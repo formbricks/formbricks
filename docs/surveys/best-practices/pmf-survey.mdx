@@ -27,14 +27,17 @@ Open the **Settings** tab, find **Survey Trigger** and add the action. See [Code
 ![The Survey Trigger section with the action attached](/images/surveys/best-practices/pmf-survey/trigger.webp)
 
 <Tip>
-  Creating the action itself — Click versus Page View, Inner Text versus CSS Selector — is the same dialog
-  in every recipe. It is walked through once on the [Feedback Box](/surveys/best-practices/feedback-box)
-  page, and the full reference is the [Actions manual](/surveys/website-app-surveys/actions).
+  A code action is two halves that have to agree: the action you create here carries a **key**, and your
+  app fires that same key with `formbricks.track("<key>")`. Nothing happens until both exist — the survey
+  stays silent if the key never fires, and the call is a no-op if no action carries it. The no-code
+  alternatives (Click, Page View, Exit Intent, 50% Scroll, Time on Page) are walked through on the
+  [Feedback Box](/surveys/best-practices/feedback-box) page; the full reference is the
+  [Actions manual](/surveys/website-app-surveys/actions).
 </Tip>
 
 ## 3. Decide how often it may appear
 
-Still on **Settings**, open **Visibility & Recontact**. Choose **Show only once**. Running the same survey at people repeatedly is how you get a number that drifts for reasons unrelated to your product.
+Still on **Settings**, open **Visibility & Recontact**. Choose **Show only once**. Asking the same people to take the survey repeatedly is how you get a number that drifts for reasons unrelated to your product.
 
 <Note>
   Recontact Options and the workspace-wide [Cooldown Period](/surveys/website-app-surveys/cooldown-period)
