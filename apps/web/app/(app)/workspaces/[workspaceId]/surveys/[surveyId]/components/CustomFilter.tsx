@@ -15,7 +15,11 @@ import {
 import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
 import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
-import { type TDateRangePreset, matchDateRangePreset, resolveDateRangePresetBounds } from "@/lib/date-ranges";
+import {
+  type TDateRangePreset,
+  resolveDateRangeLabelPreset,
+  resolveDateRangePresetBounds,
+} from "@/lib/date-ranges";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Calendar } from "@/modules/ui/components/calendar";
 import {
@@ -41,10 +45,13 @@ const getFilterDropDownLabels = (t: TFunction) => ({
   CUSTOM_RANGE: t("workspace.surveys.summary.custom_range"),
 });
 
-// The relative ranges this filter offers, in dropdown order. Order also breaks genuine ties when a
-// stored range is mapped back to its label — on the 30th of a 30-day month, "last 30 days" and "this
-// month" cover the same days. What each preset means lives in `@/lib/date-ranges`, shared with the
-// chart time dimension so the Summary tab and a chart over the same field agree.
+// The relative ranges this filter offers, in dropdown order. Picking one tags `dateRange` with its
+// preset, so the trigger label survives a remount without reverse-matching the bounds — several
+// presets span byte-identical days on period-boundary dates (on the 30th of a 30-day month, "last 30
+// days" and "this month" cover the same days) and can't be told apart from `{ from, to }` alone. Order
+// still breaks that tie for a manually picked custom range that happens to match a preset's bounds.
+// What each preset means lives in `@/lib/date-ranges`, shared with the chart time dimension so the
+// Summary tab and a chart over the same field agree.
 //
 // Labels are `t()` calls rather than bare key strings on purpose: the translation-key scanner
 // (`packages/i18n-utils`) only counts keys it can see inside a literal `t("…")`, and reports the rest
@@ -67,9 +74,9 @@ interface CustomFilterProps {
   survey: TSurvey;
 }
 
-const getDateRangeLabel = (from: Date, to: Date, t: TFunction) => {
-  const matchedPreset = matchDateRangePreset(from, to, DATE_RANGE_PRESET_NAMES);
-  const matched = DATE_RANGE_PRESETS.find(({ preset }) => preset === matchedPreset);
+const getDateRangeLabel = (dateRange: DateRange, t: TFunction) => {
+  const preset = resolveDateRangeLabelPreset(dateRange, DATE_RANGE_PRESET_NAMES);
+  const matched = DATE_RANGE_PRESETS.find((p) => p.preset === preset);
   return matched ? matched.getLabel(t) : getFilterDropDownLabels(t).CUSTOM_RANGE;
 };
 
@@ -77,9 +84,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const { t } = useTranslation();
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
-    dateRange.from && dateRange.to
-      ? getDateRangeLabel(dateRange.from, dateRange.to, t)
-      : getFilterDropDownLabels(t).ALL_TIME
+    dateRange.from && dateRange.to ? getDateRangeLabel(dateRange, t) : getFilterDropDownLabels(t).ALL_TIME
   );
   const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
@@ -247,7 +252,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                 key={preset}
                 onClick={() => {
                   setFilterRange(getLabel(t));
-                  setDateRange(resolveDateRangePresetBounds(preset));
+                  setDateRange({ ...resolveDateRangePresetBounds(preset), preset });
                 }}>
                 <p className="text-slate-700">{getLabel(t)}</p>
               </DropdownMenuItem>

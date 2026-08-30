@@ -88,10 +88,13 @@ export const resolveDateRangePresetBounds = (
 };
 
 /**
- * Finds the first preset covering exactly the same calendar days as `[from, to]` — how a stored
- * range is mapped back to the label that produced it. Matching is day-granular, and `presets` order
- * decides genuine ties (on the 30th of a 30-day month, "last 30 days" and "this month" span the same
- * days).
+ * Finds the first preset covering exactly the same calendar days as `[from, to]`, for a range that
+ * arrived with no preset attached (a manually picked custom range) — callers that pick a preset from
+ * a list should keep that preset alongside the range instead of relying on this to recover it. Once
+ * every calendar-period preset ends at "today", several presets become genuinely indistinguishable by
+ * their bounds on period-boundary days (e.g. "this month" and "last 7 days" on the 7th of any month,
+ * or "last 30 days" and "this month" on the 30th of a 30-day month) — matching is day-granular, and
+ * `presets` order picks a winner among those ties, silently mislabeling the other.
  */
 export const matchDateRangePreset = (
   from: Date,
@@ -106,4 +109,20 @@ export const matchDateRangePreset = (
       return day(bounds.from) === day(from) && day(bounds.to) === day(to);
     }) ?? null
   );
+};
+
+/**
+ * Resolves the preset that should label `range` for display: the explicit `preset` it was tagged
+ * with, if any, otherwise a reverse-match of its bounds against `presets`. A caller that already
+ * knows which preset produced a range (e.g. a dropdown selection) should tag the range with it and
+ * pass that through here, rather than relying on the bounds alone — those can be genuinely ambiguous
+ * (see `matchDateRangePreset`), so the tag is the only reliable source once it exists.
+ */
+export const resolveDateRangeLabelPreset = (
+  range: { from?: Date; to?: Date; preset?: TDateRangePreset },
+  presets: readonly TDateRangePreset[],
+  now: Date = new Date()
+): TDateRangePreset | null => {
+  if (range.preset) return range.preset;
+  return range.from && range.to ? matchDateRangePreset(range.from, range.to, presets, now) : null;
 };

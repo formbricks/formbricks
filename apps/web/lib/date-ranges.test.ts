@@ -3,6 +3,7 @@ import {
   type TDateRangePreset,
   isSubDayDateRangePreset,
   matchDateRangePreset,
+  resolveDateRangeLabelPreset,
   resolveDateRangePreset,
   resolveDateRangePresetBounds,
 } from "./date-ranges";
@@ -110,5 +111,46 @@ describe("matchDateRangePreset", () => {
     expect(
       matchDateRangePreset(new Date(2026, 4, 10), new Date(2026, 4, 12), SUMMARY_PRESETS, NOW)
     ).toBeNull();
+  });
+
+  test("cannot tell 'this month' and 'last 7 days' apart on the 7th of a month", () => {
+    // Both presets end at the end of today by definition, so on the 7th they cover the same seven
+    // calendar days. This is the collision a stored preset tag is meant to avoid resolving through
+    // here at all — see `resolveDateRangeLabelPreset`.
+    const onThe7th = new Date(2026, 7, 7, 10, 0, 0);
+    const { from, to } = resolveDateRangePresetBounds("this month", onThe7th);
+    expect(matchDateRangePreset(from, to, SUMMARY_PRESETS, onThe7th)).toBe("last 7 days");
+  });
+});
+
+describe("resolveDateRangeLabelPreset", () => {
+  test("prefers the range's own recorded preset over reverse-matching its bounds", () => {
+    // On the 7th, "this month" and "last 7 days" resolve to identical bounds (see the
+    // matchDateRangePreset collision test above), so a reverse-match alone can't recover "this
+    // month" here — the recorded preset is the only thing that can.
+    const onThe7th = new Date(2026, 7, 7, 10, 0, 0);
+    const bounds = resolveDateRangePresetBounds("this month", onThe7th);
+    expect(resolveDateRangeLabelPreset({ ...bounds, preset: "this month" }, SUMMARY_PRESETS, onThe7th)).toBe(
+      "this month"
+    );
+  });
+
+  test("falls back to reverse-matching when no preset is recorded, for a hand-picked range", () => {
+    const { from, to } = resolveDateRangePresetBounds("last 7 days", NOW);
+    expect(resolveDateRangeLabelPreset({ from, to }, SUMMARY_PRESETS, NOW)).toBe("last 7 days");
+  });
+
+  test("returns null for a range with neither a recorded preset nor a bounds match", () => {
+    expect(
+      resolveDateRangeLabelPreset(
+        { from: new Date(2026, 4, 10), to: new Date(2026, 4, 12) },
+        SUMMARY_PRESETS,
+        NOW
+      )
+    ).toBeNull();
+  });
+
+  test("returns null when the range has no bounds at all (e.g. 'all time')", () => {
+    expect(resolveDateRangeLabelPreset({}, SUMMARY_PRESETS, NOW)).toBeNull();
   });
 });
