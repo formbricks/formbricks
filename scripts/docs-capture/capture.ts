@@ -24,6 +24,8 @@ import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { DOCS_IDS } from "../../packages/database/src/scripts/docs-fixture-ids";
+import { SEED_CREDENTIALS } from "../../packages/database/src/seed/constants";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, "../..");
@@ -34,20 +36,20 @@ const BASE_URL = process.env.DOCS_CAPTURE_URL ?? "http://localhost:3000";
 /** Generated wordmark for the fictional bank, used by the logo-upload shots. */
 const LOGO_FILE = process.env.DOCS_CAPTURE_LOGO ?? "";
 
-/** Must match `SEED_CREDENTIALS.ADMIN` in `packages/database/src/seed/constants.ts`. */
-const LOGIN = { email: "admin@formbricks.com", password: "Password#123" };
+const LOGIN = SEED_CREDENTIALS.ADMIN;
 
-/** Must match `DOCS_IDS` in `packages/database/src/scripts/seed-docs-fixtures.ts`. */
+/**
+ * Imported rather than copied: a renamed id now fails to compile here instead of sending a shot to a
+ * 404 that still produces a plausible-looking screenshot. `docs-fixture-ids` is deliberately separate
+ * from the seed script, which opens a database connection while its module evaluates.
+ */
 const ACME = {
-  workspaceId: "cldocsacmeworkspace000001",
-  surveyAllElements: "cldocsallelements00000001",
-  // An app survey. Visibility & Recontact and the targeting controls do not exist for link surveys.
-  surveyApp: "cldocsappsurvey000000001",
-  // Two link surveys that exist only to be photographed from the respondent's side: the PIN screen
-  // and the email gate come before the survey and cannot be shown from the editor.
-  surveyPin: "cldocspinsurvey000000001",
-  surveyVerifyEmail: "cldocsverifyemail00000001",
-  organizationId: "cldocsacmeorg00000000001",
+  workspaceId: DOCS_IDS.WORKSPACE,
+  surveyAllElements: DOCS_IDS.SURVEY_ALL_ELEMENTS,
+  surveyApp: DOCS_IDS.SURVEY_APP,
+  surveyPin: DOCS_IDS.SURVEY_PIN,
+  surveyVerifyEmail: DOCS_IDS.SURVEY_VERIFY_EMAIL,
+  organizationId: DOCS_IDS.ORGANIZATION,
 };
 
 /**

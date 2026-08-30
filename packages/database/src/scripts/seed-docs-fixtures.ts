@@ -22,6 +22,7 @@ import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import { PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
 import { SEED_IDS } from "../seed/constants";
+import { DOCS_IDS } from "./docs-fixture-ids";
 
 const prisma = new PrismaClient({ adapter: createPrismaPgAdapter().adapter });
 
@@ -34,15 +35,9 @@ if (process.env.NODE_ENV === "production" && process.env.ALLOW_SEED !== "true") 
  * Fixed ids so the capture script can address a survey without querying for it, and so re-running
  * this script updates the same rows instead of accumulating duplicates.
  */
-export const DOCS_IDS = {
-  ORGANIZATION: "cldocsacmeorg00000000001",
-  WORKSPACE: "cldocsacmeworkspace000001",
-  SURVEY_ALL_ELEMENTS: "cldocsallelements00000001",
-  /** An app survey. Several settings — Visibility & Recontact, targeting — only exist for this type. */
-  SURVEY_APP: "cldocsappsurvey000000001",
-  SURVEY_PIN: "cldocspinsurvey000000001",
-  SURVEY_VERIFY_EMAIL: "cldocsverifyemail00000001",
-} as const;
+// Re-exported so existing importers of this module keep working; the ids themselves live in a
+// side-effect-free module that the capture script can import without opening a database connection.
+export { DOCS_IDS };
 
 /** Shown in the breadcrumb of nearly every screenshot, so it is part of the docs' visual identity. */
 const ORGANIZATION_NAME = "ACME Inc.";
