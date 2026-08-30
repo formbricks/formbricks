@@ -1,85 +1,53 @@
 ---
 title: "Improve Trial Conversion"
-description: "Improve Trial Conversion with Formbricks"
-icon: "chart-line-up"
+description: "Find out why trials do not convert, from the people who did not convert."
+icon: "hourglass-end"
 ---
 
-When a user doesn't convert, you want to know why. A micro-survey displayed at exactly the right time gives you a window into understanding the most relevant question: To pay or not to pay?
+This survey asks people who are ending a trial what stopped them from paying.
 
 ## Purpose
 
-Understanding why free users don’t convert to paid users helps boost revenue. This insight allows you to adjust your offering to encourage more users to upgrade.
+Trial conversion analytics tell you how many people dropped and where. They cannot tell you why, and the why is the only part you can act on.
 
-## Formbricks Approach
+## 1. Start from the template
 
-- Ask at exactly the right point in time.
-- Ask to understand the problem, don’t ask for solutions.
+Open **Surveys**, click **New Survey** and choose **Choose a template**. Search for **Trial Conversion**, then click the card to create the survey.
 
-## Installation
+![The Trial Conversion template in the template picker](/images/surveys/best-practices/improve-trial-cr/template.webp)
 
-To display the Trial Conversion Survey in your app you want to proceed as follows:
+The template asks what stopped them and what would have changed their mind. Both are open text on purpose — a multiple choice here only returns the options you already thought of.
 
-- Create new Trial Conversion Survey at [app.formbricks.com](https://app.formbricks.com/).
-- Set up the user action to display survey at right point in time.
-- Print it.
+## 2. Trigger it at the right moment
+
+Two triggers work, depending on how your trial ends. If cancelling is a button, match it with **Inner Text** `Cancel Trial`. If it is a page such as `/trial-cancelled`, use a **Page View** action with **Limit to specific pages**.
+
+Open the **Settings** tab, find **Survey Trigger** and add the action.
+
+![The Survey Trigger section with the action attached](/images/surveys/best-practices/improve-trial-cr/trigger.webp)
+
+<Tip>
+  Creating the action itself — Click versus Page View, Inner Text versus CSS Selector — is the same dialog
+  in every recipe. It is walked through once on the [Feedback Box](/surveys/best-practices/feedback-box)
+  page, and the full reference is the [Actions manual](/surveys/website-app-surveys/actions).
+</Tip>
+
+## 3. Decide how often it may appear
+
+Still on **Settings**, open **Visibility & Recontact**. Choose **Show only once**.
 
 <Note>
-  ### Is the Formbricks Widget Running?
-  We assume you’ve already installed the Formbricks Widget in your web app, as it’s required to display messages and surveys. If not, follow the [Quick Start Guide (takes 15 mins max.)](/surveys/website-app-surveys/quickstart).
+  Recontact Options and the workspace-wide [Cooldown Period](/surveys/website-app-surveys/cooldown-period)
+  are two separate gates and a survey has to pass both — Recontact Options first, then the cooldown. If
+  your workspace shows at most one survey a week, this survey inherits that unless you set **Ignore
+  Cooldown Period**.
 </Note>
 
-### 1. Create new Trial Conversion Survey
+## 4. Publish
 
-If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
-
-Click on **Create Survey** and select the template, [Improve Trial Conversion](https://formbricks.com/survey-templates/improve-trial-conversion):
-
-![Create survey by template](/images/surveys/best-practices/improve-trial-cr/create-survey.webp)
-
-### 2. Optional: Update questions
-
-You can update the questions and answer options.
-
-![Change text content](/images/surveys/best-practices/improve-trial-cr/change-text.webp)
-
-_Want to change the button color? Adjust it in **Settings → Workspace → Appearance**!_
-
-Save, and move over to the **Audience** tab.
-
-### 3. Pre-segment your audience
-
-Pre-segmentation isn't needed for this survey since you likely want to target all users who cancel their trial. You can use a specific user action, like clicking **Cancel Trial**, to show the survey only to users trying your product.
-
-### 4. Set up a trigger for the Trial Conversion Survey:
-
-How you trigger your survey depends on your product. There are two options:
-
-- **Trigger by Page view:** If you have a page like `/trial-cancelled` for users who cancel their trial subscription, create a user action with the type "Page View." Select "Limit to specific pages" and apply URL filters with these settings:
-
-![Add page URL action](/images/surveys/best-practices/improve-trial-cr/action-pageurl.webp)
-
-Whenever a user visits this page, the survey will be displayed ✅
-
-- **Trigger by Button Click:** In a different case, you have a “Cancel Trial" button in your app. You can setup a user Action with the `Inner Text`:
-
-![Add inner text action](/images/surveys/best-practices/improve-trial-cr/action-innertext.webp)
-
-Please have a look at our complete [Actions manual](/surveys/website-app-surveys/actions) if you have questions.
-
-### 5. Select Action in the “When to ask” card
-
-![Select feedback button action](/images/surveys/best-practices/improve-trial-cr/select-action.webp)
-
-### 6. Last step: Set Recontact Options correctly
-
-Finally, scroll down to "Recontact Options" and select the appropriate settings to gather the most insights. Ensure the survey is always displayed, even if the user has seen it in the past few days.
-
-![Set recontact options](/images/surveys/best-practices/improve-trial-cr/recontact-options.webp)
-
-### 7. Congrats! You’re ready to publish your survey 🥳
-
-![Publish survey](/images/surveys/best-practices/improve-trial-cr/publish.webp)
+**Publish** puts it live. The widget picks up the change within a minute.
 
 <Note>
-  Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow [this tutorial (Step 4 onwards)](/surveys/website-app-surveys/quickstart) to install the widget.
+  This is an app survey, so it needs the Formbricks widget running in your product. If you have not
+  installed it yet, follow [the quickstart](/surveys/website-app-surveys/quickstart) first.
 </Note>
