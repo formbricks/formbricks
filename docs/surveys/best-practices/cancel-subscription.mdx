@@ -1,103 +1,51 @@
 ---
-title: "Learn from Churn"
-description: "Mastering Churn Surveys with Formbricks | Essential Tips & Steps"
-icon: "chart-line-down"
+title: "Churn Survey"
+description: "Learn why customers cancel their subscription, at the moment they cancel."
+icon: "user-minus"
 ---
 
-Churn is hard, but can teach you a lot. Whenever a user decides that your product isn’t worth it anymore, you have a unique opportunity to get deep insights. These insights are pure gold to reduce churn.
+A churn survey asks why someone is leaving, at the one moment they are certain of the answer.
 
 ## Purpose
 
-The Churn Survey is among the most effective ways to identify weaknesses in your offering. People were willing to pay but now are not anymore: What changed? Let’s find out!
+Asked a week later by email, the answer is a rationalisation. Asked at the click of the cancel button, it is the reason.
 
-## Formbricks Approach
+## 1. Start from the template
 
-* Ask at exactly the right point in time
+Open **Surveys**, click **New Survey** and choose **Choose a template**. Search for **Churn Survey**, then click the card to create the survey.
 
-* Follow-up to prevent bad reviews
+![The Churn Survey template in the template picker](/images/surveys/best-practices/cancel-subscription/template.webp)
 
-## Overview
+The template asks for a reason and then for detail. Keep it to that: someone mid-cancellation will not fill in a long form.
 
-To run the Churn Survey in your app you want to proceed as follows:
+## 2. Trigger it at the right moment
 
-1. Create new Churn Survey at [app.formbricks.com](https://app.formbricks.com/)
+The trigger is your cancel button. Open the **Settings** tab, find **Survey Trigger** and add an action that matches it — **Inner Text** `Cancel Subscription` is usually enough, and a **CSS Selector** such as `#cancel-subscription` is better if more than one button carries that label.
 
-2. Set up the user action to display survey at right point in time
+![The Survey Trigger section with the action attached](/images/surveys/best-practices/cancel-subscription/trigger.webp)
 
-3. Choose correct recontact options to never miss a feedback
+<Tip>
+  Creating the action itself — Click versus Page View, Inner Text versus CSS Selector — is the same dialog
+  in every recipe. It is walked through once on the [Feedback Box](/surveys/best-practices/feedback-box)
+  page, and the full reference is the [Actions manual](/surveys/website-app-surveys/actions).
+</Tip>
 
-4. Prevent that churn!
+## 3. Decide how often it may appear
 
-<Note>
-  ### Formbricks Widget running? We assume that you have already installed the
-
-  Formbricks Widget in your web app. It’s required to display messages and
-  surveys in your app. If not, please follow the [Quick Start Guide (takes
-  15mins max.)](/surveys/website-app-surveys/quickstart)
-</Note>
-
-### 1. Create new Churn Survey
-
-If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
-
-Click on "Create Survey" and choose the template [Churn Survey](https://formbricks.com/survey-templates/churn-survey):
-
-![Create churn survey by template](/images/surveys/best-practices/cancel-subscription/create-cancel-flow.webp)
-
-### 2. Update questions (if you like)
-
-You’re free to update the question and answer options. However, based on our experience, we suggest giving the provided template a go 😊
-
-![Change text content](/images/surveys/best-practices/cancel-subscription/change-text.webp)
-
-*Want to change the button color? You can do so in **Settings → Workspace → Appearance**.*
-
-Save, and move over to the “Audience” tab.
-
-### 3. Pre-segment your audience
-
-In this case, you don’t really need to pre-segment your audience. You likely want to ask everyone who hits the “Cancel subscription” button.
-
-### 4. Set up a trigger
-
-To create the trigger for your Churn Survey, you have three options to choose from:
-
-* **Trigger by Inner Text:** You likely have a “Cancel Subscription” button in your app. You can setup a user Action with the according `Inner Text` to trigger the survey, like so:
-
-![Set the trigger by inner Text](/images/surveys/best-practices/cancel-subscription/trigger-inner-text.webp)
-
-* **Trigger by CSS Selector:** In case you have more than one button saying “Cancel Subscription” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“cancel-subscription”` and set your user action up like so:
-
-![Set the trigger by CSS Selector](/images/surveys/best-practices/cancel-subscription/trigger-css-selector.webp)
-
-* **Trigger by page view filters:** Lastly, you could also display your survey on a subpage “/subscription-cancelled” where you forward users once they cancelled the trial subscription. You can then create a user Action with the type `Page View` and add select `Limit to specific pages` to add url filters, with the following settings:
-
-![Set the trigger by page URL](/images/surveys/best-practices/cancel-subscription/trigger-page-url.webp)
-
-Whenever a user visits this page, matches the filter conditions above and the recontact options (below) the survey will be displayed ✅
-
-Here is our complete [Actions manual](/surveys/website-app-surveys/actions) covering [No-Code](/surveys/website-app-surveys/actions#setting-up-no-code-actions) and [Code](/surveys/website-app-surveys/actions#setting-up-code-actions) Actions.
-
-### 5. Select Action in the “When to ask” card
-
-![Select feedback button action](/images/surveys/best-practices/cancel-subscription/select-action.webp)
-
-### 6. Last step: Set Recontact Options correctly
-
-Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure you milk these super valuable insights. You want to make sure that this survey is always displayed, no matter if the user has already seen a survey in the past days:
-
-![Set recontact options](/images/surveys/best-practices/cancel-subscription/recontact-options.webp)
-
-These settings make sure the survey is always displayed, when a user wants to Cancel their subscription.
-
-### 7. Congrats! You’re ready to publish your survey 💃
-
-![Publish survey](/images/surveys/best-practices/cancel-subscription/publish-survey.webp)
+Still on **Settings**, open **Visibility & Recontact**. Choose **Show only once**. A cancellation is a one-time event, and someone who has already answered should not be asked twice.
 
 <Note>
-  Formbricks Widget running? You need to have the Formbricks Widget installed
-  to display the Churn Survey in your app. Please follow [this tutorial (Step 4
-  onwards)](/surveys/website-app-surveys/quickstart) to install the widget.
+  Recontact Options and the workspace-wide [Cooldown Period](/surveys/website-app-surveys/cooldown-period)
+  are two separate gates and a survey has to pass both — Recontact Options first, then the cooldown. If
+  your workspace shows at most one survey a week, this survey inherits that unless you set **Ignore
+  Cooldown Period**.
 </Note>
 
-### **Get those insights! 🎉**
+## 4. Publish
+
+**Publish** puts it live. The widget picks up the change within a minute.
+
+<Note>
+  This is an app survey, so it needs the Formbricks widget running in your product. If you have not
+  installed it yet, follow [the quickstart](/surveys/website-app-surveys/quickstart) first.
+</Note>
