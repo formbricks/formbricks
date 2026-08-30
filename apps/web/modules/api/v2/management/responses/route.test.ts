@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
+// Imported statically rather than with `await import("./route")` inside a test: `vi.mock` is hoisted
+// above imports either way, but a dynamic import charges the route graph's first transform to
+// whichever test runs first, which on a loaded CI runner exceeded the 5s testTimeout.
+import { GET } from "./route";
 
 const { mockAuthenticatedApiClient, mockGetResponses, mockHandleApiError, mockSuccessResponse } = vi.hoisted(
   () => ({
@@ -85,7 +89,6 @@ describe("GET /management/responses", () => {
       },
     });
 
-    const { GET } = await import("./route");
     const response = await GET(buildRequest() as any);
     const body = await response.json();
 
@@ -103,7 +106,6 @@ describe("GET /management/responses", () => {
       error: { type: "internal_server_error", details: [{ field: "responses", issue: "boom" }] },
     });
 
-    const { GET } = await import("./route");
     const response = await GET(buildRequest() as any);
 
     expect(mockSuccessResponse).not.toHaveBeenCalled();
