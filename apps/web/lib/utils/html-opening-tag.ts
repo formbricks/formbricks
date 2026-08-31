@@ -94,6 +94,13 @@ export const findOpeningTag = (
 };
 
 /**
+ * Index of the first `</name>` at or after `from`, or -1. The counterpart to `findOpeningTag`, and
+ * case-insensitive the same way.
+ */
+export const findClosingTag = (source: string, name: string, from = 0): number =>
+  indexOfAsciiCaseInsensitive(source, `</${name}>`, from);
+
+/**
  * Replace every `<name …>` with `replace(attributes, tag)`, matching `/<name\b([^>]*)>/gi` under
  * `replaceAll`. Like the regex, scanning resumes after the replaced tag's `>`, so a replacement
  * that itself contains a tag is never rescanned.

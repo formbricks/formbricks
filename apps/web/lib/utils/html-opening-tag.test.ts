@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { findOpeningTag, replaceOpeningTags } from "./html-opening-tag";
+import { findClosingTag, findOpeningTag, replaceOpeningTags } from "./html-opening-tag";
 
 // The regexes this module replaces, kept here as the oracle every case is compared against.
 const asRegex = (name: string, wordBoundary = true) =>
@@ -77,6 +77,23 @@ describe("html opening tag scanner", () => {
       }
     }
   );
+
+  test("findClosingTag matches the case-insensitive close the regex used", () => {
+    const iDot = String.fromCharCode(0x130); // lowercases to two code units
+    const cases = [
+      ["</body>", 0],
+      ["<body>x</BODY>", 7],
+      ["<body>x</BoDy>rest", 7],
+      ["no close here", -1],
+      // A toLowerCase()-based search would report an index into a longer string here.
+      [`<BODY>prefix${iDot}suffix</BoDy>`, `<BODY>prefix${iDot}suffix`.length],
+      [`${iDot.repeat(20)}</body>`, 20],
+    ] as const;
+
+    for (const [source, expected] of cases) {
+      expect(findClosingTag(source, "body"), JSON.stringify(source)).toBe(expected);
+    }
+  });
 
   test("stays linear where the regex was quadratic", () => {
     // `<p ` repeated with no `>` anywhere: the regex rescans to the end from every occurrence.

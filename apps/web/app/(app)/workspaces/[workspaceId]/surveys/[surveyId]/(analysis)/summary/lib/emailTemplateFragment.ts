@@ -1,6 +1,5 @@
-import { findOpeningTag } from "@/lib/utils/html-opening-tag";
+import { findClosingTag, findOpeningTag } from "@/lib/utils/html-opening-tag";
 
-const EMAIL_BODY_CLOSE_TAG = "</body>";
 const EMAIL_REACT_SERVER_MARKER_PATTERN = /<!--\/?\$-->/g;
 
 /**
@@ -21,25 +20,9 @@ const extractBodyContent = (html: string): string | null => {
   if (!openTag) return null;
 
   const contentStart = openTag.index + openTag.length;
-  const contentEnd = findCloseTagIndex(html, contentStart);
+  const contentEnd = findClosingTag(html, "body", contentStart);
 
   return contentEnd === -1 ? null : html.slice(contentStart, contentEnd);
-};
-
-/**
- * `</body>` is matched case-insensitively, like the `i` flag did. Deliberately not
- * `html.toLowerCase().indexOf(...)`: lowercasing is not length-preserving (U+0130 becomes two code
- * units), so a document containing one would return an index into a differently-sized string.
- */
-const findCloseTagIndex = (html: string, from: number): number => {
-  for (let index = from; index <= html.length - EMAIL_BODY_CLOSE_TAG.length; index++) {
-    if (html.startsWith(EMAIL_BODY_CLOSE_TAG, index)) return index;
-    // Only the ASCII letters differ in case here, so a case-folded comparison of the slice is exact.
-    if (html.slice(index, index + EMAIL_BODY_CLOSE_TAG.length).toLowerCase() === EMAIL_BODY_CLOSE_TAG) {
-      return index;
-    }
-  }
-  return -1;
 };
 
 export const extractEmailBodyFragment = (html: string): string => {
