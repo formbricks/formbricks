@@ -3465,6 +3465,8 @@
         "seven_points": "7 nokta",
         "show_block_settings": "Blok ayarlarını göster",
         "show_button": "Düğmeyi Göster",
+        "show_default_icon": "Varsayılan simgeyi göster",
+        "show_default_icon_description": "Metninin üzerinde onay işareti simgesini göster. Eleme veya diskalifikasyon sonlandırmaları için kapat.",
         "show_in_order": "Sırayla göster",
         "show_language_switch": "Dil değiştiricisini göster",
         "show_multiple_times": "Sınırlı sayıda göster",

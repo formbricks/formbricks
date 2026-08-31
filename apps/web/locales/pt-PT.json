@@ -3465,6 +3465,8 @@
         "seven_points": "7 pontos",
         "show_block_settings": "Mostrar definições do bloco",
         "show_button": "Mostrar Botão",
+        "show_default_icon": "Mostrar ícone predefinido",
+        "show_default_icon_description": "Exibe o ícone de visto acima do teu texto. Desativa esta opção para finalizações de exclusão ou desqualificação.",
         "show_in_order": "Mostrar por ordem",
         "show_language_switch": "Mostrar alternador de idioma",
         "show_multiple_times": "Mostrar um número limitado de vezes",

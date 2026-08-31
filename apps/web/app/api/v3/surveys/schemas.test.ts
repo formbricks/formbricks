@@ -590,6 +590,25 @@ describe("ZV3CreateSurveyBody", () => {
     }
   });
 
+  test("accepts hideDefaultIcon on an end screen ending", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      endings: [
+        {
+          id: "clend123456789012345678901",
+          type: "endScreen",
+          headline: { "en-US": "Thanks!" },
+          hideDefaultIcon: true,
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.endings?.[0]).toMatchObject({ hideDefaultIcon: true });
+    }
+  });
+
   test("reports missing required ending fields before shared ending union errors", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,

@@ -64,6 +64,9 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   buttonLink: ZEndingCardUrl.optional(),
   imageUrl: ZStorageUrl.optional(),
   videoUrl: ZStorageUrl.optional(),
+  // Absent means "show it": the checkmark predates this field, so every survey written before it has to
+  // keep rendering the icon.
+  hideDefaultIcon: z.boolean().optional(),
 });
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;

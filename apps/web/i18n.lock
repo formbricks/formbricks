@@ -3346,6 +3346,8 @@ checksums:
     workspace/surveys/edit/seven_points: 4ead50fdfda45e8710767e1b1a84bf42
     workspace/surveys/edit/show_block_settings: bad99d99c9908874e45f5c350a88cc79
     workspace/surveys/edit/show_button: 6b364aac9d7ac71f34a438607c9693bc
+    workspace/surveys/edit/show_default_icon: 1458e5ffe5c5957138f4b08a8768116d
+    workspace/surveys/edit/show_default_icon_description: 384f69eb82825320c2202bcb57f3d17c
     workspace/surveys/edit/show_in_order: 15784a59572eb8a6dba6b918c31a9493
     workspace/surveys/edit/show_language_switch: b6915a7f26d7079f2d4d844d74440413
     workspace/surveys/edit/show_multiple_times: 05239c532c9c05ef5d2990ba6ce12f60

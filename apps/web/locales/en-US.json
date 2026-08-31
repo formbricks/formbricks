@@ -3465,6 +3465,8 @@
         "seven_points": "7 points",
         "show_block_settings": "Show Block settings",
         "show_button": "Show Button",
+        "show_default_icon": "Show default icon",
+        "show_default_icon_description": "Display the checkmark icon above your text. Turn it off for screen-out or disqualification endings.",
         "show_in_order": "Show in order",
         "show_language_switch": "Show language switch",
         "show_multiple_times": "Show a limited number of times",

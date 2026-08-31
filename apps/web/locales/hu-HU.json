@@ -3465,6 +3465,8 @@
         "seven_points": "7 pont",
         "show_block_settings": "Blokkbeállítások megjelenítése",
         "show_button": "Gomb megjelenítése",
+        "show_default_icon": "Alapértelmezett ikon megjelenítése",
+        "show_default_icon_description": "A pipajel ikon megjelenítése a szöveg felett. Kapcsolja ki kizárási vagy alkalmatlanság miatti befejezéseknél.",
         "show_in_order": "Megjelenítés sorrendben",
         "show_language_switch": "Nyelvválasztó megjelenítése",
         "show_multiple_times": "Megjelenítés korlátozott számú alkalommal",

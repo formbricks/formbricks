@@ -3465,6 +3465,8 @@
         "seven_points": "7 Punkte",
         "show_block_settings": "Block-Einstellungen anzeigen",
         "show_button": "Button anzeigen",
+        "show_default_icon": "Standard-Symbol anzeigen",
+        "show_default_icon_description": "Zeige das Häkchen-Symbol über deinem Text an. Schalte es aus für Screen-out- oder Disqualifikations-Endbildschirme.",
         "show_in_order": "In Reihenfolge anzeigen",
         "show_language_switch": "Sprachwechsel anzeigen",
         "show_multiple_times": "Begrenzte Anzahl von Malen anzeigen",

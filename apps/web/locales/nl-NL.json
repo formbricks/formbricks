@@ -3465,6 +3465,8 @@
         "seven_points": "7 punten",
         "show_block_settings": "Blokinstellingen tonen",
         "show_button": "Toon knop",
+        "show_default_icon": "Standaardpictogram weergeven",
+        "show_default_icon_description": "Toon het vinkje boven je tekst. Zet het uit voor screen-out of diskwalificatie-eindes.",
         "show_in_order": "Toon op volgorde",
         "show_language_switch": "Toon taalwissel",
         "show_multiple_times": "Toon een beperkt aantal keren",

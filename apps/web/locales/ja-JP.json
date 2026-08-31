@@ -3465,6 +3465,8 @@
         "seven_points": "7点",
         "show_block_settings": "ブロック設定を表示",
         "show_button": "ボタンを表示",
+        "show_default_icon": "デフォルトアイコンを表示",
+        "show_default_icon_description": "テキストの上にチェックマークアイコンを表示します。スクリーンアウトや不適格終了の場合はオフにしてください。",
         "show_in_order": "順番に表示",
         "show_language_switch": "言語切り替えを表示",
         "show_multiple_times": "限られた回数表示する",

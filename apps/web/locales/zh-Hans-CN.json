@@ -3465,6 +3465,8 @@
         "seven_points": "7 分",
         "show_block_settings": "显示区块设置",
         "show_button": "显示 按钮",
+        "show_default_icon": "显示默认图标",
+        "show_default_icon_description": "在文本上方显示对勾图标。如果是筛选淘汰或不符合条件的结束页面，请关闭此选项。",
         "show_in_order": "按顺序显示",
         "show_language_switch": "显示 语言 切换",
         "show_multiple_times": "显示有限次数",

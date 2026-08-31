@@ -3465,6 +3465,8 @@
         "seven_points": "7 points",
         "show_block_settings": "Afficher les paramètres du bloc",
         "show_button": "Afficher le bouton",
+        "show_default_icon": "Afficher l'icône par défaut",
+        "show_default_icon_description": "Affiche l'icône de coche au-dessus de ton texte. Désactive-la pour les fins d'exclusion ou de disqualification.",
         "show_in_order": "Afficher dans l'ordre",
         "show_language_switch": "Afficher le changement de langue",
         "show_multiple_times": "Afficher un nombre limité de fois",
