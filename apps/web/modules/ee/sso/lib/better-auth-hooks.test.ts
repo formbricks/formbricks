@@ -352,15 +352,18 @@ describe("ssoDatabaseHooks.user.create.after", () => {
     test("emits a warn log and an audit event naming the provider", async () => {
       await runAfter(false);
 
+      // `userId` is on the log line too: the audit event is enterprise-gated, so for a self-hoster this
+      // is the only channel, and without an identifier it names no account to go and look at.
       expect(loggerWithContext).toHaveBeenCalledWith({
         source: "sso-signup",
         ssoProvider: "openid",
+        userId: "u1",
         emailVerified: false,
       });
       expect(loggerWarn).toHaveBeenCalledTimes(1);
       expect(queueAuditEventBackground).toHaveBeenCalledWith(
         expect.objectContaining({
-          action: "created",
+          action: "updated",
           targetType: "user",
           userId: "u1",
           targetId: "u1",

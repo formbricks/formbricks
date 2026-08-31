@@ -21,8 +21,12 @@ const LEGACY_SSO_PROVIDER_ALIASES: Partial<Record<IdentityProvider, string[]>> =
   azuread: ["azure-ad"],
 };
 
+// `Object.hasOwn`, not `in`: `in` walks the prototype chain, so "constructor" / "toString" / "__proto__"
+// would pass this guard and resolve to a Function typed as a provider. Nothing downstream is reachable
+// with such a value today, but the policy table in ./email-verification-policy is documented as
+// exhaustive over what this returns, and `in` quietly makes that untrue.
 const isSupportedSsoProvider = (provider: string): provider is keyof typeof SSO_PROVIDER_MAP =>
-  provider in SSO_PROVIDER_MAP;
+  Object.hasOwn(SSO_PROVIDER_MAP, provider);
 
 export const normalizeSsoProvider = (provider: string): TSsoIdentityProvider | null => {
   const normalizedProviderKey = provider.toLowerCase();

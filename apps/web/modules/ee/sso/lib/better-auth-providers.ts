@@ -416,7 +416,15 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
                   email: profile.email,
                   name: toDisplayName(profile),
                   // Read the RAW claim here, which is the only place it survives intact (ENG-2589).
-                  emailVerified: resolveEmailVerifiedFromRawClaim(profile.email_verified),
+                  //
+                  // Entra is the one provider that does not speak `email_verified` at all: neither its
+                  // id_tokens nor Graph's `/oidc/userinfo` carry it. Microsoft's equivalent is the
+                  // OPTIONAL `xms_edov` ("email domain owner verified"), which a tenant has to enable on
+                  // the app registration — and which is exactly the signal that says whether the `email`
+                  // claim is a proven address or just a mutable directory attribute. Falling back to it
+                  // means a tenant that opts in gets its denial honoured; one that does not is unchanged,
+                  // because an absent claim resolves the same way either way.
+                  emailVerified: resolveEmailVerifiedFromRawClaim(profile.email_verified ?? profile.xms_edov),
                 };
               },
             } satisfies GenericOAuthConfig,

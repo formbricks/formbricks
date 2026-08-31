@@ -628,6 +628,56 @@ describe("better-auth SSO providers", () => {
         });
       });
 
+      /**
+       * The azuread claim reaches the mapper only because `microsoftGraphUserInfo` spreads the raw Graph
+       * profile. That spread is now load-bearing and nothing else asserts it: an edit that normalised or
+       * whitelisted the Graph response would strip the claim, every Azure sign-up would silently resolve
+       * verified, and every other test here would still pass because they feed the mapper directly.
+       */
+      test("the Graph userinfo passes the raw verification claims through to the mapper", async () => {
+        const m = await loadProviders({
+          ENTERPRISE_LICENSE_KEY: "lic",
+          AZURE_OAUTH_ENABLED: true,
+          AZUREAD_TENANT_ID: "common", // the explicit-endpoint branch, where getUserInfo is ours
+        });
+        const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
+        if (!azure?.getUserInfo) throw new Error("azuread should use the Graph override on `common`");
+
+        vi.stubGlobal(
+          "fetch",
+          vi.fn(async () => ({
+            ok: true,
+            json: async () => ({
+              sub: "graph-sub",
+              email: "user@corp.test",
+              email_verified: false,
+              xms_edov: false,
+            }),
+          }))
+        );
+
+        const profile = (await azure.getUserInfo({ accessToken: "t" } as never)) as Record<string, unknown>;
+
+        expect(profile).toMatchObject({ email_verified: false, xms_edov: false });
+        // And the mapper turns them into a denial, which is the property that actually matters.
+        expect(callMapper(azure.mapProfileToUser, profile)).toMatchObject({ emailVerified: false });
+      });
+
+      // Entra emits no `email_verified` at all; `xms_edov` is Microsoft's own equivalent, and honouring
+      // it is what makes azuread's `raw-claim` classification true rather than aspirational.
+      test("azuread honours xms_edov when email_verified is absent", async () => {
+        const m = await loadProviders({ ENTERPRISE_LICENSE_KEY: "lic", AZURE_OAUTH_ENABLED: true });
+        const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
+
+        expect(
+          callMapper(azure?.mapProfileToUser, { email: "a@az.test", sub: "s", xms_edov: false })
+        ).toMatchObject({ emailVerified: false });
+        // A tenant that enables neither claim is unchanged — absent stays verified.
+        expect(callMapper(azure?.mapProfileToUser, { email: "a@az.test", sub: "s" })).toMatchObject({
+          emailVerified: true,
+        });
+      });
+
       // SAML is `never-attests`: it must not smuggle a claim into the mapped user at all, so the hook's
       // forced `true` is the single decision for it (BoxyHQ carries no `email_verified` on any path).
       test("saml maps no emailVerified at all", async () => {

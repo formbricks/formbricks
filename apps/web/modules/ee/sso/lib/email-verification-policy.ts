@@ -39,6 +39,20 @@ export const SSO_EMAIL_VERIFICATION_TRUST: Record<TSsoIdentityProvider, TSsoEmai
 };
 
 /**
+ * Two residuals worth naming, so nobody reads this table as a stronger guarantee than it gives:
+ *
+ * - **azuread** emits no `email_verified` at all — not in its id_tokens, not from Graph's
+ *   `/oidc/userinfo`. Its mapper falls back to `xms_edov`, Microsoft's own "is this address proven"
+ *   claim, but that is OPTIONAL and off unless the tenant enables it on the app registration. On a
+ *   default Entra setup nothing is asserted, so every sign-up resolves verified — the same as before
+ *   this change. Entra's `email` is a mutable directory attribute, so that residual is real.
+ * - **github** is `attested` on Better Auth's `/user/emails` lookup, which coalesces a FAILED lookup to
+ *   the same `false` as a genuine denial (`emails?.find(...)?.verified ?? false`). A registration
+ *   lacking the email permission therefore reads as "GitHub says unverified" for every user rather than
+ *   "GitHub could not say" — noisy and over-strict, never over-permissive.
+ */
+
+/**
  * Resolve a provider's RAW `email_verified` claim, for the `raw-claim` providers whose mappers read it
  * straight off the profile (ENG-2589).
  *
@@ -54,12 +68,24 @@ export const SSO_EMAIL_VERIFICATION_TRUST: Record<TSsoIdentityProvider, TSsoEmai
  *   they are not in. Microsoft Graph's `/oidc/userinfo` omits it for most tenants, so this is the
  *   common path, not a corner.
  *
- * The string `"false"` is denied alongside the boolean: OIDC types the claim as a boolean, but real
- * IdPs have been observed serialising it as a string, and deny is the safe direction to guess in. A
- * string `"true"` needs no special case — it is not a denial, so it lands on verified via the default.
+ * OIDC types the claim as a boolean, but real IdPs serialise it in whatever their backend produces, so
+ * a denial is recognised in the shapes it actually arrives in: the boolean, the string in any casing
+ * (`"false"`, `"False"` from a Python-derived provider, `"FALSE"`), and the numeric forms `0` / `"0"`.
+ * Matching only the exact boolean would fail OPEN on every one of those — an IdP saying "not verified"
+ * in a spelling we did not anticipate would mint a verified account, which is precisely the bug class
+ * this function exists to close. Nothing legitimate is lost by being broad here: no provider sends
+ * `"False"` or `0` to mean verified.
+ *
+ * Affirmative spellings need no cases of their own — they are not denials, so they reach verified via
+ * the default, which is the same place an absent claim lands.
  */
-export const resolveEmailVerifiedFromRawClaim = (rawClaim: unknown): boolean =>
-  !(rawClaim === false || rawClaim === "false");
+const DENIAL_CLAIM_VALUES: ReadonlySet<string> = new Set(["false", "0"]);
+
+export const resolveEmailVerifiedFromRawClaim = (rawClaim: unknown): boolean => {
+  if (rawClaim === false || rawClaim === 0) return false;
+  if (typeof rawClaim === "string" && DENIAL_CLAIM_VALUES.has(rawClaim.trim().toLowerCase())) return false;
+  return true;
+};
 
 /**
  * The value written to `User.emailVerified` on SSO sign-up — the last decision before the INSERT, made

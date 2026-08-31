@@ -93,13 +93,21 @@ const recordUnverifiedSsoSignup = ({
 }): void => {
   try {
     logger
-      .withContext({ source: "sso-signup", ssoProvider: provider, emailVerified: false })
+      // `userId` is on the log line, not only the audit event: the log is the channel a self-hoster
+      // actually has, and "some account was created unverified" with no way to find which one is not
+      // an actionable signal. The address itself stays out — the id is enough to look it up.
+      .withContext({ source: "sso-signup", ssoProvider: provider, userId, emailVerified: false })
       .warn("SSO sign-up created an account the identity provider did not report as verified");
 
-    // `.catch`, not just the try/catch: the call is deliberately not awaited (the hook is on the
-    // sign-in path), so a rejected promise would otherwise escape as an unhandled rejection.
+    // Not awaited: the hook is on the sign-in path, and the helper does its work inside `setImmediate`,
+    // so there is nothing to wait for. Called bare, like the other two audit sites in this module family.
     void queueAuditEventBackground({
-      action: "created",
+      // `updated` + a marker key, not `created`: this records a PROPERTY of a user creation, and it is
+      // emitted only for the unverified subset. An `action: "created"` / `targetType: "user"` pair
+      // exists nowhere else, so a consumer counting account creations off it would silently see only
+      // the accounts an IdP declined to vouch for. The marker idiom is the house convention for
+      // auth-internal events (`passwordResetMarker`, `verificationSessionWithheldMarker`).
+      action: "updated",
       targetType: "user",
       userId,
       userType: "user",
@@ -110,8 +118,6 @@ const recordUnverifiedSsoSignup = ({
       // already being recorded, not a flow of its own, and it keeps the shared enum untouched. Every
       // key here survives `redactPII` — an `email` would not, which is the other reason it is absent.
       newObject: { ssoUnverifiedSignupMarker: true, provider, emailVerified: false },
-    }).catch((error: unknown) => {
-      logger.warn({ error }, "Failed to audit an unverified SSO sign-up");
     });
   } catch (error) {
     logger.warn({ error }, "Failed to record an unverified SSO sign-up");

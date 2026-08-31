@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
@@ -82,6 +83,7 @@ vi.mock("./account-linking", () => ({
     isActive: true,
     identityProvider: true,
     identityProviderAccountId: true,
+    twoFactorEnabled: true,
   },
   syncSsoIdentityForUser: vi.fn(),
 }));
@@ -154,6 +156,7 @@ describe("sso-recovery", () => {
         isActive: true,
         identityProvider: "email",
         identityProviderAccountId: null,
+        twoFactorEnabled: false,
       },
       provider: "google",
       account: {
@@ -192,6 +195,7 @@ describe("sso-recovery", () => {
           isActive: true,
           identityProvider: "email",
           identityProviderAccountId: null,
+          twoFactorEnabled: false,
         },
         provider: "google",
         account: {
@@ -252,8 +256,10 @@ describe("sso-recovery", () => {
     expect(txTwoFactorDeleteMany).toHaveBeenCalledWith({ where: { userId: "user_1" } });
     // Scoped by owner, NOT by `providerAccountId`/`issuer`: those are account-key columns and a drifted key
     // (ENG-2555) would make a key-filtered query walk past a row still holding a live hash.
+    // `password: { not: null }` narrows to rows that actually held a credential, so the reported count
+    // is rows CHANGED rather than rows matched — an already-null row must not read as a factor removed.
     expect(txAccountUpdateMany).toHaveBeenCalledWith({
-      where: { userId: "user_1", provider: "credential" },
+      where: { userId: "user_1", provider: "credential", password: { not: null } },
       data: { password: null },
     });
     // Post-commit, sparing the caller's own session so the redirect still lands signed in.
@@ -359,6 +365,46 @@ describe("sso-recovery", () => {
       );
     });
 
+    /**
+     * The under-reporting trap. 2FA lives in two stores and the strip clears both, but a user who
+     * enrolled before the backfill shim landed has only the legacy `User.twoFactorEnabled` latch and no
+     * `TwoFactor` row — so counting rows alone would tell exactly that user their second factor was left
+     * alone, on the one occasion it was taken away.
+     */
+    test("reports the second factor for a legacy enrolment with no TwoFactor row", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: "user_1",
+        email: "john.doe@example.com",
+        locale: "en-US",
+        emailVerified: false,
+        isActive: true,
+        identityProvider: "email",
+        identityProviderAccountId: null,
+        twoFactorEnabled: true, // legacy latch set...
+      } as never);
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 }); // ...with no row to count
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ twoFactorRemoved: true })
+      );
+    });
+
+    // `sendEmail` returns false without throwing when SMTP is unconfigured, so the catch never sees it.
+    // Silence there means a second factor was removed and nobody was told — the exact failure this
+    // notification exists to prevent, so it has to be attributable in the log.
+    test("logs when the mail is not delivered rather than failing silently", async () => {
+      asUnverifiedUser();
+      vi.mocked(sendSsoRecoveryFactorsRemovedEmail).mockResolvedValue(false);
+
+      await expect(completeRecovery()).resolves.toBeDefined();
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "user_1" }),
+        expect.stringContaining("notification email was not sent")
+      );
+    });
+
     // An account with neither factor set has lost nothing, so a mail would be noise.
     test("says nothing when there was nothing to remove", async () => {
       asUnverifiedUser();
@@ -456,8 +502,10 @@ describe("sso-recovery", () => {
       sessionToken: "current-session-token",
     });
 
+    // `password: { not: null }` narrows to rows that actually held a credential, so the reported count
+    // is rows CHANGED rather than rows matched — an already-null row must not read as a factor removed.
     expect(txAccountUpdateMany).toHaveBeenCalledWith({
-      where: { userId: "user_1", provider: "credential" },
+      where: { userId: "user_1", provider: "credential", password: { not: null } },
       data: { password: null },
     });
     expect(txTwoFactorDeleteMany).toHaveBeenCalledOnce();

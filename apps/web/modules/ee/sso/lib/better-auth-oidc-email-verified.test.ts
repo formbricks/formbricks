@@ -40,7 +40,11 @@ vi.mock("./sso-recovery", () => ({ startSsoRecovery: vi.fn() }));
 vi.mock("@formbricks/database", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
 vi.mock("@/lib/posthog", () => ({ identifyPostHogPerson: vi.fn() }));
 vi.mock("@/lib/utils/locale", () => ({ findMatchingLocale: vi.fn(async () => "en-US") }));
-vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
+// Async like the real helper: the sign-up path calls it without awaiting, so a stub returning
+// `undefined` would put a shape through this flow that production never sees.
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
+  queueAuditEventBackground: vi.fn(async () => undefined),
+}));
 vi.mock("next/headers", () => ({ cookies: vi.fn(async () => new Map()) }));
 
 vi.mock("@/lib/env", async () => {

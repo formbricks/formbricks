@@ -10,7 +10,7 @@ import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
-import { sendVerificationEmail } from "@/modules/email";
+import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
 import {
   LINKED_SSO_LOOKUP_SELECT,
   TSsoAccountLinkInput,
@@ -71,6 +71,7 @@ const queueSsoRecoveryAuditEvent = ({
         ? {
             credentialPasswordsCleared: reclaimed.credentialPasswordsCleared,
             twoFactorRowsRemoved: reclaimed.twoFactorRowsRemoved,
+            legacyTwoFactorDisarmed: reclaimed.legacyTwoFactorDisarmed,
             // Reported separately, not summed. In this configuration access tokens are self-contained
             // JWTs that are never persisted (see the revocation block below), so the access count is
             // ~always 0 and a combined "grants" total would be the refresh count wearing a plural name —
@@ -96,6 +97,13 @@ const queueSsoRecoveryAuditEvent = ({
 type TReclaimOutcome = {
   credentialPasswordsCleared: number;
   twoFactorRowsRemoved: number;
+  /**
+   * Whether the legacy `User.twoFactorEnabled` latch was set going in. 2FA lives in two stores and the
+   * strip clears both, but a user who enrolled before the backfill shim landed has only the legacy
+   * columns — no `TwoFactor` row for `twoFactorRowsRemoved` to count. Reporting the row count alone
+   * would tell that user, and the audit trail, that their second factor was left alone.
+   */
+  legacyTwoFactorDisarmed: boolean;
   oauthAccessTokensRevoked: number;
   oauthRefreshTokensRevoked: number;
   oauthConsentsRevoked: number;
@@ -205,7 +213,11 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   });
   const twoFactorRows = await tx.twoFactor.deleteMany({ where: { userId: user.id } });
   const credentialRows = await tx.account.updateMany({
-    where: { userId: user.id, provider: "credential" },
+    // `password: { not: null }` narrows this to rows that actually HELD a credential. `updateMany`
+    // reports rows matched, not rows changed, so without it an account whose password was already null
+    // reports one cleared — which the audit trail records as a factor taken away, and the notification
+    // mail tells the user they lost a password they never had.
+    where: { userId: user.id, provider: "credential", password: { not: null } },
     data: { password: null },
   });
 
@@ -246,6 +258,7 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   return {
     credentialPasswordsCleared: credentialRows.count,
     twoFactorRowsRemoved: twoFactorRows.count,
+    legacyTwoFactorDisarmed: user.twoFactorEnabled,
     oauthAccessTokensRevoked: accessRows.count,
     oauthRefreshTokensRevoked: refreshRows.count,
     oauthConsentsRevoked: consentRows.count,
@@ -520,15 +533,27 @@ export const completeSsoRecovery = async ({
   //
   // After commit and best-effort, for the same reason the session revocation above is: the strip has
   // already landed, and a mailer failure must not turn a completed recovery into a failed sign-in.
-  if (reclaimed && (reclaimed.credentialPasswordsCleared > 0 || reclaimed.twoFactorRowsRemoved > 0)) {
+  const twoFactorRemoved = Boolean(
+    reclaimed && (reclaimed.twoFactorRowsRemoved > 0 || reclaimed.legacyTwoFactorDisarmed)
+  );
+  const passwordRemoved = Boolean(reclaimed && reclaimed.credentialPasswordsCleared > 0);
+  if (passwordRemoved || twoFactorRemoved) {
     try {
-      const { sendSsoRecoveryFactorsRemovedEmail } = await import("@/modules/email");
-      await sendSsoRecoveryFactorsRemovedEmail({
+      const sent = await sendSsoRecoveryFactorsRemovedEmail({
         email: user.email,
         locale: user.locale,
-        passwordRemoved: reclaimed.credentialPasswordsCleared > 0,
-        twoFactorRemoved: reclaimed.twoFactorRowsRemoved > 0,
+        passwordRemoved,
+        twoFactorRemoved,
       });
+      // `sendEmail` returns false without throwing when SMTP is unconfigured, so the catch below never
+      // sees it. Silence there would mean a user's second factor was removed and nobody — not them, not
+      // the operator — was told, which is the whole failure this notification exists to prevent.
+      if (!sent) {
+        logger.error(
+          { userId: user.id, passwordRemoved, twoFactorRemoved },
+          "SSO recovery removed local sign-in factors but the notification email was not sent"
+        );
+      }
     } catch (error) {
       logger.error(
         { error, userId: user.id },
