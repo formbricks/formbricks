@@ -57,7 +57,7 @@ const CalendarDayButton = ({
   day: _day,
   modifiers,
   ...props
-}: React.ComponentProps<typeof DayButton>) => {
+}: Readonly<React.ComponentProps<typeof DayButton>>) => {
   const defaultClassNames = getDefaultClassNames();
   const ref = React.useRef<HTMLButtonElement>(null);
 
