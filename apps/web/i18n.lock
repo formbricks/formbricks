@@ -2407,7 +2407,6 @@ checksums:
     workspace/settings/billing/comparison_row_respondent_id: ce83979aa301987ae6017cf18ce02a5b
     workspace/settings/billing/comparison_row_responses: 8ee5a047e4b52e64bc500ae1bb013319
     workspace/settings/billing/comparison_row_single_use_links: 8252955c867f070fc59d0e78de22785e
-    workspace/settings/billing/comparison_row_spam: e9a6afefaa7e887496f513ffd597761e
     workspace/settings/billing/comparison_row_teams_roles: ecde7a5204109c220a358d46210c869d
     workspace/settings/billing/comparison_row_topic_labeling: c7b6fe42c53b9672cf3a4d0d183866d8
     workspace/settings/billing/comparison_row_two_factor_auth: bc68ddd9c3c82225ef641f097e0940db
@@ -2506,7 +2505,7 @@ checksums:
     workspace/settings/billing/plan_scale_feature_quota: f0b44ec6d192e8ee2fd3ff53b8ecda32
     workspace/settings/billing/plan_scale_feature_rbac: ecde7a5204109c220a358d46210c869d
     workspace/settings/billing/plan_scale_feature_responses: f2be033ebf6c86a664b812b4a918647f
-    workspace/settings/billing/plan_scale_feature_security: 6671961cf8d8413d1740b13901bcc033
+    workspace/settings/billing/plan_scale_feature_security: 7961f365b26d9197654580597c94dfdb
     workspace/settings/billing/plan_scale_feature_semantic_analysis: 1441e34cacd26f0aa27af4ebad6e5c54
     workspace/settings/billing/plan_scale_feature_workflow_runs: 22007bc0ad530bfd56b8a3788bdef02f
     workspace/settings/billing/plan_scale_feature_workspaces: 6bd1b676b9470ca8cc4e73be3ffd4bef
