@@ -181,9 +181,9 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   // told. Correct for a squatter, a silent downgrade for the owner.
   //
   // Left as-is on purpose: there is no signal here that separates the two populations, and weakening the
-  // guard would reopen the takeover. What is missing is telling the user — mail them what was removed and
-  // prompt re-enrolment. That needs a new transactional template, so it is tracked separately rather than
-  // widened into a fix that backports to two release branches.
+  // guard would reopen the takeover. What was missing was telling the user, and the completion path now
+  // does — `sendSsoRecoveryFactorsRemovedEmail` names what was removed and links to re-enrolment
+  // (ENG-2633). The in-app re-enrolment prompt is still open on that ticket.
   if (user.emailVerified) {
     return null;
   }
@@ -509,6 +509,30 @@ export const completeSsoRecovery = async ({
       logger.error(
         { error, userId: user.id },
         "Failed to revoke sessions after reclaiming unverified local auth"
+      );
+    }
+  }
+
+  // Tell the account holder what recovery removed (ENG-2633). The strip is correct for a squatter and a
+  // silent security downgrade for the owner — and on a default self-hosted install, where verification
+  // blocks nothing, the owner is the likelier of the two. Nothing here can distinguish them, so the
+  // answer is to say what happened rather than to weaken the guard.
+  //
+  // After commit and best-effort, for the same reason the session revocation above is: the strip has
+  // already landed, and a mailer failure must not turn a completed recovery into a failed sign-in.
+  if (reclaimed && (reclaimed.credentialPasswordsCleared > 0 || reclaimed.twoFactorRowsRemoved > 0)) {
+    try {
+      const { sendSsoRecoveryFactorsRemovedEmail } = await import("@/modules/email");
+      await sendSsoRecoveryFactorsRemovedEmail({
+        email: user.email,
+        locale: user.locale,
+        passwordRemoved: reclaimed.credentialPasswordsCleared > 0,
+        twoFactorRemoved: reclaimed.twoFactorRowsRemoved > 0,
+      });
+    } catch (error) {
+      logger.error(
+        { error, userId: user.id },
+        "Failed to notify the user that SSO recovery removed their local sign-in factors"
       );
     }
   }

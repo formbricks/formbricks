@@ -11,6 +11,7 @@ import {
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
+  renderSsoRecoveryFactorsRemovedEmail,
   renderVerificationEmail,
 } from "@formbricks/email";
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
@@ -257,6 +258,41 @@ export const sendPasswordResetNotifyEmail = async (user: {
   return await sendEmail({
     to: user.email,
     subject: t("emails.password_reset_notify_email_subject"),
+    html,
+  });
+};
+
+/**
+ * Tell a user that SSO recovery removed the local sign-in factors from their account (ENG-2633).
+ *
+ * Recovery strips the password and any second factor from an account whose address was never proven,
+ * because marking it verified would otherwise leave an attacker who registered on someone else's
+ * address holding a live credential. No signal separates that attacker from an owner who simply never
+ * clicked a verification link, so the strip is unconditional and this mail is what keeps the
+ * legitimate case from being a silent downgrade: it names what went and links to re-enrolment.
+ */
+export const sendSsoRecoveryFactorsRemovedEmail = async ({
+  email,
+  locale,
+  passwordRemoved,
+  twoFactorRemoved,
+}: {
+  email: string;
+  locale: TUserLocale;
+  passwordRemoved: boolean;
+  twoFactorRemoved: boolean;
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderSsoRecoveryFactorsRemovedEmail({
+    passwordRemoved,
+    twoFactorRemoved,
+    securitySettingsLink: `${WEBAPP_URL}/settings/security`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    to: email,
+    subject: t("emails.sso_recovery_factors_removed_email_subject"),
     html,
   });
 };

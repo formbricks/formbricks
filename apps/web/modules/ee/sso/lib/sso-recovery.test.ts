@@ -4,7 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
-import { sendVerificationEmail } from "@/modules/email";
+import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
 import { syncSsoIdentityForUser } from "./account-linking";
 import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl, startSsoRecovery } from "./sso-recovery";
 
@@ -56,6 +56,7 @@ vi.mock("@/modules/auth/lib/verification-links", async (importOriginal) => {
 
 vi.mock("@/modules/email", () => ({
   sendVerificationEmail: vi.fn(),
+  sendSsoRecoveryFactorsRemovedEmail: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -305,6 +306,96 @@ describe("sso-recovery", () => {
       provider: "google",
     });
     expect(callbackUrl).toBe("http://localhost:3000/environments/env_1");
+  });
+
+  /**
+   * ENG-2633. The strip is correct for a squatter and a silent security downgrade for an owner who
+   * never verified their address — and on the shipped self-hosted defaults, where verification blocks
+   * nothing, the owner is the likelier of the two. Nothing here can tell them apart, so the account
+   * holder has to be told what was removed instead.
+   */
+  describe("notifying the user about removed factors", () => {
+    const asUnverifiedUser = () =>
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: "user_1",
+        email: "john.doe@example.com",
+        locale: "de-DE",
+        emailVerified: false,
+        isActive: true,
+        identityProvider: "email",
+        identityProviderAccountId: null,
+      } as any);
+
+    const completeRecovery = () =>
+      completeSsoRecovery({
+        intentToken: "test-intent",
+        sessionUserId: "user_1",
+        sessionToken: "current-session-token",
+      });
+
+    test("names what was removed, in the user's own locale", async () => {
+      asUnverifiedUser();
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith({
+        email: "john.doe@example.com",
+        locale: "de-DE",
+        passwordRemoved: true,
+        twoFactorRemoved: true,
+      });
+    });
+
+    // Each flag reports what this account actually had, so the mail never claims to have removed a
+    // factor the user never enrolled.
+    test("reports only the factors that were really there", async () => {
+      asUnverifiedUser();
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 }); // no second factor enrolled
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ passwordRemoved: true, twoFactorRemoved: false })
+      );
+    });
+
+    // An account with neither factor set has lost nothing, so a mail would be noise.
+    test("says nothing when there was nothing to remove", async () => {
+      asUnverifiedUser();
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 });
+      txAccountUpdateMany.mockResolvedValue({ count: 0 });
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).not.toHaveBeenCalled();
+    });
+
+    test("says nothing when the account was already verified and nothing was stripped", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: "user_1",
+        email: "john.doe@example.com",
+        locale: "en-US",
+        emailVerified: true,
+        isActive: true,
+        identityProvider: "email",
+        identityProviderAccountId: null,
+      } as any);
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).not.toHaveBeenCalled();
+    });
+
+    // The strip has already committed by this point, so a mailer outage must not turn a completed
+    // recovery into a failed sign-in — the user would be locked out of an account that has already
+    // changed shape.
+    test("completes the recovery even when the mail cannot be sent", async () => {
+      asUnverifiedUser();
+      vi.mocked(sendSsoRecoveryFactorsRemovedEmail).mockRejectedValue(new Error("smtp down"));
+
+      await expect(completeRecovery()).resolves.toBe("http://localhost:3000/environments/env_1");
+      expect(finalizeSuccessfulSignIn).toHaveBeenCalled();
+    });
   });
 
   test("does not clear local auth material for already verified users", async () => {
