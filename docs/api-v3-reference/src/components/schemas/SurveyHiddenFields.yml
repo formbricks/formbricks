@@ -1,13 +1,28 @@
 type: object
 description: >
-  Hidden fields, sometimes called embedded data in other survey products. Field
-  ids are stable
+  Hidden fields, sometimes called embedded data in other survey products. Field ids are stable
+  public identifiers and may be referenced by logic, recall, quotas, integrations, and response
+  data.
 
-  public identifiers and may be referenced by logic, recall, quotas,
-  integrations, and response data.
 
-  Use only letters, numbers, underscores, and hyphens; avoid spaces and reserved
-  ids.
+  **Naming rule for new field ids** — the same rule the survey editor applies (ENG-2539): a new id
+  must start with a lowercase letter and then contain only lowercase letters, numbers and
+  underscores (`^[a-z][a-z0-9_]*$`), and must not take a reserved name. Reserved are the
+  link-survey system params and internal ids — `userId`, `source`, `suid`, `end`, `start`,
+  `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`,
+  `preview`, `startAt`, `skipPrefilled`, `offlineSupport` (matched case-insensitively) — and the
+  names of auto-captured system fields, which every survey can already read without declaring
+  them: `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`.
+
+
+  **Ids a survey already declares are grandfathered**: they always load, and re-sending the survey
+  unchanged never fails validation — only *adding* such a name as a new field is refused. Deleting a
+  grandfathered field spends the reprieve: once it is gone from the saved survey, the name can no
+  longer be re-added. Note this
+  means re-creating a survey from an exported document can fail with a 400 when the export declares
+  a name the rule refuses; rename the field in the payload before importing. The `pattern` below
+  describes what stored surveys may hold (the pre-existing lenient charset), not what a new id may
+  look like.
 required:
   - enabled
 properties:

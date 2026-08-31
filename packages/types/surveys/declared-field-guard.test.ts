@@ -184,10 +184,40 @@ describe("describeDeclaredFieldNameError", () => {
   });
 
   test("a name that is merely not a safe identifier keeps the naming-rule reason", () => {
-    const reason = reasonFor("Team Size");
+    // `UserRegion`, not `Team Size`: a space is refused by the shared `HasSpaces` check BEFORE
+    // `isSafeIdentifier` is consulted, so the old spelling never exercised this reason — it passed
+    // only while every non-reserved code returned the same sentence (the drift ENG-2539's review
+    // caught). `UserRegion` genuinely produces `NotSafeIdentifier`.
+    const reason = reasonFor("UserRegion");
 
     expect(reason).toContain("lowercase letter");
     expect(reason).not.toContain("reserved");
+  });
+
+  // ENG-2539: the reason follows the check that fired. One sentence for everything non-reserved sent
+  // a caller in circles — told about lowercase letters when the space was the whole problem, and ""
+  // read identically to a charset violation.
+  describe("the reason names the check that actually fired", () => {
+    test("a space names the space, not the charset", () => {
+      const reason = reasonFor("team size");
+
+      expect(reason).toContain("spaces");
+      expect(reason).not.toContain("lowercase letter");
+    });
+
+    test("an illegal character names the legacy charset, not the strict one", () => {
+      const reason = reasonFor("user:name");
+
+      expect(reason).toContain("letters, numbers, underscores and hyphens");
+      expect(reason).not.toContain("lowercase letter");
+    });
+
+    test("an empty name says so", () => {
+      const reason = reasonFor("");
+
+      expect(reason).toContain("must not be empty");
+      expect(reason).not.toContain("lowercase letter");
+    });
   });
 });
 
