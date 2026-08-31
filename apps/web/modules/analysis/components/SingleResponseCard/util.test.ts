@@ -69,7 +69,7 @@ describe("splitRecallHighlights", () => {
     "#/a\\#trailing",
     "##//weird\\#",
     "#/\r\n\\#",
-    "#/ \\#",
+    "#/\u2028\\#",
     // What a length cap got wrong: an over-long span containing another opener.
     `#/${"a".repeat(2000)}#/short\\#tail`,
   ];

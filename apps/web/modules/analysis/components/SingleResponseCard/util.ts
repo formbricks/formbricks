@@ -21,7 +21,7 @@ const RECALL_HIGHLIGHT_CLOSE = "\\#";
 
 /** The characters `.` excludes, so a highlighted span can never cross one. */
 const isLineTerminator = (character: string): boolean =>
-  character === "\n" || character === "\r" || character === " " || character === " ";
+  character === "\n" || character === "\r" || character === "\u2028" || character === "\u2029";
 
 /**
  * Split recall-highlighted text into alternating plain and highlighted parts, exactly as
