@@ -196,7 +196,7 @@ export function TimeDimensionPanel({
             {dateRangeType === "custom" && (
               <DateRangePicker
                 value={{ from: customStartDate ?? undefined, to: customEndDate ?? undefined }}
-                locale={i18n.resolvedLanguage}
+                locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
                 triggerClassName="w-full"
                 onChange={({ from, to }) => {
                   setCustomStartDate(from);

@@ -23,7 +23,7 @@ export function FilterDateInput({ value, onChange }: Readonly<FilterDateInputPro
   return (
     <DatePicker
       value={selectedDate}
-      locale={i18n.resolvedLanguage}
+      locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
       triggerClassName="w-[200px]"
       onChange={(date) => onChange(format(date, "yyyy-MM-dd"))}
     />

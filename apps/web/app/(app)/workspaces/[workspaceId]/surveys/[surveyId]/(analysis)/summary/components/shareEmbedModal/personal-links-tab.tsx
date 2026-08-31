@@ -216,7 +216,7 @@ export const PersonalLinksTab = ({
                 <FormControl>
                   <DatePicker
                     value={field.value ?? null}
-                    locale={i18n.resolvedLanguage}
+                    locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
                     minDate={getTomorrow()}
                     onChange={field.onChange}
                     onClear={() => field.onChange(null)}

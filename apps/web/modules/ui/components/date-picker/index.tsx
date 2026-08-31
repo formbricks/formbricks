@@ -26,7 +26,7 @@ const getDisabledMatchers = (minDate?: Date, maxDate?: Date): Matcher[] | undefi
 interface DatePickerProps {
   value: Date | null;
   onChange: (date: Date) => void;
-  /** App locale code. Pass `i18n.resolvedLanguage` — not a browser default. */
+  /** App locale code — pass `i18n.resolvedLanguage ?? i18n.language ?? "en-US"`, never a browser default. */
   locale?: string;
   minDate?: Date;
   maxDate?: Date;

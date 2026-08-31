@@ -90,6 +90,9 @@ const getDateRangeLabel = (dateRange: DateRange, t: TFunction) => {
 
 export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
   const { t, i18n } = useTranslation();
+  // `resolvedLanguage` is undefined until i18next finishes initialising, so fall back the way the
+  // rest of the app does rather than letting date formatting silently drop to en-US.
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
     dateRange.from && dateRange.to ? getDateRangeLabel(dateRange, t) : getFilterDropDownLabels(t).ALL_TIME
@@ -181,7 +184,7 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
           <DropdownMenuTrigger asChild>
             <PopoverTriggerButton isOpen={isFilterDropDownOpen}>
               {filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE
-                ? getCustomRangeLabel(dateRange, i18n.resolvedLanguage, t)
+                ? getCustomRangeLabel(dateRange, locale, t)
                 : filterRange}
             </PopoverTriggerButton>
           </DropdownMenuTrigger>
@@ -262,7 +265,7 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
         <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
           <DateRangeCalendar
             value={dateRange}
-            locale={i18n.resolvedLanguage}
+            locale={locale}
             onChange={setDateRange}
             onComplete={() => setIsDatePickerOpen(false)}
           />

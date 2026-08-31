@@ -36,7 +36,7 @@ const parseLocalDate = (iso: string): Date => {
 
 export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateFilterProps>) => {
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? "en-US";
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
   const [isCustomMode, setIsCustomMode] = useState(value?.type === "custom");
   const [customStart, setCustomStart] = useState<Date | null>(
