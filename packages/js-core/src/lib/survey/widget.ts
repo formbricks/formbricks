@@ -369,17 +369,25 @@ const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
   return surveysLoadPromise;
 };
 
-let isPreloaded = false;
+let isPrefetched = false;
 
-export const preloadSurveysScript = (appUrl: string): void => {
-  // Don't preload if already loaded or already preloading
+/**
+ * Warms the browser cache with the surveys bundle so a triggered survey renders without a cold fetch.
+ *
+ * `prefetch`, not `preload`: preload claims the page needs the file now, so Chrome fetches it at high
+ * priority and warns when it goes unused. Most page views never trigger a survey, so we were outbidding
+ * the host page's own critical resources for a ~260 KB bundle we usually never run. The later <script>
+ * reuses this fetch out of the plain HTTP cache — `/js/*` is served `public, max-age=3600` — so no `as`
+ * is needed; Chrome ignores it on prefetch. Safari ignores prefetch itself, and fetches on trigger.
+ */
+export const prefetchSurveysScript = (appUrl: string): void => {
+  // Don't prefetch if already loaded or already prefetching
   if (globalThis.window.formbricksSurveys) return;
-  if (isPreloaded) return;
+  if (isPrefetched) return;
 
-  isPreloaded = true;
+  isPrefetched = true;
   const link = document.createElement("link");
-  link.rel = "preload";
-  link.as = "script";
+  link.rel = "prefetch";
   link.href = `${appUrl}/js/surveys.umd.cjs`;
   document.head.appendChild(link);
 };

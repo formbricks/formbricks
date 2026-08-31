@@ -1,21 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import {
-  differenceInDays,
-  endOfMonth,
-  endOfQuarter,
-  endOfYear,
-  format,
-  startOfDay,
-  startOfMonth,
-  startOfQuarter,
-  startOfYear,
-  subDays,
-  subMonths,
-  subQuarters,
-  subYears,
-} from "date-fns";
+import { format } from "date-fns";
 import { TFunction } from "i18next";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -29,6 +15,11 @@ import {
 import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
 import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
+import {
+  type TDateRangePreset,
+  resolveDateRangeLabelPreset,
+  resolveDateRangePresetBounds,
+} from "@/lib/date-ranges";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Calendar } from "@/modules/ui/components/calendar";
 import {
@@ -51,87 +42,49 @@ enum FilterDownload {
 
 const getFilterDropDownLabels = (t: TFunction) => ({
   ALL_TIME: t("workspace.surveys.summary.all_time"),
-  LAST_7_DAYS: t("workspace.surveys.summary.last_7_days"),
-  LAST_30_DAYS: t("workspace.surveys.summary.last_30_days"),
-  THIS_MONTH: t("workspace.surveys.summary.this_month"),
-  LAST_MONTH: t("workspace.surveys.summary.last_month"),
-  LAST_6_MONTHS: t("workspace.surveys.summary.last_6_months"),
-  THIS_QUARTER: t("workspace.surveys.summary.this_quarter"),
-  LAST_QUARTER: t("workspace.surveys.summary.last_quarter"),
-  THIS_YEAR: t("workspace.surveys.summary.this_year"),
-  LAST_YEAR: t("workspace.surveys.summary.last_year"),
   CUSTOM_RANGE: t("workspace.surveys.summary.custom_range"),
 });
+
+// The relative ranges this filter offers, in dropdown order. Picking one tags `dateRange` with its
+// preset, so the trigger label survives a remount without reverse-matching the bounds — several
+// presets span byte-identical days on period-boundary dates (on the 30th of a 30-day month, "last 30
+// days" and "this month" cover the same days) and can't be told apart from `{ from, to }` alone. Order
+// still breaks that tie for a manually picked custom range that happens to match a preset's bounds.
+// What each preset means lives in `@/lib/date-ranges`, shared with the chart time dimension so the
+// Summary tab and a chart over the same field agree.
+//
+// Labels are `t()` calls rather than bare key strings on purpose: the translation-key scanner
+// (`packages/i18n-utils`) only counts keys it can see inside a literal `t("…")`, and reports the rest
+// as unused.
+const DATE_RANGE_PRESETS: readonly { preset: TDateRangePreset; getLabel: (t: TFunction) => string }[] = [
+  { preset: "last 7 days", getLabel: (t) => t("workspace.surveys.summary.last_7_days") },
+  { preset: "last 30 days", getLabel: (t) => t("workspace.surveys.summary.last_30_days") },
+  { preset: "this month", getLabel: (t) => t("workspace.surveys.summary.this_month") },
+  { preset: "last month", getLabel: (t) => t("workspace.surveys.summary.last_month") },
+  { preset: "this quarter", getLabel: (t) => t("workspace.surveys.summary.this_quarter") },
+  { preset: "last quarter", getLabel: (t) => t("workspace.surveys.summary.last_quarter") },
+  { preset: "last 6 months", getLabel: (t) => t("workspace.surveys.summary.last_6_months") },
+  { preset: "this year", getLabel: (t) => t("workspace.surveys.summary.this_year") },
+  { preset: "last year", getLabel: (t) => t("workspace.surveys.summary.last_year") },
+];
+
+const DATE_RANGE_PRESET_NAMES = DATE_RANGE_PRESETS.map(({ preset }) => preset);
 
 interface CustomFilterProps {
   survey: TSurvey;
 }
 
-const getDateRangeLabel = (from: Date, to: Date, t: TFunction) => {
-  const dateRanges = [
-    {
-      label: getFilterDropDownLabels(t).LAST_7_DAYS,
-      matches: () => differenceInDays(to, from) === 7,
-    },
-    {
-      label: getFilterDropDownLabels(t).LAST_30_DAYS,
-      matches: () => differenceInDays(to, from) === 30,
-    },
-    {
-      label: getFilterDropDownLabels(t).THIS_MONTH,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfMonth(new Date()), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(getTodayDate(), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).LAST_MONTH,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 1)), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfMonth(subMonths(getTodayDate(), 1)), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).LAST_6_MONTHS,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 6)), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfMonth(getTodayDate()), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).THIS_QUARTER,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfQuarter(new Date()), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfQuarter(getTodayDate()), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).LAST_QUARTER,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfQuarter(subQuarters(new Date(), 1)), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfQuarter(subQuarters(getTodayDate(), 1)), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).THIS_YEAR,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfYear(new Date()), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfYear(getTodayDate()), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).LAST_YEAR,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfYear(subYears(new Date(), 1)), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfYear(subYears(getTodayDate(), 1)), "yyyy-MM-dd"),
-    },
-  ];
-
-  const matchedRange = dateRanges.find((range) => range.matches());
-  return matchedRange ? matchedRange.label : getFilterDropDownLabels(t).CUSTOM_RANGE;
+const getDateRangeLabel = (dateRange: DateRange, t: TFunction) => {
+  const preset = resolveDateRangeLabelPreset(dateRange, DATE_RANGE_PRESET_NAMES);
+  const matched = DATE_RANGE_PRESETS.find((p) => p.preset === preset);
+  return matched ? matched.getLabel(t) : getFilterDropDownLabels(t).CUSTOM_RANGE;
 };
 
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const { t } = useTranslation();
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
-    dateRange.from && dateRange.to
-      ? getDateRangeLabel(dateRange.from, dateRange.to, t)
-      : getFilterDropDownLabels(t).ALL_TIME
+    dateRange.from && dateRange.to ? getDateRangeLabel(dateRange, t) : getFilterDropDownLabels(t).ALL_TIME
   );
   const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
@@ -294,81 +247,16 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               }}>
               <p className="text-slate-700">{getFilterDropDownLabels(t).ALL_TIME}</p>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_7_DAYS);
-                setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_7_DAYS}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_30_DAYS);
-                setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_30_DAYS}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).THIS_MONTH);
-                setDateRange({ from: startOfMonth(new Date()), to: getTodayDate() });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_MONTH}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_MONTH);
-                setDateRange({
-                  from: startOfMonth(subMonths(new Date(), 1)),
-                  to: endOfMonth(subMonths(getTodayDate(), 1)),
-                });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_MONTH}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).THIS_QUARTER);
-                setDateRange({ from: startOfQuarter(new Date()), to: endOfQuarter(getTodayDate()) });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_QUARTER}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_QUARTER);
-                setDateRange({
-                  from: startOfQuarter(subQuarters(new Date(), 1)),
-                  to: endOfQuarter(subQuarters(getTodayDate(), 1)),
-                });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_QUARTER}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_6_MONTHS);
-                setDateRange({
-                  from: startOfMonth(subMonths(new Date(), 6)),
-                  to: endOfMonth(getTodayDate()),
-                });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_6_MONTHS}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).THIS_YEAR);
-                setDateRange({ from: startOfYear(new Date()), to: endOfYear(getTodayDate()) });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_YEAR}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_YEAR);
-                setDateRange({
-                  from: startOfYear(subYears(new Date(), 1)),
-                  to: endOfYear(subYears(getTodayDate(), 1)),
-                });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_YEAR}</p>
-            </DropdownMenuItem>
+            {DATE_RANGE_PRESETS.map(({ preset, getLabel }) => (
+              <DropdownMenuItem
+                key={preset}
+                onClick={() => {
+                  setFilterRange(getLabel(t));
+                  setDateRange({ ...resolveDateRangePresetBounds(preset), preset });
+                }}>
+                <p className="text-slate-700">{getLabel(t)}</p>
+              </DropdownMenuItem>
+            ))}
             <DropdownMenuItem
               onClick={() => {
                 setIsDatePickerOpen(true);

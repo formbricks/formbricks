@@ -308,6 +308,7 @@
           {
             "group": "Configuration",
             "pages": [
+              "self-hosting/configuration",
               "self-hosting/configuration/custom-ssl",
               "self-hosting/configuration/environment-variables",
               "self-hosting/configuration/job-runner",
@@ -427,7 +428,8 @@
                 "icon": "shield",
                 "pages": [
                   "development/standards/qa/code-reviews",
-                  "development/standards/qa/testing-methodology"
+                  "development/standards/qa/testing-methodology",
+                  "development/standards/qa/screen-reader-pass"
                 ]
               }
             ]

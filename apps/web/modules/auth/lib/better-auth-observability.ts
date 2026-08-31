@@ -134,6 +134,30 @@ const EMAIL_IN_MESSAGE = /[^\s@]{1,64}@([\w-]{1,63}(?:\.[\w-]{1,63}){1,8})/g;
 export const redactEmailsInLogMessage = (message: unknown): unknown =>
   typeof message === "string" ? message.replace(EMAIL_IN_MESSAGE, "[redacted]@$1") : message;
 
+const SAFE_WARNING_ERROR_NAMES = new Set([
+  "Error",
+  "TypeError",
+  "PrismaClientInitializationError",
+  "PrismaClientKnownRequestError",
+  "PrismaClientUnknownRequestError",
+]);
+const PRISMA_ERROR_CODE = /^P\d{4}$/;
+
+/**
+ * Warning causes stay in application logs only as a small allowlisted summary. Passing the Error to
+ * Pino's `err` serializer would also emit its message, stack, and enumerable properties, any of which
+ * can contain credentials supplied by an upstream provider.
+ */
+const getSafeWarningErrorContext = (cause: Error): { errorType: string; errorCode?: string } => {
+  const errorType = SAFE_WARNING_ERROR_NAMES.has(cause.name) ? cause.name : "Error";
+  const code = (cause as Error & { code?: unknown }).code;
+
+  return {
+    errorType,
+    ...(typeof code === "string" && PRISMA_ERROR_CODE.test(code) && { errorCode: code }),
+  };
+};
+
 /**
  * `StateError` codes whose events are client- or timing-caused, and so are not actionable in Sentry
  * (ENG-2471). `StateError extends BetterAuthError` and carries a stable `code`, which is what we match
@@ -312,7 +336,14 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
         }
       }
     } else if (level === "warn") {
-      contextLogger.warn(safeMessage);
+      if (cause) {
+        contextLogger.warn(
+          getSafeWarningErrorContext(cause),
+          typeof safeMessage === "string" ? safeMessage : "Better Auth warning"
+        );
+      } else {
+        contextLogger.warn(safeMessage);
+      }
     } else {
       contextLogger.info(safeMessage);
     }

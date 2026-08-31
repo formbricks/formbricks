@@ -82,6 +82,7 @@
       "consent_failed": "OAuth consent failed. Please try again.",
       "consent_revoked": "OAuth app access revoked.",
       "deny_access": "Deny access",
+      "formbricks_website": "Formbricks",
       "invalid_oauth_request": "Invalid OAuth request",
       "invalid_oauth_request_description": "The OAuth client could not be found or the authorization request is missing required details.",
       "localhost_redirect_warning": "Local redirect URI",
