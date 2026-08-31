@@ -2,7 +2,7 @@
 
 import { TFunction } from "i18next";
 import { SplitIcon } from "lucide-react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
 import { TWorkspaceConfigChannel, TWorkspaceConfigIndustry } from "@formbricks/types/workspace";
@@ -71,25 +71,28 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
 
   const roleTag = useMemo(
     () => getRoleMapping(t).find((roleMap) => roleMap.value === template.role)?.label,
-    [template.role]
+    [template.role, t]
   );
 
-  const channelTag = useMemo(() => getChannelTag(template.channels, t), [template.channels]);
-  const getIndustryTag = (industries: TWorkspaceConfigIndustry[] | undefined): string | undefined => {
-    // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".
-    if (selectedFilter[1] !== null) {
-      const industry = getIndustryMapping(t).find((industry) => industry.value === selectedFilter[1]);
-      if (industry) return industry.label;
-    }
-    if (!industries || industries.length === 0) return undefined;
-    return industries.length > 1
-      ? t("workspace.surveys.templates.multiple_industries")
-      : getIndustryMapping(t).find((industry) => industry.value === industries[0])?.label;
-  };
+  const channelTag = useMemo(() => getChannelTag(template.channels, t), [template.channels, t]);
+  const getIndustryTag = useCallback(
+    (industries: TWorkspaceConfigIndustry[] | undefined): string | undefined => {
+      // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".
+      if (selectedFilter[1] !== null) {
+        const industry = getIndustryMapping(t).find((industry) => industry.value === selectedFilter[1]);
+        if (industry) return industry.label;
+      }
+      if (!industries || industries.length === 0) return undefined;
+      return industries.length > 1
+        ? t("workspace.surveys.templates.multiple_industries")
+        : getIndustryMapping(t).find((industry) => industry.value === industries[0])?.label;
+    },
+    [selectedFilter, t]
+  );
 
   const industryTag = useMemo(
     () => getIndustryTag(template.industries),
-    [template.industries, selectedFilter]
+    [template.industries, getIndustryTag]
   );
 
   return (
