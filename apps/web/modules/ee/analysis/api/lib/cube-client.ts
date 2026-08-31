@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
+import { isRatioMeasure } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
@@ -82,8 +83,8 @@ const restoreNullMeasures = (
   rows: TChartDataRow[],
   measureKeys: string[],
   /**
-   * Rows this rejects were invented by the pivot to fill an empty date bucket, so their filled cells
-   * are a measured zero rather than a NULL. Defaults to treating every row as real.
+   * Rows this rejects were invented by the pivot to fill an empty date bucket, so their filled
+   * count cells are a measured zero rather than a NULL. Defaults to treating every row as real.
    */
   isRealRow: (row: TChartDataRow) => boolean = () => true
 ): TChartDataRow[] => {
@@ -97,9 +98,15 @@ const restoreNullMeasures = (
     const filled = Object.keys(row).filter((key) => row[key] === NULL_FILL_SENTINEL && measures.has(key));
     if (filled.length === 0) return row;
 
-    const replacement = isRealRow(row) ? null : 0;
+    const rowIsReal = isRealRow(row);
     const restored = { ...row };
-    for (const key of filled) restored[key] = replacement;
+    for (const key of filled) {
+      // An invented bucket counted zero of everything, but it has no ratio: there is no NPS for a
+      // day nobody answered, and zeroing it plots a real score of 0 (equal promoters and
+      // detractors) on every empty day, dragging the line to the baseline between the days that
+      // do have answers. Ratios stay null there so the line breaks instead.
+      restored[key] = rowIsReal || isRatioMeasure(key) ? null : 0;
+    }
     return restored;
   });
 };
