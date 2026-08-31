@@ -71,6 +71,17 @@ interface CustomFilterProps {
   survey: TSurvey;
 }
 
+const getCustomRangeLabel = (dateRange: DateRange, locale: string | undefined, t: TFunction): string => {
+  const from = dateRange?.from
+    ? formatDateForDisplay(dateRange.from, locale, DAY_MONTH_OPTIONS)
+    : t("workspace.surveys.summary.select_first_date");
+  const to = dateRange?.to
+    ? formatDateForDisplay(dateRange.to, locale, DAY_MONTH_OPTIONS)
+    : t("workspace.surveys.summary.select_last_date");
+
+  return `${from} - ${to}`;
+};
+
 const getDateRangeLabel = (dateRange: DateRange, t: TFunction) => {
   const preset = resolveDateRangeLabelPreset(dateRange, DATE_RANGE_PRESET_NAMES);
   const matched = DATE_RANGE_PRESETS.find((p) => p.preset === preset);
@@ -170,15 +181,7 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
           <DropdownMenuTrigger asChild>
             <PopoverTriggerButton isOpen={isFilterDropDownOpen}>
               {filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE
-                ? `${
-                    dateRange?.from
-                      ? formatDateForDisplay(dateRange.from, i18n.resolvedLanguage, DAY_MONTH_OPTIONS)
-                      : t("workspace.surveys.summary.select_first_date")
-                  } - ${
-                    dateRange?.to
-                      ? formatDateForDisplay(dateRange.to, i18n.resolvedLanguage, DAY_MONTH_OPTIONS)
-                      : t("workspace.surveys.summary.select_last_date")
-                  }`
+                ? getCustomRangeLabel(dateRange, i18n.resolvedLanguage, t)
                 : filterRange}
             </PopoverTriggerButton>
           </DropdownMenuTrigger>
