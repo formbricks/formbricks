@@ -13,13 +13,19 @@
  */
 
 /** `\b` after an ASCII-letter tag name: the next character must exist and not be a word character. */
-const isWordCharacterCode = (code: number): boolean =>
-  (code >= 48 && code <= 57) || // 0-9
-  (code >= 65 && code <= 90) || // A-Z
-  (code >= 97 && code <= 122) || // a-z
-  code === 95; // _
+const isWordCharacterCode = (code: number | undefined): boolean =>
+  code !== undefined &&
+  ((code >= 48 && code <= 57) || // 0-9
+    (code >= 65 && code <= 90) || // A-Z
+    (code >= 97 && code <= 122) || // a-z
+    code === 95); // _
 
-const toAsciiLowerCode = (code: number): number => (code >= 65 && code <= 90 ? code + 32 : code);
+/**
+ * Past the end of the string `codePointAt` yields `undefined`, which never equals another position's
+ * code — the same outcome `charCodeAt`'s `NaN` produced, so the scans below are unchanged.
+ */
+const toAsciiLowerCode = (code: number | undefined): number | undefined =>
+  code !== undefined && code >= 65 && code <= 90 ? code + 32 : code;
 
 /**
  * ASCII-case-insensitive `indexOf`, matching the `i` flag's behaviour on the ASCII literals used
@@ -32,7 +38,7 @@ const indexOfAsciiCaseInsensitive = (haystack: string, needle: string, from: num
     let offset = 0;
     while (
       offset < needle.length &&
-      toAsciiLowerCode(haystack.charCodeAt(start + offset)) === toAsciiLowerCode(needle.charCodeAt(offset))
+      toAsciiLowerCode(haystack.codePointAt(start + offset)) === toAsciiLowerCode(needle.codePointAt(offset))
     ) {
       offset++;
     }
@@ -72,7 +78,7 @@ export const findOpeningTag = (
     const afterPrefix = start + prefix.length;
     // `\b` fails when the next character continues the word, e.g. `<p` inside `<pre>`. The regex
     // would then retry one position later, so the scan does too.
-    if (requireWordBoundary && isWordCharacterCode(source.charCodeAt(afterPrefix))) {
+    if (requireWordBoundary && isWordCharacterCode(source.codePointAt(afterPrefix))) {
       searchFrom = start + 1;
       continue;
     }

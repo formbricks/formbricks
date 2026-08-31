@@ -17,7 +17,7 @@ export const isSubmissionTimeMoreThan5Minutes = (submissionTimeISOString: Date) 
 };
 
 const RECALL_HIGHLIGHT_OPEN = "#/";
-const RECALL_HIGHLIGHT_CLOSE = "\\#";
+const RECALL_HIGHLIGHT_CLOSE = String.raw`\#`;
 
 /** The characters `.` excludes, so a highlighted span can never cross one. */
 const isLineTerminator = (character: string): boolean =>
