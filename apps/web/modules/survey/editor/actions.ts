@@ -6,6 +6,7 @@ import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyVariable, ZSurvey } from "@formbricks/types/surveys/types";
+import { assertCan } from "@/lib/authorization";
 import {
   IS_FORMBRICKS_SURVEYS_CONFIGURED,
   POSTHOG_KEY,
@@ -14,7 +15,6 @@ import {
 } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
@@ -195,21 +195,12 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     const survey = parsedInput as TSurvey;
 
     const organizationId = await getOrganizationIdFromSurveyId(survey.id);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(survey.id),
-          minPermission: "readWrite",
-        },
-      ],
+    const workspaceId = await getWorkspaceIdFromSurveyId(survey.id);
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     if (survey.recaptcha?.enabled) {
       await checkSpamProtectionPermission(organizationId);
@@ -252,21 +243,12 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
 export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey).action(
   withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.id),
-          minPermission: "readWrite",
-        },
-      ],
+    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.id);
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     if (parsedInput.recaptcha?.enabled) {
       await checkSpamProtectionPermission(organizationId);
@@ -351,20 +333,9 @@ const ZRefetchWorkspaceAction = z.object({
 export const refetchWorkspaceAction = authenticatedActionClient
   .inputSchema(ZRefetchWorkspaceAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: parsedInput.workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
 
     return await getWorkspace(parsedInput.workspaceId);
@@ -377,20 +348,9 @@ const ZGetWorkspaceLanguagesAction = z.object({
 export const getWorkspaceLanguagesAction = authenticatedActionClient
   .inputSchema(ZGetWorkspaceLanguagesAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: parsedInput.workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
 
     return await getWorkspaceLanguages(parsedInput.workspaceId);
@@ -501,21 +461,11 @@ export const createActionClassAction = authenticatedActionClient.inputSchema(ZCr
   withAuditLogging("created", "actionClass", async ({ ctx, parsedInput }) => {
     const workspaceId = parsedInput.action.workspaceId;
     const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     const result = await createActionClass(workspaceId, parsedInput.action);

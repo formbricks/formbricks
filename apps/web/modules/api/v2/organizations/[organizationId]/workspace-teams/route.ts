@@ -35,7 +35,13 @@ export async function GET(request: Request, props: { params: Promise<{ organizat
     },
     externalParams: props.params,
     handler: async ({ parsedInput: { query, params }, authentication }) => {
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Read)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Read
+        ))
+      ) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "organizationId", issue: "unauthorized" }],
@@ -81,7 +87,13 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
         auditLog.targetId = `${workspaceId}-${teamId}`;
       }
 
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Write
+        ))
+      ) {
         return handleApiError(
           request,
           {
@@ -166,7 +178,13 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
         auditLog.targetId = `${workspaceId}-${teamId}`;
       }
 
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Write
+        ))
+      ) {
         return handleApiError(
           request,
           {
@@ -247,7 +265,13 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
         auditLog.targetId = `${workspaceId}-${teamId}`;
       }
 
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Write
+        ))
+      ) {
         return handleApiError(
           request,
           {

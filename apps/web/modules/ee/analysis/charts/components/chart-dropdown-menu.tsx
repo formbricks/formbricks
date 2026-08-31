@@ -79,7 +79,7 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
     return () => {
       cancelled = true;
     };
-  }, [isAddToDashboardDialogOpen, workspaceId, chart.id]);
+  }, [isAddToDashboardDialogOpen, workspaceId, chart.id, t]);
 
   const handleDeleteChart = async () => {
     setIsDeleting(true);

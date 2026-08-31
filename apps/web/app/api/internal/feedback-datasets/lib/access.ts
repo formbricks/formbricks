@@ -1,8 +1,8 @@
 import "server-only";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { problemForbidden, problemUnauthorized } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { can } from "@/lib/authorization";
 import { getOrganizationIdFromDirectoryId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -55,17 +55,13 @@ export async function requireFeedbackDatasetMutationAccess(
 
   // Authorization before entitlement, so a non-member never learns anything about the owning
   // organization — including whether it holds an Enterprise license.
-  try {
-    await checkAuthorizationUpdated({
-      userId,
-      organizationId,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
-    });
-  } catch (err) {
-    if (err instanceof AuthorizationError) {
-      return denied;
-    }
-    throw err;
+  if (
+    !(await can({ type: "user", id: userId }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
+    }))
+  ) {
+    return denied;
   }
 
   if (!(await getIsFeedbackDirectoriesEnabled(organizationId))) {

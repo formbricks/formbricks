@@ -115,6 +115,7 @@ jobs:
           # A burst of cases would otherwise trip the limiter and turn most operations into
           # documented-but-uninteresting 429s.
           echo "RATE_LIMITING_DISABLED=1" >> .env
+          sed -i "s|AUTHZED_CONSISTENCY=.*|AUTHZED_CONSISTENCY=fully_consistent|" .env
           # Not about running Playwright: this is the flag that stops the app sending an instanceId
           # alongside the shared licence key (license.ts — "Skip instance ID during E2E tests to avoid
           # license key conflicts"). Without it the licence server answers 403 "bound to another
@@ -131,6 +132,14 @@ jobs:
           # be replayed here. Same reason e2e.yml passes it twice.
           E2E_TESTING: "1"
         run: pnpm build --filter=@formbricks/web...
+        shell: bash
+
+      # Keep the fixture offline during the build: a successful build still proves importing the
+      # authorization runtime does not perform an RPC. Runtime contract requests are authoritative,
+      # however, so install the canonical schema before projecting the seeded PostgreSQL grants.
+      - name: Start AuthZed CI fixture
+        if: steps.harness.outputs.present == 'true'
+        run: bash scripts/start-authzed-ci.sh
         shell: bash
 
       - name: Apply Prisma migrations
@@ -155,6 +164,19 @@ jobs:
         if: steps.harness.outputs.present == 'true'
         run: pnpm --filter=@formbricks/database db:seed:contract
         shell: bash
+
+      - name: Project seeded authorization relationships
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        run: |
+          set +e
+          pnpm authzed:backfill --apply > /tmp/authzed-backfill.json
+          backfill_exit=$?
+          set -e
+
+          # Aggregate evidence only: the detailed report contains disposable fixture identifiers.
+          jq -c '{status, code, counters, truncated}' /tmp/authzed-backfill.json || true
+          exit "${backfill_exit}"
 
       - name: Run App
         if: steps.harness.outputs.present == 'true'

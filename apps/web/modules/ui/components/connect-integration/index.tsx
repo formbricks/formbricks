@@ -44,6 +44,7 @@ export const ConnectIntegration = ({
     if (error) {
       toast.error(t("workspace.integrations.connecting_integration_failed_please_try_again"));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount to surface an OAuth error query param; re-running on searchParams changes would re-fire the toast
   }, []);
 
   return (

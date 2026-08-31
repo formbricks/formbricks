@@ -9,6 +9,7 @@ import { MeasuresPanel } from "@/modules/ee/analysis/charts/components/measures-
 import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time-dimension-panel";
 import { useChartQuery } from "@/modules/ee/analysis/charts/hooks/use-chart-query";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
+import { supportsTimeGrouping } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
   type ChartBuilderState,
   type FilterRow,
@@ -119,6 +120,19 @@ export function AdvancedChartBuilder({
   );
   const timeDimensionOpen = state.timeDimension != null;
   const filtersOpen = state.filters.length > 0;
+  const timeGroupingSupported = supportsTimeGrouping(chartType);
+
+  // Switching to a chart type that doesn't support time grouping (Big Number, Pie) drops the
+  // granularity left over from a previous type, matching how sanitizeChartDisplay drops other
+  // per-type display settings rather than saving them as dead values. The time dimension itself is
+  // kept: with no granularity it is the chart's date-range filter (see TimeDimensionConfig), not a
+  // grouping, and stripping it would silently widen the chart to all-time.
+  useEffect(() => {
+    if (!timeGroupingSupported && state.timeDimension?.granularity) {
+      const { granularity: _granularity, ...rest } = state.timeDimension;
+      dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: rest });
+    }
+  }, [timeGroupingSupported, state.timeDimension]);
 
   // The executed query depends on the chart type as well as the form: a big number has nowhere to
   // put groups, so its query drops them (see prepareQueryForChartType). Switching the chart type
@@ -267,13 +281,22 @@ export function AdvancedChartBuilder({
           }
         }}
         htmlId="chart-time-dimension-toggle"
-        title={t("workspace.analysis.charts.time_dimension_title")}
-        description={t("workspace.analysis.charts.time_dimension_toggle_description")}
+        title={
+          timeGroupingSupported
+            ? t("workspace.analysis.charts.time_dimension_title")
+            : t("workspace.analysis.charts.time_dimension_title_range_only")
+        }
+        description={
+          timeGroupingSupported
+            ? t("workspace.analysis.charts.time_dimension_toggle_description")
+            : t("workspace.analysis.charts.time_dimension_toggle_description_range_only")
+        }
         customContainerClass="mt-2 px-0"
         childrenContainerClass="flex-col gap-3 p-4"
         childBorder>
         <TimeDimensionPanel
           hideTitle
+          hideGranularity={!timeGroupingSupported}
           timeDimension={state.timeDimension}
           onTimeDimensionChange={(config) => dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: config })}
         />
