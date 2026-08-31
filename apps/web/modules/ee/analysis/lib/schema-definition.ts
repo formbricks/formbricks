@@ -342,7 +342,7 @@ export const FEEDBACK_FIELDS = {
       label: "CSAT: Records",
       type: "count",
       group: "count",
-      description: "Number of feedback records from CSAT questions",
+      description: "Number of answered feedback records from CSAT questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.cesAverage",
@@ -357,7 +357,7 @@ export const FEEDBACK_FIELDS = {
       label: "CES: Records",
       type: "count",
       group: "count",
-      description: "Number of feedback records from CES questions",
+      description: "Number of answered feedback records from CES questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.ratingAverage",
@@ -376,8 +376,7 @@ export const FEEDBACK_FIELDS = {
       label: "Rating: Records",
       type: "count",
       group: "count",
-      description:
-        "Number of feedback records from rating questions (unanswered questions produce no record)",
+      description: "Number of answered feedback records from rating questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.sentimentAverage",
@@ -660,14 +659,21 @@ export function getTranslatedFieldDescription(
   fallback: string | undefined,
   t: TFunction
 ): string | undefined {
-  const descriptions: Record<string, string> = {
-    "FeedbackRecords.valueId": t("workspace.analysis.charts.field_description_value_option"),
-    "FeedbackRecords.valueText": t("workspace.analysis.charts.field_description_value_text"),
-    "FeedbackRecords.count": t("workspace.analysis.charts.field_description_count"),
-    "FeedbackRecords.uniqueRespondents": t("workspace.analysis.charts.field_description_unique_respondents"),
-    "FeedbackRecords.uniqueResponses": t("workspace.analysis.charts.field_description_unique_responses"),
-  };
-  return descriptions[id] ?? fallback;
+  // A `Map`, not an object literal: `descriptions[id]` resolves inherited members, so an id of
+  // "constructor" or "toString" returned a function where a description string was expected. Same
+  // lookup shape #8985 converted for the same reason. Not reachable from today's call sites — they
+  // all pass ids from the hardcoded FEEDBACK_FIELDS arrays — but it costs nothing to close.
+  const descriptions = new Map<string, string>([
+    ["FeedbackRecords.valueId", t("workspace.analysis.charts.field_description_value_option")],
+    ["FeedbackRecords.valueText", t("workspace.analysis.charts.field_description_value_text")],
+    ["FeedbackRecords.count", t("workspace.analysis.charts.field_description_count")],
+    [
+      "FeedbackRecords.uniqueRespondents",
+      t("workspace.analysis.charts.field_description_unique_respondents"),
+    ],
+    ["FeedbackRecords.uniqueResponses", t("workspace.analysis.charts.field_description_unique_responses")],
+  ]);
+  return descriptions.get(id) ?? fallback;
 }
 
 export function getTranslatedFieldLabel(id: string, t: TFunction): string {

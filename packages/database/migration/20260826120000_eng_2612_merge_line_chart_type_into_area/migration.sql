@@ -34,11 +34,22 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Backfill: every line chart becomes an area chart displayed as a line. `config` is
-  -- `Json @default("{}")` and never null, so `||` cannot blank it out.
+  -- Backfill: every line chart becomes an area chart displayed as a line.
+  --
+  -- The `jsonb_typeof` guard is not paranoia about NULL — `config` is `Json @default("{}")` and
+  -- NOT NULL. It is about the shape *inside* the column, which Postgres does not constrain: for a
+  -- non-object `jsonb`, `||` does not fail, it concatenates as an array. A row holding `'null'`,
+  -- a scalar or an array would silently become `[null, {"areaDisplay": "line"}]` and stop parsing
+  -- as ZChartConfig. Every row the app writes is an object, so this should match nothing; if one
+  -- ever does, it gets a valid config carrying the display style instead of a corrupt one, since
+  -- the value it replaces was already unusable.
   UPDATE "public"."Chart"
   SET "type"   = 'area',
-      "config" = "config" || '{"areaDisplay": "line"}'::jsonb
+      "config" = CASE
+                   WHEN jsonb_typeof("config") = 'object'
+                     THEN "config" || '{"areaDisplay": "line"}'::jsonb
+                   ELSE '{"areaDisplay": "line"}'::jsonb
+                 END
   WHERE "type" = 'line';
 
   CREATE TYPE "public"."ChartType_new" AS ENUM ('area', 'bar', 'pie', 'big_number');
