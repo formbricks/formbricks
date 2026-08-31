@@ -31,6 +31,11 @@ import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/
 import { auth } from "@/modules/auth/lib/auth";
 import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import {
+  SIGNUP_INTENT_COOKIE_NAME,
+  SIGNUP_INTENT_COOKIE_OPTIONS,
+  createSignupIntentToken,
+} from "@/modules/auth/lib/signup-intent";
 import { isUninvitedSignupAllowed } from "@/modules/auth/lib/signup-policy";
 import {
   markSignupDomainAllowed,
@@ -407,6 +412,34 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     // so the caller has proven nothing about an account that already exists (ENG-2091).
     if (outcome.status === "created") {
       const { user } = outcome;
+
+      // ENG-2562: remember, in THIS browser, that it is the one that created this account, so the
+      // verification click can be told apart from a stranger's and only this browser is auto-signed-in.
+      //
+      // Issued on the `created` path only, and that exclusion is the security-relevant half: on
+      // `already_existed` the caller is an unauthenticated stranger who has proven nothing about an
+      // account that already exists, so arming a cookie for it would hand them the very auto-sign-in
+      // this fix exists to withhold — and would leak that the address is registered.
+      //
+      // Before the other side effects: those can fail, and a sign-up that created the account but lost
+      // its intent cookie would silently degrade to "verify, then log in".
+      //
+      // Non-fatal for the same reason: the cookie buys UX (auto-sign-in after verification), so a
+      // failure to mint it must cost exactly that UX — never the sign-up itself, which has already
+      // created the account. Concretely reachable when neither secret is set.
+      try {
+        (await cookies()).set(
+          SIGNUP_INTENT_COOKIE_NAME,
+          createSignupIntentToken(user.id),
+          SIGNUP_INTENT_COOKIE_OPTIONS
+        );
+      } catch (error) {
+        logger.error(
+          { error, userId: user.id },
+          "Failed to issue the sign-up intent cookie; verification will require a manual sign-in"
+        );
+      }
+
       await handlePostUserCreation(ctx, outcome, inviteToken);
 
       await subscribeUserToMailingList({

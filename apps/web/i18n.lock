@@ -44,6 +44,8 @@ checksums:
     auth/last_used: 9049bf77c57c92b7a5a760ba2a40128c
     auth/login/backup_code: 870711a6df11ae55366d018255b466cf
     auth/login/create_an_account: bc53a57281d2701563f94f3169518028
+    auth/login/email_verified_sign_in_description: 91d4c968d2e1a8e576755bc4a4724054
+    auth/login/email_verified_sign_in_title: f960899104c4e22c27ab699272b2bbc1
     auth/login/enter_your_backup_code: f2a6905ea0e8d2b4093b5773d72df88b
     auth/login/enter_your_two_factor_authentication_code: 07a020191cd54ee4a0aa1aa4ddc166bf
     auth/login/forgot_your_password: 0baf970b4598f1af36623b714410dfae
@@ -66,6 +68,7 @@ checksums:
     auth/oauth/consent_failed: d6c92762fac20817ff0ec8d9cbc0412c
     auth/oauth/consent_revoked: f1c243aaacd7c466b9986e484b93247b
     auth/oauth/deny_access: ba3ac7dc12f362da277df5c9ba21e752
+    auth/oauth/formbricks_website: 95c2f69c6b6428e1aa6c26f4dd427e22
     auth/oauth/invalid_oauth_request: 02936ced8cd4df963282fe5d413f6900
     auth/oauth/invalid_oauth_request_description: 39322e962c0c20c766ae82d0b8917ebb
     auth/oauth/localhost_redirect_warning: e0368262d25dc98ea02158eebd0066c1
@@ -550,7 +553,7 @@ checksums:
     common/yes: ec580fd11a45779b039466f1e35eed2a
     common/you_are_downgraded_to_the_community_edition: e3ae56502ff787109cae0997519f628e
     common/you_are_not_authorized_to_perform_this_action: 1b3255ab740582ddff016a399f8bf302
-    common/you_have_reached_your_limit_of_workspace_limit: 506a6ee315d9754da7ea26929bc40f52
+    common/you_have_reached_your_limit_of_workspace_limit: 444293496a4029ea608ec12266bb2e94
     common/you_have_reached_your_monthly_response_limit_of_count: d1e427dbc5ce704bd6b9e188d8407e07
     common/you_will_be_downgraded_to_the_community_edition_on_date: bff35b54c13e2c205dc4c19056261cc0
     common/your_license_has_expired_please_renew: 3f21ae4a7deab351b143b407ece58254
