@@ -1,4 +1,5 @@
 import { TFunction } from "i18next";
+import { toast } from "react-hot-toast";
 import {
   TFeedbackSourceType,
   TFeedbackSourceWithMappings,
@@ -92,6 +93,34 @@ export const sumImportTotals = (totals: TFeedbackImportTotals[]): TFeedbackImpor
     }),
     { successes: 0, failures: 0, skipped: 0 }
   );
+
+/**
+ * Announce an import's totals, picking the toast by `failures` rather than by whether the action
+ * resolved.
+ *
+ * A failed import does not throw: `reconcileFeedbackRecords` folds per-record errors into
+ * `failures` and the action resolves normally, so a Hub outage returns `{ successes: 0,
+ * failures: N }`. Reporting that as a green toast made a run that wrote nothing look identical to
+ * the happy path.
+ *
+ * `showSuccess` is how the create modal keeps its "Feedback records" link on the success toast —
+ * a green toast inviting the user to go and look at records that were never written is the sharper
+ * half of the same bug. Every import site passes the same `message` it would have shown anyway,
+ * so the CSV and historical wordings stay distinct.
+ */
+export const notifyImportResult = (
+  totals: TFeedbackImportTotals,
+  message: string,
+  showSuccess: (message: string) => void = toast.success
+): boolean => {
+  if (totals.failures > 0) {
+    toast.error(message);
+    return false;
+  }
+
+  showSuccess(message);
+  return true;
+};
 
 export type TFeedbackSourceOptionId = TFeedbackSourceType | "api_ingestion" | "feedback_record_mcp";
 

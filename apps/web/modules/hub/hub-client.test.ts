@@ -6,6 +6,13 @@ vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/hub", () => {
   // Must use `function` (not arrow) so it's valid as a `new` target.
   const MockFormbricksHub = vi.fn(function () {});
+  // Stands in for the SDK's own retry policy, which our subclass narrows rather than replaces: 409
+  // and 429 are both retryable there. Lives on the prototype because that is where the real one is
+  // (`private shouldRetry` in the SDK's types is an ordinary prototype method at runtime) and where
+  // hub-client.ts reads it from at module load.
+  (MockFormbricksHub as unknown as { prototype: Record<string, unknown> }).prototype.shouldRetry = async (
+    response: Response
+  ) => response.status === 409 || response.status === 429;
   return { default: MockFormbricksHub };
 });
 
@@ -154,5 +161,61 @@ describe("assertRepeatedArrayParams", () => {
     assertRepeatedArrayParams(goodClient);
     expect(() => assertRepeatedArrayParams(laterBrokenClient)).not.toThrow();
     expect(laterBrokenBuildURL).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The retry narrowing. The SDK retries a 409 twice with backoff ("retry on lock timeouts"), which on
+ * a re-import — where every create conflicts by design — is 3x the requests and seconds of pure
+ * sleep for an answer that will not change.
+ */
+describe("conflict retries", () => {
+  const response = (status: number, url: string): Response => ({ status, url }) as Response;
+
+  const buildClient = async (): Promise<{ shouldRetry: (r: Response) => Promise<boolean> }> => {
+    mutableEnv.HUB_API_KEY = "test-key";
+    globalForHub.formbricksHubClientRepeatArrays = undefined;
+    vi.mocked(FormbricksHub).mockImplementation(function () {} as never);
+
+    const { getHubClient } = await import("./hub-client");
+
+    return getHubClient() as unknown as { shouldRetry: (r: Response) => Promise<boolean> };
+  };
+
+  test("does not retry a create that came back 409", async () => {
+    const client = await buildClient();
+
+    await expect(client.shouldRetry(response(409, "https://hub.test/v1/feedback-records"))).resolves.toBe(
+      false
+    );
+  });
+
+  test("still retries a 409 on any other path, where it means a lock timeout", async () => {
+    const client = await buildClient();
+
+    await expect(client.shouldRetry(response(409, "https://hub.test/v1/tenants/t1"))).resolves.toBe(true);
+    // A single record, not the collection: PATCH conflicts are not the create conflict.
+    await expect(
+      client.shouldRetry(response(409, "https://hub.test/v1/feedback-records/rec-1"))
+    ).resolves.toBe(true);
+  });
+
+  test("leaves every other status to the SDK", async () => {
+    const client = await buildClient();
+
+    await expect(client.shouldRetry(response(429, "https://hub.test/v1/feedback-records"))).resolves.toBe(
+      true
+    );
+    await expect(client.shouldRetry(response(400, "https://hub.test/v1/feedback-records"))).resolves.toBe(
+      false
+    );
+  });
+
+  test("resolves a baseURL that carries a path prefix", async () => {
+    const client = await buildClient();
+
+    await expect(client.shouldRetry(response(409, "https://hub.test/api/v1/feedback-records"))).resolves.toBe(
+      false
+    );
   });
 });

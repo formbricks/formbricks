@@ -31,6 +31,7 @@ import {
   getMappedSurveyIds,
   getSelectableQuestionIds,
   getSuggestedSurveys,
+  notifyImportResult,
   sumImportTotals,
 } from "../utils";
 import { CreateFeedbackSourceModal } from "./create-feedback-source-modal";
@@ -221,7 +222,7 @@ export function FeedbackSourcesSection({
       });
 
       if (importResult?.data) {
-        notifyImportResult(importResult.data);
+        announceImportResult(importResult.data);
       } else {
         // The source was created; only the historical import failed.
         toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
@@ -233,21 +234,13 @@ export function FeedbackSourcesSection({
     router.refresh();
   };
 
-  /**
-   * A failed import does not throw: `reconcileFeedbackRecords` folds per-record errors into
-   * `failures` and the action resolves normally, so a Hub outage returns
-   * `{ successes: 0, failures: N }`. Reporting that as a green toast made a run that wrote nothing
-   * look identical to the happy path.
-   */
-  const notifyImportResult = ({ successes, failures, skipped }: TFeedbackImportTotals): void => {
-    const message = t("workspace.unify.historical_import_complete", { successes, failures, skipped });
-
-    if (failures > 0) {
-      toast.error(message);
-      return;
-    }
-
-    toast.success(message);
+  /** Announces the totals, picking the toast by `failures` — see `notifyImportResult`. */
+  const announceImportResult = (totals: TFeedbackImportTotals): void => {
+    const { successes, failures, skipped } = totals;
+    notifyImportResult(
+      totals,
+      t("workspace.unify.historical_import_complete", { successes, failures, skipped })
+    );
   };
 
   /**
@@ -294,7 +287,7 @@ export function FeedbackSourcesSection({
         totals.push(importResult.data);
       }
 
-      notifyImportResult(sumImportTotals(totals));
+      announceImportResult(sumImportTotals(totals));
     } catch {
       toast.error(t("common.something_went_wrong"));
       return;

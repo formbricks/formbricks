@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
@@ -18,12 +18,19 @@ import {
   inferFieldType,
   isCsvUserDefinedStaticValueMapping,
   isFeedbackSourceNameValid,
+  notifyImportResult,
   parseCSVColumnsToFields,
   sumImportTotals,
   titleizeFromFileName,
   toggleQuestionId,
   validateCsvFile,
 } from "./utils";
+
+vi.mock("react-hot-toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+const { toast } = await import("react-hot-toast");
 
 const mockT = (key: string) => key;
 
@@ -708,5 +715,49 @@ describe("re-import historic data", () => {
     test("is zero for no results", () => {
       expect(sumImportTotals([])).toEqual({ successes: 0, failures: 0, skipped: 0 });
     });
+  });
+});
+
+describe("notifyImportResult", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // A Hub outage does not throw: per-record errors are folded into `failures` and the action
+  // resolves, so "resolved" is not evidence anything was written.
+  test("reports an import that wrote nothing as a failure", () => {
+    const imported = notifyImportResult({ successes: 0, failures: 412, skipped: 0 }, "message");
+
+    expect(imported).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith("message");
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  test("reports a partial failure as a failure too", () => {
+    const imported = notifyImportResult({ successes: 400, failures: 12, skipped: 0 }, "message");
+
+    expect(imported).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith("message");
+  });
+
+  test("reports a clean run as a success", () => {
+    const imported = notifyImportResult({ successes: 6, failures: 0, skipped: 2 }, "message");
+
+    expect(imported).toBe(true);
+    expect(toast.success).toHaveBeenCalledWith("message");
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  // The create modal's success toast carries a link to the feedback records. Routing a failure
+  // through it would invite the user to go and look at records that were never written.
+  test("uses the caller's success toast only when the import succeeded", () => {
+    const showSuccess = vi.fn();
+
+    notifyImportResult({ successes: 6, failures: 0, skipped: 0 }, "ok", showSuccess);
+    notifyImportResult({ successes: 0, failures: 6, skipped: 0 }, "failed", showSuccess);
+
+    expect(showSuccess).toHaveBeenCalledTimes(1);
+    expect(showSuccess).toHaveBeenCalledWith("ok");
+    expect(toast.error).toHaveBeenCalledWith("failed");
   });
 });
