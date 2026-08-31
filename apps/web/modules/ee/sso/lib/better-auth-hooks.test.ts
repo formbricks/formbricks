@@ -161,7 +161,12 @@ describe("ssoDatabaseHooks.user.create.before", () => {
   test("on provision: verifies email, denormalizes provider, sets locale + name fallback, and stashes the decision", async () => {
     let stashed: ReturnType<typeof getSsoProvisioningDecision>;
     const result = await runWithSsoRequestContext(async () => {
-      const r = await before({ id: "u1", email: "john.doe@example.com" } as never, callbackCtx as never);
+      // `emailVerified: true` is what the openid mapper resolves for an IdP that omits the claim — the
+      // common path — so this stays a test about the other four enrichment fields.
+      const r = await before(
+        { id: "u1", email: "john.doe@example.com", emailVerified: true } as never,
+        callbackCtx as never
+      );
       stashed = getSsoProvisioningDecision();
       return r;
     });
@@ -176,7 +181,10 @@ describe("ssoDatabaseHooks.user.create.before", () => {
 
   test("normalizes a clean provider-supplied name (unchanged, no fallback) when present", async () => {
     const result = await runWithSsoRequestContext(() =>
-      before({ id: "u1", email: "a@b.com", name: "Ada Lovelace" } as never, callbackCtx as never)
+      before(
+        { id: "u1", email: "a@b.com", name: "Ada Lovelace", emailVerified: true } as never,
+        callbackCtx as never
+      )
     );
     expect(result).toEqual({
       data: { emailVerified: true, identityProvider: "openid", locale: "en-US", name: "Ada Lovelace" },
@@ -239,22 +247,36 @@ describe("ssoDatabaseHooks.user.create.before", () => {
       expect(result).toMatchObject({ data: { emailVerified: true } });
     });
 
-    // The generic providers coalesce an absent claim to `false` upstream (`email_verified ?? false`),
-    // so "the IdP did not say" is indistinguishable from "the IdP asserted false". Keep the historical
-    // `true` for them until the raw claim is read in mapProfileToUser — a self-hosted instance whose
-    // IdP omits the claim must see no behaviour change on upgrade.
-    test.each(["openid", "azuread", "saml"])(
-      "%s: stays verified regardless of the coalesced upstream value",
-      async (id) => {
-        const result = await runWithSsoRequestContext(() =>
-          before(
-            { id: "u1", email: "a@b.com", emailVerified: false } as never,
-            { path: "/callback/:providerId", params: { providerId: id } } as never
-          )
-        );
-        expect(result).toMatchObject({ data: { emailVerified: true } });
-      }
-    );
+    // The generic providers are `raw-claim`: their mapProfileToUser has already resolved the raw
+    // `email_verified` (absent → true, asserted false → false) and that value reaches the hook as
+    // `user.emailVerified`, so the hook passes it through rather than deciding again. Asserting the
+    // pass-through here is what stops a future edit re-introducing a blanket `true` that would
+    // silently discard the mapper's answer — the claim-reading itself is covered in
+    // better-auth-providers.test.ts and end to end in better-auth-oidc-email-verified.test.ts.
+    test.each(["openid", "azuread"])("%s: passes the mapper-resolved claim through", async (id) => {
+      const genericCtx = { path: "/callback/:providerId", params: { providerId: id } };
+      const denied = await runWithSsoRequestContext(() =>
+        before({ id: "u1", email: "a@b.com", emailVerified: false } as never, genericCtx as never)
+      );
+      expect(denied).toMatchObject({ data: { emailVerified: false } });
+
+      const attested = await runWithSsoRequestContext(() =>
+        before({ id: "u1", email: "a@b.com", emailVerified: true } as never, genericCtx as never)
+      );
+      expect(attested).toMatchObject({ data: { emailVerified: true } });
+    });
+
+    // SAML is `never-attests`: BoxyHQ carries no `email_verified` on any path, so there is no claim to
+    // honour and the row is verified as it always has been — whatever value happens to arrive.
+    test("saml: stays verified, because no claim can exist", async () => {
+      const result = await runWithSsoRequestContext(() =>
+        before(
+          { id: "u1", email: "a@b.com", emailVerified: false } as never,
+          { path: "/callback/:providerId", params: { providerId: "saml" } } as never
+        )
+      );
+      expect(result).toMatchObject({ data: { emailVerified: true } });
+    });
   });
 
   test("leaves email/password sign-ups untouched (gate not run)", async () => {

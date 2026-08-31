@@ -1,5 +1,13 @@
 import type { IdentityProvider } from "@formbricks/database/prisma";
 
+/**
+ * The SSO subset of `IdentityProvider`: every value except `email`, which denotes a credential account
+ * and can never come out of an SSO callback. Narrowing `normalizeSsoProvider` to this is what lets a
+ * per-provider policy table (see `./email-verification-policy`) be exhaustive — adding a provider to
+ * the Prisma enum then fails typecheck until the policy names it, rather than falling into a default.
+ */
+export type TSsoIdentityProvider = Exclude<IdentityProvider, "email">;
+
 const SSO_PROVIDER_MAP = {
   google: "google",
   github: "github",
@@ -7,7 +15,7 @@ const SSO_PROVIDER_MAP = {
   azuread: "azuread",
   openid: "openid",
   saml: "saml",
-} as const satisfies Record<string, IdentityProvider>;
+} as const satisfies Record<string, TSsoIdentityProvider>;
 
 const LEGACY_SSO_PROVIDER_ALIASES: Partial<Record<IdentityProvider, string[]>> = {
   azuread: ["azure-ad"],
@@ -16,7 +24,7 @@ const LEGACY_SSO_PROVIDER_ALIASES: Partial<Record<IdentityProvider, string[]>> =
 const isSupportedSsoProvider = (provider: string): provider is keyof typeof SSO_PROVIDER_MAP =>
   provider in SSO_PROVIDER_MAP;
 
-export const normalizeSsoProvider = (provider: string): IdentityProvider | null => {
+export const normalizeSsoProvider = (provider: string): TSsoIdentityProvider | null => {
   const normalizedProviderKey = provider.toLowerCase();
   if (!isSupportedSsoProvider(normalizedProviderKey)) {
     return null;

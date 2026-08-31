@@ -3,7 +3,6 @@ import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
-import type { IdentityProvider } from "@formbricks/database/prisma";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { normalizeUserName } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -15,7 +14,8 @@ import { isUninvitedSignupAllowed, signupDisabledError } from "@/modules/auth/li
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
-import { normalizeSsoProvider } from "./provider-normalization";
+import { resolveSsoEmailVerifiedForCreate } from "./email-verification-policy";
+import { type TSsoIdentityProvider, normalizeSsoProvider } from "./provider-normalization";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
 import { startSsoRecovery } from "./sso-recovery";
 import {
@@ -50,18 +50,16 @@ export const getSsoProviderFromContext = (
 };
 
 /**
- * The providers whose `email_verified` signal is real, so the IdP's own claim is honoured on sign-up
- * (ENG-2589): google reads `email_verified` from the id_token, github looks it up on /user/emails.
- * The generic providers (azuread/openid/saml) are NOT here because upstream coalesces an absent claim
- * to `false` (`email_verified ?? false`), so "the IdP did not say" is indistinguishable from "the IdP
- * asserted false" — honouring it would flip every new user to unverified on any self-hosted instance
- * whose IdP omits the claim. They keep the historical always-verified behaviour until the raw claim is
- * read in mapProfileToUser.
+ * The SSO provider this Better Auth endpoint context belongs to, normalized to the Prisma enum, or
+ * null when the context is not an SSO callback at all (e.g. `/sign-up/email`). Every hook below opens
+ * with this pair of calls, so it lives here once.
  */
-const SSO_PROVIDERS_WITH_ATTESTED_EMAIL_VERIFICATION: ReadonlySet<IdentityProvider> = new Set([
-  "google",
-  "github",
-]);
+const resolveSsoIdentityProvider = (
+  context: Parameters<typeof getSsoProviderFromContext>[0]
+): TSsoIdentityProvider | null => {
+  const provider = getSsoProviderFromContext(context);
+  return provider ? normalizeSsoProvider(provider) : null;
+};
 
 /**
  * Fallback display name when the IdP supplies no name: humanize the email local-part (treat `. _ +` as
@@ -77,8 +75,8 @@ const deriveNameFromEmail = (email: string): string =>
  *  - `user.create.before` — gate the SSO sign-up (`gateSsoProvisioning`; a reject returns `false`,
  *    which rolls back inside Better Auth's user+account transaction, so no orphan user is created);
  *    stash the resolved decision for the after-hook; and enrich the insert (email-verified — the IdP's
- *    own claim where it is a real signal, see SSO_PROVIDERS_WITH_ATTESTED_EMAIL_VERIFICATION;
- *    `identityProvider`; request-matched `locale`; email-localpart name fallback).
+ *    own claim, trusted per `./email-verification-policy`; `identityProvider`; request-matched
+ *    `locale`; email-localpart name fallback).
  *  - `user.create.after` — run the membership/team/notification provisioning (`provisionSsoUserMemberships`).
  *  - `account.create.after` — denormalize `identityProvider` + `identityProviderAccountId` onto
  *    `User` for legacy SSO lookups (`findLegacyExactMatch`), parity with `syncSsoIdentityForUser`.
@@ -92,8 +90,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
   user: {
     create: {
       before: async (user, context) => {
-        const provider = getSsoProviderFromContext(context);
-        const identityProvider = provider ? normalizeSsoProvider(provider) : null;
+        const identityProvider = resolveSsoIdentityProvider(context);
         if (!identityProvider) {
           // Credential sign-up. createUserAction runs the full personal-email policy (Cloud gate +
           // invite exemption) and marks the request scope before calling signUpEmail. If that mark is
@@ -151,14 +148,11 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         // provider, request-matched locale, and an email-localpart name when the IdP gave none.
         return {
           data: {
-            // Better Auth has already computed the IdP's answer before this hook runs and hands it to
-            // us as `user.emailVerified`; whatever we return is shallow-merged over it. Where that
-            // signal is real (google/github), honour it — minting `true` for an address the IdP calls
-            // unproven hands a squatter a verified account on someone else's email (ENG-2589). Strictly
-            // `=== true`: an absent claim is not attestation.
-            emailVerified: SSO_PROVIDERS_WITH_ATTESTED_EMAIL_VERIFICATION.has(identityProvider)
-              ? user.emailVerified === true
-              : true,
+            // The IdP's own answer reaches us as `user.emailVerified` — computed by Better Auth for
+            // google/github, by our own `mapProfileToUser` for the generic providers — and whatever we
+            // return here is shallow-merged over it. How far each provider's claim is trusted lives in
+            // one table, `./email-verification-policy` (ENG-2589).
+            emailVerified: resolveSsoEmailVerifiedForCreate(identityProvider, user.emailVerified),
             identityProvider,
             locale: await findMatchingLocale(),
             // `User` has no `image` column (parity with provisionNewSsoUser, which never stored it).
@@ -179,8 +173,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
       after: async (user, context) => {
         const decision = getSsoProvisioningDecision();
         if (!decision) return; // not a gated SSO sign-up
-        const provider = getSsoProviderFromContext(context);
-        const identityProvider = provider ? normalizeSsoProvider(provider) : null;
+        const identityProvider = resolveSsoIdentityProvider(context);
         if (!identityProvider) return;
         await provisionSsoUserMemberships({
           userId: user.id,
@@ -229,8 +222,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
  * (matching NextAuth's behavior) is a Phase 7 refinement.
  */
 export const ssoLicenseGateBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
-  const provider = getSsoProviderFromContext(ctx);
-  const identityProvider = provider ? normalizeSsoProvider(provider) : null;
+  const identityProvider = resolveSsoIdentityProvider(ctx);
   if (!identityProvider) return; // not an SSO callback → no license gate
 
   if (!(await getIsSsoEnabled())) {
@@ -263,8 +255,7 @@ export type AuthHookContext = Parameters<Parameters<typeof createAuthMiddleware>
  * middleware (which would re-run `createInternalContext` + the middleware `use` chain).
  */
 export const ssoRecoveryAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
-  const providerId = getSsoProviderFromContext(ctx);
-  const provider = providerId ? normalizeSsoProvider(providerId) : null;
+  const provider = resolveSsoIdentityProvider(ctx);
   if (!provider) return; // not an SSO callback
 
   // Only act on Better Auth's account-collision redirect (handleOAuthUserInfo returns

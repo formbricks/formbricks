@@ -450,9 +450,12 @@ describe("better-auth SSO providers", () => {
       const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
       const mapper = azure?.mapProfileToUser;
 
+      // `emailVerified: true` on every profile here: none of them carries an `email_verified` claim,
+      // and an absent claim resolves to verified (ENG-2589). The claim matrix itself is below.
       expect(callMapper(mapper, { email: "a@az.test", sub: "az-sub", name: "Ada Lovelace" })).toEqual({
         email: "a@az.test",
         name: "Ada Lovelace",
+        emailVerified: true,
       });
       expect(captureSsoIdentity).toHaveBeenLastCalledWith({
         email: "a@az.test",
@@ -461,11 +464,12 @@ describe("better-auth SSO providers", () => {
 
       expect(
         callMapper(mapper, { email: "b@az.test", sub: "s", given_name: "Grace", family_name: "Hopper" })
-      ).toEqual({ email: "b@az.test", name: "Grace Hopper" });
+      ).toEqual({ email: "b@az.test", name: "Grace Hopper", emailVerified: true });
 
       expect(callMapper(mapper, { email: "c@az.test", sub: "s", preferred_username: "charles" })).toEqual({
         email: "c@az.test",
         name: "charles",
+        emailVerified: true,
       });
     });
 
@@ -492,6 +496,7 @@ describe("better-auth SSO providers", () => {
       ).toEqual({
         email: "d@idp.test",
         name: "Dee",
+        emailVerified: true, // no claim on this profile → verified (ENG-2589)
       });
       expect(captureSsoIdentity).toHaveBeenLastCalledWith({
         email: "d@idp.test",
@@ -571,6 +576,68 @@ describe("better-auth SSO providers", () => {
 
       expect(m.ssoGenericOAuthConfig.find((c) => c.providerId === "openid")).toBeUndefined();
       expect(loggerWarn).not.toHaveBeenCalled();
+    });
+
+    /**
+     * ENG-2589. The generic providers read the RAW `email_verified` claim in their mapper, because
+     * that is the only place the three-way answer still exists — Better Auth's own value has already
+     * been through `email_verified ?? false` by the time any hook sees it, which cannot tell an IdP
+     * that asserted `false` from one that never sent the claim.
+     *
+     * The absent case is the load-bearing one: it must stay `true`, or every self-hoster whose IdP
+     * omits the claim gets unverified users on upgrade.
+     */
+    describe("generic providers resolve the raw email_verified claim (ENG-2589)", () => {
+      const genericMapper = async (providerId: "azuread" | "openid") => {
+        const m = await loadProviders({
+          ENTERPRISE_LICENSE_KEY: "lic",
+          AZURE_OAUTH_ENABLED: true,
+          OIDC_OAUTH_ENABLED: true,
+          OIDC_CLIENT_ID: "oidc-id",
+          OIDC_CLIENT_SECRET: "oidc-secret",
+          OIDC_ISSUER: "https://idp.test",
+        });
+        const config = m.ssoGenericOAuthConfig.find((c) => c.providerId === providerId);
+        if (!config) throw new Error(`${providerId} provider not registered`);
+        return config.mapProfileToUser;
+      };
+
+      test.each([
+        { claim: { email_verified: true }, expected: true, label: "asserted true" },
+        { claim: { email_verified: false }, expected: false, label: "asserted false" },
+        { claim: { email_verified: "false" }, expected: false, label: "asserted false as a string" },
+        { claim: { email_verified: "true" }, expected: true, label: "asserted true as a string" },
+        { claim: {}, expected: true, label: "absent — the upgrade-safe default" },
+        { claim: { email_verified: null }, expected: true, label: "null" },
+      ])("azuread: $label → $expected", async ({ claim, expected }) => {
+        const mapper = await genericMapper("azuread");
+        expect(callMapper(mapper, { email: "a@az.test", sub: "s", ...claim })).toMatchObject({
+          emailVerified: expected,
+        });
+      });
+
+      test.each([
+        { claim: { email_verified: true }, expected: true, label: "asserted true" },
+        { claim: { email_verified: false }, expected: false, label: "asserted false" },
+        { claim: { email_verified: "false" }, expected: false, label: "asserted false as a string" },
+        { claim: {}, expected: true, label: "absent — the upgrade-safe default" },
+      ])("openid: $label → $expected", async ({ claim, expected }) => {
+        const mapper = await genericMapper("openid");
+        expect(callMapper(mapper, { email: "d@idp.test", sub: "s", ...claim })).toMatchObject({
+          emailVerified: expected,
+        });
+      });
+
+      // SAML is `never-attests`: it must not smuggle a claim into the mapped user at all, so the hook's
+      // forced `true` is the single decision for it (BoxyHQ carries no `email_verified` on any path).
+      test("saml maps no emailVerified at all", async () => {
+        const m = await loadProviders({ ENTERPRISE_LICENSE_KEY: "lic", SAML_OAUTH_ENABLED: true });
+        const saml = m.ssoGenericOAuthConfig.find((c) => c.providerId === "saml");
+        if (!saml) throw new Error("saml provider not registered");
+
+        const mapped = callMapper(saml.mapProfileToUser, { email: "s@saml.test", id: "saml-id" });
+        expect(mapped).not.toHaveProperty("emailVerified");
+      });
     });
 
     test("SAML bridges to the local Jackson endpoints and resolves first/last name", async () => {
