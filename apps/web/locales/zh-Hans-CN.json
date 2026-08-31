@@ -2477,7 +2477,9 @@
       "api_keys": {
         "add_api_key": "添加 API 密钥",
         "add_permission": "添加 权限",
-        "api_keys_description": "管理 API 密钥 以 访问 Formbricks 管理 API"
+        "api_keys_description": "管理 API 密钥 以 访问 Formbricks 管理 API",
+        "connect_app_banner_description": "想要连接应用内调查？你不需要 API 密钥。",
+        "connect_app_banner_link": "前往应用连接"
       },
       "billing": {
         "billing_interval_toggle": "账单周期",

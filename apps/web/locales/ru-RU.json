@@ -2477,7 +2477,9 @@
       "api_keys": {
         "add_api_key": "Добавить API-ключ",
         "add_permission": "Добавить разрешение",
-        "api_keys_description": "Управляйте API-ключами для доступа к управляющим API Formbricks"
+        "api_keys_description": "Управляйте API-ключами для доступа к управляющим API Formbricks",
+        "connect_app_banner_description": "Хотите подключить опросы в приложении? Для этого API-ключ не нужен.",
+        "connect_app_banner_link": "Перейти к подключению приложения"
       },
       "billing": {
         "billing_interval_toggle": "Интервал выставления счетов",

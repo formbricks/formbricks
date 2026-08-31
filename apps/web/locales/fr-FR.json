@@ -2477,7 +2477,9 @@
       "api_keys": {
         "add_api_key": "Ajouter une clé API",
         "add_permission": "Ajouter une permission",
-        "api_keys_description": "Les clés d'API permettent d'accéder aux API de gestion de Formbricks."
+        "api_keys_description": "Les clés d'API permettent d'accéder aux API de gestion de Formbricks.",
+        "connect_app_banner_description": "Tu veux connecter des sondages in-app ? Tu n'as pas besoin de clé API pour ça.",
+        "connect_app_banner_link": "Aller à la connexion d'application"
       },
       "billing": {
         "billing_interval_toggle": "Intervalle de facturation",
