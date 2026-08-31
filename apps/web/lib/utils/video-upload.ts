@@ -53,17 +53,15 @@ export const checkForLoomUrl = (url: string): boolean => {
 export const extractYoutubeId = (url: string): string | null => {
   let id = "";
 
-  // The `.{0,2048}` caps replace an unbounded `.*`, which rescanned to the end from every start
-  // position (O(N^2) — measured 1.6s on 200k chars). Greedy on purpose: `.*v=` resolves the LAST
-  // `v=`, and a lazy cap would silently switch it to the first.
-  //
-  // The cap is not free: a `v=` more than 2048 characters past `youtube.com`, or a second
-  // `youtube.com` in the string, can make this resolve a different id than the uncapped form did.
-  // No real watch URL is that long, but it is a wrong-id outcome rather than a no-match. ENG-2789.
+  // Unbounded `.*` here is quadratic in theory (measured 1.6s on 200k characters), but the input is
+  // a video URL from a form field, so that length cannot occur. A `.{0,2048}` cap was tried and
+  // removed: it bought nothing reachable and could resolve a DIFFERENT id than the uncapped form —
+  // a `v=` beyond the cap, or a second `youtube.com`, shifts which match wins. Exactness matters
+  // more than a bound that never binds. See ENG-2789.
   const regExpList = [
     /youtu\.be\/([a-zA-Z0-9_-]+)/, // youtu.be/<id>
-    /youtube\.com.{0,2048}v=([a-zA-Z0-9_-]+)/, // youtube.com/watch?v=<id>
-    /youtube\.com.{0,2048}embed\/([a-zA-Z0-9_-]+)/, // youtube.com/embed/<id>
+    /youtube\.com.*v=([a-zA-Z0-9_-]+)/, // youtube.com/watch?v=<id>
+    /youtube\.com.*embed\/([a-zA-Z0-9_-]+)/, // youtube.com/embed/<id>
     /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]+)/, // youtube-nocookie.com/embed/<id>
   ];
 

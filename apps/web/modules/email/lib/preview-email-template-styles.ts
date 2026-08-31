@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
+import { replaceOpeningTags } from "@/lib/utils/html-opening-tag";
 import {
   NESTED_LIST_ITEM_CLASS,
   NESTED_LIST_ITEM_MARKER_STYLE,
@@ -76,24 +77,6 @@ const EMAIL_PREVIEW_ACCENT_COLORS = {
   "rose-100": "#ffe4e6",
 } as const;
 
-// Attribute runs are length-capped: `<p`/`<li` repeated with no closing `>` otherwise makes the
-// engine rescan to the end from every occurrence (O(N^2) — measured 6.7s on 200k chars). Editor
-// output carries at most a couple of hundred characters of style here, so the cap is far above any
-// real tag.
-//
-// Past it the behaviour is NOT simply "leave the tag alone": if the over-long attribute run itself
-// contains another `<p`/`<li`, the engine restarts there and normalizes THAT tag instead. Reaching
-// it needs a >4096-character tag containing a second opening tag, which the editor never emits —
-// but it rewrites a different tag rather than none. Tracked in ENG-2789.
-const RICH_TEXT_TAG_ATTRIBUTES_MAX = 4096;
-const RICH_TEXT_PARAGRAPH_TAG_REGEX = new RegExp(
-  String.raw`<p\b([^>]{0,${RICH_TEXT_TAG_ATTRIBUTES_MAX}})>`,
-  "gi"
-);
-const RICH_TEXT_LIST_ITEM_TAG_REGEX = new RegExp(
-  String.raw`<li\b([^>]{0,${RICH_TEXT_TAG_ATTRIBUTES_MAX}})>`,
-  "gi"
-);
 const RICH_TEXT_STYLE_ATTRIBUTE_REGEX = /\sstyle=(["'])(.*?)\1/i;
 const RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX = /\sstyle=(["'])(.*?)\1/gi;
 const RICH_TEXT_CLASS_ATTRIBUTE_REGEX = /\sclass=(["'])(.*?)\1/i;
@@ -101,7 +84,7 @@ const RICH_TEXT_CLASS_ATTRIBUTE_REGEX = /\sclass=(["'])(.*?)\1/i;
 export const importantStyle = (value: string): string => `${value} !important`;
 
 export const normalizeRichTextSpacing = (html: string): string =>
-  html.replaceAll(RICH_TEXT_PARAGRAPH_TAG_REGEX, (_tag, attributes: string = "") => {
+  replaceOpeningTags(html, "p", (attributes) => {
     if (RICH_TEXT_STYLE_ATTRIBUTE_REGEX.test(attributes)) {
       return `<p${attributes.replaceAll(
         RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX,
@@ -123,7 +106,7 @@ export const normalizeRichTextSpacing = (html: string): string =>
  * list item (best effort: legacy Outlook's Word engine ignores list-style-type).
  */
 export const suppressNestedListMarkers = (html: string): string =>
-  html.replaceAll(RICH_TEXT_LIST_ITEM_TAG_REGEX, (tag: string, attributes: string = "") => {
+  replaceOpeningTags(html, "li", (attributes, tag) => {
     const classMatch = RICH_TEXT_CLASS_ATTRIBUTE_REGEX.exec(attributes);
     const classNames = classMatch ? classMatch[2].split(/\s+/) : [];
     if (!classNames.includes(NESTED_LIST_ITEM_CLASS)) {

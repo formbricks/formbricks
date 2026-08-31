@@ -12,7 +12,7 @@ import { getSurveyDateFormatMap } from "@/lib/utils/date-display";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { isValidValue } from "../util";
+import { isValidValue, splitRecallHighlights } from "../util";
 import { ElementSkip } from "./ElementSkip";
 import { HiddenFields } from "./HiddenFields";
 import { RenderResponse } from "./RenderResponse";
@@ -37,14 +37,7 @@ export const SingleResponseCardBody = ({
   const isFirstElementAnswered = elements[0] ? !!response.data[elements[0].id] : false;
   const { t } = useTranslation();
   const formatTextWithSlashes = (text: string) => {
-    // Content between #/ and \#, with the span length-capped. Unbounded, `(.*?)` rescans to the end
-    // from every `#/` when no closing `\#` follows (O(N^2) — measured 5.0s on 200k characters), and
-    // this runs over RESPONDENT-submitted text in the admin's browser. The cap is far longer than any
-    // recall label; past it a span containing a second `#/` highlights from there instead, so a
-    // crafted answer can shift which text is highlighted. Display only — React escapes every part —
-    // but it is a different render rather than none. Tracked in ENG-2789.
-    const regex = /#\/(.{0,1024}?)\\#/g;
-    const parts = text.split(regex);
+    const parts = splitRecallHighlights(text);
 
     return parts.map((part, index) => {
       // Check if the part was inside #/ and \#

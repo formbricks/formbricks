@@ -1,47 +1,53 @@
-// The attribute run is length-capped so a `<body`/`<!DOCTYPE` repeated with no closing `>` cannot
-// make the engine rescan to the end from every occurrence (O(N^2) — measured 1.3s on 200k chars).
-// The cap is ~30x the longest tag these emails carry, so every real document matches exactly as
-// before.
-//
-// Past it the behaviour is NOT simply "leave the tag alone": if the over-long attribute run itself
-// contains another `<body`/`<!DOCTYPE`, the engine restarts there and matches THAT tag instead, so
-// a crafted document can have a different span extracted. Reaching it needs a >4096-character tag
-// containing a second opening tag, which nothing that renders these emails produces — but it is a
-// wrong-span outcome rather than a no-op, and worth knowing before the cap is relied on elsewhere.
-// Tracked in ENG-2789.
-const EMAIL_TAG_ATTRIBUTES_MAX = 4096;
-const EMAIL_DOCTYPE_PATTERN = new RegExp(`<!DOCTYPE[^>]{0,${EMAIL_TAG_ATTRIBUTES_MAX}}>`, "i");
-const EMAIL_BODY_OPEN_TAG_PATTERN = new RegExp(String.raw`<body\b[^>]{0,${EMAIL_TAG_ATTRIBUTES_MAX}}>`, "i");
+import { findOpeningTag } from "@/lib/utils/html-opening-tag";
+
 const EMAIL_BODY_CLOSE_TAG = "</body>";
 const EMAIL_REACT_SERVER_MARKER_PATTERN = /<!--\/?\$-->/g;
 
 /**
  * The body content, or null when the document has no `<body>…</body>`.
  *
- * Two index scans rather than `<body\b[^>]*>([\s\S]*?)<\/body>`: capping the attribute run alone did
- * not help that pattern (measured 766ms before and after on 200k chars), because the cost is in the
- * lazy `([\s\S]*?)` — it expands to the end of the document looking for a `</body>` that never
- * arrives, once per `<body>` occurrence. Capping the CONTENT instead is not an option: that group is
- * the whole email, legitimately large.
+ * Two scans rather than `<body\b[^>]*>([\s\S]*?)<\/body>`. That pattern is quadratic twice over: the
+ * attribute run rescans from every `<body` when no `>` follows, and the lazy content group expands
+ * to the end of the document once per `<body>` when no `</body>` follows. Capping fixes neither —
+ * the content group is the whole email and cannot be capped, and capping the attribute run makes an
+ * over-long tag match a LATER `<body>` instead, extracting the wrong span.
  *
  * Same result as the regex. It matched the leftmost `<body…>` that has a `</body>` after it, and if
- * none follows the first opening tag then none follows a later one either — so taking the first
+ * none follows the first opening tag then none follows a later one either, so taking the first
  * opening tag and the first close after it picks exactly the same span.
  */
 const extractBodyContent = (html: string): string | null => {
-  const openTag = EMAIL_BODY_OPEN_TAG_PATTERN.exec(html);
+  const openTag = findOpeningTag(html, "body");
   if (!openTag) return null;
 
-  const contentStart = openTag.index + openTag[0].length;
-  // `indexOf` on a lowercased copy keeps the regex's case-insensitivity at one linear pass, rather
-  // than the per-position retry a case-insensitive search would cost.
-  const contentEnd = html.toLowerCase().indexOf(EMAIL_BODY_CLOSE_TAG, contentStart);
+  const contentStart = openTag.index + openTag.length;
+  const contentEnd = findCloseTagIndex(html, contentStart);
 
   return contentEnd === -1 ? null : html.slice(contentStart, contentEnd);
 };
 
+/**
+ * `</body>` is matched case-insensitively, like the `i` flag did. Deliberately not
+ * `html.toLowerCase().indexOf(...)`: lowercasing is not length-preserving (U+0130 becomes two code
+ * units), so a document containing one would return an index into a differently-sized string.
+ */
+const findCloseTagIndex = (html: string, from: number): number => {
+  for (let index = from; index <= html.length - EMAIL_BODY_CLOSE_TAG.length; index++) {
+    if (html.startsWith(EMAIL_BODY_CLOSE_TAG, index)) return index;
+    // Only the ASCII letters differ in case here, so a case-folded comparison of the slice is exact.
+    if (html.slice(index, index + EMAIL_BODY_CLOSE_TAG.length).toLowerCase() === EMAIL_BODY_CLOSE_TAG) {
+      return index;
+    }
+  }
+  return -1;
+};
+
 export const extractEmailBodyFragment = (html: string): string => {
-  const htmlWithoutDoctype = html.replace(EMAIL_DOCTYPE_PATTERN, "").trim();
+  const doctype = findOpeningTag(html, "!DOCTYPE", { requireWordBoundary: false });
+  const htmlWithoutDoctype = (
+    doctype ? html.slice(0, doctype.index) + html.slice(doctype.index + doctype.length) : html
+  ).trim();
+
   const fragment = extractBodyContent(htmlWithoutDoctype)?.trim() ?? htmlWithoutDoctype;
 
   return fragment.replaceAll(EMAIL_REACT_SERVER_MARKER_PATTERN, "").trim();
