@@ -10,11 +10,15 @@ Formbricks is not a single container. The v6 baseline runs the Formbricks app, F
 worker), Cube, PostgreSQL, Redis/Valkey, and SpiceDB, so size the host for the whole stack rather than for
 the app alone.
 
-| Deployment                                                       | CPU                     | Memory                | Disk               |
-| ---------------------------------------------------------------- | ----------------------- | --------------------- | ------------------ |
-| Evaluation on a single server ([Docker](/self-hosting/setup/docker), [one-click](/self-hosting/setup/one-click)) | 2 vCPU                  | 4 GB                  | 20 GB SSD          |
-| Small production on a single server                              | 4 vCPU                  | 8 GB                  | 50 GB SSD          |
-| [Minimal enterprise setup](#minimal-enterprise-setup) (Kubernetes) | 6 vCPU across the nodes | 12 GB across the nodes | managed services   |
+| Deployment                        | CPU          | Memory      | Disk       |
+| --------------------------------- | ------------ | ----------- | ---------- |
+| Single server, evaluation         | 2 vCPU       | 4 GB        | 20 GB SSD  |
+| Single server, small production   | 4 vCPU       | 8 GB        | 50 GB SSD  |
+| Kubernetes, minimal enterprise    | 6 vCPU total | 12 GB total | managed    |
+
+The single-server rows apply to the [Docker](/self-hosting/setup/docker) and
+[one-click](/self-hosting/setup/one-click) installs. The Kubernetes row is spread across a node pool and
+assumes managed data services — see [Minimal Enterprise Setup](#minimal-enterprise-setup).
 
 <Info>
   **HTTPS Required**: Ensure your server runs with a valid HTTPS certificate.
@@ -30,31 +34,33 @@ the app alone.
 These are the defaults the Helm chart ships, and they are the most precise sizing statement we can give.
 A Docker Compose install runs the same services without enforced limits.
 
-| Component                | Replicas | CPU request | Memory request | Memory limit |
-| ------------------------ | -------- | ----------- | -------------- | ------------ |
-| Formbricks app           | 1        | 1000m       | 1 Gi           | 2 Gi         |
-| Formbricks Hub API       | 1        | 100m        | 256 Mi         | 512 Mi       |
-| Formbricks Hub worker    | 1        | 100m        | 256 Mi         | 512 Mi       |
-| Cube                     | 1        | 250m        | 512 Mi         | 1 Gi         |
-| PostgreSQL (bundled)     | 1        | 250m        | 512 Mi         | 1 Gi         |
-| Redis/Valkey (bundled)   | 1        | 100m        | 128 Mi         | 192 Mi       |
-| SpiceDB                  | 2        | 100m each   | 256 Mi each    | 512 Mi each  |
-| **Total**                |          | **2 vCPU**  | **3.2 GiB**    | **6.2 GiB**  |
+| Component              | CPU request | Memory request | Memory limit |
+| ---------------------- | ----------- | -------------- | ------------ |
+| Formbricks app         | 1000m       | 1 Gi           | 2 Gi         |
+| Hub API                | 100m        | 256 Mi         | 512 Mi       |
+| Hub worker             | 100m        | 256 Mi         | 512 Mi       |
+| Cube                   | 250m        | 512 Mi         | 1 Gi         |
+| PostgreSQL (bundled)   | 250m        | 512 Mi         | 1 Gi         |
+| Redis/Valkey (bundled) | 100m        | 128 Mi         | 192 Mi       |
+| SpiceDB (2 replicas)   | 200m        | 512 Mi         | 1 Gi         |
+| **Total**              | **2 vCPU**  | **3.2 GiB**    | **6.2 GiB**  |
 
 Migration Jobs run alongside this on install and upgrade, and Kubernetes itself takes roughly 0.5 vCPU and
-1 GB per node before any of it is schedulable.
+1 GB per node before any of it is schedulable. The two bundled rows drop out when you use managed
+PostgreSQL and Redis.
 
 ### Optional Services Are Much Heavier
 
-Everything below is disabled by default. Budget for it separately, and prefer an external endpoint over
-self-hosting the model if you only need the AI features occasionally.
+The [AI features](/self-hosting/advanced/enterprise-features/ai-features) below are all disabled by default.
+Budget for them separately, and prefer an external endpoint over self-hosting the model if you only need
+them occasionally.
 
-| Component                                                        | CPU request | Memory request | Notes                        |
-| ---------------------------------------------------------------- | ----------- | -------------- | ---------------------------- |
-| Hub embeddings (TEI)                                             | 8 vCPU      | 8 Gi           | plus a 10 Gi model cache     |
-| Hub background embeddings pool                                   | 4 vCPU      | 8 Gi           | plus a 10 Gi model cache     |
-| [AI taxonomy](/self-hosting/advanced/enterprise-features/ai-features) | 1 vCPU      | 2 Gi           | 4 Gi limit                   |
-| Bundled Qwen/vLLM                                                | 400m router | 1 Gi router    | requires GPU-capable nodes   |
+| Component            | CPU request | Memory request | Notes               |
+| -------------------- | ----------- | -------------- | ------------------- |
+| Hub embeddings (TEI) | 8 vCPU      | 8 Gi           | + 10 Gi model cache |
+| Background embeddings pool | 4 vCPU | 8 Gi          | + 10 Gi model cache |
+| AI taxonomy          | 1 vCPU      | 2 Gi           | 4 Gi limit          |
+| Qwen/vLLM router     | 400m        | 1 Gi           | needs GPU nodes     |
 
 ## Minimal Enterprise Setup
 
