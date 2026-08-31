@@ -11,12 +11,14 @@ description: >
   link-survey system params and internal ids — `userId`, `source`, `suid`, `end`, `start`,
   `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`,
   `preview`, `startAt`, `skipPrefilled`, `offlineSupport` (matched case-insensitively) — and the
-  names of auto-captured system fields such as `url`, `country`, `language`, `timezone` or
-  `utmSource`, which every survey can already read without declaring them.
+  names of auto-captured system fields, which every survey can already read without declaring
+  them: `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`.
 
 
   **Ids a survey already declares are grandfathered**: they always load, and re-sending the survey
-  unchanged never fails validation — only *adding* such a name as a new field is refused. Note this
+  unchanged never fails validation — only *adding* such a name as a new field is refused. Deleting a
+  grandfathered field spends the reprieve: once it is gone from the saved survey, the name can no
+  longer be re-added. Note this
   means re-creating a survey from an exported document can fail with a 400 when the export declares
   a name the rule refuses; rename the field in the payload before importing. The `pattern` below
   describes what stored surveys may hold (the pre-existing lenient charset), not what a new id may
