@@ -100,7 +100,10 @@ const recordUnverifiedSsoSignup = ({
       .warn("SSO sign-up created an account the identity provider did not report as verified");
 
     // Not awaited: the hook is on the sign-in path, and the helper does its work inside `setImmediate`,
-    // so there is nothing to wait for. Called bare, like the other two audit sites in this module family.
+    // so there is nothing to wait for. The rejection handler below is defence in depth rather than a
+    // live hazard — today that helper cannot reject, because its body is entirely inside the
+    // `setImmediate` callback — but an unawaited promise that ever did would take the process down
+    // rather than fail this one sign-up, and this runs post-commit on the sign-in path.
     void queueAuditEventBackground({
       // `updated` + a marker key, not `created`: this records a PROPERTY of a user creation, and it is
       // emitted only for the unverified subset. An `action: "created"` / `targetType: "user"` pair
@@ -118,6 +121,8 @@ const recordUnverifiedSsoSignup = ({
       // already being recorded, not a flow of its own, and it keeps the shared enum untouched. Every
       // key here survives `redactPII` — an `email` would not, which is the other reason it is absent.
       newObject: { ssoUnverifiedSignupMarker: true, provider, emailVerified: false },
+    }).catch((error: unknown) => {
+      logger.warn({ error }, "Failed to audit an unverified SSO sign-up");
     });
   } catch (error) {
     logger.warn({ error }, "Failed to record an unverified SSO sign-up");

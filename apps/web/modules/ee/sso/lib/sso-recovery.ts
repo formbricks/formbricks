@@ -70,6 +70,7 @@ const queueSsoRecoveryAuditEvent = ({
       ...(reclaimed
         ? {
             credentialPasswordsCleared: reclaimed.credentialPasswordsCleared,
+            legacyPasswordCleared: reclaimed.legacyPasswordCleared,
             twoFactorRowsRemoved: reclaimed.twoFactorRowsRemoved,
             legacyTwoFactorDisarmed: reclaimed.legacyTwoFactorDisarmed,
             // Reported separately, not summed. In this configuration access tokens are self-contained
@@ -96,6 +97,8 @@ const queueSsoRecoveryAuditEvent = ({
  */
 type TReclaimOutcome = {
   credentialPasswordsCleared: number;
+  /** The pre-cutover `User.password` hash, which lives in a different store to the credential account. */
+  legacyPasswordCleared: boolean;
   twoFactorRowsRemoved: number;
   /**
    * Whether the legacy `User.twoFactorEnabled` latch was set going in. 2FA lives in two stores and the
@@ -206,10 +209,18 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
     data: {
       backupCodes: null,
       emailVerified: true,
-      password: null,
       twoFactorEnabled: false,
       twoFactorSecret: null,
     },
+  });
+  // The legacy `User.password`, cleared as its own counted write rather than a field on the update
+  // above. Pre-cutover accounts keep their hash here and may have no credential `Account` row at all,
+  // so counting only those rows would tell such a user — and the audit trail — that nothing was taken
+  // from them. `password: { not: null }` makes the count rows CHANGED, and reading it this way keeps
+  // the hash itself out of the lookup select and out of memory.
+  const legacyPasswordRows = await tx.user.updateMany({
+    where: { id: user.id, password: { not: null } },
+    data: { password: null },
   });
   const twoFactorRows = await tx.twoFactor.deleteMany({ where: { userId: user.id } });
   const credentialRows = await tx.account.updateMany({
@@ -257,6 +268,7 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
 
   return {
     credentialPasswordsCleared: credentialRows.count,
+    legacyPasswordCleared: legacyPasswordRows.count > 0,
     twoFactorRowsRemoved: twoFactorRows.count,
     legacyTwoFactorDisarmed: user.twoFactorEnabled,
     oauthAccessTokensRevoked: accessRows.count,
@@ -536,7 +548,9 @@ export const completeSsoRecovery = async ({
   const twoFactorRemoved = Boolean(
     reclaimed && (reclaimed.twoFactorRowsRemoved > 0 || reclaimed.legacyTwoFactorDisarmed)
   );
-  const passwordRemoved = Boolean(reclaimed && reclaimed.credentialPasswordsCleared > 0);
+  const passwordRemoved = Boolean(
+    reclaimed && (reclaimed.credentialPasswordsCleared > 0 || reclaimed.legacyPasswordCleared)
+  );
   if (passwordRemoved || twoFactorRemoved) {
     try {
       const sent = await sendSsoRecoveryFactorsRemovedEmail({

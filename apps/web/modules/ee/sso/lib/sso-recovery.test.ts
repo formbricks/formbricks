@@ -90,6 +90,7 @@ vi.mock("./account-linking", () => ({
 
 describe("sso-recovery", () => {
   const txUserUpdate = vi.fn();
+  const txUserUpdateMany = vi.fn();
   const txTwoFactorDeleteMany = vi.fn();
   const txAccountUpdateMany = vi.fn();
   const txOauthAccessUpdateMany = vi.fn();
@@ -100,6 +101,7 @@ describe("sso-recovery", () => {
   const tx = {
     user: {
       update: txUserUpdate,
+      updateMany: txUserUpdateMany,
     },
     twoFactor: {
       deleteMany: txTwoFactorDeleteMany,
@@ -120,6 +122,7 @@ describe("sso-recovery", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    txUserUpdateMany.mockResolvedValue({ count: 0 }); // post-cutover default: no legacy hash
     txTwoFactorDeleteMany.mockResolvedValue({ count: 1 });
     txAccountUpdateMany.mockResolvedValue({ count: 1 });
     txOauthAccessUpdateMany.mockResolvedValue({ count: 1 });
@@ -247,7 +250,6 @@ describe("sso-recovery", () => {
       data: {
         backupCodes: null,
         emailVerified: true,
-        password: null,
         twoFactorEnabled: false,
         twoFactorSecret: null,
       },
@@ -388,6 +390,23 @@ describe("sso-recovery", () => {
 
       expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith(
         expect.objectContaining({ twoFactorRemoved: true })
+      );
+    });
+
+    /**
+     * The password half of the same trap. A pre-cutover account keeps its hash in `User.password` and
+     * may have no credential `Account` row at all, so counting only those rows would tell that user
+     * their password survived — on the one occasion it did not.
+     */
+    test("reports the password for a legacy hash with no credential account", async () => {
+      asUnverifiedUser();
+      txAccountUpdateMany.mockResolvedValue({ count: 0 }); // no credential row...
+      txUserUpdateMany.mockResolvedValue({ count: 1 }); // ...but a legacy hash was cleared
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ passwordRemoved: true })
       );
     });
 
