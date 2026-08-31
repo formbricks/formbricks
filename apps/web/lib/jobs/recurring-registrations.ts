@@ -81,16 +81,20 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
     job: recurringJobs.usageTelemetry,
     schedule: {
       cronPattern: USAGE_TELEMETRY_DAILY_CRON_PATTERN,
-      // The daily pattern keeps a long-running instance reporting; `immediately` is what covers an
-      // instance that is *not* up at 02:15 UTC, which is the case the GTM need calls out — an instance
-      // may be identified and then barely run (ENG-2107).
+      // The daily pattern keeps a long-running instance reporting. What covers an instance that is
+      // *not* up at 02:15 UTC — the case the GTM need calls out, an instance identified and then
+      // barely run (ENG-2107) — is that a missed tick is not skipped: the upsert re-adds the overdue
+      // iteration with its original timestamp, so the delay clamps to 0 and it runs at the next boot.
       //
-      // It applies per upsert, not once per scheduler: BullMQ's repeat strategy returns "now" whenever
-      // `immediately` is set, and `immediately` is stripped from the persisted repeat options, so every
-      // boot queues one run and the iterations after it follow the cron pattern. That is deliberate —
-      // a boot is the one moment an otherwise-idle instance is guaranteed to be able to report. It is
-      // also cheap: `sendTelemetryEvents` is gated on a shared 24h timestamp in Redis, so the extra run
-      // is a single Redis read whenever an update already went out.
+      // `immediately` fires **once per scheduler**, not once per boot. BullMQ's repeat strategy does
+      // return "now" when it is set, but `addJobScheduler-11.lua` discards that: when the upsert
+      // removed a pending job for this scheduler it sets `nextMillis = prevMillis` ("the job has been
+      // removed and we want to replace it, so lets use the same millis"), which is every boot after
+      // the first. So its real effect is the first-ever registration — which is exactly where it is
+      // wanted, since this scheduler is new: every instance upgrading past this change registers it
+      // for the first time and reports on that boot rather than waiting for the first 02:15 slot.
+      // It is also cheap: `sendTelemetryEvents` is gated on a shared 24h timestamp in Redis, so that
+      // run is a single Redis read whenever an update already went out.
       immediately: true,
       kind: "cron",
       timeZone: USAGE_TELEMETRY_TIME_ZONE,

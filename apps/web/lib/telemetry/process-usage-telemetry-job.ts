@@ -8,15 +8,16 @@ import { sendTelemetryEvents } from "@/lib/telemetry/usage-update";
  *
  * Before this job the usage update was only ever sent from the response pipeline, so an instance that
  * identified itself against the license server but never collected a response reported no usage at all
- * (ENG-2107). The schedule is registered with `immediately: true`, so a run is also queued on each
- * boot — see `lib/jobs/recurring-registrations.ts` for why that, and not the daily slot alone, is what
- * gets an update out of an instance that barely runs.
+ * (ENG-2107). An instance that is not up at 02:15 UTC still reports: a missed tick is re-added with
+ * its original timestamp and runs at the next boot — see `lib/jobs/recurring-registrations.ts`, which
+ * also explains why `immediately: true` fires once per scheduler rather than on every boot.
  *
  * Safe to overlap, as recurring handlers must be: `sendTelemetryEvents` is guarded by an in-memory
  * check, a shared 24h timestamp in Redis and a distributed lock, so a second tick — or a response
  * pipeline run in the same window — is a no-op rather than a duplicate report. It also handles its own
- * failures, applying a 1h cooldown rather than throwing, so a rejected update normally leaves this job
- * successful and is retried on that cooldown instead of through BullMQ attempts.
+ * failures rather than throwing, so a rejected update leaves this job successful; the 1h cooldown it
+ * sets is a floor on the next attempt, not a scheduled retry, so the retry is whichever trigger calls
+ * in next (a response, the next daily tick, or that tick overdue at boot) rather than a BullMQ attempt.
  */
 export const processUsageTelemetryJob: JobHandler<TUsageTelemetryJobData> = async (data, context) => {
   const logContext = {

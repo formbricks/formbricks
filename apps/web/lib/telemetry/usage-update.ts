@@ -56,10 +56,16 @@ const executeTelemetrySend = async (cache: CacheService, lastSent: number, now: 
 
     if (!sent) {
       // Nothing was reported (no organization exists yet), so the 24h window must not be consumed:
-      // recording it here would delay the instance's *first* usage update by a day. Retry in 1h.
+      // recording it here would delay the instance's *first* usage update by a day.
+      //
+      // The 1h value is a floor on the next attempt, not a scheduled retry — nothing re-invokes this
+      // hourly. It exists so the next real trigger is not blocked for 24h; those triggers are a
+      // processed response, the next 02:15 UTC tick, or that tick running overdue at the next boot.
+      // So on an instance with no response traffic the first usage update after an organization is
+      // created lands within a day, not within an hour.
       logger.info(
         { hashedLicenseKey },
-        "Telemetry skipped - no organization to report on yet, applying 1h cooldown"
+        "Telemetry skipped - no organization to report on yet, not consuming the 24h window"
       );
       nextTelemetryCheck = now + 60 * 60 * 1000;
       return;
@@ -80,7 +86,8 @@ const executeTelemetrySend = async (cache: CacheService, lastSent: number, now: 
     );
 
     // Failure cooldown: Prevent retrying immediately to avoid hammering the endpoint.
-    // Wait 1 hour before allowing this instance to try again.
+    // Wait 1 hour before allowing this instance to try again. Like the no-organization case above
+    // this is a floor rather than a retry — the next attempt is whenever a trigger next calls in.
     // Note: Other instances can still try (they'll hit the lock or Redis check).
     nextTelemetryCheck = now + 60 * 60 * 1000;
   } finally {
