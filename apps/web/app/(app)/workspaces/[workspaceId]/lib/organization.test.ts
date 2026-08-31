@@ -1,7 +1,8 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { lookupAuthorizedOrganizationIds } from "@/lib/authorization/resource-list";
 import { getOrganizationsByUserId } from "./organization";
 
 vi.mock("@formbricks/database", () => ({
@@ -11,10 +12,16 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
+vi.mock("@/lib/authorization/resource-list", () => ({ lookupAuthorizedOrganizationIds: vi.fn() }));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue(["org1", "org2"]);
+});
 
 describe("Organization", () => {
   describe("getOrganizationsByUserId", () => {
-    test("should return organizations when found", async () => {
+    test("returns only organizations allowed by the central authorization lookup", async () => {
       const mockOrganizations = [
         { id: "org1", name: "Organization 1" },
         { id: "org2", name: "Organization 2" },
@@ -26,11 +33,7 @@ describe("Organization", () => {
 
       expect(prisma.organization.findMany).toHaveBeenCalledWith({
         where: {
-          memberships: {
-            some: {
-              userId: "user1",
-            },
-          },
+          id: { in: ["org1", "org2"] },
         },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: {
@@ -39,6 +42,13 @@ describe("Organization", () => {
         },
       });
       expect(result).toEqual(mockOrganizations);
+    });
+
+    test("should skip PostgreSQL when authorization returns no organizations", async () => {
+      vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue([]);
+
+      await expect(getOrganizationsByUserId("user-without-organizations")).resolves.toEqual([]);
+      expect(prisma.organization.findMany).not.toHaveBeenCalled();
     });
 
     test("should throw ResourceNotFoundError when organizations is null", async () => {

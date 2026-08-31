@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { can } from "@/lib/authorization";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { TGatewayAuthenticatedPrincipal } from "@/modules/gateway-auth/lib/request";
@@ -29,8 +30,9 @@ vi.mock("@/app/lib/api/request-body", () => ({
   RequestBodyTooLargeError: class RequestBodyTooLargeError extends Error {},
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: vi.fn(),
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
+vi.mock("@/lib/authorization/context", () => ({
+  withAuthorizationSurface: vi.fn((_surface, callback) => callback()),
 }));
 
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
@@ -83,8 +85,6 @@ const authorize = async (
   });
 };
 
-const accessArg = () => vi.mocked(checkAuthorizationUpdated).mock.calls.at(-1)?.[0];
-
 describe("feedbackRecordsGatewayAuthorizer", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -96,7 +96,7 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
     });
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
     vi.mocked(getFeedbackRecordTenant).mockResolvedValue({ data: { tenantId: directoryId }, error: null });
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
+    vi.mocked(can).mockResolvedValue(true);
   });
 
   // ENG-1770: records in a shared directory carry no workspace, so a workspace permission cannot
@@ -112,16 +112,15 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
         const decision = await authorize(method, path, userPrincipal);
 
         expect(decision.status).toBe("allow");
-        expect(accessArg()).toEqual({
-          userId: "user-1",
-          organizationId,
-          access: [{ type: "organization", roles: ["owner", "manager"] }],
+        expect(can).toHaveBeenLastCalledWith({ type: "user", id: "user-1" }, "organization.manage", {
+          type: "organization",
+          id: organizationId,
         });
       }
     );
 
     test("denies a delete when the caller is not an organization owner or manager", async () => {
-      vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("Not authorized"));
+      vi.mocked(can).mockResolvedValue(false);
 
       const decision = await authorize("DELETE", `/api/v3/feedbackRecords/${recordId}`, userPrincipal);
 
@@ -133,14 +132,9 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
       const decision = await authorize("GET", `/api/v3/feedbackRecords/${recordId}`, userPrincipal);
 
       expect(decision.status).toBe("allow");
-      expect(accessArg()).toEqual({
-        userId: "user-1",
-        organizationId,
-        access: [
-          { type: "organization", roles: ["owner", "manager"] },
-          { type: "workspaceTeam", workspaceId: workspaceA, minPermission: "read" },
-          { type: "workspaceTeam", workspaceId: workspaceB, minPermission: "read" },
-        ],
+      expect(can).toHaveBeenLastCalledWith({ type: "user", id: "user-1" }, "feedbackDirectory.read", {
+        type: "feedbackDirectory",
+        id: directoryId,
       });
     });
 
@@ -150,11 +144,10 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
       });
 
       expect(decision.status).toBe("allow");
-      expect(accessArg()?.access).toEqual([
-        { type: "organization", roles: ["owner", "manager"] },
-        { type: "workspaceTeam", workspaceId: workspaceA, minPermission: "readWrite" },
-        { type: "workspaceTeam", workspaceId: workspaceB, minPermission: "readWrite" },
-      ]);
+      expect(can).toHaveBeenLastCalledWith({ type: "user", id: "user-1" }, "feedbackDirectory.write", {
+        type: "feedbackDirectory",
+        id: directoryId,
+      });
     });
   });
 
@@ -261,7 +254,7 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
     const decision = await authorize("GET", `/api/v3/feedbackRecords/${recordId}`, userPrincipal);
 
     expect(decision.status).toBe("deny");
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(can).not.toHaveBeenCalled();
   });
 
   // The directory-not-found half of the combined guard (!feedbackDirectory ||
@@ -273,5 +266,28 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
 
     expect(decision.status).toBe("deny");
     expect(decision.status === "deny" && decision.response.status).toBe(403);
+  });
+
+  test("assigns authenticated gateway checks to the feedback gateway rollout surface", async () => {
+    await authorize("GET", `/api/v3/feedbackRecords/${recordId}`, userPrincipal);
+
+    expect(withAuthorizationSurface).toHaveBeenCalledWith("feedback_gateway", expect.any(Function));
+  });
+
+  test("does not put directory or record identifiers in authorization logs", async () => {
+    await authorize("GET", `/api/v3/feedbackRecords/${recordId}`, userPrincipal);
+
+    expect(JSON.stringify(vi.mocked(logger.info).mock.calls)).not.toContain(directoryId);
+    expect(JSON.stringify(vi.mocked(logger.info).mock.calls)).not.toContain(recordId);
+    expect(JSON.stringify(vi.mocked(logger.warn).mock.calls)).not.toContain(directoryId);
+    expect(JSON.stringify(vi.mocked(logger.warn).mock.calls)).not.toContain(recordId);
+  });
+
+  test("propagates central evaluator failures instead of converting them to denial", async () => {
+    vi.mocked(can).mockRejectedValue(new Error("evaluator unavailable"));
+
+    await expect(authorize("GET", `/api/v3/feedbackRecords/${recordId}`, userPrincipal)).rejects.toThrow(
+      "evaluator unavailable"
+    );
   });
 });

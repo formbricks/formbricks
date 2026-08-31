@@ -36,12 +36,20 @@ interface TimeDimensionPanelProps {
   timeDimension: TimeDimensionConfig | null;
   onTimeDimensionChange: (config: TimeDimensionConfig | null) => void;
   hideTitle?: boolean;
+  /**
+   * Hides the granularity selector for chart types that can't render a time series (Big Number,
+   * Pie — see supportsTimeGrouping). The field and date-range controls stay: with no granularity a
+   * time dimension is a date-range filter, not grouping, and is still the only way to scope those
+   * chart types to a rolling window.
+   */
+  hideGranularity?: boolean;
 }
 
 export function TimeDimensionPanel({
   timeDimension,
   onTimeDimensionChange,
   hideTitle = false,
+  hideGranularity = false,
 }: Readonly<TimeDimensionPanelProps>) {
   const { t } = useTranslation();
   const [dateRangeType, setDateRangeType] = useState<"preset" | "custom">(
@@ -150,22 +158,24 @@ export function TimeDimensionPanel({
         </div>
 
         {/* Granularity Selector */}
-        <div className="space-y-3">
-          <Label className="text-sm">{t("workspace.analysis.charts.granularity")}</Label>
-          <Select value={timeDimension.granularity ?? "none"} onValueChange={handleGranularityChange}>
-            <SelectTrigger className="w-full bg-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">{t("workspace.analysis.charts.no_grouping")}</SelectItem>
-              {TIME_GRANULARITIES.map((gran) => (
-                <SelectItem key={gran} value={gran}>
-                  {getTranslatedGranularityLabel(gran, t)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!hideGranularity && (
+          <div className="space-y-3">
+            <Label className="text-sm">{t("workspace.analysis.charts.granularity")}</Label>
+            <Select value={timeDimension.granularity ?? "none"} onValueChange={handleGranularityChange}>
+              <SelectTrigger className="w-full bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{t("workspace.analysis.charts.no_grouping")}</SelectItem>
+                {TIME_GRANULARITIES.map((gran) => (
+                  <SelectItem key={gran} value={gran}>
+                    {getTranslatedGranularityLabel(gran, t)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Date Range */}
         <div className="space-y-3">

@@ -14,6 +14,8 @@ import {
   auditVerificationSessionWithheld,
   betterAuthLogger,
   getSignInAuthMethod,
+  recordSsoCallbackOutcome,
+  recordSsoCallbackThrow,
   redactEmailsInLogMessage,
   signInAuditDatabaseHook,
 } from "./better-auth-observability";
@@ -412,6 +414,25 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
     expect(contextLoggerMock.warn).toHaveBeenCalledWith("account isn't linked");
   });
 
+  test("preserves only an allowlisted warn-level error summary in application logs", () => {
+    const dbError = Object.assign(new Error("Connection for admin@example.com included token-secret"), {
+      code: "P1001",
+      databaseUrl: "postgres://user:password-secret@db.example.com/formbricks",
+    });
+    dbError.stack = "Error: stack-secret";
+
+    log("warn", "OAuth resource seed for admin@example.com failed", dbError);
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(contextLoggerMock.warn).toHaveBeenCalledWith(
+      { errorType: "Error", errorCode: "P1001" },
+      "OAuth resource seed for [redacted]@example.com failed"
+    );
+    expect(JSON.stringify(contextLoggerMock.warn.mock.calls)).not.toMatch(
+      /token-secret|password-secret|stack-secret/
+    );
+  });
+
   test("info/debug-level logs go to info and are never captured", () => {
     log("info", "some info");
 
@@ -523,6 +544,9 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
 
     log("error", "State mismatch: verification not found", stateError);
 
+    // Anchor the negative: an empty `mock.calls` stringifies to "[]", which contains no secret, so
+    // without this the assertion would hold even if nothing were ever logged.
+    expect(logger.withContext).toHaveBeenCalled();
     expect(JSON.stringify(vi.mocked(logger.withContext).mock.calls)).not.toContain(
       "super-secret-state-value"
     );
@@ -702,5 +726,277 @@ describe("betterAuthLogger (request-path tagging, ENG-2259)", () => {
     });
 
     expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * ENG-2551: the SSO callback outcome signal. Its whole purpose is to be alertable, so the tests are
+ * about the *field values* an alert would key on, not about the human-readable message.
+ *
+ * The motivating incident is ENG-2750, where 100% of Cloud Microsoft sign-ins failed for ~18 hours
+ * and produced no Sentry event at all — Better Auth logs that failure as a bare message with no
+ * `Error`, so the capture gate above never sees anything. Hence a signal keyed on the outcome.
+ */
+describe("recordSsoCallbackOutcome (ENG-2551)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const redirect = (location: string, status = 302) => new Response(null, { status, headers: { location } });
+
+  /**
+   * A completed sign-in, which Better Auth marks by minting the session cookie. Success is asserted
+   * through that rather than through the redirect target: `getSsoReturnToUrl` preserves the caller's
+   * query string, so a legitimate `callbackURL` can carry `?error=…` of its own.
+   */
+  const signedInRedirect = (location: string) => {
+    const response = new Response(null, { status: 302, headers: { location } });
+    response.headers.append("set-cookie", "__Secure-formbricks.session_token=abc; Path=/; HttpOnly");
+    return response;
+  };
+
+  const contextOf = () => vi.mocked(logger.withContext).mock.calls[0]?.[0];
+
+  test.each([
+    ["the Better Auth path", "https://app.test/api/auth/callback/azuread"],
+    ["the pinned legacy path", "https://app.test/api/auth/oauth2/callback/azuread"],
+    ["a trailing slash", "https://app.test/api/auth/callback/azuread/"],
+  ])("records a failed callback on %s", (_label, url) => {
+    recordSsoCallbackOutcome(url, redirect("https://app.test/auth/login?error=unable_to_get_user_info"));
+
+    expect(contextOf()).toEqual({
+      source: "sso-callback",
+      ssoCallbackOutcome: "failure",
+      ssoProvider: "azuread",
+      ssoCallbackReason: "unable_to_get_user_info",
+    });
+    expect(contextLoggerMock.warn).toHaveBeenCalledWith("SSO callback failed");
+  });
+
+  test("records a successful callback, so the alert can key on a ratio", () => {
+    recordSsoCallbackOutcome("https://app.test/api/auth/callback/openid", signedInRedirect("/"));
+
+    expect(contextOf()).toEqual({
+      source: "sso-callback",
+      ssoCallbackOutcome: "success",
+      ssoProvider: "openid",
+    });
+    expect(contextLoggerMock.info).toHaveBeenCalledWith("SSO callback succeeded");
+    expect(contextLoggerMock.warn).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The two failure shapes that do not redirect, and the reason this reads the response rather than
+   * hooking an error path: the SSO licence gate answers 403 and an unhandled fault answers 500.
+   * Neither throws where an error hook would see it.
+   */
+  test.each([
+    [403, "http_403"],
+    [500, "http_500"],
+  ])("treats a %i on the callback as a failure", (status, reason) => {
+    recordSsoCallbackOutcome("https://app.test/api/auth/callback/saml", new Response(null, { status }));
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "failure", ssoCallbackReason: reason });
+  });
+
+  // Cardinality guard: anyone can request `/api/auth/callback/<anything>`, and a log field an
+  // outsider can fill with unbounded distinct values is a log field no alert can group on.
+  test.each([
+    ["an unregistered provider id", "https://app.test/api/auth/callback/not-a-provider"],
+    ["a very long segment", `https://app.test/api/auth/callback/${"a".repeat(300)}`],
+  ])("buckets %s to unknown", (_label, url) => {
+    recordSsoCallbackOutcome(url, redirect("/"));
+
+    expect(contextOf()).toMatchObject({ ssoProvider: "unknown" });
+  });
+
+  /**
+   * The reason needs the same protection as the provider, and the reason is easy to miss: Better Auth
+   * **echoes the inbound `error` query parameter** into its redirect (`callback.mjs`,
+   * `if (error) redirectOnError(error, error_description)`). Anyone can get a parseable `state` by
+   * starting a sign-in, then call the callback with `&error=<anything>` — so without an allow-list an
+   * outsider both inflates this field's cardinality and can forge a specific reason to disguise a
+   * real outage. A charset regex would not help: it bounds the shape, not the number of values.
+   */
+  test.each([
+    ["a plausible but unknown code", "totally_made_up_code"],
+    ["a forged real-looking code", "state_mismatch_2"],
+    ["markup", "%3Cscript%3E+injected"],
+  ])("buckets %s to other", (_label, injected) => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/google",
+      redirect(`https://app.test/auth/login?error=${injected}`)
+    );
+
+    expect(contextOf()).toMatchObject({ ssoCallbackReason: "other" });
+  });
+
+  test.each([
+    ["Better Auth's own callback code", "unable_to_get_user_info"],
+    ["a StateError code", "state_mismatch"],
+    ["a code this app emits", "account_not_linked"],
+    // What a database outage mid-callback actually produces — verified by stopping Postgres against a
+    // live instance. Bucketing this one would hide the clearest infrastructure signal there is.
+    ["the code an infrastructure fault produces", "internal_server_error"],
+  ])("records %s verbatim", (_label, code) => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/azuread",
+      redirect(`https://app.test/auth/login?error=${code}`)
+    );
+
+    expect(contextOf()).toMatchObject({ ssoCallbackReason: code });
+  });
+
+  /**
+   * The worst callback failure is the one that never produces a response at all: the request throws,
+   * Next answers 500, nobody signs in. Recording only responses would have left precisely that case
+   * invisible to the alert.
+   */
+  test("records a callback that threw", () => {
+    recordSsoCallbackThrow("https://app.test/api/auth/callback/azuread");
+
+    expect(contextOf()).toEqual({
+      source: "sso-callback",
+      ssoCallbackOutcome: "failure",
+      ssoProvider: "azuread",
+      ssoCallbackReason: "exception",
+    });
+    expect(contextLoggerMock.warn).toHaveBeenCalledWith("SSO callback failed");
+  });
+
+  test("stays silent when a non-callback endpoint throws", () => {
+    recordSsoCallbackThrow("https://app.test/api/auth/sign-in/email");
+
+    expect(logger.withContext).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["a non-callback auth endpoint", "https://app.test/api/auth/sign-in/email"],
+    ["the callback list root", "https://app.test/api/auth/callback"],
+    ["an unparseable URL", "not-a-url"],
+  ])("stays silent for %s", (_label, url) => {
+    recordSsoCallbackOutcome(url, redirect("/"));
+
+    expect(logger.withContext).not.toHaveBeenCalled();
+  });
+
+  /**
+   * A redirect the browser cannot follow is a failed sign-in. Both of these previously corrupted the
+   * ratio rather than merely losing detail — a missing `Location` was recorded as a *success*, and a
+   * malformed one threw into the outer catch so the callback vanished from both sides of the ratio.
+   * The earlier test here asserted only that it did not throw, which is the weaker property and is
+   * why the suite stayed green.
+   */
+  /**
+   * `URLSearchParams.get` reads both `?error=` and a bare `?error` back as `""`, so a truthiness
+   * check counted an ambiguous error parameter as a clean sign-in. Only a genuinely absent parameter
+   * (`null`) is a success — same reasoning as the two cases below: anything the browser cannot
+   * usefully follow belongs on the failure side, because success is the half the ratio must trust.
+   */
+  test.each([
+    ["an empty error value", "https://app.test/auth/login?error="],
+    ["a valueless error parameter", "https://app.test/auth/login?error"],
+  ])("records %s as a failure, not a success", (_label, location) => {
+    recordSsoCallbackOutcome("https://app.test/api/auth/callback/azuread", redirect(location));
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "failure", ssoCallbackReason: "other" });
+  });
+
+  test("still records a redirect with no error parameter as a success", () => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/azuread",
+      signedInRedirect("https://app.test/?welcome=1")
+    );
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "success" });
+  });
+
+  /**
+   * #9026 review, P1. With `response_mode=form_post` Better Auth turns the POST callback into a 302 to
+   * its own GET twin *before* validating state or exchanging the code, and `legacy-sso-callback.ts`
+   * preserves that flow deliberately. Recording the hop adds a second outcome per sign-in, and since
+   * the hop carries no `error` it lands on the success side — so a form_post flow failing 100% of the
+   * time would still read as only 50% failures, under any threshold the alert picks.
+   */
+  test.each([
+    ["the Better Auth twin", "https://app.test/api/auth/callback/azuread?code=abc&state=xyz"],
+    ["a relative twin", "/api/auth/callback/azuread?code=abc&state=xyz"],
+  ])("says nothing for the form_post hop to %s", (_label, location) => {
+    recordSsoCallbackOutcome("https://app.test/api/auth/callback/azuread", redirect(location));
+
+    expect(logger.withContext).not.toHaveBeenCalled();
+  });
+
+  test("the GET that follows the hop still records the real outcome", () => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/azuread",
+      redirect("https://app.test/auth/login?error=state_mismatch")
+    );
+
+    expect(contextOf()).toMatchObject({
+      ssoCallbackOutcome: "failure",
+      ssoCallbackReason: "state_mismatch",
+    });
+  });
+
+  /**
+   * #9026 review, P2. The success destination is the caller's `callbackURL`, and `getSsoReturnToUrl`
+   * keeps its query string — so `/page?error=retry` is a supported target. Reading `error` off the
+   * redirect cannot tell that apart from Better Auth's own error redirect, which goes to the caller's
+   * `errorCallbackURL` (`/auth/login` for every button here). The session cookie can.
+   */
+  test("a completed sign-in whose callbackURL carries its own error parameter is a success", () => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/azuread",
+      signedInRedirect("https://app.test/some-page?error=retry")
+    );
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "success" });
+    expect(contextLoggerMock.warn).not.toHaveBeenCalled();
+  });
+
+  test("a failure redirect to errorCallbackURL is still a failure", () => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/azuread",
+      redirect("https://app.test/auth/login?error=account_not_linked")
+    );
+
+    expect(contextOf()).toMatchObject({
+      ssoCallbackOutcome: "failure",
+      ssoCallbackReason: "account_not_linked",
+    });
+  });
+
+  /**
+   * Verify-before-link recovery ends here on purpose: no session, no error, an inbox-verification
+   * page. Counting it either way corrupts the ratio, so it is named and excluded from both sides.
+   */
+  test("recovery, with no session and no error, is neither a success nor a failure", () => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/openid",
+      redirect("https://app.test/auth/verification-requested")
+    );
+
+    expect(contextOf()).toMatchObject({
+      ssoCallbackOutcome: "incomplete",
+      ssoCallbackReason: "no_session",
+    });
+    expect(contextLoggerMock.warn).not.toHaveBeenCalled();
+    expect(contextLoggerMock.info).toHaveBeenCalledWith("SSO callback did not complete a sign-in");
+  });
+
+  test.each([
+    ["a redirect with no Location", undefined, "missing_location"],
+    ["a malformed Location", "http://[", "malformed_location"],
+  ])("records %s as a failure", (_label, location, reason) => {
+    expect(() =>
+      recordSsoCallbackOutcome(
+        "https://app.test/api/auth/callback/azuread",
+        new Response(null, { status: 302, ...(location ? { headers: { location } } : {}) })
+      )
+    ).not.toThrow();
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "failure", ssoCallbackReason: reason });
+    expect(contextLoggerMock.warn).toHaveBeenCalledWith("SSO callback failed");
   });
 });

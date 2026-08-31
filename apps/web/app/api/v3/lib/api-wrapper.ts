@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getSession } from "@/modules/auth/lib/session";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -391,15 +392,19 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
 
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url);
 
-      const response = await handler({
-        req,
-        props,
-        authentication: authResult.authentication,
-        auditLog,
-        parsedInput: parsedInputResult.parsedInput,
-        requestId,
-        instance,
-      });
+      const execute = () =>
+        handler({
+          req,
+          props,
+          authentication: authResult.authentication,
+          auditLog,
+          parsedInput: parsedInputResult.parsedInput,
+          requestId,
+          instance,
+        });
+      const response = authResult.authentication
+        ? await withAuthorizationSurface("api_v3", execute)
+        : await execute();
 
       if (auditLog) {
         if (response.ok) {

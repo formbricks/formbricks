@@ -4,6 +4,32 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## v6
+
+Formbricks v6 replaces the legacy authorization evaluator with AuthZed SpiceDB. PostgreSQL remains the source
+of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback, so an existing
+installation must migrate through the bridge-compatible v5 release identified in the v6 release notes.
+
+Before selecting a v6 image:
+
+1. Back up the Formbricks and SpiceDB PostgreSQL databases, secrets, deployment configuration, image versions,
+   and canonical schema digest.
+2. Merge the release-matched AuthZed deployment services or Helm values without overwriting proxy, storage,
+   SMTP, or external-datastore customization.
+3. Run the v6 database migrations while the bridge application remains available.
+4. Run `formbricks-authzed upgrade prepare`, then require `formbricks-authzed upgrade check` to exit `0`.
+5. For one-click or Compose, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. For Helm, set
+   `authzed.migrationAcknowledged=true` in the v6 upgrade values.
+6. Deploy v6 and verify critical allow, deny, revocation, and cross-tenant cases.
+
+The update scripts and chart fail before replacing the running release when the deployment contract,
+acknowledgement, schema, outbox, or relationship graph is not ready. Do not bypass the acknowledgement to silence
+a failed gate. See [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6)
+for Docker and Kubernetes commands, guarded schema replacement, backups, repair, and rollback.
+
+The moving `latest` image tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable
+publication. Existing installations opt into v6 explicitly during that migration window.
+
 ## v5.4
 
 v5.4 carries one application-level breaking change, and it is narrow: it affects **API keys** used against
@@ -201,7 +227,7 @@ HAVING COUNT(w."workspaceId") > 1;
 Most instances return no rows: a workspace is normally assigned a single dataset, so sharing only exists
 where an administrator deliberately assigned a second workspace. For any row that does come back, an
 integration that mutates records in that dataset has two ways forward — assign the dataset to a single
-workspace under **Settings → Organization → Feedback Datasets**, or have the integration authenticate as
+workspace under **Settings → Organization → Datasets**, or have the integration authenticate as
 an organization owner or manager instead of with a workspace-scoped key.
 
 #### What to do before upgrading

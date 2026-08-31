@@ -2,9 +2,9 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromApiKeyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
@@ -21,15 +21,9 @@ const ZDeleteApiKeyAction = z.object({
 export const deleteApiKeyAction = authenticatedActionClient.inputSchema(ZDeleteApiKeyAction).action(
   withAuditLogging("deleted", "apiKey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromApiKeyId(parsedInput.id);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "apiKey.manage", {
+      type: "apiKey",
+      id: parsedInput.id,
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -48,15 +42,9 @@ const ZCreateApiKeyAction = z.object({
 
 export const createApiKeyAction = authenticatedActionClient.inputSchema(ZCreateApiKeyAction).action(
   withAuditLogging("created", "apiKey", async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_api_keys", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
@@ -82,15 +70,9 @@ const ZUpdateApiKeyAction = z.object({
 export const updateApiKeyAction = authenticatedActionClient.inputSchema(ZUpdateApiKeyAction).action(
   withAuditLogging("updated", "apiKey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromApiKeyId(parsedInput.apiKeyId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "apiKey.manage", {
+      type: "apiKey",
+      id: parsedInput.apiKeyId,
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;

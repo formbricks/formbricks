@@ -267,6 +267,53 @@ const microsoftGraphUserInfo = async (tokens: {
     return null;
   }
 };
+
+/**
+ * The endpoints Microsoft publishes for a given authority, configured explicitly so Better Auth never
+ * builds an id_token verification config for it (ENG-2750). Shared with the `openid` provider, which
+ * can be pointed at the same authorities and breaks identically when it is (ENG-2754).
+ *
+ * These are the values Microsoft's own discovery document returns for a multi-tenant authority, so
+ * configuring them by hand changes nothing about where the flow goes — only that we skip discovery.
+ * Skipping it is the sole lever for turning verification off: `GenericOAuthConfig` offers no way to
+ * opt out once a discovery document has supplied both `jwks_uri` and `issuer`.
+ *
+ * Skipping discovery is NOT sufficient on its own, though, and that half is easy to miss — it was
+ * missed here until review. Removing the verification config also removes the guard that would
+ * otherwise stop Better Auth reading identity straight out of the unverified id_token, which is why
+ * `getUserInfo` below is part of this shape rather than an optimisation.
+ */
+const microsoftExplicitEndpoints = (authority: string) => ({
+  authorizationUrl: `https://login.microsoftonline.com/${authority}/oauth2/v2.0/authorize`,
+  tokenUrl: `https://login.microsoftonline.com/${authority}/oauth2/v2.0/token`,
+  userInfoUrl: MICROSOFT_GRAPH_USERINFO_URL,
+  // Not redundant with `userInfoUrl` — see microsoftGraphUserInfo. The URL alone leaves Better Auth's
+  // unverified-id_token shortcut in play; this override is what actually forces the Graph call, and it
+  // applies to every provider that reaches this branch (azuread and openid alike).
+  getUserInfo: microsoftGraphUserInfo,
+});
+
+/**
+ * The Microsoft multi-tenant authority a URL names, if it names one — e.g. an `OIDC_ISSUER` of
+ * `https://login.microsoftonline.com/common/v2.0` resolves to `common` (ENG-2754).
+ *
+ * Matched on the parsed host rather than a substring, so a lookalike host cannot be mistaken for
+ * Microsoft, and returns undefined for a concrete tenant (a GUID or verified domain) since those
+ * advertise a real issuer and must keep discovery.
+ */
+const microsoftTemplateIssuerAuthority = (issuerUrl: string | undefined): string | undefined => {
+  if (!issuerUrl?.trim()) return undefined;
+  let parsed: URL;
+  try {
+    parsed = new URL(issuerUrl.trim());
+  } catch {
+    return undefined;
+  }
+  if (parsed.host.toLowerCase() !== "login.microsoftonline.com") return undefined;
+  const authority = parsed.pathname.split("/").find(Boolean)?.toLowerCase();
+  return authority && AZURE_TEMPLATE_ISSUER_TENANTS.has(authority) ? authority : undefined;
+};
+
 // Unset behaves exactly like `common`: Microsoft's multi-tenant authority, and the documented default.
 const azureTenant = AZUREAD_TENANT_ID?.trim() || "common";
 const isAzureTemplateIssuerTenant = AZURE_TEMPLATE_ISSUER_TENANTS.has(azureTenant.toLowerCase());
@@ -291,17 +338,33 @@ if (
   );
 }
 const azureEndpoints = isAzureTemplateIssuerTenant
-  ? {
-      authorizationUrl: `https://login.microsoftonline.com/${azureAuthority}/oauth2/v2.0/authorize`,
-      tokenUrl: `https://login.microsoftonline.com/${azureAuthority}/oauth2/v2.0/token`,
-      userInfoUrl: MICROSOFT_GRAPH_USERINFO_URL,
-      // Not redundant with `userInfoUrl` — see microsoftGraphUserInfo. The URL alone leaves Better
-      // Auth's unverified-id_token shortcut in play; this is what actually forces the Graph call.
-      getUserInfo: microsoftGraphUserInfo,
-    }
+  ? microsoftExplicitEndpoints(azureAuthority)
   : {
       discoveryUrl: `https://login.microsoftonline.com/${azureAuthority}/v2.0/.well-known/openid-configuration`,
     };
+
+/**
+ * The generic OIDC provider hits the same wall when it is pointed at Microsoft (ENG-2754).
+ *
+ * `OIDC_ISSUER` is arbitrary operator input, so unlike azuread there is no set of values to enumerate
+ * — but the one issuer known to advertise a placeholder is Microsoft's, and we already know its
+ * endpoints. Anything else keeps discovery: OpenID Discovery §4.3 requires the advertised issuer to be
+ * identical to the one in the tokens, so a conforming provider cannot land here at all.
+ *
+ * Falls back rather than failing at init, matching how azuread treats the identical root cause: this
+ * configuration worked on 5.3 (1.6 never parsed the id_token), so refusing to start would be a harsher
+ * regression than the one being fixed. The warning names the better answer instead — the dedicated
+ * `AZUREAD_*` provider, which maps Entra's profile properly.
+ */
+const oidcTemplateIssuerAuthority = microsoftTemplateIssuerAuthority(OIDC_ISSUER);
+if (ENTERPRISE_LICENSE_KEY && OIDC_OAUTH_ENABLED && oidcTemplateIssuerAuthority) {
+  logger.warn(
+    `OIDC_ISSUER points at Microsoft's "${oidcTemplateIssuerAuthority}" authority, whose discovery document advertises a placeholder issuer, so id_tokens cannot be verified against it. Skipping discovery for this provider and taking identity from the userinfo endpoint; the authority you configured still applies at sign-in. Prefer the dedicated AZUREAD_CLIENT_ID / AZUREAD_CLIENT_SECRET provider for Microsoft Entra ID.`
+  );
+}
+const oidcEndpoints = oidcTemplateIssuerAuthority
+  ? microsoftExplicitEndpoints(oidcTemplateIssuerAuthority)
+  : { discoveryUrl: `${OIDC_ISSUER}/.well-known/openid-configuration` };
 
 export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KEY
   ? [
@@ -345,7 +408,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               providerId: "openid",
               clientId: OIDC_CLIENT_ID ?? "",
               clientSecret: OIDC_CLIENT_SECRET ?? "",
-              discoveryUrl: `${OIDC_ISSUER}/.well-known/openid-configuration`,
+              ...oidcEndpoints,
               scopes: ["openid", "email", "profile"],
               // Redundant since 1.7 defaults it to true, kept explicit (see azuread above).
               pkce: true,
