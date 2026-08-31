@@ -81,8 +81,9 @@ export class EmbeddedDataStore {
     // gets zero confirmation until a survey happens to display. Debug level: it prints only with
     // `?formbricksDebug=true`, so respondents' consoles stay clean. Keys only, never values — the
     // documented use of this bag includes hashed identity fields.
+    const removedSegment = removed.length > 0 ? `, removed [${removed.join(", ")}]` : "";
     this.logger.debug(
-      `setEmbeddedData: set [${set.join(", ")}]${removed.length > 0 ? `, removed [${removed.join(", ")}]` : ""} — the bag now holds [${[...this.data.keys()].join(", ")}]. Keys land on a response only if the survey declares them as ingested Embedded Data fields.`
+      `setEmbeddedData: set [${set.join(", ")}]${removedSegment} — the bag now holds [${[...this.data.keys()].join(", ")}]. Keys land on a response only if the survey declares them as ingested Embedded Data fields.`
     );
   }
 
