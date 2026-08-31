@@ -31,6 +31,9 @@ export type TEmbeddedDataInput = Record<string, string | number | boolean | Date
 export class EmbeddedDataStore {
   private static instance: EmbeddedDataStore | undefined;
   private data = new Map<string, string | number | boolean | Date>();
+  // Grabbed once: the Logger is itself a never-replaced singleton, so re-resolving it at every log
+  // site buys nothing. Configuration (the debug level) lands on this same instance later.
+  private readonly logger = Logger.getInstance();
 
   static getInstance(): EmbeddedDataStore {
     EmbeddedDataStore.instance ??= new EmbeddedDataStore();
@@ -53,20 +56,35 @@ export class EmbeddedDataStore {
     // refused too, and so is an array (`typeof [] === "object"`): either would spread into junk
     // numeric keys ({0: "p", 1: "l", …} / {0: "a", 1: "b"}) — `ecommerce.items` is the common array case.
     if (typeof data !== "object" || data === null || Array.isArray(data)) {
-      Logger.getInstance().error(
+      this.logger.error(
         `setEmbeddedData: expected an object, got ${data === null ? "null" : typeof data} — nothing was set`
       );
       return;
     }
 
+    const set: string[] = [];
+    const removed: string[] = [];
+
     for (const [key, value] of Object.entries(data)) {
       if (value === undefined) continue;
       if (value === null) {
-        this.data.delete(key);
+        // `Map.delete` says whether the key existed; the trace must report only real removals.
+        if (this.data.delete(key)) removed.push(key);
         continue;
       }
       this.data.set(key, value);
+      set.push(key);
     }
+
+    // A success trace, because the bag is otherwise invisible: it lives in memory (nothing in
+    // devtools storage) and the API has no getter, so without this line a developer wiring up GTM
+    // gets zero confirmation until a survey happens to display. Debug level: it prints only with
+    // `?formbricksDebug=true`, so respondents' consoles stay clean. Keys only, never values — the
+    // documented use of this bag includes hashed identity fields.
+    const removedSegment = removed.length > 0 ? `, removed [${removed.join(", ")}]` : "";
+    this.logger.debug(
+      `setEmbeddedData: set [${set.join(", ")}]${removedSegment} — the bag now holds [${[...this.data.keys()].join(", ")}]. Keys land on a response only if the survey declares them as ingested Embedded Data fields.`
+    );
   }
 
   /**
@@ -80,19 +98,31 @@ export class EmbeddedDataStore {
    */
   public clearEmbeddedData(...args: [] | [key: string]): void {
     if (args.length === 0) {
+      const clearedCount = this.data.size;
       this.data.clear();
+      this.logger.debug(`clearEmbeddedData: cleared the whole bag (${String(clearedCount)} keys)`);
       return;
     }
 
     const [key] = args;
     if (typeof key !== "string") {
-      Logger.getInstance().error(
+      this.logger.error(
         "clearEmbeddedData: expected a field name — nothing was cleared (call with no argument to clear everything)"
       );
       return;
     }
 
-    this.data.delete(key);
+    // Both outcomes get a line — an absent key saying so is exactly the feedback a developer
+    // debugging "why is/isn't my key here" needs, and silence was this trace's original sin.
+    if (this.data.delete(key)) {
+      this.logger.debug(
+        `clearEmbeddedData: removed "${key}" — the bag now holds [${[...this.data.keys()].join(", ")}]`
+      );
+    } else {
+      this.logger.debug(
+        `clearEmbeddedData: "${key}" was not in the bag — the bag holds [${[...this.data.keys()].join(", ")}]`
+      );
+    }
   }
 
   /**
