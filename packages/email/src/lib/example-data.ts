@@ -33,7 +33,7 @@ export const exampleData = {
   ssoRecoveryFactorsRemovedEmail: {
     passwordRemoved: true,
     twoFactorRemoved: true,
-    securitySettingsLink: "https://app.formbricks.com/settings/security",
+    securitySettingsLink: "https://app.formbricks.com/account/settings/profile",
   },
 
   inviteEmail: {
