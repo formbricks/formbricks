@@ -252,6 +252,12 @@ keeps restricting sign-in to work/school accounts, and an unset value behaves as
 logs a warning at startup when either is set and Microsoft SSO is enabled. To get full id_token
 verification, set your Directory (tenant) ID instead.
 
+<Warning>
+  This handling arrived in **5.4.1**. On 5.4.0 both authorities still take the verification path, so
+  every Microsoft sign-in fails with `?error=unable_to_get_user_info` — upgrade to 5.4.1, or unset
+  `AZUREAD_TENANT_ID` if you cannot upgrade immediately.
+</Warning>
+
 `consumers` needs no action and is not affected: every personal Microsoft account lives in one
 well-known tenant, so that authority advertises a real issuer and keeps full id_token verification.
 
