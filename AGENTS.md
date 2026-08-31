@@ -61,8 +61,8 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
 ### Stale package builds after a branch switch
 
 The same trap applies to **every** workspace package consumed through its built output rather than its
-source — `@formbricks/ai` and `@formbricks/database` resolve via `dist/` in their `exports` map, so
-`apps/web` imports the build, not `src/`. `git switch`, a rebase, or a pull changes `src/` but leaves
+source — `@formbricks/ai`, `@formbricks/database` and `@formbricks/i18n-utils` resolve via `dist/` in
+their `exports` map, so `apps/web` imports the build, not `src/`. `git switch`, a rebase, or a pull changes `src/` but leaves
 `dist/` exactly as it was, and nothing warns you.
 
 **This only bites when you bypass Turborepo.** Running `vitest` or `tsc` directly inside `apps/web`,
