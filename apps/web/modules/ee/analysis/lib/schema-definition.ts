@@ -339,10 +339,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.csatCount",
-      label: "CSAT: Responses",
+      label: "CSAT: Records",
       type: "count",
       group: "count",
-      description: "Number of CSAT responses",
+      description: "Number of feedback records from CSAT questions",
     },
     {
       id: "FeedbackRecords.cesAverage",
@@ -354,10 +354,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.cesCount",
-      label: "CES: Responses",
+      label: "CES: Records",
       type: "count",
       group: "count",
-      description: "Number of CES responses",
+      description: "Number of feedback records from CES questions",
     },
     {
       id: "FeedbackRecords.ratingAverage",
@@ -373,10 +373,11 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.ratingCount",
-      label: "Rating: Responses",
+      label: "Rating: Records",
       type: "count",
       group: "count",
-      description: "Number of answered rating responses (dismissed responses excluded)",
+      description:
+        "Number of feedback records from rating questions (unanswered questions produce no record)",
     },
     {
       id: "FeedbackRecords.sentimentAverage",
@@ -649,9 +650,10 @@ export function getFieldById(id: string): FieldDefinition | MeasureDefinition | 
  * Translate a field/measure ID. Each t() call uses a literal key so the i18n scanner can detect it.
  */
 /**
- * Translated description for the dimensions whose copy guides a chart-building decision. The rest of
- * the schema descriptions are still the inline English in FEEDBACK_FIELDS, so this falls back to that
- * rather than showing a key.
+ * Translated description for the members whose copy guides a chart-building decision — two
+ * dimensions (Value (Option) vs Value (Text)) and the three count measures a user has to choose
+ * between. The rest of the schema descriptions are still the inline English in FEEDBACK_FIELDS, so
+ * this falls back to that rather than showing a key.
  */
 export function getTranslatedFieldDescription(
   id: string,

@@ -14,14 +14,37 @@
 -- AlterEnum. The backfill shares the transaction with the swap so a failure in either leaves the
 -- column and the enum consistent, rather than rows already rewritten against the old type.
 BEGIN;
--- Backfill: every line chart becomes an area chart displayed as a line.
-UPDATE "public"."Chart"
-SET "type"   = 'area',
-    "config" = "config" || '{"areaDisplay": "line"}'::jsonb
-WHERE "type" = 'line';
-CREATE TYPE "public"."ChartType_new" AS ENUM ('area', 'bar', 'pie', 'big_number');
-ALTER TABLE "public"."Chart" ALTER COLUMN "type" TYPE "public"."ChartType_new" USING ("type"::text::"public"."ChartType_new");
-ALTER TYPE "public"."ChartType" RENAME TO "ChartType_old";
-ALTER TYPE "public"."ChartType_new" RENAME TO "ChartType";
-DROP TYPE "public"."ChartType_old";
+-- Guarded on the catalog rather than run bare, so this is convergent: on a second run, and on a
+-- database created with `db:push`, `ChartType` already lacks `line` and the whole block is a no-op.
+-- Without the guard both cases fail — and they fail at the *backfill*, before the enum swap, because
+-- `"type" = 'line'` cannot even be parsed once `line` is not a member of the enum
+-- (`invalid input value for enum ChartType: "line"`), which reads as data corruption rather than as
+-- "already applied".
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_enum e
+      JOIN pg_type t ON t.oid = e.enumtypid
+      JOIN pg_namespace n ON n.oid = t.typnamespace
+    WHERE n.nspname = 'public'
+      AND t.typname = 'ChartType'
+      AND e.enumlabel = 'line'
+  ) THEN
+    RETURN;
+  END IF;
+
+  -- Backfill: every line chart becomes an area chart displayed as a line. `config` is
+  -- `Json @default("{}")` and never null, so `||` cannot blank it out.
+  UPDATE "public"."Chart"
+  SET "type"   = 'area',
+      "config" = "config" || '{"areaDisplay": "line"}'::jsonb
+  WHERE "type" = 'line';
+
+  CREATE TYPE "public"."ChartType_new" AS ENUM ('area', 'bar', 'pie', 'big_number');
+  ALTER TABLE "public"."Chart" ALTER COLUMN "type" TYPE "public"."ChartType_new" USING ("type"::text::"public"."ChartType_new");
+  ALTER TYPE "public"."ChartType" RENAME TO "ChartType_old";
+  ALTER TYPE "public"."ChartType_new" RENAME TO "ChartType";
+  DROP TYPE "public"."ChartType_old";
+END $$;
 COMMIT;

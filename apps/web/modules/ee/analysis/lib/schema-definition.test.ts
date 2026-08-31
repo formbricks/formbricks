@@ -16,6 +16,7 @@ import {
   getMeasureAxisLabel,
   getSentimentValueForMeasureId,
   getTranslatedDimensionValueLabel,
+  getTranslatedFieldDescription,
   getTranslatedFieldLabel,
   isEnrichmentDimensionId,
   isNotEnrichedDimensionValue,
@@ -278,6 +279,40 @@ describe("schema-definition", () => {
         expect(dockerSchema).toContain(`    ${member}: {`);
         expect(chartSchema).toContain(`    ${member}: {`);
       }
+    });
+  });
+
+  describe("getTranslatedFieldDescription", () => {
+    const t = ((key: string) => key) as TFunction;
+
+    // The descriptions these ids carry are the copy that tells a user which of three
+    // near-identical measures to pick. Routing them through `t()` is what puts them in front of a
+    // non-English user; nothing else fails if a key is dropped from the map, because the fallback
+    // silently serves the hardcoded English from FEEDBACK_FIELDS and `pnpm i18n` still passes.
+    test("resolves each described member through i18n rather than the English fallback", () => {
+      const describedIds = [
+        "FeedbackRecords.valueId",
+        "FeedbackRecords.valueText",
+        "FeedbackRecords.count",
+        "FeedbackRecords.uniqueRespondents",
+        "FeedbackRecords.uniqueResponses",
+      ];
+
+      for (const id of describedIds) {
+        expect(getTranslatedFieldDescription(id, "english fallback", t)).toMatch(
+          /^workspace\.analysis\.charts\.field_description_/
+        );
+      }
+    });
+
+    test("falls back to the schema's own description for a member with no key", () => {
+      expect(getTranslatedFieldDescription("FeedbackRecords.sourceType", "english fallback", t)).toBe(
+        "english fallback"
+      );
+    });
+
+    test("passes an absent description through rather than inventing one", () => {
+      expect(getTranslatedFieldDescription("FeedbackRecords.sourceType", undefined, t)).toBeUndefined();
     });
   });
 

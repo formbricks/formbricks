@@ -6,19 +6,19 @@ cube(`FeedbackRecords`, {
   measures: {
     count: {
       type: `count`,
-      description: `Total number of feedback responses`,
+      description: `Total number of feedback records`,
     },
 
     uniqueRespondents: {
       type: `countDistinct`,
       sql: `${CUBE}.user_id`,
-      description: `Number of unique users who provided feedback`,
+      description: `Unique identified people who gave feedback, deduplicated by person — one respondent answering 3 questions counts once. Anonymous feedback (no identified respondent) isn't counted here, even though it counts as a Feedback Record.`,
     },
 
     uniqueResponses: {
       type: `countDistinct`,
       sql: `${CUBE}.submission_id`,
-      description: `Number of unique survey submissions (a submission can produce multiple feedback records)`,
+      description: `Unique survey submissions, deduplicated by submission — one respondent submitting twice counts twice`,
     },
 
     promoterCount: {
@@ -325,13 +325,13 @@ cube(`FeedbackRecords`, {
     valueText: {
       sql: `value_text`,
       type: `string`,
-      description: `Text answer value (open text, or the label of a multiple-choice / categorical answer). Pair with a fieldType filter to keep types consistent.`,
+      description: `Text answer value (open text, or the label of a multiple-choice/categorical answer). Buckets by the exact text, so a translated label, an edited label or a free-text 'other' answer each becomes its own bucket — for choice questions prefer valueId. Pair with a fieldType filter to keep types consistent.`,
     },
 
     valueId: {
       sql: `value_id`,
       type: `string`,
-      description: `Stable id of a selected choice (single/multi-select). Group by this instead of valueText to consolidate the same option across languages / after a label edit.`,
+      description: `Recommended for single-select and multi-select answers: the stable option id keeps one option in one bucket across languages, after a label edit, and for free-text 'other' answers. Charts show the option's label, not the id.`,
     },
 
     valueBoolean: {
