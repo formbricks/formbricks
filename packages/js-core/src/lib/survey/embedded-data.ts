@@ -68,8 +68,8 @@ export class EmbeddedDataStore {
     for (const [key, value] of Object.entries(data)) {
       if (value === undefined) continue;
       if (value === null) {
-        this.data.delete(key);
-        removed.push(key);
+        // `Map.delete` says whether the key existed; the trace must report only real removals.
+        if (this.data.delete(key)) removed.push(key);
         continue;
       }
       this.data.set(key, value);
@@ -111,10 +111,17 @@ export class EmbeddedDataStore {
       return;
     }
 
-    this.data.delete(key);
-    this.logger.debug(
-      `clearEmbeddedData: removed "${key}" — the bag now holds [${[...this.data.keys()].join(", ")}]`
-    );
+    // Both outcomes get a line — an absent key saying so is exactly the feedback a developer
+    // debugging "why is/isn't my key here" needs, and silence was this trace's original sin.
+    if (this.data.delete(key)) {
+      this.logger.debug(
+        `clearEmbeddedData: removed "${key}" — the bag now holds [${[...this.data.keys()].join(", ")}]`
+      );
+    } else {
+      this.logger.debug(
+        `clearEmbeddedData: "${key}" was not in the bag — the bag holds [${[...this.data.keys()].join(", ")}]`
+      );
+    }
   }
 
   /**

@@ -213,6 +213,28 @@ describe("the debug success trace — the bag's only success feedback", () => {
     expect(mockLogger.debug.mock.calls[1][0]).toContain("cleared the whole bag (1 keys)");
   });
 
+  test("a null for an ABSENT key is not reported as removed — the trace records only real removals", () => {
+    EmbeddedDataStore.getInstance().setEmbeddedData({ plan: "pro" });
+    mockLogger.debug.mockClear();
+
+    EmbeddedDataStore.getInstance().setEmbeddedData({ missing: null, pageType: "product" });
+
+    const message = mockLogger.debug.mock.calls[0][0] as string;
+    expect(message).toContain("set [pageType]");
+    expect(message).not.toContain("removed");
+  });
+
+  test("clearing an absent key says so instead of claiming a removal", () => {
+    EmbeddedDataStore.getInstance().setEmbeddedData({ plan: "pro" });
+    mockLogger.debug.mockClear();
+
+    EmbeddedDataStore.getInstance().clearEmbeddedData("missing");
+
+    const message = mockLogger.debug.mock.calls[0][0] as string;
+    expect(message).toContain('"missing" was not in the bag');
+    expect(message).not.toContain('removed "missing"');
+  });
+
   test("a refused input logs an error and no success trace", () => {
     mockLogger.error.mockClear();
 
