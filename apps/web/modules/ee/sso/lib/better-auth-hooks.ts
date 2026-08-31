@@ -30,9 +30,10 @@ import {
 /**
  * Resolve the SSO provider id from a Better Auth callback endpoint context, else null.
  *
- * Better Auth sets `context.path` to the ROUTE PATTERN — `/oauth2/callback/:providerId` for the
- * generic-OAuth plugin, `/callback/:id` for built-in social — and the matched provider on
- * `context.params` (`providerId` or `id`). We prefer the parsed param and fall back to parsing a
+ * Better Auth sets `context.path` to the ROUTE PATTERN — `/callback/:id` for both built-in social
+ * providers and, since Better Auth 1.7 (ENG-2343), the `genericOAuth` plugin too (it now shares the
+ * social-provider route instead of its own `/oauth2/callback/:providerId`) — and the matched provider
+ * on `context.params` (`providerId` or `id`). We prefer the parsed param and fall back to parsing a
  * resolved path. Returns null for non-callback paths (e.g. `/sign-up/email`) so the hooks below
  * only act on SSO sign-ups.
  */

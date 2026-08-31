@@ -25,11 +25,14 @@ const ValidationIcon = ({ state }: { state: boolean }) =>
 export const PasswordChecks = ({ password }: PasswordChecksProps) => {
   const { t } = useTranslation();
 
-  const DEFAULT_VALIDATIONS = [
-    { label: t("auth.signup.password_validation_uppercase_and_lowercase"), state: false },
-    { label: t("auth.signup.password_validation_minimum_8_and_maximum_128_characters"), state: false },
-    { label: t("auth.signup.password_validation_contain_at_least_1_number"), state: false },
-  ];
+  const DEFAULT_VALIDATIONS = useMemo(
+    () => [
+      { label: t("auth.signup.password_validation_uppercase_and_lowercase"), state: false },
+      { label: t("auth.signup.password_validation_minimum_8_and_maximum_128_characters"), state: false },
+      { label: t("auth.signup.password_validation_contain_at_least_1_number"), state: false },
+    ],
+    [t]
+  );
 
   const validations = useMemo(() => {
     if (password === null) return DEFAULT_VALIDATIONS;
@@ -48,7 +51,7 @@ export const PasswordChecks = ({ password }: PasswordChecksProps) => {
         state: PASSWORD_REGEX.NUMBER.test(password),
       },
     ];
-  }, [password]);
+  }, [password, DEFAULT_VALIDATIONS, t]);
 
   return (
     <div className="my-2 text-left text-slate-700 sm:text-sm">

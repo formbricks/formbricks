@@ -32,8 +32,9 @@ import "server-only";
 
 // Deliberately a local copy of the literal in oauth-urls.ts rather than an import: that module reads
 // `@/lib/env`, and pulling env validation into this one would cost it the property that makes it
-// exhaustively testable — no dependencies, no environment. Both sites are grep-findable as
-// "/api/auth" if the base path ever becomes configurable (ENG-606).
+// exhaustively testable — no dependencies, no environment. All three sites — this one, oauth-urls.ts and
+// legacy-sso-callback.ts — are grep-findable as "/api/auth" if the base path ever becomes
+// configurable (ENG-606).
 const AUTH_BASE_PATH = "/api/auth";
 
 /** Emitted when the URL is unparseable or names no endpoint we serve. Bounds tag cardinality. */

@@ -53,12 +53,26 @@ export const getMcpOrigin = (): string => new URL(getMcpResourceUrl()).origin;
  * Built off the issuer for the same reason `jwksUrl` is: Better Auth mounts its OAuth endpoints
  * under the auth base path, so the issuer is the prefix the plugin itself uses.
  *
- * The assumption is that this equals Better Auth's own `ctx.context.baseURL`, which is what it
- * stamps into the audience. That holds while the configured auth URL is a bare origin — Better
- * Auth's `withPath` appends `/api/auth` exactly as `getAuthIssuerUrl` does. It does NOT hold if
- * `BETTER_AUTH_URL` carries a subpath, because `withPath` returns a URL that already has a path
- * unchanged while we still append. Subpath deployments cannot complete a login at all today
- * (ENG-606), so this is not a live gap — but it is the thing to fix here when that one is fixed.
+ * The assumption is that this equals Better Auth's own `ctx.context.baseURL`, which is what it stamps
+ * into the audience. It holds for both shapes an operator is actually told to configure:
+ *
+ * - a bare origin — upstream's `withPath` appends `/api/auth`, exactly as `appendPath` does here;
+ * - a subpath already ending in `/api/auth` (`https://host/custom-path/api/auth`, which is the literal
+ *   value `docs/self-hosting/configuration/custom-subpath.mdx` prescribes) — `withPath` returns it
+ *   unchanged because `checkHasPath` is true, and `appendPath` returns it unchanged because its
+ *   `basePath.endsWith(normalizedPath)` branch fires.
+ *
+ * The one shape where they diverge is a configured URL carrying a path that does NOT end in
+ * `/api/auth`: `withPath` leaves any non-empty path alone, while `appendPath` would append. Note this
+ * is narrower than it used to say here — "any subpath breaks it" is wrong, and the documented subpath
+ * is precisely the case that works. Subpath deployments cannot complete a login at all today (ENG-606),
+ * so it is still not a live gap.
+ *
+ * This matters beyond the audience now: `ssoLegacyRedirectUri` in better-auth-providers.ts builds the
+ * pinned SSO callback URL from `getAuthIssuerUrl()` (ENG-2343). Because that URL is pinned explicitly,
+ * Better Auth sends it on both the authorization and token legs regardless of its own `baseURL`, so a
+ * divergence here cannot desynchronise the handshake — it would only mean the URL names a host the
+ * operator did not intend, which is a configuration error rather than a protocol one.
  */
 export const getOAuthUserInfoUrl = (): string => `${getAuthIssuerUrl()}/oauth2/userinfo`;
 

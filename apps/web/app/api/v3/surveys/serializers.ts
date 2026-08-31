@@ -26,6 +26,7 @@ type TV3SurveyListItemBase = Pick<
   | "createdAt"
   | "updatedAt"
   | "responseCount"
+  | "completedResponseCount"
 >;
 
 export type TV3SurveyListItem = TV3SurveyListItemBase & {
@@ -85,6 +86,7 @@ export function serializeV3SurveyListItem(survey: TSurveyListRecord): TV3SurveyL
     createdAt: survey.createdAt,
     updatedAt: survey.updatedAt,
     responseCount: survey.responseCount,
+    completedResponseCount: survey.completedResponseCount,
     creator: serializeV3SurveyCreator(survey.creator),
   };
 }

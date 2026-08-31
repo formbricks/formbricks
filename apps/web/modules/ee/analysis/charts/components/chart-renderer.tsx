@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { BreakdownBars } from "@/modules/ee/analysis/charts/components/breakdown-bars";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
+import { computeBigNumberValue } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
   CHART_BRAND_DARK,
@@ -534,18 +535,13 @@ export function ChartRenderer({
       );
     case "big_number": {
       // A measure with nothing to compute comes back as NULL (see restoreNullMeasures in
-      // cube-client, which maps the pivot's sentinel back to null). Summing it as 0 would print a
-      // confident "0" for "never asked", so count the numeric rows and fall back to a no-data glyph.
-      const numericValues = data
-        .map((row) => row[dataKey])
-        .filter((value) => value !== null && value !== undefined && value !== "")
-        .map(Number)
-        .filter((value) => Number.isFinite(value));
-      const hasValue = numericValues.length > 0;
-      const total = numericValues.reduce((sum, value) => sum + value, 0);
+      // cube-client, which maps the pivot's sentinel back to null). Printing it as 0 would be a
+      // confident "0" for "never asked", so fall back to a no-data glyph instead.
+      const value = computeBigNumberValue(data, dataKey);
+      const hasValue = value !== null;
       // formatCellValue caps at two fraction digits, so a big number and a bar label now agree on
       // precision instead of showing 4.705 next to 4.7.
-      const formatted = hasValue ? formatCellValue(total) : NO_DATA_PLACEHOLDER;
+      const formatted = hasValue ? formatCellValue(value) : NO_DATA_PLACEHOLDER;
       return (
         <div className="flex h-full items-center justify-center p-4">
           <div className="text-center">

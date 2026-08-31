@@ -91,6 +91,42 @@ describe("generateAIChartQuery", () => {
     });
   });
 
+  test("strips a grouping the model put on a big number, which has no axis for it", async () => {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
+        name: null,
+        measures: ["FeedbackRecords.npsScore"],
+        dimensions: ["FeedbackRecords.sourceName"],
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: "day",
+            dateRange: "last 30 days",
+          },
+        ],
+        chartType: "big_number",
+        filters: null,
+      },
+    });
+
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      userId: "user-1",
+      prompt: "NPS score for the last 30 days as a big number",
+    });
+
+    // The date range survives as a filter; the grouping it was paired with does not, because the
+    // single value cannot be recovered from per-day NPS readings.
+    expect(result).toEqual({
+      chartType: "big_number",
+      query: {
+        measures: ["FeedbackRecords.npsScore"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: "last 30 days" }],
+      },
+    });
+  });
+
   test("falls back to the total count measure when the AI returns no measures", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {

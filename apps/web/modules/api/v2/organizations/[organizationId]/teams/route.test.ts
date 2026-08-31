@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
+import { POST } from "./route";
 
 const {
   mockAuthenticatedApiClient,
@@ -79,7 +80,6 @@ describe("POST /organizations/[organizationId]/teams", () => {
     mockGetApiKeyCreatorRole.mockResolvedValue(null);
     mockCanManageOrganizationUsers.mockReturnValue(false);
 
-    const { POST } = await import("./route");
     const response = await POST(buildRequest(), { params: Promise.resolve({ organizationId }) });
 
     expect(mockGetApiKeyCreatorRole).toHaveBeenCalledWith(apiKeyId, organizationId);
@@ -98,7 +98,6 @@ describe("POST /organizations/[organizationId]/teams", () => {
     mockCanManageOrganizationUsers.mockReturnValue(true);
     mockCreateTeam.mockResolvedValue({ ok: true, data: { id: "team123", ...teamInput, organizationId } });
 
-    const { POST } = await import("./route");
     const response = await POST(buildRequest(), { params: Promise.resolve({ organizationId }) });
 
     expect(mockGetApiKeyCreatorRole).toHaveBeenCalledWith(apiKeyId, organizationId);

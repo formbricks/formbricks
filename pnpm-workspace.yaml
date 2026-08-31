@@ -300,54 +300,19 @@ overrides:
   # What makes it tolerable is the input, not the dependency type: every one of these call sites expands
   # glob patterns supplied by library code or developer config (gaxios' cache cleanup, typeorm's entity
   # discovery, build and lint globs), never by request data.
-  # === Accepted risk, no override possible yet (pnpm audit will keep flagging this) ===
-  # ENG-1703 / GHSA-p2fr-6hmx-4528 (Dependabot alerts #612 and #613, both dismissed as tolerable risk;
-  # the ticket is closed Done with the same conclusion as here). Re-verified 2026-08-05.
-  # @better-auth/oauth-provider 1.6.23 (used for the MCP OAuth flow, ENG-1055) fails to bind
-  # access-token audiences to their authorization grant (RFC 8707 resource-indicator confusion) — a
-  # client can complete a normal authorization flow and then request a JWT scoped to a resource server
-  # the authorization never covered. No pin can close it: the whole 1.6.x stable line is in range, and the
-  # patch ships only from 1.7.0-beta.4 — a line still in pre-release. (Deliberately version-agnostic: the
-  # `latest` and `rc` tags move about weekly, so naming them here just guarantees this note rots. The
-  # rc-specific claims below are pinned to 1.7.0-rc.4, the release actually inspected.)
-  # Why this deployment isn't exposed to the escalation — and what that rests on. Note the advisory is
-  # explicit that a single-audience deployment still does not bind the resource to the authorization
-  # grant, so the spec-compliance gap remains regardless of the below; this is "not exploitable here",
-  # not "compliant":
-  # - apps/web/modules/auth/lib/mcp-oauth-provider-options.ts sets a single-entry validAudiences (the
-  #   MCP resource URL), so there is no second audience for a client to escalate into. This is the
-  #   load-bearing mitigation, and it holds only while that array stays single-entry.
-  # - apps/web/modules/mcp/auth.ts pins `audience: getMcpResourceUrl()` on the resource server's own
-  #   verify call AND, since ENG-2339, asserts the verified payload's `aud` itself. The pin alone was
-  #   never sufficient: it flows straight into jose's jwtVerify, whose `aud` check is a membership
-  #   test, so a token whose `aud` array also lists other audiences passes it. The advisory's own
-  #   workaround requires *rejecting* multi-audience tokens, which verifyOptions.audience cannot
-  #   express. The explicit assert is that rejection — an allow-list of {MCP resource, the AS's
-  #   UserInfo endpoint, which `openid` implies}, everything else refused.
-  # - What that does and does not buy: our MCP endpoint can no longer be reached with a token minted
-  #   for somebody else, which is the exploitable half. It does NOT make the AS compliant — 1.6.x
-  #   still never persists the approved resource, so there is nothing to bind the token request to.
-  #   That is unfixable from our side and is what the 1.7 upgrade (ENG-2343) is for. If a second
-  #   audience were ever added the party at risk is that other resource server, and nothing here
-  #   protects it.
-  # - Test coverage. Single-entry validAudiences is pinned twice, deliberately: in
-  #   apps/web/modules/auth/lib/mcp-oauth-dcr.test.ts (added by #8828) and in
-  #   apps/web/modules/auth/lib/mcp-oauth-provider-options.test.ts (ENG-2339), which also covers the
-  #   advertised-vs-registration scope agreement and the write-scope step-up expiry. Redundant on
-  #   purpose — it is the invariant this entire acceptance rests on. Separately,
-  #   apps/web/modules/mcp/auth.test.ts mints real signed JWTs and proves a multi-audience token is
-  #   refused (and that jose on its own accepts it).
-  # Upgrade cost, for whoever picks up 1.7.0: the renames the 1.7 upgrade guide warns about do not apply
-  # to us (migration 20260702093000_add_better_auth_oauth_provider already created `oauthClient`, not
-  # `oauthApplication`, with an `oauthAccessToken.token` column, not `.accessToken`, plus the `sessionId`
-  # that session-bound token validity needs — and we have no SCIM), and customAccessTokenClaims.resource
-  # does not apply either (ours only returns email/name). But there is still real DDL to write: as
-  # inspected at 1.7.0-rc.4, the line replaces `validAudiences` with a resources model and declares three
-  # tables we do not have — `oauthResource`, `oauthClientResource` and `oauthClientAssertion`. The bigger
-  # blocker is that the same release declares `better-auth` and `@better-auth/core` as matching
-  # `^1.7.0-rc.x` peers, making this a coupled auth-core upgrade touching login/2FA/SSO/sessions rather
-  # than a plugin-only bump. That needs its own reviewed PR once Better Auth ships 1.7.0 stable, not an
-  # audit sweep or an unattended dependency-only bump.
+  # === Closed by ENG-2343 (kept as a record, like the section above) ===
+  # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider RFC 8707 resource-indicator confusion) was carried
+  # here as an accepted risk for as long as the only patched line was a pre-release. It is fixed as of
+  # better-auth 1.7.0 stable, which this workspace now pins, so `pnpm audit` no longer reports it and
+  # the ~50 lines of justification that used to sit here are gone with it. What replaced them is real
+  # enforcement: the AS binds each token to the resources the authorization actually approved.
+  #
+  # One thing that did NOT go away: the resource server in apps/web/modules/mcp/auth.ts still asserts
+  # the verified `aud` against its own allow-list (ENG-2339). That is not leftover scaffolding from this
+  # acceptance — `hasAcceptedMcpAudience` answers "is this token for ME", which is a different
+  # question from "does each `aud` resolve to a registered resource"; only the first is the one a
+  # resource server must answer. (An earlier note here claimed 1.7 drops `verifyOptions.audience`
+  # from its own jwtVerify. That could not be substantiated and is retracted — see mcp/auth.ts.)
 
 autoInstallPeers: true
 linkWorkspacePackages: true
@@ -378,3 +343,11 @@ minimumReleaseAgeExclude:
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
   # reliably matched by the exclude, so match by name.
   - "@formbricks/hub"
+
+# ENG-2772 / better-auth#10887: oauth-provider eagerly seeds persisted resources while building its
+# plugin context. A transient database failure rejects Better Auth's process-lifetime context promise,
+# taking every auth endpoint down until restart. Keep eager seeding best-effort so initialization can
+# finish (including the provider's database hooks); its existing lazy resource lookup retries the seed.
+# Remove this version-pinned patch once upstream defers or safely handles eager seed failures.
+patchedDependencies:
+  "@better-auth/oauth-provider@1.7.0": patches/@better-auth__oauth-provider@1.7.0.patch

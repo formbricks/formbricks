@@ -20,6 +20,7 @@ import {
   getTranslatedFieldLabel,
   isEnrichmentDimensionId,
   isNotEnrichedDimensionValue,
+  isRatioMeasure,
   isSelectableValueDimension,
   sortMeasureIdsForCategoryAxis,
   sortRowsByEnumDimension,
@@ -143,6 +144,23 @@ describe("schema-definition", () => {
       expect(getMeasureById("FeedbackRecords.promoterCount")?.group).toBe("count");
       expect(getMeasureById("FeedbackRecords.npsAverage")?.group).toBe("average");
       expect(getMeasureById("FeedbackRecords.npsScore")?.group).toBe("score");
+    });
+
+    test("classifies scores and averages as ratios, and counts as additive", () => {
+      // Drives two decisions that must not diverge: whether an empty bucket means 0 or "no value",
+      // and whether per-group values may be folded into one.
+      expect(isRatioMeasure("FeedbackRecords.npsScore")).toBe(true);
+      expect(isRatioMeasure("FeedbackRecords.csatScore")).toBe(true);
+      expect(isRatioMeasure("FeedbackRecords.npsAverage")).toBe(true);
+      expect(isRatioMeasure("FeedbackRecords.sentimentAverage")).toBe(true);
+
+      expect(isRatioMeasure("FeedbackRecords.count")).toBe(false);
+      expect(isRatioMeasure("FeedbackRecords.promoterCount")).toBe(false);
+      expect(isRatioMeasure("FeedbackRecords.uniqueRespondents")).toBe(false);
+
+      // Not a measure, and not in the schema at all: both keep the additive default.
+      expect(isRatioMeasure("FeedbackRecords.sourceName")).toBe(false);
+      expect(isRatioMeasure("FeedbackRecords.notAMeasure")).toBe(false);
     });
 
     test("only exposes members present in the deployed Cube schema", () => {

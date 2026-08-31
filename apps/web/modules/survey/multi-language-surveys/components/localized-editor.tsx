@@ -4,7 +4,6 @@ import { useMemo, useTransition } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { isValidHTML } from "@formbricks/types/surveys/validation";
 import { md } from "@/lib/markdownIt";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Editor } from "@/modules/ui/components/editor";
@@ -57,13 +56,7 @@ export function LocalizedEditor({
         autoFocus={autoFocus}
         getText={() => {
           const text = value ? (value[selectedLanguageCode] ?? "") : "";
-          let html = md.render(text);
-
-          if (id === "headline" && text && !isValidHTML(text)) {
-            html = html.replaceAll(/<p>([\s\S]*?)<\/p>/g, "<p><strong>$1</strong></p>");
-          }
-
-          return html;
+          return md.render(text);
         }}
         key={`${elementId}-${id}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}

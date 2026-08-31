@@ -2477,6 +2477,7 @@ components:
         - updatedAt
         - archivedAt
         - responseCount
+        - completedResponseCount
         - creator
       properties:
         id:
@@ -2519,6 +2520,10 @@ components:
           description: Scheduled publish time (ISO 8601), or null if not scheduled.
         responseCount:
           type: integer
+          description: Number of responses, including partial ones.
+        completedResponseCount:
+          type: integer
+          description: Number of responses the respondent finished.
         creator:
           type:
             - object
