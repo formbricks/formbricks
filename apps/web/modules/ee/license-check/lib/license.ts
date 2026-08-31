@@ -282,6 +282,11 @@ const MEMORY_CACHE_TTL_MS = 60 * 1000; // 1 minute memory cache to avoid stamped
 
 let getEnterpriseLicensePromise: Promise<TEnterpriseLicenseResult> | null = null;
 
+// Grace deliberately covers every non-active answer, not just an unreachable server: a check that
+// completes and reports "expired" takes this path too, so a lapsed key keeps its allowance for the
+// rest of the window. That is the conservative side to err on — were the license server ever to
+// answer "expired" wrongly, the window is what stops every self-hosted instance from downgrading at
+// once. Narrowing it to failed checks only would be a deliberate policy change, not a cleanup.
 const getFallbackLevel = (
   liveLicense: TEnterpriseLicenseDetails | null,
   previousResult: TPreviousResult,
