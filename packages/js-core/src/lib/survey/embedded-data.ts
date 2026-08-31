@@ -59,14 +59,28 @@ export class EmbeddedDataStore {
       return;
     }
 
+    const set: string[] = [];
+    const removed: string[] = [];
+
     for (const [key, value] of Object.entries(data)) {
       if (value === undefined) continue;
       if (value === null) {
         this.data.delete(key);
+        removed.push(key);
         continue;
       }
       this.data.set(key, value);
+      set.push(key);
     }
+
+    // A success trace, because the bag is otherwise invisible: it lives in memory (nothing in
+    // devtools storage) and the API has no getter, so without this line a developer wiring up GTM
+    // gets zero confirmation until a survey happens to display. Debug level: it prints only with
+    // `?formbricksDebug=true`, so respondents' consoles stay clean. Keys only, never values — the
+    // documented use of this bag includes hashed identity fields.
+    Logger.getInstance().debug(
+      `setEmbeddedData: set [${set.join(", ")}]${removed.length > 0 ? `, removed [${removed.join(", ")}]` : ""} — the bag now holds [${[...this.data.keys()].join(", ")}]. Keys land on a response only if the survey declares them as ingested Embedded Data fields.`
+    );
   }
 
   /**
@@ -80,7 +94,9 @@ export class EmbeddedDataStore {
    */
   public clearEmbeddedData(...args: [] | [key: string]): void {
     if (args.length === 0) {
+      const clearedCount = this.data.size;
       this.data.clear();
+      Logger.getInstance().debug(`clearEmbeddedData: cleared the whole bag (${String(clearedCount)} keys)`);
       return;
     }
 
@@ -93,6 +109,9 @@ export class EmbeddedDataStore {
     }
 
     this.data.delete(key);
+    Logger.getInstance().debug(
+      `clearEmbeddedData: removed "${key}" — the bag now holds [${[...this.data.keys()].join(", ")}]`
+    );
   }
 
   /**
