@@ -91,6 +91,10 @@ vi.mock("./account-linking", () => ({
 describe("sso-recovery", () => {
   const txUserUpdate = vi.fn();
   const txUserUpdateMany = vi.fn();
+  // Both legacy writes go through `user.updateMany`, so the stub answers on the FILTER rather than on
+  // call order: keyed positionally, reordering the two writes would silently swap what each test below
+  // is asserting, and a case meant to prove one factor was untouched would be reading the other's count.
+  const legacyCleared = { twoFactor: 0, password: 0 };
   const txTwoFactorDeleteMany = vi.fn();
   const txAccountUpdateMany = vi.fn();
   const txOauthAccessUpdateMany = vi.fn();
@@ -122,7 +126,11 @@ describe("sso-recovery", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    txUserUpdateMany.mockResolvedValue({ count: 0 }); // post-cutover default: no legacy hash
+    legacyCleared.twoFactor = 0;
+    legacyCleared.password = 0; // post-cutover default: neither legacy column holds anything
+    txUserUpdateMany.mockImplementation(async ({ where }: { where: Record<string, unknown> }) =>
+      "password" in where ? { count: legacyCleared.password } : { count: legacyCleared.twoFactor }
+    );
     txTwoFactorDeleteMany.mockResolvedValue({ count: 1 });
     txAccountUpdateMany.mockResolvedValue({ count: 1 });
     txOauthAccessUpdateMany.mockResolvedValue({ count: 1 });
@@ -383,7 +391,7 @@ describe("sso-recovery", () => {
         identityProvider: "email",
         identityProviderAccountId: null,
       } as never);
-      txUserUpdateMany.mockResolvedValue({ count: 1 }); // this transaction flipped the legacy latch...
+      legacyCleared.twoFactor = 1; // this transaction flipped the legacy latch...
       txTwoFactorDeleteMany.mockResolvedValue({ count: 0 }); // ...and there was no row to count
 
       await completeRecovery();
@@ -401,12 +409,15 @@ describe("sso-recovery", () => {
     test("reports the password for a legacy hash with no credential account", async () => {
       asUnverifiedUser();
       txAccountUpdateMany.mockResolvedValue({ count: 0 }); // no credential row...
-      txUserUpdateMany.mockResolvedValue({ count: 1 }); // ...but a legacy hash was cleared
+      legacyCleared.password = 1; // ...but a legacy hash was cleared
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 }); // and no second factor was touched
 
       await completeRecovery();
 
+      // `twoFactorRemoved: false` is the half that only holds once the two legacy writes are told
+      // apart — with a shared count it would read `true` off the password's own result.
       expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith(
-        expect.objectContaining({ passwordRemoved: true })
+        expect.objectContaining({ passwordRemoved: true, twoFactorRemoved: false })
       );
     });
 
@@ -426,7 +437,7 @@ describe("sso-recovery", () => {
         identityProviderAccountId: null,
         twoFactorEnabled: true,
       } as never);
-      txUserUpdateMany.mockResolvedValue({ count: 0 }); // the other transaction got there first
+      legacyCleared.twoFactor = 0; // the other transaction got there first
       txTwoFactorDeleteMany.mockResolvedValue({ count: 0 });
       txAccountUpdateMany.mockResolvedValue({ count: 0 });
 
