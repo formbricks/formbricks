@@ -18,8 +18,6 @@ export interface TDateRangeValue {
 /** Which bound the next click sets. */
 export type TDateRangeBound = "from" | "to";
 
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
 export const startOfLocalDay = (date: Date): Date => {
   const next = new Date(date);
   next.setHours(0, 0, 0, 0);
@@ -29,6 +27,19 @@ export const startOfLocalDay = (date: Date): Date => {
 export const endOfLocalDay = (date: Date): Date => {
   const next = new Date(date);
   next.setHours(23, 59, 59, 999);
+  return next;
+};
+
+/**
+ * Shifts by whole calendar days.
+ *
+ * Not `± 24h`: a local day is 23 or 25 hours long at a daylight-saving transition, so adding
+ * 86_400_000ms to local midnight on a fall-back day lands at 23:00 the *same* date — which would make
+ * the adjacent-day fallback below return a same-day range instead of moving the bound.
+ */
+export const addLocalDays = (date: Date, days: number): Date => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
   return next;
 };
 
@@ -58,14 +69,14 @@ export const applyRangeClick = (
 
     // `to` unset (nothing to invert) or still after the new `from`: keep it.
     const isInverted = range.to !== undefined && from > range.to;
-    const to = isInverted ? endOfLocalDay(new Date(from.getTime() + DAY_IN_MS)) : range.to;
+    const to = isInverted ? endOfLocalDay(addLocalDays(from, 1)) : range.to;
 
     return { range: { from, to }, nextBound: "to", isComplete: false };
   }
 
   const to = endOfLocalDay(date);
   const isInverted = range.from !== undefined && to < range.from;
-  const from = isInverted ? startOfLocalDay(new Date(to.getTime() - DAY_IN_MS)) : range.from;
+  const from = isInverted ? startOfLocalDay(addLocalDays(to, -1)) : range.from;
 
   return { range: { from, to }, nextBound: "from", isComplete: from !== undefined };
 };

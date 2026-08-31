@@ -182,6 +182,7 @@ checksums:
     common/choose_organization: a8f5db68012323bfbb1a0ad0fb194603
     common/choose_workspace: f9ed22d76c69cc75aa56cf3da3fa6320
     common/clear_all: 854be0c051e4a3491a2cdd9dd8c1b4d5
+    common/clear_date: c5f1b6ed772d5a9ce4e4d15e19c3ba36
     common/clear_filters: 8f40ab5af527e4b190da94e7b6221379
     common/clear_selection: af5d720527735d4253e289400d29ec9e
     common/click: 9c2744de6b5ac7333d9dae1d5cf4a76d

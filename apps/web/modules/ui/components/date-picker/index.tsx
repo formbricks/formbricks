@@ -94,7 +94,7 @@ export const DatePicker = ({
       {value && onClear && (
         <Button
           type="button"
-          aria-label={clearButtonLabel}
+          aria-label={clearButtonLabel ?? t("common.clear_date")}
           data-testid={clearButtonId}
           variant="outline"
           size="sm"

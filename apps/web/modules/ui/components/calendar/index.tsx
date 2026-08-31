@@ -52,7 +52,9 @@ const CalendarChevron = ({
  */
 const CalendarDayButton = ({
   className,
-  day,
+  // Destructured out rather than used: react-day-picker passes its own `CalendarDay` object here, and
+  // spreading it into the `Button` would put a non-DOM prop on the underlying `<button>`.
+  day: _day,
   modifiers,
   ...props
 }: React.ComponentProps<typeof DayButton>) => {
@@ -71,7 +73,6 @@ const CalendarDayButton = ({
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
       data-selected-single={isSingleSelected ? true : undefined}
       data-range-start={modifiers.range_start ? true : undefined}
       data-range-end={modifiers.range_end ? true : undefined}
