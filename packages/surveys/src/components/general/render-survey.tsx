@@ -112,6 +112,7 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
       <Survey
         {...props}
         onLanguageChange={handleLanguageChange}
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- renamed to autoFocusEnabled; focus is imperative
         autoFocus={autoFocus}
         clickOutside={hasOverlay ? props.clickOutside : true}
         onClose={close}
