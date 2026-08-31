@@ -606,6 +606,14 @@ checksums:
     emails/response_finished_email_subject: 7e8b92b483242ddb31ba83e8fcf890f9
     emails/schedule_your_meeting: 01683323bd7373560cd2cb2737dbaf06
     emails/select_a_date: 521e4a705800da06d091fde3e801ce02
+    emails/sso_recovery_factors_removed_email_did_not_expect: 30209a930b9cd3dcc05b2fc8eb5e5f0f
+    emails/sso_recovery_factors_removed_email_heading: cd9ed20b14050b7ab38fb9e6537ad161
+    emails/sso_recovery_factors_removed_email_password: a5acd53c33bfb0d4360931b8cfd1eb09
+    emails/sso_recovery_factors_removed_email_review_security: 651d94f70a60445c61f95ea1ab337a44
+    emails/sso_recovery_factors_removed_email_sign_in_hint: f20332a23dd3e882c507792a3f9927dc
+    emails/sso_recovery_factors_removed_email_subject: 1de9cb05afff7ce807dfab3511bda848
+    emails/sso_recovery_factors_removed_email_text: fcf21b6d3fd4408b1b433d1be3e8f509
+    emails/sso_recovery_factors_removed_email_two_factor: 83d572df760fdce5cdb8fa8df9ea07ad
     emails/survey_response_finished_email_congrats: 4cc39698d6a16f68cf7d9db902c5978e
     emails/survey_response_finished_email_dont_want_notifications: 749171800180682839896dc04a53ca10
     emails/survey_response_finished_email_hey: 20c5157a424f7d49ceeb27e6fb13d194
