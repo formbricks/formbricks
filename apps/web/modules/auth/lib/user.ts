@@ -45,36 +45,39 @@ export const updateUserLastLoginAt = async (email: string) => {
   try {
     // Retry on a transient deadlock (40P01): the last-login bump is idempotent, so a bounded retry
     // clears rare cross-transaction contention on the hot login path instead of surfacing a 500.
-    return await retryOnDeadlock(() =>
-      prisma.$transaction(async (tx) => {
-        // FOR NO KEY UPDATE (not FOR UPDATE): this serializes concurrent same-user updates of
-        // lastLoginAt, but — unlike FOR UPDATE — does NOT conflict with the FOR KEY SHARE lock that a
-        // concurrent Session→User FK insert takes on this row during sign-in. FOR UPDATE here was
-        // stronger than the subsequent UPDATE needs and created a deadlock cycle on the login path
-        // (ENG-2038). The row is only read to return the previous lastLoginAt for a login analytics flag.
-        const lockedUsers = await tx.$queryRaw<Array<{ id: string; lastLoginAt: Date | null }>>`
+    // No identifier in the log context: the only one in scope here is the email.
+    return await retryOnDeadlock(
+      () =>
+        prisma.$transaction(async (tx) => {
+          // FOR NO KEY UPDATE (not FOR UPDATE): this serializes concurrent same-user updates of
+          // lastLoginAt, but — unlike FOR UPDATE — does NOT conflict with the FOR KEY SHARE lock that a
+          // concurrent Session→User FK insert takes on this row during sign-in. FOR UPDATE here was
+          // stronger than the subsequent UPDATE needs and created a deadlock cycle on the login path
+          // (ENG-2038). The row is only read to return the previous lastLoginAt for a login analytics flag.
+          const lockedUsers = await tx.$queryRaw<Array<{ id: string; lastLoginAt: Date | null }>>`
         SELECT "id", "lastLoginAt"
         FROM "User"
         WHERE "email" = ${email}
         FOR NO KEY UPDATE
       `;
-        const lockedUser = lockedUsers[0];
+          const lockedUser = lockedUsers[0];
 
-        if (!lockedUser) {
-          throw new ResourceNotFoundError("email", email);
-        }
+          if (!lockedUser) {
+            throw new ResourceNotFoundError("email", email);
+          }
 
-        await tx.user.update({
-          where: {
-            id: lockedUser.id,
-          },
-          data: {
-            lastLoginAt: new Date(),
-          },
-        });
+          await tx.user.update({
+            where: {
+              id: lockedUser.id,
+            },
+            data: {
+              lastLoginAt: new Date(),
+            },
+          });
 
-        return lockedUser.lastLoginAt;
-      })
+          return lockedUser.lastLoginAt;
+        }),
+      { operation: "updateUserLastLoginAt" }
     );
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {

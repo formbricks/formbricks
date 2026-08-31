@@ -292,31 +292,33 @@ export const updateAttributes = async (
     const orderedExistingAttributes = [...existingAttributes].sort((a, b) =>
       a.attributeKeyId < b.attributeKeyId ? -1 : a.attributeKeyId > b.attributeKeyId ? 1 : 0
     );
-    await retryOnDeadlock(() =>
-      prisma.$transaction(
-        orderedExistingAttributes.map(({ attributeKeyId, columns }) =>
-          prisma.contactAttribute.upsert({
-            where: {
-              contactId_attributeKeyId: {
+    await retryOnDeadlock(
+      () =>
+        prisma.$transaction(
+          orderedExistingAttributes.map(({ attributeKeyId, columns }) =>
+            prisma.contactAttribute.upsert({
+              where: {
+                contactId_attributeKeyId: {
+                  contactId,
+                  attributeKeyId,
+                },
+              },
+              update: {
+                value: columns.value,
+                valueNumber: columns.valueNumber,
+                valueDate: columns.valueDate,
+              },
+              create: {
                 contactId,
                 attributeKeyId,
+                value: columns.value,
+                valueNumber: columns.valueNumber,
+                valueDate: columns.valueDate,
               },
-            },
-            update: {
-              value: columns.value,
-              valueNumber: columns.valueNumber,
-              valueDate: columns.valueDate,
-            },
-            create: {
-              contactId,
-              attributeKeyId,
-              value: columns.value,
-              valueNumber: columns.valueNumber,
-              valueDate: columns.valueDate,
-            },
-          })
-        )
-      )
+            })
+          )
+        ),
+      { operation: "updateAttributes.existingAttributes", contactId, workspaceId }
     );
   }
 
@@ -392,28 +394,30 @@ export const updateAttributes = async (
         const orderedNewAttributes = [...preparedNewAttributes].sort((a, b) =>
           a.key < b.key ? -1 : a.key > b.key ? 1 : 0
         );
-        await retryOnDeadlock(() =>
-          prisma.$transaction(
-            orderedNewAttributes.map(({ key, dataType, columns }) =>
-              prisma.contactAttributeKey.create({
-                data: {
-                  key,
-                  name: formatSnakeCaseToTitleCase(key),
-                  type: "custom",
-                  dataType,
-                  workspaceId,
-                  attributes: {
-                    create: {
-                      contactId,
-                      value: columns.value,
-                      valueNumber: columns.valueNumber,
-                      valueDate: columns.valueDate,
+        await retryOnDeadlock(
+          () =>
+            prisma.$transaction(
+              orderedNewAttributes.map(({ key, dataType, columns }) =>
+                prisma.contactAttributeKey.create({
+                  data: {
+                    key,
+                    name: formatSnakeCaseToTitleCase(key),
+                    type: "custom",
+                    dataType,
+                    workspaceId,
+                    attributes: {
+                      create: {
+                        contactId,
+                        value: columns.value,
+                        valueNumber: columns.valueNumber,
+                        valueDate: columns.valueDate,
+                      },
                     },
                   },
-                },
-              })
-            )
-          )
+                })
+              )
+            ),
+          { operation: "updateAttributes.newAttributeKeys", contactId, workspaceId }
         );
       }
     }

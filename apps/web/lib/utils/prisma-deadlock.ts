@@ -1,3 +1,4 @@
+import { logger } from "@formbricks/logger";
 import { isPrismaKnownRequestError } from "@/lib/utils/prisma-error";
 
 /**
@@ -24,8 +25,16 @@ const DEADLOCK_MAX_ATTEMPTS = 3;
  *
  * Retry is the second line of defense — the first is acquiring locks in a deterministic order so no
  * cycle can form in the first place (see updateAttributes in modules/ee/contacts/lib/attributes.ts).
+ *
+ * `context` identifies the caller in the retry log. A swallowed deadlock is otherwise invisible —
+ * the request succeeds and nothing reaches Sentry — which would leave "no longer deadlocking" and
+ * "deadlocking but recovering" indistinguishable in production. Pass ids only: this runs on paths
+ * carrying contact attributes and user emails, and none of that belongs in a log line.
  */
-export const retryOnDeadlock = async <T>(operation: () => Promise<T>): Promise<T> => {
+export const retryOnDeadlock = async <T>(
+  operation: () => Promise<T>,
+  context: { operation: string } & Record<string, unknown>
+): Promise<T> => {
   for (let attempt = 1; ; attempt++) {
     try {
       return await operation();
@@ -33,6 +42,7 @@ export const retryOnDeadlock = async <T>(operation: () => Promise<T>): Promise<T
       if (attempt >= DEADLOCK_MAX_ATTEMPTS || !isDeadlockError(error)) {
         throw error;
       }
+      logger.warn({ ...context, attempt }, "Retrying transaction after Postgres deadlock");
       await new Promise((resolve) => setTimeout(resolve, attempt * 25));
     }
   }
