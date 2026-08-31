@@ -4,21 +4,120 @@ description: "Learn how to self-host Formbricks."
 icon: "server"
 ---
 
-### System Requirements
+## System Requirements
 
-<Info>
-  **Minimum Setup**: 1 vCPU, 2 GB RAM, 8 GB SSD.
-</Info>
+Formbricks is not a single container. The v6 baseline runs the Formbricks app, Formbricks Hub (API and
+worker), Cube, PostgreSQL, Redis/Valkey, and SpiceDB, so size the host for the whole stack rather than for
+the app alone.
+
+| Deployment                                                       | CPU                     | Memory                | Disk               |
+| ---------------------------------------------------------------- | ----------------------- | --------------------- | ------------------ |
+| Evaluation on a single server ([Docker](/self-hosting/setup/docker), [one-click](/self-hosting/setup/one-click)) | 2 vCPU                  | 4 GB                  | 20 GB SSD          |
+| Small production on a single server                              | 4 vCPU                  | 8 GB                  | 50 GB SSD          |
+| [Minimal enterprise setup](#minimal-enterprise-setup) (Kubernetes) | 6 vCPU across the nodes | 12 GB across the nodes | managed services   |
 
 <Info>
   **HTTPS Required**: Ensure your server runs with a valid HTTPS certificate.
 </Info>
 
-#### **Self-Hosting Options**
+<Warning>
+  4 GB is a floor, not a comfortable target. It leaves no headroom for a large response import, a survey
+  bundle rebuild, or any of the optional AI services below.
+</Warning>
+
+### Where The Memory Goes
+
+These are the defaults the Helm chart ships, and they are the most precise sizing statement we can give.
+A Docker Compose install runs the same services without enforced limits.
+
+| Component                | Replicas | CPU request | Memory request | Memory limit |
+| ------------------------ | -------- | ----------- | -------------- | ------------ |
+| Formbricks app           | 1        | 1000m       | 1 Gi           | 2 Gi         |
+| Formbricks Hub API       | 1        | 100m        | 256 Mi         | 512 Mi       |
+| Formbricks Hub worker    | 1        | 100m        | 256 Mi         | 512 Mi       |
+| Cube                     | 1        | 250m        | 512 Mi         | 1 Gi         |
+| PostgreSQL (bundled)     | 1        | 250m        | 512 Mi         | 1 Gi         |
+| Redis/Valkey (bundled)   | 1        | 100m        | 128 Mi         | 192 Mi       |
+| SpiceDB                  | 2        | 100m each   | 256 Mi each    | 512 Mi each  |
+| **Total**                |          | **2 vCPU**  | **3.2 GiB**    | **6.2 GiB**  |
+
+Migration Jobs run alongside this on install and upgrade, and Kubernetes itself takes roughly 0.5 vCPU and
+1 GB per node before any of it is schedulable.
+
+### Optional Services Are Much Heavier
+
+Everything below is disabled by default. Budget for it separately, and prefer an external endpoint over
+self-hosting the model if you only need the AI features occasionally.
+
+| Component                                                        | CPU request | Memory request | Notes                        |
+| ---------------------------------------------------------------- | ----------- | -------------- | ---------------------------- |
+| Hub embeddings (TEI)                                             | 8 vCPU      | 8 Gi           | plus a 10 Gi model cache     |
+| Hub background embeddings pool                                   | 4 vCPU      | 8 Gi           | plus a 10 Gi model cache     |
+| [AI taxonomy](/self-hosting/advanced/enterprise-features/ai-features) | 1 vCPU      | 2 Gi           | 4 Gi limit                   |
+| Bundled Qwen/vLLM                                                | 400m router | 1 Gi router    | requires GPU-capable nodes   |
+
+## Minimal Enterprise Setup
+
+This is the smallest deployment we consider production-grade: a managed Kubernetes cluster with managed
+data services, sized for a modest steady load and left free to autoscale into peaks. It is the same shape as
+a large deployment, just narrower — nothing here has to be re-architected when traffic grows.
+
+### Cluster
+
+| Resource       | Minimum                                                                  |
+| -------------- | ------------------------------------------------------------------------ |
+| Node pool      | 3 nodes × 2 vCPU / 4 GB (Azure `Standard_B2s`, AWS `t3.medium`, GCP `e2-medium`) |
+| Autoscaling    | Cluster autoscaler 3 → 5 nodes; app HPA `minReplicas: 2`                 |
+| Control plane  | The free/standard managed tier is sufficient at this size                |
+| Edge           | A load balancer plus [Envoy or an equivalent edge rate limiter](/self-hosting/advanced/rate-limiting) |
+
+Two app replicas are the reason for the third node. One replica cannot be evicted without downtime, which
+makes node drains and rolling upgrades disruptive — see the
+[Kubernetes deployment guide](/self-hosting/setup/kubernetes) for the replica and PodDisruptionBudget
+settings.
+
+### Managed Data Services
+
+Run these outside the cluster. They hold the state, and a managed service gives you backups and failover
+that the bundled charts do not.
+
+| Service        | Minimum                                                                  |
+| -------------- | ------------------------------------------------------------------------ |
+| PostgreSQL     | 2 vCores burstable, 64 GB SSD, `pgvector` available, PITR backups enabled |
+| SpiceDB store  | A separate database and login on the same PostgreSQL server              |
+| Redis/Valkey   | 250 MB managed cache; 1 GB once you enable Envoy rate limiting           |
+| Object storage | ~50 GB S3-compatible or Azure Blob for [file uploads](/self-hosting/configuration/file-uploads) |
+| Registry       | A basic private registry, if you mirror the Formbricks images            |
+
+Moving PostgreSQL and Redis out of the cluster frees roughly 350m CPU and 640 Mi of memory per node pool,
+which is what makes three small nodes workable.
+
+<Note>
+  Budget for data egress separately. Survey traffic is served to end users, so egress scales with responses
+  rather than with cluster size.
+</Note>
+
+### What This Sizing Assumes
+
+- No AI features. Self-hosted embeddings or an in-cluster LLM change the node pool completely — use an
+  external endpoint at this size.
+- A single region and no cross-region replication.
+- Peaks handled by autoscaling rather than by permanently provisioned capacity.
+
+### What To Scale First
+
+1. **App replicas**, via the HPA — the app is stateless and this is the cheapest lever.
+2. **PostgreSQL vCores**, once response writes or dashboard queries start queuing.
+3. **Redis**, which becomes the dominant cost at high request rates. If that matters more than the
+   operational simplicity of a managed cache, run Valkey in-cluster instead.
+
+## **Self-Hosting Options**
 
 * [**One-Click Setup**](/self-hosting/setup/one-click)**:** Set up Formbricks on Ubuntu in minutes with our shell script.
 
 * [**Docker Setup**](/self-hosting/setup/docker)**:** Use our pre-built Docker image for an effortless start.
+
+* [**Kubernetes Deployment**](/self-hosting/setup/kubernetes)**:** Deploy the full stack with the official Helm chart.
 
 * [**Migration Guide**](/self-hosting/advanced/migration)**:** Upgrade your existing Formbricks instance smoothly.
 
@@ -28,7 +127,7 @@ icon: "server"
 
 * [**Licensing**](/self-hosting/advanced/license)**:**  Learn more about our AGPL Formbricks Core and its open-source license & Unlock advanced features tailored for larger teams and enterprises with the EE License.
 
-### **Hosting Options**
+## **Hosting Options**
 
 * **Cloud Hosting:** Hassle-free managed deployment at [app.formbricks.com](https://app.formbricks.com).
 
@@ -36,7 +135,7 @@ icon: "server"
 
 * **Self-Hosting with EE License:** Unlock advanced features for large teams or enterprises.
 
-### **Licensing Options Comparison**:
+## **Licensing Options Comparison**:
 
 For Self Hosting, our core product is free however certain advanced features are a part of our Enterprise License offering. Please refer this table to understand if you want the features that are a part of it and then we’ll reach out to you!
 
