@@ -31,6 +31,9 @@ export type TEmbeddedDataInput = Record<string, string | number | boolean | Date
 export class EmbeddedDataStore {
   private static instance: EmbeddedDataStore | undefined;
   private data = new Map<string, string | number | boolean | Date>();
+  // Grabbed once: the Logger is itself a never-replaced singleton, so re-resolving it at every log
+  // site buys nothing. Configuration (the debug level) lands on this same instance later.
+  private readonly logger = Logger.getInstance();
 
   static getInstance(): EmbeddedDataStore {
     EmbeddedDataStore.instance ??= new EmbeddedDataStore();
@@ -53,7 +56,7 @@ export class EmbeddedDataStore {
     // refused too, and so is an array (`typeof [] === "object"`): either would spread into junk
     // numeric keys ({0: "p", 1: "l", …} / {0: "a", 1: "b"}) — `ecommerce.items` is the common array case.
     if (typeof data !== "object" || data === null || Array.isArray(data)) {
-      Logger.getInstance().error(
+      this.logger.error(
         `setEmbeddedData: expected an object, got ${data === null ? "null" : typeof data} — nothing was set`
       );
       return;
@@ -78,7 +81,7 @@ export class EmbeddedDataStore {
     // gets zero confirmation until a survey happens to display. Debug level: it prints only with
     // `?formbricksDebug=true`, so respondents' consoles stay clean. Keys only, never values — the
     // documented use of this bag includes hashed identity fields.
-    Logger.getInstance().debug(
+    this.logger.debug(
       `setEmbeddedData: set [${set.join(", ")}]${removed.length > 0 ? `, removed [${removed.join(", ")}]` : ""} — the bag now holds [${[...this.data.keys()].join(", ")}]. Keys land on a response only if the survey declares them as ingested Embedded Data fields.`
     );
   }
@@ -96,20 +99,20 @@ export class EmbeddedDataStore {
     if (args.length === 0) {
       const clearedCount = this.data.size;
       this.data.clear();
-      Logger.getInstance().debug(`clearEmbeddedData: cleared the whole bag (${String(clearedCount)} keys)`);
+      this.logger.debug(`clearEmbeddedData: cleared the whole bag (${String(clearedCount)} keys)`);
       return;
     }
 
     const [key] = args;
     if (typeof key !== "string") {
-      Logger.getInstance().error(
+      this.logger.error(
         "clearEmbeddedData: expected a field name — nothing was cleared (call with no argument to clear everything)"
       );
       return;
     }
 
     this.data.delete(key);
-    Logger.getInstance().debug(
+    this.logger.debug(
       `clearEmbeddedData: removed "${key}" — the bag now holds [${[...this.data.keys()].join(", ")}]`
     );
   }
