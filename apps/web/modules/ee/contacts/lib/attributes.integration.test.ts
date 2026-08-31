@@ -46,6 +46,26 @@ const createGate = (): { wait: Promise<void>; open: () => void } => {
   return { wait, open };
 };
 
+/**
+ * Block until Postgres reports a lock request that has not been granted — i.e. our identify
+ * transaction is genuinely waiting on the row the competitor holds. Polling the real lock state
+ * replaces "sleep and hope": on a loaded machine a fixed delay lets the competitor take its second
+ * row before we ever block, no cycle forms, and the test silently stops proving anything.
+ */
+const waitForBlockedLock = async (timeoutMs = 15_000): Promise<void> => {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const [{ blocked }] = await prisma.$queryRaw<Array<{ blocked: number }>>`
+      SELECT count(*)::int AS blocked FROM pg_locks WHERE NOT granted
+    `;
+    if (blocked > 0) return;
+    if (Date.now() > deadline) {
+      throw new Error("timed out waiting for a blocked lock — the intended deadlock never set up");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+};
+
 const seedContactWithAttributes = async (
   keys: string[]
 ): Promise<{ workspaceId: string; contactId: string; attributeKeyIdsSorted: string[] }> => {
@@ -214,9 +234,9 @@ describe("updateAttributes under concurrent identify calls (ENG-2252)", () => {
       attr_a: "recovered",
       attr_b: "recovered",
     });
-    // Let the identify transaction take the first row and start waiting on the last one, so the
-    // competitor's request for the first row closes the cycle rather than merely queueing.
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    // Wait until the identify transaction actually holds the first row and is blocked on the last,
+    // so the competitor's request for the first row closes the cycle rather than merely queueing.
+    await waitForBlockedLock();
     identifyIsInFlight.open();
 
     const [identifyResult] = await Promise.all([identify, competingWriter]);
