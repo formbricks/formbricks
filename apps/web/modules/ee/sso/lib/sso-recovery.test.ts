@@ -324,7 +324,7 @@ describe("sso-recovery", () => {
         isActive: true,
         identityProvider: "email",
         identityProviderAccountId: null,
-      } as any);
+      } as never);
 
     const completeRecovery = () =>
       completeSsoRecovery({
@@ -379,7 +379,7 @@ describe("sso-recovery", () => {
         isActive: true,
         identityProvider: "email",
         identityProviderAccountId: null,
-      } as any);
+      } as never);
 
       await completeRecovery();
 
