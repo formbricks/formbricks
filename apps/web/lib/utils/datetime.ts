@@ -127,3 +127,30 @@ export const getDateFnsLocale = (localeCode?: string): Locale => {
 
   return localeMap[normalized.split("-")[0]] ?? enUS;
 };
+
+/**
+ * Serialises a local calendar day as `yyyy-MM-dd`.
+ *
+ * Machine-facing on purpose — this is the value chart and dashboard time filters hand to Cube — so it
+ * stays non-localized. Deliberately not `toISOString().slice(0, 10)`: that converts to UTC first, so
+ * a user east of UTC would emit tomorrow's date and one west of it yesterday's.
+ */
+export const formatLocalDay = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * Parses a `yyyy-MM-dd` day back to local midnight — the inverse of `formatLocalDay`.
+ *
+ * `new Date("2026-08-05")` parses as UTC midnight, which displays (and re-emits) a day earlier for
+ * anyone west of UTC, so the value is rebuilt from its parts to keep the round trip symmetric.
+ */
+export const parseLocalDay = (value: string): Date => {
+  const [year, month, day] = value.split("-").map(Number);
+
+  return new Date(year, month - 1, day);
+};

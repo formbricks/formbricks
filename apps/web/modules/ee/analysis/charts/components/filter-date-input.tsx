@@ -1,7 +1,8 @@
 "use client";
 
-import { format, isValid, parseISO } from "date-fns";
+import { isValid, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { formatLocalDay } from "@/lib/utils/datetime";
 import { DatePicker } from "@/modules/ui/components/date-picker";
 
 interface FilterDateInputProps {
@@ -25,7 +26,7 @@ export function FilterDateInput({ value, onChange }: Readonly<FilterDateInputPro
       value={selectedDate}
       locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
       triggerClassName="w-[200px]"
-      onChange={(date) => onChange(format(date, "yyyy-MM-dd"))}
+      onChange={(date) => onChange(formatLocalDay(date))}
     />
   );
 }
