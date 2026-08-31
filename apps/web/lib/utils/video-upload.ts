@@ -56,8 +56,8 @@ export const extractYoutubeId = (url: string): string | null => {
   // Regular expressions for various YouTube URL formats
   const regExpList = [
     /youtu\.be\/([a-zA-Z0-9_-]+)/, // youtu.be/<id>
-    /youtube\.com.*v=([a-zA-Z0-9_-]+)/, // youtube.com/watch?v=<id>
-    /youtube\.com.*embed\/([a-zA-Z0-9_-]+)/, // youtube.com/embed/<id>
+    /youtube\.com.{0,2048}v=([a-zA-Z0-9_-]{1,64})/, // youtube.com/watch?v=<id>
+    /youtube\.com.{0,2048}embed\/([a-zA-Z0-9_-]{1,64})/, // youtube.com/embed/<id>
     /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]+)/, // youtube-nocookie.com/embed/<id>
   ];
 

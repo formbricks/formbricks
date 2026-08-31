@@ -37,8 +37,11 @@ export const SingleResponseCardBody = ({
   const isFirstElementAnswered = elements[0] ? !!response.data[elements[0].id] : false;
   const { t } = useTranslation();
   const formatTextWithSlashes = (text: string) => {
-    // Updated regex to match content between #/ and \#
-    const regex = /#\/(.*?)\\#/g;
+    // Content between #/ and \#, with the span length-capped. Unbounded, `(.*?)` rescans to the end
+    // from every `#/` when no closing `\#` follows (O(N^2) — measured 5.0s on 200k characters), and
+    // this runs over RESPONDENT-submitted text in the admin's browser. The cap is far longer than any
+    // recall label; past it the text renders unhighlighted rather than not at all.
+    const regex = /#\/(.{0,1024}?)\\#/g;
     const parts = text.split(regex);
 
     return parts.map((part, index) => {
