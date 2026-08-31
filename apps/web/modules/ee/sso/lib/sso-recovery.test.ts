@@ -382,9 +382,9 @@ describe("sso-recovery", () => {
         isActive: true,
         identityProvider: "email",
         identityProviderAccountId: null,
-        twoFactorEnabled: true, // legacy latch set...
       } as never);
-      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 }); // ...with no row to count
+      txUserUpdateMany.mockResolvedValue({ count: 1 }); // this transaction flipped the legacy latch...
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 }); // ...and there was no row to count
 
       await completeRecovery();
 
@@ -408,6 +408,31 @@ describe("sso-recovery", () => {
       expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith(
         expect.objectContaining({ passwordRemoved: true })
       );
+    });
+
+    // Recoveries are not locked against each other, and `user` is read before the transaction opens.
+    // A racing second recovery finds the latch already down, so its filtered write matches nothing and
+    // it must not mail the owner about a factor the first one removed.
+    test("a concurrent recovery that changed nothing reports nothing", async () => {
+      // The stale pre-transaction read still says the latch is up — that is the whole trap. Only the
+      // filtered write inside the transaction knows this recovery was not the one that flipped it.
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: "user_1",
+        email: "john.doe@example.com",
+        locale: "de-DE",
+        emailVerified: false,
+        isActive: true,
+        identityProvider: "email",
+        identityProviderAccountId: null,
+        twoFactorEnabled: true,
+      } as never);
+      txUserUpdateMany.mockResolvedValue({ count: 0 }); // the other transaction got there first
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 });
+      txAccountUpdateMany.mockResolvedValue({ count: 0 });
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).not.toHaveBeenCalled();
     });
 
     // `sendEmail` returns false without throwing when SMTP is unconfigured, so the catch never sees it.

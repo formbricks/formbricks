@@ -101,7 +101,7 @@ type TReclaimOutcome = {
   legacyPasswordCleared: boolean;
   twoFactorRowsRemoved: number;
   /**
-   * Whether the legacy `User.twoFactorEnabled` latch was set going in. 2FA lives in two stores and the
+   * Whether THIS transaction flipped the legacy `User.twoFactorEnabled` latch. 2FA lives in two stores and the
    * strip clears both, but a user who enrolled before the backfill shim landed has only the legacy
    * columns — no `TwoFactor` row for `twoFactorRowsRemoved` to count. Reporting the row count alone
    * would tell that user, and the audit trail, that their second factor was left alone.
@@ -204,6 +204,17 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   //
   // The legacy columns: the 2FA pair is load-bearing (see the backfill note above); `password` is a no-op
   // for post-cutover users and kept only so a pre-cutover row cannot survive here.
+  // The latch is flipped by its own filtered write so the count reflects what THIS transaction
+  // changed. `user` was read before the transaction opened, and recoveries are deliberately not
+  // locked against each other, so deriving the flag from that stale read lets two concurrent
+  // recoveries both report they disarmed a factor only one of them touched — a duplicate mail and a
+  // false audit record. The unconditional nulls below still run for everyone: a secret left at rest
+  // on an account that changed hands is the thing the strip exists to prevent, and filtering those
+  // on the latch would skip an account whose `twoFactorEnabled` was already false.
+  const legacyTwoFactorRows = await tx.user.updateMany({
+    where: { id: user.id, twoFactorEnabled: true },
+    data: { twoFactorEnabled: false },
+  });
   await tx.user.update({
     where: { id: user.id },
     data: {
@@ -270,7 +281,7 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
     credentialPasswordsCleared: credentialRows.count,
     legacyPasswordCleared: legacyPasswordRows.count > 0,
     twoFactorRowsRemoved: twoFactorRows.count,
-    legacyTwoFactorDisarmed: user.twoFactorEnabled,
+    legacyTwoFactorDisarmed: legacyTwoFactorRows.count > 0,
     oauthAccessTokensRevoked: accessRows.count,
     oauthRefreshTokensRevoked: refreshRows.count,
     oauthConsentsRevoked: consentRows.count,
