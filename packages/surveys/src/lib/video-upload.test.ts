@@ -116,3 +116,34 @@ describe("convertToEmbedUrl", () => {
     });
   });
 });
+
+describe("extractYoutubeId — stored-value denial of service (ENG-2789)", () => {
+  // The pattern list this replaced used `youtube\\.com.*v=(…)`, whose `.*` backtracks once per
+  // `youtube.com`. `ZStorageUrl` is an unbounded `z.string()`, so a value this long persists and
+  // reaches the RESPONDENT renderer, where `element-media.tsx` converts it twice per render.
+  test("a long repeated-host URL resolves fast instead of blocking the thread", () => {
+    const stored = `https://youtube.com/${"youtube.com/".repeat(25_600)}`; // 307,220 characters
+
+    const startedAt = performance.now();
+    const result = extractYoutubeId(stored);
+    const elapsedMs = performance.now() - startedAt;
+
+    expect(result).toBeNull();
+    // ~6700ms per call before, and the renderer calls it twice.
+    expect(elapsedMs).toBeLessThan(200);
+  });
+
+  // Greedy `.*` took the LAST marker on the line and backtracked to an earlier one when the last
+  // had no id after it. Both are load-bearing, so they are pinned rather than left to the corpus.
+  test.each([
+    ["https://www.youtube.com/watch?x=v=FIRST&v=SECOND", "SECOND"],
+    ["https://youtube.com/embed/abc/embed/def", "def"],
+    ["https://youtube.com/watch?v=&v=OK", "OK"],
+    ["https://youtube.com/watch?v=&v=", null],
+    // `.` cannot cross a line terminator, so a marker on the next line is not reachable.
+    ["youtube.com\nv=NEXTLINE", null],
+    ["youtube.com v=SAMELINE\nyoutube.com v=SECOND", "SAMELINE"],
+  ])("resolves %s to %s, as the pattern did", (url, expected) => {
+    expect(extractYoutubeId(url)).toBe(expected);
+  });
+});
