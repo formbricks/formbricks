@@ -1340,7 +1340,6 @@ model WorkspaceTeam {
 enum ChartType {
   area
   bar
-  line
   pie
   big_number
 }

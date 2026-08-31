@@ -159,7 +159,7 @@ describe("generateAIChartQuery", () => {
           { dimension: "FeedbackRecords.collectedAt", granularity: "day", dateRange: "last 30 days" },
           { dimension: "FeedbackRecords.collectedAt", granularity: null, dateRange: null },
         ],
-        chartType: "line",
+        chartType: "area",
         filters: [
           { member: "FeedbackRecords.sourceType", operator: "equals", values: ["survey"] },
           { member: "FeedbackRecords.sourceType", operator: "set", values: null },
