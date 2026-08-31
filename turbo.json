@@ -10,6 +10,7 @@
     "turbo.json"
   ],
   "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
+  "globalPassThroughEnv": ["SEED_API_KEY"],
   "tasks": {
     "@formbricks/ai#build": {
       "dependsOn": ["@formbricks/logger#build"],

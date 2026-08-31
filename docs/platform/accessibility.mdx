@@ -1,0 +1,277 @@
+---
+title: "Accessibility"
+description: "How the Formbricks survey UI supports respondents with disabilities, which standards we measure against, and where we currently fall short."
+icon: "universal-access"
+---
+
+Formbricks is used to ask people questions. A survey that some people cannot answer is a survey that returns
+incomplete data, so accessibility is not a compliance exercise for us — it is part of the product working
+correctly.
+
+This page describes the accessibility of the **public survey UI**: the interface a respondent sees when they
+open a link survey or are shown a website or in-app survey. It covers what already works, what does not, and
+how to reach us.
+
+<Note>
+  This page covers the respondent-facing survey UI only. The Formbricks application that survey creators use
+  to build surveys, and the self-hosting and administration interfaces, have not been assessed to the same
+  standard and are not described here.
+</Note>
+
+---
+
+## Standards We Measure Against
+
+Formbricks assesses the public survey UI against two standards:
+
+| Standard | Level assessed |
+| --- | --- |
+| Web Content Accessibility Guidelines (WCAG) 2.0 | Level A and Level AA |
+| Revised Section 508 standards (published 18 January 2017, corrected 22 January 2018) | Chapters 3, 5 and 6 |
+
+Our assessment is published as a Voluntary Product Accessibility Template (VPAT) using the **VPAT 2.5Rev,
+Revised Section 508 Edition** format. The most recent report was completed on **9 August 2026**.
+
+To request the full report, ask in
+[GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
+
+---
+
+## Conformance Status
+
+The public survey UI **partially conforms** to WCAG 2.0 Level AA. Partial conformance means that most of the
+standard is met, but some content does not fully conform.
+
+The known gaps are listed under [Known Limitations](#known-limitations) below. We publish them rather than
+summarising them away, because a procurement team or an individual respondent needs to know what will not work
+before they rely on it, not after.
+
+<Note>
+  Some gaps recorded in the 9 August 2026 report have since been fixed in the codebase and will ship in the
+  next release. Those entries are marked **Fixed, not yet released** below and still read as *Does Not Support*
+  in the report, which predates the fix. If you are assessing a released version, treat the report as
+  authoritative for that version.
+</Note>
+
+---
+
+## Accessibility Features
+
+Everything in this table was assessed as supported in the most recent report.
+
+| Area | What the survey UI does | WCAG 2.0 criterion |
+| --- | --- | --- |
+| Keyboard operation | Every question type, navigation button, and control can be operated with a keyboard alone. Keyboard focus is never trapped in a component — it can always be moved away using standard keys. | 2.1.1, 2.1.2 |
+| Visible focus | The element that currently has keyboard focus is shown with a visible focus indicator. | 2.4.7 |
+| Focus order | Focus moves through the survey in an order that preserves meaning and operability. | 2.4.3 |
+| Text alternatives | Non-text content is given a text alternative. | 1.1.1 |
+| Contrast | Text and images of text in the default survey theme meet the minimum contrast ratio. A survey creator can override every colour, and Formbricks does not check the contrast of a custom theme. | 1.4.3 |
+| Resizing text | Text can be resized up to 200% without assistive technology, and without loss of content or functionality. | 1.4.4 |
+| No time limits | There is no time limit on completing a survey. | 2.2.1 |
+| No auto-playing media | No audio or video ever plays on its own. Nothing in a survey starts playing that the respondent did not start. | 2.2.2 |
+| Error identification | When an answer is rejected, the error is identified and described to the respondent in text. | 3.3.1 |
+| Error suggestion | Where we know how an input should be corrected, the survey suggests the correction. | 3.3.3 |
+| Labels and instructions | Every input field has a descriptive label. | 3.3.2 |
+| Review and correction | A **Back** button is shown by default, so respondents can return to an earlier question, review their answer, and change it before submitting. | 3.3.4 |
+| Not relying on colour alone | Instructions are written in plain language, and error messages carry both a visual cue and a text cue. | 1.4.1 |
+
+<Note>
+  Website and in-app surveys have an optional **auto-close** setting that dismisses an unanswered survey
+  prompt after a set number of seconds. It applies only to the first screen, and the countdown is cancelled as
+  soon as the respondent interacts with the survey in any way — including with the keyboard. It does not
+  impose a time limit on answering, and it does not apply to link surveys. While the countdown runs it is
+  shown as a shrinking progress bar, which animates for as long as the creator configured — so a survey with
+  auto-close enabled does carry one automatic animation, and it can last longer than five seconds.
+</Note>
+
+---
+
+## Known Limitations
+
+The following were assessed as not conforming. Each entry states what a respondent experiences and what a
+survey creator can do about it. Entries marked **Fixed, not yet released** have been addressed in the codebase
+since the report was written and will ship in the next release; their workarounds still apply to released
+versions.
+
+### Embedded Third-Party Video
+
+**Affected criteria:** 1.2.1, 1.2.2, 1.2.3, 1.2.5
+
+Formbricks lets survey creators embed a video from YouTube, Vimeo, or Loom into a question. Formbricks provides
+no way to upload a transcript, add captions, or supply an audio description or text alternative for that video.
+A respondent who is deaf, hard of hearing, blind, or has low vision may not be able to access information that
+is only presented in the video.
+
+Adding captions on the hosting platform does not fully close the gap either, because Formbricks reduces the
+embedded player's controls:
+
+| Platform | What the embedded player hides |
+| --- | --- |
+| YouTube | The whole control bar — so no captions button, and no visible play or pause control |
+| Vimeo | The captions button and the transcript panel |
+| Loom | The share button, the top bar, and the title. Playback controls, including captions, stay reachable |
+
+Every video carries an **Open in new tab** control in its bottom-right corner. It is reachable by keyboard and
+becomes visible when it has focus, and it opens the video in the platform's own player, where captions,
+transcripts, and full playback controls are available. For a YouTube or Vimeo video, that is currently the only
+route a respondent has to turn captions on.
+
+**Workaround:** Repeat the essential information as text in the question headline or description — that is the
+part that always works. Do not put information in a video that a respondent needs in order to answer the
+question, unless that information also appears as text. Add captions and a transcript on the hosting platform as
+well: for YouTube and Vimeo they will not be reachable from the embedded player, but they will be there for a
+respondent who opens the video in its own tab.
+
+### Page Titles and Survey Instructions
+
+**Affected criterion:** 2.4.2 — **Fixed, not yet released**
+
+As assessed, surveys carried no form title and survey instructions were not repeated after the welcome card, so
+a respondent using a screen reader was not given a clear description of the page they were on.
+
+A link survey now sets its document title per step, appending the respondent's position — "Page 3 of 7" — to the
+survey's own title, localized in the survey's language. Where a survey has instructions, they are kept reachable
+on every page instead of disappearing once the respondent advances past the welcome card.
+
+The per-step document title applies to link surveys, which own the page they are shown on. A website or in-app
+survey is embedded in a page belonging to the site that shows it, and does not change that page's title.
+
+**Workaround for released versions:** Write question headlines that make sense on their own, without depending
+on a title or on instructions given earlier in the survey.
+
+### Current Language Not Identified in the Language Switcher
+
+**Affected criterion:** 3.1.1 — **Fixed, not yet released**
+
+As assessed, the language switcher was an unlabelled globe: it listed the available languages but gave no
+indication of which one was active, so neither a sighted nor a screen-reader respondent could tell what
+language the survey was being presented in.
+
+The switcher now names the active language, in that language rather than in translation — "Deutsch", not
+"German" — both visibly and in its accessible name. Each option in the list carries its own language tag, so a
+screen reader pronounces every language name using that language's rules.
+
+**Workaround for released versions:** For link surveys, the `lang` URL parameter sends a respondent straight to
+the correct language, so they do not need to use the switcher. See
+[Multi-language Surveys](/surveys/general-features/multi-language-surveys).
+
+### Semantic Headings
+
+**Affected criterion:** 2.4.6 — **Fixed, not yet released**
+
+As assessed, the survey UI used no semantic heading elements, so a respondent using a screen reader could not
+navigate the survey by heading and question headlines were not exposed as headings.
+
+The survey now has a heading structure: the survey name is its single top-level heading, and card headlines —
+the welcome card, each question prompt, and the ending — are second-level headings beneath it. A respondent can
+navigate the survey by heading and knows what they are answering.
+
+**Workaround for released versions:** Keeping surveys short and putting one question on each screen reduces the
+amount of navigation a respondent has to do.
+
+### Language of Parts
+
+**Affected criterion:** 3.1.2
+
+Formbricks declares the survey's language for the survey as a whole, and only when the survey has languages
+configured. Where a survey uses the multi-language feature, its root element carries a `lang` attribute
+resolved from the active language, updated when the respondent uses the language switcher — so an embedded
+survey shown in a language other than its host page's is still announced correctly, without Formbricks
+altering the page it is embedded in. Link surveys additionally set `lang` and `dir` on the page's `<html>`
+element, so right-to-left languages read in the right direction.
+
+A survey that does not use the multi-language feature has no configured language for Formbricks to resolve
+from, so it declares no language of its own. It inherits whatever the surrounding page declares — the
+respondent's app locale for a link survey, or the host site's `lang` for an embedded one. A survey written in
+one language and opened where the page declares another is then announced using the wrong pronunciation rules.
+The workaround is to enable the multi-language feature and set the survey's language explicitly, even for a
+survey that only ever needs one.
+
+What a survey creator cannot do is mark up an individual passage. There is no way to set a language on a single
+question, description, label, or choice option, and the language switcher's own options are the only
+individually tagged text in the survey. So where one screen mixes languages — an English question with an
+untranslated choice option, or a term left in its original language — the part in the other language is not
+programmatically identified, and a screen reader may pronounce it using the wrong language rules.
+
+**Workaround:** Keep every part of a question in one language, and use the multi-language feature to offer the
+whole survey in each language rather than mixing languages inside a single question.
+
+---
+
+## Compatibility
+
+The survey UI is built as a standard web application. It requires no plugin, no extension, and no separate
+accessible version, and it targets current versions of Chrome, Edge, Firefox, and Safari on desktop and on
+mobile. Our automated browser tests run on Chromium only, so the other engines are a design target rather than
+a tested guarantee.
+
+### How the Assessment Was Carried Out
+
+The most recent evaluation combined automated and manual testing:
+
+- **IBM Equal Access Accessibility Checker** — automated rule-based scanning
+- **ANDI (Accessible Name & Description Inspector)** — inspection of accessible names, descriptions, and roles
+- **Manual testing** — keyboard-only operation, focus order, and visual inspection
+
+### Assistive Technology
+
+We have **not** formally tested the survey UI against specific named combinations of assistive technology and
+browser — for example a particular screen reader paired with a particular browser version. We do not claim
+support for combinations we have not evidenced.
+
+If you use a specific assistive technology and hit a barrier in a Formbricks survey, we want to hear about it.
+See [Contact](#contact) below.
+
+---
+
+## Requesting This Documentation in Another Format
+
+This page and the full accessibility report are available in alternate formats on request, at no charge. If the
+format here does not work for you, tell us which format you need and we will provide it. See
+[Contact](#contact) below.
+
+---
+
+## Contact
+
+For accessibility questions about Formbricks, to request the full accessibility report, to ask for this
+documentation in another format, or to report an accessibility barrier in the survey UI, reach us in
+[GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
+
+If you are a **survey respondent** and you cannot complete a survey that someone has sent you, contact the
+organisation that sent you the survey — they own the survey content and can offer you another way to respond.
+You are also welcome to raise it with us so we can fix the underlying barrier.
+
+---
+
+## Guidance for Survey Creators
+
+Formbricks handles the parts of accessibility that belong to the survey UI. The content you put into a survey is
+yours, and it decides whether the finished survey is usable. The following practices make a measurable
+difference.
+
+**Write question headlines that stand on their own.** A respondent using a screen reader may hear the headline
+without the surrounding context. "How satisfied were you with the onboarding call?" works; "And this one?" does
+not.
+
+**Do not put information only in an image.** Formbricks does not currently offer a field for image alt text, so
+an image cannot carry information on its own. Treat images as illustration and put anything a respondent needs
+in order to answer into the headline or the description.
+
+**Do not convey meaning with colour alone.** If a rating scale, an option, or an instruction depends on a
+respondent seeing red versus green, add a label, a number, or a word that carries the same meaning.
+
+**Caption your videos on the hosting platform, and summarise them as text.** See
+[Embedded Third-Party Video](#embedded-third-party-video) above.
+
+**Set the survey language correctly.** Choose the right default language and add translations for every
+language you send the survey in, so that assistive technology pronounces the content correctly. See
+[Multi-language Surveys](/surveys/general-features/multi-language-surveys).
+
+**Leave the Back button enabled.** It is on by default, and it is what allows a respondent to review and correct
+an answer before submitting. Turn it off only when the survey design genuinely requires it — for example a quiz
+where going back would let a respondent change an answer after seeing the result. See
+[Hide Back Button](/surveys/general-features/hide-back-button).
+
+**Keep questions short and ask one thing at a time.** This helps every respondent, and it particularly helps
+people using screen readers, screen magnification, or switch access, who move through content more slowly.

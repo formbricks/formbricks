@@ -86,6 +86,24 @@ grep --fixed-strings 'helm.sh/hook-weight: "10"' <<<"${default_install}" >/dev/n
 grep --fixed-strings 'helm.sh/hook-weight: "-10"' <<<"${default_install}" >/dev/null
 grep --fixed-strings 'value: fully_consistent' <<<"${default_install}" >/dev/null
 
+if external_initialization_error="$(helm template authzed-external-initialization "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --set authzed.initialization.enabled=false 2>&1)"; then
+  printf '%s\n' "Disabling automatic AuthZed initialization must require an explicit acknowledgement." >&2
+  exit 1
+fi
+grep --fixed-strings 'Disabling the AuthZed initialization Job requires authzed.migrationAcknowledged=true' \
+  <<<"${external_initialization_error}" >/dev/null
+
+externally_prepared_install="$(helm template authzed-externally-prepared "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --set authzed.initialization.enabled=false \
+  --set authzed.migrationAcknowledged=true)"
+if grep --fixed-strings 'name: formbricks-authzed-initialize' <<<"${externally_prepared_install}" >/dev/null; then
+  printf '%s\n' "An externally prepared cutover must not render the AuthZed initialization Job." >&2
+  exit 1
+fi
+
 helm template authzed-null-annotations "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --set-json 'deployment.annotations=null' >/dev/null
 

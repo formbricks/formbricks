@@ -1,13 +1,20 @@
+import { cookies } from "next/headers";
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
-import { getWorkspace } from "@/lib/workspace/service";
+import { FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
+import { getWorkspace, getWorkspaces } from "@/lib/workspace/service";
 import { deleteWorkspaceIfNotLast } from "@/modules/workspaces/settings/lib/workspace";
 import {
   WORKSPACE_DELETE_CONFIRMATION_ERROR,
   hasMatchingWorkspaceDeleteConfirmation,
 } from "./delete-workspace-confirmation";
+import {
+  TPostWorkspaceDeletionDestination,
+  getPostDeletionDestination,
+} from "./post-workspace-deletion-redirect";
 
 const ZWorkspaceDeleteAction = z.object({
   workspaceId: ZId,
@@ -53,6 +60,31 @@ interface DeleteWorkspaceWithConfirmationParams {
   };
 }
 
+const FALLBACK_DESTINATION: TPostWorkspaceDeletionDestination = { workspaceId: null, path: "/" };
+
+/**
+ * Points the server-readable "last active workspace" at the workspace we are about to open.
+ *
+ * The proxy only refreshes this cookie on `/workspaces/:id` paths, so when the destination is the
+ * onboarding flow (or "/") nothing would clear it and it would keep naming the workspace we just
+ * deleted — which makes the account-settings organization resolution fall back to the user's first
+ * organization, the exact multi-organization mis-routing this flow exists to prevent.
+ */
+const rememberActiveWorkspace = async (workspaceId: string | null) => {
+  const cookieStore = await cookies();
+
+  if (workspaceId) {
+    cookieStore.set(FORMBRICKS_WORKSPACE_ID_COOKIE, workspaceId, {
+      path: "/",
+      sameSite: "lax",
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  } else {
+    cookieStore.delete(FORMBRICKS_WORKSPACE_ID_COOKIE);
+  }
+};
+
 export const deleteWorkspaceWithConfirmation = async ({
   input,
   userId,
@@ -78,5 +110,35 @@ export const deleteWorkspaceWithConfirmation = async ({
   auditLoggingCtx.workspaceId = workspaceId;
   auditLoggingCtx.oldObject = workspace;
 
-  return await deleteWorkspaceIfNotLast(workspaceId, organizationId);
+  const deletedWorkspace = await deleteWorkspaceIfNotLast(workspaceId, organizationId);
+
+  // Resolved here rather than when the settings page rendered, so the surviving workspaces and the
+  // onboarding gate are both read at navigation time. Deliberately not `availableWorkspaces`: that
+  // is a pre-deletion snapshot, so a workspace deleted concurrently since would still be picked and
+  // we would navigate to an id that no longer exists. `getWorkspaces` has not been called in this
+  // request yet, so its React cache entry is cold and this is a fresh read. Only owners and managers
+  // reach this point, and they can open every workspace of the organization.
+  let destination = FALLBACK_DESTINATION;
+  try {
+    const remainingWorkspaces = await getWorkspaces(organizationId);
+    destination = await getPostDeletionDestination({
+      organizationId,
+      currentWorkspace: workspace,
+      availableWorkspaces: remainingWorkspaces,
+    });
+  } catch (error) {
+    // The workspace is already gone; failing to pick where to go next must not report the deletion
+    // as failed. "/" re-resolves a landing workspace on its own.
+    logger.error({ error, workspaceId, organizationId }, "Post-deletion destination resolution failed");
+  }
+
+  try {
+    // Kept in its own boundary so the cookie always matches the destination we return — on the
+    // fallback that means clearing it, rather than leaving it naming the workspace just deleted.
+    await rememberActiveWorkspace(destination.workspaceId);
+  } catch (error) {
+    logger.error({ error, workspaceId, organizationId }, "Post-deletion active workspace update failed");
+  }
+
+  return { workspace: deletedWorkspace, destination };
 };

@@ -15,6 +15,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 
 const ZGeneratePersonalSurveyLinkAction = z.object({
@@ -35,6 +36,8 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
         id: workspaceId,
       });
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
+
+      await ensureContactsEnabled(organizationId);
 
       // Cross-tenant guard: the survey must belong to the same workspace as the
       // contact the caller was authorized against. Authorization above is derived

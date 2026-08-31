@@ -71,6 +71,17 @@ jobs:
       - name: Validate schema assertions
         run: bash authzed/validate.sh
 
+  # No `paths:` filter, deliberately: `required` below fails on a skipped job, and a required check
+  # that never reports would keep every PR out of the merge queue. It runs concurrently with e2e-test,
+  # which is the gate's critical path, so it costs runner minutes rather than wall-clock.
+  api-v3-contract-tests:
+    name: Run API v3 Contract Tests
+    uses: ./.github/workflows/api-v3-contract-tests.yml
+    # Named rather than `inherit`: this job builds and runs PR-head code, and the licence is the only
+    # secret it declares. Inheriting would hand it every other repository and organisation secret too.
+    secrets:
+      ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
+
   required:
     name: PR Check Summary
     needs:
@@ -82,6 +93,7 @@ jobs:
         coderabbit-config-validation,
         e2e-test,
         validate-authzed-schema,
+        api-v3-contract-tests,
       ]
     if: always()
     runs-on: ubuntu-latest

@@ -16,7 +16,7 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { isSurveyResponsePresentAction, sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
+import { sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
 import { getWebAppLocale } from "@/modules/survey/link/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
@@ -83,19 +83,6 @@ export const VerifyEmail = ({
 
   const submitEmail = async (emailInput: TVerifyEmailInput) => {
     const email = emailInput.email.toLowerCase();
-    if (localSurvey.isSingleResponsePerEmailEnabled) {
-      const actionResult = await isSurveyResponsePresentAction({
-        surveyId: localSurvey.id,
-        email,
-      });
-      if (actionResult?.data) {
-        form.setError("email", {
-          type: "custom",
-          message: t("s.response_already_received"),
-        });
-        return;
-      }
-    }
 
     const data = {
       surveyId: localSurvey.id,

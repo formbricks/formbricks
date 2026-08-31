@@ -676,6 +676,7 @@ describe("serializeV3SurveyListItem", () => {
     createdAt: new Date("2026-04-15T10:00:00.000Z"),
     updatedAt: new Date("2026-04-16T10:00:00.000Z"),
     responseCount: 0,
+    completedResponseCount: 0,
     singleUse: null,
   } satisfies Omit<TSurveyListRecord, "creator">;
 
@@ -699,5 +700,19 @@ describe("serializeV3SurveyListItem", () => {
     } satisfies TSurveyListRecord;
 
     expect(serializeV3SurveyListItem(survey).creator).toBeNull();
+  });
+
+  test("exposes the total and the completed response counts", () => {
+    const survey = {
+      ...baseListSurvey,
+      responseCount: 7,
+      completedResponseCount: 4,
+      creator: null,
+    } satisfies TSurveyListRecord;
+
+    const serialized = serializeV3SurveyListItem(survey);
+
+    expect(serialized.responseCount).toBe(7);
+    expect(serialized.completedResponseCount).toBe(4);
   });
 });

@@ -1,7 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -9,6 +10,12 @@ import { verifySsoRelinkIntent } from "@/lib/jwt";
 import { actionClient } from "@/lib/utils/action-client";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { auth } from "@/modules/auth/lib/auth";
+import {
+  SIGNUP_INTENT_COOKIE_NAME,
+  SIGNUP_INTENT_COOKIE_OPTIONS,
+  classifySignupIntent,
+  createSignupIntentToken,
+} from "@/modules/auth/lib/signup-intent";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { TVerificationRequestPurpose } from "@/modules/auth/lib/verification-links";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -90,6 +97,28 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
         body: { email: user.email, callbackURL: validatedCallbackUrl },
         headers: await headers(),
       });
+
+      // ENG-2562: re-pair the sign-up intent cookie with the link just minted. The cookie's clock
+      // starts at sign-up while every resent link gets a fresh hour, so without this a resend's link
+      // outlives the cookie and the sign-up browser itself lands on the withheld path. Strictly a
+      // refresh — the browser must already hold a valid cookie naming THIS user — so it extends
+      // evidence the browser has, and never arms one that lacks it: an unauthenticated caller must not
+      // be able to mint sign-up proof for an arbitrary account by asking for a resend. A browser whose
+      // cookie has already expired therefore stays on the withheld path (documented residual).
+      // Non-fatal, like the sign-up issuance: the email above has already gone out, so a failure here
+      // must cost exactly the auto-sign-in UX, never the resend itself.
+      try {
+        const cookieStore = await cookies();
+        if (classifySignupIntent(cookieStore.get(SIGNUP_INTENT_COOKIE_NAME)?.value, user.id) === "valid") {
+          cookieStore.set(
+            SIGNUP_INTENT_COOKIE_NAME,
+            createSignupIntentToken(user.id),
+            SIGNUP_INTENT_COOKIE_OPTIONS
+          );
+        }
+      } catch (error) {
+        logger.error({ error, userId: user.id }, "Failed to refresh the sign-up intent cookie on resend");
+      }
     }
     return {
       success: true,

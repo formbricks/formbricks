@@ -291,10 +291,15 @@ const ZGetDistinctAttributeValuesAction = z.object({
 export const getDistinctAttributeValuesAction = authenticatedActionClient
   .inputSchema(ZGetDistinctAttributeValuesAction)
   .action(async ({ ctx, parsedInput }) => {
+    const workspaceId = await getWorkspaceIdFromContactAttributeKeyId(parsedInput.attributeKeyId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
       type: "workspace",
-      id: await getWorkspaceIdFromContactAttributeKeyId(parsedInput.attributeKeyId),
+      id: workspaceId,
     });
+
+    await checkAdvancedTargetingPermission(organizationId);
 
     return await getDistinctAttributeValues(parsedInput.attributeKeyId);
   });

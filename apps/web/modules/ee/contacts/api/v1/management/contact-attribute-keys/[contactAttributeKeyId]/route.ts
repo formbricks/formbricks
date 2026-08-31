@@ -6,6 +6,8 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { CONTACTS_API_V1_NOT_ENABLED_MESSAGE } from "@/modules/ee/contacts/lib/contacts-entitlement";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   deleteContactAttributeKey,
   getContactAttributeKey,
@@ -18,6 +20,13 @@ async function fetchAndAuthorizeContactAttributeKey(
   authentication: NonNullable<TApiKeyAuthentication>,
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) {
+  // Entitlement first, matching the plural route: without the contacts feature the caller may
+  // not interact with attribute keys at all, regardless of workspace permissions.
+  const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
+  if (!isContactsEnabled) {
+    return { error: responses.forbiddenResponse(CONTACTS_API_V1_NOT_ENABLED_MESSAGE) };
+  }
+
   const attributeKey = await getContactAttributeKey(attributeKeyId);
   if (!attributeKey) {
     return { error: responses.notFoundResponse("Attribute Key", attributeKeyId) };
@@ -62,14 +71,6 @@ export const GET = withV1ApiWrapper({
         response: responses.successResponse(result.attributeKey),
       };
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "Contacts are only enabled for Enterprise Edition, please upgrade."
-      ) {
-        return {
-          response: responses.forbiddenResponse(error.message),
-        };
-      }
       return handleErrorResponse(error);
     }
   },
