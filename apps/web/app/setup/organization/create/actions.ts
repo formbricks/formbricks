@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, POSTHOG_KEY } from "@/lib/constants";
 import { getHasNoOrganizations } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
@@ -71,8 +71,15 @@ export const createOrganizationAction = authenticatedActionClient
       // Person-level role snapshot across every org the user belongs to (not just this one — see
       // lib/posthog/organization-roles.ts). Set immediately, rather than waiting for the
       // client-side PostHogGroupIdentify effect, so it's correct even if the user never lands on
-      // a workspace page.
-      identifyPostHogPerson(ctx.user.id, await getOrganizationRolePersonProperties(ctx.user.id));
+      // a workspace page. Best-effort: this is read-only analytics enrichment and must never fail
+      // organization creation itself.
+      if (POSTHOG_KEY) {
+        try {
+          identifyPostHogPerson(ctx.user.id, await getOrganizationRolePersonProperties(ctx.user.id));
+        } catch (error) {
+          logger.warn({ error }, "Failed to load organization role properties for PostHog");
+        }
+      }
 
       capturePostHogEvent(
         ctx.user.id,

@@ -4,10 +4,11 @@ import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
-import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
+import { DEFAULT_TEAM_ID, POSTHOG_KEY, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
+import { getOrganizationRolePersonProperties } from "@/lib/posthog/organization-roles";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { updateUser } from "@/modules/auth/lib/user";
@@ -210,8 +211,19 @@ export const provisionSsoUserMemberships = async ({
   // Best-effort analytics + CRM sync, regardless of org assignment (parity with provisionNewSsoUser).
   createBrevoCustomer({ id: userId, email });
   // Identify the person before the sign-up capture so `user_signed_up` lands on an identified
-  // PostHog person (fires $identify + sets email/name) — parity with the credentials sign-up path.
-  identifyPostHogPerson(userId, { email, name });
+  // PostHog person (fires $identify + sets email/name, plus the role snapshot) — parity with the
+  // credentials sign-up path. Best-effort: this is read-only analytics enrichment and must never
+  // fail SSO provisioning, which has already committed the membership by this point.
+  let organizationRoleProperties: Awaited<ReturnType<typeof getOrganizationRolePersonProperties>> | null =
+    null;
+  if (POSTHOG_KEY) {
+    try {
+      organizationRoleProperties = await getOrganizationRolePersonProperties(userId);
+    } catch (error) {
+      logger.warn({ error }, "Failed to load organization role properties for PostHog");
+    }
+  }
+  identifyPostHogPerson(userId, { email, name, ...organizationRoleProperties });
   capturePostHogEvent(userId, "user_signed_up", {
     // Spread attribution first so trusted, server-computed props always win on a name clash.
     ...attributionProperties,
