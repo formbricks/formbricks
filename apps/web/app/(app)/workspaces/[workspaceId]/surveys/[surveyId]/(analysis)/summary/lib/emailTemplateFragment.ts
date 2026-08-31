@@ -1,8 +1,14 @@
 // The attribute run is length-capped so a `<body`/`<!DOCTYPE` repeated with no closing `>` cannot
 // make the engine rescan to the end from every occurrence (O(N^2) — measured 1.3s on 200k chars).
 // The cap is ~30x the longest tag these emails carry, so every real document matches exactly as
-// before; past it the tag is left alone rather than stripped, which degrades to "keep the markup",
-// never to corrupted output.
+// before.
+//
+// Past it the behaviour is NOT simply "leave the tag alone": if the over-long attribute run itself
+// contains another `<body`/`<!DOCTYPE`, the engine restarts there and matches THAT tag instead, so
+// a crafted document can have a different span extracted. Reaching it needs a >4096-character tag
+// containing a second opening tag, which nothing that renders these emails produces — but it is a
+// wrong-span outcome rather than a no-op, and worth knowing before the cap is relied on elsewhere.
+// Tracked in ENG-2789.
 const EMAIL_TAG_ATTRIBUTES_MAX = 4096;
 const EMAIL_DOCTYPE_PATTERN = new RegExp(`<!DOCTYPE[^>]{0,${EMAIL_TAG_ATTRIBUTES_MAX}}>`, "i");
 const EMAIL_BODY_OPEN_TAG_PATTERN = new RegExp(String.raw`<body\b[^>]{0,${EMAIL_TAG_ATTRIBUTES_MAX}}>`, "i");

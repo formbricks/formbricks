@@ -40,7 +40,9 @@ export const SingleResponseCardBody = ({
     // Content between #/ and \#, with the span length-capped. Unbounded, `(.*?)` rescans to the end
     // from every `#/` when no closing `\#` follows (O(N^2) — measured 5.0s on 200k characters), and
     // this runs over RESPONDENT-submitted text in the admin's browser. The cap is far longer than any
-    // recall label; past it the text renders unhighlighted rather than not at all.
+    // recall label; past it a span containing a second `#/` highlights from there instead, so a
+    // crafted answer can shift which text is highlighted. Display only — React escapes every part —
+    // but it is a different render rather than none. Tracked in ENG-2789.
     const regex = /#\/(.{0,1024}?)\\#/g;
     const parts = text.split(regex);
 

@@ -79,7 +79,12 @@ const EMAIL_PREVIEW_ACCENT_COLORS = {
 // Attribute runs are length-capped: `<p`/`<li` repeated with no closing `>` otherwise makes the
 // engine rescan to the end from every occurrence (O(N^2) — measured 6.7s on 200k chars). Editor
 // output carries at most a couple of hundred characters of style here, so the cap is far above any
-// real tag; past it the tag keeps its original spacing instead of being normalized.
+// real tag.
+//
+// Past it the behaviour is NOT simply "leave the tag alone": if the over-long attribute run itself
+// contains another `<p`/`<li`, the engine restarts there and normalizes THAT tag instead. Reaching
+// it needs a >4096-character tag containing a second opening tag, which the editor never emits —
+// but it rewrites a different tag rather than none. Tracked in ENG-2789.
 const RICH_TEXT_TAG_ATTRIBUTES_MAX = 4096;
 const RICH_TEXT_PARAGRAPH_TAG_REGEX = new RegExp(
   String.raw`<p\b([^>]{0,${RICH_TEXT_TAG_ATTRIBUTES_MAX}})>`,
