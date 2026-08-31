@@ -3,6 +3,7 @@ import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
+import type { IdentityProvider } from "@formbricks/database/prisma";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { normalizeUserName } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -49,6 +50,20 @@ export const getSsoProviderFromContext = (
 };
 
 /**
+ * The providers whose `email_verified` signal is real, so the IdP's own claim is honoured on sign-up
+ * (ENG-2589): google reads `email_verified` from the id_token, github looks it up on /user/emails.
+ * The generic providers (azuread/openid/saml) are NOT here because upstream coalesces an absent claim
+ * to `false` (`email_verified ?? false`), so "the IdP did not say" is indistinguishable from "the IdP
+ * asserted false" — honouring it would flip every new user to unverified on any self-hosted instance
+ * whose IdP omits the claim. They keep the historical always-verified behaviour until the raw claim is
+ * read in mapProfileToUser.
+ */
+const SSO_PROVIDERS_WITH_ATTESTED_EMAIL_VERIFICATION: ReadonlySet<IdentityProvider> = new Set([
+  "google",
+  "github",
+]);
+
+/**
  * Fallback display name when the IdP supplies no name: humanize the email local-part (treat `. _ +` as
  * word separators) and run it through the shared normalizer. The name allowlist lives only in
  * normalizeUserName (tied to ZUserName), so there is no second name regex here that could drift.
@@ -61,8 +76,9 @@ const deriveNameFromEmail = (email: string): string =>
  * the existing logic via `./sso-provisioning`:
  *  - `user.create.before` — gate the SSO sign-up (`gateSsoProvisioning`; a reject returns `false`,
  *    which rolls back inside Better Auth's user+account transaction, so no orphan user is created);
- *    stash the resolved decision for the after-hook; and enrich the insert (email-verified — the IdP
- *    attests it; `identityProvider`; request-matched `locale`; email-localpart name fallback).
+ *    stash the resolved decision for the after-hook; and enrich the insert (email-verified — the IdP's
+ *    own claim where it is a real signal, see SSO_PROVIDERS_WITH_ATTESTED_EMAIL_VERIFICATION;
+ *    `identityProvider`; request-matched `locale`; email-localpart name fallback).
  *  - `user.create.after` — run the membership/team/notification provisioning (`provisionSsoUserMemberships`).
  *  - `account.create.after` — denormalize `identityProvider` + `identityProviderAccountId` onto
  *    `User` for legacy SSO lookups (`findLegacyExactMatch`), parity with `syncSsoIdentityForUser`.
@@ -135,7 +151,14 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         // provider, request-matched locale, and an email-localpart name when the IdP gave none.
         return {
           data: {
-            emailVerified: true,
+            // Better Auth has already computed the IdP's answer before this hook runs and hands it to
+            // us as `user.emailVerified`; whatever we return is shallow-merged over it. Where that
+            // signal is real (google/github), honour it — minting `true` for an address the IdP calls
+            // unproven hands a squatter a verified account on someone else's email (ENG-2589). Strictly
+            // `=== true`: an absent claim is not attestation.
+            emailVerified: SSO_PROVIDERS_WITH_ATTESTED_EMAIL_VERIFICATION.has(identityProvider)
+              ? user.emailVerified === true
+              : true,
             identityProvider,
             locale: await findMatchingLocale(),
             // `User` has no `image` column (parity with provisionNewSsoUser, which never stored it).

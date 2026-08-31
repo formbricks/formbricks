@@ -1,5 +1,5 @@
 import { getOAuthState } from "better-auth/api";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { SIGNUP_DISABLED_ERROR_CODE, SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
@@ -214,6 +214,47 @@ describe("ssoDatabaseHooks.user.create.before", () => {
       before({ id: "u1", email: "🎉@example.com", name: "🎉🎉" } as never, callbackCtx as never)
     );
     expect(result).toMatchObject({ data: { name: "User" } });
+  });
+
+  // ENG-2589: Better Auth computes the IdP's own `emailVerified` answer BEFORE this hook runs —
+  // google reads `email_verified` from the id_token, github from /user/emails — and hands it to the
+  // hook as `user.emailVerified`; whatever the hook returns is shallow-merged over it. Overwriting
+  // with `true` mints a verified account for an address the IdP itself calls unproven (account
+  // squatting: `reclaimUnverifiedLocalAuthIfNeeded` skips verified users, and an org invite to that
+  // address lands on the squatter's account).
+  describe("emailVerified follows the IdP's claim where it is a real signal (ENG-2589)", () => {
+    const socialCtx = (id: string) => ({ path: "/callback/:id", params: { id } });
+
+    test.each(["google", "github"])("%s: an IdP-unverified email is not marked verified", async (id) => {
+      const result = await runWithSsoRequestContext(() =>
+        before({ id: "u1", email: "a@b.com", emailVerified: false } as never, socialCtx(id) as never)
+      );
+      expect(result).toMatchObject({ data: { emailVerified: false } });
+    });
+
+    test.each(["google", "github"])("%s: an IdP-verified email stays verified", async (id) => {
+      const result = await runWithSsoRequestContext(() =>
+        before({ id: "u1", email: "a@b.com", emailVerified: true } as never, socialCtx(id) as never)
+      );
+      expect(result).toMatchObject({ data: { emailVerified: true } });
+    });
+
+    // The generic providers coalesce an absent claim to `false` upstream (`email_verified ?? false`),
+    // so "the IdP did not say" is indistinguishable from "the IdP asserted false". Keep the historical
+    // `true` for them until the raw claim is read in mapProfileToUser — a self-hosted instance whose
+    // IdP omits the claim must see no behaviour change on upgrade.
+    test.each(["openid", "azuread", "saml"])(
+      "%s: stays verified regardless of the coalesced upstream value",
+      async (id) => {
+        const result = await runWithSsoRequestContext(() =>
+          before(
+            { id: "u1", email: "a@b.com", emailVerified: false } as never,
+            { path: "/callback/:providerId", params: { providerId: id } } as never
+          )
+        );
+        expect(result).toMatchObject({ data: { emailVerified: true } });
+      }
+    );
   });
 
   test("leaves email/password sign-ups untouched (gate not run)", async () => {
@@ -535,5 +576,112 @@ describe("blockedSignupDomainRedirectAfter", () => {
       await blockedSignupDomainRedirectAfter(ctx as never);
     });
     expect(redirect).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * ENG-2589 — the framework boundary the unit tests above cannot see. Better Auth derives
+ * `emailVerified` from GitHub's /user/emails lookup (`verified ?? false`) before `user.create.before`
+ * runs, hands it to the hook in its `user` argument, and `createWithHooks` shallow-merges the hook's
+ * return over it. These drive a REAL Better Auth instance through the full sign-in → callback flow —
+ * with `fetch` stubbed at the GitHub boundary — and assert the row that is actually persisted, so a
+ * change in the provider's signal derivation or in the hook-merge order fails here, not in production.
+ *
+ * The github registration is deliberately minimal: production's `mapProfileToUser` returns only
+ * `{ email }` (better-auth-providers.ts), so Better Auth's own emailVerified survives the profile
+ * mapping identically in both shapes.
+ */
+describe("SSO sign-up persists the IdP's email_verified claim (real Better Auth, ENG-2589)", () => {
+  const BASE_URL = "https://app.formbricks.test";
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const signUpThroughGithub = async (verifiedAtIdp: boolean) => {
+    const { betterAuth } = await import("better-auth");
+    const { memoryAdapter } = await import("better-auth/adapters/memory");
+    const db: Record<string, Record<string, unknown>[]> = {
+      user: [],
+      session: [],
+      account: [],
+      verification: [],
+    };
+    const auth = betterAuth({
+      baseURL: BASE_URL,
+      secret: "eng-2589-email-verified-boundary-secret",
+      database: memoryAdapter(db),
+      user: {
+        // The two fields the account.create.after hook denormalizes (parity with auth.ts).
+        additionalFields: {
+          identityProvider: { type: "string", required: false, input: false },
+          identityProviderAccountId: { type: "string", required: false, input: false },
+        },
+      },
+      socialProviders: { github: { clientId: "gh-id", clientSecret: "gh-secret" } },
+      databaseHooks: ssoDatabaseHooks,
+    });
+
+    // Leg 1: sign-in issues the authorization URL, the state row, and its signed cookie.
+    const signIn = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/sign-in/social`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: BASE_URL },
+        body: JSON.stringify({ provider: "github", callbackURL: "/" }),
+      })
+    );
+    expect(signIn.status).toBe(200);
+    const { url } = (await signIn.json()) as { url: string };
+    const state = new URL(url).searchParams.get("state") ?? "";
+    expect(state).not.toBe("");
+    const cookie = (signIn.headers.getSetCookie?.() ?? []).map((v) => v.split(";")[0]).join("; ");
+
+    // Leg 2: the callback, with GitHub's token + profile + emails endpoints stubbed. The /user/emails
+    // `verified` flag is the IdP's actual attestation — the value under test.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const requested = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+        if (requested.startsWith("https://github.com/login/oauth/access_token")) {
+          return Response.json({ access_token: "gh-token", token_type: "bearer" });
+        }
+        if (requested.startsWith("https://api.github.com/user/emails")) {
+          return Response.json([{ email: "squatter@corp.test", primary: true, verified: verifiedAtIdp }]);
+        }
+        if (requested.startsWith("https://api.github.com/user")) {
+          return Response.json({
+            id: 4242,
+            login: "squatter",
+            name: "Squatter",
+            email: "squatter@corp.test",
+          });
+        }
+        throw new Error(`unexpected outbound fetch: ${requested}`);
+      })
+    );
+
+    const callback = await runWithSsoRequestContext(() =>
+      auth.handler(
+        new Request(`${BASE_URL}/api/auth/callback/github?code=gh-code&state=${state}`, {
+          headers: { cookie },
+        })
+      )
+    );
+
+    // Anchor the flow itself: a rejected callback would leave db.user empty and a bare
+    // `toMatchObject` on undefined would blame the wrong thing.
+    expect(callback.status).toBeGreaterThanOrEqual(300);
+    expect(db.user).toHaveLength(1);
+    return db.user[0];
+  };
+
+  test("github reporting the address as unverified must not mint a verified account", async () => {
+    const user = await signUpThroughGithub(false);
+    expect(user).toMatchObject({ email: "squatter@corp.test", emailVerified: false });
+  });
+
+  test("github reporting the address as verified keeps it verified", async () => {
+    const user = await signUpThroughGithub(true);
+    expect(user).toMatchObject({ email: "squatter@corp.test", emailVerified: true });
   });
 });
