@@ -1,0 +1,11 @@
+{{- if .Values.authzed.enabled -}}
+{{- if not (has .Values.authzed.mode (list "selfHosted" "external")) -}}
+{{- fail "authzed.mode must be one of: selfHosted, external" -}}
+{{- end -}}
+{{- if and (eq .Values.authzed.mode "external") (not .Values.authzed.auth.existingSecret) -}}
+{{- fail "authzed.auth.existingSecret is required when authzed.mode=external" -}}
+{{- end -}}
+{{- if and (ne .Values.authzed.insecure nil) (not (kindIs "bool" .Values.authzed.insecure)) -}}
+{{- fail "authzed.insecure must be true, false, or null" -}}
+{{- end -}}
+{{- end -}}

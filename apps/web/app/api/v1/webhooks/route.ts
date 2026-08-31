@@ -10,7 +10,7 @@ import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ authentication }: THandlerParams) => {
@@ -54,7 +54,7 @@ export const POST = withV1ApiWrapper({
     }
 
     // Accept workspaceId as alternative to environmentId
-    const resolved = await resolveBodyIds(webhookInput, authentication.workspacePermissions, "POST");
+    const resolved = await resolveBodyIds(webhookInput, authentication, "POST");
     if (!resolved.ok) return { response: resolved.response };
     webhookInput = resolved.body;
 
@@ -74,7 +74,7 @@ export const POST = withV1ApiWrapper({
 
     if (
       !resolved.alreadyAuthorized &&
-      !hasPermission(authentication.workspacePermissions, workspaceId, "POST")
+      !(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "POST"))
     ) {
       return {
         response: responses.unauthorizedResponse(),

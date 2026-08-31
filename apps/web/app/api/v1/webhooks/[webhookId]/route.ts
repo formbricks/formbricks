@@ -6,7 +6,7 @@ import {
 } from "@/app/lib/api/legacy-environment-id";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ props, authentication }: THandlerParams<{ params: Promise<{ webhookId: string }> }>) => {
@@ -22,7 +22,7 @@ export const GET = withV1ApiWrapper({
         response: responses.notFoundResponse("Webhook", params.webhookId),
       };
     }
-    if (!hasPermission(authentication.workspacePermissions, webhook.workspaceId, "GET")) {
+    if (!(await hasApiKeyWorkspaceAccess(authentication, webhook.workspaceId, "GET"))) {
       return {
         response: responses.unauthorizedResponse(),
       };
@@ -56,7 +56,7 @@ export const DELETE = withV1ApiWrapper({
         response: responses.notFoundResponse("Webhook", params.webhookId),
       };
     }
-    if (!hasPermission(authentication.workspacePermissions, webhook.workspaceId, "DELETE")) {
+    if (!(await hasApiKeyWorkspaceAccess(authentication, webhook.workspaceId, "DELETE"))) {
       return {
         response: responses.unauthorizedResponse(),
       };

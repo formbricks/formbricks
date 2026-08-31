@@ -21,6 +21,12 @@ formbricks:
   # Optional: Public URL for surveys (defaults to webappUrl if not set)
   publicUrl: ""
 
+  # Optional: Server-side Better Auth JWKS endpoint for MCP OAuth verification.
+  # Leave empty to fetch keys from the public Better Auth issuer. Set an internal HTTP URL only when
+  # the cluster cannot reach its public origin and the application network is trusted. Include the
+  # configured service port and complete custom subpath, if any.
+  mcpOauthJwksUrl: ""
+
 ##########################################################
 # Enterprise Configuration
 ##########################################################
@@ -617,6 +623,117 @@ externalSecret:
     kind: ClusterSecretStore # Type of secret store
   refreshInterval: "1h" # Frequency of secret sync
   files: {}
+
+##########################################################
+# AuthZed / SpiceDB Authorization Configuration
+##########################################################
+authzed:
+  # Enables the Formbricks AuthZed runtime contract. Product authorization
+  # enforcement is introduced separately; this section owns deployment only.
+  enabled: false
+
+  # selfHosted creates a SpiceDBCluster. external only configures the app client.
+  mode: selfHosted
+
+  # Stable identifier used by the Formbricks authorization model.
+  systemKey: formbricks
+
+  # grpc:// is intentionally omitted. AuthZed SDKs accept host:port endpoints.
+  # For selfHosted mode this defaults to formbricks-spicedb:50051.
+  endpoint: ""
+  # null selects the safe mode-specific default: plaintext for the internal
+  # selfHosted service and TLS for external endpoints. Set true explicitly only
+  # when an external endpoint intentionally accepts plaintext gRPC.
+  insecure: null
+  consistency: minimize_latency
+
+  auth:
+    # Secret must contain tokenKey. When empty in selfHosted mode, the chart
+    # creates a stable secret and reuses it across Helm upgrades.
+    existingSecret: ""
+    tokenKey: preshared_key
+
+  datastore:
+    # Production deployments should provision a dedicated database and role,
+    # then expose its URI through this secret. The secret may be the same as auth.existingSecret.
+    existingSecret: ""
+    uriKey: datastore_uri
+
+  cluster:
+    name: ""
+    version: v1.52.0
+    channel: stable
+    replicas: 2
+    config:
+      datastoreEngine: postgres
+      logLevel: info
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+    # Operator patches are applied after the generated resource patch and can
+    # override it when a deployment needs more specific container settings.
+    patches: []
+
+  # Creates the dedicated `spicedb` database and role only when the bundled
+  # PostgreSQL dependency is enabled and no datastore secret is supplied.
+  bundledPostgresqlBootstrap:
+    enabled: true
+    image: postgres:17-alpine
+    backoffLimit: 10
+    # The administrative role the bootstrap Job connects as to create the
+    # dedicated `spicedb` role and database. It needs CREATEROLE and CREATEDB,
+    # not necessarily superuser.
+    #
+    # CREATE DATABASE ... OWNER also requires being able to SET ROLE to the
+    # owner, which CREATEROLE alone does not give, so the Job grants itself the
+    # `spicedb` role first. From PostgreSQL 16 that works only for a role it
+    # holds ADMIN OPTION on — which creating the role confers, so the only
+    # unsupported case is a `spicedb` role someone else already created. See the
+    # chart README.
+    #
+    # Defaults to the `postgres` superuser the bundled subchart creates. An
+    # existing PostgreSQL that was installed without one (see
+    # postgresql.auth.enablePostgresUser) would otherwise fail this Job, so point
+    # these at whichever role does hold those privileges instead of disabling
+    # bootstrap wholesale.
+    adminUsername: postgres
+    adminDatabase: postgres
+    # Where that role's password lives. Both default to the bundled PostgreSQL
+    # admin credentials, so overriding adminUsername alone is not enough — set
+    # these too whenever the role is not the bundled `postgres` superuser.
+    # Setting the name without the key is refused as well: the key would
+    # otherwise fall back to the subchart's own key name and be looked up inside
+    # your Secret, which fails only once the Pod is created.
+    adminPasswordSecretName: ""
+    adminPasswordKey: ""
+
+  # Cloud installations can bootstrap a dedicated database on an existing
+  # PostgreSQL server. The admin Secret is read only by the short-lived Job.
+  # Its URL must explicitly set sslmode=require, verify-ca, or verify-full.
+  externalPostgresqlBootstrap:
+    enabled: false
+    image: postgres:17-alpine
+    backoffLimit: 10
+    adminSecretName: ""
+    adminUrlKey: DATABASE_URL
+    databaseNameKey: database_name
+    databaseUsernameKey: database_username
+    databasePasswordKey: database_password
+
+  # Install one operator per cluster. Disable this when a shared operator
+  # already watches the Formbricks namespace (the Formbricks Cloud topology).
+  operator:
+    install: false
+
+# Values passed to the bundled spicedb-operator dependency when
+# authzed.operator.install=true.
+spicedbOperator:
+  watchNamespaces: []
+  serviceMonitor:
+    enabled: false
 
 ##########################################################
 # Ingress Configuration
@@ -1405,6 +1522,9 @@ postgresql:
     repository: pgvector/pgvector
     tag: pg17
   auth:
+    # The bundled AuthZed bootstrap creates a dedicated role and database and
+    # therefore requires the PostgreSQL administrator account.
+    enablePostgresUser: true
     username: formbricks
     database: formbricks
     existingSecret: "formbricks-app-secrets"
@@ -1417,6 +1537,16 @@ postgresql:
     persistence:
       enabled: true
       size: 10Gi
+    # The upstream nano preset leaves too little memory headroom when the
+    # bundled database also serves SpiceDB. Helm cannot condition dependency
+    # values on authzed.enabled, so retain the live-validated safe baseline.
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
     podSecurityContext:
       enabled: true
       fsGroup: 1001

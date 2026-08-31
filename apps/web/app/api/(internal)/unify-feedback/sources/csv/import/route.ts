@@ -6,7 +6,9 @@ import {
   InvalidInputError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
+import { assertFeedbackSourceDirectoryAccess } from "@/lib/feedback-source/access";
 import { CsvImportValidationError, importCsvFile } from "@/lib/feedback-source/csv-file-import";
+import { getFeedbackSourceWithMappingsById } from "@/lib/feedback-source/service";
 import { getUser } from "@/lib/user/service";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromFeedbackSourceId } from "@/lib/utils/helper";
@@ -94,6 +96,17 @@ export const POST = async (request: Request) => {
       ],
     });
 
+    const feedbackSource = await getFeedbackSourceWithMappingsById(feedbackSourceId, workspaceId);
+    if (!feedbackSource) {
+      throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
+    }
+    await assertFeedbackSourceDirectoryAccess(
+      user.id,
+      feedbackSource.feedbackDirectoryId,
+      workspaceId,
+      "write"
+    );
+
     const result = await importCsvFile({ feedbackSourceId, workspaceId, file });
 
     return NextResponse.json(result);
@@ -121,7 +134,10 @@ export const POST = async (request: Request) => {
       return buildCsvImportErrorResponse(error.message, 400);
     }
 
-    logger.error({ error }, "Failed to import CSV feedback source data");
+    logger.error(
+      { errorName: error instanceof Error ? error.name : "unknown" },
+      "Failed to import CSV feedback source data"
+    );
     return buildCsvImportErrorResponse(CSV_IMPORT_FAILED_ERROR_CODE, 500);
   }
 };

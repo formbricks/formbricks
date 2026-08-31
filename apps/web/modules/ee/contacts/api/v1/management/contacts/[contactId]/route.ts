@@ -2,14 +2,14 @@ import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { deleteContact, getContact } from "./lib/contact";
 
 // Please use the methods provided by the client API to update a person
 
 const fetchAndAuthorizeContact = async (
   contactId: string,
-  workspacePermissions: NonNullable<TApiKeyAuthentication>["workspacePermissions"],
+  authentication: NonNullable<TApiKeyAuthentication>,
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) => {
   const contact = await getContact(contactId);
@@ -18,7 +18,7 @@ const fetchAndAuthorizeContact = async (
     return { error: responses.notFoundResponse("Contact", contactId) };
   }
 
-  if (!hasPermission(workspacePermissions, contact.workspaceId, requiredPermission)) {
+  if (!(await hasApiKeyWorkspaceAccess(authentication, contact.workspaceId, requiredPermission))) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -43,11 +43,7 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      const result = await fetchAndAuthorizeContact(
-        params.contactId,
-        authentication.workspacePermissions,
-        "GET"
-      );
+      const result = await fetchAndAuthorizeContact(params.contactId, authentication, "GET");
       if (result.error) {
         return {
           response: result.error,
@@ -88,11 +84,7 @@ export const DELETE = withV1ApiWrapper({
         };
       }
 
-      const result = await fetchAndAuthorizeContact(
-        params.contactId,
-        authentication.workspacePermissions,
-        "DELETE"
-      );
+      const result = await fetchAndAuthorizeContact(params.contactId, authentication, "DELETE");
       if (result.error) {
         return {
           response: result.error,

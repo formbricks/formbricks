@@ -5,6 +5,9 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
@@ -97,6 +100,10 @@ export const updateWorkspace = async (
     throw error;
   }
 
+  await runPostCommitProjection("workspace_update", () =>
+    reconcileTeamWorkspaceRelationships({ workspaceIds: [workspaceId] })
+  );
+
   return updatedWorkspace as TWorkspace;
 };
 
@@ -114,12 +121,13 @@ export const createWorkspace = async (
   // Captured out here so the guard above still narrows it: inside the transaction callback below,
   // TypeScript widens workspaceInput.name back to `string | undefined`.
   const name = workspaceInput.name;
+  let workspace: TWorkspace;
 
   try {
     // The ownership check and both writes share one transaction: it keeps the check and the link
     // atomic (a team cannot leave the organization in between), and stops a failed createMany from
     // leaving an orphan workspace with no team links.
-    return await prisma.$transaction(async (tx) => {
+    workspace = (await prisma.$transaction(async (tx) => {
       // ENG-1922: teamIds are caller-supplied. Validate that every team belongs to this
       // organization before linking it — otherwise a caller could attach another org's team
       // to their workspace (a cross-tenant WorkspaceTeam write). The FK only enforces that the
@@ -177,7 +185,7 @@ export const createWorkspace = async (
       }
 
       return workspace;
-    });
+    })) as TWorkspace;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       throw new InvalidInputError("A workspace with this name already exists in your organization");
@@ -187,16 +195,36 @@ export const createWorkspace = async (
     }
     throw error;
   }
+
+  await runPostCommitProjection("workspace_create", () =>
+    reconcileTeamWorkspaceRelationships({
+      workspaceIds: [workspace.id],
+      workspaceTeamGrants: (teamIds ?? []).map((teamId) => ({ teamId, workspaceId: workspace.id })),
+    })
+  );
+
+  return workspace;
 };
 
 export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> => {
   try {
+    const feedbackDirectoryAssignments = await prisma.feedbackDirectoryWorkspace.findMany({
+      where: { workspaceId },
+      select: { feedbackDirectoryId: true, workspaceId: true },
+    });
     const workspace = await prisma.workspace.delete({
       where: {
         id: workspaceId,
       },
       select: selectWorkspace,
     });
+
+    await runPostCommitProjection("workspace_delete", () =>
+      reconcileTeamWorkspaceRelationships({ workspaceIds: [workspaceId] })
+    );
+    await runPostCommitProjection("workspace_delete_feedback_directory_cleanup", () =>
+      reconcileFeedbackDirectoryRelationships({ assignments: feedbackDirectoryAssignments })
+    );
 
     if (workspace) {
       const s3Result = await deleteFilesByWorkspaceId(workspaceId, []);

@@ -112,6 +112,36 @@ export const getWorkspaces = reactCache(
   }
 );
 
+/**
+ * Return only the requested workspaces that belong to the supplied organization.
+ *
+ * Authorization-sensitive callers must scope the database read itself instead of fetching by ID and
+ * discarding foreign-organization rows afterwards.
+ */
+export const getWorkspacesByIds = reactCache(
+  async (organizationId: string, workspaceIds: string[]): Promise<TWorkspace[]> => {
+    validateInputs([organizationId, ZId], [workspaceIds, ZId.array()]);
+
+    if (workspaceIds.length === 0) return [];
+
+    try {
+      return await prisma.workspace.findMany({
+        where: {
+          id: { in: workspaceIds },
+          organizationId,
+        },
+        select: selectWorkspace,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
 export const getWorkspace = reactCache(async (workspaceId: string): Promise<TWorkspace | null> => {
   let workspacePrisma;
   try {

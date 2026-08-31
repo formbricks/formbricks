@@ -10,6 +10,8 @@ import {
   type TWorkflowRunJobData,
   recurringJobs,
 } from "@formbricks/jobs";
+import { processAuthzedProjectionDeliveryJob } from "@/lib/authzed/outbox-processor";
+import { processAuthzedScheduledReconciliationJob } from "@/lib/authzed/scheduled-reconciliation";
 import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
 import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
 import { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } from "@/modules/ee/workflows/lib/runner/reconcile-constants";
@@ -56,6 +58,22 @@ interface RecurringJobRegistration {
  * registered at all). A test pins the pairing instead.
  */
 export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, RecurringJobRegistration> = {
+  authzedProjectionDelivery: {
+    handler: processAuthzedProjectionDeliveryJob,
+    job: recurringJobs.authzedProjectionDelivery,
+    schedule: {
+      everyMs: 5_000,
+      kind: "every",
+    },
+  },
+  authzedReconciliationAudit: {
+    handler: processAuthzedScheduledReconciliationJob,
+    job: recurringJobs.authzedReconciliationAudit,
+    schedule: {
+      everyMs: 6 * 60 * 60 * 1_000,
+      kind: "every",
+    },
+  },
   surveyArchivePurge: {
     handler: processSurveyArchivePurgeJob,
     job: recurringJobs.surveyArchivePurge,

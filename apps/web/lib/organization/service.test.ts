@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
+import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
+import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import { getWorkspaces } from "@/lib/workspace/service";
@@ -48,6 +52,19 @@ vi.mock("@/lib/user/service", () => ({
 
 vi.mock("@/lib/workspace/service", () => ({
   getWorkspaces: vi.fn(),
+}));
+
+vi.mock("@/lib/authzed/organization-membership", () => ({
+  deleteOrganizationRelationships: vi.fn(),
+}));
+vi.mock("@/lib/authzed/api-key", () => ({
+  reconcileApiKeyRelationships: vi.fn(),
+}));
+vi.mock("@/lib/authzed/feedback-directory", () => ({
+  reconcileFeedbackDirectoryRelationships: vi.fn(),
+}));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
@@ -395,11 +412,18 @@ describe("Organization Service", () => {
         billing: { stripeCustomerId: "cus_123" },
         memberships: [],
         workspaces: [],
+        teams: [],
+        apiKeys: [{ id: "api-key-1" }],
         feedbackDirectories: [],
       } as any);
 
       await deleteOrganization("org1");
 
+      expect(deleteOrganizationRelationships).toHaveBeenCalledWith("org1");
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ teamIds: [], workspaceIds: [] });
+      expect(reconcileApiKeyRelationships).toHaveBeenCalledWith({
+        apiKeyIds: ["api-key-1"],
+      });
       if (IS_FORMBRICKS_CLOUD) {
         expect(cleanupStripeCustomer).toHaveBeenCalledWith("cus_123");
       }
@@ -412,8 +436,13 @@ describe("Organization Service", () => {
         name: "Test Org",
         billing: null,
         memberships: [],
-        workspaces: [],
-        feedbackDirectories: [{ id: "frd_1" }, { id: "frd_2" }],
+        workspaces: [{ id: "workspace-1" }],
+        teams: [{ id: "team-1" }],
+        apiKeys: [{ id: "api-key-1" }, { id: "api-key-2" }],
+        feedbackDirectories: [
+          { id: "frd_1", workspaces: [{ workspaceId: "workspace-1" }] },
+          { id: "frd_2", workspaces: [] },
+        ],
       } as any);
 
       await deleteOrganization("org1");
@@ -421,6 +450,17 @@ describe("Organization Service", () => {
       expect(deleteHubTenantData).toHaveBeenCalledTimes(2);
       expect(deleteHubTenantData).toHaveBeenCalledWith("frd_1");
       expect(deleteHubTenantData).toHaveBeenCalledWith("frd_2");
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+        teamIds: ["team-1"],
+        workspaceIds: ["workspace-1"],
+      });
+      expect(reconcileApiKeyRelationships).toHaveBeenCalledWith({
+        apiKeyIds: ["api-key-1", "api-key-2"],
+      });
+      expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
+        assignments: [{ feedbackDirectoryId: "frd_1", workspaceId: "workspace-1" }],
+        feedbackDirectoryIds: ["frd_1", "frd_2"],
+      });
     });
   });
 

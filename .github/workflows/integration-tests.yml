@@ -123,6 +123,11 @@ jobs:
           sed -i "s|PASSWORD_RESET_DISABLED=.*|PASSWORD_RESET_DISABLED=0|" .env
         shell: bash
 
+      - name: Start AuthZed CI fixture
+        if: steps.harness.outputs.present == 'true'
+        run: bash scripts/start-authzed-ci.sh
+        shell: bash
+
       # Build the workspace packages the tests import (@formbricks/logger, cache, types, email, …) so
       # vite can resolve their package.json `exports` → dist. Deps only (`^...`), not the Next app.
       - name: Build workspace package dependencies
@@ -165,4 +170,9 @@ jobs:
         run: cd apps/web && pnpm test:integration
         env:
           TEST_DB_PROVISIONED: "1"
+        shell: bash
+
+      - name: Output AuthZed logs
+        if: failure() && steps.harness.outputs.present == 'true'
+        run: docker logs formbricks-authzed-ci 2>&1 || true
         shell: bash

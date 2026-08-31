@@ -141,6 +141,12 @@ export default defineConfig({
         // ENG-1054: keep the new Better Auth code well-tested. Glob aggregate (not perFile) so a single
         // thin file can't trip the gate; the integration-only BA instance/wiring is excluded above.
         "modules/auth/lib/**": { statements: 80, branches: 80, functions: 80, lines: 80 },
+        // ENG-1718: keep the AuthZed client, projections, and backfill/repair tooling well-tested —
+        // this code rewrites the authorization graph. Glob aggregate (not perFile) so a single thin
+        // file can't trip the gate. `**/scripts/**` is excluded above, so every decision the tooling
+        // makes (argv parsing, scoping, classification, prune guards, exit codes) lives under
+        // lib/authzed and is covered here; apps/web/scripts/authzed-*.ts stay thin argv shims.
+        "lib/authzed/**": { statements: 80, branches: 80, functions: 80, lines: 80 },
       },
     },
   },

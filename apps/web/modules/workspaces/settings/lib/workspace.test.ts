@@ -5,6 +5,8 @@ import { logger } from "@formbricks/logger";
 import { StorageErrorCode } from "@formbricks/storage";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
+import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 import { createWorkspace, deleteWorkspace, updateWorkspace } from "./workspace";
 
@@ -54,6 +56,7 @@ vi.mock("@formbricks/database", () => ({
     feedbackDirectoryWorkspace: {
       count: vi.fn(),
       create: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
@@ -63,6 +66,13 @@ vi.mock("@formbricks/database", () => ({
 // `any` casts, so the fixture can't silently drift from the query's shape.
 const mockOrgTeams = (...ids: string[]) =>
   ids.map((id) => ({ id })) as unknown as Awaited<ReturnType<typeof prisma.team.findMany>>;
+
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
+vi.mock("@/lib/authzed/feedback-directory", () => ({
+  reconcileFeedbackDirectoryRelationships: vi.fn(),
+}));
 
 const expectNoFrdSideEffects = () => {
   expect(prisma.feedbackDirectory.upsert).not.toHaveBeenCalled();
@@ -92,6 +102,7 @@ describe("workspace lib", () => {
     // createWorkspace runs its ownership check and both writes in one transaction. Hand the callback
     // the same prisma mock so assertions stay on `prisma.*` and a rollback surfaces as a throw.
     vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(prisma));
+    vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValue([]);
   });
 
   describe("updateWorkspace", () => {
@@ -102,6 +113,7 @@ describe("workspace lib", () => {
       });
       expect(result).toEqual(baseWorkspace);
       expect(prisma.workspace.update).toHaveBeenCalled();
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ workspaceIds: ["p1"] });
     });
 
     test("throws DatabaseError on Prisma error", async () => {
@@ -161,6 +173,10 @@ describe("workspace lib", () => {
       );
       expect(prisma.workspace.create).toHaveBeenCalled();
       expect(prisma.workspaceTeam.createMany).toHaveBeenCalled();
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+        workspaceIds: ["p2"],
+        workspaceTeamGrants: [{ teamId: "t1", workspaceId: "p2" }],
+      });
       expectNoFrdSideEffects();
     });
 
@@ -307,11 +323,22 @@ describe("workspace lib", () => {
 
   describe("deleteWorkspace", () => {
     test("deletes workspace, deletes files, and revalidates cache", async () => {
+      const feedbackDirectoryAssignment = {
+        feedbackDirectoryId: "feedback-directory-1",
+        workspaceId: "p1",
+      };
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValueOnce([
+        feedbackDirectoryAssignment,
+      ] as any);
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
 
       vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
       const result = await deleteWorkspace("p1");
       expect(result).toEqual(baseWorkspace);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ workspaceIds: ["p1"] });
+      expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
+        assignments: [feedbackDirectoryAssignment],
+      });
       expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", []);
     });
 

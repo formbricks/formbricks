@@ -13,7 +13,7 @@ import {
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = async (
   request: Request,
@@ -55,7 +55,7 @@ export const GET = async (
 
       const { workspaceId } = workspaceIdResult.data;
 
-      if (!hasPermission(authentication.workspacePermissions, workspaceId, "GET")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "GET"))) {
         return handleApiError(request, {
           type: "unauthorized",
         });

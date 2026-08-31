@@ -1,11 +1,11 @@
 import "server-only";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-access";
 import { problemForbidden, problemUnauthorized } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { can } from "@/lib/authorization";
+import { getFeedbackDirectoryAssignmentActionForPermission } from "@/lib/authorization/compatibility";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 /**
@@ -37,8 +37,17 @@ export async function requireUnifyDirectoryAccess(
     return context;
   }
 
-  const directories = await getFeedbackDirectoriesByWorkspaceId(context.workspaceId);
-  if (!directories.some((directory) => directory.id === directoryId)) {
+  const actor = getV3AuthorizationActor(authentication);
+  if (!actor) {
+    return problemUnauthorized(requestId, "Not authenticated", instance);
+  }
+
+  const allowed = await can(actor, getFeedbackDirectoryAssignmentActionForPermission(minPermission), {
+    type: "feedbackDirectoryAssignment",
+    feedbackDirectoryId: directoryId,
+    workspaceId: context.workspaceId,
+  });
+  if (!allowed) {
     return problemForbidden(requestId, "You are not authorized to access this resource", instance);
   }
 
@@ -81,21 +90,16 @@ export async function requireUnifyDirectoryMutationAccess(
     return problemUnauthorized(requestId, "Session required", instance);
   }
 
-  try {
-    await checkAuthorizationUpdated({
-      userId,
-      organizationId: context.organizationId,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
-    });
-  } catch (err) {
-    if (err instanceof AuthorizationError) {
-      return problemForbidden(
-        requestId,
-        "Only organization owners and managers can change a feedback directory's taxonomy",
-        instance
-      );
-    }
-    throw err;
+  const allowed = await can({ type: "user", id: userId }, "organization.manage", {
+    type: "organization",
+    id: context.organizationId,
+  });
+  if (!allowed) {
+    return problemForbidden(
+      requestId,
+      "Only organization owners and managers can change a feedback directory's taxonomy",
+      instance
+    );
   }
 
   return context;

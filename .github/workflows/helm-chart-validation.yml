@@ -10,6 +10,8 @@ jobs:
   validate:
     name: Validate Helm Chart
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
@@ -60,6 +62,7 @@ jobs:
           }
 
           helm lint "$chart" --set formbricks.webappUrl=https://qa.example.com
+          bash charts/formbricks/tests/authzed-operations.sh
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -93,6 +96,29 @@ jobs:
           grep -q '^          lifecycle:$' "$render_dir/deployment-lifecycle.yaml"
           grep -q '^            preStop:$' "$render_dir/deployment-lifecycle.yaml"
           grep -q -- '- sleep 30' "$render_dir/deployment-lifecycle.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-default.yaml"
+          if grep -q 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-default.yaml"; then
+            echo "MCP_OAUTH_JWKS_URL must remain opt-in"
+            exit 1
+          fi
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set formbricks.mcpOauthJwksUrl=http://auth-internal:3000/custom/api/auth/jwks \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-jwks-value.yaml"
+          grep -A1 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-value.yaml" \
+            | grep -q 'value: "http://auth-internal:3000/custom/api/auth/jwks"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set-string deployment.env.MCP_OAUTH_JWKS_URL=http://explicit:3000/api/auth/jwks \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-jwks-env.yaml"
+          test "$(grep -c 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-env.yaml")" -eq 1
+          grep -A1 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-env.yaml" \
+            | grep -q 'value: "http://explicit:3000/api/auth/jwks"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -543,3 +569,12 @@ jobs:
             --set formbricks.webappUrl=https://qa.example.com \
             --show-only charts/postgresql/templates/primary/statefulset.yaml > "$render_dir/postgresql.yaml"
           grep -q 'argocd.argoproj.io/sync-wave: "-2"' "$render_dir/postgresql.yaml"
+
+      # The render tests cannot execute the bootstrap SQL, and the SQL is where ENG-2390 actually
+      # broke: an administrator holding the documented CREATEROLE and CREATEDB could not run
+      # `CREATE DATABASE ... OWNER`. This runs the *rendered* script against real PostgreSQL, on both
+      # sides of the 16 CREATEROLE change. It skips itself when Docker is unavailable, so the suite
+      # stays runnable locally.
+      - name: Validate the AuthZed bootstrap against real PostgreSQL
+        shell: bash
+        run: bash charts/formbricks/tests/authzed-bootstrap-runtime.sh

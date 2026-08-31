@@ -6,7 +6,7 @@ import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-reso
 import { createContact } from "@/modules/ee/contacts/api/v2/management/contacts/lib/contact";
 import { ZContactCreateRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const POST = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -37,7 +37,7 @@ export const POST = async (request: NextRequest) =>
       const { workspaceId } = body;
 
       const perm = authentication.workspacePermissions.find((p) => p.workspaceId === workspaceId);
-      if (!perm || !hasPermission(authentication.workspacePermissions, perm.workspaceId, "POST")) {
+      if (!perm || !(await hasApiKeyWorkspaceAccess(authentication, perm.workspaceId, "POST"))) {
         return handleApiError(
           request,
           {

@@ -14,7 +14,7 @@ import {
   ZWebhookUpdateSchema,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = async (request: NextRequest, props: { params: Promise<{ webhookId: string }> }) =>
   authenticatedApiClient({
@@ -39,7 +39,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ webho
         return handleApiError(request, webhook.error as ApiErrorResponseV2);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, webhook.data.workspaceId, "GET")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, webhook.data.workspaceId, "GET"))) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "webhook", issue: "unauthorized" }],
@@ -90,7 +90,7 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
         return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, webhook.data.workspaceId, "PUT")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, webhook.data.workspaceId, "PUT"))) {
         return handleApiError(
           request,
           {
@@ -162,7 +162,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
         return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, webhook.data.workspaceId, "DELETE")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, webhook.data.workspaceId, "DELETE"))) {
         return handleApiError(
           request,
           {

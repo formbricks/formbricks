@@ -1,19 +1,21 @@
 import { cleanup } from "@testing-library/react";
 import { returnValidationErrors } from "next-safe-action";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ZodIssue, z } from "zod";
+import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { getMembershipRole } from "@/lib/membership/hooks/actions";
-import { getTeamRoleByTeamIdUserId, getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { can } from "@/lib/authorization";
 import { checkAuthorizationUpdated, formatErrors } from "./action-client-middleware";
 
-vi.mock("@/lib/membership/hooks/actions", () => ({
-  getMembershipRole: vi.fn(),
+vi.mock("@/lib/authorization", () => ({
+  can: vi.fn(),
 }));
 
-vi.mock("@/modules/ee/teams/lib/roles", () => ({
-  getWorkspacePermissionByUserId: vi.fn(),
-  getTeamRoleByTeamIdUserId: vi.fn(),
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+  },
 }));
 
 vi.mock("next-safe-action", () => ({
@@ -24,7 +26,10 @@ describe("action-client-middleware", () => {
   const userId = "user-1";
   const organizationId = "org-1";
   const workspaceId = "workspace-1";
-  const teamId = "team-1";
+
+  beforeEach(() => {
+    vi.mocked(can).mockResolvedValue(false);
+  });
 
   afterEach(() => {
     cleanup();
@@ -32,9 +37,6 @@ describe("action-client-middleware", () => {
   });
 
   describe("formatErrors", () => {
-    // We need to access the private function for testing
-    // Using any to access the function directly
-
     test("formats simple path ZodIssue", () => {
       const issues = [
         {
@@ -44,37 +46,19 @@ describe("action-client-middleware", () => {
         },
       ] as ZodIssue[];
 
-      const result = formatErrors(issues);
-      expect(result).toEqual({
+      expect(formatErrors(issues)).toEqual({
         name: {
           _errors: ["Name is required"],
         },
       });
     });
 
-    test("formats nested path ZodIssue", () => {
+    test("formats nested and multiple ZodIssues", () => {
       const issues = [
         {
           code: "custom",
           path: ["user", "address", "street"],
           message: "Street is required",
-        },
-      ] as ZodIssue[];
-
-      const result = formatErrors(issues);
-      expect(result).toEqual({
-        "user.address.street": {
-          _errors: ["Street is required"],
-        },
-      });
-    });
-
-    test("formats multiple ZodIssues", () => {
-      const issues = [
-        {
-          code: "custom",
-          path: ["name"],
-          message: "Name is required",
         },
         {
           code: "custom",
@@ -83,10 +67,9 @@ describe("action-client-middleware", () => {
         },
       ] as ZodIssue[];
 
-      const result = formatErrors(issues);
-      expect(result).toEqual({
-        name: {
-          _errors: ["Name is required"],
+      expect(formatErrors(issues)).toEqual({
+        "user.address.street": {
+          _errors: ["Street is required"],
         },
         email: {
           _errors: ["Invalid email"],
@@ -95,385 +78,253 @@ describe("action-client-middleware", () => {
     });
   });
 
-  describe("checkAuthorizationUpdated", () => {
-    test("returns validation errors when schema validation fails", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("owner");
+  describe("central compatibility shapes", () => {
+    test.each([
+      [["owner", "manager", "member", "billing"], "organization.read"],
+      [["owner", "manager", "member"], "organization.read_access"],
+      [["owner", "manager", "billing"], "organization.manage_billing"],
+      [["owner", "manager"], "organization.manage"],
+      [["owner"], "organization.write"],
+    ] as const)("maps organization roles %j to %s", async (roles, expectedAction) => {
+      vi.mocked(can)
+        .mockResolvedValueOnce(true)
+        .mockImplementation(async (_actor, action) => action === expectedAction);
 
-      const mockSchema = z.object({
-        name: z.string(),
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [{ type: "organization", roles: [...roles] }],
+        })
+      ).resolves.toBe(true);
+
+      expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "organization.read", {
+        type: "organization",
+        id: organizationId,
+      });
+      expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, expectedAction, {
+        type: "organization",
+        id: organizationId,
+      });
+      expect(can).toHaveBeenCalledTimes(expectedAction === "organization.read" ? 1 : 2);
+    });
+
+    test.each([
+      [undefined, "workspace.read"],
+      ["read", "workspace.read"],
+      ["readWrite", "workspace.write"],
+      ["manage", "workspace.manage"],
+    ] as const)("maps workspace permission %s to %s", async (minPermission, expectedAction) => {
+      vi.mocked(can).mockImplementation(async (_actor, action) =>
+        ["organization.read", expectedAction].includes(action)
+      );
+
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [
+            { type: "organization", roles: ["owner", "manager"] },
+            { type: "workspaceTeam", workspaceId, minPermission },
+          ],
+        })
+      ).resolves.toBe(true);
+
+      expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, expectedAction, {
+        type: "workspace",
+        id: workspaceId,
+      });
+    });
+
+    test("refuses an unrecognized workspace minimum permission", async () => {
+      vi.mocked(can).mockResolvedValue(true);
+
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [
+            {
+              type: "workspaceTeam",
+              workspaceId,
+              // Runtime callers can bypass the compile-time enum through untrusted input.
+              minPermission: "write" as never,
+            },
+          ],
+        })
+      ).rejects.toThrow(new AuthorizationError("Not authorized"));
+
+      expect(can).toHaveBeenCalledTimes(1);
+    });
+
+    test("preserves ordered OR evaluation across multiple workspace alternatives", async () => {
+      const otherWorkspaceId = "workspace-2";
+      vi.mocked(can).mockImplementation(async (_actor, action, resource) => {
+        if (action === "organization.read") return true;
+        return "id" in resource && resource.id === otherWorkspaceId;
       });
 
-      const mockData = { name: 123 }; // Type error to trigger validation failure
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [
+            { type: "organization", roles: ["owner", "manager"] },
+            { type: "workspaceTeam", workspaceId, minPermission: "readWrite" },
+            { type: "workspaceTeam", workspaceId: otherWorkspaceId, minPermission: "readWrite" },
+          ],
+        })
+      ).resolves.toBe(true);
 
+      expect(can).toHaveBeenNthCalledWith(3, { type: "user", id: userId }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
+      });
+      expect(can).toHaveBeenNthCalledWith(4, { type: "user", id: userId }, "workspace.write", {
+        type: "workspace",
+        id: otherWorkspaceId,
+      });
+    });
+
+    test("rejects a non-member before evaluating access alternatives", async () => {
+      vi.mocked(can).mockResolvedValue(false);
+
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [{ type: "organization", roles: ["owner"] }],
+        })
+      ).rejects.toThrow(new AuthorizationError("Not authorized"));
+
+      expect(can).toHaveBeenCalledTimes(1);
+    });
+
+    test("returns validation errors after membership and before the permission decision", async () => {
+      const schema = z.object({ name: z.string() });
+      vi.mocked(can).mockResolvedValue(true);
       vi.mocked(returnValidationErrors).mockReturnValue("validation-error" as unknown as never);
-
-      const access = [
-        {
-          type: "organization" as const,
-          schema: mockSchema,
-          data: mockData as any,
-          roles: ["owner" as const],
-        },
-      ];
 
       const result = await checkAuthorizationUpdated({
         userId,
         organizationId,
-        access,
+        access: [
+          {
+            type: "organization",
+            schema,
+            data: { name: 123 } as never,
+            roles: ["owner"],
+          },
+        ],
       });
 
-      expect(returnValidationErrors).toHaveBeenCalledWith(expect.any(Object), expect.any(Object));
       expect(result).toBe("validation-error");
-    });
-
-    test("returns true when organization access matches role", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("owner");
-
-      const access = [
-        {
-          type: "organization" as const,
-          roles: ["owner" as const],
-        },
-      ];
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
-    });
-
-    test("continues checking other access items when organization role doesn't match", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "organization" as const,
-          roles: ["owner" as const],
-        },
-        {
-          type: "workspaceTeam" as const,
-          workspaceId,
-          minPermission: "read" as const,
-        },
-      ];
-
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("readWrite");
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
-      expect(getWorkspacePermissionByUserId).toHaveBeenCalledWith(userId, workspaceId);
-    });
-
-    test("returns true when workspaceTeam access matches permission", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "workspaceTeam" as const,
-          workspaceId,
-          minPermission: "read" as const,
-        },
-      ];
-
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("readWrite");
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
-      expect(getWorkspacePermissionByUserId).toHaveBeenCalledWith(userId, workspaceId);
-    });
-
-    test("continues checking other access items when workspaceTeam permission is insufficient", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "workspaceTeam" as const,
-          workspaceId,
-          minPermission: "manage" as const,
-        },
-        {
-          type: "team" as const,
-          teamId,
-          minPermission: "contributor" as const,
-        },
-      ];
-
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("read");
-      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("admin");
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
-      expect(getWorkspacePermissionByUserId).toHaveBeenCalledWith(userId, workspaceId);
-      expect(getTeamRoleByTeamIdUserId).toHaveBeenCalledWith(teamId, userId);
-    });
-
-    test("returns true when team access matches role", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "team" as const,
-          teamId,
-          minPermission: "contributor" as const,
-        },
-      ];
-
-      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("admin");
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
-      expect(getTeamRoleByTeamIdUserId).toHaveBeenCalledWith(teamId, userId);
-    });
-
-    test("continues checking other access items when team role is insufficient", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "team" as const,
-          teamId,
-          minPermission: "admin" as const,
-        },
-        {
-          type: "organization" as const,
-          roles: ["member" as const],
-        },
-      ];
-
-      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("contributor");
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
-      expect(getTeamRoleByTeamIdUserId).toHaveBeenCalledWith(teamId, userId);
-    });
-
-    test("throws AuthorizationError when no access matches", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "organization" as const,
-          roles: ["owner" as const],
-        },
-        {
-          type: "workspaceTeam" as const,
-          workspaceId,
-          minPermission: "manage" as const,
-        },
-        {
-          type: "team" as const,
-          teamId,
-          minPermission: "admin" as const,
-        },
-      ];
-
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("read");
-      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("contributor");
-
-      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
-        AuthorizationError
-      );
-      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
-        "Not authorized"
-      );
-    });
-
-    test("continues to check when workspacePermission is null", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "workspaceTeam" as const,
-          workspaceId,
-          minPermission: "read" as const,
-        },
-        {
-          type: "organization" as const,
-          roles: ["member" as const],
-        },
-      ];
-
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue(null);
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
-    });
-
-    test("continues to check when teamRole is null", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "team" as const,
-          teamId,
-          minPermission: "contributor" as const,
-        },
-        {
-          type: "organization" as const,
-          roles: ["member" as const],
-        },
-      ];
-
-      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue(null);
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
-    });
-
-    test("returns true when schema validation passes", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("owner");
-
-      const mockSchema = z.object({
-        name: z.string(),
+      expect(returnValidationErrors).toHaveBeenCalledWith(expect.any(Object), {
+        name: { _errors: ["Invalid input: expected string, received number"] },
       });
-
-      const mockData = { name: "test" };
-
-      const access = [
-        {
-          type: "organization" as const,
-          schema: mockSchema,
-          data: mockData,
-          roles: ["owner" as const],
-        },
-      ];
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
+      expect(can).toHaveBeenCalledTimes(1);
     });
 
-    test("handles workspaceTeam access without minPermission specified", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
+    test("throws the standard denial after every alternative denies", async () => {
+      vi.mocked(can).mockImplementation(async (_actor, action) => action === "organization.read");
 
-      const access = [
-        {
-          type: "workspaceTeam" as const,
-          workspaceId,
-        },
-      ];
-
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("read");
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [
+            { type: "organization", roles: ["owner", "manager"] },
+            { type: "workspaceTeam", workspaceId, minPermission: "manage" },
+          ],
+        })
+      ).rejects.toThrow(new AuthorizationError("Not authorized"));
     });
 
-    test("refuses workspaceTeam access when minPermission is an unrecognized value", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
+    test("denies an empty requirement list instead of treating it as no requirement", async () => {
+      vi.mocked(can).mockResolvedValue(true);
 
-      // "write" is the feedback-records gateway spelling, not a TTeamPermission ("readWrite").
-      // An unrecognized minimum must not admit a read-only member.
-      const access = [
-        {
-          type: "workspaceTeam" as const,
-          workspaceId,
-          minPermission: "write" as any,
-        },
-      ];
-
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("read");
-
-      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
-        AuthorizationError
+      await expect(checkAuthorizationUpdated({ userId, organizationId, access: [] })).rejects.toThrow(
+        new AuthorizationError("Not authorized")
       );
     });
 
-    test("refuses workspaceTeam access when the granted permission is an unrecognized value", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
+    test("propagates central evaluator failures", async () => {
+      const failure = new Error("database unavailable");
+      vi.mocked(can).mockRejectedValue(failure);
 
-      const access = [
-        {
-          type: "workspaceTeam" as const,
-          workspaceId,
-          minPermission: "readWrite" as const,
-        },
-      ];
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [{ type: "organization", roles: ["owner"] }],
+        })
+      ).rejects.toBe(failure);
+    });
+  });
 
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("write" as any);
+  // ENG-1737 removed the parallel legacy evaluator these shapes used to reach. What replaces
+  // it is a refusal, so the cases below pin the failure mode rather than the old behavior.
+  describe("shapes with no central meaning", () => {
+    test("refuses an unmapped organization role set, and says so", async () => {
+      vi.mocked(can).mockResolvedValue(true);
 
-      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
-        AuthorizationError
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [{ type: "organization", roles: ["member"] }],
+        })
+      ).rejects.toThrow(new AuthorizationError("Not authorized"));
+
+      // The membership gate is the only decision that ran; the role set itself never mapped.
+      expect(can).toHaveBeenCalledTimes(1);
+      expect(logger.error).toHaveBeenCalledWith(
+        { roleSet: "member" },
+        "Unmapped organization role set in action-client authorization"
       );
     });
 
-    test("refuses team access when minPermission is an unrecognized value", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "team" as const,
-          teamId,
-          minPermission: "manage" as any,
-        },
-      ];
-
-      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("contributor");
-
-      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
-        AuthorizationError
+    test("evaluates a workspace-only requirement centrally, with no organization item", async () => {
+      vi.mocked(can).mockImplementation(async (_actor, action) =>
+        ["organization.read", "workspace.read"].includes(action)
       );
+
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [{ type: "workspaceTeam", workspaceId, minPermission: "read" }],
+        })
+      ).resolves.toBe(true);
+
+      expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "workspace.read", {
+        type: "workspace",
+        id: workspaceId,
+      });
+      expect(logger.error).not.toHaveBeenCalled();
     });
 
-    test("handles team access without minPermission specified", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
+    test("still returns schema validation errors ahead of the role mapping", async () => {
+      const schema = z.object({ name: z.string() });
+      vi.mocked(can).mockResolvedValue(true);
+      vi.mocked(returnValidationErrors).mockReturnValue("validation-error" as unknown as never);
 
-      const access = [
-        {
-          type: "team" as const,
-          teamId,
-        },
-      ];
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [
+            {
+              type: "organization",
+              schema,
+              data: { name: 123 } as never,
+              roles: ["member"],
+            },
+          ],
+        })
+      ).resolves.toBe("validation-error");
 
-      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("contributor");
-
-      const result = await checkAuthorizationUpdated({ userId, organizationId, access });
-
-      expect(result).toBe(true);
-    });
-
-    // Omitting minPermission asks for "any grant on this workspace/team", not "no check at all" — an
-    // unrecognized grant is still refused. Not reachable through the current callers, whose grants come
-    // from Postgres enums, but the helper must not fail open for one that isn't enum-backed.
-    test("refuses workspaceTeam access when the granted permission is unrecognized and no minPermission is set", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "workspaceTeam" as const,
-          workspaceId,
-        },
-      ];
-
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("write" as any);
-
-      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
-        AuthorizationError
-      );
-    });
-
-    test("refuses team access when the granted role is unrecognized and no minPermission is set", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-
-      const access = [
-        {
-          type: "team" as const,
-          teamId,
-        },
-      ];
-
-      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("owner" as any);
-
-      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
-        AuthorizationError
-      );
+      expect(logger.error).not.toHaveBeenCalled();
     });
   });
 });

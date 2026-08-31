@@ -7,7 +7,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { CONTACTS_API_V1_NOT_ENABLED_MESSAGE } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
 
@@ -76,11 +76,7 @@ export const POST = withV1ApiWrapper({
       }
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveBodyIds(
-        contactAttributeKeyInput,
-        authentication.workspacePermissions,
-        "POST"
-      );
+      const resolved = await resolveBodyIds(contactAttributeKeyInput, authentication, "POST");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZContactAttributeKeyCreateInput.safeParse(resolved.body);
@@ -96,7 +92,7 @@ export const POST = withV1ApiWrapper({
       }
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.workspacePermissions, inputValidation.data.workspaceId, "POST")
+        !(await hasApiKeyWorkspaceAccess(authentication, inputValidation.data.workspaceId, "POST"))
       ) {
         return { response: responses.unauthorizedResponse() };
       }

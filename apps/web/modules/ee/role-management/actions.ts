@@ -11,9 +11,9 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
-import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
+import { can } from "@/lib/authorization";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -103,12 +103,19 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
     if (!currentUserMembership) {
       throw new AuthenticationError("User not a member of this organization");
     }
-    const hasUserManagementAccess = getUserManagementAccess(
-      currentUserMembership.role,
-      USER_MANAGEMENT_MINIMUM_ROLE
-    );
+    // `organization.manage_access` *is* this decision in the central vocabulary: the legacy
+    // evaluator answers it with `getUserManagementAccess(role, USER_MANAGEMENT_MINIMUM_ROLE)`, and
+    // the SpiceDB evaluator maps the same setting onto the schema (`owner` → write, `manager` →
+    // manage_access, `disabled` → deny). Asking centrally is what puts this role mutation — the
+    // highest-risk one in the product — in front of shadow comparison and enforcement. The check
+    // below it stays `organization.manage`, which is a different and additionally required
+    // capability, so both remain.
+    const canManageAccess = await can({ type: "user", id: ctx.user.id }, "organization.manage_access", {
+      type: "organization",
+      id: parsedInput.organizationId,
+    });
 
-    if (!hasUserManagementAccess) {
+    if (!canManageAccess) {
       throw new OperationNotAllowedError("User management is not allowed for your role");
     }
 

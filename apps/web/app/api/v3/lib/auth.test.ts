@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { can } from "@/lib/authorization";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspace } from "@/lib/workspace/service";
-import { requireSessionWorkspaceAccess, requireV3WorkspaceAccess } from "./auth";
+import { getV3AuthorizationActor, requireSessionWorkspaceAccess, requireV3WorkspaceAccess } from "./auth";
+import type { TV3Authentication } from "./types";
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -27,7 +29,30 @@ vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
   checkAuthorizationUpdated: vi.fn(),
 }));
 
+// The API-key ladder itself is covered by lib/authorization/legacy-api-key-access.test.ts;
+// here we assert the v3 layer asks the central interface and maps a denial to 403.
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
+
 const requestId = "req-123";
+
+describe("getV3AuthorizationActor", () => {
+  test("maps session and API-key authentication to Formbricks actors", () => {
+    expect(getV3AuthorizationActor({ user: { id: "user_1" } } as unknown as TV3Authentication)).toEqual({
+      type: "user",
+      id: "user_1",
+    });
+    expect(getV3AuthorizationActor({ apiKeyId: "key_1" } as unknown as TV3Authentication)).toEqual({
+      type: "apiKey",
+      id: "key_1",
+    });
+  });
+
+  test("rejects missing or incomplete authentication", () => {
+    expect(getV3AuthorizationActor(null)).toBeNull();
+    expect(getV3AuthorizationActor({ user: {} } as unknown as TV3Authentication)).toBeNull();
+    expect(getV3AuthorizationActor({ apiKeyId: "" } as unknown as TV3Authentication)).toBeNull();
+  });
+});
 
 describe("requireSessionWorkspaceAccess", () => {
   test("returns 401 when authentication is null", async () => {
@@ -144,6 +169,7 @@ function wsPerm(workspaceId: string, permission: ApiKeyPermission = ApiKeyPermis
 
 describe("requireV3WorkspaceAccess", () => {
   beforeEach(() => {
+    vi.mocked(can).mockResolvedValue(true);
     vi.mocked(getWorkspace).mockResolvedValue({ id: "proj_k" } as any);
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org_k");
   });
@@ -195,6 +221,7 @@ describe("requireV3WorkspaceAccess", () => {
   });
 
   test("returns 403 when API key permission is lower than the required permission", async () => {
+    vi.mocked(can).mockResolvedValue(false);
     const auth = {
       ...keyBase,
       workspacePermissions: [wsPerm("proj_k", ApiKeyPermission.read)],
@@ -204,6 +231,7 @@ describe("requireV3WorkspaceAccess", () => {
   });
 
   test("403 when API key has no matching workspace", async () => {
+    vi.mocked(can).mockResolvedValue(false);
     const auth = {
       ...keyBase,
       workspacePermissions: [wsPerm("other_workspace")],
@@ -213,6 +241,7 @@ describe("requireV3WorkspaceAccess", () => {
   });
 
   test("403 when API key permission is not list-eligible (runtime value)", async () => {
+    vi.mocked(can).mockResolvedValue(false);
     const auth = {
       ...keyBase,
       workspacePermissions: [
