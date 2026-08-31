@@ -65,3 +65,30 @@ export const extractIdAfterHostMarker = (url: string, marker: string): string =>
 
   return "";
 };
+
+/**
+ * The YouTube video id in `url`, or null.
+ *
+ * Order is preserved from the pattern list this replaces: youtu.be, then `v=`, then `embed/`, then
+ * youtube-nocookie. The first and last carry no `.*`, so they stay regexes; the middle two are the
+ * quadratic ones and go through the scan above.
+ */
+export const extractYoutubeId = (url: string): string | null => {
+  for (const [pattern, marker] of [
+    [/youtu\.be\/([a-zA-Z0-9_-]+)/, null],
+    [null, "v="],
+    [null, "embed/"],
+    [/youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]+)/, null],
+  ] as [RegExp | null, string | null][]) {
+    if (pattern) {
+      const match = pattern.exec(url);
+      if (match?.[1]) return match[1];
+      continue;
+    }
+
+    const id = extractIdAfterHostMarker(url, marker as string);
+    if (id) return id;
+  }
+
+  return null;
+};

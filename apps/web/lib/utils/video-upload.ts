@@ -1,4 +1,6 @@
-import { extractIdAfterHostMarker } from "@formbricks/survey-ui/youtube-id";
+import { extractYoutubeId } from "@formbricks/survey-ui/youtube-id";
+
+export { extractYoutubeId };
 
 export const checkForYoutubeUrl = (url: string): boolean => {
   try {
@@ -50,29 +52,6 @@ export const checkForLoomUrl = (url: string): boolean => {
   } catch {
     return false;
   }
-};
-
-export const extractYoutubeId = (url: string): string | null => {
-  // Order preserved from the pattern list this replaces: youtu.be, then `v=`, then `embed/`, then
-  // youtube-nocookie. The first and last carry no `.*`, so they stay as regexes.
-  for (const [pattern, marker] of [
-    [/youtu\.be\/([a-zA-Z0-9_-]+)/, null],
-    [null, "v="],
-    [null, "embed/"],
-    [/youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]+)/, null],
-  ] as [RegExp | null, string | null][]) {
-    if (pattern) {
-      const match = pattern.exec(url);
-      const id = match ? match[1] : null;
-      if (id) return id;
-      continue;
-    }
-
-    const id = extractIdAfterHostMarker(url, marker as string);
-    if (id) return id;
-  }
-
-  return null;
 };
 
 export const extractVimeoId = (url: string): string | null => {

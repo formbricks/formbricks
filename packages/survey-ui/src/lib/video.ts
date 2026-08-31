@@ -1,4 +1,4 @@
-import { extractIdAfterHostMarker } from "./youtube-id";
+import { extractYoutubeId } from "./youtube-id";
 
 export const checkForYoutubeUrl = (url: string): boolean => {
   try {
@@ -53,29 +53,6 @@ export const checkForLoomUrl = (url: string): boolean => {
     // invalid URL
     return false;
   }
-};
-
-const extractYoutubeId = (url: string): string | null => {
-  // Order preserved from the pattern list this replaces: youtu.be, then `v=`, then `embed/`, then
-  // youtube-nocookie. The first and last carry no `.*`, so they stay as regexes.
-  for (const [pattern, marker] of [
-    [/youtu\.be\/(?<videoId>[a-zA-Z0-9_-]+)/, null],
-    [null, "v="],
-    [null, "embed/"],
-    [/youtube-nocookie\.com\/embed\/(?<videoId>[a-zA-Z0-9_-]+)/, null],
-  ] as [RegExp | null, string | null][]) {
-    if (pattern) {
-      const match = pattern.exec(url);
-      const id = match ? (match.groups?.videoId ?? null) : null;
-      if (id) return id;
-      continue;
-    }
-
-    const id = extractIdAfterHostMarker(url, marker as string);
-    if (id) return id;
-  }
-
-  return null;
 };
 
 const extractVimeoId = (url: string): string | null => {
