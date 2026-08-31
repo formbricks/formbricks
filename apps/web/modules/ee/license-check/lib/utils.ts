@@ -95,7 +95,12 @@ export const getBiggerUploadFileSizePermission = async (organizationId: string):
   const entitlementsContext = await getOrganizationEntitlementsContext(organizationId);
 
   if (!IS_FORMBRICKS_CLOUD) {
-    return entitlementsContext.licenseStatus === "active";
+    // Any active enterprise license grants the bigger upload size — there is no license feature for
+    // it. `licenseActive` rather than the status string for the same reason as the workspace limit
+    // below: in grace the cached license is still active while the status already reads
+    // "unreachable" or "expired", and gating on the status would drop a licensed instance back to
+    // the standard 10 MB cap for the whole window.
+    return entitlementsContext.licenseActive;
   }
 
   const hasPaidCloudCapacity =
