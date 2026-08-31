@@ -259,7 +259,7 @@ describe("License Core Logic", () => {
         const second = await getEnterpriseLicense();
 
         expect(second).toEqual(first);
-        expect(mockCache.get.mock.calls.length).toBe(cacheReadsAfterFirstCall);
+        expect(mockCache.get.mock.calls).toHaveLength(cacheReadsAfterFirstCall);
       } finally {
         envMock.NODE_ENV = "test";
       }
