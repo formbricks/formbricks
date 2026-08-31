@@ -3628,6 +3628,7 @@
         "how_to_identify_users": "如何 识别 用户",
         "ip_address": "IP地址",
         "last_name": "姓",
+        "locale": "设备区域设置",
         "more_context": "更多上下文",
         "not_completed": "未完成 ⏳",
         "os": "操作系统",

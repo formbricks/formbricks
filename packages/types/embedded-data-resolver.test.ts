@@ -679,6 +679,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
       viewportWidth: 1280,
       viewportHeight: 800,
       timezone: "Europe/Berlin",
+      locale: "de-AT",
     },
   };
 
@@ -823,6 +824,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         display: "secondary",
       },
       { name: "timezone", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
+      { name: "locale", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
     ]);
   });
 
@@ -863,6 +865,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
       viewportWidth: 1280,
       viewportHeight: 800,
       timezone: "Europe/Berlin",
+      locale: "de-AT",
     });
   });
 
@@ -1705,6 +1708,7 @@ describe("listDisplayableReservedFields", () => {
       viewportWidth: 1280,
       viewportHeight: 800,
       timezone: "Europe/Berlin",
+      locale: "de-AT",
     },
   };
 
@@ -1726,7 +1730,7 @@ describe("listDisplayableReservedFields", () => {
     ]);
   });
 
-  test("secondary carries ENG-1841's browser-runtime context, plus ipAddress", () => {
+  test("secondary carries the browser-runtime context, plus ipAddress", () => {
     expect(names("secondary")).toStrictEqual([
       "ipAddress",
       "pagePath",
@@ -1741,6 +1745,7 @@ describe("listDisplayableReservedFields", () => {
       "viewportWidth",
       "viewportHeight",
       "timezone",
+      "locale",
     ]);
   });
 

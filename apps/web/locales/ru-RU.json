@@ -3628,6 +3628,7 @@
         "how_to_identify_users": "Как идентифицировать пользователей",
         "ip_address": "IP-адрес",
         "last_name": "Фамилия",
+        "locale": "Язык устройства",
         "more_context": "Больше контекста",
         "not_completed": "Не завершено ⏳",
         "os": "ОС",
