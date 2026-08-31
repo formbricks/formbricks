@@ -410,6 +410,9 @@ importers:
       '@formbricks/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@formbricks/survey-ui':
+        specifier: workspace:*
+        version: link:../../packages/survey-ui
       '@formbricks/surveys':
         specifier: workspace:*
         version: link:../../packages/surveys
