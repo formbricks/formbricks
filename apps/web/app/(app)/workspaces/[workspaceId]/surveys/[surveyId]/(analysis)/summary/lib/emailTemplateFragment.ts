@@ -5,7 +5,7 @@
 // never to corrupted output.
 const EMAIL_TAG_ATTRIBUTES_MAX = 4096;
 const EMAIL_DOCTYPE_PATTERN = new RegExp(`<!DOCTYPE[^>]{0,${EMAIL_TAG_ATTRIBUTES_MAX}}>`, "i");
-const EMAIL_BODY_OPEN_TAG_PATTERN = new RegExp(`<body\\b[^>]{0,${EMAIL_TAG_ATTRIBUTES_MAX}}>`, "i");
+const EMAIL_BODY_OPEN_TAG_PATTERN = new RegExp(String.raw`<body\b[^>]{0,${EMAIL_TAG_ATTRIBUTES_MAX}}>`, "i");
 const EMAIL_BODY_CLOSE_TAG = "</body>";
 const EMAIL_REACT_SERVER_MARKER_PATTERN = /<!--\/?\$-->/g;
 

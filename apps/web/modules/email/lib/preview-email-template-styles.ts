@@ -81,8 +81,14 @@ const EMAIL_PREVIEW_ACCENT_COLORS = {
 // output carries at most a couple of hundred characters of style here, so the cap is far above any
 // real tag; past it the tag keeps its original spacing instead of being normalized.
 const RICH_TEXT_TAG_ATTRIBUTES_MAX = 4096;
-const RICH_TEXT_PARAGRAPH_TAG_REGEX = new RegExp(`<p\\b([^>]{0,${RICH_TEXT_TAG_ATTRIBUTES_MAX}})>`, "gi");
-const RICH_TEXT_LIST_ITEM_TAG_REGEX = new RegExp(`<li\\b([^>]{0,${RICH_TEXT_TAG_ATTRIBUTES_MAX}})>`, "gi");
+const RICH_TEXT_PARAGRAPH_TAG_REGEX = new RegExp(
+  String.raw`<p\b([^>]{0,${RICH_TEXT_TAG_ATTRIBUTES_MAX}})>`,
+  "gi"
+);
+const RICH_TEXT_LIST_ITEM_TAG_REGEX = new RegExp(
+  String.raw`<li\b([^>]{0,${RICH_TEXT_TAG_ATTRIBUTES_MAX}})>`,
+  "gi"
+);
 const RICH_TEXT_STYLE_ATTRIBUTE_REGEX = /\sstyle=(["'])(.*?)\1/i;
 const RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX = /\sstyle=(["'])(.*?)\1/gi;
 const RICH_TEXT_CLASS_ATTRIBUTE_REGEX = /\sclass=(["'])(.*?)\1/i;
