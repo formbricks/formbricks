@@ -1,0 +1,38 @@
+image:
+  repository: ghcr.io/authzed/spicedb-operator
+  tag: v1.25.1
+  digest: sha256:798037034302a60182e601f5399c476c6dc8bb18c253ba1b3f7431bdeda3bafe
+  pullPolicy: IfNotPresent
+
+# A single operator release can watch one or more namespaces. If empty, only
+# the Helm release namespace is watched.
+watchNamespaces: []
+
+replicaCount: 1
+
+podAnnotations: {}
+podLabels: {}
+
+resources:
+  requests:
+    cpu: 20m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 160Mi
+
+service:
+  annotations: {}
+  port: 8080
+
+serviceMonitor:
+  enabled: false
+  labels: {}
+  interval: 30s
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+nameOverride: ""
+fullnameOverride: ""

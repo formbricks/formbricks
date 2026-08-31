@@ -8,6 +8,7 @@ const {
   mockDeleteTeam,
   mockGetApiKeyCreatorRole,
   mockGetTeam,
+  mockHasOrganizationIdAndAccess,
   mockHandleApiError,
   mockSuccessResponse,
   mockUpdateTeam,
@@ -17,6 +18,7 @@ const {
   mockDeleteTeam: vi.fn(),
   mockGetApiKeyCreatorRole: vi.fn(),
   mockGetTeam: vi.fn(),
+  mockHasOrganizationIdAndAccess: vi.fn(),
   mockHandleApiError: vi.fn(),
   mockSuccessResponse: vi.fn(),
   mockUpdateTeam: vi.fn(),
@@ -34,6 +36,10 @@ vi.mock("@/modules/api/v2/lib/response", () => ({
 
 vi.mock("@/modules/api/v2/lib/utils", () => ({
   handleApiError: mockHandleApiError,
+}));
+
+vi.mock("@/modules/api/v2/organizations/[organizationId]/lib/utils", () => ({
+  hasOrganizationIdAndAccess: mockHasOrganizationIdAndAccess,
 }));
 
 vi.mock("@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/lib/teams", () => ({
@@ -58,6 +64,7 @@ const buildRequest = (method: string) =>
 describe("PUT/DELETE /organizations/[organizationId]/teams/[teamId]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHasOrganizationIdAndAccess.mockResolvedValue(true);
 
     mockAuthenticatedApiClient.mockImplementation(
       async ({ handler }: Parameters<typeof authenticatedApiClient>[0]) =>

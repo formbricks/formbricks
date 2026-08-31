@@ -1609,3 +1609,39 @@ model FeedbackDirectoryWorkspace {
   @@id([feedbackDirectoryId, workspaceId])
   @@index([workspaceId])
 }
+
+/// Durable PostgreSQL queue for rebuilding SpiceDB relationships after an authorization source changes.
+/// Source-table triggers insert these rows in the same transaction as the mutation. Identifiers are
+/// operationally sensitive and must never be included in logs, metrics, or CLI output.
+///
+/// This model declares NO indexes on purpose. All three live in
+/// `migration/20260818120000_add_authzed_projection_outbox/migration.sql`, because each one is
+/// partial (`WHERE "processedAt" IS NULL AND ...`) and Prisma's `@@index` has no `where`. Declaring
+/// approximate non-partial copies here would be worse than declaring none: `prisma db push` would
+/// see a name match with a different definition, drop and recreate them without the predicate, and
+/// the migration's `CREATE INDEX IF NOT EXISTS` would then skip them — leaving a silently wrong
+/// shape that carries a week of delivered rows on every hot-path lookup. Deployments are unaffected
+/// either way (`prisma migrate deploy` never reads this file); a dev who runs `db push` restores
+/// them by rerunning the migration, which is the same contract its triggers already live under.
+model AuthzedProjectionOutbox {
+  id                String    @id @default(uuid())
+  targetType        String
+  primaryId         String
+  secondaryId       String?
+  isRevocation      Boolean   @default(false)
+  /// Total delivery attempts. Drives the retry backoff and reports how hard delivery was tried.
+  attempts          Int       @default(0)
+  /// Non-retryable failures attributable to this event alone. The only input to dead-lettering, so
+  /// that a SpiceDB outage of any duration cannot dead-letter events that were never the problem.
+  permanentFailures Int       @default(0)
+  availableAt       DateTime  @default(now())
+  leasedAt          DateTime?
+  leaseExpiresAt    DateTime?
+  leaseOwner        String?
+  processedAt       DateTime?
+  deadLetteredAt    DateTime?
+  lastAttemptAt     DateTime?
+  lastErrorCode     String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
