@@ -1,17 +1,11 @@
 import { getOAuthState } from "better-auth/api";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { SIGNUP_DISABLED_ERROR_CODE, SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
-import { getIsFreshInstance } from "@/lib/instance/service";
+import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
-import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
-import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
-import {
-  getIsMultiOrgEnabled,
-  getIsSamlSsoEnabled,
-  getIsSsoEnabled,
-} from "@/modules/ee/license-check/lib/utils";
+import { enforceCredentialSignupBackstop } from "@/modules/auth/lib/credential-signup-backstop";
+import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   blockedSignupDomainRedirectAfter,
   getSsoProviderFromContext,
@@ -55,19 +49,14 @@ vi.mock("./sso-provisioning", () => ({
   provisionSsoUserMemberships: vi.fn(),
 }));
 vi.mock("./sso-recovery", () => ({ startSsoRecovery: vi.fn() }));
-vi.mock("@/modules/auth/lib/signup-email-domain", () => ({ isSignupEmailDomainBlocked: vi.fn() }));
-vi.mock("@/modules/auth/lib/signup-request-context", () => ({ isSignupDomainAllowed: vi.fn() }));
-
-const constantsOverrides = vi.hoisted(() => ({ SIGNUP_ENABLED: true }));
-vi.mock("@/lib/constants", () => ({
-  WEBAPP_URL: "http://localhost:3000",
-  get SIGNUP_ENABLED() {
-    return constantsOverrides.SIGNUP_ENABLED;
-  },
+// The credential policy is its own module now (credential-signup-backstop.test.ts covers it); here it
+// is mocked so the hook's routing to it can be asserted without re-testing the policy itself.
+vi.mock("@/modules/auth/lib/credential-signup-backstop", () => ({
+  enforceCredentialSignupBackstop: vi.fn(),
 }));
-vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
+
+vi.mock("@/lib/constants", () => ({ WEBAPP_URL: "http://localhost:3000" }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getIsMultiOrgEnabled: vi.fn(),
   getIsSsoEnabled: vi.fn(),
   getIsSamlSsoEnabled: vi.fn(),
 }));
@@ -84,14 +73,12 @@ const provisionDecision = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  constantsOverrides.SIGNUP_ENABLED = true;
   vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
   vi.mocked(getOAuthState).mockResolvedValue({ callbackURL: "/" } as never);
   vi.mocked(gateSsoProvisioning).mockResolvedValue(provisionDecision);
   vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
   vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
-  vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-  vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+  vi.mocked(enforceCredentialSignupBackstop).mockResolvedValue(undefined);
   vi.mocked(prisma.user.findUnique).mockResolvedValue({
     id: "u1",
     email: "a@b.com",
@@ -279,102 +266,33 @@ describe("ssoDatabaseHooks.user.create.before", () => {
     });
   });
 
-  test("leaves email/password sign-ups untouched (gate not run)", async () => {
+  /**
+   * The credential branch now delegates to `enforceCredentialSignupBackstop`
+   * (modules/auth/lib/credential-signup-backstop.ts), where its own suite covers the domain block and
+   * the ENG-2293 closed-instance policy in detail. What matters HERE is the routing: a non-SSO context
+   * must reach that policy rather than the SSO gate, and its answer must be passed through unaltered —
+   * Better Auth reads the return value literally, so a hook that swallowed a `false` would silently
+   * re-open every path the backstop closes.
+   */
+  test.each([
+    { verdict: false as const, label: "a block" },
+    { verdict: undefined, label: "an allow" },
+  ])("routes a credential sign-up to the backstop and passes $label through", async ({ verdict }) => {
+    vi.mocked(enforceCredentialSignupBackstop).mockResolvedValue(verdict);
+
     const result = await before({ id: "u1", email: "a@b.com" } as never, { path: "/sign-up/email" } as never);
-    expect(result).toBeUndefined();
+
+    expect(result).toBe(verdict);
+    expect(enforceCredentialSignupBackstop).toHaveBeenCalledWith("a@b.com");
     expect(gateSsoProvisioning).not.toHaveBeenCalled();
   });
 
-  test("blocks a credential sign-up that bypassed the action (raw /sign-up/email) with a blocked domain", async () => {
-    vi.mocked(isSignupDomainAllowed).mockReturnValue(false); // no action mark → direct native-endpoint POST
-    vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(true);
-    const result = await before(
-      { id: "u1", email: "spammer@gmail.com" } as never,
-      {
-        path: "/sign-up/email",
-      } as never
-    );
-    expect(result).toBe(false);
-    expect(gateSsoProvisioning).not.toHaveBeenCalled();
-  });
+  test("propagates a backstop rejection instead of creating the user", async () => {
+    vi.mocked(enforceCredentialSignupBackstop).mockRejectedValue(new Error("signup disabled"));
 
-  test("allows a credential sign-up that went through the action (domain already enforced, hook skips)", async () => {
-    vi.mocked(isSignupDomainAllowed).mockReturnValue(true); // action marked the scope
-    vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(true); // would block, but must be skipped
-    const result = await before(
-      { id: "u1", email: "spammer@gmail.com" } as never,
-      {
-        path: "/sign-up/email",
-      } as never
-    );
-    expect(result).toBeUndefined();
-    expect(isSignupEmailDomainBlocked).not.toHaveBeenCalled();
-  });
-
-  test("allows a credential sign-up with an allowed domain on the raw endpoint", async () => {
-    vi.mocked(isSignupDomainAllowed).mockReturnValue(false);
-    vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false);
-    const result = await before(
-      { id: "u1", email: "person@acme-corp.com" } as never,
-      {
-        path: "/sign-up/email",
-      } as never
-    );
-    expect(result).toBeUndefined();
-  });
-
-  // ENG-2293: on a closed instance (SIGNUP_ENABLED=false, not fresh, multi-org disabled),
-  // a direct POST to Better Auth's native /sign-up/email must be blocked — the hook is the
-  // last line of defense, since the page and the server action both gate correctly.
-  describe("closed-instance policy", () => {
-    beforeEach(() => {
-      constantsOverrides.SIGNUP_ENABLED = false;
-      vi.mocked(getIsFreshInstance).mockResolvedValue(false);
-      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
-    });
-
-    test("blocks a raw credential sign-up on a closed instance", async () => {
-      vi.mocked(isSignupDomainAllowed).mockReturnValue(false); // raw endpoint, not through the action
-      vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false); // self-hosted: domain block is a no-op
-      await expect(
-        before({ id: "u1", email: "intruder@example.com" } as never, { path: "/sign-up/email" } as never)
-        // The stable code is the contract callers localize against; the message is display copy, so a
-        // reworded message must not fail this test and a dropped code must.
-      ).rejects.toMatchObject({ status: "FORBIDDEN", body: { code: SIGNUP_DISABLED_ERROR_CODE } });
-      expect(gateSsoProvisioning).not.toHaveBeenCalled();
-    });
-
-    test("still allows the first administrator during fresh-instance setup", async () => {
-      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
-      vi.mocked(isSignupDomainAllowed).mockReturnValue(false);
-      vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false);
-      const result = await before(
-        { id: "u1", email: "admin@example.com" } as never,
-        { path: "/sign-up/email" } as never
-      );
-      expect(result).toBeUndefined();
-    });
-
-    test("still allows a credential sign-up when public signup is open", async () => {
-      constantsOverrides.SIGNUP_ENABLED = true;
-      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-      vi.mocked(isSignupDomainAllowed).mockReturnValue(false);
-      vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false);
-      const result = await before(
-        { id: "u1", email: "user@example.com" } as never,
-        { path: "/sign-up/email" } as never
-      );
-      expect(result).toBeUndefined();
-    });
-
-    test("still allows a credential sign-up via the action (domain already enforced)", async () => {
-      vi.mocked(isSignupDomainAllowed).mockReturnValue(true); // action marked the scope
-      const result = await before(
-        { id: "u1", email: "user@example.com" } as never,
-        { path: "/sign-up/email" } as never
-      );
-      expect(result).toBeUndefined();
-    });
+    await expect(
+      before({ id: "u1", email: "a@b.com" } as never, { path: "/sign-up/email" } as never)
+    ).rejects.toThrow("signup disabled");
   });
 });
 

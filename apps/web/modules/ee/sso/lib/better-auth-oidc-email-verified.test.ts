@@ -19,8 +19,7 @@ const BASE_URL = "https://app.formbricks.test";
 const IDP = "https://idp.formbricks.test";
 
 const { captureSsoIdentity } = vi.hoisted(() => ({ captureSsoIdentity: vi.fn() }));
-const { runWithSsoRequestContext, getSsoProvisioningDecision, setSsoProvisioningDecision } =
-  await import("./sso-request-context");
+const { runWithSsoRequestContext } = await import("./sso-request-context");
 vi.mock("./sso-request-context", async () => {
   const actual = await vi.importActual<typeof import("./sso-request-context")>("./sso-request-context");
   return { ...actual, captureSsoIdentity };
