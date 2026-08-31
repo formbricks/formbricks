@@ -150,8 +150,11 @@ describe("extractYoutubeId — stored-value denial of service (ENG-2789)", () =>
     const elapsedMs = performance.now() - startedAt;
 
     expect(result).toBeNull();
-    // ~6700ms per call before, and the renderer calls it twice.
-    expect(elapsedMs).toBeLessThan(200);
+    // Budget chosen from measurements, not a round number: the scan costs 6ms uninstrumented but
+    // ~330ms under the coverage run CI uses, which slows tight character loops far more than it
+    // slows a native regex. The pattern this replaced takes ~3300ms on the same input either way,
+    // so 2000ms sits above the instrumented pass and below the regression it guards against.
+    expect(elapsedMs).toBeLessThan(2000);
   });
 
   // Greedy `.*` took the LAST marker on the line and backtracked to an earlier one when the last
