@@ -80,7 +80,7 @@ const getDateRangeLabel = (dateRange: DateRange, t: TFunction) => {
   return matched ? matched.getLabel(t) : getFilterDropDownLabels(t).CUSTOM_RANGE;
 };
 
-export const CustomFilter = ({ survey }: CustomFilterProps) => {
+export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
   const { t } = useTranslation();
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
