@@ -5,6 +5,7 @@ import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { enforceCredentialSignupBackstop } from "@/modules/auth/lib/credential-signup-backstop";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   blockedSignupDomainRedirectAfter,
@@ -42,6 +43,15 @@ vi.mock("better-auth/api", () => ({
   },
 }));
 vi.mock("@formbricks/database", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
+// The unverified-sign-up signal (ENG-2589) is asserted through both of its channels.
+const { loggerWarn, loggerWithContext } = vi.hoisted(() => {
+  const warn = vi.fn();
+  return { loggerWarn: warn, loggerWithContext: vi.fn(() => ({ warn })) };
+});
+vi.mock("@formbricks/logger", () => ({
+  logger: { withContext: loggerWithContext, warn: loggerWarn },
+}));
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ identifyPostHogPerson: vi.fn() }));
 vi.mock("@/lib/utils/locale", () => ({ findMatchingLocale: vi.fn() }));
 vi.mock("./sso-provisioning", () => ({
@@ -79,6 +89,9 @@ beforeEach(() => {
   vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
   vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
   vi.mocked(enforceCredentialSignupBackstop).mockResolvedValue(undefined);
+  // The real helper is async and returns a promise the caller attaches a `.catch` to; a bare `vi.fn()`
+  // would return undefined and make that call throw for reasons the code under test never causes.
+  vi.mocked(queueAuditEventBackground).mockResolvedValue(undefined);
   vi.mocked(prisma.user.findUnique).mockResolvedValue({
     id: "u1",
     email: "a@b.com",
@@ -322,6 +335,74 @@ describe("ssoDatabaseHooks.user.create.after", () => {
       after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never)
     );
     expect(provisionSsoUserMemberships).not.toHaveBeenCalled();
+  });
+
+  /**
+   * ENG-2589. An account created for an address the IdP would not vouch for is the state this fix
+   * allows to exist, so it has to be visible: an audit event for the security trail, and a `warn` log
+   * for the self-hosters who have no audit log (it is enterprise-gated and off by default).
+   */
+  describe("observability for an IdP-unverified sign-up", () => {
+    const runAfter = (emailVerified: boolean) =>
+      runWithSsoRequestContext(async () => {
+        setSsoProvisioningDecision(provisionDecision);
+        await after({ id: "u1", email: "a@b.com", emailVerified } as never, callbackCtx as never);
+      });
+
+    test("emits a warn log and an audit event naming the provider", async () => {
+      await runAfter(false);
+
+      expect(loggerWithContext).toHaveBeenCalledWith({
+        source: "sso-signup",
+        ssoProvider: "openid",
+        emailVerified: false,
+      });
+      expect(loggerWarn).toHaveBeenCalledTimes(1);
+      expect(queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "created",
+          targetType: "user",
+          userId: "u1",
+          targetId: "u1",
+          organizationId: "org-1",
+          status: "success",
+          newObject: { ssoUnverifiedSignupMarker: true, provider: "openid", emailVerified: false },
+        })
+      );
+    });
+
+    // The verified case is the overwhelming majority; emitting for it would bury the signal.
+    test("says nothing for a verified sign-up", async () => {
+      await runAfter(true);
+
+      expect(loggerWarn).not.toHaveBeenCalled();
+      expect(queueAuditEventBackground).not.toHaveBeenCalled();
+    });
+
+    test("provisions the user either way", async () => {
+      await runAfter(false);
+
+      expect(provisionSsoUserMemberships).toHaveBeenCalledTimes(1);
+    });
+
+    // Observability must never be the reason a sign-up fails: this runs post-commit, so a throw here
+    // would surface as a broken callback on an account that already exists.
+    test.each([
+      {
+        label: "throws synchronously",
+        impl: () => {
+          throw new Error("audit sink unavailable");
+        },
+      },
+      // The call is not awaited, so a rejection has to be caught on the promise or it escapes the
+      // try/catch entirely and lands as an unhandled rejection.
+      { label: "rejects asynchronously", impl: async () => Promise.reject(new Error("audit sink down")) },
+    ])("a failing audit sink that $label does not break the sign-up", async ({ impl }) => {
+      vi.mocked(queueAuditEventBackground).mockImplementation(impl as never);
+
+      await expect(runAfter(false)).resolves.not.toThrow();
+      expect(provisionSsoUserMemberships).toHaveBeenCalledTimes(1);
+    });
   });
 
   test("before → after carries the decision end-to-end", async () => {
