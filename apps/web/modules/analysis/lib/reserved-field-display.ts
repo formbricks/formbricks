@@ -6,6 +6,7 @@ import {
   FileTextIcon,
   FlagIcon,
   GlobeIcon,
+  LanguagesIcon,
   type LucideIcon,
   MegaphoneIcon,
   MonitorIcon,
@@ -18,7 +19,7 @@ import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
 /**
  * The human-readable label for a reserved field (ENG-2540).
  *
- * **Every field either surface displays today has its own key.** All twenty `display !== "none"`
+ * **Every field either surface displays today has its own key.** All twenty-one `display !== "none"`
  * catalog entries are listed below, so `Page Path`, `UTM Source` and `Timezone` are translated in
  * every locale rather than rendered as English derived from the catalog name — which is what the
  * repo's i18n rule asks for, and what shipping them derived would have quietly broken.
@@ -52,9 +53,11 @@ export const getReservedFieldLabel = (name: string, t: TFunction): string => {
       return t("workspace.surveys.responses.source");
     case "url":
       return t("common.url");
-    // The thirteen `secondary` fields. `ipAddress` is the only one with copy older than ENG-1841.
+    // The fourteen `secondary` fields. `ipAddress` is the only one with copy older than ENG-1841.
     case "ipAddress":
       return t("workspace.surveys.responses.ip_address");
+    case "locale":
+      return t("workspace.surveys.responses.locale");
     case "pagePath":
       return t("workspace.surveys.responses.page_path");
     case "pageReferrer":
@@ -94,6 +97,7 @@ export const RESERVED_FIELD_ICONS: Record<string, LucideIcon> = {
   country: FlagIcon,
   deviceType: SmartphoneIcon,
   ipAddress: ShieldIcon,
+  locale: LanguagesIcon,
   os: AirplayIcon,
   pagePath: FileTextIcon,
   pageReferrer: ArrowUpFromDotIcon,

@@ -353,6 +353,12 @@ export const ZAutoCapturedResponseMeta = z.object({
   viewportHeight: z.number().optional(),
   /** IANA zone from `Intl.DateTimeFormat().resolvedOptions().timeZone`, e.g. `Europe/Berlin`. */
   timezone: z.string().optional(),
+  /**
+   * The device's configured locale from `navigator.language`, e.g. `de-AT`. Not validated as a BCP-47
+   * tag: what the runtime reports is the finding, and rejecting an unusual tag would store nothing
+   * rather than something imperfect.
+   */
+  locale: z.string().optional(),
 });
 
 export type TAutoCapturedResponseMeta = z.infer<typeof ZAutoCapturedResponseMeta>;

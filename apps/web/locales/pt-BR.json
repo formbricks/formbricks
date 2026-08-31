@@ -3628,6 +3628,7 @@
         "how_to_identify_users": "Como identificar usuários",
         "ip_address": "Endereço IP",
         "last_name": "Sobrenome",
+        "locale": "Localidade do dispositivo",
         "more_context": "Mais contexto",
         "not_completed": "Não Concluído ⏳",
         "os": "sistema operacional",

@@ -517,6 +517,24 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     display: "secondary",
     read: (r) => r.meta.timezone,
   },
+  /**
+   * How the respondent's device is configured (`de-AT`), from `navigator.language`. Deliberately a
+   * different field from `language`, which is the language they *answered* in: a German speaker
+   * taking an English-only survey has `locale: "de-DE"` and `language: "en"`, and the gap between
+   * the two is the reason to capture both — it is what "should we translate this survey?" asks.
+   *
+   * `keep`: a UI language preference is a device setting the browser advertises to every site, not
+   * something the respondent disclosed about themselves. Same call as `timezone`, which it sits
+   * beside in every runtime that can report either.
+   */
+  {
+    name: "locale",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    display: "secondary",
+    read: (r) => r.meta.locale,
+  },
 ];
 
 /**

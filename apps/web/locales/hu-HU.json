@@ -3628,6 +3628,7 @@
         "how_to_identify_users": "Hogyan kell azonosítani a felhasználókat",
         "ip_address": "IP-cím",
         "last_name": "Vezetéknév",
+        "locale": "Eszköz területi beállítása",
         "more_context": "További kontextus",
         "not_completed": "Nincs befejezve ⏳",
         "os": "Operációs rendszer",

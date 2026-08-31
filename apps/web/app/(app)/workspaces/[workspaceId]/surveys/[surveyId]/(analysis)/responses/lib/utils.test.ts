@@ -222,7 +222,10 @@ describe("utils", () => {
       // assertion is what would fail if someone reintroduced a local `METADATA_FIELDS`.
       expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("utmCampaign");
       expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("timezone");
-      expect(RESERVED_COLUMN_ENTRIES).toHaveLength(20);
+      // `locale` is the entry that proved it: it was added to the catalog by ENG-2472 and became a
+      // column here with no edit beyond this count.
+      expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("locale");
+      expect(RESERVED_COLUMN_ENTRIES).toHaveLength(21);
     });
 
     test("today's six columns are still visible by default, and the new ones are not", () => {

@@ -3628,6 +3628,7 @@
         "how_to_identify_users": "Comment identifier les utilisateurs",
         "ip_address": "Adresse IP",
         "last_name": "Nom de famille",
+        "locale": "Paramètres régionaux de l'appareil",
         "more_context": "Plus de contexte",
         "not_completed": "Non terminé ⏳",
         "os": "Système d'exploitation",

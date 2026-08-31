@@ -3501,6 +3501,7 @@ checksums:
     workspace/surveys/responses/how_to_identify_users: c886035d9d9a0cfc3fa9703972001044
     workspace/surveys/responses/ip_address: 8f2b4d42a165a4c165eca4d7639ce57e
     workspace/surveys/responses/last_name: 2c9a7de7738ca007ba9023c385149c26
+    workspace/surveys/responses/locale: f7085e279c3b4d53e701f3b2dd012767
     workspace/surveys/responses/more_context: bf030156c24007f2a9df863722c6c49e
     workspace/surveys/responses/not_completed: df34eab65a6291f2c5e15a0e349c4eba
     workspace/surveys/responses/os: a4c753bb2c004a58d02faeed6b4da476

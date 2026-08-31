@@ -108,6 +108,28 @@ describe("setup.ts", () => {
       expect(mockLogger.debug).toHaveBeenCalledWith("Already set up, skipping setup.");
     });
 
+    test("the already-setup early return does NOT re-emit formbricks_setup_successful", async () => {
+      // The event's exactly-once guarantee is structural: the emit sits at the tail every fresh
+      // setup converges on, and this branch returns before reaching it. A re-fire would re-trigger
+      // every GTM tag listening for readiness.
+      delete (window as { dataLayer?: unknown }).dataLayer;
+      getInstanceLoggerMock.mockReturnValue(mockLogger as unknown as Logger);
+      setIsSetup(true);
+
+      const result = await setup({ workspaceId: "ws_id", appUrl: "https://my.url" });
+
+      expect(result.ok).toBe(true);
+      expect(window.dataLayer).toBeUndefined();
+    });
+
+    test("a failed setup (missing field) does not emit formbricks_setup_successful", async () => {
+      delete (window as { dataLayer?: unknown }).dataLayer;
+      const result = await setup({ appUrl: "https://my.url" });
+
+      expect(result.ok).toBe(false);
+      expect(window.dataLayer).toBeUndefined();
+    });
+
     test("fails if no environmentId or workspaceId is provided", async () => {
       const result = await setup({ appUrl: "https://my.url" });
       expect(result.ok).toBe(false);
@@ -134,6 +156,7 @@ describe("setup.ts", () => {
     });
 
     test("succeeds with workspaceId instead of environmentId", async () => {
+      delete (window as { dataLayer?: unknown }).dataLayer;
       const mockConfig = {
         get: vi.fn().mockReturnValue(undefined),
         resetConfig: vi.fn(),
@@ -166,6 +189,20 @@ describe("setup.ts", () => {
           workspaceId: "ws_123",
         })
       );
+      // ENG-1846: the readiness signal fires exactly once, at the tail every fresh setup converges
+      // on, carrying the resolved workspace id.
+      expect(window.dataLayer).toEqual([
+        {
+          event: "formbricks_setup_successful",
+          formbricks: {
+            workspaceId: "ws_123",
+            surveyId: null,
+            responseId: null,
+            finished: null,
+            action: null,
+          },
+        },
+      ]);
     });
 
     test("prefers workspaceId over environmentId when both provided", async () => {
