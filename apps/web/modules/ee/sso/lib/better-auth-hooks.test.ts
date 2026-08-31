@@ -371,6 +371,18 @@ describe("ssoDatabaseHooks.user.create.after", () => {
       );
     });
 
+    // A sign-up can provision no organization at all, and the audit schema takes no null there.
+    test("falls back to the unknown-organization marker when none was provisioned", async () => {
+      await runWithSsoRequestContext(async () => {
+        setSsoProvisioningDecision({ ...provisionDecision, organizationId: null });
+        await after({ id: "u1", email: "a@b.com", emailVerified: false } as never, callbackCtx as never);
+      });
+
+      expect(queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({ organizationId: "unknown" })
+      );
+    });
+
     // The verified case is the overwhelming majority; emitting for it would bury the signal.
     test("says nothing for a verified sign-up", async () => {
       await runAfter(true);

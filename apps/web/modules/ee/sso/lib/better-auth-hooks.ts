@@ -12,6 +12,7 @@ import { findMatchingLocale } from "@/lib/utils/locale";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { enforceCredentialSignupBackstop } from "@/modules/auth/lib/credential-signup-backstop";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
 import { resolveSsoEmailVerifiedForCreate } from "./email-verification-policy";
@@ -86,7 +87,8 @@ const recordUnverifiedSsoSignup = ({
   provider,
 }: {
   userId: string;
-  organizationId: string;
+  /** Null when the sign-up provisioned no organization; recorded as UNKNOWN_DATA, per the audit schema. */
+  organizationId: string | null;
   provider: TSsoIdentityProvider;
 }): void => {
   try {
@@ -102,7 +104,7 @@ const recordUnverifiedSsoSignup = ({
       userId,
       userType: "user",
       targetId: userId,
-      organizationId,
+      organizationId: organizationId ?? UNKNOWN_DATA,
       status: "success",
       // A marker key rather than a new `ZAuditAction` value: this is a property of the user creation
       // already being recorded, not a flow of its own, and it keeps the shared enum untouched. Every
