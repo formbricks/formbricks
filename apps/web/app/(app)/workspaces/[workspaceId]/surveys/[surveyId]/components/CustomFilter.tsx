@@ -111,7 +111,7 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
-    [selectedFilter, dateRange]
+    [survey, selectedFilter, dateRange]
   );
 
   const datePickerRef = useRef<HTMLDivElement>(null);
