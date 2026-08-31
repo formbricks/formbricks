@@ -1,16 +1,11 @@
 "use client";
 
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import Calendar from "react-calendar";
 import { useTranslation } from "react-i18next";
-import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { DASHBOARD_DATE_PRESETS } from "@/modules/ee/analysis/lib/date-presets";
 import { getTranslatedDatePresetLabel } from "@/modules/ee/analysis/lib/schema-definition";
-import { Button } from "@/modules/ui/components/button";
-import "@/modules/ui/components/date-picker/styles.css";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { DateRangePicker } from "@/modules/ui/components/date-picker";
 import {
   Select,
   SelectContent,
@@ -121,50 +116,16 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
       </Select>
 
       {selectValue === CUSTOM_VALUE && (
-        <div className="flex items-center gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="justify-start bg-white text-left font-normal">
-                <CalendarIcon className="mr-2 size-4" />
-                {customStart
-                  ? formatDateForDisplay(customStart, locale)
-                  : t("workspace.analysis.charts.start_date")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                onChange={(v) => {
-                  const date = v instanceof Date ? v : new Date();
-                  setCustomStart(date);
-                  emitCustom(date, customEnd);
-                }}
-                value={customStart || undefined}
-              />
-            </PopoverContent>
-          </Popover>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="justify-start bg-white text-left font-normal">
-                <CalendarIcon className="mr-2 size-4" />
-                {customEnd
-                  ? formatDateForDisplay(customEnd, locale)
-                  : t("workspace.analysis.charts.end_date")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                onChange={(v) => {
-                  const date = v instanceof Date ? v : new Date();
-                  setCustomEnd(date);
-                  emitCustom(customStart, date);
-                }}
-                value={customEnd || undefined}
-                minDate={customStart || undefined}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <DateRangePicker
+          value={{ from: customStart ?? undefined, to: customEnd ?? undefined }}
+          locale={locale}
+          triggerClassName="w-64"
+          onChange={({ from, to }) => {
+            setCustomStart(from);
+            setCustomEnd(to);
+            emitCustom(from, to);
+          }}
+        />
       )}
     </div>
   );
