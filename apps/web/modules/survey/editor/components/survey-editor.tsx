@@ -119,20 +119,16 @@ export const SurveyEditor = ({
 
   useDocumentVisibility(fetchLatestWorkspaceData);
 
+  // Recovery only: `localSurvey` is seeded from `survey` in its `useState` initializer, so this is a
+  // no-op unless something ever resets it to null (the `LoadingSkeleton` guard below is the state it
+  // recovers from). Written as an updater rather than reading `localSurvey`, because depending on it
+  // would re-run this on every keystroke in the editor to do nothing — and that shape becomes a real
+  // loop the moment someone edits the guard. The active element is not set here: the
+  // `[localSurvey?.type]` effect below already picks the first element whenever `localSurvey`
+  // appears.
   useEffect(() => {
-    if (survey) {
-      if (localSurvey) return;
-
-      const surveyClone = structuredClone(survey);
-      setLocalSurvey(surveyClone);
-
-      // Set first element from first block
-      const firstBlock = survey.blocks[0];
-      if (firstBlock) {
-        setActiveElementId(firstBlock.elements?.[0]?.id);
-      }
-    }
-  }, [survey, localSurvey]);
+    setLocalSurvey((current) => current ?? structuredClone(survey));
+  }, [survey]);
 
   useEffect(() => {
     const listener = () => {

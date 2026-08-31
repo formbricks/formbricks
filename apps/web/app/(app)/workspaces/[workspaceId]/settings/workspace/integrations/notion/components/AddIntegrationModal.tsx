@@ -110,7 +110,11 @@ export const AddIntegrationModal = ({
         type: dbProperties[fieldKey].type,
       })) || []
     );
-  }, [selectedDatabase]);
+    // The effect below re-seeds `selectedDatabase` with a fresh object literal whenever the
+    // `databases`/`surveys` server props change identity, which an RSC refresh does on unchanged
+    // content. Keying on the id keeps identical content from recomputing this list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the database's identity, not the object's
+  }, [selectedDatabase?.id]);
 
   const elementItems = useMemo(() => {
     const mappedElements = selectedSurvey
@@ -155,7 +159,10 @@ export const AddIntegrationModal = ({
     }));
 
     return [...mappedElements, ...variables, ...hiddenFields, ...Metadata, ...createdAt, ...personAttributes];
-  }, [contactAttributeKeys, elements, selectedSurvey, t]);
+    // Same as `dbItems` above: `selectedSurvey` is re-seeded from the `surveys` server prop, so its
+    // identity changes on a refresh that changed nothing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the survey's identity, not the object's
+  }, [contactAttributeKeys, elements, selectedSurvey?.id, t]);
 
   useEffect(() => {
     if (selectedIntegration) {
