@@ -33,6 +33,7 @@ import {
   hasRelativeBound,
   hasRelativeRange,
   resolveRelativeDate,
+  shiftISODate,
 } from "./validators/date-utils";
 import { countSelections } from "./validators/selection-utils";
 import { validateEmail, validatePhone, validateUrl } from "./validators/validation-utils";
@@ -45,19 +46,33 @@ type TRelativeRangeParams = {
 /**
  * Resolve both ends of a relative range against today.
  *
- * `widen` applies the server-side timezone grace and belongs to the check only. Error messages
- * quote the strict window, so what a respondent is told matches the days the picker offered them
- * rather than the slack the server allows on top.
+ * The server-side timezone grace must always widen what is *accepted*, which is not the same as
+ * always widening the window. For `isBetween` the answer sits inside the window, so the window
+ * grows ("inside"); for `isNotBetween` the answer sits outside it, so the same grace has to shrink
+ * the hole ("outside") - widening it there would reject a day the client accepted and make the
+ * server stricter than the browser.
+ *
+ * "none" skips the grace entirely: error messages quote the strict window, so what a respondent is
+ * told matches the days the picker offered rather than the slack the server allows on top.
  */
+type TRangeGrace = "none" | "accepts-inside" | "accepts-outside";
+
 const resolveRelativeRange = (
   params: TRelativeRangeParams,
-  widen: boolean
+  grace: TRangeGrace
 ): { startDate: string; endDate: string } => {
   const now = new Date();
   const startDate = resolveRelativeDate(params.relativeStart, now);
   const endDate = resolveRelativeDate(params.relativeEnd, now);
 
-  if (!widen) return { startDate, endDate };
+  if (grace === "none") return { startDate, endDate };
+
+  if (grace === "accepts-outside") {
+    return {
+      startDate: applyTimezoneGrace(startDate, "upper"),
+      endDate: applyTimezoneGrace(endDate, "lower"),
+    };
+  }
 
   return {
     startDate: applyTimezoneGrace(startDate, "lower"),
@@ -402,8 +417,10 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       // Relative bounds are resolved to a concrete date so the respondent reads a real day rather
       // than an offset they would have to work out themselves.
+      // The relative check is inclusive (>=), but the copy reads "later than", so name the last
+      // day that is still rejected instead of the first one that is allowed.
       const date = hasRelativeBound(params)
-        ? resolveRelativeDate(params.relative, new Date())
+        ? shiftISODate(resolveRelativeDate(params.relative, new Date()), -1)
         : (params as TValidationRuleParamsIsLaterThanFixed).date;
       return t("errors.is_later_than", { date });
     },
@@ -423,7 +440,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const date = hasRelativeBound(params)
-        ? resolveRelativeDate(params.relative, new Date())
+        ? shiftISODate(resolveRelativeDate(params.relative, new Date()), 1)
         : (params as TValidationRuleParamsIsEarlierThanFixed).date;
       return t("errors.is_earlier_than", { date });
     },
@@ -435,7 +452,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
         return { valid: true };
       }
       if (hasRelativeRange(params)) {
-        const { startDate, endDate } = resolveRelativeRange(params, true);
+        const { startDate, endDate } = resolveRelativeRange(params, "accepts-inside");
         return { valid: value >= startDate && value <= endDate };
       }
       const typedParams = params as TValidationRuleParamsIsBetweenFixed;
@@ -443,7 +460,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const { startDate, endDate } = hasRelativeRange(params)
-        ? resolveRelativeRange(params, false)
+        ? resolveRelativeRange(params, "none")
         : (params as TValidationRuleParamsIsBetweenFixed);
       return t("errors.is_between", { startDate, endDate });
     },
@@ -457,7 +474,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       // The excluded window is inclusive for relative bounds, so a valid answer sits strictly
       // outside it.
       if (hasRelativeRange(params)) {
-        const { startDate, endDate } = resolveRelativeRange(params, true);
+        const { startDate, endDate } = resolveRelativeRange(params, "accepts-outside");
         return { valid: value < startDate || value > endDate };
       }
       const typedParams = params as TValidationRuleParamsIsNotBetweenFixed;
@@ -465,7 +482,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const { startDate, endDate } = hasRelativeRange(params)
-        ? resolveRelativeRange(params, false)
+        ? resolveRelativeRange(params, "none")
         : (params as TValidationRuleParamsIsNotBetweenFixed);
       return t("errors.is_not_between", { startDate, endDate });
     },

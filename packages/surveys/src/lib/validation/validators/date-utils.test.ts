@@ -188,6 +188,46 @@ describe("getDateBoundsFromRules", () => {
     expect(bounds).toEqual({});
   });
 
+  test("gives up on a fixed window that excludes every day", () => {
+    // start == end leaves no day between the two exclusive bounds. An empty window would disable
+    // the whole calendar with no error shown, so the picker stays open instead.
+    const bounds = getDateBoundsFromRules(
+      buildDateElement([
+        { id: "1", type: "isBetween", params: { startDate: "2026-09-10", endDate: "2026-09-10" } },
+      ]),
+      monday
+    );
+
+    expect(bounds).toEqual({});
+  });
+
+  test("gives up on a relative window whose bounds are inverted", () => {
+    const bounds = getDateBoundsFromRules(
+      buildDateElement([
+        {
+          id: "1",
+          type: "isBetween",
+          params: { relativeStart: bound(5, "after"), relativeEnd: bound(5, "before") },
+        },
+      ]),
+      monday
+    );
+
+    expect(bounds).toEqual({});
+  });
+
+  test("gives up when two separate rules contradict each other", () => {
+    const bounds = getDateBoundsFromRules(
+      buildDateElement([
+        { id: "1", type: "isLaterThan", params: { date: "2026-09-20" } },
+        { id: "2", type: "isEarlierThan", params: { date: "2026-09-01" } },
+      ]),
+      monday
+    );
+
+    expect(bounds).toEqual({});
+  });
+
   test("ignores malformed fixed dates rather than producing a bogus bound", () => {
     const bounds = getDateBoundsFromRules(
       buildDateElement([{ id: "1", type: "isLaterThan", params: { date: "" } }]),

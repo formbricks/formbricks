@@ -128,7 +128,10 @@ export const ZRelativeDateDirection = z.enum(["before", "after"]);
 export type TRelativeDateDirection = z.infer<typeof ZRelativeDateDirection>;
 
 export const ZRelativeDateBound = z.object({
-  amount: z.number().int().min(0),
+  // Capped at ten years: addWorkingDays steps one day at a time, and these validators run on the
+  // server for every response, so an unbounded amount from a typo or an API-created survey would
+  // block the event loop.
+  amount: z.number().int().min(0).max(3650),
   unit: ZRelativeDateUnit,
   direction: ZRelativeDateDirection,
 });

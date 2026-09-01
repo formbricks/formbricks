@@ -954,13 +954,34 @@ describe("validators", () => {
         expect(result.valid).toBe(true);
       });
 
-      test("reports the resolved date rather than the offset", () => {
+      test("reports a concrete date rather than the offset", () => {
         validators.isLaterThan.getDefaultMessage(
           { relative: relative(3, "before") },
           {} as TSurveyElement,
           mockT
         );
-        expect(mockTFn).toHaveBeenLastCalledWith("errors.is_later_than", { date: "2026-03-06" });
+        expect(mockTFn).toHaveBeenLastCalledWith("errors.is_later_than", { date: "2026-03-05" });
+      });
+    });
+
+    describe("relative error messages", () => {
+      test("isLaterThan names the last rejected day, not the first allowed one", () => {
+        // The check is >= 2026-03-06, and the copy reads "later than", so it must say 03-05.
+        validators.isLaterThan.getDefaultMessage(
+          { relative: relative(3, "before") },
+          {} as TSurveyElement,
+          mockT
+        );
+        expect(mockTFn).toHaveBeenLastCalledWith("errors.is_later_than", { date: "2026-03-05" });
+      });
+
+      test("isEarlierThan names the first rejected day", () => {
+        validators.isEarlierThan.getDefaultMessage(
+          { relative: relative(4, "after") },
+          {} as TSurveyElement,
+          mockT
+        );
+        expect(mockTFn).toHaveBeenLastCalledWith("errors.is_earlier_than", { date: "2026-03-14" });
       });
     });
 
@@ -1022,6 +1043,22 @@ describe("validators", () => {
         const element = {} as TSurveyElement;
         expect(validators.isNotBetween.check("2026-03-06", params, element).valid).toBe(false);
         expect(validators.isNotBetween.check("2026-03-13", params, element).valid).toBe(false);
+      });
+
+      test("stays looser than the client on the server, where the grace shrinks the hole", () => {
+        // Widening an excluded window would reject days the browser accepted, making the server
+        // stricter than the picker rather than more forgiving.
+        const element = {} as TSurveyElement;
+
+        expect(validators.isNotBetween.check("2026-03-05", params, element).valid).toBe(true);
+        expect(validators.isNotBetween.check("2026-03-14", params, element).valid).toBe(true);
+
+        vi.stubGlobal("window", undefined);
+
+        expect(validators.isNotBetween.check("2026-03-05", params, element).valid).toBe(true);
+        expect(validators.isNotBetween.check("2026-03-14", params, element).valid).toBe(true);
+        // The boundary days themselves stay excluded either way.
+        expect(validators.isNotBetween.check("2026-03-09", params, element).valid).toBe(false);
       });
 
       test("accepts dates strictly outside the window", () => {

@@ -114,17 +114,6 @@ const narrowMax = (bounds: TDateBounds, candidate: string): void => {
 };
 
 /**
- * Derive the selectable date window from an element's validation rules so the picker can grey out
- * dates the evaluator would reject on submit.
- *
- * The two modes differ on purpose and this must mirror the validators exactly: fixed bounds are
- * exclusive (isLaterThan 2026-03-01 first allows 2026-03-02), relative bounds are inclusive.
- *
- * Rules that do not describe a single interval are skipped: isNotBetween punches a hole rather
- * than bounding the range, and "or" logic means any one rule may be satisfied, so no date can be
- * ruled out up front. Both still fail on submit as before.
- */
-/**
  * Resolve one end of a single-bound rule. Relative bounds are inclusive, so they land on the
  * resolved day; fixed bounds are exclusive, so they shift one day inwards.
  */
@@ -198,6 +187,13 @@ export const getDateBoundsFromRules = (element: TSurveyElement, referenceDate: D
     if (minDate) narrowMin(bounds, minDate);
     if (maxDate) narrowMax(bounds, maxDate);
   }
+
+  // Rules can contradict each other - a fixed isBetween whose start equals its end, or a relative
+  // one running from "5 after" to "5 before". Restricting the picker to an empty window would
+  // disable every day with no error shown (errors only appear on submit), leaving the respondent
+  // no way forward at all. Fall back to an open calendar and let the validators explain the
+  // problem, as they did before the picker took any notice of these rules.
+  if (bounds.minDate && bounds.maxDate && bounds.minDate > bounds.maxDate) return {};
 
   return bounds;
 };
