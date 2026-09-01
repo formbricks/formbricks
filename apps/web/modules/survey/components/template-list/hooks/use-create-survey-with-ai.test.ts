@@ -28,7 +28,10 @@ const submitEvent = {
   preventDefault: vi.fn(),
 } as unknown as Parameters<ReturnType<typeof useCreateSurveyWithAI>["handleGenerate"]>[0];
 
-const payload = { name: "Generated survey" } as unknown as TV3CreateSurveyBody;
+const payload = {
+  name: "Generated survey",
+  blocks: [{ name: "Block", elements: [{ type: "openText", headline: "How was it?" }] }],
+} as unknown as TV3CreateSurveyBody;
 
 const questionSnapshot = (headline: string) => ({
   name: "Onboarding",
@@ -71,21 +74,20 @@ const submitWithPrompt = async (
   });
 };
 
-describe("useCreateSurveyWithAI", () => {
-  beforeEach(() => {
-    (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-      true;
-    vi.clearAllMocks();
-    vi.mocked(createV3Survey).mockResolvedValue({ id: "survey1" });
-    emitEvents([]);
-    // Snapshots are dispatched on the next frame; run them immediately under test.
-    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
-      callback(0);
-      return 0;
-    });
-    vi.stubGlobal("cancelAnimationFrame", () => undefined);
+beforeEach(() => {
+  (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  vi.clearAllMocks();
+  vi.mocked(createV3Survey).mockResolvedValue({ id: "survey1" });
+  emitEvents([]);
+  // Snapshots are dispatched on the next frame; run them immediately under test.
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+    callback(0);
+    return 0;
   });
+  vi.stubGlobal("cancelAnimationFrame", () => undefined);
+});
 
+describe("useCreateSurveyWithAI", () => {
   test("does not submit when AI is unavailable", async () => {
     const { result } = renderAiHook({ isAIAvailable: false });
 

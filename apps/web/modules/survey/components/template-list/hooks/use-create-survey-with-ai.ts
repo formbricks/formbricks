@@ -159,10 +159,10 @@ export const useCreateSurveyWithAI = ({
       event.preventDefault();
       if (!canCreate) return;
 
-      dispatch({ type: "SUBMIT" });
+      dispatch({ type: "SUBMIT", prompt: prompt.trim() });
       void runGeneration();
     },
-    [canCreate, runGeneration]
+    [canCreate, prompt, runGeneration]
   );
 
   const handleStop = useCallback(() => {
@@ -173,9 +173,9 @@ export const useCreateSurveyWithAI = ({
 
   const handleRegenerate = useCallback(() => {
     discardQueuedSnapshot();
-    dispatch({ type: "REGENERATE" });
+    dispatch({ type: "REGENERATE", prompt: prompt.trim() });
     void runGeneration();
-  }, [discardQueuedSnapshot, runGeneration]);
+  }, [discardQueuedSnapshot, prompt, runGeneration]);
 
   const handleEditPrompt = useCallback(() => {
     abortControllerRef.current?.abort();
@@ -192,7 +192,7 @@ export const useCreateSurveyWithAI = ({
 
   const handleBackToDraft = useCallback(() => dispatch({ type: "BACK_TO_DRAFT" }), []);
 
-  const clearError = useCallback(() => dispatch({ type: "RESET" }), []);
+  const clearError = useCallback(() => dispatch({ type: "CLEAR_ERROR" }), []);
 
   const errorMessage = useMemo(
     () => (state.errorCode === null ? null : getAiErrorMessage(state.errorCode, t)),
@@ -234,6 +234,8 @@ export const useCreateSurveyWithAI = ({
     setPrompt,
     status: state.status,
     draft: state.draft,
+    /** The prompt the draft on screen came from, which is not always the one in the textarea. */
+    submittedPrompt: state.submittedPrompt,
     canCreate,
     errorMessage,
     generatingMessages,

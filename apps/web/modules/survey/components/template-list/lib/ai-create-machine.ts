@@ -12,14 +12,20 @@ export interface TAiCreateState {
   /** An error code, not a message, so the reducer stays free of `t`. */
   errorCode: string | null;
   /**
+   * The prompt that produced what is on screen — not the one in the textarea. Editing the prompt
+   * keeps the finished draft, so rendering the live text would label an old draft with words that
+   * had no part in it, right where the user checks it before saving.
+   */
+  submittedPrompt: string;
+  /**
    * The last finished draft, held aside while a regeneration runs. Regenerating is a gamble on a
    * better result: abandoning it, or having it fail, must not cost the one the user already had.
    */
-  previous: { draft: TAiDraftState; payload: TV3CreateSurveyBody } | null;
+  previous: { draft: TAiDraftState; payload: TV3CreateSurveyBody; submittedPrompt: string } | null;
 }
 
 export type TAiCreateAction =
-  | { type: "SUBMIT" }
+  | { type: "SUBMIT"; prompt: string }
   | { type: "SNAPSHOT"; snapshot: TSurveyGenerationDraftSnapshot }
   | { type: "DONE"; payload: TV3CreateSurveyBody }
   | { type: "STOP" }
@@ -27,8 +33,9 @@ export type TAiCreateAction =
   | { type: "CREATE_FAILED"; errorCode: string }
   | { type: "EDIT_PROMPT" }
   | { type: "BACK_TO_DRAFT" }
-  | { type: "REGENERATE" }
+  | { type: "REGENERATE"; prompt: string }
   | { type: "CREATE" }
+  | { type: "CLEAR_ERROR" }
   | { type: "RESET" };
 
 export const INITIAL_AI_CREATE_STATE: TAiCreateState = {
@@ -36,8 +43,19 @@ export const INITIAL_AI_CREATE_STATE: TAiCreateState = {
   draft: EMPTY_AI_DRAFT,
   payload: null,
   errorCode: null,
+  submittedPrompt: "",
   previous: null,
 };
+
+/**
+ * Whether the terminal payload actually carries a survey. The create body nests elements inside
+ * blocks, so a payload can have blocks and still have nothing to answer.
+ */
+function isEmptyPayload(payload: TV3CreateSurveyBody): boolean {
+  const blocks = Array.isArray(payload?.blocks) ? payload.blocks : [];
+
+  return !blocks.some((block) => Array.isArray(block?.elements) && block.elements.length > 0);
+}
 
 /** Put a held-aside draft back on screen, or fall back to a clean slate when there is none. */
 function restorePrevious(state: TAiCreateState, errorCode: string | null = null): TAiCreateState {
@@ -50,6 +68,7 @@ function restorePrevious(state: TAiCreateState, errorCode: string | null = null)
     draft: state.previous.draft,
     payload: state.previous.payload,
     errorCode,
+    submittedPrompt: state.previous.submittedPrompt,
     previous: null,
   };
 }
@@ -58,15 +77,23 @@ function restorePrevious(state: TAiCreateState, errorCode: string | null = null)
 export const AI_NOTHING_GENERATED_CODE = "ai_nothing_generated";
 
 /**
- * Note what is *not* here: the prompt. It lives in its own state in the hook, which is why it
- * survives a failed generation with no restore path to get wrong — `FAIL` returns to `idle` and the
- * textarea remounts with the text still in it.
+ * Note what is *not* here: the prompt the user is *typing*. That lives in its own state in the hook,
+ * which is why it survives a failed generation with no restore path to get wrong — `FAIL` returns to
+ * `idle` and the textarea remounts with the text still in it. What the machine does keep is the
+ * prompt each generation was *submitted* with, because that is what labels the draft on screen.
  */
 export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction): TAiCreateState {
   switch (action.type) {
     case "SUBMIT":
       // A fresh prompt, so there is nothing worth holding on to.
-      return { status: "generating", draft: EMPTY_AI_DRAFT, payload: null, errorCode: null, previous: null };
+      return {
+        status: "generating",
+        draft: EMPTY_AI_DRAFT,
+        payload: null,
+        errorCode: null,
+        submittedPrompt: action.prompt,
+        previous: null,
+      };
 
     case "SNAPSHOT": {
       // A chunk that lands after Stop must not resurrect the generating view.
@@ -82,8 +109,10 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
       // see would no longer be what saving writes.
       if (state.status !== "generating") return state;
 
-      // An empty draft is a failure wearing a success hat.
-      if (state.draft.questions.length === 0) {
+      // Judged on the payload, not on the preview: the preview is built from streamed partials, and
+      // a provider that returns its object in one final chunk streams none — a perfectly good survey
+      // would be reported as "nothing generated".
+      if (isEmptyPayload(action.payload)) {
         return { ...INITIAL_AI_CREATE_STATE, errorCode: AI_NOTHING_GENERATED_CODE };
       }
 
@@ -129,7 +158,10 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
         draft: EMPTY_AI_DRAFT,
         payload: null,
         errorCode: null,
-        previous: state.payload ? { draft: state.draft, payload: state.payload } : state.previous,
+        submittedPrompt: action.prompt,
+        previous: state.payload
+          ? { draft: state.draft, payload: state.payload, submittedPrompt: state.submittedPrompt }
+          : state.previous,
       };
 
     case "CREATE":
@@ -140,6 +172,11 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
       // Unlike FAIL, this keeps the draft: the generation succeeded and the user already accepted
       // it, so a transient write failure should cost a retry, not ten seconds of regeneration.
       return { ...state, status: "review", errorCode: action.errorCode };
+
+    case "CLEAR_ERROR":
+      // Only the message goes. Dismissing an error is not a decision to throw away a kept draft —
+      // and the example-prompt chips dismiss one on every click.
+      return state.errorCode === null ? state : { ...state, errorCode: null };
 
     case "RESET":
       return INITIAL_AI_CREATE_STATE;

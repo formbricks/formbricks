@@ -3015,6 +3015,7 @@
         "prompt_label": "Describe the survey you need",
         "prompt_placeholder": "Describe the survey you need, e.g. Understand why new users stop during onboarding and what would help them finish setup",
         "regenerate": "Regenerate",
+        "request_rejected": "That prompt could not be used. Try rephrasing it.",
         "shortcut_hint": "⌘/Ctrl + Enter to generate",
         "start_from_scratch": "Start from scratch",
         "status_planning": "Planning the survey…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "Writing question {count}…",
         "status_writing_title": "Naming your survey…",
         "stop": "Stop",
+        "too_many_requests": "You are generating too quickly. Wait a moment and try again.",
         "try_prompt": "See example prompt",
         "upgrade_plan": "Upgrade plan",
         "your_prompt": "Your prompt"

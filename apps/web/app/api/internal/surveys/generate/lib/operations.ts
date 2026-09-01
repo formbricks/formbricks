@@ -131,11 +131,14 @@ export async function streamV3SurveyGeneration({
         const draft = await generation.completion;
 
         // Always land the final snapshot, whatever the throttle said, so the list the user is
-        // reading matches the draft the review step is about to act on.
-        const finalSerialized = JSON.stringify(lastSnapshot);
-        if (lastSnapshot && finalSerialized !== lastSerialized) {
+        // reading matches the draft the review step is about to act on. A provider that returns its
+        // object in one final chunk streams no partials at all, so the completed draft stands in as
+        // that snapshot — otherwise the review step opens on an empty list.
+        const finalDraft = (lastSnapshot ?? draft) as TSurveyGenerationDraftSnapshot;
+        const finalSerialized = JSON.stringify(finalDraft);
+        if (finalSerialized !== lastSerialized) {
           seq += 1;
-          emit({ type: "partial", seq, draft: lastSnapshot });
+          emit({ type: "partial", seq, draft: finalDraft });
         }
 
         const result = buildV3SurveyCreatePayloadFromDraft(body, draft);

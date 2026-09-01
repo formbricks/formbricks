@@ -3015,6 +3015,7 @@
         "prompt_label": "Descreve o inquérito de que precisas",
         "prompt_placeholder": "Descreve o inquérito de que precisas, por exemplo: Perceber porque é que os novos utilizadores desistem durante o onboarding e o que os ajudaria a concluir a configuração",
         "regenerate": "Gerar novamente",
+        "request_rejected": "Esse prompt não pôde ser utilizado. Tenta reformulá-lo.",
         "shortcut_hint": "⌘/Ctrl + Enter para gerar",
         "start_from_scratch": "Começar do zero",
         "status_planning": "A planear o inquérito…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "A escrever a pergunta {count}…",
         "status_writing_title": "A dar nome ao teu inquérito…",
         "stop": "Parar",
+        "too_many_requests": "Estás a gerar demasiado rapidamente. Aguarda um momento e tenta novamente.",
         "try_prompt": "Ver exemplo de prompt",
         "upgrade_plan": "Melhorar plano",
         "your_prompt": "O teu prompt"

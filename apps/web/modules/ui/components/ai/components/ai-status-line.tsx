@@ -77,8 +77,13 @@ export const AiStatusLine = ({
         text that never settles is harder to read, which is the opposite of the point.
       */}
       <span role="status" aria-live="polite" aria-atomic="true">
-        <span key={message} className="ai-shimmer-text inline-block animate-ai-phase-in">
-          {message}
+        {/*
+          Two spans, one animation each. Both on one element, the shimmer's `animation` shorthand —
+          unlayered, so it outranks a Tailwind utility — would win outright and the phase fade would
+          never play at all.
+        */}
+        <span key={message} className="inline-block animate-ai-phase-in">
+          <span className="ai-shimmer-text">{message}</span>
         </span>
       </span>
       {showTimer ? (

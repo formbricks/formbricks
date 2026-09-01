@@ -3015,6 +3015,7 @@
         "prompt_label": "Descrie chestionarul de care ai nevoie",
         "prompt_placeholder": "Descrie chestionarul de care ai nevoie, de ex. Înțelege de ce utilizatorii noi se opresc în timpul onboarding-ului și ce i-ar ajuta să finalizeze configurarea",
         "regenerate": "Regenerează",
+        "request_rejected": "Acel prompt nu a putut fi utilizat. Încearcă să-l reformulezi.",
         "shortcut_hint": "⌘/Ctrl + Enter pentru a genera",
         "start_from_scratch": "Începe de la zero",
         "status_planning": "Se planifică chestionarul…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "Se scrie întrebarea {count}…",
         "status_writing_title": "Se denumește chestionarul…",
         "stop": "Oprește",
+        "too_many_requests": "Generezi prea repede. Așteaptă un moment și încearcă din nou.",
         "try_prompt": "Vezi exemplu de solicitare",
         "upgrade_plan": "Actualizează planul",
         "your_prompt": "Prompt-ul tău"

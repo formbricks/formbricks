@@ -3015,6 +3015,7 @@
         "prompt_label": "Décris le questionnaire dont tu as besoin",
         "prompt_placeholder": "Décris l'enquête dont tu as besoin, par exemple : Comprendre pourquoi les nouveaux utilisateurs abandonnent pendant l'onboarding et ce qui les aiderait à terminer la configuration",
         "regenerate": "Régénérer",
+        "request_rejected": "Cette demande n'a pas pu être utilisée. Essaie de la reformuler.",
         "shortcut_hint": "⌘/Ctrl + Entrée pour générer",
         "start_from_scratch": "Partir de zéro",
         "status_planning": "Planification du sondage…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "Rédaction de la question {count}…",
         "status_writing_title": "Attribution d'un nom à ton sondage…",
         "stop": "Arrêter",
+        "too_many_requests": "Tu génères trop rapidement. Attends un instant et réessaie.",
         "try_prompt": "Voir un exemple d'instruction",
         "upgrade_plan": "Mettre à niveau l'abonnement",
         "your_prompt": "Ton invite"

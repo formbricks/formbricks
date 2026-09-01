@@ -3015,6 +3015,7 @@
         "prompt_label": "必要なアンケートを説明",
         "prompt_placeholder": "必要なアンケートを説明してください。例：新規ユーザーがオンボーディング中に離脱する理由と、セットアップ完了を支援する方法を理解する",
         "regenerate": "再生成",
+        "request_rejected": "そのプロンプトは使用できませんでした。言い換えてみてください。",
         "shortcut_hint": "⌘/Ctrl + Enterで生成",
         "start_from_scratch": "ゼロから作成",
         "status_planning": "フォームを計画中…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "質問{count}を作成中…",
         "status_writing_title": "フォーム名を設定中…",
         "stop": "停止",
+        "too_many_requests": "生成が速すぎます。少し待ってからもう一度お試しください。",
         "try_prompt": "プロンプト例を見る",
         "upgrade_plan": "プランをアップグレード",
         "your_prompt": "あなたのプロンプト"

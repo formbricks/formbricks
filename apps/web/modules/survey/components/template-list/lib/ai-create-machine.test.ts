@@ -3,7 +3,14 @@ import type { TSurveyGenerationDraftSnapshot } from "@/app/api/internal/surveys/
 import type { TV3CreateSurveyBody } from "@/app/api/v3/surveys/schemas";
 import { INITIAL_AI_CREATE_STATE, aiCreateReducer } from "./ai-create-machine";
 
-const payload = { name: "Onboarding" } as TV3CreateSurveyBody;
+/** Shaped like the real thing: `DONE` judges "did anything get generated" on the payload's blocks. */
+const buildPayload = (name: string): TV3CreateSurveyBody =>
+  ({
+    name,
+    blocks: [{ name: "Block", elements: [{ type: "openText", headline: "How was it?" }] }],
+  }) as unknown as TV3CreateSurveyBody;
+
+const payload = buildPayload("Onboarding");
 
 const snapshot = (headline: string): TSurveyGenerationDraftSnapshot =>
   ({
@@ -12,7 +19,7 @@ const snapshot = (headline: string): TSurveyGenerationDraftSnapshot =>
   }) as TSurveyGenerationDraftSnapshot;
 
 const generatingWithOneQuestion = () =>
-  aiCreateReducer(aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT" }), {
+  aiCreateReducer(aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "a prompt" }), {
     type: "SNAPSHOT",
     snapshot: snapshot("How was it?"),
   });
@@ -21,7 +28,7 @@ describe("aiCreateReducer", () => {
   test("SUBMIT enters generating with a clean slate", () => {
     const state = aiCreateReducer(
       { ...INITIAL_AI_CREATE_STATE, errorCode: "ai_generation_failed" },
-      { type: "SUBMIT" }
+      { type: "SUBMIT", prompt: "a prompt" }
     );
 
     expect(state.status).toBe("generating");
@@ -50,14 +57,32 @@ describe("aiCreateReducer", () => {
     expect(state.payload).toBe(payload);
   });
 
-  test("DONE with an empty draft is treated as a failure", () => {
-    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT" });
+  test("DONE carrying nothing to answer is treated as a failure", () => {
+    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "a prompt" });
+    const empty = {
+      name: "Onboarding",
+      blocks: [{ name: "Block", elements: [] }],
+    } as unknown as typeof payload;
 
-    const state = aiCreateReducer(generating, { type: "DONE", payload });
+    const state = aiCreateReducer(generating, { type: "DONE", payload: empty });
 
     expect(state.status).toBe("idle");
     expect(state.errorCode).toBe("ai_nothing_generated");
     expect(state.payload).toBeNull();
+  });
+
+  test("DONE succeeds even when no partial ever arrived", () => {
+    // A provider that returns its object in one final chunk streams no partials, so the preview is
+    // empty at this point. Judging success on the preview reported a perfectly good survey as
+    // "nothing generated".
+    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "a prompt" });
+    expect(generating.draft.questions).toHaveLength(0);
+
+    const state = aiCreateReducer(generating, { type: "DONE", payload });
+
+    expect(state.status).toBe("review");
+    expect(state.payload).toBe(payload);
+    expect(state.errorCode).toBeNull();
   });
 
   test("STOP keeps a partial draft the user can still act on", () => {
@@ -68,7 +93,7 @@ describe("aiCreateReducer", () => {
   });
 
   test("STOP with nothing generated returns to the prompt", () => {
-    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT" });
+    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "a prompt" });
 
     expect(aiCreateReducer(generating, { type: "STOP" }).status).toBe("idle");
   });
@@ -88,7 +113,7 @@ describe("aiCreateReducer", () => {
   test("REGENERATE clears the old draft before re-entering generating", () => {
     const reviewing = aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
 
-    const state = aiCreateReducer(reviewing, { type: "REGENERATE" });
+    const state = aiCreateReducer(reviewing, { type: "REGENERATE", prompt: "a prompt" });
 
     expect(state.status).toBe("generating");
     expect(state.draft.questions).toHaveLength(0);
@@ -119,6 +144,50 @@ describe("aiCreateReducer", () => {
   });
 });
 
+describe("the prompt the draft came from", () => {
+  test("SUBMIT records the prompt that was sent", () => {
+    const state = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "measure onboarding" });
+
+    expect(state.submittedPrompt).toBe("measure onboarding");
+  });
+
+  test("editing the prompt leaves the kept draft labelled with the prompt that produced it", () => {
+    const reviewed = aiCreateReducer(
+      aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload }),
+      { type: "EDIT_PROMPT" }
+    );
+
+    // The user is now typing something else; the chip above the kept draft must not follow along.
+    expect(aiCreateReducer(reviewed, { type: "BACK_TO_DRAFT" }).submittedPrompt).toBe("a prompt");
+  });
+
+  test("Stop restores the prompt belonging to the draft it puts back", () => {
+    const reviewed = aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
+    const regenerating = aiCreateReducer(reviewed, { type: "REGENERATE", prompt: "something else" });
+    expect(regenerating.submittedPrompt).toBe("something else");
+
+    expect(aiCreateReducer(regenerating, { type: "STOP" }).submittedPrompt).toBe("a prompt");
+  });
+});
+
+describe("dismissing an error", () => {
+  test("CLEAR_ERROR keeps the draft the user has not chosen to discard", () => {
+    // The example-prompt chips call this on every click; it used to reset the whole machine.
+    const kept = aiCreateReducer(
+      aiCreateReducer(aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload }), {
+        type: "EDIT_PROMPT",
+      }),
+      { type: "CREATE_FAILED", errorCode: "ai_generation_failed" }
+    );
+
+    const cleared = aiCreateReducer(kept, { type: "CLEAR_ERROR" });
+
+    expect(cleared.errorCode).toBeNull();
+    expect(cleared.payload).toBe(payload);
+    expect(cleared.draft.questions).toHaveLength(1);
+  });
+});
+
 describe("terminal events from an abandoned generation", () => {
   test("DONE after Stop does not pair the restored draft with the new payload", () => {
     const stopped = aiCreateReducer(generatingWithOneQuestion(), { type: "STOP" });
@@ -126,7 +195,7 @@ describe("terminal events from an abandoned generation", () => {
 
     const late = aiCreateReducer(stopped, {
       type: "DONE",
-      payload: { name: "Other" } as TV3CreateSurveyBody,
+      payload: buildPayload("Other"),
     });
 
     expect(late).toBe(stopped);
@@ -172,7 +241,7 @@ describe("editing the prompt without losing a finished draft", () => {
 
 describe("regenerating does not cost you the draft you had", () => {
   const finished = () => aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
-  const regenerating = () => aiCreateReducer(finished(), { type: "REGENERATE" });
+  const regenerating = () => aiCreateReducer(finished(), { type: "REGENERATE", prompt: "a prompt" });
 
   test("the finished draft is held aside, not destroyed", () => {
     const state = regenerating();
@@ -216,7 +285,7 @@ describe("regenerating does not cost you the draft you had", () => {
   });
 
   test("a finished regeneration supersedes what was held aside", () => {
-    const nextPayload = { name: "Second" } as TV3CreateSurveyBody;
+    const nextPayload = buildPayload("Second");
     const streamed = aiCreateReducer(regenerating(), { type: "SNAPSHOT", snapshot: snapshot("New") });
 
     const state = aiCreateReducer(streamed, { type: "DONE", payload: nextPayload });

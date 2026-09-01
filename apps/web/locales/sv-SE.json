@@ -3015,6 +3015,7 @@
         "prompt_label": "Beskriv enkäten du behöver",
         "prompt_placeholder": "Beskriv den enkät du behöver, t.ex. Förstå varför nya användare avbryter under onboarding och vad som skulle hjälpa dem att slutföra konfigurationen",
         "regenerate": "Generera om",
+        "request_rejected": "Den prompten kunde inte användas. Försök omformulera den.",
         "shortcut_hint": "⌘/Ctrl + Enter för att generera",
         "start_from_scratch": "Börja från början",
         "status_planning": "Planerar enkäten…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "Skriver fråga {count}…",
         "status_writing_title": "Namnger din enkät…",
         "stop": "Stoppa",
+        "too_many_requests": "Du genererar för snabbt. Vänta ett ögonblick och försök igen.",
         "try_prompt": "Se exempelprompt",
         "upgrade_plan": "Uppgradera abonnemang",
         "your_prompt": "Din prompt"

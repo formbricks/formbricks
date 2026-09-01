@@ -3015,6 +3015,7 @@
         "prompt_label": "Beschrijf de enquête die je nodig hebt",
         "prompt_placeholder": "Beschrijf de enquête die je nodig hebt, bijv. Begrijpen waarom nieuwe gebruikers stoppen tijdens de onboarding en wat hen zou helpen de setup af te ronden",
         "regenerate": "Opnieuw genereren",
+        "request_rejected": "Die prompt kan niet worden gebruikt. Probeer het anders te formuleren.",
         "shortcut_hint": "⌘/Ctrl + Enter om te genereren",
         "start_from_scratch": "Begin vanaf nul",
         "status_planning": "Enquête plannen…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "Vraag {count} schrijven…",
         "status_writing_title": "Je enquête een naam geven…",
         "stop": "Stop",
+        "too_many_requests": "Je genereert te snel. Wacht even en probeer het opnieuw.",
         "try_prompt": "Bekijk voorbeeldprompt",
         "upgrade_plan": "Upgrade abonnement",
         "your_prompt": "Jouw prompt"

@@ -27,6 +27,21 @@ describe("getAiErrorMessage", () => {
   });
 });
 
+describe("failures raised by the API wrapper rather than by generation", () => {
+  test('the rate limit tells the user to wait instead of "something went wrong"', () => {
+    // The wrapper answers the 10/min bucket with its own code, not an ai_* one.
+    const error = new V3ApiError({ status: 429, detail: "Rate limit exceeded", code: "too_many_requests" });
+
+    expect(getAiErrorMessage(getAiErrorCode(error), t)).toBe("workspace.surveys.ai_create.too_many_requests");
+  });
+
+  test("a rejected request points at the prompt", () => {
+    const error = new V3ApiError({ status: 400, detail: "Invalid body", code: "bad_request" });
+
+    expect(getAiErrorMessage(getAiErrorCode(error), t)).toBe("workspace.surveys.ai_create.request_rejected");
+  });
+});
+
 describe("getAiErrorCode", () => {
   test("reads the code off a V3ApiError", () => {
     const error = new V3ApiError({ status: 503, detail: "AI unavailable", code: "ai_smart_tools_disabled" });

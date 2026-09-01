@@ -63,6 +63,7 @@ export const CreateWithAIForm = ({
   const {
     prompt,
     setPrompt,
+    submittedPrompt,
     status,
     draft,
     canCreate,
@@ -207,7 +208,11 @@ export const CreateWithAIForm = ({
     <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 py-1 pr-1 pl-3">
       <p id="ai-prompt-echo" className="min-w-0 flex-1 truncate text-sm text-slate-700">
         <span className="sr-only">{t("workspace.surveys.ai_create.your_prompt")}: </span>
-        {prompt}
+        {/*
+          The prompt this draft came from, not the one being typed. Edit prompt keeps the draft, so
+          the live text would label an old draft with words that had no part in producing it.
+        */}
+        {submittedPrompt}
       </p>
       <TooltipRenderer tooltipContent={editPromptLabel}>
         <Button

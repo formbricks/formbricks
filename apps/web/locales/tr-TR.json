@@ -3015,6 +3015,7 @@
         "prompt_label": "İhtiyacın olan anketi açıkla",
         "prompt_placeholder": "İhtiyacın olan anketi tanımla, örneğin: Yeni kullanıcıların neden onboarding sırasında durduğunu ve kurulumu tamamlamalarına neyin yardımcı olacağını anla",
         "regenerate": "Yeniden oluştur",
+        "request_rejected": "Bu istem kullanılamadı. Yeniden ifade etmeyi dene.",
         "shortcut_hint": "Oluşturmak için ⌘/Ctrl + Enter",
         "start_from_scratch": "Sıfırdan başla",
         "status_planning": "Anket planlanıyor…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "Soru {count} yazılıyor…",
         "status_writing_title": "Anketin adı belirleniyor…",
         "stop": "Durdur",
+        "too_many_requests": "Çok hızlı oluşturuyorsun. Bir an bekle ve tekrar dene.",
         "try_prompt": "Örnek komutu gör",
         "upgrade_plan": "Planı yükselt",
         "your_prompt": "İstemin"

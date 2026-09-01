@@ -30,6 +30,12 @@ export function getAiErrorMessage(code: string | undefined, t: TranslateFn): str
       return t("workspace.surveys.ai_create.generation_failed");
     case "ai_nothing_generated":
       return t("workspace.surveys.ai_create.nothing_generated");
+    // Raised by the API wrapper rather than by generation, so the codes are its own. Without these
+    // the 10/min limit reads as "something went wrong", which tells the user nothing to do about it.
+    case "too_many_requests":
+      return t("workspace.surveys.ai_create.too_many_requests");
+    case "bad_request":
+      return t("workspace.surveys.ai_create.request_rejected");
     default:
       return t("common.something_went_wrong_please_try_again");
   }

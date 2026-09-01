@@ -3015,6 +3015,7 @@
         "prompt_label": "Beschreibe die Umfrage, die du brauchst",
         "prompt_placeholder": "Beschreibe die Umfrage, die du benötigst, z. B. Verstehen, warum neue Nutzer während des Onboardings abbrechen und was ihnen helfen würde, die Einrichtung abzuschließen",
         "regenerate": "Neu generieren",
+        "request_rejected": "Diese Eingabe konnte nicht verwendet werden. Versuche, sie umzuformulieren.",
         "shortcut_hint": "⌘/Strg + Eingabetaste zum Generieren",
         "start_from_scratch": "Von vorne beginnen",
         "status_planning": "Plane die Umfrage…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "Schreibe Frage {count}…",
         "status_writing_title": "Benenne deine Umfrage…",
         "stop": "Stopp",
+        "too_many_requests": "Du generierst zu schnell. Warte einen Moment und versuche es erneut.",
         "try_prompt": "Beispiel-Prompt ansehen",
         "upgrade_plan": "Tarif upgraden",
         "your_prompt": "Deine Eingabe"

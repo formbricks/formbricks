@@ -3015,6 +3015,7 @@
         "prompt_label": "Írd le, milyen kérdőívre van szükséged",
         "prompt_placeholder": "Írja le, milyen felmérésre van szüksége, például: Annak megértése, hogy az új felhasználók miért hagyják abba a regisztrációt, és mi segíthetne nekik a beállítás befejezésében",
         "regenerate": "Újragenerálás",
+        "request_rejected": "Ez a parancs nem használható. Kérem, fogalmazza meg másképp.",
         "shortcut_hint": "⌘/Ctrl + Enter a generáláshoz",
         "start_from_scratch": "Kezdés a nulláról",
         "status_planning": "A kérdőív tervezése…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "{count}. kérdés írása…",
         "status_writing_title": "A kérdőív elnevezése…",
         "stop": "Leállítás",
+        "too_many_requests": "Túl gyorsan generál. Kérem, várjon egy pillanatot, és próbálja újra.",
         "try_prompt": "Példa promptra",
         "upgrade_plan": "Csomag frissítése",
         "your_prompt": "Az Ön utasítása"

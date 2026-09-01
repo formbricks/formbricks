@@ -3015,6 +3015,7 @@
         "prompt_label": "Descreva a pesquisa que você precisa",
         "prompt_placeholder": "Descreva a pesquisa que você precisa, por exemplo: Entender por que novos usuários abandonam durante a integração e o que os ajudaria a concluir a configuração",
         "regenerate": "Gerar novamente",
+        "request_rejected": "Esse prompt não pôde ser usado. Tente reformulá-lo.",
         "shortcut_hint": "⌘/Ctrl + Enter para gerar",
         "start_from_scratch": "Começar do zero",
         "status_planning": "Planejando a pesquisa…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "Escrevendo pergunta {count}…",
         "status_writing_title": "Nomeando sua pesquisa…",
         "stop": "Parar",
+        "too_many_requests": "Você está gerando rápido demais. Aguarde um momento e tente novamente.",
         "try_prompt": "Ver exemplo de prompt",
         "upgrade_plan": "Fazer upgrade do plano",
         "your_prompt": "Seu prompt"

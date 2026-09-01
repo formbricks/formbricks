@@ -3015,6 +3015,7 @@
         "prompt_label": "Describe la encuesta que necesitas",
         "prompt_placeholder": "Describe la encuesta que necesitas, por ejemplo: Entender por qué los nuevos usuarios abandonan durante la incorporación y qué les ayudaría a completar la configuración",
         "regenerate": "Regenerar",
+        "request_rejected": "No se pudo usar ese mensaje. Intenta reformularlo.",
         "shortcut_hint": "⌘/Ctrl + Intro para generar",
         "start_from_scratch": "Empezar desde cero",
         "status_planning": "Planificando la encuesta…",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "Escribiendo la pregunta {count}…",
         "status_writing_title": "Nombrando tu encuesta…",
         "stop": "Detener",
+        "too_many_requests": "Estás generando demasiado rápido. Espera un momento e inténtalo de nuevo.",
         "try_prompt": "Ver ejemplo de instrucción",
         "upgrade_plan": "Mejorar plan",
         "your_prompt": "Tu indicación"

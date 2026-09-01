@@ -3015,6 +3015,7 @@
         "prompt_label": "描述你需要的問卷",
         "prompt_placeholder": "描述你需要的問卷調查，例如：了解新使用者為何在引導過程中停止操作，以及什麼能幫助他們完成設定",
         "regenerate": "重新產生",
+        "request_rejected": "無法使用該提示。請試著換個方式表達。",
         "shortcut_hint": "⌘/Ctrl + Enter 生成",
         "start_from_scratch": "從零開始",
         "status_planning": "正在規劃問卷⋯",
@@ -3022,6 +3023,7 @@
         "status_writing_questions": "正在撰寫第 {count} 個問題⋯",
         "status_writing_title": "正在為你的問卷命名⋯",
         "stop": "停止",
+        "too_many_requests": "你產生的速度太快了。請稍等片刻再試一次。",
         "try_prompt": "查看範例提示",
         "upgrade_plan": "升級方案",
         "your_prompt": "你的提示"
