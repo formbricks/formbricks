@@ -137,25 +137,37 @@ migrations are the baseline and are not linted again. To check a migration local
 pnpm lint:migrations migration/<timestamp>/migration.sql
 ```
 
+Squawk checks PostgreSQL 15 syntax, the lowest supported self-hosted floor, while CI replays the complete history
+on PostgreSQL 18. Prisma 7.8 does not add a transaction wrapper around migration SQL, so concurrent index checks
+remain enabled and migrations must add `BEGIN` and `COMMIT` explicitly when atomic execution is required.
+
 If a warning is intentional, place a statement-level ignore immediately before the affected statement and
-document why it is safe. Do not add repository-wide exclusions or historical path allowlists. For example:
+document why it is safe. Package-level exclusions are reserved for rules that conflict with Prisma's generated
+SQL or deployment model; do not add one for a migration-specific exception or use historical path allowlists.
+For example:
 
 ```sql
 SET lock_timeout = '1s';
-SET statement_timeout = '5s';
--- The table is created earlier in this migration and is still empty.
--- squawk-ignore require-concurrent-index-creation
-CREATE INDEX IF NOT EXISTS "Example_createdAt_idx" ON "Example"("createdAt");
+-- A preceding data migration guarantees that Example has no rows.
+-- squawk-ignore adding-required-field
+ALTER TABLE "Example" ADD COLUMN IF NOT EXISTS "slug" TEXT NOT NULL;
 ```
 
+Squawk enforces a short lock timeout, but intentionally does not require a statement timeout. If an operation
+needs one, size it for that operation and table; a blanket value can abort legitimate large-table index builds.
+
 The drift check replays only checked-in `migration.sql` files, so interleaved TypeScript data migrations are
-excluded. Prisma resets the shadow database while evaluating migration history; use a dedicated disposable
-database and never point this variable at a development, staging, or production database:
+excluded. Data migrations must remain data-only: DDL in a `migration.ts` file is invisible to the replay and
+causes false drift. Prisma resets the shadow database while evaluating migration history; use a dedicated
+disposable database and never point this variable at a development, staging, or production database:
 
 ```bash
 SHADOW_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/formbricks_migration_shadow?schema=public" \
   pnpm check:migration-drift
 ```
+
+Pass `SHADOW_DATABASE_URL` inline or through ephemeral CI configuration. Do not persist it in `.env`, because
+`prisma.config.ts` would then activate that shadow database for other Prisma migration commands as well.
 
 ### Available Scripts
 

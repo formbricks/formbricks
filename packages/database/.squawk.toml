@@ -1,2 +1,14 @@
+# PostgreSQL 15 is the lowest supported self-hosted major; CI replays the history on PostgreSQL 18.
 pg_version = "15.0"
+
+# Prisma 7.8 does not add a transaction wrapper around migration SQL.
 assume_in_transaction = false
+
+excluded_rules = [
+  # Prisma Int fields generate INTEGER columns by design.
+  "prefer-bigint-over-int",
+  # Prisma DateTime fields generate TIMESTAMP(3) columns by design.
+  "prefer-timestamp-tz",
+  # Safe statement timeouts depend on the operation and table size; a global value can abort valid migrations.
+  "require-statement-timeout",
+]

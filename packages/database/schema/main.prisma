@@ -1169,7 +1169,7 @@ model User {
   name                  String
   email                 String    @unique
   emailVerified         Boolean   @default(false) @map(name: "email_verified")
-  // Retained for rollback compatibility; keep the column in the database contract but out of Prisma Client.
+  // Temporary representation of the orphaned rollback column until ENG-1826 removes it; keep it out of Prisma Client.
   legacyEmailVerifiedAt DateTime? @map(name: "email_verified_at") @ignore
 
   twoFactorSecret           String?

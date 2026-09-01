@@ -2,9 +2,15 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { checkMigrationDrift, stagePrismaMigrationHistory } from "./check-migration-drift";
+import {
+  checkMigrationDrift,
+  runPrismaDiff,
+  sortMigrationDirectoryNames,
+  stagePrismaMigrationHistory,
+} from "./check-migration-drift";
 
 const temporaryPaths: string[] = [];
+const MIGRATION_LOCK_CONTENT = '# Migration lock fixture\nprovider = "postgresql"\n';
 
 const createTemporaryDirectory = async (prefix: string): Promise<string> => {
   const temporaryPath = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
@@ -25,6 +31,12 @@ const createMigration = async (
   );
 };
 
+const createMigrationHistory = async (): Promise<string> => {
+  const migrationsDir = await createTemporaryDirectory("formbricks-migration-source-");
+  await fs.writeFile(path.join(migrationsDir, "migration_lock.toml"), MIGRATION_LOCK_CONTENT);
+  return migrationsDir;
+};
+
 afterEach(async () => {
   await Promise.all(
     temporaryPaths.splice(0).map((temporaryPath) => fs.rm(temporaryPath, { force: true, recursive: true }))
@@ -32,8 +44,15 @@ afterEach(async () => {
 });
 
 describe("stagePrismaMigrationHistory", () => {
+  test("sorts migration directory names chronologically", () => {
+    expect(sortMigrationDirectoryNames(["20260103000000_third", "20260101000000_first"])).toEqual([
+      "20260101000000_first",
+      "20260103000000_third",
+    ]);
+  });
+
   test("copies schema migrations in order and ignores data migrations", async () => {
-    const migrationsDir = await createTemporaryDirectory("formbricks-migration-source-");
+    const migrationsDir = await createMigrationHistory();
     const destinationDir = await createTemporaryDirectory("formbricks-migration-destination-");
 
     await createMigration(migrationsDir, "20260103000000_second_schema", "migration.sql");
@@ -44,7 +63,7 @@ describe("stagePrismaMigrationHistory", () => {
 
     expect(stagedMigrations).toEqual(["20260101000000_first_schema", "20260103000000_second_schema"]);
     expect(await fs.readFile(path.join(destinationDir, "migration_lock.toml"), "utf8")).toBe(
-      'provider = "postgresql"\n'
+      MIGRATION_LOCK_CONTENT
     );
     expect((await fs.readdir(destinationDir)).sort()).toEqual([
       "20260101000000_first_schema",
@@ -54,15 +73,67 @@ describe("stagePrismaMigrationHistory", () => {
   });
 });
 
+describe("runPrismaDiff", () => {
+  test("invokes Prisma migrate diff with exit-code enabled", async () => {
+    const environment = { SHADOW_DATABASE_URL: "postgresql://postgres:postgres@localhost/shadow" };
+    const executeCommand = vi.fn(() => Promise.resolve(2));
+
+    await expect(
+      runPrismaDiff({
+        environment,
+        executeCommand,
+        migrationsPath: "/tmp/migrations",
+        prismaBin: "/repo/node_modules/.bin/prisma",
+        prismaConfigPath: "/repo/packages/database/prisma.config.ts",
+        repoRoot: "/repo",
+        schemaPath: "/repo/packages/database/schema",
+      })
+    ).resolves.toBe(2);
+
+    expect(executeCommand).toHaveBeenCalledWith({
+      args: [
+        "migrate",
+        "diff",
+        "--config",
+        "/repo/packages/database/prisma.config.ts",
+        "--from-migrations",
+        "/tmp/migrations",
+        "--to-schema",
+        "/repo/packages/database/schema",
+        "--exit-code",
+      ],
+      command: "/repo/node_modules/.bin/prisma",
+      cwd: "/repo",
+      environment,
+    });
+  });
+});
+
 describe("checkMigrationDrift", () => {
+  test.each([undefined, "", " "])(
+    "rejects an invalid shadow database URL (%s)",
+    async (shadowDatabaseUrl) => {
+      await expect(
+        checkMigrationDrift({
+          environment: { SHADOW_DATABASE_URL: shadowDatabaseUrl },
+          migrationsDir: "/migrations",
+          prismaBin: "prisma",
+          prismaConfigPath: "prisma.config.ts",
+          repoRoot: "/repo",
+          schemaPath: "schema",
+        })
+      ).rejects.toThrow("SHADOW_DATABASE_URL must point to a dedicated disposable database");
+    }
+  );
+
   test.each([1, 2])("propagates Prisma exit code %i and removes the staged history", async (exitCode) => {
-    const migrationsDir = await createTemporaryDirectory("formbricks-migration-source-");
+    const migrationsDir = await createMigrationHistory();
     await createMigration(migrationsDir, "20260101000000_schema", "migration.sql");
     let stagedMigrationsPath = "";
     const executePrismaDiff = vi.fn(async ({ migrationsPath }: { migrationsPath: string }) => {
       stagedMigrationsPath = migrationsPath;
       expect(await fs.readFile(path.join(migrationsPath, "migration_lock.toml"), "utf8")).toBe(
-        'provider = "postgresql"\n'
+        MIGRATION_LOCK_CONTENT
       );
       return exitCode;
     });
@@ -83,7 +154,7 @@ describe("checkMigrationDrift", () => {
   });
 
   test("propagates process errors and still removes the staged history", async () => {
-    const migrationsDir = await createTemporaryDirectory("formbricks-migration-source-");
+    const migrationsDir = await createMigrationHistory();
     await createMigration(migrationsDir, "20260101000000_schema", "migration.sql");
     let stagedMigrationsPath = "";
     const executePrismaDiff = vi.fn(({ migrationsPath }: { migrationsPath: string }) => {

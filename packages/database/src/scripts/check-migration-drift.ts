@@ -16,10 +16,20 @@ const PRISMA_BIN = path.join(
   ".bin",
   process.platform === "win32" ? "prisma.cmd" : "prisma"
 );
-const MIGRATION_LOCK_CONTENT = 'provider = "postgresql"\n';
+const MIGRATION_LOCK_FILE_NAME = "migration_lock.toml";
+
+export interface CommandInput {
+  args: string[];
+  command: string;
+  cwd: string;
+  environment: NodeJS.ProcessEnv;
+}
+
+export type ExecuteCommand = (input: CommandInput) => Promise<number>;
 
 export interface PrismaDiffInput {
   environment: NodeJS.ProcessEnv;
+  executeCommand?: ExecuteCommand;
   migrationsPath: string;
   prismaBin: string;
   prismaConfigPath: string;
@@ -42,6 +52,9 @@ export interface MigrationDriftCheckOptions {
 const isMissingFileError = (error: unknown): boolean =>
   error instanceof Error && "code" in error && error.code === "ENOENT";
 
+export const sortMigrationDirectoryNames = (migrationNames: string[]): string[] =>
+  [...migrationNames].sort((a, b) => a.localeCompare(b));
+
 export const stagePrismaMigrationHistory = async (
   migrationsDir: string,
   destinationDir: string
@@ -49,10 +62,12 @@ export const stagePrismaMigrationHistory = async (
   const entries = await fs.readdir(migrationsDir, { withFileTypes: true });
   const schemaMigrationNames: string[] = [];
 
-  for (const entry of entries
-    .filter((candidate) => candidate.isDirectory())
-    .sort((a, b) => a.name.localeCompare(b.name))) {
-    const sourceSqlPath = path.join(migrationsDir, entry.name, "migration.sql");
+  const migrationDirectoryNames = sortMigrationDirectoryNames(
+    entries.filter((candidate) => candidate.isDirectory()).map((entry) => entry.name)
+  );
+
+  for (const migrationName of migrationDirectoryNames) {
+    const sourceSqlPath = path.join(migrationsDir, migrationName, "migration.sql");
 
     try {
       await fs.access(sourceSqlPath);
@@ -64,54 +79,62 @@ export const stagePrismaMigrationHistory = async (
       throw error;
     }
 
-    const destinationMigrationDir = path.join(destinationDir, entry.name);
+    const destinationMigrationDir = path.join(destinationDir, migrationName);
     await fs.mkdir(destinationMigrationDir, { recursive: true });
     await fs.copyFile(sourceSqlPath, path.join(destinationMigrationDir, "migration.sql"));
-    schemaMigrationNames.push(entry.name);
+    schemaMigrationNames.push(migrationName);
   }
 
   if (schemaMigrationNames.length === 0) {
     throw new Error(`No schema migrations found in ${migrationsDir}`);
   }
 
-  await fs.writeFile(path.join(destinationDir, "migration_lock.toml"), MIGRATION_LOCK_CONTENT);
+  await fs.copyFile(
+    path.join(migrationsDir, MIGRATION_LOCK_FILE_NAME),
+    path.join(destinationDir, MIGRATION_LOCK_FILE_NAME)
+  );
 
   return schemaMigrationNames;
 };
 
+const spawnCommand: ExecuteCommand = async ({ args, command, cwd, environment }) =>
+  new Promise<number>((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd,
+      env: environment,
+      stdio: "inherit",
+    });
+
+    child.once("error", reject);
+    child.once("close", (exitCode) => {
+      resolve(exitCode ?? 1);
+    });
+  });
+
 export const runPrismaDiff: RunPrismaDiff = async ({
   environment,
+  executeCommand = spawnCommand,
   migrationsPath,
   prismaBin,
   prismaConfigPath,
   repoRoot,
   schemaPath,
 }) =>
-  new Promise<number>((resolve, reject) => {
-    const child = spawn(
-      prismaBin,
-      [
-        "migrate",
-        "diff",
-        "--config",
-        prismaConfigPath,
-        "--from-migrations",
-        migrationsPath,
-        "--to-schema",
-        schemaPath,
-        "--exit-code",
-      ],
-      {
-        cwd: repoRoot,
-        env: environment,
-        stdio: "inherit",
-      }
-    );
-
-    child.once("error", reject);
-    child.once("close", (exitCode) => {
-      resolve(exitCode ?? 1);
-    });
+  executeCommand({
+    args: [
+      "migrate",
+      "diff",
+      "--config",
+      prismaConfigPath,
+      "--from-migrations",
+      migrationsPath,
+      "--to-schema",
+      schemaPath,
+      "--exit-code",
+    ],
+    command: prismaBin,
+    cwd: repoRoot,
+    environment,
   });
 
 export const checkMigrationDrift = async ({
