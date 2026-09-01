@@ -25,14 +25,19 @@ const globalForHub = globalThis as unknown as { formbricksHubClientRepeatArrays:
 const record = { tenant_id: "t1", submission_id: "s1", field_id: "q1" } as FeedbackRecordCreateParams;
 
 /**
+ * A stub transport answering with one RFC 9457 problem body.
+ *
+ * `code` is the member the narrowing reads, so it is a parameter rather than part of a fixed body:
+ * on a 409 it is the entire difference between the duplicate row and a draining tenant purge.
+ *
  * `retry-after-ms: 0` is honoured ahead of the SDK's exponential backoff, so a retrying case costs
  * no wall clock here. Without it the 429 test would sleep ~1.5s to prove the same thing.
  */
-const respondWith = (status: number): typeof fetch =>
+const respondWith = (status: number, code?: string): typeof fetch =>
   vi.fn(async (input: RequestInfo | URL) => {
-    const response = new Response(JSON.stringify({ detail: "stubbed" }), {
+    const response = new Response(JSON.stringify({ detail: "stubbed", ...(code ? { code } : {}) }), {
       status,
-      headers: { "content-type": "application/json", "retry-after-ms": "0" },
+      headers: { "content-type": "application/problem+json", "retry-after-ms": "0" },
     });
     // A hand-built `Response` has an empty `url`; a real fetch populates it from the request, which
     // is what the narrowing reads to tell the create apart from the other operations on this path.
@@ -59,8 +64,8 @@ describe("Hub client retries, through the SDK's own request loop", () => {
     vi.unstubAllGlobals();
   });
 
-  test("a create that conflicts is attempted once, not three times", async () => {
-    const fetchStub = respondWith(409);
+  test("a create that hits the duplicate row is attempted once, not three times", async () => {
+    const fetchStub = respondWith(409, "conflict");
     vi.stubGlobal("fetch", fetchStub);
     const client = await getClient();
 
@@ -69,6 +74,31 @@ describe("Hub client retries, through the SDK's own request loop", () => {
     // The behaviour the narrowing exists for: on a re-import every create conflicts, and the SDK's
     // default is three POSTs plus ~1.5s of backoff per record for an answer that cannot change.
     expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  test("a create refused by a draining tenant purge still gets the SDK's retries", async () => {
+    const fetchStub = respondWith(409, "tenant_write_conflict");
+    vi.stubGlobal("fetch", fetchStub);
+    const client = await getClient();
+
+    await expect(client.feedbackRecords.create(record)).rejects.toThrow();
+
+    // Hub's create answers 409 for two unrelated reasons and documents this one as retryable
+    // (`openapi.yaml`, and `NewTenantWriteConflictError` in its feedback-records repository).
+    // Keying the narrowing on the status or the path alone suppressed a retry Hub asked for.
+    expect(fetchStub).toHaveBeenCalledTimes(3);
+  });
+
+  test("a conflicting create whose body carries no code falls back to the SDK's policy", async () => {
+    const fetchStub = respondWith(409);
+    vi.stubGlobal("fetch", fetchStub);
+    const client = await getClient();
+
+    await expect(client.feedbackRecords.create(record)).rejects.toThrow();
+
+    // Nothing to read the two 409s apart with, so the degradation is the safe one: the extra
+    // retries the SDK would have made anyway, never a suppressed one.
+    expect(fetchStub).toHaveBeenCalledTimes(3);
   });
 
   test("a rate-limited create still gets the SDK's retries", async () => {
@@ -84,12 +114,10 @@ describe("Hub client retries, through the SDK's own request loop", () => {
   });
 
   test("a 409 outside the feedback-record collection is still retried", async () => {
-    const fetchStub = respondWith(409);
+    const fetchStub = respondWith(409, "tenant_write_conflict");
     vi.stubGlobal("fetch", fetchStub);
     const client = await getClient();
 
-    // Hub's `tenant_write_conflict` is a genuinely retryable 409 (a tenant purge is draining), which
-    // is why the narrowing is scoped to the create rather than to the status.
     await expect(client.tenants.settings.update("tenant-1", {})).rejects.toThrow();
 
     expect(fetchStub).toHaveBeenCalledTimes(3);
@@ -100,7 +128,11 @@ describe("Hub client retries, through the SDK's own request loop", () => {
   // stands, which costs the extra retries but never suppresses one that was wanted.
   test("a conflict whose response carries no URL falls back to the SDK's policy", async () => {
     const fetchStub = vi.fn(
-      async () => new Response("{}", { status: 409, headers: { "retry-after-ms": "0" } })
+      async () =>
+        new Response(JSON.stringify({ code: "conflict" }), {
+          status: 409,
+          headers: { "content-type": "application/problem+json", "retry-after-ms": "0" },
+        })
     ) as unknown as typeof fetch;
     vi.stubGlobal("fetch", fetchStub);
     const client = await getClient();
@@ -111,7 +143,7 @@ describe("Hub client retries, through the SDK's own request loop", () => {
   });
 
   test("a 409 on a single record is still retried", async () => {
-    const fetchStub = respondWith(409);
+    const fetchStub = respondWith(409, "conflict");
     vi.stubGlobal("fetch", fetchStub);
     const client = await getClient();
 
