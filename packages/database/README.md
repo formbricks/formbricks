@@ -123,12 +123,46 @@ Run these commands from the `packages/database` directory:
   - **Note**: Only use Prisma raw queries in data migrations for better performance and to avoid type errors
 - **`pnpm db:seed`**: Run the seeding script
 - **`pnpm db:seed:clear`**: Clear data and run the seeding script
+- **`pnpm lint:migrations migration/<timestamp>/migration.sql`**: Lint one or more new schema
+  migrations with Squawk
+- **`pnpm check:migration-drift`**: Compare the complete checked-in SQL migration history with the
+  Prisma schema (requires a disposable `SHADOW_DATABASE_URL`)
+
+### Migration safety checks
+
+CI runs Squawk only on schema migrations added, copied, renamed, or modified by the pull request. Existing
+migrations are the baseline and are not linted again. To check a migration locally from this package, run:
+
+```bash
+pnpm lint:migrations migration/<timestamp>/migration.sql
+```
+
+If a warning is intentional, place a statement-level ignore immediately before the affected statement and
+document why it is safe. Do not add repository-wide exclusions or historical path allowlists. For example:
+
+```sql
+SET lock_timeout = '1s';
+SET statement_timeout = '5s';
+-- The table is created earlier in this migration and is still empty.
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "Example_createdAt_idx" ON "Example"("createdAt");
+```
+
+The drift check replays only checked-in `migration.sql` files, so interleaved TypeScript data migrations are
+excluded. Prisma resets the shadow database while evaluating migration history; use a dedicated disposable
+database and never point this variable at a development, staging, or production database:
+
+```bash
+SHADOW_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/formbricks_migration_shadow?schema=public" \
+  pnpm check:migration-drift
+```
 
 ### Available Scripts
 
 ```json
 {
   "build": "pnpm generate && vite build",
+  "check:migration-drift": "Compare SQL migration history with the Prisma schema",
   "create-migration": "Create new schema migration",
   "db:migrate:deploy": "Apply migrations in production",
   "db:migrate:dev": "Apply migrations in development",
@@ -138,7 +172,8 @@ Run these commands from the `packages/database` directory:
   "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev && pnpm db:seed",
   "dev": "vite build --watch",
   "generate": "prisma generate --config ./prisma.config.ts",
-  "generate-data-migration": "Create new data migration"
+  "generate-data-migration": "Create new data migration",
+  "lint:migrations": "Lint one or more schema migration SQL files"
 }
 ```
 

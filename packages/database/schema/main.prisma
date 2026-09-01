@@ -1163,12 +1163,14 @@ model PasswordResetToken {
 /// @property memberships - Organizations the user belongs to
 /// @property notificationSettings - User's notification preferences
 model User {
-  id            String   @id @default(cuid())
-  createdAt     DateTime @default(now()) @map(name: "created_at")
-  updatedAt     DateTime @updatedAt @map(name: "updated_at")
-  name          String
-  email         String   @unique
-  emailVerified Boolean  @default(false) @map(name: "email_verified")
+  id                    String    @id @default(cuid())
+  createdAt             DateTime  @default(now()) @map(name: "created_at")
+  updatedAt             DateTime  @updatedAt @map(name: "updated_at")
+  name                  String
+  email                 String    @unique
+  emailVerified         Boolean   @default(false) @map(name: "email_verified")
+  // Retained for rollback compatibility; keep the column in the database contract but out of Prisma Client.
+  legacyEmailVerifiedAt DateTime? @map(name: "email_verified_at") @ignore
 
   twoFactorSecret           String?
   twoFactorEnabled          Boolean             @default(false)
@@ -1535,14 +1537,14 @@ model FeedbackSourceFormbricksMapping {
   createdAt        DateTime       @default(now()) @map(name: "created_at")
   feedbackSourceId String         @map(name: "feedback_source_id")
   workspaceId      String
-  feedbackSource   FeedbackSource @relation(fields: [feedbackSourceId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  feedbackSource   FeedbackSource @relation(fields: [feedbackSourceId, workspaceId], references: [id, workspaceId], onDelete: Cascade, map: "FeedbackSourceFormbricksMapping_feedbackSourceId_workspaceId_fk")
   surveyId         String
   survey           Survey         @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
   elementId        String
   hubFieldType     HubFieldType
   customFieldLabel String?        @map(name: "custom_field_label")
 
-  @@unique([workspaceId, feedbackSourceId, surveyId, elementId])
+  @@unique([workspaceId, feedbackSourceId, surveyId, elementId], map: "FeedbackSourceFormbricksMapping_workspaceId_feedbackSourceId_su")
   @@index([workspaceId, surveyId])
   @@index([surveyId])
 }
@@ -1560,12 +1562,12 @@ model FeedbackSourceFieldMapping {
   createdAt        DateTime       @default(now()) @map(name: "created_at")
   feedbackSourceId String         @map(name: "feedback_source_id")
   workspaceId      String
-  feedbackSource   FeedbackSource @relation(fields: [feedbackSourceId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  feedbackSource   FeedbackSource @relation(fields: [feedbackSourceId, workspaceId], references: [id, workspaceId], onDelete: Cascade, map: "FeedbackSourceFieldMapping_feedbackSourceId_workspaceId_fkey")
   sourceFieldId    String         @map(name: "source_field_id")
   targetFieldId    String         @map(name: "target_field_id")
   staticValue      String?        @map(name: "static_value")
 
-  @@unique([workspaceId, feedbackSourceId, sourceFieldId, targetFieldId])
+  @@unique([workspaceId, feedbackSourceId, sourceFieldId, targetFieldId], map: "FeedbackSourceFieldMapping_workspaceId_feedbackSourceId_sourceF")
 }
 
 /// Represents a feedback directory (Hub tenant) owned by an organization.

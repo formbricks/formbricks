@@ -11,6 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      postgres:
+        image: pgvector/pgvector@sha256:9ae02a756ba16a2d69dd78058e25915e36e189bb36ddf01ceae86390d7ed786a
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: formbricks_migration_shadow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
@@ -41,6 +56,52 @@ jobs:
       # `git commit --no-verify` skips. Run `pnpm format` to fix failures.
       - name: Check formatting
         run: pnpm format:check
+
+      - name: Lint changed database migrations
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          base_sha="${BASE_SHA}"
+          if [[ -z "${base_sha}" ]]; then
+            base_sha="$(git rev-parse HEAD^)"
+            echo "::notice::No event base SHA was provided; comparing against ${base_sha}."
+          fi
+
+          if [[ ! "${base_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Invalid base SHA: ${base_sha}"
+            exit 1
+          fi
+
+          if ! git cat-file -e "${base_sha}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=1 origin "${base_sha}"
+          fi
+
+          mapfile -d '' migration_files < <(
+            git diff --diff-filter=ACMR --name-only -z "${base_sha}" HEAD -- \
+              'packages/database/migration/*/migration.sql'
+          )
+
+          if (( ${#migration_files[@]} == 0 )); then
+            echo "::notice::No changed schema migrations to lint."
+            exit 0
+          fi
+
+          absolute_migration_files=()
+          for migration_file in "${migration_files[@]}"; do
+            absolute_migration_files+=("${GITHUB_WORKSPACE}/${migration_file}")
+          done
+
+          printf 'Linting migration: %s\n' "${migration_files[@]}"
+          pnpm --filter @formbricks/database lint:migrations -- "${absolute_migration_files[@]}"
+
+      - name: Check database migration drift
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/formbricks_migration_shadow?schema=public
+          SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/formbricks_migration_shadow?schema=public
+        run: pnpm --filter @formbricks/database check:migration-drift
 
       - name: Lint
         run: pnpm lint
