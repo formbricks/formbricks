@@ -910,4 +910,46 @@ describe("formatV3ZodInvalidParams", () => {
       );
     }
   });
+
+  test("normalizes the comma-joined ending-card shape too", () => {
+    const issue = {
+      code: "custom",
+      message:
+        "The button label on the Ending card 2 is missing for the following languages:  -fLang- de, fr",
+      path: ["endings", 1, "buttonLabel"],
+    } as z.core.$ZodIssue;
+
+    const [invalidParam] = formatV3ZodInvalidParams(new z.ZodError([issue]), "body");
+
+    expect(invalidParam.reason).toBe(
+      "The button label on the Ending card 2 is missing for the following languages: de, fr"
+    );
+  });
+
+  // A caller-supplied language code reaches `reason` verbatim (createZV3SurveyLanguageTag interpolates
+  // it and only trims the ends), so a long interior whitespace run is reachable from one request. The
+  // previous `/\s*-fLang-\s*/` implementation was quadratic on exactly that input — ~5s server-side at
+  // 100k characters. The timeout is a complexity guard, not a benchmark: the linear implementation
+  // needs microseconds, so the margin here is several orders of magnitude.
+  test.each([
+    ["no marker present", 100_000, false],
+    ["marker present", 100_000, true],
+  ])(
+    "stays linear on a %s whitespace run",
+    (_label, runLength, withMarker) => {
+      const run = " ".repeat(runLength);
+      const message = withMarker
+        ? `Language 'a${run}b' is not valid: -fLang- de-DE`
+        : `Language 'a${run}b' is not a valid locale code`;
+      const issue = { code: "custom", message, path: ["languages", 0, "code"] } as z.core.$ZodIssue;
+
+      const [invalidParam] = formatV3ZodInvalidParams(new z.ZodError([issue]), "body");
+
+      expect(invalidParam.reason).not.toContain("-fLang-");
+      // The caller's run is preserved: only the marker and the whitespace adjoining it are touched.
+      expect(invalidParam.reason).toContain(run);
+      expect(invalidParam.reason.endsWith(withMarker ? "de-DE" : "code")).toBe(true);
+    },
+    2_000
+  );
 });
