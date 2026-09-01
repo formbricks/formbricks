@@ -1,5 +1,14 @@
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
-import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import {
+  RESERVED_FIELD_CATALOG,
+  type TReservedFieldCatalogEntry,
+  dropShadowedReservedEntries,
+  getComputedEmbeddedFields,
+  getIngestedStorageKeys,
+  getSurveyEmbeddedFields,
+  listShadowingNames,
+  projectReservedValues,
+} from "@formbricks/types/embedded-data-resolver";
 import {
   TResponse,
   TResponseDataValue,
@@ -9,6 +18,7 @@ import {
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
+import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
 import {
   TSurveyElement,
   TSurveyMultipleChoiceElement,
@@ -120,24 +130,52 @@ export const getResponsesFileName = (surveyName: string, extension: string) => {
   return `export-${sanitizedSurveyName.split(" ").join("-")}-${formattedDateString}.${extension}`.toLocaleLowerCase();
 };
 
-export const extracMetadataKeys = (obj: TResponse["meta"]) => {
-  let keys: string[] = [];
+/**
+ * The four catalog entries whose values the export's fixed basic columns already carry — "Response
+ * ID", "Survey ID", "Finished" and "Timestamp" (`createdAt`, which is what `startedAt` reads).
+ * Skipped from the reserved column set so one fact never gets two columns.
+ */
+const EXPORT_BASICS_COVERED_RESERVED_NAMES = new Set(["responseId", "surveyId", "finished", "startedAt"]);
 
-  Object.entries(obj ?? {}).forEach(([key, value]) => {
-    if (typeof value === "object" && value !== null) {
-      Object.entries(value).forEach(([subKey]) => {
-        keys.push(key + " - " + subKey);
-      });
-    } else {
-      keys.push(key);
-    }
+/**
+ * The reserved fields one survey's export carries as columns — the catalog, minus what cannot or
+ * must not appear (ENG-1847).
+ *
+ * Catalog-derived on purpose: the previous column set was the FIRST response's `meta` keys, so a
+ * first response missing `utmSource` meant no column at all, however many later responses carried
+ * it — and headers came out as raw key paths (`userAgent - browser`). This set is stable per
+ * survey, whatever any individual response holds.
+ *
+ * The filters, each a decision already made elsewhere and reused here:
+ * - shadowed entries drop (`dropShadowedReservedEntries`) — a survey declaring `url` keeps its
+ *   declared column and never gets the reserved one, same rule as the renderer and response table;
+ * - the four facts the fixed basic columns already carry are skipped (one column per fact);
+ * - on an anonymized survey, `privacy: "drop"` entries are never captured, so their always-empty
+ *   columns are omitted;
+ * - `ipAddress` is only a column when the survey captures it (`isCaptureIpEnabled`).
+ */
+export const getReservedExportEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] => {
+  const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
+  const shadowingNames = listShadowingNames(getSurveyEmbeddedFields(survey), elementIds);
+
+  return dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, shadowingNames).filter((entry) => {
+    if (EXPORT_BASICS_COVERED_RESERVED_NAMES.has(entry.name)) return false;
+    if (survey.isAnonymizeResponsesEnabled && entry.privacy === "drop") return false;
+    if (entry.name === "ipAddress" && !survey.isCaptureIpEnabled) return false;
+    return true;
   });
-
-  return keys;
 };
 
+/**
+ * The export header for a reserved column. `formatFieldNameToTitleCase` rather than the localized
+ * `getReservedFieldLabel`: export headers are a machine-facing contract, and localizing them would
+ * make the column names depend on whichever operator happened to click download.
+ */
+export const getReservedExportHeader = (entry: TReservedFieldCatalogEntry): string =>
+  formatFieldNameToTitleCase(entry.name);
+
 export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
-  const metaDataFields = responses.length > 0 ? extracMetadataKeys(responses[0].meta) : [];
+  const metaDataFields = getReservedExportEntries(survey).map(getReservedExportHeader);
   const modifiedSurvey = replaceHeadlineRecall(survey, "default");
 
   const modifiedElements = getElementsFromBlocks(modifiedSurvey.blocks);
@@ -179,6 +217,7 @@ export const getResponsesJson = (
   isQuotasAllowed: boolean = false
 ): Record<string, string | number>[] => {
   const jsonData: Record<string, string | number>[] = [];
+  const reservedEntries = getReservedExportEntries(survey);
 
   responses.forEach((response, idx) => {
     // basic response details
@@ -197,15 +236,12 @@ export const getResponsesJson = (
       jsonData[idx]["Quotas"] = response.quotas?.map((quota) => quota.name).join(", ") || "";
     }
 
-    // meta details
-    Object.entries(response.meta ?? {}).forEach(([key, value]) => {
-      if (typeof value === "object" && value !== null) {
-        Object.entries(value).forEach(([subKey, subValue]) => {
-          jsonData[idx][key + " - " + subKey] = subValue;
-        });
-      } else {
-        jsonData[idx][key] = value;
-      }
+    // Reserved fields, through the same projection recall/logic read (coercion to the declared
+    // dataType, booleans stringified, `redactQuery` honoured). Every column gets a cell — absent
+    // values as "" — so rows stay aligned with the stable header set.
+    const reservedValues = projectReservedValues(reservedEntries, response);
+    reservedEntries.forEach((entry) => {
+      jsonData[idx][getReservedExportHeader(entry)] = reservedValues[entry.name] ?? "";
     });
 
     // survey response data
@@ -261,11 +297,14 @@ export const getResponsesJson = (
       jsonData[idx][`person.${attribute}`] = response.contactAttributes?.[attribute] || "";
     });
 
-    // hidden fields
+    // hidden fields — a number stays a number (the ingest contract stores coerced values, so a
+    // `dataType: "number"` field holds a real number and the XLSX cell should be numeric, not text)
     hiddenFields.forEach((field) => {
       const value = response.data[field];
       if (Array.isArray(value)) {
         jsonData[idx][field] = value.join("; ");
+      } else if (typeof value === "number") {
+        jsonData[idx][field] = value;
       } else {
         jsonData[idx][field] = processResponseData(value);
       }
