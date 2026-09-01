@@ -77,7 +77,10 @@ const submitAnswer = async (page: Page, answer: string): Promise<void> => {
 };
 
 test.describe("Response export columns @slow", () => {
-  test("exports reserved fields as stable, titlecased, redacted columns", async ({ page, users }) => {
+  test("exports reserved fields as stable, titlecased, redacted columns", async ({
+    page,
+    users,
+  }, testInfo) => {
     const owner = await users.create({ skipSurveySeed: true });
     if (!owner.workspaceId) throw new Error("users.create() did not return a workspaceId");
     const surveyId = await seedSurvey(owner.workspaceId, owner.id);
@@ -110,7 +113,10 @@ test.describe("Response export columns @slow", () => {
     await page.getByTestId("fb__custom-filter-download-all-csv").click();
     const download = await downloadPromise;
 
-    const csvPath = await download.path();
+    // saveAs, not download.path(): CI runs this suite against Azure's remote browsers
+    // (playwright.service.config.ts), where path() throws — saveAs transfers the artifact.
+    const csvPath = testInfo.outputPath(download.suggestedFilename());
+    await download.saveAs(csvPath);
     const csv = await readFile(csvPath, "utf-8");
     const [headerLine] = csv.split("\n");
 
