@@ -86,18 +86,24 @@ export const setup = async (
     config.resetConfig();
     config = Config.getInstance();
 
-    // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
-    // otherwise, we just sync again!
-
-    if (newState && !newState.user?.data?.userId) {
+    // Persist the migrated state for every legacy config, identified or not. `resetConfig()` has
+    // just wiped storage, so skipping the write leaves no config at all and the fresh-setup path
+    // below would silently downgrade an identified user to anonymous.
+    if (newState) {
       // Legacy configs could be persisted without a user state, or with a user missing `data` —
-      // substitute the default (rebuilding a complete state when only `data` survived) so
-      // downstream `config.user` reads keep working and the resync path still runs.
+      // substitute the default so downstream `config.user` reads keep working and the resync path
+      // still runs.
       const legacyUser = newState.user;
       config.update({
         ...newState,
         user: legacyUser?.data
-          ? { expiresAt: legacyUser.expiresAt ?? null, data: legacyUser.data }
+          ? {
+              expiresAt: legacyUser.expiresAt ?? null,
+              // A legacy `data` is unchecked JSON: `Partial<TUserState>` only makes `data` itself
+              // optional, so a present-but-incomplete `data` type-checks while missing the arrays
+              // `filterSurveys` destructures. Complete it from the default instead of trusting it.
+              data: { ...DEFAULT_USER_STATE_NO_USER_ID.data, ...legacyUser.data },
+            }
           : DEFAULT_USER_STATE_NO_USER_ID,
       });
     }
@@ -296,13 +302,23 @@ export const setup = async (
 
       let userState: TUserState = DEFAULT_USER_STATE_NO_USER_ID;
 
-      if ("userId" in configInput && configInput.userId) {
+      // A migrated legacy config reaches this branch whenever it carried no workspace state to
+      // reuse. It can still carry an identified user, so fall back to that id when setup was not
+      // given one — otherwise the migration would turn an identified user into an anonymous one.
+      // Only for the workspace it was migrated for: a different `effectiveId` is a different app.
+      const migratedUserId =
+        changed && existingConfig?.workspaceId === effectiveId ? existingConfig.user.data.userId : null;
+      const setupUserId = "userId" in configInput && configInput.userId ? configInput.userId : null;
+      const userId = setupUserId ?? migratedUserId;
+
+      if (userId) {
         const updatesResponse = await sendUpdatesToBackend({
           appUrl: configInput.appUrl,
           workspaceId: effectiveId,
           updates: {
-            userId: configInput.userId,
-            attributes: configInput.attributes,
+            userId,
+            // Attributes only ever come from the setup call, never from the migrated state.
+            ...(setupUserId && "attributes" in configInput ? { attributes: configInput.attributes } : {}),
           },
         });
 
