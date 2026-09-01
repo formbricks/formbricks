@@ -49,7 +49,7 @@ export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizati
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.api_keys")} />
       {workspaces.length > 0 && (
-        <Alert variant="info" size="small" role="status" className="mb-4">
+        <Alert variant="info" size="small" role="status">
           <AlertDescription>
             {t("workspace.settings.api_keys.connect_app_banner_description")}
           </AlertDescription>
