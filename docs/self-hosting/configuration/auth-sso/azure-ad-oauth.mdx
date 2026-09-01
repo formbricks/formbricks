@@ -135,10 +135,15 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 
 ## Keeping display names in step with your directory
 
+<Note>SSO name synchronization is part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license)</Note>
+
 A user's name in Formbricks comes from the OIDC `name` claim, which is their Entra ID `displayName`. That
 attribute is free text, so its format is whatever your directory holds — accounts synced from on-premises
 Active Directory often read `Surname, Givenname`, while accounts created in the Entra admin center usually
-read `Givenname Surname`. Formbricks stores it as-is; it never reorders or reformats a name.
+read `Givenname Surname`. Formbricks keeps whatever order your directory uses — it never reorders a
+name into `First Last`. It does normalize the value before storing it: characters outside the allowed
+set (letters, marks, spaces, and `' , . & ( ) -` plus digits) collapse to a single space, so
+`Doe, Jane` is stored unchanged while stray markup or line separators are stripped.
 
 By default the name is read once, when the account is created, and never again. Set `AUTH_SSO_SYNC_NAME=1`
 to re-read it on every sign-in instead, so a rename in Entra ID reaches Formbricks the next time that
