@@ -126,13 +126,32 @@ describe("getSsoProviderFromContext", () => {
 describe("ssoDatabaseHooks.user.create.before", () => {
   const before = ssoDatabaseHooks.user!.create!.before!;
 
-  test("rejects (returns false) when the provisioning gate rejects", async () => {
+  /**
+   * ENG-2537. The documented way to reject here is `return false`, and it is what shipped — but Better
+   * Auth then resolves `createUser` to `null` and reads `createdUser.id` off it one line later, which
+   * 500s every rejected SSO sign-up. It must throw an APIError carrying a `code` instead: that is the
+   * shape the OAuth callback catches and converts into a redirect.
+   */
+  test("throws an APIError carrying the reason code when the provisioning gate rejects", async () => {
     vi.mocked(gateSsoProvisioning).mockResolvedValue({ action: "reject", reason: "missing_callback_url" });
-    const result = await runWithSsoRequestContext(() =>
-      before({ id: "u1", email: "a@b.com" } as never, callbackCtx as never)
-    );
-    expect(result).toBe(false);
-    expect(getSsoProvisioningDecision()).toBeUndefined();
+
+    await expect(
+      runWithSsoRequestContext(() => before({ id: "u1", email: "a@b.com" } as never, callbackCtx as never))
+      // The `code` is load-bearing: `callback.mjs` only redirects for an APIError that carries one, and
+      // rethrows otherwise — which is the 500 this replaces.
+    ).rejects.toMatchObject({ status: "FORBIDDEN", body: { code: "missing_callback_url" } });
+  });
+
+  test("does not stash a provisioning decision for a rejected sign-up", async () => {
+    vi.mocked(gateSsoProvisioning).mockResolvedValue({ action: "reject", reason: "missing_callback_url" });
+    let stashed: ReturnType<typeof getSsoProvisioningDecision>;
+
+    await runWithSsoRequestContext(async () => {
+      await before({ id: "u1", email: "a@b.com" } as never, callbackCtx as never).catch(() => undefined);
+      stashed = getSsoProvisioningDecision();
+    });
+
+    expect(stashed).toBeUndefined();
   });
 
   test("stashes the reject reason so the after-hook can redirect (personal email domain)", async () => {
@@ -141,12 +160,14 @@ describe("ssoDatabaseHooks.user.create.before", () => {
       reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
     });
     let reason: string | undefined;
-    const result = await runWithSsoRequestContext(async () => {
-      const r = await before({ id: "u1", email: "spammer@gmail.com" } as never, callbackCtx as never);
+    await runWithSsoRequestContext(async () => {
+      // The throw is the reject; the stashed reason is what the after-hook reads to rewrite the
+      // redirect Better Auth produces from it.
+      await before({ id: "u1", email: "spammer@gmail.com" } as never, callbackCtx as never).catch(
+        () => undefined
+      );
       reason = getSsoSignupRejectReason();
-      return r;
     });
-    expect(result).toBe(false);
     expect(reason).toBe(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
   });
 

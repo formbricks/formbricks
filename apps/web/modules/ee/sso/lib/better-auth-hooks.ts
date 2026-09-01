@@ -162,8 +162,8 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         // Not an SSO callback → a credential user creation, whose policy is a separate concern.
         if (!identityProvider) return enforceCredentialSignupBackstop(user.email);
 
-        // Provisioning gate — orphan-safe: a reject returns `false`, rolling back the user+account
-        // insert inside Better Auth's transaction (a post-commit after-hook could not reject safely).
+        // Provisioning gate — orphan-safe: a reject aborts Better Auth's user+account transaction, so
+        // no half-created user survives (a post-commit after-hook could not reject safely).
         let callbackUrl = "";
         try {
           callbackUrl = (await getOAuthState())?.callbackURL ?? "";
@@ -174,9 +174,23 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         if (decision.action === "reject") {
           // Stash the reason (request scope) so the after-hook can turn Better Auth's generic
           // create-failure redirect into a tailored one — e.g. the personal-email block redirects to
-          // /auth/signup with a toast. Returning false rolls back the user+account insert.
+          // /auth/signup with a toast.
           setSsoSignupRejectReason(decision.reason);
-          return false;
+          // THROW, do not `return false` (ENG-2537). Returning false is the documented way to reject
+          // here, but Better Auth then has `createUser` resolve to `null` (`db/with-hooks.mjs`) and
+          // immediately reads `createdUser.id` on the next line of `oauth2/link-account.mjs` — an
+          // unguarded dereference that surfaced as a TypeError and a 500 on every rejected SSO sign-up.
+          // That crash is also what happened to roll the transaction back, so the orphan-safety this
+          // gate advertised was a side effect of the bug rather than a property of the design.
+          //
+          // An APIError carrying a `code` is the shape the OAuth callback handles deliberately: it
+          // catches one and turns it into a redirect (`api/routes/callback.mjs`), which is what lets the
+          // after-hook below rewrite the destination. Throwing still aborts the transaction, so nothing
+          // is created — now on purpose.
+          throw new APIError("FORBIDDEN", {
+            message: "SSO sign-up was rejected by the instance's provisioning policy.",
+            code: decision.reason,
+          });
         }
         setSsoProvisioningDecision(decision); // carried to user.create.after (the membership writes)
 
