@@ -99,7 +99,7 @@ jobs:
 
       - name: Check database migration drift
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/formbricks_migration_shadow?schema=public
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres?schema=public
           SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/formbricks_migration_shadow?schema=public
         run: pnpm --filter @formbricks/database check:migration-drift
 
