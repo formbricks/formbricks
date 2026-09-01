@@ -378,11 +378,10 @@ describe("createV3Survey", () => {
     expect(createSurvey).not.toHaveBeenCalled();
   });
 
-  // Ordering guard, not a fix by this PR. A whitespace-only headline never reaches the new pre-write
-  // parse: `prepareV3SurveyCreate` rejects it first with V3SurveyReferenceValidationError, which
-  // already mapped to 422 before this change. Pinned so the new parse is not mistaken for the thing
-  // that catches it, and so a future reorder that lets it fall through shows up here.
-  test("leaves a whitespace-only headline to the earlier preparation guard", async () => {
+  // A blank headline is rejected either side of the new parse, and which side depends on the language
+  // set rather than on the blankness. What `prepareV3SurveyCreate` catches here is the *absent* `de-DE`
+  // key, since `rawCreateBody` declares `de-DE` while this headline carries only `en-US`.
+  test("routes a blank headline with a missing declared locale to the earlier preparation guard", async () => {
     const body = ZV3CreateSurveyBody.parse({
       ...rawCreateBody,
       blocks: [
@@ -390,7 +389,7 @@ describe("createV3Survey", () => {
           ...rawCreateBody.blocks[0],
           elements: [
             {
-              id: "blank_headline",
+              id: "blank_headline_missing_locale",
               type: "openText",
               headline: { "en-US": "   " },
               required: true,
@@ -400,12 +399,51 @@ describe("createV3Survey", () => {
       ],
     });
 
-    const error = await createV3Survey(body, null, "req_blank_headline").catch((err: unknown) => err);
+    const error = await createV3Survey(body, null, "req_blank_missing_locale").catch((err: unknown) => err);
 
     expect(error).toBeInstanceOf(V3SurveyReferenceValidationError);
     expect(error).not.toBeInstanceOf(V3SurveyInputValidationError);
     expect(createSurvey).not.toHaveBeenCalled();
   });
+
+  // ...and once every declared locale key is present, the blank headline reaches the new pre-write parse
+  // instead. These two shapes were 500s on `main`, so they are part of what this PR fixes. Found in
+  // review after an earlier version of this suite pinned only the shape above and over-generalised
+  // from it.
+  test.each([
+    ["no languages declared", undefined, { "en-US": "   " }, { "en-US": "Product Feedback" }],
+    [
+      "every declared locale present and blank",
+      [{ code: "de-DE", enabled: true }],
+      { "en-US": "   ", "de-DE": "   " },
+      { "en-US": "Product Feedback", "de-DE": "Produktfeedback" },
+    ],
+  ])(
+    "rejects a blank headline with %s through the new pre-write parse",
+    async (_label, languages, headline, title) => {
+      const body = ZV3CreateSurveyBody.parse({
+        ...rawCreateBody,
+        languages,
+        // The metadata title has to carry the same declared locales, or preparation rejects *that*
+        // missing key first and the element never reaches the parse under test.
+        metadata: { cx_operation: "enterprise_onboarding", title },
+        blocks: [
+          {
+            ...rawCreateBody.blocks[0],
+            elements: [{ id: "blank_headline", type: "openText", headline, required: true }],
+          },
+        ],
+      });
+
+      const error = await createV3Survey(body, null, "req_blank_headline").catch((err: unknown) => err);
+
+      expect(error).toBeInstanceOf(V3SurveyInputValidationError);
+      expect((error as V3SurveyInputValidationError).invalidParams).toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: "blocks.0.elements.0.headline" })])
+      );
+      expect(createSurvey).not.toHaveBeenCalled();
+    }
+  );
 
   test("accepts an https CTA buttonUrl through the same path", async () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
