@@ -75,7 +75,7 @@ export const ValidationRuleValueInput = ({
     const isRange = ruleType === "isBetween" || ruleType === "isNotBetween";
 
     if (isRelative) {
-      const params = rule.params as {
+      const { relative, relativeStart, relativeEnd } = rule.params as {
         relative?: TRelativeDateBound;
         relativeStart?: TRelativeDateBound;
         relativeEnd?: TRelativeDateBound;
@@ -84,22 +84,22 @@ export const ValidationRuleValueInput = ({
       return (
         <div className="flex w-full flex-wrap items-center gap-2">
           {renderDateModeSelect()}
-          {isRange && params.relativeStart && params.relativeEnd ? (
+          {isRange && relativeStart && relativeEnd ? (
             <>
               <ValidationRuleRelativeDateInput
-                bound={params.relativeStart}
-                onChange={(bound) => onParamsChange({ ...params, relativeStart: bound })}
+                bound={relativeStart}
+                onChange={(bound) => onParamsChange({ relativeStart: bound, relativeEnd })}
               />
               <span className="text-sm text-slate-500">{t("common.and")}</span>
               <ValidationRuleRelativeDateInput
-                bound={params.relativeEnd}
-                onChange={(bound) => onParamsChange({ ...params, relativeEnd: bound })}
+                bound={relativeEnd}
+                onChange={(bound) => onParamsChange({ relativeStart, relativeEnd: bound })}
               />
             </>
           ) : null}
-          {!isRange && params.relative ? (
+          {!isRange && relative ? (
             <ValidationRuleRelativeDateInput
-              bound={params.relative}
+              bound={relative}
               onChange={(bound) => onParamsChange({ relative: bound })}
             />
           ) : null}

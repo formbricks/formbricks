@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { DateElement as SurveyUIDateElement } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
@@ -52,17 +52,33 @@ export function DateElement({
     setTtc(updatedTtcObj);
   };
 
+  // Relative bounds are anchored to "today", so a survey left open across local midnight would
+  // otherwise keep offering yesterday's window while the validators resolve the new one on submit.
+  // Re-anchor once the day rolls over.
+  const [today, setToday] = useState(() => new Date());
+
+  useEffect(() => {
+    const nextMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const timer = setTimeout(() => {
+      setToday(new Date());
+    }, nextMidnight.getTime() - Date.now());
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [today]);
+
   // Restrict the calendar to whatever the element's date validation rules allow, so a respondent
   // cannot pick a date the evaluator would reject on submit. Falls back to a +/-100 year span when
   // no rule bounds that end of the range.
-  const { minDate, maxDate } = getDateBoundsFromRules(element, new Date());
+  const { minDate, maxDate } = getDateBoundsFromRules(element, today);
 
   const getMinDate = (): string => {
-    return minDate ?? toISODateString(new Date(new Date().getFullYear() - 100, 0, 1));
+    return minDate ?? toISODateString(new Date(today.getFullYear() - 100, 0, 1));
   };
 
   const getMaxDate = (): string => {
-    return maxDate ?? toISODateString(new Date(new Date().getFullYear() + 100, 0, 1));
+    return maxDate ?? toISODateString(new Date(today.getFullYear() + 100, 0, 1));
   };
 
   return (

@@ -63,7 +63,7 @@ export const ValidationRuleRow = ({
   onDelete,
   onAdd,
   canAddMore,
-}: ValidationRuleRowProps) => {
+}: Readonly<ValidationRuleRowProps>) => {
   const { t } = useTranslation();
   const ruleType = rule.type;
   const config = RULE_TYPE_CONFIG[ruleType];
