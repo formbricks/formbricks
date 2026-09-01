@@ -137,9 +137,20 @@ migrations are the baseline and are not linted again. To check a migration local
 pnpm lint:migrations migration/<timestamp>/migration.sql
 ```
 
-Squawk checks PostgreSQL 15 syntax, the lowest supported self-hosted floor, while CI replays the complete history
-on PostgreSQL 18. Prisma 7.8 does not add a transaction wrapper around migration SQL, so concurrent index checks
-remain enabled and migrations must add `BEGIN` and `COMMIT` explicitly when atomic execution is required.
+Squawk checks PostgreSQL 15 syntax, which remains relevant to older one-click installations in the
+[self-hosted migration guide](../../docs/self-hosting/advanced/migration.mdx#v27), while CI replays the complete
+history on PostgreSQL 18. Prisma 7.8 does not add a transaction wrapper around migration SQL, so concurrent index
+checks remain enabled and migrations must add `BEGIN` and `COMMIT` explicitly when atomic execution is required.
+
+`pnpm create-migration` copies Prisma's generated SQL unchanged. Before committing every generated migration:
+
+1. Add `SET lock_timeout = '1s';` at the top.
+2. Add explicit transaction boundaries when the statements must be atomic.
+3. Change eligible index builds to `CREATE INDEX CONCURRENTLY`, which cannot run inside a transaction.
+4. Run `pnpm lint:migrations migration/<timestamp>/migration.sql` and document targeted exceptions.
+
+Squawk cannot inspect statements hidden inside a `DO $$ ... $$` block. Use such blocks only when PostgreSQL
+procedural logic is required, not to bypass the migration safety checks.
 
 If a warning is intentional, place a statement-level ignore immediately before the affected statement and
 document why it is safe. Package-level exclusions are reserved for rules that conflict with Prisma's generated
@@ -158,8 +169,10 @@ needs one, size it for that operation and table; a blanket value can abort legit
 
 The drift check replays only checked-in `migration.sql` files, so interleaved TypeScript data migrations are
 excluded. Data migrations must remain data-only: DDL in a `migration.ts` file is invisible to the replay and
-causes false drift. Prisma resets the shadow database while evaluating migration history; use a dedicated
-disposable database and never point this variable at a development, staging, or production database:
+causes false drift. Prisma resets the shadow database while evaluating migration history. The helper requires
+the database name to contain `shadow` and rejects the primary database identity, but that marker is only a
+fail-safe: still use a dedicated disposable database and never point this variable at a development, staging, or
+production database:
 
 ```bash
 SHADOW_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/formbricks_migration_shadow?schema=public" \

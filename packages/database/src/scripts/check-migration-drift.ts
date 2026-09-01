@@ -17,6 +17,8 @@ const PRISMA_BIN = path.join(
   process.platform === "win32" ? "prisma.cmd" : "prisma"
 );
 const MIGRATION_LOCK_FILE_NAME = "migration_lock.toml";
+const POSTGRESQL_PROTOCOLS = new Set(["postgres:", "postgresql:"]);
+const SHADOW_DATABASE_MARKER = "shadow";
 
 export interface CommandInput {
   args: string[];
@@ -51,6 +53,65 @@ export interface MigrationDriftCheckOptions {
 
 const isMissingFileError = (error: unknown): boolean =>
   error instanceof Error && "code" in error && error.code === "ENOENT";
+
+interface DatabaseIdentity {
+  databaseName: string;
+  hostname: string;
+  port: string;
+}
+
+const parseDatabaseIdentity = (databaseUrl: string, variableName: string): DatabaseIdentity => {
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(databaseUrl);
+  } catch {
+    throw new Error(`${variableName} must be a valid PostgreSQL URL`);
+  }
+
+  if (!POSTGRESQL_PROTOCOLS.has(parsedUrl.protocol)) {
+    throw new Error(`${variableName} must be a valid PostgreSQL URL`);
+  }
+
+  const databaseName = decodeURIComponent(parsedUrl.pathname.replace(/^\//, ""));
+  if (!parsedUrl.hostname || !databaseName) {
+    throw new Error(`${variableName} must be a valid PostgreSQL URL`);
+  }
+
+  return {
+    databaseName: databaseName.toLowerCase(),
+    hostname: parsedUrl.hostname.toLowerCase(),
+    port: parsedUrl.port || "5432",
+  };
+};
+
+export const validateShadowDatabaseEnvironment = (environment: NodeJS.ProcessEnv): void => {
+  const databaseUrl = environment.DATABASE_URL?.trim();
+  const shadowDatabaseUrl = environment.SHADOW_DATABASE_URL?.trim();
+
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL must be set so shadow database isolation can be verified");
+  }
+
+  if (!shadowDatabaseUrl) {
+    throw new Error("SHADOW_DATABASE_URL must point to a dedicated disposable database");
+  }
+
+  const databaseIdentity = parseDatabaseIdentity(databaseUrl, "DATABASE_URL");
+  const shadowDatabaseIdentity = parseDatabaseIdentity(shadowDatabaseUrl, "SHADOW_DATABASE_URL");
+
+  if (!shadowDatabaseIdentity.databaseName.includes(SHADOW_DATABASE_MARKER)) {
+    throw new Error('SHADOW_DATABASE_URL database name must contain the marker "shadow"');
+  }
+
+  if (
+    databaseIdentity.hostname === shadowDatabaseIdentity.hostname &&
+    databaseIdentity.port === shadowDatabaseIdentity.port &&
+    databaseIdentity.databaseName === shadowDatabaseIdentity.databaseName
+  ) {
+    throw new Error("SHADOW_DATABASE_URL must not target the DATABASE_URL database");
+  }
+};
 
 export const sortMigrationDirectoryNames = (migrationNames: string[]): string[] =>
   [...migrationNames].sort((a, b) => a.localeCompare(b));
@@ -146,9 +207,7 @@ export const checkMigrationDrift = async ({
   runPrismaDiff: executePrismaDiff = runPrismaDiff,
   schemaPath,
 }: MigrationDriftCheckOptions): Promise<number> => {
-  if (!environment.SHADOW_DATABASE_URL?.trim()) {
-    throw new Error("SHADOW_DATABASE_URL must point to a dedicated disposable database");
-  }
+  validateShadowDatabaseEnvironment(environment);
 
   const temporaryMigrationsDir = await fs.mkdtemp(path.join(os.tmpdir(), "formbricks-prisma-migrations-"));
 

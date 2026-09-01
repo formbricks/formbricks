@@ -7,6 +7,7 @@ import {
   runPrismaDiff,
   sortMigrationDirectoryNames,
   stagePrismaMigrationHistory,
+  validateShadowDatabaseEnvironment,
 } from "./check-migration-drift";
 
 const temporaryPaths: string[] = [];
@@ -110,21 +111,61 @@ describe("runPrismaDiff", () => {
 });
 
 describe("checkMigrationDrift", () => {
-  test.each([undefined, "", " "])(
-    "rejects an invalid shadow database URL (%s)",
-    async (shadowDatabaseUrl) => {
-      await expect(
-        checkMigrationDrift({
-          environment: { SHADOW_DATABASE_URL: shadowDatabaseUrl },
-          migrationsDir: "/migrations",
-          prismaBin: "prisma",
-          prismaConfigPath: "prisma.config.ts",
-          repoRoot: "/repo",
-          schemaPath: "schema",
-        })
-      ).rejects.toThrow("SHADOW_DATABASE_URL must point to a dedicated disposable database");
-    }
-  );
+  const databaseEnvironment = {
+    DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks",
+    SHADOW_DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks_shadow",
+  };
+
+  test("accepts distinct primary and explicitly marked shadow databases", () => {
+    expect(() => validateShadowDatabaseEnvironment(databaseEnvironment)).not.toThrow();
+  });
+
+  test.each([
+    {
+      environment: { SHADOW_DATABASE_URL: databaseEnvironment.SHADOW_DATABASE_URL },
+      expectedError: "DATABASE_URL must be set so shadow database isolation can be verified",
+      name: "a missing primary URL",
+    },
+    {
+      environment: { DATABASE_URL: databaseEnvironment.DATABASE_URL },
+      expectedError: "SHADOW_DATABASE_URL must point to a dedicated disposable database",
+      name: "a missing shadow URL",
+    },
+    {
+      environment: {
+        DATABASE_URL: databaseEnvironment.DATABASE_URL,
+        SHADOW_DATABASE_URL: " ",
+      },
+      expectedError: "SHADOW_DATABASE_URL must point to a dedicated disposable database",
+      name: "a blank shadow URL",
+    },
+    {
+      environment: {
+        DATABASE_URL: databaseEnvironment.DATABASE_URL,
+        SHADOW_DATABASE_URL: "not-a-url",
+      },
+      expectedError: "SHADOW_DATABASE_URL must be a valid PostgreSQL URL",
+      name: "an invalid shadow URL",
+    },
+    {
+      environment: {
+        DATABASE_URL: databaseEnvironment.DATABASE_URL,
+        SHADOW_DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks_scratch",
+      },
+      expectedError: 'SHADOW_DATABASE_URL database name must contain the marker "shadow"',
+      name: "an unmarked shadow database",
+    },
+    {
+      environment: {
+        DATABASE_URL: "postgresql://postgres:postgres@localhost/formbricks_shadow?schema=main",
+        SHADOW_DATABASE_URL: "postgres://postgres:postgres@localhost:5432/formbricks_shadow?schema=public",
+      },
+      expectedError: "SHADOW_DATABASE_URL must not target the DATABASE_URL database",
+      name: "the primary database through an equivalent URL",
+    },
+  ])("rejects $name", ({ environment, expectedError }) => {
+    expect(() => validateShadowDatabaseEnvironment(environment)).toThrow(expectedError);
+  });
 
   test.each([1, 2])("propagates Prisma exit code %i and removes the staged history", async (exitCode) => {
     const migrationsDir = await createMigrationHistory();
@@ -140,7 +181,7 @@ describe("checkMigrationDrift", () => {
 
     await expect(
       checkMigrationDrift({
-        environment: { SHADOW_DATABASE_URL: "postgresql://postgres:postgres@localhost/shadow" },
+        environment: databaseEnvironment,
         migrationsDir,
         prismaBin: "prisma",
         prismaConfigPath: "prisma.config.ts",
@@ -164,7 +205,7 @@ describe("checkMigrationDrift", () => {
 
     await expect(
       checkMigrationDrift({
-        environment: { SHADOW_DATABASE_URL: "postgresql://postgres:postgres@localhost/shadow" },
+        environment: databaseEnvironment,
         migrationsDir,
         prismaBin: "prisma",
         prismaConfigPath: "prisma.config.ts",
