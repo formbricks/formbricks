@@ -140,8 +140,9 @@ const deriveNameFromEmail = (email: string): string =>
 /**
  * Better Auth `databaseHooks` re-expressing Formbricks' SSO sign-up flow (design doc §13), reusing
  * the existing logic via `./sso-provisioning`:
- *  - `user.create.before` — gate the SSO sign-up (`gateSsoProvisioning`; a reject returns `false`,
- *    which rolls back inside Better Auth's user+account transaction, so no orphan user is created);
+ *  - `user.create.before` — gate the SSO sign-up (`gateSsoProvisioning`; a reject THROWS an APIError
+ *    carrying the reason code, which aborts Better Auth's user+account transaction, so no orphan user
+ *    is created — see the reject below for why `return false` is wrong here);
  *    stash the resolved decision for the after-hook; and enrich the insert (email-verified — the IdP's
  *    own claim, trusted per `./email-verification-policy`; `identityProvider`; request-matched
  *    `locale`; email-localpart name fallback).
@@ -176,17 +177,21 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           // create-failure redirect into a tailored one — e.g. the personal-email block redirects to
           // /auth/signup with a toast.
           setSsoSignupRejectReason(decision.reason);
-          // THROW, do not `return false` (ENG-2537). Returning false is the documented way to reject
-          // here, but Better Auth then has `createUser` resolve to `null` (`db/with-hooks.mjs`) and
-          // immediately reads `createdUser.id` on the next line of `oauth2/link-account.mjs` — an
-          // unguarded dereference that surfaced as a TypeError and a 500 on every rejected SSO sign-up.
-          // That crash is also what happened to roll the transaction back, so the orphan-safety this
-          // gate advertised was a side effect of the bug rather than a property of the design.
+          // THROW, do not `return false` (ENG-2537). Returning false is the documented way to reject,
+          // but Better Auth then has `createUser` resolve to `null` (`db/with-hooks.mjs`) and reads
+          // `createdUser.id` off it on the next line of `oauth2/link-account.mjs`. That TypeError is
+          // caught there and turned into a generic `unable_to_create_user` redirect — so not a 500 —
+          // but the catch logs it, and `betterAuthLogger` forwards a caught non-APIError to Sentry.
+          // Every rejected SSO sign-up therefore reported an internal fault for what is an ordinary
+          // policy decision (FORMBRICKS-19M).
           //
           // An APIError carrying a `code` is the shape the OAuth callback handles deliberately: it
-          // catches one and turns it into a redirect (`api/routes/callback.mjs`), which is what lets the
-          // after-hook below rewrite the destination. Throwing still aborts the transaction, so nothing
-          // is created — now on purpose.
+          // catches one and turns it into a redirect naming that code (`api/routes/callback.mjs`),
+          // which is what lets the after-hook below rewrite the destination.
+          //
+          // Nothing is orphaned either way — `with-hooks.mjs` returns null BEFORE the insert, so the
+          // rolled-back transaction was always empty — but the throw makes that explicit rather than
+          // incidental.
           throw new APIError("FORBIDDEN", {
             message: "SSO sign-up was rejected by the instance's provisioning policy.",
             code: decision.reason,
@@ -366,8 +371,8 @@ export const ssoRecoveryAfter = createAuthMiddleware(ssoRecoveryAfterHandler);
 
 /**
  * Request hook (`hooks.after`) that redirects a personal-email SSO sign-up rejection back to the
- * sign-up page. When `user.create.before` rejects the domain (returns `false`, rolling back the
- * insert), Better Auth finishes the OAuth callback with a generic error redirect (to /auth/login).
+ * sign-up page. When `user.create.before` rejects the domain (throws, aborting the insert), Better
+ * Auth finishes the OAuth callback with an error redirect carrying that reason code.
  * We detect our own reject reason — stashed in the same request scope — and rewrite that redirect to
  * `/auth/signup?error=<code>`; the sign-up form reads the param and toasts the localized message.
  *

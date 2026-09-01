@@ -279,7 +279,8 @@ const isUnactionableStateError = (code: string | undefined): boolean =>
  *   1. OAuth callback rejections logged as a bare string code (`logger.error("account_not_linked")`,
  *      `"unable_to_create_user"`, `"unable_to_get_user_info"`, … via `redirectOnError`) — no Error
  *      object; these are client-facing redirects, e.g. our blocked-domain / SSO provisioning gate
- *      returning `false`. These were the top volume in Sentry (FORMBRICKS-16Q).
+ *      rejecting a sign-up. These were the top volume in Sentry (FORMBRICKS-16Q); the SSO gate now
+ *      rejects by throwing an APIError, which this branch skips by design (ENG-2537).
  *   2. Credential-path rejections thrown as a Better Auth `APIError` (`FAILED_TO_CREATE_USER`,
  *      `USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`, invalid-input codes) — a 4xx-equivalent response, not a
  *      server fault.

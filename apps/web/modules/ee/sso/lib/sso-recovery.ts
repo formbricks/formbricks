@@ -156,7 +156,7 @@ type TReclaimOutcome = {
  * AsyncLocalStorage, so a revocation issued in here would execute outside `tx` and survive a rollback.
  *
  * Not locked against concurrent recoveries (upstream takes a DB advisory lock for its equivalent). Every
- * write here is idempotent — two `deleteMany`/`updateMany` calls and an update to fixed values — so a race
+ * write here is idempotent — the `deleteMany`/`updateMany` calls and an update to fixed values — so a race
  * converges on the same state rather than corrupting it.
  */
 const reclaimUnverifiedLocalAuthIfNeeded = async ({

@@ -262,6 +262,18 @@ describe("sso-recovery", () => {
         twoFactorSecret: null,
       },
     });
+    // The two legacy writes, asserted on the CALL and not only on the counts they feed. Their payloads
+    // are load-bearing for the same reason the exact-match above is: a hash or a latch left behind is a
+    // factor that survives an account changing hands, and `data: {}` would keep every derived count and
+    // every assertion below green.
+    expect(txUserUpdateMany).toHaveBeenCalledWith({
+      where: { id: "user_1", password: { not: null } },
+      data: { password: null },
+    });
+    expect(txUserUpdateMany).toHaveBeenCalledWith({
+      where: { id: "user_1", twoFactorEnabled: true },
+      data: { twoFactorEnabled: false },
+    });
     // The live stores, which the pre-ENG-2557 implementation never touched.
     expect(txTwoFactorDeleteMany).toHaveBeenCalledWith({ where: { userId: "user_1" } });
     // Scoped by owner, NOT by `providerAccountId`/`issuer`: those are account-key columns and a drifted key
@@ -296,6 +308,7 @@ describe("sso-recovery", () => {
         status: "success",
         newObject: expect.objectContaining({
           credentialPasswordsCleared: 1,
+          legacyPasswordCleared: false,
           twoFactorRowsRemoved: 1,
           // Distinct fields, and the stub returns distinct counts (1 access / 2 refresh) on purpose: a
           // summed field would read 3 either way and could not catch the two being swapped.

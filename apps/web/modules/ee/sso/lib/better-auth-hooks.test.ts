@@ -25,31 +25,24 @@ import {
   setSsoSignupRejectReason,
 } from "./sso-request-context";
 
-vi.mock("better-auth/api", () => ({
+// Spread the REAL module: only `getOAuthState` and the middleware wrapper need stubbing. A hand-rolled
+// `APIError` class cannot stand in here — Better Auth identifies one by `instanceof` or `name ===
+// "APIError"`, and a local subclass of Error reports `name === "Error"`, so every `isAPIError` branch
+// the reject now depends on would take the wrong path while these tests still passed.
+vi.mock("better-auth/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("better-auth/api")>()),
   getOAuthState: vi.fn(),
   // Passthrough so the wrapped hook is testable directly as its inner function.
   createAuthMiddleware: (fn: unknown) => fn,
-  // Keeps `body` like the real APIError does, so a test can assert the stable error CODE rather than
-  // the English message — dropping it would leave the message as the only assertable thing, which is
-  // display copy, not the contract callers depend on.
-  APIError: class APIError extends Error {
-    status: string;
-    body?: { message?: string; code?: string };
-    constructor(status: string, body?: { message?: string; code?: string }) {
-      super(body?.message);
-      this.status = status;
-      this.body = body;
-    }
-  },
 }));
 vi.mock("@formbricks/database", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
 // The unverified-sign-up signal (ENG-2589) is asserted through both of its channels.
-const { loggerWarn, loggerWithContext } = vi.hoisted(() => {
+const { loggerWarn, loggerError, loggerWithContext } = vi.hoisted(() => {
   const warn = vi.fn();
-  return { loggerWarn: warn, loggerWithContext: vi.fn(() => ({ warn })) };
+  return { loggerWarn: warn, loggerError: vi.fn(), loggerWithContext: vi.fn(() => ({ warn })) };
 });
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: loggerWithContext, warn: loggerWarn },
+  logger: { withContext: loggerWithContext, warn: loggerWarn, error: loggerError },
 }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ identifyPostHogPerson: vi.fn() }));
@@ -728,17 +721,50 @@ describe("SSO sign-up persists the IdP's email_verified claim (real Better Auth,
     // Anchor the flow itself: a rejected callback would leave db.user empty and a bare
     // `toMatchObject` on undefined would blame the wrong thing.
     expect(callback.status).toBeGreaterThanOrEqual(300);
+    return { db, callback };
+  };
+
+  /** The sign-up cases expect exactly one row; a reject case asserts on `db` directly. */
+  const signUpUserThroughGithub = async (verifiedAtIdp: boolean) => {
+    const { db } = await signUpThroughGithub(verifiedAtIdp);
     expect(db.user).toHaveLength(1);
     return db.user[0];
   };
 
   test("github reporting the address as unverified must not mint a verified account", async () => {
-    const user = await signUpThroughGithub(false);
+    const user = await signUpUserThroughGithub(false);
     expect(user).toMatchObject({ email: "squatter@corp.test", emailVerified: false });
   });
 
   test("github reporting the address as verified keeps it verified", async () => {
-    const user = await signUpThroughGithub(true);
+    const user = await signUpUserThroughGithub(true);
     expect(user).toMatchObject({ email: "squatter@corp.test", emailVerified: true });
+  });
+
+  /**
+   * ENG-2537, through the real framework rather than against the hook's return value. `return false`
+   * makes Better Auth resolve `createUser` to `null` and dereference it, and the resulting TypeError is
+   * caught and logged — which is what our own logger forwards to Sentry. Only a run against the real
+   * `createWithHooks` and `link-account` can tell that apart from a clean rejection, so this is the case
+   * that actually proves the fix: revert the throw to `return false` and the log assertion goes red.
+   */
+  test("a gated reject redirects cleanly and reports no internal fault", async () => {
+    vi.mocked(gateSsoProvisioning).mockResolvedValue({
+      action: "reject",
+      reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+    });
+
+    const { db, callback } = await signUpThroughGithub(true);
+
+    // Nothing was created: the throw aborts Better Auth's user+account transaction.
+    expect(db.user).toHaveLength(0);
+    expect(db.account).toHaveLength(0);
+    // The discriminating assertion. Returning `false` makes Better Auth fail the creation generically —
+    // it dereferences null, catches its own TypeError, and redirects with `error=unable_to_create_user`,
+    // logging the fault our own logger forwards to Sentry. An APIError carrying a `code` is recognised
+    // instead, so the redirect names OUR reason and nothing is reported as a fault.
+    const location = callback.headers.get("location") ?? "";
+    expect(location).toContain(`error=${SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE}`);
+    expect(location).not.toContain("unable_to_create_user");
   });
 });
