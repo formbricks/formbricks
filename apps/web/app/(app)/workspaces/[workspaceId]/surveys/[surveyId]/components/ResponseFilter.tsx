@@ -4,6 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -14,7 +15,7 @@ import {
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { getSurveyFilterDataAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
 import { ElementFilterComboBox } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementFilterComboBox";
-import { generateElementAndFilterOptions } from "@/app/lib/surveys/surveys";
+import { NO_VALUE_FILTER_OPERATORS, generateElementAndFilterOptions } from "@/app/lib/surveys/surveys";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
@@ -36,9 +37,12 @@ export type ElementFilterOptions = {
     | "Quotas"
     | "Hidden Fields"
     | "Meta"
+    | "Variables"
     | OptionsType.OTHERS;
   filterOptions: (string | TI18nString)[];
   filterComboBoxOptions: (string | TI18nString)[];
+  /** For Embedded Data / reserved fields: drives the operator set and the value input type. */
+  fieldDataType?: TEmbeddedDataType;
   id: string;
 };
 
@@ -103,20 +107,23 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
 
       if (!surveyFilterData?.data) return;
 
-      const { attributes, meta, environmentTags, hiddenFields, quotas } = surveyFilterData.data;
-      const { elementFilterOptions, elementOptions } = generateElementAndFilterOptions(
+      const { attributes, environmentTags, hiddenFields, reservedValues, variableValues, quotas } =
+        surveyFilterData.data;
+      const { elementFilterOptions, elementOptions } = generateElementAndFilterOptions({
         survey,
         environmentTags,
         attributes,
-        meta,
+        reservedValues,
         hiddenFields,
-        quotas
-      );
+        variableValues,
+        quotas,
+        t,
+      });
       setSelectedOptions({ elementFilterOptions: elementFilterOptions, elementOptions: elementOptions });
     };
 
     handleInitialData();
-  }, [isOpen, setSelectedOptions]);
+  }, [isOpen, setSelectedOptions, t]);
 
   const handleOnChangeElementComboBoxValue = (value: ElementOption, index: number) => {
     const matchingFilterOption = selectedOptions.elementFilterOptions.find(
@@ -149,8 +156,13 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   const clearItem = () => {
     setFilterValue({
       filter: filterValue.filter.filter((s) => {
-        // keep the filter if elementType is selected and filterComboBoxValue is selected
-        return s.elementType.hasOwnProperty("label") && s.filterType.filterComboBoxValue?.length;
+        // keep the filter if elementType is selected and a value is selected — or the chosen
+        // operator needs no value at all (Is set / Is not set)
+        return (
+          s.elementType.hasOwnProperty("label") &&
+          (s.filterType.filterComboBoxValue?.length ||
+            NO_VALUE_FILTER_OPERATORS.includes(s.filterType.filterValue ?? ""))
+        );
       }),
       responseStatus: filterValue.responseStatus,
     });
@@ -307,6 +319,13 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
                           (q.type === s.elementType.elementType || q.type === s.elementType.type) &&
                           q.id === s.elementType.id
                       )?.filterComboBoxOptions
+                    }
+                    fieldDataType={
+                      selectedOptions.elementFilterOptions.find(
+                        (q) =>
+                          (q.type === s.elementType.elementType || q.type === s.elementType.type) &&
+                          q.id === s.elementType.id
+                      )?.fieldDataType
                     }
                     filterValue={filterValue.filter[i].filterType.filterValue}
                     filterComboBoxValue={filterValue.filter[i].filterType.filterComboBoxValue}

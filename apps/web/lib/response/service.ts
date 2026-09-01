@@ -7,6 +7,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { type TIngestFlag, mergeIngestFlags } from "@formbricks/types/embedded-data-ingest";
+import { type TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TResponse,
@@ -38,6 +39,8 @@ import {
   getResponseContactAttributes,
   getResponseHiddenFields,
   getResponseMeta,
+  getResponseReservedFilterValues,
+  getResponseVariableFilterValues,
   getResponsesFileName,
   getResponsesJson,
   normalizeResponseLanguage,
@@ -295,17 +298,30 @@ export const getResponseFilteringValues = reactCache(async (surveyId: string) =>
         surveyId,
       },
       select: {
+        // The full TEmbeddedValueResponse shape, so reserved values run through the shared
+        // projection (redactQuery, type coercion) instead of raw meta reads (ENG-1848).
+        id: true,
+        surveyId: true,
+        createdAt: true,
+        updatedAt: true,
+        finished: true,
+        language: true,
         data: true,
+        variables: true,
+        ttc: true,
         meta: true,
         contactAttributes: true,
       },
     });
 
+    const embeddedValueResponses = responses as unknown as TEmbeddedValueResponse[];
     const contactAttributes = getResponseContactAttributes(responses);
     const meta = getResponseMeta(responses);
     const hiddenFields = getResponseHiddenFields(survey, responses);
+    const reservedValues = getResponseReservedFilterValues(survey, embeddedValueResponses);
+    const variableValues = getResponseVariableFilterValues(survey, embeddedValueResponses);
 
-    return { contactAttributes, meta, hiddenFields };
+    return { contactAttributes, meta, hiddenFields, reservedValues, variableValues };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

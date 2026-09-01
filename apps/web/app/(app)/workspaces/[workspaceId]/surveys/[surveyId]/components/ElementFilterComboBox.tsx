@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
@@ -46,7 +47,22 @@ type ElementFilterComboBoxProps = {
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
   fieldId?: string;
+  /** Embedded Data / reserved fields: picks the value input (number/date/free text) per dataType. */
+  fieldDataType?: TEmbeddedDataType;
 };
+
+// Operators whose value is free text rather than a pick from observed values.
+const TEXT_FAMILY_OPERATORS = [
+  "Contains",
+  "Does not contain",
+  "Starts with",
+  "Does not start with",
+  "Ends with",
+  "Does not end with",
+];
+
+// Operators that take no value at all; the value box is disabled while one is selected.
+const NO_VALUE_OPERATORS = ["Is set", "Is not set"];
 
 // Helper function to check if multiple selection is allowed
 const checkIsMultiple = (
@@ -82,6 +98,7 @@ export const ElementFilterComboBox = ({
   handleRemoveMultiSelect,
   disabled = false,
   fieldId,
+  fieldDataType,
 }: ElementFilterComboBoxProps) => {
   const [open, setOpen] = useState(false);
   const commandRef = useRef(null);
@@ -102,10 +119,20 @@ export const ElementFilterComboBox = ({
     });
   }, [isMultiple, filterComboBoxOptions, filterComboBoxValue]);
 
-  const isDisabledComboBox = checkIsDisabledComboBox(type, filterValue);
+  const isNoValueOperator = NO_VALUE_OPERATORS.includes(filterValue ?? "");
+  const isDisabledComboBox = checkIsDisabledComboBox(type, filterValue) || isNoValueOperator;
 
-  // Check if this is a text input field (URL meta field)
-  const isTextInputField = type === OptionsType.META && fieldId === "url";
+  // Free-form value input instead of the observed-values combobox: the URL meta field (its value
+  // set is deliberately not enumerated), any text-family operator, number/date typed fields, and a
+  // typed field with no observed values to offer.
+  const isTextInputField =
+    !isNoValueOperator &&
+    ((type === OptionsType.META && fieldId === "url") ||
+      TEXT_FAMILY_OPERATORS.includes(filterValue ?? "") ||
+      (fieldDataType !== undefined && fieldDataType !== "boolean" && fieldDataType !== "string") ||
+      (fieldDataType !== undefined && (!filterComboBoxOptions || filterComboBoxOptions.length === 0)));
+
+  const textInputType = fieldDataType === "number" ? "number" : fieldDataType === "date" ? "date" : "text";
 
   // Filter options based on search query
   const filteredOptions = useMemo(
@@ -243,11 +270,11 @@ export const ElementFilterComboBox = ({
 
       {isTextInputField ? (
         <Input
-          type="text"
+          type={textInputType}
           value={typeof filterComboBoxValue === "string" ? filterComboBoxValue : ""}
           onChange={(e) => onChangeFilterComboBoxValue(e.target.value)}
           disabled={isComboBoxDisabled}
-          placeholder={t("common.enter_url")}
+          placeholder={type === OptionsType.META && fieldId === "url" ? t("common.enter_url") : undefined}
           className="h-9 rounded-l-none border-none bg-white text-sm focus:ring-offset-0"
         />
       ) : (

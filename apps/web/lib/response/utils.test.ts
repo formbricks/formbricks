@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
-import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import { RESERVED_FIELD_CATALOG, deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -9,13 +9,14 @@ import {
   extractChoiceIdsFromResponse,
   extractSurveyDetails,
   generateAllPermutationsOfSubsets,
+  getReservedFilterEntries,
   getResponseContactAttributes,
   getResponseHiddenFields,
   getResponseMeta,
   getResponsesFileName,
   getResponsesJson,
 } from "./utils";
-import { buildWhereClause } from "./where-clause";
+import { RESERVED_FILTER_LOCATORS, buildWhereClause } from "./where-clause";
 
 /**
  * A survey as a reader actually receives it: `transformPrismaSurvey` inlines the EmbeddedData rows
@@ -526,6 +527,218 @@ describe("Response Utils", () => {
           ],
         },
       ]);
+    });
+  });
+
+  describe("buildWhereClause – reserved + variables filters (ENG-1848)", () => {
+    const reservedSurvey = asRead({
+      id: "s3",
+      name: "ReservedSurvey",
+      blocks: [],
+      questions: [],
+      type: "link",
+      hiddenFields: { enabled: true, fieldIds: [] },
+      variables: [{ id: "var_score", name: "score", type: "number" as const, value: 0 }],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "e3",
+      createdBy: "u3",
+      status: "inProgress",
+    }) as TSurvey;
+
+    test("reserved string field filters its meta path with the catalog name", () => {
+      const result = buildWhereClause(reservedSurvey, {
+        reserved: { utmSource: { op: "equals", value: "newsletter" } },
+      });
+      expect(result.AND).toContainEqual({
+        AND: [{ meta: { path: ["utmSource"], equals: "newsletter" } }],
+      });
+    });
+
+    test("deviceType remaps to the stored userAgent.device path", () => {
+      const result = buildWhereClause(reservedSurvey, {
+        reserved: { deviceType: { op: "equals", value: "desktop" } },
+      });
+      expect(result.AND).toContainEqual({
+        AND: [{ meta: { path: ["userAgent", "device"], equals: "desktop" } }],
+      });
+    });
+
+    test("number-typed reserved field compares numerically", () => {
+      const result = buildWhereClause(reservedSurvey, {
+        reserved: { screenWidth: { op: "greaterThan", value: 1000 } },
+      });
+      expect(result.AND).toContainEqual({
+        AND: [{ meta: { path: ["screenWidth"], gt: 1000 } }],
+      });
+    });
+
+    test("negated text ops wrap in NOT, and notEquals also matches absent values", () => {
+      const contains = buildWhereClause(reservedSurvey, {
+        reserved: { pagePath: { op: "doesNotContain", value: "/checkout" } },
+      });
+      expect(contains.AND).toContainEqual({
+        AND: [{ NOT: { meta: { path: ["pagePath"], string_contains: "/checkout" } } }],
+      });
+
+      const notEquals = buildWhereClause(reservedSurvey, {
+        reserved: { country: { op: "notEquals", value: "DE" } },
+      });
+      // Prisma.DbNull stringifies to {}, hence the regex assertion (same trick as notUploaded above).
+      expect(JSON.stringify(notEquals.AND)).toMatch(
+        /"OR":\[\{"meta":\{"path":\["country"\],"not":"DE"\}\},\{"meta":\{"path":\["country"\],"equals":\{\}\}\}\]/
+      );
+    });
+
+    test("isSet / isNotSet match presence via DbNull", () => {
+      const isSet = buildWhereClause(reservedSurvey, { reserved: { utmSource: { op: "isSet" } } });
+      expect(JSON.stringify(isSet.AND)).toMatch(/"meta":\{"path":\["utmSource"\],"not":\{\}\}/);
+
+      const isNotSet = buildWhereClause(reservedSurvey, { reserved: { utmSource: { op: "isNotSet" } } });
+      expect(JSON.stringify(isNotSet.AND)).toMatch(/"meta":\{"path":\["utmSource"\],"equals":\{\}\}/);
+    });
+
+    test("durationSeconds filters ttc._total milliseconds through Math.round windows", () => {
+      const equals = buildWhereClause(reservedSurvey, {
+        reserved: { durationSeconds: { op: "equals", value: 13 } },
+      });
+      expect(equals.AND).toContainEqual({
+        AND: [
+          {
+            AND: [{ ttc: { path: ["_total"], gte: 12500 } }, { ttc: { path: ["_total"], lt: 13500 } }],
+          },
+        ],
+      });
+
+      // rounded > 60 starts at 60500ms (60499 rounds DOWN to 60), rounded < 60 ends below 59500.
+      const greaterThan = buildWhereClause(reservedSurvey, {
+        reserved: { durationSeconds: { op: "greaterThan", value: 60 } },
+      });
+      expect(greaterThan.AND).toContainEqual({ AND: [{ ttc: { path: ["_total"], gte: 60500 } }] });
+
+      const lessThan = buildWhereClause(reservedSurvey, {
+        reserved: { durationSeconds: { op: "lessThan", value: 60 } },
+      });
+      expect(lessThan.AND).toContainEqual({ AND: [{ ttc: { path: ["_total"], lt: 59500 } }] });
+    });
+
+    test("fails closed: shadowed, unknown, and type-mismatched conditions emit nothing", () => {
+      // `url` is declared as an ingested field here, so the reserved read must never be queried.
+      const shadowingSurvey = asRead({
+        ...reservedSurvey,
+        hiddenFields: { enabled: true, fieldIds: ["url"] },
+      }) as TSurvey;
+      const shadowed = buildWhereClause(shadowingSurvey, {
+        reserved: { url: { op: "equals", value: "https://x.test" } },
+      });
+      expect(shadowed.AND).toContainEqual({ AND: [] });
+
+      const unknown = buildWhereClause(reservedSurvey, {
+        reserved: { notInCatalog: { op: "equals", value: "x" } },
+      });
+      expect(unknown.AND).toContainEqual({ AND: [] });
+
+      // A text op on the number-typed duration entry has no meaningful translation.
+      const mismatched = buildWhereClause(reservedSurvey, {
+        reserved: { durationSeconds: { op: "contains", value: "6" } },
+      });
+      expect(mismatched.AND).toContainEqual({ AND: [] });
+    });
+
+    test("variables filter by computed storageKey, unknown keys emit nothing", () => {
+      const known = buildWhereClause(reservedSurvey, {
+        variables: { var_score: { op: "greaterEqual", value: 5 } },
+      });
+      expect(known.AND).toContainEqual({
+        AND: [{ variables: { path: ["var_score"], gte: 5 } }],
+      });
+
+      const unknown = buildWhereClause(reservedSurvey, {
+        variables: { not_a_variable: { op: "equals", value: 5 } },
+      });
+      expect(unknown.AND).toContainEqual({ AND: [] });
+    });
+
+    test("ingested string fields get text ops through the data group", () => {
+      const result = buildWhereClause(reservedSurvey, {
+        data: { plan: { op: "contains", value: "gold" } },
+      });
+      expect(result.AND).toContainEqual({
+        AND: [{ data: { path: ["plan"], string_contains: "gold" } }],
+      });
+
+      const negated = buildWhereClause(reservedSurvey, {
+        data: { plan: { op: "doesNotEndWith", value: "-trial" } },
+      });
+      expect(negated.AND).toContainEqual({
+        AND: [{ NOT: { data: { path: ["plan"], string_ends_with: "-trial" } } }],
+      });
+    });
+
+    test("anti-drift: every filterable catalog entry has a storage locator", () => {
+      const filterableNames = RESERVED_FIELD_CATALOG.filter(
+        (entry) => entry.display !== "none" || entry.name === "durationSeconds"
+      ).map((entry) => entry.name);
+      expect(filterableNames.length).toBeGreaterThan(0);
+      for (const name of filterableNames) {
+        expect(RESERVED_FILTER_LOCATORS[name], `catalog entry "${name}" has no filter locator`).toBeDefined();
+      }
+    });
+  });
+
+  describe("getReservedFilterEntries (ENG-1848)", () => {
+    const baseSurvey = asRead({
+      id: "s4",
+      name: "FilterEntriesSurvey",
+      blocks: [],
+      questions: [],
+      type: "link",
+      hiddenFields: { enabled: true, fieldIds: [] },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "e4",
+      createdBy: "u4",
+      status: "inProgress",
+      isAnonymizeResponsesEnabled: false,
+      isCaptureIpEnabled: true,
+    }) as TSurvey;
+
+    test("offers the table's display entries plus durationSeconds, never ids or startedAt", () => {
+      const names = getReservedFilterEntries(baseSurvey).map((entry) => entry.name);
+      expect(names).toContain("utmSource");
+      expect(names).toContain("browser");
+      expect(names).toContain("durationSeconds");
+      for (const excluded of ["responseId", "surveyId", "finished", "startedAt", "finishedAt", "language"]) {
+        expect(names).not.toContain(excluded);
+      }
+    });
+
+    test("a declared field owns its name — the reserved entry is dropped", () => {
+      const shadowingSurvey = asRead({
+        ...baseSurvey,
+        hiddenFields: { enabled: true, fieldIds: ["url"] },
+      }) as TSurvey;
+      const names = getReservedFilterEntries(shadowingSurvey).map((entry) => entry.name);
+      expect(names).not.toContain("url");
+      expect(names).toContain("pagePath");
+    });
+
+    test("anonymized surveys drop never-captured fields; ipAddress follows its capture toggle", () => {
+      const anonymized = getReservedFilterEntries({
+        ...baseSurvey,
+        isAnonymizeResponsesEnabled: true,
+      } as TSurvey).map((entry) => entry.name);
+      for (const dropped of ["country", "browser", "os", "deviceType", "ipAddress"]) {
+        expect(anonymized).not.toContain(dropped);
+      }
+      expect(anonymized).toContain("utmSource");
+
+      const ipOff = getReservedFilterEntries({
+        ...baseSurvey,
+        isCaptureIpEnabled: false,
+      } as TSurvey).map((entry) => entry.name);
+      expect(ipOff).not.toContain("ipAddress");
+      expect(ipOff).toContain("country");
     });
   });
 

@@ -1,6 +1,7 @@
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import {
   RESERVED_FIELD_CATALOG,
+  type TEmbeddedValueResponse,
   type TReservedFieldCatalogEntry,
   dropShadowedReservedEntries,
   getComputedEmbeddedFields,
@@ -173,6 +174,72 @@ export const getReservedExportEntries = (survey: TSurvey): TReservedFieldCatalog
  */
 export const getReservedExportHeader = (entry: TReservedFieldCatalogEntry): string =>
   formatFieldNameToTitleCase(entry.name);
+
+/**
+ * The reserved fields one survey's response filter may offer (ENG-1848) — the same list the
+ * response table shows (`display !== "none"`), plus `durationSeconds`, whose `ttc._total` path the
+ * ticket names explicitly even though the table hides it. The gates:
+ * - shadowed entries drop — filters fail closed on a name the survey's declared fields own
+ *   (`buildWhereClause` enforces the same rule server-side against crafted criteria);
+ * - on an anonymized survey, `privacy: "drop"` entries are never captured, and `ipAddress` is only
+ *   captured when `isCaptureIpEnabled` — offering either would let users build always-empty filters.
+ */
+export const getReservedFilterEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] => {
+  const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
+  const shadowingNames = listShadowingNames(getSurveyEmbeddedFields(survey), elementIds);
+
+  return dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, shadowingNames).filter((entry) => {
+    if (entry.display === "none" && entry.name !== "durationSeconds") return false;
+    if (survey.isAnonymizeResponsesEnabled && entry.privacy === "drop") return false;
+    if (entry.name === "ipAddress" && !survey.isCaptureIpEnabled) return false;
+    return true;
+  });
+};
+
+/**
+ * Observed values for the string-typed reserved filter fields, through the shared projection — so
+ * `redactQuery` entries (url, pageReferrer) never leak query strings into the filter dropdown.
+ * Number-typed entries are skipped: they get a numeric input, not an options list.
+ */
+export const getResponseReservedFilterValues = (
+  survey: TSurvey,
+  responses: TEmbeddedValueResponse[]
+): TSurveyMetaFieldFilter => {
+  const entries = getReservedFilterEntries(survey).filter((entry) => entry.dataType === "string");
+  const values: Record<string, Set<string>> = {};
+
+  responses.forEach((response) => {
+    const projected = projectReservedValues(entries, response);
+    entries.forEach((entry) => {
+      const value = projected[entry.name];
+      if (typeof value !== "string" || value.length === 0) return;
+      values[entry.name] ??= new Set();
+      values[entry.name].add(value);
+    });
+  });
+
+  return Object.fromEntries(Object.entries(values).map(([name, set]) => [name, Array.from(set)]));
+};
+
+/** Observed values for string-typed computed embedded fields, keyed by storageKey (ENG-1848). */
+export const getResponseVariableFilterValues = (
+  survey: TSurvey,
+  responses: Pick<TResponse, "variables">[]
+): TSurveyMetaFieldFilter => {
+  const stringFields = getComputedEmbeddedFields(survey).filter(({ field }) => field.dataType === "string");
+  const values: Record<string, Set<string>> = {};
+
+  responses.forEach((response) => {
+    stringFields.forEach(({ link }) => {
+      const value = response.variables?.[link.storageKey];
+      if (typeof value !== "string" || value.length === 0) return;
+      values[link.storageKey] ??= new Set();
+      values[link.storageKey].add(value);
+    });
+  });
+
+  return Object.fromEntries(Object.entries(values).map(([key, set]) => [key, Array.from(set)]));
+};
 
 export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
   const metaDataFields = getReservedExportEntries(survey).map(getReservedExportHeader);

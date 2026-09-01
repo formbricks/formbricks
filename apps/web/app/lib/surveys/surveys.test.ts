@@ -1,6 +1,8 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
+import { TFunction } from "i18next";
 import { afterEach, describe, expect, test } from "vitest";
+import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -11,6 +13,28 @@ import {
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
 import { generateElementAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
+
+const t = ((key: string) => key) as TFunction;
+
+/** A survey as readers receive it: EmbeddedData rows inlined from the legacy columns (ENG-2412). */
+const asRead = (survey: TSurvey): TSurvey =>
+  ({ ...survey, embeddedFields: deriveLegacyEmbeddedData(survey) }) as TSurvey;
+
+const genOptions = (
+  survey: TSurvey,
+  extra: Partial<Parameters<typeof generateElementAndFilterOptions>[0]> = {}
+) =>
+  generateElementAndFilterOptions({
+    survey: asRead(survey),
+    environmentTags: undefined,
+    attributes: {},
+    reservedValues: {},
+    hiddenFields: {},
+    variableValues: {},
+    quotas: [],
+    t,
+    ...extra,
+  });
 
 describe("surveys", () => {
   afterEach(() => {
@@ -44,12 +68,13 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = genOptions(survey);
 
       expect(result.elementOptions.length).toBeGreaterThan(0);
       expect(result.elementOptions[0].header).toBe(OptionsType.ELEMENTS);
-      expect(result.elementFilterOptions.length).toBe(1);
-      expect(result.elementFilterOptions[0].id).toBe("q1");
+      const elementRows = result.elementFilterOptions.filter((o) => o.type !== "Meta");
+      expect(elementRows.length).toBe(1);
+      expect(elementRows[0].id).toBe("q1");
     });
 
     test("should include tags in options when provided", () => {
@@ -67,7 +92,7 @@ describe("surveys", () => {
         { id: "tag1", name: "Tag 1", workspaceId: "env1", createdAt: new Date(), updatedAt: new Date() },
       ];
 
-      const result = generateElementAndFilterOptions(survey, tags, {}, {}, {}, []);
+      const result = genOptions(survey, { environmentTags: tags });
 
       const tagsHeader = result.elementOptions.find((opt) => opt.header === OptionsType.TAGS);
       expect(tagsHeader).toBeDefined();
@@ -90,7 +115,7 @@ describe("surveys", () => {
         role: ["admin", "user"],
       };
 
-      const result = generateElementAndFilterOptions(survey, undefined, attributes, {}, {}, []);
+      const result = genOptions(survey, { attributes });
 
       const attributesHeader = result.elementOptions.find((opt) => opt.header === OptionsType.ATTRIBUTES);
       expect(attributesHeader).toBeDefined();
@@ -98,7 +123,7 @@ describe("surveys", () => {
       expect(attributesHeader?.option[0].label).toBe("role");
     });
 
-    test("should include meta in options when provided", () => {
+    test("meta options are catalog-driven, not derived from observed response values (ENG-1848)", () => {
       const survey = {
         id: "survey1",
         name: "Test Survey",
@@ -107,43 +132,107 @@ describe("surveys", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft",
+        isCaptureIpEnabled: true,
       } as unknown as TSurvey;
 
-      const meta = {
-        source: ["web", "mobile"],
-      };
-
-      const result = generateElementAndFilterOptions(survey, undefined, {}, meta, {}, []);
+      // No observed values passed at all — the fields must still be offered.
+      const result = genOptions(survey);
 
       const metaHeader = result.elementOptions.find((opt) => opt.header === OptionsType.META);
       expect(metaHeader).toBeDefined();
-      expect(metaHeader?.option.length).toBe(1);
-      expect(metaHeader?.option[0].label).toBe("source");
+      const ids = metaHeader?.option.map((o) => o.id) ?? [];
+      expect(ids).toContain("utmSource");
+      expect(ids).toContain("browser");
+      expect(ids).toContain("durationSeconds");
+      // Covered elsewhere (response status, date range) or meaningless as user filters.
+      for (const excluded of ["responseId", "surveyId", "finished", "startedAt", "language"]) {
+        expect(ids).not.toContain(excluded);
+      }
+
+      // Observed values feed the combobox when provided.
+      const withValues = genOptions(survey, { reservedValues: { utmSource: ["newsletter", "ads"] } });
+      const utmSource = withValues.elementFilterOptions.find((o) => o.id === "utmSource");
+      expect(utmSource?.filterComboBoxOptions).toEqual(["newsletter", "ads"]);
+      expect(utmSource?.fieldDataType).toBe("string");
     });
 
-    test("should include hidden fields in options when provided", () => {
+    test("reserved options drop shadowed names and respect the IP capture toggle", () => {
       const survey = {
         id: "survey1",
         name: "Test Survey",
         blocks: [],
         questions: [],
+        hiddenFields: { enabled: true, fieldIds: ["url"] },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: "draft",
+        isCaptureIpEnabled: false,
+      } as unknown as TSurvey;
+
+      const result = genOptions(survey);
+
+      const metaIds =
+        result.elementOptions.find((opt) => opt.header === OptionsType.META)?.option.map((o) => o.id) ?? [];
+      expect(metaIds).not.toContain("url"); // the declared field owns the name
+      expect(metaIds).not.toContain("ipAddress");
+      expect(metaIds).toContain("pagePath");
+    });
+
+    test("hidden fields enumerate from the survey's declared ingested fields", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        blocks: [],
+        questions: [],
+        hiddenFields: { enabled: true, fieldIds: ["segment"] },
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft",
       } as unknown as TSurvey;
 
-      const hiddenFields = {
-        segment: ["free", "paid"],
-      };
+      // A declared field is filterable even before observed values exist.
+      const bare = genOptions(survey);
+      const bareHeader = bare.elementOptions.find((opt) => opt.header === OptionsType.HIDDEN_FIELDS);
+      expect(bareHeader?.option.length).toBe(1);
+      expect(bareHeader?.option[0].label).toBe("segment");
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, hiddenFields, []);
-
-      const hiddenFieldsHeader = result.elementOptions.find(
-        (opt) => opt.header === OptionsType.HIDDEN_FIELDS
+      const result = genOptions(survey, { hiddenFields: { segment: ["free", "paid"] } });
+      const segment = result.elementFilterOptions.find(
+        (o) => o.type === "Hidden Fields" && o.id === "segment"
       );
-      expect(hiddenFieldsHeader).toBeDefined();
-      expect(hiddenFieldsHeader?.option.length).toBe(1);
-      expect(hiddenFieldsHeader?.option[0].label).toBe("segment");
+      expect(segment?.filterComboBoxOptions).toEqual(["free", "paid"]);
+      expect(segment?.filterOptions).toContain("Contains");
+      expect(segment?.filterOptions).toContain("Is set");
+    });
+
+    test("variables enumerate from the survey's computed fields, keyed by storageKey", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        blocks: [],
+        questions: [],
+        variables: [{ id: "var_score", name: "score", type: "number", value: 0 }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: "draft",
+      } as unknown as TSurvey;
+
+      const result = genOptions(survey);
+
+      const variablesHeader = result.elementOptions.find((opt) => opt.header === OptionsType.VARIABLES);
+      expect(variablesHeader?.option).toEqual([
+        { label: "score", type: OptionsType.VARIABLES, id: "var_score" },
+      ]);
+      const score = result.elementFilterOptions.find((o) => o.type === "Variables" && o.id === "var_score");
+      expect(score?.fieldDataType).toBe("number");
+      expect(score?.filterOptions).toEqual([
+        "Equals",
+        "Not equals",
+        "Is greater than",
+        "Is less than",
+        "Is set",
+        "Is not set",
+      ]);
     });
 
     test("should include language options when survey has languages", () => {
@@ -158,7 +247,7 @@ describe("surveys", () => {
         languages: [{ language: { code: "en" } as unknown as TLanguage } as unknown as TSurveyLanguage],
       } as unknown as TSurvey;
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = genOptions(survey);
 
       const othersHeader = result.elementOptions.find((opt) => opt.header === OptionsType.OTHERS);
       expect(othersHeader).toBeDefined();
@@ -255,16 +344,16 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = genOptions(survey);
 
-      expect(result.elementFilterOptions.length).toBe(8);
+      expect(result.elementFilterOptions.filter((o) => o.type !== "Meta").length).toBe(8);
       expect(result.elementFilterOptions.some((o) => o.id === "q1")).toBeTruthy();
       expect(result.elementFilterOptions.some((o) => o.id === "q2")).toBeTruthy();
       expect(result.elementFilterOptions.some((o) => o.id === "q7")).toBeTruthy();
       expect(result.elementFilterOptions.some((o) => o.id === "q8")).toBeTruthy();
     });
 
-    test("should provide extended filter options for URL meta field", () => {
+    test("reserved fields get operators per dataType (ENG-1848)", () => {
       const survey = {
         id: "survey1",
         name: "Test Survey",
@@ -275,17 +364,9 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const meta = {
-        url: ["https://example.com", "https://test.com"],
-        source: ["web", "mobile"],
-      };
+      const result = genOptions(survey);
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, meta, {}, []);
-
-      const urlFilterOption = result.elementFilterOptions.find((o) => o.id === "url");
-      const sourceFilterOption = result.elementFilterOptions.find((o) => o.id === "source");
-
-      expect(urlFilterOption).toBeDefined();
+      const urlFilterOption = result.elementFilterOptions.find((o) => o.type === "Meta" && o.id === "url");
       expect(urlFilterOption?.filterOptions).toEqual([
         "Equals",
         "Not equals",
@@ -295,10 +376,22 @@ describe("surveys", () => {
         "Does not start with",
         "Ends with",
         "Does not end with",
+        "Is set",
+        "Is not set",
       ]);
 
-      expect(sourceFilterOption).toBeDefined();
-      expect(sourceFilterOption?.filterOptions).toEqual(["Equals", "Not equals"]);
+      const screenWidthOption = result.elementFilterOptions.find(
+        (o) => o.type === "Meta" && o.id === "screenWidth"
+      );
+      expect(screenWidthOption?.fieldDataType).toBe("number");
+      expect(screenWidthOption?.filterOptions).toEqual([
+        "Equals",
+        "Not equals",
+        "Is greater than",
+        "Is less than",
+        "Is set",
+        "Is not set",
+      ]);
     });
 
     test("should include quota options in filter options when quotas are provided", () => {
@@ -313,7 +406,7 @@ describe("surveys", () => {
 
       const quotas = [{ id: "quota1" }];
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, quotas as any);
+      const result = genOptions(survey, { quotas: quotas as any });
 
       const quotaFilterOption = result.elementFilterOptions.find((o) => o.id === "quota1");
       expect(quotaFilterOption).toBeDefined();
@@ -338,7 +431,7 @@ describe("surveys", () => {
 
       const quotas = [{ id: "quota1" }, { id: "quota2" }];
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, quotas as any);
+      const result = genOptions(survey, { quotas: quotas as any });
 
       const quota1 = result.elementFilterOptions.find((o) => o.id === "quota1");
       const quota2 = result.elementFilterOptions.find((o) => o.id === "quota2");
@@ -359,7 +452,7 @@ describe("surveys", () => {
   });
 
   describe("getFormattedFilters", () => {
-    const survey = {
+    const survey = asRead({
       id: "survey1",
       name: "Test Survey",
       blocks: [
@@ -477,10 +570,12 @@ describe("surveys", () => {
         },
       ],
       questions: [],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+      variables: [{ id: "var_score", name: "score", type: "number", value: 0 }],
       createdAt: new Date(),
       updatedAt: new Date(),
       status: "draft",
-    } as unknown as TSurvey;
+    } as unknown as TSurvey);
 
     const dateRange: DateRange = {
       from: new Date("2023-01-01"),
@@ -843,12 +938,12 @@ describe("surveys", () => {
       expect(result.others?.Language).toEqual({ op: "equals", value: "en" });
     });
 
-    test("should filter by meta fields", () => {
+    test("reserved fields land in the reserved group, keyed by catalog name (ENG-1848)", () => {
       const selectedFilter: SelectedFilterValue = {
         responseStatus: "all",
         filter: [
           {
-            elementType: { type: "Meta", label: "source", id: "source" },
+            elementType: { type: "Meta", label: "Source", id: "source" },
             filterType: { filterValue: "Not equals", filterComboBoxValue: "web" },
           },
         ],
@@ -856,7 +951,77 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, {} as any);
 
-      expect(result.meta?.source).toEqual({ op: "notEquals", value: "web" });
+      expect(result.reserved?.source).toEqual({ op: "notEquals", value: "web" });
+      expect(result.meta).toBeUndefined();
+    });
+
+    test("number-typed reserved values are sent as numbers, presence ops carry no value", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            elementType: { type: "Meta", label: "Screen Width", id: "screenWidth" },
+            filterType: { filterValue: "Is greater than", filterComboBoxValue: "1000" },
+          },
+          {
+            elementType: { type: "Meta", label: "UTM Source", id: "utmSource" },
+            filterType: { filterValue: "Is set", filterComboBoxValue: undefined },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.reserved?.screenWidth).toEqual({ op: "greaterThan", value: 1000 });
+      expect(result.reserved?.utmSource).toEqual({ op: "isSet" });
+    });
+
+    test("fails closed: an unknown or shadowed reserved id emits nothing", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            elementType: { type: "Meta", label: "Nope", id: "notInCatalog" },
+            filterType: { filterValue: "Equals", filterComboBoxValue: "x" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.reserved).toBeUndefined();
+    });
+
+    test("variables land in the variables group keyed by storageKey, coerced to their dataType", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            elementType: { type: "Variables", label: "score", id: "var_score" },
+            filterType: { filterValue: "Is less than", filterComboBoxValue: "5" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.variables?.var_score).toEqual({ op: "lessThan", value: 5 });
+    });
+
+    test("ingested presence maps onto the data group's submitted/skipped vocabulary", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            elementType: { type: "Hidden Fields", label: "plan", id: "plan" },
+            filterType: { filterValue: "Is not set", filterComboBoxValue: undefined },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.data?.plan).toEqual({ op: "skipped" });
     });
 
     test("should handle multiple filters together", () => {
@@ -900,7 +1065,7 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
-      expect(result.meta?.url).toEqual({ op: "contains", value: "example.com" });
+      expect(result.reserved?.url).toEqual({ op: "contains", value: "example.com" });
     });
 
     test("should format URL meta filters with all supported string operations", () => {
@@ -927,7 +1092,7 @@ describe("surveys", () => {
         } as any;
 
         const result = getFormattedFilters(survey, selectedFilter, dateRange);
-        expect(result.meta?.url).toEqual(expected);
+        expect(result.reserved?.url).toEqual(expected);
       });
     });
 
@@ -944,7 +1109,7 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
-      expect(result.meta?.url).toBeUndefined();
+      expect(result.reserved?.url).toBeUndefined();
     });
 
     test("should handle URL meta filters with whitespace-only values", () => {
@@ -960,7 +1125,8 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
-      expect(result.meta?.url).toEqual({ op: "contains", value: "" });
+      // A whitespace-only value cannot form a condition; the row drops instead of matching nothing.
+      expect(result.reserved?.url).toBeUndefined();
     });
 
     test("should still handle existing meta filters with array values", () => {
@@ -976,7 +1142,7 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
-      expect(result.meta?.source).toEqual({ op: "equals", value: "google" });
+      expect(result.reserved?.source).toEqual({ op: "equals", value: "google" });
     });
 
     test("should handle mixed URL and traditional meta filters", () => {
@@ -996,8 +1162,8 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
-      expect(result.meta?.url).toEqual({ op: "contains", value: "formbricks.com" });
-      expect(result.meta?.source).toEqual({ op: "equals", value: "newsletter" });
+      expect(result.reserved?.url).toEqual({ op: "contains", value: "formbricks.com" });
+      expect(result.reserved?.source).toEqual({ op: "equals", value: "newsletter" });
     });
 
     test("should filter by quota with screened in status", () => {
