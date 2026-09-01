@@ -118,23 +118,81 @@ export const ZValidationRuleParamsIsLessThan = z.object({
   max: z.number(),
 });
 
-export const ZValidationRuleParamsIsLaterThan = z.object({
+// Relative date bounds - offsets counted from the date the survey is answered, so a rolling
+// window ("no earlier than 3 days ago") stays correct without anyone editing the survey.
+// Mirrors the {amount, unit} shape already used by segment relative-date filters.
+export const ZRelativeDateUnit = z.enum(["calendarDays", "workingDays"]);
+export type TRelativeDateUnit = z.infer<typeof ZRelativeDateUnit>;
+
+export const ZRelativeDateDirection = z.enum(["before", "after"]);
+export type TRelativeDateDirection = z.infer<typeof ZRelativeDateDirection>;
+
+export const ZRelativeDateBound = z.object({
+  amount: z.number().int().min(0),
+  unit: ZRelativeDateUnit,
+  direction: ZRelativeDateDirection,
+});
+
+export type TRelativeDateBound = z.infer<typeof ZRelativeDateBound>;
+
+// Date rule params come in two shapes: a fixed calendar date (the original shape, unchanged so
+// existing surveys keep parsing) or a bound relative to the response date.
+export const ZValidationRuleParamsIsLaterThanFixed = z.object({
   date: z.string(), // YYYY-MM-DD format
 });
 
-export const ZValidationRuleParamsIsEarlierThan = z.object({
+export const ZValidationRuleParamsIsLaterThanRelative = z.object({
+  relative: ZRelativeDateBound,
+});
+
+export const ZValidationRuleParamsIsLaterThan = z.union([
+  ZValidationRuleParamsIsLaterThanFixed,
+  ZValidationRuleParamsIsLaterThanRelative,
+]);
+
+export const ZValidationRuleParamsIsEarlierThanFixed = z.object({
   date: z.string(), // YYYY-MM-DD format
 });
 
-export const ZValidationRuleParamsIsBetween = z.object({
+export const ZValidationRuleParamsIsEarlierThanRelative = z.object({
+  relative: ZRelativeDateBound,
+});
+
+export const ZValidationRuleParamsIsEarlierThan = z.union([
+  ZValidationRuleParamsIsEarlierThanFixed,
+  ZValidationRuleParamsIsEarlierThanRelative,
+]);
+
+export const ZValidationRuleParamsIsBetweenFixed = z.object({
   startDate: z.string(), // YYYY-MM-DD format
   endDate: z.string(), // YYYY-MM-DD format
 });
 
-export const ZValidationRuleParamsIsNotBetween = z.object({
+// Both bounds are relative or both are fixed - mixing the two in one rule is not supported.
+export const ZValidationRuleParamsIsBetweenRelative = z.object({
+  relativeStart: ZRelativeDateBound,
+  relativeEnd: ZRelativeDateBound,
+});
+
+export const ZValidationRuleParamsIsBetween = z.union([
+  ZValidationRuleParamsIsBetweenFixed,
+  ZValidationRuleParamsIsBetweenRelative,
+]);
+
+export const ZValidationRuleParamsIsNotBetweenFixed = z.object({
   startDate: z.string(), // YYYY-MM-DD format
   endDate: z.string(), // YYYY-MM-DD format
 });
+
+export const ZValidationRuleParamsIsNotBetweenRelative = z.object({
+  relativeStart: ZRelativeDateBound,
+  relativeEnd: ZRelativeDateBound,
+});
+
+export const ZValidationRuleParamsIsNotBetween = z.union([
+  ZValidationRuleParamsIsNotBetweenFixed,
+  ZValidationRuleParamsIsNotBetweenRelative,
+]);
 
 export const ZValidationRuleParamsMinRanked = z.object({
   min: z.number().min(1),
@@ -174,10 +232,14 @@ export const ZValidationRuleParams = z.union([
   ZValidationRuleParamsIsLessThan,
   ZValidationRuleParamsMinSelections,
   ZValidationRuleParamsMaxSelections,
-  ZValidationRuleParamsIsLaterThan,
-  ZValidationRuleParamsIsEarlierThan,
-  ZValidationRuleParamsIsBetween,
-  ZValidationRuleParamsIsNotBetween,
+  ZValidationRuleParamsIsLaterThanFixed,
+  ZValidationRuleParamsIsLaterThanRelative,
+  ZValidationRuleParamsIsEarlierThanFixed,
+  ZValidationRuleParamsIsEarlierThanRelative,
+  ZValidationRuleParamsIsBetweenFixed,
+  ZValidationRuleParamsIsBetweenRelative,
+  ZValidationRuleParamsIsNotBetweenFixed,
+  ZValidationRuleParamsIsNotBetweenRelative,
   ZValidationRuleParamsMinRanked,
   ZValidationRuleParamsRankAll,
   ZValidationRuleParamsMinRowsAnswered,
@@ -205,9 +267,23 @@ export type TValidationRuleParamsContains = z.infer<typeof ZValidationRuleParams
 export type TValidationRuleParamsDoesNotContain = z.infer<typeof ZValidationRuleParamsDoesNotContain>;
 export type TValidationRuleParamsIsGreaterThan = z.infer<typeof ZValidationRuleParamsIsGreaterThan>;
 export type TValidationRuleParamsIsLessThan = z.infer<typeof ZValidationRuleParamsIsLessThan>;
+export type TValidationRuleParamsIsLaterThanFixed = z.infer<typeof ZValidationRuleParamsIsLaterThanFixed>;
+export type TValidationRuleParamsIsLaterThanRelative = z.infer<
+  typeof ZValidationRuleParamsIsLaterThanRelative
+>;
 export type TValidationRuleParamsIsLaterThan = z.infer<typeof ZValidationRuleParamsIsLaterThan>;
+export type TValidationRuleParamsIsEarlierThanFixed = z.infer<typeof ZValidationRuleParamsIsEarlierThanFixed>;
+export type TValidationRuleParamsIsEarlierThanRelative = z.infer<
+  typeof ZValidationRuleParamsIsEarlierThanRelative
+>;
 export type TValidationRuleParamsIsEarlierThan = z.infer<typeof ZValidationRuleParamsIsEarlierThan>;
+export type TValidationRuleParamsIsBetweenFixed = z.infer<typeof ZValidationRuleParamsIsBetweenFixed>;
+export type TValidationRuleParamsIsBetweenRelative = z.infer<typeof ZValidationRuleParamsIsBetweenRelative>;
 export type TValidationRuleParamsIsBetween = z.infer<typeof ZValidationRuleParamsIsBetween>;
+export type TValidationRuleParamsIsNotBetweenFixed = z.infer<typeof ZValidationRuleParamsIsNotBetweenFixed>;
+export type TValidationRuleParamsIsNotBetweenRelative = z.infer<
+  typeof ZValidationRuleParamsIsNotBetweenRelative
+>;
 export type TValidationRuleParamsIsNotBetween = z.infer<typeof ZValidationRuleParamsIsNotBetween>;
 export type TValidationRuleParamsMinRanked = z.infer<typeof ZValidationRuleParamsMinRanked>;
 export type TValidationRuleParamsRankAll = z.infer<typeof ZValidationRuleParamsRankAll>;

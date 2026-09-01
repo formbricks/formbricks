@@ -3,7 +3,11 @@
 import { useTranslation } from "react-i18next";
 import { ALLOWED_FILE_EXTENSIONS, TAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
-import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
+import {
+  TRelativeDateBound,
+  TValidationRule,
+  TValidationRuleType,
+} from "@formbricks/types/surveys/validation-rules";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import {
@@ -14,6 +18,12 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
+import {
+  createRelativeDateParams,
+  createRuleParams,
+  isRelativeDateParams,
+} from "../lib/validation-rules-utils";
+import { ValidationRuleRelativeDateInput } from "./validation-rule-relative-date-input";
 
 interface ValidationRuleValueInputProps {
   rule: TValidationRule;
@@ -22,6 +32,7 @@ interface ValidationRuleValueInputProps {
   currentValue: number | string | undefined;
   onChange: (value: string) => void;
   onFileExtensionChange: (extensions: TAllowedFileExtension[]) => void;
+  onParamsChange: (params: TValidationRule["params"]) => void;
   element?: TSurveyElement;
 }
 
@@ -32,49 +43,114 @@ export const ValidationRuleValueInput = ({
   currentValue,
   onChange,
   onFileExtensionChange,
+  onParamsChange,
   element,
-}: ValidationRuleValueInputProps) => {
+}: Readonly<ValidationRuleValueInputProps>) => {
   const { t } = useTranslation();
+  const isRelative = isRelativeDateParams(rule.params);
 
-  // Determine HTML input type for value inputs
-  let htmlInputType: "number" | "date" | "text" = "text";
-  if (config.valueType === "number") {
-    htmlInputType = "number";
-  } else if (
-    ruleType.startsWith("is") &&
-    (ruleType.includes("Later") || ruleType.includes("Earlier") || ruleType.includes("On"))
-  ) {
-    htmlInputType = "date";
-  }
+  // Date rules bound either a fixed calendar date or an offset from the response date. The mode
+  // select swaps the inputs and resets the params, since the two shapes share no fields.
+  const renderDateModeSelect = () => (
+    <Select
+      value={isRelative ? "relative" : "fixed"}
+      onValueChange={(mode) => {
+        onParamsChange(mode === "relative" ? createRelativeDateParams(ruleType) : createRuleParams(ruleType));
+      }}>
+      <SelectTrigger
+        className="h-9 w-44 shrink-0 bg-white"
+        aria-label={t("workspace.surveys.edit.validation.date_mode")}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="fixed">{t("workspace.surveys.edit.validation.fixed_date")}</SelectItem>
+        <SelectItem value="relative">
+          {t("workspace.surveys.edit.validation.relative_to_response")}
+        </SelectItem>
+      </SelectContent>
+    </Select>
+  );
 
-  // Special handling for date range inputs
-  if (ruleType === "isBetween" || ruleType === "isNotBetween") {
+  if (config.supportsRelative) {
+    const isRange = ruleType === "isBetween" || ruleType === "isNotBetween";
+
+    if (isRelative) {
+      const params = rule.params as {
+        relative?: TRelativeDateBound;
+        relativeStart?: TRelativeDateBound;
+        relativeEnd?: TRelativeDateBound;
+      };
+
+      return (
+        <div className="flex w-full flex-wrap items-center gap-2">
+          {renderDateModeSelect()}
+          {isRange && params.relativeStart && params.relativeEnd ? (
+            <>
+              <ValidationRuleRelativeDateInput
+                bound={params.relativeStart}
+                onChange={(bound) => onParamsChange({ ...params, relativeStart: bound })}
+              />
+              <span className="text-sm text-slate-500">{t("common.and")}</span>
+              <ValidationRuleRelativeDateInput
+                bound={params.relativeEnd}
+                onChange={(bound) => onParamsChange({ ...params, relativeEnd: bound })}
+              />
+            </>
+          ) : null}
+          {!isRange && params.relative ? (
+            <ValidationRuleRelativeDateInput
+              bound={params.relative}
+              onChange={(bound) => onParamsChange({ relative: bound })}
+            />
+          ) : null}
+        </div>
+      );
+    }
+
+    if (isRange) {
+      return (
+        <div className="flex w-full flex-wrap items-center gap-2">
+          {renderDateModeSelect()}
+          <Input
+            type="date"
+            value={(currentValue as string)?.split(",")?.[0] ?? ""}
+            onChange={(e) => {
+              const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
+              onChange(`${e.target.value},${currentEndDate}`);
+            }}
+            placeholder={t("workspace.surveys.edit.validation.start_date")}
+            className="h-9 flex-1 bg-white"
+          />
+          <span className="text-sm text-slate-500">{t("common.and")}</span>
+          <Input
+            type="date"
+            value={(currentValue as string)?.split(",")?.[1] ?? ""}
+            onChange={(e) => {
+              const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
+              onChange(`${currentStartDate},${e.target.value}`);
+            }}
+            placeholder={t("workspace.surveys.edit.validation.end_date")}
+            className="h-9 flex-1 bg-white"
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="flex w-full items-center gap-2">
+        {renderDateModeSelect()}
         <Input
           type="date"
-          value={(currentValue as string)?.split(",")?.[0] ?? ""}
-          onChange={(e) => {
-            const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
-            onChange(`${e.target.value},${currentEndDate}`);
-          }}
-          placeholder={t("workspace.surveys.edit.validation.start_date")}
-          className="h-9 flex-1 bg-white"
-        />
-        <span className="text-sm text-slate-500">{t("common.and")}</span>
-        <Input
-          type="date"
-          value={(currentValue as string)?.split(",")?.[1] ?? ""}
-          onChange={(e) => {
-            const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
-            onChange(`${currentStartDate},${e.target.value}`);
-          }}
-          placeholder={t("workspace.surveys.edit.validation.end_date")}
+          value={(currentValue as string) ?? ""}
+          onChange={(e) => onChange(e.target.value)}
           className="h-9 flex-1 bg-white"
         />
       </div>
     );
   }
+
+  // Date rules return above; everything left is a plain text or number input.
+  const htmlInputType = config.valueType === "number" ? "number" : "text";
 
   // Option selector for single select validation rules
   if (config.valueType === "option") {

@@ -6,6 +6,8 @@ export const RULE_TYPE_CONFIG: Record<
   {
     labelKey: string;
     needsValue: boolean;
+    /** Date rules can bound either a fixed calendar date or an offset from the response date. */
+    supportsRelative?: boolean;
     valueType?: "number" | "text" | "option" | "ranking";
     valuePlaceholder?: string;
     unitOptions?: { value: string; labelKey: string }[];
@@ -104,24 +106,28 @@ export const RULE_TYPE_CONFIG: Record<
   isLaterThan: {
     labelKey: "is_later_than",
     needsValue: true,
+    supportsRelative: true,
     valueType: "text",
     valuePlaceholder: "YYYY-MM-DD",
   },
   isEarlierThan: {
     labelKey: "is_earlier_than",
     needsValue: true,
+    supportsRelative: true,
     valueType: "text",
     valuePlaceholder: "YYYY-MM-DD",
   },
   isBetween: {
     labelKey: "is_between",
     needsValue: true,
+    supportsRelative: true,
     valueType: "text",
     valuePlaceholder: "YYYY-MM-DD,YYYY-MM-DD",
   },
   isNotBetween: {
     labelKey: "is_not_between",
     needsValue: true,
+    supportsRelative: true,
     valueType: "text",
     valuePlaceholder: "YYYY-MM-DD,YYYY-MM-DD",
   },

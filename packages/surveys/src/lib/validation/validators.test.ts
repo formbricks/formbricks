@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { validators } from "./validators";
@@ -889,6 +889,202 @@ describe("validators", () => {
         mockT
       );
       expect(message).toBe("errors.file_extension_must_not_be");
+    });
+  });
+  // Relative date bounds resolve against the day the answer is given, and unlike the fixed bounds
+  // above they are inclusive - "3 days before" still allows that day itself.
+  describe("relative date bounds", () => {
+    // 2026-03-09 is a Monday; the preceding Saturday and Sunday are 03-07 and 03-08.
+    const referenceMonday = new Date(2026, 2, 9, 12, 0, 0);
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(referenceMonday);
+      // These suites run in the node project, where there is no window and the validators would
+      // apply their server-side timezone grace. Stub one in so the strict client behaviour is
+      // what gets asserted; the grace itself has its own suite below.
+      vi.stubGlobal("window", {});
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    });
+
+    const relative = (
+      amount: number,
+      direction: "before" | "after",
+      unit: "calendarDays" | "workingDays" = "calendarDays"
+    ) => ({ amount, unit, direction });
+
+    describe("isLaterThan", () => {
+      test("accepts the boundary day itself", () => {
+        const result = validators.isLaterThan.check(
+          "2026-03-06",
+          { relative: relative(3, "before") },
+          {} as TSurveyElement
+        );
+        expect(result.valid).toBe(true);
+      });
+
+      test("rejects a day before the boundary", () => {
+        const result = validators.isLaterThan.check(
+          "2026-03-05",
+          { relative: relative(3, "before") },
+          {} as TSurveyElement
+        );
+        expect(result.valid).toBe(false);
+      });
+
+      test("counts working days over the weekend", () => {
+        // 3 working days before Monday is the previous Wednesday, so Thursday passes and
+        // Tuesday does not.
+        const element = {} as TSurveyElement;
+        const params = { relative: relative(3, "before", "workingDays") };
+        expect(validators.isLaterThan.check("2026-03-05", params, element).valid).toBe(true);
+        expect(validators.isLaterThan.check("2026-03-03", params, element).valid).toBe(false);
+      });
+
+      test("skips validation for an empty value", () => {
+        const result = validators.isLaterThan.check(
+          "",
+          { relative: relative(3, "before") },
+          {} as TSurveyElement
+        );
+        expect(result.valid).toBe(true);
+      });
+
+      test("reports the resolved date rather than the offset", () => {
+        validators.isLaterThan.getDefaultMessage(
+          { relative: relative(3, "before") },
+          {} as TSurveyElement,
+          mockT
+        );
+        expect(mockTFn).toHaveBeenLastCalledWith("errors.is_later_than", { date: "2026-03-06" });
+      });
+    });
+
+    describe("isEarlierThan", () => {
+      test("accepts the boundary day itself", () => {
+        const result = validators.isEarlierThan.check(
+          "2026-03-13",
+          { relative: relative(4, "after") },
+          {} as TSurveyElement
+        );
+        expect(result.valid).toBe(true);
+      });
+
+      test("rejects a day past the boundary", () => {
+        const result = validators.isEarlierThan.check(
+          "2026-03-14",
+          { relative: relative(4, "after") },
+          {} as TSurveyElement
+        );
+        expect(result.valid).toBe(false);
+      });
+    });
+
+    describe("isBetween", () => {
+      const params = {
+        relativeStart: relative(3, "before"),
+        relativeEnd: relative(4, "after"),
+      };
+
+      test("accepts both boundary days and everything between", () => {
+        const element = {} as TSurveyElement;
+        expect(validators.isBetween.check("2026-03-06", params, element).valid).toBe(true);
+        expect(validators.isBetween.check("2026-03-09", params, element).valid).toBe(true);
+        expect(validators.isBetween.check("2026-03-13", params, element).valid).toBe(true);
+      });
+
+      test("rejects dates outside the window", () => {
+        const element = {} as TSurveyElement;
+        expect(validators.isBetween.check("2026-03-05", params, element).valid).toBe(false);
+        expect(validators.isBetween.check("2026-03-14", params, element).valid).toBe(false);
+      });
+
+      test("reports both resolved dates", () => {
+        validators.isBetween.getDefaultMessage(params, {} as TSurveyElement, mockT);
+        expect(mockTFn).toHaveBeenLastCalledWith("errors.is_between", {
+          startDate: "2026-03-06",
+          endDate: "2026-03-13",
+        });
+      });
+    });
+
+    describe("isNotBetween", () => {
+      const params = {
+        relativeStart: relative(3, "before"),
+        relativeEnd: relative(4, "after"),
+      };
+
+      test("rejects the boundary days because the excluded window is inclusive", () => {
+        const element = {} as TSurveyElement;
+        expect(validators.isNotBetween.check("2026-03-06", params, element).valid).toBe(false);
+        expect(validators.isNotBetween.check("2026-03-13", params, element).valid).toBe(false);
+      });
+
+      test("accepts dates strictly outside the window", () => {
+        const element = {} as TSurveyElement;
+        expect(validators.isNotBetween.check("2026-03-05", params, element).valid).toBe(true);
+        expect(validators.isNotBetween.check("2026-03-14", params, element).valid).toBe(true);
+      });
+    });
+
+    describe("server-side timezone grace", () => {
+      // On the server there is no window, and the respondent's clock may be up to a day ahead of
+      // or behind it, so the window widens by one day on each side.
+      test("widens the window by one day on each side when there is no window global", () => {
+        const params = {
+          relativeStart: relative(3, "before"),
+          relativeEnd: relative(4, "after"),
+        };
+        const element = {} as TSurveyElement;
+
+        // Strict in the browser.
+        expect(validators.isBetween.check("2026-03-05", params, element).valid).toBe(false);
+        expect(validators.isBetween.check("2026-03-14", params, element).valid).toBe(false);
+
+        vi.stubGlobal("window", undefined);
+
+        expect(validators.isBetween.check("2026-03-05", params, element).valid).toBe(true);
+        expect(validators.isBetween.check("2026-03-14", params, element).valid).toBe(true);
+        // Two days out is still rejected - the grace is one day, not an open door.
+        expect(validators.isBetween.check("2026-03-04", params, element).valid).toBe(false);
+        expect(validators.isBetween.check("2026-03-15", params, element).valid).toBe(false);
+      });
+
+      test("quotes the strict window in the error message, not the graced one", () => {
+        const params = {
+          relativeStart: relative(3, "before"),
+          relativeEnd: relative(4, "after"),
+        };
+
+        vi.stubGlobal("window", undefined);
+
+        validators.isBetween.getDefaultMessage(params, {} as TSurveyElement, mockT);
+        expect(mockTFn).toHaveBeenLastCalledWith("errors.is_between", {
+          startDate: "2026-03-06",
+          endDate: "2026-03-13",
+        });
+      });
+
+      test("widens a future-only window outwards rather than closing it in", () => {
+        // Both bounds run "after" the response date, so the grace must follow the role of each
+        // bound (lower moves earlier, upper moves later) rather than its direction.
+        const params = {
+          relativeStart: relative(2, "after"),
+          relativeEnd: relative(5, "after"),
+        };
+        const element = {} as TSurveyElement;
+
+        vi.stubGlobal("window", undefined);
+
+        expect(validators.isBetween.check("2026-03-10", params, element).valid).toBe(true);
+        expect(validators.isBetween.check("2026-03-15", params, element).valid).toBe(true);
+        expect(validators.isBetween.check("2026-03-09", params, element).valid).toBe(false);
+        expect(validators.isBetween.check("2026-03-16", params, element).valid).toBe(false);
+      });
     });
   });
 });

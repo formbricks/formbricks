@@ -6,6 +6,7 @@ import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
 import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { getDateBoundsFromRules, toISODateString } from "@/lib/validation/validators/date-utils";
 
 interface DateElementProps {
   element: TSurveyDateElement;
@@ -51,12 +52,17 @@ export function DateElement({
     setTtc(updatedTtcObj);
   };
 
-  const getMinDate = (): string | undefined => {
-    return new Date(new Date().getFullYear() - 100, 0, 1).toISOString().split("T")[0];
+  // Restrict the calendar to whatever the element's date validation rules allow, so a respondent
+  // cannot pick a date the evaluator would reject on submit. Falls back to a +/-100 year span when
+  // no rule bounds that end of the range.
+  const { minDate, maxDate } = getDateBoundsFromRules(element, new Date());
+
+  const getMinDate = (): string => {
+    return minDate ?? toISODateString(new Date(new Date().getFullYear() - 100, 0, 1));
   };
 
-  const getMaxDate = (): string | undefined => {
-    return new Date(new Date().getFullYear() + 100, 0, 1).toISOString().split("T")[0];
+  const getMaxDate = (): string => {
+    return maxDate ?? toISODateString(new Date(new Date().getFullYear() + 100, 0, 1));
   };
 
   return (

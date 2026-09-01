@@ -228,6 +228,16 @@ export const ValidationRulesEditor = ({
     onUpdateValidation({ rules: updated, logic: validationLogic });
   };
 
+  // Relative date bounds are objects, not a single string, so they bypass the shared
+  // value-to-params channel and set params directly.
+  const handleRuleParamsChange = (ruleId: string, params: TValidationRule["params"]) => {
+    const updated = validationRules.map((rule) => {
+      if (rule.id !== ruleId) return rule;
+      return { ...rule, params } as TValidationRule;
+    });
+    onUpdateValidation({ rules: updated, logic: validationLogic });
+  };
+
   const handleFileExtensionChange = (ruleId: string, extensions: TAllowedFileExtension[]) => {
     const updated = validationRules.map((r) => {
       if (r.id !== ruleId) return r;
@@ -341,6 +351,7 @@ export const ValidationRulesEditor = ({
             onFieldChange={handleFieldChange}
             onRuleTypeChange={handleRuleTypeChange}
             onRuleValueChange={handleRuleValueChange}
+            onRuleParamsChange={handleRuleParamsChange}
             onFileExtensionChange={handleFileExtensionChange}
             onDelete={handleDeleteRule}
             onAdd={handleAddRule}
