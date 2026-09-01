@@ -124,6 +124,65 @@ const narrowMax = (bounds: TDateBounds, candidate: string): void => {
  * than bounding the range, and "or" logic means any one rule may be satisfied, so no date can be
  * ruled out up front. Both still fail on submit as before.
  */
+/**
+ * Resolve one end of a single-bound rule. Relative bounds are inclusive, so they land on the
+ * resolved day; fixed bounds are exclusive, so they shift one day inwards.
+ */
+const resolveSingleBound = (
+  params: Record<string, unknown>,
+  referenceDate: Date,
+  fixedShift: 1 | -1
+): string | undefined => {
+  if (hasRelativeBound(params)) return resolveRelativeDate(params.relative, referenceDate);
+  return isValidISODate(params.date) ? shiftISODate(params.date, fixedShift) : undefined;
+};
+
+/** Resolve both ends of a range rule, under the same inclusive/exclusive split. */
+const resolveRangeBounds = (params: Record<string, unknown>, referenceDate: Date): TDateBounds => {
+  if (hasRelativeRange(params)) {
+    return {
+      minDate: resolveRelativeDate(params.relativeStart, referenceDate),
+      maxDate: resolveRelativeDate(params.relativeEnd, referenceDate),
+    };
+  }
+
+  if (isValidISODate(params.startDate) && isValidISODate(params.endDate)) {
+    return {
+      minDate: shiftISODate(params.startDate, 1),
+      maxDate: shiftISODate(params.endDate, -1),
+    };
+  }
+
+  return {};
+};
+
+/** The window a single rule implies, or an empty object when it implies none. */
+const boundsForRule = (rule: TValidationRule, referenceDate: Date): TDateBounds => {
+  const params = rule.params as Record<string, unknown>;
+
+  switch (rule.type) {
+    case "isLaterThan":
+      return { minDate: resolveSingleBound(params, referenceDate, 1) };
+    case "isEarlierThan":
+      return { maxDate: resolveSingleBound(params, referenceDate, -1) };
+    case "isBetween":
+      return resolveRangeBounds(params, referenceDate);
+    default:
+      // isNotBetween punches a hole rather than bounding the range, so it contributes nothing.
+      return {};
+  }
+};
+
+/**
+ * Derive the selectable date window from an element's validation rules so the picker can grey out
+ * dates the evaluator would reject on submit.
+ *
+ * The two modes differ on purpose and this must mirror the validators exactly: fixed bounds are
+ * exclusive (isLaterThan 2026-03-01 first allows 2026-03-02), relative bounds are inclusive.
+ *
+ * Under "or" logic any single rule may be satisfied, so no date can be ruled out up front and the
+ * picker stays open; those rules still fail on submit as before.
+ */
 export const getDateBoundsFromRules = (element: TSurveyElement, referenceDate: Date): TDateBounds => {
   const validation = (
     element as TSurveyElement & { validation?: { rules?: TValidationRule[]; logic?: "and" | "or" } }
@@ -135,38 +194,9 @@ export const getDateBoundsFromRules = (element: TSurveyElement, referenceDate: D
   const bounds: TDateBounds = {};
 
   for (const rule of rules) {
-    const params = rule.params as Record<string, unknown>;
-
-    switch (rule.type) {
-      case "isLaterThan":
-        if (hasRelativeBound(params)) {
-          narrowMin(bounds, resolveRelativeDate(params.relative, referenceDate));
-        } else if (isValidISODate(params.date)) {
-          narrowMin(bounds, shiftISODate(params.date, 1));
-        }
-        break;
-
-      case "isEarlierThan":
-        if (hasRelativeBound(params)) {
-          narrowMax(bounds, resolveRelativeDate(params.relative, referenceDate));
-        } else if (isValidISODate(params.date)) {
-          narrowMax(bounds, shiftISODate(params.date, -1));
-        }
-        break;
-
-      case "isBetween":
-        if (hasRelativeRange(params)) {
-          narrowMin(bounds, resolveRelativeDate(params.relativeStart, referenceDate));
-          narrowMax(bounds, resolveRelativeDate(params.relativeEnd, referenceDate));
-        } else if (isValidISODate(params.startDate) && isValidISODate(params.endDate)) {
-          narrowMin(bounds, shiftISODate(params.startDate, 1));
-          narrowMax(bounds, shiftISODate(params.endDate, -1));
-        }
-        break;
-
-      default:
-        break;
-    }
+    const { minDate, maxDate } = boundsForRule(rule, referenceDate);
+    if (minDate) narrowMin(bounds, minDate);
+    if (maxDate) narrowMax(bounds, maxDate);
   }
 
   return bounds;

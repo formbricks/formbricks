@@ -92,7 +92,7 @@ export const DATE_RULE_TYPES: TValidationRuleType[] = [
   "isNotBetween",
 ];
 
-const RANGE_DATE_RULE_TYPES: TValidationRuleType[] = ["isBetween", "isNotBetween"];
+const RANGE_DATE_RULE_TYPES = new Set<TValidationRuleType>(["isBetween", "isNotBetween"]);
 
 export const DEFAULT_RELATIVE_BOUND: TRelativeDateBound = {
   amount: 0,
@@ -106,7 +106,7 @@ export const isRelativeDateParams = (params: TValidationRule["params"]): boolean
 
 /** Default params when a date rule is switched into relative mode. */
 export const createRelativeDateParams = (ruleType: TValidationRuleType): TValidationRule["params"] => {
-  if (RANGE_DATE_RULE_TYPES.includes(ruleType)) {
+  if (RANGE_DATE_RULE_TYPES.has(ruleType)) {
     return {
       relativeStart: { ...DEFAULT_RELATIVE_BOUND },
       relativeEnd: { ...DEFAULT_RELATIVE_BOUND, direction: "after" },
