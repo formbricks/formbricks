@@ -96,6 +96,7 @@ checksums:
     auth/signup/company_email_required: 997bf11a31512cedf4ab8acb7b4f56c3
     auth/signup/have_an_account: 6f9c2d441e93cb6df9ef7dc898e80e05
     auth/signup/log_in: 9fb886eff8d1d67d8bb79f5c3f78edde
+    auth/signup/password_requirements: 58d15c4e16b28c51b83977d0c2af17bc
     auth/signup/password_validation_contain_at_least_1_number: 58fb33a486aa4dadfc05e3242fc7ea0b
     auth/signup/password_validation_minimum_8_and_maximum_128_characters: ec704690a454c7f01e59856c39206259
     auth/signup/password_validation_uppercase_and_lowercase: ae98b485024dbff1022f6048e22443cd
@@ -230,6 +231,7 @@ checksums:
     common/delete: 8bcf303dd10a645b5baacb02b47d72c9
     common/delete_what: 718ddfcc1dec7f3e8b67856fba838267
     common/description: e17686a22ffad04cc7bb70524ed4478b
+    common/digit_number_of_total: bd36d550b8797c5a928ede29cb10a0f9
     common/disable: 81b754fd7962e0bd9b6ba87f3972e7fc
     common/disabled: 0889a3dfd914a7ef638611796b17bf72
     common/disallow: 01c8ed3ce545ed836d3ccffc562c8a0c
@@ -274,6 +276,7 @@ checksums:
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/finished_at: 05d2fa31cf3b2e2255729ec7898240c2
     common/first_name: cf040a5d6a9fd696be400380cc99f54b
+    common/formbricks_homepage: 95a78e9e1812a97221d1f69015561e68
     common/formbricks_version: d9967c797f3e49ca0cae78bc0ebd19cb
     common/full_name: f45991923345e8322c9ff8cd6b7e2b16
     common/gathering_responses: c5914490ed81bd77f13d411739f0c9ef
@@ -286,6 +289,7 @@ checksums:
     common/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
     common/hidden_fields: 3de6cfd308293a826cb8679fd1d49972
     common/hide_column: 23ce94db148f2d8e4a0923defead6cf1
+    common/hide_password: dd9813264cfc4a7ae515cd5644943c1b
     common/html: f750870203043349d570d8f5865ca0f8
     common/id: c8886d38aeea2ed5f785aba4fc96784b
     common/image: 048ba7a239de0fbd883ade8558415830
@@ -455,6 +459,7 @@ checksums:
     common/settings: 8df6777277469c1fd88cc18dde2f1cc3
     common/share_feedback: f3c14bfa149fde4035b6965cb8d3e993
     common/show: 16dfe5dc481240cd2819a6394f90df92
+    common/show_password: 8696d19a0f02613a86727810355fef47
     common/show_response_count: 609e5dc7c074d57e711a728fa2f8eb79
     common/shown: 63e4ffb245c05e04b636446c3dbdd8df
     common/size: 227fadeeff951e041ff42031a11a4626

@@ -6,9 +6,9 @@ interface VerificationMessageProps {
   email: string;
 }
 
-export const VerificationMessage = ({ email }: VerificationMessageProps) => {
+export const VerificationMessage = ({ email }: Readonly<VerificationMessageProps>) => {
   return (
-    <p className="text-center text-sm text-slate-700">
+    <p className="text-center text-sm break-words text-slate-700">
       <Trans
         i18nKey="auth.verification-requested.verification_email_successfully_sent_info"
         values={{ email }}
