@@ -1008,6 +1008,81 @@ describe("surveys", () => {
       expect(result.variables?.var_score).toEqual({ op: "lessThan", value: 5 });
     });
 
+    test("boolean and date ingested fields coerce per dataType; invalid numbers drop the row", () => {
+      // Legacy-derived fields are all string-typed, so craft the typed rows directly.
+      const typedSurvey = {
+        ...survey,
+        embeddedFields: [
+          ...(survey.embeddedFields ?? []),
+          {
+            field: {
+              name: "is_pro",
+              source: "ingested",
+              dataType: "boolean",
+              defaultValue: null,
+              locked: false,
+            },
+            link: { storageKey: "is_pro" },
+          },
+          {
+            field: {
+              name: "signup_date",
+              source: "ingested",
+              dataType: "date",
+              defaultValue: null,
+              locked: false,
+            },
+            link: { storageKey: "signup_date" },
+          },
+        ],
+      } as TSurvey;
+
+      const result = getFormattedFilters(
+        typedSurvey,
+        {
+          responseStatus: "all",
+          filter: [
+            {
+              elementType: { type: "Hidden Fields", label: "is_pro", id: "is_pro" },
+              filterType: { filterValue: "Equals", filterComboBoxValue: "true" },
+            },
+            {
+              elementType: { type: "Hidden Fields", label: "signup_date", id: "signup_date" },
+              filterType: { filterValue: "Is before", filterComboBoxValue: "2026-01-01" },
+            },
+            {
+              elementType: { type: "Variables", label: "score", id: "var_score" },
+              filterType: { filterValue: "Is less than", filterComboBoxValue: "abc" },
+            },
+          ],
+        } as any,
+        {} as any
+      );
+
+      // Booleans are stored as real jsonb booleans, so the filter value must be one too.
+      expect(result.data?.is_pro).toEqual({ op: "equals", value: true });
+      // Dates ride the comparison ops with the ISO string.
+      expect(result.data?.signup_date).toEqual({ op: "lessThan", value: "2026-01-01" });
+      // A non-numeric value for a number field cannot form a condition — the row drops.
+      expect(result.variables).toBeUndefined();
+
+      // A text op makes no sense on a boolean — dropped rather than matching wrongly.
+      const boolContains = getFormattedFilters(
+        typedSurvey,
+        {
+          responseStatus: "all",
+          filter: [
+            {
+              elementType: { type: "Hidden Fields", label: "is_pro", id: "is_pro" },
+              filterType: { filterValue: "Contains", filterComboBoxValue: "tru" },
+            },
+          ],
+        } as any,
+        {} as any
+      );
+      expect(boolContains.data?.is_pro).toBeUndefined();
+    });
+
     test("ingested presence maps onto the data group's submitted/skipped vocabulary", () => {
       const selectedFilter: SelectedFilterValue = {
         responseStatus: "all",

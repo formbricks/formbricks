@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
-import { RESERVED_FIELD_CATALOG, deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import {
+  RESERVED_FIELD_CATALOG,
+  type TEmbeddedValueResponse,
+  deriveLegacyEmbeddedData,
+} from "@formbricks/types/embedded-data-resolver";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -13,6 +17,8 @@ import {
   getResponseContactAttributes,
   getResponseHiddenFields,
   getResponseMeta,
+  getResponseReservedFilterValues,
+  getResponseVariableFilterValues,
   getResponsesFileName,
   getResponsesJson,
 } from "./utils";
@@ -645,6 +651,97 @@ describe("Response Utils", () => {
       expect(mismatched.AND).toContainEqual({ AND: [] });
     });
 
+    test("every comparison and text-op arm translates one-to-one", () => {
+      const cases: Array<[object, object]> = [
+        [
+          { screenWidth: { op: "lessThan" as const, value: 800 } },
+          { meta: { path: ["screenWidth"], lt: 800 } },
+        ],
+        [
+          { screenWidth: { op: "lessEqual" as const, value: 800 } },
+          { meta: { path: ["screenWidth"], lte: 800 } },
+        ],
+        [
+          { screenWidth: { op: "greaterEqual" as const, value: 800 } },
+          { meta: { path: ["screenWidth"], gte: 800 } },
+        ],
+        [
+          { pagePath: { op: "contains" as const, value: "/checkout" } },
+          { meta: { path: ["pagePath"], string_contains: "/checkout" } },
+        ],
+        [
+          { pagePath: { op: "startsWith" as const, value: "/app" } },
+          { meta: { path: ["pagePath"], string_starts_with: "/app" } },
+        ],
+        [
+          { pagePath: { op: "doesNotStartWith" as const, value: "/app" } },
+          { NOT: { meta: { path: ["pagePath"], string_starts_with: "/app" } } },
+        ],
+        [
+          { pagePath: { op: "endsWith" as const, value: "/done" } },
+          { meta: { path: ["pagePath"], string_ends_with: "/done" } },
+        ],
+        [
+          { pagePath: { op: "doesNotEndWith" as const, value: "/done" } },
+          { NOT: { meta: { path: ["pagePath"], string_ends_with: "/done" } } },
+        ],
+      ];
+      for (const [reserved, expected] of cases) {
+        const result = buildWhereClause(reservedSurvey, { reserved } as never);
+        expect(result.AND).toContainEqual({ AND: [expected] });
+      }
+    });
+
+    test("duration bounds stay consistent with the projection at every boundary", () => {
+      const lessEqual = buildWhereClause(reservedSurvey, {
+        reserved: { durationSeconds: { op: "lessEqual", value: 60 } },
+      });
+      expect(lessEqual.AND).toContainEqual({ AND: [{ ttc: { path: ["_total"], lt: 60500 } }] });
+
+      const greaterEqual = buildWhereClause(reservedSurvey, {
+        reserved: { durationSeconds: { op: "greaterEqual", value: 60 } },
+      });
+      expect(greaterEqual.AND).toContainEqual({ AND: [{ ttc: { path: ["_total"], gte: 59500 } }] });
+
+      const notEquals = buildWhereClause(reservedSurvey, {
+        reserved: { durationSeconds: { op: "notEquals", value: 13 } },
+      });
+      expect(JSON.stringify(notEquals.AND)).toMatch(
+        /"OR":\[\{"ttc":\{"path":\["_total"\],"lt":12500\}\},\{"ttc":\{"path":\["_total"\],"gte":13500\}\},\{"ttc":\{"path":\["_total"\],"equals":\{\}\}\}\]/
+      );
+
+      // A non-numeric value cannot form a window — nothing is emitted.
+      const notANumber = buildWhereClause(reservedSurvey, {
+        reserved: { durationSeconds: { op: "equals", value: "abc" } },
+      });
+      expect(notANumber.AND).toContainEqual({ AND: [] });
+    });
+
+    test("data text ops: remaining arms translate one-to-one", () => {
+      const cases: Array<[object, object]> = [
+        [
+          { plan: { op: "doesNotContain" as const, value: "trial" } },
+          { NOT: { data: { path: ["plan"], string_contains: "trial" } } },
+        ],
+        [
+          { plan: { op: "startsWith" as const, value: "gold" } },
+          { data: { path: ["plan"], string_starts_with: "gold" } },
+        ],
+        [
+          { plan: { op: "doesNotStartWith" as const, value: "gold" } },
+          { NOT: { data: { path: ["plan"], string_starts_with: "gold" } } },
+        ],
+        [
+          { plan: { op: "endsWith" as const, value: "-v2" } },
+          { data: { path: ["plan"], string_ends_with: "-v2" } },
+        ],
+      ];
+      for (const [data, expected] of cases) {
+        const result = buildWhereClause(reservedSurvey, { data } as never);
+        expect(result.AND).toContainEqual({ AND: [expected] });
+      }
+    });
+
     test("variables filter by computed storageKey, unknown keys emit nothing", () => {
       const known = buildWhereClause(reservedSurvey, {
         variables: { var_score: { op: "greaterEqual", value: 5 } },
@@ -739,6 +836,76 @@ describe("Response Utils", () => {
       } as TSurvey).map((entry) => entry.name);
       expect(ipOff).not.toContain("ipAddress");
       expect(ipOff).toContain("country");
+    });
+  });
+
+  describe("filter value helpers (ENG-1848)", () => {
+    const valueSurvey = asRead({
+      id: "s5",
+      name: "FilterValuesSurvey",
+      blocks: [],
+      questions: [],
+      type: "link",
+      hiddenFields: { enabled: true, fieldIds: [] },
+      variables: [
+        { id: "var_plan", name: "plan_name", type: "text" as const, value: "" },
+        { id: "var_score", name: "score", type: "number" as const, value: 0 },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "e5",
+      createdBy: "u5",
+      status: "inProgress",
+    }) as TSurvey;
+
+    const mkResponse = (over: Record<string, unknown>): TEmbeddedValueResponse =>
+      ({
+        id: "r1",
+        surveyId: "s5",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        finished: true,
+        language: null,
+        data: {},
+        variables: {},
+        ttc: {},
+        meta: {},
+        ...over,
+      }) as unknown as TEmbeddedValueResponse;
+
+    test("reserved values: distinct strings by catalog name, projected (url query-stripped), numbers skipped", () => {
+      const values = getResponseReservedFilterValues(valueSurvey, [
+        mkResponse({ meta: { utmSource: "newsletter", url: "https://x.test/p?email=leak@x.test" } }),
+        mkResponse({ meta: { utmSource: "newsletter", screenWidth: 1280 } }),
+        mkResponse({ meta: { utmSource: "ads" } }),
+      ]);
+
+      expect(values.utmSource).toEqual(["newsletter", "ads"]);
+      // The dropdown gets the projected value, so the query string never leaks into filter options.
+      expect(values.url).toEqual(["https://x.test/p"]);
+      // Number-typed entries get a numeric input, not an options list.
+      expect(values.screenWidth).toBeUndefined();
+    });
+
+    test("reserved values respect the per-survey gates", () => {
+      const anonymized = { ...valueSurvey, isAnonymizeResponsesEnabled: true } as TSurvey;
+      const values = getResponseReservedFilterValues(anonymized, [
+        mkResponse({ meta: { country: "DE", utmSource: "ads" } }),
+      ]);
+      expect(values.country).toBeUndefined();
+      expect(values.utmSource).toEqual(["ads"]);
+    });
+
+    test("variable values: distinct strings keyed by storageKey, non-string fields and empties skipped", () => {
+      const values = getResponseVariableFilterValues(valueSurvey, [
+        mkResponse({ variables: { var_plan: "gold", var_score: 5 } }),
+        mkResponse({ variables: { var_plan: "gold" } }),
+        mkResponse({ variables: { var_plan: "" } }),
+        mkResponse({ variables: { var_plan: "silver" } }),
+      ]);
+
+      expect(values.var_plan).toEqual(["gold", "silver"]);
+      expect(values.var_score).toBeUndefined();
     });
   });
 
