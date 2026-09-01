@@ -24,6 +24,30 @@ describe("handleClientResponseCreateError", () => {
     );
   });
 
+  // ENG-2251: adapter-pg parses the column list out of the Postgres error DETAIL; when that line is
+  // absent or unparseable it emits `constraint: undefined`, so no field check can match. A P2002
+  // must still be a conflict (409), never fall through to DatabaseError (500).
+  test("maps a P2002 without recoverable fields to UniqueConstraintError", () => {
+    const error = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+      code: "P2002",
+      clientVersion: "test",
+      meta: { driverAdapterError: { cause: { kind: "UniqueConstraintViolation" } } },
+    });
+    expect(() => handleClientResponseCreateError(error)).toThrow(
+      new UniqueConstraintError("Response already exists")
+    );
+  });
+
+  test("maps a P2002 without any meta to UniqueConstraintError", () => {
+    const error = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+      code: "P2002",
+      clientVersion: "test",
+    });
+    expect(() => handleClientResponseCreateError(error)).toThrow(
+      new UniqueConstraintError("Response already exists")
+    );
+  });
+
   test("maps any other known Prisma error to DatabaseError carrying its message", () => {
     const error = new Prisma.PrismaClientKnownRequestError("boom", { code: "P2025", clientVersion: "test" });
     expect(() => handleClientResponseCreateError(error)).toThrow(new DatabaseError("boom"));
