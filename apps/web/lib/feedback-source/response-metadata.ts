@@ -87,6 +87,12 @@ const TRAILING_HIGH_SURROGATE = /[\uD800-\uDBFF]$/;
  * dimension. Keep the route, drop the secret.
  */
 const PERSONAL_LINK_TOKEN_PATH = /^(\/c)\/[^/]+/;
+/**
+ * The same token, for the fallback's input shape. A parsed `pathname` starts at `/`, but a value
+ * that never parsed still carries its scheme and authority, so the route has to be matched after
+ * them — and only as the FIRST path segment, so an unrelated `/a/c/x` is left alone.
+ */
+const PERSONAL_LINK_TOKEN_URL = /^((?:[a-z][a-z0-9+.-]*:)?\/\/[^/]*|[^/]*)(\/c)\/[^/]+/i;
 
 /** Userinfo up to the LAST `@` before the path, so `u:p@ss@host` cannot leak `ss`. */
 const LEADING_USERINFO = /^((?:[a-z][a-z0-9+.-]*:)?\/\/)?[^/]*@/i;
@@ -118,7 +124,11 @@ export const stripUrlQuery = (rawUrl: string): string | undefined => {
   // protocol-relative `//user:pass@host/p` cannot be parsed without a base, so both skip the
   // branch above. Cut the query first, then remove any userinfo, keeping a `scheme://` or bare
   // `//` prefix when one is present.
-  const cut = trimmed.split(/[?#]/)[0].replace(LEADING_USERINFO, "$1").trim();
+  const cut = trimmed
+    .split(/[?#]/)[0]
+    .replace(LEADING_USERINFO, "$1")
+    .replace(PERSONAL_LINK_TOKEN_URL, "$1$2")
+    .trim();
 
   return cut || undefined;
 };

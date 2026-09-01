@@ -76,6 +76,11 @@ describe("stripUrlQuery", () => {
       "https://app.example.com/s/cm123",
       "https://app.example.com/s/cm123",
     ],
+    // The fallback shape: never produced by the SDK (which sends an absolute href), but `meta.url`
+    // is client-supplied, so the helper's contract has to hold on this path too.
+    ["protocol-relative personal link", "//app.example.com/c/eyJhbGci.tok.sig?foo=1", "//app.example.com/c"],
+    ["scheme-less personal link", "app.example.com/c/eyJhbGci.tok.sig", "app.example.com/c"],
+    ["a /c segment that is not the first is left alone", "//host/a/c/keep", "//host/a/c/keep"],
   ])("drops the personal-link token (%s)", (_label, input, expected) => {
     expect(stripUrlQuery(input)).toBe(expected);
   });
