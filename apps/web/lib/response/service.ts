@@ -4,7 +4,6 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -16,14 +15,12 @@ import {
   ZResponseFilterCriteria,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
-import { deleteFile } from "@/modules/storage/service";
-import { parseStorageFileUrl, resolveStorageUrlsInObject } from "@/modules/storage/utils";
+import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
+import { getSurveyFileUploadConfigs, resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -633,36 +630,20 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  const elements = getElementsFromBlocks(survey.blocks);
-
-  const fileUploadElements = new Set(
-    elements.filter((element) => element.type === TSurveyElementTypeEnum.FileUpload).map((q) => q.id)
+  // Match write-time validation: a survey holds file uploads in either blocks or questions, so build
+  // the id set from the union of both rather than one shape (getSurveyFileUploadConfigs is exactly what
+  // validateClientFileUploads uses). Keying off a single shape silently skips deletes for the other.
+  const fileUploadElementIds = new Set(
+    getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).map(
+      (config) => config.id
+    )
   );
 
   const fileUrls = Object.entries(response.data)
-    .filter(([elementId]) => fileUploadElements.has(elementId))
+    .filter(([elementId]) => fileUploadElementIds.has(elementId))
     .flatMap(([, elementResponse]) => elementResponse as string[]);
 
-  const deletionPromises = fileUrls.map(async (fileUrl) => {
-    try {
-      const storageFile = parseStorageFileUrl(fileUrl);
-
-      if (!storageFile) {
-        throw new Error(`Invalid storage file URL: ${fileUrl}`);
-      }
-
-      return deleteFile(
-        storageFile.storageId,
-        storageFile.accessType,
-        storageFile.fileName,
-        survey.workspaceId
-      );
-    } catch (error) {
-      logger.error(error, `Failed to delete file ${fileUrl}`);
-    }
-  });
-
-  await Promise.all(deletionPromises);
+  await deleteResponseFileUrls(fileUrls, survey.workspaceId);
 };
 
 export const deleteResponse = async (

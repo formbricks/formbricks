@@ -10,18 +10,15 @@ import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import {
-  getCXElementNameMap,
-  getElementDefaults,
-  getElementIconMap,
-  getElementNameMap,
-} from "@/modules/survey/lib/elements";
+import { getElementDefaults, getGroupedElementTypes } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -73,7 +70,6 @@ export const EditorCardMenu = ({
   isCxMode = false,
 }: EditorCardMenuProps) => {
   const { t } = useTranslation();
-  const ELEMENTS_ICON_MAP = getElementIconMap(t);
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(() => {
     if (card.type !== "endScreen" && card.type !== "redirectToUrl") {
@@ -87,7 +83,7 @@ export const EditorCardMenu = ({
   const isDeleteDisabled =
     cardType === "element" ? elements.length === 1 : survey.type === "link" && survey.endings.length === 1;
 
-  const availableElementTypes = isCxMode ? getCXElementNameMap(t) : getElementNameMap(t);
+  const groupedElementTypes = getGroupedElementTypes(t, isCxMode);
 
   const changeElementType = (type?: TSurveyElementTypeEnum) => {
     if (!type) return;
@@ -237,25 +233,36 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2">
-                  {Object.entries(availableElementTypes).map(([type, name]) => {
-                    if (type === card.type) return null;
-                    return (
-                      <DropdownMenuItem
-                        key={type}
-                        onClick={() => {
-                          setChangeToType(type as TSurveyElementTypeEnum);
-                          if ((card as EditorCardMenuSurveyElement).logic) {
-                            setLogicWarningModal(true);
-                            return;
-                          }
+                  {groupedElementTypes
+                    .map((group) => ({
+                      ...group,
+                      elements: group.elements.filter((elementType) => elementType.id !== card.type),
+                    }))
+                    .filter((group) => group.elements.length > 0)
+                    .map((group, index) => (
+                      <div key={group.category.id}>
+                        {index > 0 && <DropdownMenuSeparator />}
+                        <DropdownMenuLabel className="pt-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                          {group.category.label}
+                        </DropdownMenuLabel>
+                        {group.elements.map((elementType) => (
+                          <DropdownMenuItem
+                            key={elementType.id}
+                            onClick={() => {
+                              setChangeToType(elementType.id as TSurveyElementTypeEnum);
+                              if ((card as EditorCardMenuSurveyElement).logic) {
+                                setLogicWarningModal(true);
+                                return;
+                              }
 
-                          changeElementType(type as TSurveyElementTypeEnum);
-                        }}
-                        icon={ELEMENTS_ICON_MAP[type as TSurveyElementTypeEnum]}>
-                        <span className="ml-2">{name}</span>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                              changeElementType(elementType.id as TSurveyElementTypeEnum);
+                            }}
+                            icon={<elementType.icon className="size-4" />}>
+                            <span className="ml-2">{elementType.label}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
+                    ))}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}
@@ -277,22 +284,28 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2">
-                  {Object.entries(availableElementTypes).map(([type, name]) => {
-                    return (
-                      <DropdownMenuItem
-                        key={type}
-                        className="min-h-8"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (cardType === "element") {
-                            addElementCardBelow(type as TSurveyElementTypeEnum);
-                          }
-                        }}>
-                        {ELEMENTS_ICON_MAP[type as TSurveyElementTypeEnum]}
-                        <span className="ml-2">{name}</span>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                  {groupedElementTypes.map((group, index) => (
+                    <div key={group.category.id}>
+                      {index > 0 && <DropdownMenuSeparator />}
+                      <DropdownMenuLabel className="pt-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                        {group.category.label}
+                      </DropdownMenuLabel>
+                      {group.elements.map((elementType) => (
+                        <DropdownMenuItem
+                          key={elementType.id}
+                          className="min-h-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (cardType === "element") {
+                              addElementCardBelow(elementType.id as TSurveyElementTypeEnum);
+                            }
+                          }}>
+                          <elementType.icon className="size-4" />
+                          <span className="ml-2">{elementType.label}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
+                  ))}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}

@@ -37,15 +37,32 @@ beforeEach(async () => {
   await resetDb();
 });
 
+/**
+ * Better Auth 1.7 types `enableTwoFactor`'s response as a union on `method` — `{ method: "otp" }` carries
+ * no `totpURI` at all — so destructuring it directly no longer typechecks (surfaced once test files
+ * entered the typecheck graph, #8890).
+ *
+ * Narrowed rather than cast, deliberately: our config enrols TOTP, and if a future version ever answers
+ * `otp` here this fails with a legible message instead of feeding `undefined` into `secretFromUri` and
+ * failing several lines later as an unreadable TOTP error.
+ */
+const enrolTotp = async (cookie: string): Promise<string> => {
+  const enrolled = await auth.api.enableTwoFactor({
+    body: { password: "Passw0rd!" },
+    headers: { cookie },
+  });
+  if (enrolled.method !== "totp") {
+    throw new Error(`expected a TOTP enrolment, got method="${enrolled.method}"`);
+  }
+  return enrolled.totpURI;
+};
+
 describe("Better Auth two-factor (real Postgres)", () => {
   test("enabling 2FA + verifying a TOTP flips twoFactorEnabled and stores the secret", async () => {
     const userId = await createVerifiedUser("tfa@example.com", "Passw0rd!");
     const cookie = await sessionCookie("tfa@example.com", "Passw0rd!");
 
-    const { totpURI } = await auth.api.enableTwoFactor({
-      body: { password: "Passw0rd!" },
-      headers: { cookie },
-    });
+    const totpURI = await enrolTotp(cookie);
     expect(totpURI).toContain("otpauth://");
 
     await auth.api.verifyTOTP({ body: { code: totp(secretFromUri(totpURI)) }, headers: { cookie } });
@@ -58,10 +75,7 @@ describe("Better Auth two-factor (real Postgres)", () => {
   test("an enabled second factor gates sign-in: password yields a challenge, TOTP issues the session", async () => {
     await createVerifiedUser("login2fa@example.com", "Passw0rd!");
     const enrollCookie = await sessionCookie("login2fa@example.com", "Passw0rd!");
-    const { totpURI } = await auth.api.enableTwoFactor({
-      body: { password: "Passw0rd!" },
-      headers: { cookie: enrollCookie },
-    });
+    const totpURI = await enrolTotp(enrollCookie);
     const secret = secretFromUri(totpURI);
     await auth.api.verifyTOTP({ body: { code: totp(secret) }, headers: { cookie: enrollCookie } });
     await prisma.session.deleteMany(); // clear the enrollment session

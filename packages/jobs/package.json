@@ -29,15 +29,15 @@
     "@formbricks/types": "workspace:*",
     "bullmq": "5.61.0",
     "ioredis": "5.8.1",
-    "zod": "4.3.6"
+    "zod": "catalog:"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
-    "@vitest/coverage-v8": "4.1.6",
-    "typescript": "5.9.3",
-    "vite": "7.3.5",
-    "vite-plugin-dts": "4.5.4",
-    "vitest": "4.1.6"
+    "@vitest/coverage-v8": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-dts": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -1,4 +1,5 @@
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
   MAX_CSV_VALUES,
@@ -9,17 +10,27 @@ import {
 import {
   areAllRequiredCsvFieldsMapped,
   autoMapCsvSourceFields,
+  canReimportHistoricalData,
   getCsvIdentityMappingAlert,
   getFeedbackSourceOptions,
+  getMappedSurveyIds,
   getSuggestedSurveys,
   inferFieldType,
   isCsvUserDefinedStaticValueMapping,
   isFeedbackSourceNameValid,
+  notifyImportResult,
   parseCSVColumnsToFields,
+  sumImportTotals,
   titleizeFromFileName,
   toggleQuestionId,
   validateCsvFile,
 } from "./utils";
+
+vi.mock("react-hot-toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+const { toast } = await import("react-hot-toast");
 
 const mockT = (key: string) => key;
 
@@ -77,17 +88,6 @@ describe("getFeedbackSourceOptions", () => {
     expect(options[1].id).toBe("csv");
     expect(options[2].id).toBe("api_ingestion");
     expect(options[3].id).toBe("feedback_record_mcp");
-  });
-
-  test("formbricks and csv are enabled; api ingestion and mcp are coming soon (disabled)", () => {
-    const options = getFeedbackSourceOptions(mockT as never);
-    const byId = Object.fromEntries(options.map((o) => [o.id, o]));
-    expect(byId.formbricks_survey.disabled).toBe(false);
-    expect(byId.csv.disabled).toBe(false);
-    expect(byId.api_ingestion.disabled).toBe(true);
-    expect(byId.api_ingestion.badge?.text).toBe("common.coming_soon");
-    expect(byId.feedback_record_mcp.disabled).toBe(true);
-    expect(byId.feedback_record_mcp.badge?.text).toBe("common.coming_soon");
   });
 
   test("uses translation keys for name and description", () => {
@@ -626,5 +626,138 @@ describe("toggleQuestionId", () => {
 
   test("removes only the matching id when duplicates exist", () => {
     expect(toggleQuestionId(["a", "b", "a"], "a")).toEqual(["b"]);
+  });
+});
+
+describe("re-import historic data", () => {
+  const buildSource = (overrides: Partial<TFeedbackSourceWithMappings> = {}): TFeedbackSourceWithMappings =>
+    ({
+      id: "fs1",
+      type: "formbricks_survey",
+      status: "active",
+      formbricksMappings: [],
+      ...overrides,
+    }) as TFeedbackSourceWithMappings;
+
+  const mapping = (surveyId: string, elementId: string) =>
+    ({ surveyId, elementId }) as TFeedbackSourceWithMappings["formbricksMappings"][number];
+
+  describe("getMappedSurveyIds", () => {
+    test("collapses the one-row-per-question mappings to a single survey", () => {
+      const source = buildSource({
+        formbricksMappings: [mapping("survey1", "q1"), mapping("survey1", "q2"), mapping("survey1", "q3")],
+      });
+
+      expect(getMappedSurveyIds(source)).toEqual(["survey1"]);
+    });
+
+    test("returns every distinct survey rather than only the first", () => {
+      const source = buildSource({
+        formbricksMappings: [mapping("survey1", "q1"), mapping("survey2", "q1"), mapping("survey1", "q2")],
+      });
+
+      expect(getMappedSurveyIds(source)).toEqual(["survey1", "survey2"]);
+    });
+
+    test("returns nothing when the source has no mappings", () => {
+      expect(getMappedSurveyIds(buildSource())).toEqual([]);
+    });
+  });
+
+  describe("canReimportHistoricalData", () => {
+    test("applies to a Formbricks source with a mapped survey", () => {
+      expect(canReimportHistoricalData(buildSource({ formbricksMappings: [mapping("survey1", "q1")] }))).toBe(
+        true
+      );
+    });
+
+    test("does not apply to a Formbricks source with nothing mapped", () => {
+      expect(canReimportHistoricalData(buildSource())).toBe(false);
+    });
+
+    test("does not apply to a CSV source, which importHistoricalResponses rejects", () => {
+      const csvSource = buildSource({ type: "csv", formbricksMappings: [mapping("survey1", "q1")] });
+
+      expect(canReimportHistoricalData(csvSource)).toBe(false);
+    });
+
+    test("does not apply to a paused source, whose owner switched off writes to the directory", () => {
+      const paused = buildSource({ status: "paused", formbricksMappings: [mapping("survey1", "q1")] });
+
+      expect(canReimportHistoricalData(paused)).toBe(false);
+    });
+
+    test("does not apply to an errored source, which the live pipeline also skips", () => {
+      const errored = buildSource({ status: "error", formbricksMappings: [mapping("survey1", "q1")] });
+
+      expect(canReimportHistoricalData(errored)).toBe(false);
+    });
+  });
+
+  describe("sumImportTotals", () => {
+    test("adds each count across surveys", () => {
+      expect(
+        sumImportTotals([
+          { successes: 12, failures: 1, skipped: 3 },
+          { successes: 5, failures: 0, skipped: 2 },
+        ])
+      ).toEqual({ successes: 17, failures: 1, skipped: 5 });
+    });
+
+    test("passes a single result through unchanged", () => {
+      expect(sumImportTotals([{ successes: 7, failures: 2, skipped: 1 }])).toEqual({
+        successes: 7,
+        failures: 2,
+        skipped: 1,
+      });
+    });
+
+    test("is zero for no results", () => {
+      expect(sumImportTotals([])).toEqual({ successes: 0, failures: 0, skipped: 0 });
+    });
+  });
+});
+
+describe("notifyImportResult", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // A Hub outage does not throw: per-record errors are folded into `failures` and the action
+  // resolves, so "resolved" is not evidence anything was written.
+  test("reports an import that wrote nothing as a failure", () => {
+    const imported = notifyImportResult({ successes: 0, failures: 412, skipped: 0 }, "message");
+
+    expect(imported).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith("message");
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  test("reports a partial failure as a failure too", () => {
+    const imported = notifyImportResult({ successes: 400, failures: 12, skipped: 0 }, "message");
+
+    expect(imported).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith("message");
+  });
+
+  test("reports a clean run as a success", () => {
+    const imported = notifyImportResult({ successes: 6, failures: 0, skipped: 2 }, "message");
+
+    expect(imported).toBe(true);
+    expect(toast.success).toHaveBeenCalledWith("message");
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  // The create modal's success toast carries a link to the feedback records. Routing a failure
+  // through it would invite the user to go and look at records that were never written.
+  test("uses the caller's success toast only when the import succeeded", () => {
+    const showSuccess = vi.fn();
+
+    notifyImportResult({ successes: 6, failures: 0, skipped: 0 }, "ok", showSuccess);
+    notifyImportResult({ successes: 0, failures: 6, skipped: 0 }, "failed", showSuccess);
+
+    expect(showSuccess).toHaveBeenCalledTimes(1);
+    expect(showSuccess).toHaveBeenCalledWith("ok");
+    expect(toast.error).toHaveBeenCalledWith("failed");
   });
 });

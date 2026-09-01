@@ -2,6 +2,8 @@
 
 set -e
 ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are available." | grep "Description:" | awk -F "Description:\t" '{print $2}')
+legacy_valkey_image="valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"
+multi_arch_valkey_image="valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"
 
 write_rustfs_init_script() {
   local target_path="${1:-rustfs-init.sh}"
@@ -289,20 +291,41 @@ serialize_dotenv_value() {
 write_generated_env_file() (
   local env_file="${1:-.env}"
   local postgres_password="${2:-}"
+  local hub_api_key="${3:-}"
+  local cubejs_api_secret="${4:-}"
+  local authzed_token="${5:-}"
+  local authzed_database_password="${6:-}"
   local serialized_postgres_password
   local postgres_password_url_encoded
-  local hub_api_key
-  local cubejs_api_secret
   local tmp_file
+
+  append_if_missing() {
+    local key="$1"
+    local value="$2"
+
+    if ! grep -Eq "^[[:space:]]*(export[[:space:]]+)?${key}[[:space:]]*=" "$tmp_file"; then
+      printf '%s=%s\n' "$key" "$value" >>"$tmp_file"
+    fi
+  }
 
   umask 077
   if [ -z "$postgres_password" ]; then
     postgres_password=$(openssl rand -hex 32)
   fi
+  if [ -z "$hub_api_key" ]; then
+    hub_api_key=$(openssl rand -hex 32)
+  fi
+  if [ -z "$cubejs_api_secret" ]; then
+    cubejs_api_secret=$(openssl rand -hex 32)
+  fi
+  if [ -z "$authzed_token" ]; then
+    authzed_token=$(openssl rand -hex 32)
+  fi
+  if [ -z "$authzed_database_password" ]; then
+    authzed_database_password=$(openssl rand -hex 32)
+  fi
   serialized_postgres_password=$(serialize_dotenv_value "$postgres_password")
   postgres_password_url_encoded=$(url_encode "$postgres_password")
-  hub_api_key=$(openssl rand -hex 32)
-  cubejs_api_secret=$(openssl rand -hex 32)
 
   tmp_file=$(mktemp "${env_file}.tmp.XXXXXX")
   trap 'rm -f "$tmp_file"' EXIT
@@ -310,10 +333,10 @@ write_generated_env_file() (
   if [ -f "$env_file" ]; then
     awk '
       !/^[[:space:]]*(export[[:space:]]+)?(POSTGRES_PASSWORD|POSTGRES_PASSWORD_URL_ENCODED|HUB_API_KEY|CUBEJS_API_SECRET|CUBEJS_JWT_ISSUER|CUBEJS_JWT_AUDIENCE)[[:space:]]*=/
-    ' "$env_file" > "$tmp_file"
+    ' "$env_file" >"$tmp_file"
   fi
 
-  cat <<EOF >> "$tmp_file"
+  cat <<EOF >>"$tmp_file"
 POSTGRES_PASSWORD=$serialized_postgres_password
 POSTGRES_PASSWORD_URL_ENCODED=$postgres_password_url_encoded
 HUB_API_KEY=$hub_api_key
@@ -322,10 +345,28 @@ CUBEJS_JWT_ISSUER=formbricks-web
 CUBEJS_JWT_AUDIENCE=formbricks-cube
 EOF
 
+  append_if_missing "AUTHZED_TOKEN" "$authzed_token"
+  append_if_missing "AUTHZED_DATABASE_PASSWORD" "$authzed_database_password"
+  append_if_missing "AUTHZED_ENABLED" "true"
+  append_if_missing "AUTHZED_CONSISTENCY" "fully_consistent"
+  append_if_missing "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED" "true"
+
   chmod 600 "$tmp_file"
   mv "$tmp_file" "$env_file"
   trap - EXIT
 )
+
+write_base_env_file() {
+  local env_file="${1:-.env}"
+  local hub_key="$2"
+  local cube_secret="$3"
+  local authzed_token="$4"
+  local authzed_database_password="$5"
+
+  umask 077
+  : >"$env_file"
+  write_generated_env_file "$env_file" "" "$hub_key" "$cube_secret" "$authzed_token" "$authzed_database_password"
+}
 
 add_formbricks_traefik_labels() {
   local compose_file="${1:-docker-compose.yml}"
@@ -738,6 +779,13 @@ EOT
 
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
   curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+  echo "📥 Downloading AuthZed database bootstrap helper..."
+  authzed_bootstrap_commit="10d5ad908491a8a818aef3c6ada91fa4fdc30b03"
+  authzed_bootstrap_sha256="70975701cdf0dcffef5d3573a7514360e87428bb07cc4bfb4dbf47ae0c2e93a5"
+  curl -fsSL -o authzed-postgres-bootstrap.sh \
+    "https://raw.githubusercontent.com/formbricks/formbricks/${authzed_bootstrap_commit}/docker/authzed-postgres-bootstrap.sh"
+  printf '%s  %s\n' "$authzed_bootstrap_sha256" authzed-postgres-bootstrap.sh | sha256sum --check --status -
+  chmod 700 authzed-postgres-bootstrap.sh
   mkdir -p cube/schema
   echo "📥 Downloading Cube.js configuration for XM Suite v5 analytics..."
   curl -fsSL -o cube/cube.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
@@ -756,11 +804,21 @@ EOT
   cron_secret=$(openssl rand -hex 32) && sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $cron_secret/" docker-compose.yml	
   echo "🚗 CRON_SECRET updated successfully!"
 
-  write_generated_env_file ".env" "$existing_postgres_password"
+  hub_api_key=$(openssl rand -hex 32)
+  cubejs_api_secret=$(openssl rand -hex 32)
+  authzed_token=$(openssl rand -hex 32)
+  authzed_database_password=$(openssl rand -hex 32)
+  write_generated_env_file \
+    ".env" \
+    "$existing_postgres_password" \
+    "$hub_api_key" \
+    "$cubejs_api_secret" \
+    "$authzed_token" \
+    "$authzed_database_password"
   if [ -n "$existing_postgres_password" ]; then
-    echo "🚗 Preserved the existing PostgreSQL password and generated new Hub and Cube secrets in .env."
+    echo "🚗 Preserved the existing PostgreSQL password and AuthZed credentials while refreshing .env."
   else
-    echo "🚗 Generated PostgreSQL, Hub, and Cube secrets in .env successfully!"
+    echo "🚗 Generated PostgreSQL, Hub, Cube, and AuthZed secrets in .env successfully!"
   fi
   
   if [[ -n $mail_from ]]; then
@@ -932,7 +990,7 @@ EOF
       cat >> "$services_snippet_file" << EOF
   rustfs:
     restart: always
-    image: rustfs/rustfs:1.0.0-alpha.93
+    image: rustfs/rustfs:1.0.0-rc.2@sha256:7d6d361c49c08d427250fb59aae5d78df83d644c3405d9ccf4b21cda0b0692d0
     depends_on:
       rustfs-perms:
         condition: service_completed_successfully
@@ -1103,6 +1161,11 @@ EOF
 
   newgrp docker <<END
 
+set -e
+docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate
+docker compose wait formbricks-migrate
+docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 docker compose up -d
 
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
@@ -1145,10 +1208,111 @@ stop_formbricks() {
   echo "🎉 Formbricks instance stopped successfully!"
 }
 
+migrate_legacy_valkey_image() {
+  local compose_file="${1:-docker-compose.yml}"
+  local backup_file="${compose_file}.before-valkey-8.1.9"
+  local temp_file="${compose_file}.tmp"
+
+  if [[ ! -f "$compose_file" ]]; then
+    echo "❌ Cannot update Valkey because $compose_file does not exist."
+    return 1
+  fi
+
+  if ! awk -v legacy_image="$legacy_valkey_image" '
+    function indentation(line) {
+      match(line, /[^ ]/)
+      return RSTART - 1
+    }
+    /^services:[[:space:]]*$/ {
+      in_services=1
+      service_indent=-1
+      next
+    }
+    in_services && /^[^[:space:]#]/ {
+      in_services=0
+      in_redis=0
+    }
+    in_services && /^[ ]+[A-Za-z0-9_-]+:[[:space:]]*$/ {
+      line_indent=indentation($0)
+      if (service_indent < 0) service_indent=line_indent
+      if (line_indent == service_indent) in_redis=($0 ~ /^[ ]+redis:[[:space:]]*$/)
+    }
+    in_redis && /^[[:space:]]+image:[[:space:]]*/ && index($0, legacy_image) { found=1 }
+    END { exit(found ? 0 : 1) }
+  ' "$compose_file"; then
+    return 0
+  fi
+
+  cp -p "$compose_file" "$backup_file"
+  cp -p "$compose_file" "$temp_file"
+
+  if ! awk -v legacy_image="$legacy_valkey_image" -v replacement_image="$multi_arch_valkey_image" '
+    function indentation(line) {
+      match(line, /[^ ]/)
+      return RSTART - 1
+    }
+    /^services:[[:space:]]*$/ {
+      in_services=1
+      service_indent=-1
+    }
+    in_services && /^[^[:space:]#]/ && !/^services:[[:space:]]*$/ {
+      in_services=0
+      in_redis=0
+    }
+    in_services && /^[ ]+[A-Za-z0-9_-]+:[[:space:]]*$/ {
+      line_indent=indentation($0)
+      if (service_indent < 0) service_indent=line_indent
+      if (line_indent == service_indent) in_redis=($0 ~ /^[ ]+redis:[[:space:]]*$/)
+    }
+    in_redis && /^[[:space:]]+image:[[:space:]]*/ && index($0, legacy_image) {
+      sub(legacy_image, replacement_image)
+      replacements++
+    }
+    { print }
+    END { exit(replacements == 1 ? 0 : 1) }
+  ' "$compose_file" >"$temp_file"; then
+    rm -f "$temp_file"
+    echo "❌ Could not update the bundled Valkey image. The original Compose file is unchanged."
+    return 1
+  fi
+
+  mv "$temp_file" "$compose_file"
+
+  if ! sudo docker compose -f "$compose_file" config >/dev/null; then
+    cp -p "$backup_file" "$compose_file"
+    echo "❌ The updated Compose file is invalid. Restored $compose_file from $backup_file."
+    return 1
+  fi
+
+  echo "✅ Updated bundled Valkey to the native amd64/arm64 image. Backup: $backup_file"
+}
+
 update_formbricks() {
   echo "🔄 Updating Formbricks..."
   cd formbricks
+
+  migrate_legacy_valkey_image docker-compose.yml
+
+  if ! grep -Eq '^  authzed-ops:$' docker-compose.yml || ! grep -Eq '^  spicedb:$' docker-compose.yml; then
+    echo "❌ This installation does not yet contain the AuthZed v6 Compose services."
+    echo "Your customized Compose file was not changed. Follow the v6 AuthZed migration guide before updating:"
+    echo "https://formbricks.com/docs/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6"
+    exit 1
+  fi
+
+  if ! grep -Eq '^FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true$' .env; then
+    echo "❌ The AuthZed v6 migration has not been acknowledged for this installation."
+    echo "Back up PostgreSQL, add the documented AuthZed services and secrets, then run the upgrade preparation."
+    echo "After its final check is clean, set FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true in .env and retry."
+    echo "https://formbricks.com/docs/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6"
+    exit 1
+  fi
   sudo docker compose pull
+  # The outbox migration is backward compatible with the still-running v5 application. Apply it before
+  # the release-matched operator checks so the old deployment stays available if preparation blocks.
+  sudo docker compose run --rm formbricks-migrate
+  sudo docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+  sudo docker compose --profile authzed-ops run --rm authzed-ops upgrade check
   sudo docker compose down
   sudo docker compose up -d
   echo "🎉 Formbricks updated successfully!"

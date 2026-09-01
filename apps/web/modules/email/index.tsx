@@ -125,7 +125,7 @@ export const sendVerificationNewEmail = async (
 ): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
-    const token = createEmailChangeToken(id, email);
+    const token = await createEmailChangeToken(id, email);
     const verifyLink = `${WEBAPP_URL}/verify-email-change?token=${encodeURIComponent(token)}`;
 
     const html = await renderNewEmailVerification({ verifyLink, t, ...legalProps });
@@ -332,6 +332,13 @@ export const sendResponseFinishedEmail = async (
     return element;
   });
 
+  // The whitelabel logo is stored as a relative `/storage/...` path, which an email client cannot
+  // resolve — it has no origin to resolve against, so the `<img>` renders broken. Resolve it to an
+  // absolute URL here, exactly like every other email sender does.
+  const logoUrl = organization.whitelabel?.logoUrl
+    ? resolveStorageUrl(organization.whitelabel.logoUrl)
+    : undefined;
+
   const html = await renderResponseFinishedEmail({
     survey,
     responseCount,
@@ -340,6 +347,7 @@ export const sendResponseFinishedEmail = async (
     workspaceId,
     organization,
     elements: elementsWithResolvedUrls,
+    logoUrl,
     t,
     ...legalProps,
   });

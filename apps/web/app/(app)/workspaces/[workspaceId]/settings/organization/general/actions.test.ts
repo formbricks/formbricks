@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { updateOrganizationAISettingsAction, updateOrganizationDisplayTimeZoneAction } from "./actions";
-import { ZOrganizationAISettingsInput, ZOrganizationDisplayTimeZoneInput } from "./schemas";
+import {
+  deleteOrganizationAction,
+  updateOrganizationAISettingsAction,
+  updateOrganizationNameAction,
+} from "./actions";
+import { ZOrganizationAISettingsInput } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   isInstanceAIConfigured: vi.fn(),
-  checkAuthorizationUpdated: vi.fn(),
+  assertCan: vi.fn(),
   deleteOrganization: vi.fn(),
   getOrganization: vi.fn(),
   getIsMultiOrgEnabled: vi.fn(),
@@ -21,8 +25,8 @@ vi.mock("@/lib/utils/action-client", () => ({
   },
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: mocks.checkAuthorizationUpdated,
+vi.mock("@/lib/authorization", () => ({
+  assertCan: mocks.assertCan,
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -53,7 +57,7 @@ describe("organization AI settings actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mocks.checkAuthorizationUpdated.mockResolvedValue(undefined);
+    mocks.assertCan.mockResolvedValue(undefined);
     mocks.getOrganization.mockResolvedValue({
       id: organizationId,
       isAISmartToolsEnabled: false,
@@ -79,7 +83,7 @@ describe("organization AI settings actions", () => {
     });
   });
 
-  test("passes owner and manager roles to the authorization check and updates organization settings", async () => {
+  test("requires organization.manage and updates organization settings", async () => {
     const ctx = {
       user: { id: "user_1", locale: "en-US" },
       auditLoggingCtx: {},
@@ -93,17 +97,9 @@ describe("organization AI settings actions", () => {
 
     const result = await updateOrganizationAISettingsAction({ ctx, parsedInput } as any);
 
-    expect(mocks.checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          schema: ZOrganizationAISettingsInput,
-          data: parsedInput.data,
-          roles: ["owner", "manager"],
-        },
-      ],
+    expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
     expect(mocks.getOrganization).toHaveBeenCalledWith(organizationId);
     expect(mocks.updateOrganization).toHaveBeenCalledWith(organizationId, parsedInput.data);
@@ -125,7 +121,7 @@ describe("organization AI settings actions", () => {
   });
 
   test("propagates authorization failures so members cannot update AI settings", async () => {
-    mocks.checkAuthorizationUpdated.mockRejectedValueOnce(new AuthorizationError("Not authorized"));
+    mocks.assertCan.mockRejectedValueOnce(new AuthorizationError("Not authorized"));
 
     await expect(
       updateOrganizationAISettingsAction({
@@ -143,6 +139,44 @@ describe("organization AI settings actions", () => {
     ).rejects.toThrow(AuthorizationError);
 
     expect(mocks.updateOrganization).not.toHaveBeenCalled();
+  });
+
+  test("requires organization.write for organization name updates", async () => {
+    const ctx = {
+      user: { id: "user_owner", locale: "en-US" },
+      auditLoggingCtx: {},
+    };
+
+    await updateOrganizationNameAction({
+      ctx,
+      parsedInput: {
+        organizationId,
+        data: { name: "Renamed organization" },
+      },
+    } as never);
+
+    expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: "user_owner" }, "organization.write", {
+      type: "organization",
+      id: organizationId,
+    });
+  });
+
+  test("requires organization.write for organization deletion", async () => {
+    const ctx = {
+      user: { id: "user_owner", locale: "en-US" },
+      auditLoggingCtx: {},
+    };
+
+    await deleteOrganizationAction({
+      ctx,
+      parsedInput: { organizationId },
+    } as never);
+
+    expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: "user_owner" }, "organization.write", {
+      type: "organization",
+      id: organizationId,
+    });
+    expect(mocks.deleteOrganization).toHaveBeenCalledWith(organizationId);
   });
 
   test("rejects enabling AI when the instance AI provider is not configured", async () => {
@@ -183,93 +217,6 @@ describe("organization AI settings actions", () => {
     expect(mocks.updateOrganization).toHaveBeenCalledWith(organizationId, {
       isAISmartToolsEnabled: true,
     });
-  });
-
-  test("accepts a valid IANA display time zone", () => {
-    expect(
-      ZOrganizationDisplayTimeZoneInput.parse({
-        displayTimeZone: "Asia/Manila",
-      })
-    ).toEqual({
-      displayTimeZone: "Asia/Manila",
-    });
-  });
-
-  test("accepts null as display time zone (UTC default)", () => {
-    expect(
-      ZOrganizationDisplayTimeZoneInput.parse({
-        displayTimeZone: null,
-      })
-    ).toEqual({
-      displayTimeZone: null,
-    });
-  });
-
-  test("rejects an invalid display time zone", () => {
-    const result = ZOrganizationDisplayTimeZoneInput.safeParse({
-      displayTimeZone: "Manila",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  test("passes owner and manager roles to the authorization check and updates the display time zone", async () => {
-    mocks.updateOrganization.mockResolvedValueOnce({
-      id: organizationId,
-      displayTimeZone: "Asia/Manila",
-    });
-
-    const ctx = {
-      user: { id: "user_1", locale: "en-US" },
-      auditLoggingCtx: {},
-    };
-    const parsedInput = {
-      organizationId,
-      data: {
-        displayTimeZone: "Asia/Manila",
-      },
-    };
-
-    const result = await updateOrganizationDisplayTimeZoneAction({ ctx, parsedInput } as any);
-
-    expect(mocks.checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          schema: ZOrganizationDisplayTimeZoneInput,
-          data: parsedInput.data,
-          roles: ["owner", "manager"],
-        },
-      ],
-    });
-    expect(mocks.updateOrganization).toHaveBeenCalledWith(organizationId, parsedInput.data);
-    expect(result).toEqual({
-      id: organizationId,
-      displayTimeZone: "Asia/Manila",
-    });
-  });
-
-  test("propagates authorization failures so members cannot update the display time zone", async () => {
-    mocks.checkAuthorizationUpdated.mockRejectedValueOnce(new AuthorizationError("Not authorized"));
-
-    await expect(
-      updateOrganizationDisplayTimeZoneAction({
-        ctx: {
-          user: { id: "user_member", locale: "en-US" },
-          auditLoggingCtx: {},
-        },
-        parsedInput: {
-          organizationId,
-          data: {
-            displayTimeZone: "Asia/Manila",
-          },
-        },
-      } as any)
-    ).rejects.toThrow(AuthorizationError);
-
-    expect(mocks.updateOrganization).not.toHaveBeenCalled();
   });
 
   test("allows disabling AI when the instance configuration later becomes invalid", async () => {

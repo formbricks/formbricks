@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import type { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import type { Account } from "@formbricks/types/auth";
-import { OAUTH_ACCOUNT_NOT_LINKED_ERROR } from "@/modules/ee/sso/lib/constants";
+import { OAUTH_ACCOUNT_NOT_LINKED_ERROR, canonicalAccountIssuer } from "@/modules/ee/sso/lib/constants";
 
 export const LINKED_SSO_LOOKUP_SELECT = {
   id: true,
@@ -97,7 +97,10 @@ const syncSsoIdentityForUserWithTx = async ({
         where: {
           id: existingCanonicalAccount.id,
         },
-        data: getAccountTokenUpdate(account),
+        // `issuer` too, and the CANONICAL value (ENG-2555): the row may predate the ENG-2343 backfill
+        // window (NULL) or carry the synthetic form where the provider declares its own — either way
+        // 1.7's account lookup cannot see it until this write corrects it.
+        data: { issuer: canonicalAccountIssuer(provider), ...getAccountTokenUpdate(account) },
       });
     } else {
       await tx.account.update({
@@ -109,6 +112,9 @@ const syncSsoIdentityForUserWithTx = async ({
           type: account.type,
           provider,
           providerAccountId: account.providerAccountId,
+          // Same reason as the create branch below: normalising a legacy row without setting `issuer`
+          // leaves it unmatched by 1.7's account lookup (ENG-2343).
+          issuer: canonicalAccountIssuer(provider),
           ...getAccountTokenUpdate(account),
         },
       });
@@ -118,7 +124,13 @@ const syncSsoIdentityForUserWithTx = async ({
       where: {
         id: existingCanonicalAccount.id,
       },
-      data: getAccountTokenUpdate(account),
+      // `issuer` here too, and this branch is the one that matters most (ENG-2555). It is the branch
+      // every attempt after the first takes, so while it wrote only tokens a row created with a wrong
+      // or NULL issuer could never heal: sign-in could not see it, recovery ran again, and this update
+      // left the bad value untouched. Writing the canonical value makes the next sign-in repair it.
+      // The row's ownership is already asserted above, and the value derives from `provider`, so this
+      // cannot rebind the row to another identity.
+      data: { issuer: canonicalAccountIssuer(provider), ...getAccountTokenUpdate(account) },
     });
   } else {
     await tx.account.create({
@@ -127,6 +139,15 @@ const syncSsoIdentityForUserWithTx = async ({
         type: account.type,
         provider,
         providerAccountId: account.providerAccountId,
+        // 1.7 keys the account on `(issuer, accountId)` and `findAccountByKey` filters on `issuer`, so a
+        // row written with a missing OR non-canonical issuer is invisible to every later sign-in: the
+        // user completes verify-before-link, gets a session, and is pushed back through recovery on the
+        // NEXT sign-in, forever. The migration cannot save them either — it runs once, before this row
+        // exists. NOT the same helper the provider config pins (`ssoAccountIssuer`): google's canonical
+        // issuer is the one upstream declares, not the synthetic form, which is exactly the bug that
+        // shipped here (ENG-2555). `canonicalAccountIssuer` mirrors the backfill's CASE and is pinned
+        // against both the SQL and upstream in constants.test.ts, so the sites cannot drift.
+        issuer: canonicalAccountIssuer(provider),
         ...getAccountTokenUpdate(account),
       },
     });

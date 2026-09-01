@@ -7,7 +7,7 @@ import {
   hasEmailAttribute,
   hasUserIdAttribute,
 } from "@/modules/ee/contacts/lib/contact-attributes";
-import { updateAttributes } from "./attributes";
+import { formatAttributeMessage, updateAttributes } from "./attributes";
 
 vi.mock("@/lib/constants", () => ({
   MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT: 2,
@@ -489,5 +489,32 @@ describe("updateAttributes", () => {
     const transactionCall = vi.mocked(prisma.$transaction).mock.calls[0][0];
     // Both name (coerced from boolean) and email should be upserted
     expect(transactionCall).toHaveLength(2);
+  });
+});
+
+describe("formatAttributeMessage", () => {
+  test("describes the duplicate email/userId checks as workspace-scoped", () => {
+    // The checks behind these two codes call hasEmailAttribute/hasUserIdAttribute with workspaceId,
+    // and the UI renders the same conditions via workspace.contacts.attributes_msg_* — so the
+    // English templates must not describe the scope as an environment.
+    expect(formatAttributeMessage({ code: "email_already_exists", params: {} })).toBe(
+      "The email already exists for this workspace and was not updated."
+    );
+    expect(formatAttributeMessage({ code: "userid_already_exists", params: {} })).toBe(
+      "The userId already exists for this workspace and was not updated."
+    );
+  });
+
+  test("interpolates every occurrence of a param", () => {
+    expect(
+      formatAttributeMessage({
+        code: "attribute_type_validation_error",
+        params: { error: "Not a number", key: "age", dataType: "number" },
+      })
+    ).toBe("Not a number (attribute 'age' has dataType: number)");
+  });
+
+  test("falls back to the raw code when no template exists", () => {
+    expect(formatAttributeMessage({ code: "some_unmapped_code", params: {} })).toBe("some_unmapped_code");
   });
 });

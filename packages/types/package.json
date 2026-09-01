@@ -13,12 +13,12 @@
     "clean": "rimraf node_modules .turbo"
   },
   "dependencies": {
-    "zod": "4.3.6",
-    "zod-openapi": "5.4.6",
+    "zod": "catalog:",
+    "zod-openapi": "catalog:",
     "node-html-parser": "7.1.0"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
-    "typescript": "5.9.3"
+    "typescript": "catalog:"
   }
 }

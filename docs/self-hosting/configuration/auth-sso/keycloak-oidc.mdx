@@ -15,10 +15,13 @@ Integrating Keycloak with your Formbricks instance allows users to log in using 
 - The Formbricks callback URI: `{WEBAPP_URL}/api/auth/oauth2/callback/openid`
 
 <Warning>
-  **Upgrading from v5.1 or earlier?** This path changed in v5.2. The old URI was
-  `{WEBAPP_URL}/api/auth/callback/openid` (without `/oauth2`). Add the new one to your Keycloak client's
-  **Valid redirect URIs** or logins will fail. See the
-  [migration guide](/self-hosting/advanced/migration) for the full list of changed callback URLs.
+  **Upgrading from v5.1 or earlier?** This path changed once, at v5.2:
+
+  - v5.1 and earlier: `{WEBAPP_URL}/api/auth/callback/openid`
+  - v5.2 and later (current): `{WEBAPP_URL}/api/auth/oauth2/callback/openid`
+
+  Upgrading from v5.2 or later needs no change — the callback URL is pinned and does not move with
+  Formbricks' authentication library. See the [migration guide](/self-hosting/advanced/migration).
 </Warning>
 
 ## Setting up Keycloak OIDC
@@ -190,7 +193,7 @@ AUTH_SSO_DEFAULT_TEAM_ID=your-team-id-here
 
   <Accordion title="Authentication fails with a redirect error">
     - Verify the **Valid redirect URI** in your Keycloak client matches exactly: `{WEBAPP_URL}/api/auth/oauth2/callback/openid`
-    - If you upgraded from v5.1 or earlier, note the path changed in v5.2 — the old `/api/auth/callback/openid` URI no longer works on its own.
+    - If you're on v5.1 or earlier, the path is `{WEBAPP_URL}/api/auth/callback/openid` (without `/oauth2`) instead.
     - Check that the OIDC issuer URL is reachable from your Formbricks server. You can test with:
     ```bash
     curl https://your-keycloak-domain.com/realms/your-realm-name/.well-known/openid-configuration

@@ -6,7 +6,7 @@ import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
-import { E2E_TESTING } from "@/lib/constants";
+import { COMMUNITY_WORKSPACE_LIMIT, E2E_TESTING } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hash-string";
 import { getInstanceId } from "@/lib/instance";
@@ -146,7 +146,7 @@ export const getCacheKeys = () => {
 // Default features
 const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   isMultiOrgEnabled: false,
-  workspaces: 3,
+  workspaces: COMMUNITY_WORKSPACE_LIMIT,
   twoFactorAuth: false,
   sso: false,
   whitelabel: false,

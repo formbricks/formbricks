@@ -1,16 +1,8 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { TFunction } from "i18next";
-import {
-  CalendarIcon,
-  ChevronDownIcon,
-  HashIcon,
-  MessageSquareTextIcon,
-  PlusIcon,
-  RefreshCwIcon,
-  ToggleLeftIcon,
-  TypeIcon,
-} from "lucide-react";
+import { ChevronDownIcon, MessageSquareTextIcon, PlusIcon, RefreshCwIcon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -19,6 +11,7 @@ import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-sou
 import { getFeedbackRecordContactsAction, listFeedbackRecordsAction } from "@/lib/feedback-source/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { enrichmentStatusKeys } from "@/modules/ee/unify-feedback/enrichment-status/lib/query";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -32,6 +25,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { deleteFeedbackRecordAction } from "../actions";
+import { FieldTypeIcon } from "../lib/field-type-icons";
 import { formatFieldType, formatSourceType, resolveFeedbackDisplayText } from "../lib/utils";
 import { CsvImportModal } from "../sources/components/csv-import-modal";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
@@ -41,18 +35,6 @@ import { TranslatedBadge } from "./translated-badge";
 const RECORDS_PER_PAGE = 50;
 // Must not exceed the getFeedbackRecordContactsAction input cap (`userIds` is `.max(1000)`).
 const CONTACT_RESOLVE_BATCH_SIZE = 1000;
-
-const FIELD_TYPE_ICONS: Record<string, React.ReactNode> = {
-  text: <TypeIcon className="size-3.5" />,
-  categorical: <HashIcon className="size-3.5" />,
-  nps: <HashIcon className="size-3.5" />,
-  csat: <HashIcon className="size-3.5" />,
-  ces: <HashIcon className="size-3.5" />,
-  rating: <HashIcon className="size-3.5" />,
-  number: <HashIcon className="size-3.5" />,
-  boolean: <ToggleLeftIcon className="size-3.5" />,
-  date: <CalendarIcon className="size-3.5" />,
-};
 
 // resolvedText (translation-preferred) is computed once by the caller; null falls through to other types.
 const formatValue = (
@@ -103,6 +85,10 @@ export const FeedbackRecordsTable = ({
   canDeleteRecords,
 }: Readonly<FeedbackRecordsTableProps>) => {
   const { t, i18n } = useTranslation();
+  // Reaches the same query client as the enrichment-status banner (provided above this table by
+  // `feedback-records-page-client.tsx`), so a CSV import here can invalidate that read instead of
+  // leaving it stale until a manual reload — see EnrichmentStatus's doc comment.
+  const queryClient = useQueryClient();
   const [records, setRecords] = useState<FeedbackRecordData[]>(initialRecords);
   const [cursors, setCursors] = useState<Record<string, string>>(initialCursors);
   const [contactIdByUserId, setContactIdByUserId] =
@@ -253,6 +239,15 @@ export const FeedbackRecordsTable = ({
     setIsRefreshing(false);
     toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
     void resolveContactsForRecords(mergedRecords);
+  };
+
+  // A CSV import creates records this list and the enrichment-status banner above it don't know
+  // about yet — neither refetches on its own. Refresh the list the same way the manual Refresh
+  // button does, and invalidate the banner's read so its next poll (or mount) picks up the new
+  // backlog instead of staying dark until someone reloads the page.
+  const handleImportComplete = () => {
+    void handleRefresh();
+    void queryClient.invalidateQueries({ queryKey: enrichmentStatusKeys.all });
   };
 
   const handleLoadMore = async () => {
@@ -514,6 +509,7 @@ export const FeedbackRecordsTable = ({
           feedbackSourceId={csvImportSource.id}
           workspaceId={workspaceId}
           fieldMappings={csvImportSource.fieldMappings}
+          onImportComplete={handleImportComplete}
         />
       )}
     </>
@@ -592,7 +588,7 @@ const FeedbackRecordRow = ({
       </td>
       <td className="px-4 py-3 whitespace-nowrap">
         <span className="inline-flex items-center gap-1 text-slate-600">
-          {FIELD_TYPE_ICONS[record.field_type] ?? <HashIcon className="size-3.5" />}
+          <FieldTypeIcon fieldType={record.field_type} className="size-3.5" />
           {formatFieldType(record.field_type)}
         </span>
       </td>

@@ -4,12 +4,184 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## v6
+
+Formbricks v6 replaces the legacy authorization evaluator with AuthZed SpiceDB. PostgreSQL remains the source
+of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback, so an existing
+installation must migrate through the bridge-compatible v5 release identified in the v6 release notes.
+
+Before selecting a v6 image:
+
+1. Back up the Formbricks and SpiceDB PostgreSQL databases, secrets, deployment configuration, image versions,
+   and canonical schema digest.
+2. Merge the release-matched AuthZed deployment services or Helm values without overwriting proxy, storage,
+   SMTP, or external-datastore customization.
+3. Run the v6 database migrations while the bridge application remains available.
+4. Run `formbricks-authzed upgrade prepare`, then require `formbricks-authzed upgrade check` to exit `0`.
+5. For one-click or Compose, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. For Helm, set
+   `authzed.migrationAcknowledged=true` in the v6 upgrade values.
+6. Deploy v6 and verify critical allow, deny, revocation, and cross-tenant cases.
+
+The update scripts and chart fail before replacing the running release when the deployment contract,
+acknowledgement, schema, outbox, or relationship graph is not ready. Do not bypass the acknowledgement to silence
+a failed gate. See [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6)
+for Docker and Kubernetes commands, guarded schema replacement, backups, repair, and rollback.
+
+The moving `latest` image tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable
+publication. Existing installations opt into v6 explicitly during that migration window.
+
 ## v5.4
 
-v5.4 carries one breaking change, and it is narrow: it affects **API keys** used against the Feedback
-Records API or the MCP server, and nothing else. It needs no environment variables and no database
-migrations. If you do not use Unify Feedback, or you only reach it through the UI, there is nothing to do
-for it.
+v5.4 carries one application-level breaking change, and it is narrow: it affects **API keys** used against
+the Feedback Records API or the MCP server. If you do not use Unify Feedback, or you only reach it through
+the UI, there is nothing to do for it. The release adds no new environment variables. It does ship
+**seven database migrations**, applied automatically during the upgrade. Six are quick — new columns and
+tables, two of them data migrations that run on their own. The seventh builds an index on the `Response`
+table, and it is the one that needs scheduling: it blocks response writes while it builds. Other
+migrations add indexes too, but only on new or small tables. See
+[Database migrations](#database-migrations) before scheduling the upgrade.
+
+v5.4 also upgrades the **Better Auth** authentication core to 1.7. That upgrade needs no manual database
+step — every migration is additive and applies automatically, including the backfills over existing rows —
+and **your SSO callback URLs do not change**. It carries one narrow exception, and only for custom code: an
+MCP access token is now bound to the session that authorized it, so an integration that caches one across
+sessions has to fetch a fresh token — see
+[MCP access tokens now end with their session](#mcp-access-tokens-now-end-with-their-session).
+
+The bundled Valkey image moves from an amd64-only 8.1.1 image to the native amd64/arm64 Valkey 8.1.9 Alpine
+image. Fresh Docker and Helm installations receive it automatically. Existing installations that retain an
+older Compose file or explicitly reuse the previous Helm digest need the one-time update below.
+
+### Database migrations
+
+All seven migrations apply automatically during the upgrade. Two want something from you first: one needs
+`WEBAPP_URL` set if you use MCP OAuth, and one deserves a scheduling decision on large instances. So here
+is the full list rather than a summary:
+
+| Migration | What it does | Impact |
+| --- | --- | --- |
+| `add_feedback_source_import_mode` | Adds `FeedbackSource.import_mode`, which controls whether a source's historical import includes partial responses. Existing sources take the `completedOnly` default, which aligns the historical import with the live ingestion path — that path only ever ran on finished responses, while the import used to pull partials too. Records already in Hub are left alone, so this shows up the next time you run an import: set a source to `all` if it should keep importing partial responses. | Instant |
+| `add_organization_display_time_zone` | Adds the nullable `Organization.displayTimeZone`, which formats response timestamps in file exports and in the payloads pushed to Google Sheets, Slack and Airtable (Notion is passed a raw date and is unaffected). | Instant |
+| `eng_2343_better_auth_17_resource_model` | The Better Auth 1.7 schema: the `oauthResource` tables, resource columns on OAuth tokens and consents, `alg`/`crv` on `jwks`, and `Account.issuer` with its backfill. Details in the Better Auth 1.7 section below. | Additive and fast. The issuer backfill is what keeps password sign-in working on 1.7, so it must not be skipped — it runs on its own, listed here so it is not mistaken for optional |
+| `eng_2343_backfill_oauth_resource_links` | Data migration linking existing MCP OAuth clients, refresh tokens and consents to this instance's `${WEBAPP_URL}/api/mcp` resource, so already-registered MCP clients survive the upgrade. It is a no-op only when the instance has no OAuth client at all, which in practice means a fresh install. | **Set `WEBAPP_URL` before upgrading if you use MCP OAuth.** The resource identifier is derived from it, so on an instance that has OAuth clients an unset or unparseable `WEBAPP_URL` fails this migration and stops the upgrade — set it and re-run |
+| `add_feedback_source_element_scope` | Adds `FeedbackSource.elementScope`, which controls whether a source picks up survey questions added later. Existing sources keep the current behaviour (`specific`). | Instant |
+| `add_response_survey_finished_index` | Adds an index on `Response(surveyId, finished)` so the survey list's response counts are served from the index instead of scanning the table. | **Blocks response writes while it builds — see the warning below** |
+| `repair_account_issuer` | Data migration rewriting `Account.issuer` rows that were written with a non-canonical value, which locked the affected Google SSO users into a sign-in loop. Idempotent; a no-op when nothing is wrong. | Fast |
+
+<Warning>
+  `add_response_survey_finished_index` builds its index with a plain `CREATE INDEX`, not `CREATE INDEX
+  CONCURRENTLY` — migrations run inside a transaction, and Postgres does not allow concurrent builds
+  there. The build holds a `SHARE` lock on `Response`: reads keep working, but **survey responses cannot
+  be written until the index is built**. `Response` is usually the largest table on an instance. On small
+  instances the build takes seconds; if yours holds millions of responses, run the upgrade in a window
+  where a short pause in response collection is acceptable.
+
+  Neither documented deployment avoids this, so plan the window either way. On Kubernetes the chart runs
+  migrations in their own job while the pods already running keep serving traffic, so the responses
+  arriving during the build are the ones that block. On Docker Compose the app container does **not** wait
+  for `formbricks-migrate` — it has no `depends_on` on that service and skips startup migrations itself —
+  so after the documented `docker compose down && docker compose up -d` the two come up in parallel: you
+  get downtime while the app boots, and then blocked writes for however much of the index build is left
+  once it starts serving.
+</Warning>
+
+None of the seven constrains a rollback. v5.3 reads none of the new columns and tables, and the two
+`NOT NULL` columns added to existing tables both carry a database default, so a v5.3 instance keeps
+writing to those tables exactly as before. Rolling the application images / Helm values back to v5.3 is
+safe without touching the database.
+
+Coming back **forward** has one catch, and only if accounts were created while you were rolled back.
+`Account.issuer` does not exist in v5.3, so any account signed up or linked on that version is written
+without one — and both issuer backfills are already recorded as applied, so rolling forward does not
+re-run them. Better Auth 1.7 keys accounts on `(issuer, accountId)`, which makes those rows invisible to
+password sign-in and password reset. SSO accounts repair themselves on the next successful sign-in;
+password accounts have no such path. If anyone signed up during the rollback window, re-run the repair
+after rolling forward. This is the statement the `repair_account_issuer` migration runs, and it is
+idempotent — it matches the providers v5.4 ships, so if you have since enabled one that is not listed
+here, take the current mapping from that migration rather than this copy:
+
+```sql
+UPDATE "Account"
+SET "issuer" = CASE
+  WHEN "provider" = 'credential' THEN 'local:credential'
+  WHEN "provider" = 'google' THEN 'https://accounts.google.com'
+  ELSE 'local:oauth:' || "provider"
+END
+WHERE "issuer" IS DISTINCT FROM (
+  CASE
+    WHEN "provider" = 'credential' THEN 'local:credential'
+    WHEN "provider" = 'google' THEN 'https://accounts.google.com'
+    ELSE 'local:oauth:' || "provider"
+  END
+);
+```
+
+### Bundled Valkey 8.1.9 Upgrade (action required for some self-hosted deployments)
+
+The old bundled digest selects only `linux/amd64`. The new digest selects the matching native image on
+`linux/amd64` and `linux/arm64`, without requiring QEMU or `binfmt`. Valkey 8.1.9 also contains upstream
+security fixes that are not present in 8.1.1.
+
+<Warning>
+  Valkey stores sessions, queues, cache entries and rate-limit state in the named `redis` volume with AOF
+  enabled. Do not run `docker compose down -v`, delete the volume, or use `FLUSHDB` during this upgrade.
+  Recreating only the container preserves the volume. Expect a brief interruption while Valkey restarts.
+</Warning>
+
+<Tabs>
+  <Tab title="One-Click">
+    Download the current stable updater so it can migrate the exact old Valkey pin in your existing Compose
+    file. It creates `formbricks/docker-compose.yml.before-valkey-8.1.9`, validates the updated Compose file,
+    and restores the backup if validation fails. Custom Valkey images are left unchanged.
+
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh \
+      -o formbricks.sh
+    chmod +x formbricks.sh
+    ./formbricks.sh update
+    ```
+  </Tab>
+  <Tab title="Docker Compose">
+    Back up your Compose file before changing it:
+
+    ```bash
+    cp docker-compose.yml docker-compose.yml.before-valkey-8.1.9
+    ```
+
+    Then replace the `redis` service's old image with the new multi-architecture index:
+
+    ```yaml
+    image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+    ```
+
+    Validate the file, then pull and recreate only Valkey:
+
+    ```bash
+    docker compose config >/dev/null
+    docker compose pull redis
+    docker compose up -d --no-deps --force-recreate redis
+    docker compose exec redis valkey-cli ping
+    docker compose exec redis valkey-server --version
+    redis_image_id=$(docker inspect --format '{{.Image}}' "$(docker compose ps -q redis)")
+    docker image inspect --format '{{.Architecture}}' "$redis_image_id"
+    ```
+  </Tab>
+  <Tab title="Helm">
+    A normal upgrade with the current chart uses the new default digest. If you explicitly set
+    `redis.image.digest`, pass a complete older values file, or use `--reuse-values`, override it during the
+    upgrade:
+
+    ```bash
+    helm upgrade formbricks formbricks/formbricks \
+      --reuse-values \
+      --set-string redis.image.repository=valkey/valkey \
+      --set-string redis.image.digest=sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+    ```
+
+    The Valkey StatefulSet rolls while its existing PVC remains attached. Check the rendered image and
+    `valkey-cli ping` after the rollout.
+  </Tab>
+</Tabs>
 
 ### Feedback Record Mutations by API Key (action required for some integrations)
 
@@ -55,7 +227,7 @@ HAVING COUNT(w."workspaceId") > 1;
 Most instances return no rows: a workspace is normally assigned a single dataset, so sharing only exists
 where an administrator deliberately assigned a second workspace. For any row that does come back, an
 integration that mutates records in that dataset has two ways forward — assign the dataset to a single
-workspace under **Settings → Organization → Feedback Datasets**, or have the integration authenticate as
+workspace under **Settings → Organization → Datasets**, or have the integration authenticate as
 an organization owner or manager instead of with a workspace-scoped key.
 
 #### What to do before upgrading
@@ -69,9 +241,107 @@ an organization owner or manager instead of with a workspace-scoped key.
 
 #### Rollback
 
-This change adds no migrations and touches no schema, so rolling the application images / Helm values back
-to v5.3 undoes it with nothing to restore. An API key raised to `manage` in step 2 keeps working on v5.3 —
+This access-rule change itself ships no migration and touches no schema (the release's migrations are
+listed [above](#database-migrations)), so rolling the application images / Helm values back to v5.3 undoes
+it with nothing to restore. An API key raised to `manage` in step 2 keeps working on v5.3 —
 `manage` was always accepted wherever `write` was — so that step does not need reverting either.
+
+### Better Auth 1.7 upgrade (no action required for most instances)
+
+v5.4 upgrades the Better Auth authentication core from the 1.6 line to 1.7, which fixes
+[GHSA-p2fr-6hmx-4528](https://github.com/advisories/GHSA-p2fr-6hmx-4528): MCP OAuth access-token audiences
+are now bound to the resource a user actually approved during authorization, instead of trusting whatever
+the client requested. This is a coupled core upgrade — it touches login, sessions, 2FA, SSO and MCP OAuth —
+but for self-hosted instances it needs no manual database step. Every schema change is additive and nullable,
+and the required backfills (account identity, existing OAuth clients, refresh tokens, consents) run
+automatically during the upgrade — they are the two `eng_2343` entries in the
+[Database migrations](#database-migrations) table above.
+
+The migration also adds two nullable columns, `alg` and `crv`, to the `jwks` table that holds your
+instance's JWT signing keys. Keys created before the upgrade keep working untouched — Better Auth reads a
+null `alg` as the default algorithm — so there is nothing to backfill, but the columns must exist before
+the new version mints its next key.
+
+#### AZUREAD_TENANT_ID: set a concrete tenant for full id_token verification
+
+Better Auth 1.7 verifies Microsoft id_tokens against the issuer advertised by the tenant's OpenID
+discovery document whenever `AZUREAD_TENANT_ID` names a concrete tenant — a Directory (tenant) ID GUID or
+a verified domain. That is strictly stronger than v5.3 and needs no action.
+
+Two of Microsoft's multi-tenant authorities are different. `common` and `organizations` advertise the
+literal placeholder `https://login.microsoftonline.com/{tenantid}/v2.0` as their issuer, so verifying
+real tokens against it fails every Microsoft sign-in with `?error=unable_to_get_user_info`. Formbricks
+therefore handles those two the way it already handles an unset `AZUREAD_TENANT_ID`: sign-in identity
+comes from Microsoft's userinfo endpoint over a client-authenticated call (the v5.3 behavior) and
+id_tokens are not verified. The authority you configure still applies at sign-in, so `organizations`
+keeps restricting sign-in to work/school accounts, and an unset value behaves as `common`. Formbricks
+logs a warning at startup when either is set and Microsoft SSO is enabled. To get full id_token
+verification, set your Directory (tenant) ID instead.
+
+`consumers` needs no action and is not affected: every personal Microsoft account lives in one
+well-known tenant, so that authority advertises a real issuer and keeps full id_token verification.
+
+#### SSO callback URLs are unchanged
+
+Your SSO callback URLs stay exactly as they are:
+
+| Provider | Callback URL | Action required? |
+| --- | --- | --- |
+| Azure AD / Entra ID | `https://your-domain.com/api/auth/oauth2/callback/azuread` | No |
+| Generic OIDC / Keycloak | `https://your-domain.com/api/auth/oauth2/callback/openid` | No |
+| SAML (BoxyHQ / Jackson) | `https://your-domain.com/api/auth/oauth2/callback/saml` | No |
+| Google / GitHub | `https://your-domain.com/api/auth/callback/{provider}` | No |
+
+Better Auth 1.7 rebuilds its generic-OAuth support on top of the built-in social-provider route, which
+would otherwise have moved these three callbacks to `/api/auth/callback/{providerId}` and required you to
+register a new redirect URI at your identity provider. OAuth requires redirect URIs to match exactly, so a
+path change means editing every provider configuration by hand.
+
+Formbricks pins the callback URL instead, so it no longer follows the authentication library's internal
+routing. The URLs above are the ones introduced in v5.2 and they are now a stable part of the Formbricks
+API — a future authentication-core upgrade will not move them either.
+
+<Note>
+  The table writes `your-domain.com` as your `WEBAPP_URL`, which is correct for a default install. If you
+  set `BETTER_AUTH_URL` or `NEXTAUTH_URL` to a different origin, the callback lives on **that** origin
+  instead — it is derived from the same auth base URL Better Auth itself uses, not from `WEBAPP_URL`.
+  Either way it is unchanged by this upgrade.
+</Note>
+
+<Note>
+  Nothing to do, and nothing to undo. If you added a `/api/auth/callback/{providerId}` redirect URI in
+  advance based on an earlier draft of these notes, leaving it registered is harmless — most identity
+  providers accept several redirect URIs, and Formbricks simply will not use it.
+</Note>
+
+#### MCP access tokens now end with their session
+
+An MCP access token used to stay valid until its own expiry, independently of the session that authorized
+it. In 1.7 it is bound to that session: once the session ends — the user signs out, or the session is
+revoked — the token is inactive. `/introspect` reports `active: false` for it and
+`/api/auth/oauth2/userinfo` rejects it, rather than honouring it until its TTL runs out.
+
+This is upstream hardening, and it is the stricter of the two behaviours: a token that outlives the sign-out
+which created it is exactly what a revocation is supposed to stop.
+
+It applies to **access** tokens. A refresh token granted `offline_access` deliberately survives the session
+ending, per OIDC Back-Channel Logout 1.0 §2.7, so that long-lived API access can outlive a browser session —
+which is what MCP clients rely on. Signing out is therefore not a way to cut a client off permanently.
+
+**No action is required.** MCP clients re-authorize on their own — Claude Code and MCP Inspector both do —
+so a user who signs out and back in sees nothing. It is listed here for one case only: a custom integration
+that caches a Formbricks MCP access token and reuses it across sessions will start receiving rejections
+where it previously succeeded, and should obtain a fresh token instead of treating the cached one as valid
+until its expiry.
+
+#### Rollback (Better Auth 1.7)
+
+The `Account.issuer` column and the new `oauthResource`, `oauthClientResource` and `oauthClientAssertion`
+tables are additive and nullable, and are not read by v5.3, so rolling the application images / Helm values
+back to v5.3 is safe without touching the database. SSO needs no attention in either direction: v5.3 and
+v5.4 use the same callback URLs. If accounts are created while you are rolled back, see the
+[rollback note above](#database-migrations) before rolling forward — `Account.issuer` is the one value a
+v5.3 instance cannot write.
 
 ## v5.3
 

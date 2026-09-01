@@ -78,7 +78,7 @@ describe("signupPolicyBeforeHandler", () => {
 
   test("ignores every path other than the credential sign-up route", async () => {
     closeTheInstance();
-    for (const path of ["/sign-in/email", "/reset-password", "/oauth2/callback/openid", "/get-session"]) {
+    for (const path of ["/sign-in/email", "/reset-password", "/callback/openid", "/get-session"]) {
       await expect(signupPolicyBeforeHandler({ path } as never)).resolves.toBeUndefined();
     }
   });

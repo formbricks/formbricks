@@ -19,23 +19,26 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "vitest run",
-    "clean": "rimraf .turbo node_modules dist"
+    "test:coverage": "vitest run --coverage",
+    "clean": "rimraf .turbo node_modules coverage dist"
   },
   "dependencies": {
     "@formbricks/types": "workspace:*",
     "@react-email/components": "1.0.12",
     "@react-email/render": "2.0.6",
-    "clsx": "2.1.1",
-    "lucide-react": "0.577.0",
-    "react": "19.2.6",
+    "clsx": "catalog:",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
     "react-email": "5.2.11",
-    "tailwind-merge": "3.5.0"
+    "tailwind-merge": "catalog:"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
-    "@types/react": "19.2.14",
-    "typescript": "5.9.3",
-    "vitest": "4.1.6"
+    "@types/react": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

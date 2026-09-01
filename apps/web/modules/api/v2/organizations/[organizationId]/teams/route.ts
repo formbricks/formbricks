@@ -26,7 +26,13 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { query, params } }) => {
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Read)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Read
+        ))
+      ) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "organizationId", issue: "unauthorized" }],
@@ -53,7 +59,13 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { body, params }, auditLog }) => {
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Write
+        ))
+      ) {
         return handleApiError(
           request,
           {

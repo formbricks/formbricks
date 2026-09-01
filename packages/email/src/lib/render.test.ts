@@ -173,6 +173,33 @@ describe("legal footer", () => {
   });
 });
 
+describe("custom branding", () => {
+  test("response-finished notification falls back to the Formbricks logo when no organization logo is set", async () => {
+    const html = await renderResponseFinishedEmail({
+      ...exampleData.responseFinishedEmail,
+      elements: responseFinishedElements,
+      t,
+    });
+
+    expect(html).toContain('data-testid="default-logo-image"');
+    expect(html).not.toContain('data-testid="logo-image"');
+  });
+
+  test("response-finished notification renders the organization's custom logo when set", async () => {
+    const customLogoUrl = "https://example.com/custom-logo.png";
+    const html = await renderResponseFinishedEmail({
+      ...exampleData.responseFinishedEmail,
+      elements: responseFinishedElements,
+      logoUrl: customLogoUrl,
+      t,
+    });
+
+    expect(html).toContain('data-testid="logo-image"');
+    expect(html).toContain(customLogoUrl);
+    expect(html).not.toContain('data-testid="default-logo-image"');
+  });
+});
+
 describe("Tailwind render engine", () => {
   // `@react-email/tailwind` — not anything configured in this package — decides which
   // Tailwind version compiles the template classes. Pin that contract: these utilities

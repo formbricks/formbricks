@@ -44,7 +44,13 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
         });
       }
 
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Read)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Read
+        ))
+      ) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "organizationId", issue: "unauthorized" }],
@@ -84,7 +90,13 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
         );
       }
 
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Write
+        ))
+      ) {
         return handleApiError(
           request,
           {
@@ -160,7 +172,13 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
         );
       }
 
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Write
+        ))
+      ) {
         return handleApiError(
           request,
           {

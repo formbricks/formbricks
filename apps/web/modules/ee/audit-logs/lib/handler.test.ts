@@ -313,6 +313,21 @@ describe("withAuditLogging", () => {
     expect(callArgs.target.id).toBe("chart-1");
   });
 
+  test("resolves targetId for feedback source target type", async () => {
+    const feedbackSourceCtx = {
+      ...mockCtxBase,
+      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, feedbackSourceId: "feedback-source-1" },
+    };
+    const handlerImpl = vi.fn().mockResolvedValue("ok");
+    const wrapped = OriginalHandler.withAuditLogging("created", "feedbackSource", handlerImpl);
+    await wrapped({ ctx: feedbackSourceCtx as any, parsedInput: mockParsedInput });
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
+    const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
+    expect(callArgs.target.type).toBe("feedbackSource");
+    expect(callArgs.target.id).toBe("feedback-source-1");
+  });
+
   test("resolves targetId for dashboard target type", async () => {
     const dashCtx = {
       ...mockCtxBase,

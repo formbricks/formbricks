@@ -9,7 +9,7 @@ import { FORMBRICKS_CLIENT_IP_HEADER, resolveClientIp } from "@/lib/utils/client
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getProxySession } from "@/modules/auth/lib/proxy-session";
 
-const handleAuth = async (request: NextRequest): Promise<Response | null> => {
+const handleAuth = async (request: NextRequest): Promise<NextResponse | null> => {
   const session = await getProxySession(request);
 
   if (isAuthProtectedRoute(request.nextUrl.pathname) && !session) {
@@ -34,7 +34,7 @@ const handleAuth = async (request: NextRequest): Promise<Response | null> => {
 /**
  * Handle domain-aware routing based on PUBLIC_URL and WEBAPP_URL
  */
-const handleDomainAwareRouting = (request: NextRequest): Response | null => {
+const handleDomainAwareRouting = (request: NextRequest): NextResponse | null => {
   try {
     const publicDomainConfigured = isPublicDomainConfigured();
 
