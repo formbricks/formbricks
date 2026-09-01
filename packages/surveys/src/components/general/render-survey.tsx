@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
-import { hasSurveyInstructions } from "@/lib/survey-page";
+import { getSurveyDisplayName, hasSurveyInstructions } from "@/lib/survey-page";
 import { getSurveyLanguageTag, isRTLLanguage } from "@/lib/utils";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
@@ -106,12 +106,13 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
       onClose={close}
       isOpen={isOpen}
       dir={dir}
-      surveyName={props.survey.name}
+      surveyName={getSurveyDisplayName(props.survey.name)}
       hasInstructions={hasSurveyInstructions(props.survey)}
       lang={languageTag}>
       <Survey
         {...props}
         onLanguageChange={handleLanguageChange}
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- renamed to autoFocusEnabled; focus is imperative
         autoFocus={autoFocus}
         clickOutside={hasOverlay ? props.clickOutside : true}
         onClose={close}

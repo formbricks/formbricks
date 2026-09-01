@@ -27,7 +27,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         throw new AuthenticationError("Invite disabled");
       }
 
-      // Owner-only — see `SETUP_INVITE_ROLES` for why this path is narrower than the org settings
+      // Owner-only — see `SETUP_INVITE_ACTION` for why this path is narrower than the org settings
       // invite path.
       await checkSetupInviteAuthorization(ctx.user.id, parsedInput.organizationId);
 

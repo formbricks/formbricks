@@ -12,6 +12,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import {
   countFeedbackRecords,
   createFeedbackRecord,
@@ -77,6 +78,11 @@ import {
  */
 
 const CACHE = "private, no-store" as const;
+
+const getMutationAssignmentPermission = (
+  authentication: TV3Authentication,
+  apiKeyPermission: Extract<TTeamPermission, "readWrite" | "manage">
+): TTeamPermission => (authentication && "apiKeyId" in authentication ? apiKeyPermission : "read");
 
 /**
  * Build the Hub create payload. This field list *is* the allowlist — never a spread of the input — so
@@ -790,7 +796,7 @@ export async function updateV3FeedbackRecord({
       authentication,
       workspaceId,
       datasetId,
-      minPermission: "readWrite",
+      minPermission: getMutationAssignmentPermission(authentication, "readWrite"),
       requestId,
       instance,
     });
@@ -917,7 +923,7 @@ export async function deleteV3FeedbackRecord({
       datasetId,
       // `manage`, matching the gateway's DELETE route and `methodPermissionMap` everywhere else in the
       // API. Both delete paths had to move or the bar would only apply to one of them (ENG-2083).
-      minPermission: "manage",
+      minPermission: getMutationAssignmentPermission(authentication, "manage"),
       requestId,
       instance,
     });

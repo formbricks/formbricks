@@ -1,4 +1,7 @@
+// Imported from the dependency-free constants module rather than from `./js`: a value import of
+// `@formbricks/types/js` pulls its zod schema graph into the widget bundle (+94 kB on the UMD build).
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
+import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 
 /** Id of the visually-hidden region holding the survey's persistent instructions. */
 export const SURVEY_INSTRUCTIONS_ID = "fb__survey-instructions";
@@ -41,6 +44,26 @@ export const getSurveyPagePosition = (
   // Not a block: an ending card, or an id that no longer resolves after the survey was edited
   // mid-session. The last page either way.
   return { index: total, total };
+};
+
+/**
+ * The survey name to show a respondent, or `undefined` when there is none to show.
+ *
+ * A survey delivered by the JS widget is fetched from the public client API, which deliberately
+ * replaces every name with a placeholder so names are not exposed over an unauthenticated endpoint
+ * (ENG-808). That placeholder is an internal deprecation notice, so rendering it is worse than
+ * rendering nothing: it became the dialog's accessible name and its only heading on every app
+ * survey, which is what a screen reader then announced. Treat it as "this survey has no name" and
+ * let the callers fall back the way they already do for a survey rendered without one.
+ *
+ * Link surveys are unaffected — their name comes from the server component, never from this
+ * endpoint, so it never matches the placeholder.
+ *
+ * Also drops a name that is only whitespace, which would name the dialog with nothing at all.
+ */
+export const getSurveyDisplayName = (name: string | undefined): string | undefined => {
+  if (!name || name === PUBLIC_API_SURVEY_NAME_PLACEHOLDER) return undefined;
+  return name.trim().length > 0 ? name : undefined;
 };
 
 /**

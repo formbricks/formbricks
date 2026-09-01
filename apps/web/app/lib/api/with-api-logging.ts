@@ -11,6 +11,7 @@ import {
   isIntegrationRoute,
   isManagementApiRoute,
 } from "@/app/middleware/endpoint-validator";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getSession } from "@/modules/auth/lib/session";
@@ -350,7 +351,10 @@ export const withV1ApiWrapper = <TResult extends { response: Response; error?: u
     }
 
     // === Handler Execution ===
-    const { result, error } = await executeHandler(handler, req, props, auditLog, authentication);
+    const execute = () => executeHandler(handler, req, props, auditLog, authentication);
+    const { result, error } = authentication
+      ? await withAuthorizationSurface("api_v1", execute)
+      : await execute();
     const res = result.response;
     const reportedError = result.error ?? error;
 

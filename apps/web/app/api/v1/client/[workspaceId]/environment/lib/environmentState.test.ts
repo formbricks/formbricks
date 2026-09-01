@@ -111,7 +111,6 @@ const mockSurveys: TSurvey[] = [
     endings: [],
     followUps: [],
     isBackButtonHidden: false,
-    isSingleResponsePerEmailEnabled: false,
     isVerifyEmailEnabled: false,
     workspaceOverwrites: null,
     showLanguageSwitch: false,

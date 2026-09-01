@@ -43,31 +43,12 @@ interface PersonalLinksFormData {
   expiryDate: Date | null;
 }
 
-// Custom DatePicker component with date restrictions
-const RestrictedDatePicker = ({
-  date,
-  updateSurveyDate,
-}: {
-  date: Date | null;
-  updateSurveyDate: (date: Date | null) => void;
-}) => {
-  // Get tomorrow's date
+// A personal link has to expire in the future, so the calendar starts at tomorrow.
+const getTomorrow = (): Date => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
-
-  const handleDateUpdate = (date: Date) => {
-    updateSurveyDate(date);
-  };
-
-  return (
-    <DatePicker
-      date={date}
-      updateSurveyDate={handleDateUpdate}
-      minDate={tomorrow}
-      onClearDate={() => updateSurveyDate(null)}
-    />
-  );
+  return tomorrow;
 };
 
 export const PersonalLinksTab = ({
@@ -77,7 +58,7 @@ export const PersonalLinksTab = ({
   isFormbricksCloud,
   enterpriseLicenseRequestFormUrl,
 }: PersonalLinksTabProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { workspace } = useWorkspace();
 
   const form = useForm<PersonalLinksFormData>({
@@ -233,7 +214,13 @@ export const PersonalLinksTab = ({
               <FormItem>
                 <FormLabel>{t("workspace.surveys.share.personal_links.expiry_date_optional")}</FormLabel>
                 <FormControl>
-                  <RestrictedDatePicker date={field.value} updateSurveyDate={field.onChange} />
+                  <DatePicker
+                    value={field.value ?? null}
+                    locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
+                    minDate={getTomorrow()}
+                    onChange={field.onChange}
+                    onClear={() => field.onChange(null)}
+                  />
                 </FormControl>
                 <FormDescription>
                   {t("workspace.surveys.share.personal_links.expiry_date_description")}

@@ -1,14 +1,22 @@
 ---
 title: "Dashboards & Charts"
+sidebarTitle: "Overview"
 description: "Visualize Feedback Records and group charts onto shareable dashboards."
 icon: "chart-line"
 ---
 
 Dashboards & Charts let you turn Feedback Records into visual analytics. A **Chart** is a single visualization scoped to one Feedback Dataset. A **Dashboard** is a grid of charts you can share with your team.
 
+Charts read Feedback Records, not survey responses. A workspace therefore needs a **Feedback Dataset** and at least
+one **Feedback Source** before any chart has data - see the guide below for that path end to end.
+
+<Card title="Creating your first charts" icon="rocket" href="/unify-feedback/dashboards-charts/creating-your-first-charts">
+  From the NPS template to a shareable dashboard, with three hands-on CX use cases.
+</Card>
+
 ## Charts
 
-Charts live under **Workspace → Charts**. Each chart is a query plus a visualization config.
+Charts live under **Analyze → Analysis**. Each chart is a query plus a visualization config.
 
 ### Available chart types
 
@@ -34,7 +42,7 @@ The AI builder requires **Smart functionality (AI)** to be enabled at the organi
 
 ## Dashboards
 
-Dashboards live under **Workspace → Dashboards**. Each dashboard is a grid you can resize and arrange.
+Dashboards live under **Analyze → Analysis**, alongside charts. Each dashboard is a grid you can resize and arrange.
 
 From a dashboard you can:
 
@@ -51,5 +59,9 @@ From a dashboard you can:
 
 ## Requirements
 
-- A Feedback Dataset with records.
+- A Feedback Dataset linked to your workspace.
+- At least one Feedback Source writing into it - a dataset with no source stays empty.
 - Workspace access to that dataset.
+
+If Analysis shows **"No feedback dataset linked"**, start with
+[Creating your first charts](/unify-feedback/dashboards-charts/creating-your-first-charts).

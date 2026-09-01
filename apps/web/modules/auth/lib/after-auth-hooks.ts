@@ -6,6 +6,7 @@ import {
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { auditFailedAuthAfter } from "./better-auth-observability";
 import { twoFactorBackfillAfterHandler } from "./better-auth-two-factor-backfill";
+import { verificationAutoSignInAfterHandler } from "./better-auth-verification-autosignin";
 
 /**
  * Composed Better Auth `hooks.after` chain. Ordering rationale: `auditFailedAuthAfter` runs before
@@ -23,5 +24,9 @@ export const runAfterAuthHooks = async (ctx: AuthHookContext): Promise<void> => 
   // ENG-1824: heal legacy 2FA enrollments (no `TwoFactor` row) on successful password sign-in, before
   // the 2FA challenge. Only touches `/sign-in/email`, so it's unaffected by the SSO-only redirect below.
   await twoFactorBackfillAfterHandler(ctx);
+  // ENG-2562: mint the post-verification session only for the browser that signed up. Only touches
+  // `/verify-email`, so it is order-independent with respect to the SSO redirects above — placed last
+  // because it is the only handler here that adds a session rather than inspecting one.
+  await verificationAutoSignInAfterHandler(ctx);
   await blockedSignupDomainRedirectAfterHandler(ctx);
 };
