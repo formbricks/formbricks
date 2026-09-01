@@ -13,6 +13,7 @@ import {
   MousePointerClickIcon,
   ShieldIcon,
   SmartphoneIcon,
+  TimerIcon,
 } from "lucide-react";
 import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
 
@@ -96,6 +97,8 @@ export const RESERVED_FIELD_ICONS: Record<string, LucideIcon> = {
   browser: GlobeIcon,
   country: FlagIcon,
   deviceType: SmartphoneIcon,
+  // Not displayed by the table (display: "none") but offered by the response filter (ENG-1848).
+  durationSeconds: TimerIcon,
   ipAddress: ShieldIcon,
   locale: LanguagesIcon,
   os: AirplayIcon,
