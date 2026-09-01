@@ -151,8 +151,10 @@ export const useCreateSurveyWithAI = ({
     }
   }, [flushSnapshot, language, prompt, queueSnapshot, workspaceId]);
 
-  const canCreate =
-    isAIAvailable && state.status === "idle" && prompt.trim().length >= AI_SURVEY_PROMPT_MIN_LENGTH;
+  // What both entry points need: AI on, and a prompt worth sending. `canCreate` adds the one thing
+  // that is only true of the first generation — that nothing is running yet.
+  const hasUsablePrompt = isAIAvailable && prompt.trim().length >= AI_SURVEY_PROMPT_MIN_LENGTH;
+  const canCreate = hasUsablePrompt && state.status === "idle";
 
   const handleGenerate = useCallback(
     (event: SyntheticEvent<HTMLFormElement>) => {
@@ -172,10 +174,14 @@ export const useCreateSurveyWithAI = ({
   }, [discardQueuedSnapshot]);
 
   const handleRegenerate = useCallback(() => {
+    // Regenerate is reachable with a prompt the form would never have let you submit: edit the
+    // prompt, clear it, go back to the kept draft, press Regenerate. Same gate as Generate.
+    if (!hasUsablePrompt) return;
+
     discardQueuedSnapshot();
     dispatch({ type: "REGENERATE", prompt: prompt.trim() });
     void runGeneration();
-  }, [discardQueuedSnapshot, prompt, runGeneration]);
+  }, [discardQueuedSnapshot, hasUsablePrompt, prompt, runGeneration]);
 
   const handleEditPrompt = useCallback(() => {
     abortControllerRef.current?.abort();

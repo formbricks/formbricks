@@ -112,11 +112,9 @@ export async function streamV3SurveyGeneration({
       let seq = 0;
       let lastEmittedAt: number | null = null;
       let lastSerialized: string | null = null;
-      let lastSnapshot: TSurveyGenerationDraftSnapshot | null = null;
 
       try {
         for await (const snapshot of generation.partialObjectStream) {
-          lastSnapshot = snapshot;
           const serialized = JSON.stringify(snapshot);
           if (!shouldEmitSnapshot({ now: Date.now(), lastEmittedAt, serialized, lastSerialized })) {
             continue;
@@ -130,11 +128,12 @@ export async function streamV3SurveyGeneration({
 
         const draft = await generation.completion;
 
-        // Always land the final snapshot, whatever the throttle said, so the list the user is
-        // reading matches the draft the review step is about to act on. A provider that returns its
-        // object in one final chunk streams no partials at all, so the completed draft stands in as
-        // that snapshot — otherwise the review step opens on an empty list.
-        const finalDraft = (lastSnapshot ?? draft) as TSurveyGenerationDraftSnapshot;
+        // Always land the completed draft as the final snapshot, whatever the throttle said. Not the
+        // last partial: that one is a `DeepPartial` and can be missing fields the finished object
+        // has, and the review step renders this while saving uses the payload — so the two would
+        // disagree. It also covers a provider that streams no partials at all, where the review step
+        // would otherwise open on an empty list.
+        const finalDraft = draft as TSurveyGenerationDraftSnapshot;
         const finalSerialized = JSON.stringify(finalDraft);
         if (finalSerialized !== lastSerialized) {
           seq += 1;

@@ -116,7 +116,8 @@ describe("streamV3SurveyGeneration", () => {
     expect(response.headers.get("X-Accel-Buffering")).toBe("no");
 
     const events = await readEvents(response);
-    expect(events.map((event) => event.type)).toEqual(["start", "partial", "done"]);
+    // Two partials: the streamed chunk, then the completed draft as the final snapshot.
+    expect(events.map((event) => event.type)).toEqual(["start", "partial", "partial", "done"]);
     expect(events.at(-1)).toMatchObject({ language: "en-US", payload: { name: "Onboarding" } });
     expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
       "user1",
@@ -124,6 +125,42 @@ describe("streamV3SurveyGeneration", () => {
       expect.objectContaining({ streamed: true }),
       expect.anything()
     );
+  });
+
+  test("the final partial carries the completed draft, not the last streamed chunk", async () => {
+    // The partial stream yields DeepPartials: the last one can be missing fields the finished object
+    // has. The review step renders this draft while saving uses the payload, so a stale final
+    // snapshot means the two disagree about what the survey contains.
+    mocks.streamOrganizationAIObject.mockResolvedValue({
+      partialObjectStream: asyncIterable([{ name: "Onboarding", blocks: [{ name: "Block" }] }]),
+      completion: Promise.resolve({
+        name: "Onboarding",
+        blocks: [{ name: "Block", questions: [{ type: "openText", headline: "How was it?" }] }],
+      }),
+    });
+
+    const events = await readEvents(await call());
+    const partials = events.filter((event) => event.type === "partial");
+
+    expect(partials.at(-1).draft).toEqual({
+      name: "Onboarding",
+      blocks: [{ name: "Block", questions: [{ type: "openText", headline: "How was it?" }] }],
+    });
+  });
+
+  test("a generation that streams no partials still sends the draft to render", async () => {
+    // A provider that returns its object in one final chunk yields nothing from the partial stream.
+    mocks.streamOrganizationAIObject.mockResolvedValue({
+      partialObjectStream: asyncIterable([]),
+      completion: Promise.resolve({
+        name: "Onboarding",
+        blocks: [{ name: "Block", questions: [{ type: "openText", headline: "How was it?" }] }],
+      }),
+    });
+
+    const events = await readEvents(await call());
+
+    expect(events.map((event) => event.type)).toEqual(["start", "partial", "done"]);
   });
 
   test("a request that was already aborted starts the generation cancelled", async () => {

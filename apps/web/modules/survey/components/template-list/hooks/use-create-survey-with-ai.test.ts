@@ -206,6 +206,31 @@ describe("useCreateSurveyWithAI", () => {
   });
 });
 
+describe("regenerating", () => {
+  test("does not fire with a prompt the form would have rejected", async () => {
+    // Reachable without touching Generate: edit the prompt, clear it, go back to the kept draft,
+    // press Regenerate.
+    emitEvents([
+      { type: "partial", seq: 1, draft: questionSnapshot("How was it?") },
+      { type: "done", language: "en-US", payload, validation: { valid: true } },
+    ] as unknown as TSurveyGenerationStreamEvent[]);
+    const { result } = renderAiHook();
+
+    await submitWithPrompt(result);
+    expect(result.current.status).toBe("review");
+
+    act(() => result.current.handleEditPrompt());
+    act(() => result.current.setPrompt(""));
+    act(() => result.current.handleBackToDraft());
+
+    const callsBefore = vi.mocked(streamSurveyGeneration).mock.calls.length;
+    act(() => result.current.handleRegenerate());
+
+    expect(vi.mocked(streamSurveyGeneration)).toHaveBeenCalledTimes(callsBefore);
+    expect(result.current.status).toBe("review");
+  });
+});
+
 describe("unsaved work", () => {
   test("is flagged through every state a reload would destroy", async () => {
     emitEvents([
