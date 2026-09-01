@@ -1309,6 +1309,19 @@ export const ZV3SurveyValidationRequestBody = z.discriminatedUnion("operation", 
 
 export const ZV3EmptyQuery = z.object({}).strict();
 
+/**
+ * `-fLang-` is an editor-only delimiter: the shared label validators embed it in the issue message so
+ * the editor can split the language list off for its toast (`survey-menu-bar.tsx`). v3 clients receive
+ * these messages verbatim as `invalid_params[].reason`, so the marker is stripped here rather than in
+ * the shared validators the editor still depends on. The suffix it follows already ends in ": ", so
+ * the marker and the whitespace around it collapse to a single space.
+ */
+const FIELD_LANGUAGE_MARKER_PATTERN = /\s*-fLang-\s*/g;
+
+function toV3InvalidParamReason(message: string): string {
+  return message.replace(FIELD_LANGUAGE_MARKER_PATTERN, " ");
+}
+
 export function formatV3ZodInvalidParams(error: z.ZodError, fallbackName: string): InvalidParam[] {
   return error.issues.map((issue) => {
     const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
@@ -1316,7 +1329,7 @@ export function formatV3ZodInvalidParams(error: z.ZodError, fallbackName: string
 
     return {
       name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
-      reason: issue.message,
+      reason: toV3InvalidParamReason(issue.message),
       ...(code ? { code } : {}),
     };
   });

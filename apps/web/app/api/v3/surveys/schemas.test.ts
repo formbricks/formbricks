@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+import { z } from "zod";
+import { validateElementLabels } from "@formbricks/types/surveys/elements-validation";
 import {
   ZV3CreateSurveyBody,
   ZV3PatchSurveyBody,
@@ -846,5 +848,66 @@ describe("ZV3PatchSurveyBody", () => {
 
     expect(parsed.distribution).toMatchObject({ displayOption: "displayMultiple" });
     expect(parsed.targeting).toEqual({ filters: [] });
+  });
+});
+
+describe("formatV3ZodInvalidParams", () => {
+  // Built from the real validator rather than a literal message: the marker only reaches clients
+  // because these shared validators embed it, so a hand-written fixture would assert nothing.
+  const buildBlankTranslationIssue = (): z.core.$ZodIssue => {
+    const language = {
+      id: "clln1234567890123456789012",
+      code: "de-DE",
+      alias: null,
+      workspaceId: "clxx1234567890123456789012",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const issue = validateElementLabels(
+      "headline",
+      { default: "What should we improve?", "de-DE": "   " },
+      [
+        {
+          language: { ...language, id: "clle1234567890123456789012", code: "en-US" },
+          default: true,
+          enabled: true,
+        },
+        { language, default: false, enabled: true },
+      ],
+      0,
+      0
+    );
+
+    if (!issue) {
+      throw new Error("expected the label validator to reject a blank translation");
+    }
+
+    return issue as z.core.$ZodIssue;
+  };
+
+  test("strips the editor-only -fLang- delimiter from the reason", () => {
+    const issue = buildBlankTranslationIssue();
+    expect(issue.message).toContain("-fLang-");
+
+    const [invalidParam] = formatV3ZodInvalidParams(new z.ZodError([issue]), "body");
+
+    expect(invalidParam.reason).not.toContain("-fLang-");
+    expect(invalidParam.reason).toBe(
+      "The question in question 1 of block 1 is missing for the following languages: de-DE"
+    );
+    expect(invalidParam.name).toBe("blocks.0.elements.0.headline");
+  });
+
+  test("leaves a reason without the delimiter untouched", () => {
+    const result = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, defaultLanguage: "not a locale" });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ reason: "Language 'not a locale' is not a valid locale code" }),
+        ])
+      );
+    }
   });
 });
