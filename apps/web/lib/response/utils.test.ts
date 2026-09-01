@@ -6,7 +6,6 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   calculateTtcTotal,
-  extracMetadataKeys,
   extractChoiceIdsFromResponse,
   extractSurveyDetails,
   generateAllPermutationsOfSubsets,
@@ -539,27 +538,6 @@ describe("Response Utils", () => {
     });
   });
 
-  describe("extracMetadataKeys", () => {
-    test("should extract metadata keys correctly", () => {
-      const meta = {
-        userAgent: { browser: "Chrome", os: "Windows", device: "Desktop" },
-        country: "US",
-        source: "direct",
-      };
-      const result = extracMetadataKeys(meta);
-      expect(result).toContain("userAgent - browser");
-      expect(result).toContain("userAgent - os");
-      expect(result).toContain("userAgent - device");
-      expect(result).toContain("country");
-      expect(result).toContain("source");
-    });
-
-    test("should handle empty metadata", () => {
-      const result = extracMetadataKeys({});
-      expect(result).toEqual([]);
-    });
-  });
-
   // TODO: Fix this test after the survey editor poc is merged
   describe("extractSurveyDetails", () => {
     const mockSurvey: Partial<TSurvey> = asRead({
@@ -627,10 +605,76 @@ describe("Response Utils", () => {
 
     test("should extract survey details correctly", () => {
       const result = extractSurveyDetails(mockSurvey as TSurvey, mockResponses as TResponse[]);
-      expect(result.metaDataFields).toContain("userAgent - browser");
+      // Catalog-derived, not first-response-derived: the header exists whatever any response holds.
+      expect(result.metaDataFields).toContain("Browser");
+      expect(result.metaDataFields).toContain("Utm Source");
+      expect(result.metaDataFields).not.toContain("userAgent - browser");
       expect(result.elements).toHaveLength(2); // 1 regular question + 2 matrix rows
       expect(result.hiddenFields).toContain("hidden1");
       expect(result.userAttributes).toContain("email");
+    });
+
+    // ENG-1847: the reserved column set is catalog-derived and stable — the four decisions below
+    // (stability, shadowing, anonymize, basics dedupe) are each a rule reused from elsewhere, pinned
+    // here so the export cannot drift from the response table.
+    describe("reserved export columns (ENG-1847)", () => {
+      test("columns are stable: a first response with NO meta still yields every catalog header", () => {
+        // The old derivation read the FIRST response's meta keys, so this exact input produced zero
+        // meta columns — red under that implementation.
+        const bareResponse = { ...mockResponses[0], meta: {} } as TResponse;
+        const result = extractSurveyDetails(mockSurvey as TSurvey, [bareResponse]);
+
+        expect(result.metaDataFields).toContain("Utm Source");
+        expect(result.metaDataFields).toContain("Page Path");
+        expect(result.metaDataFields).toContain("Locale");
+      });
+
+      test("a survey declaring `url` does not get the reserved Url column — declared owns the name", () => {
+        const shadowedSurvey = asRead({
+          ...mockSurvey,
+          hiddenFields: { enabled: true, fieldIds: ["url", "hidden1"] },
+        }) as TSurvey;
+
+        const result = extractSurveyDetails(shadowedSurvey, mockResponses as TResponse[]);
+
+        expect(result.metaDataFields).not.toContain("Url");
+        expect(result.hiddenFields).toContain("url");
+      });
+
+      test("an anonymized survey omits the privacy-drop columns and keeps the rest", () => {
+        const anonymizedSurvey = {
+          ...(mockSurvey as TSurvey),
+          isAnonymizeResponsesEnabled: true,
+        } as TSurvey;
+
+        const result = extractSurveyDetails(anonymizedSurvey, mockResponses as TResponse[]);
+
+        expect(result.metaDataFields).not.toContain("Country");
+        expect(result.metaDataFields).toContain("Utm Source");
+      });
+
+      test("facts the fixed basic columns already carry never become reserved columns", () => {
+        const result = extractSurveyDetails(mockSurvey as TSurvey, mockResponses as TResponse[]);
+
+        for (const doubled of ["Response Id", "Survey Id", "Finished", "Started At"]) {
+          expect(result.metaDataFields).not.toContain(doubled);
+        }
+        // finishedAt/durationSeconds are NOT basics-covered — they must be columns.
+        expect(result.metaDataFields).toContain("Finished At");
+        expect(result.metaDataFields).toContain("Duration Seconds");
+      });
+
+      test("ipAddress is a column only when the survey captures it", () => {
+        const withIp = { ...(mockSurvey as TSurvey), isCaptureIpEnabled: true } as TSurvey;
+        const withoutIp = { ...(mockSurvey as TSurvey), isCaptureIpEnabled: false } as TSurvey;
+
+        expect(extractSurveyDetails(withIp, mockResponses as TResponse[]).metaDataFields).toContain(
+          "Ip Address"
+        );
+        expect(extractSurveyDetails(withoutIp, mockResponses as TResponse[]).metaDataFields).not.toContain(
+          "Ip Address"
+        );
+      });
     });
 
     test("should collect contact attributes for link surveys too", () => {
@@ -774,9 +818,55 @@ describe("Response Utils", () => {
         false
       );
       expect(result[0]["Response ID"]).toBe("response1");
-      expect(result[0]["userAgent - browser"]).toBe("Chrome");
+      expect(result[0]["Browser"]).toBe("Chrome");
       expect(result[0]["1. Question 1"]).toBe("answer1");
       expect(result[0]["person.email"]).toBe("test@example.com");
+    });
+
+    test("reserved values are typed and projected: duration numeric, finishedAt ISO, url query redacted, absent empty", () => {
+      const finishedAtDate = new Date("2026-08-30T10:00:00.000Z");
+      const richResponse = {
+        ...mockResponses[0],
+        updatedAt: finishedAtDate,
+        ttc: { _total: 12500 },
+        meta: {
+          ...mockResponses[0].meta,
+          url: "https://example.com/pricing?email=leak@example.com",
+        },
+      } as unknown as TResponse;
+
+      const result = getResponsesJson(
+        mockSurvey as TSurvey,
+        [richResponse] as TResponse[],
+        [["1. Question 1"]],
+        [],
+        [],
+        false
+      );
+
+      // number cell, seconds not milliseconds — real numeric in XLSX, not text
+      expect(result[0]["Duration Seconds"]).toBe(13);
+      expect(result[0]["Finished At"]).toBe("2026-08-30T10:00:00.000Z");
+      // redactQuery is honoured on the export projection like every other projection
+      expect(result[0]["Url"]).toBe("https://example.com/pricing");
+      expect(String(result[0]["Url"])).not.toContain("leak@example.com");
+      // a column whose value this response never captured is an empty cell, not a missing key
+      expect(result[0]["Utm Source"]).toBe("");
+    });
+
+    test("an ingested number stays a number in the cell", () => {
+      const surveyWithNumberField = asRead({
+        ...mockSurvey,
+        hiddenFields: { enabled: true, fieldIds: ["seats"] },
+      }) as TSurvey;
+      const response = {
+        ...mockResponses[0],
+        data: { ...mockResponses[0].data, seats: 12 },
+      } as unknown as TResponse;
+
+      const result = getResponsesJson(surveyWithNumberField, [response], [], [], ["seats"], false);
+
+      expect(result[0]["seats"]).toBe(12);
     });
 
     test("a computed field the response never captured leaves an empty cell", () => {
