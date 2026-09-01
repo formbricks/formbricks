@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
-import { isDeepEqual } from "@/lib/utils/object";
 import {
   AdvancedChartBuilder,
   type ChartQueryState,
@@ -16,6 +15,7 @@ import { ChartDisplaySettings } from "@/modules/ee/analysis/charts/components/ch
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ChartTypeSwitch } from "@/modules/ee/analysis/charts/components/chart-type-switch";
 import { useChartDialog } from "@/modules/ee/analysis/charts/hooks/use-chart-dialog";
+import { useChartDirtyState } from "@/modules/ee/analysis/charts/hooks/use-chart-dirty-state";
 import { hasChartDisplaySettings } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { DEFAULT_CHART_TYPE } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { AnalyticsResponse, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
@@ -33,7 +33,6 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 
 interface CreateChartViewProps {
   open: boolean;
@@ -108,50 +107,9 @@ export function CreateChartView({
     if (!open) adoptedChartRef.current = null;
   }, [open]);
 
-  /**
-   * Dirty means *changed*, not merely populated. Opening a saved chart loads its data straight
-   * away, so "has chart data" would flag every read-only visit as unsaved work — which is exactly
-   * what it did. Instead, snapshot the state once the dialog has settled and compare against it:
-   * a new chart starts from an empty snapshot, so generating or configuring anything counts.
-   */
-  const currentSnapshot = useMemo(
-    () => ({
-      name: chartName.trim(),
-      type: chartData?.chartType ?? null,
-      query: chartData?.query ?? null,
-      config: chartConfig ?? null,
-    }),
-    [chartName, chartData, chartConfig]
-  );
-
-  // State rather than a ref: this is read during render to decide whether closing needs to ask.
-  const [baseline, setBaseline] = useState<typeof currentSnapshot | null>(null);
   const isReady = open && !isLoadingChart && (!isEditing || Boolean(chartData));
-
-  useEffect(() => {
-    if (!open) {
-      setBaseline(null);
-      return;
-    }
-    if (isReady && baseline === null) {
-      setBaseline(currentSnapshot);
-    }
-  }, [open, isReady, baseline, currentSnapshot]);
-
-  const hasUnsavedChart = !isSaving && baseline !== null && !isDeepEqual(currentSnapshot, baseline);
-  useBeforeUnloadPrompt(() => open && hasUnsavedChart);
-  const [isConfirmingDiscard, setIsConfirmingDiscard] = useState(false);
-  // What to run once the user confirms — closing and handing off to AI both discard the chart.
-  const pendingDiscardActionRef = useRef<(() => void) | null>(null);
-
-  const confirmDiscard = (action: () => void) => {
-    if (!hasUnsavedChart) {
-      action();
-      return;
-    }
-    pendingDiscardActionRef.current = action;
-    setIsConfirmingDiscard(true);
-  };
+  const { confirmDiscard, isConfirmingDiscard, setIsConfirmingDiscard, runPendingDiscard } =
+    useChartDirtyState({ open, isReady, isSaving, chartName, chartData, chartConfig });
 
   const requestClose = () => confirmDiscard(handleClose);
 
@@ -356,12 +314,7 @@ export function CreateChartView({
         buttonText={t("workspace.surveys.ai_create.discard")}
         buttonVariant="destructive"
         cancelButtonText={t("workspace.surveys.ai_create.keep_editing")}
-        onConfirm={() => {
-          setIsConfirmingDiscard(false);
-          const action = pendingDiscardActionRef.current;
-          pendingDiscardActionRef.current = null;
-          action?.();
-        }}
+        onConfirm={runPendingDiscard}
       />
     </>
   );

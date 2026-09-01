@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent, type SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
@@ -137,7 +137,7 @@ export function CreateChartWithAIDialog({
     setIsGenerating(false);
   };
 
-  const handleGenerate = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleGenerate = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canGenerate || !feedbackDirectoryId) return;
 
