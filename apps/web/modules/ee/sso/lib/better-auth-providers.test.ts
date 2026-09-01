@@ -40,7 +40,6 @@ interface MockConstants {
   OIDC_CLIENT_SECRET?: string;
   OIDC_ISSUER?: string;
   SAML_OAUTH_ENABLED: boolean;
-  SSO_SYNC_NAME: boolean;
   WEBAPP_URL: string;
 }
 
@@ -64,7 +63,6 @@ const BASE: MockConstants = {
   OIDC_CLIENT_SECRET: undefined,
   OIDC_ISSUER: undefined,
   SAML_OAUTH_ENABLED: false,
-  SSO_SYNC_NAME: false,
   WEBAPP_URL: "https://app.formbricks.test",
 };
 
@@ -844,7 +842,7 @@ describe("OIDC identity comes from Graph when pointed at Microsoft (#9023 review
   });
 });
 
-describe("per-sign-in profile sync (AUTH_SSO_SYNC_NAME)", () => {
+describe("per-sign-in profile sync", () => {
   // Everything on, so one load covers all five providers.
   const ALL_ON = {
     ENTERPRISE_LICENSE_KEY: "license",
@@ -856,18 +854,8 @@ describe("per-sign-in profile sync (AUTH_SSO_SYNC_NAME)", () => {
     SAML_OAUTH_ENABLED: true,
   };
 
-  test("is off by default, so a name stays frozen at sign-up", async () => {
-    const m = await loadProviders({ ...ALL_ON, SSO_SYNC_NAME: false });
-    for (const config of m.ssoGenericOAuthConfig) {
-      expect(config.overrideUserInfo).toBe(false);
-    }
-    const social = asSocial(m.ssoSocialProviders);
-    expect(social.github?.overrideUserInfoOnSignIn).toBe(false);
-    expect(social.google?.overrideUserInfoOnSignIn).toBe(false);
-  });
-
-  test("reaches every SSO provider when enabled", async () => {
-    const m = await loadProviders({ ...ALL_ON, SSO_SYNC_NAME: true });
+  test("is on for every SSO provider, so a directory rename reaches Formbricks", async () => {
+    const m = await loadProviders(ALL_ON);
     // Named by provider so a missed one is identifiable from the failure, not just a count.
     expect(m.ssoGenericOAuthConfig.map((c) => [c.providerId, c.overrideUserInfo])).toEqual([
       ["azuread", true],

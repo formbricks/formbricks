@@ -145,16 +145,11 @@ name into `First Last`. It does normalize the value before storing it: character
 set (letters, marks, spaces, and `' , . & ( ) -` plus digits) collapse to a single space, so
 `Doe, Jane` is stored unchanged while stray markup or line separators are replaced with a single space.
 
-By default the name is read once, when the account is created, and never again. Set `AUTH_SSO_SYNC_NAME=1`
-to re-read it on every sign-in instead, so a rename in Entra ID reaches Formbricks the next time that
-person logs in:
-
-```yml
-AUTH_SSO_SYNC_NAME=1
-```
+Formbricks re-reads that name from Entra ID on every sign-in, so a rename in your directory — a
+marriage, a legal rename, a corrected import — reaches Formbricks the next time that person logs in.
 
 <Note>
-  This makes Entra ID authoritative for the name. A name a user set under **Account → Profile** in
-  Formbricks is replaced on their next sign-in. See [Authentication
-  Behavior](/self-hosting/auth-behavior) for the full description.
+  Because Entra ID is authoritative for the name, the **Full name** field under **Account → Profile**
+  is read-only for users who signed in through SSO, exactly as the email field already is. Change the
+  name in your directory instead.
 </Note>

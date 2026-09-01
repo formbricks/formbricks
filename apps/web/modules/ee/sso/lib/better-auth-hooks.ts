@@ -59,7 +59,7 @@ const deriveNameFromEmail = (email: string): string =>
 /**
  * Narrow Better Auth's per-sign-in profile override down to the display name.
  *
- * With `AUTH_SSO_SYNC_NAME=1` the SSO providers set `overrideUserInfo`, which makes
+ * The SSO providers set `overrideUserInfo`, which makes
  * `handleOAuthUserInfo` re-write the user row on every sign-in so a directory rename reaches
  * Formbricks. It writes the whole profile in one call — `{ name, image, email, emailVerified }` —
  * and two of those are wrong here:
@@ -116,7 +116,7 @@ export const ssoProfileSyncUpdateBefore = async (
  *    attests it; `identityProvider`; request-matched `locale`; email-localpart name fallback).
  *  - `user.create.after` — run the membership/team/notification provisioning (`provisionSsoUserMemberships`).
  *  - `user.update.before` — narrow the per-sign-in profile override to the display name
- *    (`ssoProfileSyncUpdateBefore`); only reached when `AUTH_SSO_SYNC_NAME=1` makes that write happen.
+ *    (`ssoProfileSyncUpdateBefore`), which is the write `overrideUserInfo` performs on every sign-in.
  *  - `account.create.after` — denormalize `identityProvider` + `identityProviderAccountId` onto
  *    `User` for legacy SSO lookups (`findLegacyExactMatch`), parity with `syncSsoIdentityForUser`.
  *

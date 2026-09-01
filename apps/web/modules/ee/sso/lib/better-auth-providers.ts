@@ -21,7 +21,6 @@ import {
   SAML_OAUTH_ENABLED,
   SAML_PRODUCT,
   SAML_TENANT,
-  SSO_SYNC_NAME,
   WEBAPP_URL,
 } from "@/lib/constants";
 import { getAuthIssuerUrl } from "@/modules/auth/lib/oauth-urls";
@@ -40,7 +39,7 @@ type GithubProfile = Parameters<NonNullable<SocialConfig<"github">["mapProfileTo
 type GoogleProfile = Parameters<NonNullable<SocialConfig<"google">["mapProfileToUser"]>>[0];
 
 /**
- * Re-read the IdP profile on every sign-in, not just the first one, when `AUTH_SSO_SYNC_NAME=1`.
+ * Re-read the IdP profile on every sign-in, not just the first one.
  *
  * Without it Better Auth writes the profile once, at account creation, and never looks again
  * (`handleOAuthUserInfo` only calls `updateUser` under this flag) — so a directory rename never
@@ -48,13 +47,17 @@ type GoogleProfile = Parameters<NonNullable<SocialConfig<"google">["mapProfileTo
  * it differently: `overrideUserInfo` on a `GenericOAuthConfig`, `overrideUserInfoOnSignIn` on a
  * built-in social provider's options. Both land on the same `opts.overrideUserInfo` branch.
  *
+ * The IdP is therefore authoritative for `User.name`, which is why `EditProfileDetailsForm` disables
+ * the name input for a user whose `identityProvider` is not `email` — the same treatment that field's
+ * email sibling has always had. Editing it there would only survive until the next sign-in.
+ *
  * ⚠ This flag alone is NOT safe, and the unsafe half is invisible here. Better Auth writes
  * `{ name, image, email, emailVerified }` in one `updateUser` call, which for Formbricks means a
  * write to a column that does not exist (`User` has no `image`) and an unverified rewrite of the
  * account's email. `ssoProfileSyncUpdateBefore` in ./better-auth-hooks.ts narrows that write back
  * down to the display name; the two are a pair, and neither works alone.
  */
-const ssoSyncProfileOnSignIn = SSO_SYNC_NAME;
+const ssoSyncProfileOnSignIn = true;
 
 /**
  * Better Auth SSO providers (ENG-1054), mirroring the NextAuth set in `./providers.ts`. Gated behind
