@@ -73,7 +73,7 @@ type AiDraftPreviewProps = {
   isGenerating: boolean;
   className?: string;
   /** The scroll container, exposed so a finished generation can land focus where scrolling works. */
-  scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
+  scrollContainerRef?: React.RefObject<HTMLElement | null>;
 };
 
 export const AiDraftPreview = ({
@@ -91,7 +91,7 @@ export const AiDraftPreview = ({
   const blocks = useMemo(() => groupAiDraftByBlock(draft.questions), [draft.questions]);
   const showsBlockNames = blocks.length > 1;
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
   const isPinnedRef = useRef(true);
 
   useEffect(() => {
@@ -132,14 +132,17 @@ export const AiDraftPreview = ({
         2.1.1 — only Firefox makes overflow containers focusable on its own). One stop, on the
         element that moves, which is also where the finished generation lands focus.
       */}
-      <div
+      <section
         ref={(node) => {
           scrollRef.current = node;
           if (scrollContainerRef) scrollContainerRef.current = node;
         }}
         onScroll={handleScroll}
-        tabIndex={0}
-        role="group"
+        // A scroll container that cannot take focus cannot be scrolled from the keyboard, which is
+        // the WCAG 2.1.1 failure this exists to fix — so the tabIndex stays on a non-interactive
+        // element on purpose. `<section>` with an accessible name is a region natively, which is why
+        // there is no `role` here.
+        tabIndex={0} // NOSONAR
         aria-label={t("workspace.surveys.ai_create.draft_survey")}
         aria-busy={isGenerating}
         className="focus-visible:ring-ring min-h-0 flex-1 overflow-y-auto focus-visible:ring-1 focus-visible:outline-hidden">
@@ -185,7 +188,7 @@ export const AiDraftPreview = ({
             ))}
           </ul>
         ) : null}
-      </div>
+      </section>
     </div>
   );
 };

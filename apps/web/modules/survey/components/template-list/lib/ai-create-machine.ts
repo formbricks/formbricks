@@ -82,6 +82,78 @@ export const AI_NOTHING_GENERATED_CODE = "ai_nothing_generated";
  * `idle` and the textarea remounts with the text still in it. What the machine does keep is the
  * prompt each generation was *submitted* with, because that is what labels the draft on screen.
  */
+/** A chunk that lands after Stop must not resurrect the generating view. */
+function applySnapshot(state: TAiCreateState, snapshot: TSurveyGenerationDraftSnapshot): TAiCreateState {
+  if (state.status !== "generating") return state;
+
+  const draft = mergeAiDraftSnapshot(state.draft, snapshot);
+  return draft === state.draft ? state : { ...state, draft };
+}
+
+function applyDone(state: TAiCreateState, payload: TV3CreateSurveyBody): TAiCreateState {
+  // Same guard as SNAPSHOT, for the same reason: a terminal event from a run the user already
+  // stopped would otherwise pair the restored draft with the abandoned run's payload — what you see
+  // would no longer be what saving writes.
+  if (state.status !== "generating") return state;
+
+  // Judged on the payload, not on the preview: the preview is built from streamed partials, and a
+  // provider that returns its object in one final chunk streams none — a perfectly good survey would
+  // be reported as "nothing generated".
+  if (isEmptyPayload(payload)) {
+    return { ...INITIAL_AI_CREATE_STATE, errorCode: AI_NOTHING_GENERATED_CODE };
+  }
+
+  // The new draft supersedes whatever was held aside.
+  return { ...state, status: "review", payload, errorCode: null, previous: null };
+}
+
+function applyStop(state: TAiCreateState): TAiCreateState {
+  // Stopping a regeneration restores the draft it was trying to replace. The partial that was
+  // streaming has no payload and could not be saved anyway, so the finished one always wins.
+  if (state.previous) return restorePrevious(state);
+
+  // First generation: keep whatever arrived so it is still actionable, or go back to the prompt.
+  return state.draft.questions.length > 0 ? { ...state, status: "review" } : { ...INITIAL_AI_CREATE_STATE };
+}
+
+function applyFail(state: TAiCreateState, errorCode: string): TAiCreateState {
+  // A failure belonging to an abandoned run must not tear down what the user went back to.
+  if (state.status !== "generating") return state;
+
+  // Discard the partial draft — a generation that died mid-write is not a trustworthy artifact — but
+  // a failed regeneration still hands back the draft it was replacing.
+  return restorePrevious(state, errorCode);
+}
+
+function applyEditPrompt(state: TAiCreateState): TAiCreateState {
+  // Non-destructive: a finished draft is kept so the user can tweak the prompt, change their mind,
+  // and go back to it. A half-written one is dropped — there is nothing to return to.
+  if (state.payload) return { ...state, status: "idle", errorCode: null };
+  // Mid-regeneration: drop the half-written draft but keep the finished one behind it.
+  if (state.previous) return { ...restorePrevious(state), status: "idle" };
+
+  return { ...INITIAL_AI_CREATE_STATE };
+}
+
+function applyRegenerate(state: TAiCreateState, prompt: string): TAiCreateState {
+  // Clear the visible list so the old one does not sit under the new stream, but hold it aside
+  // rather than destroying it: Stop, or a failure, puts it straight back.
+  return {
+    status: "generating",
+    draft: EMPTY_AI_DRAFT,
+    payload: null,
+    errorCode: null,
+    submittedPrompt: prompt,
+    previous: state.payload
+      ? { draft: state.draft, payload: state.payload, submittedPrompt: state.submittedPrompt }
+      : state.previous,
+  };
+}
+
+/**
+ * A dispatch table rather than a switch full of logic: every case that has to decide something owns
+ * a named function above, so the transitions can be read — and tested — one at a time.
+ */
 export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction): TAiCreateState {
   switch (action.type) {
     case "SUBMIT":
@@ -95,78 +167,31 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
         previous: null,
       };
 
-    case "SNAPSHOT": {
-      // A chunk that lands after Stop must not resurrect the generating view.
-      if (state.status !== "generating") return state;
+    case "SNAPSHOT":
+      return applySnapshot(state, action.snapshot);
 
-      const draft = mergeAiDraftSnapshot(state.draft, action.snapshot);
-      return draft === state.draft ? state : { ...state, draft };
-    }
-
-    case "DONE": {
-      // Same guard as SNAPSHOT, for the same reason: a terminal event from a run the user already
-      // stopped would otherwise pair the restored draft with the abandoned run's payload — what you
-      // see would no longer be what saving writes.
-      if (state.status !== "generating") return state;
-
-      // Judged on the payload, not on the preview: the preview is built from streamed partials, and
-      // a provider that returns its object in one final chunk streams none — a perfectly good survey
-      // would be reported as "nothing generated".
-      if (isEmptyPayload(action.payload)) {
-        return { ...INITIAL_AI_CREATE_STATE, errorCode: AI_NOTHING_GENERATED_CODE };
-      }
-
-      // The new draft supersedes whatever was held aside.
-      return { ...state, status: "review", payload: action.payload, errorCode: null, previous: null };
-    }
+    case "DONE":
+      return applyDone(state, action.payload);
 
     case "STOP":
-      // Stopping a regeneration restores the draft it was trying to replace. The partial that was
-      // streaming has no payload and could not be saved anyway, so the finished one always wins.
-      if (state.previous) return restorePrevious(state);
-
-      // First generation: keep whatever arrived so it is still actionable, or go back to the prompt.
-      return state.draft.questions.length > 0
-        ? { ...state, status: "review" }
-        : { ...INITIAL_AI_CREATE_STATE };
+      return applyStop(state);
 
     case "FAIL":
-      // A failure belonging to an abandoned run must not tear down what the user went back to.
-      if (state.status !== "generating") return state;
-
-      // Discard the partial draft — a generation that died mid-write is not a trustworthy artifact
-      // — but a failed regeneration still hands back the draft it was replacing.
-      return restorePrevious(state, action.errorCode);
+      return applyFail(state, action.errorCode);
 
     case "EDIT_PROMPT":
-      // Non-destructive: a finished draft is kept so the user can tweak the prompt, change their
-      // mind, and go back to it. A half-written one is dropped — there is nothing to return to.
-      if (state.payload) return { ...state, status: "idle", errorCode: null };
-      // Mid-regeneration: drop the half-written draft but keep the finished one behind it.
-      if (state.previous) return { ...restorePrevious(state), status: "idle" };
-      return { ...INITIAL_AI_CREATE_STATE };
+      return applyEditPrompt(state);
 
     case "BACK_TO_DRAFT":
-      if (!state.payload) return state;
-      return { ...state, status: "review", errorCode: null };
+      return state.payload ? { ...state, status: "review", errorCode: null } : state;
 
     case "REGENERATE":
-      // Clear the visible list so the old one does not sit under the new stream, but hold it aside
-      // rather than destroying it: Stop, or a failure, puts it straight back.
-      return {
-        status: "generating",
-        draft: EMPTY_AI_DRAFT,
-        payload: null,
-        errorCode: null,
-        submittedPrompt: action.prompt,
-        previous: state.payload
-          ? { draft: state.draft, payload: state.payload, submittedPrompt: state.submittedPrompt }
-          : state.previous,
-      };
+      return applyRegenerate(state, action.prompt);
 
     case "CREATE":
-      if (state.status !== "review" || !state.payload) return state;
-      return { ...state, status: "creating", errorCode: null };
+      return state.status === "review" && state.payload
+        ? { ...state, status: "creating", errorCode: null }
+        : state;
 
     case "CREATE_FAILED":
       // Unlike FAIL, this keeps the draft: the generation succeeded and the user already accepted
@@ -180,7 +205,6 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
 
     case "RESET":
       return INITIAL_AI_CREATE_STATE;
-
     default:
       return state;
   }

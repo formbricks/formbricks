@@ -83,7 +83,7 @@ export const CreateWithAIForm = ({
   } = useCreateSurveyWithAI({ workspaceId, language, isAIAvailable, onSuccess });
 
   const stopButtonRef = useRef<HTMLButtonElement>(null);
-  const draftRef = useRef<HTMLDivElement>(null);
+  const draftRef = useRef<HTMLElement>(null);
 
   const isGenerating = status === "generating";
   const isReviewing = status === "review" || status === "creating";

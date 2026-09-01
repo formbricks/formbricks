@@ -40,8 +40,11 @@ export function useBeforeUnloadPrompt(
       if (!shouldPromptRef.current()) return;
 
       event.preventDefault();
-      // Deprecated but still required by older Chromium to trigger the dialog. NOSONAR
-      event.returnValue = "";
+      // `returnValue` is deprecated, and kept deliberately: `preventDefault()` alone is enough on
+      // current Chrome, Firefox and Safari, but older Chromium shows no dialog without it. There is
+      // no browserslist target in this repo that rules those out, and the cost of being wrong is a
+      // user silently losing a generation.
+      event.returnValue = ""; // NOSONAR
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
