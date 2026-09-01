@@ -2478,7 +2478,7 @@
         "add_api_key": "APIキーを追加",
         "add_permission": "権限を追加",
         "api_keys_description": "Formbricks管理APIにアクセスするためのAPIキーを管理します",
-        "connect_app_banner_description": "アプリ内アンケートを接続したいですか?APIキーは不要です。",
+        "connect_app_banner_description": "ウェブサイトやアプリのアンケートを接続したいですか？そのためにAPIキーは必要ありません。",
         "connect_app_banner_link": "アプリ接続へ移動"
       },
       "billing": {

@@ -2478,7 +2478,7 @@
         "add_api_key": "API-Schlüssel hinzufügen",
         "add_permission": "Berechtigung hinzufügen",
         "api_keys_description": "Verwalte API-Schlüssel für den Zugriff auf die Formbricks Management-APIs",
-        "connect_app_banner_description": "Möchtest du In-App-Umfragen verbinden? Dafür brauchst du keinen API-Schlüssel.",
+        "connect_app_banner_description": "Möchtest du eine Website- oder App-Umfrage verbinden? Dafür brauchst du keinen API-Schlüssel.",
         "connect_app_banner_link": "Zur App-Verbindung"
       },
       "billing": {
