@@ -2478,7 +2478,7 @@
         "add_api_key": "API-kulcs hozzáadása",
         "add_permission": "Jogosultság hozzáadása",
         "api_keys_description": "API-kulcsok kezelése a Formbricks kezelő API-jaihoz való hozzáféréshez",
-        "connect_app_banner_description": "Szeretne webhelyet vagy alkalmazásfelmérést csatlakoztatni? Ehhez nincs szüksége API-kulcsra.",
+        "connect_app_banner_description": "Weboldal és Alkalmazás felmérést hoz létre? A weboldala vagy alkalmazása csatlakoztatásához nincs szükség API kulcsra.",
         "connect_app_banner_link": "Ugrás az alkalmazás csatlakoztatásához"
       },
       "billing": {

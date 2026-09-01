@@ -2478,7 +2478,7 @@
         "add_api_key": "Adicionar chave de API",
         "add_permission": "Adicionar permissão",
         "api_keys_description": "Gerencie chaves de API para acessar as APIs de gerenciamento do Formbricks",
-        "connect_app_banner_description": "Quer conectar uma pesquisa de site ou app? Você não precisa de uma chave de API para isso.",
+        "connect_app_banner_description": "Criando uma pesquisa de Site e App? Conectar seu site ou app não precisa de uma chave de API.",
         "connect_app_banner_link": "Ir para Conexão de App"
       },
       "billing": {

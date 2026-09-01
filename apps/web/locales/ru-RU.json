@@ -2478,7 +2478,7 @@
         "add_api_key": "Добавить API-ключ",
         "add_permission": "Добавить разрешение",
         "api_keys_description": "Управляйте API-ключами для доступа к управляющим API Formbricks",
-        "connect_app_banner_description": "Хочешь подключить опрос на сайте или в приложении? API-ключ для этого не нужен.",
+        "connect_app_banner_description": "Создаёшь опрос для сайта или приложения? Для подключения сайта или приложения API-ключ не нужен.",
         "connect_app_banner_link": "Перейти к подключению приложения"
       },
       "billing": {
