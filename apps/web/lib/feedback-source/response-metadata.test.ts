@@ -59,6 +59,9 @@ describe("stripUrlQuery", () => {
     // the fallback has to drop the credentials itself.
     ["scheme-less credentials", "user:pass@app.example.com/p?token=1", "app.example.com/p"],
     ["credentials on a custom scheme", "myapp://u:p@host/x?t=1", "myapp://host/x"],
+    // A network-path reference: new URL() rejects it without a base, so only the fallback can
+    // strip these — and its userinfo cut has to see past the leading slashes.
+    ["credentials on a protocol-relative url", "//user:pass@host/path?token=1", "//host/path"],
     ["credentials with nothing after them", "user:pass@", undefined],
   ])("drops userinfo the origin branch never saw (%s)", (_label, input, expected) => {
     expect(stripUrlQuery(input)).toBe(expected);
