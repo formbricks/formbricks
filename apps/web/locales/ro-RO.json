@@ -2478,9 +2478,9 @@
         "add_api_key": "Adaugă Cheie API",
         "add_permission": "Adaugă permisiune",
         "api_keys_description": "Gestionați cheile API pentru a accesa API-urile de administrare Formbricks",
-        "connect_app_banner_description": "Cheile API sunt necesare doar pentru a citi sondaje, răspunsuri sau contacte prin API.",
+        "connect_app_banner_description": "Conectarea site-ului sau aplicației tale nu necesită o cheie API.",
         "connect_app_banner_link": "Mergi la Conexiune aplicație",
-        "connect_app_banner_title": "Conectezi un sondaj pentru website sau aplicație?"
+        "connect_app_banner_title": "Configurezi un sondaj pentru Site & Aplicație?"
       },
       "billing": {
         "billing_interval_toggle": "Interval de facturare",

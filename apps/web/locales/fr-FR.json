@@ -2478,9 +2478,9 @@
         "add_api_key": "Ajouter une clé API",
         "add_permission": "Ajouter une permission",
         "api_keys_description": "Les clés d'API permettent d'accéder aux API de gestion de Formbricks.",
-        "connect_app_banner_description": "Les clés API ne sont nécessaires que pour lire les enquêtes, les réponses ou les contacts via l'API.",
+        "connect_app_banner_description": "Connecter ton site ou ton application ne nécessite pas de clé API.",
         "connect_app_banner_link": "Aller à la connexion d'application",
-        "connect_app_banner_title": "Tu connectes une enquête pour un site web ou une application ?"
+        "connect_app_banner_title": "Tu configures une enquête Site Web & Application ?"
       },
       "billing": {
         "billing_interval_toggle": "Intervalle de facturation",

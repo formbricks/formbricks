@@ -2478,9 +2478,9 @@
         "add_api_key": "API-sleutel toevoegen",
         "add_permission": "Toestemming toevoegen",
         "api_keys_description": "Beheer API-sleutels om toegang te krijgen tot Formbricks-beheer-API's",
-        "connect_app_banner_description": "API-sleutels zijn alleen nodig om enquêtes, reacties of contacten via de API uit te lezen.",
+        "connect_app_banner_description": "Voor het verbinden van je site of app is geen API-sleutel nodig.",
         "connect_app_banner_link": "Ga naar app-koppeling",
-        "connect_app_banner_title": "Een website- of app-enquête verbinden?"
+        "connect_app_banner_title": "Een Website & App-enquête instellen?"
       },
       "billing": {
         "billing_interval_toggle": "Factureringsinterval",

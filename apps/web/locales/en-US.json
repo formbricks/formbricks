@@ -2478,9 +2478,9 @@
         "add_api_key": "Add API key",
         "add_permission": "Add permission",
         "api_keys_description": "Manage API keys to access Formbricks management APIs",
-        "connect_app_banner_description": "API keys are only needed to read surveys, responses, or contacts via the API.",
+        "connect_app_banner_description": "Connecting your site or app doesn't need an API key.",
         "connect_app_banner_link": "Go to App Connection",
-        "connect_app_banner_title": "Connecting a website or app survey?"
+        "connect_app_banner_title": "Setting up a Website & App survey?"
       },
       "billing": {
         "billing_interval_toggle": "Billing interval",

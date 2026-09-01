@@ -2478,9 +2478,9 @@
         "add_api_key": "新增 API 金鑰",
         "add_permission": "新增權限",
         "api_keys_description": "管理 API 金鑰以存取 Formbricks 管理 API",
-        "connect_app_banner_description": "API 金鑰僅用於透過 API 讀取問卷、回覆或聯絡人。",
+        "connect_app_banner_description": "連接你的網站或應用程式不需要 API 金鑰。",
         "connect_app_banner_link": "前往應用程式連接",
-        "connect_app_banner_title": "正在連接網站或應用程式問卷？"
+        "connect_app_banner_title": "正在設定網站與應用程式問卷調查？"
       },
       "billing": {
         "billing_interval_toggle": "帳單週期",

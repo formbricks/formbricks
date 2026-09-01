@@ -2478,9 +2478,9 @@
         "add_api_key": "Adicionar chave API",
         "add_permission": "Adicionar permissão",
         "api_keys_description": "Faça a gestão das suas chaves API para aceder às APIs de gestão do Formbricks",
-        "connect_app_banner_description": "As chaves de API só são necessárias para ler inquéritos, respostas ou contactos através da API.",
+        "connect_app_banner_description": "Ligar o teu site ou app não precisa de uma chave de API.",
         "connect_app_banner_link": "Ir para Ligação à Aplicação",
-        "connect_app_banner_title": "Ligar um inquérito de website ou app?"
+        "connect_app_banner_title": "A configurar um inquérito para Website e App?"
       },
       "billing": {
         "billing_interval_toggle": "Intervalo de faturação",
