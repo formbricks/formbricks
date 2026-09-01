@@ -116,7 +116,7 @@ export const BlockCard = ({
   addElementToBlock,
   moveElementToBlock,
   totalBlocks,
-}: BlockCardProps) => {
+}: Readonly<BlockCardProps>) => {
   const selectedLanguageCode = "default";
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({

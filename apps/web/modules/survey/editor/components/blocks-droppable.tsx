@@ -70,7 +70,7 @@ export const BlocksDroppable = ({
   moveBlock,
   addElementToBlock,
   moveElementToBlock,
-}: BlocksDroppableProps) => {
+}: Readonly<BlocksDroppableProps>) => {
   const [parent] = useAutoAnimate();
 
   return (
