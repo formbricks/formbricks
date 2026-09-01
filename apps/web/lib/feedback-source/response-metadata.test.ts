@@ -55,6 +55,16 @@ describe("stripUrlQuery", () => {
   });
 
   test.each([
+    // `user:pass@host` parses as a URL whose protocol is `user:`, so it dodges the origin branch —
+    // the fallback has to drop the credentials itself.
+    ["scheme-less credentials", "user:pass@app.example.com/p?token=1", "app.example.com/p"],
+    ["credentials on a custom scheme", "myapp://u:p@host/x?t=1", "myapp://host/x"],
+    ["credentials with nothing after them", "user:pass@", undefined],
+  ])("drops userinfo the origin branch never saw (%s)", (_label, input, expected) => {
+    expect(stripUrlQuery(input)).toBe(expected);
+  });
+
+  test.each([
     ["empty", ""],
     ["whitespace", "   "],
     ["query only", "?token=secret"],
@@ -215,6 +225,15 @@ describe("buildResponseMetadata", () => {
       expect(
         buildResponseMetadata(buildResponse({ ttc: { _total: 45_500 } }), linkSurvey).duration_seconds
       ).toBe(46);
+    });
+
+    test("publishes a duration of exactly seven days", () => {
+      // The cap is inclusive: a week is a plausible longest-lived link-survey tab, noise starts
+      // beyond it.
+      expect(
+        buildResponseMetadata(buildResponse({ ttc: { _total: 7 * 24 * 60 * 60 * 1000 } }), linkSurvey)
+          .duration_seconds
+      ).toBe(604_800);
     });
 
     test("publishes a zero duration", () => {

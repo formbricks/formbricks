@@ -90,7 +90,13 @@ export const stripUrlQuery = (rawUrl: string): string | undefined => {
     // Not an absolute URL — fall through to the textual cut below.
   }
 
-  return trimmed.split(/[?#]/)[0] || undefined;
+  // The origin branch never ran, so credentials have not been dropped — and this path is easy to
+  // reach with them: `user:pass@host/p` parses as a URL whose protocol is `user:`, skipping the
+  // branch above. Cut the query first, then remove any userinfo (everything up to a trailing `@`
+  // before the first path segment), keeping a scheme prefix when one is present.
+  const cut = trimmed.split(/[?#]/)[0];
+
+  return cut.replace(/^([a-z][a-z0-9+.-]*:\/\/)?[^/@]*@/i, "$1") || undefined;
 };
 
 const readDurationSeconds = (ttc: TResponse["ttc"]): number | undefined => {

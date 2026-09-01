@@ -386,15 +386,16 @@ export const ZV3FeedbackRecordCreateBodyFields = z.object({
     // one is the expensive one to learn late: an agent that assumes `metadata` is queryable will
     // promise a breakdown it cannot produce.
     .describe(
-      "Arbitrary context stored with the record and returned verbatim: the dimensions you want to " +
+      "Arbitrary context stored with the record and returned with equivalent values (key order and " +
+        "number formatting are normalized): the dimensions you want to " +
         "group or segment by later, such as channel, device, browser, OS, country, referrer, " +
         "campaign, plan or tags. Values may be strings, numbers, booleans, null, or nested objects " +
         "and arrays. Use snake_case keys and keep them stable across records, since the key is what " +
         "a chart groups by. NOT filterable or searchable through this API — metadata is read back " +
         "with a record, so narrowing by a metadata value means fetching and filtering client-side. " +
         "On update the whole object is REPLACED, not merged, so send every key you want to keep. " +
-        "Avoid personal data: it is stored unredacted, and it is repeated on every record belonging " +
-        "to the same submission."
+        "Avoid personal data: it is stored unredacted (and the Formbricks survey pipeline repeats " +
+        "its own metadata on every record of a submission)."
     ),
 });
 
