@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
+import { DELETE, PUT } from "./route";
 
 const {
   mockAuthenticatedApiClient,
@@ -7,6 +8,7 @@ const {
   mockDeleteTeam,
   mockGetApiKeyCreatorRole,
   mockGetTeam,
+  mockHasOrganizationIdAndAccess,
   mockHandleApiError,
   mockSuccessResponse,
   mockUpdateTeam,
@@ -16,6 +18,7 @@ const {
   mockDeleteTeam: vi.fn(),
   mockGetApiKeyCreatorRole: vi.fn(),
   mockGetTeam: vi.fn(),
+  mockHasOrganizationIdAndAccess: vi.fn(),
   mockHandleApiError: vi.fn(),
   mockSuccessResponse: vi.fn(),
   mockUpdateTeam: vi.fn(),
@@ -33,6 +36,10 @@ vi.mock("@/modules/api/v2/lib/response", () => ({
 
 vi.mock("@/modules/api/v2/lib/utils", () => ({
   handleApiError: mockHandleApiError,
+}));
+
+vi.mock("@/modules/api/v2/organizations/[organizationId]/lib/utils", () => ({
+  hasOrganizationIdAndAccess: mockHasOrganizationIdAndAccess,
 }));
 
 vi.mock("@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/lib/teams", () => ({
@@ -57,6 +64,7 @@ const buildRequest = (method: string) =>
 describe("PUT/DELETE /organizations/[organizationId]/teams/[teamId]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHasOrganizationIdAndAccess.mockResolvedValue(true);
 
     mockAuthenticatedApiClient.mockImplementation(
       async ({ handler }: Parameters<typeof authenticatedApiClient>[0]) =>
@@ -86,7 +94,6 @@ describe("PUT/DELETE /organizations/[organizationId]/teams/[teamId]", () => {
       mockGetApiKeyCreatorRole.mockResolvedValue(null);
       mockCanManageOrganizationUsers.mockReturnValue(false);
 
-      const { DELETE } = await import("./route");
       const response = await DELETE(buildRequest("DELETE"), {
         params: Promise.resolve({ organizationId, teamId }),
       });
@@ -107,7 +114,6 @@ describe("PUT/DELETE /organizations/[organizationId]/teams/[teamId]", () => {
       mockCanManageOrganizationUsers.mockReturnValue(true);
       mockDeleteTeam.mockResolvedValue({ ok: true, data: team });
 
-      const { DELETE } = await import("./route");
       const response = await DELETE(buildRequest("DELETE"), {
         params: Promise.resolve({ organizationId, teamId }),
       });
@@ -123,7 +129,6 @@ describe("PUT/DELETE /organizations/[organizationId]/teams/[teamId]", () => {
       mockGetApiKeyCreatorRole.mockResolvedValue(null);
       mockCanManageOrganizationUsers.mockReturnValue(false);
 
-      const { PUT } = await import("./route");
       const response = await PUT(buildRequest("PUT"), {
         params: Promise.resolve({ organizationId, teamId }),
       });
@@ -144,7 +149,6 @@ describe("PUT/DELETE /organizations/[organizationId]/teams/[teamId]", () => {
       mockCanManageOrganizationUsers.mockReturnValue(true);
       mockUpdateTeam.mockResolvedValue({ ok: true, data: { ...team, name: "Renamed Team" } });
 
-      const { PUT } = await import("./route");
       const response = await PUT(buildRequest("PUT"), {
         params: Promise.resolve({ organizationId, teamId }),
       });

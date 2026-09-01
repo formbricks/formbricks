@@ -1,6 +1,6 @@
 import "server-only";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { assertCan } from "@/lib/authorization";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -20,22 +20,8 @@ export const ensureUnifyEnabled = async (workspaceId: string): Promise<string> =
  * point of sharing it.
  */
 export const ensureReadAccess = async (userId: string, workspaceId: string): Promise<void> => {
-  const organizationId = await ensureUnifyEnabled(workspaceId);
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      {
-        type: "organization",
-        roles: ["owner", "manager"],
-      },
-      {
-        type: "workspaceTeam",
-        minPermission: "read",
-        workspaceId,
-      },
-    ],
-  });
+  await ensureUnifyEnabled(workspaceId);
+  await assertCan({ type: "user", id: userId }, "workspace.read", { type: "workspace", id: workspaceId });
 };
 
 /**
@@ -54,17 +40,38 @@ export const ensureReadAccess = async (userId: string, workspaceId: string): Pro
  */
 export const ensureDeleteAccess = async (userId: string, workspaceId: string): Promise<string> => {
   const organizationId = await ensureUnifyEnabled(workspaceId);
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      {
-        type: "organization",
-        roles: ["owner", "manager"],
-      },
-    ],
+  await assertCan({ type: "user", id: userId }, "organization.manage", {
+    type: "organization",
+    id: organizationId,
   });
   return organizationId;
+};
+
+export const assertFeedbackDirectoryAssignmentAccess = async (
+  userId: string,
+  feedbackDirectoryId: string,
+  workspaceId: string
+): Promise<void> =>
+  assertCan({ type: "user", id: userId }, "feedbackDirectoryAssignment.read", {
+    type: "feedbackDirectoryAssignment",
+    feedbackDirectoryId,
+    workspaceId,
+  });
+
+/**
+ * Return the active datasets assigned to a workspace after issuing one exact assignment check per dataset.
+ * The PostgreSQL lookup remains authoritative; the checks give shadow mode coverage for server-rendered
+ * dataset, source, chart, and taxonomy entry points without introducing a second filtering model.
+ */
+export const getAuthorizedWorkspaceFeedbackDirectories = async (
+  userId: string,
+  workspaceId: string
+): Promise<{ id: string; name: string }[]> => {
+  const directories = await getFeedbackDirectoriesByWorkspaceId(workspaceId);
+  await Promise.all(
+    directories.map(({ id }) => assertFeedbackDirectoryAssignmentAccess(userId, id, workspaceId))
+  );
+  return directories;
 };
 
 /** Ids of the feedback directories (Hub tenants) assigned to a workspace. */

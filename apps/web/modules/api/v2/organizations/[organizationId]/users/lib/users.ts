@@ -2,6 +2,9 @@ import { prisma } from "@formbricks/database";
 import { OrganizationRole, Prisma, TeamUserRole } from "@formbricks/database/prisma";
 import { TUser } from "@formbricks/database/zod/users";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { getUsersQuery } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import {
@@ -129,6 +132,13 @@ export const createUser = async (
         },
       },
     });
+
+    await reconcileOrganizationMembership(organizationId, user.id);
+    await runPostCommitProjection("api_v2_organization_user_create", () =>
+      reconcileTeamWorkspaceRelationships({
+        teamMemberships: (existingTeams ?? []).map(({ id: teamId }) => ({ teamId, userId: user.id })),
+      })
+    );
 
     const returnedUser = {
       id: user.id,
@@ -370,6 +380,17 @@ export const updateUser = async (
       // Retrieve the updated user result. Since the update was the last operation, it is the last item.
       updatedUser = results[results.length - 1];
     }
+
+    await reconcileOrganizationMembership(organizationId, updatedUser.id);
+    const affectedTeamIds = new Set([
+      ...existingUser.teamUsers.map(({ team }) => team.id),
+      ...(newTeams ?? []).map(({ id }) => id),
+    ]);
+    await runPostCommitProjection("api_v2_organization_user_update", () =>
+      reconcileTeamWorkspaceRelationships({
+        teamMemberships: [...affectedTeamIds].map((teamId) => ({ teamId, userId: updatedUser.id })),
+      })
+    );
 
     const returnedUser = {
       id: updatedUser.id,

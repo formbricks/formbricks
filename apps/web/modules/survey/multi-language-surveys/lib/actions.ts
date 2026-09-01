@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZLanguageInput, ZLanguageUpdate } from "@formbricks/types/workspace";
+import { assertCan } from "@/lib/authorization";
 import {
   createLanguage,
   deleteLanguage,
@@ -12,12 +13,9 @@ import {
 } from "@/lib/language/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import {
-  getOrganizationIdFromLanguageId,
-  getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromLanguageId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromLanguageId } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 const ZCreateLanguageAction = z.object({
@@ -29,23 +27,11 @@ export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreat
   withAuditLogging("created", "language", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          schema: ZLanguageInput,
-          data: parsedInput.languageInput,
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
-          minPermission: "manage",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
 
     const result = await createLanguage(parsedInput.workspaceId, parsedInput.languageInput);
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -82,21 +68,11 @@ export const deleteLanguageAction = authenticatedActionClient.inputSchema(ZDelet
 
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
-          minPermission: "manage",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.languageId = parsedInput.languageId;
@@ -113,22 +89,9 @@ const ZGetSurveysUsingGivenLanguageAction = z.object({
 export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
   .inputSchema(ZGetSurveysUsingGivenLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromLanguageId(parsedInput.languageId);
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromLanguageId(parsedInput.languageId),
-          minPermission: "manage",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
+      type: "workspace",
+      id: await getWorkspaceIdFromLanguageId(parsedInput.languageId),
     });
 
     return await getSurveysUsingGivenLanguage(parsedInput.languageId);
@@ -152,23 +115,11 @@ export const updateLanguageAction = authenticatedActionClient.inputSchema(ZUpdat
 
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          schema: ZLanguageUpdate,
-          data: parsedInput.languageInput,
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
-          minPermission: "manage",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.languageId = parsedInput.languageId;

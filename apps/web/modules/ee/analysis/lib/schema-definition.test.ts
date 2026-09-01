@@ -16,9 +16,11 @@ import {
   getMeasureAxisLabel,
   getSentimentValueForMeasureId,
   getTranslatedDimensionValueLabel,
+  getTranslatedFieldDescription,
   getTranslatedFieldLabel,
   isEnrichmentDimensionId,
   isNotEnrichedDimensionValue,
+  isRatioMeasure,
   isSelectableValueDimension,
   sortMeasureIdsForCategoryAxis,
   sortRowsByEnumDimension,
@@ -70,7 +72,7 @@ describe("schema-definition", () => {
     test("returns measure by id", () => {
       const field = getFieldById("FeedbackRecords.count");
       expect(field).toBeDefined();
-      expect(field?.label).toBe("Responses");
+      expect(field?.label).toBe("Feedback Records");
     });
 
     test("returns undefined for unknown id", () => {
@@ -86,7 +88,7 @@ describe("schema-definition", () => {
 
     test("returns field label for known dimension/measure", () => {
       expect(formatCubeColumnHeader("FeedbackRecords.sourceType")).toBe("Source Type");
-      expect(formatCubeColumnHeader("FeedbackRecords.count")).toBe("Responses");
+      expect(formatCubeColumnHeader("FeedbackRecords.count")).toBe("Feedback Records");
     });
 
     test("converts last segment to title case for unknown keys", () => {
@@ -142,6 +144,23 @@ describe("schema-definition", () => {
       expect(getMeasureById("FeedbackRecords.promoterCount")?.group).toBe("count");
       expect(getMeasureById("FeedbackRecords.npsAverage")?.group).toBe("average");
       expect(getMeasureById("FeedbackRecords.npsScore")?.group).toBe("score");
+    });
+
+    test("classifies scores and averages as ratios, and counts as additive", () => {
+      // Drives two decisions that must not diverge: whether an empty bucket means 0 or "no value",
+      // and whether per-group values may be folded into one.
+      expect(isRatioMeasure("FeedbackRecords.npsScore")).toBe(true);
+      expect(isRatioMeasure("FeedbackRecords.csatScore")).toBe(true);
+      expect(isRatioMeasure("FeedbackRecords.npsAverage")).toBe(true);
+      expect(isRatioMeasure("FeedbackRecords.sentimentAverage")).toBe(true);
+
+      expect(isRatioMeasure("FeedbackRecords.count")).toBe(false);
+      expect(isRatioMeasure("FeedbackRecords.promoterCount")).toBe(false);
+      expect(isRatioMeasure("FeedbackRecords.uniqueRespondents")).toBe(false);
+
+      // Not a measure, and not in the schema at all: both keep the additive default.
+      expect(isRatioMeasure("FeedbackRecords.sourceName")).toBe(false);
+      expect(isRatioMeasure("FeedbackRecords.notAMeasure")).toBe(false);
     });
 
     test("only exposes members present in the deployed Cube schema", () => {
@@ -278,6 +297,45 @@ describe("schema-definition", () => {
         expect(dockerSchema).toContain(`    ${member}: {`);
         expect(chartSchema).toContain(`    ${member}: {`);
       }
+    });
+  });
+
+  describe("getTranslatedFieldDescription", () => {
+    // Returns something distinguishable from the key, so an assertion cannot pass on an id that
+    // resolves to the *wrong* `field_description_*` key — which a key-echoing `t` would allow.
+    const t = ((key: string) => `translated:${key}`) as TFunction;
+
+    // The descriptions these ids carry are the copy that tells a user which of three
+    // near-identical measures to pick. Routing them through `t()` is what puts them in front of a
+    // non-English user; nothing else fails if a key is dropped from the map, because the fallback
+    // silently serves the hardcoded English from FEEDBACK_FIELDS and `pnpm i18n` still passes.
+    test.each([
+      ["FeedbackRecords.valueId", "workspace.analysis.charts.field_description_value_option"],
+      ["FeedbackRecords.valueText", "workspace.analysis.charts.field_description_value_text"],
+      ["FeedbackRecords.count", "workspace.analysis.charts.field_description_count"],
+      ["FeedbackRecords.uniqueRespondents", "workspace.analysis.charts.field_description_unique_respondents"],
+      ["FeedbackRecords.uniqueResponses", "workspace.analysis.charts.field_description_unique_responses"],
+    ])("resolves %s through i18n rather than the English fallback", (id, key) => {
+      expect(getTranslatedFieldDescription(id, "english fallback", t)).toBe(`translated:${key}`);
+    });
+
+    test("falls back to the schema's own description for a member with no key", () => {
+      expect(getTranslatedFieldDescription("FeedbackRecords.sourceType", "english fallback", t)).toBe(
+        "english fallback"
+      );
+    });
+
+    test("passes an absent description through rather than inventing one", () => {
+      expect(getTranslatedFieldDescription("FeedbackRecords.sourceType", undefined, t)).toBeUndefined();
+    });
+
+    // The lookup is an object literal, so an id that collides with a prototype member must not
+    // resolve through the prototype chain — the defect #8985 had to convert its own lookup to a Map
+    // for. Unreachable today (every call site passes an id from the hardcoded FEEDBACK_FIELDS), so
+    // this pins it rather than fixing something live.
+    test("does not resolve an inherited property as a description", () => {
+      expect(getTranslatedFieldDescription("constructor", "english fallback", t)).toBe("english fallback");
+      expect(getTranslatedFieldDescription("toString", undefined, t)).toBeUndefined();
     });
   });
 

@@ -4,11 +4,10 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
+import { assertCan } from "@/lib/authorization";
 import { getSpreadsheetNameById, validateGoogleSheetsConnection } from "@/lib/googleSheet/service";
 import { getIntegrationByType } from "@/lib/integration/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 
 const ZValidateGoogleSheetsConnectionAction = z.object({
   workspaceId: ZId,
@@ -17,20 +16,9 @@ const ZValidateGoogleSheetsConnectionAction = z.object({
 export const validateGoogleSheetsConnectionAction = authenticatedActionClient
   .inputSchema(ZValidateGoogleSheetsConnectionAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
 
     const integration = await getIntegrationByType(parsedInput.workspaceId, "googleSheets");
@@ -50,20 +38,9 @@ const ZGetSpreadsheetNameByIdAction = z.object({
 export const getSpreadsheetNameByIdAction = authenticatedActionClient
   .inputSchema(ZGetSpreadsheetNameByIdAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
 
     // The integration is read from the database rather than accepted from the client. The settings page

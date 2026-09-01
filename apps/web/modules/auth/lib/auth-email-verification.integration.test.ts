@@ -68,19 +68,16 @@ describe("Better Auth email verification (real Postgres)", () => {
 
     const verifiedUser = await prisma.user.findUnique({ where: { email: "verify@example.com" } });
     expect(verifiedUser?.emailVerified).toBe(true);
-    // autoSignInAfterVerification (ENG-1746): consuming the link establishes a session so the user
-    // lands in the app already logged in instead of bouncing to /auth/login...
-    expect(await prisma.session.count()).toBe(1);
-    // ...and that session is captured in the signedIn audit trail, tagged as a credential-account
-    // ("password") sign-in via the /verify-email allow-list entry in getSignInAuthMethod.
-    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
-    expect(queueAuditEventBackground).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "signedIn",
-        userId: verifiedUser?.id,
-        newObject: expect.objectContaining({ authMethod: "password" }),
-      })
-    );
+    // ENG-2562: consuming the link verifies the address but does NOT establish a session. This row
+    // used to assert 1 — the ENG-1746 auto-sign-in — and that is precisely the pre-hijacking defect:
+    // whoever clicks the link is not necessarily whoever chose the password, so handing the clicker a
+    // session signs a victim into an attacker's account. The session is now minted only against a
+    // sign-up intent cookie, which a server-side `auth.api.verifyEmail` has no way to carry (there is
+    // no browser here) — see better-auth-verification-autosignin.integration.test.ts for the granted
+    // path driven through the real hook chain.
+    expect(await prisma.session.count()).toBe(0);
+    // No session means no `signedIn` audit either.
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
     // afterEmailVerification re-homes the createBrevoCustomer side effect (fire-and-forget)
     expect(brevo.createBrevoCustomer).toHaveBeenCalledWith({
       id: verifiedUser?.id,
@@ -90,13 +87,13 @@ describe("Better Auth email verification (real Postgres)", () => {
     expect(capturePostHogEvent).toHaveBeenCalledWith(verifiedUser?.id, "user_email_confirmed");
 
     // verify-email is a stateless signed JWT (no getAndDelete), so re-verifying is idempotent:
-    // the already-verified branch returns { status: true, user: null } and creates no second session
+    // the already-verified branch returns { status: true, user: null } and creates no session
     const replay = await auth.api.verifyEmail({ query: { token } });
     expect(replay).toMatchObject({ status: true, user: null });
-    expect(await prisma.session.count()).toBe(1);
-    // afterEmailVerification fires once per user — the replay must NOT re-emit the event or the audit
+    expect(await prisma.session.count()).toBe(0);
+    // afterEmailVerification fires once per user — the replay must NOT re-emit the event
     expect(capturePostHogEvent).toHaveBeenCalledTimes(1);
-    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
   });
 });
 

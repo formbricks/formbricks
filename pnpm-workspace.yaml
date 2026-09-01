@@ -343,3 +343,11 @@ minimumReleaseAgeExclude:
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
   # reliably matched by the exclude, so match by name.
   - "@formbricks/hub"
+
+# ENG-2772 / better-auth#10887: oauth-provider eagerly seeds persisted resources while building its
+# plugin context. A transient database failure rejects Better Auth's process-lifetime context promise,
+# taking every auth endpoint down until restart. Keep eager seeding best-effort so initialization can
+# finish (including the provider's database hooks); its existing lazy resource lookup retries the seed.
+# Remove this version-pinned patch once upstream defers or safely handles eager seed failures.
+patchedDependencies:
+  "@better-auth/oauth-provider@1.7.0": patches/@better-auth__oauth-provider@1.7.0.patch

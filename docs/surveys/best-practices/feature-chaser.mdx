@@ -1,86 +1,53 @@
 ---
 title: "Feature Chaser"
-description: "Learn how to harness the power of Formbricks to gather targeted user feedback on specific features. Dive deep into creating, triggering, and publishing the Feature Chaser survey to enhance your product with actionable insights for specific users."
-icon: "wrench"
+description: "Ask about one feature, immediately after it has been used."
+icon: "wand-magic-sparkles"
 ---
 
-
-Following up on specific features only makes sense with very targeted surveys. Formbricks is built for that.
+A feature chaser asks about a single feature the moment someone finishes using it.
 
 ## Purpose
 
-Product analytics never tell you why a feature is used - and why not. Following up on specific features with highly relevant questions is a great way to gather feedback and improve your product.
+Feedback about a feature collected days later is feedback about the memory of it. Asked on the spot, you get the friction while it is still fresh — and only from people who actually used the thing.
 
-## Formbricks Approach
+## 1. Start from the template
 
-* Trigger survey at exactly the right point in the user journey
+Open **Surveys**, click **New Survey** and choose **Choose a template**. Search for **Feature Chaser**, then click the card to create the survey.
 
-* Never ask twice, keep your data clean
+![The Feature Chaser template in the template picker](/images/surveys/best-practices/feature-chaser/template.webp)
 
-* Prevent survey fatigue with global waiting period
+The template is deliberately short. One question about the feature is the point; a second question turns a quick answer into a form.
 
-## Overview
+## 2. Trigger it at the right moment
 
-To run the Feature Chaser survey in your app you want to proceed as follows:
+Identify the click that means "finished using the feature" — usually the last button in the flow, such as **Export Report**. Match it with **Inner Text**, or with a **CSS Selector** such as `#export-report` if the same label appears elsewhere.
 
-- Create new Feature Chaser survey at [app.formbricks.com](https://app.formbricks.com/)
+Open the **Settings** tab, find **Survey Trigger** and add the action.
 
-- Setup a user action to display survey at the right point in time
+![The Survey Trigger section with the action attached](/images/surveys/best-practices/feature-chaser/trigger.webp)
+
+<Tip>
+  Creating the action itself — Click versus Page View, Inner Text versus CSS Selector — is the same dialog
+  in every recipe. It is walked through once on the [Feedback Box](/surveys/best-practices/feedback-box)
+  page, and the full reference is the [Actions manual](/surveys/website-app-surveys/actions).
+</Tip>
+
+## 3. Decide how often it may appear
+
+Still on **Settings**, open **Visibility & Recontact**. Choose **Show only once** for a one-off read on a new feature, or **Ask until they submit a response** if you want to keep asking until someone answers.
 
 <Note>
- Formbricks Widget running? We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins max.)](/surveys/website-app-surveys/quickstart)
+  Recontact Options and the workspace-wide [Cooldown Period](/surveys/website-app-surveys/cooldown-period)
+  are two separate gates and a survey has to pass both — Recontact Options first, then the cooldown. If
+  your workspace shows at most one survey a week, this survey inherits that unless you set **Ignore
+  Cooldown Period**.
 </Note>
 
-### 1. Create new Feature Chaser
+## 4. Publish
 
-If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
-
-Click on "Create Survey" and choose the template [Feature Chaser](https://formbricks.com/survey-templates/feature-chaser):
-
-![Create survey by template](/images/surveys/best-practices/feature-chaser/create-survey.webp)
-
-### 2. Update questions
-
-The questions you want to ask are dependent on your feature and can be very specific. In the template, we suggest a high-level check on how easy it was for the user to achieve their goal. We also add an opportunity to provide context:
-
-![Change text content](/images/surveys/best-practices/feature-chaser/change-text.webp)
-
-Save, and move over to where the magic happens: The “Audience” tab.
-
-### 3. Set up a trigger for the Feature Chaser survey:
-
-Before setting the right trigger, you need to identify a user action in your app which signals, that they have just used the feature you want to understand better. In most cases, it is clicking a specific button in your product.
-
-You can create [Code Actions](/surveys/website-app-surveys/actions#setting-up-code-actions) and [No Code Actions](/surveys/website-app-surveys/actions#setting-up-no-code-actions) to follow users through your app. In this example, we will create a No Code Action.
-
-There are two ways to track a button:
-
-1. **Trigger by Inner Text:** You might have a button with a unique text at the end of your feature e.g. "Export Report". You can setup a user Action with the according `Inner Text` to trigger the survey, like so:
-
-![Set the trigger by inner Text](/images/surveys/best-practices/feature-chaser/action-innertext.webp)
-
-1. **Trigger by CSS Selector:** In case you have more than one button saying “Export Report” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“export-report-featurename”` and set your user action up like so:
-
-![Set the trigger by CSS Selector](/images/surveys/best-practices/feature-chaser/action-css.webp)
-
-Please follow our [Actions manual](/surveys/website-app-surveys/actions) for an in-depth description of how Actions work.
-
-### 4. Select Action in the “When to ask” card
-
-![Select PMF trigger button action](/images/surveys/best-practices/feature-chaser/select-action.webp)
-
-### 5. Last step: Set Recontact Options correctly
-
-Lastly, scroll down to “Recontact Options”. Here you have full freedom to decide who you want to ask. Generally, you only want to ask every user once and prevent survey fatigue. It's up to you to decide if you want to ask again, when the user did not yet reply:
-
-![Set recontact options](/images/surveys/best-practices/feature-chaser/recontact-options.webp)
-
-### 7. Congrats! You’re ready to publish your survey 💃
-
-![Publish survey](/images/surveys/best-practices/feature-chaser/publish.webp)
+**Publish** puts it live. The widget picks up the change within a minute.
 
 <Note>
-  Formbricks Widget running? You need to have the Formbricks Widget installed
-  to display the Feature Chaser in your app. Please follow [this tutorial (Step
-  4 onwards)](/surveys/website-app-surveys/quickstart) to install the widget.
+  This is an app survey, so it needs the Formbricks widget running in your product. If you have not
+  installed it yet, follow [the quickstart](/surveys/website-app-surveys/quickstart) first.
 </Note>

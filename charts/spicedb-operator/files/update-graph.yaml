@@ -1,0 +1,3475 @@
+channels:
+- edges:
+    v1.2.0:
+    - v1.3.0
+    - v1.4.0
+    - v1.5.0
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.3.0:
+    - v1.4.0
+    - v1.5.0
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.4.0:
+    - v1.5.0
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.5.0:
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.6.0:
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.7.0:
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.7.1:
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.8.0:
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.9.0:
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.10.0:
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.11.0:
+    - v1.12.0
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.12.0:
+    - v1.13.0
+    - v1.14.0-phase1
+    v1.13.0:
+    - v1.14.0-phase1
+    v1.14.0:
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.14.0-phase1:
+    - v1.14.0-phase2
+    v1.14.0-phase2:
+    - v1.14.0
+    v1.14.1:
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.15.0:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.16.0:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.16.1:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.16.2:
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.17.0:
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.18.0:
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.19.1:
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.21.0:
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.22.2:
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.23.1:
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.24.0:
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.25.0:
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.26.0:
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.29.5:
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.30.0:
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.31.0:
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.32.0:
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.33.1:
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.34.0:
+    - v1.35.3
+    - v1.36.2
+    v1.35.3:
+    - v1.36.2
+    v1.36.2:
+    - v1.37.1
+    - v1.38.0
+    v1.37.1:
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.38.0:
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.39.1:
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.40.1:
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.42.1:
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.45.4:
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.47.1:
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.48.0:
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.49.2:
+    - v1.51.1
+    - v1.52.0
+    v1.51.1:
+    - v1.52.0
+  metadata:
+    datastore: postgres
+    default: "true"
+  name: stable
+  nodes:
+  - id: v1.52.0
+    migration: add-index-for-transaction-gc
+    tag: v1.52.0
+  - id: v1.51.1
+    migration: add-index-for-transaction-gc
+    tag: v1.51.1
+  - id: v1.49.2
+    migration: add-index-for-transaction-gc
+    tag: v1.49.2
+  - id: v1.48.0
+    migration: add-index-for-transaction-gc
+    tag: v1.48.0
+  - id: v1.47.1
+    migration: add-index-for-transaction-gc
+    tag: v1.47.1
+  - id: v1.45.4
+    migration: add-index-for-transaction-gc
+    tag: v1.45.4
+  - id: v1.42.1
+    migration: add-index-for-transaction-gc
+    tag: v1.42.1
+  - id: v1.40.1
+    migration: add-index-for-transaction-gc
+    tag: v1.40.1
+  - id: v1.39.1
+    migration: add-watch-api-index-to-relation-tuple-table
+    tag: v1.39.1
+  - id: v1.38.0
+    migration: add-metadata-to-transaction-table
+    tag: v1.38.0
+  - id: v1.37.1
+    migration: create-relationships-counters-table
+    tag: v1.37.1
+  - id: v1.36.2
+    migration: create-relationships-counters-table
+    tag: v1.36.2
+  - id: v1.35.3
+    migration: create-relationships-counters-table
+    tag: v1.35.3
+  - id: v1.34.0
+    migration: create-relationships-counters-table
+    tag: v1.34.0
+  - id: v1.33.1
+    migration: add-rel-by-alive-resource-relation-subject
+    tag: v1.33.1
+  - id: v1.32.0
+    migration: add-rel-by-alive-resource-relation-subject
+    tag: v1.32.0
+  - id: v1.31.0
+    migration: add-rel-by-alive-resource-relation-subject
+    tag: v1.31.0
+  - id: v1.30.0
+    migration: add-rel-by-alive-resource-relation-subject
+    tag: v1.30.0
+  - id: v1.29.5
+    migration: add-rel-by-alive-resource-relation-subject
+    tag: v1.29.5
+  - id: v1.26.0
+    migration: add-rel-by-alive-resource-relation-subject
+    tag: v1.26.0
+  - id: v1.25.0
+    migration: add-gc-covering-index
+    tag: v1.25.0
+  - id: v1.24.0
+    migration: add-gc-covering-index
+    tag: v1.24.0
+  - id: v1.23.1
+    migration: add-gc-covering-index
+    tag: v1.23.1
+  - id: v1.22.2
+    migration: add-gc-covering-index
+    tag: v1.22.2
+  - id: v1.21.0
+    migration: add-gc-covering-index
+    tag: v1.21.0
+  - id: v1.19.1
+    migration: add-gc-covering-index
+    tag: v1.19.1
+  - id: v1.18.0
+    migration: drop-bigserial-ids
+    tag: v1.18.0
+  - id: v1.17.0
+    migration: drop-bigserial-ids
+    tag: v1.17.0
+  - id: v1.16.2
+    migration: drop-bigserial-ids
+    tag: v1.16.2
+  - id: v1.16.1
+    migration: drop-bigserial-ids
+    tag: v1.16.1
+  - id: v1.16.0
+    migration: drop-bigserial-ids
+    tag: v1.16.0
+  - id: v1.15.0
+    migration: drop-bigserial-ids
+    tag: v1.15.0
+  - id: v1.14.1
+    migration: drop-bigserial-ids
+    tag: v1.14.1
+  - id: v1.14.0
+    migration: drop-bigserial-ids
+    tag: v1.14.0
+  - id: v1.14.0-phase2
+    migration: add-xid-constraints
+    phase: write-both-read-new
+    tag: v1.14.0
+  - id: v1.14.0-phase1
+    migration: add-xid-columns
+    phase: write-both-read-old
+    tag: v1.14.0
+  - id: v1.13.0
+    migration: add-ns-config-id
+    tag: v1.13.0
+  - id: v1.12.0
+    migration: add-ns-config-id
+    tag: v1.12.0
+  - id: v1.11.0
+    migration: add-ns-config-id
+    tag: v1.11.0
+  - id: v1.10.0
+    migration: add-ns-config-id
+    tag: v1.10.0
+  - id: v1.9.0
+    migration: add-unique-datastore-id
+    tag: v1.9.0
+  - id: v1.8.0
+    migration: add-unique-datastore-id
+    tag: v1.8.0
+  - id: v1.7.1
+    migration: add-unique-datastore-id
+    tag: v1.7.1
+  - id: v1.7.0
+    migration: add-unique-datastore-id
+    tag: v1.7.0
+  - id: v1.6.0
+    migration: add-unique-datastore-id
+    tag: v1.6.0
+  - id: v1.5.0
+    migration: add-transaction-timestamp-index
+    tag: v1.5.0
+  - id: v1.4.0
+    migration: add-transaction-timestamp-index
+    tag: v1.4.0
+  - id: v1.3.0
+    migration: add-transaction-timestamp-index
+    tag: v1.3.0
+  - id: v1.2.0
+    migration: add-transaction-timestamp-index
+    tag: v1.2.0
+- edges:
+    v1.2.0:
+    - v1.3.0
+    - v1.4.0
+    - v1.5.0
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.3.0:
+    - v1.4.0
+    - v1.5.0
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.4.0:
+    - v1.5.0
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.5.0:
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.6.0:
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.7.0:
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.7.1:
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.8.0:
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.9.0:
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.10.0:
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.11.0:
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.12.0:
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.13.0:
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.14.0:
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.14.1:
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.15.0:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.16.0:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.16.1:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.16.2:
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.17.0:
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.18.0:
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.19.1:
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.21.0:
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.22.2:
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.23.1:
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.24.0:
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.25.0:
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.26.0:
+    - v1.29.5
+    - v1.30.0-phase1
+    v1.29.5:
+    - v1.30.0-phase1
+    v1.30.0:
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.30.0-phase1:
+    - v1.30.0
+    v1.31.0:
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.32.0:
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.33.1:
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.34.0:
+    - v1.35.3
+    - v1.36.2
+    v1.35.3:
+    - v1.36.2
+    v1.36.2:
+    - v1.37.1
+    - v1.38.0
+    v1.37.1:
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.38.0:
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.39.1:
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.40.1:
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.42.1:
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.45.4:
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.47.1:
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.48.0:
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.49.2:
+    - v1.51.1
+    - v1.52.0
+    v1.51.1:
+    - v1.52.0
+  metadata:
+    datastore: cockroachdb
+    default: "true"
+  name: stable
+  nodes:
+  - id: v1.52.0
+    migration: add-expiration-support
+    tag: v1.52.0
+  - id: v1.51.1
+    migration: add-expiration-support
+    tag: v1.51.1
+  - id: v1.49.2
+    migration: add-expiration-support
+    tag: v1.49.2
+  - id: v1.48.0
+    migration: add-expiration-support
+    tag: v1.48.0
+  - id: v1.47.1
+    migration: add-expiration-support
+    tag: v1.47.1
+  - id: v1.45.4
+    migration: add-expiration-support
+    tag: v1.45.4
+  - id: v1.42.1
+    migration: add-expiration-support
+    tag: v1.42.1
+  - id: v1.40.1
+    migration: add-expiration-support
+    tag: v1.40.1
+  - id: v1.39.1
+    migration: add-transaction-metadata-table
+    tag: v1.39.1
+  - id: v1.38.0
+    migration: add-transaction-metadata-table
+    tag: v1.38.0
+  - id: v1.37.1
+    migration: add-integrity-relationtuple-table
+    tag: v1.37.1
+  - id: v1.36.2
+    migration: add-integrity-relationtuple-table
+    tag: v1.36.2
+  - id: v1.35.3
+    migration: add-relationship-counters-table
+    tag: v1.35.3
+  - id: v1.34.0
+    migration: add-relationship-counters-table
+    tag: v1.34.0
+  - id: v1.33.1
+    migration: remove-stats-table
+    tag: v1.33.1
+  - id: v1.32.0
+    migration: remove-stats-table
+    tag: v1.32.0
+  - id: v1.31.0
+    migration: remove-stats-table
+    tag: v1.31.0
+  - id: v1.30.0
+    migration: remove-stats-table
+    tag: v1.30.0
+  - id: v1.30.0-phase1
+    migration: add-caveats
+    tag: v1.30.0
+  - id: v1.29.5
+    migration: add-caveats
+    tag: v1.29.5
+  - id: v1.26.0
+    migration: add-caveats
+    tag: v1.26.0
+  - id: v1.25.0
+    migration: add-caveats
+    tag: v1.25.0
+  - id: v1.24.0
+    migration: add-caveats
+    tag: v1.24.0
+  - id: v1.23.1
+    migration: add-caveats
+    tag: v1.23.1
+  - id: v1.22.2
+    migration: add-caveats
+    tag: v1.22.2
+  - id: v1.21.0
+    migration: add-caveats
+    tag: v1.21.0
+  - id: v1.19.1
+    migration: add-caveats
+    tag: v1.19.1
+  - id: v1.18.0
+    migration: add-caveats
+    tag: v1.18.0
+  - id: v1.17.0
+    migration: add-caveats
+    tag: v1.17.0
+  - id: v1.16.2
+    migration: add-caveats
+    tag: v1.16.2
+  - id: v1.16.1
+    migration: add-caveats
+    tag: v1.16.1
+  - id: v1.16.0
+    migration: add-caveats
+    tag: v1.16.0
+  - id: v1.15.0
+    migration: add-caveats
+    tag: v1.15.0
+  - id: v1.14.1
+    migration: add-caveats
+    tag: v1.14.1
+  - id: v1.14.0
+    migration: add-caveats
+    tag: v1.14.0
+  - id: v1.13.0
+    migration: add-metadata-and-counters
+    tag: v1.13.0
+  - id: v1.12.0
+    migration: add-metadata-and-counters
+    tag: v1.12.0
+  - id: v1.11.0
+    migration: add-metadata-and-counters
+    tag: v1.11.0
+  - id: v1.10.0
+    migration: add-metadata-and-counters
+    tag: v1.10.0
+  - id: v1.9.0
+    migration: add-metadata-and-counters
+    tag: v1.9.0
+  - id: v1.8.0
+    migration: add-metadata-and-counters
+    tag: v1.8.0
+  - id: v1.7.1
+    migration: add-metadata-and-counters
+    tag: v1.7.1
+  - id: v1.7.0
+    migration: add-metadata-and-counters
+    tag: v1.7.0
+  - id: v1.6.0
+    migration: add-metadata-and-counters
+    tag: v1.6.0
+  - id: v1.5.0
+    migration: add-transactions-table
+    tag: v1.5.0
+  - id: v1.4.0
+    migration: add-transactions-table
+    tag: v1.4.0
+  - id: v1.3.0
+    migration: add-transactions-table
+    tag: v1.3.0
+  - id: v1.2.0
+    migration: add-transactions-table
+    tag: v1.2.0
+- edges:
+    v1.7.0:
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.7.1:
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.8.0:
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.9.0:
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.10.0:
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.11.0:
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.12.0:
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.13.0:
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.14.0:
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.14.1:
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.15.0:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.16.0:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.16.1:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.16.2:
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.17.0:
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.18.0:
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.19.1:
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.21.0:
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.22.2:
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.23.1:
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.24.0:
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.25.0:
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.26.0:
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.29.5:
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.30.0:
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.31.0:
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.32.0:
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.33.1:
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.34.0:
+    - v1.35.3
+    - v1.36.2
+    v1.35.3:
+    - v1.36.2
+    v1.36.2:
+    - v1.37.1
+    - v1.38.0
+    v1.37.1:
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.38.0:
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.39.1:
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.40.1:
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.42.1:
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.45.4:
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.47.1:
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.48.0:
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.49.2:
+    - v1.51.1
+    - v1.52.0
+    v1.51.1:
+    - v1.52.0
+  metadata:
+    datastore: mysql
+    default: "true"
+  name: stable
+  nodes:
+  - id: v1.52.0
+    migration: add_expiration_to_relation_tuple
+    tag: v1.52.0
+  - id: v1.51.1
+    migration: add_expiration_to_relation_tuple
+    tag: v1.51.1
+  - id: v1.49.2
+    migration: add_expiration_to_relation_tuple
+    tag: v1.49.2
+  - id: v1.48.0
+    migration: add_expiration_to_relation_tuple
+    tag: v1.48.0
+  - id: v1.47.1
+    migration: add_expiration_to_relation_tuple
+    tag: v1.47.1
+  - id: v1.45.4
+    migration: add_expiration_to_relation_tuple
+    tag: v1.45.4
+  - id: v1.42.1
+    migration: add_expiration_to_relation_tuple
+    tag: v1.42.1
+  - id: v1.40.1
+    migration: add_expiration_to_relation_tuple
+    tag: v1.40.1
+  - id: v1.39.1
+    migration: add_metadata_to_transaction_table
+    tag: v1.39.1
+  - id: v1.38.0
+    migration: add_metadata_to_transaction_table
+    tag: v1.38.0
+  - id: v1.37.1
+    migration: add_relationship_counters_table
+    tag: v1.37.1
+  - id: v1.36.2
+    migration: add_relationship_counters_table
+    tag: v1.36.2
+  - id: v1.35.3
+    migration: add_relationship_counters_table
+    tag: v1.35.3
+  - id: v1.34.0
+    migration: add_relationship_counters_table
+    tag: v1.34.0
+  - id: v1.33.1
+    migration: watch_api_relation_tuple_index
+    tag: v1.33.1
+  - id: v1.32.0
+    migration: watch_api_relation_tuple_index
+    tag: v1.32.0
+  - id: v1.31.0
+    migration: watch_api_relation_tuple_index
+    tag: v1.31.0
+  - id: v1.30.0
+    migration: watch_api_relation_tuple_index
+    tag: v1.30.0
+  - id: v1.29.5
+    migration: watch_api_relation_tuple_index
+    tag: v1.29.5
+  - id: v1.26.0
+    migration: longblob_definitions
+    tag: v1.26.0
+  - id: v1.25.0
+    migration: longblob_definitions
+    tag: v1.25.0
+  - id: v1.24.0
+    migration: extend_object_id
+    tag: v1.24.0
+  - id: v1.23.1
+    migration: extend_object_id
+    tag: v1.23.1
+  - id: v1.22.2
+    migration: extend_object_id
+    tag: v1.22.2
+  - id: v1.21.0
+    migration: extend_object_id
+    tag: v1.21.0
+  - id: v1.19.1
+    migration: add_caveat
+    tag: v1.19.1
+  - id: v1.18.0
+    migration: add_caveat
+    tag: v1.18.0
+  - id: v1.17.0
+    migration: add_caveat
+    tag: v1.17.0
+  - id: v1.16.2
+    migration: add_caveat
+    tag: v1.16.2
+  - id: v1.16.1
+    migration: add_caveat
+    tag: v1.16.1
+  - id: v1.16.0
+    migration: add_caveat
+    tag: v1.16.0
+  - id: v1.15.0
+    migration: add_caveat
+    tag: v1.15.0
+  - id: v1.14.1
+    migration: add_caveat
+    tag: v1.14.1
+  - id: v1.14.0
+    migration: add_caveat
+    tag: v1.14.0
+  - id: v1.13.0
+    migration: add_ns_config_id
+    tag: v1.13.0
+  - id: v1.12.0
+    migration: add_ns_config_id
+    tag: v1.12.0
+  - id: v1.11.0
+    migration: add_ns_config_id
+    tag: v1.11.0
+  - id: v1.10.0
+    migration: add_ns_config_id
+    tag: v1.10.0
+  - id: v1.9.0
+    migration: add_unique_datastore_id
+    tag: v1.9.0
+  - id: v1.8.0
+    migration: add_unique_datastore_id
+    tag: v1.8.0
+  - id: v1.7.1
+    migration: add_unique_datastore_id
+    tag: v1.7.1
+  - id: v1.7.0
+    migration: add_unique_datastore_id
+    tag: v1.7.0
+- edges:
+    v1.8.0:
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.9.0:
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.10.0:
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.11.0:
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.12.0:
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.13.0:
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.14.0:
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.14.1:
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.15.0:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.16.0:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.16.1:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.16.2:
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.17.0:
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.18.0:
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.19.1:
+    - v1.21.0
+    - v1.22.2-phase1
+    v1.21.0:
+    - v1.22.2-phase1
+    v1.22.2:
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5-phase1
+    v1.22.2-phase1:
+    - v1.22.2-phase2
+    v1.22.2-phase2:
+    - v1.22.2
+    v1.23.1:
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5-phase1
+    v1.24.0:
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5-phase1
+    v1.25.0:
+    - v1.26.0
+    - v1.29.5-phase1
+    v1.26.0:
+    - v1.29.5-phase1
+    v1.29.5:
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.29.5-phase1:
+    - v1.29.5
+    v1.30.0:
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.31.0:
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.32.0:
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.33.1:
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    v1.34.0:
+    - v1.35.3
+    - v1.36.2
+    v1.35.3:
+    - v1.36.2
+    v1.36.2:
+    - v1.37.1
+    - v1.38.0
+    v1.37.1:
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    v1.38.0:
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    v1.39.1:
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    v1.40.1:
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    v1.42.1:
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    v1.45.4:
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    v1.47.1:
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    v1.48.0:
+    - v1.49.2
+    - v1.51.1
+    v1.49.2:
+    - v1.51.1
+  metadata:
+    datastore: spanner
+    default: "true"
+  name: stable
+  nodes:
+  - id: v1.51.1
+    migration: add-expiration-support
+    tag: v1.52.0
+  - id: v1.49.2
+    migration: add-expiration-support
+    tag: v1.51.1
+  - id: v1.48.0
+    migration: add-expiration-support
+    tag: v1.48.0
+  - id: v1.47.1
+    migration: add-expiration-support
+    tag: v1.47.1
+  - id: v1.45.4
+    migration: add-expiration-support
+    tag: v1.45.4
+  - id: v1.42.1
+    migration: add-expiration-support
+    tag: v1.42.1
+  - id: v1.40.1
+    migration: add-expiration-support
+    tag: v1.40.1
+  - id: v1.39.1
+    migration: add-transaction-metadata-table
+    tag: v1.39.1
+  - id: v1.38.0
+    migration: add-transaction-metadata-table
+    tag: v1.38.0
+  - id: v1.37.1
+    migration: add-relationship-counter-table
+    tag: v1.37.1
+  - id: v1.36.2
+    migration: add-relationship-counter-table
+    tag: v1.36.2
+  - id: v1.35.3
+    migration: add-relationship-counter-table
+    tag: v1.35.3
+  - id: v1.34.0
+    migration: add-relationship-counter-table
+    tag: v1.34.0
+  - id: v1.33.1
+    migration: delete-older-changestreams
+    tag: v1.33.1
+  - id: v1.32.0
+    migration: delete-older-changestreams
+    tag: v1.32.0
+  - id: v1.31.0
+    migration: delete-older-changestreams
+    tag: v1.31.0
+  - id: v1.30.0
+    migration: delete-older-changestreams
+    tag: v1.30.0
+  - id: v1.29.5
+    migration: delete-older-changestreams
+    tag: v1.29.5
+  - id: v1.29.5-phase1
+    migration: register-combined-change-stream
+    tag: v1.29.5
+  - id: v1.26.0
+    migration: drop-changelog-table
+    tag: v1.26.0
+  - id: v1.25.0
+    migration: drop-changelog-table
+    tag: v1.25.0
+  - id: v1.24.0
+    migration: drop-changelog-table
+    tag: v1.24.0
+  - id: v1.23.1
+    migration: drop-changelog-table
+    tag: v1.23.1
+  - id: v1.22.2
+    migration: drop-changelog-table
+    tag: v1.22.2
+  - id: v1.22.2-phase2
+    migration: register-tuple-change-stream
+    phase: write-changelog-read-stream
+    tag: v1.22.2
+  - id: v1.22.2-phase1
+    migration: register-tuple-change-stream
+    phase: write-changelog-read-changelog
+    tag: v1.22.2
+  - id: v1.21.0
+    migration: add-caveats
+    tag: v1.21.0
+  - id: v1.19.1
+    migration: add-caveats
+    tag: v1.19.1
+  - id: v1.18.0
+    migration: add-caveats
+    tag: v1.18.0
+  - id: v1.17.0
+    migration: add-caveats
+    tag: v1.17.0
+  - id: v1.16.2
+    migration: add-caveats
+    tag: v1.16.2
+  - id: v1.16.1
+    migration: add-caveats
+    tag: v1.16.1
+  - id: v1.16.0
+    migration: add-caveats
+    tag: v1.16.0
+  - id: v1.15.0
+    migration: add-caveats
+    tag: v1.15.0
+  - id: v1.14.1
+    migration: add-caveats
+    tag: v1.14.1
+  - id: v1.14.0
+    migration: add-caveats
+    tag: v1.14.0
+  - id: v1.13.0
+    migration: add-metadata-and-counters
+    tag: v1.13.0
+  - id: v1.12.0
+    migration: add-metadata-and-counters
+    tag: v1.12.0
+  - id: v1.11.0
+    migration: add-metadata-and-counters
+    tag: v1.11.0
+  - id: v1.10.0
+    migration: add-metadata-and-counters
+    tag: v1.10.0
+  - id: v1.9.0
+    migration: add-metadata-and-counters
+    tag: v1.9.0
+  - id: v1.8.0
+    migration: add-metadata-and-counters
+    tag: v1.8.0
+- edges:
+    v1.2.0:
+    - v1.3.0
+    - v1.4.0
+    - v1.5.0
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.3.0:
+    - v1.4.0
+    - v1.5.0
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.4.0:
+    - v1.5.0
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.5.0:
+    - v1.6.0
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.6.0:
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.7.0:
+    - v1.7.1
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.7.1:
+    - v1.8.0
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.8.0:
+    - v1.9.0
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.9.0:
+    - v1.10.0
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.10.0:
+    - v1.11.0
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.11.0:
+    - v1.12.0
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.12.0:
+    - v1.13.0
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.13.0:
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.14.0:
+    - v1.14.1
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.14.1:
+    - v1.15.0
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.15.0:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.16.0:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.16.1:
+    - v1.16.2
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.16.2:
+    - v1.17.0
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.17.0:
+    - v1.18.0
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.18.0:
+    - v1.19.1
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.19.1:
+    - v1.21.0
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.21.0:
+    - v1.22.2
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.22.2:
+    - v1.23.1
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.23.1:
+    - v1.24.0
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.24.0:
+    - v1.25.0
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.25.0:
+    - v1.26.0
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.26.0:
+    - v1.29.5
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.29.5:
+    - v1.30.0
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.30.0:
+    - v1.31.0
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.31.0:
+    - v1.32.0
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.32.0:
+    - v1.33.1
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.33.1:
+    - v1.34.0
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.34.0:
+    - v1.35.3
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.35.3:
+    - v1.36.2
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.36.2:
+    - v1.37.1
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.37.1:
+    - v1.38.0
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.38.0:
+    - v1.39.1
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.39.1:
+    - v1.40.1
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.40.1:
+    - v1.42.1
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.42.1:
+    - v1.45.4
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.45.4:
+    - v1.47.1
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.47.1:
+    - v1.48.0
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.48.0:
+    - v1.49.2
+    - v1.51.1
+    - v1.52.0
+    v1.49.2:
+    - v1.51.1
+    - v1.52.0
+    v1.51.1:
+    - v1.52.0
+  metadata:
+    datastore: memory
+    default: "true"
+  name: stable
+  nodes:
+  - id: v1.52.0
+    tag: v1.52.0
+  - id: v1.51.1
+    tag: v1.51.1
+  - id: v1.49.2
+    tag: v1.49.2
+  - id: v1.48.0
+    tag: v1.48.0
+  - id: v1.47.1
+    tag: v1.47.1
+  - id: v1.45.4
+    tag: v1.45.4
+  - id: v1.42.1
+    tag: v1.42.1
+  - id: v1.40.1
+    tag: v1.40.1
+  - id: v1.39.1
+    tag: v1.39.1
+  - id: v1.38.0
+    tag: v1.38.0
+  - id: v1.37.1
+    tag: v1.37.1
+  - id: v1.36.2
+    tag: v1.36.2
+  - id: v1.35.3
+    tag: v1.35.3
+  - id: v1.34.0
+    tag: v1.34.0
+  - id: v1.33.1
+    tag: v1.33.1
+  - id: v1.32.0
+    tag: v1.32.0
+  - id: v1.31.0
+    tag: v1.31.0
+  - id: v1.30.0
+    tag: v1.30.0
+  - id: v1.29.5
+    tag: v1.29.5
+  - id: v1.26.0
+    tag: v1.26.0
+  - id: v1.25.0
+    tag: v1.25.0
+  - id: v1.24.0
+    tag: v1.24.0
+  - id: v1.23.1
+    tag: v1.23.1
+  - id: v1.22.2
+    tag: v1.22.2
+  - id: v1.21.0
+    tag: v1.21.0
+  - id: v1.19.1
+    tag: v1.19.1
+  - id: v1.18.0
+    tag: v1.18.0
+  - id: v1.17.0
+    tag: v1.17.0
+  - id: v1.16.2
+    tag: v1.16.2
+  - id: v1.16.1
+    tag: v1.16.1
+  - id: v1.16.0
+    tag: v1.16.0
+  - id: v1.15.0
+    tag: v1.15.0
+  - id: v1.14.1
+    tag: v1.14.1
+  - id: v1.14.0
+    tag: v1.14.0
+  - id: v1.13.0
+    tag: v1.13.0
+  - id: v1.12.0
+    tag: v1.12.0
+  - id: v1.11.0
+    tag: v1.11.0
+  - id: v1.10.0
+    tag: v1.10.0
+  - id: v1.9.0
+    tag: v1.9.0
+  - id: v1.8.0
+    tag: v1.8.0
+  - id: v1.7.1
+    tag: v1.7.1
+  - id: v1.7.0
+    tag: v1.7.0
+  - id: v1.6.0
+    tag: v1.6.0
+  - id: v1.5.0
+    tag: v1.5.0
+  - id: v1.4.0
+    tag: v1.4.0
+  - id: v1.3.0
+    tag: v1.3.0
+  - id: v1.2.0
+    tag: v1.2.0
+imageName: ghcr.io/authzed/spicedb

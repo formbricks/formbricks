@@ -7,15 +7,19 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
+import { assertCan, can } from "@/lib/authorization";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
-import { assertRateLimitAvailable, recordRateLimitUsage } from "@/modules/core/rate-limit/helpers";
+import {
+  applyRateLimit,
+  assertRateLimitAvailable,
+  recordRateLimitUsage,
+} from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -34,6 +38,9 @@ import { type TBulkInviteResult, getInviteFailureReason } from "./lib/invite-fai
 // Hard cap on a single bulk import to bound payload size and email fan-out.
 const BULK_INVITE_MAX_INVITEES = 500;
 
+// Cap on the teams one invite may name. See ZInviteUserAction.
+const INVITE_MAX_TEAMS = 100;
+
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
 });
@@ -42,16 +49,11 @@ export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteI
   withAuditLogging("deleted", "invite", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, organizationId);
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
     ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
@@ -67,16 +69,11 @@ export const createInviteTokenAction = authenticatedActionClient.inputSchema(ZCr
   withAuditLogging("updated", "invite", async ({ parsedInput, ctx }) => {
     const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, organizationId);
 
     // Get old expiresAt for audit logging before update
     const oldInvite = await prisma.invite.findUnique({
@@ -112,16 +109,11 @@ const ZDeleteMembershipAction = z.object({
 
 export const deleteMembershipAction = authenticatedActionClient.inputSchema(ZDeleteMembershipAction).action(
   withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     if (parsedInput.userId === ctx.user.id) {
       throw new OperationNotAllowedError("You cannot delete yourself from the organization");
@@ -183,16 +175,11 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       throw new ValidationError("Invite does not belong to the organization");
     }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     const invite = await getInvite(parsedInput.inviteId);
 
@@ -242,12 +229,61 @@ const validateTeamAdminInvitePermissions = (
   }
 };
 
+/**
+ * The capability half of "may this person send this invite", routed through the central interface.
+ *
+ * Organization owners and managers are decided once at the organization. Team admins reach this
+ * action too, and before ENG-1737 their capability was established only by `getTeamsWhereUserIsAdmin`.
+ * `team.manage` is that capability, asked once per requested team so the answer
+ * covers exactly the teams the invite would write to.
+ *
+ * Distinct ids, checked one at a time, stopping at the first refusal: asking per team makes the
+ * number of authorization decisions follow the request body, so repeats are collapsed (naming a team
+ * twice asks the same question twice) and the array is capped in the schema. Sequential rather than
+ * `Promise.all` for the same reason — a request naming many teams should not fan out that many
+ * concurrent checks, and the answer is available as soon as one team is refused.
+ *
+ * The narrower rules stay with the caller, in `validateTeamAdminInvitePermissions`: which invitation
+ * role a team admin may grant, and that they must name at least one team, are policy about the
+ * request's content rather than capabilities the vocabulary expresses.
+ */
+const assertInviterMayInvite = async ({
+  isOrgOwnerOrManager,
+  organizationId,
+  teamIds,
+  userId,
+}: Readonly<{
+  isOrgOwnerOrManager: boolean;
+  organizationId: string;
+  teamIds: ReadonlyArray<string>;
+  userId: string;
+}>): Promise<void> => {
+  if (isOrgOwnerOrManager) {
+    await assertCan({ type: "user", id: userId }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
+    });
+    return;
+  }
+
+  const actor = { type: "user", id: userId } as const;
+
+  for (const teamId of new Set(teamIds)) {
+    if (!(await can(actor, "team.manage", { type: "team", id: teamId }))) {
+      throw new OperationNotAllowedError("Team admins can only add users to teams where they are admin");
+    }
+  }
+};
+
 const ZInviteUserAction = z.object({
   organizationId: ZId,
   email: z.string(),
   name: z.string().trim().min(1, "Name is required"),
   role: ZOrganizationRole,
-  teamIds: z.array(ZId),
+  // Bounded because a team admin's authorization is now decided per named team: without a cap the
+  // number of authorization decisions would follow the request body. The UI offers the teams the
+  // inviter can see, so this is far above any real selection.
+  teamIds: z.array(ZId).max(INVITE_MAX_TEAMS, `An invite is limited to ${INVITE_MAX_TEAMS} teams`),
 });
 
 export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUserAction).action(
@@ -282,19 +318,12 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       throw new AuthenticationError("Not authorized to invite members");
     }
 
-    if (isOrgOwnerOrManager) {
-      // Standard org-level auth check
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-        ],
-      });
-    }
+    await assertInviterMayInvite({
+      isOrgOwnerOrManager,
+      organizationId: parsedInput.organizationId,
+      teamIds: parsedInput.teamIds,
+      userId: ctx.user.id,
+    });
 
     // Validate team admin restrictions
     validateTeamAdminInvitePermissions(
@@ -387,10 +416,9 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       throw new AuthenticationError("User not a member of this organization");
     }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
 
     // Entitlement gate: bulk invite is a paid feature. Mitigates the invite-spam abuse vector by
@@ -478,16 +506,11 @@ const ZLeaveOrganizationAction = z.object({
 
 export const leaveOrganizationAction = authenticatedActionClient.inputSchema(ZLeaveOrganizationAction).action(
   withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "billing", "member"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
 
