@@ -62,6 +62,20 @@ export const formatAttributeMessage = (msg: TAttributeUpdateMessage): string => 
   return template;
 };
 
+/**
+ * Total, locale-independent ordering of two strings by code unit.
+ *
+ * Deliberately NOT `localeCompare` (ENG-2252): this decides the order in which the attribute
+ * transactions below take their row locks, and that order must be byte-identical on every server in
+ * the fleet. `localeCompare` varies with the runtime's locale, so two pods could sort the same keys
+ * differently, take locks in opposite orders, and reintroduce the deadlock this ordering prevents.
+ */
+const compareCodeUnits = (a: string, b: string): number => {
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
+};
+
 // Default/system attributes that should not be deleted even if missing from payload
 const DEFAULT_ATTRIBUTES = new Set(["email", "userId", "firstName", "lastName"]);
 
@@ -290,7 +304,7 @@ export const updateAttributes = async (
   // safe because a deadlock rolls the whole transaction back and the upserts are idempotent.
   if (existingAttributes.length > 0) {
     const orderedExistingAttributes = [...existingAttributes].sort((a, b) =>
-      a.attributeKeyId < b.attributeKeyId ? -1 : a.attributeKeyId > b.attributeKeyId ? 1 : 0
+      compareCodeUnits(a.attributeKeyId, b.attributeKeyId)
     );
     await retryOnDeadlock(
       () =>
@@ -392,7 +406,7 @@ export const updateAttributes = async (
         // (key, workspaceId) unique index locks on — plus a bounded deadlock retry. A deadlock rolls
         // the whole batch back, so re-running it is safe.
         const orderedNewAttributes = [...preparedNewAttributes].sort((a, b) =>
-          a.key < b.key ? -1 : a.key > b.key ? 1 : 0
+          compareCodeUnits(a.key, b.key)
         );
         await retryOnDeadlock(
           () =>
