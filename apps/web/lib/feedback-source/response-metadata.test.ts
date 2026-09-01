@@ -68,6 +68,24 @@ describe("stripUrlQuery", () => {
   });
 
   test.each([
+    // The personal-link token is the credential itself, and stripping the query does not touch it.
+    ["personal link", "https://app.example.com/c/eyJhbGci.tok.sig?foo=1", "https://app.example.com/c"],
+    ["personal link, no query", "https://app.example.com/c/eyJhbGci.tok.sig", "https://app.example.com/c"],
+    [
+      "an ordinary survey path is untouched",
+      "https://app.example.com/s/cm123",
+      "https://app.example.com/s/cm123",
+    ],
+  ])("drops the personal-link token (%s)", (_label, input, expected) => {
+    expect(stripUrlQuery(input)).toBe(expected);
+  });
+
+  test("drops userinfo up to the last @, not the first", () => {
+    // Cutting at the first `@` would publish the tail of the password.
+    expect(stripUrlQuery("//user:p@ss@host/path?token=1")).toBe("//host/path");
+  });
+
+  test.each([
     ["empty", ""],
     ["whitespace", "   "],
     ["query only", "?token=secret"],
@@ -81,9 +99,15 @@ describe("buildResponseMetadata", () => {
     // Asserted with toEqual, not toMatchObject: this is the published payload, so a newly added
     // key has to be seen and decided on here rather than shipping unnoticed.
     expect(
-      buildResponseMetadata(buildResponse({ meta: fullMeta, finished: true, ttc: { _total: 45_500 } }), {
-        type: "app",
-      })
+      buildResponseMetadata(
+        buildResponse({
+          meta: fullMeta,
+          finished: true,
+          ttc: { _total: 45_500 },
+          endingId: "ending-1",
+        }),
+        { type: "app" }
+      )
     ).toEqual({
       source: "link",
       url: "https://app.example.com/s/abc",
@@ -94,6 +118,7 @@ describe("buildResponseMetadata", () => {
       action: "Clicked pricing CTA",
       finished: true,
       duration_seconds: 46,
+      ending_id: "ending-1",
       survey_type: "app",
     });
   });
@@ -210,6 +235,13 @@ describe("buildResponseMetadata", () => {
       ).toBe("feedback \u{1F600}");
     });
 
+    test("does not leave trailing whitespace where the cut landed", () => {
+      expect(
+        buildResponseMetadata(buildResponse({ meta: { source: `${"a".repeat(255)} tail` } }), linkSurvey)
+          .source
+      ).toBe("a".repeat(255));
+    });
+
     test("strips NUL bytes, which Hub cannot store", () => {
       expect(
         buildResponseMetadata(buildResponse({ meta: { source: "li\u0000nk" } }), linkSurvey).source
@@ -273,6 +305,7 @@ describe("HUB_METADATA_FIELDS", () => {
       "action",
       "finished",
       "duration_seconds",
+      "ending_id",
       "survey_type",
     ]);
   });

@@ -15,6 +15,13 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  *    the same object, it is personal data under GDPR, and Hub applies no validation or redaction of
  *    its own. A spread would publish it the moment a survey enables IP capture. Absence by
  *    construction is the guard — there is no filter to forget.
+ *
+ *    The other response fields left out, so a reader can tell decided from forgotten:
+ *    `contactAttributes` (arbitrary customer-set values — the richest dimension set here, and the
+ *    one most likely to carry personal data, so it needs its own decision rather than riding along),
+ *    `tags` (curated in the UI after submission, so at `responseFinished` they are near-always empty
+ *    and would publish a stale value), `variables` (per-survey and unbounded), and `displayId` /
+ *    `singleUseId` / `updatedAt` (internal plumbing, and `singleUseId` is itself a link token).
  * 2. Values are bounded here. `source`, `url` and `action` are client-supplied on the public
  *    response endpoint (`ZResponseInput.meta` declares no maximum lengths) and Hub caps only the
  *    total request body at 512 KiB, so an oversized value would fail the create and silently cost
@@ -39,7 +46,7 @@ type TMetadataValue = string | number | boolean | null | undefined;
 export type TResponseMetadata = Record<string, string | number | boolean>;
 
 export type TMetadataContext = {
-  response: Pick<TResponse, "meta" | "finished" | "ttc">;
+  response: Pick<TResponse, "meta" | "finished" | "ttc" | "endingId">;
   survey: Pick<TSurvey, "type">;
 };
 
@@ -67,6 +74,22 @@ const MAX_METADATA_URL_LENGTH = 512;
  * would skew an average silently.
  */
 const MAX_DURATION_SECONDS = 7 * 24 * 60 * 60;
+/**
+ * A high surrogate as the final UTF-16 code unit — the signature of a cut that split a pair. A
+ * complete pair ends on its LOW half, so this matches only the orphaned case.
+ */
+const TRAILING_HIGH_SURROGATE = /[\uD800-\uDBFF]$/;
+/**
+ * The personal-link route's token segment (`apps/web/app/c/[jwt]`). Stripping the query is not
+ * enough there: the JWT *is* the authorization to answer as that contact, and it sits in the path,
+ * so `origin + pathname` would move a live credential into a second datastore. It is also unique
+ * per recipient, which would give `url` unbounded cardinality precisely where a dashboard wants a
+ * dimension. Keep the route, drop the secret.
+ */
+const PERSONAL_LINK_TOKEN_PATH = /^(\/c)\/[^/]+/;
+
+/** Userinfo up to the LAST `@` before the path, so `u:p@ss@host` cannot leak `ss`. */
+const LEADING_USERINFO = /^((?:[a-z][a-z0-9+.-]*:)?\/\/)?[^/]*@/i;
 
 /**
  * Reduce a URL to origin + path.
@@ -84,7 +107,7 @@ export const stripUrlQuery = (rawUrl: string): string | undefined => {
     const parsed = new URL(trimmed);
     // `origin` also drops any embedded credentials (https://user:pass@host).
     if (parsed.protocol === "http:" || parsed.protocol === "https:") {
-      return `${parsed.origin}${parsed.pathname}`;
+      return `${parsed.origin}${parsed.pathname.replace(PERSONAL_LINK_TOKEN_PATH, "$1")}`;
     }
   } catch {
     // Not an absolute URL — fall through to the textual cut below.
@@ -93,11 +116,11 @@ export const stripUrlQuery = (rawUrl: string): string | undefined => {
   // The origin branch never ran, so credentials have not been dropped — and this path is easy to
   // reach with them: `user:pass@host/p` parses as a URL whose protocol is `user:`, and the
   // protocol-relative `//user:pass@host/p` cannot be parsed without a base, so both skip the
-  // branch above. Cut the query first, then remove any userinfo (everything up to a trailing `@`
-  // before the first path segment), keeping a `scheme://` or bare `//` prefix when one is present.
-  const cut = trimmed.split(/[?#]/)[0];
+  // branch above. Cut the query first, then remove any userinfo, keeping a `scheme://` or bare
+  // `//` prefix when one is present.
+  const cut = trimmed.split(/[?#]/)[0].replace(LEADING_USERINFO, "$1").trim();
 
-  return cut.replace(/^((?:[a-z][a-z0-9+.-]*:)?\/\/)?[^/@]*@/i, "$1") || undefined;
+  return cut || undefined;
 };
 
 const readDurationSeconds = (ttc: TResponse["ttc"]): number | undefined => {
@@ -135,6 +158,9 @@ export const HUB_METADATA_FIELDS: readonly TMetadataFieldSpec[] = [
     read: ({ response }) => (typeof response.finished === "boolean" ? response.finished : undefined),
   },
   { key: "duration_seconds", enabled: true, read: ({ response }) => readDurationSeconds(response.ttc) },
+  // Which ending the respondent reached — the branch they came out of. Bounded per survey and
+  // author-defined, so it groups cleanly.
+  { key: "ending_id", enabled: true, read: ({ response }) => response.endingId },
   { key: "survey_type", enabled: true, read: ({ survey }) => survey.type },
 ];
 
@@ -166,10 +192,10 @@ const sanitizeValue = (value: unknown, maxLength: number): string | number | boo
   // same silently-dropped-records outcome. The caller picks the offset by choosing the value's
   // length, so this is reachable on purpose and not only by accident.
   const truncated = cleaned.slice(0, maxLength);
-  const lastUnit = truncated.charCodeAt(truncated.length - 1);
-  const endsOnHighSurrogate = lastUnit >= 0xd800 && lastUnit <= 0xdbff;
+  const whole = TRAILING_HIGH_SURROGATE.test(truncated) ? truncated.slice(0, -1) : truncated;
 
-  return endsOnHighSurrogate ? truncated.slice(0, -1) : truncated;
+  // The cut can land mid-word and leave trailing space the pre-truncation trim never saw.
+  return whole.trimEnd() || undefined;
 };
 
 /**
@@ -177,7 +203,8 @@ const sanitizeValue = (value: unknown, maxLength: number): string | number | boo
  * unrepresentable.
  *
  * Separate from the table so the mechanism can be proven against an arbitrary table — a disabled
- * field, a field that throws — without mutating the module-level catalog other callers share.
+ * field, a field with its own maxLength — without mutating the module-level catalog other callers
+ * share.
  */
 export const projectMetadataFields = (
   fields: readonly TMetadataFieldSpec[],
