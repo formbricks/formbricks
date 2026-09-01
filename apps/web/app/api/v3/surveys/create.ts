@@ -1,5 +1,7 @@
 import "server-only";
+import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import type { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
+import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
@@ -10,7 +12,7 @@ import { v3DistributionToScalars } from "./distribution";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
 import { prepareV3SurveyCreate } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
-import type { TV3CreateSurveyBody } from "./schemas";
+import { type TV3CreateSurveyBody, formatV3ZodInvalidParams } from "./schemas";
 import {
   V3_CONTACTS_NOT_ENABLED_MESSAGE,
   assertV3SurveyTargetingFilterReferences,
@@ -28,6 +30,29 @@ export class V3SurveyCreatePermissionError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "V3SurveyCreatePermissionError";
+  }
+}
+
+/**
+ * The create document passed this route's request schema but failed the stricter schema the survey
+ * service applies on write (`ZSurveyCreateInput` + `surveyRefinement`) — e.g. a CTA `buttonUrl`
+ * scheme the element schema allows but the refinement rejects.
+ *
+ * This is raised from an explicit pre-write parse rather than by catching `ValidationError` in the
+ * response mapper, and the distinction matters: `createSurvey` runs `validateInputs` again itself,
+ * and it also calls out to code *after* its transaction commits (`subscribeOrganizationMembers-
+ * ToSurveyResponses` → `updateUser`, which re-validates the user's stored `notificationSettings`
+ * JSON). A `ValidationError` from there means the survey row already exists, so answering it with a
+ * 4xx would tell the caller nothing was written and invite a duplicate retry. Anything that is not
+ * this error keeps its 500.
+ */
+export class V3SurveyInputValidationError extends Error {
+  invalidParams: InvalidParam[];
+
+  constructor(invalidParams: InvalidParam[]) {
+    super("Survey document failed validation");
+    this.name = "V3SurveyInputValidationError";
+    this.invalidParams = invalidParams;
   }
 }
 
@@ -183,6 +208,16 @@ export async function executeV3SurveyCreate(params: {
     ...appCreateFields,
     ...surveyCreateInputOverrides,
   };
+
+  // Run the survey service's own write schema here, before any DB work, so a document this route's
+  // request schema admits but `surveyRefinement` rejects (a CTA `buttonUrl` of `tel:…` being the
+  // known case) fails with a typed error the route can answer 422. `createSurvey` validates this
+  // same input again; catching its `ValidationError` instead would be wrong, because it also throws
+  // one from post-commit work where the survey row already exists. See V3SurveyInputValidationError.
+  const parsedCreateInput = ZSurveyCreateInput.safeParse(surveyCreateInput);
+  if (!parsedCreateInput.success) {
+    throw new V3SurveyInputValidationError(formatV3ZodInvalidParams(parsedCreateInput.error, "body"));
+  }
 
   // App targeting filters are created atomically with the survey's private segment inside
   // `createSurvey` (a single transaction), so a failed targeting write can't leave a partial survey.
