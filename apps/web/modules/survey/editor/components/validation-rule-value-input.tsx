@@ -58,7 +58,7 @@ export const ValidationRuleValueInput = ({
         onParamsChange(mode === "relative" ? createRelativeDateParams(ruleType) : createRuleParams(ruleType));
       }}>
       <SelectTrigger
-        className="h-9 w-44 shrink-0 bg-white"
+        className="h-9 w-32 shrink-0 bg-white whitespace-nowrap"
         aria-label={t("workspace.surveys.edit.validation.date_mode")}>
         <SelectValue />
       </SelectTrigger>
@@ -81,21 +81,23 @@ export const ValidationRuleValueInput = ({
         relativeEnd?: TRelativeDateBound;
       };
 
+      // Two relative bounds are six controls, which will not sit on one line next to the rule-type
+      // select. Stack them so the amount / unit / direction columns line up instead of wrapping
+      // ragged; "before" and "after" already say which bound is which, so no connective word.
       return (
-        <div className="flex w-full flex-wrap items-center gap-2">
+        <div className="flex flex-[3] items-start gap-2">
           {renderDateModeSelect()}
           {isRange && relativeStart && relativeEnd ? (
-            <>
+            <div className="flex flex-col gap-2">
               <ValidationRuleRelativeDateInput
                 bound={relativeStart}
                 onChange={(bound) => onParamsChange({ relativeStart: bound, relativeEnd })}
               />
-              <span className="text-sm text-slate-500">{t("common.and")}</span>
               <ValidationRuleRelativeDateInput
                 bound={relativeEnd}
                 onChange={(bound) => onParamsChange({ relativeStart, relativeEnd: bound })}
               />
-            </>
+            </div>
           ) : null}
           {!isRange && relative ? (
             <ValidationRuleRelativeDateInput
@@ -109,7 +111,7 @@ export const ValidationRuleValueInput = ({
 
     if (isRange) {
       return (
-        <div className="flex w-full flex-wrap items-center gap-2">
+        <div className="flex flex-[3] flex-wrap items-center gap-2">
           {renderDateModeSelect()}
           <Input
             type="date"
@@ -137,7 +139,7 @@ export const ValidationRuleValueInput = ({
     }
 
     return (
-      <div className="flex w-full items-center gap-2">
+      <div className="flex flex-[3] items-center gap-2">
         {renderDateModeSelect()}
         <Input
           type="date"

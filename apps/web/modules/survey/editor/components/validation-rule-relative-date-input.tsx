@@ -41,21 +41,21 @@ export const ValidationRuleRelativeDateInput = ({
   ];
 
   return (
-    <div className="flex flex-1 items-center gap-2">
+    <div className="flex shrink-0 items-center gap-2">
       <Input
         type="number"
         min={0}
         step={1}
         value={bound.amount}
         onChange={(e) => onChange({ ...bound, amount: Math.max(0, Math.trunc(Number(e.target.value) || 0)) })}
-        className="h-9 w-20 bg-white"
+        className="h-9 w-16 shrink-0 bg-white"
         aria-label={t("workspace.surveys.edit.validation.relative_date_amount")}
       />
       <Select
         value={bound.unit}
         onValueChange={(value) => onChange({ ...bound, unit: value as TRelativeDateUnit })}>
         <SelectTrigger
-          className="h-9 flex-1 bg-white"
+          className="h-9 w-36 shrink-0 bg-white whitespace-nowrap"
           aria-label={t("workspace.surveys.edit.validation.relative_date_unit")}>
           <SelectValue />
         </SelectTrigger>
@@ -71,7 +71,7 @@ export const ValidationRuleRelativeDateInput = ({
         value={bound.direction}
         onValueChange={(value) => onChange({ ...bound, direction: value as TRelativeDateDirection })}>
         <SelectTrigger
-          className="h-9 flex-1 bg-white"
+          className="h-9 w-24 shrink-0 bg-white whitespace-nowrap"
           aria-label={t("workspace.surveys.edit.validation.relative_date_direction")}>
           <SelectValue />
         </SelectTrigger>
