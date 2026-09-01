@@ -1,10 +1,16 @@
 import { z } from "zod";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
-import { problemBadRequest, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
+import {
+  problemBadRequest,
+  problemTooManyRequests,
+  problemUnprocessableContent,
+  successResponse,
+} from "@/app/api/v3/lib/response";
 import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { checkRateLimit } from "@/modules/core/rate-limit/rate-limit";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { collectResponseAttachments } from "@/modules/storage/lib/collect-response-attachments";
 import { MAX_ATTACHMENT_FILES, streamAttachmentsAsZip } from "./lib/export-attachments";
@@ -47,7 +53,6 @@ export const GET = withV3ApiWrapper({
   auth: "session",
   action: "exported",
   targetType: "file",
-  customRateLimitConfig: rateLimitConfigs.storage.attachmentsExport,
   schemas: {
     params: paramsSchema,
     query: querySchema,
@@ -119,12 +124,29 @@ export const GET = withV3ApiWrapper({
       });
     }
 
+    const sessionUserId = getSessionUserId(authentication);
+
+    // Charged here rather than through the wrapper's `customRateLimitConfig`: the wrapper runs before
+    // the handler knows whether this is a download or the client's cheap dryRun pre-flight, so a budget
+    // applied there would spend a download's allowance on a pre-flight. Pre-flights are still bounded by
+    // the wrapper's default API limit. `checkRateLimit` rather than `applyRateLimit` because the wrapper
+    // turns a thrown error into a 500, and this has to be a 429.
+    if (sessionUserId) {
+      const limit = await checkRateLimit(rateLimitConfigs.storage.attachmentsExport, sessionUserId);
+      if (limit.ok && !limit.data.allowed) {
+        return problemTooManyRequests(
+          requestId,
+          "Too many attachment exports. Try again shortly.",
+          limit.data.retryAfter
+        );
+      }
+    }
+
     if (auditLog) {
       auditLog.organizationId = authResult.organizationId;
       auditLog.targetId = survey.id;
     }
 
-    const sessionUserId = getSessionUserId(authentication);
     if (sessionUserId) {
       capturePostHogEvent(
         sessionUserId,

@@ -2,6 +2,7 @@ import "server-only";
 import { type Archiver, type ArchiverError, ZipArchive } from "archiver";
 import { Readable } from "node:stream";
 import { logger } from "@formbricks/logger";
+import { StorageErrorCode } from "@formbricks/storage";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { type TAttachmentEntry } from "@/modules/storage/lib/collect-response-attachments";
 import { getFileStreamForDownload } from "@/modules/storage/service";
@@ -21,7 +22,7 @@ import { buildAttachmentManifestCsv } from "./manifest";
 export const MAX_ATTACHMENT_FILES = 5000;
 
 /**
- * Above this the archive is finalised early with a `_TRUNCATED.txt` note. Enforced mid-stream rather
+ * The archive stops before crossing this, and says so in `_TRUNCATED.txt`. Enforced mid-stream rather
  * than pre-flighted: object sizes are not in the database, so checking first would mean thousands of S3
  * HEAD requests.
  */
@@ -34,16 +35,36 @@ export const buildAttachmentArchiveFileName = (survey: TSurvey, now: Date): stri
   `${survey.id}-attachments-${now.toISOString().slice(0, 10)}.zip`;
 
 /**
+ * Holds the storage stream currently being consumed.
+ *
+ * `archive.abort()` is documented not to drain appended sources, and `Readable.toWeb` cancelling the
+ * archive does not reach through it either — so a client that cancels a multi-gigabyte download would
+ * leave the in-flight S3 stream open. Whoever tears the archive down destroys this instead.
+ */
+interface ActiveSource {
+  stream: Readable | null;
+}
+
+/**
  * Appends one entry and resolves when archiver has consumed it.
  *
  * Sequential on purpose: `archive.append` queues internally, so appending every entry up front would
  * open one S3 stream per file — thousands of them — and hold them all open while the archive drains.
  */
-const appendEntry = (archive: Archiver, body: ReadableStream<Uint8Array>, zipPath: string): Promise<void> =>
+const appendEntry = (
+  archive: Archiver,
+  body: ReadableStream<Uint8Array>,
+  zipPath: string,
+  activeSource: ActiveSource
+): Promise<void> =>
   new Promise((resolve, reject) => {
+    const source = Readable.fromWeb(body as Parameters<typeof Readable.fromWeb>[0]);
+    activeSource.stream = source;
+
     const cleanup = () => {
       archive.off("entry", onEntry);
       archive.off("error", onError);
+      activeSource.stream = null;
     };
     const onEntry = () => {
       cleanup();
@@ -51,30 +72,49 @@ const appendEntry = (archive: Archiver, body: ReadableStream<Uint8Array>, zipPat
     };
     const onError = (error: Error) => {
       cleanup();
+      source.destroy();
       reject(error);
     };
 
     archive.on("entry", onEntry);
     archive.on("error", onError);
-    archive.append(Readable.fromWeb(body as Parameters<typeof Readable.fromWeb>[0]), { name: zipPath });
+    archive.append(source, { name: zipPath });
   });
 
-const streamArchive = async (entries: TAttachmentEntry[], archive: Archiver): Promise<void> => {
-  // Mirrors the collector's report, with a row's status overwritten when the object turns out to be
-  // gone and each row's size filled in as storage reports it.
+/** Discards a storage body the archive will not read, so the S3 connection is not left open. */
+const discardBody = (body: ReadableStream<Uint8Array>): void => {
+  void body.cancel().catch((error: unknown) => {
+    logger.warn({ error }, "Attachment export: failed to cancel an unused storage stream");
+  });
+};
+
+/**
+ * `missing_in_storage` is reserved for an object storage confirms is gone. Every other failure —
+ * credentials, a client error, a rejected name — means the object's fate is unknown, and saying
+ * "missing" during an outage would have the manifest assert that intact attachments were lost.
+ */
+const statusForStorageError = (code: StorageErrorCode): TAttachmentEntry["status"] =>
+  code === StorageErrorCode.FileNotFoundError ? "missing_in_storage" : "unavailable_in_storage";
+
+const buildTruncationNote = (fileCount: number): string =>
+  `This archive was truncated after ${fileCount} files because the export reached the ${MAX_ATTACHMENT_BYTES} byte limit.\nNarrow the response filter and download again to get the rest.\n`;
+
+const streamArchive = async (
+  entries: TAttachmentEntry[],
+  archive: Archiver,
+  activeSource: ActiveSource
+): Promise<void> => {
+  // Mirrors the collector's report, with a row's status overwritten when storage cannot produce the
+  // object and each row's size filled in as storage reports it.
   const manifestRows: TAttachmentEntry[] = [];
   let totalBytes = 0;
-  let truncatedAfter: number | null = null;
+  let appendedFiles = 0;
+  let truncated = false;
 
   for (const entry of entries) {
     if (entry.status !== "ok" || !entry.storage) {
       manifestRows.push(entry);
       continue;
-    }
-
-    if (totalBytes >= MAX_ATTACHMENT_BYTES) {
-      truncatedAfter = manifestRows.filter((row) => row.status === "ok").length;
-      break;
     }
 
     const streamResult = await getFileStreamForDownload(
@@ -85,27 +125,34 @@ const streamArchive = async (entries: TAttachmentEntry[], archive: Archiver): Pr
     );
 
     if (!streamResult.ok) {
-      // The response is already committed with a 200, so a missing object cannot become an error
+      // The response is already committed with a 200, so a storage failure cannot become an error
       // status. Record it in the manifest instead of leaving the file silently absent.
+      const status = statusForStorageError(streamResult.error.code);
       logger.warn(
         { zipPath: entry.zipPath, error: streamResult.error },
-        "Attachment export: file missing from storage"
+        "Attachment export: storage could not produce a file"
       );
-      manifestRows.push({ ...entry, status: "missing_in_storage" });
+      manifestRows.push({ ...entry, status });
       continue;
     }
 
-    await appendEntry(archive, streamResult.data.body, entry.zipPath);
+    // Checked before appending, not after: appending first would let one oversized object blow past the
+    // limit entirely, and two large ones produce an archive twice the cap.
+    if (totalBytes + streamResult.data.contentLength > MAX_ATTACHMENT_BYTES) {
+      discardBody(streamResult.data.body);
+      truncated = true;
+      break;
+    }
+
+    await appendEntry(archive, streamResult.data.body, entry.zipPath, activeSource);
 
     totalBytes += streamResult.data.contentLength;
+    appendedFiles++;
     manifestRows.push({ ...entry, bytes: streamResult.data.contentLength });
   }
 
-  if (truncatedAfter !== null) {
-    archive.append(
-      `This archive was truncated after ${truncatedAfter} files because the export exceeded ${MAX_ATTACHMENT_BYTES} bytes.\nNarrow the response filter and download again to get the rest.\n`,
-      { name: TRUNCATION_NOTE_PATH }
-    );
+  if (truncated) {
+    archive.append(buildTruncationNote(appendedFiles), { name: TRUNCATION_NOTE_PATH });
   }
 
   archive.append(await buildAttachmentManifestCsv(manifestRows), { name: MANIFEST_PATH });
@@ -126,14 +173,27 @@ export const streamAttachmentsAsZip = ({
   // would burn CPU on the request path for nothing. zip64 because the archive can exceed 4 GB.
   // archiver 8 dropped the `archiver("zip", …)` factory in favour of the format classes.
   const archive = new ZipArchive({ zlib: { level: 0 }, forceZip64: true });
+  const activeSource: ActiveSource = { stream: null };
+
+  const destroyActiveSource = () => {
+    const source = activeSource.stream;
+    activeSource.stream = null;
+    source?.destroy();
+  };
 
   archive.on("warning", (warning: ArchiverError) => {
     logger.warn({ warning }, "Attachment export: archiver warning");
   });
 
+  // A cancelled download closes the archive without draining what was appended to it, so the storage
+  // stream in flight has to be torn down here.
+  archive.on("close", destroyActiveSource);
+  archive.on("error", destroyActiveSource);
+
   // Not awaited: the Response must be returned before the archive drains, or no bytes ever flow.
-  void streamArchive(entries, archive).catch((error) => {
+  void streamArchive(entries, archive, activeSource).catch((error: unknown) => {
     logger.error({ error, surveyId: survey.id }, "Attachment export failed mid-stream");
+    destroyActiveSource();
     archive.abort();
   });
 

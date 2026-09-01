@@ -45,8 +45,11 @@ export type TAttachmentStatus =
   | "ok"
   | "skipped_foreign_workspace"
   | "skipped_invalid_url"
-  // Set by the streaming stage, not the collector: the object was gone when the archive asked for it.
-  | "missing_in_storage";
+  // Set by the streaming stage, not the collector: storage confirmed the object is gone.
+  | "missing_in_storage"
+  // Also from the streaming stage: storage failed for some other reason, so whether the object still
+  // exists is unknown. Kept distinct so an outage does not read as data loss.
+  | "unavailable_in_storage";
 
 export interface TAttachmentEntry {
   /** Path inside the archive. Unique across the whole export. */

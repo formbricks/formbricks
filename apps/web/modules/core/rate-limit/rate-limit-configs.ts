@@ -107,15 +107,14 @@ export const rateLimitConfigs = {
       namespace: "storage:upload:workspace",
     }, // 100 per minute per workspace
     delete: { interval: 60, allowedPerInterval: 5, namespace: "storage:delete" }, // 5 per minute
-    // One attachment export streams thousands of objects out of S3, so it is bounded far more
-    // tightly than a CSV download. Counted in requests, not downloads: the client spends two per
-    // download — the dryRun pre-flight and the navigation that follows it — so the budget is sized in
-    // pairs. Getting this wrong strands the rejection on the navigation, which replaces the responses
-    // table with a problem document, the exact outcome the pre-flight exists to avoid.
+    // One attachment export streams thousands of objects out of S3, so it is bounded far more tightly
+    // than a CSV download. Charged inside the route's handler, on the download path only, so the
+    // client's dryRun pre-flight does not spend a download's allowance — see the route for why that
+    // cannot go through the wrapper's customRateLimitConfig.
     attachmentsExport: {
       interval: 600,
-      allowedPerInterval: 6,
+      allowedPerInterval: 3,
       namespace: "storage:attachments-export",
-    }, // 3 downloads per 10 minutes (2 requests each)
+    }, // 3 downloads per 10 minutes
   },
 } as const;

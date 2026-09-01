@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { StorageErrorCode } from "@formbricks/storage";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TAttachmentEntry } from "@/modules/storage/lib/collect-response-attachments";
 import { getFileStreamForDownload } from "@/modules/storage/service";
@@ -123,15 +124,31 @@ describe("streamAttachmentsAsZip", () => {
     expect(mockedGetFileStream).toHaveBeenCalledWith("my photo.jpg", "ws-own", "private", "ws-own");
   });
 
-  test("records a file that vanished from storage instead of failing the download", async () => {
+  test("records a file storage confirms is gone as missing", async () => {
     // The 200 and its headers are already flushed by the time storage is asked, so a missing object
     // cannot become an error status — it has to surface in the manifest.
-    mockedGetFileStream.mockResolvedValue({ ok: false, error: { code: "file_not_found" } } as never);
+    mockedGetFileStream.mockResolvedValue({
+      ok: false,
+      error: { code: StorageErrorCode.FileNotFoundError },
+    } as never);
 
     const archive = await readArchive(streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW }));
 
     expect(archive).toContain("manifest.csv");
     expect(manifestRows()).toEqual([expect.objectContaining({ status: "missing_in_storage" })]);
+  });
+
+  test("does not call an outage a missing file", async () => {
+    // Saying "missing" for a credentials or client error would have the manifest assert that intact
+    // attachments were lost.
+    mockedGetFileStream.mockResolvedValue({
+      ok: false,
+      error: { code: StorageErrorCode.S3CredentialsError },
+    } as never);
+
+    await readArchive(streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW }));
+
+    expect(manifestRows()).toEqual([expect.objectContaining({ status: "unavailable_in_storage" })]);
   });
 
   test("carries the collector's skipped entries into the manifest without asking storage", async () => {
@@ -148,19 +165,14 @@ describe("streamAttachmentsAsZip", () => {
     expect(manifestRows()).toEqual([expect.objectContaining({ status: "skipped_foreign_workspace" })]);
   });
 
-  test("truncates once the byte ceiling is crossed and says so in the archive", async () => {
-    // The ceiling is enforced from what storage reports, not from bytes actually read, so one oversized
-    // entry is enough to exercise it.
-    mockedGetFileStream
-      .mockResolvedValueOnce({
-        ok: true,
-        data: {
-          body: streamOf("x").data.body,
-          contentType: "image/jpeg",
-          contentLength: MAX_ATTACHMENT_BYTES,
-        },
-      } as never)
-      .mockResolvedValue(streamOf("second") as never);
+  test("truncates before appending an object that would cross the byte ceiling", async () => {
+    // Two half-cap objects: the first fits, the second must be refused rather than appended and only
+    // then noticed, which would have produced an archive twice the limit.
+    const half = Math.floor(MAX_ATTACHMENT_BYTES / 2) + 1;
+    mockedGetFileStream.mockResolvedValue({
+      ok: true,
+      data: { body: streamOf("x").data.body, contentType: "image/jpeg", contentLength: half },
+    } as never);
 
     const archive = await readArchive(
       streamAttachmentsAsZip({
@@ -174,9 +186,39 @@ describe("streamAttachmentsAsZip", () => {
     );
 
     expect(archive).toContain("_TRUNCATED.txt");
-    // The second entry was never fetched, so it is absent from the archive.
-    expect(mockedGetFileStream).toHaveBeenCalledTimes(1);
+    // The first was appended; the second was fetched, refused, and never written.
+    expect(archive).toContain("2026-09-01_res-1/");
     expect(archive).not.toContain("2026-09-01_res-2/");
+    expect(manifestRows()).toEqual([expect.objectContaining({ responseId: "res-1", status: "ok" })]);
+  });
+
+  test("cancels the storage body it refuses, instead of leaving the connection open", async () => {
+    const cancel = vi.fn().mockResolvedValue(undefined);
+    const body = { cancel } as unknown as ReadableStream<Uint8Array>;
+    mockedGetFileStream.mockResolvedValue({
+      ok: true,
+      data: { body, contentType: "image/jpeg", contentLength: MAX_ATTACHMENT_BYTES + 1 },
+    } as never);
+
+    await readArchive(streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW }));
+
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
+  test("refuses a single object larger than the whole budget", async () => {
+    mockedGetFileStream.mockResolvedValue({
+      ok: true,
+      data: {
+        body: streamOf("x").data.body,
+        contentType: "image/jpeg",
+        contentLength: MAX_ATTACHMENT_BYTES + 1,
+      },
+    } as never);
+
+    const archive = await readArchive(streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW }));
+
+    expect(archive).toContain("_TRUNCATED.txt");
+    expect(archive).not.toContain("2026-09-01_res-1/2_Upload a photo/photo.jpg");
   });
 
   test("still produces a manifest when there is nothing to write", async () => {
