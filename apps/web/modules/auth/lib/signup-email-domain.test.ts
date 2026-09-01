@@ -42,6 +42,27 @@ describe("isBlockedEmailDomain", () => {
       "test@yandex.com",
       "test@aol.com",
       "test@fastmail.com",
+      "test@live.nl",
+      "test@yahoo.fr",
+      "test@privaterelay.appleid.com",
+      "test@anonaddy.com",
+      "test@8alias.com",
+      "test@keemail.me",
+      "test@ik.me",
+      "test@murena.io",
+      "test@firemail.cc",
+      "test@cock.li",
+      "test@tmpmailtor.com",
+      "test@allwebemails.com",
+      "test@zohomail.com",
+      "test@null.net",
+      "test@139.com",
+      "test@orange.fr",
+      "test@centrum.cz",
+      "test@wp.pl",
+      "test@earthlink.net",
+      "test@roadrunner.com",
+      "test@gmail.cz",
     ]) {
       expect(isBlockedEmailDomain(email)).toBe(true);
     }
@@ -54,6 +75,7 @@ describe("isBlockedEmailDomain", () => {
       "test@yopmail.com",
       "test@10minutemail.com",
       "test@sharklasers.com",
+      "test@33mail.com",
     ]) {
       expect(isBlockedEmailDomain(email)).toBe(true);
     }
