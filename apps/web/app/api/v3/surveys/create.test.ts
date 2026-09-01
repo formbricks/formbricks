@@ -341,6 +341,72 @@ describe("createV3Survey", () => {
     expect(createSurvey).not.toHaveBeenCalled();
   });
 
+  // Found in review on #8991: a second case the request schema admits and the write schema rejects, so
+  // it used to be a 500 too. Same path as the CTA case above, different refinement — worth pinning
+  // because the description claims this case is covered, and a live check alone would not keep it so.
+  // The other case the request schema admits and the write schema rejects: `isSafeLinkUrl` allows
+  // `http:`, `safeUrlRefinement` allows only `https://` and `http://localhost`. Per review this is the
+  // most common of the three in practice, so it gets its own assertion rather than riding on `tel:`.
+  test("rejects a plain http CTA buttonUrl the request schema admits", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              id: "http_cta",
+              type: "cta",
+              headline: { "en-US": "Docs", "de-DE": "Doku" },
+              required: false,
+              buttonExternal: true,
+              buttonUrl: "http://example.com",
+              ctaButtonLabel: { "en-US": "Open", "de-DE": "Oeffnen" },
+            },
+          ],
+        },
+      ],
+    });
+
+    const error = await createV3Survey(body, null, "req_http_cta").catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(V3SurveyInputValidationError);
+    expect((error as V3SurveyInputValidationError).invalidParams).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: "blocks.0.elements.0.buttonUrl" })])
+    );
+    expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  // Ordering guard, not a fix by this PR. A whitespace-only headline never reaches the new pre-write
+  // parse: `prepareV3SurveyCreate` rejects it first with V3SurveyReferenceValidationError, which
+  // already mapped to 422 before this change. Pinned so the new parse is not mistaken for the thing
+  // that catches it, and so a future reorder that lets it fall through shows up here.
+  test("leaves a whitespace-only headline to the earlier preparation guard", async () => {
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              id: "blank_headline",
+              type: "openText",
+              headline: { "en-US": "   " },
+              required: true,
+            },
+          ],
+        },
+      ],
+    });
+
+    const error = await createV3Survey(body, null, "req_blank_headline").catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(V3SurveyReferenceValidationError);
+    expect(error).not.toBeInstanceOf(V3SurveyInputValidationError);
+    expect(createSurvey).not.toHaveBeenCalled();
+  });
+
   test("accepts an https CTA buttonUrl through the same path", async () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
     const body = ZV3CreateSurveyBody.parse({

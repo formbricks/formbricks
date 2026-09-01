@@ -945,10 +945,9 @@ describe("formatV3ZodInvalidParams", () => {
 
       const [invalidParam] = formatV3ZodInvalidParams(new z.ZodError([issue]), "body");
 
-      expect(invalidParam.reason).not.toContain("-fLang-");
-      // The caller's run is preserved: only the marker and the whitespace adjoining it are touched.
-      expect(invalidParam.reason).toContain(run);
-      expect(invalidParam.reason.endsWith(withMarker ? "de-DE" : "code")).toBe(true);
+      // Whole expected string, not fragments: the caller's interior run survives untouched, only the
+      // marker and the whitespace adjoining it are collapsed, and a marker-free message is identical.
+      expect(invalidParam.reason).toBe(withMarker ? `Language 'a${run}b' is not valid: de-DE` : message);
     },
     2_000
   );
