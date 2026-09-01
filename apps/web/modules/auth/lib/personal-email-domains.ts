@@ -39,6 +39,7 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "passmail.com",
   "mailbox.org",
   "posteo.de",
+  "fastmail.com",
   "mozmail.com",
   "duck.com",
   // Other mainstream / international

@@ -41,6 +41,7 @@ describe("isBlockedEmailDomain", () => {
       "test@gmx.com",
       "test@yandex.com",
       "test@aol.com",
+      "test@fastmail.com",
     ]) {
       expect(isBlockedEmailDomain(email)).toBe(true);
     }
