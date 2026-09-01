@@ -8,7 +8,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
 import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
-import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { ApiKeyList } from "./components/api-key-list";
@@ -49,7 +49,8 @@ export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizati
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.api_keys")} />
       {workspaces.length > 0 && (
-        <Alert variant="info" size="small" role="status" className="max-w-4xl rounded-xl">
+        <Alert variant="info" role="status" className="max-w-4xl rounded-xl">
+          <AlertTitle>{t("workspace.settings.api_keys.connect_app_banner_title")}</AlertTitle>
           <AlertDescription>
             {t("workspace.settings.api_keys.connect_app_banner_description")}
           </AlertDescription>

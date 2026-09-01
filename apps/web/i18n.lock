@@ -2383,8 +2383,9 @@ checksums:
     workspace/settings/api_keys/add_api_key: 1c11117b1d4665ccdeb68530381c6a9d
     workspace/settings/api_keys/add_permission: 4f0481d26a32aef6137ee6f18aaf8e89
     workspace/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
-    workspace/settings/api_keys/connect_app_banner_description: f8943aa868004769acebbf4a4b207b0f
+    workspace/settings/api_keys/connect_app_banner_description: 132e8d2b109401ed3fa88b2ec7724a84
     workspace/settings/api_keys/connect_app_banner_link: 83911096fcdce361834eb91b7f4fd04a
+    workspace/settings/api_keys/connect_app_banner_title: bf0309b0fe506ddd665cab2b7813af2e
     workspace/settings/billing/billing_interval_toggle: 62c76eb73507108fc6aefdf1ab86cc38
     workspace/settings/billing/cancel_at_period_end: c252f54e4ee6f9419a945f3cb7c31e80
     workspace/settings/billing/comparison_addon: 4f35a82638402eb9dcb31e00be8997be

@@ -2478,8 +2478,9 @@
         "add_api_key": "Lägg till API-nyckel",
         "add_permission": "Lägg till behörighet",
         "api_keys_description": "Hantera API-nycklar för åtkomst till Formbricks hanterings-API:er",
-        "connect_app_banner_description": "Skapar du en webbplats- och appenkät? Du behöver ingen API-nyckel för att ansluta din webbplats eller app.",
-        "connect_app_banner_link": "Gå till appanslutning"
+        "connect_app_banner_description": "Du behöver ingen API-nyckel för det. API-nycklar krävs bara för att hämta enkäter, svar eller kontaktattribut via API:et.",
+        "connect_app_banner_link": "Gå till appanslutning",
+        "connect_app_banner_title": "Ansluter du en webbplats eller app?"
       },
       "billing": {
         "billing_interval_toggle": "Faktureringsintervall",

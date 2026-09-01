@@ -2478,8 +2478,9 @@
         "add_api_key": "Add API key",
         "add_permission": "Add permission",
         "api_keys_description": "Manage API keys to access Formbricks management APIs",
-        "connect_app_banner_description": "Creating a Website & App survey? Connecting your site or app doesn't need an API key.",
-        "connect_app_banner_link": "Go to App Connection"
+        "connect_app_banner_description": "You don't need an API key for that. API keys are only required to fetch surveys, responses, or contact attributes through the API.",
+        "connect_app_banner_link": "Go to App Connection",
+        "connect_app_banner_title": "Connecting a website or app?"
       },
       "billing": {
         "billing_interval_toggle": "Billing interval",

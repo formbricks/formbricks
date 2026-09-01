@@ -2478,8 +2478,9 @@
         "add_api_key": "Añadir clave API",
         "add_permission": "Añadir permiso",
         "api_keys_description": "Gestiona las claves API para acceder a las APIs de gestión de Formbricks",
-        "connect_app_banner_description": "¿Vas a crear una encuesta de sitio web y app? Conectar tu sitio o app no requiere una clave API.",
-        "connect_app_banner_link": "Ir a Conexión de aplicación"
+        "connect_app_banner_description": "No necesitas una clave API para eso. Las claves API solo son necesarias para obtener encuestas, respuestas o atributos de contacto a través de la API.",
+        "connect_app_banner_link": "Ir a Conexión de aplicación",
+        "connect_app_banner_title": "¿Conectando un sitio web o una app?"
       },
       "billing": {
         "billing_interval_toggle": "Intervalo de facturación",

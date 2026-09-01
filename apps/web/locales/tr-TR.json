@@ -2478,8 +2478,9 @@
         "add_api_key": "API anahtarı ekle",
         "add_permission": "İzin ekle",
         "api_keys_description": "Formbricks yönetim API'lerine erişmek için API anahtarlarını yönet",
-        "connect_app_banner_description": "Web Sitesi ve Uygulama anketi mi oluşturuyorsun? Sitenizi veya uygulamanızı bağlamak için API anahtarına ihtiyacınız yok.",
-        "connect_app_banner_link": "Uygulama Bağlantısına Git"
+        "connect_app_banner_description": "Bunun için bir API anahtarına ihtiyacın yok. API anahtarları yalnızca API aracılığıyla anketleri, yanıtları veya iletişim özniteliklerini almak için gereklidir.",
+        "connect_app_banner_link": "Uygulama Bağlantısına Git",
+        "connect_app_banner_title": "Bir web sitesi veya uygulama mı bağlıyorsun?"
       },
       "billing": {
         "billing_interval_toggle": "Fatura dönemi",
