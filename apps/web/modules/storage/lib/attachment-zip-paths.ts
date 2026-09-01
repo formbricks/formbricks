@@ -45,7 +45,20 @@ const stripUnsafeCharacters = (raw: string): string =>
 
 // A segment may not begin or end with a dot or a space: Windows silently trims them on extraction,
 // which turns two distinct names into one collision after the archive has already been written.
-const trimEdges = (value: string): string => value.replace(/^[.\s]+/, "").replace(/[.\s]+$/, "");
+//
+// Scanned rather than matched with `/^[.\s]+|[.\s]+$/`: an anchored quantified class backtracks
+// super-linearly on a long run of dots and spaces, and these strings come from user content.
+const isTrimmableEdge = (char: string): boolean => char === "." || /\s/.test(char);
+
+const trimEdges = (value: string): string => {
+  let start = 0;
+  let end = value.length;
+
+  while (start < end && isTrimmableEdge(value[start])) start++;
+  while (end > start && isTrimmableEdge(value[end - 1])) end--;
+
+  return value.slice(start, end);
+};
 
 const escapeReservedName = (value: string): string =>
   RESERVED_WINDOWS_NAMES.has(value.toLowerCase()) ? `_${value}` : value;

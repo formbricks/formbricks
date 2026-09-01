@@ -8,11 +8,10 @@ import {
   ZAllowedFileExtension,
 } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import { getSurveyFileUploadConfigs } from "./survey-file-upload-elements";
+import { type TFileUploadCandidate, getSurveyFileUploadConfigs } from "./survey-file-upload-elements";
 import { getOriginalFileNameFromUrl } from "./url-helpers";
 
 // Re-exports for backward compatibility with server-side code
@@ -129,7 +128,7 @@ export const validateSurveyAllowsFileUpload = ({
   fileName: string;
   elementId: string;
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
 }): TSurveyFileUploadPermissionResult => {
   const fileUploadConfigs = getSurveyFileUploadConfigs({ blocks, questions });
 
@@ -324,7 +323,7 @@ export const validateClientFileUploads = ({
   workspaceId: string;
   surveyId: string;
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
   // Passed by the management routes (see getWorkspaceLegacyEnvironmentId) so a replayed old response
   // whose file URL predates the scoped shape still validates against a prefix the workspace owns.
   // Omitted by the client widget path, which stays strict on the scoped shape.

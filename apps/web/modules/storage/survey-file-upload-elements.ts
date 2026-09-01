@@ -8,7 +8,14 @@
  */
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+
+/**
+ * The minimum an element must expose to be recognised as a file upload.
+ *
+ * Structural rather than `TSurveyQuestion[]`: that type is deprecated (v1 back-compat only), and this
+ * shape accepts both it and `TSurveyElement[]` without importing the deprecated union.
+ */
+export type TFileUploadCandidate = { id: string; type: string };
 
 /**
  * Every file-upload element in a survey.
@@ -21,12 +28,13 @@ export const getSurveyFileUploadConfigs = ({
   questions,
 }: {
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
 }): TSurveyFileUploadElement[] => {
   return [
     ...(blocks ?? [])
       .flatMap((block) => block.elements)
       .filter((element) => element.type === TSurveyElementTypeEnum.FileUpload),
-    ...(questions ?? []).filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload),
+    // Both enums spell this `"fileUpload"`, so the element enum covers the legacy shape too.
+    ...(questions ?? []).filter((question) => question.type === TSurveyElementTypeEnum.FileUpload),
   ] as TSurveyFileUploadElement[];
 };

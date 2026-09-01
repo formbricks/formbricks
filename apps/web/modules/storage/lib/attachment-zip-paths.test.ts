@@ -38,7 +38,7 @@ describe("sanitizeZipPathSegment", () => {
   test("truncates a long headline and re-trims the cut edge", () => {
     const segment = sanitizeZipPathSegment(`${"a".repeat(59)}. tail`);
     expect(segment).toBe("a".repeat(59));
-    expect(segment.length).toBe(59);
+    expect(segment).toHaveLength(59);
   });
 
   test("falls back when nothing survives sanitisation", () => {

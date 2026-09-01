@@ -164,6 +164,159 @@ const decodeStoredFileName = (fileName: string): string | null => {
   }
 };
 
+interface AttachmentCandidate {
+  elementId: string;
+  element: LabelledElement;
+  fileUrl: string;
+}
+
+/** Flattens a response's file-upload answers into one list, so the collector loops once, not twice. */
+const listAttachmentCandidates = (
+  data: unknown,
+  elementLabels: Map<string, LabelledElement>
+): AttachmentCandidate[] => {
+  const answers = (data ?? {}) as Record<string, unknown>;
+
+  return [...elementLabels].flatMap(([elementId, element]) =>
+    extractFileUrls(answers[elementId]).map((fileUrl) => ({ elementId, element, fileUrl }))
+  );
+};
+
+type ResolvedStorage =
+  | { ok: true; storage: NonNullable<TAttachmentEntry["storage"]> }
+  | { ok: false; status: Extract<TAttachmentStatus, `skipped_${string}`> };
+
+/**
+ * Turns one answer URL into storage coordinates, or says why it cannot be exported. Every rejection
+ * here is a URL the response's author controls, so each is logged and reported rather than thrown.
+ */
+const resolveAttachmentStorage = async (
+  fileUrl: string,
+  context: {
+    responseId: string;
+    elementId: string;
+    surveyWorkspaceId: string;
+    resolveWorkspace: (storageId: string) => ReturnType<typeof findWorkspaceByIdOrLegacyEnvId>;
+  }
+): Promise<ResolvedStorage> => {
+  const { responseId, elementId, surveyWorkspaceId, resolveWorkspace } = context;
+
+  const storageFile = parseStorageFileUrl(fileUrl);
+  if (!storageFile) {
+    logger.warn({ responseId, elementId }, "Skipping an attachment with an unparseable storage URL");
+    return { ok: false, status: "skipped_invalid_url" };
+  }
+
+  const storageWorkspace = await resolveWorkspace(storageFile.storageId);
+  if (storageWorkspace?.id !== surveyWorkspaceId) {
+    logger.error(
+      { responseId, elementId, storageId: storageFile.storageId, surveyWorkspaceId },
+      "Refusing to export a response file stored outside the survey's workspace"
+    );
+    return { ok: false, status: "skipped_foreign_workspace" };
+  }
+
+  const fileName = decodeStoredFileName(storageFile.fileName);
+  if (fileName === null) {
+    logger.warn(
+      { responseId, elementId },
+      "Skipping an attachment whose storage URL has malformed percent-encoding"
+    );
+    return { ok: false, status: "skipped_invalid_url" };
+  }
+
+  return {
+    ok: true,
+    storage: { storageId: storageFile.storageId, accessType: storageFile.accessType, fileName },
+  };
+};
+
+/** Yields matching responses one at a time, fetching them in cursor-paged batches. */
+async function* iterateResponses(
+  where: Prisma.ResponseWhereInput,
+  batchSize: number
+): AsyncGenerator<{ id: string; createdAt: Date; data: unknown }> {
+  let cursor: string | undefined;
+
+  while (true) {
+    const batch = await prisma.response.findMany({
+      where,
+      select: { id: true, createdAt: true, data: true },
+      // Any stable total order works; Prisma's own cursor keeps the batches consistent with it.
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: batchSize,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+
+    for (const response of batch) {
+      yield response;
+    }
+
+    if (batch.length < batchSize) return;
+    cursor = batch.at(-1)?.id;
+    if (!cursor) return;
+  }
+}
+
+/** Collects one response's attachments, stopping short if the export has reached `remainingFiles`. */
+const collectFromResponse = async (
+  response: { id: string; createdAt: Date; data: unknown },
+  elementLabels: Map<string, LabelledElement>,
+  context: {
+    surveyWorkspaceId: string;
+    resolveWorkspace: (storageId: string) => ReturnType<typeof findWorkspaceByIdOrLegacyEnvId>;
+    usedPaths: Set<string>;
+    remainingFiles: number;
+  }
+): Promise<{ entries: TAttachmentEntry[]; fileCount: number; reachedCap: boolean }> => {
+  const entries: TAttachmentEntry[] = [];
+  let fileCount = 0;
+
+  for (const { elementId, element, fileUrl } of listAttachmentCandidates(response.data, elementLabels)) {
+    const base = {
+      responseId: response.id,
+      responseCreatedAt: response.createdAt,
+      elementId,
+      elementLabel: element.label,
+      originalFileName: getOriginalFileNameFromUrl(fileUrl),
+    };
+
+    const resolved = await resolveAttachmentStorage(fileUrl, {
+      responseId: response.id,
+      elementId,
+      surveyWorkspaceId: context.surveyWorkspaceId,
+      resolveWorkspace: context.resolveWorkspace,
+    });
+
+    if (!resolved.ok) {
+      entries.push({ ...base, zipPath: "", status: resolved.status });
+      continue;
+    }
+
+    if (fileCount >= context.remainingFiles) {
+      return { entries, fileCount, reachedCap: true };
+    }
+
+    entries.push({
+      ...base,
+      zipPath: buildAttachmentZipPath({
+        responseId: response.id,
+        responseCreatedAt: response.createdAt,
+        elementIndex: element.index,
+        elementLabel: element.label,
+        originalFileName: base.originalFileName,
+        usedPaths: context.usedPaths,
+      }),
+      status: "ok",
+      storage: resolved.storage,
+    });
+
+    fileCount++;
+  }
+
+  return { entries, fileCount, reachedCap: false };
+};
+
 export const collectResponseAttachments = async ({
   survey,
   filterCriteria,
@@ -181,115 +334,32 @@ export const collectResponseAttachments = async ({
     ...buildWhereClause(survey, filterCriteria),
   };
 
-  const resolveWorkspace = createWorkspaceResolver();
-  const usedPaths = new Set<string>();
-  const entries: TAttachmentEntry[] = [];
+  const context = {
+    surveyWorkspaceId: survey.workspaceId,
+    resolveWorkspace: createWorkspaceResolver(),
+    usedPaths: new Set<string>(),
+    remainingFiles: maxFiles,
+  };
 
+  const entries: TAttachmentEntry[] = [];
   let fileCount = 0;
   let responseCount = 0;
   let exceedsMaxFiles = false;
-  let cursor: string | undefined;
 
-  while (!exceedsMaxFiles) {
-    const responses = await prisma.response.findMany({
-      where,
-      select: { id: true, createdAt: true, data: true },
-      // Any stable total order works; Prisma's own cursor keeps the batches consistent with it.
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      take: batchSize,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  for await (const response of iterateResponses(where, batchSize)) {
+    const collected = await collectFromResponse(response, elementLabels, {
+      ...context,
+      remainingFiles: maxFiles - fileCount,
     });
 
-    if (responses.length === 0) break;
+    entries.push(...collected.entries);
+    fileCount += collected.fileCount;
+    if (collected.fileCount > 0) responseCount++;
 
-    for (const response of responses) {
-      let responseContributed = false;
-
-      for (const [elementId, element] of elementLabels) {
-        const fileUrls = extractFileUrls((response.data as Record<string, unknown>)[elementId]);
-
-        for (const fileUrl of fileUrls) {
-          const storageFile = parseStorageFileUrl(fileUrl);
-          const originalFileName = getOriginalFileNameFromUrl(fileUrl);
-
-          const base = {
-            responseId: response.id,
-            responseCreatedAt: response.createdAt,
-            elementId,
-            elementLabel: element.label,
-            originalFileName,
-          };
-
-          if (!storageFile) {
-            logger.warn(
-              { responseId: response.id, elementId },
-              "Skipping an attachment with an unparseable storage URL"
-            );
-            entries.push({ ...base, zipPath: "", status: "skipped_invalid_url" });
-            continue;
-          }
-
-          const storageWorkspace = await resolveWorkspace(storageFile.storageId);
-          if (storageWorkspace?.id !== survey.workspaceId) {
-            logger.error(
-              {
-                responseId: response.id,
-                elementId,
-                storageId: storageFile.storageId,
-                surveyWorkspaceId: survey.workspaceId,
-              },
-              "Refusing to export a response file stored outside the survey's workspace"
-            );
-            entries.push({ ...base, zipPath: "", status: "skipped_foreign_workspace" });
-            continue;
-          }
-
-          const storedFileName = decodeStoredFileName(storageFile.fileName);
-          if (storedFileName === null) {
-            logger.warn(
-              { responseId: response.id, elementId },
-              "Skipping an attachment whose storage URL has malformed percent-encoding"
-            );
-            entries.push({ ...base, zipPath: "", status: "skipped_invalid_url" });
-            continue;
-          }
-
-          if (fileCount >= maxFiles) {
-            exceedsMaxFiles = true;
-            break;
-          }
-
-          entries.push({
-            ...base,
-            zipPath: buildAttachmentZipPath({
-              responseId: response.id,
-              responseCreatedAt: response.createdAt,
-              elementIndex: element.index,
-              elementLabel: element.label,
-              originalFileName,
-              usedPaths,
-            }),
-            status: "ok",
-            storage: {
-              storageId: storageFile.storageId,
-              accessType: storageFile.accessType,
-              fileName: storedFileName,
-            },
-          });
-
-          fileCount++;
-          responseContributed = true;
-        }
-
-        if (exceedsMaxFiles) break;
-      }
-
-      if (responseContributed) responseCount++;
-      if (exceedsMaxFiles) break;
+    if (collected.reachedCap) {
+      exceedsMaxFiles = true;
+      break;
     }
-
-    if (responses.length < batchSize) break;
-    cursor = responses[responses.length - 1].id;
   }
 
   return { entries, fileCount, responseCount, exceedsMaxFiles };
