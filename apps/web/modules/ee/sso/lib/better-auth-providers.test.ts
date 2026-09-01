@@ -40,6 +40,7 @@ interface MockConstants {
   OIDC_CLIENT_SECRET?: string;
   OIDC_ISSUER?: string;
   SAML_OAUTH_ENABLED: boolean;
+  SSO_SYNC_NAME: boolean;
   WEBAPP_URL: string;
 }
 
@@ -63,6 +64,7 @@ const BASE: MockConstants = {
   OIDC_CLIENT_SECRET: undefined,
   OIDC_ISSUER: undefined,
   SAML_OAUTH_ENABLED: false,
+  SSO_SYNC_NAME: false,
   WEBAPP_URL: "https://app.formbricks.test",
 };
 
@@ -80,6 +82,7 @@ interface SocialEntry {
   clientId: string;
   clientSecret: string;
   mapProfileToUser: unknown;
+  overrideUserInfoOnSignIn: boolean;
 }
 const asSocial = (providers: unknown) => providers as Record<string, SocialEntry | undefined>;
 
@@ -838,5 +841,41 @@ describe("OIDC identity comes from Graph when pointed at Microsoft (#9023 review
 
     expect(saml.scopes ?? []).not.toContain("openid");
     expect(saml.discoveryUrl).toBeUndefined();
+  });
+});
+
+describe("per-sign-in profile sync (AUTH_SSO_SYNC_NAME)", () => {
+  // Everything on, so one load covers all five providers.
+  const ALL_ON = {
+    ENTERPRISE_LICENSE_KEY: "license",
+    GITHUB_OAUTH_ENABLED: true,
+    GOOGLE_OAUTH_ENABLED: true,
+    AZURE_OAUTH_ENABLED: true,
+    OIDC_OAUTH_ENABLED: true,
+    OIDC_ISSUER: "https://idp.test",
+    SAML_OAUTH_ENABLED: true,
+  };
+
+  test("is off by default, so a name stays frozen at sign-up", async () => {
+    const m = await loadProviders({ ...ALL_ON, SSO_SYNC_NAME: false });
+    for (const config of m.ssoGenericOAuthConfig) {
+      expect(config.overrideUserInfo).toBe(false);
+    }
+    const social = asSocial(m.ssoSocialProviders);
+    expect(social.github?.overrideUserInfoOnSignIn).toBe(false);
+    expect(social.google?.overrideUserInfoOnSignIn).toBe(false);
+  });
+
+  test("reaches every SSO provider when enabled", async () => {
+    const m = await loadProviders({ ...ALL_ON, SSO_SYNC_NAME: true });
+    // Named by provider so a missed one is identifiable from the failure, not just a count.
+    expect(m.ssoGenericOAuthConfig.map((c) => [c.providerId, c.overrideUserInfo])).toEqual([
+      ["azuread", true],
+      ["openid", true],
+      ["saml", true],
+    ]);
+    const social = asSocial(m.ssoSocialProviders);
+    expect(social.github?.overrideUserInfoOnSignIn).toBe(true);
+    expect(social.google?.overrideUserInfoOnSignIn).toBe(true);
   });
 });

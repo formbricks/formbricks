@@ -127,6 +127,19 @@ export const CLOUD_HOBBY_WORKSPACE_LIMIT = 1;
 export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO === "1";
 export const DEFAULT_TEAM_ID = env.AUTH_DEFAULT_TEAM_ID;
 
+/**
+ * When enabled, an SSO user's display name is re-read from the identity provider on every sign-in
+ * instead of being frozen at the value captured when their account was created.
+ *
+ * Off by default because it makes the IdP the source of truth for `User.name`: a name the user edited
+ * under Account → Profile is overwritten on their next sign-in. Directories where the display name is
+ * maintained centrally (a `displayName` that changes on marriage, a rename, a department move) want
+ * that; instances where people curate their own name do not.
+ *
+ * Only the name syncs. Email stays put — see `ssoProfileSyncUpdateBefore`.
+ */
+export const SSO_SYNC_NAME = env.AUTH_SSO_SYNC_NAME === "1";
+
 // Cloud-only kill-switch: when enabled, the personal-email sign-up block also applies to invited
 // users (default exempts invites). See @/modules/auth/lib/signup-email-domain.
 export const SIGNUP_DOMAIN_CHECK_ON_INVITES = env.SIGNUP_DOMAIN_CHECK_ON_INVITES === "1";

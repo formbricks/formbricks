@@ -132,3 +132,24 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
     - You're all set! Users can now sign up & log in using their Microsoft credentials associated with your Entra ID Tenant.
   </Step>
 </Steps>
+
+## Keeping display names in step with your directory
+
+A user's name in Formbricks comes from the OIDC `name` claim, which is their Entra ID `displayName`. That
+attribute is free text, so its format is whatever your directory holds — accounts synced from on-premises
+Active Directory often read `Surname, Givenname`, while accounts created in the Entra admin center usually
+read `Givenname Surname`. Formbricks stores it as-is; it never reorders or reformats a name.
+
+By default the name is read once, when the account is created, and never again. Set `AUTH_SSO_SYNC_NAME=1`
+to re-read it on every sign-in instead, so a rename in Entra ID reaches Formbricks the next time that
+person logs in:
+
+```yml
+AUTH_SSO_SYNC_NAME=1
+```
+
+<Note>
+  This makes Entra ID authoritative for the name. A name a user set under **Account → Profile** in
+  Formbricks is replaced on their next sign-in. See [Authentication
+  Behavior](/self-hosting/auth-behavior) for the full description.
+</Note>

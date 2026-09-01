@@ -232,6 +232,10 @@ x-environment: &environment
     # Set the below to automatically assign new users to a specific team, insert an existing team id
     # (Role Management is an Enterprise feature)
     # AUTH_SSO_DEFAULT_TEAM_ID:
+    # Set the below to 1 to re-read an SSO user's display name from the identity provider on every
+    # sign-in, so a rename in your directory reaches Formbricks. Leave unset to keep the name
+    # captured when the account was created.
+    # AUTH_SSO_SYNC_NAME: 1
 
     # Configure the minimum role for user management from UI(owner, manager, disabled)
     # USER_MANAGEMENT_MINIMUM_ROLE: "manager"

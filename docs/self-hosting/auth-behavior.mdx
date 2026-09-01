@@ -10,6 +10,7 @@ In self-hosted Formbricks, user management and authentication can be customized 
 
 - `AUTH_SKIP_INVITE_FOR_SSO`
 - `AUTH_SSO_DEFAULT_TEAM_ID`
+- `AUTH_SSO_SYNC_NAME`
 
 ## License Requirement for Role Management and SSO Behavior
 
@@ -42,6 +43,23 @@ In self-hosted Formbricks, user management and authentication can be customized 
   - Set this to the ID of your default team to streamline onboarding for new users.
   - If not set, users will not be automatically assigned to any team upon signup or invite acceptance.
 
+### `AUTH_SSO_SYNC_NAME`
+
+- **Type:** Boolean (0 or 1)
+- **Default:** 0 (the name is captured once, at account creation)
+- **Description:**
+  - When set to `1`, an SSO user's display name is re-read from the identity provider on every sign-in, so a rename in the directory (Microsoft Entra ID `displayName`, a Google Workspace or Okta profile, a SAML assertion) reaches Formbricks on their next login.
+  - When set to `0` (default), the name is written once when the account is created and never changes again unless the user edits it themselves.
+  - Only the display name is synchronized. The account's email address is never rewritten from the provider: changing it stays a deliberate, verified action.
+- **Use case:**
+  - Set this to `1` when your directory is the source of truth for people's names — names change on marriage, on a legal rename, or when an admin corrects a badly imported record.
+  - Keep it at `0` if your users curate their own names in Formbricks, since a sync would overwrite their edit on their next sign-in.
+
+<Note>
+  Turning this on makes the identity provider authoritative for `User.name`. A name a user set under
+  **Account → Profile** is replaced the next time they sign in through SSO.
+</Note>
+
 ## Example `.env` Configuration
 
 ```env
@@ -50,6 +68,9 @@ AUTH_SKIP_INVITE_FOR_SSO=1
 
 # Automatically assign new users to this team
 AUTH_SSO_DEFAULT_TEAM_ID=team-123
+
+# Keep display names in step with the identity provider
+AUTH_SSO_SYNC_NAME=1
 ```
 
 Refer to the [Environment Variables documentation](./configuration/environment-variables) for a full list and details.

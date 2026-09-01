@@ -57,6 +57,57 @@ const deriveNameFromEmail = (email: string): string =>
   normalizeUserName(email.split("@")[0].replace(/[._+]+/g, " "));
 
 /**
+ * Narrow Better Auth's per-sign-in profile override down to the display name.
+ *
+ * With `AUTH_SSO_SYNC_NAME=1` the SSO providers set `overrideUserInfo`, which makes
+ * `handleOAuthUserInfo` re-write the user row on every sign-in so a directory rename reaches
+ * Formbricks. It writes the whole profile in one call — `{ name, image, email, emailVerified }` —
+ * and two of those are wrong here:
+ *
+ *  - **`image`** would break sign-in outright. `User` has no `image` column (parity with
+ *    `provisionNewSsoUser`, which never stored one), so the Prisma update throws. `user.create.before`
+ *    already strips it on the sign-up path; this is the same strip on the sign-in path.
+ *  - **`email`** is the account identity. Rewriting it from a provider claim would bypass the
+ *    email-change verification flow, and a claim that collides with another row's unique email would
+ *    fail the update mid-sign-in. A changed work address stays a deliberate, verified action.
+ *
+ * What is left — the name — is normalized exactly as on sign-up, so ENG-1743 can't come back through
+ * the update path: an IdP name is untrusted input either way, and a raw one would persist here and
+ * break the user's next profile save.
+ *
+ * Runs for SSO callbacks only, and only for the override write. Every other user update reaches the
+ * adapter untouched: a `POST /change-email`, the `emailVerified` flip on the link path, and the
+ * `identityProvider` denormalization in `account.create.after` (which is itself an `updateUser` on
+ * the callback request, and is distinguished by carrying neither `name` nor `image`).
+ */
+export const ssoProfileSyncUpdateBefore = async (
+  user: Record<string, unknown>,
+  context?: { path?: string; params?: Record<string, string | undefined> } | null
+): Promise<{ data: Record<string, unknown> } | void> => {
+  const provider = getSsoProviderFromContext(context);
+  if (!provider || !normalizeSsoProvider(provider)) return; // not an SSO callback
+
+  // `handleOAuthUserInfo` destructures `name` and `image` out of the resolved userInfo, so both keys
+  // are present on the override write and absent from every other update made on this request.
+  if (!("name" in user) && !("image" in user)) return;
+
+  // An `undefined` value drops the field from the update: on `action: "update"` the adapter's
+  // transformInput skips every undefined field that has no `onUpdate`, which is all four of these.
+  const normalizedName = typeof user.name === "string" ? normalizeUserName(user.name) : "";
+  return {
+    data: {
+      image: undefined,
+      email: undefined,
+      emailVerified: undefined,
+      // Unlike sign-up there is already a good name in the row, so a name that normalizes away
+      // (emoji-only, punctuation-only) leaves it alone rather than falling back to the email
+      // local-part — that would be a downgrade, and it would repeat on every sign-in.
+      name: normalizedName || undefined,
+    },
+  };
+};
+
+/**
  * Better Auth `databaseHooks` re-expressing Formbricks' SSO sign-up flow (design doc §13), reusing
  * the existing logic via `./sso-provisioning`:
  *  - `user.create.before` — gate the SSO sign-up (`gateSsoProvisioning`; a reject returns `false`,
@@ -64,6 +115,8 @@ const deriveNameFromEmail = (email: string): string =>
  *    stash the resolved decision for the after-hook; and enrich the insert (email-verified — the IdP
  *    attests it; `identityProvider`; request-matched `locale`; email-localpart name fallback).
  *  - `user.create.after` — run the membership/team/notification provisioning (`provisionSsoUserMemberships`).
+ *  - `user.update.before` — narrow the per-sign-in profile override to the display name
+ *    (`ssoProfileSyncUpdateBefore`); only reached when `AUTH_SSO_SYNC_NAME=1` makes that write happen.
  *  - `account.create.after` — denormalize `identityProvider` + `identityProviderAccountId` onto
  *    `User` for legacy SSO lookups (`findLegacyExactMatch`), parity with `syncSsoIdentityForUser`.
  *
@@ -175,6 +228,9 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         // keeps the person unidentified; this fires `$identify` so `is_identified` flips.
         identifyPostHogPerson(user.id, { email: user.email, name: user.name });
       },
+    },
+    update: {
+      before: ssoProfileSyncUpdateBefore,
     },
   },
   account: {
