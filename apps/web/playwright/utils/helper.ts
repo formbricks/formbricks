@@ -441,15 +441,15 @@ export const signupUsingInviteToken = async (page: Page, name: string, email: st
 const RENDER_SETTLE_MS = 150;
 
 const flushRender = async (page: Page): Promise<void> => {
-  await page.evaluate(
-    (settleMs) =>
-      new Promise<void>((resolve) => {
-        setTimeout(() => {
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-        }, settleMs);
-      }),
-    RENDER_SETTLE_MS
-  );
+  await page.evaluate(async (settleMs) => {
+    // Sequential awaits rather than nested callbacks: the callback form stacked six functions deep,
+    // and the order it encoded — sleep, then two frames — is what the doc comment above requires.
+    const nextFrame = (): Promise<unknown> => new Promise((resolve) => requestAnimationFrame(resolve));
+
+    await new Promise((resolve) => setTimeout(resolve, settleMs));
+    await nextFrame();
+    await nextFrame();
+  }, RENDER_SETTLE_MS);
 };
 
 /**
