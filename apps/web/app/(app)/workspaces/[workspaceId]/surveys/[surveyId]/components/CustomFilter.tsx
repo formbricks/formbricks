@@ -21,6 +21,7 @@ import {
 } from "@/lib/date-ranges";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
+import { getSurveyFileUploadConfigs } from "@/modules/storage/survey-file-upload-elements";
 import { DateRangeCalendar } from "@/modules/ui/components/date-picker";
 import {
   DropdownMenu,
@@ -143,6 +144,62 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
     setIsDatePickerOpen(false);
   };
 
+  // The attachment items only make sense when the survey actually collects files. Hidden rather than
+  // disabled: a survey with no file-upload element has nothing to explain.
+  const hasFileUploadElements = useMemo(
+    () => getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).length > 0,
+    [survey.blocks, survey.questions]
+  );
+
+  /**
+   * Attachments are downloaded by navigating to the export route, never by fetch + blob: the archive can
+   * reach several GB and buffering it in the tab would kill it.
+   *
+   * That is also why this pre-flights. Once the route has flushed its 200 and headers it can no longer
+   * answer with an error, and a problem document rendered into the tab would replace this page. So ask
+   * for the counts first, toast anything the user needs to know, and only then navigate.
+   */
+  const handleDownloadAttachments = async (filter: FilterDownload) => {
+    const buildUrl = (extra?: Record<string, string>) => {
+      const params = new URLSearchParams(extra);
+      if (filter === FilterDownload.FILTER) {
+        params.set("filters", JSON.stringify(filters));
+      }
+      return `/api/v3/surveys/${survey.id}/attachments?${params.toString()}`;
+    };
+
+    try {
+      setIsDownloading(true);
+
+      const preflight = await fetch(buildUrl({ dryRun: "true" }));
+      if (!preflight.ok) {
+        toast.error(t("workspace.surveys.responses.error_downloading_attachments"));
+        return;
+      }
+
+      const { data } = await preflight.json();
+
+      if (data.exceedsMaxFiles) {
+        toast.error(
+          t("workspace.surveys.responses.too_many_attachments_to_download", { maxFiles: data.maxFiles })
+        );
+        return;
+      }
+
+      if (data.fileCount === 0) {
+        toast.error(t("workspace.surveys.responses.no_attachments_to_download"));
+        return;
+      }
+
+      window.location.assign(buildUrl());
+    } catch (err) {
+      Sentry.captureException(err);
+      toast.error(t("workspace.surveys.responses.error_downloading_attachments"));
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleDownloadResponses = async (filter: FilterDownload, fileType: "csv" | "xlsx") => {
     try {
       const responseFilters = filter === FilterDownload.ALL ? {} : filters;
@@ -258,6 +315,26 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
               }}>
               <p className="text-slate-700">{t("workspace.surveys.summary.filtered_responses_excel")}</p>
             </DropdownMenuItem>
+            {hasFileUploadElements && (
+              <>
+                <DropdownMenuItem
+                  data-testid="fb__custom-filter-download-all-attachments"
+                  onClick={async () => {
+                    await handleDownloadAttachments(FilterDownload.ALL);
+                  }}>
+                  <p className="text-slate-700">{t("workspace.surveys.summary.all_responses_attachments")}</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  data-testid="fb__custom-filter-download-filtered-attachments"
+                  onClick={async () => {
+                    await handleDownloadAttachments(FilterDownload.FILTER);
+                  }}>
+                  <p className="text-slate-700">
+                    {t("workspace.surveys.summary.filtered_responses_attachments")}
+                  </p>
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -8,15 +8,16 @@ import {
   ZAllowedFileExtension,
 } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getSurveyFileUploadConfigs } from "./survey-file-upload-elements";
 import { getOriginalFileNameFromUrl } from "./url-helpers";
 
-// Re-export for backward compatibility with server-side code
+// Re-exports for backward compatibility with server-side code
 export { getOriginalFileNameFromUrl } from "./url-helpers";
+export { getSurveyFileUploadConfigs } from "./survey-file-upload-elements";
 
 /**
  * Sanitize a provided file name to a safe subset.
@@ -117,21 +118,6 @@ const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExte
   const extensionValidation = ZAllowedFileExtension.safeParse(extension);
 
   return extensionValidation.success ? extensionValidation.data : null;
-};
-
-export const getSurveyFileUploadConfigs = ({
-  blocks,
-  questions,
-}: {
-  blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
-}): TSurveyFileUploadElement[] => {
-  return [
-    ...(blocks ?? [])
-      .flatMap((block) => block.elements)
-      .filter((element) => element.type === TSurveyElementTypeEnum.FileUpload),
-    ...(questions ?? []).filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload),
-  ] as TSurveyFileUploadElement[];
 };
 
 export const validateSurveyAllowsFileUpload = ({

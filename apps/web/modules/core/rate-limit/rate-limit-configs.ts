@@ -107,5 +107,12 @@ export const rateLimitConfigs = {
       namespace: "storage:upload:workspace",
     }, // 100 per minute per workspace
     delete: { interval: 60, allowedPerInterval: 5, namespace: "storage:delete" }, // 5 per minute
+    // One attachment export streams thousands of objects out of S3, so it is bounded far more
+    // tightly than a CSV download.
+    attachmentsExport: {
+      interval: 600,
+      allowedPerInterval: 3,
+      namespace: "storage:attachments-export",
+    }, // 3 per 10 minutes
   },
 } as const;
