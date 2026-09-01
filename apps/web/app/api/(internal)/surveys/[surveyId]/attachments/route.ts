@@ -10,11 +10,15 @@ import { collectResponseAttachments } from "@/modules/storage/lib/collect-respon
 import { MAX_ATTACHMENT_FILES, streamAttachmentsAsZip } from "./lib/export-attachments";
 
 /**
- * `GET /api/v3/surveys/{surveyId}/attachments` — the response-attachment ZIP export (ENG-1256).
+ * `GET /api/surveys/{surveyId}/attachments` — the response-attachment ZIP export (ENG-1256).
  *
- * Session-only: the browser reaches it by navigating, so the cookie is the credential. Deliberately
- * absent from `docs/api-v3-reference/src/openapi.yml` — documenting an operation is what enrols it in
- * the Schemathesis contract suite, and a streaming ZIP has no JSON response schema to match.
+ * Lives under `(internal)` rather than `/api/v3` because it carries no OpenAPI entry and makes no
+ * compatibility promise: a streaming ZIP has no JSON response schema for the contract suite to match,
+ * and the only caller is this app's own responses table. Session-only — the browser reaches it by
+ * navigating, so the cookie is the credential.
+ *
+ * It still goes through `withV3ApiWrapper`, which is where request validation, rate limiting and audit
+ * logging live; the wrapper is a shared utility, not part of the public surface.
  *
  * `dryRun=true` returns the counts as JSON instead of the archive. The client needs that because the
  * download is a plain navigation: once the 200 and its headers are flushed there is no way back to a

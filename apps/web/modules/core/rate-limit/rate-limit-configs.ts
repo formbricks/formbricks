@@ -108,11 +108,14 @@ export const rateLimitConfigs = {
     }, // 100 per minute per workspace
     delete: { interval: 60, allowedPerInterval: 5, namespace: "storage:delete" }, // 5 per minute
     // One attachment export streams thousands of objects out of S3, so it is bounded far more
-    // tightly than a CSV download.
+    // tightly than a CSV download. Counted in requests, not downloads: the client spends two per
+    // download — the dryRun pre-flight and the navigation that follows it — so the budget is sized in
+    // pairs. Getting this wrong strands the rejection on the navigation, which replaces the responses
+    // table with a problem document, the exact outcome the pre-flight exists to avoid.
     attachmentsExport: {
       interval: 600,
-      allowedPerInterval: 3,
+      allowedPerInterval: 6,
       namespace: "storage:attachments-export",
-    }, // 3 per 10 minutes
+    }, // 3 downloads per 10 minutes (2 requests each)
   },
 } as const;

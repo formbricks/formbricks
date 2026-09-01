@@ -165,7 +165,7 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
       if (filter === FilterDownload.FILTER) {
         params.set("filters", JSON.stringify(filters));
       }
-      return `/api/v3/surveys/${survey.id}/attachments?${params.toString()}`;
+      return `/api/surveys/${survey.id}/attachments?${params.toString()}`;
     };
 
     try {

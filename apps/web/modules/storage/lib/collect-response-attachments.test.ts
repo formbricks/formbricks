@@ -158,6 +158,24 @@ describe("collectResponseAttachments", () => {
     expect(result.entries[0].status).toBe("skipped_invalid_url");
   });
 
+  test("skips a URL with malformed percent-encoding instead of aborting the export", async () => {
+    // `decodeURIComponent` throws `URIError` on a bare `%`, and response data is attacker-supplied, so
+    // one bad answer must not take the whole archive down with it.
+    respondWithBatches([
+      response("res-1", {
+        [UPLOAD_ELEMENT_ID]: [
+          `/storage/${WORKSPACE_ID}/private/%`,
+          `/storage/${WORKSPACE_ID}/private/good.jpg`,
+        ],
+      }),
+    ]);
+
+    const result = await collectResponseAttachments({ survey: buildBlocksSurvey(), maxFiles: 100 });
+
+    expect(result.entries.map((entry) => entry.status)).toEqual(["skipped_invalid_url", "ok"]);
+    expect(result.fileCount).toBe(1);
+  });
+
   test("ignores non-string entries in a file-upload answer", async () => {
     respondWithBatches([response("res-1", { [UPLOAD_ELEMENT_ID]: [null, 42] })]);
 

@@ -151,6 +151,19 @@ const createWorkspaceResolver = () => {
 const extractFileUrls = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
 
+/**
+ * The URL carries the percent-encoded name; the object is stored under the decoded one. Returns null
+ * on malformed encoding (a bare `%`) instead of throwing: `decodeURIComponent` raises `URIError`, and
+ * response data is attacker-supplied, so one bad answer would abort the whole export.
+ */
+const decodeStoredFileName = (fileName: string): string | null => {
+  try {
+    return decodeURIComponent(fileName);
+  } catch {
+    return null;
+  }
+};
+
 export const collectResponseAttachments = async ({
   survey,
   filterCriteria,
@@ -231,6 +244,16 @@ export const collectResponseAttachments = async ({
             continue;
           }
 
+          const storedFileName = decodeStoredFileName(storageFile.fileName);
+          if (storedFileName === null) {
+            logger.warn(
+              { responseId: response.id, elementId },
+              "Skipping an attachment whose storage URL has malformed percent-encoding"
+            );
+            entries.push({ ...base, zipPath: "", status: "skipped_invalid_url" });
+            continue;
+          }
+
           if (fileCount >= maxFiles) {
             exceedsMaxFiles = true;
             break;
@@ -250,7 +273,7 @@ export const collectResponseAttachments = async ({
             storage: {
               storageId: storageFile.storageId,
               accessType: storageFile.accessType,
-              fileName: decodeURIComponent(storageFile.fileName),
+              fileName: storedFileName,
             },
           });
 

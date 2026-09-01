@@ -7,6 +7,7 @@ import {
   buildAttachmentArchiveFileName,
   streamAttachmentsAsZip,
 } from "./export-attachments";
+import { buildAttachmentManifestCsv } from "./manifest";
 
 vi.mock("server-only", () => ({}));
 
@@ -18,7 +19,18 @@ vi.mock("@/modules/storage/service", () => ({
   getFileStreamForDownload: vi.fn(),
 }));
 
+// Mocked so these tests can assert the manifest *rows* the streaming stage produces. Asserting the
+// rendered CSV through the archive's bytes would only work while entries are stored uncompressed;
+// manifest.test.ts covers the rendering itself.
+vi.mock("./manifest", () => ({
+  buildAttachmentManifestCsv: vi.fn(() => Promise.resolve("manifest-csv")),
+}));
+
 const mockedGetFileStream = vi.mocked(getFileStreamForDownload);
+const mockedBuildManifest = vi.mocked(buildAttachmentManifestCsv);
+
+/** The rows handed to the manifest builder — statuses and sizes, independent of ZIP encoding. */
+const manifestRows = () => mockedBuildManifest.mock.calls.at(-1)?.[0] ?? [];
 
 const survey = { id: "survey-1", workspaceId: "ws-own" } as unknown as TSurvey;
 const NOW = new Date("2026-09-01T12:00:00.000Z");
@@ -50,8 +62,10 @@ const streamOf = (content: string) => ({
 });
 
 /**
- * Reads the whole archive. Entries are stored (level 0), so file names and text contents appear
- * verbatim in the bytes — which is what lets these tests assert on the manifest without unzipping.
+ * Reads the whole archive so entry *names* can be asserted. Names sit uncompressed in each local file
+ * header and in the central directory whatever the compression level, so these assertions survive a
+ * change from stored to deflated entries. Anything about an entry's contents is asserted through the
+ * mocked manifest rows instead.
  */
 const readArchive = async (response: Response): Promise<string> =>
   Buffer.from(await response.arrayBuffer()).toString("binary");
@@ -87,11 +101,10 @@ describe("streamAttachmentsAsZip", () => {
 
     expect(archive).toContain("2026-09-01_res-1/2_Upload a photo/photo.jpg");
     expect(archive).toContain("manifest.csv");
-    // The manifest joins each file back to its response and records the size storage reported.
-    expect(archive).toContain('"res-1"');
-    expect(archive).toContain('"2026-09-01T10:00:00.000Z"');
-    expect(archive).toContain('"ok"');
-    expect(archive).toContain(String("photo-bytes".length));
+    // The manifest row carries the response link and the size storage reported.
+    expect(manifestRows()).toEqual([
+      expect.objectContaining({ responseId: "res-1", status: "ok", bytes: "photo-bytes".length }),
+    ]);
   });
 
   test("asks storage for the decoded file name under the URL's storage id", async () => {
@@ -117,12 +130,13 @@ describe("streamAttachmentsAsZip", () => {
 
     const archive = await readArchive(streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW }));
 
-    expect(archive).toContain('"missing_in_storage"');
     expect(archive).toContain("manifest.csv");
+    expect(manifestRows()).toEqual([expect.objectContaining({ status: "missing_in_storage" })]);
   });
 
   test("carries the collector's skipped entries into the manifest without asking storage", async () => {
-    const archive = await readArchive(
+    // Drained rather than inspected: the point is that nothing was fetched and the row still lands.
+    await readArchive(
       streamAttachmentsAsZip({
         entries: [okEntry({ status: "skipped_foreign_workspace", zipPath: "", storage: undefined })],
         survey,
@@ -131,7 +145,7 @@ describe("streamAttachmentsAsZip", () => {
     );
 
     expect(mockedGetFileStream).not.toHaveBeenCalled();
-    expect(archive).toContain('"skipped_foreign_workspace"');
+    expect(manifestRows()).toEqual([expect.objectContaining({ status: "skipped_foreign_workspace" })]);
   });
 
   test("truncates once the byte ceiling is crossed and says so in the archive", async () => {
@@ -160,7 +174,6 @@ describe("streamAttachmentsAsZip", () => {
     );
 
     expect(archive).toContain("_TRUNCATED.txt");
-    expect(archive).toContain("truncated after 1 files");
     // The second entry was never fetched, so it is absent from the archive.
     expect(mockedGetFileStream).toHaveBeenCalledTimes(1);
     expect(archive).not.toContain("2026-09-01_res-2/");
