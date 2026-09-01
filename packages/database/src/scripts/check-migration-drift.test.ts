@@ -150,6 +150,14 @@ describe("checkMigrationDrift", () => {
     {
       environment: {
         DATABASE_URL: databaseEnvironment.DATABASE_URL,
+        SHADOW_DATABASE_URL: "http://localhost:5432/formbricks_shadow",
+      },
+      expectedError: "SHADOW_DATABASE_URL must be a valid PostgreSQL URL",
+      name: "a non-PostgreSQL shadow URL",
+    },
+    {
+      environment: {
+        DATABASE_URL: databaseEnvironment.DATABASE_URL,
         SHADOW_DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks_scratch",
       },
       expectedError: 'SHADOW_DATABASE_URL database name must contain the marker "shadow"',
@@ -165,6 +173,27 @@ describe("checkMigrationDrift", () => {
     },
   ])("rejects $name", ({ environment, expectedError }) => {
     expect(() => validateShadowDatabaseEnvironment(environment)).toThrow(expectedError);
+  });
+
+  test("validates shadow database isolation before staging migrations", async () => {
+    const executePrismaDiff = vi.fn(() => Promise.resolve(0));
+
+    await expect(
+      checkMigrationDrift({
+        environment: {
+          DATABASE_URL: databaseEnvironment.DATABASE_URL,
+          SHADOW_DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks_scratch",
+        },
+        migrationsDir: "/migrations",
+        prismaBin: "prisma",
+        prismaConfigPath: "prisma.config.ts",
+        repoRoot: "/repo",
+        runPrismaDiff: executePrismaDiff,
+        schemaPath: "schema",
+      })
+    ).rejects.toThrow('SHADOW_DATABASE_URL database name must contain the marker "shadow"');
+
+    expect(executePrismaDiff).not.toHaveBeenCalled();
   });
 
   test.each([1, 2])("propagates Prisma exit code %i and removes the staged history", async (exitCode) => {
