@@ -62,6 +62,10 @@ export const ZSurveyArchivePurgeJobData = ZGlobalScopeJobData;
 
 export type TSurveyArchivePurgeJobData = TGlobalScopeJobData;
 
+export const ZUsageTelemetryJobData = ZGlobalScopeJobData;
+
+export type TUsageTelemetryJobData = TGlobalScopeJobData;
+
 export const ZWorkflowRunJobData = z.object({
   workflowRunId: z.cuid2(),
   workflowId: z.cuid2(),

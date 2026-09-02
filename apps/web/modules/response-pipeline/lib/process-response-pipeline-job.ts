@@ -15,6 +15,7 @@ import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-han
 import { getIntegrations } from "@/lib/integration/service";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { sendTelemetryEvents } from "@/lib/telemetry/usage-update";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
@@ -26,7 +27,6 @@ import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { getFinishedResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { handleIntegrations } from "./handle-integrations";
-import { sendTelemetryEvents } from "./telemetry";
 
 const DEFAULT_NOTIFICATION_LOCALE: TUserLocale = "en-US";
 
