@@ -208,6 +208,27 @@ const buildVariableConditions = (
   return conditions;
 };
 
+/**
+ * The ENG-1848 criteria groups as ready-to-push clauses. Both branches live here rather than in
+ * `buildWhereClause`, which sat exactly at the cognitive-complexity limit before this feature —
+ * even two plain `if`s there tip it over.
+ */
+const buildEmbeddedDataFilterClauses = (
+  survey: TSurvey,
+  filterCriteria?: TResponseFilterCriteria
+): Prisma.ResponseWhereInput[] => {
+  const clauses: Prisma.ResponseWhereInput[] = [];
+
+  if (filterCriteria?.reserved) {
+    clauses.push({ AND: buildReservedConditions(survey, filterCriteria.reserved) });
+  }
+  if (filterCriteria?.variables) {
+    clauses.push({ AND: buildVariableConditions(survey, filterCriteria.variables) });
+  }
+
+  return clauses;
+};
+
 const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
   if (!tags) return [];
 
@@ -418,17 +439,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     });
   }
 
-  if (filterCriteria?.reserved) {
-    whereClause.push({
-      AND: buildReservedConditions(survey, filterCriteria.reserved),
-    });
-  }
-
-  if (filterCriteria?.variables) {
-    whereClause.push({
-      AND: buildVariableConditions(survey, filterCriteria.variables),
-    });
-  }
+  whereClause.push(...buildEmbeddedDataFilterClauses(survey, filterCriteria));
 
   if (filterCriteria?.data) {
     const data: Prisma.ResponseWhereInput[] = [];
