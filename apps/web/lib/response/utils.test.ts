@@ -649,6 +649,22 @@ describe("Response Utils", () => {
         reserved: { durationSeconds: { op: "contains", value: "6" } },
       });
       expect(mismatched.AND).toContainEqual({ AND: [] });
+
+      // Same for a text op on a number-typed meta entry: no filter that its value can never match.
+      const textOnNumber = buildWhereClause(reservedSurvey, {
+        reserved: { screenWidth: { op: "contains", value: "1" } },
+      });
+      expect(textOnNumber.AND).toContainEqual({ AND: [] });
+    });
+
+    test("prototype-chain keys never resolve a locator", () => {
+      // z.record keys are unrestricted, so a crafted criteria can carry these; a plain index lookup
+      // would resolve them through Object.prototype and hand Prisma an undefined path.
+      const crafted = JSON.parse(
+        '{"__proto__":{"op":"equals","value":"x"},"constructor":{"op":"equals","value":"x"},"hasOwnProperty":{"op":"isSet"}}'
+      );
+      const result = buildWhereClause(reservedSurvey, { reserved: crafted });
+      expect(result.AND).toContainEqual({ AND: [] });
     });
 
     test("every comparison and text-op arm translates one-to-one", () => {
@@ -773,10 +789,18 @@ describe("Response Utils", () => {
     });
 
     test("anti-drift: every filterable catalog entry has a storage locator", () => {
-      const filterableNames = RESERVED_FIELD_CATALOG.filter(
-        (entry) => entry.display !== "none" || entry.name === "durationSeconds"
-      ).map((entry) => entry.name);
-      expect(filterableNames.length).toBeGreaterThan(0);
+      // The most permissive survey (nothing shadowed, nothing anonymized, IP captured) offers the
+      // full filterable set — derived from the real function, so the rule lives in one place.
+      const permissiveSurvey = {
+        ...reservedSurvey,
+        hiddenFields: { enabled: true, fieldIds: [] },
+        variables: [],
+        embeddedFields: [],
+        isAnonymizeResponsesEnabled: false,
+        isCaptureIpEnabled: true,
+      } as TSurvey;
+      const filterableNames = getReservedFilterEntries(permissiveSurvey).map((entry) => entry.name);
+      expect(filterableNames.length).toBeGreaterThan(20);
       for (const name of filterableNames) {
         expect(RESERVED_FILTER_LOCATORS[name], `catalog entry "${name}" has no filter locator`).toBeDefined();
       }
@@ -894,6 +918,14 @@ describe("Response Utils", () => {
       ]);
       expect(values.country).toBeUndefined();
       expect(values.utmSource).toEqual(["ads"]);
+    });
+
+    test("high-cardinality fields are capped instead of shipping every distinct value", () => {
+      const responses = Array.from({ length: 60 }, (_, i) =>
+        mkResponse({ meta: { pagePath: `/product/${i}` } })
+      );
+      const values = getResponseReservedFilterValues(valueSurvey, responses);
+      expect(values.pagePath).toHaveLength(50);
     });
 
     test("variable values: distinct strings keyed by storageKey, non-string fields and empties skipped", () => {

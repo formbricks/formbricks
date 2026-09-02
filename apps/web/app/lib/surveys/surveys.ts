@@ -192,6 +192,7 @@ const buildTypedFieldCondition = (
   }
   if (dataType === "boolean") {
     if (op !== "equals" && op !== "notEquals") return null;
+    if (value !== "true" && value !== "false") return null;
     return { op, value: value === "true" } as TTypedFieldFilterCondition;
   }
   return { op, value } as TTypedFieldFilterCondition;

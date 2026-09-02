@@ -155,17 +155,28 @@ const EXPORT_BASICS_COVERED_RESERVED_NAMES = new Set(["responseId", "surveyId", 
  *   columns are omitted;
  * - `ipAddress` is only a column when the survey captures it (`isCaptureIpEnabled`).
  */
-export const getReservedExportEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] => {
+/**
+ * The gates every reserved-entry consumer shares: shadowed entries drop (a declared field owns its
+ * name), anonymized surveys drop `privacy: "drop"` entries (never captured), and `ipAddress` needs
+ * its capture toggle. What differs per surface is only which entries are eligible at all.
+ */
+const gateReservedEntries = (
+  survey: TSurvey,
+  isEligible: (entry: TReservedFieldCatalogEntry) => boolean
+): TReservedFieldCatalogEntry[] => {
   const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
   const shadowingNames = listShadowingNames(getSurveyEmbeddedFields(survey), elementIds);
 
   return dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, shadowingNames).filter((entry) => {
-    if (EXPORT_BASICS_COVERED_RESERVED_NAMES.has(entry.name)) return false;
+    if (!isEligible(entry)) return false;
     if (survey.isAnonymizeResponsesEnabled && entry.privacy === "drop") return false;
     if (entry.name === "ipAddress" && !survey.isCaptureIpEnabled) return false;
     return true;
   });
 };
+
+export const getReservedExportEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] =>
+  gateReservedEntries(survey, (entry) => !EXPORT_BASICS_COVERED_RESERVED_NAMES.has(entry.name));
 
 /**
  * The export header for a reserved column. `formatFieldNameToTitleCase` rather than the localized
@@ -184,16 +195,20 @@ export const getReservedExportHeader = (entry: TReservedFieldCatalogEntry): stri
  * - on an anonymized survey, `privacy: "drop"` entries are never captured, and `ipAddress` is only
  *   captured when `isCaptureIpEnabled` — offering either would let users build always-empty filters.
  */
-export const getReservedFilterEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] => {
-  const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
-  const shadowingNames = listShadowingNames(getSurveyEmbeddedFields(survey), elementIds);
+export const getReservedFilterEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] =>
+  gateReservedEntries(survey, (entry) => entry.display !== "none" || entry.name === "durationSeconds");
 
-  return dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, shadowingNames).filter((entry) => {
-    if (entry.display === "none" && entry.name !== "durationSeconds") return false;
-    if (survey.isAnonymizeResponsesEnabled && entry.privacy === "drop") return false;
-    if (entry.name === "ipAddress" && !survey.isCaptureIpEnabled) return false;
-    return true;
-  });
+/**
+ * Upper bound on distinct dropdown options collected per field. Free-text fields like `url` or
+ * `pageReferrer` are unbounded in practice, and the whole record ships to the client when the
+ * filter opens; past this many options a dropdown is no better than the free-text input anyway.
+ */
+const MAX_FILTER_VALUE_OPTIONS = 50;
+
+const addBoundedValue = (values: Record<string, Set<string>>, key: string, value: string): void => {
+  values[key] ??= new Set();
+  if (values[key].size >= MAX_FILTER_VALUE_OPTIONS) return;
+  values[key].add(value);
 };
 
 /**
@@ -213,8 +228,7 @@ export const getResponseReservedFilterValues = (
     entries.forEach((entry) => {
       const value = projected[entry.name];
       if (typeof value !== "string" || value.length === 0) return;
-      values[entry.name] ??= new Set();
-      values[entry.name].add(value);
+      addBoundedValue(values, entry.name, value);
     });
   });
 
@@ -233,8 +247,7 @@ export const getResponseVariableFilterValues = (
     stringFields.forEach(({ link }) => {
       const value = response.variables?.[link.storageKey];
       if (typeof value !== "string" || value.length === 0) return;
-      values[link.storageKey] ??= new Set();
-      values[link.storageKey].add(value);
+      addBoundedValue(values, link.storageKey, value);
     });
   });
 

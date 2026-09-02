@@ -52,17 +52,44 @@ type ElementFilterComboBoxProps = {
 };
 
 // Operators whose value is free text rather than a pick from observed values.
-const TEXT_FAMILY_OPERATORS = [
+const TEXT_FAMILY_OPERATORS = new Set([
   "Contains",
   "Does not contain",
   "Starts with",
   "Does not start with",
   "Ends with",
   "Does not end with",
-];
+]);
 
 // Operators that take no value at all; the value box is disabled while one is selected.
-const NO_VALUE_OPERATORS = ["Is set", "Is not set"];
+const NO_VALUE_OPERATORS = new Set(["Is set", "Is not set"]);
+
+const getFreeTextInputType = (fieldDataType?: TEmbeddedDataType): "number" | "date" | "text" => {
+  if (fieldDataType === "number") return "number";
+  if (fieldDataType === "date") return "date";
+  return "text";
+};
+
+/**
+ * Free-form value input instead of the observed-values combobox: the URL meta field (its value set
+ * is deliberately not enumerated), any text-family operator, number/date typed fields, and a typed
+ * field with no observed values to offer.
+ */
+const checkIsFreeTextValueInput = (params: {
+  type?: TSurveyElementTypeEnum | Omit<OptionsType, OptionsType.ELEMENTS>;
+  fieldId?: string;
+  fieldDataType?: TEmbeddedDataType;
+  filterValue?: string;
+  hasComboBoxOptions: boolean;
+  isNoValueOperator: boolean;
+}): boolean => {
+  if (params.isNoValueOperator) return false;
+  if (params.type === OptionsType.META && params.fieldId === "url") return true;
+  if (TEXT_FAMILY_OPERATORS.has(params.filterValue ?? "")) return true;
+  if (params.fieldDataType === undefined) return false;
+  if (params.fieldDataType !== "boolean" && params.fieldDataType !== "string") return true;
+  return !params.hasComboBoxOptions;
+};
 
 // Helper function to check if multiple selection is allowed
 const checkIsMultiple = (
@@ -119,20 +146,19 @@ export const ElementFilterComboBox = ({
     });
   }, [isMultiple, filterComboBoxOptions, filterComboBoxValue]);
 
-  const isNoValueOperator = NO_VALUE_OPERATORS.includes(filterValue ?? "");
+  const isNoValueOperator = NO_VALUE_OPERATORS.has(filterValue ?? "");
   const isDisabledComboBox = checkIsDisabledComboBox(type, filterValue) || isNoValueOperator;
 
-  // Free-form value input instead of the observed-values combobox: the URL meta field (its value
-  // set is deliberately not enumerated), any text-family operator, number/date typed fields, and a
-  // typed field with no observed values to offer.
-  const isTextInputField =
-    !isNoValueOperator &&
-    ((type === OptionsType.META && fieldId === "url") ||
-      TEXT_FAMILY_OPERATORS.includes(filterValue ?? "") ||
-      (fieldDataType !== undefined && fieldDataType !== "boolean" && fieldDataType !== "string") ||
-      (fieldDataType !== undefined && (!filterComboBoxOptions || filterComboBoxOptions.length === 0)));
+  const isTextInputField = checkIsFreeTextValueInput({
+    type,
+    fieldId,
+    fieldDataType,
+    filterValue,
+    hasComboBoxOptions: (filterComboBoxOptions?.length ?? 0) > 0,
+    isNoValueOperator,
+  });
 
-  const textInputType = fieldDataType === "number" ? "number" : fieldDataType === "date" ? "date" : "text";
+  const textInputType = getFreeTextInputType(fieldDataType);
 
   // Filter options based on search query
   const filteredOptions = useMemo(

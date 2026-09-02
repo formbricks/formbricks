@@ -73,7 +73,7 @@ describe("surveys", () => {
       expect(result.elementOptions.length).toBeGreaterThan(0);
       expect(result.elementOptions[0].header).toBe(OptionsType.ELEMENTS);
       const elementRows = result.elementFilterOptions.filter((o) => o.type !== "Meta");
-      expect(elementRows.length).toBe(1);
+      expect(elementRows).toHaveLength(1);
       expect(elementRows[0].id).toBe("q1");
     });
 
@@ -346,7 +346,7 @@ describe("surveys", () => {
 
       const result = genOptions(survey);
 
-      expect(result.elementFilterOptions.filter((o) => o.type !== "Meta").length).toBe(8);
+      expect(result.elementFilterOptions.filter((o) => o.type !== "Meta")).toHaveLength(8);
       expect(result.elementFilterOptions.some((o) => o.id === "q1")).toBeTruthy();
       expect(result.elementFilterOptions.some((o) => o.id === "q2")).toBeTruthy();
       expect(result.elementFilterOptions.some((o) => o.id === "q7")).toBeTruthy();
@@ -1081,6 +1081,22 @@ describe("surveys", () => {
         {} as any
       );
       expect(boolContains.data?.is_pro).toBeUndefined();
+
+      // Only the exact literals are booleans — "yes" must drop, not coerce to false.
+      const boolGarbage = getFormattedFilters(
+        typedSurvey,
+        {
+          responseStatus: "all",
+          filter: [
+            {
+              elementType: { type: "Hidden Fields", label: "is_pro", id: "is_pro" },
+              filterType: { filterValue: "Equals", filterComboBoxValue: "yes" },
+            },
+          ],
+        } as any,
+        {} as any
+      );
+      expect(boolGarbage.data?.is_pro).toBeUndefined();
     });
 
     test("ingested presence maps onto the data group's submitted/skipped vocabulary", () => {

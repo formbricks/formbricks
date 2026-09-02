@@ -1,6 +1,8 @@
 import "server-only";
 import { Prisma } from "@formbricks/database/prisma";
+import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
+  RESERVED_FIELD_CATALOG,
   getComputedEmbeddedFields,
   getSurveyEmbeddedFields,
   listShadowingNames,
@@ -52,53 +54,68 @@ const mkJsonColumnFilter = (
   filter: Prisma.ResponseWhereInput["meta"]
 ): Prisma.ResponseWhereInput => (column === "meta" ? { meta: filter } : { variables: filter });
 
+// Negated text ops share their Prisma key with the positive op and wrap in NOT.
+const TEXT_OP_TO_PRISMA: Record<string, { key: string; negated: boolean }> = {
+  contains: { key: "string_contains", negated: false },
+  doesNotContain: { key: "string_contains", negated: true },
+  startsWith: { key: "string_starts_with", negated: false },
+  doesNotStartWith: { key: "string_starts_with", negated: true },
+  endsWith: { key: "string_ends_with", negated: false },
+  doesNotEndWith: { key: "string_ends_with", negated: true },
+};
+
+const COMPARISON_OP_TO_PRISMA: Record<string, string> = {
+  lessThan: "lt",
+  lessEqual: "lte",
+  greaterThan: "gt",
+  greaterEqual: "gte",
+};
+
 /**
  * One typed condition → one Prisma JSON-path filter on `meta` or `variables`. `notEquals` and
- * `isNotSet` treat an absent value as a match (same stance as the `data` branch below); ops that
- * don't fit the column's value (e.g. text ops sent for a number field) emit nothing — fail closed.
+ * `isNotSet` treat an absent value as a match (same stance as the `data` branch below). Ops that
+ * don't fit the field's dataType — text ops on anything but a string, comparisons on a boolean or
+ * string — emit nothing: fail closed rather than querying a shape the value can never have.
  */
 const buildJsonPathCondition = (
   column: "meta" | "variables",
   path: string[],
-  val: TTypedFieldFilterCondition
+  val: TTypedFieldFilterCondition,
+  dataType: TEmbeddedDataType
 ): Prisma.ResponseWhereInput | null => {
-  switch (val.op) {
-    case "equals":
-      return mkJsonColumnFilter(column, { path, equals: val.value });
-    case "notEquals":
-      return {
-        OR: [
-          mkJsonColumnFilter(column, { path, not: val.value }),
-          mkJsonColumnFilter(column, { path, equals: Prisma.DbNull }),
-        ],
-      };
-    case "contains":
-      return mkJsonColumnFilter(column, { path, string_contains: val.value });
-    case "doesNotContain":
-      return { NOT: mkJsonColumnFilter(column, { path, string_contains: val.value }) };
-    case "startsWith":
-      return mkJsonColumnFilter(column, { path, string_starts_with: val.value });
-    case "doesNotStartWith":
-      return { NOT: mkJsonColumnFilter(column, { path, string_starts_with: val.value }) };
-    case "endsWith":
-      return mkJsonColumnFilter(column, { path, string_ends_with: val.value });
-    case "doesNotEndWith":
-      return { NOT: mkJsonColumnFilter(column, { path, string_ends_with: val.value }) };
-    case "lessThan":
-      return mkJsonColumnFilter(column, { path, lt: val.value });
-    case "lessEqual":
-      return mkJsonColumnFilter(column, { path, lte: val.value });
-    case "greaterThan":
-      return mkJsonColumnFilter(column, { path, gt: val.value });
-    case "greaterEqual":
-      return mkJsonColumnFilter(column, { path, gte: val.value });
-    case "isSet":
-      return mkJsonColumnFilter(column, { path, not: Prisma.DbNull });
-    case "isNotSet":
-      return mkJsonColumnFilter(column, { path, equals: Prisma.DbNull });
-    default:
-      return null;
+  if (val.op === "isSet") return mkJsonColumnFilter(column, { path, not: Prisma.DbNull });
+  if (val.op === "isNotSet") return mkJsonColumnFilter(column, { path, equals: Prisma.DbNull });
+  if (val.op === "equals") return mkJsonColumnFilter(column, { path, equals: val.value });
+  if (val.op === "notEquals") {
+    return {
+      OR: [
+        mkJsonColumnFilter(column, { path, not: val.value }),
+        mkJsonColumnFilter(column, { path, equals: Prisma.DbNull }),
+      ],
+    };
   }
+
+  const textOp = TEXT_OP_TO_PRISMA[val.op];
+  if (textOp && "value" in val) {
+    if (dataType !== "string") return null;
+    // The dynamic Prisma key needs one cast; the three keys above are all valid string filters.
+    const filter = mkJsonColumnFilter(column, {
+      path,
+      [textOp.key]: val.value,
+    } as Prisma.ResponseWhereInput["meta"]);
+    return textOp.negated ? { NOT: filter } : filter;
+  }
+
+  const comparisonKey = COMPARISON_OP_TO_PRISMA[val.op];
+  if (comparisonKey && "value" in val) {
+    if (dataType !== "number" && dataType !== "date") return null;
+    return mkJsonColumnFilter(column, {
+      path,
+      [comparisonKey]: val.value,
+    } as Prisma.ResponseWhereInput["meta"]);
+  }
+
+  return null;
 };
 
 /**
@@ -353,18 +370,23 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
   if (filterCriteria?.reserved) {
     // Fail closed (ENG-1848): a name the survey's declared fields or element ids shadow filters the
     // declared value elsewhere, never the reserved read — and an unknown name emits nothing.
+    // `Object.hasOwn` because the keys come from a z.record: a crafted `__proto__`/`constructor`
+    // key must not resolve a locator through the prototype chain.
     const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
     const shadowed = new Set(listShadowingNames(getSurveyEmbeddedFields(survey), elementIds));
+    const catalogEntriesByName = new Map(RESERVED_FIELD_CATALOG.map((entry) => [entry.name, entry]));
     const reserved: Prisma.ResponseWhereInput[] = [];
 
     Object.entries(filterCriteria.reserved).forEach(([name, val]) => {
       if (shadowed.has(name)) return;
+      if (!Object.hasOwn(RESERVED_FILTER_LOCATORS, name)) return;
+      const entry = catalogEntriesByName.get(name);
+      if (!entry) return;
       const locator = RESERVED_FILTER_LOCATORS[name];
-      if (!locator) return;
       const condition =
         locator.kind === "ttcTotalMs"
           ? buildDurationSecondsCondition(val)
-          : buildJsonPathCondition("meta", locator.path, val);
+          : buildJsonPathCondition("meta", locator.path, val, entry.dataType);
       if (condition) reserved.push(condition);
     });
 
@@ -375,12 +397,15 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
 
   if (filterCriteria?.variables) {
     // Keys are storageKeys of the survey's computed embedded fields; anything else emits nothing.
-    const computedKeys = new Set(getComputedEmbeddedFields(survey).map(({ link }) => link.storageKey));
+    const computedFieldsByKey = new Map(
+      getComputedEmbeddedFields(survey).map((field) => [field.link.storageKey, field])
+    );
     const variables: Prisma.ResponseWhereInput[] = [];
 
     Object.entries(filterCriteria.variables).forEach(([storageKey, val]) => {
-      if (!computedKeys.has(storageKey)) return;
-      const condition = buildJsonPathCondition("variables", [storageKey], val);
+      const field = computedFieldsByKey.get(storageKey);
+      if (!field) return;
+      const condition = buildJsonPathCondition("variables", [storageKey], val, field.field.dataType);
       if (condition) variables.push(condition);
     });
 

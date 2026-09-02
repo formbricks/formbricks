@@ -108,8 +108,10 @@ test.describe("Response filtering by reserved fields @slow", () => {
       await page.getByRole("option", { name: "newsletter" }).click();
       await page.getByRole("button", { name: "Apply filters" }).click();
 
-      await expect(page.getByText(BARE_ANSWER)).toHaveCount(0);
+      // Positive first: once the expected row has re-rendered, the absence check is meaningful
+      // (an empty still-loading table would satisfy toHaveCount(0) immediately).
       await expect(page.getByText(CAMPAIGN_ANSWER).first()).toBeVisible();
+      await expect(page.getByText(BARE_ANSWER)).toHaveCount(0);
     });
 
     await test.step("UTM Source is not set → only the bare response remains", async () => {
@@ -119,8 +121,8 @@ test.describe("Response filtering by reserved fields @slow", () => {
       await page.getByRole("menuitem", { name: "Is not set" }).click();
       await page.getByRole("button", { name: "Apply filters" }).click();
 
-      await expect(page.getByText(CAMPAIGN_ANSWER)).toHaveCount(0);
       await expect(page.getByText(BARE_ANSWER).first()).toBeVisible();
+      await expect(page.getByText(CAMPAIGN_ANSWER)).toHaveCount(0);
     });
   });
 });

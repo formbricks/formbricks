@@ -284,6 +284,24 @@ export const getResponseSnapshotForPipeline = async (responseId: string): Promis
   }
 };
 
+// The full TEmbeddedValueResponse shape, so reserved values run through the shared projection
+// (redactQuery, type coercion) instead of raw meta reads (ENG-1848). Kept as a named selection so
+// the row type stays checked against TEmbeddedValueResponse — a field added there without being
+// selected here must fail the build, not read undefined at runtime.
+const filteringValuesSelection = {
+  id: true,
+  surveyId: true,
+  createdAt: true,
+  updatedAt: true,
+  finished: true,
+  language: true,
+  data: true,
+  variables: true,
+  ttc: true,
+  meta: true,
+  contactAttributes: true,
+} satisfies Prisma.ResponseSelect;
+
 export const getResponseFilteringValues = reactCache(async (surveyId: string) => {
   validateInputs([surveyId, ZId]);
 
@@ -297,24 +315,10 @@ export const getResponseFilteringValues = reactCache(async (surveyId: string) =>
       where: {
         surveyId,
       },
-      select: {
-        // The full TEmbeddedValueResponse shape, so reserved values run through the shared
-        // projection (redactQuery, type coercion) instead of raw meta reads (ENG-1848).
-        id: true,
-        surveyId: true,
-        createdAt: true,
-        updatedAt: true,
-        finished: true,
-        language: true,
-        data: true,
-        variables: true,
-        ttc: true,
-        meta: true,
-        contactAttributes: true,
-      },
+      select: filteringValuesSelection,
     });
 
-    const embeddedValueResponses = responses as unknown as TEmbeddedValueResponse[];
+    const embeddedValueResponses: TEmbeddedValueResponse[] = responses;
     const contactAttributes = getResponseContactAttributes(responses);
     const meta = getResponseMeta(responses);
     const hiddenFields = getResponseHiddenFields(survey, responses);
