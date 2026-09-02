@@ -59,38 +59,50 @@ interface RawSurveyBody {
   variables?: unknown;
 }
 
-const buildRecallLabels = (data: RawSurveyBody, defaultLanguage: string): RecallLabels => {
-  const labels: RecallLabels = {};
-
-  const blocks = Array.isArray(data.blocks) ? data.blocks : [];
-  for (const block of blocks) {
+/** The v3 payload is untyped at this point, so walk blocks → elements defensively. */
+const rawElementsFromBlocks = (blocks: unknown): unknown[] =>
+  (Array.isArray(blocks) ? blocks : []).flatMap((block) => {
     const elements = (block as { elements?: unknown } | null)?.elements;
-    if (!Array.isArray(elements)) continue;
-    for (const element of elements) {
-      const { id, headline } = (element ?? {}) as { id?: unknown; headline?: unknown };
-      if (typeof id !== "string" || !id) continue;
-      const headlineText = pickDefaultLanguageString(headline, defaultLanguage);
-      if (headlineText) labels[id] = getTextContent(headlineText);
-    }
-  }
+    return Array.isArray(elements) ? elements : [];
+  });
 
-  const variables = Array.isArray(data.variables) ? data.variables : [];
-  for (const variable of variables) {
-    const { id, name } = (variable ?? {}) as { id?: unknown; name?: unknown };
-    // An element with the same id wins, as it does in `getRecallItemLabel`.
-    if (typeof id === "string" && id && typeof name === "string" && !(id in labels)) labels[id] = name;
+const collectElementLabels = (blocks: unknown, defaultLanguage: string): RecallLabels => {
+  const labels: RecallLabels = {};
+  for (const element of rawElementsFromBlocks(blocks)) {
+    const { id, headline } = (element ?? {}) as { id?: unknown; headline?: unknown };
+    if (typeof id !== "string" || !id) continue;
+    const headlineText = pickDefaultLanguageString(headline, defaultLanguage);
+    if (headlineText) labels[id] = getTextContent(headlineText);
   }
-
-  // A hidden field recalls as its own id, and takes precedence over the other two.
-  const fieldIds = (data.hiddenFields as { fieldIds?: unknown } | null | undefined)?.fieldIds;
-  if (Array.isArray(fieldIds)) {
-    for (const fieldId of fieldIds) {
-      if (typeof fieldId === "string" && fieldId) labels[fieldId] = fieldId;
-    }
-  }
-
   return labels;
 };
+
+const collectVariableLabels = (variables: unknown): RecallLabels => {
+  const labels: RecallLabels = {};
+  for (const variable of Array.isArray(variables) ? variables : []) {
+    const { id, name } = (variable ?? {}) as { id?: unknown; name?: unknown };
+    if (typeof id === "string" && id && typeof name === "string") labels[id] = name;
+  }
+  return labels;
+};
+
+/** A hidden field recalls as its own id. */
+const collectHiddenFieldLabels = (hiddenFields: unknown): RecallLabels => {
+  const labels: RecallLabels = {};
+  const fieldIds = (hiddenFields as { fieldIds?: unknown } | null | undefined)?.fieldIds;
+  for (const fieldId of Array.isArray(fieldIds) ? fieldIds : []) {
+    if (typeof fieldId === "string" && fieldId) labels[fieldId] = fieldId;
+  }
+  return labels;
+};
+
+const buildRecallLabels = (data: RawSurveyBody, defaultLanguage: string): RecallLabels => ({
+  // Later spreads win, so the order spells out `getRecallItemLabel`'s precedence: a hidden field
+  // beats an element, and an element beats a variable.
+  ...collectVariableLabels(data.variables),
+  ...collectElementLabels(data.blocks, defaultLanguage),
+  ...collectHiddenFieldLabels(data.hiddenFields),
+});
 
 /**
  * Resolves `#recall:<id>/fallback:<text>#` tokens to the label the survey editor shows, prefixed
