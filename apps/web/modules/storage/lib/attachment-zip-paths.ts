@@ -130,20 +130,36 @@ const formatResponseFolderTimestamp = (date: Date, timeZone: string): string => 
     timeZone,
   };
 
-  // An invalid IANA zone makes Intl.DateTimeFormat throw a RangeError. Degrade to UTC rather than
-  // failing the whole export, matching getFormattedDateTimeString.
-  const format = (zone: string) =>
-    // en-CA renders as `2026-09-01, 18:05:00`, which is already year-first.
-    new Intl.DateTimeFormat("en-CA", { ...options, timeZone: zone }).format(date);
+  // Assembled from named parts rather than from `format()`. The separators `format()` places between
+  // the fields are an implementation-defined locale pattern: ICU has already changed them once (the
+  // narrow no-break space before a time), and a pattern emitting `/` would smuggle a directory
+  // separator into the ZIP path. Only the numeric parts are read here, so no locale literal can reach
+  // the folder name.
+  const partsIn = (zone: string): Intl.DateTimeFormatPart[] =>
+    new Intl.DateTimeFormat("en-CA", { ...options, timeZone: zone }).formatToParts(date);
 
-  let formatted: string;
+  let parts: Intl.DateTimeFormatPart[];
   try {
-    formatted = format(timeZone);
+    // An invalid IANA zone makes Intl.DateTimeFormat throw a RangeError. Degrade to UTC rather than
+    // failing the whole export, matching getFormattedDateTimeString.
+    parts = partsIn(timeZone);
   } catch {
-    formatted = format("UTC");
+    parts = partsIn("UTC");
   }
 
-  return formatted.replace(", ", "T").replaceAll(":", "-");
+  const valueOf = (type: Intl.DateTimeFormatPartTypes): string | undefined =>
+    parts.find((part) => part.type === type)?.value;
+
+  const fields = (["year", "month", "day", "hour", "minute", "second"] as const).map(valueOf);
+
+  // Every field has to be a run of digits. Anything else means the runtime produced a shape this does
+  // not understand, and a half-built folder name is worse than a plain UTC one.
+  if (fields.some((field) => field === undefined || !/^\d+$/.test(field))) {
+    return date.toISOString().slice(0, 19).replaceAll(":", "-");
+  }
+
+  const [year, month, day, hour, minute, second] = fields;
+  return `${year}-${month}-${day}T${hour}-${minute}-${second}`;
 };
 
 const withCollisionSuffix = (fileName: string, attempt: number): string => {

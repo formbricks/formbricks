@@ -124,6 +124,38 @@ describe("buildAttachmentZipPath", () => {
     expect(at("America/New_York").startsWith("2026-09-01T19-30-00_")).toBe(true);
   });
 
+  test("keeps the timestamp free of locale separators across many zones", () => {
+    // The folder name is assembled from named date parts, not from a locale pattern: a pattern that
+    // emitted `/` would add an unintended directory level inside the archive.
+    const zones = [
+      "UTC",
+      "Asia/Tokyo",
+      "Asia/Kolkata",
+      "America/New_York",
+      "Europe/Berlin",
+      "Pacific/Chatham",
+    ];
+
+    for (const timeZone of zones) {
+      const folder = buildAttachmentZipPath({
+        ...baseParams,
+        timeZone,
+        usedPaths: new Set(),
+      }).split("/")[0];
+
+      expect(folder).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}_/);
+    }
+  });
+
+  test("stamps midnight as 00, not 24", () => {
+    const path = buildAttachmentZipPath({
+      ...baseParams,
+      responseCreatedAt: new Date("2026-09-01T00:00:00.000Z"),
+      usedPaths: new Set(),
+    });
+    expect(path.startsWith("2026-09-01T00-00-00_")).toBe(true);
+  });
+
   test("falls back to UTC on an unusable time zone rather than failing the export", () => {
     const path = buildAttachmentZipPath({
       ...baseParams,
