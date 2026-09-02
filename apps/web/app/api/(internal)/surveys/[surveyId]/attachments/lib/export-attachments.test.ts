@@ -37,7 +37,7 @@ const survey = { id: "survey-1", workspaceId: "ws-own" } as unknown as TSurvey;
 const NOW = new Date("2026-09-01T12:00:00.000Z");
 
 const okEntry = (overrides: Partial<TAttachmentEntry> = {}): TAttachmentEntry => ({
-  zipPath: "2026-09-01T10-00-00Z_res-1/2_Upload a photo/photo.jpg",
+  zipPath: "2026-09-01T10-00-00_res-1/2_Upload a photo/photo.jpg",
   responseId: "res-1",
   responseCreatedAt: new Date("2026-09-01T10:00:00.000Z"),
   elementId: "el-upload",
@@ -100,7 +100,7 @@ describe("streamAttachmentsAsZip", () => {
 
     const archive = await readArchive(streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW }));
 
-    expect(archive).toContain("2026-09-01T10-00-00Z_res-1/2_Upload a photo/photo.jpg");
+    expect(archive).toContain("2026-09-01T10-00-00_res-1/2_Upload a photo/photo.jpg");
     expect(archive).toContain("manifest.csv");
     // The manifest row carries the response link and the size storage reported.
     expect(manifestRows()).toEqual([
@@ -178,7 +178,7 @@ describe("streamAttachmentsAsZip", () => {
       streamAttachmentsAsZip({
         entries: [
           okEntry(),
-          okEntry({ zipPath: "2026-09-01T10-00-00Z_res-2/2_Upload a photo/photo.jpg", responseId: "res-2" }),
+          okEntry({ zipPath: "2026-09-01T10-00-00_res-2/2_Upload a photo/photo.jpg", responseId: "res-2" }),
         ],
         survey,
         now: NOW,
@@ -187,8 +187,8 @@ describe("streamAttachmentsAsZip", () => {
 
     expect(archive).toContain("_TRUNCATED.txt");
     // The first was appended; the second was fetched, refused, and never written.
-    expect(archive).toContain("2026-09-01T10-00-00Z_res-1/");
-    expect(archive).not.toContain("2026-09-01T10-00-00Z_res-2/");
+    expect(archive).toContain("2026-09-01T10-00-00_res-1/");
+    expect(archive).not.toContain("2026-09-01T10-00-00_res-2/");
     // The dropped file still gets a row: it is the only thing naming what is missing, since
     // _TRUNCATED.txt carries a count alone.
     expect(manifestRows()).toEqual([
@@ -223,7 +223,7 @@ describe("streamAttachmentsAsZip", () => {
     const archive = await readArchive(streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW }));
 
     expect(archive).toContain("_TRUNCATED.txt");
-    expect(archive).not.toContain("2026-09-01T10-00-00Z_res-1/2_Upload a photo/photo.jpg");
+    expect(archive).not.toContain("2026-09-01T10-00-00_res-1/2_Upload a photo/photo.jpg");
   });
 
   test("still produces a manifest when there is nothing to write", async () => {

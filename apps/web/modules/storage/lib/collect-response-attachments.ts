@@ -82,6 +82,11 @@ export interface CollectResponseAttachmentsParams {
    * tell "exactly at the cap" from "over the cap" and refuse before any bytes are written.
    */
   maxFiles: number;
+  /**
+   * IANA zone the response folders' clocks are rendered in — `organization.displayTimeZone`, the same
+   * zone the CSV export stamps its Timestamp column with. Defaults to UTC, as that column does.
+   */
+  timeZone?: string;
   /** Responses fetched per query. */
   batchSize?: number;
 }
@@ -273,6 +278,7 @@ const collectFromResponse = async (
     resolveWorkspace: (storageId: string) => ReturnType<typeof findWorkspaceByIdOrLegacyEnvId>;
     usedPaths: Set<string>;
     remainingFiles: number;
+    timeZone: string;
   }
 ): Promise<{ entries: TAttachmentEntry[]; fileCount: number; reachedCap: boolean }> => {
   const entries: TAttachmentEntry[] = [];
@@ -311,6 +317,7 @@ const collectFromResponse = async (
         elementIndex: element.index,
         elementLabel: element.label,
         originalFileName: base.originalFileName,
+        timeZone: context.timeZone,
         usedPaths: context.usedPaths,
       }),
       status: "ok",
@@ -327,6 +334,7 @@ export const collectResponseAttachments = async ({
   survey,
   filterCriteria,
   maxFiles,
+  timeZone = "UTC",
   batchSize = DEFAULT_BATCH_SIZE,
 }: CollectResponseAttachmentsParams): Promise<CollectResponseAttachmentsResult> => {
   const elementLabels = buildFileUploadElementLabels(survey);
@@ -345,6 +353,7 @@ export const collectResponseAttachments = async ({
     resolveWorkspace: createWorkspaceResolver(),
     usedPaths: new Set<string>(),
     remainingFiles: maxFiles,
+    timeZone,
   };
 
   const entries: TAttachmentEntry[] = [];

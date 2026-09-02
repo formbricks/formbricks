@@ -91,23 +91,47 @@ describe("buildAttachmentZipPath", () => {
     elementIndex: 2,
     elementLabel: "Upload a photo",
     originalFileName: "photo.jpg",
+    timeZone: "UTC",
   };
 
   test("builds {date}_{responseId}/{n}_{label}/{fileName}", () => {
     expect(buildAttachmentZipPath({ ...baseParams, usedPaths: new Set() })).toBe(
-      "2026-09-01T10-30-00Z_cm1response000000000000/2_Upload a photo/photo.jpg"
+      "2026-09-01T10-30-00_cm1response000000000000/2_Upload a photo/photo.jpg"
     );
   });
 
-  test("stamps the response folder in UTC, not the host timezone", () => {
-    // 23:30 UTC is already the next day in Tokyo and still the previous day in Los Angeles; the folder
-    // has to be stable regardless of who downloads the archive.
+  test("stamps the folder in the given zone, not the host's", () => {
     const path = buildAttachmentZipPath({
       ...baseParams,
       responseCreatedAt: new Date("2026-09-01T23:30:00.000Z"),
       usedPaths: new Set(),
     });
-    expect(path.startsWith("2026-09-01T23-30-00Z_")).toBe(true);
+    expect(path.startsWith("2026-09-01T23-30-00_")).toBe(true);
+  });
+
+  test("renders the clock of the organization's display time zone", () => {
+    // The same instant, stamped for two orgs. 23:30 UTC is already the next day in Tokyo and still the
+    // same evening in New York — matching what each org sees in its CSV export.
+    const at = (timeZone: string) =>
+      buildAttachmentZipPath({
+        ...baseParams,
+        responseCreatedAt: new Date("2026-09-01T23:30:00.000Z"),
+        timeZone,
+        usedPaths: new Set(),
+      });
+
+    expect(at("Asia/Tokyo").startsWith("2026-09-02T08-30-00_")).toBe(true);
+    expect(at("America/New_York").startsWith("2026-09-01T19-30-00_")).toBe(true);
+  });
+
+  test("falls back to UTC on an unusable time zone rather than failing the export", () => {
+    const path = buildAttachmentZipPath({
+      ...baseParams,
+      responseCreatedAt: new Date("2026-09-01T23:30:00.000Z"),
+      timeZone: "Not/AZone",
+      usedPaths: new Set(),
+    });
+    expect(path.startsWith("2026-09-01T23-30-00_")).toBe(true);
   });
 
   test("sorts folders chronologically within a single day", () => {
@@ -136,16 +160,16 @@ describe("buildAttachmentZipPath", () => {
     const second = buildAttachmentZipPath({ ...baseParams, usedPaths });
     const third = buildAttachmentZipPath({ ...baseParams, usedPaths });
 
-    expect(first).toBe("2026-09-01T10-30-00Z_cm1response000000000000/2_Upload a photo/photo.jpg");
-    expect(second).toBe("2026-09-01T10-30-00Z_cm1response000000000000/2_Upload a photo/photo (2).jpg");
-    expect(third).toBe("2026-09-01T10-30-00Z_cm1response000000000000/2_Upload a photo/photo (3).jpg");
+    expect(first).toBe("2026-09-01T10-30-00_cm1response000000000000/2_Upload a photo/photo.jpg");
+    expect(second).toBe("2026-09-01T10-30-00_cm1response000000000000/2_Upload a photo/photo (2).jpg");
+    expect(third).toBe("2026-09-01T10-30-00_cm1response000000000000/2_Upload a photo/photo (3).jpg");
   });
 
   test("suffixes an extensionless collision at the end", () => {
     const usedPaths = new Set<string>();
     buildAttachmentZipPath({ ...baseParams, originalFileName: "scan", usedPaths });
     expect(buildAttachmentZipPath({ ...baseParams, originalFileName: "scan", usedPaths })).toBe(
-      "2026-09-01T10-30-00Z_cm1response000000000000/2_Upload a photo/scan (2)"
+      "2026-09-01T10-30-00_cm1response000000000000/2_Upload a photo/scan (2)"
     );
   });
 

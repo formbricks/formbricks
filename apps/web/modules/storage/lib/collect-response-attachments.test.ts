@@ -91,7 +91,7 @@ describe("collectResponseAttachments", () => {
     expect(result.entries).toHaveLength(1);
     expect(result.entries[0]).toMatchObject({
       // Element index 2: the open-text element is first in the survey.
-      zipPath: "2026-09-01T10-00-00Z_res-1/2_Upload a photo/photo.jpg",
+      zipPath: "2026-09-01T10-00-00_res-1/2_Upload a photo/photo.jpg",
       responseId: "res-1",
       elementId: UPLOAD_ELEMENT_ID,
       elementLabel: "Upload a photo",
@@ -112,7 +112,7 @@ describe("collectResponseAttachments", () => {
     });
 
     expect(result.fileCount).toBe(1);
-    expect(result.entries[0].zipPath).toBe("2026-09-01T10-00-00Z_res-1/2_Upload a photo/scan.pdf");
+    expect(result.entries[0].zipPath).toBe("2026-09-01T10-00-00_res-1/2_Upload a photo/scan.pdf");
   });
 
   test("ignores answers to elements that are not file uploads", async () => {
@@ -230,8 +230,8 @@ describe("collectResponseAttachments", () => {
     const result = await collectResponseAttachments({ survey: buildBlocksSurvey(), maxFiles: 100 });
 
     expect(result.entries.map((entry) => entry.zipPath)).toEqual([
-      "2026-09-01T10-00-00Z_res-1/2_Upload a photo/photo.jpg",
-      "2026-09-01T10-00-00Z_res-1/2_Upload a photo/photo (2).jpg",
+      "2026-09-01T10-00-00_res-1/2_Upload a photo/photo.jpg",
+      "2026-09-01T10-00-00_res-1/2_Upload a photo/photo (2).jpg",
     ]);
   });
 

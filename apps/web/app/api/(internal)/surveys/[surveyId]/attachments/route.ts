@@ -9,6 +9,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
+import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { checkRateLimit } from "@/modules/core/rate-limit/rate-limit";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -96,10 +97,15 @@ export const GET = withV3ApiWrapper({
 
     // One pass serves both branches: the pre-flight needs the counts, the download needs the entries,
     // and the collector never opens a storage stream so there is nothing to waste by holding them.
+    // The folders are stamped in the org's display time zone, so an archive and the CSV export of the
+    // same responses read the same clock.
+    const organization = await getOrganization(authResult.organizationId);
+
     const { entries, fileCount, responseCount, exceedsMaxFiles } = await collectResponseAttachments({
       survey,
       filterCriteria,
       maxFiles: MAX_ATTACHMENT_FILES,
+      timeZone: organization?.displayTimeZone ?? "UTC",
     });
 
     if (dryRun) {

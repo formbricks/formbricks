@@ -4,7 +4,7 @@
  * Respondents upload whatever their phone or laptop called the file, so a flat archive is a pile of
  * `photo.jpg`, `photo (1).jpg` and `IMG_0042.jpg` with nothing tying a file back to the answer it came
  * from. Every path this module builds is therefore
- * `{YYYY-MM-DDTHH-MM-SSZ}_{responseId}/{n}_{elementLabel}/{originalFileName}`: the response folder joins the
+ * `{YYYY-MM-DDTHH-MM-SS}_{responseId}/{n}_{elementLabel}/{originalFileName}`: the response folder joins the
  * archive to the CSV/Excel export by response id, and the numeric prefix on the element folder keeps
  * questions in survey order rather than alphabetical order.
  *
@@ -106,16 +106,45 @@ export const sanitizeZipFileName = (raw: string): string => {
 };
 
 /**
- * `YYYY-MM-DDTHH-MM-SSZ` in UTC. Machine-facing, so deliberately not localised — the folder name has to
- * be stable and sortable regardless of who downloads the archive.
+ * `YYYY-MM-DDTHH-MM-SS` in the organization's display time zone.
  *
- * The time is part of it, not just the date: a survey taking a thousand responses a day would otherwise
- * put them all under one date prefix, where the rest of the folder name is a cuid2 and sorts randomly.
- * With seconds included the lexicographic order a file browser shows *is* chronological order. Colons
- * are replaced because Windows rejects them in a path and macOS shows them as `/`.
+ * The zone is the same one the CSV and Excel exports stamp their Timestamp column with
+ * (`organization.displayTimeZone`, "the IANA time zone used for human-facing response timestamps"), so
+ * a folder and its row in the response export read the same clock. The absolute instant stays available
+ * in UTC in `manifest.csv`, which is machine-facing.
+ *
+ * The time is part of the name, not just the date: a survey taking a thousand responses a day would
+ * otherwise put them all under one date prefix, where the rest of the folder name is a cuid2 and sorts
+ * randomly. With seconds included, the lexicographic order a file browser shows *is* chronological
+ * order. Colons become dashes because Windows rejects them in a path and macOS renders them as `/`.
  */
-const formatUtcTimestampPrefix = (date: Date): string =>
-  `${date.toISOString().slice(0, 19).replace(/:/g, "-")}Z`;
+const formatResponseFolderTimestamp = (date: Date, timeZone: string): string => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+    timeZone,
+  };
+
+  // An invalid IANA zone makes Intl.DateTimeFormat throw a RangeError. Degrade to UTC rather than
+  // failing the whole export, matching getFormattedDateTimeString.
+  const format = (zone: string) =>
+    // en-CA renders as `2026-09-01, 18:05:00`, which is already year-first.
+    new Intl.DateTimeFormat("en-CA", { ...options, timeZone: zone }).format(date);
+
+  let formatted: string;
+  try {
+    formatted = format(timeZone);
+  } catch {
+    formatted = format("UTC");
+  }
+
+  return formatted.replace(", ", "T").replaceAll(":", "-");
+};
 
 const withCollisionSuffix = (fileName: string, attempt: number): string => {
   const { base, extension } = splitExtension(fileName);
@@ -130,6 +159,8 @@ export interface BuildAttachmentZipPathParams {
   elementIndex: number;
   elementLabel: string;
   originalFileName: string;
+  /** IANA zone the response folder's clock is rendered in; `organization.displayTimeZone`. */
+  timeZone: string;
   /**
    * Paths already claimed in this archive. The chosen path is added to it, so the caller cannot forget
    * to register it and silently emit a duplicate entry.
@@ -150,9 +181,10 @@ export const buildAttachmentZipPath = ({
   elementIndex,
   elementLabel,
   originalFileName,
+  timeZone,
   usedPaths,
 }: BuildAttachmentZipPathParams): string => {
-  const responseFolder = `${formatUtcTimestampPrefix(responseCreatedAt)}_${responseId}`;
+  const responseFolder = `${formatResponseFolderTimestamp(responseCreatedAt, timeZone)}_${responseId}`;
   const elementFolder = `${elementIndex}_${sanitizeZipPathSegment(elementLabel)}`;
   const fileName = sanitizeZipFileName(originalFileName);
 
