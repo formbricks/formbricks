@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Произошла ошибка при добавлении тега",
         "an_error_occurred_creating_the_tag": "Произошла ошибка при создании тега",
         "an_error_occurred_deleting_the_tag": "Произошла ошибка при удалении тега",
-        "attachments_download_started": "Загрузка началась — {{fileCount}} файлов. Большие экспорты могут занять несколько минут.",
+        "attachments_download_started": "Загрузка началась — {fileCount, plural, one {{fileCount} файл} few {{fileCount} файла} many {{fileCount} файлов} other {{fileCount} файла}}. Большие экспорты могут занять несколько минут.",
         "browser": "Браузер",
         "bulk_delete_response_quotas": "Ответы входят в квоты для этого опроса. Как вы хотите обработать квоты?",
         "city": "Город",
@@ -3673,7 +3673,7 @@
         "survey_closed": "Опрос закрыт",
         "tag_already_exists": "Тег уже существует",
         "this_response_is_in_progress": "Этот ответ в процессе заполнения.",
-        "too_many_attachments_to_download": "Эта загрузка содержит более {{maxFiles}} файлов. Сузьте фильтр и попробуйте снова.",
+        "too_many_attachments_to_download": "Эта загрузка содержит более {maxFiles} файлов. Сузьте фильтр и попробуйте снова.",
         "zip_post_code": "Индекс"
       },
       "restore": "Восстановить",

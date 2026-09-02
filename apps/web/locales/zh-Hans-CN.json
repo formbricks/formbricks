@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "添加标签时发生错误",
         "an_error_occurred_creating_the_tag": "创建标签时发生错误",
         "an_error_occurred_deleting_the_tag": "删除 标签 时发生错误",
-        "attachments_download_started": "下载已开始 — {{fileCount}} 个文件。大型导出可能需要几分钟时间。",
+        "attachments_download_started": "下载已开始 — {fileCount, plural, other {{fileCount} 个文件}}。大型导出可能需要几分钟时间。",
         "browser": "浏览器",
         "bulk_delete_response_quotas": "这些 响应是 此 调查配额 的一部分。 您 希望 如何 处理 这些 配额？",
         "city": "城市",
@@ -3673,7 +3673,7 @@
         "survey_closed": "调查 关闭",
         "tag_already_exists": "标签 已 存在",
         "this_response_is_in_progress": "此 响应 正在 进行中。",
-        "too_many_attachments_to_download": "此下载包含超过 {{maxFiles}} 个文件。请缩小筛选范围后重试。",
+        "too_many_attachments_to_download": "此下载包含超过 {maxFiles} 个文件。请缩小筛选条件后重试。",
         "zip_post_code": "邮政编码"
       },
       "restore": "恢复",

@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Une erreur est survenue lors de l'ajout de l'étiquette",
         "an_error_occurred_creating_the_tag": "Une erreur est survenue lors de la création de l'étiquette",
         "an_error_occurred_deleting_the_tag": "Une erreur est survenue lors de la suppression de l'étiquette.",
-        "attachments_download_started": "Téléchargement lancé — {{fileCount}} fichiers. Les exports volumineux peuvent prendre quelques minutes.",
+        "attachments_download_started": "Téléchargement démarré — {fileCount, plural, one {{fileCount} fichier} other {{fileCount} fichiers}}. Les exports volumineux peuvent prendre quelques minutes.",
         "browser": "Navigateur",
         "bulk_delete_response_quotas": "Les réponses font partie des quotas pour ce sondage. Comment voulez-vous gérer les quotas ?",
         "city": "Ville",
@@ -3673,7 +3673,7 @@
         "survey_closed": "Sondage fermé",
         "tag_already_exists": "Le tag existe déjà",
         "this_response_is_in_progress": "Cette réponse est en cours.",
-        "too_many_attachments_to_download": "Ce téléchargement contient plus de {{maxFiles}} fichiers. Affinez le filtre et réessaye.",
+        "too_many_attachments_to_download": "Ce téléchargement contient plus de {maxFiles} fichiers. Affine le filtre et réessaie.",
         "zip_post_code": "Code postal"
       },
       "restore": "Restaurer",

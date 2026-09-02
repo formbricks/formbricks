@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Ocorreu um erro ao adicionar a tag",
         "an_error_occurred_creating_the_tag": "Ocorreu um erro ao criar a tag",
         "an_error_occurred_deleting_the_tag": "Ocorreu um erro ao deletar a tag",
-        "attachments_download_started": "Download iniciado — {{fileCount}} arquivos. Exportações grandes podem levar alguns minutos.",
+        "attachments_download_started": "Download iniciado — {fileCount, plural, one {{fileCount} arquivo} other {{fileCount} arquivos}}. Exportações grandes podem levar alguns minutos.",
         "browser": "navegador",
         "bulk_delete_response_quotas": "As respostas fazem parte das cotas desta pesquisa. Como você quer gerenciar as cotas?",
         "city": "Cidade",
@@ -3673,7 +3673,7 @@
         "survey_closed": "Pesquisa encerrada",
         "tag_already_exists": "Tag já existe",
         "this_response_is_in_progress": "Essa resposta está em andamento.",
-        "too_many_attachments_to_download": "Este download contém mais de {{maxFiles}} arquivos. Refine o filtro e tente novamente.",
+        "too_many_attachments_to_download": "Este download contém mais de {maxFiles} arquivos. Refine o filtro e tente novamente.",
         "zip_post_code": "CEP / Código postal"
       },
       "restore": "Restaurar",

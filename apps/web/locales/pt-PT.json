@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Ocorreu um erro ao adicionar a etiqueta",
         "an_error_occurred_creating_the_tag": "Ocorreu um erro ao criar a etiqueta",
         "an_error_occurred_deleting_the_tag": "Ocorreu um erro ao eliminar a etiqueta",
-        "attachments_download_started": "Transferência iniciada — {{fileCount}} ficheiros. Exportações grandes podem demorar alguns minutos.",
+        "attachments_download_started": "Download iniciado — {fileCount, plural, one {{fileCount} ficheiro} other {{fileCount} ficheiros}}. Exportações grandes podem demorar alguns minutos.",
         "browser": "Navegador",
         "bulk_delete_response_quotas": "As respostas são parte das quotas deste inquérito. Como deseja gerir as quotas?",
         "city": "Cidade",
@@ -3673,7 +3673,7 @@
         "survey_closed": "Inquérito encerrado",
         "tag_already_exists": "A etiqueta já existe",
         "this_response_is_in_progress": "Esta resposta está em progresso.",
-        "too_many_attachments_to_download": "Esta transferência contém mais de {{maxFiles}} ficheiros. Restringe o filtro e tenta novamente.",
+        "too_many_attachments_to_download": "Este download contém mais de {maxFiles} ficheiros. Restringe o filtro e tenta novamente.",
         "zip_post_code": "Código Postal"
       },
       "restore": "Restaurar",

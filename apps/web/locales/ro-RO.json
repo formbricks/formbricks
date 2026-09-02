@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "A apărut o eroare la adăugarea etichetei",
         "an_error_occurred_creating_the_tag": "A apărut o eroare la crearea etichetei",
         "an_error_occurred_deleting_the_tag": "A apărut o eroare la ștergerea etichetei",
-        "attachments_download_started": "Descărcare pornită — {{fileCount}} fișiere. Exporturile mari pot dura câteva minute.",
+        "attachments_download_started": "Descărcarea a început — {fileCount, plural, one {{fileCount} fișier} few {{fileCount} fișiere} other {{fileCount} de fișiere}}. Exporturile mari pot dura câteva minute.",
         "browser": "Browser",
         "bulk_delete_response_quotas": "Răspunsurile fac parte din cotele pentru acest sondaj. Cum doriți să gestionați cotele?",
         "city": "Oraș",
@@ -3673,7 +3673,7 @@
         "survey_closed": "Chestionar închis",
         "tag_already_exists": "Eticheta există deja",
         "this_response_is_in_progress": "Acest răspuns este în curs de procesare.",
-        "too_many_attachments_to_download": "Această descărcare conține mai mult de {{maxFiles}} fișiere. Restrânge filtrul și încearcă din nou.",
+        "too_many_attachments_to_download": "Această descărcare conține mai mult de {maxFiles} fișiere. Restrânge filtrul și încearcă din nou.",
         "zip_post_code": "Cod poștal"
       },
       "restore": "Restaurează",

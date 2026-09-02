@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Hiba történt a címke hozzáadásakor",
         "an_error_occurred_creating_the_tag": "Hiba történt a címke létrehozásakor",
         "an_error_occurred_deleting_the_tag": "Hiba történt a címke törlésekor",
-        "attachments_download_started": "A letöltés megkezdődött — {{fileCount}} fájl. A nagyobb exportálások több percet is igénybe vehetnek.",
+        "attachments_download_started": "Letöltés megkezdődött — {fileCount, plural, one {{fileCount} fájl} other {{fileCount} fájl}}. A nagy méretű exportálások néhány percet igénybe vehetnek.",
         "browser": "Böngésző",
         "bulk_delete_response_quotas": "A válaszok a kérdőív kvótáinak részét képezik. Hogyan szeretné kezelni a kvótákat?",
         "city": "Város",
@@ -3673,7 +3673,7 @@
         "survey_closed": "Kérdőív lezárva",
         "tag_already_exists": "A címke már létezik",
         "this_response_is_in_progress": "Ez a válasz folyamatban van.",
-        "too_many_attachments_to_download": "Ez a letöltés több mint {{maxFiles}} fájlt tartalmaz. Szűkítse a szűrést, és próbálja újra.",
+        "too_many_attachments_to_download": "Ez a letöltés több mint {maxFiles} fájlt tartalmaz. Szűkítse a szűrőt, és próbálja újra.",
         "zip_post_code": "Irányítószám"
       },
       "restore": "Visszaállítás",

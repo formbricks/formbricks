@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "タグの追加中にエラーが発生しました",
         "an_error_occurred_creating_the_tag": "タグの作成中にエラーが発生しました",
         "an_error_occurred_deleting_the_tag": "タグの削除中にエラーが発生しました",
-        "attachments_download_started": "ダウンロードを開始しました — {{fileCount}}ファイル。大きなエクスポートには数分かかることがあります。",
+        "attachments_download_started": "ダウンロードを開始しました — {fileCount, plural, other {{fileCount}件のファイル}}。大きなエクスポートには数分かかる場合があります。",
         "browser": "ブラウザ",
         "bulk_delete_response_quotas": "この回答は、このアンケートの割り当ての一部です。 割り当てをどのように処理しますか？",
         "city": "市区町村",
@@ -3673,7 +3673,7 @@
         "survey_closed": "フォームはクローズしました",
         "tag_already_exists": "タグはすでに存在します",
         "this_response_is_in_progress": "この回答は進行中です。",
-        "too_many_attachments_to_download": "このダウンロードには{{maxFiles}}個を超えるファイルが含まれています。フィルターを絞り込んで再試行してください。",
+        "too_many_attachments_to_download": "このダウンロードには{maxFiles}件を超えるファイルが含まれています。フィルターを絞り込んで、もう一度お試しください。",
         "zip_post_code": "郵便番号"
       },
       "restore": "復元",

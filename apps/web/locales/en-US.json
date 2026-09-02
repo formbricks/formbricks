@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "An error occurred adding the tag",
         "an_error_occurred_creating_the_tag": "An error occurred creating the tag",
         "an_error_occurred_deleting_the_tag": "An error occurred deleting the tag",
-        "attachments_download_started": "Download started — {{fileCount}} files. Large exports can take a few minutes.",
+        "attachments_download_started": "Download started — {fileCount, plural, one {{fileCount} file} other {{fileCount} files}}. Large exports can take a few minutes.",
         "browser": "Browser",
         "bulk_delete_response_quotas": "The responses are part of quotas for this survey. How do you want to handle the quotas?",
         "city": "City",
@@ -3673,7 +3673,7 @@
         "survey_closed": "Survey closed",
         "tag_already_exists": "Tag already exists",
         "this_response_is_in_progress": "This response is in progress.",
-        "too_many_attachments_to_download": "This download holds more than {{maxFiles}} files. Narrow the filter and try again.",
+        "too_many_attachments_to_download": "This download holds more than {maxFiles} files. Narrow the filter and try again.",
         "zip_post_code": "ZIP / Post code"
       },
       "restore": "Restore",
