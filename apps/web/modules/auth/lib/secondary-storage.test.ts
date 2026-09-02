@@ -85,4 +85,16 @@ describe("redisSecondaryStorage", () => {
       pingInterval: 300_000,
     });
   });
+
+  test("retries the lazy connection after a failed connect", async () => {
+    vi.resetModules();
+    const connectionError = new Error("Connection failed");
+    mockClient.connect.mockRejectedValueOnce(connectionError).mockResolvedValueOnce(undefined);
+    mockClient.get.mockResolvedValue("value");
+    const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+
+    await expect(freshStorage.get("k")).rejects.toBe(connectionError);
+    await expect(freshStorage.get("k")).resolves.toBe("value");
+    expect(mockClient.connect).toHaveBeenCalledTimes(2);
+  });
 });
