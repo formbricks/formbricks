@@ -11,11 +11,20 @@ import { buildAttachmentManifestCsv } from "./manifest";
 /**
  * Streams a survey's response attachments as a ZIP (ENG-1256).
  *
- * Synchronous by design: `output: "standalone"` means a long-lived node server, so there is no
- * serverless time cap, and a ZIP stream emits bytes continuously so proxy idle timeouts do not fire
- * either. A background job would need an export-status table, an S3 round trip for the archive, a notify
- * channel and TTL cleanup — and the BullMQ worker is opt-in, so self-hosters running without it would
- * get a menu item that does nothing.
+ * Synchronous by design. `output: "standalone"` means a long-lived node server, so there is no
+ * serverless time cap, and a ZIP stream emits bytes continuously, so proxy idle timeouts do not fire
+ * either. The download begins about a second after the click because the route streams while it
+ * collects, rather than assembling an archive first.
+ *
+ * A background job would not shorten that wait — the same objects still have to be fetched — it would
+ * only move it out of sight, and it would need an export-status table, an S3 round trip for the archive,
+ * a notify channel, TTL cleanup and an authenticated link to an archive of respondent data sitting at
+ * rest. What it would buy is resumability when a connection drops mid-download, and exports too large
+ * for one request to hold. Revisit it when real surveys need either.
+ *
+ * Not because the worker is unavailable: `BULLMQ_WORKER_ENABLED` defaults on outside tests and
+ * `REDIS_URL` is required, so a job would run on essentially every install. An earlier version of this
+ * comment claimed otherwise.
  */
 
 /** Above this the export is refused outright: narrowing the filter is the intended remedy. */
@@ -105,13 +114,15 @@ const streamArchive = async (
   activeSource: ActiveSource
 ): Promise<void> => {
   // Mirrors the collector's report, with a row's status overwritten when storage cannot produce the
-  // object and each row's size filled in as storage reports it.
+  // object and each row's size filled in as storage reports it. It stays a full mirror even after a
+  // truncation: a row saying a file was dropped is the only thing in the archive that names it, and
+  // `_TRUNCATED.txt` carries a count alone.
   const manifestRows: TAttachmentEntry[] = [];
   let totalBytes = 0;
   let appendedFiles = 0;
-  let truncated = false;
+  let truncatedFrom: number | null = null;
 
-  for (const entry of entries) {
+  for (const [index, entry] of entries.entries()) {
     if (entry.status !== "ok" || !entry.storage) {
       manifestRows.push(entry);
       continue;
@@ -140,7 +151,7 @@ const streamArchive = async (
     // limit entirely, and two large ones produce an archive twice the cap.
     if (totalBytes + streamResult.data.contentLength > MAX_ATTACHMENT_BYTES) {
       discardBody(streamResult.data.body);
-      truncated = true;
+      truncatedFrom = index;
       break;
     }
 
@@ -151,7 +162,11 @@ const streamArchive = async (
     manifestRows.push({ ...entry, bytes: streamResult.data.contentLength });
   }
 
-  if (truncated) {
+  if (truncatedFrom !== null) {
+    // Everything from the refused entry onwards, so the manifest still lists what is missing.
+    for (const dropped of entries.slice(truncatedFrom)) {
+      manifestRows.push({ ...dropped, status: "skipped_export_truncated" });
+    }
     archive.append(buildTruncationNote(appendedFiles), { name: TRUNCATION_NOTE_PATH });
   }
 

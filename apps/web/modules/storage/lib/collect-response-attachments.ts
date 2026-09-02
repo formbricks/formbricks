@@ -49,7 +49,10 @@ export type TAttachmentStatus =
   | "missing_in_storage"
   // Also from the streaming stage: storage failed for some other reason, so whether the object still
   // exists is unknown. Kept distinct so an outage does not read as data loss.
-  | "unavailable_in_storage";
+  | "unavailable_in_storage"
+  // The archive hit its byte ceiling before reaching this file. Recorded so the manifest still names
+  // every attachment the export was meant to contain.
+  | "skipped_export_truncated";
 
 export interface TAttachmentEntry {
   /** Path inside the archive. Unique across the whole export. */

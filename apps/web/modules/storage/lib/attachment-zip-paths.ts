@@ -4,7 +4,7 @@
  * Respondents upload whatever their phone or laptop called the file, so a flat archive is a pile of
  * `photo.jpg`, `photo (1).jpg` and `IMG_0042.jpg` with nothing tying a file back to the answer it came
  * from. Every path this module builds is therefore
- * `{YYYY-MM-DD}_{responseId}/{n}_{elementLabel}/{originalFileName}`: the response folder joins the
+ * `{YYYY-MM-DDTHH-MM-SSZ}_{responseId}/{n}_{elementLabel}/{originalFileName}`: the response folder joins the
  * archive to the CSV/Excel export by response id, and the numeric prefix on the element folder keeps
  * questions in survey order rather than alphabetical order.
  *
@@ -105,9 +105,17 @@ export const sanitizeZipFileName = (raw: string): string => {
   return safeExtension ? `${escapedBase}.${safeExtension}` : escapedBase;
 };
 
-// `YYYY-MM-DD` in UTC. Machine-facing, so it is deliberately not localised — the folder name has to be
-// stable and sortable regardless of who downloads the archive.
-const formatUtcDatePrefix = (date: Date): string => date.toISOString().slice(0, 10);
+/**
+ * `YYYY-MM-DDTHH-MM-SSZ` in UTC. Machine-facing, so deliberately not localised — the folder name has to
+ * be stable and sortable regardless of who downloads the archive.
+ *
+ * The time is part of it, not just the date: a survey taking a thousand responses a day would otherwise
+ * put them all under one date prefix, where the rest of the folder name is a cuid2 and sorts randomly.
+ * With seconds included the lexicographic order a file browser shows *is* chronological order. Colons
+ * are replaced because Windows rejects them in a path and macOS shows them as `/`.
+ */
+const formatUtcTimestampPrefix = (date: Date): string =>
+  `${date.toISOString().slice(0, 19).replace(/:/g, "-")}Z`;
 
 const withCollisionSuffix = (fileName: string, attempt: number): string => {
   const { base, extension } = splitExtension(fileName);
@@ -144,7 +152,7 @@ export const buildAttachmentZipPath = ({
   originalFileName,
   usedPaths,
 }: BuildAttachmentZipPathParams): string => {
-  const responseFolder = `${formatUtcDatePrefix(responseCreatedAt)}_${responseId}`;
+  const responseFolder = `${formatUtcTimestampPrefix(responseCreatedAt)}_${responseId}`;
   const elementFolder = `${elementIndex}_${sanitizeZipPathSegment(elementLabel)}`;
   const fileName = sanitizeZipFileName(originalFileName);
 

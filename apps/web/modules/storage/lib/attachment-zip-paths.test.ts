@@ -95,11 +95,11 @@ describe("buildAttachmentZipPath", () => {
 
   test("builds {date}_{responseId}/{n}_{label}/{fileName}", () => {
     expect(buildAttachmentZipPath({ ...baseParams, usedPaths: new Set() })).toBe(
-      "2026-09-01_cm1response000000000000/2_Upload a photo/photo.jpg"
+      "2026-09-01T10-30-00Z_cm1response000000000000/2_Upload a photo/photo.jpg"
     );
   });
 
-  test("dates the response folder in UTC, not the host timezone", () => {
+  test("stamps the response folder in UTC, not the host timezone", () => {
     // 23:30 UTC is already the next day in Tokyo and still the previous day in Los Angeles; the folder
     // has to be stable regardless of who downloads the archive.
     const path = buildAttachmentZipPath({
@@ -107,7 +107,27 @@ describe("buildAttachmentZipPath", () => {
       responseCreatedAt: new Date("2026-09-01T23:30:00.000Z"),
       usedPaths: new Set(),
     });
-    expect(path.startsWith("2026-09-01_")).toBe(true);
+    expect(path.startsWith("2026-09-01T23-30-00Z_")).toBe(true);
+  });
+
+  test("sorts folders chronologically within a single day", () => {
+    // A survey taking a thousand responses a day would otherwise pile them under one date prefix, where
+    // the rest of the name is a cuid2 and sorts randomly.
+    const usedPaths = new Set<string>();
+    const at = (iso: string, responseId: string) =>
+      buildAttachmentZipPath({ ...baseParams, responseCreatedAt: new Date(iso), responseId, usedPaths });
+
+    const evening = at("2026-09-01T18:05:00.000Z", "cm1zzz000000000000000");
+    const morning = at("2026-09-01T07:45:00.000Z", "cm1aaa000000000000000");
+
+    // Sorted as a file browser would: the earlier response comes first despite the later id.
+    expect([evening, morning].sort()).toEqual([morning, evening]);
+  });
+
+  test("keeps the folder name free of characters a filesystem rejects", () => {
+    const path = buildAttachmentZipPath({ ...baseParams, usedPaths: new Set() });
+    const responseFolder = path.split("/")[0];
+    expect(responseFolder).not.toMatch(/[:*?"<>|\\]/);
   });
 
   test("suffixes a collision before the extension", () => {
@@ -116,16 +136,16 @@ describe("buildAttachmentZipPath", () => {
     const second = buildAttachmentZipPath({ ...baseParams, usedPaths });
     const third = buildAttachmentZipPath({ ...baseParams, usedPaths });
 
-    expect(first).toBe("2026-09-01_cm1response000000000000/2_Upload a photo/photo.jpg");
-    expect(second).toBe("2026-09-01_cm1response000000000000/2_Upload a photo/photo (2).jpg");
-    expect(third).toBe("2026-09-01_cm1response000000000000/2_Upload a photo/photo (3).jpg");
+    expect(first).toBe("2026-09-01T10-30-00Z_cm1response000000000000/2_Upload a photo/photo.jpg");
+    expect(second).toBe("2026-09-01T10-30-00Z_cm1response000000000000/2_Upload a photo/photo (2).jpg");
+    expect(third).toBe("2026-09-01T10-30-00Z_cm1response000000000000/2_Upload a photo/photo (3).jpg");
   });
 
   test("suffixes an extensionless collision at the end", () => {
     const usedPaths = new Set<string>();
     buildAttachmentZipPath({ ...baseParams, originalFileName: "scan", usedPaths });
     expect(buildAttachmentZipPath({ ...baseParams, originalFileName: "scan", usedPaths })).toBe(
-      "2026-09-01_cm1response000000000000/2_Upload a photo/scan (2)"
+      "2026-09-01T10-30-00Z_cm1response000000000000/2_Upload a photo/scan (2)"
     );
   });
 
