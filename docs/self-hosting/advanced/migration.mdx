@@ -30,6 +30,42 @@ for Docker and Kubernetes commands, guarded schema replacement, backups, repair,
 The moving `latest` image tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable
 publication. Existing installations opt into v6 explicitly during that migration window.
 
+### Encrypted single-use survey links must be regenerated (action required if you use them)
+
+Encrypted single-use survey links issued before v6 stop working and have to be regenerated.
+
+#### What to do before upgrading
+
+Regenerate and re-send the links for any survey with single-use enabled and **URL encryption of
+single-use ID** on, either from the survey's share modal or via
+`GET /api/v1/management/surveys/{surveyId}/singleUseIds`. Formbricks never stores generated links,
+so there is nothing to migrate and nothing to back up — new links simply replace the old ones.
+
+**Links with URL encryption off are unaffected**, including custom single-use IDs. Those have carried
+a `suToken` signature since 5.0 and validate exactly as before, so integrations that mint their own
+IDs need no changes.
+
+Because outstanding links stop working the moment the new version serves traffic, prefer a
+maintenance window: a respondent who opened an encrypted link before the deploy and submits after it
+will see the invitation error and lose their answers.
+
+#### What you will see if you skip it
+
+Opening an old encrypted link shows *"This survey can only be taken by invitation"*, and submissions
+against it are rejected. Server logs record one `warn` per rejection carrying the survey id and a
+`reason` of `missing_signature`.
+
+#### Why
+
+An encrypted single-use link carried only an encrypted id and no signature, so nothing tied it to the
+survey it was issued for and any survey on the same deployment accepted it. Both modes now carry the
+same signature, which is what the old links are missing.
+
+#### Rollback
+
+Downgrading restores the old links, since nothing about them changed on disk — but it also restores
+the behaviour above, so treat it as a stopgap while you regenerate rather than a fix.
+
 ## v5.4
 
 v5.4 carries one application-level breaking change, and it is narrow: it affects **API keys** used against
