@@ -1,8 +1,13 @@
 import { describe, expect, test } from "vitest";
+import { CHART_TYPE_IDS } from "@/modules/ee/analysis/types/analysis";
 import { generateSchemaContext } from "./ai-schema-context";
 
 describe("AI schema context", () => {
   test.each([
+    [
+      "the responses alias, distinct from the unique-submissions measure it could be confused with",
+      '"responses", "response count", or "feedback records" means `FeedbackRecords.count` — not `FeedbackRecords.uniqueResponses`',
+    ],
     [
       "the NPS score alias for the canonical score measure",
       '"NPS score" or "net promoter score" means `FeedbackRecords.npsScore`',
@@ -39,5 +44,20 @@ describe("AI schema context", () => {
     ["sourceName among the free-text dimensions", "`FeedbackRecords.sourceName`"],
   ])("documents %s", (_description, expectedSnippet) => {
     expect(generateSchemaContext()).toContain(expectedSnippet);
+  });
+
+  test("offers exactly the chart types the output schema accepts", () => {
+    const context = generateSchemaContext();
+    const guideline = context.split("\n").find((line) => line.includes("most appropriate chart type"));
+
+    expect(guideline).toBeDefined();
+    for (const id of CHART_TYPE_IDS) {
+      expect(guideline).toContain(`\`${id}\``);
+    }
+    // Only the ids are backticked, so this catches `line` being offered as a type again without
+    // tripping on the prose that tells the model area covers a line rendering. Steering the model
+    // at `line` would produce a value ZChartType rejects inside generateObject — before
+    // resolveChartType's legacy alias could rescue it.
+    expect(guideline).not.toContain("`line`");
   });
 });

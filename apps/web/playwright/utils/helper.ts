@@ -424,6 +424,35 @@ export const signupUsingInviteToken = async (page: Page, name: string, email: st
 };
 
 /**
+ * Wait for the previous interaction to reach the survey state, then for a frame after it.
+ *
+ * `ElementFormInput` pushes edits upstream through `debounce(handleUpdate, 100)`
+ * (apps/web/modules/survey/components/element-form-input/index.tsx), and the editor's add handlers
+ * (`handleAddLabel`, `updateChoice`, `addElement`, the "Add description"/"Add “Other”" buttons) each
+ * build their payload from the `element`/`survey` prop of the render they were created in. A
+ * structural click that lands before that debounce has fired writes a stale array back and silently
+ * drops the edit — what the spec-wide `slowMo: 150` was really paying for.
+ *
+ * Order matters: the sleep clears the 100ms debounce, and the two animation frames then confirm the
+ * resulting commit has painted. Frames first would resolve at ~16/32ms — before the debounce had
+ * even run — and guarantee nothing. Cost is ~180ms at each of the ~40 structural seams, against
+ * 150ms on every one of the spec's 726 actions.
+ */
+const RENDER_SETTLE_MS = 150;
+
+const flushRender = async (page: Page): Promise<void> => {
+  await page.evaluate(async (settleMs) => {
+    // Sequential awaits rather than nested callbacks: the callback form stacked six functions deep,
+    // and the order it encoded — sleep, then two frames — is what the doc comment above requires.
+    const nextFrame = (): Promise<unknown> => new Promise((resolve) => requestAnimationFrame(resolve));
+
+    await new Promise((resolve) => setTimeout(resolve, settleMs));
+    await nextFrame();
+    await nextFrame();
+  }, RENDER_SETTLE_MS);
+};
+
+/**
  * Helper function to fill content into a rich text editor (contenteditable div).
  * The rich text editor uses a contenteditable div with class "editor-input" instead of a regular input.
  *
@@ -437,12 +466,18 @@ export const fillRichTextEditor = async (page: Page, labelText: string, content:
   const editorContainer = label.locator("..").locator("..");
   const editor = editorContainer.locator(".editor-input").first();
 
-  await editor.click();
-  // Clear existing content by selecting all and deleting
-  await editor.press("Meta+a"); // Cmd+A on Mac, Ctrl+A is handled automatically by Playwright
-  await editor.press("Backspace");
-  // Type the new content
-  await editor.pressSequentially(content, { delay: 50 });
+  // Waiting for the editor before touching it is what lets this run without a global `slowMo`: the
+  // element card mounts its form asynchronously after an element is added, so an unguarded action
+  // used to resolve against the outgoing render and fail as a detached node.
+  await expect(editor).toBeVisible();
+  // `fill` on the contenteditable, not `pressSequentially`. One `insertText` replaces the whole
+  // value, where per-key typing raced Lexical's own re-render and truncated the text ("Picture
+  // Select Question" landing as "Picture S") unless every keystroke was paced by `slowMo`.
+  await editor.fill(content);
+  // Confirms the editor settled before the caller's next action — this assertion, not a delay, is
+  // what keeps the following interactions off a mid-render tree.
+  await expect(editor).toHaveText(content);
+  await flushRender(page);
 };
 
 /**
@@ -463,15 +498,244 @@ export const fillModalRichTranslation = async (page: Page, path: string, text: s
   const row = page.locator(`[data-testid="translation-row-${path}"]`);
   await row.scrollIntoViewIfNeeded();
   const editor = row.locator(".editor-input").first();
-  await editor.click();
-  await editor.press("Meta+a");
-  await editor.press("Backspace");
-  await editor.pressSequentially(text, { delay: 50 });
+  await expect(editor).toBeVisible();
+  await editor.fill(text);
+  await expect(editor).toHaveText(text);
+};
+
+/** Reveal an element's description field. Structural, so the pending edit is flushed first. */
+const addDescription = async (page: Page, options: { exact?: boolean } = {}) => {
+  await flushRender(page);
+  await page.getByRole("button", { name: "Add description", exact: options.exact ?? false }).click();
+  await expect(page.locator('label:has-text("Description")').first()).toBeVisible();
+};
+
+/** Append the "Other" choice to a select element. Structural, so flush first. */
+const addOtherChoice = async (page: Page) => {
+  await flushRender(page);
+  await page.getByRole("button", { name: "Add “Other”", exact: true }).click();
+  await expect(page.getByPlaceholder("Other", { exact: true })).toBeVisible();
+};
+
+/**
+ * Add an element to the survey via the editor's "Add Block" collapsible.
+ *
+ * Every step asserts the state it depends on, which is what replaced the spec-wide `slowMo: 150`:
+ * the collapsible animates open and shut (`animate-collapsible-down`/`-up`) while the new element
+ * card mounts, so an unguarded "click trigger, click type" pair raced the animation and the React
+ * commit, and failed with "element detached from the DOM".
+ */
+export const addElement = async (page: Page, elementType: string, options: { exact?: boolean } = {}) => {
+  const trigger = page.getByTestId("add-element-trigger");
+
+  // The add rebuilds the element list from the current render — let the previous edit commit first.
+  await flushRender(page);
+  await expect(trigger).toBeVisible();
+  await trigger.scrollIntoViewIfNeeded();
+  await trigger.click();
+
+  // Radix flips `data-state` on the trigger, so this waits for the panel to be open rather than
+  // for a timeout to expire.
+  await expect(trigger).toHaveAttribute("data-state", "open");
+
+  // Scoped to the picker panel: the editor renders a card per existing element plus its settings, so
+  // an unscoped non-exact name ("Date", "Rating") can match several buttons late in a build and fail
+  // strict mode.
+  const option = page
+    .getByTestId("add-element-picker")
+    .getByRole("button", { name: elementType, exact: options.exact ?? false });
+  await expect(option).toBeVisible();
+  // The picker is a two-column grid that overflows on shorter viewports (e.g. "Matrix").
+  await option.scrollIntoViewIfNeeded();
+  await option.click();
+
+  // The picker closes itself from `handleAddElement`, so a collapsed trigger is the signal that
+  // the element was committed to the survey and the new card is rendering.
+  await expect(trigger).toHaveAttribute("data-state", "closed");
+};
+
+/**
+ * The editor's live preview, which renders from the committed survey state.
+ *
+ * The label inputs keep their own local state, so an input can still show text that the survey no
+ * longer holds — exactly what happens when a later edit overwrites an earlier one from a stale
+ * array. Asserting against the preview is therefore the only reliable proof that an edit landed.
+ */
+const surveyPreview = (page: Page): Locator => page.locator("#survey-preview");
+
+/**
+ * Fill a list of label inputs until every value is present in the live preview at the same time.
+ *
+ * `updateChoice`/`updateMatrixLabel` rebuild their whole array from the props of the render they
+ * were created in, so two quick edits overwrite each other — filling "Option 2" reverts "Option 1"
+ * to "". Re-filling whatever the preview is still missing converges on the intended state without
+ * pacing every action, which is what the spec-wide `slowMo: 150` used to do.
+ */
+const fillLabelsUntilCommitted = async (
+  page: Page,
+  values: string[],
+  fieldFor: (index: number) => Locator
+): Promise<void> => {
+  const preview = surveyPreview(page);
+
+  await expect(async () => {
+    for (const [index, value] of values.entries()) {
+      const field = fieldFor(index);
+      if ((await field.inputValue()) !== value) {
+        await expect(field).toBeEditable();
+        await field.fill(value);
+        await flushRender(page);
+      }
+    }
+
+    for (const value of values) {
+      await expect(preview.getByText(value, { exact: true }).first()).toBeVisible({ timeout: 2000 });
+    }
+  }).toPass({ timeout: 60000 });
+};
+
+/**
+ * Click "Add row"/"Add column" until the matrix has `total` labels.
+ *
+ * One click per pass, each verified by the count growing by exactly one. Waiting for the *final*
+ * count instead would burn the whole timeout on every intermediate pass, and could not keep its
+ * promise not to overshoot: if a commit outlasted the wait, the next pass would still read the
+ * pre-click count and click again, pushing the list past `total` with no way back.
+ */
+export const ensureMatrixLabelCount = async (page: Page, type: "row" | "column", total: number) => {
+  const labels = page.locator(`input[id^="${type}-"]`);
+  const addButton = page.getByRole("button", { name: type === "row" ? "Add row" : "Add column" });
+
+  // One label per iteration, each add retried against its own target count. Driving the loop from
+  // the outside is what keeps it honest: a `toPass` that merely "added one" reports success and
+  // stops, and a `toPass` waiting for `total` burns its whole budget on every intermediate pass.
+  for (let count = await labels.count(); count < total; count++) {
+    const target = count + 1;
+
+    await expect(async () => {
+      if ((await labels.count()) < target) {
+        await flushRender(page);
+        await expect(addButton).toBeEnabled();
+        await addButton.click();
+      }
+      await expect(labels).toHaveCount(target, { timeout: 2000 });
+    }).toPass({ timeout: 20000 });
+  }
+
+  await expect(labels).toHaveCount(total);
+};
+
+/** Add every matrix label, then fill them — see fillLabelsUntilCommitted for the ordering reason. */
+export const fillMatrixLabels = async (page: Page, type: "row" | "column", values: string[]) => {
+  await ensureMatrixLabelCount(page, type, values.length);
+  await fillLabelsUntilCommitted(page, values, (index) => page.locator(`#${type}-${index}`));
+};
+
+/**
+ * Click until the choice list holds `total` inputs, one added per pass.
+ *
+ * Two different controls, because the forms disagree: the ranking form renders a single "Add option"
+ * button (ranking-element-form.tsx), while the multiple-choice forms only offer the per-row
+ * "Add choice below" icon (element-option-choice.tsx). Whichever exists is used, so this works for
+ * select and ranking elements alike — with the select presets currently matching the fixtures, the
+ * select path would otherwise only be exercised the day a fixture grew an option.
+ */
+export const ensureChoiceCount = async (page: Page, total: number) => {
+  // Counting by placeholder, not by `id^="choice-"`: the "Other" and "None of the above" choices
+  // share that id prefix, so an id-based count would never match the number of real options.
+  const choices = page.locator('input[placeholder^="Option "]');
+  const addOption = page.getByRole("button", { name: "Add option" });
+  const addChoiceBelow = page.getByRole("button", { name: "Add choice below" });
+
+  // One choice per iteration, each add retried against its own target count — see
+  // ensureMatrixLabelCount for why the loop lives outside the retry.
+  for (let count = await choices.count(); count < total; count++) {
+    const target = count + 1;
+
+    await expect(async () => {
+      if ((await choices.count()) < target) {
+        await flushRender(page);
+
+        if (await addOption.count()) {
+          await expect(addOption).toBeEnabled();
+          await addOption.click();
+        } else {
+          const lastRowAdd = addChoiceBelow.last();
+          await expect(lastRowAdd).toBeEnabled();
+          await lastRowAdd.click();
+        }
+      }
+      await expect(choices).toHaveCount(target, { timeout: 2000 });
+    }).toPass({ timeout: 20000 });
+  }
+
+  await expect(choices).toHaveCount(total);
+};
+
+/** Add every choice, then fill them — see fillLabelsUntilCommitted for the ordering reason. */
+export const fillChoiceOptions = async (page: Page, values: string[]) => {
+  await ensureChoiceCount(page, values.length);
+  await fillLabelsUntilCommitted(page, values, (index) => page.getByPlaceholder(`Option ${index + 1}`));
+};
+
+const publishButtonOf = (page: Page): Locator => page.getByRole("button", { name: "Publish", exact: true });
+
+/**
+ * Publish the survey being edited and wait for the summary page.
+ *
+ * The editor validates client-side and reports problems only through a toast that auto-dismisses, so
+ * a failed publish otherwise surfaces as an opaque `waitForURL` timeout. This watches for the
+ * navigation and collects error toasts alongside it, then fails with the message the editor actually
+ * gave — or says plainly that none was shown, which points at a slow publish rather than a rejected
+ * one.
+ */
+export const publishSurvey = async (page: Page): Promise<void> => {
+  // Matches the per-test timeout in playwright.config.ts, and the `waitForURL` timeout every call
+  // site used before this helper existed. Publishing the 13-element survey is the slowest step in
+  // the suite; a shorter budget would turn a slow-but-passing run red.
+  const publishTimeoutMs = 120000;
+  const summaryUrl = /\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/;
+  // Scoped to react-hot-toast's own error class (set in modules/ui/components/toaster-client) rather
+  // than `role="status"`, which the shared `Alert` also uses — several of those are on screen in the
+  // editor and would be reported as publish failures.
+  const errorToasts = page.locator(".formbricks__toast__error");
+
+  await expect(publishButtonOf(page)).toBeEnabled();
+  await publishButtonOf(page).click();
+
+  const navigated = page
+    .waitForURL(summaryUrl, { timeout: publishTimeoutMs })
+    .then(() => true)
+    .catch(() => false);
+
+  const seen = new Set<string>();
+
+  for (;;) {
+    // Racing the navigation keeps the toast reads off a destroyed execution context: once the
+    // summary page starts loading, `navigated` wins and no further query is issued.
+    const settled = await Promise.race([navigated, page.waitForTimeout(250).then(() => null)]);
+
+    if (settled === true) return;
+    if (settled === false) break;
+
+    // The publish may still navigate between the race above and this read.
+    for (const text of await errorToasts.allInnerTexts().catch(() => [])) {
+      const message = text.trim();
+      if (message) seen.add(message);
+    }
+  }
+
+  const reported =
+    seen.size > 0
+      ? `Editor reported: ${JSON.stringify([...seen])}`
+      : "No validation toast was shown, so this is a slow publish rather than a rejected one";
+
+  throw new Error(
+    `Publish did not reach the summary page within ${publishTimeoutMs}ms. ${reported} (url: ${page.url()})`
+  );
 };
 
 export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
-  const addBlock = "Add BlockChoose the first question on your Block";
-
   await createSurveyFromScratch(page);
 
   // Welcome Card
@@ -489,71 +753,45 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByRole("main").getByText("What would you like to know?").click();
 
   await fillRichTextEditor(page, "Question*", params.openTextQuestion.question);
-  await page.getByRole("button", { name: "Add description" }).click();
+  await addDescription(page);
   await fillRichTextEditor(page, "Description", params.openTextQuestion.description);
   await page.getByLabel("Placeholder").fill(params.openTextQuestion.placeholder);
 
   await page.locator("h3").filter({ hasText: params.openTextQuestion.question }).click();
 
   // Single Select Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Single-Select" }).click();
+  await addElement(page, "Single-Select");
   await fillRichTextEditor(page, "Question*", params.singleSelectQuestion.question);
-  await page.getByRole("button", { name: "Add description" }).click();
+  await addDescription(page);
   await fillRichTextEditor(page, "Description", params.singleSelectQuestion.description);
-  await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
-  await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
-  await page.getByRole("button", { name: "Add “Other”", exact: true }).click();
+  // "Other" is added before the labels are filled: the add rebuilds the choice array and would
+  // otherwise wipe whatever had just been typed into Option 1/2.
+  await addOtherChoice(page);
+  await fillChoiceOptions(page, params.singleSelectQuestion.options);
 
   // Multi Select Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Multi-Select", exact: true }).click();
+  await addElement(page, "Multi-Select", { exact: true });
   await fillRichTextEditor(page, "Question*", params.multiSelectQuestion.question);
-  await page.getByRole("button", { name: "Add description", exact: true }).click();
+  await addDescription(page, { exact: true });
   await fillRichTextEditor(page, "Description", params.multiSelectQuestion.description);
-  await page.getByPlaceholder("Option 1").fill(params.multiSelectQuestion.options[0]);
-  await page.getByPlaceholder("Option 2").fill(params.multiSelectQuestion.options[1]);
-  await page.getByPlaceholder("Option 3").fill(params.multiSelectQuestion.options[2]);
+  await fillChoiceOptions(page, params.multiSelectQuestion.options);
 
   // Rating Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Rating" }).click();
+  await addElement(page, "Rating");
   await fillRichTextEditor(page, "Question*", params.ratingQuestion.question);
-  await page.getByRole("button", { name: "Add description", exact: true }).click();
+  await addDescription(page, { exact: true });
   await fillRichTextEditor(page, "Description", params.ratingQuestion.description);
   await page.getByPlaceholder("Not good").fill(params.ratingQuestion.lowLabel);
   await page.getByPlaceholder("Very satisfied").fill(params.ratingQuestion.highLabel);
 
   // NPS Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
+  await addElement(page, "Net Promoter Score (NPS)");
   await fillRichTextEditor(page, "Question*", params.npsQuestion.question);
   await page.getByLabel("Lower label").fill(params.npsQuestion.lowLabel);
   await page.getByLabel("Upper label").fill(params.npsQuestion.highLabel);
 
   // CTA Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Statement (Call to Action)" }).click();
+  await addElement(page, "Statement (Call to Action)");
   await fillRichTextEditor(page, "Question*", params.ctaQuestion.question);
 
   // Enable external button and fill URL
@@ -562,72 +800,32 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByPlaceholder("Finish").fill(params.ctaQuestion.buttonLabel);
 
   // Consent Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Consent" }).click();
+  await addElement(page, "Consent");
   await fillRichTextEditor(page, "Question*", params.consentQuestion.question);
   await page.getByPlaceholder("I agree to the terms and").fill(params.consentQuestion.checkboxLabel);
 
   // Picture Select Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Picture Selection" }).click();
+  await addElement(page, "Picture Selection");
   await fillRichTextEditor(page, "Question*", params.pictureSelectQuestion.question);
-  await page.getByRole("button", { name: "Add description" }).click();
+  await addDescription(page);
   await fillRichTextEditor(page, "Description", params.pictureSelectQuestion.description);
 
   await uploadImageChoicesForPictureSelection(page);
 
   // File Upload Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "File Upload" }).click();
+  await addElement(page, "File Upload");
   await fillRichTextEditor(page, "Question*", params.fileUploadQuestion.question);
 
   // Matrix Upload Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Matrix" }).click();
+  await addElement(page, "Matrix");
   await fillRichTextEditor(page, "Question*", params.matrix.question);
-  await page.getByRole("button", { name: "Add description", exact: true }).click();
+  await addDescription(page, { exact: true });
   await fillRichTextEditor(page, "Description", params.matrix.description);
-  await page.locator("#row-0").click();
-  await page.locator("#row-0").fill(params.matrix.rows[0]);
-  await page.locator("#row-1").click();
-  await page.locator("#row-1").fill(params.matrix.rows[1]);
-  await page.getByRole("button", { name: "Add row" }).click();
-  await expect(page.locator("#row-2")).toBeEditable();
-  await page.locator("#row-2").fill(params.matrix.rows[2]);
-  await page.locator("#column-0").click();
-  await page.locator("#column-0").fill(params.matrix.columns[0]);
-  await page.locator("#column-1").click();
-  await page.locator("#column-1").fill(params.matrix.columns[1]);
-  await page.getByRole("button", { name: "Add column" }).click();
-  await expect(page.locator("#column-2")).toBeEditable();
-  await page.locator("#column-2").fill(params.matrix.columns[2]);
-  await page.getByRole("button", { name: "Add column" }).click();
-  await expect(page.locator("#column-3")).toBeEditable();
-  await page.locator("#column-3").fill(params.matrix.columns[3]);
+  await fillMatrixLabels(page, "row", params.matrix.rows);
+  await fillMatrixLabels(page, "column", params.matrix.columns);
 
   // Fill Address Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Address" }).click();
+  await addElement(page, "Address");
   await fillRichTextEditor(page, "Question*", params.address.question);
   await page.getByRole("row", { name: "Address Line 2" }).getByRole("switch").nth(1).click();
   await page.getByRole("row", { name: "City" }).getByRole("cell").nth(2).click();
@@ -636,12 +834,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByRole("row", { name: "Country" }).getByRole("switch").nth(1).click();
 
   // Fill Contact Info Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Contact Info" }).click();
+  await addElement(page, "Contact Info");
   await fillRichTextEditor(page, "Question*", params.contactInfo.question);
   await page.getByRole("row", { name: "Last Name" }).getByRole("switch").nth(1).click();
   await page.getByRole("row", { name: "Email" }).getByRole("switch").nth(1).click();
@@ -649,26 +842,9 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByRole("row", { name: "Company" }).getByRole("switch").nth(1).click();
 
   // Fill Ranking question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Ranking" }).click();
+  await addElement(page, "Ranking");
   await fillRichTextEditor(page, "Question*", params.ranking.question);
-  await page.getByPlaceholder("Option 1").click();
-  await page.getByPlaceholder("Option 1").fill(params.ranking.choices[0]);
-  await page.getByPlaceholder("Option 2").click();
-  await page.getByPlaceholder("Option 2").fill(params.ranking.choices[1]);
-  await page.getByRole("button", { name: "Add option" }).click();
-  await page.getByPlaceholder("Option 3").click();
-  await page.getByPlaceholder("Option 3").fill(params.ranking.choices[2]);
-  await page.getByRole("button", { name: "Add option" }).click();
-  await page.getByPlaceholder("Option 4").click();
-  await page.getByPlaceholder("Option 4").fill(params.ranking.choices[3]);
-  await page.getByRole("button", { name: "Add option" }).click();
-  await page.getByPlaceholder("Option 5").click();
-  await page.getByPlaceholder("Option 5").fill(params.ranking.choices[4]);
+  await fillChoiceOptions(page, params.ranking.choices);
 };
 
 /**
@@ -683,9 +859,17 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
 const editorElementHeading = (page: Page, name: string): Locator =>
   page.getByRole("main").getByRole("heading", { name });
 
-export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
-  const addBlock = "Add BlockChoose the first question on your Block";
+/**
+ * The header row of the nth block card (1-based), which doubles as its collapse toggle.
+ *
+ * Addressed by position rather than by text: since ENG-742 the block name is an editable input,
+ * so the header no longer carries the name as text content and `hasText: /^Block N…/` matches
+ * nothing. Position is also the stabler key here — a creator-set title would break a name match.
+ */
+const blockCardHeader = (page: Page, blockNumber: number): Locator =>
+  page.getByTestId("block-card-header").nth(blockNumber - 1);
 
+export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   await createSurveyFromScratch(page);
 
   // Add variables
@@ -717,133 +901,65 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("main").getByText("What would you like to know?").click();
 
   await fillRichTextEditor(page, "Question*", params.openTextQuestion.question);
-  await page.getByRole("button", { name: "Add description" }).click();
+  await addDescription(page);
   await fillRichTextEditor(page, "Description", params.openTextQuestion.description);
   await page.getByLabel("Placeholder").fill(params.openTextQuestion.placeholder);
 
   await page.locator("h3").filter({ hasText: params.openTextQuestion.question }).click();
 
   // Single Select Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Single-Select" }).click();
+  await addElement(page, "Single-Select");
   await fillRichTextEditor(page, "Question*", params.singleSelectQuestion.question);
-  await page.getByRole("button", { name: "Add description" }).click();
+  await addDescription(page);
   await fillRichTextEditor(page, "Description", params.singleSelectQuestion.description);
-  await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
-  await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
-  await page.getByRole("button", { name: "Add “Other”", exact: true }).click();
+  // "Other" is added before the labels are filled: the add rebuilds the choice array and would
+  // otherwise wipe whatever had just been typed into Option 1/2.
+  await addOtherChoice(page);
+  await fillChoiceOptions(page, params.singleSelectQuestion.options);
 
   // Multi Select Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Multi-Select", exact: true }).click();
+  await addElement(page, "Multi-Select", { exact: true });
   await fillRichTextEditor(page, "Question*", params.multiSelectQuestion.question);
-  await page.getByRole("button", { name: "Add description" }).click();
+  await addDescription(page);
   await fillRichTextEditor(page, "Description", params.multiSelectQuestion.description);
-  await page.getByPlaceholder("Option 1").fill(params.multiSelectQuestion.options[0]);
-  await page.getByPlaceholder("Option 2").fill(params.multiSelectQuestion.options[1]);
-  await page.getByPlaceholder("Option 3").fill(params.multiSelectQuestion.options[2]);
+  await fillChoiceOptions(page, params.multiSelectQuestion.options);
 
   // Picture Select Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Picture Selection" }).click();
+  await addElement(page, "Picture Selection");
   await fillRichTextEditor(page, "Question*", params.pictureSelectQuestion.question);
-  await page.getByRole("button", { name: "Add description" }).click();
+  await addDescription(page);
   await fillRichTextEditor(page, "Description", params.pictureSelectQuestion.description);
   await uploadImageChoicesForPictureSelection(page);
 
   // Rating Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Rating" }).click();
+  await addElement(page, "Rating");
   await fillRichTextEditor(page, "Question*", params.ratingQuestion.question);
-  await page.getByRole("button", { name: "Add description" }).click();
+  await addDescription(page);
   await fillRichTextEditor(page, "Description", params.ratingQuestion.description);
   await page.getByPlaceholder("Not good").fill(params.ratingQuestion.lowLabel);
   await page.getByPlaceholder("Very satisfied").fill(params.ratingQuestion.highLabel);
 
   // NPS Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
+  await addElement(page, "Net Promoter Score (NPS)");
   await fillRichTextEditor(page, "Question*", params.npsQuestion.question);
   await page.getByLabel("Lower label").fill(params.npsQuestion.lowLabel);
   await page.getByLabel("Upper label").fill(params.npsQuestion.highLabel);
 
   // Fill Ranking question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Ranking" }).click();
+  await addElement(page, "Ranking");
   await fillRichTextEditor(page, "Question*", params.ranking.question);
-  await page.getByPlaceholder("Option 1").click();
-  await page.getByPlaceholder("Option 1").fill(params.ranking.choices[0]);
-  await page.getByPlaceholder("Option 2").click();
-  await page.getByPlaceholder("Option 2").fill(params.ranking.choices[1]);
-  await page.getByRole("button", { name: "Add option" }).click();
-  await page.getByPlaceholder("Option 3").click();
-  await page.getByPlaceholder("Option 3").fill(params.ranking.choices[2]);
-  await page.getByRole("button", { name: "Add option" }).click();
-  await page.getByPlaceholder("Option 4").click();
-  await page.getByPlaceholder("Option 4").fill(params.ranking.choices[3]);
-  await page.getByRole("button", { name: "Add option" }).click();
-  await page.getByPlaceholder("Option 5").click();
-  await page.getByPlaceholder("Option 5").fill(params.ranking.choices[4]);
+  await fillChoiceOptions(page, params.ranking.choices);
 
   // Matrix Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Matrix" }).click();
+  await addElement(page, "Matrix");
   await fillRichTextEditor(page, "Question*", params.matrix.question);
-  await page.getByRole("button", { name: "Add description" }).click();
+  await addDescription(page);
   await fillRichTextEditor(page, "Description", params.matrix.description);
-  await page.locator("#row-0").click();
-  await page.locator("#row-0").fill(params.matrix.rows[0]);
-  await page.locator("#row-1").click();
-  await page.locator("#row-1").fill(params.matrix.rows[1]);
-  await page.getByRole("button", { name: "Add row" }).click();
-  await expect(page.locator("#row-2")).toBeEditable();
-  await page.locator("#row-2").fill(params.matrix.rows[2]);
-  await page.locator("#column-0").click();
-  await page.locator("#column-0").fill(params.matrix.columns[0]);
-  await page.locator("#column-1").click();
-  await page.locator("#column-1").fill(params.matrix.columns[1]);
-  await page.getByRole("button", { name: "Add column" }).click();
-  await expect(page.locator("#column-2")).toBeEditable();
-  await page.locator("#column-2").fill(params.matrix.columns[2]);
-  await page.getByRole("button", { name: "Add column" }).click();
-  await expect(page.locator("#column-3")).toBeEditable();
-  await page.locator("#column-3").fill(params.matrix.columns[3]);
+  await fillMatrixLabels(page, "row", params.matrix.rows);
+  await fillMatrixLabels(page, "column", params.matrix.columns);
 
   // CTA Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Statement (Call to Action)" }).click();
+  await addElement(page, "Statement (Call to Action)");
   await fillRichTextEditor(page, "Question*", params.ctaQuestion.question);
 
   // Enable external button and fill URL
@@ -852,49 +968,24 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByPlaceholder("Finish").fill(params.ctaQuestion.buttonLabel);
 
   // Consent Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Consent" }).click();
+  await addElement(page, "Consent");
   await fillRichTextEditor(page, "Question*", params.consentQuestion.question);
   await page.getByPlaceholder("I agree to the terms and").fill(params.consentQuestion.checkboxLabel);
 
   // File Upload Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "File Upload" }).click();
+  await addElement(page, "File Upload");
   await fillRichTextEditor(page, "Question*", params.fileUploadQuestion.question);
 
   // Date Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Date" }).click();
+  await addElement(page, "Date");
   await fillRichTextEditor(page, "Question*", params.date.question);
 
   // Cal Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Schedule a meeting" }).click();
+  await addElement(page, "Schedule a meeting");
   await fillRichTextEditor(page, "Question*", params.cal.question);
 
   // Fill Address Question
-  await page
-    .locator("div")
-    .filter({ hasText: new RegExp(`^${addBlock}$`) })
-    .nth(1)
-    .click();
-  await page.getByRole("button", { name: "Address" }).click();
+  await addElement(page, "Address");
   await fillRichTextEditor(page, "Question*", params.address.question);
   await page.getByRole("row", { name: "Address Line 2" }).getByRole("switch").nth(1).click();
   await page.getByRole("row", { name: "City" }).getByRole("cell").nth(2).click();
@@ -936,11 +1027,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-2-value-input").click();
   await page.locator("#action-2-value-input").fill("This ");
   // Close Block 1 settings before moving to Block 2
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 11 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 1).click();
 
   // Block 2 (Single Select Question)
   await editorElementHeading(page, params.singleSelectQuestion.question).click();
@@ -974,11 +1061,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("is ");
   // Close Block 2 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 21 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 2).click();
 
   // Block 3 (Multi Select Question)
   await editorElementHeading(page, params.multiSelectQuestion.question).click();
@@ -1025,11 +1108,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("a ");
   // Close Block 3 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 31 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 3).click();
 
   // Block 4 (Picture Select Question)
   await editorElementHeading(page, params.pictureSelectQuestion.question).click();
@@ -1058,11 +1137,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("secret ");
   // Close Block 4 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 41 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 4).click();
 
   // Block 5 (Rating Question)
   await editorElementHeading(page, params.ratingQuestion.question).click();
@@ -1093,11 +1168,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("message ");
   // Close Block 5 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 51 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 5).click();
 
   // Block 6 (NPS Question)
   await editorElementHeading(page, params.npsQuestion.question).click();
@@ -1167,11 +1238,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("for ");
   // Close Block 6 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 61 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 6).click();
 
   // Block 7 (Ranking Question)
   await editorElementHeading(page, params.ranking.question).click();
@@ -1200,11 +1267,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("e2e ");
   // Close Block 7 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 71 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 7).click();
 
   // Block 8 (Matrix Question)
   await editorElementHeading(page, params.matrix.question).click();
@@ -1244,11 +1307,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-2-target").click();
   await page.getByRole("option", { name: params.ctaQuestion.question }).click();
   // Close Block 8 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 81 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 8).click();
 
   // Block 9 (CTA Question)
   await editorElementHeading(page, params.ctaQuestion.question).click();
@@ -1283,11 +1342,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
   // Close Block 9 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 91 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 9).click();
 
   // Block 10 (Consent Question)
   await editorElementHeading(page, params.consentQuestion.question).click();
@@ -1302,11 +1357,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("2");
   // Close Block 10 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 101 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 10).click();
 
   // Block 11 (File Upload Question)
   await editorElementHeading(page, params.fileUploadQuestion.question).click();
@@ -1321,11 +1372,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
   // Close Block 11 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 111 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 11).click();
 
   // Block 12 (Date Question)
   const today = new Date().toISOString().split("T")[0];
@@ -1369,11 +1416,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
   // Close Block 12 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 121 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 12).click();
 
   // Block 13 (Cal Question)
   await editorElementHeading(page, params.cal.question).click();
@@ -1392,11 +1435,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
   // Close Block 13 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 131 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 13).click();
 
   // Block 14 (Address Question)
   await editorElementHeading(page, params.address.question).click();

@@ -3,9 +3,11 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import {
@@ -37,16 +39,11 @@ export const updateOrganizationEmailLogoUrlAction = authenticatedActionClient
   .inputSchema(ZUpdateOrganizationEmailLogoUrlAction)
   .action(
     withAuditLogging("updated", "organization", async ({ ctx, parsedInput }) => {
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+        type: "organization",
+        id: parsedInput.organizationId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
       await checkWhiteLabelPermission(parsedInput.organizationId);
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
@@ -63,11 +60,11 @@ export const removeOrganizationEmailLogoUrlAction = authenticatedActionClient
   .inputSchema(ZRemoveOrganizationEmailLogoUrlAction)
   .action(
     withAuditLogging("updated", "organization", async ({ ctx, parsedInput }) => {
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [{ type: "organization", roles: ["owner", "manager"] }],
+      await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+        type: "organization",
+        id: parsedInput.organizationId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
       await checkWhiteLabelPermission(parsedInput.organizationId);
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
@@ -89,10 +86,9 @@ export const sendTestEmailAction = authenticatedActionClient
       throw new ResourceNotFoundError("Organization", parsedInput.organizationId);
     }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: organization.id,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: organization.id,
     });
 
     await checkWhiteLabelPermission(organization.id);

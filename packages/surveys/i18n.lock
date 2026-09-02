@@ -8,10 +8,12 @@ checksums:
     common/company_logo: 82d5c0d5994508210ee02d684819f4b8
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/language_switch: fd72a9ada13f672f4fd5da863b22cc46
+    common/language_switch_current: 7ba57c6c92816c81f14336dd8d4aac28
     common/next: 89ddbcf710eba274963494f312bdc8a9
     common/no_results_found: 5518f2865757dc73900aa03ef8be6934
     common/open_in_new_tab: 6844e4922a7a40a7ee25c10ea109cdeb
     common/option_number: 9144a491be19258a1ea077a0e12892e6
+    common/page_x_of_y: c9c50ddf2a3d0e2d1f00fcb6f02c98ba
     common/people_responded: b685fb877090d8658db724ad07a0dbd8
     common/please_retry_now_or_try_again_later: 949a3841e2eb01fa249790a42bf23aa5
     common/powered_by: 6b6f88e2fa5a1ecec6cebf813abaeebb

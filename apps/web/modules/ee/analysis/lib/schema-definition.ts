@@ -120,18 +120,18 @@ export const FEEDBACK_FIELDS = {
       description: "Type of feedback field (e.g., nps, text, rating)",
     },
     {
-      id: "FeedbackRecords.valueText",
-      label: "Value (Text)",
-      type: "string",
-      description:
-        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
-    },
-    {
       id: "FeedbackRecords.valueId",
       label: "Value (Option)",
       type: "string",
       description:
-        "Stable id of a selected choice (single/multi-select). Group by this instead of valueText to consolidate the same option across languages / after a label edit.",
+        "Recommended for single/multi-select answers: the stable option id keeps one option in one bucket across languages, after a label edit, and for free-text 'other' answers. Charts show the option's label, not the id.",
+    },
+    {
+      id: "FeedbackRecords.valueText",
+      label: "Value (Text)",
+      type: "string",
+      description:
+        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Buckets by the exact text, so a translated label, an edited label or a free-text 'other' answer each becomes its own bucket — for choice questions prefer Value (Option). Pair with a fieldType filter to keep types consistent.",
     },
     {
       id: "FeedbackRecords.valueNumber",
@@ -244,24 +244,26 @@ export const FEEDBACK_FIELDS = {
   measures: [
     {
       id: "FeedbackRecords.count",
-      label: "Responses",
+      label: "Feedback Records",
       type: "count",
       group: "count",
-      description: "Total number of feedback responses",
+      description: "Total number of feedback records",
     },
     {
       id: "FeedbackRecords.uniqueRespondents",
       label: "Unique respondents",
       type: "number",
       group: "count",
-      description: "Number of unique users who provided feedback",
+      description:
+        "Unique identified people who gave feedback, deduplicated by person — one respondent answering 3 questions counts once. Anonymous feedback (no identified respondent) isn't counted here, even though it counts as a Feedback Record.",
     },
     {
       id: "FeedbackRecords.uniqueResponses",
       label: "Unique responses",
       type: "number",
       group: "count",
-      description: "Number of unique survey submissions",
+      description:
+        "Unique survey submissions, deduplicated by submission — one respondent submitting twice counts twice",
     },
     {
       id: "FeedbackRecords.npsScore",
@@ -337,10 +339,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.csatCount",
-      label: "CSAT: Responses",
+      label: "CSAT: Records",
       type: "count",
       group: "count",
-      description: "Number of CSAT responses",
+      description: "Number of answered feedback records from CSAT questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.cesAverage",
@@ -352,10 +354,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.cesCount",
-      label: "CES: Responses",
+      label: "CES: Records",
       type: "count",
       group: "count",
-      description: "Number of CES responses",
+      description: "Number of answered feedback records from CES questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.ratingAverage",
@@ -371,10 +373,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.ratingCount",
-      label: "Rating: Responses",
+      label: "Rating: Records",
       type: "count",
       group: "count",
-      description: "Number of answered rating responses (dismissed responses excluded)",
+      description: "Number of answered feedback records from rating questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.sentimentAverage",
@@ -396,6 +398,19 @@ export const FEEDBACK_MEASURE_IDS: string[] = FEEDBACK_FIELDS.measures.map((m) =
 export const getMeasureAxisMaxCandidates = (measureId: string): readonly number[] | undefined =>
   FEEDBACK_FIELDS.measures.find((m) => m.id === measureId)?.axisMaxCandidates;
 
+/**
+ * True for a measure computed *over* the responses in a group — a score or an average — rather
+ * than by counting them. The distinction decides what an empty group means: a count genuinely
+ * counted zero there, while a ratio has nothing to divide, so it has no value at all. It also
+ * decides whether per-group values can be folded into one, since ratios cannot be added.
+ *
+ * False for anything not in the schema, so an unrecognized column keeps the additive treatment.
+ */
+export const isRatioMeasure = (measureId: string): boolean => {
+  const group = FEEDBACK_FIELDS.measures.find((m) => m.id === measureId)?.group;
+  return group === "score" || group === "average";
+};
+
 export const FEEDBACK_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
 
 export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
@@ -404,6 +419,9 @@ export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
 
 export const SENTIMENT_DIMENSION_ID = "FeedbackRecords.sentiment";
 export const EMOTIONS_DIMENSION_ID = "FeedbackRecords.emotions";
+export const LANGUAGE_DIMENSION_ID = "FeedbackRecords.language";
+export const VALUE_TEXT_DIMENSION_ID = "FeedbackRecords.valueText";
+export const VALUE_ID_DIMENSION_ID = "FeedbackRecords.valueId";
 
 export const isSentimentValue = (value: string): value is TSentimentValue =>
   (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);
@@ -429,6 +447,14 @@ const isEmptyDimensionValue = (value: unknown): boolean =>
  * because the record hasn't been AI-enriched yet. Drives both the label and the gray coloring. */
 export const isNotEnrichedDimensionValue = (dimensionId: string, value: unknown): boolean =>
   isEnrichmentDimensionId(dimensionId) && isEmptyDimensionValue(value);
+
+/** Grouping by language yields an unlabelled bucket beside the explicit codes, and it has more than
+ * one cause: a survey response in its own default language stores no code (transform.ts only writes
+ * `language` when it is not "default"), and a review, support or manually entered record may never
+ * have captured one at all. It is a real group rather than missing data, so it gets a name — but a
+ * neutral one, since "default language" would assert a language those other records never had. */
+export const isUnspecifiedLanguageDimensionValue = (dimensionId: string, value: unknown): boolean =>
+  dimensionId === LANGUAGE_DIMENSION_ID && isEmptyDimensionValue(value);
 
 // The label maps are typed against the enum tuples, so extending
 // SENTIMENT_VALUE_ORDER / EMOTION_VALUES without adding the matching label is a
@@ -471,6 +497,9 @@ export function getTranslatedDimensionValueLabel(
 ): string | undefined {
   if (isNotEnrichedDimensionValue(dimensionId, value)) {
     return t("workspace.analysis.charts.not_enriched");
+  }
+  if (isUnspecifiedLanguageDimensionValue(dimensionId, value)) {
+    return t("workspace.analysis.charts.language_value_unspecified");
   }
   if (typeof value !== "string" || value.length === 0) return undefined;
   if (dimensionId === SENTIMENT_DIMENSION_ID) {
@@ -632,6 +661,34 @@ export function getFieldById(id: string): FieldDefinition | MeasureDefinition | 
 /**
  * Translate a field/measure ID. Each t() call uses a literal key so the i18n scanner can detect it.
  */
+/**
+ * Translated description for the members whose copy guides a chart-building decision — two
+ * dimensions (Value (Option) vs Value (Text)) and the three count measures a user has to choose
+ * between. The rest of the schema descriptions are still the inline English in FEEDBACK_FIELDS, so
+ * this falls back to that rather than showing a key.
+ */
+export function getTranslatedFieldDescription(
+  id: string,
+  fallback: string | undefined,
+  t: TFunction
+): string | undefined {
+  // A `Map`, not an object literal: `descriptions[id]` resolves inherited members, so an id of
+  // "constructor" or "toString" returned a function where a description string was expected. Same
+  // lookup shape #8985 converted for the same reason. Not reachable from today's call sites — they
+  // all pass ids from the hardcoded FEEDBACK_FIELDS arrays — but it costs nothing to close.
+  const descriptions = new Map<string, string>([
+    ["FeedbackRecords.valueId", t("workspace.analysis.charts.field_description_value_option")],
+    ["FeedbackRecords.valueText", t("workspace.analysis.charts.field_description_value_text")],
+    ["FeedbackRecords.count", t("workspace.analysis.charts.field_description_count")],
+    [
+      "FeedbackRecords.uniqueRespondents",
+      t("workspace.analysis.charts.field_description_unique_respondents"),
+    ],
+    ["FeedbackRecords.uniqueResponses", t("workspace.analysis.charts.field_description_unique_responses")],
+  ]);
+  return descriptions.get(id) ?? fallback;
+}
+
 export function getTranslatedFieldLabel(id: string, t: TFunction): string {
   const labels: Record<string, string> = {
     "FeedbackRecords.sourceType": t("workspace.analysis.charts.field_label_source_type"),
@@ -648,6 +705,7 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.responseId": t("workspace.analysis.charts.field_label_response_id"),
     "FeedbackRecords.valueNumber": t("workspace.analysis.charts.field_label_value_number"),
     "FeedbackRecords.valueText": t("workspace.analysis.charts.field_label_value_text"),
+    "FeedbackRecords.valueId": t("workspace.analysis.charts.field_label_value_option"),
     "FeedbackRecords.valueBoolean": t("workspace.analysis.charts.field_label_value_boolean"),
     "FeedbackRecords.valueDate": t("workspace.analysis.charts.field_label_value_date"),
     "FeedbackRecords.collectedAt": t("workspace.analysis.charts.field_label_collected_at"),

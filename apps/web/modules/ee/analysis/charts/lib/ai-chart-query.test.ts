@@ -41,6 +41,8 @@ describe("generateAIChartQuery", () => {
 
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      userId: "user-1",
       prompt: "responses by sentiment",
     });
 
@@ -78,12 +80,50 @@ describe("generateAIChartQuery", () => {
 
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      userId: "user-1",
       prompt: "create a big number chart with the NPS score",
     });
 
     expect(result).toEqual({
       chartType: "big_number",
       query: { measures: ["FeedbackRecords.npsScore"] },
+    });
+  });
+
+  test("strips a grouping the model put on a big number, which has no axis for it", async () => {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
+        name: null,
+        measures: ["FeedbackRecords.npsScore"],
+        dimensions: ["FeedbackRecords.sourceName"],
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: "day",
+            dateRange: "last 30 days",
+          },
+        ],
+        chartType: "big_number",
+        filters: null,
+      },
+    });
+
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      userId: "user-1",
+      prompt: "NPS score for the last 30 days as a big number",
+    });
+
+    // The date range survives as a filter; the grouping it was paired with does not, because the
+    // single value cannot be recovered from per-day NPS readings.
+    expect(result).toEqual({
+      chartType: "big_number",
+      query: {
+        measures: ["FeedbackRecords.npsScore"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: "last 30 days" }],
+      },
     });
   });
 
@@ -101,6 +141,8 @@ describe("generateAIChartQuery", () => {
 
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      userId: "user-1",
       prompt: "show a big number",
     });
 
@@ -117,7 +159,7 @@ describe("generateAIChartQuery", () => {
           { dimension: "FeedbackRecords.collectedAt", granularity: "day", dateRange: "last 30 days" },
           { dimension: "FeedbackRecords.collectedAt", granularity: null, dateRange: null },
         ],
-        chartType: "line",
+        chartType: "area",
         filters: [
           { member: "FeedbackRecords.sourceType", operator: "equals", values: ["survey"] },
           { member: "FeedbackRecords.sourceType", operator: "set", values: null },
@@ -127,6 +169,8 @@ describe("generateAIChartQuery", () => {
 
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      userId: "user-1",
       prompt: "trend over time",
     });
 
@@ -199,6 +243,8 @@ describe("generateAIChartQuery", () => {
 
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      userId: "user-1",
       prompt: "responses",
     });
 
@@ -219,6 +265,8 @@ describe("generateAIChartQuery", () => {
 
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      userId: "user-1",
       prompt: "responses",
     });
 
@@ -246,7 +294,12 @@ describe("generateAIChartQuery", () => {
     );
 
     await expect(
-      generateAIChartQuery({ organizationId: "organization-1", prompt: "anything" })
+      generateAIChartQuery({
+        organizationId: "organization-1",
+        workspaceId: "workspace-1",
+        userId: "user-1",
+        prompt: "anything",
+      })
     ).rejects.toMatchObject({
       name: InvalidInputError.name,
       message: AI_CHART_PROMPT_ERROR_CODE,
@@ -257,16 +310,26 @@ describe("generateAIChartQuery", () => {
     const providerError = new Error("billing disabled");
     mocks.generateOrganizationAIObject.mockRejectedValueOnce(providerError);
 
-    await expect(generateAIChartQuery({ organizationId: "organization-1", prompt: "anything" })).rejects.toBe(
-      providerError
-    );
+    await expect(
+      generateAIChartQuery({
+        organizationId: "organization-1",
+        workspaceId: "workspace-1",
+        userId: "user-1",
+        prompt: "anything",
+      })
+    ).rejects.toBe(providerError);
   });
 
   test("does not convert non-Error rejections", async () => {
     mocks.generateOrganizationAIObject.mockRejectedValueOnce("string failure");
 
-    await expect(generateAIChartQuery({ organizationId: "organization-1", prompt: "anything" })).rejects.toBe(
-      "string failure"
-    );
+    await expect(
+      generateAIChartQuery({
+        organizationId: "organization-1",
+        workspaceId: "workspace-1",
+        userId: "user-1",
+        prompt: "anything",
+      })
+    ).rejects.toBe("string failure");
   });
 });

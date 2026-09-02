@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { lookupAuthorizedOrganizationIds } from "@/lib/authorization/resource-list";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const getOrganizationsByUserId = reactCache(
@@ -10,13 +11,12 @@ export const getOrganizationsByUserId = reactCache(
     validateInputs([userId, ZString]);
 
     try {
+      const organizationIds = await lookupAuthorizedOrganizationIds({ type: "user", id: userId });
+      if (organizationIds.length === 0) return [];
+
       const organizations = await prisma.organization.findMany({
         where: {
-          memberships: {
-            some: {
-              userId,
-            },
-          },
+          id: { in: [...organizationIds] },
         },
         // Deterministic order so callers that take organizations[0] (e.g. account settings'
         // default org) always resolve the same organization for a given user. id breaks ties when

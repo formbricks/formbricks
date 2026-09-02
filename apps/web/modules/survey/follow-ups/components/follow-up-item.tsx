@@ -117,7 +117,7 @@ export const FollowUpItem = ({
       ...prev,
       followUps: [...prev.followUps, newFollowUp],
     }));
-  }, [followUp, setLocalSurvey]);
+  }, [followUp, setLocalSurvey, t]);
 
   return (
     <>

@@ -43,11 +43,20 @@ export const ContactDataView = ({
       prevWorkspaceId.current = workspaceId;
       setContacts([...initialContacts]);
       setHasMore(initialHasMore);
-      isResettingSearch.current = true;
+      // Arm the skip only when there is a search to clear. `setSearchValue("")` on an already-empty
+      // value is a no-op, so the `[searchValue]` effect never runs to lower the flag again — and the
+      // next time the user does type, that effect consumes their first search as the "reset" it was
+      // waiting for. Switching workspace without having searched is the common path, so the flag was
+      // usually left armed.
+      if (searchValue) {
+        isResettingSearch.current = true;
+      }
       setSearchValue("");
       prevInitialContactsLength.current = initialContacts.length;
     }
-  }, [workspaceId, initialContacts, initialHasMore]);
+    // `searchValue` is read above, so it belongs here; the whole body is behind the workspace-change
+    // guard, which updates `prevWorkspaceId` immediately, so the extra runs are a comparison.
+  }, [workspaceId, initialContacts, initialHasMore, searchValue]);
 
   // Sync state when initialContacts changes from server refresh (e.g., after CSV upload)
   // Only update if we're viewing the first page without search
@@ -105,6 +114,7 @@ export const ContactDataView = ({
     if (isResettingSearch.current) {
       isResettingSearch.current = false;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounced search must fire only on searchValue change; `fetchContactsFromStart` is keyed on `searchValue` itself, so listing it would re-trigger the search whenever `workspaceId` or `itemsPerPage` changed too
   }, [searchValue]);
 
   useEffect(() => {

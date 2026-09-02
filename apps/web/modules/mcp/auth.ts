@@ -15,6 +15,7 @@ import {
   problemUnauthorized,
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { parseApiKeyV2 } from "@/lib/crypto";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
@@ -22,6 +23,7 @@ import {
   MCP_CHALLENGE_SCOPE,
   MCP_RESOURCE_SCOPES,
   getAuthIssuerUrl,
+  getMcpOAuthJwksUrl,
   getMcpOrigin,
   getMcpProtectedResourceMetadataUrl,
   getMcpResourceUrl,
@@ -39,7 +41,44 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
   "authorization",
 ]);
 
+/**
+ * RFC 9068 §2.1 media type for a JWT access token. Better Auth stamps it into the JWS header from
+ * 1.7 onwards; 1.6 emitted no `typ` at all.
+ */
+const JWT_ACCESS_TOKEN_TYPE = "at+jwt";
+
 const oauthResourceClient = oauthProviderResourceClient(auth);
+
+const JWKS_FAILURE_CODES = new Set([
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "ENETUNREACH",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ERR_JWKS_MULTIPLE_MATCHING_KEYS",
+  "ERR_JWKS_NO_MATCHING_KEY",
+  "ERR_JWKS_TIMEOUT",
+]);
+
+const getErrorCode = (error: unknown): string | undefined => {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return undefined;
+  }
+
+  return typeof error.code === "string" ? error.code : undefined;
+};
+
+const getMcpOAuthFailureDetails = (error: unknown) => {
+  const errorName = error instanceof Error ? error.name : "UnknownError";
+  const cause = error instanceof Error ? error.cause : undefined;
+  const errorCode = getErrorCode(error) ?? getErrorCode(cause);
+  const failureSource =
+    errorName === "TypeError" || (errorCode !== undefined && JWKS_FAILURE_CODES.has(errorCode))
+      ? "jwks_fetch"
+      : "token_verification";
+
+  return { errorCode, errorName, failureSource };
+};
 
 export type TMcpAuthInfo = AuthInfo & {
   extra: {
@@ -395,19 +434,41 @@ async function authenticateMcpOAuthBearer(
   let payload: JWTPayload;
 
   try {
-    payload = await oauthResourceClient.getActions().verifyAccessToken(token, {
+    // Renamed from `verifyAccessToken` in Better Auth 1.7 (ENG-2343). `hasAcceptedMcpAudience` below is
+    // kept regardless of what upstream does with `verifyOptions.audience`: an earlier version of this
+    // comment asserted that 1.7 stops passing it into its own `jwtVerify`, which could not be
+    // substantiated — `verifyBearerToken` is re-exported through `better-auth/oauth2` and its body is not
+    // readable in the published dist. So the reason to keep our own check is not a claim about upstream:
+    // it is that "every `aud` resolves to a registered resource" and "this token is for ME" are different
+    // questions, and only the second is the one a resource server must answer. Ours answers it.
+    payload = await oauthResourceClient.getActions().verifyBearerToken(token, {
       verifyOptions: {
         audience: getMcpResourceUrl(),
         issuer: getAuthIssuerUrl(),
+        // RFC 9068 §4: an access token must be typed `at+jwt`, and a resource server should refuse
+        // one that is not. Enforceable only from 1.7 — 1.6 issued no `typ` header at all, so
+        // requiring it before the upgrade would have rejected every token in circulation.
+        //
+        // Kept strict through the rolling deploy, deliberately. A 1.6-minted token (no `typ`) hitting a
+        // 1.7 pod is rejected here — but this check is on the RESOURCE SERVER only, not on the refresh
+        // path, and `20260812110001_eng_2343_backfill_oauth_resource_links` backfills
+        // `oauthRefreshToken.resources` precisely so existing refresh tokens keep working. So a client
+        // takes one 401, refreshes against the 1.7 authorization server, and retries with a typed token:
+        // self-healing in a single round trip, which is the 401 handling every MCP client already
+        // implements. Relaxing this to "absent is fine" would weaken a cross-JWT-confusion defence
+        // permanently to smooth a window that closes on its own — the wrong trade in the PR whose whole
+        // purpose is binding token audiences.
+        typ: JWT_ACCESS_TOKEN_TYPE,
       },
-      jwksUrl: `${getAuthIssuerUrl()}/jwks`,
+      jwksUrl: getMcpOAuthJwksUrl(),
     });
-  } catch {
+  } catch (error) {
     return await rejectUnauthenticatedMcpRequest({
       requestId,
       instance,
       log,
       logMessage: "MCP OAuth authentication failed",
+      logContext: getMcpOAuthFailureDetails(error),
     });
   }
 
@@ -596,6 +657,6 @@ export async function handleAuthenticatedMcpRequest(
   }
 
   (request as Request & { auth?: AuthInfo }).auth = authResult.authInfo;
-  const response = await handler(request);
+  const response = await withAuthorizationSurface("mcp", () => handler(request));
   return withMcpResponseHeaders(response, authResult.requestId);
 }

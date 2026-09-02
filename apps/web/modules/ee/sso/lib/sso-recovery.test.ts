@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { sendVerificationEmail } from "@/modules/email";
@@ -35,6 +36,10 @@ vi.mock("@/lib/jwt", () => ({
   createEmailToken: mocks.createEmailToken,
   createSsoRelinkIntent: mocks.createSsoRelinkIntent,
   verifySsoRelinkIntent: mocks.verifySsoRelinkIntent,
+}));
+
+vi.mock("@/modules/auth/lib/session-revocation", () => ({
+  revokeUserSessionsExcept: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/sign-in-tracking", () => ({
@@ -82,14 +87,42 @@ vi.mock("./account-linking", () => ({
 
 describe("sso-recovery", () => {
   const txUserUpdate = vi.fn();
+  const txTwoFactorDeleteMany = vi.fn();
+  const txAccountUpdateMany = vi.fn();
+  const txOauthAccessUpdateMany = vi.fn();
+  const txOauthRefreshUpdateMany = vi.fn();
+  const txOauthConsentDeleteMany = vi.fn();
+  // Both new stores belong in the stub: post-ENG-1054 the password lives on `Account` and the 2FA secret
+  // in `TwoFactor`, so a strip that only touched `user` is exactly the bug ENG-2557 fixed.
   const tx = {
     user: {
       update: txUserUpdate,
+    },
+    twoFactor: {
+      deleteMany: txTwoFactorDeleteMany,
+    },
+    account: {
+      updateMany: txAccountUpdateMany,
+    },
+    oauthAccessToken: {
+      updateMany: txOauthAccessUpdateMany,
+    },
+    oauthRefreshToken: {
+      updateMany: txOauthRefreshUpdateMany,
+    },
+    oauthConsent: {
+      deleteMany: txOauthConsentDeleteMany,
     },
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    txTwoFactorDeleteMany.mockResolvedValue({ count: 1 });
+    txAccountUpdateMany.mockResolvedValue({ count: 1 });
+    txOauthAccessUpdateMany.mockResolvedValue({ count: 1 });
+    txOauthRefreshUpdateMany.mockResolvedValue({ count: 2 });
+    txOauthConsentDeleteMany.mockResolvedValue({ count: 1 });
+    vi.mocked(revokeUserSessionsExcept).mockResolvedValue(2);
     vi.mocked(prisma.$transaction).mockImplementation(
       async (callback: (txClient: Prisma.TransactionClient) => Promise<unknown>) =>
         await callback(tx as unknown as Prisma.TransactionClient)
@@ -187,21 +220,21 @@ describe("sso-recovery", () => {
       id: "user_1",
       email: "john.doe@example.com",
       locale: "en-US",
-      emailVerified: null,
+      emailVerified: false,
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-      password: "hashed-password",
-      twoFactorEnabled: true,
-      twoFactorSecret: "encrypted-secret",
-      backupCodes: "encrypted-codes",
     } as any);
 
     const callbackUrl = await completeSsoRecovery({
       intentToken: "test-intent",
       sessionUserId: "user_1",
+      sessionToken: "current-session-token",
     });
 
+    // Exact-match on purpose: the legacy nulls are load-bearing, not leftovers. `better-auth-two-factor-backfill`
+    // re-materialises a `TwoFactor` row from `twoFactorEnabled && twoFactorSecret` on the next credential
+    // sign-in, so dropping them from this payload would let the stripped factor come back.
     expect(txUserUpdate).toHaveBeenCalledWith({
       where: {
         id: "user_1",
@@ -214,6 +247,48 @@ describe("sso-recovery", () => {
         twoFactorSecret: null,
       },
     });
+    // The live stores, which the pre-ENG-2557 implementation never touched.
+    expect(txTwoFactorDeleteMany).toHaveBeenCalledWith({ where: { userId: "user_1" } });
+    // Scoped by owner, NOT by `providerAccountId`/`issuer`: those are account-key columns and a drifted key
+    // (ENG-2555) would make a key-filtered query walk past a row still holding a live hash.
+    expect(txAccountUpdateMany).toHaveBeenCalledWith({
+      where: { userId: "user_1", provider: "credential" },
+      data: { password: null },
+    });
+    // Post-commit, sparing the caller's own session so the redirect still lands signed in.
+    expect(revokeUserSessionsExcept).toHaveBeenCalledWith({
+      userId: "user_1",
+      keepSessionToken: "current-session-token",
+    });
+    // The OAuth grants the account minted while unproven: a refresh token outlives every session, so
+    // the sweep is incomplete without this.
+    expect(txOauthAccessUpdateMany).toHaveBeenCalledWith({
+      where: { userId: "user_1", revoked: null },
+      data: { revoked: expect.any(Date) },
+    });
+    expect(txOauthRefreshUpdateMany).toHaveBeenCalledWith({
+      where: { userId: "user_1", revoked: null },
+      data: { revoked: expect.any(Date) },
+    });
+    // Consent too: `/authorize` skips the consent screen when a row exists, so leaving it would let a
+    // still-cookie-cached session mint a replacement refresh token and undo the revocation above.
+    expect(txOauthConsentDeleteMany).toHaveBeenCalledWith({ where: { userId: "user_1" } });
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "sso_recovery_completed",
+        status: "success",
+        newObject: expect.objectContaining({
+          credentialPasswordsCleared: 1,
+          twoFactorRowsRemoved: 1,
+          // Distinct fields, and the stub returns distinct counts (1 access / 2 refresh) on purpose: a
+          // summed field would read 3 either way and could not catch the two being swapped.
+          oauthAccessTokensRevoked: 1,
+          oauthRefreshTokensRevoked: 2,
+          oauthConsentsRevoked: 1,
+          sessionsRevoked: 2,
+        }),
+      })
+    );
     expect(syncSsoIdentityForUser).toHaveBeenCalledWith({
       userId: "user_1",
       provider: "google",
@@ -237,23 +312,110 @@ describe("sso-recovery", () => {
       id: "user_1",
       email: "john.doe@example.com",
       locale: "en-US",
-      emailVerified: new Date("2024-01-01T00:00:00.000Z"),
+      emailVerified: true,
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-      password: "hashed-password",
-      twoFactorEnabled: true,
-      twoFactorSecret: "encrypted-secret",
-      backupCodes: "encrypted-codes",
     } as any);
 
     await completeSsoRecovery({
       intentToken: "test-intent",
       sessionUserId: "user_1",
+      sessionToken: "current-session-token",
     });
 
     expect(txUserUpdate).not.toHaveBeenCalled();
+    expect(txTwoFactorDeleteMany).not.toHaveBeenCalled();
+    expect(txAccountUpdateMany).not.toHaveBeenCalled();
+    expect(txOauthAccessUpdateMany).not.toHaveBeenCalled();
+    expect(txOauthRefreshUpdateMany).not.toHaveBeenCalled();
+    expect(txOauthConsentDeleteMany).not.toHaveBeenCalled();
+    // A proven account is a legitimate one: linking another provider to it must not sign its other
+    // sessions out, and must not report a strip that did not happen.
+    expect(revokeUserSessionsExcept).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "sso_recovery_completed",
+        newObject: expect.not.objectContaining({ credentialPasswordsCleared: expect.anything() }),
+      })
+    );
     expect(syncSsoIdentityForUser).toHaveBeenCalledOnce();
+  });
+
+  /**
+   * The guard keys on `emailVerified` alone. It used to also require `identityProvider === "email"`, but
+   * that column is denormalized onto `User` by an `account.create.after` hook, so a security control
+   * resting on it goes silently dead if it ever drifts. An unproven address is unproven whatever the
+   * denormalized column happens to say.
+   */
+  test("strips an unverified account even when identityProvider says otherwise", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: false,
+      isActive: true,
+      identityProvider: "google",
+      identityProviderAccountId: "provider-account-1",
+    } as any);
+
+    await completeSsoRecovery({
+      intentToken: "test-intent",
+      sessionUserId: "user_1",
+      sessionToken: "current-session-token",
+    });
+
+    expect(txAccountUpdateMany).toHaveBeenCalledWith({
+      where: { userId: "user_1", provider: "credential" },
+      data: { password: null },
+    });
+    expect(txTwoFactorDeleteMany).toHaveBeenCalledOnce();
+    expect(revokeUserSessionsExcept).toHaveBeenCalledOnce();
+  });
+
+  /**
+   * The strip has already committed by the time sessions are swept, so a revocation failure must not undo
+   * it or fail the recovery — the user would be left with a stripped password and no way through.
+   */
+  test("still completes recovery when the session sweep fails", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: false,
+      isActive: true,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+    } as any);
+    vi.mocked(revokeUserSessionsExcept).mockRejectedValue(new Error("redis unavailable"));
+
+    const callbackUrl = await completeSsoRecovery({
+      intentToken: "test-intent",
+      sessionUserId: "user_1",
+      sessionToken: "current-session-token",
+    });
+
+    expect(callbackUrl).toBe("http://localhost:3000/environments/env_1");
+    expect(txAccountUpdateMany).toHaveBeenCalledOnce();
+    // A failed sweep must NOT be recorded as "0 sessions revoked" — same number, opposite incident.
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "sso_recovery_completed",
+        newObject: expect.objectContaining({
+          credentialPasswordsCleared: 1,
+          sessionRevocationFailed: true,
+        }),
+      })
+    );
+    // `action` discriminator is load-bearing: `toHaveBeenCalledWith` passes when ANY call matches, so
+    // without it this would be satisfied by any other queued event lacking the key, and could go green
+    // without ever proving the completion event omits it.
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "sso_recovery_completed",
+        newObject: expect.not.objectContaining({ sessionsRevoked: expect.anything() }),
+      })
+    );
   });
 
   test("rejects recovery when the signed-in user does not match the intent owner", async () => {

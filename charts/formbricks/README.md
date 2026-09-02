@@ -56,6 +56,187 @@ or provide equivalent edge rate limiting for the documented route coverage. The 
 least two for availability during voluntary disruptions, or change/disable the PDB for an intentional
 single-replica deployment.
 
+## AuthZed / SpiceDB
+
+Formbricks v6 enables AuthZed, `fully_consistent` authorization, and the bundled SpiceDB operator by default.
+
+### Breaking changes from v5
+
+| Setting                    | v5 default | v6 default | Existing shared-operator clusters                                              |
+| -------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------- |
+| `authzed.operator.install` | `false`    | `true`     | Set `authzed.operator.install=false` before upgrading to avoid duplicate reconcilers. |
+
+For a cluster where a compatible operator already watches the Formbricks namespace:
+
+```yaml
+authzed:
+  operator:
+    install: false
+```
+
+The default installs the pinned SpiceDB operator, creates a two-replica `SpiceDBCluster`, and creates a dedicated
+`spicedb` database and role in the bundled PostgreSQL server. During normal Helm installs and upgrades, the
+chart reuses generated credentials from the existing cluster Secret. Renderers without live Secret access,
+including offline `helm template` and Argo CD manifest generation, must provide persistent credentials through
+`authzed.auth.existingSecret` and `authzed.datastore.existingSecret`; otherwise generated values are not stable
+between renders. The operator runs datastore migrations before rolling out SpiceDB.
+
+The bundled PostgreSQL dependency uses the following resource baseline, which was validated while PostgreSQL
+also served SpiceDB:
+
+```yaml
+postgresql:
+  primary:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+```
+
+Helm cannot condition values passed to the PostgreSQL dependency on a sibling value, so the safe database
+baseline remains in effect. Override `authzed.cluster.resources` and `postgresql.primary.resources` to match the
+expected authorization traffic and the other workloads using the bundled database.
+
+Install only one operator per Kubernetes cluster. When a platform-managed operator already watches the Formbricks
+namespace, keep `authzed.operator.install=false`; the Formbricks release still owns its `SpiceDBCluster`.
+Kubernetes does not upgrade CRDs during a normal Helm upgrade. When changing the bundled operator version, apply
+the matching `charts/spicedb-operator/crds/authzed.com_spicedbclusters.yaml` before upgrading the release.
+
+For managed PostgreSQL, create a dedicated database and login outside Helm and expose these keys in a Kubernetes
+Secret:
+
+```yaml
+stringData:
+  datastore_uri: postgresql://spicedb:<password>@postgres.example:5432/spicedb?sslmode=require
+  preshared_key: <strong-random-token>
+```
+
+Alternatively, the chart can create the dedicated database and login with a short-lived bootstrap Job. Put a
+PostgreSQL administrator URL in a separate Secret and enable the external bootstrap:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: formbricks-postgresql-admin
+stringData:
+  DATABASE_URL: postgresql://postgres:<admin-password>@postgres.example:5432/postgres?sslmode=require
+```
+
+```yaml
+authzed:
+  externalPostgresqlBootstrap:
+    enabled: true
+    adminSecretName: formbricks-postgresql-admin
+```
+
+The administrator URL must explicitly set `sslmode=require`, `sslmode=verify-ca`, or `sslmode=verify-full`.
+The bootstrap Job validates the TLS mode without logging the URL and passes the URL through unchanged, so other
+connection parameters and certificate settings are preserved.
+
+### Bootstrapping against an existing PostgreSQL without a `postgres` role
+
+The bundled bootstrap connects as the `postgres` superuser the subchart normally creates. An existing
+installation deployed with `postgresql.auth.enablePostgresUser=false` has no such role, so point the Job at a
+role that does hold `CREATEROLE` and `CREATEDB` instead:
+
+```yaml
+authzed:
+  bundledPostgresqlBootstrap:
+    adminUsername: fbadmin
+    adminDatabase: formbricks # the maintenance database to attach to
+    adminPasswordSecretName: existing-pg-admin
+    adminPasswordKey: password
+```
+
+`adminPasswordSecretName` is required whenever `adminUsername` is not the bundled superuser, and
+`adminPasswordKey` whenever that Secret is configured explicitly. **Both are enforced when the chart renders**,
+so a missing one fails `helm template`/`upgrade` with a named value rather than producing a Job. That is the
+point of the guards: without them the first would silently fall back to the bundled admin password and the
+second would look up the subchart's key name inside your own Secret — neither of which surfaces until the Pod
+is created in the cluster.
+
+`CREATEROLE` and `CREATEDB` cover the normal case, in which this administrator also creates the `spicedb` role.
+`CREATE DATABASE ... OWNER spicedb` additionally requires being able to `SET ROLE` to that owner, so the Job
+grants itself the `spicedb` role first; from PostgreSQL 16 that is only possible for a role it holds
+`ADMIN OPTION` on, which creating the role confers. A `spicedb` role that already exists and was created by
+someone else is therefore the one case the Job cannot adopt on PostgreSQL 16+ — grant it explicitly
+(`GRANT spicedb TO fbadmin WITH ADMIN OPTION`) or run the bootstrap once as a superuser. PostgreSQL 15 and
+older are unaffected.
+
+Re-running is safe but not inert: the role and the database are created only when absent, while the `spicedb`
+role's password is reconciled to the chart's Secret on **every** run. If you rotate that password outside Helm,
+update the Secret too, or the next upgrade will set it back.
+`authzed.bundledPostgresqlBootstrap.enabled=false` remains available for operators who provision both by hand.
+
+Then reference it from the release:
+
+```yaml
+authzed:
+  enabled: true
+  mode: selfHosted
+  auth:
+    existingSecret: formbricks-authzed
+  datastore:
+    existingSecret: formbricks-authzed
+```
+
+To connect to an AuthZed-managed or otherwise external endpoint, use TLS, provide the endpoint without a URL
+scheme, and reference a Secret containing `preshared_key`:
+
+```yaml
+authzed:
+  enabled: true
+  mode: external
+  operator:
+    install: false
+  endpoint: grpc.authzed.com:443
+  insecure: false
+  auth:
+    existingSecret: formbricks-authzed
+```
+
+`authzed.insecure` defaults to `false` in external mode. Set it to `true` only for a trusted plaintext gRPC
+endpoint; plaintext transport sends the preshared token without TLS protection. The chart injects `AUTHZED_ENABLED`,
+`AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and `AUTHZED_CONSISTENCY` into
+the Formbricks app. Authorization checks must fail closed once product enforcement is enabled; general
+Formbricks readiness remains independent from transient SpiceDB availability.
+
+Fresh installs run a release-matched post-install initialization Job that applies the canonical schema and verifies
+the empty or reconciled graph. An acknowledged existing release runs the same release-matched gate as a pre-upgrade
+hook; unacknowledged upgrades are rejected before rendering. Before the first v6 upgrade, run:
+
+```bash
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade prepare
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade check
+
+# Empty instances only
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply
+
+# Non-empty instances: use the remoteDigest returned by the immediately preceding check
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply \
+  --expected-current-digest sha256:<digest-from-check>
+```
+
+The initial apply to an empty instance needs no digest. A non-empty instance must first be checked and then
+prepared with `--expected-current-digest sha256:<digest-from-check>`. Once `upgrade check` exits `0`, set
+`authzed.migrationAcknowledged=true` in the v6 upgrade values. The chart refuses an unacknowledged upgrade,
+`authzed.enabled=false`, or consistency other than `fully_consistent`. Back up the current schema and affected
+relationships before replacement; see the repository `authzed/README.md` for exit codes and rollback rules.
+The public [AuthZed operations guide](../../docs/self-hosting/advanced/authzed-operations.mdx) covers backups,
+restoration, schema lifecycle, relationship repair, and monitoring.
+
+Cloud operators that run the same guarded schema, outbox drain, reconciliation, and audit sequence outside Helm
+may set `authzed.initialization.enabled=false` together with `authzed.migrationAcknowledged=true`. This suppresses
+the initialization hook so a GitOps sync cannot mutate the authorization graph outside the controlled cutover
+window. The acknowledgement must be set only after the external preparation succeeds. Fresh self-hosted installs
+should keep the default initialization Job enabled.
+
 ## Cube
 
 Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default
@@ -123,10 +304,11 @@ hub:
     enabled: true
     background:
       enabled: true
-      maxConcurrent: "24"
+      maxConcurrent: "48"
       batchSize: "8"
-      batchMaxWaitMs: "25"
-      batchMaxInFlight: "3"
+      batchMaxWaitMs: "100"
+      batchMaxInFlight: "12"
+      httpDisableKeepAlives: "true"
       persistence:
         storageClass: gp3
       resources:
@@ -142,6 +324,8 @@ hub:
 The background pool is a StatefulSet with one retained RWO cache PVC per replica. Before a planned
 backfill, temporarily set both autoscaling replica bounds to the desired pre-warmed count and wait
 for every pod to become Ready. Restore the steady-state bounds after the backlog drains.
+An existing `hub.worker.env.EMBEDDING_HTTP_DISABLE_KEEP_ALIVES` override remains supported and takes
+precedence over `hub.embeddings.background.httpDisableKeepAlives` during chart upgrades.
 
 Embedding backfills are opt-in and never render a Job unless `hub.embeddingBackfill.enabled=true`.
 Each deliberate run requires a new `runId`; start with `countOnly: true`, then use `tenantId` or
@@ -255,23 +439,93 @@ externalSecret:
 The chart can optionally deploy the standalone AI taxonomy service. It is disabled by default and remains internal
 to the cluster through a `ClusterIP` service.
 
+No cloud LLM is hardwired into the chart. `taxonomy.llm.provider` defaults to the OpenAI-compatible protocol and
+`taxonomy.llm.model` is operator-selectable. The taxonomy runtime currently provides these adapters:
+
+| Provider value | Use case | Provider-specific values |
+| --- | --- | --- |
+| `openai-compatible` | Bundled vLLM, OpenAI, or another compatible `/v1` endpoint | `baseUrl` and `existingSecret` |
+| `bedrock` | A model available through Amazon Bedrock | `bedrock.region`; AWS credentials use the standard SDK chain and must be supplied through workload identity or a Secret |
+| `vertex-gemini` | Gemini through Google Vertex AI | `vertex.project`, `vertex.location`, and `vertex.existingSecret` |
+
+Only the selected adapter's environment variables and credentials are rendered. Provider-specific blocks for the
+other adapters remain inactive. The selected model and its exact context window must satisfy `/v1/preflight`.
+
 To deploy taxonomy and reuse the bundled Qwen/vLLM runtime:
 
 ```yaml
 llm:
   enabled: true
+  servingEngineSpec:
+    modelSpec:
+      - name: qwen
+        enabled: true
+        repository: vllm/vllm-openai
+        tag: v0.14.0
+        modelURL: Qwen/Qwen3-14B-AWQ
+        replicaCount: 1
+        requestCPU: 4
+        requestMemory: 24Gi
+        limitCPU: 8
+        limitMemory: 32Gi
+        requestGPU: 1
+        requestGPUType: nvidia.com/gpu
+        pvcStorage: 100Gi
+        runtimeClassName: ""
+        shmSize: 8Gi
+        vllmConfig:
+          maxModelLen: 65536
+          dtype: float16
+          tensorParallelSize: 1
+          maxNumSeqs: 8
+          gpuMemoryUtilization: 0.9
+          extraArgs:
+            - --served-model-name
+            - qwen3-14b-awq
+            - --default-chat-template-kwargs
+            - '{"enable_thinking": false}'
+        lmcacheConfig:
+          enabled: false
+        keda:
+          enabled: false
 
 taxonomy:
   enabled: true
+  llm:
+    bundledModelSpecName: qwen
+    structuredOutputMode: json-schema
+    contextWindowTokens: "65536"
 ```
 
-When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment, Service, and Secret, then injects these
-Hub API env vars unless `taxonomy.autoConfigureHub=false`:
+When applying this as a Helm override, preserve the bundled model defaults and raise the selected model's
+`vllmConfig.maxModelLen` to the same value. `taxonomy.llm.bundledModelSpecName` selects the enabled `modelSpec`
+entry whose deployment limit the chart checks. It may be omitted when exactly one model is enabled, but is
+required when multiple bundled models are enabled. Helm replaces lists supplied through values or `--set`, so
+copy the complete `modelSpec` entry into the override; a partial list item discards required image and resource
+fields.
+
+The bounded maximum-size hierarchy request requires at least 58,176 context tokens with the default output
+and reserve budgets. This uses a conservative one-token-per-UTF-8-byte input bound instead of an average
+tokenization ratio. The chart's general-purpose bundled vLLM default remains 8,192 tokens so existing
+non-taxonomy installs do not pay the KV-cache cost; taxonomy operators must explicitly raise the selected model
+deployment limit as shown above. The chart requires the configured context window and, for a bundled model,
+checks it against that selected deployment's `maxModelLen`. Taxonomy startup and `/ready` remain authoritative
+for the full prompt, output, and reserve calculation and for external provider/model preflight.
+
+`taxonomy.maxClusters` remains configurable for upgrade compatibility, but production Taxonomy images enforce
+the 80-cluster quality invariant at startup. The Taxonomy and Hub runtimes likewise validate retry, timeout,
+heartbeat, stale-run, and total-run settings. Keep the default 30-second heartbeat well below the 1,800-second
+stale-run timeout; a heartbeat value of `0` intentionally disables heartbeats in supporting Taxonomy images.
+
+When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment and Service, creates or uses the
+configured Secrets, then injects these Hub API env vars unless `taxonomy.autoConfigureHub=false`:
 
 ```yaml
 TAXONOMY_SERVICE_URL: http://formbricks-taxonomy:8000
 TAXONOMY_SERVICE_TOKEN: <from taxonomy auth secret>
 HUB_INTERNAL_API_TOKEN: <from taxonomy auth secret>
+TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS: "1800"
+TAXONOMY_REAPER_INTERVAL_SECONDS: "60"
 ```
 
 If `llm.enabled=true` and `taxonomy.llm.baseUrl` is empty, taxonomy uses the bundled vLLM router at
@@ -281,13 +535,50 @@ If `llm.enabled=true` and `taxonomy.llm.baseUrl` is empty, taxonomy uses the bun
 taxonomy:
   enabled: true
   llm:
+    provider: openai-compatible
     model: qwen3-14b-awq
     baseUrl: http://my-llm-gateway:8000/v1
     existingSecret: taxonomy-llm-secret
+    structuredOutputMode: json-object
+    contextWindowTokens: "65536"
 ```
 
-The taxonomy service exposes public `/health` only for Kubernetes probes. Use authenticated `/v1/preflight` as an
-operator check after install:
+Generic OpenAI-compatible endpoints default to JSON-object mode; set `json-schema` only after the exact
+deployment passes preflight. Vertex selects JSON Schema automatically. Bedrock selects prompt-only mode unless
+you opt an exact supported model into schema mode.
+
+To use Amazon Bedrock instead:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    provider: bedrock
+    model: your-bedrock-model-id
+    contextWindowTokens: "200000"
+    bedrock:
+      region: us-east-1
+```
+
+Prefer an IAM role delivered to the pod through EKS Pod Identity, IRSA, or the equivalent workload-identity
+mechanism for your cluster. Configure that association for the Kubernetes service account used by the Taxonomy
+pod. If role-based credentials are unavailable, create a Kubernetes Secret outside the values file and load it
+through `taxonomy.envFrom` so the AWS SDK can read `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and, when
+required, `AWS_SESSION_TOKEN`:
+
+```yaml
+taxonomy:
+  envFrom:
+    - secretRef:
+        name: taxonomy-aws-credentials
+```
+
+Never put AWS credentials in `taxonomy.env`, a committed values file, or `--set` arguments.
+
+The default `v0.1.0` taxonomy image exposes public `/health`, so the chart uses it for both liveness and readiness
+probes. Taxonomy images that implement the newer readiness contract also expose `/ready` for cached Hub-auth,
+context-budget, provider, and structured-output readiness; set `taxonomy.probes.readinessProbe.httpGet.path` to
+`/ready` only with such an image. Use authenticated `/v1/preflight` as an operator check after install:
 
 ```sh
 kubectl exec -n formbricks deploy/formbricks-taxonomy -- \
@@ -302,13 +593,14 @@ taxonomy:
   llm:
     provider: vertex-gemini
     model: gemini-2.5-flash
+    contextWindowTokens: "1048576"
     vertex:
-      project: formbricks-cloud
-      location: europe-west3
-      existingSecret: taxonomy-vertex-secret
+      project: example-project-id
+      location: us-central1
+      existingSecret: taxonomy-vertex-credentials
 ```
 
-The `taxonomy-vertex-secret` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
+The `taxonomy-vertex-credentials` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
 JSON that can call Vertex AI.
 
 ## Hub and Taxonomy metrics and structured logs
@@ -450,6 +742,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | externalSecret.refreshInterval                                     | string | `"1h"`                                                                      |                                                           |
 | externalSecret.secretStore.kind                                    | string | `"ClusterSecretStore"`                                                      |                                                           |
 | externalSecret.secretStore.name                                    | string | `"aws-secrets-manager"`                                                     |                                                           |
+| formbricks.mcpOauthJwksUrl                                         | string | `""`                                                                        | Optional internal JWKS fetch URL for trusted application networks. |
 | formbricks.publicUrl                                               | string | `""`                                                                        |                                                           |
 | formbricks.webappUrl                                               | string | `""`                                                                        |                                                           |
 | hub.autoscaling.enabled                                            | bool   | `false`                                                                     |                                                           |
@@ -467,6 +760,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.embeddings.background.batchMaxWaitMs                           | string | `"25"`                                                                      |                                                           |
 | hub.embeddings.background.batchSize                                | string | `"1"`                                                                       |                                                           |
 | hub.embeddings.background.enabled                                  | bool   | `false`                                                                     |                                                           |
+| hub.embeddings.background.httpDisableKeepAlives                    | string | `"false"`                                                                 | Opens a new worker provider connection per request. Existing `hub.worker.env` override wins. |
 | hub.embeddings.background.maxConcurrent                            | string | `"5"`                                                                       |                                                           |
 | hub.embeddings.background.persistence.enabled                      | bool   | `true`                                                                      |                                                           |
 | hub.embeddings.background.persistence.size                         | string | `"10Gi"`                                                                    | One retained cache volume per StatefulSet replica.        |
@@ -512,10 +806,10 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.existingSecret                                                 | string | `""`                                                                        |                                                           |
 | hub.extraVolumeMounts                                              | list   | `[]`                                                                        | Additional volume mounts for Hub API and worker.          |
 | hub.extraVolumes                                                   | list   | `[]`                                                                        | Additional pod volumes for Hub API and worker.            |
-| hub.image.digest                                                   | string | `"sha256:5eb1e185383bcadc0fd591b9ccb475869ca2aebb81c09b493be1073f24190f10"` | When set, takes precedence over tag (immutable pin).      |
+| hub.image.digest                                                   | string | `"sha256:9f4c109e6589993ef15708f834d57241ed3a73e3246e3565620777a66a231b59"` | When set, takes precedence over tag (immutable pin).      |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                                                            |                                                           |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`                                                  |                                                           |
-| hub.image.tag                                                      | string | `"0.8.4"`                                                                   | Fallback when digest is empty.                            |
+| hub.image.tag                                                      | string | `"0.8.5"`                                                                   | Fallback when digest is empty.                            |
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                                                                       |                                                           |
 | hub.migration.backoffLimit                                         | int    | `3`                                                                         |                                                           |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                                                                       |                                                           |
@@ -584,6 +878,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | pdb.enabled                                                        | bool   | `true`                                                                      |                                                           |
 | pdb.minAvailable                                                   | int    | `1`                                                                         |                                                           |
 | postgresql.auth.database                                           | string | `"formbricks"`                                                              |                                                           |
+| postgresql.auth.enablePostgresUser                                 | bool   | `true`                                                                       | Required by the bundled AuthZed database bootstrap.       |
 | postgresql.auth.existingSecret                                     | string | `"formbricks-app-secrets"`                                                  |                                                           |
 | postgresql.auth.secretKeys.adminPasswordKey                        | string | `"POSTGRES_ADMIN_PASSWORD"`                                                 |                                                           |
 | postgresql.auth.secretKeys.userPasswordKey                         | string | `"POSTGRES_USER_PASSWORD"`                                                  |                                                           |
@@ -604,6 +899,10 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | postgresql.primary.podSecurityContext.enabled                      | bool   | `true`                                                                      |                                                           |
 | postgresql.primary.podSecurityContext.fsGroup                      | int    | `1001`                                                                      |                                                           |
 | postgresql.primary.podSecurityContext.runAsUser                    | int    | `1001`                                                                      |                                                           |
+| postgresql.primary.resources.limits.cpu                            | string | `"1"`                                                                       |                                                           |
+| postgresql.primary.resources.limits.memory                         | string | `"1Gi"`                                                                     |                                                           |
+| postgresql.primary.resources.requests.cpu                          | string | `"250m"`                                                                    |                                                           |
+| postgresql.primary.resources.requests.memory                       | string | `"512Mi"`                                                                   |                                                           |
 | rbac.enabled                                                       | bool   | `false`                                                                     |                                                           |
 | rbac.serviceAccount.additionalLabels                               | object | `{}`                                                                        |                                                           |
 | rbac.serviceAccount.annotations                                    | object | `{}`                                                                        |                                                           |
@@ -616,7 +915,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | redis.enabled                                                      | bool   | `true`                                                                      |                                                           |
 | redis.externalRedisUrl                                             | string | `""`                                                                        |                                                           |
 | redis.fullnameOverride                                             | string | `"formbricks-redis"`                                                        |                                                           |
-| redis.image.digest                                                 | string | `"sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"` |                                                           |
+| redis.image.digest                                                 | string | `"sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"` |                                                           |
 | redis.image.pullPolicy                                             | string | `"IfNotPresent"`                                                            |                                                           |
 | redis.image.repository                                             | string | `"valkey/valkey"`                                                           |                                                           |
 | redis.image.tag                                                    | string | `""`                                                                        |                                                           |
@@ -653,15 +952,33 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                                                                 |                                                           |
 | taxonomy.autoConfigureHub                                          | bool   | `true`                                                                      | Inject taxonomy service env vars into Hub API when taxonomy is enabled. |
 | taxonomy.enabled                                                   | bool   | `false`                                                                     | Deploy the optional standalone taxonomy service.          |
+| taxonomy.envFrom                                                   | list   | `[]`                                                                          | Secret or ConfigMap sources for Taxonomy runtime environment variables. |
+| taxonomy.heartbeatIntervalSeconds                                  | string | `"30"`                                                                      | Hub heartbeat interval; `0` intentionally disables heartbeats in supporting images. |
+| taxonomy.hubClientMaxAttempts                                      | string | `"3"`                                                                       | Maximum idempotent Hub callback/fetch attempts.            |
+| taxonomy.hubReaperIntervalSeconds                                  | string | `"60"`                                                                      | Interval between Hub stale-run reaper passes.             |
+| taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"1800"`                                                                    | Hub stale-run timeout; lower only with a callback-heartbeating taxonomy image. |
 | taxonomy.image.repository                                          | string | `"ghcr.io/formbricks/taxonomy"`                                             | Taxonomy service image repository.                        |
 | taxonomy.image.tag                                                 | string | `"v0.1.0"`                                                                  | Taxonomy service image tag.                               |
 | taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |
+| taxonomy.llm.bedrock.region                                        | string | `""`                                                                        | AWS region for Bedrock; alternatively set `taxonomy.env.AWS_REGION`. |
+| taxonomy.llm.bundledModelSpecName                                  | string | `""`                                                                        | Enabled bundled `modelSpec` used by Taxonomy; required when multiple bundled models are enabled. |
+| taxonomy.llm.contextWindowTokens                                   | string | `""`                                                                        | Exact provider context window; required when taxonomy is enabled. |
 | taxonomy.llm.existingSecret                                        | string | `""`                                                                        | Existing secret containing `TAXONOMY_LLM_API_KEY`.        |
+| taxonomy.llm.labelMaxTokens                                        | string | `"4096"`                                                                    | Maximum cluster-label output tokens.                      |
+| taxonomy.llm.maxAttempts                                           | string | `"4"`                                                                       | Maximum semantic validation/repair attempts.              |
 | taxonomy.llm.model                                                 | string | `"qwen3-14b-awq"`                                                           | LLM model used by taxonomy labeling and tree generation.  |
-| taxonomy.llm.provider                                              | string | `"openai-compatible"`                                                       | Taxonomy LLM provider.                                    |
+| taxonomy.llm.provider                                              | string | `"openai-compatible"`                                                       | Runtime adapter: `openai-compatible`, `bedrock`, or `vertex-gemini`. |
+| taxonomy.llm.providerMaxAttempts                                   | string | `"3"`                                                                       | Maximum timeout, 429, or 5xx provider attempts.            |
+| taxonomy.llm.promptTokenReserve                                    | string | `"4096"`                                                                    | Context safety reserve for bounded prompts.               |
+| taxonomy.llm.structuredOutputMode                                  | string | `"auto"`                                                                    | `auto`, `prompt-only`, `json-object`, or `json-schema`.    |
+| taxonomy.llm.treeMaxTokens                                         | string | `"16384"`                                                                   | Maximum hierarchy output tokens.                          |
 | taxonomy.llm.vertex.credentialsJson                                | string | `""`                                                                        | Inline Vertex service-account JSON used only when no existing secret is set. |
 | taxonomy.llm.vertex.credentialsJsonSecretKey                       | string | `"TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON"`                                  | Secret key containing Vertex service-account JSON.        |
 | taxonomy.llm.vertex.existingSecret                                 | string | `""`                                                                        | Existing secret containing Vertex service-account JSON.   |
 | taxonomy.llm.vertex.location                                       | string | `""`                                                                        | Vertex AI location for Gemini taxonomy calls.             |
 | taxonomy.llm.vertex.project                                        | string | `""`                                                                        | Google Cloud project for Gemini taxonomy calls.           |
+| taxonomy.llm.vertex.thinkingBudget                                 | string | `"0"`                                                                       | Vertex Gemini thinking-token budget for taxonomy calls.   |
+| taxonomy.maxClusters                                               | string | `"80"`                                                                      | Compatibility value; production Taxonomy images enforce 80 at startup. |
+| taxonomy.runDeadlineSeconds                                        | string | `"900"`                                                                     | Total taxonomy run deadline.                              |
 | taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |
+| taxonomy.terminationGracePeriodSeconds                             | int    | `930`                                                                         | Recommended pod grace period for the default 900-second run deadline. |

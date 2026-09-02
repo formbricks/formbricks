@@ -72,7 +72,9 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSamlSsoEnabled: vi.fn(),
 }));
 
-const callbackCtx = { path: "/oauth2/callback/:providerId", params: { providerId: "openid" } };
+// Better Auth's INTERNAL endpoint path, which 1.7 serves at `/callback/:id`. Not the public SSO callback
+// URL — that stays `/api/auth/oauth2/callback/{providerId}`, pinned (ENG-2343) and mapped onto this one.
+const callbackCtx = { path: "/callback/:providerId", params: { providerId: "openid" } };
 const provisionDecision = {
   action: "provision" as const,
   organizationId: "org-1",
@@ -101,7 +103,7 @@ beforeEach(() => {
 describe("getSsoProviderFromContext", () => {
   test("reads the provider from a generic-OAuth callback's params", () => {
     expect(
-      getSsoProviderFromContext({ path: "/oauth2/callback/:providerId", params: { providerId: "openid" } })
+      getSsoProviderFromContext({ path: "/callback/:providerId", params: { providerId: "openid" } })
     ).toBe("openid");
   });
 
@@ -110,7 +112,7 @@ describe("getSsoProviderFromContext", () => {
   });
 
   test("falls back to parsing a resolved callback path", () => {
-    expect(getSsoProviderFromContext({ path: "/oauth2/callback/azuread", params: {} })).toBe("azuread");
+    expect(getSsoProviderFromContext({ path: "/callback/azuread", params: {} })).toBe("azuread");
   });
 
   test.each([{ path: "/sign-up/email" }, { path: "/sign-in/email" }, {}, null, undefined])(
@@ -379,7 +381,7 @@ describe("ssoDatabaseHooks.account.create.after", () => {
 });
 
 describe("ssoLicenseGateBefore", () => {
-  const samlCtx = { path: "/oauth2/callback/:providerId", params: { providerId: "saml" } };
+  const samlCtx = { path: "/callback/:providerId", params: { providerId: "saml" } };
 
   test("ignores non-callback requests without checking the license", async () => {
     await ssoLicenseGateBefore({ path: "/sign-up/email" } as never);
@@ -409,7 +411,7 @@ describe("ssoLicenseGateBefore", () => {
 describe("ssoRecoveryAfter", () => {
   const collisionLocation = "https://app.test/error?error=account_not_linked";
   const makeCtx = (overrides: Record<string, unknown> = {}) => ({
-    path: "/oauth2/callback/:providerId",
+    path: "/callback/:providerId",
     params: { providerId: "openid" },
     context: { responseHeaders: new Headers({ location: collisionLocation }) },
     redirect: vi.fn((url: string) => new Error(`redirect:${url}`)),
@@ -487,7 +489,7 @@ describe("ssoRecoveryAfter", () => {
 
 describe("blockedSignupDomainRedirectAfter", () => {
   const makeCtx = (overrides: Record<string, unknown> = {}) => ({
-    path: "/oauth2/callback/:providerId",
+    path: "/callback/:providerId",
     params: { providerId: "openid" },
     context: {
       responseHeaders: new Headers({ location: "https://app.test/auth/login?error=unable_to_create_user" }),

@@ -7,6 +7,7 @@ import {
   FEEDBACK_FIELDS,
   MEASURE_GROUP_ORDER,
   type TMeasureGroup,
+  getTranslatedFieldDescription,
   getTranslatedFieldLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { Label } from "@/modules/ui/components/label";
@@ -46,7 +47,7 @@ export function MeasuresPanel({
       .map((m) => ({
         value: m.id,
         label: getTranslatedFieldLabel(m.id, t),
-        description: m.description,
+        description: getTranslatedFieldDescription(m.id, m.description, t),
         group: groupMeta[group].label,
         groupIcon: groupMeta[group].icon,
       }))

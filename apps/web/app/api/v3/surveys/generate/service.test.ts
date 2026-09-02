@@ -72,6 +72,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     await expect(
       generateV3SurveyCreatePayloadFromPrompt({
         organizationId: "org_1",
+        workspaceId,
         input: {
           workspaceId,
           type: "link",
@@ -83,6 +84,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     await expect(
       generateV3SurveyCreatePayloadFromPrompt({
         organizationId: "org_1",
+        workspaceId,
         input: {
           workspaceId,
           type: "link",
@@ -148,6 +150,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
 
     const result = await generateV3SurveyCreatePayloadFromPrompt({
       organizationId: "org_1",
+      workspaceId,
       input: generateInput,
     });
 
@@ -229,6 +232,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
 
     const result = await generateV3SurveyCreatePayloadFromPrompt({
       organizationId: "org_1",
+      workspaceId,
       input: {
         workspaceId,
         type: "app",
@@ -323,6 +327,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
 
     const result = await generateV3SurveyCreatePayloadFromPrompt({
       organizationId: "org_1",
+      workspaceId,
       input: {
         ...generateInput,
         prompt:
@@ -403,6 +408,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
 
     const result = await generateV3SurveyCreatePayloadFromPrompt({
       organizationId: "org_1",
+      workspaceId,
       input: generateInput,
     });
 
@@ -460,6 +466,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
 
     const result = await generateV3SurveyCreatePayloadFromPrompt({
       organizationId: "org_1",
+      workspaceId,
       input: generateInput,
     });
 
@@ -516,6 +523,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
 
     const result = await generateV3SurveyCreatePayloadFromPrompt({
       organizationId: "org_1",
+      workspaceId,
       input: generateInput,
     });
 
@@ -599,6 +607,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
 
     const result = await generateV3SurveyCreatePayloadFromPrompt({
       organizationId: "org_1",
+      workspaceId,
       input: generateInput,
     });
     const elements = result.payload.blocks.flatMap((block) => block.elements);
@@ -674,6 +683,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     await expect(
       generateV3SurveyCreatePayloadFromPrompt({
         organizationId: "org_1",
+        workspaceId,
         input: generateInput,
       })
     ).rejects.toThrow(V3SurveyGeneratedPayloadValidationError);
@@ -720,6 +730,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
 
     const result = await generateV3SurveyCreatePayloadFromPrompt({
       organizationId: "org_1",
+      workspaceId,
       input: {
         ...generateInput,
         language: "es-ES",
@@ -773,6 +784,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     await expect(
       generateV3SurveyCreatePayloadFromPrompt({
         organizationId: "org_1",
+        workspaceId,
         input: generateInput,
       })
     ).rejects.toThrow(V3SurveyGeneratedPayloadValidationError);
@@ -812,6 +824,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     await expect(
       generateV3SurveyCreatePayloadFromPrompt({
         organizationId: "org_1",
+        workspaceId,
         input: generateInput,
       })
     ).rejects.toThrow(V3SurveyGeneratedPayloadValidationError);

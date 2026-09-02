@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { SENTIMENT_VALUE_ORDER } from "@/modules/ee/analysis/lib/schema-definition";
 import {
+  CATEGORY_AXIS_MAX_WIDTH,
+  CATEGORY_AXIS_MIN_WIDTH,
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
@@ -9,10 +11,16 @@ import {
   PIE_MEASURE_VALUE_KEY,
   PIVOTED_MEASURE_KEY,
   PIVOTED_VALUE_KEY,
+  VALUE_LABEL_MAX_PADDING,
+  VALUE_LABEL_MIN_PADDING,
+  buildDistributionSegments,
   formatCellValue,
+  formatPercentShare,
   formatXAxisTick,
+  getCategoryAxisWidth,
   getSemanticDimensionColor,
   getSentimentMeasureColor,
+  getValueLabelPadding,
   pivotMeasuresToCategories,
   prepareMeasureSliceData,
   preparePieData,
@@ -53,20 +61,93 @@ describe("chart-utils", () => {
         { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 2, tooltipLabel: "L:m.anger" },
       ]);
     });
+
+    // ENG-2346: the tooltip falls back to formatting a row's dataKey when the row carries no
+    // `tooltipLabel`, and the slice value lives under a synthetic key that is not a Cube column —
+    // so a missing label surfaced to users as the literal "__measure Value".
+    test("carries the translated measure label so the tooltip never formats the synthetic value key", () => {
+      const result = prepareMeasureSliceData([{ "m.joy": 236 }], ["m.joy"], label);
+      expect(result[0].tooltipLabel).toBe("L:m.joy");
+    });
   });
 
   describe("resolveChartType", () => {
     test("returns valid chart types", () => {
       expect(resolveChartType("area")).toBe("area");
       expect(resolveChartType("bar")).toBe("bar");
-      expect(resolveChartType("line")).toBe("line");
       expect(resolveChartType("pie")).toBe("pie");
       expect(resolveChartType("big_number")).toBe("big_number");
+    });
+
+    test("maps the retired line type onto area rather than the bar fallback", () => {
+      expect(resolveChartType("line")).toBe("area");
     });
 
     test("defaults to bar for invalid type", () => {
       expect(resolveChartType("invalid")).toBe("bar");
       expect(resolveChartType("")).toBe("bar");
+      // An inherited Object key must not resolve through the legacy alias lookup.
+      expect(resolveChartType("constructor")).toBe("bar");
+    });
+  });
+
+  describe("buildDistributionSegments", () => {
+    test("sizes each section by its share of the total", () => {
+      const result = buildDistributionSegments([
+        { key: "a", label: "A", value: 30 },
+        { key: "b", label: "B", value: 10 },
+      ]);
+      expect(result).not.toBeNull();
+      expect(result!.total).toBe(40);
+      expect(result!.segments.map((s) => s.percent)).toEqual([0.75, 0.25]);
+    });
+
+    test("orders sections largest first, the order preparePieData uses", () => {
+      const result = buildDistributionSegments([
+        { key: "small", label: "Small", value: 1 },
+        { key: "big", label: "Big", value: 99 },
+      ]);
+      expect(result!.segments.map((s) => s.key)).toEqual(["big", "small"]);
+    });
+
+    test("keeps the caller's order for equal shares, so the palette handout is stable", () => {
+      const result = buildDistributionSegments([
+        { key: "a", label: "A", value: 5 },
+        { key: "b", label: "B", value: 5 },
+        { key: "c", label: "C", value: 5 },
+      ]);
+      expect(result!.segments.map((s) => s.key)).toEqual(["a", "b", "c"]);
+    });
+
+    test("drops non-positive and non-numeric entries from the total", () => {
+      const result = buildDistributionSegments([
+        { key: "a", label: "A", value: 10 },
+        { key: "zero", label: "Zero", value: 0 },
+        { key: "negative", label: "Negative", value: -5 },
+        { key: "text", label: "Text", value: "n/a" },
+        { key: "empty", label: "Empty", value: null },
+      ]);
+      expect(result!.total).toBe(10);
+      expect(result!.segments.map((s) => s.key)).toEqual(["a"]);
+    });
+
+    test("returns null when nothing positive is left to show", () => {
+      expect(buildDistributionSegments([])).toBeNull();
+      expect(buildDistributionSegments([{ key: "a", label: "A", value: 0 }])).toBeNull();
+      expect(buildDistributionSegments([{ key: "a", label: "A", value: "text" }])).toBeNull();
+    });
+
+    test("keeps semantic colors and hands the palette only to the rest", () => {
+      const result = buildDistributionSegments([
+        { key: "positive", label: "Positive", value: 5, color: CHART_SENTIMENT_COLORS.positive },
+        { key: "other", label: "Other", value: 5 },
+        { key: "another", label: "Another", value: 5 },
+      ]);
+      expect(result!.segments.map((s) => s.color)).toEqual([
+        CHART_SENTIMENT_COLORS.positive,
+        CHART_MEASURE_COLORS[0],
+        CHART_MEASURE_COLORS[1],
+      ]);
     });
   });
 
@@ -273,16 +354,23 @@ describe("chart-utils", () => {
       expect(result.map((row) => row[PIVOTED_MEASURE_KEY])).toEqual(["a", "b"]);
     });
 
-    test("renders missing, null, and non-numeric values as 0 so empty measures keep a slot", () => {
+    test("keeps missing, null, and non-numeric values null so they never read as a measured zero", () => {
       const data = [{ a: null, b: "n/a" }];
       const result = pivotMeasuresToCategories(data, ["a", "b", "missing"], label);
-      expect(result.map((row) => row[PIVOTED_VALUE_KEY])).toEqual([0, 0, 0]);
+      // A measure Cube computed as NULL (never asked) must not render the same as a real 0.
+      expect(result.map((row) => row[PIVOTED_VALUE_KEY])).toEqual([null, null, null]);
     });
 
-    test("emits one zero-value row per measure key when data is empty", () => {
+    test("distinguishes a genuine zero from a null measure", () => {
+      const data = [{ scored: 0, notAsked: null }];
+      const result = pivotMeasuresToCategories(data, ["scored", "notAsked"], label);
+      expect(result.map((row) => row[PIVOTED_VALUE_KEY])).toEqual([0, null]);
+    });
+
+    test("emits one row per measure key when data is empty, with no value", () => {
       const result = pivotMeasuresToCategories([], ["a"], label);
       expect(result).toHaveLength(1);
-      expect(result[0][PIVOTED_VALUE_KEY]).toBe(0);
+      expect(result[0][PIVOTED_VALUE_KEY]).toBeNull();
     });
 
     test("cycles the palette when there are more measures than colors", () => {
@@ -322,5 +410,51 @@ describe("chart-utils", () => {
       // the semantic scale must not collide with the "not enriched" gray
       expect(colors).not.toContain(CHART_NOT_ENRICHED_COLOR);
     });
+  });
+});
+
+describe("flipped bar axis sizing", () => {
+  test("sizes the category gutter to the labels present", () => {
+    // Three numeric categories used to leave ~150px of empty gutter before the bars started.
+    expect(getCategoryAxisWidth(["3", "10", "25"])).toBeLessThan(CATEGORY_AXIS_MAX_WIDTH / 2);
+  });
+
+  test("never drops below the floor or above the ceiling", () => {
+    expect(getCategoryAxisWidth(["1"])).toBe(CATEGORY_AXIS_MIN_WIDTH);
+    expect(getCategoryAxisWidth([])).toBe(CATEGORY_AXIS_MIN_WIDTH);
+    expect(getCategoryAxisWidth(["How satisfied are you with the checkout experience overall?"])).toBe(
+      CATEGORY_AXIS_MAX_WIDTH
+    );
+  });
+
+  test("takes the longest label, not the first or last", () => {
+    const width = getCategoryAxisWidth(["ok", "a considerably longer label", "no"]);
+    expect(width).toBe(getCategoryAxisWidth(["a considerably longer label"]));
+  });
+
+  test("reserves room for the widest value label so the longest bar keeps its number", () => {
+    // The bug this guards: with no padding the label of a bar reaching the axis bound is anchored
+    // at the plot edge and clipped by the SVG viewport.
+    expect(getValueLabelPadding(["50", "20", "5"])).toBeGreaterThanOrEqual(VALUE_LABEL_MIN_PADDING);
+    expect(getValueLabelPadding(["1,234,567"])).toBeGreaterThan(getValueLabelPadding(["5"]));
+  });
+
+  test("caps the value gutter so a huge number cannot eat the plot", () => {
+    expect(getValueLabelPadding(["123,456,789,012,345"])).toBe(VALUE_LABEL_MAX_PADDING);
+  });
+});
+
+describe("formatPercentShare", () => {
+  test("keeps one fraction digit, so a small real share is not rounded away to 0%", () => {
+    // 2 records out of 500: the section is drawn and hoverable, so its label must not read "0%".
+    expect(formatPercentShare(0.004, "en-US")).toBe("0.4%");
+    expect(formatPercentShare(1 / 3, "en-US")).toBe("33.3%");
+    expect(formatPercentShare(1, "en-US")).toBe("100.0%");
+  });
+
+  test("follows the locale's decimal separator instead of a hardcoded period", () => {
+    const de = formatPercentShare(0.125, "de-DE");
+    expect(de).toContain("12,5");
+    expect(de).not.toContain("12.5");
   });
 });

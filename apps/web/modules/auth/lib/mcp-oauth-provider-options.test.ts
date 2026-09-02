@@ -14,25 +14,49 @@ vi.mock("@/lib/env", () => ({
 }));
 
 /**
- * `validAudiences` is the single mitigation standing between this deployment and
- * GHSA-p2fr-6hmx-4528, and until now nothing asserted it.
+ * The registered resource set is what binds an access token's audience to what the user approved
+ * (GHSA-p2fr-6hmx-4528). Better Auth 1.7 replaced the flat `validAudiences` allow-list with this
+ * model: a token is issued for a resource the grant covers rather than for whatever the client asked
+ * for. Declaring a second resource here would make cross-resource escalation possible again, so the
+ * single entry is asserted rather than assumed.
  *
- * The provider does not bind an access token's `aud` to the resource approved at authorization: it
- * stamps the token with the whole `validAudiences` allow-list. With one entry there is no second
- * audience to escalate into, so the advisory cannot bite here. Add a second entry and it can —
- * silently, with every existing test still green. That is what this suite exists to stop.
- *
- * The resource server enforces the other half (rejecting a token that names an audience beyond this
- * one) in modules/mcp/auth.ts, which is required by RFC 9068 §4 no matter how the provider behaves.
+ * The resource server enforces the other half — refusing a token whose `aud` names anything beyond
+ * this resource and the AS's own UserInfo endpoint — in modules/mcp/auth.ts. RFC 9068 §4 puts that
+ * on the resource server regardless of how the provider behaves, and 1.7 makes it more load-bearing:
+ * the provider no longer checks the audience against the *calling* resource server at all.
  */
 describe("getMcpOauthProviderOptions", () => {
   // Also pinned in mcp-oauth-dcr.test.ts (#8828). The duplication is deliberate: this is the
   // invariant the whole GHSA-p2fr-6hmx-4528 acceptance rests on, and the two suites can be deleted
   // or rewritten independently. Do not "de-duplicate" this away.
-  test("grants exactly one audience, so no token can be minted for a second resource server", () => {
-    const { validAudiences } = getMcpOauthProviderOptions();
+  test("registers exactly one resource, so no token can be minted for a second resource server", () => {
+    const { resources } = getMcpOauthProviderOptions();
 
-    expect(validAudiences).toEqual([getMcpResourceUrl()]);
+    expect(resources).toHaveLength(1);
+    expect(resources?.[0]).toMatchObject({ identifier: getMcpResourceUrl() });
+  });
+
+  // enforcePerClientResources defaults to true, so a DCR client with no linked resource is refused
+  // `invalid_target` at the token endpoint — after the user has consented. This must stay in step
+  // with the registered resource above.
+  test("links every newly registered client to that same resource", () => {
+    const { clientRegistrationDefaultResources } = getMcpOauthProviderOptions();
+
+    expect(clientRegistrationDefaultResources).toEqual([getMcpResourceUrl()]);
+  });
+
+  // allowedScopes INTERSECTS the requested scopes instead of rejecting them, so a short list would
+  // silently strip openid/profile/email/offline_access from every token — no error, no id_token, no
+  // refresh. Pinned against the full constant.
+  test("allows the full advertised scope set on the resource, not just the resource scopes", () => {
+    const { resources } = getMcpOauthProviderOptions();
+
+    expect(resources?.[0]).toMatchObject({ allowedScopes: [...MCP_OAUTH_SCOPES] });
+  });
+
+  // Boot-time config must never revert an operator's CRUD edit on restart.
+  test("seeds resources insert-only", () => {
+    expect(getMcpOauthProviderOptions().resourceSeedMode).toBe("insertOnly");
   });
 
   test("advertises only scopes it is willing to grant", () => {

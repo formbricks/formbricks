@@ -3,12 +3,14 @@
   "cacheMaxSize": "10GB",
   "globalDependencies": [
     ".nvmrc",
+    "authzed/schema.zed",
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
     "prisma.config.mjs",
     "turbo.json"
   ],
   "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
+  "globalPassThroughEnv": ["SEED_API_KEY"],
   "tasks": {
     "@formbricks/ai#build": {
       "dependsOn": ["@formbricks/logger#build"],
@@ -243,6 +245,12 @@
       ],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"],
       "passThroughEnv": [
+        "AUTHZED_CONSISTENCY",
+        "AUTHZED_ENABLED",
+        "AUTHZED_ENDPOINT",
+        "AUTHZED_INSECURE",
+        "AUTHZED_SYSTEM_KEY",
+        "AUTHZED_TOKEN",
         "DATABASE_URL",
         "DEBUG",
         "ENCRYPTION_KEY",
@@ -260,6 +268,7 @@
         "OTEL_SERVICE_NAME",
         "OTEL_TRACES_SAMPLER",
         "OTEL_TRACES_SAMPLER_ARG",
+        "MCP_OAUTH_JWKS_URL",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
         "REDIS_URL",

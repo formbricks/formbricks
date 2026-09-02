@@ -458,7 +458,10 @@ post:
         `distribution.triggers[].actionClassId` referencing an action class that does not exist in
         the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters`
         entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an
-        unsupported person identifier, or an unknown device value. The `invalid_params`
+        unsupported person identifier, or an unknown device value. Also returned when the document
+        passes this endpoint's request schema but is rejected by the stricter validation the survey
+        service applies on write — for example a CTA `buttonUrl` whose scheme the service does not
+        accept. The `invalid_params`
         array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
       content:
         application/problem+json:

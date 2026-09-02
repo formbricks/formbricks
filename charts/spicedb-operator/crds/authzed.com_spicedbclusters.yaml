@@ -1,0 +1,352 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.2
+  name: spicedbclusters.authzed.com
+spec:
+  group: authzed.com
+  names:
+    categories:
+    - authzed
+    kind: SpiceDBCluster
+    listKind: SpiceDBClusterList
+    plural: spicedbclusters
+    shortNames:
+    - spicedbs
+    singular: spicedbcluster
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.channel
+      name: Channel
+      type: string
+    - jsonPath: .spec.version
+      name: Desired
+      type: string
+    - jsonPath: .status.version.name
+      name: Current
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='ConfigurationWarning')].status
+      name: Warnings
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Migrating')].status
+      name: Migrating
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='RollingDeployment')].status
+      name: Updating
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='ConditionValidatingFailed')].status
+      name: Invalid
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Paused')].status
+      name: Paused
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: SpiceDBCluster defines all options for a full SpiceDB cluster
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterSpec holds the desired state of the cluster.
+            properties:
+              baseImage:
+                description: |-
+                  BaseImage specifies the base container image to use for SpiceDB.
+                  If not specified, will fall back to the operator's --base-image flag,
+                  then to the imageName defined in the update graph.
+                type: string
+              channel:
+                description: |-
+                  Channel is a defined series of updates that operator should follow.
+                  The operator is configured with a datasource that configures available
+                  channels and update paths.
+                  If `version` is not specified, then the operator will keep SpiceDB
+                  up-to-date with the current head of the channel.
+                  If `version` is specified, then the operator will write available updates
+                  in the status.
+                type: string
+              config:
+                description: Config values to be passed to the cluster
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              credentials:
+                description: |-
+                  Credentials configures per-field secret references for sensitive config.
+                  Mutually exclusive with SecretRef.
+                properties:
+                  datastoreURI:
+                    description: DatastoreURI configures the source for the datastore
+                      connection string.
+                    properties:
+                      key:
+                        description: |-
+                          Key is the key within the Secret. Defaults to the standard SpiceDB key
+                          name for this credential (datastore_uri or preshared_key) if omitted.
+                        type: string
+                      secretName:
+                        description: SecretName is the name of the Kubernetes Secret
+                          in the same namespace.
+                        type: string
+                      skip:
+                        description: |-
+                          Skip instructs the operator not to validate or inject this credential.
+                          Use when the credential is provided externally (CSI driver, workload
+                          identity, sidecar proxy). When true, SecretName and Key are ignored.
+                        type: boolean
+                    type: object
+                  migrationSecrets:
+                    description: MigrationSecrets configures the source for the migration
+                      secrets.
+                    properties:
+                      key:
+                        description: |-
+                          Key is the key within the Secret. Defaults to the standard SpiceDB key
+                          name for this credential (datastore_uri or preshared_key) if omitted.
+                        type: string
+                      secretName:
+                        description: SecretName is the name of the Kubernetes Secret
+                          in the same namespace.
+                        type: string
+                      skip:
+                        description: |-
+                          Skip instructs the operator not to validate or inject this credential.
+                          Use when the credential is provided externally (CSI driver, workload
+                          identity, sidecar proxy). When true, SecretName and Key are ignored.
+                        type: boolean
+                    type: object
+                  presharedKey:
+                    description: PresharedKey configures the source for the gRPC preshared
+                      key.
+                    properties:
+                      key:
+                        description: |-
+                          Key is the key within the Secret. Defaults to the standard SpiceDB key
+                          name for this credential (datastore_uri or preshared_key) if omitted.
+                        type: string
+                      secretName:
+                        description: SecretName is the name of the Kubernetes Secret
+                          in the same namespace.
+                        type: string
+                      skip:
+                        description: |-
+                          Skip instructs the operator not to validate or inject this credential.
+                          Use when the credential is provided externally (CSI driver, workload
+                          identity, sidecar proxy). When true, SecretName and Key are ignored.
+                        type: boolean
+                    type: object
+                type: object
+              patches:
+                description: |-
+                  Patches is a list of patches to apply to generated resources.
+                  If multiple patches apply to the same object and field, later patches
+                  in the list take precedence over earlier ones.
+                items:
+                  description: Patch represents a single change to apply to generated
+                    manifests
+                  properties:
+                    kind:
+                      description: Kind targets an object by its kubernetes Kind name.
+                      type: string
+                    patch:
+                      description: |-
+                        Patch is an inlined representation of a structured merge patch (one that
+                        just specifies the structure and fields to be modified) or a an explicit
+                        JSON6902 patch operation.
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                  required:
+                  - patch
+                  type: object
+                type: array
+              secretName:
+                description: |-
+                  SecretName points to a secret (in the same namespace) that holds secret
+                  config for the cluster like passwords, credentials, etc.
+                  If the secret is omitted, one will be generated
+                type: string
+              version:
+                description: |-
+                  Version is the name of the version of SpiceDB that will be run.
+                  The version is usually a simple version string like `v1.13.0`, but the
+                  operator is configured with a data source that tells it what versions
+                  are allowed, and they may have other names.
+                  If omitted, the newest version in the head of the channel will be used.
+                  Note that the `config.image` field will take precedence over
+                  version/channel, if it is specified
+                type: string
+            type: object
+          status:
+            description: ClusterStatus communicates the observed state of the cluster.
+            properties:
+              availableVersions:
+                description: |-
+                  AvailableVersions is a list of versions that the currently running
+                  version can be updated to. Only applies if using an update channel.
+                items:
+                  properties:
+                    attributes:
+                      description: |-
+                        Attributes is an optional set of descriptors for the update, which
+                        carry additional information like whether there will be a migration
+                        if this version is selected.
+                      items:
+                        type: string
+                      type: array
+                    channel:
+                      description: Channel is the name of the channel this version
+                        is in
+                      type: string
+                    description:
+                      description: Description a human-readable description of the
+                        update.
+                      type: string
+                    name:
+                      description: Name is the identifier for this version
+                      type: string
+                  required:
+                  - channel
+                  - name
+                  type: object
+                type: array
+              conditions:
+                description: Conditions for the current state of the Stack.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              currentMigrationHash:
+                description: |-
+                  CurrentMigrationHash is a hash of the currently running migration target and config.
+                  If this is equal to TargetMigrationHash (and there are no conditions) then the datastore
+                  is fully migrated.
+                type: string
+              image:
+                description: Image is the image that is or will be used for this cluster
+                type: string
+              migration:
+                description: Migration is the name of the last migration applied
+                type: string
+              observedGeneration:
+                description: |-
+                  ObservedGeneration represents the .metadata.generation that has been
+                  seen by the controller.
+                format: int64
+                minimum: 0
+                type: integer
+              phase:
+                description: Phase is the currently running phase (used for phased
+                  migrations)
+                type: string
+              secretHash:
+                description: SecretHash is a digest of the last applied secret
+                type: string
+              targetMigrationHash:
+                description: TargetMigrationHash is a hash of the desired migration
+                  target and config
+                type: string
+              version:
+                description: |-
+                  CurrentVersion is a description of the currently selected version from
+                  the channel, if an update channel is being used.
+                properties:
+                  attributes:
+                    description: |-
+                      Attributes is an optional set of descriptors for the update, which
+                      carry additional information like whether there will be a migration
+                      if this version is selected.
+                    items:
+                      type: string
+                    type: array
+                  channel:
+                    description: Channel is the name of the channel this version is
+                      in
+                    type: string
+                  description:
+                    description: Description a human-readable description of the update.
+                    type: string
+                  name:
+                    description: Name is the identifier for this version
+                    type: string
+                required:
+                - channel
+                - name
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

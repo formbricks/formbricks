@@ -1,0 +1,38 @@
+{{- if and .Values.authzed.enabled (eq .Values.authzed.mode "selfHosted") }}
+apiVersion: authzed.com/v1alpha1
+kind: SpiceDBCluster
+metadata:
+  name: {{ include "formbricks.authzedClusterName" . }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  version: {{ .Values.authzed.cluster.version | quote }}
+  channel: {{ .Values.authzed.cluster.channel | quote }}
+  config:
+    replicas: {{ .Values.authzed.cluster.replicas }}
+    {{- toYaml .Values.authzed.cluster.config | nindent 4 }}
+  credentials:
+    datastoreURI:
+      secretName: {{ include "formbricks.authzedDatastoreSecretName" . }}
+      key: {{ .Values.authzed.datastore.uriKey }}
+    presharedKey:
+      secretName: {{ include "formbricks.authzedAuthSecretName" . }}
+      key: {{ .Values.authzed.auth.tokenKey }}
+  {{- if or .Values.authzed.cluster.resources .Values.authzed.cluster.patches }}
+  patches:
+    {{- with .Values.authzed.cluster.resources }}
+    - kind: Deployment
+      patch:
+        spec:
+          template:
+            spec:
+              containers:
+                - name: spicedb
+                  resources:
+                    {{- toYaml . | nindent 20 }}
+    {{- end }}
+    {{- with .Values.authzed.cluster.patches }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end }}

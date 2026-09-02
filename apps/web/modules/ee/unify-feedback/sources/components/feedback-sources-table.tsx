@@ -51,6 +51,7 @@ const getFeedbackSourceColumns = ({
   locale,
   surveyNameById,
   onCsvImport,
+  onReimport,
   onToggleStatus,
   onDelete,
   onFeedbackSourceClick,
@@ -60,6 +61,7 @@ const getFeedbackSourceColumns = ({
   locale: string;
   surveyNameById: Record<string, string>;
   onCsvImport: (feedbackSource: TFeedbackSourceWithMappings) => void;
+  onReimport: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
   onToggleStatus: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
   onDelete: (feedbackSourceId: string) => Promise<void>;
   onFeedbackSourceClick: (feedbackSource: TFeedbackSourceWithMappings) => void;
@@ -177,6 +179,7 @@ const getFeedbackSourceColumns = ({
             feedbackSource={feedbackSource}
             onEdit={() => onFeedbackSourceClick(feedbackSource)}
             onCsvImport={feedbackSource.type === "csv" ? () => onCsvImport(feedbackSource) : undefined}
+            onReimport={() => onReimport(feedbackSource)}
             onToggleStatus={() => onToggleStatus(feedbackSource)}
             onDelete={() => onDelete(feedbackSource.id)}
           />
@@ -194,6 +197,7 @@ interface FeedbackSourcesTableProps {
   workspaceId: string;
   onFeedbackSourceClick: (feedbackSource: TFeedbackSourceWithMappings) => void;
   onCsvImport: (feedbackSource: TFeedbackSourceWithMappings) => void;
+  onReimport: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
   onToggleStatus: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
   onDelete: (feedbackSourceId: string) => Promise<void>;
   onImportResponses: (survey: TUnifySurvey) => Promise<void>;
@@ -209,6 +213,7 @@ export function FeedbackSourcesTable({
   workspaceId,
   onFeedbackSourceClick,
   onCsvImport,
+  onReimport,
   onToggleStatus,
   onDelete,
   onImportResponses,
@@ -237,6 +242,7 @@ export function FeedbackSourcesTable({
         locale: i18n.language,
         surveyNameById,
         onCsvImport,
+        onReimport,
         onToggleStatus,
         onDelete,
         onFeedbackSourceClick,

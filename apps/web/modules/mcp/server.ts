@@ -26,7 +26,11 @@ import { registerWorkspaceTools } from "./tools/workspaces";
  * best-effort. Any failure here falls back to an anonymous event, not a thrown
  * error into the MCP request path.
  */
-export const identifyMcpUser: NonNullable<MCPAnalyticsOptions["identify"]> = async (_request, extra) => {
+// `identify` is a union of callback | static identity | null — pick the callback member so
+// callers (and tests) can invoke this directly.
+type TMcpIdentifyFn = Extract<NonNullable<MCPAnalyticsOptions["identify"]>, CallableFunction>;
+
+export const identifyMcpUser: TMcpIdentifyFn = async (_request, extra) => {
   try {
     // Read BOTH locations, deliberately. @posthog/mcp hands us its own compat context, where SDK v2's
     // auth sits at `http.authInfo` while v1's sat flat on `extra.authInfo`. Reading only the flat one

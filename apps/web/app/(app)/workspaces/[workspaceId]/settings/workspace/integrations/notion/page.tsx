@@ -16,10 +16,14 @@ import { getNotionDatabases } from "@/lib/notion/service";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getSettingsPageMetadata } from "@/modules/settings/lib/metadata";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
+
+export const generateMetadata = () =>
+  getSettingsPageMetadata("workspace.integrations.notion.notion_integration");
 
 const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;

@@ -260,6 +260,7 @@ export const ToolbarPlugin = (
         }
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally reloads editor content only when updateTemplate/firstRender toggle; depending on editor/props would re-run on every unrelated prop change
   }, [props.updateTemplate, props.firstRender]);
 
   useEffect(() => {
@@ -275,6 +276,7 @@ export const ToolbarPlugin = (
         root.append(...nodes);
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time firstRender initialization; adding editor/props would re-seed the editor on unrelated changes
   }, []);
 
   // Register text-saving update listener - always active for each editor instance
