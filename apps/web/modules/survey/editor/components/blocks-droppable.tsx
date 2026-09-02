@@ -16,6 +16,7 @@ interface BlocksDroppableProps {
   updateElement: (elementIdx: number, updatedAttributes: any) => void;
   updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
   updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
+  updateBlockName: (blockIdx: number, name: string) => void;
   updateBlockButtonLabel: (
     blockIndex: number,
     labelKey: "buttonLabel" | "backButtonLabel",
@@ -54,6 +55,7 @@ export const BlocksDroppable = ({
   updateElement,
   updateBlockLogic,
   updateBlockLogicFallback,
+  updateBlockName,
   updateBlockButtonLabel,
   addElement,
   isFormbricksCloud,
@@ -68,7 +70,7 @@ export const BlocksDroppable = ({
   moveBlock,
   addElementToBlock,
   moveElementToBlock,
-}: BlocksDroppableProps) => {
+}: Readonly<BlocksDroppableProps>) => {
   const [parent] = useAutoAnimate();
 
   return (
@@ -91,6 +93,7 @@ export const BlocksDroppable = ({
               updateElement={updateElement}
               updateBlockLogic={updateBlockLogic}
               updateBlockLogicFallback={updateBlockLogicFallback}
+              updateBlockName={updateBlockName}
               updateBlockButtonLabel={updateBlockButtonLabel}
               duplicateElement={duplicateElement}
               deleteElement={deleteElement}
