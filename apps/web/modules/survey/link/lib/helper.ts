@@ -20,7 +20,7 @@ export const getEmailVerificationDetails = async (
       } else {
         return { status: "fishy" };
       }
-    } catch (error) {
+    } catch {
       return { status: "not-verified" };
     }
   }
