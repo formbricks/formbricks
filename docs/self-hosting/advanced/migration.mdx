@@ -699,6 +699,9 @@ Cube is part of the baseline Formbricks v5 stack.
     Then compare `formbricks/docker-compose.v5.yml` with your existing `formbricks/docker-compose.yml` and merge
     the v5 additions:
 
+    - set `POSTGRES_PASSWORD` in `formbricks/.env` to the exact password used by the existing PostgreSQL
+      volume; do not generate a new value during the upgrade. If it contains URI-reserved characters, also set
+      `POSTGRES_PASSWORD_URL_ENCODED` to its percent-encoded form
     - add a non-empty `HUB_API_KEY` and reuse the same value wherever your deployment resolves Hub auth
     - keep `HUB_API_URL` at `http://hub:8080` unless Hub runs elsewhere
     - include the bundled `formbricks-migrate`, `hub-migrate`, and `hub` services
@@ -728,6 +731,9 @@ Cube is part of the baseline Formbricks v5 stack.
 
     At minimum, confirm:
 
+    - `POSTGRES_PASSWORD` contains the exact password used by the existing PostgreSQL volume; replacing the
+      Compose file does not rotate the database password. If it contains URI-reserved characters, also set
+      `POSTGRES_PASSWORD_URL_ENCODED` to its percent-encoded form
     - `HUB_API_KEY` is configured and the same value is available wherever your deployment resolves Hub auth
     - `HUB_API_URL` points to the Hub service the app can reach
     - the compose stack includes `formbricks-migrate`, `hub-migrate`, and `hub`
