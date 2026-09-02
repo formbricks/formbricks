@@ -165,6 +165,27 @@ write_rustfs_env_file() {
   upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
 }
 
+write_base_env_file() {
+  local env_file="${1:-.env}"
+  local hub_key="$2"
+  local cube_secret="$3"
+  local authzed_token="$4"
+  local authzed_database_password="$5"
+
+  umask 077
+  : >"$env_file"
+  upsert_dotenv_var "HUB_API_KEY" "$hub_key" "$env_file"
+  upsert_dotenv_var "CUBEJS_API_SECRET" "$cube_secret" "$env_file"
+  upsert_dotenv_var "CUBEJS_JWT_ISSUER" "formbricks-web" "$env_file"
+  upsert_dotenv_var "CUBEJS_JWT_AUDIENCE" "formbricks-cube" "$env_file"
+  upsert_dotenv_var "AUTHZED_TOKEN" "$authzed_token" "$env_file"
+  upsert_dotenv_var "AUTHZED_DATABASE_PASSWORD" "$authzed_database_password" "$env_file"
+  upsert_dotenv_var "AUTHZED_ENABLED" "true" "$env_file"
+  upsert_dotenv_var "AUTHZED_CONSISTENCY" "fully_consistent" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED" "true" "$env_file"
+  chmod 600 "$env_file"
+}
+
 add_formbricks_traefik_labels() {
   local compose_file="${1:-docker-compose.yml}"
   local formbricks_domain_name="$2"
@@ -569,6 +590,13 @@ EOT
 
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
   curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+  echo "📥 Downloading AuthZed database bootstrap helper..."
+  authzed_bootstrap_commit="10d5ad908491a8a818aef3c6ada91fa4fdc30b03"
+  authzed_bootstrap_sha256="70975701cdf0dcffef5d3573a7514360e87428bb07cc4bfb4dbf47ae0c2e93a5"
+  curl -fsSL -o authzed-postgres-bootstrap.sh \
+    "https://raw.githubusercontent.com/formbricks/formbricks/${authzed_bootstrap_commit}/docker/authzed-postgres-bootstrap.sh"
+  printf '%s  %s\n' "$authzed_bootstrap_sha256" authzed-postgres-bootstrap.sh | sha256sum --check --status -
+  chmod 700 authzed-postgres-bootstrap.sh
   mkdir -p cube/schema
   echo "📥 Downloading Cube.js configuration for XM Suite v5 analytics..."
   curl -fsSL -o cube/cube.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
@@ -589,13 +617,10 @@ EOT
 
   hub_api_key=$(openssl rand -hex 32)
   cubejs_api_secret=$(openssl rand -hex 32)
-cat <<EOF > .env
-HUB_API_KEY=$hub_api_key
-CUBEJS_API_SECRET=$cubejs_api_secret
-CUBEJS_JWT_ISSUER=formbricks-web
-CUBEJS_JWT_AUDIENCE=formbricks-cube
-EOF
-  echo "🚗 Generated Hub and Cube secrets in .env successfully!"
+  authzed_token=$(openssl rand -hex 32)
+  authzed_database_password=$(openssl rand -hex 32)
+  write_base_env_file ".env" "$hub_api_key" "$cubejs_api_secret" "$authzed_token" "$authzed_database_password"
+  echo "🚗 Generated Hub, Cube, and AuthZed secrets in .env successfully!"
   
   if [[ -n $mail_from ]]; then
     sed -i "s|# MAIL_FROM:|MAIL_FROM: \"$mail_from\"|" docker-compose.yml
@@ -937,6 +962,11 @@ EOF
 
   newgrp docker <<END
 
+set -e
+docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate
+docker compose wait formbricks-migrate
+docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 docker compose up -d
 
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
@@ -1061,8 +1091,29 @@ migrate_legacy_valkey_image() {
 update_formbricks() {
   echo "🔄 Updating Formbricks..."
   cd formbricks
+
   migrate_legacy_valkey_image docker-compose.yml
+
+  if ! grep -Eq '^  authzed-ops:$' docker-compose.yml || ! grep -Eq '^  spicedb:$' docker-compose.yml; then
+    echo "❌ This installation does not yet contain the AuthZed v6 Compose services."
+    echo "Your customized Compose file was not changed. Follow the v6 AuthZed migration guide before updating:"
+    echo "https://formbricks.com/docs/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6"
+    exit 1
+  fi
+
+  if ! grep -Eq '^FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true$' .env; then
+    echo "❌ The AuthZed v6 migration has not been acknowledged for this installation."
+    echo "Back up PostgreSQL, add the documented AuthZed services and secrets, then run the upgrade preparation."
+    echo "After its final check is clean, set FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true in .env and retry."
+    echo "https://formbricks.com/docs/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6"
+    exit 1
+  fi
   sudo docker compose pull
+  # The outbox migration is backward compatible with the still-running v5 application. Apply it before
+  # the release-matched operator checks so the old deployment stays available if preparation blocks.
+  sudo docker compose run --rm formbricks-migrate
+  sudo docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+  sudo docker compose --profile authzed-ops run --rm authzed-ops upgrade check
   sudo docker compose down
   sudo docker compose up -d
   echo "🎉 Formbricks updated successfully!"

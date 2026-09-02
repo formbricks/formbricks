@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZIntegrationInput } from "@formbricks/types/integration";
+import { assertCan } from "@/lib/authorization";
 import { withStoredIntegrationKey } from "@/lib/integration/redact-credentials";
 import {
   createOrUpdateIntegration,
@@ -11,7 +12,6 @@ import {
 } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromIntegrationId,
   getOrganizationIdFromWorkspaceId,
@@ -36,20 +36,9 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
 
       const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: parsedInput.workspaceId,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -102,20 +91,9 @@ export const deleteIntegrationAction = authenticatedActionClient.inputSchema(ZDe
 
     const organizationId = await getOrganizationIdFromIntegrationId(parsedInput.integrationId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromIntegrationId(parsedInput.integrationId),
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromIntegrationId(parsedInput.integrationId),
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;

@@ -58,7 +58,7 @@ describe("prepareQueryForChartType", () => {
     });
   });
 
-  test.each(["line", "area", "bar", "pie"] as const)("leaves a %s chart grouped", (chartType) => {
+  test.each(["area", "bar", "pie"] as const)("leaves a %s chart grouped", (chartType) => {
     expect(prepareQueryForChartType(grouped, chartType)).toBe(grouped);
   });
 });

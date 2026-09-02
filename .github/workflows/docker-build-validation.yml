@@ -13,9 +13,60 @@ permissions:
   contents: read
 
 jobs:
+  validate-authzed-compose:
+    name: Validate AuthZed Compose
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: postgresql://test:test@127.0.0.1:5432/formbricks
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      REDIS_URL: redis://127.0.0.1:6379
+      CUBEJS_API_URL: http://127.0.0.1:4000
+      CUBEJS_API_SECRET: build-time-placeholder
+      HUB_API_URL: http://127.0.0.1:4000
+      HUB_API_KEY: build-time-placeholder
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.x
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
+
+      - name: Build web workspace dependencies
+        run: pnpm build --filter=@formbricks/web^...
+
+      - name: Test AuthZed client and schema lifecycle
+        run: pnpm --dir apps/web test lib/authzed
+
+      - name: Validate Compose contracts
+        run: bash docker/authzed-compose-contract.sh
+
+      - name: Run AuthZed application and persistence smoke test
+        run: bash docker/authzed-smoke.sh
+
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     # Add PostgreSQL and Redis service containers
     services:
@@ -49,12 +100,16 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
       - name: Verify Valkey Image Platforms
         shell: bash
+        env:
+          AUTHZED_DATABASE_PASSWORD: 0000000000000000000000000000000000000000000000000000000000000002
+          AUTHZED_TOKEN: 0000000000000000000000000000000000000000000000000000000000000001
         run: |
           set -euo pipefail
 
@@ -107,6 +162,56 @@ jobs:
             ! command -v npx >/dev/null 2>&1
             node --version
           '
+
+      - name: Verify Release-Matched AuthZed Operator CLI
+        shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+
+          IMAGE="formbricks-test:$GITHUB_SHA"
+          docker run --rm --entrypoint sh "$IMAGE" -c '
+            set -eu
+            test "$(id -u)" != "0"
+            test -x /usr/local/bin/formbricks-authzed
+            test -r /home/nextjs/authzed-cli/index.mjs
+            test -r /home/nextjs/authzed-cli/schema.zed
+          '
+
+          AUTHZED_CLI_ENV=(
+            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks"
+            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY"
+            -e REDIS_URL="redis://192.0.2.1:6379"
+            -e HUB_API_URL="http://192.0.2.1:4000"
+            -e HUB_API_KEY="build-time-placeholder"
+            -e CUBEJS_API_URL="http://192.0.2.1:4000"
+            -e CUBEJS_API_SECRET="build-time-placeholder"
+            -e AUTHZED_ENABLED="false"
+          )
+
+          set +e
+          output="$(docker run --rm \
+            --entrypoint formbricks-authzed \
+            "${AUTHZED_CLI_ENV[@]}" \
+            "$IMAGE" health 2>&1)"
+          status=$?
+          set -e
+
+          test "$status" -eq 1
+          test "$output" = '{"status":"disabled"}'
+
+          set +e
+          upgrade_output="$(docker run --rm \
+            --entrypoint formbricks-authzed \
+            "${AUTHZED_CLI_ENV[@]}" \
+            "$IMAGE" upgrade check 2>&1)"
+          upgrade_status=$?
+          set -e
+
+          test "$upgrade_status" -eq 1
+          test "$upgrade_output" = '{"code":"authzed_disabled","retryable":false,"status":"failed"}'
 
       - name: Reject Invalid Environment Before Database Setup
         shell: bash
@@ -221,6 +326,8 @@ jobs:
             "BETTER_AUTH_SECRET=$DUMMY_ENCRYPTION_KEY" \
             'HUB_API_KEY=build-time-placeholder' \
             'CUBEJS_API_SECRET=build-time-placeholder' \
+            'AUTHZED_TOKEN=compose-authzed-token-placeholder' \
+            'AUTHZED_DATABASE_PASSWORD=compose-authzed-database-placeholder' \
             'AI_PROVIDER=compose-provider-secret-sentinel' \
             > docker/.env
 

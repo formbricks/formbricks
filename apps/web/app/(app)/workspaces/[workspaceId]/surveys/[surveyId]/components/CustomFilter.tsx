@@ -1,7 +1,6 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { format } from "date-fns";
 import { TFunction } from "i18next";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -20,8 +19,9 @@ import {
   resolveDateRangeLabelPreset,
   resolveDateRangePresetBounds,
 } from "@/lib/date-ranges";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
-import { Calendar } from "@/modules/ui/components/calendar";
+import { DateRangeCalendar } from "@/modules/ui/components/date-picker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,11 +29,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { PopoverTriggerButton, ResponseFilter } from "./ResponseFilter";
-
-enum DateSelected {
-  FROM = "common.from",
-  TO = "common.to",
-}
 
 enum FilterDownload {
   ALL = "common.all",
@@ -70,9 +65,22 @@ const DATE_RANGE_PRESETS: readonly { preset: TDateRangePreset; getLabel: (t: TFu
 
 const DATE_RANGE_PRESET_NAMES = DATE_RANGE_PRESETS.map(({ preset }) => preset);
 
+const DAY_MONTH_OPTIONS: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+
 interface CustomFilterProps {
   survey: TSurvey;
 }
+
+const getCustomRangeLabel = (dateRange: DateRange, locale: string | undefined, t: TFunction): string => {
+  const from = dateRange?.from
+    ? formatDateForDisplay(dateRange.from, locale, DAY_MONTH_OPTIONS)
+    : t("workspace.surveys.summary.select_first_date");
+  const to = dateRange?.to
+    ? formatDateForDisplay(dateRange.to, locale, DAY_MONTH_OPTIONS)
+    : t("workspace.surveys.summary.select_last_date");
+
+  return `${from} - ${to}`;
+};
 
 const getDateRangeLabel = (dateRange: DateRange, t: TFunction) => {
   const preset = resolveDateRangeLabelPreset(dateRange, DATE_RANGE_PRESET_NAMES);
@@ -80,17 +88,18 @@ const getDateRangeLabel = (dateRange: DateRange, t: TFunction) => {
   return matched ? matched.getLabel(t) : getFilterDropDownLabels(t).CUSTOM_RANGE;
 };
 
-export const CustomFilter = ({ survey }: CustomFilterProps) => {
-  const { t } = useTranslation();
+export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
+  const { t, i18n } = useTranslation();
+  // `resolvedLanguage` is undefined until i18next finishes initialising, so fall back the way the
+  // rest of the app does rather than letting date formatting silently drop to en-US.
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
     dateRange.from && dateRange.to ? getDateRangeLabel(dateRange, t) : getFilterDropDownLabels(t).ALL_TIME
   );
-  const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
   const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
-  const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const firstMountRef = useRef(true);
@@ -130,66 +139,8 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     return keys;
   }, []);
 
-  const handleDateHoveredChange = (date: Date) => {
-    if (selectingDate === DateSelected.FROM) {
-      const startOfRange = new Date(date);
-      startOfRange.setHours(0, 0, 0, 0); // Set to the start of the selected day
-
-      // Check if the selected date is after the current 'to' date
-      if (startOfRange > dateRange?.to!) {
-        return;
-      } else {
-        setHoveredRange({ from: startOfRange, to: dateRange.to });
-      }
-    } else {
-      const endOfRange = new Date(date);
-      endOfRange.setHours(23, 59, 59, 999); // Set to the end of the selected day
-
-      // Check if the selected date is before the current 'from' date
-      if (endOfRange < dateRange?.from!) {
-        return;
-      } else {
-        setHoveredRange({ from: dateRange.from, to: endOfRange });
-      }
-    }
-  };
-
-  const handleDateChange = (date: Date) => {
-    if (selectingDate === DateSelected.FROM) {
-      const startOfRange = new Date(date);
-      startOfRange.setHours(0, 0, 0, 0); // Set to the start of the selected day
-
-      // Check if the selected date is after the current 'to' date
-      if (startOfRange > dateRange?.to!) {
-        const nextDay = new Date(startOfRange);
-        nextDay.setDate(nextDay.getDate() + 1);
-        nextDay.setHours(23, 59, 59, 999);
-        setDateRange({ from: startOfRange, to: nextDay });
-      } else {
-        setDateRange((prevData) => ({ from: startOfRange, to: prevData.to }));
-      }
-      setSelectingDate(DateSelected.TO);
-    } else {
-      const endOfRange = new Date(date);
-      endOfRange.setHours(23, 59, 59, 999); // Set to the end of the selected day
-
-      // Check if the selected date is before the current 'from' date
-      if (endOfRange < dateRange?.from!) {
-        const previousDay = new Date(endOfRange);
-        previousDay.setDate(previousDay.getDate() - 1);
-        previousDay.setHours(0, 0, 0, 0); // Set to the start of the selected day
-        setDateRange({ from: previousDay, to: endOfRange });
-      } else {
-        setDateRange((prevData) => ({ from: prevData?.from, to: endOfRange }));
-      }
-      setIsDatePickerOpen(false);
-      setSelectingDate(DateSelected.FROM);
-    }
-  };
-
   const handleDatePickerClose = () => {
     setIsDatePickerOpen(false);
-    setSelectingDate(DateSelected.FROM);
   };
 
   const handleDownloadResponses = async (filter: FilterDownload, fileType: "csv" | "xlsx") => {
@@ -233,9 +184,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
           <DropdownMenuTrigger asChild>
             <PopoverTriggerButton isOpen={isFilterDropDownOpen}>
               {filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE
-                ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
-                    dateRange?.to ? format(dateRange.to, "dd LLL") : "Select last date"
-                  }`
+                ? getCustomRangeLabel(dateRange, locale, t)
                 : filterRange}
             </PopoverTriggerButton>
           </DropdownMenuTrigger>
@@ -261,7 +210,6 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               onClick={() => {
                 setIsDatePickerOpen(true);
                 setFilterRange(getFilterDropDownLabels(t).CUSTOM_RANGE);
-                setSelectingDate(DateSelected.FROM);
               }}>
               <p className="text-sm text-slate-700 hover:ring-0">{getFilterDropDownLabels(t).CUSTOM_RANGE}</p>
             </DropdownMenuItem>
@@ -315,18 +263,11 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
       </div>
       {isDatePickerOpen && (
         <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
-          <Calendar
-            autoFocus
-            mode="range"
-            defaultMonth={dateRange?.from}
-            selected={hoveredRange || dateRange}
-            numberOfMonths={2}
-            onDayClick={(date) => handleDateChange(date)}
-            onDayMouseEnter={handleDateHoveredChange}
-            onDayMouseLeave={() => setHoveredRange(null)}
-            classNames={{
-              day_today: "hover:bg-slate-200 bg-white",
-            }}
+          <DateRangeCalendar
+            value={dateRange}
+            locale={locale}
+            onChange={setDateRange}
+            onComplete={() => setIsDatePickerOpen(false)}
           />
         </div>
       )}

@@ -45,6 +45,11 @@ test.describe("Workspace tags settings @slow", () => {
       waitUntil: "domcontentloaded",
     });
 
+    // The tab title used to come from one section-wide `metadata` that still said "Configuration" — a
+    // word the UI shows nowhere, and the phrase the product docs picked up from it. Each settings page
+    // now titles itself with the heading it renders, so assert the two agree on the way past.
+    await expect(page).toHaveTitle("Tags | Formbricks");
+
     // Rows are addressed by the id the API returned, and names are read with `toHaveValue`, which reads
     // the live value. An `input[value="…"]` selector would match the *attribute* instead — `fill()` never
     // updates that, so such a locator passes before a rename and fails after one for the wrong reason.

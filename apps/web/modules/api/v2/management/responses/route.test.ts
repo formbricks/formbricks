@@ -5,14 +5,19 @@ import type { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated
 // whichever test runs first, which on a loaded CI runner exceeded the 5s testTimeout.
 import { GET } from "./route";
 
-const { mockAuthenticatedApiClient, mockGetResponses, mockHandleApiError, mockSuccessResponse } = vi.hoisted(
-  () => ({
-    mockAuthenticatedApiClient: vi.fn(),
-    mockGetResponses: vi.fn(),
-    mockHandleApiError: vi.fn(),
-    mockSuccessResponse: vi.fn(),
-  })
-);
+const {
+  mockAuthenticatedApiClient,
+  mockGetAuthorizedApiKeyWorkspaceIds,
+  mockGetResponses,
+  mockHandleApiError,
+  mockSuccessResponse,
+} = vi.hoisted(() => ({
+  mockAuthenticatedApiClient: vi.fn(),
+  mockGetAuthorizedApiKeyWorkspaceIds: vi.fn(),
+  mockGetResponses: vi.fn(),
+  mockHandleApiError: vi.fn(),
+  mockSuccessResponse: vi.fn(),
+}));
 
 vi.mock("@/modules/api/v2/auth/authenticated-api-client", () => ({
   authenticatedApiClient: mockAuthenticatedApiClient,
@@ -27,6 +32,10 @@ vi.mock("@/modules/api/v2/lib/response", () => ({
 
 vi.mock("@/modules/api/v2/lib/utils", () => ({
   handleApiError: mockHandleApiError,
+}));
+
+vi.mock("@/modules/api/v2/management/lib/authorized-workspace-ids", () => ({
+  getAuthorizedApiKeyWorkspaceIds: mockGetAuthorizedApiKeyWorkspaceIds,
 }));
 
 vi.mock("./lib/response", () => ({
@@ -78,6 +87,7 @@ describe("GET /management/responses", () => {
     );
     mockHandleApiError.mockImplementation((_request, error) => Response.json({ error }, { status: 400 }));
     mockSuccessResponse.mockImplementation((body: unknown) => Response.json(body, { status: 200 }));
+    mockGetAuthorizedApiKeyWorkspaceIds.mockResolvedValue(["ws123"]);
   });
 
   test("returns the pagination meta the service computed alongside the data", async () => {
@@ -92,6 +102,9 @@ describe("GET /management/responses", () => {
     const response = await GET(buildRequest() as any);
     const body = await response.json();
 
+    expect(mockGetAuthorizedApiKeyWorkspaceIds).toHaveBeenCalledWith(
+      expect.objectContaining({ apiKeyId: "apiKey123" })
+    );
     expect(mockGetResponses).toHaveBeenCalledWith(["ws123"], query);
     expect(response.status).toBe(200);
     expect(body).toEqual({
