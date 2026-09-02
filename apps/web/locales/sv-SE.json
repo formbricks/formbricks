@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Ett fel uppstod när taggen lades till",
         "an_error_occurred_creating_the_tag": "Ett fel uppstod när taggen skapades",
         "an_error_occurred_deleting_the_tag": "Ett fel uppstod när taggen togs bort",
-        "attachments_download_started": "Nedladdning startad — {fileCount, plural, one {{fileCount} fil} other {{fileCount} filer}}. Stora exporter kan ta några minuter.",
+        "attachments_download_started": "Nedladdning startad: {fileCount, plural, one {{fileCount} fil} other {{fileCount} filer}}. Stora exporter kan ta några minuter.",
         "browser": "Webbläsare",
         "bulk_delete_response_quotas": "Svaren är del av kvoter för denna enkät. Hur vill du hantera kvoterna?",
         "city": "Stad",

@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Hiba történt a címke hozzáadásakor",
         "an_error_occurred_creating_the_tag": "Hiba történt a címke létrehozásakor",
         "an_error_occurred_deleting_the_tag": "Hiba történt a címke törlésekor",
-        "attachments_download_started": "Letöltés megkezdődött — {fileCount, plural, one {{fileCount} fájl} other {{fileCount} fájl}}. A nagy méretű exportálások néhány percet igénybe vehetnek.",
+        "attachments_download_started": "A letöltés elkezdődött: {fileCount, plural, one {{fileCount} fájl} other {{fileCount} fájl}}. A nagyobb exportálások néhány percet igénybe vehetnek.",
         "browser": "Böngésző",
         "bulk_delete_response_quotas": "A válaszok a kérdőív kvótáinak részét képezik. Hogyan szeretné kezelni a kvótákat?",
         "city": "Város",

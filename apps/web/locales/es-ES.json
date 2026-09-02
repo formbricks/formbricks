@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Se ha producido un error al añadir la etiqueta",
         "an_error_occurred_creating_the_tag": "Se ha producido un error al crear la etiqueta",
         "an_error_occurred_deleting_the_tag": "Se ha producido un error al eliminar la etiqueta",
-        "attachments_download_started": "Descarga iniciada — {fileCount, plural, one {{fileCount} archivo} other {{fileCount} archivos}}. Las exportaciones grandes pueden tardar unos minutos.",
+        "attachments_download_started": "Descarga iniciada: {fileCount, plural, one {{fileCount} archivo} other {{fileCount} archivos}}. Las exportaciones grandes pueden tardar unos minutos.",
         "browser": "Navegador",
         "bulk_delete_response_quotas": "Las respuestas forman parte de cuotas para esta encuesta. ¿Cómo quieres gestionar las cuotas?",
         "city": "Ciudad",

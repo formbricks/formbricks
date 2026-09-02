@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Etiket eklenirken bir hata oluştu",
         "an_error_occurred_creating_the_tag": "Etiket oluşturulurken bir hata oluştu",
         "an_error_occurred_deleting_the_tag": "Etiket silinirken bir hata oluştu",
-        "attachments_download_started": "İndirme başladı — {fileCount, plural, one {{fileCount} dosya} other {{fileCount} dosya}}. Büyük dışa aktarmalar birkaç dakika sürebilir.",
+        "attachments_download_started": "İndirme başladı: {fileCount, plural, one {{fileCount} dosya} other {{fileCount} dosya}}. Büyük dışa aktarımlar birkaç dakika sürebilir.",
         "browser": "Tarayıcı",
         "bulk_delete_response_quotas": "Yanıtlar bu anket için kotaların bir parçası. Kotaları nasıl işlemek istiyorsun?",
         "city": "Şehir",

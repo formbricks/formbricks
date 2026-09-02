@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Er is een fout opgetreden bij het toevoegen van de tag",
         "an_error_occurred_creating_the_tag": "Er is een fout opgetreden bij het aanmaken van de tag",
         "an_error_occurred_deleting_the_tag": "Er is een fout opgetreden bij het verwijderen van de tag",
-        "attachments_download_started": "Download gestart — {fileCount, plural, one {{fileCount} bestand} other {{fileCount} bestanden}}. Grote exports kunnen een paar minuten duren.",
+        "attachments_download_started": "Download gestart: {fileCount, plural, one {{fileCount} bestand} other {{fileCount} bestanden}}. Grote exports kunnen een paar minuten duren.",
         "browser": "Browser",
         "bulk_delete_response_quotas": "De antwoorden maken deel uit van de quota voor deze enquête. Hoe wilt u omgaan met de quota?",
         "city": "Stad",

@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Une erreur est survenue lors de l'ajout de l'étiquette",
         "an_error_occurred_creating_the_tag": "Une erreur est survenue lors de la création de l'étiquette",
         "an_error_occurred_deleting_the_tag": "Une erreur est survenue lors de la suppression de l'étiquette.",
-        "attachments_download_started": "Téléchargement démarré — {fileCount, plural, one {{fileCount} fichier} other {{fileCount} fichiers}}. Les exports volumineux peuvent prendre quelques minutes.",
+        "attachments_download_started": "Téléchargement commencé : {fileCount, plural, one {{fileCount} fichier} other {{fileCount} fichiers}}. Les exports volumineux peuvent prendre quelques minutes.",
         "browser": "Navigateur",
         "bulk_delete_response_quotas": "Les réponses font partie des quotas pour ce sondage. Comment voulez-vous gérer les quotas ?",
         "city": "Ville",

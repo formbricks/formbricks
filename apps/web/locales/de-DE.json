@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Beim Hinzufügen des Tags ist ein Fehler aufgetreten",
         "an_error_occurred_creating_the_tag": "Beim Erstellen des Tags ist ein Fehler aufgetreten",
         "an_error_occurred_deleting_the_tag": "Beim Löschen des Tags ist ein Fehler aufgetreten",
-        "attachments_download_started": "Download gestartet — {fileCount, plural, one {{fileCount} Datei} other {{fileCount} Dateien}}. Große Exporte können ein paar Minuten dauern.",
+        "attachments_download_started": "Download gestartet: {fileCount, plural, one {{fileCount} Datei} other {{fileCount} Dateien}}. Große Exporte können ein paar Minuten dauern.",
         "browser": "Browser",
         "bulk_delete_response_quotas": "Die Antworten sind Teil von Kontingenten für diese Umfrage. Wie möchtest du mit den Kontingenten verfahren?",
         "city": "Stadt",

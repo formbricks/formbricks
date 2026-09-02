@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "タグの追加中にエラーが発生しました",
         "an_error_occurred_creating_the_tag": "タグの作成中にエラーが発生しました",
         "an_error_occurred_deleting_the_tag": "タグの削除中にエラーが発生しました",
-        "attachments_download_started": "ダウンロードを開始しました — {fileCount, plural, other {{fileCount}件のファイル}}。大きなエクスポートには数分かかる場合があります。",
+        "attachments_download_started": "ダウンロードを開始しました：{fileCount, plural, other {{fileCount}件のファイル}}。大容量のエクスポートには数分かかる場合があります。",
         "browser": "ブラウザ",
         "bulk_delete_response_quotas": "この回答は、このアンケートの割り当ての一部です。 割り当てをどのように処理しますか？",
         "city": "市区町村",

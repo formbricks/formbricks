@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "新增標籤時發生錯誤",
         "an_error_occurred_creating_the_tag": "建立標籤時發生錯誤",
         "an_error_occurred_deleting_the_tag": "刪除標籤時發生錯誤",
-        "attachments_download_started": "下載已開始 — {fileCount, plural, other {{fileCount} 個檔案}}。大型匯出可能需要幾分鐘的時間。",
+        "attachments_download_started": "下載已開始：{fileCount, plural, other {{fileCount} 個檔案}}。大型匯出可能需要幾分鐘時間。",
         "browser": "瀏覽器",
         "bulk_delete_response_quotas": "這些回應屬於此問卷的配額。你想如何處理配額？",
         "city": "城市",

@@ -3639,7 +3639,7 @@
         "an_error_occurred_adding_the_tag": "Ocorreu um erro ao adicionar a tag",
         "an_error_occurred_creating_the_tag": "Ocorreu um erro ao criar a tag",
         "an_error_occurred_deleting_the_tag": "Ocorreu um erro ao deletar a tag",
-        "attachments_download_started": "Download iniciado — {fileCount, plural, one {{fileCount} arquivo} other {{fileCount} arquivos}}. Exportações grandes podem levar alguns minutos.",
+        "attachments_download_started": "Download iniciado: {fileCount, plural, one {{fileCount} arquivo} other {{fileCount} arquivos}}. Exportações grandes podem levar alguns minutos.",
         "browser": "navegador",
         "bulk_delete_response_quotas": "As respostas fazem parte das cotas desta pesquisa. Como você quer gerenciar as cotas?",
         "city": "Cidade",
