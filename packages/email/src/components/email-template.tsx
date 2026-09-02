@@ -1,10 +1,31 @@
-import { Body, Container, Head, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
+import {
+  Body,
+  Column,
+  Container,
+  Head,
+  Html,
+  Img,
+  Link,
+  Row,
+  Section,
+  Tailwind,
+  Text,
+} from "@react-email/components";
 import { TEmailTemplateLegalProps } from "../types/email";
 import { TFunction } from "../types/translations";
 
 const fbLogoUrl = "https://app.formbricks.com/logo-transparent.png";
 const logoLink = "https://formbricks.com?utm_source=formbricks-app&utm_medium=email&utm_campaign=email_logo";
 const FORCE_LIGHT_COLOR_SCHEME = "only light";
+/**
+ * Widths are also emitted as `width` HTML attributes, in px, to match the `w-60` / `w-80` classes.
+ * Tailwind compiles those classes to `rem`, and Outlook's Word rendering engine supports neither
+ * `rem` nor `max-height` / `object-fit` — so without the attribute it constrains the logo not at
+ * all and renders it at its natural size. An image wider than the email body cannot be centered,
+ * which is why the width is part of fixing the centering rather than a separate concern.
+ */
+const DEFAULT_LOGO_WIDTH = 240; // w-60
+const CUSTOM_LOGO_WIDTH = 320; // w-80
 
 interface EmailTemplateProps extends TEmailTemplateLegalProps {
   readonly children: React.ReactNode;
@@ -47,20 +68,34 @@ export function EmailTemplate({
               : {}),
             fontFamily: "'Jost', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
           }}>
-          <Section>
-            {isDefaultLogo ? (
-              <Link href={logoLink} target="_blank">
-                <Img data-testid="default-logo-image" alt="Logo" className="mx-auto w-60" src={fbLogoUrl} />
-              </Link>
-            ) : (
-              <Img
-                data-testid="logo-image"
-                alt="Logo"
-                className="mx-auto max-h-[100px] w-80 object-contain"
-                src={logoUrl}
-              />
-            )}
-          </Section>
+          {/* The logo is centered on the wrapping cell, not on the image itself: Outlook's Word
+              rendering engine ignores `margin: auto`, so `mx-auto` alone left-aligns the logo
+              there. `align="center"` is an HTML attribute Word does honor, and `Column` is the
+              only react-email primitive that renders a `<td>` we can put it on (`Section` keeps
+              its cell bare). `mx-auto` stays for clients that honor the image's own margins. */}
+          <Row>
+            <Column align="center" className="text-center">
+              {isDefaultLogo ? (
+                <Link href={logoLink} target="_blank">
+                  <Img
+                    data-testid="default-logo-image"
+                    alt="Logo"
+                    className="mx-auto w-60"
+                    src={fbLogoUrl}
+                    width={DEFAULT_LOGO_WIDTH}
+                  />
+                </Link>
+              ) : (
+                <Img
+                  data-testid="logo-image"
+                  alt="Logo"
+                  className="mx-auto max-h-[100px] w-80 object-contain"
+                  src={logoUrl}
+                  width={CUSTOM_LOGO_WIDTH}
+                />
+              )}
+            </Column>
+          </Row>
           <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-left">
             {children}
           </Container>
