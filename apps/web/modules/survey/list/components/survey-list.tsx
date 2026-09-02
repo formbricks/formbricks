@@ -71,7 +71,7 @@ const NewSurveyMenu = ({
   defaultSurveyLanguage,
   isAIAvailable,
   aiUnavailableReason,
-}: NewSurveyMenuProps) => {
+}: Readonly<NewSurveyMenuProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);

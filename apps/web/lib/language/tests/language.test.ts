@@ -9,7 +9,12 @@ import {
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { getWorkspace } from "@/lib/workspace/service";
 import { createLanguage, deleteLanguage, updateLanguage } from "../service";
@@ -147,8 +152,14 @@ describe("updateLanguage", () => {
 });
 
 describe("deleteLanguage", () => {
+  const workspaceOwningLanguage = {
+    ...fakeWorkspace,
+    languages: [{ ...mockLanguage, id: mockLanguageId, code: "fr-FR" }],
+    config: {},
+  } as unknown as TWorkspace;
+
   beforeEach(() => {
-    vi.mocked(getWorkspace).mockResolvedValue(fakeWorkspace);
+    vi.mocked(getWorkspace).mockResolvedValue(workspaceOwningLanguage);
   });
 
   test("happy path deletes a language", async () => {
@@ -167,6 +178,13 @@ describe("deleteLanguage", () => {
       });
       vi.mocked(prisma.language.delete).mockRejectedValue(err);
       await expect(deleteLanguage(mockLanguageId, mockWorkspaceId)).rejects.toThrow(DatabaseError);
+    });
+
+    test("refuses to delete a language that is not one of the workspace's own", async () => {
+      vi.mocked(getWorkspace).mockResolvedValue(fakeWorkspace);
+
+      await expect(deleteLanguage(mockLanguageId, mockWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
+      expect(prisma.language.delete).not.toHaveBeenCalled();
     });
 
     // ENG-2816: the workspace default survey language must keep naming a language the workspace has.

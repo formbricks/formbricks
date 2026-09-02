@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
@@ -80,14 +80,25 @@ export const EditDefaultSurveyLanguageForm = ({
     ? (storedCode ?? undefined)
     : undefined;
 
-  const [selectedValue, setSelectedValue] = useState<string | undefined>(storedValue);
+  /**
+   * The stored value is the source of truth; state only holds the pick while the write is in flight.
+   * Holding the selection itself in state would strand it: `router.refresh()` re-renders this component
+   * without remounting it, so a language list that shrinks under it (the sibling editor deletes a row)
+   * would leave a value behind with no matching option.
+   */
+  const [pendingValue, setPendingValue] = useState<string>();
   const [isSaving, setIsSaving] = useState(false);
+  const selectedValue = pendingValue ?? storedValue;
 
-  // Saved on pick: one control, one decision, no separate submit. The optimistic value is rolled back
-  // if the write fails, so the control never shows a default the workspace does not have.
+  // Drop the optimistic value once the refreshed props carry it, so the prop is in charge again.
+  useEffect(() => {
+    setPendingValue((pending) => (pending === storedValue ? undefined : pending));
+  }, [storedValue]);
+
+  // Saved on pick: one control, one decision, no separate submit. A failed write drops the optimistic
+  // value, so the control never shows a default the workspace does not have.
   const handleChange = async (nextValue: string) => {
-    const previousValue = selectedValue;
-    setSelectedValue(nextValue);
+    setPendingValue(nextValue);
     setIsSaving(true);
 
     // `config` is a JSON column that is replaced wholesale, so its other keys have to be carried over.
@@ -98,7 +109,7 @@ export const EditDefaultSurveyLanguageForm = ({
     setIsSaving(false);
 
     if (!response?.data) {
-      setSelectedValue(previousValue);
+      setPendingValue(undefined);
       toast.error(getFormattedErrorMessage(response));
       return;
     }
@@ -120,8 +131,8 @@ export const EditDefaultSurveyLanguageForm = ({
       <div className="flex w-full max-w-sm flex-col gap-y-2">
         <Label htmlFor="defaultSurveyLanguage">{t("workspace.languages.default_survey_language")}</Label>
         <Select
-          // Remounts when the value crosses the unset boundary, which only happens when a failed write
-          // is rolled back — Radix keeps its own state once it has been handed a value.
+          // Remounts when the value crosses the unset boundary, in either direction: Radix keeps its own
+          // state once it has been handed a value, so it would otherwise ignore a return to unset.
           key={selectedValue === undefined ? "unset" : "set"}
           value={selectedValue}
           onValueChange={(nextValue) => void handleChange(nextValue)}
