@@ -38,12 +38,13 @@ after 30 seconds if startup fails.
 
 Current workloads on the shared queue include:
 
-| Workload          | Job names                                        | Purpose                                                        |
-| ----------------- | ------------------------------------------------ | -------------------------------------------------------------- |
-| Response pipeline | `response-pipeline.process`                      | Processes asynchronous response pipeline events.               |
-| Survey scheduling | `survey-scheduling.reconcile`                    | Reconciles scheduled survey state.                             |
-| Survey archive    | `survey-archive-purge.process`                   | Permanently deletes surveys past the archive retention window. |
-| Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs.              |
+| Workload          | Job names                                        | Purpose                                                                                    |
+| ----------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Response pipeline | `response-pipeline.process`                      | Processes asynchronous response pipeline events and fans out one delivery job per webhook. |
+| Webhook delivery  | `webhook-delivery.process`                       | Delivers one response event to one webhook, with its own retry budget.                     |
+| Survey scheduling | `survey-scheduling.reconcile`                    | Reconciles scheduled survey state.                                                         |
+| Survey archive    | `survey-archive-purge.process`                   | Permanently deletes surveys past the archive retention window.                             |
+| Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs.                                          |
 
 These are current examples rather than a fixed list. Future Formbricks features can use the same Job Runner for
 additional background work.
@@ -94,6 +95,11 @@ web replicas x BULLMQ_WORKER_COUNT x BULLMQ_WORKER_CONCURRENCY
 Increase concurrency gradually and monitor database, Redis, and downstream service capacity. Adding replicas
 also adds workers, so account for both scaling controls.
 
+Every response now produces one job per matching webhook in addition to the pipeline job itself, and each
+delivery holds a worker slot for up to `WEBHOOK_DELIVERY_TIMEOUT_MS` (5 seconds by default). Deployments with
+many webhooks per survey, or with slow receivers, should raise `BULLMQ_WORKER_CONCURRENCY` so a burst of
+deliveries does not queue behind the pipeline and workflow jobs.
+
 ## Retry behavior
 
 BullMQ applies the following defaults to background jobs:
@@ -106,6 +112,12 @@ BullMQ applies the following defaults to background jobs:
 | Failed job retention    | Up to 7 days or 5,000 jobs         |
 
 Individual workloads can add their own recovery behavior on top of these queue-level retries.
+
+Webhook deliveries override the queue defaults with **5 attempts** and an **exponential backoff starting at 30
+seconds** (retries after roughly 30 seconds, 1, 2 and 4 minutes). A receiver that returns a 4xx status other
+than 408 or 429, or a webhook URL that fails the SSRF policy, fails the job immediately without retrying;
+network errors, timeouts, DNS failures, redirects, 408, 429 and 5xx statuses are retried. Deliveries to a
+webhook that was deleted or unsubscribed from the event while the job was queued complete without a request.
 
 ## Workflows
 
@@ -184,7 +196,12 @@ Formbricks writes structured logs to stdout and stderr. Search the `msg` field f
 | `BullMQ worker registration retry scheduled`                                                       | A startup retry is pending. Fix the underlying Redis or configuration error before it runs.                                                                                                                                                                                                    |
 | `BullMQ recurring job registration failed`                                                         | Recurring schedules could not be registered. Check Redis connectivity.                                                                                                                                                                                                                         |
 | `BullMQ recurring job registration retry scheduled`                                                | A recurring-schedule registration retry is pending for 30 seconds.                                                                                                                                                                                                                             |
-| `BullMQ job failed`                                                                                | Inspect `jobName`, `jobId`, `attemptsMade`, and `err`. The job may retry until all three attempts are used.                                                                                                                                                                                    |
+| `BullMQ job failed`                                                                                | Inspect `jobName`, `jobId`, `attemptsMade`, and `err`. The job may retry until all its attempts are used (three by default, five for `webhook-delivery.process`).                                                                                                                                |
+| `Webhook delivery failed; retry scheduled`                                                         | One webhook delivery attempt failed and BullMQ will retry it. Inspect `webhookId`, `webhookUrlHost`, `statusCode`, `reason`, and `attempt` of `maxAttempts`. Usually the receiver is down or slow; nothing to do unless it keeps failing.                                                          |
+| `Webhook delivery failed; retries exhausted`                                                       | The last attempt for a webhook delivery failed; the event was not delivered. Same fields as above. Check the receiver, then re-send from the source system if needed — Formbricks does not replay exhausted deliveries.                                                                          |
+| `Webhook delivery failed permanently`                                                              | The receiver rejected the request (4xx) or the webhook URL failed the SSRF policy, so no retry was attempted. Fix the receiver or the webhook URL; `reason` names the cause.                                                                                                                       |
+| `Webhook delivery skipped: webhook deleted`                                                        | The webhook was deleted after the event was queued. Expected after deleting a webhook with deliveries in flight.                                                                                                                                                                                 |
+| `Webhook delivery skipped: webhook no longer subscribed to this event`                             | The webhook's triggers or surveys were changed after the event was queued. Expected after editing a webhook with deliveries in flight.                                                                                                                                                             |
 | `Dropping BullMQ job with no registered processor: its schedule outlived the code that handled it` | A schedule in Redis outlived the build that handles it — typically after a rollback to a version without that feature. The job is completed rather than retried, so it does not accumulate in the failed set. Redeploy the build that owns `jobName`, or remove the stale schedule from Redis. |
 
 If background jobs stay queued:
@@ -194,6 +211,12 @@ If background jobs stay queued:
 3. Look for `BullMQ runtime started` after the latest deployment or restart.
 4. Check Redis connection and `BullMQ job failed` logs.
 5. Use the `jobName` field to identify the affected workload and continue in its feature-specific logs or UI.
+
+When OpenTelemetry metrics are enabled (`PROMETHEUS_ENABLED=1` or `OTEL_EXPORTER_OTLP_ENDPOINT`), webhook
+deliveries also emit `formbricks.webhook.delivery.total` (a counter with `outcome`, `event` and `status_class`
+attributes) and `formbricks.webhook.delivery.duration` (a histogram in milliseconds), so delivery failure rates
+and receiver latency can be graphed and alerted on without reading logs. See
+[Monitoring](/self-hosting/setup/monitoring) for how to scrape them.
 
 See [Environment Variables](/self-hosting/configuration/environment-variables) for every Job Runner setting
 and [Monitoring](/self-hosting/setup/monitoring) for log collection guidance.
