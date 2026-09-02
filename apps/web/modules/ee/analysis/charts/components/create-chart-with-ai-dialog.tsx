@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { generateAIChartAction } from "@/modules/ee/analysis/charts/actions";
+import { NoFeedbackDirectoryAlert } from "@/modules/ee/analysis/charts/components/no-feedback-directory-alert";
 import {
   type TAIUnavailableActionType,
   type TAIUnavailableReason,
@@ -73,7 +74,8 @@ export function CreateChartWithAIDialog({
   const runIdRef = useRef(0);
 
   const helperPrompts = useMemo(() => getChartHelperPrompts(t), [t]);
-  const canGenerate = canGenerateChart(prompt, isAIAvailable, isGenerating);
+  const hasFeedbackDirectory = Boolean(feedbackDirectoryId);
+  const canGenerate = canGenerateChart(prompt, isAIAvailable, isGenerating, hasFeedbackDirectory);
 
   // A reload mid-generation loses a request the user cannot cheaply recreate.
   useBeforeUnloadPrompt(() => isGenerating);
@@ -201,6 +203,12 @@ export function CreateChartWithAIDialog({
 
         <DialogBody className="-mx-1 -mt-1 space-y-4 px-1 pt-1 pb-1">
           <form className="flex w-full flex-col space-y-4" onSubmit={handleGenerate}>
+            {isAIAvailable && !hasFeedbackDirectory && (
+              // The builder's from-scratch branch renders this same alert; without it the AI branch
+              // was the one path that explained nothing.
+              <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} />
+            )}
+
             {!isAIAvailable && (
               <Alert variant="info" role="status">
                 <AlertTitle>{t("workspace.analysis.charts.ai_chart_generation")}</AlertTitle>

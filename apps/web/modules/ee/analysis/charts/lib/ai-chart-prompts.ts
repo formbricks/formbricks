@@ -40,7 +40,16 @@ export const getChartHelperPrompts = (
   },
 ];
 
-/** Whether the prompt is worth sending. Trimmed, because whitespace is not a question. */
-export function canGenerateChart(prompt: string, isAIAvailable: boolean, isGenerating: boolean): boolean {
-  return isAIAvailable && !isGenerating && prompt.trim().length > 0;
+/**
+ * Whether this generation can actually run. The feedback directory is part of the gate, not just of
+ * the request: without one the action has nothing to query, and a Generate button that stays live
+ * and does nothing is worse than one that is plainly unavailable.
+ */
+export function canGenerateChart(
+  prompt: string,
+  isAIAvailable: boolean,
+  isGenerating: boolean,
+  hasFeedbackDirectory: boolean
+): boolean {
+  return isAIAvailable && hasFeedbackDirectory && !isGenerating && prompt.trim().length > 0;
 }

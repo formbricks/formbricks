@@ -126,7 +126,16 @@ export function CreateChartView({
   const isAIQueryAvailable = isAIAvailable !== false;
   const showAIAction = !isEditing && isAIQueryAvailable && Boolean(onRequestAIDialog);
   const canSave = Boolean(chartData) && !queryState.error;
-  const requestAI = showAIAction ? () => confirmDiscard(() => onRequestAIDialog?.()) : undefined;
+  // Close through handleClose rather than letting the parent flip the dialog shut: leaving for the
+  // AI dialog ends this builder session, and a session that ends without a reset leaves its chart
+  // behind for the next one to open on top of.
+  const requestAI = showAIAction
+    ? () =>
+        confirmDiscard(() => {
+          handleClose();
+          onRequestAIDialog?.();
+        })
+    : undefined;
   const saveLabel = autoAddToDashboardId
     ? t("workspace.analysis.charts.save_and_add_to_dashboard")
     : t("workspace.analysis.charts.save_chart");

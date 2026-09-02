@@ -31,13 +31,16 @@ describe("getChartHelperPrompts", () => {
 
 describe("canGenerateChart", () => {
   test("needs a prompt with something in it", () => {
-    expect(canGenerateChart("responses per week", true, false)).toBe(true);
-    expect(canGenerateChart("", true, false)).toBe(false);
-    expect(canGenerateChart("   ", true, false)).toBe(false);
+    expect(canGenerateChart("responses per week", true, false, true)).toBe(true);
+    expect(canGenerateChart("", true, false, true)).toBe(false);
+    expect(canGenerateChart("   ", true, false, true)).toBe(false);
   });
 
   test("blocks while AI is unavailable or a run is already in flight", () => {
-    expect(canGenerateChart("responses per week", false, false)).toBe(false);
-    expect(canGenerateChart("responses per week", true, true)).toBe(false);
+    expect(canGenerateChart("responses per week", false, false, true)).toBe(false);
+    expect(canGenerateChart("responses per week", true, true, true)).toBe(false);
+    // Without a feedback directory there is nothing to query: the action would return silently and
+    // the button would sit there looking live.
+    expect(canGenerateChart("responses per week", true, false, false)).toBe(false);
   });
 });
