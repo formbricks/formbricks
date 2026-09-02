@@ -9,15 +9,15 @@ import {
 import { buildWebhookDeliveryBody, processWebhookDeliveryJob } from "./process-webhook-delivery-job";
 import { recordWebhookDeliveryOutcome } from "./webhook-delivery-metrics";
 
-const { mockFindUnique, mockLoggerError, mockLoggerInfo, mockLoggerWarn } = vi.hoisted(() => ({
-  mockFindUnique: vi.fn(),
+const { mockFindFirst, mockLoggerError, mockLoggerInfo, mockLoggerWarn } = vi.hoisted(() => ({
+  mockFindFirst: vi.fn(),
   mockLoggerError: vi.fn(),
   mockLoggerInfo: vi.fn(),
   mockLoggerWarn: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
-  prisma: { webhook: { findUnique: mockFindUnique } },
+  prisma: { webhook: { findFirst: mockFindFirst } },
 }));
 
 vi.mock("@formbricks/jobs", () => ({
@@ -85,7 +85,6 @@ const data: TWebhookDeliveryJobData = {
 const target = {
   url: "https://hooks.example.com/in/abc?token=capability-token",
   secret: "whsec_test",
-  workspaceId: "workspace_123",
   triggers: ["responseFinished", "responseCreated"],
   surveyIds: [] as string[],
 };
@@ -129,7 +128,7 @@ describe("buildWebhookDeliveryBody", () => {
 describe("processWebhookDeliveryJob", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFindUnique.mockResolvedValue({ ...target, surveyIds: [] });
+    mockFindFirst.mockResolvedValue({ ...target, surveyIds: [] });
   });
 
   test("re-reads url and secret, delivers with the fan-out webhook-id, and records the outcome", async () => {
@@ -137,9 +136,10 @@ describe("processWebhookDeliveryJob", () => {
 
     await expect(processWebhookDeliveryJob(data, createContext())).resolves.toBeUndefined();
 
-    expect(mockFindUnique).toHaveBeenCalledWith({
-      where: { id: "webhook_123" },
-      select: { url: true, secret: true, workspaceId: true, triggers: true, surveyIds: true },
+    // Scoped in the query: a foreign workspace cannot return this webhook's URL or secret at all.
+    expect(mockFindFirst).toHaveBeenCalledWith({
+      where: { id: "webhook_123", workspaceId: "workspace_123" },
+      select: { url: true, secret: true, triggers: true, surveyIds: true },
     });
     expect(mockSend).toHaveBeenCalledTimes(1);
     expect(mockSend).toHaveBeenCalledWith({
@@ -179,7 +179,7 @@ describe("processWebhookDeliveryJob", () => {
   });
 
   test("sends unsigned when the webhook has no secret", async () => {
-    mockFindUnique.mockResolvedValue({ ...target, secret: null });
+    mockFindFirst.mockResolvedValue({ ...target, secret: null });
     mockSend.mockResolvedValue({ statusCode: 200 });
 
     await processWebhookDeliveryJob(data, createContext());
@@ -282,7 +282,7 @@ describe("processWebhookDeliveryJob", () => {
   });
 
   test("completes without a request when the webhook was deleted", async () => {
-    mockFindUnique.mockResolvedValue(null);
+    mockFindFirst.mockResolvedValue(null);
 
     await expect(processWebhookDeliveryJob(data, createContext())).resolves.toBeUndefined();
 
@@ -297,9 +297,8 @@ describe("processWebhookDeliveryJob", () => {
   test.each([
     ["the event was unsubscribed", { triggers: ["responseCreated"] }],
     ["the webhook was re-scoped to other surveys", { surveyIds: ["survey_999"] }],
-    ["the row belongs to another workspace", { workspaceId: "workspace_other" }],
   ])("completes without a request when %s", async (_label, overrides) => {
-    mockFindUnique.mockResolvedValue({ ...target, ...overrides });
+    mockFindFirst.mockResolvedValue({ ...target, ...overrides });
 
     await expect(processWebhookDeliveryJob(data, createContext())).resolves.toBeUndefined();
 
@@ -314,8 +313,24 @@ describe("processWebhookDeliveryJob", () => {
     );
   });
 
+  test("treats a webhook that the workspace-scoped read cannot see as gone", async () => {
+    // The scoped `where` returns nothing for another workspace's id, so this lands on the deleted path
+    // rather than reaching a subscription check with a foreign row in hand.
+    mockFindFirst.mockResolvedValue(null);
+
+    await expect(
+      processWebhookDeliveryJob({ ...data, workspaceId: "workspace_other" }, createContext())
+    ).resolves.toBeUndefined();
+
+    expect(mockFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "webhook_123", workspaceId: "workspace_other" } })
+    );
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(mockRecordOutcome).toHaveBeenCalledWith({ outcome: "skipped_deleted", event: "responseFinished" });
+  });
+
   test("still delivers when the webhook is scoped to a survey list that includes this survey", async () => {
-    mockFindUnique.mockResolvedValue({ ...target, surveyIds: ["survey_999", "survey_123"] });
+    mockFindFirst.mockResolvedValue({ ...target, surveyIds: ["survey_999", "survey_123"] });
     mockSend.mockResolvedValue({ statusCode: 200 });
 
     await expect(processWebhookDeliveryJob(data, createContext())).resolves.toBeUndefined();
@@ -325,7 +340,7 @@ describe("processWebhookDeliveryJob", () => {
 
   test("rethrows database pool exhaustion so BullMQ retries, with a warning", async () => {
     const poolError = new Error("Timed out fetching a new connection from the connection pool");
-    mockFindUnique.mockRejectedValue(poolError);
+    mockFindFirst.mockRejectedValue(poolError);
 
     await expect(processWebhookDeliveryJob(data, createContext())).rejects.toBe(poolError);
 
@@ -340,7 +355,7 @@ describe("processWebhookDeliveryJob", () => {
 
   test("rethrows other database errors so BullMQ retries", async () => {
     const dbError = new Error("connection refused");
-    mockFindUnique.mockRejectedValue(dbError);
+    mockFindFirst.mockRejectedValue(dbError);
 
     await expect(processWebhookDeliveryJob(data, createContext())).rejects.toBe(dbError);
 

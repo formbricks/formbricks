@@ -69,7 +69,6 @@ type TDeliveryLogContext = ReturnType<typeof getDeliveryLogContext>;
 type TDeliveryTarget = {
   url: string;
   secret: string | null;
-  workspaceId: string;
   triggers: string[];
   surveyIds: string[];
 };
@@ -79,9 +78,12 @@ const loadDeliveryTarget = async (
   logContext: TDeliveryLogContext
 ): Promise<TDeliveryTarget | null> => {
   try {
-    return await prisma.webhook.findUnique({
-      where: { id: data.webhookId },
-      select: { url: true, secret: true, workspaceId: true, triggers: true, surveyIds: true },
+    // Scoped by workspace in the query rather than checked afterwards: a webhook id paired with the
+    // wrong workspace then reads as absent instead of handing back another workspace's URL and signing
+    // secret. Our own fan-out always pairs them correctly, so this guards stale or malformed job data.
+    return await prisma.webhook.findFirst({
+      where: { id: data.webhookId, workspaceId: data.workspaceId },
+      select: { url: true, secret: true, triggers: true, surveyIds: true },
     });
   } catch (error) {
     // Counted like any other failed attempt: a database outage stops deliveries just as effectively as a
@@ -106,11 +108,9 @@ const loadDeliveryTarget = async (
 /**
  * A webhook still receives an event only while it is subscribed to it. The pipeline job matched
  * `triggers`/`surveyIds` when it fanned out; re-checking here means a webhook the user unsubscribed or
- * re-scoped while this delivery was queued or retrying gets nothing. The workspace check cannot fail for
- * a row Prisma returned by id, but it costs nothing and turns a future bug into a skip instead of a leak.
+ * re-scoped while this delivery was queued or retrying gets nothing.
  */
 const isStillSubscribed = (target: TDeliveryTarget, data: TWebhookDeliveryJobData): boolean =>
-  target.workspaceId === data.workspaceId &&
   target.triggers.includes(data.event) &&
   (target.surveyIds.length === 0 || target.surveyIds.includes(data.surveyId));
 
@@ -175,7 +175,8 @@ const classifyFailure = (attempt: TDeliveryAttempt): TClassifiedFailure => {
  *
  * Outcome per attempt, in order of evaluation:
  * - the webhook row cannot be read → rethrow so BullMQ retries (`load_failed`)
- * - webhook row gone → complete (`skipped_deleted`); unsubscribed/re-scoped → complete (`skipped_rescoped`)
+ * - webhook row gone, or not this workspace's → complete (`skipped_deleted`); unsubscribed or re-scoped →
+ *   complete (`skipped_rescoped`)
  * - 2xx → complete (`delivered`)
  * - SSRF/URL policy rejection or a 4xx other than 408/429 → `UnrecoverableError` (`permanent_failure`)
  * - anything else (network, timeout, DNS, 3xx, 408, 429, 5xx) → throw so BullMQ retries (`retryable_failure`)

@@ -93,7 +93,7 @@ so a slow or unavailable receiver never delays other webhooks or the rest of res
 
 - A delivery counts as successful when your endpoint answers with any `2xx` status within the delivery timeout
   (5 seconds by default; self-hosters can change it with `WEBHOOK_DELIVERY_TIMEOUT_MS`).
-- Network errors, timeouts, redirects, and `408`, `429` or `5xx` responses are retried up to **5 times** with an
+- Network errors, timeouts, redirects, and `408`, `429` or `5xx` responses are **attempted up to 5 times** with an
   exponential backoff starting at 30 seconds — roughly 30 seconds, then 1, 2 and 4 minutes after the first
   attempt. After the last attempt the event is dropped; Formbricks does not replay exhausted deliveries.
 - Any other `4xx` response is treated as a rejection of the request and is **not** retried. Respond with `2xx`
