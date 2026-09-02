@@ -226,6 +226,9 @@ describe("logo centering (ENG-2438)", () => {
 
     expect(cell).toContain('align="center"');
     expect(cell).toContain('width="240"');
+    // The attribute mirrors `w-60`; if the class moves and the constant does not, Outlook
+    // silently goes back to rendering the logo at its natural size.
+    expect(cell).toContain("width:15rem");
     // The modern-client centering path must survive alongside it.
     expect(cell).toContain("margin-left:auto");
   });
@@ -241,6 +244,7 @@ describe("logo centering (ENG-2438)", () => {
 
     expect(cell).toContain('align="center"');
     expect(cell).toContain('width="320"');
+    expect(cell).toContain("width:20rem"); // mirrors `w-80`, see above
     expect(cell).toContain("margin-left:auto");
   });
 
