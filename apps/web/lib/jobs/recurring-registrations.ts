@@ -12,6 +12,8 @@ import {
 } from "@formbricks/jobs";
 import { processAuthzedProjectionDeliveryJob } from "@/lib/authzed/outbox-processor";
 import { processAuthzedScheduledReconciliationJob } from "@/lib/authzed/scheduled-reconciliation";
+import { USAGE_TELEMETRY_DAILY_CRON_PATTERN, USAGE_TELEMETRY_TIME_ZONE } from "@/lib/telemetry/constants";
+import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetry-job";
 import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
 import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
 import { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } from "@/modules/ee/workflows/lib/runner/reconcile-constants";
@@ -90,6 +92,30 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
       cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
       kind: "cron",
       timeZone: SURVEY_SCHEDULING_TIME_ZONE,
+    },
+  },
+  usageTelemetry: {
+    handler: processUsageTelemetryJob,
+    job: recurringJobs.usageTelemetry,
+    schedule: {
+      cronPattern: USAGE_TELEMETRY_DAILY_CRON_PATTERN,
+      // The daily pattern keeps a long-running instance reporting. What covers an instance that is
+      // *not* up at 02:15 UTC — the case the GTM need calls out, an instance identified and then
+      // barely run (ENG-2107) — is that a missed tick is not skipped: the upsert re-adds the overdue
+      // iteration with its original timestamp, so the delay clamps to 0 and it runs at the next boot.
+      //
+      // `immediately` fires **once per scheduler**, not once per boot. BullMQ's repeat strategy does
+      // return "now" when it is set, but `addJobScheduler-11.lua` discards that: when the upsert
+      // removed a pending job for this scheduler it sets `nextMillis = prevMillis` ("the job has been
+      // removed and we want to replace it, so lets use the same millis"), which is every boot after
+      // the first. So its real effect is the first-ever registration — which is exactly where it is
+      // wanted, since this scheduler is new: every instance upgrading past this change registers it
+      // for the first time and reports on that boot rather than waiting for the first 02:15 slot.
+      // It is also cheap: `sendTelemetryEvents` is gated on a shared 24h timestamp in Redis, so that
+      // run is a single Redis read whenever an update already went out.
+      immediately: true,
+      kind: "cron",
+      timeZone: USAGE_TELEMETRY_TIME_ZONE,
     },
   },
   workflowRunReconcile: {
