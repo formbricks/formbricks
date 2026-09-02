@@ -22,6 +22,8 @@ export async function createRedisClientFromEnv(): Promise<Result<RedisClient, Ca
     socket: {
       connectTimeout: 3000,
     },
+    // Azure Cache for Redis closes idle connections after 10 minutes.
+    pingInterval: 300_000,
   });
 
   client.on("error", (error) => {

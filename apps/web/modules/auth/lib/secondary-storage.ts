@@ -19,7 +19,12 @@ let clientPromise: Promise<RedisClient> | undefined;
 
 const getClient = (): Promise<RedisClient> => {
   if (!clientPromise) {
-    const client = createClient({ url: env.REDIS_URL, socket: { connectTimeout: 3000 } });
+    const client = createClient({
+      url: env.REDIS_URL,
+      socket: { connectTimeout: 3000 },
+      // Azure Cache for Redis closes idle connections after 10 minutes.
+      pingInterval: 300_000,
+    });
     client.on("error", (error) => logger.error(error, "Better Auth Redis secondary storage error"));
     clientPromise = client
       .connect()
