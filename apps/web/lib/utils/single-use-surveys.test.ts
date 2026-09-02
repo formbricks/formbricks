@@ -3,8 +3,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as crypto from "@/lib/crypto";
 import { env } from "@/lib/env";
 import {
-  generateSurveySingleUseId,
-  generateSurveySingleUseIds,
   generateSurveySingleUseLinkParams,
   generateSurveySingleUseLinkParamsList,
   generateSurveySingleUseSignature,
@@ -43,84 +41,53 @@ describe("Single Use Surveys", () => {
     vi.clearAllMocks();
   });
 
-  describe("generateSurveySingleUseId", () => {
-    test("returns plain cuid when encryption is disabled", () => {
-      const createIdMock = vi.spyOn(cuid2, "createId");
-      createIdMock.mockReturnValueOnce("test-cuid");
-
-      const result = generateSurveySingleUseId(false);
-
-      expect(result).toBe("test-cuid");
-      expect(createIdMock).toHaveBeenCalledTimes(1);
-      expect(crypto.symmetricEncrypt).not.toHaveBeenCalled();
-    });
-
-    test("returns encrypted cuid when encryption is enabled", () => {
-      const createIdMock = vi.spyOn(cuid2, "createId");
-      createIdMock.mockReturnValueOnce("test-cuid");
-      vi.mocked(crypto.symmetricEncrypt).mockReturnValueOnce("encrypted-test-cuid");
-
-      const result = generateSurveySingleUseId(true);
-
-      expect(result).toBe("encrypted-test-cuid");
-      expect(createIdMock).toHaveBeenCalledTimes(1);
-      expect(crypto.symmetricEncrypt).toHaveBeenCalledWith("test-cuid", env.ENCRYPTION_KEY);
-    });
-
-    test("throws error when encryption key is missing", () => {
-      vi.mocked(env).ENCRYPTION_KEY = "";
-      const createIdMock = vi.spyOn(cuid2, "createId");
-      createIdMock.mockReturnValueOnce("test-cuid");
-
-      expect(() => generateSurveySingleUseId(true)).toThrow("ENCRYPTION_KEY is not set");
-
-      // Restore encryption key for subsequent tests
-      vi.mocked(env).ENCRYPTION_KEY = "test-encryption-key";
-    });
-  });
-
-  describe("generateSurveySingleUseIds", () => {
+  describe("minting", () => {
+    // `generateSurveySingleUseId` is module-private since ENG-2758 -- it mints an id with no survey
+    // binding, which is the shape the vulnerability had. Its behaviour is covered here through the
+    // public entry point that always signs.
     beforeEach(() => {
       vi.mocked(env).ENCRYPTION_KEY = "test-encryption-key";
     });
 
-    test("generates multiple single use IDs", () => {
-      const createIdMock = vi.spyOn(cuid2, "createId");
-      createIdMock
-        .mockReturnValueOnce("test-cuid-1")
-        .mockReturnValueOnce("test-cuid-2")
-        .mockReturnValueOnce("test-cuid-3");
+    test("returns a plain cuid as the suId when encryption is disabled", () => {
+      vi.spyOn(cuid2, "createId").mockReturnValueOnce("test-cuid");
 
-      const result = generateSurveySingleUseIds(3, false);
-
-      expect(result).toEqual(["test-cuid-1", "test-cuid-2", "test-cuid-3"]);
-      expect(createIdMock).toHaveBeenCalledTimes(3);
+      expect(generateSurveySingleUseLinkParams("survey-1", false).suId).toBe("test-cuid");
+      expect(crypto.symmetricEncrypt).not.toHaveBeenCalled();
     });
 
-    test("generates encrypted IDs when encryption is enabled", () => {
-      const createIdMock = vi.spyOn(cuid2, "createId");
+    test("returns an encrypted cuid as the suId when encryption is enabled", () => {
+      vi.spyOn(cuid2, "createId").mockReturnValueOnce("test-cuid");
+      vi.mocked(crypto.symmetricEncrypt).mockReturnValueOnce("encrypted-test-cuid");
 
-      createIdMock.mockReturnValueOnce("test-cuid-1").mockReturnValueOnce("test-cuid-2");
-
-      vi.mocked(crypto.symmetricEncrypt)
-        .mockReturnValueOnce("encrypted-test-cuid-1")
-        .mockReturnValueOnce("encrypted-test-cuid-2");
-
-      const result = generateSurveySingleUseIds(2, true);
-
-      expect(result).toEqual(["encrypted-test-cuid-1", "encrypted-test-cuid-2"]);
-      expect(createIdMock).toHaveBeenCalledTimes(2);
-      expect(crypto.symmetricEncrypt).toHaveBeenCalledTimes(2);
+      expect(generateSurveySingleUseLinkParams("survey-1", true).suId).toBe("encrypted-test-cuid");
+      expect(crypto.symmetricEncrypt).toHaveBeenCalledWith("test-cuid", env.ENCRYPTION_KEY);
     });
 
-    test("returns empty array when count is zero", () => {
-      const result = generateSurveySingleUseIds(0, false);
+    test("prefers a supplied custom id over a generated one, in plaintext mode", () => {
+      expect(generateSurveySingleUseLinkParams("survey-1", false, "CUSTOM-ID").suId).toBe("CUSTOM-ID");
+    });
 
-      const createIdMock = vi.spyOn(cuid2, "createId");
-      createIdMock.mockReturnValueOnce("test-cuid");
+    test.each([true, false])("throws when the encryption key is missing (isEncrypted=%s)", (isEncrypted) => {
+      vi.mocked(env).ENCRYPTION_KEY = "";
+      vi.spyOn(cuid2, "createId").mockReturnValueOnce("test-cuid");
 
-      expect(result).toEqual([]);
-      expect(createIdMock).not.toHaveBeenCalled();
+      expect(() => generateSurveySingleUseLinkParams("survey-1", isEncrypted)).toThrow(
+        "ENCRYPTION_KEY is not set"
+      );
+
+      vi.mocked(env).ENCRYPTION_KEY = "test-encryption-key";
+    });
+
+    test("signs every link in a bulk batch", () => {
+      const batch = generateSurveySingleUseLinkParamsList(3, "survey-1", false);
+
+      expect(batch).toHaveLength(3);
+      expect(batch.every((params) => /^[0-9a-f]{64}$/.test(params.suToken))).toBe(true);
+    });
+
+    test("returns an empty batch when count is zero", () => {
+      expect(generateSurveySingleUseLinkParamsList(0, "survey-1", false)).toEqual([]);
     });
   });
 

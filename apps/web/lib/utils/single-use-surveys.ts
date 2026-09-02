@@ -46,8 +46,12 @@ const getSingleUseSigningKey = (): string => {
   return env.ENCRYPTION_KEY;
 };
 
-// generate encrypted single use id for the survey
-export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
+/**
+ * Module-private on purpose: this mints a bare id with no survey binding, which is the shape that
+ * ENG-2758 was. Everything outside this file goes through `generateSurveySingleUseLinkParams`,
+ * which always signs. Do not export it again.
+ */
+const generateSurveySingleUseId = (isEncrypted: boolean): string => {
   const cuid = createId();
   if (!isEncrypted) {
     return cuid;
@@ -59,16 +63,6 @@ export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
 
   const encryptedCuid = symmetricEncrypt(cuid, env.ENCRYPTION_KEY);
   return encryptedCuid;
-};
-
-export const generateSurveySingleUseIds = (count: number, isEncrypted: boolean): string[] => {
-  const singleUseIds: string[] = [];
-
-  for (let i = 0; i < count; i++) {
-    singleUseIds.push(generateSurveySingleUseId(isEncrypted));
-  }
-
-  return singleUseIds;
 };
 
 export const generateSurveySingleUseSignature = (surveyId: string, singleUseId: string): string => {
