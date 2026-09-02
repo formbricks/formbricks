@@ -26,7 +26,7 @@ Wiring up an LLM takes two steps:
   </Step>
 </Steps>
 
-## Choosing a Provider
+## Choosing a provider
 
 `AI_PROVIDER` accepts four values. Set only the variables for the provider you use — the rest can be omitted.
 
@@ -80,8 +80,17 @@ provider manually.
 
 To use an endpoint you already run, do not enable the bundled runtime — keep the `qwen` Compose profile off, or
 `llm.enabled=false` in Helm. Point `AI_OPENAI_COMPATIBLE_BASE_URL` at your endpoint and add
-`AI_OPENAI_COMPATIBLE_API_KEY` if it requires one. Only `AI_OPENAI_COMPATIBLE_BASE_URL` is required; it must be a
-valid HTTP(S) URL.
+`AI_OPENAI_COMPATIBLE_API_KEY` if it requires one.
+
+`AI_PROVIDER` and `AI_MODEL` are always required. `AI_OPENAI_COMPATIBLE_BASE_URL` is the only variable specific
+to this provider that you must set, and it has to be a valid HTTP(S) URL.
+
+<Warning>
+  Use an `https://` endpoint whenever you set `AI_OPENAI_COMPATIBLE_API_KEY`. Formbricks accepts a plain `http://`
+  URL, so nothing stops you sending that key — and every prompt — in cleartext. Plain HTTP is only appropriate for
+  an endpoint that takes no credentials and is unreachable from outside your network, such as the bundled
+  `http://vllm:8000/v1` on the internal Compose network.
+</Warning>
 
 ## Google Cloud
 
@@ -92,8 +101,12 @@ AI_GOOGLE_CLOUD_PROJECT=your-project-id
 AI_GOOGLE_CLOUD_LOCATION=global
 ```
 
-`gemini-3.5-flash` must use `AI_GOOGLE_CLOUD_LOCATION=global`, `us`, or `eu`. Keep regional locations such as
-`europe-west3` or `me-central2` only for models Google lists as supported there, for example `gemini-2.5-flash`.
+Formbricks passes `AI_GOOGLE_CLOUD_LOCATION` through as given and enforces no list of its own: `us` and `eu`
+are sent to their multi-region endpoints, and every other value — `global` and regional locations such as
+`europe-west3` — uses the SDK default endpoint. Which locations actually serve your model depends on Google's
+availability for that model and your serving mode, so check the
+[model page](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/3-5-flash) before picking
+one for data-residency reasons. `global` is the safe default.
 
 Credentials are optional. If the container already has Application Default Credentials, leave both credential
 variables unset. Otherwise pick one:
@@ -114,11 +127,19 @@ variables unset. Otherwise pick one:
 AI_PROVIDER=azure
 AI_MODEL=your-deployment-name
 AI_AZURE_API_KEY=your-api-key
-AI_AZURE_BASE_URL=https://your-resource.openai.azure.com/openai/v1
+AI_AZURE_RESOURCE_NAME=your-resource
 ```
 
-`AI_MODEL` is the deployment name, not the base model name. Provide either `AI_AZURE_BASE_URL` or
-`AI_AZURE_RESOURCE_NAME` — the base URL wins when both are set. `AI_AZURE_API_VERSION` defaults to `v1`.
+`AI_MODEL` is the deployment name, not the base model name. `AI_AZURE_API_VERSION` defaults to `v1`.
+
+Provide either `AI_AZURE_RESOURCE_NAME` or `AI_AZURE_BASE_URL` — the base URL wins when both are set. If you set
+the base URL, end it at `/openai` and do not append `/v1`: the Azure SDK adds the version segment itself, so
+`https://your-resource.openai.azure.com/openai/v1` produces requests against `/openai/v1/v1/…` and fails.
+
+```bash
+# Equivalent to the resource name above
+AI_AZURE_BASE_URL=https://your-resource.openai.azure.com/openai
+```
 
 ## AWS Bedrock
 
@@ -132,17 +153,27 @@ AI_AWS_SECRET_ACCESS_KEY=your-secret-access-key
 AI_AWS_SESSION_TOKEN=your-session-token
 ```
 
-## External Providers on Kubernetes
+## External providers on Kubernetes
 
 Keep `llm.enabled=false` when you use Google Cloud, Azure, AWS Bedrock, or your own OpenAI-compatible runtime.
 Configure those providers with `deployment.env` in your Helm values or with environment variables in your
 deployment platform.
 
-## Verifying the Setup
+## Verifying the setup
 
 Restart your containers after changing any of these variables, then open **Settings → Organization → General**.
 While the instance is not configured, the AI toggle stays disabled and the page says so — the setting cannot be
 turned on from the UI until the environment variables are in place.
+
+<Warning>
+  An enabled toggle only means the variables are present and well-formed. Formbricks does not call your provider
+  to check it: an unreachable base URL, a wrong API key, or a deployment name that does not exist all pass this
+  check and fail on the first real request.
+</Warning>
+
+So finish by exercising the model once — translate a survey into a second language, or ask the AI chart builder
+for a chart. If that request fails while the toggle is on, the credentials or the endpoint are wrong, not the
+configuration shape.
 
 If the toggle stays disabled after a restart, check the app logs:
 
