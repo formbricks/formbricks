@@ -5,7 +5,7 @@ import { describe, expect, test, vi } from "vitest";
 
 const BASE_URL = "https://app.formbricks.test";
 
-const createAuthInstance = (storeSessionInDatabase: boolean) => {
+const createAuthInstance = (storeSessionInDatabase: boolean, preserveSessionInDatabase = false) => {
   const secondaryStorage = createSecondaryStorageMock();
   const log = vi.fn();
   const auth = betterAuth({
@@ -15,7 +15,7 @@ const createAuthInstance = (storeSessionInDatabase: boolean) => {
     emailAndPassword: { enabled: true },
     rateLimit: { enabled: false },
     secondaryStorage: secondaryStorage.storage,
-    session: { storeSessionInDatabase },
+    session: { storeSessionInDatabase, preserveSessionInDatabase },
     logger: { level: "error", log },
   });
 
@@ -53,6 +53,17 @@ describe("Better Auth session database fallback", () => {
 
   test("propagates the secondary-storage error when sessions are not stored in the database", async () => {
     const { auth, secondaryStorage, signUp } = createAuthInstance(false);
+    const cookie = await signUp();
+    secondaryStorage.failReads();
+
+    await expect(auth.api.getSession({ headers: new Headers({ cookie }) })).rejects.toMatchObject({
+      status: "INTERNAL_SERVER_ERROR",
+      body: { code: "FAILED_TO_GET_SESSION" },
+    });
+  });
+
+  test("propagates the secondary-storage error when database sessions are preserved", async () => {
+    const { auth, secondaryStorage, signUp } = createAuthInstance(true, true);
     const cookie = await signUp();
     secondaryStorage.failReads();
 
