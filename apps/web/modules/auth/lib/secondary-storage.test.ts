@@ -1,3 +1,4 @@
+import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { redisSecondaryStorage } from "./secondary-storage";
 
@@ -23,9 +24,14 @@ describe("redisSecondaryStorage", () => {
     mockClient.connect.mockResolvedValue(undefined);
   });
 
-  test("get reads through to the client", async () => {
+  test("creates the client with a heartbeat and reads through to it", async () => {
     mockClient.get.mockResolvedValue("value");
     expect(await redisSecondaryStorage.get("k")).toBe("value");
+    expect(createClient).toHaveBeenCalledWith({
+      url: "redis://localhost:6379",
+      socket: { connectTimeout: 3000 },
+      pingInterval: 300_000,
+    });
     expect(mockClient.get).toHaveBeenCalledWith("k");
   });
 
