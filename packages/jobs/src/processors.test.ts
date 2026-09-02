@@ -30,6 +30,7 @@ describe("@formbricks/jobs processor registry", () => {
     expect(getJobProcessor(JOB_NAMES.responsePipeline)).toBeDefined();
     expect(getJobProcessor(JOB_NAMES.surveyScheduling)).toBeDefined();
     expect(getJobProcessor(JOB_NAMES.workflowRun)).toBeDefined();
+    expect(getJobProcessor(JOB_NAMES.webhookDelivery)).toBeDefined();
     expect(getBackgroundJobDefinition(JOB_NAMES.testLog)).toBeDefined();
   });
 
@@ -146,6 +147,68 @@ describe("@formbricks/jobs processor registry", () => {
       }),
       "BullMQ workflow run processor override is not registered"
     );
+  });
+
+  test("fails fast for the unimplemented webhook delivery processor without logging the payload", async () => {
+    const webhookDeliveryJobData = {
+      webhookId: "cm8cmpnjj000108jfdr9whk01",
+      workspaceId: "cm8cmpnjj000108jfdr9wksp1",
+      surveyId: "cm8cmpnjj000108jfdr9surv1",
+      event: "responseFinished",
+      webhookMessageId: "a".repeat(64),
+      response: {
+        id: "cm8cmpnjj000108jfdr9resp1",
+        createdAt: new Date("2026-01-01T00:00:00.000Z").toISOString(),
+        updatedAt: new Date("2026-01-01T00:00:00.000Z").toISOString(),
+        surveyId: "cm8cmpnjj000108jfdr9surv1",
+        displayId: null,
+        contact: null,
+        contactAttributes: null,
+        finished: true,
+        endingId: null,
+        data: { q1: "sensitive answer" },
+        variables: {},
+        ttc: {},
+        meta: {},
+        notes: [],
+        tags: [],
+        singleUseId: null,
+        language: null,
+      },
+      survey: {
+        name: "Survey",
+        type: "link",
+        status: "inProgress",
+        createdAt: new Date("2026-01-01T00:00:00.000Z").toISOString(),
+        updatedAt: new Date("2026-01-01T00:00:00.000Z").toISOString(),
+      },
+    };
+
+    await expect(
+      processJob({
+        attemptsMade: 0,
+        data: webhookDeliveryJobData,
+        id: "job-whd",
+        name: JOB_NAMES.webhookDelivery,
+        opts: { attempts: 5 },
+        queueName: "background-jobs",
+      } as never)
+    ).rejects.toThrow("BullMQ webhook delivery processor override missing");
+
+    expect(mockError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "responseFinished",
+        responseId: "cm8cmpnjj000108jfdr9resp1",
+        surveyId: "cm8cmpnjj000108jfdr9surv1",
+        webhookId: "cm8cmpnjj000108jfdr9whk01",
+        workspaceId: "cm8cmpnjj000108jfdr9wksp1",
+        jobId: "job-whd",
+        jobName: JOB_NAMES.webhookDelivery,
+      }),
+      "BullMQ webhook delivery processor override is not registered"
+    );
+    // Scalar identifiers only — the response answers must never reach the log line.
+    expect(JSON.stringify(mockError.mock.calls)).not.toContain("sensitive answer");
   });
 
   test("uses registered handler overrides when provided", async () => {
