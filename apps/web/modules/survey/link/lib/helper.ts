@@ -1,7 +1,5 @@
 import "server-only";
-import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { verifyTokenForLinkSurvey } from "@/lib/jwt";
-import { validateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 
 interface emailVerificationDetails {
   status: "not-verified" | "verified" | "fishy";
@@ -25,34 +23,5 @@ export const getEmailVerificationDetails = async (
     } catch (error) {
       return { status: "not-verified" };
     }
-  }
-};
-
-export const checkAndValidateSingleUseId = (
-  suid?: string,
-  isEncrypted = false,
-  surveyId?: string,
-  suToken?: string
-): string | null => {
-  if (!suid?.trim()) return null;
-
-  if (isEncrypted) {
-    const validatedSingleUseId = validateSurveySingleUseId(suid);
-    if (!validatedSingleUseId) return null;
-    return validatedSingleUseId;
-  }
-
-  if (!surveyId) return null;
-
-  try {
-    return validateSurveySingleUseLinkParams({
-      surveyId,
-      suId: suid,
-      suToken,
-      isEncrypted,
-      decrypt: (encryptedSingleUseId) => validateSurveySingleUseId(encryptedSingleUseId) ?? "",
-    });
-  } catch {
-    return null;
   }
 };

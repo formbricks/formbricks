@@ -4,8 +4,7 @@ import { TResponseInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY } from "@/lib/constants";
-import { symmetricDecrypt } from "@/lib/crypto";
-import { validateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
+import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 
 type TSingleUseResponseInput = Pick<TResponseInput, "singleUseId" | "meta">;
 
@@ -86,18 +85,13 @@ export const validateSingleUseResponseInput = (
     };
   }
 
-  let canonicalSingleUseId: string | null = null;
-  try {
-    canonicalSingleUseId = validateSurveySingleUseLinkParams({
-      surveyId: survey.id,
-      suId,
-      suToken,
-      isEncrypted: survey.singleUse.isEncrypted,
-      decrypt: (encryptedSingleUseId: string) => symmetricDecrypt(encryptedSingleUseId, ENCRYPTION_KEY),
-    });
-  } catch (error) {
-    logger.error({ error, surveyId: survey.id, environmentId }, "Failed to validate single-use id");
-  }
+  const canonicalSingleUseId = resolveSingleUseIdForSurvey({
+    surveyId: survey.id,
+    isEncrypted: survey.singleUse.isEncrypted,
+    suId,
+    suToken,
+    surface: "client_response_v1",
+  });
 
   if (!canonicalSingleUseId || canonicalSingleUseId !== responseInput.singleUseId) {
     return {
