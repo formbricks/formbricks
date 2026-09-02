@@ -176,7 +176,8 @@
                       "surveys/website-app-surveys/recontact",
                       "surveys/website-app-surveys/cooldown-period",
                       "surveys/website-app-surveys/survey-display-logic",
-                      "surveys/website-app-surveys/show-survey-to-percent-of-users"
+                      "surveys/website-app-surveys/show-survey-to-percent-of-users",
+                      "surveys/website-app-surveys/lifecycle-events"
                     ]
                   }
                 ]

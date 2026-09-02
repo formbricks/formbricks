@@ -1,0 +1,80 @@
+---
+title: "Lifecycle Events"
+description: "Subscribe to survey lifecycle events to find out when a survey was actually shown, answered or closed in your app."
+icon: "bell"
+---
+
+Calling `formbricks.track()` does not mean a survey appeared. Formbricks still checks the cooldown period, recontact options, targeting and the percentage setting, and often decides not to show anything.
+
+Lifecycle events tell you what really happened, so your app can react to the survey it actually displayed.
+
+## The three events
+
+| Event | Fires when | How often |
+| --- | --- | --- |
+| `displayed` | The survey becomes visible | Once per display |
+| `responded` | The user submits their first answer | Once per survey |
+| `closed` | The user dismisses or finishes the survey | Once per display |
+
+Every event is an object with the event type and the survey it belongs to:
+
+```js
+{ type: "displayed", surveyId: "cltxyz1234567890" }
+```
+
+## Listening for events
+
+```js
+formbricks.on("displayed", (event) => {
+  console.log("Survey shown:", event.surveyId);
+});
+```
+
+You can subscribe before or after `formbricks.setup()`, and your listeners stay registered after `formbricks.logout()`.
+
+## Stopping a listener
+
+`formbricks.on()` returns a function that removes the listener:
+
+```js
+const unsubscribe = formbricks.on("responded", handleResponse);
+
+// later
+unsubscribe();
+```
+
+If you kept the handler in a variable, `formbricks.off()` does the same:
+
+```js
+formbricks.off("responded", handleResponse);
+```
+
+## Example: show a survey once per session
+
+```js
+let surveyShown = false;
+
+formbricks.on("displayed", () => {
+  surveyShown = true;
+});
+
+function onCheckout() {
+  if (surveyShown) return;
+  formbricks.track("checkout_completed");
+}
+```
+
+<Note>
+  A survey that is never shown sends no events at all. That silence is the signal: it means the user did not
+  see a survey, so nothing needs to be recorded.
+</Note>
+
+<Tip>
+  There is no separate "finished" event. `closed` covers both dismissing and completing a survey. To tell them
+  apart, check whether `responded` arrived first.
+</Tip>
+
+<Note>
+  Lifecycle events are available in the JavaScript SDK. Support for React Native, iOS, Android and Flutter is
+  coming in a later release.
+</Note>
