@@ -16,7 +16,8 @@ import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
 
 type TUncheckedResponseUpdate = Record<string, unknown> & {
-  data: TResponseData;
+  // Both optional: the body is unchecked here, and ZResponseUpdateInput allows partial updates.
+  data?: TResponseData;
   language?: string;
 };
 

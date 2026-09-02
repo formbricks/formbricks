@@ -116,6 +116,16 @@ describe("validateResponseData", () => {
     expect(validateResponseData(undefined, mockResponseData, "en", null)).toBeNull();
   });
 
+  test("should return null when responseData is absent", () => {
+    // Partial API updates (e.g. `{ "finished": true }` on PUT /api/v1/management/responses/:id) omit
+    // `data` entirely, so the helper must treat it as "nothing to validate" (ENG-2425).
+    mockGetElementsFromBlocks.mockReturnValue(mockElements);
+
+    expect(validateResponseData(mockBlocks, undefined, "en")).toBeNull();
+    expect(validateResponseData(mockBlocks, null, "en")).toBeNull();
+    expect(mockValidateBlockResponses).not.toHaveBeenCalled();
+  });
+
   test("should use default language code", () => {
     mockGetElementsFromBlocks.mockReturnValue(mockElements);
     mockValidateBlockResponses.mockReturnValue({});
