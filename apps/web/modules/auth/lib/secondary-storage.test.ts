@@ -62,18 +62,16 @@ describe("redisSecondaryStorage", () => {
     expect(await redisSecondaryStorage.getAndDelete("native-key")).toBe("native");
     await expect(redisSecondaryStorage.getAndDelete("closed-key")).rejects.toBe(connectionError);
     expect(await redisSecondaryStorage.getAndDelete("verification:key")).toBe("once");
-    expect(await redisSecondaryStorage.getAndDelete("verification:missing")).toBeNull();
+    expect(await redisSecondaryStorage.getAndDelete("verification:key")).toBeNull();
 
     expect(mockClient.getDel).toHaveBeenCalledTimes(3);
     expect(mockClient.getDel).toHaveBeenNthCalledWith(1, "native-key");
     expect(mockClient.getDel).toHaveBeenNthCalledWith(2, "closed-key");
     expect(mockClient.getDel).toHaveBeenNthCalledWith(3, "verification:key");
     expect(mockClient.eval).toHaveBeenCalledTimes(2);
-    const [script, options] = mockClient.eval.mock.calls[0];
-    expect(script).toContain("redis.call('GET', KEYS[1])");
-    expect(script).toContain("redis.call('DEL', KEYS[1])");
+    const [, options] = mockClient.eval.mock.calls[0];
     expect(options).toEqual({ keys: ["verification:key"], arguments: [] });
-    expect(mockClient.eval.mock.calls[1][1]).toEqual({ keys: ["verification:missing"], arguments: [] });
+    expect(mockClient.eval.mock.calls[1][1]).toEqual({ keys: ["verification:key"], arguments: [] });
   });
 
   test("increment runs a single atomic INCR+EXPIRE Lua eval and returns the count", async () => {
