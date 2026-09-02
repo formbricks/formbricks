@@ -1,10 +1,9 @@
 /**
  * @vitest-environment jsdom
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { createWrapper, newQueryClient } from "./test-utils";
 import { useWorkflowSurveyEndings, useWorkflowSurveyOptions } from "./use-trigger-survey-picker";
 
 const { listSurveysMock } = vi.hoisted(() => ({ listSurveysMock: vi.fn() }));
@@ -12,15 +11,6 @@ const { listSurveysMock } = vi.hoisted(() => ({ listSurveysMock: vi.fn() }));
 vi.mock("@/modules/survey/list/lib/v3-surveys-client", () => ({
   listSurveys: listSurveysMock,
 }));
-
-function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-  Wrapper.displayName = "TriggerSurveyPickerTestWrapper";
-  return Wrapper;
-}
-
-const newQueryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
 const page = (data: Array<{ id: string; name: string }>, nextCursor: string | null) => ({
   data,
@@ -169,6 +159,52 @@ describe("useWorkflowSurveyEndings", () => {
       { id: "end-4", label: "User @userId" },
       { id: "end-5", label: "Q2: @Nested ___" },
       { id: "end-6", label: "Plain thanks" },
+    ]);
+  });
+
+  // The three recall sources are separate maps merged into one, so a shared id is resolved by merge
+  // order alone. Distinct ids in the fixture above cannot catch a reordering; these collisions can.
+  test("resolves a colliding recall id by source precedence: hidden field > element > variable", async () => {
+    const fetchMock = vi.mocked(global.fetch);
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        data: {
+          defaultLanguage: "en",
+          blocks: [
+            {
+              id: "b1",
+              elements: [
+                { id: "shared_qv", headline: { en: "Element headline" } },
+                { id: "shared_qh", headline: { en: "Element loses to hidden field" } },
+              ],
+            },
+          ],
+          variables: [
+            { id: "shared_qv", name: "variable name" },
+            { id: "shared_vh", name: "variable loses to hidden field" },
+          ],
+          hiddenFields: { enabled: true, fieldIds: ["shared_qh", "shared_vh"] },
+          endings: [
+            { id: "end-1", type: "endScreen", headline: { en: "A #recall:shared_qv/fallback:x#" } },
+            { id: "end-2", type: "endScreen", headline: { en: "B #recall:shared_qh/fallback:x#" } },
+            { id: "end-3", type: "endScreen", headline: { en: "C #recall:shared_vh/fallback:x#" } },
+          ],
+        },
+      })
+    );
+
+    const { result } = renderHook(() => useWorkflowSurveyEndings("survey_1"), {
+      wrapper: createWrapper(newQueryClient()),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.endings).toEqual([
+      // element over variable
+      { id: "end-1", label: "A @Element headline" },
+      // hidden field (which recalls as its own id) over element
+      { id: "end-2", label: "B @shared_qh" },
+      // hidden field over variable
+      { id: "end-3", label: "C @shared_vh" },
     ]);
   });
 
