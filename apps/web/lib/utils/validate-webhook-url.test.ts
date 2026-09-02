@@ -449,6 +449,38 @@ describe("validateWebhookUrl", () => {
         name: "InvalidInputError",
       });
     });
+
+    // The delivery worker retries the subclass (a resolver hiccup is transient) and treats the base
+    // class as permanent, so the two must stay distinguishable while both remain 400s for the API.
+    test("DNS failures are the WebhookDnsResolutionError subclass, still a 400 InvalidInputError", async () => {
+      setupDnsResolution(null, null);
+      await expect(validateWebhookUrl("https://nonexistent.invalid/path")).rejects.toMatchObject({
+        name: "WebhookDnsResolutionError",
+        statusCode: 400,
+      });
+    });
+
+    test("a DNS timeout is also the WebhookDnsResolutionError subclass", async () => {
+      vi.useFakeTimers();
+      mockResolve.mockImplementation((() => {}) as never);
+
+      const assertion = expect(
+        validateWebhookUrl("https://slow-dns.example.com/webhook")
+      ).rejects.toMatchObject({
+        name: "WebhookDnsResolutionError",
+      });
+      await vi.advanceTimersByTimeAsync(3000);
+      await assertion;
+
+      vi.useRealTimers();
+    });
+
+    test("a policy rejection after successful resolution is the plain InvalidInputError, not the DNS subclass", async () => {
+      setupDnsResolution(["192.168.1.1"]);
+      await expect(validateWebhookUrl("https://private.example.com/webhook")).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
+    });
   });
 
   describe("DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS", () => {
