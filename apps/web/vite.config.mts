@@ -128,7 +128,6 @@ export default defineConfig({
         // tests, so they are excluded from the unit-coverage gate below (ENG-1054).
         "modules/auth/lib/auth.ts",
         "modules/auth/lib/auth-client.ts",
-        "modules/auth/lib/secondary-storage.ts",
         "modules/auth/lib/better-auth-email-verification.ts",
         "packages/js-core/src/index.ts", // JS Core index file
 
