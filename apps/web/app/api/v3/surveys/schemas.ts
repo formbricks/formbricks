@@ -1309,6 +1309,33 @@ export const ZV3SurveyValidationRequestBody = z.discriminatedUnion("operation", 
 
 export const ZV3EmptyQuery = z.object({}).strict();
 
+/**
+ * `-fLang-` is an editor-only delimiter: the shared label validators embed it in the issue message so
+ * the editor can split the language list off for its toast (`survey-menu-bar.tsx`). v3 clients receive
+ * these messages verbatim as `invalid_params[].reason`, so the marker is stripped here rather than in
+ * the shared validators the editor still depends on. The suffix it precedes already ends in ": ", so
+ * the segments are trimmed and rejoined with a single space.
+ *
+ * Deliberately not a regex. Wrapping the literal in a `\s*` on each side is quadratic on a long
+ * whitespace run that contains no marker (Sonar S8786): the leading `\s*` matches to the end at every
+ * start position, then backtracks looking for a literal that is not there. That run is reachable from
+ * one request: `createZV3SurveyLanguageTag` interpolates the caller's raw language code into its
+ * message and `.trim()` strips only the ends, so interior whitespace arrives here. Splitting on the
+ * literal is linear by construction, with no bound to tune and nothing to backtrack.
+ */
+const FIELD_LANGUAGE_MARKER = "-fLang-";
+
+function toV3InvalidParamReason(message: string): string {
+  if (!message.includes(FIELD_LANGUAGE_MARKER)) {
+    return message;
+  }
+
+  return message
+    .split(FIELD_LANGUAGE_MARKER)
+    .map((segment) => segment.trim())
+    .join(" ");
+}
+
 export function formatV3ZodInvalidParams(error: z.ZodError, fallbackName: string): InvalidParam[] {
   return error.issues.map((issue) => {
     const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
@@ -1316,7 +1343,7 @@ export function formatV3ZodInvalidParams(error: z.ZodError, fallbackName: string
 
     return {
       name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
-      reason: issue.message,
+      reason: toV3InvalidParamReason(issue.message),
       ...(code ? { code } : {}),
     };
   });

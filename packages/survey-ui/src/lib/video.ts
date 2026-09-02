@@ -1,3 +1,5 @@
+import { extractYoutubeId } from "./youtube-id";
+
 export const checkForYoutubeUrl = (url: string): boolean => {
   try {
     const youtubeUrl = new URL(url);
@@ -51,29 +53,6 @@ export const checkForLoomUrl = (url: string): boolean => {
     // invalid URL
     return false;
   }
-};
-
-const extractYoutubeId = (url: string): string | null => {
-  let id = "";
-
-  // Regular expressions for various YouTube URL formats
-  const regExpList = [
-    /youtu\.be\/(?<videoId>[a-zA-Z0-9_-]+)/, // youtu.be/<id>
-    /youtube\.com.*v=(?<videoId>[a-zA-Z0-9_-]+)/, // youtube.com/watch?v=<id>
-    /youtube\.com.*embed\/(?<videoId>[a-zA-Z0-9_-]+)/, // youtube.com/embed/<id>
-    /youtube-nocookie\.com\/embed\/(?<videoId>[a-zA-Z0-9_-]+)/, // youtube-nocookie.com/embed/<id>
-  ];
-
-  regExpList.some((regExp) => {
-    const match = regExp.exec(url);
-    if (match?.groups?.videoId) {
-      id = match.groups.videoId;
-      return true;
-    }
-    return false;
-  });
-
-  return id || null;
 };
 
 const extractVimeoId = (url: string): string | null => {

@@ -33,10 +33,19 @@ export const extractIds = (text: string): string[] => {
 };
 
 // Extracts the fallback value from a string containing the "fallback" pattern.
+// An index scan, not `/fallback:([^#]*)#/`: that pattern is O(N^2) on a long run of `fallback:`
+// with no `#` after it, because the engine rescans to the end from every occurrence. Identical
+// result — `[^#]*` cannot cross a `#`, so the regex ends at the first `#` after the FIRST
+// `fallback:`, and if none follows that one none follows a later one either.
+const FALLBACK_MARKER = "fallback:";
+
 export const extractFallbackValue = (text: string): string => {
-  const pattern = /fallback:([^#]*)#/;
-  const match = text.match(pattern);
-  return match?.[1] ?? "";
+  const markerStart = text.indexOf(FALLBACK_MARKER);
+  if (markerStart === -1) return "";
+
+  const valueStart = markerStart + FALLBACK_MARKER.length;
+  const valueEnd = text.indexOf("#", valueStart);
+  return valueEnd === -1 ? "" : text.slice(valueStart, valueEnd);
 };
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
