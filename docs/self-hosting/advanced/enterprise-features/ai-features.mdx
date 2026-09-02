@@ -1,35 +1,52 @@
 ---
 title: "AI Features"
-description: "Enable AI-powered helpers like survey translation and AI chart creation."
+description: "Connect an LLM to your instance and enable AI-powered helpers like survey translation and AI chart creation."
 icon: "sparkles"
 sidebarTitle: "AI Features"
 ---
 
-A single organization toggle unlocks AI-assisted survey translation and AI chart creation across the app. Requires `AI_PROVIDER`, `AI_MODEL`, and the matching provider configuration on the instance.
+A single organization toggle unlocks AI-assisted survey translation and AI chart creation across the app.
+Formbricks runs fine without AI — nothing is enabled until you connect a model.
 
-This page covers deploying the bundled Qwen/vLLM runtime. To connect any provider, including an existing external one, see [AI Setup](/self-hosting/configuration/ai-setup).
+<Note>
+  AI features are part of the [Enterprise Edition](/self-hosting/advanced/license). See [AI
+  Features](/platform/features/ai-features) for what the toggle unlocks and how your data is handled.
+</Note>
 
-## Kubernetes Helm
+Wiring up an LLM takes two steps:
 
-The Formbricks Helm chart can deploy a bundled Qwen/vLLM runtime for Smart functionality. This path is disabled
-by default and requires GPU-capable Kubernetes nodes.
+<Steps>
+  <Step title="Point the instance at a model">
+    Set `AI_PROVIDER`, `AI_MODEL`, and the credentials for that provider as environment variables, then
+    restart your containers.
+  </Step>
+  <Step title="Turn AI on for the organization">
+    In the app, go to **Settings → Organization → General → Smart functionality (AI)** and enable the toggle.
+    Only Owners and Managers can change it.
+  </Step>
+</Steps>
 
-```yaml
-llm:
-  enabled: true
-```
+## Choosing a Provider
 
-When `llm.enabled` is true, the chart deploys the vLLM router and Qwen serving engine. By default it also points
-the Formbricks app at the in-cluster OpenAI-compatible endpoint by injecting the required `AI_*` environment
-variables.
+`AI_PROVIDER` accepts four values. Set only the variables for the provider you use — the rest can be omitted.
 
-Set `llm.autoConfigureApp=false` if you want the chart to deploy Qwen/vLLM but prefer to configure the app
-provider manually.
+| `AI_PROVIDER`       | Runs on                                            |
+| ------------------- | -------------------------------------------------- |
+| `openai-compatible` | Any OpenAI-compatible `/v1` endpoint — Qwen/vLLM and friends. The self-hosted path. |
+| `google`            | Google Cloud, for Gemini models.                   |
+| `azure`             | Azure OpenAI / Foundry.                            |
+| `aws`               | Amazon Bedrock.                                    |
 
-## Docker Compose
+## OpenAI-compatible (self-hosted)
 
-The Docker stack can deploy the same Qwen/vLLM runtime through an opt-in Compose profile. This path is disabled
-by default and requires a GPU-capable Docker host with the NVIDIA Container Toolkit installed.
+The supported self-hosted path is Qwen served by vLLM behind an OpenAI-compatible `/v1` endpoint. Docker Compose
+and the Helm chart can both deploy that runtime for you — both paths are disabled by default and require
+GPU-capable hosts.
+
+### Docker Compose
+
+The Docker stack deploys the Qwen/vLLM runtime through an opt-in Compose profile. It needs a GPU-capable Docker
+host with the NVIDIA Container Toolkit installed.
 
 ```bash
 COMPOSE_PROFILES=qwen
@@ -43,10 +60,96 @@ AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS=1
 If you use the optional taxonomy service and want it to share the bundled Qwen runtime, start Docker Compose with
 `COMPOSE_PROFILES=qwen,taxonomy` and point `TAXONOMY_LLM_BASE_URL` at `http://vllm:8000/v1`.
 
-## External Providers
+### Kubernetes Helm
 
-Keep `llm.enabled=false` when you use Google Vertex, Azure, AWS Bedrock, or your own OpenAI-compatible runtime.
+The Formbricks Helm chart deploys the same runtime on GPU-capable Kubernetes nodes.
+
+```yaml
+llm:
+  enabled: true
+```
+
+When `llm.enabled` is true, the chart deploys the vLLM router and Qwen serving engine. By default it also points
+the Formbricks app at the in-cluster OpenAI-compatible endpoint by injecting the required `AI_*` environment
+variables.
+
+Set `llm.autoConfigureApp=false` if you want the chart to deploy Qwen/vLLM but prefer to configure the app
+provider manually.
+
+### Your own endpoint
+
+To use an endpoint you already run, do not enable the bundled runtime — keep the `qwen` Compose profile off, or
+`llm.enabled=false` in Helm. Point `AI_OPENAI_COMPATIBLE_BASE_URL` at your endpoint and add
+`AI_OPENAI_COMPATIBLE_API_KEY` if it requires one. Only `AI_OPENAI_COMPATIBLE_BASE_URL` is required; it must be a
+valid HTTP(S) URL.
+
+## Google Cloud
+
+```bash
+AI_PROVIDER=google
+AI_MODEL=gemini-3.5-flash
+AI_GOOGLE_CLOUD_PROJECT=your-project-id
+AI_GOOGLE_CLOUD_LOCATION=global
+# Omit both credential variables when Application Default Credentials are available
+AI_GOOGLE_CLOUD_CREDENTIALS_JSON='{"type":"service_account", ...}'
+```
+
+`gemini-3.5-flash` must use `AI_GOOGLE_CLOUD_LOCATION=global`, `us`, or `eu`. Keep regional locations such as
+`europe-west3` or `me-central2` only for models Google lists as supported there, for example `gemini-2.5-flash`.
+
+Credentials are optional: if the container already has Application Default Credentials, leave
+`AI_GOOGLE_CLOUD_CREDENTIALS_JSON` and `AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS` unset. Otherwise supply the
+service account JSON inline, or mount it and pass its path in `AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS`.
+
+<Note>
+  Formbricks uses Google Cloud naming here, even though the underlying SDK still talks to Vertex AI endpoints for
+  Gemini model access.
+</Note>
+
+## Azure
+
+```bash
+AI_PROVIDER=azure
+AI_MODEL=your-deployment-name
+AI_AZURE_API_KEY=your-api-key
+AI_AZURE_BASE_URL=https://your-resource.openai.azure.com/openai/v1
+```
+
+`AI_MODEL` is the deployment name, not the base model name. Provide either `AI_AZURE_BASE_URL` or
+`AI_AZURE_RESOURCE_NAME` — the base URL wins when both are set. `AI_AZURE_API_VERSION` defaults to `v1`.
+
+## AWS Bedrock
+
+```bash
+AI_PROVIDER=aws
+AI_MODEL=eu.anthropic.claude-sonnet-4-5-20250929-v1:0
+AI_AWS_REGION=eu-central-1
+AI_AWS_ACCESS_KEY_ID=your-access-key-id
+AI_AWS_SECRET_ACCESS_KEY=your-secret-access-key
+# Only for temporary credentials
+AI_AWS_SESSION_TOKEN=your-session-token
+```
+
+## External Providers on Kubernetes
+
+Keep `llm.enabled=false` when you use Google Cloud, Azure, AWS Bedrock, or your own OpenAI-compatible runtime.
 Configure those providers with `deployment.env` in your Helm values or with environment variables in your
 deployment platform.
 
-Read the full guide: [AI Features](/platform/features/ai-features).
+## Verifying the Setup
+
+Restart your containers after changing any of these variables, then open **Settings → Organization → General**.
+While the instance is not configured, the AI toggle stays disabled and the page says so — the setting cannot be
+turned on from the UI until the environment variables are in place.
+
+If the toggle stays disabled after a restart, check the app logs:
+
+```bash
+docker compose logs formbricks | grep -i "ai"
+```
+
+The usual causes are `AI_MODEL` left unset, credentials that do not match the chosen `AI_PROVIDER`, or an
+`AI_GOOGLE_CLOUD_CREDENTIALS_JSON` value that is not valid JSON.
+
+The full list of `AI_*` variables, including the optional ones, is in the [environment variables
+reference](/self-hosting/configuration/environment-variables).
