@@ -330,7 +330,8 @@ describe("processWebhookDeliveryJob", () => {
     await expect(processWebhookDeliveryJob(data, createContext())).rejects.toBe(poolError);
 
     expect(mockSend).not.toHaveBeenCalled();
-    expect(mockRecordOutcome).not.toHaveBeenCalled();
+    // Counted, so a delivery-failure alert cannot stay green through a database outage.
+    expect(mockRecordOutcome).toHaveBeenCalledWith({ outcome: "load_failed", event: "responseFinished" });
     expect(mockLoggerWarn).toHaveBeenCalledWith(
       expect.objectContaining({ err: poolError, webhookId: "webhook_123" }),
       "Webhook delivery hit database pool exhaustion and will be retried"
@@ -343,8 +344,9 @@ describe("processWebhookDeliveryJob", () => {
 
     await expect(processWebhookDeliveryJob(data, createContext())).rejects.toBe(dbError);
 
+    expect(mockRecordOutcome).toHaveBeenCalledWith({ outcome: "load_failed", event: "responseFinished" });
     expect(mockLoggerError).toHaveBeenCalledWith(
-      expect.objectContaining({ err: dbError }),
+      expect.objectContaining({ err: dbError, outcome: "load_failed" }),
       "Webhook delivery could not load the webhook and will be retried"
     );
   });

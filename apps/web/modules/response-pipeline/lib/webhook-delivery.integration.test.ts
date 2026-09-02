@@ -71,9 +71,18 @@ const toOverride =
 
 type TRuntime = Awaited<ReturnType<typeof startJobsRuntime>>;
 
+/**
+ * Own BullMQ key prefix, so this file's queue is not the deployment's `background-jobs` queue: the tests
+ * below wipe the queue between cases, and doing that on the shared prefix would delete whatever another
+ * suite (or a developer's local worker on the same Redis) had queued. Hash-tagged for Redis Cluster, the
+ * way `JOBS_PREFIX` is.
+ */
+const TEST_QUEUE_PREFIX = `{formbricks:jobs:webhook-delivery-it:${process.pid}}`;
+
 const startWorker = (redisUrl: string): Promise<TRuntime> =>
   startJobsRuntime({
     redisUrl,
+    prefix: TEST_QUEUE_PREFIX,
     jobHandlerOverrides: { [ONE_SHOT_JOB_NAMES.webhookDelivery]: toOverride(processWebhookDeliveryJob) },
   });
 
@@ -170,6 +179,8 @@ describe("webhook delivery job (integration)", () => {
   }, 30_000);
 
   afterAll(async () => {
+    // Drop this run's keys before closing, so a shared integration Redis does not accumulate a prefix per run.
+    await runtime?.queue.obliterate({ force: true }).catch(() => undefined);
     await queueEvents?.close();
     await queueEventsConnection?.quit();
     await runtime?.close();

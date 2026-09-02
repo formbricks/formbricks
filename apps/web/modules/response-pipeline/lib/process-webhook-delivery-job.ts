@@ -84,14 +84,18 @@ const loadDeliveryTarget = async (
       select: { url: true, secret: true, workspaceId: true, triggers: true, surveyIds: true },
     });
   } catch (error) {
+    // Counted like any other failed attempt: a database outage stops deliveries just as effectively as a
+    // dead receiver, and a failure-rate alert that ignores it would stay green through the outage.
+    recordWebhookDeliveryOutcome({ outcome: "load_failed", event: data.event });
+
     if (isDatabasePoolExhaustionError(error)) {
       logger.warn(
-        { ...logContext, err: error },
+        { ...logContext, err: error, outcome: "load_failed" },
         "Webhook delivery hit database pool exhaustion and will be retried"
       );
     } else {
       logger.error(
-        { ...logContext, err: error },
+        { ...logContext, err: error, outcome: "load_failed" },
         "Webhook delivery could not load the webhook and will be retried"
       );
     }
@@ -170,6 +174,7 @@ const classifyFailure = (attempt: TDeliveryAttempt): TClassifiedFailure => {
  * matching webhook, with its own retry budget (`WEBHOOK_DELIVERY_JOB_OPTIONS`).
  *
  * Outcome per attempt, in order of evaluation:
+ * - the webhook row cannot be read → rethrow so BullMQ retries (`load_failed`)
  * - webhook row gone → complete (`skipped_deleted`); unsubscribed/re-scoped → complete (`skipped_rescoped`)
  * - 2xx → complete (`delivered`)
  * - SSRF/URL policy rejection or a 4xx other than 408/429 → `UnrecoverableError` (`permanent_failure`)

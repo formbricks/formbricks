@@ -311,8 +311,7 @@ const parsedEnv = createEnv({
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.url(),
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
-    // Bounded so a misconfiguration cannot pin a worker slot for minutes; 30 s also stays under
-    // BullMQ's default lock horizon.
+    // Bounded so a misconfiguration cannot pin a background-worker slot for minutes.
     WEBHOOK_DELIVERY_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).optional(),
     DEBUG_SHOW_RESET_LINK: z.enum(["1", "0"]).optional(),
     // DEBUG is a common ambient env var in CI/tooling, so we accept arbitrary strings here

@@ -3,13 +3,15 @@ import type { TResponsePipelineEvent } from "@formbricks/jobs";
 
 /**
  * What a single delivery attempt ended as. `retryable_failure` is one attempt that BullMQ will (or, on
- * the last attempt, would) retry; `permanent_failure` is a rejection no retry can fix; the two `skipped_*`
- * outcomes are completions with no HTTP request at all.
+ * the last attempt, would) retry; `permanent_failure` is a rejection no retry can fix; `load_failed` is our
+ * own database refusing to hand over the webhook, so no request was made and the fault is ours rather than
+ * the receiver's; the two `skipped_*` outcomes are completions with no HTTP request at all.
  */
 export type TWebhookDeliveryOutcome =
   | "delivered"
   | "retryable_failure"
   | "permanent_failure"
+  | "load_failed"
   | "skipped_deleted"
   | "skipped_rescoped";
 

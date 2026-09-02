@@ -96,9 +96,14 @@ Increase concurrency gradually and monitor database, Redis, and downstream servi
 also adds workers, so account for both scaling controls.
 
 Every response now produces one job per matching webhook in addition to the pipeline job itself, and each
-delivery holds a worker slot for up to `WEBHOOK_DELIVERY_TIMEOUT_MS` (5 seconds by default). Deployments with
-many webhooks per survey, or with slow receivers, should raise `BULLMQ_WORKER_CONCURRENCY` so a burst of
-deliveries does not queue behind the pipeline and workflow jobs.
+delivery holds a worker slot for up to `WEBHOOK_DELIVERY_TIMEOUT_MS` (5 seconds by default). Because those
+jobs share the queue's concurrency, the deliveries for one response run **as concurrency allows rather than
+all at once**: at the default of one, ten webhooks are delivered one after another, so the last receiver is
+contacted later than it would have been when the pipeline job posted to all of them itself.
+
+Raise `BULLMQ_WORKER_CONCURRENCY` if your workspaces have several webhooks per survey, or receivers that are
+slow to answer — otherwise a burst of deliveries also delays pipeline and workflow jobs behind it. Each
+concurrent slot needs a database connection, so raise the connection pool alongside it.
 
 ## Retry behavior
 
@@ -116,8 +121,13 @@ Individual workloads can add their own recovery behavior on top of these queue-l
 Webhook deliveries override the queue defaults with **5 attempts** and an **exponential backoff starting at 30
 seconds** (retries after roughly 30 seconds, 1, 2 and 4 minutes). A receiver that returns a 4xx status other
 than 408 or 429, or a webhook URL that fails the SSRF policy, fails the job immediately without retrying;
-network errors, timeouts, DNS failures, redirects, 408, 429 and 5xx statuses are retried. Deliveries to a
-webhook that was deleted or unsubscribed from the event while the job was queued complete without a request.
+network errors, timeouts, DNS failures, 408, 429 and 5xx statuses are retried. Deliveries to a webhook that was
+deleted or unsubscribed from the event while the job was queued complete without a request.
+
+Redirects depend on `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS`. Left unset — the default, and the safe setting —
+a 3xx response is refused rather than followed, and the attempt is retried in case the receiver's configuration
+is fixed. With the variable set, redirects are followed instead: note that following one turns the POST into a
+GET, which many receivers answer with `405`, and a 405 is then treated as a permanent rejection.
 
 ## Workflows
 
@@ -202,6 +212,7 @@ Formbricks writes structured logs to stdout and stderr. Search the `msg` field f
 | `Webhook delivery failed permanently`                                                              | The receiver rejected the request (4xx) or the webhook URL failed the SSRF policy, so no retry was attempted. Fix the receiver or the webhook URL; `reason` names the cause.                                                                                                                       |
 | `Webhook delivery skipped: webhook deleted`                                                        | The webhook was deleted after the event was queued. Expected after deleting a webhook with deliveries in flight.                                                                                                                                                                                 |
 | `Webhook delivery skipped: webhook no longer subscribed to this event`                             | The webhook's triggers or surveys were changed after the event was queued. Expected after editing a webhook with deliveries in flight.                                                                                                                                                             |
+| `Webhook delivery could not load the webhook and will be retried`                                  | The database refused the webhook lookup, so no request was made and the attempt is retried. Check database health and the connection pool; the companion message names pool exhaustion explicitly.                                                                                                 |
 | `Dropping BullMQ job with no registered processor: its schedule outlived the code that handled it` | A schedule in Redis outlived the build that handles it — typically after a rollback to a version without that feature. The job is completed rather than retried, so it does not accumulate in the failed set. Redeploy the build that owns `jobName`, or remove the stale schedule from Redis. |
 
 If background jobs stay queued:
