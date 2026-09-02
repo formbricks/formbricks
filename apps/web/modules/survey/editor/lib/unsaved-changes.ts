@@ -1,14 +1,14 @@
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { isDeepEqual } from "@/lib/utils/object";
 
+/** Stands in for `updatedAt` on both sides of a comparison, so its real value never decides one. */
+const IGNORED_UPDATED_AT = new Date(0);
+
 /**
  * `updatedAt` moves on every write and is never something the user typed, so it can't take part in a
- * dirty check.
+ * dirty check. Flattened to a fixed value rather than stripped, which keeps the result a `TSurvey`.
  */
-const withoutUpdatedAt = (survey: TSurvey): Omit<TSurvey, "updatedAt"> => {
-  const { updatedAt: _updatedAt, ...rest } = survey;
-  return rest;
-};
+const ignoringUpdatedAt = (survey: TSurvey): TSurvey => ({ ...survey, updatedAt: IGNORED_UPDATED_AT });
 
 /**
  * Whether the editor holds changes that are not persisted.
@@ -24,6 +24,6 @@ export const hasUnsavedSurveyChanges = (
   localSurvey: TSurvey,
   persistedSurveys: readonly (TSurvey | null | undefined)[]
 ): boolean => {
-  const local = withoutUpdatedAt(localSurvey);
-  return !persistedSurveys.some((persisted) => persisted && isDeepEqual(local, withoutUpdatedAt(persisted)));
+  const local = ignoringUpdatedAt(localSurvey);
+  return !persistedSurveys.some((persisted) => persisted && isDeepEqual(local, ignoringUpdatedAt(persisted)));
 };
