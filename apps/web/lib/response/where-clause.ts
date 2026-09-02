@@ -157,6 +157,57 @@ const buildDurationSecondsCondition = (val: TTypedFieldFilterCondition): Prisma.
   }
 };
 
+/**
+ * The `reserved` criteria group → conditions. Fails closed (ENG-1848): a name the survey's declared
+ * fields or element ids shadow filters the declared value elsewhere, never the reserved read — and
+ * an unknown name emits nothing. `Object.hasOwn` because the keys come from a z.record: a crafted
+ * `__proto__`/`constructor` key must not resolve a locator through the prototype chain.
+ */
+const buildReservedConditions = (
+  survey: TSurvey,
+  reserved: NonNullable<TResponseFilterCriteria["reserved"]>
+): Prisma.ResponseWhereInput[] => {
+  const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
+  const shadowed = new Set(listShadowingNames(getSurveyEmbeddedFields(survey), elementIds));
+  const catalogEntriesByName = new Map(RESERVED_FIELD_CATALOG.map((entry) => [entry.name, entry]));
+  const conditions: Prisma.ResponseWhereInput[] = [];
+
+  Object.entries(reserved).forEach(([name, val]) => {
+    if (shadowed.has(name)) return;
+    if (!Object.hasOwn(RESERVED_FILTER_LOCATORS, name)) return;
+    const entry = catalogEntriesByName.get(name);
+    if (!entry) return;
+    const locator = RESERVED_FILTER_LOCATORS[name];
+    const condition =
+      locator.kind === "ttcTotalMs"
+        ? buildDurationSecondsCondition(val)
+        : buildJsonPathCondition("meta", locator.path, val, entry.dataType);
+    if (condition) conditions.push(condition);
+  });
+
+  return conditions;
+};
+
+/** The `variables` group → conditions. Keys are computed-field storageKeys; anything else emits nothing. */
+const buildVariableConditions = (
+  survey: TSurvey,
+  variables: NonNullable<TResponseFilterCriteria["variables"]>
+): Prisma.ResponseWhereInput[] => {
+  const computedFieldsByKey = new Map(
+    getComputedEmbeddedFields(survey).map((field) => [field.link.storageKey, field])
+  );
+  const conditions: Prisma.ResponseWhereInput[] = [];
+
+  Object.entries(variables).forEach(([storageKey, val]) => {
+    const field = computedFieldsByKey.get(storageKey);
+    if (!field) return;
+    const condition = buildJsonPathCondition("variables", [storageKey], val, field.field.dataType);
+    if (condition) conditions.push(condition);
+  });
+
+  return conditions;
+};
+
 const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
   if (!tags) return [];
 
@@ -368,49 +419,14 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
   }
 
   if (filterCriteria?.reserved) {
-    // Fail closed (ENG-1848): a name the survey's declared fields or element ids shadow filters the
-    // declared value elsewhere, never the reserved read — and an unknown name emits nothing.
-    // `Object.hasOwn` because the keys come from a z.record: a crafted `__proto__`/`constructor`
-    // key must not resolve a locator through the prototype chain.
-    const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
-    const shadowed = new Set(listShadowingNames(getSurveyEmbeddedFields(survey), elementIds));
-    const catalogEntriesByName = new Map(RESERVED_FIELD_CATALOG.map((entry) => [entry.name, entry]));
-    const reserved: Prisma.ResponseWhereInput[] = [];
-
-    Object.entries(filterCriteria.reserved).forEach(([name, val]) => {
-      if (shadowed.has(name)) return;
-      if (!Object.hasOwn(RESERVED_FILTER_LOCATORS, name)) return;
-      const entry = catalogEntriesByName.get(name);
-      if (!entry) return;
-      const locator = RESERVED_FILTER_LOCATORS[name];
-      const condition =
-        locator.kind === "ttcTotalMs"
-          ? buildDurationSecondsCondition(val)
-          : buildJsonPathCondition("meta", locator.path, val, entry.dataType);
-      if (condition) reserved.push(condition);
-    });
-
     whereClause.push({
-      AND: reserved,
+      AND: buildReservedConditions(survey, filterCriteria.reserved),
     });
   }
 
   if (filterCriteria?.variables) {
-    // Keys are storageKeys of the survey's computed embedded fields; anything else emits nothing.
-    const computedFieldsByKey = new Map(
-      getComputedEmbeddedFields(survey).map((field) => [field.link.storageKey, field])
-    );
-    const variables: Prisma.ResponseWhereInput[] = [];
-
-    Object.entries(filterCriteria.variables).forEach(([storageKey, val]) => {
-      const field = computedFieldsByKey.get(storageKey);
-      if (!field) return;
-      const condition = buildJsonPathCondition("variables", [storageKey], val, field.field.dataType);
-      if (condition) variables.push(condition);
-    });
-
     whereClause.push({
-      AND: variables,
+      AND: buildVariableConditions(survey, filterCriteria.variables),
     });
   }
 
