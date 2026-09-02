@@ -351,3 +351,6 @@ minimumReleaseAgeExclude:
 # Remove this version-pinned patch once upstream defers or safely handles eager seed failures.
 patchedDependencies:
   "@better-auth/oauth-provider@1.7.0": patches/@better-auth__oauth-provider@1.7.0.patch
+  # ENG-2559: a failed secondary-storage session read bypasses Better Auth's configured database
+  # fallback. Remove this version-pinned patch once upstream handles Redis read failures here.
+  better-auth@1.7.0: patches/better-auth@1.7.0.patch
