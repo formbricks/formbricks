@@ -11,14 +11,26 @@ import {
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
+import { SurveyLifecycleEmitter } from "@/lib/survey/lifecycle";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type TUserState, type TWorkspaceStateSurvey } from "@/types/config";
-import { type TTrackProperties } from "@/types/survey";
+import { type TSurveyLifecycleEventType, type TTrackProperties } from "@/types/survey";
 
 let isSurveyRunning = false;
 
+// The survey handed to the renderer, held only while it is on screen. `closeSurvey` is the single
+// close path — the renderer's onClose, and tearDown on logout / error — but it is called without
+// arguments, so this is what lets the "closed" lifecycle event name the survey it belongs to. It is
+// set when the widget actually renders (after the delay, after every skip check), so a survey that
+// was never shown never reports a close.
+let activeSurveyId: string | null = null;
+
 export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
+};
+
+const emitLifecycleEvent = (type: TSurveyLifecycleEventType, surveyId: string): void => {
+  SurveyLifecycleEmitter.getInstance().emit({ type, surveyId });
 };
 
 type TInteractionSource = keyof NonNullable<TWorkspaceStateSurvey["interactionRefresh"]>;
@@ -161,6 +173,8 @@ export const renderWidget = async (
   }
 
   const timeoutId = setTimeout(() => {
+    activeSurveyId = survey.id;
+
     formbricksSurveys.renderSurvey({
       appUrl: config.get().appUrl,
       workspaceId: config.get().workspaceId,
@@ -206,6 +220,10 @@ export const renderWidget = async (
         // coalesced) so interaction targeting is current by the time this survey closes and the next
         // trigger evaluates. The display is already persisted (fires after createDisplay).
         refreshSegmentsAfterInteraction(previousConfig.user.data.userId, survey, "onDisplay");
+
+        // Fires after the display was persisted, i.e. once the survey is on screen — not when the
+        // triggering `track()` ran, which is the distinction the host needs to cap frequency on.
+        emitLifecycleEvent("displayed", survey.id);
       },
       onResponseCreated: () => {
         const responses = config.get().user.data.responses;
@@ -230,6 +248,10 @@ export const renderWidget = async (
         // once, on the first answer (not on subsequent question submits — see survey.tsx), so this is
         // a single refresh covering "started". The "completed X" case is handled in onFinished below.
         refreshSegmentsAfterInteraction(config.get().user.data.userId, survey, "onResponse");
+
+        // Once per survey, on the first answer: the renderer creates the response then and only
+        // updates it on later submits (see survey.tsx).
+        emitLifecycleEvent("responded", survey.id);
       },
       onFinished: () => {
         // Survey completion flips "have completed X" (and clears "have not completed X") segments.
@@ -266,6 +288,14 @@ export const closeSurvey = (): void => {
   });
 
   setIsSurveyRunning(false);
+
+  // Last, so a host handler observes settled state. Guarded on activeSurveyId: closeSurvey also runs
+  // on paths where nothing is open (tearDown), and it must report each rendered survey exactly once.
+  if (activeSurveyId) {
+    const closedSurveyId = activeSurveyId;
+    activeSurveyId = null;
+    emitLifecycleEvent("closed", closedSurveyId);
+  }
 };
 
 export const addWidgetContainer = (): void => {

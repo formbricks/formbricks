@@ -92,3 +92,13 @@ export type TActionClassNoCodeConfig =
 export interface TTrackProperties {
   hiddenFields: Record<string, string | number | string[]>;
 }
+
+/** Survey lifecycle events a host application can subscribe to via `formbricks.on()`. */
+export type TSurveyLifecycleEventType = "displayed" | "responded" | "closed";
+
+export interface TSurveyLifecycleEvent {
+  type: TSurveyLifecycleEventType;
+  surveyId: string;
+}
+
+export type TSurveyLifecycleEventHandler = (event: TSurveyLifecycleEvent) => void;

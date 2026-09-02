@@ -3,6 +3,7 @@ import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import type * as CommonUtils from "@/lib/common/utils";
 import { filterSurveys, getLanguageCode, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
+import { SurveyLifecycleEmitter } from "@/lib/survey/lifecycle";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import * as widget from "@/lib/survey/widget";
 import { type TWorkspaceStateSurvey } from "@/types/config";
@@ -888,6 +889,131 @@ describe("widget-file", () => {
 
       expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
       expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("survey lifecycle events", () => {
+    // The public `formbricks.on()` channel: the host is told what actually reached the screen, so the
+    // assertions here are about which renderer callback maps to which event and about the survey id.
+    const lifecycleConfig = {
+      get: vi.fn().mockReturnValue({
+        appUrl: "https://fake.app",
+        workspaceId: "env_123",
+        workspace: {
+          data: {
+            settings: { clickOutsideClose: true, overlay: "none", placement: "bottomRight" },
+          },
+        },
+        user: {
+          data: {
+            userId: "user_abc",
+            contactId: "contact_abc",
+            displays: [],
+            responses: [],
+            lastDisplayAt: null,
+          },
+        },
+      }),
+      update: vi.fn(),
+    };
+
+    const renderAndGetCallbacks = async (): Promise<{
+      onDisplayCreated: () => void;
+      onResponseCreated: () => void;
+      onClose: () => void;
+    }> => {
+      widget.setIsSurveyRunning(false);
+      window.formbricksSurveys = createMockFormbricksSurveys();
+
+      vi.useFakeTimers();
+      await widget.renderWidget({ ...mockSurvey, delay: 0 });
+      vi.advanceTimersByTime(0);
+      vi.useRealTimers();
+
+      return (getFormbricksSurveys().renderSurvey as Mock).mock.calls[0][0] as {
+        onDisplayCreated: () => void;
+        onResponseCreated: () => void;
+        onClose: () => void;
+      };
+    };
+
+    beforeEach(() => {
+      getInstanceConfigMock.mockReturnValue(lifecycleConfig as unknown as Config);
+      (filterSurveys as Mock).mockReturnValue([]);
+      // Drop any survey an earlier test left on screen, then start from a subscriber-free emitter.
+      widget.closeSurvey();
+      SurveyLifecycleEmitter.getInstance().resetInstance();
+    });
+
+    test("emits displayed once the display is created, not when the survey is triggered", async () => {
+      const handler = vi.fn();
+      SurveyLifecycleEmitter.getInstance().on("displayed", handler);
+
+      const callbacks = await renderAndGetCallbacks();
+      expect(handler).not.toHaveBeenCalled();
+
+      callbacks.onDisplayCreated();
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({ type: "displayed", surveyId: mockSurvey.id });
+    });
+
+    test("emits responded when the response is created", async () => {
+      const handler = vi.fn();
+      SurveyLifecycleEmitter.getInstance().on("responded", handler);
+
+      const callbacks = await renderAndGetCallbacks();
+      callbacks.onResponseCreated();
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({ type: "responded", surveyId: mockSurvey.id });
+    });
+
+    test("emits closed once when the survey closes, and not again on a repeated close", async () => {
+      const handler = vi.fn();
+      SurveyLifecycleEmitter.getInstance().on("closed", handler);
+
+      const callbacks = await renderAndGetCallbacks();
+      callbacks.onClose();
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({ type: "closed", surveyId: mockSurvey.id });
+
+      widget.closeSurvey();
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    test("emits nothing when closeSurvey runs with no survey on screen", () => {
+      const handler = vi.fn();
+      SurveyLifecycleEmitter.getInstance().on("closed", handler);
+
+      widget.closeSurvey();
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    test("renders and closes normally when no host has subscribed", async () => {
+      const callbacks = await renderAndGetCallbacks();
+
+      expect(() => {
+        callbacks.onDisplayCreated();
+        callbacks.onResponseCreated();
+        callbacks.onClose();
+      }).not.toThrow();
+    });
+
+    test("a throwing host handler does not break the survey it is reporting on", async () => {
+      SurveyLifecycleEmitter.getInstance().on("displayed", () => {
+        throw new Error("host blew up");
+      });
+
+      const callbacks = await renderAndGetCallbacks();
+
+      expect(() => {
+        callbacks.onDisplayCreated();
+      }).not.toThrow();
+      // The display was still recorded in the user state.
+      expect(lifecycleConfig.update).toHaveBeenCalled();
     });
   });
 });

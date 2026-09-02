@@ -2,11 +2,17 @@ import { CommandQueue, CommandType } from "@/lib/common/command-queue";
 import * as Setup from "@/lib/common/setup";
 import { getIsDebug } from "@/lib/common/utils";
 import * as Action from "@/lib/survey/action";
+import { SurveyLifecycleEmitter } from "@/lib/survey/lifecycle";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
 import * as Attribute from "@/lib/user/attribute";
 import * as User from "@/lib/user/user";
 import { type TConfigInput, type TLegacyConfigInput } from "@/types/config";
-import { type TTrackProperties } from "@/types/survey";
+import {
+  type TSurveyLifecycleEvent,
+  type TSurveyLifecycleEventHandler,
+  type TSurveyLifecycleEventType,
+  type TTrackProperties,
+} from "@/types/survey";
 
 const queue = CommandQueue.getInstance();
 
@@ -82,6 +88,33 @@ const registerRouteChange = async (): Promise<void> => {
 };
 
 /**
+ * Subscribe to a survey lifecycle event.
+ *
+ * The host application is notified when a survey is actually shown ("displayed"), answered
+ * ("responded") and dismissed or finished ("closed"), so it can drive its own logic — frequency
+ * capping, analytics — off what the SDK really did rather than off the `track()` calls it made.
+ *
+ * Subscriptions are independent of setup(): registering before or after setup() both work, and a
+ * handler stays registered across logout() until it is removed.
+ *
+ * @param eventType - "displayed" | "responded" | "closed"
+ * @param handler - Called with the event type and the survey it concerns
+ * @returns A function that removes this subscription. `off()` with the same arguments does the same.
+ */
+const on = (eventType: TSurveyLifecycleEventType, handler: TSurveyLifecycleEventHandler): (() => void) =>
+  SurveyLifecycleEmitter.getInstance().on(eventType, handler);
+
+/**
+ * Remove a survey lifecycle subscription registered with on().
+ *
+ * @param eventType - The event type the handler was registered for
+ * @param handler - The same function reference that was passed to on()
+ */
+const off = (eventType: TSurveyLifecycleEventType, handler: TSurveyLifecycleEventHandler): void => {
+  SurveyLifecycleEmitter.getInstance().off(eventType, handler);
+};
+
+/**
  * Set the CSP nonce for inline styles
  * @param nonce - The CSP nonce value (without 'nonce-' prefix), or undefined to clear
  */
@@ -107,6 +140,8 @@ const formbricks = {
   logout,
   registerRouteChange,
   setNonce,
+  on,
+  off,
 };
 
 // Explicitly assign to globalThis so the wrapper SDK (@formbricks/js) can
@@ -117,5 +152,5 @@ const formbricks = {
 (globalThis as unknown as Record<string, unknown>).formbricks = formbricks;
 
 type TFormbricks = typeof formbricks;
-export type { TFormbricks };
+export type { TFormbricks, TSurveyLifecycleEvent, TSurveyLifecycleEventHandler, TSurveyLifecycleEventType };
 export default formbricks;
