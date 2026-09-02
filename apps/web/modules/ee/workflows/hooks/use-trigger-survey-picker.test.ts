@@ -130,6 +130,67 @@ describe("useWorkflowSurveyEndings", () => {
     ]);
   });
 
+  test("resolves recall tokens in ending headlines against the survey", async () => {
+    const fetchMock = vi.mocked(global.fetch);
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        data: {
+          defaultLanguage: "en",
+          blocks: [
+            { id: "b1", elements: [{ id: "q1", headline: { en: "<p>What is your score?</p>" } }] },
+            { id: "b2", elements: [{ id: "q2", headline: { en: "Nested #recall:q1/fallback:there#" } }] },
+          ],
+          variables: [{ id: "v1", name: "plan" }],
+          hiddenFields: { enabled: true, fieldIds: ["userId"] },
+          endings: [
+            { id: "end-1", type: "endScreen", headline: { en: "Thanks! Score: #recall:q1/fallback:none#" } },
+            // target deleted -> fallback text, never the raw cuid
+            { id: "end-2", type: "endScreen", headline: { en: "Bye #recall:gone/fallback:friend#" } },
+            { id: "end-3", type: "endScreen", headline: { en: "Plan #recall:v1/fallback:free#" } },
+            { id: "end-4", type: "endScreen", headline: { en: "User #recall:userId/fallback:anon#" } },
+            // recalling an element whose own headline recalls -> inner token blanked, not looped on
+            { id: "end-5", type: "endScreen", headline: { en: "Q2: #recall:q2/fallback:x#" } },
+            // no recall -> unchanged
+            { id: "end-6", type: "endScreen", headline: { en: "Plain thanks" } },
+          ],
+        },
+      })
+    );
+
+    const { result } = renderHook(() => useWorkflowSurveyEndings("survey_1"), {
+      wrapper: createWrapper(newQueryClient()),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.endings).toEqual([
+      { id: "end-1", label: "Thanks! Score: @What is your score?" },
+      { id: "end-2", label: "Bye friend" },
+      { id: "end-3", label: "Plan @plan" },
+      { id: "end-4", label: "User @userId" },
+      { id: "end-5", label: "Q2: @Nested ___" },
+      { id: "end-6", label: "Plain thanks" },
+    ]);
+  });
+
+  test("falls back to the ending id when a dangling recall leaves the headline empty", async () => {
+    const fetchMock = vi.mocked(global.fetch);
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        data: {
+          defaultLanguage: "en",
+          endings: [{ id: "end-1", type: "endScreen", headline: { en: "#recall:gone/fallback:#" } }],
+        },
+      })
+    );
+
+    const { result } = renderHook(() => useWorkflowSurveyEndings("survey_1"), {
+      wrapper: createWrapper(newQueryClient()),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.endings).toEqual([{ id: "end-1", label: "end-1" }]);
+  });
+
   // Errors rather than resolving to []: an empty success is indistinguishable from "every ending
   // was deleted", and callers that prune stored ids against this list would delete a valid
   // selection. Landing in the error branch keeps them on the "leave it alone" path.
