@@ -313,6 +313,7 @@
               "self-hosting/configuration/environment-variables",
               "self-hosting/configuration/job-runner",
               "self-hosting/configuration/smtp",
+              "self-hosting/configuration/ai-setup",
               "self-hosting/configuration/file-uploads",
               "self-hosting/configuration/domain-configuration",
               "self-hosting/configuration/cdn",

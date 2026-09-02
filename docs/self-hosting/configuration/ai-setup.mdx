@@ -1,0 +1,118 @@
+---
+title: "AI Setup"
+description: "Connect an LLM to your self-hosted Formbricks instance"
+icon: "sparkles"
+---
+
+Formbricks runs fine without AI — nothing is enabled until you connect a model. Wiring up an LLM takes two steps:
+
+<Steps>
+  <Step title="Point the instance at a model">
+    Set `AI_PROVIDER`, `AI_MODEL`, and the credentials for that provider as environment variables, then
+    restart your containers.
+  </Step>
+  <Step title="Turn AI on for the organization">
+    In the app, go to **Settings → Organization → General → Smart functionality (AI)** and enable the toggle.
+    Only Owners and Managers can change it.
+  </Step>
+</Steps>
+
+<Note>
+  AI features are part of the [Enterprise Edition](/self-hosting/advanced/license). See [AI
+  Features](/platform/features/ai-features) for what the toggle unlocks and how your data is handled.
+</Note>
+
+## Choosing a Provider
+
+`AI_PROVIDER` accepts four values. Set only the variables for the provider you use — the rest can be omitted.
+
+| `AI_PROVIDER`       | Runs on                                            |
+| ------------------- | -------------------------------------------------- |
+| `openai-compatible` | Any OpenAI-compatible `/v1` endpoint — Qwen/vLLM and friends. The self-hosted path. |
+| `google`            | Google Cloud, for Gemini models.                   |
+| `azure`             | Azure OpenAI / Foundry.                            |
+| `aws`               | Amazon Bedrock.                                    |
+
+## OpenAI-compatible (self-hosted)
+
+The supported self-hosted path is Qwen served by vLLM behind an OpenAI-compatible `/v1` endpoint. Docker Compose
+and the Helm chart can both deploy that runtime for you — see [AI
+Features](/self-hosting/advanced/enterprise-features/ai-features) for the `COMPOSE_PROFILES=qwen` profile and the
+`llm.enabled` Helm value. Both require GPU-capable hosts.
+
+```bash
+AI_PROVIDER=openai-compatible
+AI_MODEL=qwen3-14b-awq
+AI_OPENAI_COMPATIBLE_BASE_URL=http://vllm:8000/v1
+AI_OPENAI_COMPATIBLE_PROVIDER_NAME=vllm
+AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS=1
+```
+
+To use your own endpoint instead, point `AI_OPENAI_COMPATIBLE_BASE_URL` at it and add
+`AI_OPENAI_COMPATIBLE_API_KEY` if it requires one. Only `AI_OPENAI_COMPATIBLE_BASE_URL` is required; it must be a
+valid HTTP(S) URL.
+
+## Google Cloud
+
+```bash
+AI_PROVIDER=google
+AI_MODEL=gemini-3.5-flash
+AI_GOOGLE_CLOUD_PROJECT=your-project-id
+AI_GOOGLE_CLOUD_LOCATION=global
+# Omit both credential variables when Application Default Credentials are available
+AI_GOOGLE_CLOUD_CREDENTIALS_JSON='{"type":"service_account", ...}'
+```
+
+`gemini-3.5-flash` must use `AI_GOOGLE_CLOUD_LOCATION=global`, `us`, or `eu`. Keep regional locations such as
+`europe-west3` or `me-central2` only for models Google lists as supported there, for example `gemini-2.5-flash`.
+
+Credentials are optional: if the container already has Application Default Credentials, leave
+`AI_GOOGLE_CLOUD_CREDENTIALS_JSON` and `AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS` unset. Otherwise supply the
+service account JSON inline, or mount it and pass its path in `AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS`.
+
+<Note>
+  Formbricks uses Google Cloud naming here, even though the underlying SDK still talks to Vertex AI endpoints for
+  Gemini model access.
+</Note>
+
+## Azure
+
+```bash
+AI_PROVIDER=azure
+AI_MODEL=your-deployment-name
+AI_AZURE_API_KEY=your-api-key
+AI_AZURE_BASE_URL=https://your-resource.openai.azure.com/openai/v1
+```
+
+`AI_MODEL` is the deployment name, not the base model name. Provide either `AI_AZURE_BASE_URL` or
+`AI_AZURE_RESOURCE_NAME` — the base URL wins when both are set. `AI_AZURE_API_VERSION` defaults to `v1`.
+
+## AWS Bedrock
+
+```bash
+AI_PROVIDER=aws
+AI_MODEL=eu.anthropic.claude-sonnet-4-5-20250929-v1:0
+AI_AWS_REGION=eu-central-1
+AI_AWS_ACCESS_KEY_ID=your-access-key-id
+AI_AWS_SECRET_ACCESS_KEY=your-secret-access-key
+# Only for temporary credentials
+AI_AWS_SESSION_TOKEN=your-session-token
+```
+
+## Verifying the Setup
+
+Restart your containers after changing any of these variables, then open **Settings → Organization → General**.
+While the instance is not configured, the AI toggle stays disabled and the page says so — the setting cannot be
+turned on from the UI until the environment variables are in place.
+
+If the toggle stays disabled after a restart, check the app logs:
+
+```bash
+docker compose logs formbricks | grep -i "ai"
+```
+
+The usual causes are `AI_MODEL` left unset, credentials that do not match the chosen `AI_PROVIDER`, or an
+`AI_GOOGLE_CLOUD_CREDENTIALS_JSON` value that is not valid JSON.
+
+The full list of `AI_*` variables, including the optional ones, is in the [environment variables
+reference](/self-hosting/configuration/environment-variables).
