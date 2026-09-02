@@ -24,14 +24,9 @@ describe("redisSecondaryStorage", () => {
     mockClient.connect.mockResolvedValue(undefined);
   });
 
-  test("creates the client with a heartbeat and reads through to it", async () => {
+  test("get reads through to the client", async () => {
     mockClient.get.mockResolvedValue("value");
     expect(await redisSecondaryStorage.get("k")).toBe("value");
-    expect(createClient).toHaveBeenCalledWith({
-      url: "redis://localhost:6379",
-      socket: { connectTimeout: 3000 },
-      pingInterval: 300_000,
-    });
     expect(mockClient.get).toHaveBeenCalledWith("k");
   });
 
@@ -76,5 +71,18 @@ describe("redisSecondaryStorage", () => {
   test("increment coerces the Lua reply to a number", async () => {
     mockClient.eval.mockResolvedValue("5");
     expect(await redisSecondaryStorage.increment("k", 90)).toBe(5);
+  });
+
+  test("creates the client with a heartbeat", async () => {
+    vi.resetModules();
+    const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+    mockClient.get.mockResolvedValue("value");
+
+    expect(await freshStorage.get("k")).toBe("value");
+    expect(createClient).toHaveBeenCalledWith({
+      url: "redis://localhost:6379",
+      socket: { connectTimeout: 3000 },
+      pingInterval: 300_000,
+    });
   });
 });

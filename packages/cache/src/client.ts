@@ -22,7 +22,8 @@ export async function createRedisClientFromEnv(): Promise<Result<RedisClient, Ca
     socket: {
       connectTimeout: 3000,
     },
-    // Azure Cache for Redis closes idle connections after 10 minutes.
+    // Managed Redis services and their network paths can reap idle connections (for example,
+    // Azure Cache for Redis documents a 10-minute idle timeout). Ping well inside that limit.
     pingInterval: 300_000,
   });
 
