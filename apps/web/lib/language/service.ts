@@ -4,7 +4,12 @@ import { Prisma } from "@formbricks/database/prisma";
 import { CANONICAL_LANGUAGE_CODES, normalizeLanguageCode } from "@formbricks/i18n-utils";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import {
   TLanguage,
   TLanguageInput,
@@ -12,6 +17,7 @@ import {
   ZLanguageInput,
   ZLanguageUpdate,
 } from "@formbricks/types/workspace";
+import { isWorkspaceDefaultSurveyLanguage } from "../i18n/default-survey-language";
 import { validateInputs } from "../utils/validate";
 import { getWorkspace } from "../workspace/service";
 
@@ -125,6 +131,21 @@ export const deleteLanguage = async (languageId: string, workspaceId: string): P
     validateInputs([languageId, ZId], [workspaceId, ZId]);
     const workspace = await getWorkspace(workspaceId);
     if (!workspace) throw new ResourceNotFoundError("Workspace not found", workspaceId);
+
+    // Removing the language the workspace default survey language points at would leave the setting
+    // naming a language the workspace no longer has, so it is blocked until the default is changed.
+    const languageToDelete = workspace.languages.find(
+      (workspaceLanguage) => workspaceLanguage.id === languageId
+    );
+    if (
+      languageToDelete &&
+      isWorkspaceDefaultSurveyLanguage(languageToDelete.code, workspace.config.defaultSurveyLanguage)
+    ) {
+      throw new OperationNotAllowedError(
+        "This language is the workspace's default survey language and cannot be removed"
+      );
+    }
+
     const prismaLanguage = await prisma.language.delete({
       where: { id: languageId },
       select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },

@@ -50,6 +50,8 @@ interface SurveysListProps {
   surveysPerPage: number;
   currentWorkspaceChannel: TWorkspaceConfigChannel;
   locale: TUserLocale;
+  /** The language new surveys are authored in — see `resolveDefaultSurveyLanguage`. */
+  defaultSurveyLanguage: string;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
   showFeaturedTemplates?: boolean;
@@ -58,11 +60,18 @@ interface SurveysListProps {
 type NewSurveyMenuProps = {
   workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
   language: TUserLocale;
+  defaultSurveyLanguage: string;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 };
 
-const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason }: NewSurveyMenuProps) => {
+const NewSurveyMenu = ({
+  workspace,
+  language,
+  defaultSurveyLanguage,
+  isAIAvailable,
+  aiUnavailableReason,
+}: NewSurveyMenuProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
@@ -88,7 +97,7 @@ const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason
         templateId: CUSTOM_SURVEY_TEMPLATE_ID,
         source: "custom",
         surveyType,
-        defaultLanguage: language,
+        defaultLanguage: defaultSurveyLanguage,
       });
 
       router.push(`${workspaceBasePath}/surveys/${survey.id}/edit`);
@@ -147,6 +156,7 @@ export const SurveysList = ({
   surveysPerPage,
   currentWorkspaceChannel,
   locale,
+  defaultSurveyLanguage,
   isAIAvailable,
   aiUnavailableReason,
   showFeaturedTemplates = false,
@@ -257,6 +267,7 @@ export const SurveysList = ({
     <NewSurveyMenu
       workspace={workspace}
       language={locale}
+      defaultSurveyLanguage={defaultSurveyLanguage}
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
     />
@@ -288,7 +299,7 @@ export const SurveysList = ({
         workspace={workspace}
         isTemplatePage={false}
         publicDomain={publicDomain}
-        defaultLanguage={locale}
+        defaultLanguage={defaultSurveyLanguage}
         language={locale}
         isAIAvailable={isAIAvailable}
         aiUnavailableReason={aiUnavailableReason}

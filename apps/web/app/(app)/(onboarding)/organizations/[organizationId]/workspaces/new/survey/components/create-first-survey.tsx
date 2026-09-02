@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TUserLocale } from "@formbricks/types/user";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
@@ -18,7 +17,8 @@ type TOnboardingSurveyPath = "scratch" | "template" | "ai";
 interface CreateFirstSurveyProps {
   organizationId: string;
   workspaceId: string;
-  defaultLanguage: TUserLocale;
+  /** The language the created survey is authored in — see `resolveDefaultSurveyLanguage`. */
+  defaultLanguage: string;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 }

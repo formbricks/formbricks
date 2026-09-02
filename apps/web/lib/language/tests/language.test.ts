@@ -9,7 +9,7 @@ import {
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { getWorkspace } from "@/lib/workspace/service";
 import { createLanguage, deleteLanguage, updateLanguage } from "../service";
@@ -31,7 +31,9 @@ vi.mock("@/lib/workspace/service", () => ({
 
 const fakeWorkspace = {
   id: mockWorkspaceId,
-} as TWorkspace;
+  languages: [],
+  config: {},
+} as unknown as TWorkspace;
 
 const testInputValidation = async (
   service: (workspaceId: string, ...functionArgs: any[]) => Promise<any>,
@@ -165,6 +167,40 @@ describe("deleteLanguage", () => {
       });
       vi.mocked(prisma.language.delete).mockRejectedValue(err);
       await expect(deleteLanguage(mockLanguageId, mockWorkspaceId)).rejects.toThrow(DatabaseError);
+    });
+
+    // ENG-2816: the workspace default survey language must keep naming a language the workspace has.
+    test("refuses to delete the workspace default survey language", async () => {
+      vi.mocked(getWorkspace).mockResolvedValue({
+        ...fakeWorkspace,
+        languages: [{ ...mockLanguage, id: mockLanguageId, code: "de-DE" }],
+        config: { defaultSurveyLanguage: "de-DE" },
+      } as unknown as TWorkspace);
+
+      await expect(deleteLanguage(mockLanguageId, mockWorkspaceId)).rejects.toThrow(OperationNotAllowedError);
+      expect(prisma.language.delete).not.toHaveBeenCalled();
+    });
+
+    // A row stored under a legacy code is the same language as the canonical setting.
+    test("refuses to delete a legacy-coded row that is the default", async () => {
+      vi.mocked(getWorkspace).mockResolvedValue({
+        ...fakeWorkspace,
+        languages: [{ ...mockLanguage, id: mockLanguageId, code: "de" }],
+        config: { defaultSurveyLanguage: "de-DE" },
+      } as unknown as TWorkspace);
+
+      await expect(deleteLanguage(mockLanguageId, mockWorkspaceId)).rejects.toThrow(OperationNotAllowedError);
+    });
+
+    test("allows deleting a language that is not the default", async () => {
+      vi.mocked(getWorkspace).mockResolvedValue({
+        ...fakeWorkspace,
+        languages: [{ ...mockLanguage, id: mockLanguageId, code: "fr-FR" }],
+        config: { defaultSurveyLanguage: "de-DE" },
+      } as unknown as TWorkspace);
+      vi.mocked(prisma.language.delete).mockResolvedValue(mockLanguage);
+
+      await expect(deleteLanguage(mockLanguageId, mockWorkspaceId)).resolves.toEqual(mockLanguage);
     });
   });
 });

@@ -1,5 +1,4 @@
 import type { TSurveyType } from "@formbricks/types/surveys/types";
-import type { TUserLocale } from "@formbricks/types/user";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 
 type TV3SurveyCreateResponse = {
@@ -15,7 +14,8 @@ export type TCreateSurveyFromTemplateInput = {
   templateId: string;
   source: TV3TemplateSource;
   surveyType: TSurveyType;
-  defaultLanguage: TUserLocale;
+  /** The survey's default language — see `resolveDefaultSurveyLanguage`. Not the creator's UI locale. */
+  defaultLanguage: string;
 };
 
 export async function createSurveyFromTemplate({

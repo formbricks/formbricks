@@ -2,6 +2,10 @@ import i18n from "i18next";
 import ICU from "i18next-icu";
 import { initReactI18next } from "react-i18next";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import {
+  DEFAULT_SURVEY_LANGUAGE_CODE,
+  SURVEY_RUNTIME_LANGUAGE_CODES,
+} from "@formbricks/i18n-utils/src/survey-runtime-languages";
 import arEGTranslations from "../../locales/ar-EG.json";
 import daDKTranslations from "../../locales/da-DK.json";
 import deDETranslations from "../../locales/de-DE.json";
@@ -49,15 +53,17 @@ const scriptOf = (code: string | null): string | undefined => {
  * otherwise `zh-TW` would strip to a bare `zh` and borrow the Simplified bundle.
  */
 export const resolveFallbackBundles = (code: string): string[] => {
-  if (!code) return ["en-US"];
+  if (!code) return [DEFAULT_SURVEY_LANGUAGE_CODE];
   try {
     const locale = new Intl.Locale(code);
     const canonicalScript = locale.script ?? scriptOf(normalizeLanguageCode(code));
     const languageWithScript = [locale.language, canonicalScript].filter(Boolean).join("-");
     const defaultBundle = normalizeLanguageCode(languageWithScript);
-    return defaultBundle && defaultBundle !== code ? [defaultBundle, "en-US"] : ["en-US"];
+    return defaultBundle && defaultBundle !== code
+      ? [defaultBundle, DEFAULT_SURVEY_LANGUAGE_CODE]
+      : [DEFAULT_SURVEY_LANGUAGE_CODE];
   } catch {
-    return ["en-US"];
+    return [DEFAULT_SURVEY_LANGUAGE_CODE];
   }
 };
 
@@ -66,31 +72,7 @@ i18n
   .use(initReactI18next)
   .init({
     fallbackLng: resolveFallbackBundles,
-    supportedLngs: [
-      "ar-EG",
-      "da-DK",
-      "de-DE",
-      "en-US",
-      "es-ES",
-      "et-EE",
-      "fr-FR",
-      "hi-IN",
-      "hu-HU",
-      "id-ID",
-      "it-IT",
-      "ja-JP",
-      "nl-NL",
-      "pt-BR",
-      "ro-RO",
-      "ru-RU",
-      "sv-SE",
-      "tr-TR",
-      "ur-PK",
-      "uz-UZ",
-      "vi-VN",
-      "zh-Hans-CN",
-      "zh-Hant-TW",
-    ],
+    supportedLngs: [...SURVEY_RUNTIME_LANGUAGE_CODES],
 
     resources: {
       "ar-EG": { translation: arEGTranslations },

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { getTeamsByOrganizationIdAction, updateWorkspaceAction } from "./actions";
 
@@ -95,6 +95,50 @@ describe("workspace settings authorization", () => {
 
     expect(mocks.getWorkspace).not.toHaveBeenCalled();
     expect(mocks.updateWorkspace).not.toHaveBeenCalled();
+  });
+
+  // ENG-2816: the setting must always name one of the workspace's own survey languages.
+  describe("default survey language", () => {
+    const updateDefaultSurveyLanguage = (defaultSurveyLanguage: string | null) =>
+      updateWorkspaceAction({
+        ctx,
+        parsedInput: { workspaceId, data: { config: { defaultSurveyLanguage } } },
+      } as never);
+
+    test("accepts a language the workspace has", async () => {
+      mocks.getWorkspace.mockResolvedValue({ id: workspaceId, languages: [{ code: "de-DE" }] });
+
+      await updateDefaultSurveyLanguage("de-DE");
+
+      expect(mocks.updateWorkspace).toHaveBeenCalledWith(workspaceId, {
+        config: { defaultSurveyLanguage: "de-DE" },
+      });
+    });
+
+    test("accepts a language the workspace stores under a legacy code", async () => {
+      mocks.getWorkspace.mockResolvedValue({ id: workspaceId, languages: [{ code: "de" }] });
+
+      await updateDefaultSurveyLanguage("de-DE");
+
+      expect(mocks.updateWorkspace).toHaveBeenCalled();
+    });
+
+    test("rejects a language the workspace does not have", async () => {
+      mocks.getWorkspace.mockResolvedValue({ id: workspaceId, languages: [{ code: "de-DE" }] });
+
+      await expect(updateDefaultSurveyLanguage("tr-TR")).rejects.toThrow(OperationNotAllowedError);
+      expect(mocks.updateWorkspace).not.toHaveBeenCalled();
+    });
+
+    test("accepts clearing the setting", async () => {
+      mocks.getWorkspace.mockResolvedValue({ id: workspaceId, languages: [] });
+
+      await updateDefaultSurveyLanguage(null);
+
+      expect(mocks.updateWorkspace).toHaveBeenCalledWith(workspaceId, {
+        config: { defaultSurveyLanguage: null },
+      });
+    });
   });
 
   test("requires organization.manage to list teams for workspace settings", async () => {
