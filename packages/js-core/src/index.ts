@@ -8,7 +8,6 @@ import * as Attribute from "@/lib/user/attribute";
 import * as User from "@/lib/user/user";
 import { type TConfigInput, type TLegacyConfigInput } from "@/types/config";
 import {
-  type TSurveyLifecycleEvent,
   type TSurveyLifecycleEventHandler,
   type TSurveyLifecycleEventType,
   type TTrackProperties,
@@ -152,5 +151,10 @@ const formbricks = {
 (globalThis as unknown as Record<string, unknown>).formbricks = formbricks;
 
 type TFormbricks = typeof formbricks;
-export type { TFormbricks, TSurveyLifecycleEvent, TSurveyLifecycleEventHandler, TSurveyLifecycleEventType };
+export type { TFormbricks };
+export type {
+  TSurveyLifecycleEvent,
+  TSurveyLifecycleEventHandler,
+  TSurveyLifecycleEventType,
+} from "@/types/survey";
 export default formbricks;
