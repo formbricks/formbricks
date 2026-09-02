@@ -168,12 +168,17 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
       return `/api/surveys/${survey.id}/attachments?${params.toString()}`;
     };
 
+    // Held from the click until either an error or the navigation, because both phases are slow enough
+    // to look like nothing happened: the pre-flight counts every matching file, and the download request
+    // then collects them again before the first byte reaches the browser.
+    const toastId = toast.loading(t("workspace.surveys.responses.preparing_attachments_download"));
+
     try {
       setIsDownloading(true);
 
       const preflight = await fetch(buildUrl({ dryRun: "true" }));
       if (!preflight.ok) {
-        toast.error(t("workspace.surveys.responses.error_downloading_attachments"));
+        toast.error(t("workspace.surveys.responses.error_downloading_attachments"), { id: toastId });
         return;
       }
 
@@ -181,20 +186,29 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
 
       if (data.exceedsMaxFiles) {
         toast.error(
-          t("workspace.surveys.responses.too_many_attachments_to_download", { maxFiles: data.maxFiles })
+          t("workspace.surveys.responses.too_many_attachments_to_download", { maxFiles: data.maxFiles }),
+          { id: toastId }
         );
         return;
       }
 
       if (data.fileCount === 0) {
-        toast.error(t("workspace.surveys.responses.no_attachments_to_download"));
+        toast.error(t("workspace.surveys.responses.no_attachments_to_download"), { id: toastId });
         return;
       }
 
       window.location.assign(buildUrl());
+
+      // A `Content-Disposition: attachment` navigation never unloads this page, so the toast survives to
+      // hand over to the browser's own download UI. It says "started" rather than "finished" on purpose:
+      // nothing here can observe the archive completing.
+      toast.success(
+        t("workspace.surveys.responses.attachments_download_started", { fileCount: data.fileCount }),
+        { id: toastId, duration: 8000 }
+      );
     } catch (err) {
       Sentry.captureException(err);
-      toast.error(t("workspace.surveys.responses.error_downloading_attachments"));
+      toast.error(t("workspace.surveys.responses.error_downloading_attachments"), { id: toastId });
     } finally {
       setIsDownloading(false);
     }
