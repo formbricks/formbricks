@@ -90,16 +90,18 @@ AI_PROVIDER=google
 AI_MODEL=gemini-3.5-flash
 AI_GOOGLE_CLOUD_PROJECT=your-project-id
 AI_GOOGLE_CLOUD_LOCATION=global
-# Omit both credential variables when Application Default Credentials are available
-AI_GOOGLE_CLOUD_CREDENTIALS_JSON='{"type":"service_account", ...}'
 ```
 
 `gemini-3.5-flash` must use `AI_GOOGLE_CLOUD_LOCATION=global`, `us`, or `eu`. Keep regional locations such as
 `europe-west3` or `me-central2` only for models Google lists as supported there, for example `gemini-2.5-flash`.
 
-Credentials are optional: if the container already has Application Default Credentials, leave
-`AI_GOOGLE_CLOUD_CREDENTIALS_JSON` and `AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS` unset. Otherwise supply the
-service account JSON inline, or mount it and pass its path in `AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS`.
+Credentials are optional. If the container already has Application Default Credentials, leave both credential
+variables unset. Otherwise pick one:
+
+- `AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS` — mount the service account key file into the container and set this
+  to its path, for example `/run/secrets/google-cloud.json`.
+- `AI_GOOGLE_CLOUD_CREDENTIALS_JSON` — the entire contents of that key file, as a single-line JSON string.
+  Formbricks parses this value, so paste the whole file: a truncated or hand-edited value fails as invalid JSON.
 
 <Note>
   Formbricks uses Google Cloud naming here, even though the underlying SDK still talks to Vertex AI endpoints for
