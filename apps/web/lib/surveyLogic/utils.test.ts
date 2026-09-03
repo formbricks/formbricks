@@ -244,6 +244,55 @@ describe("surveyLogic", () => {
     expect(evaluateLogic(mockSurvey, data, vars, group, "en")).toBe(true);
   });
 
+  test("evaluateLogic treats doesNotEqual as the inverse of equals for single-selection answers", () => {
+    const multiSurvey: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      blocks: [
+        ...mockSurvey.blocks,
+        {
+          id: "multiBlock",
+          name: "Multi Choice Block",
+          elements: [
+            {
+              id: "multiQ",
+              type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+              headline: { default: "Multiple Choice" },
+              required: true,
+              choices: [
+                { id: "opt1", label: { default: "Option 1" } },
+                { id: "opt2", label: { default: "Option 2" } },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    // answer labels resolve to choice ids, so a single selection of "Option 1" becomes ["opt1"]
+    const data: TResponseData = { multiQ: ["Option 1"] };
+    const vars: TResponseVariables = {};
+
+    const condition = (operator: "equals" | "doesNotEqual", value: string): TConditionGroup => ({
+      id: "g",
+      connector: "and",
+      conditions: [
+        {
+          id: "c1",
+          operator,
+          leftOperand: { type: "element", value: "multiQ" },
+          rightOperand: { type: "static", value },
+        },
+      ],
+    });
+
+    // the selection matches the condition value: equals is true, so doesNotEqual must be false
+    expect(evaluateLogic(multiSurvey, data, vars, condition("equals", "opt1"), "en")).toBe(true);
+    expect(evaluateLogic(multiSurvey, data, vars, condition("doesNotEqual", "opt1"), "en")).toBe(false);
+
+    // the selection does not match: equals is false, doesNotEqual is true
+    expect(evaluateLogic(multiSurvey, data, vars, condition("equals", "opt2"), "en")).toBe(false);
+    expect(evaluateLogic(multiSurvey, data, vars, condition("doesNotEqual", "opt2"), "en")).toBe(true);
+  });
+
   test("performActions calculates, requires, and jumps correctly", () => {
     const data: TResponseData = { q: "5" };
     const initialVars: TResponseVariables = {};

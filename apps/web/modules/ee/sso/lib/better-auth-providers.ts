@@ -25,6 +25,7 @@ import {
 } from "@/lib/constants";
 import { getAuthIssuerUrl } from "@/modules/auth/lib/oauth-urls";
 import { ssoAccountIssuer } from "./constants";
+import { resolveEmailVerifiedFromRawClaim } from "./email-verification-policy";
 import { captureSsoIdentity } from "./sso-request-context";
 
 // Better Auth's per-provider profile types, extracted so the social mappers below aren't implicitly
@@ -281,9 +282,10 @@ const microsoftGraphUserInfo = async (tokens: {
     if (!profile?.sub) return null;
     return {
       ...profile,
-      // Strictly `=== true`, not Better Auth's `?? false`: this flag is a claim from the provider that
-      // feeds provisioning, so anything that is not an explicit boolean true is treated as unverified.
-      emailVerified: profile.email_verified === true,
+      // `emailVerified` is deliberately NOT set here. The raw `email_verified` claim rides along in the
+      // spread above, and this provider's `mapProfileToUser` resolves it through the shared policy
+      // (ENG-2589) — a mapper's return spreads last over whatever this function produced, so anything
+      // decided here would be overwritten. One decision, in one place, rather than two that must agree.
       image: typeof profile.picture === "string" ? profile.picture : undefined,
     };
   } catch {
@@ -389,6 +391,22 @@ const oidcEndpoints = oidcTemplateIssuerAuthority
   ? microsoftExplicitEndpoints(oidcTemplateIssuerAuthority)
   : { discoveryUrl: `${OIDC_ISSUER}/.well-known/openid-configuration` };
 
+/**
+ * Why `email_verified` is read in these mappers rather than in the sign-up hook (ENG-2589).
+ *
+ * Better Auth resolves the generic-OAuth profile down to a user object before any database hook runs,
+ * and on the userinfo path it coalesces the claim: `emailVerified: userInfo.data.email_verified ?? false`
+ * (`better-auth/dist/plugins/generic-oauth/index.mjs`). That single `??` destroys the distinction the
+ * whole fix turns on — an IdP that ASSERTS `false` and one that simply never sends the claim both
+ * arrive as `false`, and treating the second as a denial would flip every new user to unverified on
+ * upgrade for self-hosters whose IdP omits it.
+ *
+ * `mapProfileToUser` is upstream of that coalesce and receives the raw profile intact (the whole
+ * `...decoded` / `...userInfo.data` spread), so it is the only place the three-way answer still exists.
+ * Its return value spreads LAST over Better Auth's own fields, so an `emailVerified` returned here is
+ * authoritative all the way into `createUser` — and into the sign-in upgrade path, which flips an
+ * existing unverified row to verified when the IdP later attests the address.
+ */
 export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KEY
   ? [
       ...(AZURE_OAUTH_ENABLED
@@ -421,6 +439,16 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
                 return {
                   email: profile.email,
                   name: toDisplayName(profile),
+                  // Read the RAW claim here, which is the only place it survives intact (ENG-2589).
+                  //
+                  // Entra is the one provider that does not speak `email_verified` at all: neither its
+                  // id_tokens nor Graph's `/oidc/userinfo` carry it. Microsoft's equivalent is the
+                  // OPTIONAL `xms_edov` ("email domain owner verified"), which a tenant has to enable on
+                  // the app registration — and which is exactly the signal that says whether the `email`
+                  // claim is a proven address or just a mutable directory attribute. Falling back to it
+                  // means a tenant that opts in gets its denial honoured; one that does not is unchanged,
+                  // because an absent claim resolves the same way either way.
+                  emailVerified: resolveEmailVerifiedFromRawClaim(profile.email_verified ?? profile.xms_edov),
                 };
               },
             } satisfies GenericOAuthConfig,
@@ -452,6 +480,8 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
                   email: profile.email,
                   // Parity with provisionNewSsoUser (OIDC): name → given+family → preferred_username.
                   name: toDisplayName(profile),
+                  // Read the RAW claim here, which is the only place it survives intact (ENG-2589).
+                  emailVerified: resolveEmailVerifiedFromRawClaim(profile.email_verified),
                 };
               },
             } satisfies GenericOAuthConfig,
@@ -483,6 +513,10 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
                   email: profile.email,
                   // Parity with provisionNewSsoUser (SAML): name → firstName + lastName.
                   name: toSamlDisplayName(profile),
+                  // No `emailVerified`, deliberately: SAML is a permanent `never-attests` provider in
+                  // ./email-verification-policy. Jackson's userinfo shape carries no `email_verified`,
+                  // and this provider requests no `openid` scope, so no id_token one could ride in on
+                  // is ever minted — there is nothing to read, and the hook verifies the row.
                 };
               },
             } satisfies GenericOAuthConfig,

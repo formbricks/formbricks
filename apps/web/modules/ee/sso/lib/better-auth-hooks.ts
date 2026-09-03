@@ -3,18 +3,20 @@ import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { normalizeUserName } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
-import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
-import { isUninvitedSignupAllowed, signupDisabledError } from "@/modules/auth/lib/signup-policy";
-import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
+import { enforceCredentialSignupBackstop } from "@/modules/auth/lib/credential-signup-backstop";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
-import { normalizeSsoProvider } from "./provider-normalization";
+import { resolveSsoEmailVerifiedForCreate } from "./email-verification-policy";
+import { type TSsoIdentityProvider, normalizeSsoProvider } from "./provider-normalization";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
 import { startSsoRecovery } from "./sso-recovery";
 import {
@@ -46,6 +48,85 @@ export const getSsoProviderFromContext = (
   if (fromParams && !fromParams.startsWith(":")) return fromParams;
   const match = /\/callback\/([^/?:]+)$/.exec(path);
   return match ? match[1] : null;
+};
+
+/**
+ * The SSO provider this Better Auth endpoint context belongs to, normalized to the Prisma enum, or
+ * null when the context is not an SSO callback at all (e.g. `/sign-up/email`). Every hook below opens
+ * with this pair of calls, so it lives here once.
+ */
+const resolveSsoIdentityProvider = (
+  context: Parameters<typeof getSsoProviderFromContext>[0]
+): TSsoIdentityProvider | null => {
+  const provider = getSsoProviderFromContext(context);
+  return provider ? normalizeSsoProvider(provider) : null;
+};
+
+/**
+ * Record that an SSO sign-up produced an account whose address the IdP did not vouch for (ENG-2589).
+ *
+ * Dual emission, matching how SSO recovery reports itself: the audit event is the security trail, and
+ * the log line is what a self-hoster actually sees, since audit logging is an enterprise feature and
+ * `AUDIT_LOG_ENABLED` is off by default. Neither is a duplicate of the other.
+ *
+ * `warn`, not `info`: production runs at `warn`, and an unverified account is precisely the state
+ * worth noticing — the squatting scenario this fix exists for shows up here, one line per occurrence,
+ * as does an IdP that has quietly started denying every address. The fields are stable and low
+ * cardinality (the provider comes from a closed five-value enum, so unlike the callback-outcome logger
+ * there is nothing to allow-list), and none of them is redacted away: the address itself is
+ * deliberately absent, `userId` carries the identity for anyone who needs to follow it up.
+ *
+ * The verified case is deliberately silent — it is the overwhelming majority and already leaves a
+ * `user_signed_up` trail — and the whole thing is best-effort: observability must never be the reason
+ * a sign-up fails, so a broken logger or audit sink is swallowed rather than propagated into Better
+ * Auth's post-commit hook.
+ */
+const recordUnverifiedSsoSignup = ({
+  userId,
+  organizationId,
+  provider,
+}: {
+  userId: string;
+  /** Null when the sign-up provisioned no organization; recorded as UNKNOWN_DATA, per the audit schema. */
+  organizationId: string | null;
+  provider: TSsoIdentityProvider;
+}): void => {
+  try {
+    logger
+      // `userId` is on the log line, not only the audit event: the log is the channel a self-hoster
+      // actually has, and "some account was created unverified" with no way to find which one is not
+      // an actionable signal. The address itself stays out — the id is enough to look it up.
+      .withContext({ source: "sso-signup", ssoProvider: provider, userId, emailVerified: false })
+      .warn("SSO sign-up created an account the identity provider did not report as verified");
+
+    // Not awaited: the hook is on the sign-in path, and the helper does its work inside `setImmediate`,
+    // so there is nothing to wait for. The rejection handler below is defence in depth rather than a
+    // live hazard — today that helper cannot reject, because its body is entirely inside the
+    // `setImmediate` callback — but an unawaited promise that ever did would take the process down
+    // rather than fail this one sign-up, and this runs post-commit on the sign-in path.
+    void queueAuditEventBackground({
+      // `updated` + a marker key, not `created`: this records a PROPERTY of a user creation, and it is
+      // emitted only for the unverified subset. An `action: "created"` / `targetType: "user"` pair
+      // exists nowhere else, so a consumer counting account creations off it would silently see only
+      // the accounts an IdP declined to vouch for. The marker idiom is the house convention for
+      // auth-internal events (`passwordResetMarker`, `verificationSessionWithheldMarker`).
+      action: "updated",
+      targetType: "user",
+      userId,
+      userType: "user",
+      targetId: userId,
+      organizationId: organizationId ?? UNKNOWN_DATA,
+      status: "success",
+      // A marker key rather than a new `ZAuditAction` value: this is a property of the user creation
+      // already being recorded, not a flow of its own, and it keeps the shared enum untouched. Every
+      // key here survives `redactPII` — an `email` would not, which is the other reason it is absent.
+      newObject: { ssoUnverifiedSignupMarker: true, provider, emailVerified: false },
+    }).catch((error: unknown) => {
+      logger.warn({ error }, "Failed to audit an unverified SSO sign-up");
+    });
+  } catch (error) {
+    logger.warn({ error }, "Failed to record an unverified SSO sign-up");
+  }
 };
 
 /**
@@ -84,11 +165,15 @@ export const ssoProfileSyncUpdateBefore = async (
   user: Record<string, unknown>,
   context?: { path?: string; params?: Record<string, string | undefined> } | null
 ): Promise<{ data: Record<string, unknown> } | void> => {
-  const provider = getSsoProviderFromContext(context);
-  if (!provider || !normalizeSsoProvider(provider)) return; // not an SSO callback
+  if (!resolveSsoIdentityProvider(context)) return; // not an SSO callback
 
   // `handleOAuthUserInfo` destructures `name` and `image` out of the resolved userInfo, so both keys
   // are present on the override write and absent from every other update made on this request.
+  //
+  // That is also what keeps ENG-2589's verified-upgrade intact: Better Auth flips an unverified row
+  // through a DEDICATED `updateUser(id, { emailVerified: true })` (`oauth2/link-account.mjs`), which
+  // carries neither key and so returns here untouched. It also runs before the override write below,
+  // so by the time we drop `emailVerified` the upgrade has already landed.
   if (!("name" in user) && !("image" in user)) return;
 
   // An `undefined` value drops the field from the update: on `action: "update"` the adapter's
@@ -110,10 +195,12 @@ export const ssoProfileSyncUpdateBefore = async (
 /**
  * Better Auth `databaseHooks` re-expressing Formbricks' SSO sign-up flow (design doc §13), reusing
  * the existing logic via `./sso-provisioning`:
- *  - `user.create.before` — gate the SSO sign-up (`gateSsoProvisioning`; a reject returns `false`,
- *    which rolls back inside Better Auth's user+account transaction, so no orphan user is created);
- *    stash the resolved decision for the after-hook; and enrich the insert (email-verified — the IdP
- *    attests it; `identityProvider`; request-matched `locale`; email-localpart name fallback).
+ *  - `user.create.before` — gate the SSO sign-up (`gateSsoProvisioning`; a reject THROWS an APIError
+ *    carrying the reason code, which aborts Better Auth's user+account transaction, so no orphan user
+ *    is created — see the reject below for why `return false` is wrong here);
+ *    stash the resolved decision for the after-hook; and enrich the insert (email-verified — the IdP's
+ *    own claim, trusted per `./email-verification-policy`; `identityProvider`; request-matched
+ *    `locale`; email-localpart name fallback).
  *  - `user.create.after` — run the membership/team/notification provisioning (`provisionSsoUserMemberships`).
  *  - `user.update.before` — narrow the per-sign-in profile override to the display name
  *    (`ssoProfileSyncUpdateBefore`), which is the write `overrideUserInfo` performs on every sign-in.
@@ -129,36 +216,12 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
   user: {
     create: {
       before: async (user, context) => {
-        const provider = getSsoProviderFromContext(context);
-        const identityProvider = provider ? normalizeSsoProvider(provider) : null;
-        if (!identityProvider) {
-          // Credential sign-up. createUserAction runs the full personal-email policy (Cloud gate +
-          // invite exemption) and marks the request scope before calling signUpEmail. If that mark is
-          // absent, this is a direct POST to Better Auth's native /sign-up/email — which bypasses the
-          // action — so re-enforce the domain block here (no invite is carried on that raw path).
-          // One read, two guards: both re-checks below exist only for a request that skipped the action.
-          const wentThroughAction = isSignupDomainAllowed();
-          if (!wentThroughAction && (await isSignupEmailDomainBlocked(user.email, async () => false))) {
-            return false;
-          }
-          // ENG-2293 BACKSTOP: closed-instance policy (SIGNUP_ENABLED / multi-org / fresh-instance).
-          // The primary gate is `signupPolicyBeforeHandler` in auth.ts's `hooks.before`, which rejects
-          // `POST /sign-up/email` before Better Auth looks the address up — deliberately NOT here,
-          // because this hook only ever runs for an address that does not yet exist (the duplicate
-          // branch returns a synthetic 200 without creating anything), so rejecting here and nowhere
-          // else would answer "does this address have an account?". See signup-policy.ts.
-          //
-          // Kept anyway because this hook covers EVERY credential user-creation path, not just the one
-          // route the before-hook names: any future Better Auth plugin that creates a user (magic link,
-          // email OTP, admin create) lands here, and on a closed instance it should not.
-          if (!wentThroughAction && !(await isUninvitedSignupAllowed())) {
-            throw signupDisabledError();
-          }
-          return; // otherwise keep credential-signup defaults
-        }
+        const identityProvider = resolveSsoIdentityProvider(context);
+        // Not an SSO callback → a credential user creation, whose policy is a separate concern.
+        if (!identityProvider) return enforceCredentialSignupBackstop(user.email);
 
-        // Provisioning gate — orphan-safe: a reject returns `false`, rolling back the user+account
-        // insert inside Better Auth's transaction (a post-commit after-hook could not reject safely).
+        // Provisioning gate — orphan-safe: a reject aborts Better Auth's user+account transaction, so
+        // no half-created user survives (a post-commit after-hook could not reject safely).
         let callbackUrl = "";
         try {
           callbackUrl = (await getOAuthState())?.callbackURL ?? "";
@@ -169,9 +232,27 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         if (decision.action === "reject") {
           // Stash the reason (request scope) so the after-hook can turn Better Auth's generic
           // create-failure redirect into a tailored one — e.g. the personal-email block redirects to
-          // /auth/signup with a toast. Returning false rolls back the user+account insert.
+          // /auth/signup with a toast.
           setSsoSignupRejectReason(decision.reason);
-          return false;
+          // THROW, do not `return false` (ENG-2537). Returning false is the documented way to reject,
+          // but Better Auth then has `createUser` resolve to `null` (`db/with-hooks.mjs`) and reads
+          // `createdUser.id` off it on the next line of `oauth2/link-account.mjs`. That TypeError is
+          // caught there and turned into a generic `unable_to_create_user` redirect — so not a 500 —
+          // but the catch logs it, and `betterAuthLogger` forwards a caught non-APIError to Sentry.
+          // Every rejected SSO sign-up therefore reported an internal fault for what is an ordinary
+          // policy decision (FORMBRICKS-19M).
+          //
+          // An APIError carrying a `code` is the shape the OAuth callback handles deliberately: it
+          // catches one and turns it into a redirect naming that code (`api/routes/callback.mjs`),
+          // which is what lets the after-hook below rewrite the destination.
+          //
+          // Nothing is orphaned either way — `with-hooks.mjs` returns null BEFORE the insert, so the
+          // rolled-back transaction was always empty — but the throw makes that explicit rather than
+          // incidental.
+          throw new APIError("FORBIDDEN", {
+            message: "SSO sign-up was rejected by the instance's provisioning policy.",
+            code: decision.reason,
+          });
         }
         setSsoProvisioningDecision(decision); // carried to user.create.after (the membership writes)
 
@@ -188,7 +269,11 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         // provider, request-matched locale, and an email-localpart name when the IdP gave none.
         return {
           data: {
-            emailVerified: true,
+            // The IdP's own answer reaches us as `user.emailVerified` — computed by Better Auth for
+            // google/github, by our own `mapProfileToUser` for the generic providers — and whatever we
+            // return here is shallow-merged over it. How far each provider's claim is trusted lives in
+            // one table, `./email-verification-policy` (ENG-2589).
+            emailVerified: resolveSsoEmailVerifiedForCreate(identityProvider, user.emailVerified),
             identityProvider,
             locale: await findMatchingLocale(),
             // `User` has no `image` column (parity with provisionNewSsoUser, which never stored it).
@@ -209,9 +294,18 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
       after: async (user, context) => {
         const decision = getSsoProvisioningDecision();
         if (!decision) return; // not a gated SSO sign-up
-        const provider = getSsoProviderFromContext(context);
-        const identityProvider = provider ? normalizeSsoProvider(provider) : null;
+        const identityProvider = resolveSsoIdentityProvider(context);
         if (!identityProvider) return;
+
+        // Before the provisioning writes, so a failure in those cannot swallow the security signal.
+        if (user.emailVerified === false) {
+          recordUnverifiedSsoSignup({
+            userId: user.id,
+            organizationId: decision.organizationId,
+            provider: identityProvider,
+          });
+        }
+
         await provisionSsoUserMemberships({
           userId: user.id,
           email: user.email,
@@ -262,8 +356,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
  * (matching NextAuth's behavior) is a Phase 7 refinement.
  */
 export const ssoLicenseGateBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
-  const provider = getSsoProviderFromContext(ctx);
-  const identityProvider = provider ? normalizeSsoProvider(provider) : null;
+  const identityProvider = resolveSsoIdentityProvider(ctx);
   if (!identityProvider) return; // not an SSO callback → no license gate
 
   if (!(await getIsSsoEnabled())) {
@@ -296,8 +389,7 @@ export type AuthHookContext = Parameters<Parameters<typeof createAuthMiddleware>
  * middleware (which would re-run `createInternalContext` + the middleware `use` chain).
  */
 export const ssoRecoveryAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
-  const providerId = getSsoProviderFromContext(ctx);
-  const provider = providerId ? normalizeSsoProvider(providerId) : null;
+  const provider = resolveSsoIdentityProvider(ctx);
   if (!provider) return; // not an SSO callback
 
   // Only act on Better Auth's account-collision redirect (handleOAuthUserInfo returns
@@ -339,8 +431,8 @@ export const ssoRecoveryAfter = createAuthMiddleware(ssoRecoveryAfterHandler);
 
 /**
  * Request hook (`hooks.after`) that redirects a personal-email SSO sign-up rejection back to the
- * sign-up page. When `user.create.before` rejects the domain (returns `false`, rolling back the
- * insert), Better Auth finishes the OAuth callback with a generic error redirect (to /auth/login).
+ * sign-up page. When `user.create.before` rejects the domain (throws, aborting the insert), Better
+ * Auth finishes the OAuth callback with an error redirect carrying that reason code.
  * We detect our own reject reason — stashed in the same request scope — and rewrite that redirect to
  * `/auth/signup?error=<code>`; the sign-up form reads the param and toasts the localized message.
  *
