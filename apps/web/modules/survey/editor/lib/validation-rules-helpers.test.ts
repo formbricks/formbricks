@@ -323,20 +323,34 @@ describe("applyRuleDeletion", () => {
     expect(result.resetInputTypeToText).toBe(true);
   });
 
+  // Found in review: `app/lib/templates.ts` ships OpenText elements with inputType "email",
+  // longAnswer false and no `validation` key (139, 281, 2431), so zero rules with a non-text
+  // inputType is legitimate data. Resetting it here would flip longAnswer to true via
+  // open-element-form.tsx and turn a template email question into a textarea still placeholdered
+  // `example@email.com`. Long answer being disabled for those types is correct, not the ENG-2419 bug.
+  test.each(["email", "url", "phone"] as const)(
+    "deleting the last rule leaves inputType %s alone — zero rules is a shipped state for it",
+    (inputType) => {
+      const result = applyRuleDeletion([rule("a")], "a", TSurveyElementTypeEnum.OpenText, inputType);
+      expect(result.rules).toEqual([]);
+      expect(result.resetInputTypeToText).toBe(false);
+    }
+  );
+
+  // The disable path stays broader on purpose: `main` clears any non-text inputType when the section
+  // is toggled off, and this PR does not change that. Only the delete path is narrowed.
+  test.each(["email", "url", "phone"] as const)(
+    "disabling the section still clears inputType %s, matching main",
+    (inputType) => {
+      expect(shouldResetInputTypeToText(TSurveyElementTypeEnum.OpenText, 0, inputType)).toBe(true);
+    }
+  );
+
   test("deleting one of several rules leaves inputType alone", () => {
     const result = applyRuleDeletion([rule("a"), rule("b")], "a", TSurveyElementTypeEnum.OpenText, "number");
     expect(result.rules.map((r) => r.id)).toEqual(["b"]);
     expect(result.resetInputTypeToText).toBe(false);
   });
-
-  test.each(["email", "url", "phone"] as const)(
-    "asks for the reset on inputType %s too, not just number",
-    (inputType) => {
-      expect(
-        applyRuleDeletion([rule("a")], "a", TSurveyElementTypeEnum.OpenText, inputType).resetInputTypeToText
-      ).toBe(true);
-    }
-  );
 
   test("does not ask for a reset when inputType is already text", () => {
     expect(

@@ -40,6 +40,17 @@ export const shouldResetInputTypeToText = (
  * be two code paths and only the latter reset `inputType`, so the editor could leave an OpenText
  * element with zero rules and `inputType: "number"`. Computing the new rule list without being
  * handed that decision is now impossible.
+ *
+ * The deletion path deliberately resets only `number`, which is narrower than `handleDisable`.
+ * Toggling the section off is an explicit "stop validating this" action, and `main` already clears
+ * any non-text `inputType` there. Deleting one rule is not that action, and zero rules with a
+ * non-text `inputType` is shipped data rather than the bug state: `app/lib/templates.ts` builds
+ * OpenText elements with `inputType: "email"`, `longAnswer: false` and no `validation` key at all
+ * (lines 139, 281, 2431). Resetting those on a trash-icon click would flip `longAnswer` to true via
+ * `open-element-form.tsx`, turning a template email question into a textarea that still shows
+ * `example@email.com`. `number` is the one case ENG-2419 reports and the one where the leftover type
+ * is vestigial — set by adding a number rule, and keeping Long answer disabled with nothing left
+ * enforcing it.
  */
 export const applyRuleDeletion = (
   rules: TValidationRule[],
@@ -50,7 +61,8 @@ export const applyRuleDeletion = (
   const remaining = rules.filter((rule) => rule.id !== ruleId);
   return {
     rules: remaining,
-    resetInputTypeToText: shouldResetInputTypeToText(elementType, remaining.length, inputType),
+    resetInputTypeToText:
+      inputType === "number" && shouldResetInputTypeToText(elementType, remaining.length, inputType),
   };
 };
 
