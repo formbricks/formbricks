@@ -12,13 +12,15 @@ Lifecycle events tell you what really happened, so your app can react to the sur
 
 | Event                           | Fires when                                                                                               | Payload                               |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `formbricks_survey_shown`       | A survey becomes visible (once per display)                                                              | `{ surveyId }`                        |
+| `formbricks_survey_shown`       | A survey becomes visible (once per appearance)                                                           | `{ surveyId }`                        |
 | `formbricks_response_submitted` | The first answer is stored (`finished: false`) and again when the survey is completed (`finished: true`) | `{ surveyId, responseId?, finished }` |
-| `formbricks_survey_closed`      | The survey is dismissed or finishes (once per display)                                                   | `{ surveyId }`                        |
+| `formbricks_survey_closed`      | The survey is dismissed or finishes (once per appearance)                                                | `{ surveyId }`                        |
 | `formbricks_setup_successful`   | `setup()` finished — the SDK is ready                                                                    | `{ workspaceId }`                     |
 | `formbricks_action_tracked`     | An action was tracked (code or no-code)                                                                  | `{ action }`                          |
 
-`responseId` is the id of the stored response — the same id you see in the Responses tab — so your app can link its own analytics or session replays to the exact response. It is optional: in survey previews nothing is stored, so the key is absent (GTM's dataLayer carries `null` for it there).
+`responseId` is the id of the stored response — the same id you see in the Responses tab — so your app can link its own analytics or session replays to the exact response. It is optional: when the id is not available the key is absent, and GTM's dataLayer carries `null` for it.
+
+`formbricks_survey_shown` reports what the respondent saw, so every appearance is paired with a `formbricks_survey_closed`. The Displays number in your Formbricks dashboard counts what reached the server instead, so it can be lower if the network dropped.
 
 ## Listening for events
 
@@ -83,7 +85,10 @@ function onCheckout() {
 
 <Tip>
   There is no separate "finished" event. `formbricks_survey_closed` covers both dismissing and completing a
-  survey — a `formbricks_response_submitted` with `finished: true` arriving first is what tells them apart.
+  survey — a `formbricks_response_submitted` with `finished: true` for the same `surveyId` is what tells them
+  apart. Correlate on the id, not on arrival order: that event is sent once the server has stored the
+  response, so it normally lands before the close but can follow it, and if the response cannot be saved it
+  never lands at all.
 </Tip>
 
 ## Google Tag Manager

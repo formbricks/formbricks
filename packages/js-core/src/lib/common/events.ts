@@ -39,8 +39,10 @@ export interface TFormbricksEventPayloads {
    * not client-minted — absent only offline/preview.
    */
   formbricks_response_submitted: { surveyId: string; responseId?: string; finished: boolean };
-  /** Dismissed OR finished — the display is over either way; whether a `formbricks_response_submitted`
-   * came first is what tells those apart. Fires once per rendered survey. */
+  /** Dismissed OR finished — the display is over either way; a `formbricks_response_submitted` with
+   * `finished: true` for the same `surveyId` is what tells those apart. Correlate on the id, not on
+   * arrival order: that event is ack-gated, so it can follow this one, or never arrive at all if the
+   * response fails to save. Fires once per rendered survey. */
   formbricks_survey_closed: { surveyId: string };
 }
 
@@ -114,8 +116,10 @@ const notifySubscribers = (event: TFormbricksEventName, payload: unknown): void 
   const handlers = subscribers.get(event);
   if (!handlers?.size) return;
 
-  // Iterate a snapshot: a handler is allowed to unsubscribe itself (a one-shot listener is the
-  // obvious way to capture "the first display of this journey leg") while we are still notifying.
+  // Iterate a snapshot, not the live Set: `Set.prototype.forEach` visits entries appended during
+  // iteration, so a host handler that re-arms itself (`off()` then `on()` inside its own callback)
+  // would be appended behind the cursor and dispatched again, unboundedly — and the catch below
+  // would just keep going.
   [...handlers].forEach((handler) => {
     try {
       handler(payload);
