@@ -1592,6 +1592,7 @@ checksums:
     workspace/analysis/charts/ai_create/discard_generation_title: 8c5317fdbafda4715e2eb4f983ec0b9c
     workspace/analysis/charts/ai_create/generate: 0345bf322c191e70d01fd6607ec5c2f8
     workspace/analysis/charts/ai_create/generate_with_ai: 5d8c659f559f1343bb23fd191a6556ad
+    workspace/analysis/charts/ai_create/prompt_helper_aria: 941af5c22696eb9b8aca0354c4271e6f
     workspace/analysis/charts/ai_create/prompt_helper_breakdown: 46ecdc7514c17710f4a786f04944969e
     workspace/analysis/charts/ai_create/prompt_helper_breakdown_label: 3563fa5dc7da1e95f2d7c635b7c98d82
     workspace/analysis/charts/ai_create/prompt_helper_completion: 98851c9cee42603d9e9e6a5d08c45efe

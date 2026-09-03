@@ -1656,6 +1656,7 @@
           "discard_generation_title": "Stoppen met genereren?",
           "generate": "Genereren",
           "generate_with_ai": "Maak met AI",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "Verdeel de antwoorden op meerkeuzevragen per optie",
           "prompt_helper_breakdown_label": "Antwoordverdeling",
           "prompt_helper_completion": "Hoeveel mensen de enquête zijn gestart versus hoeveel deze hebben voltooid",

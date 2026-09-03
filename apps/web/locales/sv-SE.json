@@ -1656,6 +1656,7 @@
           "discard_generation_title": "Sluta generera?",
           "generate": "Generera",
           "generate_with_ai": "Skapa med AI",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "Dela upp svaren på flervalsfrågor per alternativ",
           "prompt_helper_breakdown_label": "Svarsfördelning",
           "prompt_helper_completion": "Hur många som började enkäten jämfört med hur många som slutförde den",

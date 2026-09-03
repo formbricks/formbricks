@@ -1656,6 +1656,7 @@
           "discard_generation_title": "生成を停止する?",
           "generate": "生成",
           "generate_with_ai": "AIで作成",
+          "prompt_helper_aria": "{label}。{prompt}",
           "prompt_helper_breakdown": "複数選択式の質問の回答を選択肢ごとに分類",
           "prompt_helper_breakdown_label": "回答の内訳",
           "prompt_helper_completion": "アンケートを開始した人数と完了した人数の比較",

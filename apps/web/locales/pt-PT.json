@@ -1656,6 +1656,7 @@
           "discard_generation_title": "Parar a geração?",
           "generate": "Gerar",
           "generate_with_ai": "Criar com IA",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "Detalha as respostas a perguntas de múltipla escolha por opção",
           "prompt_helper_breakdown_label": "Detalhamento de respostas",
           "prompt_helper_completion": "Quantas pessoas iniciaram o questionário versus quantas o concluíram",

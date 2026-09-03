@@ -264,7 +264,13 @@ export function CreateChartWithAIDialog({
                         size="sm"
                         className="group w-full min-w-0 justify-start text-left"
                         title={helperPrompt.prompt}
-                        aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
+                        // Composed through a key rather than concatenated: the separator between
+                        // the short name and the prompt it fills in is punctuation, and punctuation
+                        // is the locale's business.
+                        aria-label={t("workspace.analysis.charts.ai_create.prompt_helper_aria", {
+                          label: helperPrompt.label,
+                          prompt: helperPrompt.prompt,
+                        })}
                         onClick={() => onPromptChange(helperPrompt.prompt)}>
                         <helperPrompt.Icon className="size-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-primary" />
                         <span className="min-w-0 truncate">{helperPrompt.label}</span>

@@ -1656,6 +1656,7 @@
           "discard_generation_title": "Остановить генерацию?",
           "generate": "Сгенерировать",
           "generate_with_ai": "Создать с помощью ИИ",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "Распредели ответы на вопросы с множественным выбором по вариантам",
           "prompt_helper_breakdown_label": "Разбивка ответов",
           "prompt_helper_completion": "Сколько человек начали опрос и сколько завершили его",

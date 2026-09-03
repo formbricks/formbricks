@@ -1656,6 +1656,7 @@
           "discard_generation_title": "Stop generating?",
           "generate": "Generate",
           "generate_with_ai": "Create with AI",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "Break down the answers to multiple-choice questions by option",
           "prompt_helper_breakdown_label": "Answer breakdown",
           "prompt_helper_completion": "How many people started the survey versus how many completed it",

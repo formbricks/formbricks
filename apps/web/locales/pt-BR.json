@@ -1656,6 +1656,7 @@
           "discard_generation_title": "Parar de gerar?",
           "generate": "Gerar",
           "generate_with_ai": "Criar com IA",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "Divida as respostas de questões de múltipla escolha por opção",
           "prompt_helper_breakdown_label": "Divisão de respostas",
           "prompt_helper_completion": "Quantas pessoas iniciaram a pesquisa versus quantas completaram",

@@ -1656,6 +1656,7 @@
           "discard_generation_title": "Oluşturma durdurulsun mu?",
           "generate": "Oluştur",
           "generate_with_ai": "Yapay Zeka ile Oluştur",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "Çoktan seçmeli soruların cevaplarını seçeneklere göre ayır",
           "prompt_helper_breakdown_label": "Cevap dağılımı",
           "prompt_helper_completion": "Ankete kaç kişi başladı ve kaç kişi tamamladı",

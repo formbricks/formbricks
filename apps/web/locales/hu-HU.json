@@ -1656,6 +1656,7 @@
           "discard_generation_title": "Leállítja a generálást?",
           "generate": "Generálás",
           "generate_with_ai": "Létrehozás mesterséges intelligenciával",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "A feleletválasztós kérdésekre adott válaszok lebontása lehetőségek szerint",
           "prompt_helper_breakdown_label": "Válaszlebontás",
           "prompt_helper_completion": "Hányan kezdték el a felmérést, és hányan fejezték be",

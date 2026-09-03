@@ -1656,6 +1656,7 @@
           "discard_generation_title": "Erstellung abbrechen?",
           "generate": "Erstellen",
           "generate_with_ai": "Mit KI erstellen",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "Aufschlüsselung der Antworten auf Multiple-Choice-Fragen nach Option",
           "prompt_helper_breakdown_label": "Antwort-Aufschlüsselung",
           "prompt_helper_completion": "Wie viele Personen die Umfrage begonnen haben im Vergleich zu denen, die sie abgeschlossen haben",

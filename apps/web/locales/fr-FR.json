@@ -1656,6 +1656,7 @@
           "discard_generation_title": "Arrêter la génération ?",
           "generate": "Générer",
           "generate_with_ai": "Créer avec l'IA",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "Répartir les réponses aux questions à choix multiples par option",
           "prompt_helper_breakdown_label": "Répartition des réponses",
           "prompt_helper_completion": "Combien de personnes ont commencé le sondage par rapport à combien l'ont terminé",

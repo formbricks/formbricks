@@ -1656,6 +1656,7 @@
           "discard_generation_title": "¿Detener la generación?",
           "generate": "Generar",
           "generate_with_ai": "Crear con IA",
+          "prompt_helper_aria": "{label}. {prompt}",
           "prompt_helper_breakdown": "Desglosar las respuestas de preguntas de opción múltiple por opción",
           "prompt_helper_breakdown_label": "Desglose de respuestas",
           "prompt_helper_completion": "Cuántas personas comenzaron la encuesta versus cuántas la completaron",
