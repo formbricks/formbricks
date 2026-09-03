@@ -19,6 +19,8 @@ export type {
   WorkflowApiAccess,
   WorkflowApiContext,
   AuthorizedWorkspace,
+  WorkflowAnalyticsDetail,
+  WorkflowAnalyticsOperation,
   WorkflowAuditDetail,
 } from "../handlers/context";
 

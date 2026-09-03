@@ -1,8 +1,11 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { posthogServerClient } from "./server";
 
-type PostHogEventProperties = Record<string, string | number | boolean | null | undefined>;
+// Arrays are allowed: PostHog stores them as list properties and can break down on their elements
+// (used for `action_types` on the workflow events).
+type PostHogEventProperties = Record<string, string | number | boolean | string[] | null | undefined>;
 
 export type PostHogGroupContext = {
   organizationId?: string;
@@ -33,6 +36,8 @@ export function capturePostHogEvent(
         ...properties,
         $lib: "posthog-node",
         source: "server",
+        // Cloud versus self-hosted on every event, so the split never needs a group lookup.
+        deployment: IS_FORMBRICKS_CLOUD ? "cloud" : "self_hosted",
       },
       groups: buildGroups(groupContext),
     });

@@ -21,10 +21,12 @@ import {
 } from "@formbricks/workflows";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
+import { WORKFLOW_RUN_FAILED_EVENT } from "@/modules/ee/workflows/lib/analytics-events";
 import { sendEmail } from "@/modules/email";
 import {
   buildSurveyResponseEmailHtml,
@@ -55,6 +57,7 @@ const workflowRunSelect = {
   id: true,
   status: true,
   attempt: true,
+  triggerType: true,
   triggerPayload: true,
   workflowVersion: { select: { definition: true } },
   workflow: { select: { definition: true } },
@@ -577,8 +580,8 @@ const executeClaimedRun = async (
  */
 const handleRunError = async (
   error: unknown,
-  runId: string,
-  workspaceId: string,
+  run: { id: string; triggerType: string },
+  data: TWorkflowRunJobData,
   context: Parameters<JobHandler<TWorkflowRunJobData>>[1],
   logContext: ReturnType<typeof getWorkflowRunLogContext>
 ): Promise<void> => {
@@ -591,14 +594,62 @@ const handleRunError = async (
     if (isDatabasePoolExhaustionError(error)) {
       logger.warn({ ...logContext, err: error }, "Workflow run job hit database pool exhaustion; will retry");
     }
-    await recordRunFailure(runId, workspaceId, error, runData, false, logContext);
+    await recordRunFailure(run.id, data.workspaceId, error, runData, false, logContext);
     throw toError(error, "Workflow run job failed");
   }
 
   // Final attempt: commit a terminal `failed` and swallow. Pool exhaustion on the last attempt must be
   // recorded here rather than rethrown into the void, or the run would stay stuck `running` forever.
-  await recordRunFailure(runId, workspaceId, error, runData, true, logContext);
+  await recordRunFailure(run.id, data.workspaceId, error, runData, true, logContext);
   logger.error({ ...logContext, err: error }, "Workflow run job failed after final attempt");
+  await captureWorkflowRunFailed(error, run, data, context.attempt, runData);
+};
+
+/** Coarse, PII-free failure class for analytics; the message itself can name a recipient. */
+const classifyRunError = (error: unknown): string => {
+  if (error instanceof WorkflowRunNotExecutableError) return "not_executable";
+  if (error instanceof WorkflowStepFailedError) return "step_failed";
+  if (isDatabasePoolExhaustionError(error)) return "database_pool_exhausted";
+  return "unknown";
+};
+
+/**
+ * Product analytics (ENG-2851): one `workflow_run_failed` per run that ends `failed`, emitted from
+ * the final attempt only so retries never inflate the failure rate. Successful runs are not emitted
+ * per run; the daily usage snapshot aggregates them. Never throws: the run is already recorded as
+ * failed and this sits on the swallow path, so a telemetry problem must not become a job error.
+ */
+const captureWorkflowRunFailed = async (
+  error: unknown,
+  run: { id: string; triggerType: string },
+  data: TWorkflowRunJobData,
+  attempt: number,
+  runData: TWorkflowRunData | undefined
+): Promise<void> => {
+  try {
+    const organization = await getOrganizationByWorkspaceId(data.workspaceId);
+    const failedStep = runData?.steps.filter((step) => step.status === "failed").at(-1);
+    capturePostHogEvent(
+      organization?.id ?? data.workspaceId,
+      WORKFLOW_RUN_FAILED_EVENT,
+      {
+        workflow_id: data.workflowId,
+        workspace_id: data.workspaceId,
+        organization_id: organization?.id ?? null,
+        run_id: run.id,
+        trigger_type: run.triggerType,
+        failed_step_type: failedStep?.stepType ?? null,
+        error_kind: classifyRunError(error),
+        attempt,
+      },
+      { organizationId: organization?.id, workspaceId: data.workspaceId }
+    );
+  } catch (analyticsError) {
+    logger.warn(
+      { workflowRunId: run.id, err: analyticsError },
+      "Failed to capture workflow run failure analytics"
+    );
+  }
 };
 
 /**
@@ -648,7 +699,7 @@ export const processWorkflowRunJob: JobHandler<TWorkflowRunJobData> = async (dat
 
     await executeClaimedRun(run, data.workspaceId, triggerPayload, logContext);
   } catch (error) {
-    await handleRunError(error, run.id, data.workspaceId, context, logContext);
+    await handleRunError(error, run, data, context, logContext);
   }
 };
 
