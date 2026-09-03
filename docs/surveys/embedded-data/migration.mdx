@@ -1,0 +1,83 @@
+---
+title: "Hidden Fields & Variables"
+description: "What Embedded Data changes for surveys that already use hidden fields and variables, and what it deliberately leaves alone."
+icon: "arrow-right-arrow-left"
+---
+
+If you already use hidden fields or variables, the short version is: **nothing renames, nothing moves, and no survey needs editing.** Embedded Data is the name for the concepts you already have, now sharing one type system and one read path, plus a set of fields Formbricks fills in for you.
+
+## The Mapping
+
+| You know it as        | It is now called   | Where you author it            |
+| --------------------- | ------------------ | ------------------------------ |
+| Hidden field          | an ingested field  | the **Hidden Fields** card     |
+| Variable              | a computed field   | the **Variables** card         |
+| Response metadata     | a reserved field   | nowhere, it is always captured |
+
+The distinction the two names were always making is the one the new vocabulary makes explicit: a hidden field arrives from **outside** the survey, a variable is computed **inside** it.
+
+## What Does Not Change
+
+- **Existing surveys keep working, unedited.** Field names, ids and stored values are untouched.
+- **Recall tokens keep resolving.** `#recall:<name>/fallback:x#` for a hidden field and `#recall:<id>/fallback:x#` for a variable both still point at the same value.
+- **Logic conditions keep matching.** Hidden field and variable operands are unchanged.
+- **`?field=value` in a survey link keeps filling hidden fields**, including the case-insensitive matching that was already there.
+- **`formbricks.track("action", { hiddenFields: { … } })` keeps working**, and an explicit value there still beats an ambient one.
+- **API payloads are unchanged.** `hiddenFields` and `variables` on the survey resource look exactly as they did.
+- **Exports keep their hidden field and variable columns.**
+
+## What Is New
+
+- **[Reserved fields](/surveys/embedded-data/reserved-fields).** Twenty-eight auto-captured fields (page, campaign, device, timing, request context) are available on every response by name, with no declaration. Thirteen of them are newly captured in the browser, so they only exist on responses collected from now on.
+- **[`setEmbeddedData()`](/surveys/embedded-data/set-embedded-data).** Ambient context for app surveys that is not tied to a trigger, in the JavaScript SDK and in all four [mobile SDKs](/surveys/embedded-data/mobile-sdks).
+- **Stable export columns.** The reserved column set is derived from the catalog rather than from whatever the first response happened to carry, so a column no longer disappears because response #1 lacked the value, and headers read `Page Path` rather than `userAgent - browser`.
+- **Typed values in exports.** A numeric field such as `viewportWidth` exports as a number rather than as text.
+- **An [Anonymize responses](/surveys/embedded-data/reserved-fields#anonymize-responses) toggle** that suppresses the privacy-sensitive reserved fields at ingest.
+
+<Note>
+  Older responses carry nothing for the fields that did not exist when they were collected, and read back as
+  unset rather than empty. Filters and export columns can therefore be blank for historic responses on a
+  survey that is otherwise capturing everything.
+</Note>
+
+## Naming Rules for New Fields
+
+New hidden field and variable names must start with a lowercase letter and then contain only lowercase letters, numbers and underscores, and cannot be one of the reserved names in any casing. Names your surveys already use are grandfathered: they load, collect values and re-save unchanged.
+
+The one thing to know before you delete a grandfathered field: **the reprieve is spent once it is gone**, so a name that is refused today cannot be re-added afterwards. That also means re-creating a survey from an export fails with a `400` when the export declares a refused name; rename the field in the payload before importing.
+
+The full rule and the refused list are on the [Hidden Fields](/surveys/general-features/hidden-fields#naming) page.
+
+## Don't Pass Sensitive Data via the URL
+
+Hidden field values passed in a survey link are visible to anyone who sees or shares that link, gets it forwarded, or reads it out of a browser history, a referrer header or a proxy log. **Do not pass email addresses, tokens, account numbers or any other personal identifier that way.**
+
+The editor shows this warning next to the Hidden Fields card, and it is worth taking literally rather than treating as boilerplate:
+
+- Pass an opaque reference you can resolve on your own side, not the identifier itself.
+- For app surveys, prefer [`setEmbeddedData()`](/surveys/embedded-data/set-embedded-data), which never puts the value in a URL.
+- Remember that the page URL is itself captured as the reserved `url` field. Formbricks always strips the query string and fragment before recall, logic or an export can read it, and the [Anonymize responses](/surveys/embedded-data/reserved-fields#anonymize-responses) toggle strips it from storage too, but neither of those protects the link while it is in transit.
+
+## Should I Change Anything?
+
+Only if you want the new capability:
+
+<Steps>
+  <Step title="Move ambient context off track()">
+    If you pass the same `hiddenFields` on several different `track()` calls just to make sure whichever
+    survey opens has them, push them once with `setEmbeddedData()` instead. Both work; the bag stops you
+    repeating yourself, and works for surveys you did not know would open.
+  </Step>
+
+  <Step title="Drop fields you were only using for metadata">
+    A hidden field you fill with the page URL, the referrer, a UTM parameter, the device or the time zone is
+    now redundant: the [reserved field](/surveys/embedded-data/reserved-fields) of that name is captured for
+    free. Keep the declared field if you have historic responses that depend on it, since a declared field
+    always shadows the reserved one of the same name.
+  </Step>
+
+  <Step title="Decide on Anonymize responses">
+    Off by default and nothing changes. Turn it on per survey where you do not want the IP address, the
+    country or the parsed device details stored, and read what it does and does not cover first.
+  </Step>
+</Steps>

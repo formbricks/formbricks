@@ -1,0 +1,161 @@
+---
+title: "Embedded Data"
+description: "Everything on a response that is not an answer to a question: values you pass in, values the survey calculates, and the context Formbricks captures on its own."
+icon: "database"
+---
+
+Embedded Data is **data about this response**. A page type, a plan, a campaign, a quiz score, the device the survey was answered on. It rides along with the answers, shows up in the response table and in exports, and can be used in recall, logic and redirect URLs.
+
+That makes it the counterpart to **contact attributes**, which are **data about this person** and persist across every response they ever give.
+
+|                       | Embedded Data                                | Contact attributes                                   |
+| --------------------- | -------------------------------------------- | ---------------------------------------------------- |
+| Describes             | one response / one session                   | one person, across responses                         |
+| Stored on             | the response                                 | the contact record, snapshotted onto the response    |
+| Set with              | URL params, `setEmbeddedData()`, survey logic | `setUserId()`, `setAttributes()`, `setEmail()`        |
+| Lives past the survey | no                                           | yes                                                  |
+
+<Note>
+  Nothing renames. In the survey editor these are still the **Hidden Fields** and **Variables** cards, and the
+  API payloads are unchanged. Embedded Data is the name for those two plus the auto-captured fields, now that
+  they share one type system and one read path. See [Hidden Fields and
+  Variables](/surveys/embedded-data/migration) if you already use them.
+</Note>
+
+## The Three Sources
+
+Every Embedded Data field has exactly one source, and the source decides who is allowed to write it.
+
+| Source       | Written by                                   | Called this in the editor | Types today                           |
+| ------------ | -------------------------------------------- | ------------------------- | ------------------------------------- |
+| **Ingested** | the outside world: URL params or the SDK     | Hidden Fields             | `string`                              |
+| **Computed** | the survey itself, through logic actions      | Variables                 | `string`, `number`                    |
+| **Reserved** | Formbricks, automatically, on every response | not authored at all       | `string`, `number`, `boolean`, `date` |
+
+Ingested fields are the only ones anything outside the survey can write. Computed fields are set by logic while the respondent answers, and reserved fields are read-only auto-capture, so a URL param or an SDK call naming one of them is dropped and logged rather than stored.
+
+## Where Values Come From
+
+Which capture channel is available depends on the survey type, and this is the part worth reading twice, because a URL param does nothing for an app survey and `setEmbeddedData()` does nothing for a link survey.
+
+| Capture channel                                                       | Link surveys | Website & app surveys (JS) | App surveys (mobile SDKs) |
+| --------------------------------------------------------------------- | ------------ | -------------------------- | ------------------------- |
+| Ingested via **URL parameter** (`?plan=pro`)                          | Yes          | No                         | No                        |
+| Ingested via **`setEmbeddedData()`**                                   | No           | Yes                        | Yes                       |
+| Computed by **survey logic**                                           | Yes          | Yes                        | Yes                       |
+| Reserved — **page and campaign** (`pagePath`, `pageReferrer`, `utm*`, `url`, `source`) | Yes          | Yes                        | No                        |
+| Reserved — **device** (`screenWidth`, `viewportWidth`, `timezone`, `locale`, …)         | Yes          | Yes                        | Yes                       |
+| Reserved — **server-derived** (`country`, `browser`, `os`, `deviceType`, `ipAddress`, timings) | Yes          | Yes                        | Yes                       |
+
+<Note>
+  Mobile SDKs render the survey inside a WebView that has no host page, so `location` and `document.referrer`
+  describe nothing real there. The page and campaign fields are left **absent** on mobile responses rather
+  than filled with a meaningless value. The device fields are honest measurements of the device and are
+  captured. If you want the equivalent of a page name on mobile, pass it yourself:
+  `setEmbeddedData({ screen: "checkout" })`.
+</Note>
+
+A field does not care which channel filled it. `plan` is declared the same way, filled by `?plan=pro` on a link survey and by `setEmbeddedData({ plan: "pro" })` on an app survey, and reads back identically in recall, logic, filters and exports.
+
+## Declaring a Field
+
+An ingested or computed field has to exist on the survey before anything can fill it. Add it in the survey editor: **Hidden Fields** for ingested, **Variables** for computed. Reserved fields are never declared, they are always available.
+
+A field's **name** is the key you use everywhere: in a URL parameter, in `setEmbeddedData()`, in recall tokens, in logic operands and as the export column header.
+
+Field names follow one rule everywhere, and reserved names are refused for new fields in any casing. The full rule and the refused list live on the [Hidden Fields](/surveys/general-features/hidden-fields#naming) page.
+
+A field also carries a **type** that decides how its value is read back and compared. In this release:
+
+- **Hidden fields** are `string`. Anything you pass is stored as text.
+- **Variables** are text or number, and the initial value you set in the editor is the default the field falls back to.
+- **Reserved fields** are typed by Formbricks, and several of them are genuinely numeric: `viewportWidth < 768` is a numeric comparison in logic, not a comparison of digit strings.
+
+<Note>
+  Typing hidden fields (`number`, `boolean`, `date`), giving them a default, and locking a field so nothing
+  outside the survey can write it, are part of the Embedded Data manager and are not authorable yet. The
+  ingest rules below already honour all of them, so nothing changes for you when they arrive.
+</Note>
+
+## What Happens to an Incoming Value
+
+The same contract runs in the browser when the survey is displayed, and again on the server when the response is saved, so what the client accepts is never taken on trust.
+
+<Steps>
+  <Step title="Allow-list">
+    Only names the survey declares as **ingested** fields are stored. An unknown key, a computed field, a
+    reserved field or a locked field is dropped and logged, never stored, and never an error.
+  </Step>
+
+  <Step title="Case-insensitive matching">
+    A field declared `customerRef` is filled by `?customerref=x` as well as `?customerRef=x`. The value is
+    always stored under the declared spelling, so exports and recall see one key.
+  </Step>
+
+  <Step title="Coercion to the declared type">
+    Values are coerced rather than rejected. `"42"` into a `number` field becomes `42`; `true`, `1`, `yes`
+    and `on` (and their negatives) become booleans; a `date` field accepts `2026-08-06` and full ISO 8601
+    datetimes, stores ISO 8601, and reads a datetime with no zone as UTC rather than as the respondent's
+    local time. A value that cannot be coerced is stored verbatim and flagged, so a bad parameter never
+    blocks a response. Today every hidden field is a `string`, and every scalar has a lossless text form, so
+    this step only starts doing visible work once fields can be typed.
+  </Step>
+
+  <Step title="Size limit">
+    One value is capped at **16 KB** of UTF-8. Anything longer is truncated on a character boundary and
+    flagged, not rejected.
+  </Step>
+
+  <Step title="Collision with a question">
+    A question's answer always wins its own key. A field whose name collides with a question id can never
+    hold a value, and the collision is reported.
+  </Step>
+</Steps>
+
+<Note>
+  A field nothing arrived for keeps its key **absent** rather than empty, and reads back as its default value
+  if it has one. That is what makes `#recall:plan/fallback:unknown#` show the fallback instead of a blank.
+</Note>
+
+### Precedence
+
+When two sources offer the same field on the same response, the more explicit one wins:
+
+1. a question's answer, always, for its own key;
+2. an explicit `formbricks.track("action", { hiddenFields: { plan: "pro" } })` value;
+3. the ambient bag set with `setEmbeddedData()`, or the URL parameter on a link survey;
+4. the field's default value;
+5. otherwise the field is unset.
+
+Reserved fields sit outside this list because they are never written from outside. The one interaction is **shadowing**: if a survey declares its own field named `url` or `country`, that name resolves to the declared field everywhere, and the reserved field of the same name is not offered, listed or exported for that survey.
+
+## Reading the Values Back
+
+Once a value is on a response it behaves like any other response data:
+
+- **Recall** it into question copy, ending cards and redirect URLs with `#recall:<name>/fallback:<text>#`.
+- Use it as a **logic** operand to branch the survey.
+- Filter and group **responses** by it.
+- **Export** it as a stable, typed column in CSV and Excel.
+
+Mid-survey surfaces (recall inside a running survey, logic conditions) can only use values that exist while the respondent is still answering. Server-derived reserved fields such as `country` or `durationSeconds` are only known once the response reaches Formbricks, so they are available on the response but not offered to a running survey. The [Reserved Fields](/surveys/embedded-data/reserved-fields) page marks which is which.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Reserved Fields" icon="list-check" href="/surveys/embedded-data/reserved-fields">
+    The full catalog of auto-captured fields, their types, and what the Anonymize toggle suppresses.
+  </Card>
+
+  <Card title="setEmbeddedData" icon="code" href="/surveys/embedded-data/set-embedded-data">
+    The JavaScript SDK reference: merge semantics, SPA route changes, GTM and the debug trace.
+  </Card>
+
+  <Card title="Mobile SDKs" icon="mobile" href="/surveys/embedded-data/mobile-sdks">
+    `setEmbeddedData` on React Native, iOS, Android and Flutter, with each language's value types.
+  </Card>
+
+  <Card title="Hidden Fields & Variables" icon="arrow-right-arrow-left" href="/surveys/embedded-data/migration">
+    What changes for surveys you already run, and what does not.
+  </Card>
+</CardGroup>

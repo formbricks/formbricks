@@ -4,6 +4,12 @@ description: "Add data to a submission without asking the user to type it in. Th
 icon: "eye-slash"
 ---
 
+<Note>
+  Hidden fields are the **ingested** half of [Embedded Data](/surveys/embedded-data/overview) — the values
+  that arrive from outside the survey. Nothing renames and nothing changes for surveys you already run; see
+  [Hidden Fields & Variables](/surveys/embedded-data/migration) for what is new around them.
+</Note>
+
 ## How to Add Hidden Fields
 
 ### Enable Hidden Fields
@@ -52,11 +58,17 @@ https://formbricks.com/s/clin34bjy?screen=landing_page&job=Founder
 
 ## Set Hidden Fields via SDK
 
-<Note>
-  We are reworking how to add Hidden Fields via SDK moving away from binding them to Actions over to Context.
-  Until then, we will **continue to support the current approach for the JS SDK**. However, we don't support
-  Hidden Fields for the Android and iOS SDKs.
-</Note>
+Attach the values once, and whichever survey is displayed next picks them up:
+
+```js
+formbricks.setEmbeddedData({ my_field: "value" });
+```
+
+This works in the JavaScript SDK and in the React Native, iOS, Android and Flutter SDKs. See
+[`setEmbeddedData`](/surveys/embedded-data/set-embedded-data) for merge and clearing semantics, and
+[Mobile SDKs](/surveys/embedded-data/mobile-sdks) for the mobile call syntax.
+
+The older per-trigger form still works, and an explicit value there still wins over an ambient one:
 
 ```js
 formbricks.track("action_name", { hiddenFields: { my_field: "value" } });

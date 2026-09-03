@@ -125,6 +125,17 @@
                 ]
               },
               {
+                "group": "Embedded Data",
+                "icon": "database",
+                "pages": [
+                  "surveys/embedded-data/overview",
+                  "surveys/embedded-data/reserved-fields",
+                  "surveys/embedded-data/set-embedded-data",
+                  "surveys/embedded-data/mobile-sdks",
+                  "surveys/embedded-data/migration"
+                ]
+              },
+              {
                 "group": "Link Surveys",
                 "icon": "link",
                 "pages": [

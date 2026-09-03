@@ -1,0 +1,162 @@
+---
+title: "Mobile SDKs"
+description: "setEmbeddedData and clearEmbeddedData on React Native, iOS, Android and Flutter, and what mobile responses auto-capture."
+icon: "mobile"
+---
+
+All four mobile SDKs carry the same [Embedded Data](/surveys/embedded-data/overview) API as the JavaScript SDK, with the same contract: merge into an in-memory bag, snapshot it when a survey is displayed, never persist it.
+
+The rules are identical everywhere, so read the [`setEmbeddedData` reference](/surveys/embedded-data/set-embedded-data) for the semantics. This page covers what differs per language.
+
+<Note>
+  Values reach a response only through the fields the survey declares in its **Hidden Fields** card. Declare
+  the field first, then push a value under the same name.
+</Note>
+
+<Note>
+  `setEmbeddedData` lives in the SDK, so it needs an SDK upgrade and a new build of your app. The
+  [auto-captured fields](#what-mobile-responses-auto-capture) further down do not: those come from the survey
+  renderer, which is loaded from your Formbricks instance at display time.
+</Note>
+
+## React Native
+
+```javascript
+import { setEmbeddedData, clearEmbeddedData } from "@formbricks/react-native";
+
+setEmbeddedData({
+  plan: "pro",
+  seats: 25,
+  isTrial: false,
+  signedUpAt: new Date(),
+  screen: null, // removes the key
+});
+
+clearEmbeddedData("plan"); // one key
+clearEmbeddedData(); // everything
+```
+
+Values are `string`, `number`, `boolean` or `Date`. `null` removes a key and `undefined` is a no-op, exactly as in the browser SDK.
+
+## Swift (iOS)
+
+```swift
+Formbricks.setEmbeddedData([
+    "plan": "pro",
+    "seats": 25,
+    "isTrial": false,
+    "signedUpAt": .date(Date()),
+    "screen": nil,   // removes the key
+])
+
+Formbricks.clearEmbeddedData("plan")  // one key
+Formbricks.clearEmbeddedData()        // everything
+```
+
+Values are an `EmbeddedDataValue`: `.string`, `.number`, `.bool` or `.date`. String, integer, floating-point and boolean literals convert on their own, so the common call reads as plain data; a `Date` needs the explicit `.date(…)` case.
+
+<Warning>
+  **On iOS, `nil` removes a key — there is no "leave this alone" value.** Swift has no `undefined`, so this
+  SDK maps `nil` onto the JavaScript SDK's `null` and has nothing that spells its `undefined`.
+
+  The cross-platform idiom of passing every field unconditionally therefore behaves differently here:
+
+  ```swift
+  // ⚠️ clears `plan` whenever the optional is empty
+  Formbricks.setEmbeddedData(["plan": user.plan.map(EmbeddedDataValue.string)])
+  ```
+
+  Build the dictionary from the keys you actually have, and use `clearEmbeddedData(_:)` when you mean to
+  remove one.
+</Warning>
+
+The single-key and clear-everything forms are separate overloads, so a `String` that cannot be `nil` means reading the key from your own state can never accidentally wipe the whole bag.
+
+## Kotlin (Android)
+
+```kotlin
+Formbricks.setEmbeddedData(mapOf(
+    "plan" to EmbeddedDataValue.string("pro"),
+    "seats" to EmbeddedDataValue.number(25.0),
+    "isTrial" to EmbeddedDataValue.boolean(false),
+    "signedUpAt" to EmbeddedDataValue.date(Date()),
+    "screen" to null,   // removes the key
+))
+
+Formbricks.clearEmbeddedData("plan")  // one key
+Formbricks.clearEmbeddedData()        // everything
+```
+
+Values are an `EmbeddedDataValue`, built with `string()`, `number()`, `boolean()` or `date()`. Kotlin has no `undefined` either, so `null` removes a key and the iOS warning above applies here too. As on iOS, the two clear forms are separate overloads.
+
+## Flutter
+
+```dart
+Formbricks.setEmbeddedData({
+  'plan': 'pro',
+  'seats': 25,
+  'isTrial': false,
+  'signedUpAt': DateTime.now(),
+  'screen': null, // removes the key
+});
+
+Formbricks.clearEmbeddedData('plan'); // one key
+Formbricks.clearEmbeddedData();       // everything
+```
+
+Values must be a `String`, `num`, `bool` or `DateTime`; anything else is logged and skipped. `null` removes a key.
+
+`clearEmbeddedData()` with no argument clears everything, while `clearEmbeddedData(null)` is a logged no-op — the same distinction the JavaScript SDK draws by argument count, so reading the key name from your own state cannot wipe the bag when that state is empty.
+
+## Value Types at a Glance
+
+| SDK          | Argument type                                                              | Removes a key | Leaves a key alone | Clears everything                 |
+| ------------ | -------------------------------------------------------------------------- | ------------- | ------------------ | --------------------------------- |
+| React Native | `Record<string, string \| number \| boolean \| Date \| null \| undefined>` | `null`        | `undefined`        | `clearEmbeddedData()`             |
+| Swift        | `[String: EmbeddedDataValue?]`                                             | `nil`         | omitting the key   | `clearEmbeddedData()` overload    |
+| Kotlin       | `Map<String, EmbeddedDataValue?>`                                          | `null`        | omitting the key   | `clearEmbeddedData()` overload    |
+| Dart         | `Map<String, Object?>`                                                     | `null`        | omitting the key   | `clearEmbeddedData()` no argument |
+
+Only React Native has a **value** that means "leave this key alone". On the other three, leaving the key out of the map is the way to skip it, which is why the warnings above matter for code that builds the map from optionals.
+
+Dates are sent as ISO 8601 on every platform, which is what a `date` field accepts.
+
+<Note>
+  Swift, Kotlin and Dart refuse a non-finite number (`NaN`, `infinity`) at the door and log it. That guard is
+  not politeness: on those platforms the payload being serialized is the whole survey's configuration, so one
+  unserializable value would mean **no survey at all** rather than one missing field. React Native matches the
+  browser SDK instead, where such a value simply arrives as unusable and is dropped by the renderer.
+</Note>
+
+## Lifetime on Mobile
+
+Same three rules as the browser, with one wording change: the bag is **process** scoped rather than page-load scoped.
+
+- **In memory, never persisted.** A cold app start begins with an empty bag and your app re-pushes. Nothing is written to `UserDefaults`, `SharedPreferences` or async storage, so there is no PII at rest.
+- **Snapshot at display, then frozen.** A value set while a survey is on screen reaches the next response.
+- **Cleared on an identity switch.** `logout()`, or `setUserId()` with a different id, empties the bag. Identifying for the first time keeps it.
+
+All four SDKs let you call `setEmbeddedData` **before** `setup()`: the bag is pure memory and needs nothing running, so context pushed at launch is not silently dropped.
+
+<Note>
+  `setUserId("a")` immediately followed by `setUserId("b")` in the same tick clears neither the user state nor
+  the bag on any of the four SDKs, because the first id has not been committed yet. This is existing identity
+  behavior rather than something Embedded Data introduces.
+</Note>
+
+## What Mobile Responses Auto-Capture
+
+The [reserved fields](/surveys/embedded-data/reserved-fields) work in a WebView with **no extra wiring**: the survey renderer is loaded from your Formbricks instance at display time, so an already-installed app picks this up without a rebuild or an SDK upgrade.
+
+| Captured on mobile                                                                                     | Absent on mobile                                            |
+| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `locale`                 | `url`, `source`, `pagePath`, `pageReferrer`, every `utm*`   |
+| `browser`, `os`, `deviceType`, `country`, `ipAddress` — derived server-side from the request           |                                                             |
+| `finished`, `language`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`         |                                                             |
+
+The absent ones are absent on purpose. A WebView has no host page, so `location` and `document.referrer` describe nothing real, and filling those fields would produce values that look valid and mean nothing. A screen name is host-supplied rather than observed, which makes it ingested data by definition: declare a `screen` hidden field and push it yourself with `setEmbeddedData`.
+
+<Note>
+  [Lifecycle events](/surveys/website-app-surveys/lifecycle-events) are JavaScript-only for now. React Native,
+  iOS, Android and Flutter support is tracked separately and will land in a later release.
+</Note>
