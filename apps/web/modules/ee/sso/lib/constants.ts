@@ -23,10 +23,22 @@ export const SSO_RECOVERY_SIGN_IN_PATH = "/api/auth/sso-recovery/sign-in";
  */
 export const isSsoRecoveryInternalCallbackUrl = (callbackUrl: string): boolean => {
   try {
-    // Next normalises a trailing slash away before routing, so compare the same way it does.
-    const pathname = new URL(callbackUrl, "http://localhost").pathname.replace(/\/+$/, "");
+    // Next normalises trailing slashes away before routing, so compare the same way it does —
+    // otherwise `…/complete/` slips past this check and still reaches the route.
+    //
+    // Walked by index rather than stripped with `/\/+$/`: that pattern backtracks super-linearly on a
+    // path of many slashes (Sonar S8786), and this pathname comes from a caller-supplied URL. Slicing
+    // in a loop would allocate per slash; finding the end first is one pass and one allocation.
+    const { pathname } = new URL(callbackUrl, "http://localhost");
+    let end = pathname.length;
+    while (end > 0 && pathname.charAt(end - 1) === "/") {
+      end -= 1;
+    }
+    const normalizedPathname = pathname.slice(0, end);
 
-    return pathname === SSO_RECOVERY_COMPLETION_PATH || pathname === SSO_RECOVERY_SIGN_IN_PATH;
+    return (
+      normalizedPathname === SSO_RECOVERY_COMPLETION_PATH || normalizedPathname === SSO_RECOVERY_SIGN_IN_PATH
+    );
   } catch {
     return false;
   }
