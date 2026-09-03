@@ -10,15 +10,15 @@ Lifecycle events tell you what really happened, so your app can react to the sur
 
 ## The events
 
-| Event                           | Fires when                                                                                               | Payload                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `formbricks_survey_shown`       | A survey becomes visible (once per display)                                                              | `{ surveyId }`                       |
-| `formbricks_response_submitted` | The first answer is stored (`finished: false`) and again when the survey is completed (`finished: true`) | `{ surveyId, responseId, finished }` |
-| `formbricks_survey_closed`      | The survey is dismissed or finishes (once per display)                                                   | `{ surveyId }`                       |
-| `formbricks_setup_successful`   | `setup()` finished — the SDK is ready                                                                    | `{ workspaceId }`                    |
-| `formbricks_action_tracked`     | An action was tracked (code or no-code)                                                                  | `{ action }`                         |
+| Event                           | Fires when                                                                                               | Payload                               |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `formbricks_survey_shown`       | A survey becomes visible (once per display)                                                              | `{ surveyId }`                        |
+| `formbricks_response_submitted` | The first answer is stored (`finished: false`) and again when the survey is completed (`finished: true`) | `{ surveyId, responseId?, finished }` |
+| `formbricks_survey_closed`      | The survey is dismissed or finishes (once per display)                                                   | `{ surveyId }`                        |
+| `formbricks_setup_successful`   | `setup()` finished — the SDK is ready                                                                    | `{ workspaceId }`                     |
+| `formbricks_action_tracked`     | An action was tracked (code or no-code)                                                                  | `{ action }`                          |
 
-`responseId` is the id of the stored response — the same id you see in the Responses tab — so your app can link its own analytics or session replays to the exact response.
+`responseId` is the id of the stored response — the same id you see in the Responses tab — so your app can link its own analytics or session replays to the exact response. It is optional: in survey previews nothing is stored, so the key is absent (GTM's dataLayer carries `null` for it there).
 
 ## Listening for events
 
@@ -38,10 +38,10 @@ You can subscribe before or after `formbricks.setup()`, and your listeners stay 
 
 <Note>
   Events are delivered live, not replayed: a listener registered after an event fired will not receive it.
-  This matters most for `formbricks_setup_successful` — register it before calling `setup()`. If you only
-  need to know when your own `setup()` call finished, you can also simply `await` the promise it returns;
-  the event is for code that did not make that call, like a decoupled module or a tag. On GTM the dataLayer
-  buffers, so its triggers are immune to this ordering.
+  This matters most for `formbricks_setup_successful` — register it before calling `setup()`. If you only need
+  to know when your own `setup()` call finished, you can also simply `await` the promise it returns; the event
+  is for code that did not make that call, like a decoupled module or a tag. On GTM the dataLayer buffers, so
+  its triggers are immune to this ordering.
 </Note>
 
 ## Stopping a listener

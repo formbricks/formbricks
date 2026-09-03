@@ -167,7 +167,9 @@ test.describe("JS Package Test", async () => {
         orderBy: { createdAt: "desc" },
         select: { id: true },
       });
-      expect(storedResponse).not.toBeNull();
+      // A hard throw rather than expect().not.toBeNull(): it narrows the type, so the id
+      // comparisons below cannot silently compare undefined against undefined.
+      if (!storedResponse) throw new Error("No response was persisted for the survey");
 
       // Shown, first answer, completion, and — after the ending card auto-closes the modal —
       // closed exactly once. One vocabulary, in order.
@@ -181,8 +183,8 @@ test.describe("JS Package Test", async () => {
       for (const event of events) {
         expect(event.surveyId).toBe(surveyId);
       }
-      expect(events[1].responseId).toBe(storedResponse?.id);
-      expect(events[2].responseId).toBe(storedResponse?.id);
+      expect(events[1].responseId).toBe(storedResponse.id);
+      expect(events[2].responseId).toBe(storedResponse.id);
     });
 
     // Validate displays and response
