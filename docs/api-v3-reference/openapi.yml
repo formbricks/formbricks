@@ -3653,6 +3653,9 @@ components:
           type: string
         videoUrl:
           type: string
+        hideDefaultIcon:
+          type: boolean
+          description: Hides the default checkmark icon rendered above the headline when the ending carries no image or video. Omit to keep the icon.
       additionalProperties: false
     SurveyRedirectEnding:
       type: object

@@ -1,6 +1,9 @@
 "❗️ migrations":
-  - packages/database/migration/**/migration.sql
+  - changed-files:
+      - any-glob-to-any-file: packages/database/migration/**/migration.sql
 
 "❗️ .env changes":
-  - .env.example
-  - .env.docker
+  - changed-files:
+      - any-glob-to-any-file:
+          - .env.example
+          - .env.docker

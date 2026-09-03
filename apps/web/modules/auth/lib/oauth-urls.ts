@@ -6,7 +6,15 @@ const AUTH_BASE_PATH = "/api/auth";
 const MCP_RESOURCE_PATH = "/api/mcp";
 const MCP_PROTECTED_RESOURCE_METADATA_PATH = "/.well-known/oauth-protected-resource/api/mcp";
 
-const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, "");
+// A reverse scan, not `replace(/\/+$/, "")`: that pattern is greedy and unanchored at the start, so
+// on a run of N slashes the engine retries from every offset — O(N^2). Only ever fed configured
+// values here (WEBAPP_URL / BETTER_AUTH_URL / NEXTAUTH_URL), so this is not the reachable case that
+// better-auth-path-label.ts fixes — it is the same shape, kept off the codebase for good.
+const trimTrailingSlash = (value: string): string => {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") end--;
+  return value.slice(0, end);
+};
 
 const normalizeConfiguredUrl = (value: string | undefined, fallback = DEFAULT_WEBAPP_URL): URL => {
   const configured = value?.trim() || fallback;
