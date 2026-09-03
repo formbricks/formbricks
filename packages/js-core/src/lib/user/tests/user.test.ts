@@ -1,5 +1,6 @@
 import { type MockInstance, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
+import { emitFormbricksEvent, onFormbricksEvent, resetFormbricksEventSubscribers } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import { tearDown } from "@/lib/common/setup";
 import { EmbeddedDataStore } from "@/lib/survey/embedded-data";
@@ -252,6 +253,22 @@ describe("user.ts", () => {
       expect(mockLogger.debug).toHaveBeenCalledWith("Logging out and cleaning user state");
       expect(tearDown).toHaveBeenCalled();
       expect(result.ok).toBe(true);
+    });
+
+    test("keeps event subscriptions registered — the docs promise handlers survive logout (ENG-1814)", () => {
+      const mockLogger = { debug: vi.fn(), error: vi.fn() };
+      getInstanceLoggerMock.mockReturnValue(mockLogger as unknown as Logger);
+
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_shown", handler);
+
+      const result = logout();
+      expect(result.ok).toBe(true);
+
+      emitFormbricksEvent("formbricks_survey_shown", { surveyId: "survey_1" });
+      expect(handler).toHaveBeenCalledWith({ surveyId: "survey_1" });
+
+      resetFormbricksEventSubscribers();
     });
 
     test("clears the Embedded Data bag — the previous user's context must not leak (ENG-1844)", () => {
