@@ -14,6 +14,12 @@ import {
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
+import { lookupAuthorizedOrganizationIds } from "@/lib/authorization/resource-list";
+import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
+import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
+import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
@@ -89,13 +95,12 @@ export const getOrganizationsByUserId = reactCache(
     validateInputs([userId, ZString], [page, ZOptionalNumber]);
 
     try {
+      const organizationIds = await lookupAuthorizedOrganizationIds({ type: "user", id: userId });
+      if (organizationIds.length === 0) return [];
+
       const organizations = await prisma.organization.findMany({
         where: {
-          memberships: {
-            some: {
-              userId,
-            },
-          },
+          id: { in: [...organizationIds] },
         },
         select,
         take: page ? ITEMS_PER_PAGE : undefined,
@@ -297,13 +302,50 @@ export const deleteOrganization = async (organizationId: string) => {
             id: true,
           },
         },
-        feedbackDirectories: {
+        teams: {
           select: {
             id: true,
           },
         },
+        apiKeys: {
+          select: {
+            id: true,
+          },
+        },
+        feedbackDirectories: {
+          select: {
+            id: true,
+            workspaces: { select: { workspaceId: true } },
+          },
+        },
       },
     });
+
+    await runPostCommitProjection("organization_delete_relationship_cleanup", () =>
+      deleteOrganizationRelationships(organizationId)
+    );
+    await runPostCommitProjection("organization_delete_team_workspace_cleanup", () =>
+      reconcileTeamWorkspaceRelationships({
+        teamIds: deletedOrganization.teams.map(({ id }) => id),
+        workspaceIds: deletedOrganization.workspaces.map(({ id }) => id),
+      })
+    );
+    await runPostCommitProjection("organization_delete_api_key_cleanup", () =>
+      reconcileApiKeyRelationships({
+        apiKeyIds: deletedOrganization.apiKeys.map(({ id }) => id),
+      })
+    );
+    await runPostCommitProjection("organization_delete_feedback_directory_cleanup", () =>
+      reconcileFeedbackDirectoryRelationships({
+        assignments: deletedOrganization.feedbackDirectories.flatMap((directory) =>
+          directory.workspaces.map(({ workspaceId }) => ({
+            feedbackDirectoryId: directory.id,
+            workspaceId,
+          }))
+        ),
+        feedbackDirectoryIds: deletedOrganization.feedbackDirectories.map(({ id }) => id),
+      })
+    );
 
     const stripeCustomerId = deletedOrganization.billing?.stripeCustomerId;
     if (IS_FORMBRICKS_CLOUD && stripeCustomerId) {

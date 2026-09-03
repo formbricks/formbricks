@@ -9,6 +9,7 @@ import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
+import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getElementDefaults, getGroupedElementTypes } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
@@ -316,11 +317,11 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2">
-                  {survey.blocks.map((block) => {
+                  {survey.blocks.map((block, idx) => {
                     // Don't show current block in the list
                     if (block.id === blockId) return null;
 
-                    const blockName = block.name;
+                    const blockName = getBlockDisplayName(block, idx, t);
                     return (
                       <DropdownMenuItem
                         key={block.id}

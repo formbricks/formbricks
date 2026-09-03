@@ -11,6 +11,7 @@ import {
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { type TChartType, ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { getAIChartPromptError } from "./ai-chart-errors.server";
+import { prepareQueryForChartType } from "./big-number";
 
 const CUBE_NAME = "FeedbackRecords";
 const DEFAULT_MEASURE = `${CUBE_NAME}.count`;
@@ -173,7 +174,12 @@ const normalizeChartQuery = (output: AIQueryResponse): AIChartQueryResult => {
     }));
   }
 
-  const result: AIChartQueryResult = { chartType: output.chartType, query };
+  // A big number has no axis for a grouping, so the model asking for one (a granularity, a
+  // dimension) is dropped rather than folded into the single value it renders.
+  const result: AIChartQueryResult = {
+    chartType: output.chartType,
+    query: prepareQueryForChartType(query, output.chartType),
+  };
 
   const name = output.name?.trim();
   if (name) {

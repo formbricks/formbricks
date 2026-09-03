@@ -5,8 +5,12 @@ const mockRemoveSurveyScheduling = vi.fn();
 const mockUpsertSurveyScheduling = vi.fn();
 const mockRemoveSurveyArchivePurge = vi.fn();
 const mockUpsertSurveyArchivePurge = vi.fn();
+const mockRemoveUsageTelemetry = vi.fn();
+const mockUpsertUsageTelemetry = vi.fn();
 const mockRemoveWorkflowRunReconcile = vi.fn();
 const mockUpsertWorkflowRunReconcile = vi.fn();
+const mockUpsertAuthzedProjectionDelivery = vi.fn();
+const mockUpsertAuthzedReconciliationAudit = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockWarn = vi.fn();
@@ -15,8 +19,11 @@ const mockGetJobsWorkerBootstrapConfig = vi.fn();
 const mockProcessResponsePipelineJob = vi.fn();
 const mockProcessSurveySchedulingJob = vi.fn();
 const mockProcessSurveyArchivePurgeJob = vi.fn();
+const mockProcessUsageTelemetryJob = vi.fn();
 const mockProcessWorkflowRunJob = vi.fn();
 const mockProcessWorkflowRunReconcileJob = vi.fn();
+const mockProcessAuthzedProjectionDeliveryJob = vi.fn();
+const mockProcessAuthzedScheduledReconciliationJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 
 const slowTest = (name: string, fn: () => Promise<void>): void => {
@@ -31,6 +38,18 @@ vi.mock("@formbricks/jobs", () => ({
     workflowRun: "workflow-run.process",
   },
   recurringJobs: {
+    authzedProjectionDelivery: {
+      name: "authzed-projection.deliver",
+      scheduleId: "authzed-projection-delivery",
+      scope: "global",
+      upsert: mockUpsertAuthzedProjectionDelivery,
+    },
+    authzedReconciliationAudit: {
+      name: "authzed-reconciliation.audit",
+      scheduleId: "authzed-reconciliation-audit",
+      scope: "global",
+      upsert: mockUpsertAuthzedReconciliationAudit,
+    },
     surveyArchivePurge: {
       name: "survey-archive-purge.process",
       remove: mockRemoveSurveyArchivePurge,
@@ -44,6 +63,13 @@ vi.mock("@formbricks/jobs", () => ({
       scheduleId: "daily-survey-scheduling",
       scope: "global",
       upsert: mockUpsertSurveyScheduling,
+    },
+    usageTelemetry: {
+      name: "usage-telemetry.process",
+      remove: mockRemoveUsageTelemetry,
+      scheduleId: "daily-usage-telemetry",
+      scope: "global",
+      upsert: mockUpsertUsageTelemetry,
     },
     workflowRunReconcile: {
       name: "workflow-run.reconcile",
@@ -82,12 +108,24 @@ vi.mock("@/modules/survey/archive/lib/process-survey-archive-purge-job", () => (
   processSurveyArchivePurgeJob: mockProcessSurveyArchivePurgeJob,
 }));
 
+vi.mock("@/lib/telemetry/process-usage-telemetry-job", () => ({
+  processUsageTelemetryJob: mockProcessUsageTelemetryJob,
+}));
+
 vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-job", () => ({
   processWorkflowRunJob: mockProcessWorkflowRunJob,
 }));
 
 vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job", () => ({
   processWorkflowRunReconcileJob: mockProcessWorkflowRunReconcileJob,
+}));
+
+vi.mock("@/lib/authzed/outbox-processor", () => ({
+  processAuthzedProjectionDeliveryJob: mockProcessAuthzedProjectionDeliveryJob,
+}));
+
+vi.mock("@/lib/authzed/scheduled-reconciliation", () => ({
+  processAuthzedScheduledReconciliationJob: mockProcessAuthzedScheduledReconciliationJob,
 }));
 
 describe("instrumentation-jobs", () => {
@@ -100,6 +138,12 @@ describe("instrumentation-jobs", () => {
     mockUpsertSurveyArchivePurge.mockResolvedValue({
       id: "archive-purge-schedule-1",
       name: "survey-archive-purge.process",
+      queueName: "background-jobs",
+    });
+    mockRemoveUsageTelemetry.mockResolvedValue(true);
+    mockUpsertUsageTelemetry.mockResolvedValue({
+      id: "usage-telemetry-schedule-1",
+      name: "usage-telemetry.process",
       queueName: "background-jobs",
     });
     mockRemoveWorkflowRunReconcile.mockResolvedValue(true);
@@ -176,11 +220,14 @@ describe("instrumentation-jobs", () => {
     expect(mockStartJobsRuntime).toHaveBeenCalledWith({
       concurrency: 4,
       jobHandlerOverrides: {
+        "authzed-projection.deliver": expect.any(Function),
+        "authzed-reconciliation.audit": expect.any(Function),
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
         "survey-archive-purge.process": expect.any(Function),
         "workflow-run.process": expect.any(Function),
         "test-log.process": mockExistingOverride,
+        "usage-telemetry.process": expect.any(Function),
         "workflow-run.reconcile": expect.any(Function),
       },
       redisUrl: "redis://localhost:6379",
@@ -256,6 +303,28 @@ describe("instrumentation-jobs", () => {
         attempt: 1,
         jobId: "job_456",
         jobName: "survey-scheduling.reconcile",
+        maxAttempts: 3,
+        queueName: "background-jobs",
+      }
+    );
+
+    const usageTelemetryOverride = overrides?.["usage-telemetry.process"];
+    await usageTelemetryOverride?.(
+      { scope: "global" },
+      {
+        attempt: 1,
+        jobId: "job_101",
+        jobName: "usage-telemetry.process",
+        maxAttempts: 3,
+        queueName: "background-jobs",
+      }
+    );
+    expect(mockProcessUsageTelemetryJob).toHaveBeenCalledWith(
+      { scope: "global" },
+      {
+        attempt: 1,
+        jobId: "job_101",
+        jobName: "usage-telemetry.process",
         maxAttempts: 3,
         queueName: "background-jobs",
       }
@@ -407,6 +476,8 @@ describe("instrumentation-jobs", () => {
         await import("@/modules/survey/scheduling/lib/constants");
       const { SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN, SURVEY_ARCHIVE_PURGE_TIME_ZONE } =
         await import("@/modules/survey/archive/lib/constants");
+      const { USAGE_TELEMETRY_DAILY_CRON_PATTERN, USAGE_TELEMETRY_TIME_ZONE } =
+        await import("@/lib/telemetry/constants");
       const { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } =
         await import("@/modules/ee/workflows/lib/runner/reconcile-constants");
 
@@ -416,6 +487,16 @@ describe("instrumentation-jobs", () => {
       // The schedule identity and payload now belong to the job declaration in @formbricks/jobs (and are
       // asserted there); what this app owns, and what is asserted here, is the timing per job.
       expect(mockStartJobsRuntime).not.toHaveBeenCalled();
+      expect(mockUpsertAuthzedProjectionDelivery).toHaveBeenCalledOnce();
+      expect(mockUpsertAuthzedProjectionDelivery).toHaveBeenCalledWith({
+        everyMs: 5_000,
+        kind: "every",
+      });
+      expect(mockUpsertAuthzedReconciliationAudit).toHaveBeenCalledOnce();
+      expect(mockUpsertAuthzedReconciliationAudit).toHaveBeenCalledWith({
+        everyMs: 6 * 60 * 60 * 1_000,
+        kind: "every",
+      });
       expect(mockUpsertSurveyScheduling).toHaveBeenCalledTimes(1);
       expect(mockUpsertSurveyScheduling).toHaveBeenCalledWith({
         cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
@@ -432,6 +513,15 @@ describe("instrumentation-jobs", () => {
       // NEXT_PUBLIC_ var that ENG-1665 renamed away, pinning it to the Europe/Berlin fallback
       // regardless of configuration (ENG-2244).
       expect(SURVEY_ARCHIVE_PURGE_TIME_ZONE).toBe(SURVEY_SCHEDULING_TIME_ZONE);
+      expect(mockUpsertUsageTelemetry).toHaveBeenCalledTimes(1);
+      // `immediately` is the point of this schedule, not an incidental option: without it an instance
+      // that has just been identified sends no usage update until the next daily slot (ENG-2107).
+      expect(mockUpsertUsageTelemetry).toHaveBeenCalledWith({
+        cronPattern: USAGE_TELEMETRY_DAILY_CRON_PATTERN,
+        immediately: true,
+        kind: "cron",
+        timeZone: USAGE_TELEMETRY_TIME_ZONE,
+      });
       expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledTimes(1);
       expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledWith({
         everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
@@ -441,6 +531,7 @@ describe("instrumentation-jobs", () => {
       // scheduler with no delayed job (bullmq#3063).
       expect(mockRemoveSurveyScheduling).not.toHaveBeenCalled();
       expect(mockRemoveSurveyArchivePurge).not.toHaveBeenCalled();
+      expect(mockRemoveUsageTelemetry).not.toHaveBeenCalled();
       expect(mockRemoveWorkflowRunReconcile).not.toHaveBeenCalled();
     }
   );

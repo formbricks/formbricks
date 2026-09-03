@@ -4,6 +4,32 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## v6
+
+Formbricks v6 replaces the legacy authorization evaluator with AuthZed SpiceDB. PostgreSQL remains the source
+of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback, so an existing
+installation must migrate through the bridge-compatible v5 release identified in the v6 release notes.
+
+Before selecting a v6 image:
+
+1. Back up the Formbricks and SpiceDB PostgreSQL databases, secrets, deployment configuration, image versions,
+   and canonical schema digest.
+2. Merge the release-matched AuthZed deployment services or Helm values without overwriting proxy, storage,
+   SMTP, or external-datastore customization.
+3. Run the v6 database migrations while the bridge application remains available.
+4. Run `formbricks-authzed upgrade prepare`, then require `formbricks-authzed upgrade check` to exit `0`.
+5. For one-click or Compose, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. For Helm, set
+   `authzed.migrationAcknowledged=true` in the v6 upgrade values.
+6. Deploy v6 and verify critical allow, deny, revocation, and cross-tenant cases.
+
+The update scripts and chart fail before replacing the running release when the deployment contract,
+acknowledgement, schema, outbox, or relationship graph is not ready. Do not bypass the acknowledgement to silence
+a failed gate. See [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6)
+for Docker and Kubernetes commands, guarded schema replacement, backups, repair, and rollback.
+
+The moving `latest` image tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable
+publication. Existing installations opt into v6 explicitly during that migration window.
+
 ## v5.4
 
 v5.4 carries one application-level breaking change, and it is narrow: it affects **API keys** used against
@@ -201,7 +227,7 @@ HAVING COUNT(w."workspaceId") > 1;
 Most instances return no rows: a workspace is normally assigned a single dataset, so sharing only exists
 where an administrator deliberately assigned a second workspace. For any row that does come back, an
 integration that mutates records in that dataset has two ways forward — assign the dataset to a single
-workspace under **Settings → Organization → Feedback Datasets**, or have the integration authenticate as
+workspace under **Settings → Organization → Datasets**, or have the integration authenticate as
 an organization owner or manager instead of with a workspace-scoped key.
 
 #### What to do before upgrading
@@ -235,6 +261,25 @@ The migration also adds two nullable columns, `alg` and `crv`, to the `jwks` tab
 instance's JWT signing keys. Keys created before the upgrade keep working untouched — Better Auth reads a
 null `alg` as the default algorithm — so there is nothing to backfill, but the columns must exist before
 the new version mints its next key.
+
+#### AZUREAD_TENANT_ID: set a concrete tenant for full id_token verification
+
+Better Auth 1.7 verifies Microsoft id_tokens against the issuer advertised by the tenant's OpenID
+discovery document whenever `AZUREAD_TENANT_ID` names a concrete tenant — a Directory (tenant) ID GUID or
+a verified domain. That is strictly stronger than v5.3 and needs no action.
+
+Two of Microsoft's multi-tenant authorities are different. `common` and `organizations` advertise the
+literal placeholder `https://login.microsoftonline.com/{tenantid}/v2.0` as their issuer, so verifying
+real tokens against it fails every Microsoft sign-in with `?error=unable_to_get_user_info`. Formbricks
+therefore handles those two the way it already handles an unset `AZUREAD_TENANT_ID`: sign-in identity
+comes from Microsoft's userinfo endpoint over a client-authenticated call (the v5.3 behavior) and
+id_tokens are not verified. The authority you configure still applies at sign-in, so `organizations`
+keeps restricting sign-in to work/school accounts, and an unset value behaves as `common`. Formbricks
+logs a warning at startup when either is set and Microsoft SSO is enabled. To get full id_token
+verification, set your Directory (tenant) ID instead.
+
+`consumers` needs no action and is not affected: every personal Microsoft account lives in one
+well-known tenant, so that authority advertises a real issuer and keeps full id_token verification.
 
 #### SSO callback URLs are unchanged
 
@@ -654,6 +699,9 @@ Cube is part of the baseline Formbricks v5 stack.
     Then compare `formbricks/docker-compose.v5.yml` with your existing `formbricks/docker-compose.yml` and merge
     the v5 additions:
 
+    - set `POSTGRES_PASSWORD` in `formbricks/.env` to the exact password used by the existing PostgreSQL
+      volume; do not generate a new value during the upgrade. If it contains URI-reserved characters, also set
+      `POSTGRES_PASSWORD_URL_ENCODED` to its percent-encoded form
     - add a non-empty `HUB_API_KEY` and reuse the same value wherever your deployment resolves Hub auth
     - keep `HUB_API_URL` at `http://hub:8080` unless Hub runs elsewhere
     - include the bundled `formbricks-migrate`, `hub-migrate`, and `hub` services
@@ -683,6 +731,9 @@ Cube is part of the baseline Formbricks v5 stack.
 
     At minimum, confirm:
 
+    - `POSTGRES_PASSWORD` contains the exact password used by the existing PostgreSQL volume; replacing the
+      Compose file does not rotate the database password. If it contains URI-reserved characters, also set
+      `POSTGRES_PASSWORD_URL_ENCODED` to its percent-encoded form
     - `HUB_API_KEY` is configured and the same value is available wherever your deployment resolves Hub auth
     - `HUB_API_URL` points to the Hub service the app can reach
     - the compose stack includes `formbricks-migrate`, `hub-migrate`, and `hub`

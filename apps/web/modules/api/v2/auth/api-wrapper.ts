@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { TApiAuditLog } from "@/app/lib/api/with-api-logging";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -163,10 +164,12 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
     }
   }
 
-  return handler({
-    authentication: authentication.data,
-    parsedInput,
-    request,
-    auditLog,
-  });
+  return withAuthorizationSurface("api_v2", () =>
+    handler({
+      authentication: authentication.data,
+      parsedInput,
+      request,
+      auditLog,
+    })
+  );
 };

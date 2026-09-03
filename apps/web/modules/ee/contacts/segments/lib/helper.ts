@@ -2,7 +2,10 @@ import { prisma } from "@formbricks/database";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TBaseFilters, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
-import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
+import {
+  SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
+  isResourceFilter,
+} from "@/modules/ee/contacts/segments/lib/utils";
 
 /**
  * Checks if a segment filter contains a recursive reference to itself
@@ -66,25 +69,29 @@ export const collectSurveyIdsFromSegmentFilters = (filters: TBaseFilters): strin
  * Ensures every survey referenced by a "specific" survey-interaction filter belongs to the given
  * workspace. This is the tenancy guard for interaction filters — the runtime evaluation query is
  * already workspace-scoped, but we reject unknown/foreign ids at write time to avoid persisting
- * dead references.
+ * dead references. The deduplicated ids are looked up in bounded batches, sequentially: each batch
+ * is checked before the next query runs, so the first missing id (in collection order) still
+ * rejects, and no further queries are issued after a rejection. Callers pass ZSegmentFilters-parsed
+ * trees, so the total is already capped (MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE — a handful of
+ * batches at most); the chunking is defense in depth for each query's parameter payload and for any
+ * future caller that skips the parse.
  * @throws {InvalidInputError} When a referenced survey is not found in the workspace
  */
 export const assertSurveyInteractionSurveyIds = async (filters: TBaseFilters, workspaceId: string) => {
   const surveyIds = Array.from(new Set(collectSurveyIdsFromSegmentFilters(filters)));
 
-  if (surveyIds.length === 0) {
-    return;
-  }
+  for (let i = 0; i < surveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
+    const batch = surveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
+    const foundSurveys = await prisma.survey.findMany({
+      where: { id: { in: batch }, workspaceId },
+      select: { id: true },
+    });
 
-  const foundSurveys = await prisma.survey.findMany({
-    where: { id: { in: surveyIds }, workspaceId },
-    select: { id: true },
-  });
+    const foundIds = new Set(foundSurveys.map((survey) => survey.id));
+    const missingId = batch.find((id) => !foundIds.has(id));
 
-  const foundIds = new Set(foundSurveys.map((survey) => survey.id));
-  const missingId = surveyIds.find((id) => !foundIds.has(id));
-
-  if (missingId) {
-    throw new InvalidInputError(`Survey not found in workspace: ${missingId}`);
+    if (missingId) {
+      throw new InvalidInputError(`Survey not found in workspace: ${missingId}`);
+    }
   }
 };

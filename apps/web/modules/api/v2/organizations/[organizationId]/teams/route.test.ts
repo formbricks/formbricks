@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
+import { POST } from "./route";
 
 const {
   mockAuthenticatedApiClient,
   mockCanManageOrganizationUsers,
   mockCreateTeam,
   mockGetApiKeyCreatorRole,
+  mockHasOrganizationIdAndAccess,
   mockHandleApiError,
   mockSuccessResponse,
 } = vi.hoisted(() => ({
@@ -13,6 +15,7 @@ const {
   mockCanManageOrganizationUsers: vi.fn(),
   mockCreateTeam: vi.fn(),
   mockGetApiKeyCreatorRole: vi.fn(),
+  mockHasOrganizationIdAndAccess: vi.fn(),
   mockHandleApiError: vi.fn(),
   mockSuccessResponse: vi.fn(),
 }));
@@ -30,6 +33,10 @@ vi.mock("@/modules/api/v2/lib/response", () => ({
 
 vi.mock("@/modules/api/v2/lib/utils", () => ({
   handleApiError: mockHandleApiError,
+}));
+
+vi.mock("@/modules/api/v2/organizations/[organizationId]/lib/utils", () => ({
+  hasOrganizationIdAndAccess: mockHasOrganizationIdAndAccess,
 }));
 
 vi.mock("@/modules/api/v2/organizations/[organizationId]/teams/lib/teams", () => ({
@@ -52,6 +59,7 @@ const buildRequest = () =>
 describe("POST /organizations/[organizationId]/teams", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHasOrganizationIdAndAccess.mockResolvedValue(true);
 
     mockAuthenticatedApiClient.mockImplementation(
       async ({ handler }: Parameters<typeof authenticatedApiClient>[0]) =>
@@ -79,7 +87,6 @@ describe("POST /organizations/[organizationId]/teams", () => {
     mockGetApiKeyCreatorRole.mockResolvedValue(null);
     mockCanManageOrganizationUsers.mockReturnValue(false);
 
-    const { POST } = await import("./route");
     const response = await POST(buildRequest(), { params: Promise.resolve({ organizationId }) });
 
     expect(mockGetApiKeyCreatorRole).toHaveBeenCalledWith(apiKeyId, organizationId);
@@ -98,7 +105,6 @@ describe("POST /organizations/[organizationId]/teams", () => {
     mockCanManageOrganizationUsers.mockReturnValue(true);
     mockCreateTeam.mockResolvedValue({ ok: true, data: { id: "team123", ...teamInput, organizationId } });
 
-    const { POST } = await import("./route");
     const response = await POST(buildRequest(), { params: Promise.resolve({ organizationId }) });
 
     expect(mockGetApiKeyCreatorRole).toHaveBeenCalledWith(apiKeyId, organizationId);

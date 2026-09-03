@@ -4,13 +4,12 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
+import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { loadNewSegmentInSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getOrganizationIdFromContactAttributeKeyId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
@@ -18,6 +17,8 @@ import {
   getWorkspaceIdFromSegmentId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
 import {
@@ -66,21 +67,11 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
     // Set the organizationId in the context to be used in the audit log
     ctx.auditLoggingCtx.organizationId = organizationId;
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user?.id ?? "",
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user?.id ?? "" }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
@@ -124,21 +115,11 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
   withAuditLogging("updated", "segment", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
     const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: segmentWorkspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: segmentWorkspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, segmentWorkspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
@@ -189,9 +170,8 @@ const ZLoadNewSegmentAction = z.object({
   segmentId: ZId,
 });
 
-export const loadNewSegmentAction = authenticatedActionClient
-  .inputSchema(ZLoadNewSegmentAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const loadNewSegmentAction = authenticatedActionClient.inputSchema(ZLoadNewSegmentAction).action(
+  withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
     const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
 
@@ -200,26 +180,21 @@ export const loadNewSegmentAction = authenticatedActionClient
     }
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: surveyWorkspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: surveyWorkspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, surveyWorkspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
-    return await loadNewSegmentInSurvey(parsedInput.surveyId, parsedInput.segmentId);
-  });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+    const result = await loadNewSegmentInSurvey(parsedInput.surveyId, parsedInput.segmentId);
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);
 
 const ZCloneSegmentAction = z.object({
   segmentId: ZId,
@@ -237,21 +212,11 @@ export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSe
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: surveyWorkspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: surveyWorkspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, surveyWorkspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
@@ -271,22 +236,13 @@ const ZDeleteSegmentAction = z.object({
 export const deleteSegmentAction = authenticatedActionClient.inputSchema(ZDeleteSegmentAction).action(
   withAuditLogging("deleted", "segment", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
+    const workspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user?.id ?? "",
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromSegmentId(parsedInput.segmentId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user?.id ?? "" }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
@@ -307,22 +263,13 @@ export const resetSegmentFiltersAction = authenticatedActionClient
   .action(
     withAuditLogging("updated", "segment", async ({ ctx, parsedInput }) => {
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
       await checkAdvancedTargetingPermission(organizationId);
 
@@ -344,22 +291,12 @@ const ZGetDistinctAttributeValuesAction = z.object({
 export const getDistinctAttributeValuesAction = authenticatedActionClient
   .inputSchema(ZGetDistinctAttributeValuesAction)
   .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromContactAttributeKeyId(parsedInput.attributeKeyId);
+    const workspaceId = await getWorkspaceIdFromContactAttributeKeyId(parsedInput.attributeKeyId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromContactAttributeKeyId(parsedInput.attributeKeyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: workspaceId,
     });
 
     await checkAdvancedTargetingPermission(organizationId);
@@ -376,20 +313,9 @@ export const getSurveysForSegmentFilterAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: parsedInput.workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
 
     await checkAdvancedTargetingPermission(organizationId);

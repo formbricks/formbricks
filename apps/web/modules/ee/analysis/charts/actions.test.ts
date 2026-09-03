@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { executeQueryAction as executeQueryActionExport, generateAIChartAction } from "./actions";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import {
+  createChartAction,
+  executeQueryAction as executeQueryActionExport,
+  generateAIChartAction,
+} from "./actions";
 
 // The action-client mock below turns `.inputSchema(...).action(fn)` into the identity, so the
 // export IS the raw handler at runtime — re-type it accordingly (the SafeActionResult type on the
@@ -26,6 +31,7 @@ const mocks = vi.hoisted(() => {
     executeTenantScopedQuery: vi.fn(),
     generateAIChartQuery: vi.fn(),
     updateChart: vi.fn(),
+    applyRateLimit: vi.fn(),
     getFeedbackSourcesWithMappings: vi.fn(),
     getSurvey: vi.fn(),
     getElementsFromBlocks: vi.fn(),
@@ -39,6 +45,8 @@ vi.mock("@/lib/utils/action-client", () => ({
     inputSchema: mocks.actionClientInputSchema,
   },
 }));
+
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -142,9 +150,9 @@ describe("chart Cube actions", () => {
     expect(mocks.checkWorkspaceAccess).toHaveBeenCalledWith("user-1", "workspace-1", "read");
     expect(mocks.checkFeedbackDirectoryAccess).toHaveBeenCalledWith({
       feedbackDirectoryId: "frd-1",
-      organizationId: "organization-1",
       workspaceId: "workspace-1",
       userId: "user-1",
+      minPermission: "read",
       source: "charts.executeQueryAction",
     });
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
@@ -155,6 +163,25 @@ describe("chart Cube actions", () => {
       userId: "user-1",
       source: "charts.executeQueryAction",
     });
+  });
+
+  test("createChartAction applies the chart creation rate limit", async () => {
+    await createChartAction({
+      ctx,
+      parsedInput: {
+        workspaceId: "workspace-1",
+        chartInput: {
+          name: "Chart",
+          type: "bar",
+          query: { measures: ["FeedbackRecords.count"] },
+          config: {},
+          feedbackDirectoryId: "frd-1",
+        },
+      },
+    } as any);
+
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.chartCreation, "user-1");
+    expect(mocks.createChart).toHaveBeenCalled();
   });
 
   test("executeQueryAction does not delegate before workspace authorization succeeds", async () => {

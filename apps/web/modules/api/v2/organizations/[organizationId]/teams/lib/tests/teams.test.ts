@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { TGetTeamsFilter } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
 import { createTeam, getTeams } from "../teams";
 
@@ -26,6 +27,10 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
+
 describe("Teams Lib", () => {
   describe("createTeam", () => {
     test("creates a team successfully and revalidates cache", async () => {
@@ -41,6 +46,7 @@ describe("Teams Lib", () => {
         },
       });
       expect(result.ok).toBe(true);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ teamIds: ["team123"] });
       if (result.ok) expect(result.data).toEqual(mockTeam);
     });
 

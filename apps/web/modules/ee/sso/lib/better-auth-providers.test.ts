@@ -6,6 +6,10 @@ import { PINNED_SSO_PROVIDER_IDS } from "@/modules/auth/lib/legacy-sso-callback"
 const { captureSsoIdentity } = vi.hoisted(() => ({ captureSsoIdentity: vi.fn() }));
 vi.mock("./sso-request-context", () => ({ captureSsoIdentity }));
 
+// The module warns at import time when a pseudo-tenant is configured (ENG-2750); capture it.
+const { loggerWarn } = vi.hoisted(() => ({ loggerWarn: vi.fn() }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: loggerWarn } }));
+
 // The pinned SSO callback URL is built from `getAuthIssuerUrl()`, which reads `@/lib/env` directly rather
 // than the constants mocked below — it has to, because that helper encodes Better Auth's own base-URL
 // precedence (`BETTER_AUTH_URL ?? NEXTAUTH_URL ?? WEBAPP_URL`). Spread the real env so `@/lib/constants`
@@ -85,6 +89,7 @@ const callMapper = (mapper: unknown, profile: Record<string, unknown>): { email?
 
 beforeEach(() => {
   captureSsoIdentity.mockClear();
+  loggerWarn.mockClear();
 });
 
 afterEach(() => {
@@ -323,6 +328,123 @@ describe("better-auth SSO providers", () => {
       expect(azure?.tokenUrl).toBeUndefined();
     });
 
+    /**
+     * ENG-2750: `common` and `organizations` must NOT take the discovery branch. Their discovery
+     * documents advertise the literal `{tenantid}` placeholder as `issuer`, which 1.7's literal `iss`
+     * comparison can never match — with `AZUREAD_TENANT_ID=common` in the env (Cloud prod's config),
+     * every Microsoft sign-in failed verification and landed on `?error=unable_to_get_user_info`.
+     * The authority is preserved in the endpoint URLs: `organizations` still restricts which account
+     * types Microsoft accepts at the authorize endpoint.
+     *
+     * `consumers` is deliberately absent — it advertises a real issuer, so it belongs with the
+     * discovery cases below.
+     */
+    test.each([
+      ["common", "common"],
+      ["organizations", "organizations"],
+      // Case-insensitive and trimmed (an operator-typed env var), and emitted in canonical lower case.
+      ["Common", "common"],
+      [" common ", "common"],
+      ["ORGANIZATIONS", "organizations"],
+    ])(
+      "Azure treats the template-issuer authority %j like unset: explicit endpoints, no discovery",
+      async (value, inUrl) => {
+        const m = await loadProviders({
+          ENTERPRISE_LICENSE_KEY: "lic",
+          AZURE_OAUTH_ENABLED: true,
+          AZUREAD_TENANT_ID: value,
+        });
+        const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
+
+        expect(azure?.discoveryUrl).toBeUndefined();
+        expect(azure?.authorizationUrl).toBe(
+          `https://login.microsoftonline.com/${inUrl}/oauth2/v2.0/authorize`
+        );
+        expect(azure?.tokenUrl).toBe(`https://login.microsoftonline.com/${inUrl}/oauth2/v2.0/token`);
+        expect(azure?.userInfoUrl).toBe("https://graph.microsoft.com/oidc/userinfo");
+        // The operator set a value and is getting the weaker multi-tenant mode — that must be visible.
+        expect(loggerWarn).toHaveBeenCalledTimes(1);
+        expect(loggerWarn.mock.calls[0][0]).toContain("placeholder issuer");
+      }
+    );
+
+    /**
+     * The warning must not describe this as "treating it like unset". Unset resolves to `common`,
+     * which accepts personal accounts, so an operator who chose `organizations` to allow only
+     * work/school accounts would read that as having silently lost the restriction — while in fact
+     * only id_token verification is given up and the authority still applies at the authorize
+     * endpoint. Pinned because it is a deliberate wording decision, not incidental phrasing.
+     */
+    test("the tenant warning says the configured authority still applies, not that it is ignored", async () => {
+      await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: true,
+        AZUREAD_TENANT_ID: "organizations",
+      });
+
+      expect(loggerWarn).toHaveBeenCalledTimes(1);
+      const message = loggerWarn.mock.calls[0][0] as string;
+      expect(message).toContain("still applies");
+      expect(message).not.toMatch(/like unset|treated as unset/i);
+    });
+
+    /**
+     * Every tenant whose discovery document carries a real issuer keeps the stronger discovery path.
+     * `consumers` is the one that is easy to get wrong: it looks like a sibling of `common` and
+     * `organizations`, but all personal Microsoft accounts live in one well-known MSA tenant, so its
+     * discovery document names that tenant as the issuer and its id_tokens verify. Treating it as a
+     * placeholder authority would silently drop a check that works today.
+     */
+    test.each([
+      ["a verified domain", "contoso.onmicrosoft.com", "contoso.onmicrosoft.com"],
+      ["the personal-accounts authority", "consumers", "consumers"],
+      ["a mixed-case value, passed through unchanged", "Contoso.OnMicrosoft.com", "Contoso.OnMicrosoft.com"],
+    ])("Azure uses discovery for %s", async (_label, value, inUrl) => {
+      const m = await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: true,
+        AZUREAD_TENANT_ID: value,
+      });
+      const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
+
+      expect(azure?.discoveryUrl).toBe(
+        `https://login.microsoftonline.com/${inUrl}/v2.0/.well-known/openid-configuration`
+      );
+      expect(azure?.authorizationUrl).toBeUndefined();
+      expect(azure?.tokenUrl).toBeUndefined();
+    });
+
+    test.each([
+      ["unset", undefined],
+      ["whitespace only", "   "],
+      ["a concrete tenant", "00000000-1111-2222-3333-444444444444"],
+      ["the personal-accounts authority", "consumers"],
+    ])("Azure does not warn when the tenant is %s", async (_label, value) => {
+      await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: true,
+        AZUREAD_TENANT_ID: value,
+      });
+
+      expect(loggerWarn).not.toHaveBeenCalled();
+    });
+
+    /**
+     * The warning describes how Azure sign-in will behave, so it is pointless — and misleading — on an
+     * instance that registers no Azure provider. Both cases below reach that state, and registration
+     * needs BOTH gates, so the warning has to check both too: an unlicensed instance with Azure
+     * credentials configured is just as provider-less as a licensed one with none.
+     */
+    test.each([
+      ["Azure SSO is disabled", { ENTERPRISE_LICENSE_KEY: "lic", AZURE_OAUTH_ENABLED: false }],
+      ["the instance is unlicensed", { ENTERPRISE_LICENSE_KEY: undefined, AZURE_OAUTH_ENABLED: true }],
+    ])("Azure does not warn about a template-issuer authority when %s", async (_label, overrides) => {
+      const m = await loadProviders({ ...overrides, AZUREAD_TENANT_ID: "common" });
+
+      expect(m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread")).toBeUndefined();
+      expect(loggerWarn).not.toHaveBeenCalled();
+    });
+
     test("Azure mapProfileToUser resolves the display name through its fallback chain", async () => {
       const m = await loadProviders({ ENTERPRISE_LICENSE_KEY: "lic", AZURE_OAUTH_ENABLED: true });
       const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
@@ -377,6 +499,80 @@ describe("better-auth SSO providers", () => {
       });
     });
 
+    /**
+     * ENG-2754: the generic OIDC provider shares ENG-2750's failure mode, because it too resolves its
+     * endpoints from a discovery document. Pointed at a Microsoft multi-tenant authority it would
+     * verify id_tokens against a `{tenantid}` placeholder and fail every sign-in, so those authorities
+     * skip discovery here too — and the operator is told to prefer the dedicated azuread provider.
+     */
+    const oidcBase = {
+      ENTERPRISE_LICENSE_KEY: "lic",
+      OIDC_OAUTH_ENABLED: true,
+      OIDC_CLIENT_ID: "oidc-id",
+      OIDC_CLIENT_SECRET: "oidc-secret",
+    };
+
+    test.each([
+      ["https://login.microsoftonline.com/common/v2.0", "common"],
+      ["https://login.microsoftonline.com/organizations/v2.0", "organizations"],
+      // Case and a trailing slash are operator typing, not a different provider.
+      ["https://LOGIN.microsoftonline.com/Common/", "common"],
+      // No /v2.0 suffix: the authority is the first path segment either way.
+      ["https://login.microsoftonline.com/common", "common"],
+    ])("OIDC pointed at %s skips discovery and uses Microsoft's endpoints", async (issuer, authority) => {
+      const m = await loadProviders({ ...oidcBase, OIDC_ISSUER: issuer });
+      const oidc = m.ssoGenericOAuthConfig.find((c) => c.providerId === "openid");
+
+      expect(oidc?.discoveryUrl).toBeUndefined();
+      expect(oidc?.authorizationUrl).toBe(
+        `https://login.microsoftonline.com/${authority}/oauth2/v2.0/authorize`
+      );
+      expect(oidc?.tokenUrl).toBe(`https://login.microsoftonline.com/${authority}/oauth2/v2.0/token`);
+      expect(oidc?.userInfoUrl).toBe("https://graph.microsoft.com/oidc/userinfo");
+      // Account keying must not move, or existing linked accounts stop matching.
+      expect(oidc?.accountIssuer).toBe("local:oauth:openid");
+      expect(loggerWarn).toHaveBeenCalledTimes(1);
+      // Recommends the dedicated provider, and — like the azuread warning — does not imply the
+      // configured authority has been discarded, since `organizations` keeps restricting sign-in.
+      const message = loggerWarn.mock.calls[0][0] as string;
+      expect(message).toContain("AZUREAD_CLIENT_ID");
+      expect(message).toContain("still applies");
+      expect(message).not.toMatch(/like unset|treated as unset/i);
+    });
+
+    /**
+     * Everything else keeps discovery. `consumers` is included deliberately: it is a Microsoft
+     * authority but advertises a real issuer, so it must not be swept up with the other two — the same
+     * distinction ENG-2750 turns on. The lookalike host guards against matching on a substring.
+     */
+    test.each([
+      ["a normal IdP", "https://idp.test"],
+      ["Microsoft's personal-accounts authority", "https://login.microsoftonline.com/consumers/v2.0"],
+      [
+        "a concrete Microsoft tenant",
+        "https://login.microsoftonline.com/00000000-1111-2222-3333-444444444444/v2.0",
+      ],
+      ["a lookalike host", "https://login.microsoftonline.com.evil.test/common/v2.0"],
+    ])("OIDC keeps discovery for %s", async (_label, issuer) => {
+      const m = await loadProviders({ ...oidcBase, OIDC_ISSUER: issuer });
+      const oidc = m.ssoGenericOAuthConfig.find((c) => c.providerId === "openid");
+
+      expect(oidc?.discoveryUrl).toBe(`${issuer}/.well-known/openid-configuration`);
+      expect(oidc?.authorizationUrl).toBeUndefined();
+      expect(loggerWarn).not.toHaveBeenCalled();
+    });
+
+    test("OIDC does not warn about a Microsoft authority when the instance is unlicensed", async () => {
+      const m = await loadProviders({
+        ...oidcBase,
+        ENTERPRISE_LICENSE_KEY: undefined,
+        OIDC_ISSUER: "https://login.microsoftonline.com/common/v2.0",
+      });
+
+      expect(m.ssoGenericOAuthConfig.find((c) => c.providerId === "openid")).toBeUndefined();
+      expect(loggerWarn).not.toHaveBeenCalled();
+    });
+
     test("SAML bridges to the local Jackson endpoints and resolves first/last name", async () => {
       const m = await loadProviders({
         ENTERPRISE_LICENSE_KEY: "lic",
@@ -422,5 +618,225 @@ describe("better-auth SSO providers", () => {
       });
       expect(m.ssoGenericOAuthConfig.map((c) => c.providerId)).toEqual(["azuread", "openid", "saml"]);
     });
+  });
+});
+
+/**
+ * Raised in review on #9017: setting `userInfoUrl` does not guarantee Better Auth calls it.
+ *
+ * `fetchUserInfo` opens with `decodeJwt(tokens.idToken)` — decode, not verify — and returns those
+ * claims whenever the token carries `sub` and `email`, never touching the userinfo endpoint. The
+ * explicit-endpoint branch deliberately has no `idToken` config, so nothing validates that token's
+ * signature, issuer or nonce, and we request the `email` scope, so a real Microsoft token takes the
+ * shortcut every time.
+ *
+ * These tests drive the provider Better Auth actually initialises rather than the config object,
+ * because the config object cannot show which of the two paths runs — asserting `userInfoUrl` is
+ * exactly the check that passed while the shortcut was live.
+ */
+describe("Azure identity comes from Graph, not an unverified id_token (#9017 review)", () => {
+  // An UNSIGNED token carrying the claims the shortcut looks for. If it is ever accepted, an
+  // attacker-supplied token would be too.
+  const forgedIdToken = `${Buffer.from(JSON.stringify({ alg: "none" })).toString("base64url")}.${Buffer.from(
+    JSON.stringify({ sub: "forged-subject", email: "attacker@evil.test", name: "Forged" })
+  ).toString("base64url")}.`;
+
+  const initializedAzureProvider = async (tenant?: string) => {
+    const m = await loadProviders({
+      ENTERPRISE_LICENSE_KEY: "lic",
+      AZURE_OAUTH_ENABLED: true,
+      AZUREAD_CLIENT_ID: "az-id",
+      AZUREAD_CLIENT_SECRET: "az-secret",
+      AZUREAD_TENANT_ID: tenant,
+    });
+    const { betterAuth } = await import("better-auth");
+    const { memoryAdapter } = await import("better-auth/adapters/memory");
+    const { genericOAuth } = await import("better-auth/plugins");
+    const auth = betterAuth({
+      baseURL: "https://app.formbricks.test",
+      secret: "sso-provider-contract-secret-0123456789",
+      database: memoryAdapter({ user: [], session: [], account: [], verification: [] }),
+      plugins: [genericOAuth({ config: m.ssoGenericOAuthConfig })],
+    });
+    const ctx = await auth.$context;
+    return ctx.socialProviders.find((p) => p.id === "azuread");
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test.each([["common"], ["organizations"], [undefined]])(
+    "tenant %s: a forged id_token is never accepted as the identity",
+    async (tenant) => {
+      // Graph is unreachable, so the ONLY way to produce a profile is the unverified shortcut.
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+          throw new Error("graph unreachable");
+        })
+      );
+
+      const provider = await initializedAzureProvider(tenant);
+      const result = await provider?.getUserInfo?.({
+        accessToken: "access-token",
+        idToken: forgedIdToken,
+      } as never);
+
+      expect(result).toBeNull();
+    }
+  );
+
+  test("the identity is the Graph response, and Graph is actually called", async () => {
+    const graph = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ sub: "graph-subject", email: "real@corp.test", name: "Real User" }),
+    }));
+    vi.stubGlobal("fetch", graph);
+
+    const provider = await initializedAzureProvider("common");
+    const result = await provider?.getUserInfo?.({
+      accessToken: "access-token",
+      idToken: forgedIdToken,
+    } as never);
+
+    expect(graph).toHaveBeenCalledWith(
+      "https://graph.microsoft.com/oidc/userinfo",
+      expect.objectContaining({ headers: { Authorization: "Bearer access-token" } })
+    );
+    // The forged subject must not appear anywhere in the resolved identity.
+    expect(result?.user).toMatchObject({ email: "real@corp.test" });
+    expect(JSON.stringify(result)).not.toContain("forged-subject");
+    expect(JSON.stringify(result)).not.toContain("attacker@evil.test");
+  });
+
+  test("a Graph error fails the sign-in closed rather than falling back to the token", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: false, status: 401, json: async () => ({}) }))
+    );
+
+    const provider = await initializedAzureProvider("common");
+    expect(await provider?.getUserInfo?.({ accessToken: "t", idToken: forgedIdToken } as never)).toBeNull();
+  });
+
+  // The concrete-tenant branch keeps discovery, where Better Auth verifies the id_token before any
+  // profile is resolved — so it is intentionally left on the default path.
+  test("a concrete tenant still uses discovery, not the Graph override", async () => {
+    const m = await loadProviders({
+      ENTERPRISE_LICENSE_KEY: "lic",
+      AZURE_OAUTH_ENABLED: true,
+      AZUREAD_TENANT_ID: "00000000-1111-2222-3333-444444444444",
+    });
+    const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
+
+    expect(azure?.getUserInfo).toBeUndefined();
+    expect(azure?.discoveryUrl).toBeDefined();
+  });
+});
+
+/**
+ * Raised in review on #9023: the generic OIDC provider reaches the same explicit-endpoint branch when
+ * `OIDC_ISSUER` points at a Microsoft multi-tenant authority, so it inherited the same unverified
+ * id_token shortcut. Driven through the initialised provider, for the same reason as the azuread
+ * suite above: the config object cannot show which of the two paths actually runs.
+ *
+ * Also pins the sweep result — `saml` reaches an explicit-endpoint branch too but is NOT affected,
+ * because it requests no `openid` scope, so BoxyHQ never mints an id_token for the shortcut to read.
+ */
+describe("OIDC identity comes from Graph when pointed at Microsoft (#9023 review)", () => {
+  const forgedIdToken = `${Buffer.from(JSON.stringify({ alg: "none" })).toString("base64url")}.${Buffer.from(
+    JSON.stringify({ sub: "forged-subject", email: "attacker@evil.test" })
+  ).toString("base64url")}.`;
+
+  const initializedProvider = async (providerId: string, overrides: Partial<MockConstants>) => {
+    const m = await loadProviders({ ENTERPRISE_LICENSE_KEY: "lic", ...overrides });
+    const { betterAuth } = await import("better-auth");
+    const { memoryAdapter } = await import("better-auth/adapters/memory");
+    const { genericOAuth } = await import("better-auth/plugins");
+    const auth = betterAuth({
+      baseURL: "https://app.formbricks.test",
+      secret: "sso-oidc-contract-secret-0123456789ab",
+      database: memoryAdapter({ user: [], session: [], account: [], verification: [] }),
+      plugins: [genericOAuth({ config: m.ssoGenericOAuthConfig })],
+    });
+    return (await auth.$context).socialProviders.find((p) => p.id === providerId);
+  };
+
+  const oidcAtMicrosoft = {
+    OIDC_OAUTH_ENABLED: true,
+    OIDC_CLIENT_ID: "oidc-id",
+    OIDC_CLIENT_SECRET: "oidc-secret",
+    OIDC_ISSUER: "https://login.microsoftonline.com/common/v2.0",
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test("a forged id_token is never accepted as the identity", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("graph unreachable");
+      })
+    );
+
+    const provider = await initializedProvider("openid", oidcAtMicrosoft);
+    expect(await provider?.getUserInfo?.({ accessToken: "t", idToken: forgedIdToken } as never)).toBeNull();
+  });
+
+  test("the identity is the Graph response, and Graph is actually called", async () => {
+    const graph = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ sub: "graph-subject", email: "real@corp.test", name: "Real User" }),
+    }));
+    vi.stubGlobal("fetch", graph);
+
+    const provider = await initializedProvider("openid", oidcAtMicrosoft);
+    const result = await provider?.getUserInfo?.({
+      accessToken: "access-token",
+      idToken: forgedIdToken,
+    } as never);
+
+    expect(graph).toHaveBeenCalledWith("https://graph.microsoft.com/oidc/userinfo", expect.anything());
+    // Assert the Graph identity positively first: on its own, `not.toContain` passes for a `null`
+    // result, so the two negatives below would hold even if the provider resolved nothing at all.
+    expect(result?.user).toMatchObject({ email: "real@corp.test" });
+    expect(result?.data).toMatchObject({ sub: "graph-subject", email: "real@corp.test" });
+    expect(JSON.stringify(result)).not.toContain("forged-subject");
+    expect(JSON.stringify(result)).not.toContain("attacker@evil.test");
+  });
+
+  test("a normal OIDC issuer keeps discovery and the default profile path", async () => {
+    const m = await loadProviders({
+      ENTERPRISE_LICENSE_KEY: "lic",
+      ...oidcAtMicrosoft,
+      OIDC_ISSUER: "https://idp.test",
+    });
+    const oidc = m.ssoGenericOAuthConfig.find((c) => c.providerId === "openid");
+
+    expect(oidc?.getUserInfo).toBeUndefined();
+    expect(oidc?.discoveryUrl).toBe("https://idp.test/.well-known/openid-configuration");
+  });
+
+  /**
+   * The sweep result, pinned. `saml` also configures explicit endpoints with no discovery, which is
+   * the shape that exposed the other two — but BoxyHQ only mints an id_token for an OIDC-flow request
+   * (`requestedOIDCFlow` in Jackson's oauth controller), and this provider requests no scopes at all.
+   * No id_token means the shortcut cannot fire, so no override is needed. If someone ever adds
+   * `openid` to these scopes, this test fails and says why.
+   */
+  test("saml requests no openid scope, so no id_token exists for the shortcut to read", async () => {
+    const m = await loadProviders({ ENTERPRISE_LICENSE_KEY: "lic", SAML_OAUTH_ENABLED: true });
+    const saml = m.ssoGenericOAuthConfig.find((c) => c.providerId === "saml");
+
+    // Anchor the negatives: without this, an unregistered `saml` makes `saml?.scopes ?? []` an empty
+    // array and `saml?.discoveryUrl` undefined, so both assertions below would hold while proving
+    // nothing about the provider they are supposed to be describing.
+    if (!saml) throw new Error("saml provider not registered");
+
+    expect(saml.scopes ?? []).not.toContain("openid");
+    expect(saml.discoveryUrl).toBeUndefined();
   });
 });

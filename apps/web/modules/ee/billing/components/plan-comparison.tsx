@@ -219,11 +219,6 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
       label: t("workspace.settings.billing.comparison_row_two_factor_auth"),
       values: [false, false, "addon"],
     },
-    {
-      type: "feature",
-      label: t("workspace.settings.billing.comparison_row_spam"),
-      values: [false, false, "addon"],
-    },
   ];
 
   const displayRows: ComparisonDisplayRow[] = [

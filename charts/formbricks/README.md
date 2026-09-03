@@ -56,6 +56,187 @@ or provide equivalent edge rate limiting for the documented route coverage. The 
 least two for availability during voluntary disruptions, or change/disable the PDB for an intentional
 single-replica deployment.
 
+## AuthZed / SpiceDB
+
+Formbricks v6 enables AuthZed, `fully_consistent` authorization, and the bundled SpiceDB operator by default.
+
+### Breaking changes from v5
+
+| Setting                    | v5 default | v6 default | Existing shared-operator clusters                                              |
+| -------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------- |
+| `authzed.operator.install` | `false`    | `true`     | Set `authzed.operator.install=false` before upgrading to avoid duplicate reconcilers. |
+
+For a cluster where a compatible operator already watches the Formbricks namespace:
+
+```yaml
+authzed:
+  operator:
+    install: false
+```
+
+The default installs the pinned SpiceDB operator, creates a two-replica `SpiceDBCluster`, and creates a dedicated
+`spicedb` database and role in the bundled PostgreSQL server. During normal Helm installs and upgrades, the
+chart reuses generated credentials from the existing cluster Secret. Renderers without live Secret access,
+including offline `helm template` and Argo CD manifest generation, must provide persistent credentials through
+`authzed.auth.existingSecret` and `authzed.datastore.existingSecret`; otherwise generated values are not stable
+between renders. The operator runs datastore migrations before rolling out SpiceDB.
+
+The bundled PostgreSQL dependency uses the following resource baseline, which was validated while PostgreSQL
+also served SpiceDB:
+
+```yaml
+postgresql:
+  primary:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+```
+
+Helm cannot condition values passed to the PostgreSQL dependency on a sibling value, so the safe database
+baseline remains in effect. Override `authzed.cluster.resources` and `postgresql.primary.resources` to match the
+expected authorization traffic and the other workloads using the bundled database.
+
+Install only one operator per Kubernetes cluster. When a platform-managed operator already watches the Formbricks
+namespace, keep `authzed.operator.install=false`; the Formbricks release still owns its `SpiceDBCluster`.
+Kubernetes does not upgrade CRDs during a normal Helm upgrade. When changing the bundled operator version, apply
+the matching `charts/spicedb-operator/crds/authzed.com_spicedbclusters.yaml` before upgrading the release.
+
+For managed PostgreSQL, create a dedicated database and login outside Helm and expose these keys in a Kubernetes
+Secret:
+
+```yaml
+stringData:
+  datastore_uri: postgresql://spicedb:<password>@postgres.example:5432/spicedb?sslmode=require
+  preshared_key: <strong-random-token>
+```
+
+Alternatively, the chart can create the dedicated database and login with a short-lived bootstrap Job. Put a
+PostgreSQL administrator URL in a separate Secret and enable the external bootstrap:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: formbricks-postgresql-admin
+stringData:
+  DATABASE_URL: postgresql://postgres:<admin-password>@postgres.example:5432/postgres?sslmode=require
+```
+
+```yaml
+authzed:
+  externalPostgresqlBootstrap:
+    enabled: true
+    adminSecretName: formbricks-postgresql-admin
+```
+
+The administrator URL must explicitly set `sslmode=require`, `sslmode=verify-ca`, or `sslmode=verify-full`.
+The bootstrap Job validates the TLS mode without logging the URL and passes the URL through unchanged, so other
+connection parameters and certificate settings are preserved.
+
+### Bootstrapping against an existing PostgreSQL without a `postgres` role
+
+The bundled bootstrap connects as the `postgres` superuser the subchart normally creates. An existing
+installation deployed with `postgresql.auth.enablePostgresUser=false` has no such role, so point the Job at a
+role that does hold `CREATEROLE` and `CREATEDB` instead:
+
+```yaml
+authzed:
+  bundledPostgresqlBootstrap:
+    adminUsername: fbadmin
+    adminDatabase: formbricks # the maintenance database to attach to
+    adminPasswordSecretName: existing-pg-admin
+    adminPasswordKey: password
+```
+
+`adminPasswordSecretName` is required whenever `adminUsername` is not the bundled superuser, and
+`adminPasswordKey` whenever that Secret is configured explicitly. **Both are enforced when the chart renders**,
+so a missing one fails `helm template`/`upgrade` with a named value rather than producing a Job. That is the
+point of the guards: without them the first would silently fall back to the bundled admin password and the
+second would look up the subchart's key name inside your own Secret — neither of which surfaces until the Pod
+is created in the cluster.
+
+`CREATEROLE` and `CREATEDB` cover the normal case, in which this administrator also creates the `spicedb` role.
+`CREATE DATABASE ... OWNER spicedb` additionally requires being able to `SET ROLE` to that owner, so the Job
+grants itself the `spicedb` role first; from PostgreSQL 16 that is only possible for a role it holds
+`ADMIN OPTION` on, which creating the role confers. A `spicedb` role that already exists and was created by
+someone else is therefore the one case the Job cannot adopt on PostgreSQL 16+ — grant it explicitly
+(`GRANT spicedb TO fbadmin WITH ADMIN OPTION`) or run the bootstrap once as a superuser. PostgreSQL 15 and
+older are unaffected.
+
+Re-running is safe but not inert: the role and the database are created only when absent, while the `spicedb`
+role's password is reconciled to the chart's Secret on **every** run. If you rotate that password outside Helm,
+update the Secret too, or the next upgrade will set it back.
+`authzed.bundledPostgresqlBootstrap.enabled=false` remains available for operators who provision both by hand.
+
+Then reference it from the release:
+
+```yaml
+authzed:
+  enabled: true
+  mode: selfHosted
+  auth:
+    existingSecret: formbricks-authzed
+  datastore:
+    existingSecret: formbricks-authzed
+```
+
+To connect to an AuthZed-managed or otherwise external endpoint, use TLS, provide the endpoint without a URL
+scheme, and reference a Secret containing `preshared_key`:
+
+```yaml
+authzed:
+  enabled: true
+  mode: external
+  operator:
+    install: false
+  endpoint: grpc.authzed.com:443
+  insecure: false
+  auth:
+    existingSecret: formbricks-authzed
+```
+
+`authzed.insecure` defaults to `false` in external mode. Set it to `true` only for a trusted plaintext gRPC
+endpoint; plaintext transport sends the preshared token without TLS protection. The chart injects `AUTHZED_ENABLED`,
+`AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and `AUTHZED_CONSISTENCY` into
+the Formbricks app. Authorization checks must fail closed once product enforcement is enabled; general
+Formbricks readiness remains independent from transient SpiceDB availability.
+
+Fresh installs run a release-matched post-install initialization Job that applies the canonical schema and verifies
+the empty or reconciled graph. An acknowledged existing release runs the same release-matched gate as a pre-upgrade
+hook; unacknowledged upgrades are rejected before rendering. Before the first v6 upgrade, run:
+
+```bash
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade prepare
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade check
+
+# Empty instances only
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply
+
+# Non-empty instances: use the remoteDigest returned by the immediately preceding check
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply \
+  --expected-current-digest sha256:<digest-from-check>
+```
+
+The initial apply to an empty instance needs no digest. A non-empty instance must first be checked and then
+prepared with `--expected-current-digest sha256:<digest-from-check>`. Once `upgrade check` exits `0`, set
+`authzed.migrationAcknowledged=true` in the v6 upgrade values. The chart refuses an unacknowledged upgrade,
+`authzed.enabled=false`, or consistency other than `fully_consistent`. Back up the current schema and affected
+relationships before replacement; see the repository `authzed/README.md` for exit codes and rollback rules.
+The public [AuthZed operations guide](../../docs/self-hosting/advanced/authzed-operations.mdx) covers backups,
+restoration, schema lifecycle, relationship repair, and monitoring.
+
+Cloud operators that run the same guarded schema, outbox drain, reconciliation, and audit sequence outside Helm
+may set `authzed.initialization.enabled=false` together with `authzed.migrationAcknowledged=true`. This suppresses
+the initialization hook so a GitOps sync cannot mutate the authorization graph outside the controlled cutover
+window. The acknowledgement must be set only after the external preparation succeeds. Fresh self-hosted installs
+should keep the default initialization Job enabled.
+
 ## Cube
 
 Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default
@@ -561,6 +742,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | externalSecret.refreshInterval                                     | string | `"1h"`                                                                      |                                                           |
 | externalSecret.secretStore.kind                                    | string | `"ClusterSecretStore"`                                                      |                                                           |
 | externalSecret.secretStore.name                                    | string | `"aws-secrets-manager"`                                                     |                                                           |
+| formbricks.mcpOauthJwksUrl                                         | string | `""`                                                                        | Optional internal JWKS fetch URL for trusted application networks. |
 | formbricks.publicUrl                                               | string | `""`                                                                        |                                                           |
 | formbricks.webappUrl                                               | string | `""`                                                                        |                                                           |
 | hub.autoscaling.enabled                                            | bool   | `false`                                                                     |                                                           |
@@ -696,6 +878,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | pdb.enabled                                                        | bool   | `true`                                                                      |                                                           |
 | pdb.minAvailable                                                   | int    | `1`                                                                         |                                                           |
 | postgresql.auth.database                                           | string | `"formbricks"`                                                              |                                                           |
+| postgresql.auth.enablePostgresUser                                 | bool   | `true`                                                                       | Required by the bundled AuthZed database bootstrap.       |
 | postgresql.auth.existingSecret                                     | string | `"formbricks-app-secrets"`                                                  |                                                           |
 | postgresql.auth.secretKeys.adminPasswordKey                        | string | `"POSTGRES_ADMIN_PASSWORD"`                                                 |                                                           |
 | postgresql.auth.secretKeys.userPasswordKey                         | string | `"POSTGRES_USER_PASSWORD"`                                                  |                                                           |
@@ -716,6 +899,10 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | postgresql.primary.podSecurityContext.enabled                      | bool   | `true`                                                                      |                                                           |
 | postgresql.primary.podSecurityContext.fsGroup                      | int    | `1001`                                                                      |                                                           |
 | postgresql.primary.podSecurityContext.runAsUser                    | int    | `1001`                                                                      |                                                           |
+| postgresql.primary.resources.limits.cpu                            | string | `"1"`                                                                       |                                                           |
+| postgresql.primary.resources.limits.memory                         | string | `"1Gi"`                                                                     |                                                           |
+| postgresql.primary.resources.requests.cpu                          | string | `"250m"`                                                                    |                                                           |
+| postgresql.primary.resources.requests.memory                       | string | `"512Mi"`                                                                   |                                                           |
 | rbac.enabled                                                       | bool   | `false`                                                                     |                                                           |
 | rbac.serviceAccount.additionalLabels                               | object | `{}`                                                                        |                                                           |
 | rbac.serviceAccount.annotations                                    | object | `{}`                                                                        |                                                           |

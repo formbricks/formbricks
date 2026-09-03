@@ -33,24 +33,111 @@ That's it! After running the command and providing the required information, vis
 The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (`ghcr.io/formbricks/hub`) and the bundled Cube service. Hub and Cube share the same database as Formbricks by default and both start as part of the baseline `docker compose up`.
 
 - **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API starts. Both migration services run on every `docker compose up` and are idempotent.
-- **Production** (`docker/docker-compose.yml`): Set non-empty `HUB_API_KEY` and
-  `CUBEJS_API_SECRET` in `.env` before starting the stack. `docker compose config >/dev/null` validates
-  Compose syntax, but missing secrets are reported by the service that needs them at startup.
-  `HUB_API_URL` defaults to `http://hub:8080` and `CUBEJS_API_URL` defaults to `http://cube:4000` so the
-  Formbricks app reaches Hub and Cube inside the Compose network. Cube JWT issuer/audience default to
-  `formbricks-web` and `formbricks-cube`, and the bundled Cube service exposes only `meta,data` API
-  scopes. The bundled single-replica Cube uses in-memory cache and queue storage and defaults
-  `CUBEJS_EXTERNAL_DEFAULT` to `false`, so it does not require Cube Store. If you add external
-  pre-aggregations, configure Cube Store before overriding `CUBEJS_EXTERNAL_DEFAULT=true`. Override
-  `HUB_DATABASE_URL` and `CUBEJS_DB_*` only if Hub or Cube should use a separate database. The Hub image
-  tracks `:latest` by default so `formbricks.sh update` advances Hub in lockstep with the app. `hub` and
-  `hub-migrate` always resolve to the same image. To pin to an immutable reference, set `HUB_IMAGE_REF`
-  in `docker/.env` to either a tag (e.g. `:0.3.0`) or a digest
-  (e.g. `@sha256:14db7b3d...`).
+- **Production** (`docker/docker-compose.yml`): Set `POSTGRES_PASSWORD` to a unique random value and set
+  non-empty `HUB_API_KEY`, `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` values in
+  `.env` before starting the stack. Keep
+  `POSTGRES_PASSWORD` unchanged after the database volume has been initialized. The installer also writes a
+  URL-encoded companion for connection strings. Manual installs only need to set
+  `POSTGRES_PASSWORD_URL_ENCODED` when the raw password contains URI-reserved characters; existing URL-safe
+  passwords continue to work through the raw-value fallback. The `docker compose config >/dev/null` command
+  validates Compose syntax and fails when `POSTGRES_PASSWORD` is missing; other missing secrets are reported by
+  the service that needs them at startup. `HUB_API_URL` defaults to `http://hub:8080` and `CUBEJS_API_URL`
+  defaults to `http://cube:4000` so the Formbricks app reaches Hub and Cube inside the Compose network. Cube JWT
+  issuer/audience default to `formbricks-web` and `formbricks-cube`, and the bundled Cube service exposes only
+  `meta,data` API scopes. The bundled single-replica Cube uses in-memory cache and queue storage and defaults
+  `CUBEJS_EXTERNAL_DEFAULT` to `false`, so it does not require Cube Store. If you add external pre-aggregations,
+  configure Cube Store before overriding `CUBEJS_EXTERNAL_DEFAULT=true`. Override `HUB_DATABASE_URL` and
+  `CUBEJS_DB_*` only if Hub or Cube should use a separate database. The Hub image tracks `:latest` by default so
+  `formbricks.sh update` advances Hub in lockstep with the app. `hub` and `hub-migrate` always resolve to the same
+  image. To pin to an immutable reference, set `HUB_IMAGE_REF` in `docker/.env` to either a tag (e.g. `:0.3.0`)
+  or a digest (e.g. `@sha256:14db7b3d...`).
 - **Existing production installs**: Pulling new images does not replace an existing
   `docker-compose.yml`. Add `CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}` to the Cube
   service's `environment` block, then run `docker compose up -d --no-deps --force-recreate cube`.
 - **Development** (`docker-compose.dev.yml`): Hub uses a dedicated local `hub` database and `HUB_API_KEY` defaults to `dev-api-key`. The dev stack starts `hub` plus `hub-worker`; set `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, and any provider credentials in the repo root `.env` to enable Hub embeddings locally. See the [Hub embeddings environment reference](https://hub.formbricks.com/reference/environment-variables/#embeddings) for provider-specific values. Cube starts with the dev stack, `CUBEJS_API_URL` defaults to `http://localhost:4000`, and `pnpm dev:setup` generates `CUBEJS_API_SECRET` in the repo root `.env`. The Hub image is pinned to a semver tag (`hub`, `hub-worker`, and `hub-migrate` share the same value); override `HUB_IMAGE_TAG` in the repo root `.env` to test a specific Hub release.
+
+## AuthZed / SpiceDB
+
+The production and development Compose stacks include one SpiceDB v1.52.0 service backed by a dedicated
+`spicedb` database and login in the bundled PostgreSQL server. `authzed-db-bootstrap` creates or updates the
+database credentials, `spicedb-migrate` applies datastore migrations, and only then does `spicedb` start. Both
+one-shot services are idempotent.
+
+For production Docker, generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with
+`openssl rand -hex 32` and keep them in the mode-`0600` `.env` file. SpiceDB remains internal at
+`spicedb:50051`; it is not published through Traefik. The one-click installer generates both values and
+downloads `authzed-postgres-bootstrap.sh` automatically.
+
+For repository development, `pnpm dev:setup` generates and preserves the same credentials and `pnpm db:up`
+starts SpiceDB on `127.0.0.1:50051`. Run the isolated persistence test with:
+
+```bash
+pnpm authzed:smoke
+```
+
+Run the read-only application client health check with:
+
+```bash
+docker compose --profile authzed-ops run --rm authzed-ops health
+```
+
+The opt-in operations service uses the same release image and environment as Formbricks, but never starts during
+normal `docker compose up`. The health command accepts an empty schema as healthy, prints exactly one JSON
+result, and exits `0` only for a healthy connection. Disabled, invalid, authentication, permission, timeout,
+overload, unavailable, and unexpected states exit `1` with a stable `authzed_*` code. It never prints the
+token, schema, raw SDK error, or stack trace. It is intentionally not exposed through a browser or HTTP route,
+and SpiceDB availability does not affect the normal Formbricks `/health` result. Restart Formbricks after
+changing AuthZed configuration.
+
+Check or explicitly apply the canonical Formbricks schema with:
+
+```bash
+docker compose --profile authzed-ops run --rm authzed-ops schema check
+
+# Empty instances only
+docker compose --profile authzed-ops run --rm authzed-ops schema apply
+
+# Non-empty instances: use the remoteDigest returned by the immediately preceding check
+docker compose --profile authzed-ops run --rm authzed-ops schema apply \
+  --expected-current-digest sha256:<digest-from-check>
+
+# Relationship audit (dry run)
+docker compose --profile authzed-ops run --rm authzed-ops backfill
+
+# Release-matched v6 readiness gate
+docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+```
+
+The first apply to an empty SpiceDB needs no additional argument. Replacing a non-empty schema requires
+`--expected-current-digest sha256:<digest-from-check>`. The command verifies the write by reading and comparing
+the schema again. Fresh installs run the idempotent `authzed-initialize` service independently; Formbricks
+startup and `/health` do not depend on it. Existing upgrades require the explicit preparation and read-only gate. See
+the [public operations guide](../docs/self-hosting/advanced/authzed-operations.mdx) for the JSON contract, exit
+codes, backup requirements, repair, and rollback rules. Repository development retains the equivalent
+`pnpm authzed:*` commands.
+
+`AUTHZED_ENABLED` and `AUTHZED_INSECURE` accept `true`, `false`, `1`, and `0`. Unset means disabled and secure
+TLS, respectively. `AUTHZED_ENDPOINT` is a bare `host:port` (including bracketed IPv6) with no scheme or path;
+`AUTHZED_CONSISTENCY` accepts both client values, but released v6 Compose deployments require and default to
+`fully_consistent`.
+
+To use the optional authenticated grpcui browser in development:
+
+```bash
+docker compose -f docker-compose.dev.yml --profile authzed-ui up -d authzed-ui
+```
+
+Open `http://127.0.0.1:50052`. The browser UI and gRPC port are development-only.
+
+Existing one-click installations keep their customized Compose file during `formbricks.sh update`. Merge all
+release-matched AuthZed services and the two generated secrets manually, pass `upgrade prepare` and `upgrade
+check`, and only then set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. Back up both databases first and
+never use `docker compose down -v` during migration or rollback.
+
+The bundled PostgreSQL service keeps `track_commit_timestamp` at its default `off` value. SpiceDB therefore
+logs that its Watch API is disabled; schema, relationship, and permission-check APIs are unaffected. A future
+consumer of the Watch API must explicitly enable that PostgreSQL setting and account for the required restart.
 
 ## Smart Functionality AI with Qwen/vLLM
 

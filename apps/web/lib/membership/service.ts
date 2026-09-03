@@ -6,9 +6,15 @@ import { logger } from "@formbricks/logger";
 import { ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMembership, ZMembership } from "@formbricks/types/memberships";
+import { reconcileOrganizationMembership } from "../authzed/organization-membership";
 import { validateInputs } from "../utils/validate";
 
 type TMembershipDbClient = PrismaClient | Prisma.TransactionClient;
+
+type TDeferredMembershipProjection = Readonly<{
+  projection: "deferred";
+  transaction: Prisma.TransactionClient;
+}>;
 
 const getDbClient = (tx?: Prisma.TransactionClient): TMembershipDbClient => tx ?? prisma;
 
@@ -62,12 +68,14 @@ export const createMembership = async (
   organizationId: string,
   userId: string,
   data: Partial<TMembership>,
-  tx?: Prisma.TransactionClient
+  options?: TDeferredMembershipProjection
 ): Promise<TMembership> => {
   validateInputs([organizationId, ZString], [userId, ZString], [data, ZMembership.partial()]);
 
+  let membership: TMembership;
+
   try {
-    const prismaClient = getDbClient(tx);
+    const prismaClient = getDbClient(options?.transaction);
     const existingMembership = await prismaClient.membership.findUnique({
       where: {
         userId_organizationId: {
@@ -78,11 +86,8 @@ export const createMembership = async (
     });
 
     if (existingMembership && existingMembership.role === data.role) {
-      return existingMembership;
-    }
-
-    let membership: TMembership;
-    if (!existingMembership) {
+      membership = existingMembership;
+    } else if (!existingMembership) {
       membership = await prismaClient.membership.create({
         data: {
           userId,
@@ -105,8 +110,6 @@ export const createMembership = async (
         },
       });
     }
-
-    return membership;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -114,4 +117,12 @@ export const createMembership = async (
 
     throw error;
   }
+
+  // Transactional callers must project only after their outer transaction commits. Non-transactional
+  // callers reconcile even on an idempotent retry so a repeated source mutation can heal SpiceDB.
+  if (!options) {
+    await reconcileOrganizationMembership(organizationId, userId);
+  }
+
+  return membership;
 };

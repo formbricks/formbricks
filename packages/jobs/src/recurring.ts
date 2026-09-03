@@ -58,6 +58,16 @@ export const defineRecurringJob = ({
 
 /** Every recurring job in the system. Adding one here wires the registry, the producer and the exports. */
 export const recurringJobDescriptors = {
+  authzedProjectionDelivery: defineRecurringJob({
+    label: "AuthZed projection delivery",
+    name: JOB_NAMES.authzedProjectionDelivery,
+    scheduleId: "authzed-projection-delivery",
+  }),
+  authzedReconciliationAudit: defineRecurringJob({
+    label: "AuthZed reconciliation audit",
+    name: JOB_NAMES.authzedReconciliationAudit,
+    scheduleId: "authzed-reconciliation-audit",
+  }),
   surveyArchivePurge: defineRecurringJob({
     label: "survey archive purge",
     name: JOB_NAMES.surveyArchivePurge,
@@ -67,6 +77,11 @@ export const recurringJobDescriptors = {
     label: "survey scheduling",
     name: JOB_NAMES.surveyScheduling,
     scheduleId: "daily-survey-scheduling",
+  }),
+  usageTelemetry: defineRecurringJob({
+    label: "usage telemetry",
+    name: JOB_NAMES.usageTelemetry,
+    scheduleId: "daily-usage-telemetry",
   }),
   workflowRunReconcile: defineRecurringJob({
     label: "workflow run reconcile",

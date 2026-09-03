@@ -1,3 +1,7 @@
+import { extractYoutubeId } from "@formbricks/survey-ui/youtube-id";
+
+export { extractYoutubeId };
+
 export const checkForYoutubeUrl = (url: string): boolean => {
   try {
     const youtubeUrl = new URL(url);
@@ -51,29 +55,6 @@ export const checkForLoomUrl = (url: string): boolean => {
     // invalid URL
     return false;
   }
-};
-
-export const extractYoutubeId = (url: string): string | null => {
-  let id = "";
-
-  // Regular expressions for various YouTube URL formats
-  const regExpList = [
-    /youtu\.be\/([a-zA-Z0-9_-]+)/, // youtu.be/<id>
-    /youtube\.com.*v=([a-zA-Z0-9_-]+)/, // youtube.com/watch?v=<id>
-    /youtube\.com.*embed\/([a-zA-Z0-9_-]+)/, // youtube.com/embed/<id>
-    /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]+)/, // youtube-nocookie.com/embed/<id>
-  ];
-
-  regExpList.some((regExp) => {
-    const match = url.match(regExp);
-    if (match && match[1]) {
-      id = match[1];
-      return true;
-    }
-    return false;
-  });
-
-  return id || null;
 };
 
 const extractVimeoId = (url: string): string | null => {
