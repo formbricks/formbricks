@@ -1,5 +1,6 @@
 import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
+import { onFormbricksEvent, resetFormbricksEventSubscribers } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import type * as CommonUtils from "@/lib/common/utils";
 import { filterSurveys, getLanguageCode, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
@@ -903,7 +904,7 @@ describe("widget-file", () => {
       };
     };
 
-    test("survey_shown on display; response_submitted with the acked responseId on create and finish", async () => {
+    test("survey_shown on render; response_submitted with the acked responseId on create and finish", async () => {
       delete (window as { dataLayer?: unknown }).dataLayer;
       const callbacks = await renderAndGetEventCallbacks();
 
@@ -923,6 +924,194 @@ describe("widget-file", () => {
           formbricks: { ...base, surveyId: mockSurvey.id, responseId: "resp_123", finished: true },
         },
       ]);
+    });
+  });
+
+  describe("survey lifecycle via formbricks.on (ENG-1814)", () => {
+    // The subscription surface over the same emits as the dataLayer transport: which renderer
+    // callback maps to which event, the survey id it names, and the closed-once guard.
+    const renderAndGetLifecycleCallbacks = async (): Promise<{
+      onDisplayCreated: () => void;
+      onResponseCreated: (responseId?: string) => void;
+      onClose: () => void;
+    }> => {
+      const mockConfigValue = {
+        get: vi.fn().mockReturnValue({
+          appUrl: "https://fake.app",
+          workspaceId: "env_123",
+          workspace: {
+            data: {
+              settings: { clickOutsideClose: true, overlay: "none", placement: "bottomRight" },
+            },
+          },
+          user: {
+            data: {
+              userId: null,
+              contactId: "contact_abc",
+              displays: [],
+              responses: [],
+              lastDisplayAt: null,
+            },
+          },
+        }),
+        update: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
+      (filterSurveys as Mock).mockReturnValue([]);
+      widget.setIsSurveyRunning(false);
+      window.formbricksSurveys = createMockFormbricksSurveys();
+
+      vi.useFakeTimers();
+      await widget.renderWidget({ ...mockSurvey, delay: 0 } as unknown as TWorkspaceStateSurvey);
+      vi.advanceTimersByTime(0);
+      vi.useRealTimers();
+
+      return (getFormbricksSurveys().renderSurvey as Mock).mock.calls[0][0] as {
+        onDisplayCreated: () => void;
+        onResponseCreated: (responseId?: string) => void;
+        onClose: () => void;
+      };
+    };
+
+    beforeEach(() => {
+      // Drop any survey an earlier test left on screen, then start from a subscriber-free registry.
+      widget.closeSurvey();
+      resetFormbricksEventSubscribers();
+      delete (window as { dataLayer?: unknown }).dataLayer;
+    });
+
+    test("notifies formbricks_survey_shown subscribers when the survey renders, not when the display acks", async () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_shown", handler);
+
+      const callbacks = await renderAndGetLifecycleCallbacks();
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({ surveyId: mockSurvey.id });
+
+      // The display ack does its own bookkeeping; it must not report a second appearance.
+      callbacks.onDisplayCreated();
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    test("notifies formbricks_response_submitted subscribers with the server-acked responseId", async () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_response_submitted", handler);
+
+      const callbacks = await renderAndGetLifecycleCallbacks();
+      callbacks.onResponseCreated("resp_123");
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({
+        surveyId: mockSurvey.id,
+        responseId: "resp_123",
+        finished: false,
+      });
+    });
+
+    test("emits formbricks_survey_closed once — to subscribers AND the dataLayer — and not again on a repeated close", async () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_closed", handler);
+
+      const callbacks = await renderAndGetLifecycleCallbacks();
+      callbacks.onClose();
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({ surveyId: mockSurvey.id });
+      // The same moment reaches GTM through the dataLayer transport, paired with the render's shown.
+      const base = { workspaceId: null, surveyId: null, responseId: null, finished: null, action: null };
+      expect(window.dataLayer).toEqual([
+        { event: "formbricks_survey_shown", formbricks: { ...base, surveyId: mockSurvey.id } },
+        { event: "formbricks_survey_closed", formbricks: { ...base, surveyId: mockSurvey.id } },
+      ]);
+
+      widget.closeSurvey();
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(window.dataLayer).toHaveLength(2);
+    });
+
+    test("each close names its own survey when a second one renders over the first", async () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_closed", handler);
+
+      const surveyA = await renderAndGetLifecycleCallbacks();
+
+      // What no-code-action.ts does when the SPA navigates away from a still-open pageView survey: a
+      // fired timeout entry is never pruned, so the guard is released while A is still on screen and
+      // the renderer appends a second container rather than replacing A's.
+      widget.setIsSurveyRunning(false);
+      vi.useFakeTimers();
+      await widget.renderWidget({
+        ...mockSurvey,
+        id: "survey_B",
+        delay: 0,
+      } as unknown as TWorkspaceStateSurvey);
+      vi.advanceTimersByTime(0);
+      vi.useRealTimers();
+
+      const renderCalls = (getFormbricksSurveys().renderSurvey as Mock).mock.calls;
+      const surveyB = renderCalls[renderCalls.length - 1][0] as { onClose: () => void };
+
+      // Each close reports only its own survey: A's must not carry B's id, nor close B on its behalf.
+      surveyA.onClose();
+      expect(handler.mock.calls).toEqual([[{ surveyId: mockSurvey.id }]]);
+
+      surveyB.onClose();
+      expect(handler.mock.calls).toEqual([[{ surveyId: mockSurvey.id }], [{ surveyId: "survey_B" }]]);
+    });
+
+    test("a close landing after logout already tore the survey down still emits once", async () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_closed", handler);
+
+      const callbacks = await renderAndGetLifecycleCallbacks();
+
+      // tearDown on logout closes whatever is on screen without knowing which survey that is; the
+      // renderer's own onClose still fires as the modal unmounts.
+      widget.closeSurvey();
+      callbacks.onClose();
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({ surveyId: mockSurvey.id });
+    });
+
+    test("emits nothing when closeSurvey runs with no survey on screen", () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_closed", handler);
+
+      widget.closeSurvey();
+
+      expect(handler).not.toHaveBeenCalled();
+      expect(window.dataLayer).toBeUndefined();
+    });
+
+    test("renders and closes normally when no host has subscribed", async () => {
+      const callbacks = await renderAndGetLifecycleCallbacks();
+
+      expect(() => {
+        callbacks.onDisplayCreated();
+        callbacks.onResponseCreated("resp_123");
+        callbacks.onClose();
+      }).not.toThrow();
+    });
+
+    test("a throwing host handler does not break the survey it is reporting on", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+      onFormbricksEvent("formbricks_survey_shown", () => {
+        throw new Error("host blew up");
+      });
+
+      const callbacks = await renderAndGetLifecycleCallbacks();
+
+      // The throw now lands while the widget is rendering, so the survey still has to reach the screen.
+      expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalled();
+
+      expect(() => {
+        callbacks.onDisplayCreated();
+        callbacks.onClose();
+      }).not.toThrow();
     });
   });
 
