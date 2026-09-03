@@ -1,6 +1,7 @@
 // extend this object in order to add more validation rules
 import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { ZEndingCardUrl } from "@formbricks/types/common";
 import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -313,6 +314,129 @@ export const isSurveyValid = (
   }
 
   return true;
+};
+
+// Element fields holding a TI18nString: in an issue path the segment right after them is a language code.
+const I18N_STRING_FIELDS = new Set([
+  "headline",
+  "subheader",
+  "html",
+  "label",
+  "placeholder",
+  "upperLabel",
+  "lowerLabel",
+  "buttonLabel",
+  "backButtonLabel",
+  "dismissButtonLabel",
+  "ctaButtonLabel",
+]);
+
+// Collections inside an element whose entries are numbered in the editor UI.
+const NUMBERED_COLLECTION_LABEL_KEYS: Record<string, string> = {
+  rows: "common.row_n",
+  columns: "common.column_n",
+  choices: "common.choice_n",
+};
+
+// Every message Zod generates itself starts with this — "Invalid input" for a union, "Invalid input:
+// expected string, received undefined" for a type mismatch. A message a schema authored does not.
+const ZOD_DEFAULT_MESSAGE_PREFIX = "Invalid input";
+
+interface TElementIssueDescription {
+  message: string;
+  /** Set when the issue points at a single language of a translated field, so the caller can open the Language tab. */
+  languageCode?: string;
+}
+
+/**
+ * Locates a Zod issue for the survey author: names the block and the question it belongs to, and — when
+ * the issue carries no message of its own — the field it points at.
+ *
+ * Zod's own defaults name nothing, so an element that fails validation leaves an author with a red card
+ * and no idea which field to fix. The issue path does carry that (e.g.
+ * `blocks.0.elements.0.rows.1.label.de`), so the message is built from it instead. A message the schema
+ * authored ("Cal user name is required") is kept as-is and only gets its location prepended.
+ *
+ * Returns null for paths outside an element; those keep their own message.
+ */
+export const describeElementIssue = (
+  issue: { path: PropertyKey[]; message: string },
+  t: TFunction,
+  locale: string
+): TElementIssueDescription | null => {
+  const [root, blockIndex, elementsKey, elementIndex, ...fieldPath] = issue.path;
+
+  if (
+    root !== "blocks" ||
+    elementsKey !== "elements" ||
+    typeof blockIndex !== "number" ||
+    typeof elementIndex !== "number"
+  ) {
+    return null;
+  }
+
+  const blockNumber = blockIndex + 1;
+  const questionNumber = elementIndex + 1;
+
+  if (!issue.message.startsWith(ZOD_DEFAULT_MESSAGE_PREFIX)) {
+    return {
+      message: t("workspace.surveys.edit.issue_in_question", {
+        message: issue.message,
+        questionNumber,
+        blockNumber,
+      }),
+    };
+  }
+
+  let languageCode: string | undefined;
+  const fieldParts: string[] = [];
+
+  fieldPath.forEach((segment, index) => {
+    if (typeof segment === "number") {
+      const collectionKey = NUMBERED_COLLECTION_LABEL_KEYS[String(fieldPath[index - 1])];
+      // Numbered entry of a known collection: replace the raw "rows"/"1" pair with "Row 2".
+      if (collectionKey) {
+        fieldParts.pop();
+        fieldParts.push(t(collectionKey, { n: segment + 1 }));
+      } else {
+        fieldParts.push(String(segment + 1));
+      }
+      return;
+    }
+
+    if (typeof segment === "string") {
+      // The segment after a translated field is a language code, not a field of its own.
+      if (index > 0 && I18N_STRING_FIELDS.has(String(fieldPath[index - 1]))) {
+        languageCode = segment;
+        return;
+      }
+      fieldParts.push(segment);
+    }
+  });
+
+  if (!fieldParts.length) {
+    return {
+      message: t("workspace.surveys.edit.invalid_question_in_block", { questionNumber, blockNumber }),
+    };
+  }
+
+  const field = fieldParts.join(" ");
+
+  if (languageCode) {
+    return {
+      languageCode,
+      message: t("workspace.surveys.edit.invalid_field_in_question_for_languages", {
+        field,
+        questionNumber,
+        blockNumber,
+        languages: getLanguageLabel(languageCode, locale) ?? languageCode,
+      }),
+    };
+  }
+
+  return {
+    message: t("workspace.surveys.edit.invalid_field_in_question", { field, questionNumber, blockNumber }),
+  };
 };
 
 export const getValidateIdErrorMessage = (

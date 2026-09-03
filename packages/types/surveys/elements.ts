@@ -386,8 +386,12 @@ export const ZSurveyCesElement = ZSurveyElementBase.extend({
 
 export type TSurveyCesElement = z.infer<typeof ZSurveyCesElement>;
 
-// Union of all element types
-export const ZSurveyElement = z.union([
+// Union of all element types.
+// Discriminated on `type` on purpose: a plain `z.union` reports a single `invalid_union` issue at the
+// element's own path with the bare default message "Invalid input", hiding which field actually failed.
+// Discriminating picks the one member that matches and surfaces its inner issue path (e.g.
+// `blocks.0.elements.0.rows.1.label.de`), which is what the editor needs to name the broken field.
+export const ZSurveyElement = z.discriminatedUnion("type", [
   ZSurveyOpenTextElement,
   ZSurveyConsentElement,
   ZSurveyMultipleChoiceSingleElement,

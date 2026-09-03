@@ -27,7 +27,7 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
-import { isSurveyValid } from "../lib/validation";
+import { describeElementIssue, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
 interface SurveyMenuBarProps {
@@ -324,6 +324,18 @@ export const SurveyMenuBar = ({
           });
         }
 
+        return false;
+      }
+
+      // Anything else reaches here with a raw Zod default ("Invalid input", "Invalid input: expected
+      // string, received undefined") that names no field. The issue path does, so build the message from it.
+      const elementIssue = describeElementIssue(firstError, t, locale);
+
+      if (elementIssue) {
+        toast.error(elementIssue.message, { className: "w-fit max-w-md!" });
+        if (elementIssue.languageCode && elementIssue.languageCode !== "default") {
+          setActiveId("language");
+        }
         return false;
       }
 
