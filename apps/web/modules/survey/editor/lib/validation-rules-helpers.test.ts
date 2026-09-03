@@ -256,6 +256,27 @@ describe("parseRuleValue", () => {
       expect(parseRuleValue("isGreaterThan", input, config)).toBe(expected);
     });
 
+    // Found in review: the regex admits these, so only the finite check stops them. A long digit run
+    // overflows to Infinity, which is truthy and so survived the old `Number(value) || 0`; it then
+    // survived the truthy guard in createMaxParams too and stored `{ max: null }`, because
+    // JSON.stringify writes Infinity as null. The `-` / `.` / `-.` cases were already caught by the
+    // old truthy guard and are pinned here so the finite check is not credited with more than it does.
+    test.each([
+      ["a 400-digit run overflowing to Infinity", "9".repeat(400)],
+      ["a lone minus", "-"],
+      ["a lone decimal point", "."],
+      ["a minus and a point", "-."],
+    ])("parses %s as 0 rather than a non-finite number", (_label, input) => {
+      const parsed = parseRuleValue("isGreaterThan", input, config);
+      expect(parsed).toBe(0);
+      expect(Number.isFinite(parsed)).toBe(true);
+    });
+
+    test("the overflow never reaches the stored rule params", () => {
+      const parsed = parseRuleValue("isLessThan", "9".repeat(400), RULE_TYPE_CONFIG.isLessThan);
+      expect(createRuleParams("isLessThan", parsed)).toEqual({ max: 100 });
+    });
+
     test.each([
       ["10", 10],
       ["2.5", 2.5],

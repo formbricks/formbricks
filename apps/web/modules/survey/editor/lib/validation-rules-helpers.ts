@@ -177,7 +177,14 @@ export const parseRuleValue = (
     // latter lets a digit run be split between two `\d*`, so a long non-numeric paste backtracks
     // quadratically (Sonar S8786). Same accepted strings, linear time.
     if (!/^-?\d*(\.\d*)?$/.test(value.trim())) return 0;
-    return Number(value) || 0;
+    // The regex admits an arbitrarily long digit run, and `Number()` turns anything past ~1e308 into
+    // `Infinity`, which is truthy — so `Number(value) || 0` let it through. `createMinParams` /
+    // `createMaxParams` are also truthy-guarded, so it reached the stored rule, and `JSON.stringify`
+    // writes `Infinity` as `null`: a 400-digit paste stored `{ max: null }` against a `z.number()`
+    // param. `NaN` (from a lone `-`, `.` or `-.`, which the regex also admits) was already caught by
+    // the truthy guard; requiring a finite number covers both without relying on falsiness.
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   return value;
