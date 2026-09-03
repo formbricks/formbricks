@@ -3,9 +3,9 @@ import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { ENCRYPTION_KEY, WEBAPP_URL } from "@/lib/constants";
 import { symmetricEncrypt } from "@/lib/crypto";
-import { createSsoRelinkIntent } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
 import { getSessionTokenFromCookieHeader } from "@/modules/auth/lib/session-cookie";
+import { createSsoRecoveryIntent } from "@/modules/ee/sso/lib/recovery-intent";
 import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { sendPasswordResetLinkEmail } from "@/modules/email";
 
@@ -109,9 +109,11 @@ const createRecoverySession = async (userId: string): Promise<string> => {
   return session.token;
 };
 
-const runRecovery = (user: { id: string; email: string }, sessionToken: string) =>
+const runRecovery = async (user: { id: string; email: string }, sessionToken: string) =>
   completeSsoRecovery({
-    intentToken: createSsoRelinkIntent({
+    // Through the real store against the real Redis, not a hand-built token: the intent lives there now
+    // (ENG-2783), so anything else would exercise a shape production never produces.
+    stateId: await createSsoRecoveryIntent({
       userId: user.id,
       email: user.email,
       provider: "google",

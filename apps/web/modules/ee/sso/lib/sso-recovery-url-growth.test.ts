@@ -21,7 +21,6 @@ import { startSsoRecovery } from "./sso-recovery";
 const NGINX_REQUEST_LINE_LIMIT = 8192;
 const WEBAPP_URL = "http://localhost:3000";
 
-
 // Hoisted with the mocks that use them: `vi.mock` factories are lifted above every top-level const.
 const mocks = vi.hoisted(() => ({
   createEmailToken: vi.fn(() => "email-token"),
@@ -35,7 +34,12 @@ vi.mock("crypto", async () => await vi.importActual<typeof import("crypto")>("cr
 
 vi.mock("@formbricks/database", () => ({ prisma: { $transaction: vi.fn(), user: { findUnique: vi.fn() } } }));
 vi.mock("@formbricks/logger", () => ({
-  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), withContext: () => ({ info: vi.fn(), error: vi.fn() }) },
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    withContext: () => ({ info: vi.fn(), error: vi.fn() }),
+  },
 }));
 // Real crypto material, so this file runs unchanged against the JWT implementation too — which is what
 // makes "red before, green after" checkable rather than asserted. `vitestSetup.ts` supplies a 19-char
@@ -154,7 +158,9 @@ describe("SSO recovery URL growth (ENG-2783)", () => {
     // Round two, arriving with the previous attempt's completion URL — the shape that used to nest.
     await startRecoveryReturningCompletionUrl(completionUrl);
 
-    const storedCallbackUrls = [...mocks.store.values()].map((intent) => (intent as { callbackUrl: string }).callbackUrl);
+    const storedCallbackUrls = [...mocks.store.values()].map(
+      (intent) => (intent as { callbackUrl: string }).callbackUrl
+    );
     expect(storedCallbackUrls).toEqual([`${WEBAPP_URL}/environments/env_1`, WEBAPP_URL]);
   });
 });
