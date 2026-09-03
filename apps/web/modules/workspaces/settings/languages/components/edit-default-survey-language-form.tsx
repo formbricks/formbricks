@@ -126,44 +126,41 @@ export const EditDefaultSurveyLanguageForm = ({
     }
   };
 
-  // No languages at all: no control, and no separator either, so the card ends cleanly at the language
-  // list. Languages that exist but cannot be the default still render — disabled, with the reason — so
-  // the setting never silently disappears.
+  // No languages at all: no control, so the card ends cleanly at the language list. Languages that
+  // exist but cannot be the default still render — disabled, with the reason — so the setting never
+  // silently disappears.
   if (languageOptions.length === 0) {
     return null;
   }
 
   return (
-    <>
-      <hr className="border-slate-200" />
-      <div className="flex w-full max-w-sm flex-col gap-y-2">
-        <Label htmlFor="defaultSurveyLanguage">{t("workspace.languages.default_survey_language")}</Label>
-        <Select
-          value={selectedValue}
-          onValueChange={(nextValue) => void handleChange(nextValue)}
-          disabled={isReadOnly || isSaving}>
-          <SelectTrigger id="defaultSurveyLanguage" className="bg-white">
-            <SelectValue placeholder={t("workspace.languages.default_survey_language_placeholder")} />
-          </SelectTrigger>
-          <SelectContent>
-            {languageOptions.map(({ code, label, isSelectable }) => (
-              <SelectItem key={code} value={code} disabled={!isSelectable}>
-                {label}
-                {!isSelectable && (
-                  <span className="ml-2 text-xs text-slate-400">
-                    {t("workspace.languages.default_survey_language_unsupported")}
-                  </span>
-                )}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-sm text-slate-500">
-          {selectedValue
-            ? t("workspace.languages.default_survey_language_description")
-            : t("workspace.languages.default_survey_language_unset_description")}
-        </p>
-      </div>
-    </>
+    <div className="flex w-full max-w-sm flex-col gap-y-2">
+      <Label htmlFor="defaultSurveyLanguage">{t("workspace.languages.default_survey_language")}</Label>
+      <Select
+        value={selectedValue}
+        onValueChange={(nextValue) => void handleChange(nextValue)}
+        disabled={isReadOnly || isSaving}>
+        <SelectTrigger id="defaultSurveyLanguage" className="bg-white">
+          <SelectValue placeholder={t("workspace.languages.default_survey_language_placeholder")} />
+        </SelectTrigger>
+        <SelectContent>
+          {languageOptions.map(({ code, label, isSelectable }) => (
+            <SelectItem key={code} value={code} disabled={!isSelectable}>
+              {label}
+              {!isSelectable && (
+                <span className="ml-2 text-xs text-slate-400">
+                  {t("workspace.languages.default_survey_language_unsupported")}
+                </span>
+              )}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className="text-sm text-slate-500">
+        {selectedValue
+          ? t("workspace.languages.default_survey_language_description")
+          : t("workspace.languages.default_survey_language_unset_description")}
+      </p>
+    </div>
   );
 };

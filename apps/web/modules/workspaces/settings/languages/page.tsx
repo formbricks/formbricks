@@ -28,7 +28,7 @@ export const LanguagesPage = async (props: { params: Promise<{ workspaceId: stri
         description={t("workspace.languages.multi_language_surveys_description")}>
         <div className="flex flex-col gap-y-6">
           <EditLanguage workspace={workspace} locale={user.locale} isReadOnly={isReadOnly} />
-          {/* Renders nothing, separator included, until the workspace has a language to default to. */}
+          {/* Renders nothing until the workspace has a language to default to. */}
           <EditDefaultSurveyLanguageForm workspace={workspace} locale={user.locale} isReadOnly={isReadOnly} />
         </div>
       </SettingsCard>
