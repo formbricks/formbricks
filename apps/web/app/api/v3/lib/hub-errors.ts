@@ -75,6 +75,9 @@ function toApiVocabulary(text: string): string {
  * into leaking more than the other.
  */
 export function relayableHubDetail(error: HubError | null, fallback: string): string {
+  // `problemDetail`, never `detail` or `message`: those two are the SDK's error text, which folds the
+  // *entire* RFC 9457 body into a string (internal Hub URLs, problem type URIs, its request id).
+  // Relaying either is the disclosure bug this surface already had once (ENG-2048 Part 1 / ENG-1886).
   if (!error?.problemDetail || !RELAYABLE_HUB_STATUSES.has(error.status)) {
     return fallback;
   }

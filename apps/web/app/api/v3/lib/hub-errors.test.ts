@@ -131,6 +131,32 @@ describe("hubErrorToProblemResponse", () => {
     expect(JSON.stringify(body)).not.toContain("invalid api key");
   });
 
+  /**
+   * The regression this whole surface once shipped (ENG-2048 Part 1): the SDK folds the entire RFC 9457
+   * body — internal Hub URLs, problem type URIs, its own request id — into the error's `message`, and
+   * `HubError.detail` is a copy of it. Only the parsed `problemDetail` may be relayed, so a 400 whose
+   * raw text is full of internals must still answer with just the parsed detail.
+   */
+  test("relays only the parsed detail, never the SDK's raw problem body", async () => {
+    const body = await hubErrorToProblemResponse(
+      hubError(400, {
+        message:
+          '400 {"type":"https://hub.formbricks.com/problems/validation","instance":"/v1/taxonomy/runs","request_id":"019fa-internal"}',
+        detail:
+          '400 {"type":"https://hub.formbricks.com/problems/validation","instance":"/v1/taxonomy/runs","request_id":"019fa-internal"}',
+        problemDetail: "One or more request parameters are invalid",
+      }),
+      requestId,
+      instance
+    ).json();
+
+    expect(body.detail).toBe("One or more request parameters are invalid");
+    const serialized = JSON.stringify(body);
+    expect(serialized).not.toContain("hub.formbricks.com");
+    expect(serialized).not.toContain("/v1/taxonomy/runs");
+    expect(serialized).not.toContain("019fa-internal");
+  });
+
   test("maps a success-with-no-payload (no error object at all) to a generic 502", async () => {
     const response = hubErrorToProblemResponse(null, requestId, instance);
 

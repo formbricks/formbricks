@@ -100,6 +100,21 @@ describe("mapV3ThrownError", () => {
       expect(serverLog.warn).not.toHaveBeenCalled();
     });
 
+    /**
+     * The key is the contract with pino: `@formbricks/logger` registers `stdSerializers.err` for `err`
+     * and nothing else, so logging under `error` drops `message` and `stack` and leaves a 500 with only
+     * the error's enumerable own properties. Asserted here because the loss is silent.
+     */
+    test("logs the thrown value under `err`, the only key the serializer covers", () => {
+      const log = makeLog();
+      const thrown = new DatabaseError('relation "Survey" does not exist');
+      mapV3ThrownError(thrown, ctx(log));
+
+      const fields = log.error.mock.calls[0][0];
+      expect(fields.err).toBe(thrown);
+      expect(fields).not.toHaveProperty("error");
+    });
+
     // The label is what replaced six bespoke message strings, so it has to be queryable as a field.
     test("carries the operation label as a structured field", () => {
       const log = makeLog();

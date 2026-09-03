@@ -60,6 +60,10 @@ type TV3ErrorContext = {
  * is written for a developer, and `@/lib/ai/service` even throws the latter with a machine code as its
  * message.
  *
+ * The thrown value is logged under the key `err`, not `error`: `@formbricks/logger` registers
+ * pino's `stdSerializers.err` for that key only, so any other key logs the enumerable own properties
+ * and silently drops `message` and `stack` — which is most of what a 500's log is for.
+ *
  * `ValidationError` and `InvalidInputError` are deliberately absent. Both are 400-ish by `statusCode`,
  * but neither is safe to map centrally: `createSurvey` throws `ValidationError` from work it does
  * *after* its transaction commits, where a 4xx would wrongly tell the caller nothing was written
@@ -99,10 +103,10 @@ export function mapV3ThrownError(err: unknown, ctx: TV3ErrorContext): Response {
   }
 
   if (err instanceof DatabaseError) {
-    log.error({ ...context, error: err, statusCode: 500 }, "V3 database error");
+    log.error({ ...context, err, statusCode: 500 }, "V3 database error");
     return problemInternalError(requestId, undefined, instance);
   }
 
-  log.error({ ...context, error: err, statusCode: 500 }, "V3 unexpected error");
+  log.error({ ...context, err, statusCode: 500 }, "V3 unexpected error");
   return problemInternalError(requestId, undefined, instance);
 }
