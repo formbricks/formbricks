@@ -13,8 +13,8 @@ import { emitWorkflowUsageSnapshots } from "./usage-snapshot";
  * Skipped outright without POSTHOG_KEY: the capture helpers would no-op anyway, but there is no
  * point paying for the read pass on an instance that reports to nobody. Idempotent and safe to
  * overlap in the sense recurring handlers must be: a second run in the same day emits the same
- * facts again, which is why the dashboards read these events with `max` or `unique organizations`
- * per day and never `sum`. Errors propagate so BullMQ retries with its default backoff.
+ * facts again, which is why the dashboards deduplicate these events per organization and day before
+ * summing. Errors propagate so BullMQ retries with its default backoff.
  */
 export const processWorkflowsUsageSnapshotJob: JobHandler<TWorkflowsUsageSnapshotJobData> = async (
   data,
