@@ -1,3 +1,9 @@
+import { TFunction } from "i18next";
+import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
+import {
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+} from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TResponseFilterCriteria,
@@ -21,7 +27,9 @@ import {
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
 import { ElementFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ResponseFilter";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getReservedFilterEntries } from "@/lib/response/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getReservedFieldLabel } from "@/modules/analysis/lib/reserved-field-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 const conditionOptions: Record<string, string[]> = {
@@ -114,14 +122,101 @@ const META_OP_MAP = {
   "Does not end with": "doesNotEndWith",
 } as const;
 
-export const generateElementAndFilterOptions = (
-  survey: TSurvey,
-  environmentTags: TTag[] | undefined,
-  attributes: TSurveyContactAttributes,
-  meta: TSurveyMetaFieldFilter,
-  hiddenFields: TResponseHiddenFieldsFilter,
-  quotas: TSurveyQuota[]
-): {
+/** Operators that take no right-hand value; rows carrying them must survive the empty-value cleanup. */
+export const NO_VALUE_FILTER_OPERATORS = ["Is set", "Is not set"];
+
+// Operator menus per Embedded Data / reserved field dataType (ENG-1848) — the editor's
+// logic-builder model: string → equality + text ops, number → comparisons, date → before/after,
+// boolean → equality; every family can also match on absence.
+const TEXT_FIELD_OPERATORS = [...Object.keys(META_OP_MAP), ...NO_VALUE_FILTER_OPERATORS];
+const NUMBER_FIELD_OPERATORS = [
+  "Equals",
+  "Not equals",
+  "Is greater than",
+  "Is less than",
+  ...NO_VALUE_FILTER_OPERATORS,
+];
+const DATE_FIELD_OPERATORS = ["Equals", "Not equals", "Is before", "Is after", ...NO_VALUE_FILTER_OPERATORS];
+const BOOLEAN_FIELD_OPERATORS = ["Equals", "Not equals", ...NO_VALUE_FILTER_OPERATORS];
+
+const getTypedFieldOperators = (dataType: TEmbeddedDataType): string[] => {
+  switch (dataType) {
+    case "number":
+      return NUMBER_FIELD_OPERATORS;
+    case "date":
+      return DATE_FIELD_OPERATORS;
+    case "boolean":
+      return BOOLEAN_FIELD_OPERATORS;
+    default:
+      return TEXT_FIELD_OPERATORS;
+  }
+};
+
+// Operator label → criteria op for the typed field groups. "Is before"/"Is after" reuse the
+// comparison ops: jsonb compares same-format ISO strings lexicographically, i.e. chronologically.
+const TYPED_FIELD_OP_MAP: Record<string, string> = {
+  ...META_OP_MAP,
+  "Is greater than": "greaterThan",
+  "Is less than": "lessThan",
+  "Is before": "lessThan",
+  "Is after": "greaterThan",
+  "Is set": "isSet",
+  "Is not set": "isNotSet",
+};
+
+type TTypedFieldFilterCondition = NonNullable<TResponseFilterCriteria["reserved"]>[string];
+
+/**
+ * One filter row → one typed condition, coerced to the field's dataType (a number field must send a
+ * real number — a string-typed `equals` never matches a jsonb number). Returns null when the row
+ * cannot form a valid condition, so half-filled rows drop instead of matching wrongly.
+ */
+const buildTypedFieldCondition = (
+  filterType: FilterValue["filterType"],
+  dataType: TEmbeddedDataType
+): TTypedFieldFilterCondition | null => {
+  const op = TYPED_FIELD_OP_MAP[filterType.filterValue ?? ""];
+  if (!op) return null;
+  if (op === "isSet" || op === "isNotSet") return { op };
+
+  const raw = Array.isArray(filterType.filterComboBoxValue)
+    ? filterType.filterComboBoxValue[0]
+    : filterType.filterComboBoxValue;
+  if (typeof raw !== "string" || raw.trim().length === 0) return null;
+  const value = raw.trim();
+
+  if (dataType === "number") {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return null;
+    return { op, value: numeric } as TTypedFieldFilterCondition;
+  }
+  if (dataType === "boolean") {
+    if (op !== "equals" && op !== "notEquals") return null;
+    if (value !== "true" && value !== "false") return null;
+    return { op, value: value === "true" } as TTypedFieldFilterCondition;
+  }
+  return { op, value } as TTypedFieldFilterCondition;
+};
+
+export const generateElementAndFilterOptions = ({
+  survey,
+  environmentTags,
+  attributes,
+  reservedValues,
+  hiddenFields,
+  variableValues,
+  quotas,
+  t,
+}: {
+  survey: TSurvey;
+  environmentTags: TTag[] | undefined;
+  attributes: TSurveyContactAttributes;
+  reservedValues: TSurveyMetaFieldFilter;
+  hiddenFields: TResponseHiddenFieldsFilter;
+  variableValues: TSurveyMetaFieldFilter;
+  quotas: TSurveyQuota[];
+  t: TFunction;
+}): {
   elementOptions: ElementOptions[];
   elementFilterOptions: ElementFilterOptions[];
 } => {
@@ -186,42 +281,77 @@ export const generateElementAndFilterOptions = (
     });
   }
 
-  if (meta) {
+  // Reserved fields, catalog-driven (ENG-1848): the same per-survey list the response table shows
+  // (shadowed / anonymized / uncaptured entries gated out by getReservedFilterEntries), with the
+  // table's localized labels and operators per dataType — no longer whatever meta keys the stored
+  // responses happened to hold.
+  const reservedEntries = getReservedFilterEntries(survey);
+  if (reservedEntries.length > 0) {
     elementOptions = [
       ...elementOptions,
       {
         header: OptionsType.META,
-        option: Object.keys(meta).map((m) => {
-          return { label: m, type: OptionsType.META, id: m };
+        option: reservedEntries.map((entry) => {
+          return { label: getReservedFieldLabel(entry.name, t), type: OptionsType.META, id: entry.name };
         }),
       },
     ];
-    Object.keys(meta).forEach((m) => {
+    reservedEntries.forEach((entry) => {
       elementFilterOptions.push({
         type: "Meta",
-        filterOptions: m === "url" ? Object.keys(META_OP_MAP) : ["Equals", "Not equals"],
-        filterComboBoxOptions: meta[m],
-        id: m,
+        filterOptions: getTypedFieldOperators(entry.dataType),
+        filterComboBoxOptions: reservedValues[entry.name] ?? [],
+        fieldDataType: entry.dataType,
+        id: entry.name,
       });
     });
   }
 
-  if (hiddenFields) {
+  // Ingested embedded fields enumerate from the survey's rows, not from observed response values —
+  // a declared field is filterable before its first response. Values live at data[storageKey].
+  const ingestedFields = getIngestedEmbeddedFields(survey);
+  if (ingestedFields.length > 0) {
     elementOptions = [
       ...elementOptions,
       {
         header: OptionsType.HIDDEN_FIELDS,
-        option: Object.keys(hiddenFields).map((hiddenField) => {
-          return { label: hiddenField, type: OptionsType.HIDDEN_FIELDS, id: hiddenField };
+        option: ingestedFields.map(({ field, link }) => {
+          return { label: field.name, type: OptionsType.HIDDEN_FIELDS, id: link.storageKey };
         }),
       },
     ];
-    Object.keys(hiddenFields).forEach((hiddenField) => {
+    ingestedFields.forEach(({ field, link }) => {
       elementFilterOptions.push({
         type: "Hidden Fields",
-        filterOptions: ["Equals", "Not equals"],
-        filterComboBoxOptions: hiddenFields[hiddenField],
-        id: hiddenField,
+        filterOptions: getTypedFieldOperators(field.dataType),
+        filterComboBoxOptions:
+          field.dataType === "boolean" ? ["true", "false"] : (hiddenFields[link.storageKey] ?? []),
+        fieldDataType: field.dataType,
+        id: link.storageKey,
+      });
+    });
+  }
+
+  // Computed embedded fields (variables), keyed by storageKey (ENG-1848).
+  const computedFields = getComputedEmbeddedFields(survey);
+  if (computedFields.length > 0) {
+    elementOptions = [
+      ...elementOptions,
+      {
+        header: OptionsType.VARIABLES,
+        option: computedFields.map(({ field, link }) => {
+          return { label: field.name, type: OptionsType.VARIABLES, id: link.storageKey };
+        }),
+      },
+    ];
+    computedFields.forEach(({ field, link }) => {
+      elementFilterOptions.push({
+        type: "Variables",
+        filterOptions: getTypedFieldOperators(field.dataType),
+        filterComboBoxOptions:
+          field.dataType === "boolean" ? ["true", "false"] : (variableValues[link.storageKey] ?? []),
+        fieldDataType: field.dataType,
+        id: link.storageKey,
       });
     });
   }
@@ -460,23 +590,16 @@ const processElementFilters = (
   });
 };
 
-// Helper function to process equals/not equals filters (for hiddenFields, attributes, others)
+// Helper function to process equals/not equals filters (for attributes, others)
 const processEqualsNotEqualsFilter = (
   filterType: FilterValue["filterType"],
   label: string | undefined,
   filters: TResponseFilterCriteria,
-  targetKey: "data" | "contactAttributes" | "others"
+  targetKey: "contactAttributes" | "others"
 ) => {
   if (!filterType.filterComboBoxValue) return;
 
-  if (targetKey === "data") {
-    filters.data = filters.data || {};
-    if (filterType.filterValue === "Equals") {
-      filters.data[label ?? ""] = { op: "equals", value: filterType.filterComboBoxValue as string };
-    } else if (filterType.filterValue === "Not equals") {
-      filters.data[label ?? ""] = { op: "notEquals", value: filterType.filterComboBoxValue as string };
-    }
-  } else if (targetKey === "contactAttributes") {
+  if (targetKey === "contactAttributes") {
     filters.contactAttributes = filters.contactAttributes || {};
     if (filterType.filterValue === "Equals") {
       filters.contactAttributes[label ?? ""] = {
@@ -499,32 +622,77 @@ const processEqualsNotEqualsFilter = (
   }
 };
 
-// Helper function to process meta filters
-const processMetaFilters = (meta: FilterValue[], filters: TResponseFilterCriteria) => {
-  if (!meta.length) return;
+// Reserved-field filter rows → the `reserved` criteria group, keyed by catalog name (ENG-1848).
+const processReservedFilters = (
+  reserved: FilterValue[],
+  survey: TSurvey,
+  filters: TResponseFilterCriteria
+) => {
+  if (!reserved.length) return;
 
-  filters.meta = filters.meta || {};
+  const entriesByName = new Map(getReservedFilterEntries(survey).map((entry) => [entry.name, entry]));
 
-  meta.forEach(({ filterType, elementType }) => {
-    const label = elementType.label ?? "";
-    const metaFilters = filters.meta!; // Safe because we initialized it above
+  reserved.forEach(({ filterType, elementType }) => {
+    const entry = entriesByName.get(elementType.id ?? "");
+    if (!entry) return; // fail closed: shadowed/gated names never emit a reserved condition
 
-    // For text input cases (URL filtering)
-    if (typeof filterType.filterComboBoxValue === "string" && filterType.filterComboBoxValue.length > 0) {
-      const value = filterType.filterComboBoxValue.trim();
-      const op = META_OP_MAP[filterType.filterValue as keyof typeof META_OP_MAP];
-      if (op) {
-        metaFilters[label] = { op, value };
-      }
-    }
-    // For dropdown/select cases (existing metadata fields)
-    else if (Array.isArray(filterType.filterComboBoxValue) && filterType.filterComboBoxValue.length > 0) {
-      const value = filterType.filterComboBoxValue[0];
-      if (filterType.filterValue === "Equals") {
-        metaFilters[label] = { op: "equals", value };
-      } else if (filterType.filterValue === "Not equals") {
-        metaFilters[label] = { op: "notEquals", value };
-      }
+    const condition = buildTypedFieldCondition(filterType, entry.dataType);
+    if (!condition) return;
+    filters.reserved = filters.reserved || {};
+    filters.reserved[entry.name] = condition;
+  });
+};
+
+// Computed-field filter rows → the `variables` criteria group, keyed by storageKey (ENG-1848).
+const processVariableFilters = (
+  variables: FilterValue[],
+  survey: TSurvey,
+  filters: TResponseFilterCriteria
+) => {
+  if (!variables.length) return;
+
+  const fieldsByKey = new Map(
+    getComputedEmbeddedFields(survey).map((field) => [field.link.storageKey, field])
+  );
+
+  variables.forEach(({ filterType, elementType }) => {
+    const field = fieldsByKey.get(elementType.id ?? "");
+    if (!field) return;
+
+    const condition = buildTypedFieldCondition(filterType, field.field.dataType);
+    if (!condition) return;
+    filters.variables = filters.variables || {};
+    filters.variables[field.link.storageKey] = condition;
+  });
+};
+
+// Ingested-field filter rows → the `data` group under the storageKey. Presence maps onto the data
+// group's own vocabulary: submitted (key present) / skipped (absent or empty), matching isSet's
+// treatment of "" as not set.
+const processIngestedFilters = (
+  hiddenFields: FilterValue[],
+  survey: TSurvey,
+  filters: TResponseFilterCriteria
+) => {
+  if (!hiddenFields.length) return;
+
+  const fieldsByKey = new Map(
+    getIngestedEmbeddedFields(survey).map((field) => [field.link.storageKey, field])
+  );
+
+  hiddenFields.forEach(({ filterType, elementType }) => {
+    const field = fieldsByKey.get(elementType.id ?? "");
+    if (!field) return;
+
+    const condition = buildTypedFieldCondition(filterType, field.field.dataType);
+    if (!condition) return;
+    filters.data = filters.data || {};
+    if (condition.op === "isSet") {
+      filters.data[field.link.storageKey] = { op: "submitted" };
+    } else if (condition.op === "isNotSet") {
+      filters.data[field.link.storageKey] = { op: "skipped" };
+    } else {
+      filters.data[field.link.storageKey] = condition;
     }
   });
 };
@@ -564,6 +732,7 @@ export const getFormattedFilters = (
   const others: FilterValue[] = [];
   const meta: FilterValue[] = [];
   const hiddenFields: FilterValue[] = [];
+  const variables: FilterValue[] = [];
   const quotas: FilterValue[] = [];
 
   selectedFilter.filter.forEach((filter) => {
@@ -579,6 +748,8 @@ export const getFormattedFilters = (
       meta.push(filter);
     } else if (filter.elementType?.type === "Hidden Fields") {
       hiddenFields.push(filter);
+    } else if (filter.elementType?.type === "Variables") {
+      variables.push(filter);
     } else if (filter.elementType?.type === "Quotas") {
       quotas.push(filter);
     }
@@ -615,14 +786,8 @@ export const getFormattedFilters = (
   }
 
   processElementFilters(elements, survey, filters);
-
-  // for hidden fields
-  if (hiddenFields.length) {
-    filters.data = filters.data || {};
-    hiddenFields.forEach(({ filterType, elementType }) => {
-      processEqualsNotEqualsFilter(filterType, elementType.label, filters, "data");
-    });
-  }
+  processIngestedFilters(hiddenFields, survey, filters);
+  processVariableFilters(variables, survey, filters);
 
   // for attributes
   if (attributes.length) {
@@ -640,7 +805,7 @@ export const getFormattedFilters = (
     });
   }
 
-  processMetaFilters(meta, filters);
+  processReservedFilters(meta, survey, filters);
   processQuotaFilters(quotas, filters);
 
   return filters;

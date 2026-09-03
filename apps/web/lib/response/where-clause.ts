@@ -1,9 +1,233 @@
 import "server-only";
 import { Prisma } from "@formbricks/database/prisma";
+import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
+import {
+  RESERVED_FIELD_CATALOG,
+  getComputedEmbeddedFields,
+  getSurveyEmbeddedFields,
+  listShadowingNames,
+} from "@formbricks/types/embedded-data-resolver";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { generateAllPermutationsOfSubsets } from "./utils";
+
+type TTypedFieldFilterCondition = NonNullable<TResponseFilterCriteria["reserved"]>[string];
+
+type TReservedFilterLocator = { kind: "meta"; path: string[] } | { kind: "ttcTotalMs" };
+
+/**
+ * Where each filterable reserved field physically lives on the Response row. The catalog carries
+ * typed `read` accessors instead of path strings on purpose (see the rationale in
+ * embedded-data-resolver.ts), so the DB layer owns this map; the anti-drift test in utils.test.ts
+ * pins that every entry `getReservedFilterEntries` can offer has a locator. `durationSeconds` is
+ * the one computed entry — it filters the stored `ttc._total` milliseconds through windows that
+ * reproduce the read seam's `Math.round(ms / 1000)` projection exactly.
+ */
+export const RESERVED_FILTER_LOCATORS: Record<string, TReservedFilterLocator> = {
+  source: { kind: "meta", path: ["source"] },
+  url: { kind: "meta", path: ["url"] },
+  country: { kind: "meta", path: ["country"] },
+  action: { kind: "meta", path: ["action"] },
+  browser: { kind: "meta", path: ["userAgent", "browser"] },
+  os: { kind: "meta", path: ["userAgent", "os"] },
+  deviceType: { kind: "meta", path: ["userAgent", "device"] },
+  ipAddress: { kind: "meta", path: ["ipAddress"] },
+  pagePath: { kind: "meta", path: ["pagePath"] },
+  pageReferrer: { kind: "meta", path: ["pageReferrer"] },
+  utmSource: { kind: "meta", path: ["utmSource"] },
+  utmMedium: { kind: "meta", path: ["utmMedium"] },
+  utmCampaign: { kind: "meta", path: ["utmCampaign"] },
+  utmTerm: { kind: "meta", path: ["utmTerm"] },
+  utmContent: { kind: "meta", path: ["utmContent"] },
+  screenWidth: { kind: "meta", path: ["screenWidth"] },
+  screenHeight: { kind: "meta", path: ["screenHeight"] },
+  viewportWidth: { kind: "meta", path: ["viewportWidth"] },
+  viewportHeight: { kind: "meta", path: ["viewportHeight"] },
+  timezone: { kind: "meta", path: ["timezone"] },
+  locale: { kind: "meta", path: ["locale"] },
+  durationSeconds: { kind: "ttcTotalMs" },
+};
+
+const mkJsonColumnFilter = (
+  column: "meta" | "variables",
+  filter: Prisma.ResponseWhereInput["meta"]
+): Prisma.ResponseWhereInput => (column === "meta" ? { meta: filter } : { variables: filter });
+
+// Negated text ops share their Prisma key with the positive op and wrap in NOT.
+const TEXT_OP_TO_PRISMA: Record<string, { key: string; negated: boolean }> = {
+  contains: { key: "string_contains", negated: false },
+  doesNotContain: { key: "string_contains", negated: true },
+  startsWith: { key: "string_starts_with", negated: false },
+  doesNotStartWith: { key: "string_starts_with", negated: true },
+  endsWith: { key: "string_ends_with", negated: false },
+  doesNotEndWith: { key: "string_ends_with", negated: true },
+};
+
+const COMPARISON_OP_TO_PRISMA: Record<string, string> = {
+  lessThan: "lt",
+  lessEqual: "lte",
+  greaterThan: "gt",
+  greaterEqual: "gte",
+};
+
+/**
+ * One typed condition → one Prisma JSON-path filter on `meta` or `variables`. `notEquals` and
+ * `isNotSet` treat an absent value as a match (same stance as the `data` branch below). Ops that
+ * don't fit the field's dataType — text ops on anything but a string, comparisons on a boolean or
+ * string — emit nothing: fail closed rather than querying a shape the value can never have.
+ */
+const buildJsonPathCondition = (
+  column: "meta" | "variables",
+  path: string[],
+  val: TTypedFieldFilterCondition,
+  dataType: TEmbeddedDataType
+): Prisma.ResponseWhereInput | null => {
+  if (val.op === "isSet") return mkJsonColumnFilter(column, { path, not: Prisma.DbNull });
+  if (val.op === "isNotSet") return mkJsonColumnFilter(column, { path, equals: Prisma.DbNull });
+  if (val.op === "equals") return mkJsonColumnFilter(column, { path, equals: val.value });
+  if (val.op === "notEquals") {
+    return {
+      OR: [
+        mkJsonColumnFilter(column, { path, not: val.value }),
+        mkJsonColumnFilter(column, { path, equals: Prisma.DbNull }),
+      ],
+    };
+  }
+
+  const textOp = TEXT_OP_TO_PRISMA[val.op];
+  if (textOp && "value" in val) {
+    if (dataType !== "string") return null;
+    // The dynamic Prisma key needs one cast; the three keys above are all valid string filters.
+    const filter = mkJsonColumnFilter(column, {
+      path,
+      [textOp.key]: val.value,
+    } as Prisma.ResponseWhereInput["meta"]);
+    return textOp.negated ? { NOT: filter } : filter;
+  }
+
+  const comparisonKey = COMPARISON_OP_TO_PRISMA[val.op];
+  if (comparisonKey && "value" in val) {
+    if (dataType !== "number" && dataType !== "date") return null;
+    return mkJsonColumnFilter(column, {
+      path,
+      [comparisonKey]: val.value,
+    } as Prisma.ResponseWhereInput["meta"]);
+  }
+
+  return null;
+};
+
+/**
+ * `durationSeconds` filters in seconds against `ttc._total`, which stores milliseconds. The read
+ * seam projects `Math.round(ms / 1000)`, so second `s` covers ms in [s*1000-500, s*1000+500) — the
+ * windows below make DB filtering agree with the projected value at every boundary. `ttc._total`
+ * only exists on finished responses, so partials never match (except via `isNotSet`).
+ */
+const buildDurationSecondsCondition = (val: TTypedFieldFilterCondition): Prisma.ResponseWhereInput | null => {
+  const path = ["_total"];
+  if (val.op === "isSet") return { ttc: { path, not: Prisma.DbNull } };
+  if (val.op === "isNotSet") return { ttc: { path, equals: Prisma.DbNull } };
+  if (!("value" in val)) return null;
+  const seconds = Number(val.value);
+  if (!Number.isFinite(seconds)) return null;
+  const lower = seconds * 1000 - 500;
+  const upper = seconds * 1000 + 500;
+  switch (val.op) {
+    case "equals":
+      return { AND: [{ ttc: { path, gte: lower } }, { ttc: { path, lt: upper } }] };
+    case "notEquals":
+      return {
+        OR: [
+          { ttc: { path, lt: lower } },
+          { ttc: { path, gte: upper } },
+          { ttc: { path, equals: Prisma.DbNull } },
+        ],
+      };
+    case "greaterThan":
+      return { ttc: { path, gte: upper } };
+    case "greaterEqual":
+      return { ttc: { path, gte: lower } };
+    case "lessThan":
+      return { ttc: { path, lt: lower } };
+    case "lessEqual":
+      return { ttc: { path, lt: upper } };
+    default:
+      return null;
+  }
+};
+
+/**
+ * The `reserved` criteria group → conditions. Fails closed (ENG-1848): a name the survey's declared
+ * fields or element ids shadow filters the declared value elsewhere, never the reserved read — and
+ * an unknown name emits nothing. `Object.hasOwn` because the keys come from a z.record: a crafted
+ * `__proto__`/`constructor` key must not resolve a locator through the prototype chain.
+ */
+const buildReservedConditions = (
+  survey: TSurvey,
+  reserved: NonNullable<TResponseFilterCriteria["reserved"]>
+): Prisma.ResponseWhereInput[] => {
+  const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
+  const shadowed = new Set(listShadowingNames(getSurveyEmbeddedFields(survey), elementIds));
+  const catalogEntriesByName = new Map(RESERVED_FIELD_CATALOG.map((entry) => [entry.name, entry]));
+  const conditions: Prisma.ResponseWhereInput[] = [];
+
+  Object.entries(reserved).forEach(([name, val]) => {
+    if (shadowed.has(name)) return;
+    if (!Object.hasOwn(RESERVED_FILTER_LOCATORS, name)) return;
+    const entry = catalogEntriesByName.get(name);
+    if (!entry) return;
+    const locator = RESERVED_FILTER_LOCATORS[name];
+    const condition =
+      locator.kind === "ttcTotalMs"
+        ? buildDurationSecondsCondition(val)
+        : buildJsonPathCondition("meta", locator.path, val, entry.dataType);
+    if (condition) conditions.push(condition);
+  });
+
+  return conditions;
+};
+
+/** The `variables` group → conditions. Keys are computed-field storageKeys; anything else emits nothing. */
+const buildVariableConditions = (
+  survey: TSurvey,
+  variables: NonNullable<TResponseFilterCriteria["variables"]>
+): Prisma.ResponseWhereInput[] => {
+  const computedFieldsByKey = new Map(
+    getComputedEmbeddedFields(survey).map((field) => [field.link.storageKey, field])
+  );
+  const conditions: Prisma.ResponseWhereInput[] = [];
+
+  Object.entries(variables).forEach(([storageKey, val]) => {
+    const field = computedFieldsByKey.get(storageKey);
+    if (!field) return;
+    const condition = buildJsonPathCondition("variables", [storageKey], val, field.field.dataType);
+    if (condition) conditions.push(condition);
+  });
+
+  return conditions;
+};
+
+/**
+ * The ENG-1848 criteria groups as ready-to-push clauses. Both branches live here rather than in
+ * `buildWhereClause`, which sat exactly at the cognitive-complexity limit before this feature —
+ * even two plain `if`s there tip it over.
+ */
+const buildEmbeddedDataFilterClauses = (
+  survey: TSurvey,
+  filterCriteria?: TResponseFilterCriteria
+): Prisma.ResponseWhereInput[] => {
+  const clauses: Prisma.ResponseWhereInput[] = [];
+
+  if (filterCriteria?.reserved) {
+    clauses.push({ AND: buildReservedConditions(survey, filterCriteria.reserved) });
+  }
+  if (filterCriteria?.variables) {
+    clauses.push({ AND: buildVariableConditions(survey, filterCriteria.variables) });
+  }
+
+  return clauses;
+};
 
 const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
   if (!tags) return [];
@@ -214,6 +438,8 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
       AND: others,
     });
   }
+
+  whereClause.push(...buildEmbeddedDataFilterClauses(survey, filterCriteria));
 
   if (filterCriteria?.data) {
     const data: Prisma.ResponseWhereInput[] = [];
@@ -458,6 +684,61 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
           });
           break;
         }
+        // Text ops for string-typed ingested Embedded Data fields (ENG-1848).
+        case "contains":
+          data.push({
+            data: {
+              path: [key],
+              string_contains: val.value,
+            },
+          });
+          break;
+        case "doesNotContain":
+          data.push({
+            NOT: {
+              data: {
+                path: [key],
+                string_contains: val.value,
+              },
+            },
+          });
+          break;
+        case "startsWith":
+          data.push({
+            data: {
+              path: [key],
+              string_starts_with: val.value,
+            },
+          });
+          break;
+        case "doesNotStartWith":
+          data.push({
+            NOT: {
+              data: {
+                path: [key],
+                string_starts_with: val.value,
+              },
+            },
+          });
+          break;
+        case "endsWith":
+          data.push({
+            data: {
+              path: [key],
+              string_ends_with: val.value,
+            },
+          });
+          break;
+        case "doesNotEndWith":
+          data.push({
+            NOT: {
+              data: {
+                path: [key],
+                string_ends_with: val.value,
+              },
+            },
+          });
+          break;
       }
     });
 

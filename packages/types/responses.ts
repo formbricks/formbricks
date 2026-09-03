@@ -84,24 +84,26 @@ export const ZResponseHiddenFieldsFilter = z.record(z.string(), z.array(z.string
 
 export type TResponseHiddenFieldsFilter = z.infer<typeof ZResponseHiddenFieldsFilter>;
 
+// Comparison values are numbers for number-typed fields, ISO-8601 strings for date-typed ones —
+// jsonb compares same-format ISO strings lexicographically, which is chronological (ENG-1848).
 const ZResponseFilterCriteriaDataLessThan = z.object({
   op: z.literal(ZResponseFilterCondition.enum.lessThan),
-  value: z.number(),
+  value: z.union([z.number(), z.string()]),
 });
 
 const ZResponseFilterCriteriaDataLessEqual = z.object({
   op: z.literal(ZResponseFilterCondition.enum.lessEqual),
-  value: z.number(),
+  value: z.union([z.number(), z.string()]),
 });
 
 const ZResponseFilterCriteriaDataGreaterEqual = z.object({
   op: z.literal(ZResponseFilterCondition.enum.greaterEqual),
-  value: z.number(),
+  value: z.union([z.number(), z.string()]),
 });
 
 const ZResponseFilterCriteriaDataGreaterThan = z.object({
   op: z.literal(ZResponseFilterCondition.enum.greaterThan),
-  value: z.number(),
+  value: z.union([z.number(), z.string()]),
 });
 
 const ZResponseFilterCriteriaDataIncludesOne = z.object({
@@ -114,14 +116,16 @@ const ZResponseFilterCriteriaDataIncludesAll = z.object({
   value: z.array(z.string()),
 });
 
+// Booleans belong to boolean-typed Embedded Data fields, whose stored values are real jsonb
+// booleans — a string "true" would never match them (ENG-1848).
 const ZResponseFilterCriteriaDataEquals = z.object({
   op: z.literal(ZResponseFilterCondition.enum.equals),
-  value: z.union([z.string(), z.number()]),
+  value: z.union([z.string(), z.number(), z.boolean()]),
 });
 
 const ZResponseFilterCriteriaDataNotEquals = z.object({
   op: z.literal(ZResponseFilterCondition.enum.notEquals),
-  value: z.union([z.string(), z.number()]),
+  value: z.union([z.string(), z.number(), z.boolean()]),
 });
 
 const ZResponseFilterCriteriaDataAccepted = z.object({
@@ -204,6 +208,37 @@ const ZResponseFilterCriteriaFilledOut = z.object({
   op: z.literal("filledOut"),
 });
 
+const ZResponseFilterCriteriaIsSet = z.object({
+  op: z.literal("isSet"),
+});
+
+const ZResponseFilterCriteriaIsNotSet = z.object({
+  op: z.literal("isNotSet"),
+});
+
+/**
+ * Condition grammar for the typed Embedded Data + reserved-field filter groups (ENG-1848). One
+ * union serves both groups: which subset a field actually offers is decided by its `dataType` at
+ * the UI (string → equality + text ops, number → equality + comparisons, date → equality +
+ * before/after via lessThan/greaterThan on ISO strings), and `buildWhereClause` only translates.
+ */
+const ZTypedFieldFilterCondition = z.union([
+  ZResponseFilterCriteriaDataEquals,
+  ZResponseFilterCriteriaDataNotEquals,
+  ZResponseFilterCriteriaContains,
+  ZResponseFilterCriteriaDoesNotContain,
+  ZResponseFilterCriteriaStartsWith,
+  ZResponseFilterCriteriaDoesNotStartWith,
+  ZResponseFilterCriteriaEndsWith,
+  ZResponseFilterCriteriaDoesNotEndWith,
+  ZResponseFilterCriteriaDataLessThan,
+  ZResponseFilterCriteriaDataLessEqual,
+  ZResponseFilterCriteriaDataGreaterEqual,
+  ZResponseFilterCriteriaDataGreaterThan,
+  ZResponseFilterCriteriaIsSet,
+  ZResponseFilterCriteriaIsNotSet,
+]);
+
 const ZQuotasFilterCriteriaScreenedIn = z.object({
   op: z.literal("screenedIn"),
 });
@@ -260,9 +295,27 @@ export const ZResponseFilterCriteria = z.object({
         ZResponseFilterCriteriaIsNotEmpty,
         ZResponseFilterCriteriaIsAnyOf,
         ZResponseFilterCriteriaFilledOut,
+        // Text ops for string-typed ingested Embedded Data fields, which filter through `data`
+        // under their storage key (ENG-1848).
+        ZResponseFilterCriteriaContains,
+        ZResponseFilterCriteriaDoesNotContain,
+        ZResponseFilterCriteriaStartsWith,
+        ZResponseFilterCriteriaDoesNotStartWith,
+        ZResponseFilterCriteriaEndsWith,
+        ZResponseFilterCriteriaDoesNotEndWith,
       ])
     )
     .optional(),
+
+  /**
+   * Typed filters on Embedded Data + reserved fields (ENG-1848).
+   * - `variables`: computed embedded fields, keyed by storageKey (values live in `Response.variables`).
+   * - `reserved`: reserved catalog fields, keyed by catalog entry name (`utmSource`, `deviceType`, …).
+   *   The name→storage-path mapping is owned by `buildWhereClause`, which also drops names the
+   *   survey's declared fields shadow — filters fail closed, consistent with recall/logic.
+   */
+  variables: z.record(z.string(), ZTypedFieldFilterCondition).optional(),
+  reserved: z.record(z.string(), ZTypedFieldFilterCondition).optional(),
 
   tags: z
     .object({
