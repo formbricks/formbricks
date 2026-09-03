@@ -19,9 +19,16 @@ describe("ZWorkspaceUpdateActionInput", () => {
     expect(ZWorkspaceUpdateActionInput.safeParse({ config: {} }).success).toBe(true);
   });
 
+  test("accepts a regional variant the runtime serves from its language's bundle", () => {
+    for (const defaultSurveyLanguage of ["pt-PT", "de-AT", "es-MX", "en-GB"]) {
+      const result = ZWorkspaceUpdateActionInput.safeParse({ config: { defaultSurveyLanguage } });
+      expect(result.success, defaultSurveyLanguage).toBe(true);
+    }
+  });
+
   test("rejects a language the survey runtime ships no strings for", () => {
-    // pt-PT is a dashboard language with no survey bundle; km-KH is only in the 215-entry picker.
-    for (const defaultSurveyLanguage of ["pt-PT", "km-KH", "de-AT", "nonsense"]) {
+    // Only in the 215-entry workspace-language catalog, with no survey bundle behind them.
+    for (const defaultSurveyLanguage of ["km-KH", "ne-NP", "aa-ET", "nonsense"]) {
       const result = ZWorkspaceUpdateActionInput.safeParse({ config: { defaultSurveyLanguage } });
       expect(result.success, defaultSurveyLanguage).toBe(false);
       expect(result.error?.issues[0].path).toEqual(["config", "defaultSurveyLanguage"]);

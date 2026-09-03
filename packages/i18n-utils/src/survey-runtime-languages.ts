@@ -50,15 +50,50 @@ const runtimeLanguageCodesByLowerCase = new Map<string, TSurveyRuntimeLanguageCo
   SURVEY_RUNTIME_LANGUAGE_CODES.map((code) => [code.toLowerCase(), code])
 );
 
+/** The script subtag of a BCP-47 tag, or undefined when it has none (or can't be parsed). */
+const scriptOf = (code: string | null): string | undefined => {
+  if (!code) return undefined;
+  try {
+    return new Intl.Locale(code).script;
+  } catch {
+    return undefined;
+  }
+};
+
 /**
- * The runtime language a code refers to, or `null` when the runtime ships no bundle for it.
+ * The canonical tag of the language a code belongs to, region dropped: `de-AT` -> `de-DE`, `pt-PT` ->
+ * `pt-BR`, `en-GB` -> `en-US`, `ar-SA` -> `ar-EG`. SCRIPT is preserved, so `zh-Hant`/`zh-TW` resolve to
+ * Traditional (`zh-Hant-TW`) and never borrow the Simplified tag.
  *
- * Matching is case-insensitive, and falls back to the canonical form of the input, so a legacy spelling
- * resolves to the bundle it means: `de` -> `de-DE`, `zh-CN` -> `zh-Hans-CN`. That is what lets one
- * stored setting line up with both legacy and canonical `Language.code` rows (ENG-1067). A deliberate
- * non-default region stays itself and so has no bundle — `de-AT` is not `de-DE`.
+ * A legacy tag can carry its script only in the region (`zh-TW`, `zh-HK`), and `Intl.Locale` does not
+ * infer the script, so it is recovered from the tag's canonical form before the region is dropped —
+ * otherwise `zh-TW` would strip to a bare `zh` and pick up Simplified.
  */
-export const resolveSurveyRuntimeLanguageCode = (
+export const resolveSurveyLanguageDefaultTag = (code: string): string | null => {
+  if (!code) return null;
+  try {
+    const locale = new Intl.Locale(code);
+    const canonicalScript = locale.script ?? scriptOf(normalizeLanguageCode(code));
+    return normalizeLanguageCode([locale.language, canonicalScript].filter(Boolean).join("-"));
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * The bundle the survey runtime would serve a given language from, or `null` when it ships none.
+ *
+ * Three ways to hit a bundle, in order: the code is one; its canonical form is one (`de` -> `de-DE`,
+ * `zh-CN` -> `zh-Hans-CN`, which is what lets one stored setting line up with both legacy and canonical
+ * `Language.code` rows, ENG-1067); or its language's default tag is one, which is how the runtime serves
+ * a regional variant it has no bundle of its own for (`de-AT` renders the `de-DE` strings, `es-MX` the
+ * `es-ES` ones).
+ *
+ * Deliberately NOT the runtime's final English fallback: every tag would resolve through that, and the
+ * point of this function is to tell a language whose strings we ship from one that would render English
+ * buttons around translated questions (ENG-2325).
+ */
+export const resolveSurveyRuntimeBundle = (
   code: string | null | undefined
 ): TSurveyRuntimeLanguageCode | null => {
   if (!code) return null;
@@ -69,5 +104,17 @@ export const resolveSurveyRuntimeLanguageCode = (
   if (exactMatch) return exactMatch;
 
   const canonicalCode = normalizeLanguageCode(trimmedCode);
-  return canonicalCode ? (runtimeLanguageCodesByLowerCase.get(canonicalCode.toLowerCase()) ?? null) : null;
+  const canonicalMatch = canonicalCode
+    ? runtimeLanguageCodesByLowerCase.get(canonicalCode.toLowerCase())
+    : undefined;
+  if (canonicalMatch) return canonicalMatch;
+
+  const languageDefaultTag = resolveSurveyLanguageDefaultTag(trimmedCode);
+  return languageDefaultTag
+    ? (runtimeLanguageCodesByLowerCase.get(languageDefaultTag.toLowerCase()) ?? null)
+    : null;
 };
+
+/** Whether the survey runtime has strings for this language — see `resolveSurveyRuntimeBundle`. */
+export const isSurveyRuntimeLanguage = (code: string | null | undefined): boolean =>
+  resolveSurveyRuntimeBundle(code) !== null;

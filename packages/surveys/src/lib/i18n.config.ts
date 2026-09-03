@@ -1,10 +1,10 @@
 import i18n from "i18next";
 import ICU from "i18next-icu";
 import { initReactI18next } from "react-i18next";
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import {
   DEFAULT_SURVEY_LANGUAGE_CODE,
   SURVEY_RUNTIME_LANGUAGE_CODES,
+  resolveSurveyLanguageDefaultTag,
 } from "@formbricks/i18n-utils/src/survey-runtime-languages";
 import arEGTranslations from "../../locales/ar-EG.json";
 import daDKTranslations from "../../locales/da-DK.json";
@@ -30,41 +30,20 @@ import viVNTranslations from "../../locales/vi-VN.json";
 import zhHansCNTranslations from "../../locales/zh-Hans-CN.json";
 import zhHantTWTranslations from "../../locales/zh-Hant-TW.json";
 
-/** The script subtag of a BCP-47 tag, or undefined when it has none (or can't be parsed). */
-const scriptOf = (code: string | null): string | undefined => {
-  if (!code) return undefined;
-  try {
-    return new Intl.Locale(code).script;
-  } catch {
-    return undefined;
-  }
-};
-
 /**
  * Map any requested language tag to the bundle we actually ship, then English.
  *
- * Bundles are keyed by each language's canonical CLDR-default tag (`de-DE`, `ar-EG`, `zh-Hans-CN`). A
- * non-default or legacy variant resolves to its language's default bundle — `de-AT`/`de` → `de-DE`,
- * `ar-SA` → `ar-EG`, `pt-PT` → `pt-BR` — while SCRIPT is preserved: `zh-Hant`/`zh-TW` resolves to the
- * Traditional bundle `zh-Hant-TW`, NOT to the Simplified `zh-Hans-CN`.
- *
- * A legacy tag can carry its script only in the region (`zh-TW`, `zh-HK`), and `Intl.Locale` does not
- * infer the script, so we recover it from the tag's canonical form before dropping the region —
- * otherwise `zh-TW` would strip to a bare `zh` and borrow the Simplified bundle.
+ * Bundles are keyed by each language's canonical CLDR-default tag (`de-DE`, `ar-EG`, `zh-Hans-CN`), and
+ * `resolveSurveyLanguageDefaultTag` is what turns a requested tag into that key — `de-AT`/`de` -> `de-DE`,
+ * `pt-PT` -> `pt-BR`, while preserving script so `zh-Hant`/`zh-TW` resolve to Traditional. It is shared
+ * with the workspace default-language picker, which uses it to decide whether a language has strings at
+ * all, so the two can never disagree about what this runtime serves.
  */
 export const resolveFallbackBundles = (code: string): string[] => {
-  if (!code) return [DEFAULT_SURVEY_LANGUAGE_CODE];
-  try {
-    const locale = new Intl.Locale(code);
-    const canonicalScript = locale.script ?? scriptOf(normalizeLanguageCode(code));
-    const languageWithScript = [locale.language, canonicalScript].filter(Boolean).join("-");
-    const defaultBundle = normalizeLanguageCode(languageWithScript);
-    return defaultBundle && defaultBundle !== code
-      ? [defaultBundle, DEFAULT_SURVEY_LANGUAGE_CODE]
-      : [DEFAULT_SURVEY_LANGUAGE_CODE];
-  } catch {
-    return [DEFAULT_SURVEY_LANGUAGE_CODE];
-  }
+  const defaultBundle = resolveSurveyLanguageDefaultTag(code);
+  return defaultBundle && defaultBundle !== code
+    ? [defaultBundle, DEFAULT_SURVEY_LANGUAGE_CODE]
+    : [DEFAULT_SURVEY_LANGUAGE_CODE];
 };
 
 i18n

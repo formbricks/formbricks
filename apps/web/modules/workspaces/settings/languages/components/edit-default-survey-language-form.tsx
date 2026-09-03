@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
-import { resolveSurveyRuntimeLanguageCode } from "@formbricks/i18n-utils/src/survey-runtime-languages";
+import { isSurveyRuntimeLanguage } from "@formbricks/i18n-utils/src/survey-runtime-languages";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import type { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
@@ -39,23 +39,23 @@ export const EditDefaultSurveyLanguageForm = ({
    * (`de-DE`) collapse into one option. Offering a language the workspace does not have would let the
    * setting name one nothing else in the workspace knows about.
    *
-   * A language the survey runtime ships no strings for is listed but disabled rather than dropped: as the
-   * default it would render translated questions with English buttons and validation errors (ENG-2325),
-   * and silently omitting it from a list of languages the workspace *does* have reads as a bug.
-   * Selectable ones sort first.
+   * Selectable means the survey runtime has strings for it, including a regional variant served by its
+   * language's bundle (`es-MX` renders the `es-ES` strings). A language with no strings at all is listed
+   * but disabled rather than dropped: as the default it would wrap translated questions in English
+   * buttons and validation errors (ENG-2325), and silently omitting a language the workspace *does*
+   * have reads as a bug. Selectable ones sort first.
    */
   const languageOptions = useMemo(() => {
     const optionsByCode = new Map<string, { code: string; label: string; isSelectable: boolean }>();
 
     for (const language of workspace.languages) {
-      const selectableCode = resolveSurveyRuntimeLanguageCode(language.code);
-      const code = selectableCode ?? normalizeLanguageCode(language.code) ?? language.code;
+      const code = normalizeLanguageCode(language.code) ?? language.code;
 
       if (!optionsByCode.has(code)) {
         optionsByCode.set(code, {
           code,
           label: getLanguageLabel(code, locale) ?? code,
-          isSelectable: selectableCode !== null,
+          isSelectable: isSurveyRuntimeLanguage(code),
         });
       }
     }
@@ -75,7 +75,7 @@ export const EditDefaultSurveyLanguageForm = ({
    * Resolved rather than read raw, so a stored value that is not selectable any more reads as unset —
    * which is how it behaves — instead of as a selection that quietly does nothing.
    */
-  const storedCode = resolveSurveyRuntimeLanguageCode(workspace.config.defaultSurveyLanguage);
+  const storedCode = normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "");
   const storedValue = languageOptions.some((option) => option.isSelectable && option.code === storedCode)
     ? (storedCode ?? undefined)
     : undefined;
@@ -101,21 +101,29 @@ export const EditDefaultSurveyLanguageForm = ({
     setPendingValue(nextValue);
     setIsSaving(true);
 
-    // `config` is a JSON column that is replaced wholesale, so its other keys have to be carried over.
-    const response = await updateWorkspaceAction({
-      workspaceId: workspace.id,
-      data: { config: { ...workspace.config, defaultSurveyLanguage: nextValue } },
-    });
-    setIsSaving(false);
+    try {
+      // `config` is a JSON column replaced wholesale, so its other keys have to be carried over.
+      const response = await updateWorkspaceAction({
+        workspaceId: workspace.id,
+        data: { config: { ...workspace.config, defaultSurveyLanguage: nextValue } },
+      });
 
-    if (!response?.data) {
+      if (!response?.data) {
+        setPendingValue(undefined);
+        toast.error(getFormattedErrorMessage(response));
+        return;
+      }
+
+      toast.success(t("workspace.languages.default_survey_language_updated_successfully"));
+      router.refresh();
+    } catch {
+      // A rejected call — dropped connection, 500 from the action endpoint — must not leave the
+      // control disabled with nothing said.
       setPendingValue(undefined);
-      toast.error(getFormattedErrorMessage(response));
-      return;
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    } finally {
+      setIsSaving(false);
     }
-
-    toast.success(t("workspace.languages.default_survey_language_updated_successfully"));
-    router.refresh();
   };
 
   // No languages at all: no control, and no separator either, so the card ends cleanly at the language
@@ -131,9 +139,6 @@ export const EditDefaultSurveyLanguageForm = ({
       <div className="flex w-full max-w-sm flex-col gap-y-2">
         <Label htmlFor="defaultSurveyLanguage">{t("workspace.languages.default_survey_language")}</Label>
         <Select
-          // Remounts when the value crosses the unset boundary, in either direction: Radix keeps its own
-          // state once it has been handed a value, so it would otherwise ignore a return to unset.
-          key={selectedValue === undefined ? "unset" : "set"}
           value={selectedValue}
           onValueChange={(nextValue) => void handleChange(nextValue)}
           disabled={isReadOnly || isSaving}>
