@@ -2249,6 +2249,7 @@
       "conflict_between_selected_alias_and_another_language": "Existe um conflito entre o alias selecionado e outro idioma que possui este identificador. Por favor, adiciona o idioma com este identificador ao teu espaço de trabalho para evitar inconsistências.",
       "default_survey_language": "Idioma predefinido do inquérito",
       "default_survey_language_description": "Os novos inquéritos são criados neste idioma. Os inquéritos existentes mantêm o idioma em que foram escritos.",
+      "default_survey_language_placeholder": "Seleciona um idioma",
       "default_survey_language_unsupported": "Ainda não há traduções de inquérito disponíveis",
       "delete_language_confirmation": "Tem a certeza de que pretende eliminar este idioma? Esta ação não pode ser desfeita.",
       "duplicate_language_or_language_id": "Idioma ou ID de idioma duplicado",

@@ -2249,6 +2249,7 @@
       "conflict_between_selected_alias_and_another_language": "所选别名与另一个具有该标识符的语言存在冲突。请将该标识符的语言添加到您的工作区，以避免不一致。",
       "default_survey_language": "默认调查语言",
       "default_survey_language_description": "新调查将使用此语言创建。现有调查保留其原始编写语言。",
+      "default_survey_language_placeholder": "选择语言",
       "default_survey_language_unsupported": "暂无调查问卷翻译",
       "delete_language_confirmation": "确定要删除此语言吗？此操作无法撤销。",
       "duplicate_language_or_language_id": "语言或语言 ID 重复",

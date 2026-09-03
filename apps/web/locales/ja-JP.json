@@ -2249,6 +2249,7 @@
       "conflict_between_selected_alias_and_another_language": "選択されたエイリアスと、この識別子を持つ別の言語との間に競合があります。不整合を避けるため、この識別子を持つ言語をワークスペースに追加してください。",
       "default_survey_language": "デフォルトのアンケート言語",
       "default_survey_language_description": "新しいアンケートはこの言語で作成されます。既存のアンケートは作成時の言語が保持されます。",
+      "default_survey_language_placeholder": "言語を選択",
       "default_survey_language_unsupported": "アンケートの翻訳はまだ利用できません",
       "delete_language_confirmation": "この言語を削除してもよろしいですか？このアクションは元に戻せません。",
       "duplicate_language_or_language_id": "重複する言語または言語ID",

@@ -2249,6 +2249,7 @@
       "conflict_between_selected_alias_and_another_language": "Există un conflict între aliasul selectat și o altă limbă care are acest identificator. Te rugăm să adaugi în schimb limba cu acest identificator în spațiul tău de lucru pentru a evita inconsistențele.",
       "default_survey_language": "Limba implicită pentru sondaj",
       "default_survey_language_description": "Sondajele noi sunt create în această limbă. Sondajele existente păstrează limba în care au fost scrise.",
+      "default_survey_language_placeholder": "Selectează o limbă",
       "default_survey_language_unsupported": "Nu există încă traduceri disponibile pentru sondaj",
       "delete_language_confirmation": "Sigur vrei să ștergi această limbă? Această acțiune nu poate fi anulată.",
       "duplicate_language_or_language_id": "Limbă sau ID de limbă duplicat",

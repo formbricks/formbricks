@@ -2,13 +2,13 @@
 
 import { TFunction } from "i18next";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Language } from "@formbricks/database/prisma-browser";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { isSurveyRuntimeLanguage } from "@formbricks/i18n-utils/src/survey-runtime-languages";
-import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
+import { getLanguageLabel, iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
 import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
@@ -16,7 +16,14 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { RadioGroup } from "@/modules/ui/components/radio-group";
+import { Label } from "@/modules/ui/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 import {
   createLanguageAction,
@@ -102,6 +109,34 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   useEffect(() => {
     setDefaultLanguage(normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? "");
   }, [workspace.config.defaultSurveyLanguage]);
+
+  /**
+   * One option per language in the table, keyed by canonical tag so a legacy row (`de`) and its
+   * canonical twin (`de-DE`) collapse into one. Selectable means the survey runtime has strings for it,
+   * including a regional variant served by its language's bundle (`es-MX` renders the `es-ES` strings);
+   * a language with no strings at all is listed with the reason rather than dropped, since silently
+   * omitting a language the workspace has reads as a bug (ENG-2325).
+   */
+  const languageOptions = useMemo(() => {
+    const optionsByCode = new Map<string, { code: string; label: string; isSelectable: boolean }>();
+
+    for (const language of languages) {
+      const code = normalizeLanguageCode(language.code) ?? language.code;
+      if (!code || optionsByCode.has(code)) continue;
+
+      optionsByCode.set(code, {
+        code,
+        label: getLanguageLabel(code, locale) ?? code,
+        isSelectable: isSurveyRuntimeLanguage(code),
+      });
+    }
+
+    return Array.from(optionsByCode.values()).sort(
+      (left, right) =>
+        Number(right.isSelectable) - Number(left.isSelectable) ||
+        left.label.localeCompare(right.label, locale)
+    );
+  }, [languages, locale]);
 
   const router = useRouter();
 
@@ -245,27 +280,20 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         {languages.length > 0 ? (
           <>
             <LanguageLabels />
-            <RadioGroup onValueChange={setDefaultLanguage} value={defaultLanguage}>
-              {languages.map((language, index) => {
-                const canonicalCode = normalizeLanguageCode(language.code) ?? language.code;
-                return (
-                  <LanguageRow
-                    canBeDefault={isSurveyRuntimeLanguage(canonicalCode)}
-                    defaultLanguageValue={canonicalCode || null}
-                    isEditing={isEditing}
-                    key={language.id}
-                    language={language}
-                    locale={locale}
-                    onDelete={() => handleDeleteLanguage(language.id)}
-                    onLanguageChange={(newLanguage: Language) => {
-                      const updatedLanguages = [...languages];
-                      updatedLanguages[index] = newLanguage;
-                      setLanguages(updatedLanguages);
-                    }}
-                  />
-                );
-              })}
-            </RadioGroup>
+            {languages.map((language, index) => (
+              <LanguageRow
+                isEditing={isEditing}
+                key={language.id}
+                language={language}
+                locale={locale}
+                onDelete={() => handleDeleteLanguage(language.id)}
+                onLanguageChange={(newLanguage: Language) => {
+                  const updatedLanguages = [...languages];
+                  updatedLanguages[index] = newLanguage;
+                  setLanguages(updatedLanguages);
+                }}
+              />
+            ))}
           </>
         ) : (
           <p className="text-sm text-slate-500 italic">{t("workspace.languages.no_language_found")}</p>
@@ -277,6 +305,35 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
           languages={languages}
           workspace={workspace}
         />
+
+        {languageOptions.length > 0 && (
+          <div className="flex w-full max-w-sm flex-col gap-y-2 pt-2">
+            <Label htmlFor="defaultSurveyLanguage">{t("workspace.languages.default_survey_language")}</Label>
+            <Select
+              disabled={!isEditing}
+              onValueChange={setDefaultLanguage}
+              value={defaultLanguage || undefined}>
+              <SelectTrigger id="defaultSurveyLanguage" className="bg-white">
+                <SelectValue placeholder={t("workspace.languages.default_survey_language_placeholder")} />
+              </SelectTrigger>
+              <SelectContent>
+                {languageOptions.map(({ code, label, isSelectable }) => (
+                  <SelectItem key={code} value={code} disabled={!isSelectable}>
+                    {label}
+                    {!isSelectable && (
+                      <span className="ml-2 text-xs text-slate-400">
+                        {t("workspace.languages.default_survey_language_unsupported")}
+                      </span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-slate-500">
+              {t("workspace.languages.default_survey_language_description")}
+            </p>
+          </div>
+        )}
       </div>
       <EditSaveButtons
         isEditing={isEditing}

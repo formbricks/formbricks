@@ -2249,6 +2249,7 @@
       "conflict_between_selected_alias_and_another_language": "Ütközés van a kiválasztott álnév és egy másik, ezzel az azonosítóval rendelkező nyelv között. A következetlenségek elkerülése érdekében ezzel az azonosítóval adja hozzá a nyelvet a munkaterületéhez.",
       "default_survey_language": "Alapértelmezett felmérési nyelv",
       "default_survey_language_description": "Az új felmérések ebben a nyelvben kerülnek létrehozásra. A meglévő felmérések megtartják azt a nyelvet, amelyen megírták őket.",
+      "default_survey_language_placeholder": "Kérem, válasszon nyelvet",
       "default_survey_language_unsupported": "Még nincsenek elérhető felmérésfordítások",
       "delete_language_confirmation": "Biztosan törölni szeretné ezt a nyelvet? Ezt a műveletet nem lehet visszavonni.",
       "duplicate_language_or_language_id": "Kettőzött nyelv vagy nyelvazonosító",

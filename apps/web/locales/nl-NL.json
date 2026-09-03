@@ -2249,6 +2249,7 @@
       "conflict_between_selected_alias_and_another_language": "Er is een conflict tussen de geselecteerde alias en een andere taal die deze identifier heeft. Voeg in plaats daarvan de taal met deze identifier toe aan je werkruimte om inconsistenties te voorkomen.",
       "default_survey_language": "Standaard enquêtetaal",
       "default_survey_language_description": "Nieuwe enquêtes worden in deze taal aangemaakt. Bestaande enquêtes behouden de taal waarin ze zijn geschreven.",
+      "default_survey_language_placeholder": "Selecteer een taal",
       "default_survey_language_unsupported": "Nog geen enquêtevertalingen beschikbaar",
       "delete_language_confirmation": "Weet je zeker dat je deze taal wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
       "duplicate_language_or_language_id": "Dubbele taal of taal-ID",

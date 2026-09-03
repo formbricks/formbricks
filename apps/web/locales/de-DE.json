@@ -2249,6 +2249,7 @@
       "conflict_between_selected_alias_and_another_language": "Es gibt einen Konflikt zwischen dem ausgewählten Alias und einer anderen Sprache, die diese Kennung hat. Bitte füge stattdessen die Sprache mit dieser Kennung zu deinem Workspace hinzu, um Inkonsistenzen zu vermeiden.",
       "default_survey_language": "Standard-Umfragesprache",
       "default_survey_language_description": "Neue Umfragen werden in dieser Sprache erstellt. Bestehende Umfragen behalten die Sprache, in der sie verfasst wurden.",
+      "default_survey_language_placeholder": "Wähle eine Sprache",
       "default_survey_language_unsupported": "Noch keine Umfrageübersetzungen verfügbar",
       "delete_language_confirmation": "Bist du sicher, dass du diese Sprache löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
       "duplicate_language_or_language_id": "Doppelte Sprache oder Sprach-ID",
