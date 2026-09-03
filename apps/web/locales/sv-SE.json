@@ -87,7 +87,7 @@
       "invalid_oauth_request_description": "The OAuth client could not be found or the authorization request is missing required details.",
       "localhost_redirect_warning": "Local redirect URI",
       "localhost_redirect_warning_description": "This client redirects to localhost. Only continue if you started this client on your own machine.",
-      "mcp_docs_link": "MCP-dokumentation",
+      "mcp_docs_link": "MCP-anslutningsguide",
       "no_authorized_apps": "Du har inte anslutit några MCP-klienter än.",
       "permissions": "Permissions",
       "redirect_host": "Redirect host",
