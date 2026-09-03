@@ -34,6 +34,21 @@ describe("mapV3ThrownError", () => {
     expect(JSON.stringify(body)).not.toContain("survey_secret");
   });
 
+  /**
+   * The property the 403 mapping exists for, pinned directly: "it is not there" and "it is not yours"
+   * must be one answer. Asserting `code` and the absent id is not enough — giving either branch its own
+   * detail would keep both of those true and still hand back an oracle, which is exactly the mistake
+   * a second surface relying on this default is liable to make.
+   */
+  test("renders one identical body whichever way the caller is refused", async () => {
+    const missing = await mapV3ThrownError(new ResourceNotFoundError("Survey", "s1"), ctx()).json();
+    const refused = await mapV3ThrownError(new AuthorizationError("not a member"), ctx()).json();
+
+    delete missing.requestId;
+    delete refused.requestId;
+    expect(missing).toEqual(refused);
+  });
+
   test.each([
     ["AuthorizationError", new AuthorizationError("user 42 lacks manage on ws_9")],
     ["OperationNotAllowedError", new OperationNotAllowedError("ai_features_not_enabled")],
