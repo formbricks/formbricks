@@ -110,12 +110,14 @@ Values must be a `String`, `num`, `bool` or `DateTime`; anything else is logged 
 
 ## Value Types at a Glance
 
-| SDK          | Argument type                                                              | Removes a key | Leaves a key alone | Clears everything                 |
-| ------------ | -------------------------------------------------------------------------- | ------------- | ------------------ | --------------------------------- |
-| React Native | `Record<string, string \| number \| boolean \| Date \| null \| undefined>` | `null`        | `undefined`        | `clearEmbeddedData()`             |
-| Swift        | `[String: EmbeddedDataValue?]`                                             | `nil`         | omitting the key   | `clearEmbeddedData()` overload    |
-| Kotlin       | `Map<String, EmbeddedDataValue?>`                                          | `null`        | omitting the key   | `clearEmbeddedData()` overload    |
-| Dart         | `Map<String, Object?>`                                                     | `null`        | omitting the key   | `clearEmbeddedData()` no argument |
+| SDK          | Value type                                                      | Removes a key | Leaves a key alone |
+| ------------ | ---------------------------------------------------------------- | ------------- | ------------------ |
+| React Native | `string`, `number`, `boolean`, `Date`                           | `null`        | `undefined`        |
+| Swift        | `EmbeddedDataValue`: `.string`, `.number`, `.bool`, `.date`     | `nil`         | omitting the key   |
+| Kotlin       | `EmbeddedDataValue`: `string()`, `number()`, `boolean()`, `date()` | `null`     | omitting the key   |
+| Dart         | `String`, `num`, `bool`, `DateTime`                             | `null`        | omitting the key   |
+
+On all four, `clearEmbeddedData("key")` removes one key and `clearEmbeddedData()` with no argument clears the whole bag.
 
 Only React Native has a **value** that means "leave this key alone". On the other three, leaving the key out of the map is the way to skip it, which is why the warnings above matter for code that builds the map from optionals.
 
