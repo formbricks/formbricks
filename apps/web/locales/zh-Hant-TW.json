@@ -3482,6 +3482,8 @@
         "seven_points": "7 分",
         "show_block_settings": "顯示區塊設定",
         "show_button": "顯示按鈕",
+        "show_checkmark_icon": "顯示勾選圖示",
+        "show_checkmark_icon_description": "在文字上方顯示勾選圖示。",
         "show_in_order": "依序顯示",
         "show_language_switch": "顯示語言切換",
         "show_multiple_times": "顯示有限次數",

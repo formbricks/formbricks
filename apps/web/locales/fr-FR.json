@@ -3482,6 +3482,8 @@
         "seven_points": "7 points",
         "show_block_settings": "Afficher les paramètres du bloc",
         "show_button": "Afficher le bouton",
+        "show_checkmark_icon": "Afficher l'icône de validation",
+        "show_checkmark_icon_description": "Affiche l'icône de validation au-dessus de ton texte.",
         "show_in_order": "Afficher dans l'ordre",
         "show_language_switch": "Afficher le changement de langue",
         "show_multiple_times": "Afficher un nombre limité de fois",

@@ -3482,6 +3482,8 @@
         "seven_points": "7 puntos",
         "show_block_settings": "Mostrar ajustes del bloque",
         "show_button": "Mostrar botón",
+        "show_checkmark_icon": "Mostrar icono de confirmación",
+        "show_checkmark_icon_description": "Muestra el icono de confirmación encima de tu texto.",
         "show_in_order": "Mostrar en orden",
         "show_language_switch": "Mostrar cambio de idioma",
         "show_multiple_times": "Mostrar un número limitado de veces",

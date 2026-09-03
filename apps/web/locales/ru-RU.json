@@ -3482,6 +3482,8 @@
         "seven_points": "7 баллов",
         "show_block_settings": "Показать настройки блока",
         "show_button": "Показать кнопку",
+        "show_checkmark_icon": "Показать значок галочки",
+        "show_checkmark_icon_description": "Отображать значок галочки над текстом.",
         "show_in_order": "Показать по порядку",
         "show_language_switch": "Показать переключатель языка",
         "show_multiple_times": "Показать ограниченное количество раз",

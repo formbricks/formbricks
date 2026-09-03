@@ -3482,6 +3482,8 @@
         "seven_points": "7 poäng",
         "show_block_settings": "Visa blockinställningar",
         "show_button": "Visa knapp",
+        "show_checkmark_icon": "Visa bockikon",
+        "show_checkmark_icon_description": "Visa bockikonen ovanför din text.",
         "show_in_order": "Visa i ordning",
         "show_language_switch": "Visa språkväxlare",
         "show_multiple_times": "Visa ett begränsat antal gånger",
