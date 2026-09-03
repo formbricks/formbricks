@@ -602,7 +602,7 @@ paths:
                 aiDisabled:
                   summary: AI smart tools disabled
                   value:
-                    title: AI Unavailable
+                    title: Forbidden
                     status: 403
                     detail: AI smart tools are disabled for this organization.
                     code: ai_smart_tools_disabled
@@ -610,7 +610,7 @@ paths:
                 aiNotInPlan:
                   summary: AI features not enabled for the plan
                   value:
-                    title: AI Unavailable
+                    title: Forbidden
                     status: 403
                     detail: AI features are not enabled for this organization's plan.
                     code: ai_features_not_enabled
@@ -670,7 +670,7 @@ paths:
                 instanceNotConfigured:
                   summary: AI instance configuration missing
                   value:
-                    title: AI Unavailable
+                    title: Service Unavailable
                     status: 503
                     detail: AI is not configured for this Formbricks instance.
                     code: ai_instance_not_configured
@@ -2601,7 +2601,12 @@ components:
       additionalProperties: false
     Problem:
       type: object
-      description: RFC 9457 Problem Details for HTTP APIs (`application/problem+json`). Responses typically include a machine-readable `code` field alongside `title`, `status`, `detail`, and `requestId`.
+      description: |-
+        RFC 9457 Problem Details for HTTP APIs (`application/problem+json`). Responses typically include a machine-readable `code` field alongside `title`, `status`, `detail`, and `requestId`.
+
+        Branch on `code`, not on `detail` or `title`: `code` is stable and locale-independent, whereas `detail` is prose that may be reworded. No problem sets `type`, so per RFC 9457 §4.2.1 `title` is always the HTTP reason phrase for `status` and carries no information of its own.
+
+        Member naming is frozen as published, mixed conventions included (`requestId` alongside `invalid_params` and `details.resource_type`): renaming any of them would break every client that reads them.
       required:
         - title
         - status
@@ -5544,6 +5549,11 @@ components:
     V3Unauthorized:
       description: Not authenticated (no valid session or API key).
       headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+          example: Bearer realm="formbricks"
+          description: Authentication scheme challenge, as required on a 401 by RFC 9110. The MCP endpoints send a richer OAuth challenge carrying `resource_metadata` and `scope`.
         X-Request-Id:
           schema:
             type: string

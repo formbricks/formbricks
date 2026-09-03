@@ -1,5 +1,12 @@
 description: Not authenticated (no valid session or API key).
 headers:
+  WWW-Authenticate:
+    schema:
+      type: string
+    example: Bearer realm="formbricks"
+    description: >-
+      Authentication scheme challenge, as required on a 401 by RFC 9110. The MCP endpoints send a
+      richer OAuth challenge carrying `resource_metadata` and `scope`.
   X-Request-Id:
     schema:
       type: string
