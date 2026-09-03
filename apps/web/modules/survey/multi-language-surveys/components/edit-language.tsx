@@ -9,6 +9,7 @@ import { Language } from "@formbricks/database/prisma-browser";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
+import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -105,6 +106,22 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   };
 
   const handleDeleteLanguage = async (languageId: string) => {
+    // The workspace default survey language must keep pointing at a language the workspace has, so the
+    // row it names cannot be removed until a different default is picked (ENG-2816).
+    const languageToDelete = languages.find((workspaceLanguage) => workspaceLanguage.id === languageId);
+    if (
+      languageToDelete &&
+      isWorkspaceDefaultSurveyLanguage(languageToDelete.code, workspace.config.defaultSurveyLanguage)
+    ) {
+      setConfirmationModal({
+        isOpen: true,
+        languageId,
+        text: t("workspace.languages.cannot_remove_default_survey_language_warning"),
+        isButtonDisabled: true,
+      });
+      return;
+    }
+
     try {
       const surveysUsingLanguageResponse = await getSurveysUsingGivenLanguageAction({
         languageId,

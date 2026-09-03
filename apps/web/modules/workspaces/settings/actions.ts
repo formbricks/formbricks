@@ -3,8 +3,8 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { assertCan } from "@/lib/authorization";
+import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -16,10 +16,11 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
 import { updateWorkspace } from "@/modules/workspaces/settings/lib/workspace";
+import { ZWorkspaceUpdateActionInput } from "@/modules/workspaces/settings/lib/workspace-update-input";
 
 const ZUpdateWorkspaceAction = z.object({
   workspaceId: ZId,
-  data: ZWorkspaceUpdateInput,
+  data: ZWorkspaceUpdateActionInput,
 });
 
 export const updateWorkspaceAction = authenticatedActionClient.inputSchema(ZUpdateWorkspaceAction).action(
@@ -60,6 +61,23 @@ export const updateWorkspaceAction = authenticatedActionClient.inputSchema(ZUpda
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
     const oldObject = await getWorkspace(parsedInput.workspaceId);
+
+    // The default survey language has to be one of the workspace's own survey languages, so the setting
+    // can never name a language the workspace does not have (ENG-2816). The input schema already limits
+    // it to the languages the survey runtime ships strings for; this is the half that needs the
+    // workspace, and it pairs with `deleteLanguage` refusing to remove the language it points at.
+    const nextDefaultSurveyLanguage = parsedInput.data.config?.defaultSurveyLanguage;
+    if (
+      nextDefaultSurveyLanguage &&
+      !oldObject?.languages.some((language) =>
+        isWorkspaceDefaultSurveyLanguage(language.code, nextDefaultSurveyLanguage)
+      )
+    ) {
+      throw new OperationNotAllowedError(
+        "The default survey language must be one of the workspace's survey languages"
+      );
+    }
+
     const result = await updateWorkspace(parsedInput.workspaceId, parsedInput.data);
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;

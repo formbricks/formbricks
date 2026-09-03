@@ -1,4 +1,6 @@
+import { readdirSync } from "node:fs";
 import { describe, expect, test } from "vitest";
+import { SURVEY_RUNTIME_LANGUAGE_CODES } from "@formbricks/i18n-utils/src/survey-runtime-languages";
 import i18n, { resolveFallbackBundles } from "./i18n.config";
 
 // Locks down the locale-to-bundle fallback contract (ENG-1067). Bundles are keyed by each language's
@@ -74,6 +76,17 @@ describe("shipped bundles", () => {
     const supportedLngs = i18n.options.supportedLngs || [];
     const supported = supportedLngs.filter((code: string) => code !== "cimode");
     expect([...supported].sort()).toEqual(Object.keys(i18n.options.resources ?? {}).sort());
+  });
+
+  // SURVEY_RUNTIME_LANGUAGE_CODES is what the workspace default-survey-language picker offers
+  // (ENG-2816). Offering a language whose bundle we do not ship is the bug that setting exists to
+  // avoid, so the list has to be provably the shipped set — not a copy of it that can rot.
+  test("the runtime language list matches the bundles on disk", () => {
+    const shippedBundleCodes = readdirSync(new URL("../../locales/", import.meta.url))
+      .filter((file) => file.endsWith(".json"))
+      .map((file) => file.replace(/\.json$/, ""));
+
+    expect([...SURVEY_RUNTIME_LANGUAGE_CODES].sort()).toEqual(shippedBundleCodes.sort());
   });
 
   test("survey strings resolve for the shipped languages", () => {

@@ -1,7 +1,6 @@
 import "server-only";
 import type { TSurveyType } from "@formbricks/types/surveys/types";
 import type { TTemplate } from "@formbricks/types/templates";
-import type { TUserLocale } from "@formbricks/types/user";
 import { isInternalI18nString, isPlainObject } from "../../guards";
 
 export type TV3TemplateSurveyCreatePayload = {
@@ -9,7 +8,7 @@ export type TV3TemplateSurveyCreatePayload = {
   name: string;
   type: TSurveyType;
   status: "draft";
-  defaultLanguage: TUserLocale;
+  defaultLanguage: string;
   languages: [];
   metadata: unknown;
   welcomeCard: unknown;
@@ -19,16 +18,13 @@ export type TV3TemplateSurveyCreatePayload = {
   variables: unknown[];
 };
 
-function toPublicLocaleMap(
-  value: Record<string, string>,
-  defaultLanguage: TUserLocale
-): Record<string, string> {
+function toPublicLocaleMap(value: Record<string, string>, defaultLanguage: string): Record<string, string> {
   return {
     [defaultLanguage]: value.default,
   };
 }
 
-function toV3PublicValue(value: unknown, defaultLanguage: TUserLocale): unknown {
+function toV3PublicValue(value: unknown, defaultLanguage: string): unknown {
   if (isInternalI18nString(value)) {
     return toPublicLocaleMap(value, defaultLanguage);
   }
@@ -57,7 +53,7 @@ export function buildV3SurveyCreatePayloadFromTemplate({
   template: TTemplate;
   workspaceId: string;
   surveyType: TSurveyType;
-  defaultLanguage: TUserLocale;
+  defaultLanguage: string;
 }): TV3TemplateSurveyCreatePayload {
   return {
     workspaceId,
