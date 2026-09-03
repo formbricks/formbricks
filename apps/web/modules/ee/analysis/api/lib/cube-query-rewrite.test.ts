@@ -239,6 +239,39 @@ describe("cube queryRewrite", () => {
     ]);
   });
 
+  test("rewrites equals on a response-context dimension to its case-insensitive companion", () => {
+    // A country arrives as "DE" from geo resolution but as "de" through a CSV import, and the
+    // browser/device strings are whatever a user agent reported, so the metadata dimensions need
+    // the same casing tolerance as the source ones.
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.metadataCountry", operator: "equals", values: [" DE "] }],
+    };
+
+    const rewrittenQuery = queryRewrite(query, { securityContext });
+
+    expect(rewrittenQuery.filters).toEqual([
+      { member: "FeedbackRecords.metadataCountryNormalized", operator: "equals", values: ["de"] },
+      { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
+    ]);
+  });
+
+  test("leaves the product-generated response-context dimensions unrewritten", () => {
+    // metadataSurveyType and metadataEndingId hold values this product writes, so they have no
+    // normalized companion and must pass through as the caller sent them.
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.metadataSurveyType", operator: "equals", values: ["link"] }],
+    };
+
+    const rewrittenQuery = queryRewrite(query, { securityContext });
+
+    expect(rewrittenQuery.filters).toEqual([
+      { member: "FeedbackRecords.metadataSurveyType", operator: "equals", values: ["link"] },
+      { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
+    ]);
+  });
+
   test("leaves contains and other substring operators untouched", () => {
     const query = {
       measures: ["FeedbackRecords.count"],

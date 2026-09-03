@@ -179,6 +179,89 @@ describe("schema-definition", () => {
     });
   });
 
+  describe("Response context (ENG-1555 metadata)", () => {
+    const metadataDimensionIds = [
+      "FeedbackRecords.metadataSource",
+      "FeedbackRecords.metadataUrl",
+      "FeedbackRecords.metadataBrowser",
+      "FeedbackRecords.metadataOs",
+      "FeedbackRecords.metadataDevice",
+      "FeedbackRecords.metadataCountry",
+      "FeedbackRecords.metadataAction",
+      "FeedbackRecords.metadataFinished",
+      "FeedbackRecords.metadataDurationSeconds",
+      "FeedbackRecords.metadataEndingId",
+      "FeedbackRecords.metadataSurveyType",
+    ];
+
+    test("exposes one dimension per key the ingestion allowlist writes", () => {
+      const dimensionIds = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
+      expect(dimensionIds).toEqual(expect.arrayContaining(metadataDimensionIds));
+    });
+
+    test("types the two non-text keys as their own types rather than strings", () => {
+      // The filter UI picks its operators off this type, so a boolean typed as a string would offer
+      // `contains` on true/false and no gt/lt on the duration.
+      expect(getFieldById("FeedbackRecords.metadataFinished")?.type).toBe("boolean");
+      expect(getFieldById("FeedbackRecords.metadataDurationSeconds")?.type).toBe("number");
+    });
+
+    test("members exist in both deployed Cube schemas", () => {
+      const dockerSchema = readDockerCubeSchema();
+      const chartSchema = readChartCubeSchema();
+
+      for (const id of metadataDimensionIds) {
+        expect(dockerSchema).toContain(`    ${getCubeMemberName(id)}: {`);
+        expect(chartSchema).toContain(`    ${getCubeMemberName(id)}: {`);
+      }
+    });
+
+    test("reads the non-text keys through a guard instead of a bare cast", () => {
+      // `metadata` is free-form jsonb any writer can fill, so a bare ::boolean / ::double precision
+      // on a malformed value fails the whole chart query rather than that one row.
+      const dockerSchema = readDockerCubeSchema();
+
+      expect(dockerSchema).toContain("LOWER(${CUBE}.metadata->>'finished') IN ('true', 'false')");
+      expect(dockerSchema).toContain("metadata->>'duration_seconds' ~ '^-?[0-9]+(\\\\.[0-9]+)?$'");
+    });
+
+    test("offers a value pick-list for the low-cardinality keys only", () => {
+      for (const id of [
+        "FeedbackRecords.metadataSource",
+        "FeedbackRecords.metadataSurveyType",
+        "FeedbackRecords.metadataBrowser",
+        "FeedbackRecords.metadataOs",
+        "FeedbackRecords.metadataDevice",
+        "FeedbackRecords.metadataCountry",
+        "FeedbackRecords.metadataAction",
+        "FeedbackRecords.metadataEndingId",
+      ]) {
+        expect(isSelectableValueDimension(id)).toBe(true);
+      }
+      // One bucket per path: a pick-list of URLs is the valueText problem again.
+      expect(isSelectableValueDimension("FeedbackRecords.metadataUrl")).toBe(false);
+    });
+
+    test("labels resolve to i18n keys rather than the raw dimension id", () => {
+      const t = ((key: string) => key) as unknown as TFunction;
+
+      for (const id of metadataDimensionIds) {
+        expect(getTranslatedFieldLabel(id, t)).toMatch(/^workspace\.analysis\.charts\.field_label_/);
+      }
+    });
+
+    test("translates the descriptions that carry a chart-building caveat", () => {
+      const t = ((key: string) => key) as unknown as TFunction;
+
+      expect(getTranslatedFieldDescription("FeedbackRecords.metadataFinished", "fallback", t)).toBe(
+        "workspace.analysis.charts.field_description_completed"
+      );
+      expect(getTranslatedFieldDescription("FeedbackRecords.metadataDurationSeconds", "fallback", t)).toBe(
+        "workspace.analysis.charts.field_description_time_to_complete"
+      );
+    });
+  });
+
   describe("Hub enrichment fields (sentiment + emotions)", () => {
     test("exposes the enrichment dimensions and measures", () => {
       const dimensionIds = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
@@ -557,6 +640,13 @@ describe("schema-definition", () => {
       "fieldGroupLabelNormalized",
       "languageNormalized",
       "valueTextNormalized",
+      "metadataSourceNormalized",
+      "metadataUrlNormalized",
+      "metadataBrowserNormalized",
+      "metadataOsNormalized",
+      "metadataDeviceNormalized",
+      "metadataCountryNormalized",
+      "metadataActionNormalized",
     ];
 
     test("are present in both Cube schemas with a LOWER(TRIM(...)) sql and hidden", () => {
