@@ -38,14 +38,19 @@ export const EMBEDDING_PENDING_DETAIL =
 /**
  * Positional wrapper over the shared mapper, kept because every feedback-records operation already calls
  * it this way; the mapping itself lives in `@/app/api/v3/lib/errors`.
+ *
+ * `operation` is not optional: these operations are reached through MCP as well as HTTP, and every MCP
+ * tool passes the same `instance` (`/api/mcp`), so the label is the only thing that says which of the
+ * ten failed.
  */
 export function handleUnexpectedError(
   err: unknown,
   log: ReturnType<typeof logger.withContext>,
   requestId: string,
-  instance: string
+  instance: string,
+  operation: string
 ): Response {
-  return mapV3ThrownError(err, { log, requestId, instance, operation: "feedbackRecords" });
+  return mapV3ThrownError(err, { log, requestId, instance, operation });
 }
 
 export const toInvalidParams = (error: z.ZodError): InvalidParam[] =>

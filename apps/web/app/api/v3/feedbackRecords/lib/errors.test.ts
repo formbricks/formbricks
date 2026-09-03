@@ -18,7 +18,8 @@ describe("handleUnexpectedError", () => {
       new ResourceNotFoundError("Workspace", "ws_1"),
       log,
       requestId,
-      instance
+      instance,
+      "feedbackRecords.get"
     );
 
     expect(response.status).toBe(403);
@@ -27,14 +28,26 @@ describe("handleUnexpectedError", () => {
   });
 
   test("maps a database failure to a generic 500", async () => {
-    const response = handleUnexpectedError(new DatabaseError("connection lost"), log, requestId, instance);
+    const response = handleUnexpectedError(
+      new DatabaseError("connection lost"),
+      log,
+      requestId,
+      instance,
+      "feedbackRecords.get"
+    );
 
     expect(response.status).toBe(500);
     expect((await response.json()).detail).toBe("An unexpected error occurred.");
   });
 
   test("maps an unknown throw to a generic 500 without leaking the message", async () => {
-    const response = handleUnexpectedError(new Error("secret internal detail"), log, requestId, instance);
+    const response = handleUnexpectedError(
+      new Error("secret internal detail"),
+      log,
+      requestId,
+      instance,
+      "feedbackRecords.get"
+    );
 
     expect(response.status).toBe(500);
     expect(JSON.stringify(await response.json())).not.toContain("secret internal detail");
