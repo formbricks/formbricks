@@ -534,6 +534,30 @@ describe("sso-recovery", () => {
     expect(mocks.consumeSsoRecoveryIntent).toHaveBeenCalledWith("test-state");
   });
 
+  /**
+   * The link is what the intent pays for, so a transaction that rolls back must leave the intent
+   * spendable — otherwise a transient database fault burns the user's one recovery and the emailed
+   * link they still hold goes nowhere.
+   */
+  test("keeps the intent when the linking transaction rolls back", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: false,
+      isActive: true,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+    } as any);
+    vi.mocked(syncSsoIdentityForUser).mockRejectedValue(new Error("deadlock detected"));
+
+    await expect(completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })).rejects.toThrow(
+      "deadlock detected"
+    );
+
+    expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+  });
+
   test("leaves the intent in place when the recovery is rejected", async () => {
     // A mail scanner reaching the completion URL has no session, so it lands on `missing_session`.
     // Consuming there would spend the record before the real user ever clicked their link.
