@@ -301,6 +301,9 @@ export const InstallMethodCards = ({
 
   const renderMethod = (method: TInstallMethod) => {
     const isOpen = openMethod === method.id;
+    const isWebsiteMethod = method.id === "website";
+    const selectedSubMethodId = isWebsiteMethod ? websiteSubMethod : mobileSubMethod;
+    const setSelectedSubMethod = isWebsiteMethod ? setWebsiteSubMethod : setMobileSubMethod;
     return (
       <Collapsible.Root
         key={method.id}
@@ -325,11 +328,7 @@ export const InstallMethodCards = ({
         <Collapsible.CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
           <div className="space-y-4 border-t border-slate-100 px-5 pt-4 pb-5">
             {method.subMethods ? (
-              renderSubMethodContent(
-                method.subMethods,
-                method.id === "website" ? websiteSubMethod : mobileSubMethod,
-                method.id === "website" ? setWebsiteSubMethod : setMobileSubMethod
-              )
+              renderSubMethodContent(method.subMethods, selectedSubMethodId, setSelectedSubMethod)
             ) : (
               <>
                 <ol className="list-inside list-decimal space-y-1 text-sm text-slate-700">
