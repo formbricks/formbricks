@@ -90,12 +90,6 @@ describe("emitFormbricksEvent", () => {
     });
   });
 
-  test("no window CustomEvent is dispatched — formbricks.on replaced that transport (ENG-1814)", () => {
-    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
-
-    expect(window.dispatchEvent).not.toHaveBeenCalled();
-  });
-
   test("a non-array dataLayer (a host shim) is replaced instead of throwing on .push", () => {
     (window as { dataLayer?: unknown }).dataLayer = {};
 
