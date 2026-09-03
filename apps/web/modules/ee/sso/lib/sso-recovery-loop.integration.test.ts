@@ -47,9 +47,9 @@ const seedUser = () =>
   });
 
 /** The Better Auth endpoint context for an SSO callback that collided with an existing account. */
-const makeCollisionCtx = (redirect: (url: string) => Error) => ({
+const makeCollisionCtx = (redirect: (url: string) => Error, providerId: string) => ({
   path: "/callback/:providerId",
-  params: { providerId: "google" },
+  params: { providerId },
   context: {
     responseHeaders: new Headers({ location: `${WEBAPP_URL}/auth/login?error=account_not_linked` }),
   },
@@ -57,7 +57,11 @@ const makeCollisionCtx = (redirect: (url: string) => Error) => ({
 });
 
 /** One turn of the loop. Returns where the handler redirected the browser. */
-const runOneRecoveryAttempt = async (callbackUrl: string, providerAccountId: string): Promise<string> => {
+const runOneRecoveryAttempt = async (
+  callbackUrl: string,
+  providerAccountId: string,
+  providerId = "google"
+): Promise<string> => {
   mocks.getOAuthState.mockResolvedValue({ callbackURL: callbackUrl });
 
   let redirectedTo = "";
@@ -69,7 +73,9 @@ const runOneRecoveryAttempt = async (callbackUrl: string, providerAccountId: str
   await runWithSsoRequestContext(async () => {
     captureSsoIdentity({ email: VICTIM_EMAIL, providerAccountId });
     // The handler signals its redirect by throwing, exactly as Better Auth expects.
-    await expect(ssoRecoveryAfterHandler(makeCollisionCtx(redirect) as never)).rejects.toBeDefined();
+    await expect(
+      ssoRecoveryAfterHandler(makeCollisionCtx(redirect, providerId) as never)
+    ).rejects.toBeDefined();
   });
 
   expect(redirectedTo).toContain("/auth/verification-requested");
@@ -112,6 +118,38 @@ describe("SSO recovery retry loop (real Postgres + Redis, real Better Auth hook)
     expect(new Set(stateIds).size).toBe(4);
     stateIds.forEach((stateId) => expect(stateId).toMatch(/^[A-Za-z0-9_-]{43}$/));
   });
+
+  /**
+   * The ticket was reported against Microsoft, but nothing on this path is provider-specific:
+   * `ssoRecoveryAfterHandler` fires for any id `normalizeSsoProvider` accepts, and `startSsoRecovery`
+   * carries `provider` as data without branching on it. So every configured provider grew the URL the
+   * same way, and every one of them is fixed by the same change. `azure-ad` is in the list because
+   * Microsoft can arrive under either spelling — the normaliser maps the legacy alias to `azuread`.
+   */
+  test.each(["google", "github", "azuread", "azure-ad", "openid", "saml"])(
+    "the loop is flat for %s too, not just the provider it was reported against",
+    async (providerId) => {
+      await seedUser();
+
+      let callbackUrl = `${WEBAPP_URL}/organizations/org_loop/workspaces/ws_loop/surveys`;
+      const lengths: number[] = [];
+
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const verificationRequestedUrl = await runOneRecoveryAttempt(
+          callbackUrl,
+          `${providerId}-sub-${attempt}`,
+          providerId
+        );
+        const completionUrl = new URL(verificationRequestedUrl).searchParams.get("callbackUrl")!;
+
+        lengths.push(completionUrl.length);
+        expect(loginRequestLineFor(verificationRequestedUrl).length).toBeLessThan(NGINX_REQUEST_LINE_LIMIT);
+        callbackUrl = completionUrl;
+      }
+
+      expect(new Set(lengths).size).toBe(1);
+    }
+  );
 
   test("a recovery callback arriving as the next attempt's destination is dropped, not stored", async () => {
     await seedUser();
