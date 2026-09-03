@@ -69,13 +69,15 @@ icon: "tags"
 
 The SDK pushes its own lifecycle events to `window.dataLayer`, so you can trigger GTM tags off what Formbricks actually did rather than guessing at timing.
 
-| Event                           | Fires when                                                                | Payload                             |
-| ------------------------------- | ------------------------------------------------------------------------- | ----------------------------------- |
-| `formbricks_setup_successful`   | `setup()` finished, so `window.formbricks` is ready to use                | `{ workspaceId }`                   |
-| `formbricks_action_tracked`     | An action was tracked (code or no-code)                                   | `{ action }`                        |
-| `formbricks_survey_shown`       | A survey became visible                                                   | `{ surveyId }`                      |
-| `formbricks_response_submitted` | The first answer is stored (`finished: false`) and again when it completes | `{ surveyId, responseId, finished }` |
-| `formbricks_survey_closed`      | The survey was dismissed or finished                                      | `{ surveyId }`                      |
+| Event                           | Fires when                                                                | Payload                              |
+| ------------------------------- | ------------------------------------------------------------------------- | ------------------------------------ |
+| `formbricks_setup_successful`   | `setup()` finished — the SDK is ready                                     | `{ workspaceId }`                    |
+| `formbricks_action_tracked`     | An action was tracked (code or no-code)                                   | `{ action }`                         |
+| `formbricks_survey_shown`       | A survey became visible (once per appearance)                             | `{ surveyId }`                       |
+| `formbricks_response_submitted` | The first answer is stored (`finished: false`) and again when it completes | `{ surveyId, responseId?, finished }` |
+| `formbricks_survey_closed`      | The survey was dismissed or finished (once per appearance)                | `{ surveyId }`                       |
+
+`formbricks_survey_shown` reports what the respondent saw, so every appearance is paired with a `formbricks_survey_closed`. The Displays number in your Formbricks dashboard counts what reached the server instead, so it can be lower if the network dropped — worth knowing before you reconcile a GTM-side count against the dashboard.
 
 The push happens through the standard `window.dataLayer = window.dataLayer || []` idiom, so it survives load order: events emitted before GTM loads are still in the array when GTM drains it.
 
@@ -101,7 +103,9 @@ The push happens through the standard `window.dataLayer = window.dataLayer || []
 <Note>
   Every push carries the full set of keys, with `null` for the ones that event does not set. That is
   deliberate: GTM merges pushes recursively, so a partial push would let survey A's `responseId` still resolve
-  under survey B's `formbricks_survey_shown`. Check for `null` rather than assuming a key is absent.
+  under survey B's `formbricks_survey_shown`. Check for `null` rather than assuming a key is absent — and note
+  that `responseId` is optional on `formbricks_response_submitted` itself, so it reads `null` there too
+  whenever the stored id is not available. A tag that needs the id has to tolerate that.
 </Note>
 
 For the JavaScript equivalent of these events, see [Lifecycle Events](/surveys/website-app-surveys/lifecycle-events).

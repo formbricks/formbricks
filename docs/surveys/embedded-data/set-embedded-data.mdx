@@ -106,17 +106,20 @@ Setting the key to `null` when the new route has no page type is what stops the 
 
 ## Calling It Before Setup
 
-`setEmbeddedData()` is synchronous and does not go through the SDK's command queue, so a call made before `setup()` finishes is kept rather than dropped. What it does need is for the SDK **script** to have loaded, since `window.formbricks` does not exist before that.
+`setEmbeddedData()` is synchronous and does not go through the SDK's command queue, so a call made before `setup()` finishes is kept rather than dropped. Two things do have to be true first, and they have different answers.
 
-If your code cannot guarantee the script is there — a tag that fires on page load, or a setup deliberately delayed until a consent banner resolves — subscribe to the readiness event instead of polling for the global:
+**The script must have loaded.** `window.formbricks` does not exist until then, and neither does anything on it — `setEmbeddedData` and `on` alike. Push your context from the script tag's own `onload`, or from a Google Tag Manager tag: the dataLayer buffers across load order, so a GTM trigger cannot be too early. Do not poll for the global.
+
+**`setup()` may be delayed, and that is what the readiness event is for.** When the script has loaded but `setup()` waits on something like a consent banner, subscribe first and push when it resolves:
 
 ```js
+// the script has loaded; setup() has not been called yet
 formbricks.on("formbricks_setup_successful", () => {
   formbricks.setEmbeddedData({ plan: currentUser.plan });
 });
 ```
 
-See [Lifecycle Events](/surveys/website-app-surveys/lifecycle-events) for the full list of events and the subscription API. In Google Tag Manager the equivalent is a Custom Event trigger on `formbricks_setup_successful`; see [Google Tag Manager](/surveys/website-app-surveys/google-tag-manager#set-embedded-data).
+The order matters. Events are delivered live rather than replayed, so a handler registered after `setup()` has already finished never fires and logs nothing. See [Lifecycle Events](/surveys/website-app-surveys/lifecycle-events) for the full list and the subscription API, and [Google Tag Manager](/surveys/website-app-surveys/google-tag-manager#set-embedded-data) for the tag-manager wiring.
 
 ## Checking What Is in the Bag
 
