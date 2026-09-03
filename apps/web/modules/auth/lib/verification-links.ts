@@ -1,6 +1,18 @@
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 
 const RELATIVE_URL_BASE = "http://localhost";
+
+/**
+ * Lifetime of the emailed verification / SSO-recovery magic link.
+ *
+ * Exported so the SSO recovery intent can be pinned to the SAME number (ENG-2783). The link and the
+ * intent are two halves of one flow — the link mints the session, the intent says what to do with it —
+ * so a shorter intent is a guaranteed failure for anyone who reads their mail later: they get signed in
+ * by a link that is still valid and then land on "recovery failed". This is a leaf module both
+ * `modules/email` and `modules/ee/sso` already import, which is what keeps that pairing in one place
+ * without closing an import cycle.
+ */
+export const VERIFICATION_LINK_TTL_SECONDS = 60 * 60 * 24;
 export const VERIFICATION_REQUEST_PURPOSES = ["email_verification", "sso_recovery"] as const;
 export type TVerificationRequestPurpose = (typeof VERIFICATION_REQUEST_PURPOSES)[number];
 const DEFAULT_VERIFICATION_REQUEST_PURPOSE: TVerificationRequestPurpose = "email_verification";
