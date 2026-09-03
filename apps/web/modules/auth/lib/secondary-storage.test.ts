@@ -1,3 +1,4 @@
+import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { redisSecondaryStorage } from "./secondary-storage";
 
@@ -70,5 +71,30 @@ describe("redisSecondaryStorage", () => {
   test("increment coerces the Lua reply to a number", async () => {
     mockClient.eval.mockResolvedValue("5");
     expect(await redisSecondaryStorage.increment("k", 90)).toBe(5);
+  });
+
+  test("creates the client with a heartbeat", async () => {
+    vi.resetModules();
+    const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+    mockClient.get.mockResolvedValue("value");
+
+    expect(await freshStorage.get("k")).toBe("value");
+    expect(createClient).toHaveBeenCalledWith({
+      url: "redis://localhost:6379",
+      socket: { connectTimeout: 3000 },
+      pingInterval: 300_000,
+    });
+  });
+
+  test("retries the lazy connection after a failed connect", async () => {
+    vi.resetModules();
+    const connectionError = new Error("Connection failed");
+    mockClient.connect.mockRejectedValueOnce(connectionError).mockResolvedValueOnce(undefined);
+    mockClient.get.mockResolvedValue("value");
+    const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+
+    await expect(freshStorage.get("k")).rejects.toBe(connectionError);
+    await expect(freshStorage.get("k")).resolves.toBe("value");
+    expect(mockClient.connect).toHaveBeenCalledTimes(2);
   });
 });

@@ -100,6 +100,7 @@ describe("@formbricks/cache factory", () => {
         socket: {
           connectTimeout: 3000,
         },
+        pingInterval: 300_000,
       });
 
       // Verify event handlers are set up
@@ -138,6 +139,7 @@ describe("@formbricks/cache factory", () => {
         socket: {
           connectTimeout: 3000,
         },
+        pingInterval: 300_000,
       });
       expect(mockClient.connect).toHaveBeenCalled();
     });
