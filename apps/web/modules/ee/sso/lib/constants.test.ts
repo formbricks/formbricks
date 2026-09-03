@@ -4,7 +4,15 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
-import { canonicalAccountIssuer, ssoAccountIssuer } from "./constants";
+import {
+  SSO_RECOVERY_COMPLETION_PATH,
+  SSO_RECOVERY_SIGN_IN_PATH,
+  canonicalAccountIssuer,
+  isSsoRecoveryInternalCallbackUrl,
+  ssoAccountIssuer,
+} from "./constants";
+
+const WEBAPP_URL = "https://app.example.com";
 
 /**
  * `Account.issuer` is spelled in four places that cannot import each other, and ENG-2555 happened
@@ -70,6 +78,47 @@ const parsedSources = Object.entries(ISSUER_MIGRATION_SOURCES).map(([label, path
 // One canonical parse for the per-arm assertions below; the cross-copy equality tests prove every
 // other copy is identical to it, so asserting against one is asserting against all.
 const { arms, elseTemplate } = parsedSources[0].cases[0];
+
+describe("isSsoRecoveryInternalCallbackUrl", () => {
+  /**
+   * The predicate had no test of its own — the loop tests only reached it through
+   * `startSsoRecovery`, so nothing pinned the trailing-slash handling that stops
+   * `…/complete/` slipping past a check Next would then route to the real page anyway.
+   */
+  test.each([
+    ["the completion path", `${WEBAPP_URL}${SSO_RECOVERY_COMPLETION_PATH}?state=abc`],
+    ["the recovery sign-in path", `${WEBAPP_URL}${SSO_RECOVERY_SIGN_IN_PATH}?token=abc`],
+    ["a single trailing slash", `${WEBAPP_URL}${SSO_RECOVERY_COMPLETION_PATH}/`],
+    ["many trailing slashes", `${WEBAPP_URL}${SSO_RECOVERY_COMPLETION_PATH}/////`],
+    ["a dot segment that normalises back", `${WEBAPP_URL}/api/auth/sso/recovery/../recovery/complete`],
+    ["a root-relative form", `${SSO_RECOVERY_COMPLETION_PATH}?state=abc`],
+  ])("recognises %s", (_label, callbackUrl) => {
+    expect(isSsoRecoveryInternalCallbackUrl(callbackUrl)).toBe(true);
+  });
+
+  test.each([
+    ["an ordinary app URL", `${WEBAPP_URL}/organizations/org_1/workspaces/ws_1/surveys`],
+    ["a path that merely starts the same", `${WEBAPP_URL}${SSO_RECOVERY_COMPLETION_PATH}-not-really`],
+    ["a path that merely contains it", `${WEBAPP_URL}/x${SSO_RECOVERY_COMPLETION_PATH}`],
+    ["the app root", WEBAPP_URL],
+    ["an unparseable value", "::::"],
+  ])("leaves %s alone", (_label, callbackUrl) => {
+    expect(isSsoRecoveryInternalCallbackUrl(callbackUrl)).toBe(false);
+  });
+
+  test("stays linear on the input shape that made the old regex quadratic", () => {
+    // Deliberately a slash run that does NOT reach the end. `/\/+$/` (Sonar S8786) matches greedily
+    // from every start position, hits the trailing `b`, fails the anchor and backtracks: measured
+    // 34ms at 10k slashes, 2.9s at 100k, 313s at 1M. Trailing slashes would NOT catch this — the old
+    // regex matched those on the first attempt — so the run has to end in a non-slash to bind.
+    const adversarial = `${WEBAPP_URL}/a${"/".repeat(100_000)}b`;
+    const started = Date.now();
+
+    expect(isSsoRecoveryInternalCallbackUrl(adversarial)).toBe(false);
+
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+});
 
 describe("canonicalAccountIssuer ↔ every SQL spelling of the mapping", () => {
   // Guard the guard: if the regex silently matched nothing, every assertion below would pass against an
