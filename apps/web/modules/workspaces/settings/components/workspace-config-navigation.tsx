@@ -34,7 +34,7 @@ export const WorkspaceConfigNavigation = ({ activeId, loading }: WorkspaceConfig
     },
     {
       id: "app-connection",
-      label: t("common.connect_your_app"),
+      label: t("common.web_and_mobile_sdk"),
       icon: <CodeXmlIcon className="size-5" />,
       href: `${workspaceBasePath}/settings/workspace/app-connection`,
       current: pathname?.includes("/app-connection"),

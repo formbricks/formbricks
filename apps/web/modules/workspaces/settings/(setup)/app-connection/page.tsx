@@ -168,7 +168,7 @@ Call setUserId with the authenticated user's ID. Call logout() on sign-out.
 
 ## Validate
 
-Go to Settings → ${t("common.connect_your_app")}. The widget indicator should turn green.
+Go to Settings → ${t("common.web_and_mobile_sdk")}. The widget indicator should turn green.
 To debug, add ?formbricksDebug=true to your app URL and check the browser console.`;
 
   const htmlSnippet = `<!-- START Formbricks Surveys -->
@@ -264,7 +264,7 @@ Formbricks(
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.connect_your_app")} />
+      <PageHeader pageTitle={t("common.web_and_mobile_sdk")} />
       <div className="space-y-4">
         <Alert variant="info" role="status" className="max-w-4xl rounded-xl">
           <AlertTitle>{t("workspace.app-connection.invite_banner_title")}</AlertTitle>

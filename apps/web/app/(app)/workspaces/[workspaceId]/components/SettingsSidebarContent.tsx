@@ -314,7 +314,7 @@ export const SettingsSidebarContent = ({
     },
     {
       id: "app-connection",
-      label: t("common.connect_your_app"),
+      label: t("common.web_and_mobile_sdk"),
       href: workspaceSettingsPath(workspaceId, "app-connection"),
       icon: <CodeXmlIcon className={iconClassName} />,
       disabled: isBilling,

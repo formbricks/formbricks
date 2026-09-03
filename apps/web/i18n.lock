@@ -196,8 +196,6 @@ checksums:
     common/completed: 0e4bbce9985f25eb673d9a054c8d5334
     common/confirm: 90930b51154032f119fa75c1bd422d8b
     common/connect: 8778ee245078a8be4a2ce855c8c56edc
-    common/connect_formbricks: f4b6202f1a6cba2d61b87ae06f38338d
-    common/connect_your_app: ebf19ed5decb5ef6deeea7cae346f1ae
     common/connected: aa0ceca574641de34c74b9e590664230
     common/contact: 9afa39bc47019ee6dec6c74b6273967c
     common/contacts: d5b6c3f890b3904eaf5754081945c03d
@@ -456,6 +454,7 @@ checksums:
     common/selected_questions: beffe92d5272d99a0022f004e6a6ad73
     common/send_test_email: 2fd3ea40199b9589132ac826a5b0f3f5
     common/session_not_found: e9622df3170dbfd9636403bb0c22295b
+    common/set_up_formbricks_sdk: f4b6202f1a6cba2d61b87ae06f38338d
     common/settings: 8df6777277469c1fd88cc18dde2f1cc3
     common/share_feedback: f3c14bfa149fde4035b6965cb8d3e993
     common/show: 16dfe5dc481240cd2819a6394f90df92
@@ -538,6 +537,7 @@ checksums:
     common/view_workflow: c3d3675fc33f5793cfe5fa86155224bb
     common/warning: 6618da2c7e5e93bb4ea0e16d29ab8c4c
     common/we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable: f29f2e0286195dab170b9806bcd74fc9
+    common/web_and_mobile_sdk: ebf19ed5decb5ef6deeea7cae346f1ae
     common/webhook: 70f95b2c27f2c3840b500fcaf79ee83c
     common/webhooks: 0329bc102d3ab3c73410d126e119de12
     common/website_app_survey: 258579927ed3955dcc8e1cbd7f0df17f

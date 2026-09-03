@@ -26,7 +26,7 @@ export const EmptyAppSurveys = () => {
 
         <Link className="mt-2" href={`/workspaces/${workspace?.id}/settings/workspace/app-connection`}>
           <Button size="sm" className="flex w-fit justify-center">
-            {t("common.connect_formbricks")}
+            {t("common.set_up_formbricks_sdk")}
           </Button>
         </Link>
       </div>
