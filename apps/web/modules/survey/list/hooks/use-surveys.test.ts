@@ -53,6 +53,7 @@ describe("useSurveys", () => {
               limit: 20,
               nextCursor: "cursor_1",
               totalCount: 2,
+              workspaceSurveyCount: 5,
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
@@ -80,6 +81,7 @@ describe("useSurveys", () => {
               limit: 20,
               nextCursor: null,
               totalCount: null,
+              workspaceSurveyCount: null,
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
@@ -111,7 +113,7 @@ describe("useSurveys", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.surveys).toHaveLength(1);
-    expect(result.current.totalCount).toBe(2);
+    expect(result.current.workspaceSurveyCount).toBe(5);
     expect(result.current.hasNextPage).toBe(true);
 
     await act(async () => {
@@ -120,6 +122,8 @@ describe("useSurveys", () => {
 
     await waitFor(() => expect(result.current.surveys).toHaveLength(2));
     expect(result.current.hasNextPage).toBe(false);
+    // The cursor page came back with null counts; the hook keeps reading the workspace count from page one.
+    expect(result.current.workspaceSurveyCount).toBe(5);
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       "/api/v3/surveys?workspaceId=env_1&limit=20&sortBy=relevance&cursor=cursor_1&includeTotalCount=false",
@@ -160,6 +164,7 @@ describe("useSurveys", () => {
               limit: 20,
               nextCursor: null,
               totalCount: 1,
+              workspaceSurveyCount: 3,
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
@@ -231,6 +236,7 @@ describe("useSurveys", () => {
             limit: 20,
             nextCursor: null,
             totalCount: 1,
+            workspaceSurveyCount: 3,
           },
         }),
         { status: 200, headers: { "Content-Type": "application/json" } }
