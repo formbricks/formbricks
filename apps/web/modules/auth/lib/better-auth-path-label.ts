@@ -42,6 +42,21 @@ export const UNKNOWN_AUTH_PATH_LABEL = "unknown";
 
 const getFirstSegment = (path: string): string | undefined => path.split("/")[1] || undefined;
 
+/**
+ * Linear-time trailing-slash trim.
+ *
+ * Not `replace(/\/+$/, "")`: that pattern is super-linear. The leading `\/+` is greedy and
+ * unanchored at the start, so on a run of N slashes the engine retries from every offset and
+ * backtracks the whole run each time — O(N^2). `pathname` here comes straight off the request URL,
+ * which is attacker-controlled, so `/api/auth` + a few thousand slashes would burn CPU per request.
+ * A single reverse scan does the same job in one pass and one allocation.
+ */
+const trimTrailingSlashes = (path: string): string => {
+  let end = path.length;
+  while (end > 0 && path[end - 1] === "/") end--;
+  return path.slice(0, end);
+};
+
 export const createAuthPathLabeller = (declaredPaths: Iterable<string>): ((url: string) => string) => {
   // Only parameter-free declared paths may be emitted verbatim. Patterns still contribute their first
   // segment, so `/reset-password/<token>` degrades to a recognized `/reset-password/*` rather than to
@@ -72,7 +87,7 @@ export const createAuthPathLabeller = (declaredPaths: Iterable<string>): ((url: 
     // Trailing slashes are trimmed before matching: the declared set holds `/get-session`, so
     // `/api/auth/get-session/` would otherwise miss the exact match and degrade to `/get-session/*`,
     // splitting one endpoint across two facet values for nothing.
-    const authPath = pathname.slice(baseIndex + AUTH_BASE_PATH.length).replace(/\/+$/, "");
+    const authPath = trimTrailingSlashes(pathname.slice(baseIndex + AUTH_BASE_PATH.length));
     if (literalPaths.has(authPath)) return authPath;
 
     // `/<segment>/*`, not a bare segment: the emitted values all land in one Sentry facet, so a mix of

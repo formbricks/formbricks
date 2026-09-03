@@ -231,6 +231,7 @@ overrides:
 
 patchedDependencies:
   '@better-auth/oauth-provider@1.7.0': c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4
+  better-auth@1.7.0: 1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e
 
 importers:
 
@@ -355,7 +356,7 @@ importers:
         version: 1.7.0(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.2)(nanostores@1.3.0)
       '@better-auth/oauth-provider':
         specifier: 1.7.0
-        version: 1.7.0(patch_hash=c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4)(a7d5e9ad522ca47a6d8a16da19a4e45c)
+        version: 1.7.0(patch_hash=c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4)(ddb3752cb5b0f8e8c6d96ce106aeec89)
       '@better-auth/utils':
         specifier: 0.4.2
         version: 0.4.2
@@ -410,6 +411,9 @@ importers:
       '@formbricks/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@formbricks/survey-ui':
+        specifier: workspace:*
+        version: link:../../packages/survey-ui
       '@formbricks/surveys':
         specifier: workspace:*
         version: link:../../packages/surveys
@@ -598,7 +602,7 @@ importers:
         version: 3.0.3
       better-auth:
         specifier: 1.7.0
-        version: 1.7.0(@opentelemetry/api@1.9.0)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.20.0(@types/node@25.4.0))(next@16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.6)
+        version: 1.7.0(patch_hash=1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e)(@opentelemetry/api@1.9.0)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.20.0(@types/node@25.4.0))(next@16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.6)
       boring-avatars:
         specifier: 2.0.4
         version: 2.0.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -1113,6 +1117,9 @@ importers:
       prisma-json-types-generator:
         specifier: 4.1.1
         version: 4.1.1(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3)
+      squawk-cli:
+        specifier: 2.63.0
+        version: 2.63.0
       tsx:
         specifier: 'catalog:'
         version: 4.21.0
@@ -5967,6 +5974,31 @@ packages:
 
   '@sqltools/formatter@1.2.5':
     resolution: {integrity: sha512-Uy0+khmZqUrUGm5dmMqVlnvufZRSK0FbYzVgp0UMstm+F5+W2/jnEEQyc9vo1ZR/E5ZI/B1WjjoTqBqwJL6Krw==}
+
+  '@squawk-cli/darwin-arm64@2.63.0':
+    resolution: {integrity: sha512-YaSfsQ8c0bb93thcBmJWLOte/1MExUFn6mVWfSqjgaFHip0UGHa3X4oZJiCdk75f/Tw2GrGmAiLV2/eQqnYfUA==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@squawk-cli/darwin-x64@2.63.0':
+    resolution: {integrity: sha512-y23BkUAzD5VtxjCr2JGZz3j+gMVueyad6t4f8AfXV/cNp2CEY+5EmO7QAjXD9z8ro8Oye4F9aId9A5gCNsbh9A==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@squawk-cli/linux-arm64@2.63.0':
+    resolution: {integrity: sha512-ino85Bg5vL3XIHCBLadoQdaTIZlTg+oh9LriyejIGur7s15fhavDkwhCjqnEUKznGnqsx7x92yW2uDUbJM3fYw==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@squawk-cli/linux-x64@2.63.0':
+    resolution: {integrity: sha512-dh1IiQGs/7M9cQEHaC2JkV6lYrLoR5ytAyznRLxcBAfzExSfqEz/gPwc11dewzFZDq3G6TmKKVbMNhcWIhAsww==}
+    cpu: [x64]
+    os: [linux]
+
+  '@squawk-cli/win32-x64@2.63.0':
+    resolution: {integrity: sha512-7939Y/zW6ni0X/Zp19Mml8wS35eOsszgFT+RuZH5zYZwWvQxjEa00pc3baPugb9VIAIdWVMnJTjBcmFA31sKfg==}
+    cpu: [x64]
+    os: [win32]
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
@@ -11361,6 +11393,10 @@ packages:
     resolution: {integrity: sha512-qC9iz2FlN7DQl3+wjwn3802RTyjCx7sDvfQEXchwa6CWOx07/WVfh91gBmQ9fahw8snwGEWU3xGzOt4tFyHLxg==}
     engines: {node: '>= 0.6'}
 
+  squawk-cli@2.63.0:
+    resolution: {integrity: sha512-OR9UHzY3kSLoZCB4qk3iSHeEm9pwVccHSWnRggfvRKo/QAddkWJEyoXlIsz0gPAPpzsyk60WcaY4SkswZTXPVA==}
+    hasBin: true
+
   ssri@8.0.1:
     resolution: {integrity: sha512-97qShzy1AiyxvPNIkLWoGua7xoQzzPjQ0HAH4B0rWKo7SZ6USuPcrUiAFrws0UH8RrbWmgq3LMTObhPIHbbBeQ==}
     engines: {node: '>= 8'}
@@ -14051,12 +14087,12 @@ snapshots:
     optionalDependencies:
       mongodb: 7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7)
 
-  '@better-auth/oauth-provider@1.7.0(patch_hash=c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4)(a7d5e9ad522ca47a6d8a16da19a4e45c)':
+  '@better-auth/oauth-provider@1.7.0(patch_hash=c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4)(ddb3752cb5b0f8e8c6d96ce106aeec89)':
     dependencies:
       '@better-auth/core': 1.7.0(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.2)(nanostores@1.3.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
-      better-auth: 1.7.0(@opentelemetry/api@1.9.0)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.20.0(@types/node@25.4.0))(next@16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.6)
+      better-auth: 1.7.0(patch_hash=1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e)(@opentelemetry/api@1.9.0)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.20.0(@types/node@25.4.0))(next@16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.6)
       better-call: 1.4.0(zod@4.3.6)
       jose: 6.2.9
       zod: 4.3.6
@@ -18271,6 +18307,21 @@ snapshots:
 
   '@sqltools/formatter@1.2.5': {}
 
+  '@squawk-cli/darwin-arm64@2.63.0':
+    optional: true
+
+  '@squawk-cli/darwin-x64@2.63.0':
+    optional: true
+
+  '@squawk-cli/linux-arm64@2.63.0':
+    optional: true
+
+  '@squawk-cli/linux-x64@2.63.0':
+    optional: true
+
+  '@squawk-cli/win32-x64@2.63.0':
+    optional: true
+
   '@standard-schema/spec@1.1.0': {}
 
   '@standard-schema/utils@0.3.0': {}
@@ -19725,7 +19776,7 @@ snapshots:
       jsonpointer: 5.0.1
       leven: 3.1.0
 
-  better-auth@1.7.0(@opentelemetry/api@1.9.0)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.20.0(@types/node@25.4.0))(next@16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.6):
+  better-auth@1.7.0(patch_hash=1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e)(@opentelemetry/api@1.9.0)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.20.0(@types/node@25.4.0))(next@16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.6):
     dependencies:
       '@better-auth/core': 1.7.0(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.3.6))(jose@6.2.9)(kysely@0.29.2)(nanostores@1.3.0)
       '@better-auth/drizzle-adapter': 1.7.0(@better-auth/core@1.7.0(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.2)(nanostores@1.3.0))(@better-auth/utils@0.4.2)
@@ -24329,6 +24380,14 @@ snapshots:
     optional: true
 
   sqlstring@2.3.3: {}
+
+  squawk-cli@2.63.0:
+    optionalDependencies:
+      '@squawk-cli/darwin-arm64': 2.63.0
+      '@squawk-cli/darwin-x64': 2.63.0
+      '@squawk-cli/linux-arm64': 2.63.0
+      '@squawk-cli/linux-x64': 2.63.0
+      '@squawk-cli/win32-x64': 2.63.0
 
   ssri@8.0.1:
     dependencies:

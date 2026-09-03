@@ -81,14 +81,13 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   if (!selectedNode || !definition) return null;
 
   const blockedReasonType = getBlockedReason(isEditable, isReadOnly, status);
-  const blockedReason =
-    blockedReasonType === "readOnly"
-      ? t("workspace.workflows.edit_blocked_read_only")
-      : blockedReasonType === "archived"
-        ? t("workspace.workflows.edit_blocked_archived")
-        : blockedReasonType === "active"
-          ? t("workspace.workflows.edit_blocked_active")
-          : null;
+  // Inline literal t() calls so the translation-key scanner detects the keys.
+  const blockedReasonMessages: Record<TBlockedReason, string> = {
+    readOnly: t("workspace.workflows.edit_blocked_read_only"),
+    archived: t("workspace.workflows.edit_blocked_archived"),
+    active: t("workspace.workflows.edit_blocked_active"),
+  };
+  const blockedReason = blockedReasonType ? blockedReasonMessages[blockedReasonType] : null;
 
   const registryEntry = getNodeRegistryEntry(selectedNode);
   const ConfigForm = registryEntry.ConfigForm;
