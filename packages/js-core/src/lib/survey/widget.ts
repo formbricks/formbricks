@@ -18,12 +18,13 @@ import { type TTrackProperties } from "@/types/survey";
 
 let isSurveyRunning = false;
 
-// The survey handed to the renderer, held only while it is on screen. `closeSurvey` is the single
-// close path — the renderer's onClose, and tearDown on logout / error — but it is called without
-// arguments, so this is what lets the "formbricks_survey_closed" event name the survey it belongs
-// to. It is set when the widget actually renders (after the delay, after every skip check), so a
+// The surveys currently on screen, so each "formbricks_survey_closed" can name its own. A set
+// rather than a single id because a second survey can render over a live one: a fired TimeoutStack
+// entry is never pruned, so a later `checkPageUrl` releases `isSurveyRunning` while the first
+// survey is still up, and the renderer appends a second container instead of replacing the first.
+// Ids are added when the widget actually renders — after the delay, after every skip check — so a
 // survey that was never shown never reports a close.
-let activeSurveyId: string | null = null;
+const openSurveyIds = new Set<string>();
 
 export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
@@ -168,7 +169,15 @@ export const renderWidget = async (
   }
 
   const timeoutId = setTimeout(() => {
-    activeSurveyId = survey.id;
+    openSurveyIds.add(survey.id);
+
+    // Render-gated, paired with "formbricks_survey_closed" off the same set so a host counting opens
+    // against closes cannot drift. Deliberately not gated on the display POST: the renderer only
+    // logs a failed one and leaves the survey on screen, so waiting for persistence would report a
+    // close for a survey that never reported an open — and a slow POST against a quick dismissal
+    // would deliver the two out of order. What was persisted is the dashboard's Displays count; this
+    // event is what the respondent saw.
+    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: survey.id });
 
     formbricksSurveys.renderSurvey({
       appUrl: config.get().appUrl,
@@ -219,12 +228,6 @@ export const renderWidget = async (
         // coalesced) so interaction targeting is current by the time this survey closes and the next
         // trigger evaluates. The display is already persisted (fires after createDisplay).
         refreshSegmentsAfterInteraction(previousConfig.user.data.userId, survey, "onDisplay");
-
-        // Emitted LAST, after the SDK's own bookkeeping: the caller swallows throws, so anything the
-        // emitter reaches on the host page must never be able to skip the display update above —
-        // that would leave display caps evaluating stale state and the survey re-showing. The
-        // emitter guards its transports too; this ordering is the second wall.
-        emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: survey.id });
       },
       onResponseCreated: (responseId?: string) => {
         const responses = config.get().user.data.responses;
@@ -275,7 +278,11 @@ export const renderWidget = async (
           finished: true,
         });
       },
-      onClose: closeSurvey,
+      // Bound here, not passed as `closeSurvey`: the renderer calls onClose with no arguments, and
+      // this closure is the only place that still knows which survey the container belongs to.
+      onClose: () => {
+        closeSurvey(survey.id);
+      },
       getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
     });
   }, survey.delay * 1000);
@@ -285,7 +292,7 @@ export const renderWidget = async (
   }
 };
 
-export const closeSurvey = (): void => {
+export const closeSurvey = (surveyId?: string): void => {
   const config = Config.getInstance();
 
   // remove the survey modal container from DOM
@@ -303,11 +310,12 @@ export const closeSurvey = (): void => {
 
   setIsSurveyRunning(false);
 
-  // Last, so host handlers observe settled state. Guarded on activeSurveyId: closeSurvey also runs
-  // on paths where nothing is open (tearDown), and it must report each rendered survey exactly once.
-  if (activeSurveyId) {
-    const closedSurveyId = activeSurveyId;
-    activeSurveyId = null;
+  // Last, so host handlers observe settled state. `surveyId` is the renderer's own onClose id; the
+  // argument-less callers (tearDown on logout / error) close whatever is on screen. The delete both
+  // drops the survey and answers "was it still open?", which is what keeps this exactly once per
+  // rendered survey.
+  for (const closedSurveyId of surveyId === undefined ? [...openSurveyIds] : [surveyId]) {
+    if (!openSurveyIds.delete(closedSurveyId)) continue;
     emitFormbricksEvent(FORMBRICKS_EVENTS.surveyClosed, { surveyId: closedSurveyId });
   }
 };

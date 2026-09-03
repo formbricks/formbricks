@@ -904,7 +904,7 @@ describe("widget-file", () => {
       };
     };
 
-    test("survey_shown on display; response_submitted with the acked responseId on create and finish", async () => {
+    test("survey_shown on render; response_submitted with the acked responseId on create and finish", async () => {
       delete (window as { dataLayer?: unknown }).dataLayer;
       const callbacks = await renderAndGetEventCallbacks();
 
@@ -981,17 +981,18 @@ describe("widget-file", () => {
       delete (window as { dataLayer?: unknown }).dataLayer;
     });
 
-    test("notifies formbricks_survey_shown subscribers once the display is created, not on render", async () => {
+    test("notifies formbricks_survey_shown subscribers when the survey renders, not when the display acks", async () => {
       const handler = vi.fn();
       onFormbricksEvent("formbricks_survey_shown", handler);
 
       const callbacks = await renderAndGetLifecycleCallbacks();
-      expect(handler).not.toHaveBeenCalled();
-
-      callbacks.onDisplayCreated();
 
       expect(handler).toHaveBeenCalledTimes(1);
       expect(handler).toHaveBeenCalledWith({ surveyId: mockSurvey.id });
+
+      // The display ack does its own bookkeeping; it must not report a second appearance.
+      callbacks.onDisplayCreated();
+      expect(handler).toHaveBeenCalledTimes(1);
     });
 
     test("notifies formbricks_response_submitted subscribers with the server-acked responseId", async () => {
@@ -1018,15 +1019,61 @@ describe("widget-file", () => {
 
       expect(handler).toHaveBeenCalledTimes(1);
       expect(handler).toHaveBeenCalledWith({ surveyId: mockSurvey.id });
-      // The same moment reaches GTM through the dataLayer transport.
+      // The same moment reaches GTM through the dataLayer transport, paired with the render's shown.
       const base = { workspaceId: null, surveyId: null, responseId: null, finished: null, action: null };
       expect(window.dataLayer).toEqual([
+        { event: "formbricks_survey_shown", formbricks: { ...base, surveyId: mockSurvey.id } },
         { event: "formbricks_survey_closed", formbricks: { ...base, surveyId: mockSurvey.id } },
       ]);
 
       widget.closeSurvey();
       expect(handler).toHaveBeenCalledTimes(1);
-      expect(window.dataLayer).toHaveLength(1);
+      expect(window.dataLayer).toHaveLength(2);
+    });
+
+    test("each close names its own survey when a second one renders over the first", async () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_closed", handler);
+
+      const surveyA = await renderAndGetLifecycleCallbacks();
+
+      // What no-code-action.ts does when the SPA navigates away from a still-open pageView survey: a
+      // fired timeout entry is never pruned, so the guard is released while A is still on screen and
+      // the renderer appends a second container rather than replacing A's.
+      widget.setIsSurveyRunning(false);
+      vi.useFakeTimers();
+      await widget.renderWidget({
+        ...mockSurvey,
+        id: "survey_B",
+        delay: 0,
+      } as unknown as TWorkspaceStateSurvey);
+      vi.advanceTimersByTime(0);
+      vi.useRealTimers();
+
+      const renderCalls = (getFormbricksSurveys().renderSurvey as Mock).mock.calls;
+      const surveyB = renderCalls[renderCalls.length - 1][0] as { onClose: () => void };
+
+      // Each close reports only its own survey: A's must not carry B's id, nor close B on its behalf.
+      surveyA.onClose();
+      expect(handler.mock.calls).toEqual([[{ surveyId: mockSurvey.id }]]);
+
+      surveyB.onClose();
+      expect(handler.mock.calls).toEqual([[{ surveyId: mockSurvey.id }], [{ surveyId: "survey_B" }]]);
+    });
+
+    test("a close landing after logout already tore the survey down still emits once", async () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_closed", handler);
+
+      const callbacks = await renderAndGetLifecycleCallbacks();
+
+      // tearDown on logout closes whatever is on screen without knowing which survey that is; the
+      // renderer's own onClose still fires as the modal unmounts.
+      widget.closeSurvey();
+      callbacks.onClose();
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({ surveyId: mockSurvey.id });
     });
 
     test("emits nothing when closeSurvey runs with no survey on screen", () => {
@@ -1057,10 +1104,14 @@ describe("widget-file", () => {
 
       const callbacks = await renderAndGetLifecycleCallbacks();
 
+      // The throw now lands while the widget is rendering, so the survey still has to reach the screen.
+      expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalled();
+
       expect(() => {
         callbacks.onDisplayCreated();
+        callbacks.onClose();
       }).not.toThrow();
-      expect(errorSpy).toHaveBeenCalled();
     });
   });
 
