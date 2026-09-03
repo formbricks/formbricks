@@ -604,7 +604,7 @@ await Formbricks.logout();
 ```
 
 <Note>
-  Prefer to initialize before any UI mounts? Call `Formbricks.setup(appUrl: ..., workspaceId: ...)` directly — the widget still needs to be in the tree to render surveys, but it won't re-run setup (setup is idempotent). All static methods are sequenced through an internal command queue, so calls run in submission order and return a `Future<Result<void, FormbricksError>>`.
+  Prefer to initialize before any UI mounts? Call `Formbricks.setup(appUrl: ..., workspaceId: ...)` directly — the widget still needs to be in the tree to render surveys, but it won't re-run setup (setup is idempotent). `setup`, `track`, `setUserId`, `setAttribute`, `setAttributes`, `setLanguage` and `logout` are sequenced through an internal command queue, so they run in submission order and return a `Future<Result<void, FormbricksError>>`. `setEmbeddedData` and `clearEmbeddedData` are the exceptions: they are synchronous and return `void`, so a context push at launch is not dropped while setup is still running.
 </Note>
 
 ### Public API
