@@ -1,7 +1,7 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import { TActionClassPageUrlRule } from "@formbricks/types/action-classes";
-import { getValidatedCallbackUrl, isStringUrl, testURLmatch } from "./url";
+import { MAX_CALLBACK_URL_LENGTH, getValidatedCallbackUrl, isStringUrl, testURLmatch } from "./url";
 
 afterEach(() => {
   cleanup();
@@ -111,6 +111,34 @@ describe("getValidatedCallbackUrl", () => {
     expect(getValidatedCallbackUrl("https://webapp.example.com/dashboard", WEBAPP_URL)).toBe(
       "https://webapp.example.com/dashboard"
     );
+  });
+
+  /**
+   * A callback rides in the request line, and nginx returns a bare 414 once that exceeds one 8K buffer.
+   * Rejecting it here gives every caller something to act on: `proxy.ts` answers 400, the auth flows
+   * fall back to WEBAPP_URL (ENG-2783).
+   */
+  test("rejects a callback URL longer than the cap", () => {
+    const tooLong = `https://webapp.example.com/x?padding=${"a".repeat(MAX_CALLBACK_URL_LENGTH)}`;
+
+    expect(tooLong.length).toBeGreaterThan(MAX_CALLBACK_URL_LENGTH);
+    expect(getValidatedCallbackUrl(tooLong, WEBAPP_URL)).toBeNull();
+  });
+
+  test("accepts a callback URL right at the cap", () => {
+    const prefix = "https://webapp.example.com/x?padding=";
+    const atCap = prefix + "a".repeat(MAX_CALLBACK_URL_LENGTH - prefix.length);
+
+    expect(atCap).toHaveLength(MAX_CALLBACK_URL_LENGTH);
+    expect(getValidatedCallbackUrl(atCap, WEBAPP_URL)).toBe(atCap);
+  });
+
+  test("leaves room for the widest callback the app actually mints", () => {
+    // An invite link, `/invite?token=<jwt>`, is the longest legitimate callback in the app at roughly
+    // 640 characters with a long address. If that ever approaches the cap, this fails before users do.
+    const inviteCallbackUrl = `https://webapp.example.com/invite?token=${"t".repeat(600)}`;
+
+    expect(getValidatedCallbackUrl(inviteCallbackUrl, WEBAPP_URL)).toBe(inviteCallbackUrl);
   });
 });
 

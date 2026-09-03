@@ -34,12 +34,32 @@ export const testURLmatch = (
   }
 };
 
+/**
+ * Upper bound on a callback URL, in characters (ENG-2783).
+ *
+ * A callback rides in a request line, and nginx's `large_client_header_buffers` defaults to `4 8k` with
+ * the rule that a request line must fit inside ONE buffer — so an over-long callback comes back as a
+ * bare `414 Request-URI Too Large`, a blank page with nothing to act on. Rejecting it here turns that
+ * into something diagnosable instead: `proxy.ts` answers `400 {"error":"Invalid callback URL"}`, and
+ * the auth flows fall back to `WEBAPP_URL` the same way they do for any other invalid callback.
+ *
+ * 2048 is the conventional safe maximum, and it is not a new constraint on this codebase:
+ * `resendVerificationEmailAction` has capped its callback at 2000 since it was written. The widest
+ * legitimate callback in the app is an invite link, `/invite?token=<jwt>`, which measures ~640
+ * characters with a long address — so this leaves roughly threefold headroom.
+ */
+export const MAX_CALLBACK_URL_LENGTH = 2048;
+
 // Helper function to validate callback URLs
 export const getValidatedCallbackUrl = (
   url: string | null | undefined,
   WEBAPP_URL: string
 ): string | null => {
   if (!url) {
+    return null;
+  }
+
+  if (url.length > MAX_CALLBACK_URL_LENGTH) {
     return null;
   }
 
