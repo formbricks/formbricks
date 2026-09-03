@@ -1925,8 +1925,8 @@ checksums:
     workspace/app-connection/install_method_wordpress_step_3: 5992549ac6b01a3260f4fb3cf9014179
     workspace/app-connection/install_method_wordpress_step_4: c2f4e28a4b3455953bd6316a0ef7ef4a
     workspace/app-connection/invite_banner_button: c4312d52bdcb8c0041351f9e3be8f060
-    workspace/app-connection/invite_banner_description: 222ef49a2d09807d90097918f61269b6
-    workspace/app-connection/invite_banner_title: 39d06cd0bb682a189ffec73cd479cb2f
+    workspace/app-connection/invite_banner_description: c64b56903b82366b3b6ed0f57f424c6d
+    workspace/app-connection/invite_banner_title: 7ef58e493b2a20d9c5fc8d9f5f2d23d8
     workspace/app-connection/receiving_data: 9f2a48c0b0278861add70b526061264c
     workspace/app-connection/recheck: f95f2bbe6990a123d60255c87bdd59f7
     workspace/app-connection/sdk_connection_details: 75cd448f46737ebf6d7fa5418a3ce440
