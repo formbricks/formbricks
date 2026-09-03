@@ -813,6 +813,49 @@ describe("sso-recovery", () => {
     expect(syncSsoIdentityForUser).toHaveBeenCalledOnce();
   });
 
+  /**
+   * The failure redirect must not tell an unauthenticated caller whether a state id exists. Carrying the
+   * stored callback on the pre-session branches did exactly that — a held id got the record's callback
+   * back, an unknown one got a bare redirect — and leaked where that user was headed with it.
+   */
+  test.each([
+    ["missing_session", { stateId: "test-state" }],
+    ["session_user_mismatch", { stateId: "test-state", sessionUserId: "someone-else" }],
+  ])("withholds the stored callback from a caller who is not the intent's user (%s)", async (_r, args) => {
+    await expect(completeSsoRecovery(args)).rejects.toMatchObject({ callbackUrl: undefined });
+  });
+
+  test("withholds the stored callback when the provider is unusable, before any session is checked", async () => {
+    mocks.readSsoRecoveryIntent.mockResolvedValue({
+      userId: "user_1",
+      email: "john.doe@example.com",
+      provider: "unknown-provider",
+      providerAccountId: "provider-account-1",
+      callbackUrl: "http://localhost:3000/environments/env_1",
+      createdAt: Date.now(),
+    });
+
+    await expect(
+      completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })
+    ).rejects.toMatchObject({ callbackUrl: undefined });
+  });
+
+  test("returns the callback once the caller is proven to be the intent's own user", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "someone.else@example.com",
+      locale: "en-US",
+      emailVerified: true,
+      isActive: true,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+    } as any);
+
+    await expect(
+      completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })
+    ).rejects.toMatchObject({ callbackUrl: "http://localhost:3000/environments/env_1" });
+  });
+
   test("preserves only safe callback URLs in the failure redirect", () => {
     expect(getSsoRecoveryFailureRedirectUrl("http://localhost:3000/invite?token=invite-token")).toBe(
       "http://localhost:3000/auth/login?error=OAuthAccountNotLinked&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Finvite%3Ftoken%3Dinvite-token"
