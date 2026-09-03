@@ -68,6 +68,44 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TLegacyConfig } =
   return { changed: false };
 };
 
+/**
+ * Rebuild a legacy `user` into a complete `TUserState`.
+ *
+ * A legacy blob is unchecked JSON: `data` can be absent, or present with missing fields or wrong
+ * types. Spreading it over the default is not enough on its own — a spread only fills keys that are
+ * absent, so a stored `displays: null` would win over the default and reach `filterSurveys`, which
+ * calls `.filter` on it. The three fields it destructures as arrays are therefore type-checked.
+ *
+ * A repaired state is marked already-expired rather than trusted, because a half-empty one is not
+ * merely incomplete, it is wrong: an identified user completed to `segments: []` is filtered down
+ * to no surveys at all. Expiring it makes setup re-sync instead of rendering nothing.
+ */
+const completeLegacyUserState = (legacyUser: TLegacyConfig["user"]): TUserState => {
+  const legacyData = legacyUser?.data;
+
+  if (!legacyData) {
+    return DEFAULT_USER_STATE_NO_USER_ID;
+  }
+
+  const defaults = DEFAULT_USER_STATE_NO_USER_ID.data;
+  const wasRepaired =
+    !Array.isArray(legacyData.segments) ||
+    !Array.isArray(legacyData.displays) ||
+    !Array.isArray(legacyData.responses);
+
+  return {
+    // `new Date(0)` reads as expired wherever `expiresAt` is checked, which is what forces the sync.
+    expiresAt: wasRepaired ? new Date(0) : (legacyUser.expiresAt ?? null),
+    data: {
+      ...defaults,
+      ...legacyData,
+      segments: Array.isArray(legacyData.segments) ? legacyData.segments : defaults.segments,
+      displays: Array.isArray(legacyData.displays) ? legacyData.displays : defaults.displays,
+      responses: Array.isArray(legacyData.responses) ? legacyData.responses : defaults.responses,
+    },
+  };
+};
+
 export const setup = async (
   configInput: TConfigInput | (TConfigInput & { userId: string; attributes: Record<string, string> })
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
@@ -90,22 +128,7 @@ export const setup = async (
     // just wiped storage, so skipping the write leaves no config at all and the fresh-setup path
     // below would silently downgrade an identified user to anonymous.
     if (newState) {
-      // Legacy configs could be persisted without a user state, or with a user missing `data` —
-      // substitute the default so downstream `config.user` reads keep working and the resync path
-      // still runs.
-      const legacyUser = newState.user;
-      config.update({
-        ...newState,
-        user: legacyUser?.data
-          ? {
-              expiresAt: legacyUser.expiresAt ?? null,
-              // A legacy `data` is unchecked JSON: `Partial<TUserState>` only makes `data` itself
-              // optional, so a present-but-incomplete `data` type-checks while missing the arrays
-              // `filterSurveys` destructures. Complete it from the default instead of trusting it.
-              data: { ...DEFAULT_USER_STATE_NO_USER_ID.data, ...legacyUser.data },
-            }
-          : DEFAULT_USER_STATE_NO_USER_ID,
-      });
+      config.update({ ...newState, user: completeLegacyUserState(newState.user) });
     }
   }
 
@@ -305,11 +328,14 @@ export const setup = async (
       // A migrated legacy config reaches this branch whenever it carried no workspace state to
       // reuse. It can still carry an identified user, so fall back to that id when setup was not
       // given one — otherwise the migration would turn an identified user into an anonymous one.
-      // Only for the workspace it was migrated for: a different `effectiveId` is a different app.
-      const migratedUserId =
-        changed && existingConfig?.workspaceId === effectiveId ? existingConfig.user.data.userId : null;
+      // Scoped to the config the migration just wrote: another workspace or app URL is another
+      // integration, and its user must not be carried across.
+      const migratedUser =
+        changed && existingConfig?.workspaceId === effectiveId && existingConfig.appUrl === configInput.appUrl
+          ? existingConfig.user
+          : null;
       const setupUserId = "userId" in configInput && configInput.userId ? configInput.userId : null;
-      const userId = setupUserId ?? migratedUserId;
+      const userId = setupUserId ?? migratedUser?.data.userId ?? null;
 
       if (userId) {
         const updatesResponse = await sendUpdatesToBackend({
@@ -328,6 +354,14 @@ export const setup = async (
           logger.error(
             `Error updating user state: ${updatesResponse.error.code} - ${updatesResponse.error.responseMessage ?? ""}`
           );
+
+          // The migration is one-shot: the config just written no longer looks legacy, so `changed`
+          // is false on every later load and this id is gone for good if it is not kept now. Keep
+          // the migrated state, expired, so the next load retries the sync instead of persisting
+          // the default and stranding the user as anonymous.
+          if (!setupUserId && migratedUser) {
+            userState = { ...migratedUser, expiresAt: new Date(0) };
+          }
         }
       }
 

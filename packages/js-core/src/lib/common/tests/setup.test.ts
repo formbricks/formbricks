@@ -78,6 +78,34 @@ vi.mock("@/lib/survey/widget", () => ({
   addLiveRegionContainer: vi.fn(),
 }));
 
+interface StatefulConfigMock {
+  get: Mock;
+  update: Mock;
+  resetConfig: Mock;
+  read: () => TConfig | undefined;
+}
+
+// Stateful stand-in for Config: `get()` throws until something is written and then returns the last
+// value written, like the real one. A mock whose `get()` always throws cannot observe whether state
+// survived the migration at all, which is the whole question these tests ask.
+const createStatefulConfigMock = (): StatefulConfigMock => {
+  let stored: TConfig | undefined;
+
+  return {
+    get: vi.fn(() => {
+      if (!stored) throw new Error("config is null");
+      return stored;
+    }),
+    update: vi.fn((next: TConfigUpdateInput) => {
+      stored = { ...next, status: { value: "success", expiresAt: null } };
+    }),
+    resetConfig: vi.fn(() => {
+      stored = undefined;
+    }),
+    read: () => stored,
+  };
+};
+
 describe("setup.ts", () => {
   let getInstanceConfigMock: MockInstance<() => Config>;
   let getInstanceLoggerMock: MockInstance<() => Logger>;
@@ -562,21 +590,7 @@ describe("setup.ts", () => {
         })
       );
 
-      // Stateful, like the real Config: `get()` throws until something is written, and returns
-      // whatever `update()` last stored. A `get()` that always throws would hide the bug.
-      let stored: TConfig | undefined;
-      const mockConfig = {
-        get: vi.fn(() => {
-          if (!stored) throw new Error("config is null");
-          return stored;
-        }),
-        update: vi.fn((next: TConfigUpdateInput) => {
-          stored = { ...next, status: { value: "success", expiresAt: null } };
-        }),
-        resetConfig: vi.fn(() => {
-          stored = undefined;
-        }),
-      };
+      const mockConfig = createStatefulConfigMock();
 
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
 
@@ -602,31 +616,34 @@ describe("setup.ts", () => {
       expect(sendUpdatesToBackend).toHaveBeenCalledWith(
         expect.objectContaining({ updates: { userId: "user_1" } })
       );
-      expect(stored?.user.data.userId).toBe("user_1");
+      expect(mockConfig.read()?.user.data.userId).toBe("user_1");
     });
 
-    test("does not carry a migrated user into a different workspace", async () => {
+    // The migrated config below belongs to ws_123 on https://urlX. Either mismatch means a
+    // different integration, whose user must not be carried across.
+    test.each([
+      { label: "workspace", input: { workspaceId: "ws_999", appUrl: "https://urlX" } },
+      { label: "app URL", input: { workspaceId: "ws_123", appUrl: "https://other.url" } },
+    ])("does not carry a migrated user into a different $label", async ({ input }) => {
       (localStorage.getItem as unknown as Mock).mockReturnValueOnce(
         JSON.stringify({
           appUrl: "https://urlX",
           environmentId: "ws_123",
-          user: { expiresAt: null, data: { userId: "user_1", contactId: "contact_1", segments: [] } },
+          user: {
+            expiresAt: null,
+            data: {
+              userId: "user_1",
+              contactId: "contact_1",
+              segments: [],
+              displays: [],
+              responses: [],
+              lastDisplayAt: null,
+            },
+          },
         })
       );
 
-      let stored: TConfig | undefined;
-      const mockConfig = {
-        get: vi.fn(() => {
-          if (!stored) throw new Error("config is null");
-          return stored;
-        }),
-        update: vi.fn((next: TConfigUpdateInput) => {
-          stored = { ...next, status: { value: "success", expiresAt: null } };
-        }),
-        resetConfig: vi.fn(() => {
-          stored = undefined;
-        }),
-      };
+      const mockConfig = createStatefulConfigMock();
 
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
 
@@ -636,12 +653,127 @@ describe("setup.ts", () => {
       });
       (filterSurveys as unknown as Mock).mockReturnValueOnce([]);
 
-      // the migrated config belongs to ws_123; this setup call is for a different workspace
-      const result = await setup({ workspaceId: "ws_999", appUrl: "https://urlX" });
+      const result = await setup(input);
 
       expect(result.ok).toBe(true);
       expect(sendUpdatesToBackend).not.toHaveBeenCalled();
-      expect(stored?.user).toEqual(DEFAULT_USER_STATE_NO_USER_ID);
+      expect(mockConfig.read()?.user.data.userId).toBeNull();
+    });
+
+    test("keeps the migrated user when the identify call fails", async () => {
+      const legacyUserData = {
+        userId: "user_1",
+        contactId: "contact_1",
+        segments: ["seg_1"],
+        displays: [],
+        responses: [],
+        lastDisplayAt: null,
+      };
+      (localStorage.getItem as unknown as Mock).mockReturnValueOnce(
+        JSON.stringify({
+          appUrl: "https://urlX",
+          environmentId: "ws_123",
+          user: { expiresAt: null, data: legacyUserData },
+        })
+      );
+
+      const mockConfig = createStatefulConfigMock();
+
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+      (fetchWorkspaceState as unknown as Mock).mockResolvedValueOnce({
+        ok: true,
+        data: { data: { surveys: [], expiresAt: new Date(Date.now() + 60000) } },
+      });
+      (sendUpdatesToBackend as unknown as Mock).mockResolvedValueOnce({
+        ok: false,
+        error: { code: "network_error", responseMessage: "boom" },
+      });
+      (filterSurveys as unknown as Mock).mockReturnValueOnce([]);
+
+      const result = await setup({ workspaceId: "ws_123", appUrl: "https://urlX" });
+
+      expect(result.ok).toBe(true);
+      // the migration is one-shot, so a failed sync must not persist the anonymous default
+      expect(mockConfig.read()?.user.data).toEqual(legacyUserData);
+      // kept expired, so the next load retries the sync
+      expect(mockConfig.read()?.user.expiresAt).toEqual(new Date(0));
+    });
+
+    test("repairs a legacy user whose data holds the wrong types", async () => {
+      (localStorage.getItem as unknown as Mock).mockReturnValueOnce(
+        JSON.stringify({
+          appUrl: "https://urlX",
+          environmentId: "ws_123",
+          // a spread over the default keeps this null, and `filterSurveys` calls `.filter` on it
+          user: { data: { userId: "user_1", displays: null, responses: [], segments: [] } },
+        })
+      );
+
+      const mockConfig = createStatefulConfigMock();
+
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+      (fetchWorkspaceState as unknown as Mock).mockResolvedValueOnce({
+        ok: true,
+        data: { data: { surveys: [], expiresAt: new Date(Date.now() + 60000) } },
+      });
+      (sendUpdatesToBackend as unknown as Mock).mockResolvedValueOnce({
+        ok: false,
+        error: { code: "network_error", responseMessage: "boom" },
+      });
+      (filterSurveys as unknown as Mock).mockReturnValueOnce([]);
+
+      const result = await setup({ workspaceId: "ws_123", appUrl: "https://urlX" });
+
+      expect(result.ok).toBe(true);
+      const [migrated] = mockConfig.update.mock.calls[0] as [TConfigUpdateInput];
+      expect(migrated.user.data.displays).toEqual([]);
+    });
+
+    test("re-syncs a migrated user whose data had to be completed", async () => {
+      // `segments` is missing. Completing it to [] and trusting it would send an identified user
+      // through `filterSurveys`'s `if (!segments.length) return []` — no surveys at all.
+      (localStorage.getItem as unknown as Mock).mockReturnValueOnce(
+        JSON.stringify({
+          appUrl: "https://urlX",
+          environmentId: "ws_123",
+          environment: {
+            expiresAt: new Date(Date.now() + 60000).toISOString(),
+            data: { surveys: [], settings: {} },
+          },
+          user: {
+            // not expired on its own — only the repair marks it for a re-sync
+            expiresAt: new Date(Date.now() + 60000).toISOString(),
+            data: { userId: "user_1", contactId: "contact_1", displays: [], responses: [] },
+          },
+        })
+      );
+
+      const mockConfig = createStatefulConfigMock();
+
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+      (isNowExpired as unknown as Mock).mockImplementation(
+        (date: Date) => new Date(date).getTime() < Date.now()
+      );
+      (sendUpdatesToBackend as unknown as Mock).mockResolvedValueOnce({
+        ok: true,
+        data: {
+          state: {
+            expiresAt: new Date(Date.now() + 60000),
+            data: { userId: "user_1", segments: ["seg_1"], displays: [], responses: [] },
+          },
+        },
+      });
+      (filterSurveys as unknown as Mock).mockReturnValueOnce([]);
+
+      const result = await setup({ workspaceId: "ws_123", appUrl: "https://urlX" });
+
+      expect(result.ok).toBe(true);
+      expect(sendUpdatesToBackend).toHaveBeenCalledWith(
+        expect.objectContaining({ updates: { userId: "user_1" } })
+      );
+      expect(mockConfig.read()?.user.data.segments).toEqual(["seg_1"]);
     });
 
     test("completes a legacy user whose data is present but empty", async () => {
@@ -674,10 +806,22 @@ describe("setup.ts", () => {
       const result = await setup({ workspaceId: "ws_123", appUrl: "https://urlX" });
 
       expect(result.ok).toBe(true);
-      // the empty data was completed from the default instead of being trusted as-is
+      // completed from the default, and expired so setup re-syncs rather than trusting the repair
       expect(mockConfig.update).toHaveBeenNthCalledWith(
         1,
-        expect.objectContaining({ user: DEFAULT_USER_STATE_NO_USER_ID })
+        expect.objectContaining({
+          user: {
+            expiresAt: new Date(0),
+            data: {
+              userId: null,
+              contactId: null,
+              segments: [],
+              displays: [],
+              responses: [],
+              lastDisplayAt: null,
+            },
+          },
+        })
       );
     });
 
