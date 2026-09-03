@@ -1954,7 +1954,7 @@
       "install_method_ai_step_1": "将下面的提示复制到你的 AI 编码助手中，例如 Cursor、Claude Code 或 GitHub Copilot。",
       "install_method_ai_step_2": "重新加载页面。下方的小部件状态应变为绿色。",
       "install_method_android": "Android",
-      "install_method_android_step_1": "将依赖项添加到你的 build.gradle.kts 文件中：implementation(\"com.formbricks:android:2.1.0\")。",
+      "install_method_android_step_1": "将 mavenCentral() 添加到你的仓库中，并将依赖项添加到 build.gradle.kts：implementation(\"com.formbricks:android:2.1.0\")。",
       "install_method_android_step_2": "使用下面的代码片段，用你的工作区 ID 初始化 SDK。",
       "install_method_flutter": "Flutter",
       "install_method_flutter_step_1": "安装软件包：flutter pub add formbricks。",

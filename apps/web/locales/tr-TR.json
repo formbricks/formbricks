@@ -1954,7 +1954,7 @@
       "install_method_ai_step_1": "Aşağıdaki komutu Cursor, Claude Code veya GitHub Copilot gibi AI kodlama asistanına kopyala.",
       "install_method_ai_step_2": "Sayfanı yenile. Aşağıdaki widget durumu yeşile dönmeli.",
       "install_method_android": "Android",
-      "install_method_android_step_1": "Bağımlılığı build.gradle.kts dosyana ekle: implementation(\"com.formbricks:android:2.1.0\").",
+      "install_method_android_step_1": "Depolarınıza mavenCentral() ekleyin ve build.gradle.kts dosyasına bağımlılığı ekleyin: implementation(\"com.formbricks:android:2.1.0\").",
       "install_method_android_step_2": "Aşağıdaki kod parçacığını kullanarak SDK'yı Workspace ID'inle başlat.",
       "install_method_flutter": "Flutter",
       "install_method_flutter_step_1": "Paketi yükle: flutter pub add formbricks.",

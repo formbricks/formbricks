@@ -1954,7 +1954,7 @@
       "install_method_ai_step_1": "將下方提示複製到你的 AI 程式設計助理中，例如 Cursor、Claude Code 或 GitHub Copilot。",
       "install_method_ai_step_2": "重新載入頁面。下方的小工具狀態應該會變成綠色。",
       "install_method_android": "Android",
-      "install_method_android_step_1": "將依賴項加入你的 build.gradle.kts：implementation(\"com.formbricks:android:2.1.0\")。",
+      "install_method_android_step_1": "將 mavenCentral() 加入你的儲存庫，並在 build.gradle.kts 中加入依賴項：implementation(\"com.formbricks:android:2.1.0\")。",
       "install_method_android_step_2": "使用下方程式碼片段以你的工作區 ID 初始化 SDK。",
       "install_method_flutter": "Flutter",
       "install_method_flutter_step_1": "安裝套件：flutter pub add formbricks。",

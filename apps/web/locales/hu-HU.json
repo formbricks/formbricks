@@ -1954,7 +1954,7 @@
       "install_method_ai_step_1": "Másolja be az alábbi utasítást az MI kódolási asszisztensébe, például a Cursor, Claude Code vagy a GitHub Copilot alkalmazásba.",
       "install_method_ai_step_2": "Töltse újra az oldalát. Az alábbi widget állapotának zöldre kell váltania.",
       "install_method_android": "Android",
-      "install_method_android_step_1": "Adja hozzá a függőséget a build.gradle.kts fájlhoz: implementation(\"com.formbricks:android:2.1.0\").",
+      "install_method_android_step_1": "Adja hozzá a mavenCentral() elemet a tárolóihoz és a függőséget a build.gradle.kts fájlhoz: implementation(\"com.formbricks:android:2.1.0\").",
       "install_method_android_step_2": "Inicializálja az SDK-t a Workspace ID-jával az alábbi kódrészlet használatával.",
       "install_method_flutter": "Flutter",
       "install_method_flutter_step_1": "Telepítse a csomagot: flutter pub add formbricks.",

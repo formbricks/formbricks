@@ -1954,7 +1954,7 @@
       "install_method_ai_step_1": "Kopiera prompten nedan till din AI-kodassistent, som Cursor, Claude Code eller GitHub Copilot.",
       "install_method_ai_step_2": "Ladda om din sida. Widgetstatusen nedan bör bli grön.",
       "install_method_android": "Android",
-      "install_method_android_step_1": "Lägg till beroendet i din build.gradle.kts: implementation(\"com.formbricks:android:2.1.0\").",
+      "install_method_android_step_1": "Lägg till mavenCentral() i dina repositories och beroendet i build.gradle.kts: implementation(\"com.formbricks:android:2.1.0\").",
       "install_method_android_step_2": "Initiera SDK:n med ditt Workspace ID genom att använda kodavsnittet nedan.",
       "install_method_flutter": "Flutter",
       "install_method_flutter_step_1": "Installera paketet: flutter pub add formbricks.",

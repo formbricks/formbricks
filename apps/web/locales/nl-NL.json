@@ -1954,7 +1954,7 @@
       "install_method_ai_step_1": "Kopieer de onderstaande prompt naar je AI-codeerassistent, zoals Cursor, Claude Code of GitHub Copilot.",
       "install_method_ai_step_2": "Herlaad je pagina. De widgetstatus hieronder zou groen moeten worden.",
       "install_method_android": "Android",
-      "install_method_android_step_1": "Voeg de afhankelijkheid toe aan je build.gradle.kts: implementation(\"com.formbricks:android:2.1.0\").",
+      "install_method_android_step_1": "Voeg mavenCentral() toe aan je repositories en de dependency aan build.gradle.kts: implementation(\"com.formbricks:android:2.1.0\").",
       "install_method_android_step_2": "Initialiseer de SDK met je Workspace ID met behulp van onderstaand codefragment.",
       "install_method_flutter": "Flutter",
       "install_method_flutter_step_1": "Installeer het pakket: flutter pub add formbricks.",

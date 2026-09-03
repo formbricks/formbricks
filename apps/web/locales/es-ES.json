@@ -1954,7 +1954,7 @@
       "install_method_ai_step_1": "Copia el prompt que aparece a continuación en tu asistente de codificación de IA, como Cursor, Claude Code o GitHub Copilot.",
       "install_method_ai_step_2": "Recarga tu página. El estado del widget que aparece a continuación debería volverse verde.",
       "install_method_android": "Android",
-      "install_method_android_step_1": "Añade la dependencia a tu build.gradle.kts: implementation(\"com.formbricks:android:2.1.0\").",
+      "install_method_android_step_1": "Añade mavenCentral() a tus repositorios y la dependencia a build.gradle.kts: implementation(\"com.formbricks:android:2.1.0\").",
       "install_method_android_step_2": "Inicializa el SDK con tu ID de espacio de trabajo usando el fragmento de código que aparece a continuación.",
       "install_method_flutter": "Flutter",
       "install_method_flutter_step_1": "Instala el paquete: flutter pub add formbricks.",

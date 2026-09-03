@@ -1954,7 +1954,7 @@
       "install_method_ai_step_1": "Copiază promptul de mai jos în asistentul tău AI pentru coding, cum ar fi Cursor, Claude Code sau GitHub Copilot.",
       "install_method_ai_step_2": "Reîncarcă pagina. Starea widget-ului de mai jos ar trebui să devină verde.",
       "install_method_android": "Android",
-      "install_method_android_step_1": "Adaugă dependența în fișierul tău build.gradle.kts: implementation(\"com.formbricks:android:2.1.0\").",
+      "install_method_android_step_1": "Adaugă mavenCentral() la repositories și dependența la build.gradle.kts: implementation(\"com.formbricks:android:2.1.0\").",
       "install_method_android_step_2": "Inițializează SDK-ul cu ID-ul workspace-ului tău folosind fragmentul de cod de mai jos.",
       "install_method_flutter": "Flutter",
       "install_method_flutter_step_1": "Instalează pachetul: flutter pub add formbricks.",

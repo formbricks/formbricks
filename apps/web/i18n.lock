@@ -1884,7 +1884,7 @@ checksums:
     workspace/app-connection/install_method_ai_step_1: 30380a2788ef8e437b9da99894775e2b
     workspace/app-connection/install_method_ai_step_2: a13fa12a3cf37aacc335b2f8243cd2b2
     workspace/app-connection/install_method_android: 7f1144cdf1a7df38c98ff2c876ad16e0
-    workspace/app-connection/install_method_android_step_1: ba9bedb0adb07c415866f1bac10d4172
+    workspace/app-connection/install_method_android_step_1: 7e1a80ad5321e09951e1cf4e21eb5617
     workspace/app-connection/install_method_android_step_2: 716e6afe5c97981672df5cff7a6cd5f1
     workspace/app-connection/install_method_flutter: 1a188994ffa78bbe280e9eeaea0e57c2
     workspace/app-connection/install_method_flutter_step_1: 92384c197d44f6b98f1555d4fe54a8c1

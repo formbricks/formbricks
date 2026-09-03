@@ -1954,7 +1954,7 @@
       "install_method_ai_step_1": "Скопируй промпт ниже в свой AI-ассистент для кодирования, например Cursor, Claude Code или GitHub Copilot.",
       "install_method_ai_step_2": "Перезагрузи страницу. Статус виджета ниже должен стать зелёным.",
       "install_method_android": "Android",
-      "install_method_android_step_1": "Добавь зависимость в свой build.gradle.kts: implementation(\"com.formbricks:android:2.1.0\").",
+      "install_method_android_step_1": "Добавьте mavenCentral() в ваши репозитории и зависимость в build.gradle.kts: implementation(\"com.formbricks:android:2.1.0\").",
       "install_method_android_step_2": "Инициализируй SDK с помощью своего ID рабочего пространства, используя код ниже.",
       "install_method_flutter": "Flutter",
       "install_method_flutter_step_1": "Установи пакет: flutter pub add formbricks.",

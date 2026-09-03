@@ -1954,7 +1954,7 @@
       "install_method_ai_step_1": "以下のプロンプトをCursor、Claude Code、GitHub CopilotなどのあなたのAIコーディングアシスタントにコピーしてください。",
       "install_method_ai_step_2": "ページをリロードしてください。下のウィジェットステータスが緑色になります。",
       "install_method_android": "Android",
-      "install_method_android_step_1": "build.gradle.kts に依存関係を追加してください: implementation(\"com.formbricks:android:2.1.0\")",
+      "install_method_android_step_1": "リポジトリにmavenCentral()を追加し、build.gradle.ktsに依存関係を追加してください: implementation(\"com.formbricks:android:2.1.0\")。",
       "install_method_android_step_2": "以下のスニペットを使用して、ワークスペースIDでSDKを初期化してください。",
       "install_method_flutter": "Flutter",
       "install_method_flutter_step_1": "パッケージをインストール: flutter pub add formbricks",
