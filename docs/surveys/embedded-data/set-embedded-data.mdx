@@ -141,7 +141,9 @@ Keys land on a response only if the survey declares them as ingested Embedded Da
 
 The older `formbricks.track("action", { hiddenFields: { … } })` form still works and still wins. An explicit per-trigger value beats the ambient bag for the same field, whatever the casing on either side, so migrating one call site at a time is safe.
 
-<Note>
-  npm users need `@formbricks/js` at a version that proxies `setEmbeddedData` / `clearEmbeddedData` through
-  to the SDK. Loading the script directly from `/js/formbricks.umd.cjs` always has them.
-</Note>
+<Warning>
+  **The npm wrapper does not have this yet.** `@formbricks/js` proxies the SDK's methods explicitly, and
+  `setEmbeddedData` / `clearEmbeddedData` are not in its current release — they arrive in a later one. Loading
+  the script directly from your Formbricks instance (`/js/formbricks.umd.cjs`) has them as soon as the
+  instance is updated, because that bundle is served rather than installed.
+</Warning>
