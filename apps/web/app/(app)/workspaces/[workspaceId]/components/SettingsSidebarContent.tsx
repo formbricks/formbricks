@@ -6,6 +6,7 @@ import {
   BrushIcon,
   Building2Icon,
   ChevronDownIcon,
+  CodeXmlIcon,
   CreditCardIcon,
   FoldersIcon,
   GlobeIcon,
@@ -315,7 +316,7 @@ export const SettingsSidebarContent = ({
       id: "app-connection",
       label: t("common.connect_your_app"),
       href: workspaceSettingsPath(workspaceId, "app-connection"),
-      icon: <UnplugIcon className={iconClassName} />,
+      icon: <CodeXmlIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
