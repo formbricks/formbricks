@@ -3,6 +3,8 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { ArrowRightIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
+import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import {
   getWorkflowValidationProblemFocusTarget,
   getWorkflowValidationProblemLocation,
@@ -87,6 +89,9 @@ export const WorkflowValidationProblemsDialog = ({
                       aria-label={t("workspace.workflows.validation_problem_fix_label", { problem: message })}
                       className="focus-visible:ring-ring flex w-full items-start gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-left transition-colors hover:border-slate-300 hover:bg-slate-100 focus-visible:ring-1 focus-visible:outline-hidden"
                       onClick={() => {
+                        trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.validationProblemFixClicked, {
+                          problem_code: problem.code,
+                        });
                         onOpenChange(false);
                         requestFieldFocus(focusTarget);
                       }}>

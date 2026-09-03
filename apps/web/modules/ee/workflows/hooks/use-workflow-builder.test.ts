@@ -59,6 +59,11 @@ vi.mock("@/modules/ee/workflows/lib/definition-to-flow", () => ({
   workflowDefinitionToFlowNodes: () => [],
 }));
 
+const trackWorkflowEvent = vi.fn();
+vi.mock("@/modules/ee/workflows/lib/analytics", () => ({
+  trackWorkflowEvent: (...args: unknown[]) => trackWorkflowEvent(...args),
+}));
+
 // safeParse mimics real zod normalization: it returns a REBUILT object (defaults applied, keys in
 // schema order), never the input reference. The autosave dirty-tracking must stay immune to that —
 // see "a normalizing schema parse..." below.
@@ -226,6 +231,11 @@ describe("save", () => {
 
     expect(toastError).toHaveBeenCalledWith("workspace.workflows.save_failed");
     expect(routerRefresh).not.toHaveBeenCalled();
+    // Analytics sees the coarse kind only, never the browser's message.
+    expect(trackWorkflowEvent).toHaveBeenCalledWith("workflow_autosave_failed", {
+      error_kind: "unreachable",
+      silent: false,
+    });
   });
 
   test("surfaces the server's detail when the API rejects the draft", async () => {
@@ -240,6 +250,10 @@ describe("save", () => {
     });
 
     expect(toastError).toHaveBeenCalledWith("Definition is invalid.");
+    expect(trackWorkflowEvent).toHaveBeenCalledWith("workflow_autosave_failed", {
+      error_kind: "rejected",
+      silent: false,
+    });
   });
 
   test("does not flag a failed state for a draft that never left the client", async () => {

@@ -1,8 +1,12 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode, TWorkflowResource } from "@formbricks/workflows";
+import { getWorkflowNodeConcreteType } from "@formbricks/workflows";
+import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
+import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import {
   isWorkflowReadOnlyAtom,
@@ -78,7 +82,22 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
 
   const selectedNode = findSelectedNode(definition, selectedNodeId);
-  if (!selectedNode || !definition) return null;
+  const registryEntry = selectedNode ? getNodeRegistryEntry(selectedNode) : null;
+
+  // Analytics: which node kinds people actually open, and whether they land on a kind that has no
+  // form yet (`if_else` today). Keyed on the node id so re-renders of an open panel do not re-fire.
+  const nodeType = selectedNode ? getWorkflowNodeConcreteType(selectedNode) : null;
+  const hasConfigForm = registryEntry?.ConfigForm !== null;
+  useEffect(() => {
+    if (!selectedNodeId || !nodeType) return;
+    trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.inspectorOpened, {
+      node_type: nodeType,
+      has_config_form: hasConfigForm,
+      is_editable: isEditable,
+    });
+  }, [selectedNodeId, nodeType, hasConfigForm, isEditable]);
+
+  if (!selectedNode || !definition || !registryEntry) return null;
 
   const blockedReasonType = getBlockedReason(isEditable, isReadOnly, status);
   // Inline literal t() calls so the translation-key scanner detects the keys.
@@ -89,7 +108,6 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   };
   const blockedReason = blockedReasonType ? blockedReasonMessages[blockedReasonType] : null;
 
-  const registryEntry = getNodeRegistryEntry(selectedNode);
   const ConfigForm = registryEntry.ConfigForm;
 
   const handleChange = (nextNode: TWorkflowNode) => {

@@ -27,3 +27,36 @@ export const WORKFLOW_RUN_FAILED_EVENT = "workflow_run_failed";
 
 /** Which surface issued the mutation; the same handler serves all three. */
 export type TWorkflowAnalyticsVia = "ui" | "api" | "mcp";
+
+/** Client-side events, fired from the Workflows UI through `trackWorkflowEvent`. */
+export const WORKFLOW_CLIENT_EVENTS = {
+  surfaceViewed: "workflow_surface_viewed",
+  triggerAdded: "workflow_trigger_added",
+  actionAdded: "workflow_action_added",
+  nodeDeleted: "workflow_node_deleted",
+  inspectorOpened: "workflow_inspector_opened",
+  canvasAction: "workflow_canvas_action",
+  validationProblemsViewed: "workflow_validation_problems_viewed",
+  validationProblemFixClicked: "workflow_validation_problem_fix_clicked",
+  enableBlocked: "workflow_enable_blocked",
+  autosaveFailed: "workflow_autosave_failed",
+  listFiltered: "workflow_list_filtered",
+  runDetailOpened: "workflow_run_detail_opened",
+} as const;
+export type TWorkflowClientEvent = (typeof WORKFLOW_CLIENT_EVENTS)[keyof typeof WORKFLOW_CLIENT_EVENTS];
+
+/**
+ * The distinct screens of the feature, reported as `surface` on `workflow_surface_viewed`. A value
+ * that never shows up in PostHog is a screen nobody reaches. Not listed on purpose: the paywall,
+ * which is the shared `upgrade_prompt_viewed{feature:"workflows"}`, and the inspector and run
+ * drawer, which have richer events of their own.
+ */
+export const WORKFLOW_SURFACES = [
+  "list",
+  "list_empty",
+  "list_empty_filtered",
+  "workspace_runs",
+  "builder",
+  "workflow_runs",
+] as const;
+export type TWorkflowSurface = (typeof WORKFLOW_SURFACES)[number];
