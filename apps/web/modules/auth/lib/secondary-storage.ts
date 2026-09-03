@@ -30,7 +30,13 @@ const isGetDelUnsupportedError = (error: unknown): boolean => {
 
 const getClient = (): Promise<RedisClient> => {
   if (!clientPromise) {
-    const client = createClient({ url: env.REDIS_URL, socket: { connectTimeout: 3000 } });
+    const client = createClient({
+      url: env.REDIS_URL,
+      socket: { connectTimeout: 3000 },
+      // Managed Redis services and their network paths can reap idle connections (for example,
+      // Azure Cache for Redis documents a 10-minute idle timeout). Ping well inside that limit.
+      pingInterval: 300_000,
+    });
     client.on("error", (error) => logger.error(error, "Better Auth Redis secondary storage error"));
     clientPromise = client
       .connect()
