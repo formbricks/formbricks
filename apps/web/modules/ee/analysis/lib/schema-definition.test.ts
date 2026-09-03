@@ -218,11 +218,13 @@ describe("schema-definition", () => {
 
     test("reads the non-text keys through a guard instead of a bare cast", () => {
       // `metadata` is free-form jsonb any writer can fill, so a bare ::boolean / ::double precision
-      // on a malformed value fails the whole chart query rather than that one row.
-      const dockerSchema = readDockerCubeSchema();
-
-      expect(dockerSchema).toContain("LOWER(${CUBE}.metadata->>'finished') IN ('true', 'false')");
-      expect(dockerSchema).toContain("metadata->>'duration_seconds' ~ '^-?[0-9]+(\\\\.[0-9]+)?$'");
+      // on a malformed value fails the whole chart query rather than that one row. The digit bounds
+      // are part of the guard: an unbounded digit run still reads as a number but overflows or
+      // underflows double precision, which raises 22003 for the whole query.
+      for (const schema of [readDockerCubeSchema(), readChartCubeSchema()]) {
+        expect(schema).toContain("LOWER(${CUBE}.metadata->>'finished') IN ('true', 'false')");
+        expect(schema).toContain("metadata->>'duration_seconds' ~ '^-?[0-9]{1,15}(\\\\.[0-9]{1,6})?$'");
+      }
     });
 
     test("offers a value pick-list for the low-cardinality keys only", () => {
@@ -641,7 +643,6 @@ describe("schema-definition", () => {
       "languageNormalized",
       "valueTextNormalized",
       "metadataSourceNormalized",
-      "metadataUrlNormalized",
       "metadataBrowserNormalized",
       "metadataOsNormalized",
       "metadataDeviceNormalized",

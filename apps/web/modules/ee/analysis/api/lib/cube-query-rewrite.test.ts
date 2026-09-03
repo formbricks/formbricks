@@ -272,6 +272,28 @@ describe("cube queryRewrite", () => {
     ]);
   });
 
+  test("keeps the page URL case-sensitive", () => {
+    // Scheme and host are case-insensitive, the path is not: /Foo and /foo are two different pages,
+    // so folding case here would silently merge them for an exact filter.
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      filters: [
+        {
+          member: "FeedbackRecords.metadataUrl",
+          operator: "equals",
+          values: ["https://example.test/Foo"],
+        },
+      ],
+    };
+
+    const rewrittenQuery = queryRewrite(query, { securityContext });
+
+    expect(rewrittenQuery.filters).toEqual([
+      { member: "FeedbackRecords.metadataUrl", operator: "equals", values: ["https://example.test/Foo"] },
+      { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
+    ]);
+  });
+
   test("leaves contains and other substring operators untouched", () => {
     const query = {
       measures: ["FeedbackRecords.count"],

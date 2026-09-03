@@ -173,7 +173,6 @@ const CASE_INSENSITIVE_EQUALS_DIMENSIONS = {
   "FeedbackRecords.language": "FeedbackRecords.languageNormalized",
   "FeedbackRecords.valueText": "FeedbackRecords.valueTextNormalized",
   "FeedbackRecords.metadataSource": "FeedbackRecords.metadataSourceNormalized",
-  "FeedbackRecords.metadataUrl": "FeedbackRecords.metadataUrlNormalized",
   "FeedbackRecords.metadataBrowser": "FeedbackRecords.metadataBrowserNormalized",
   "FeedbackRecords.metadataOs": "FeedbackRecords.metadataOsNormalized",
   "FeedbackRecords.metadataDevice": "FeedbackRecords.metadataDeviceNormalized",

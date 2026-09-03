@@ -343,9 +343,14 @@ cube(`FeedbackRecords`, {
     metadataDurationSeconds: {
       // The regex accepts both a jsonb number (rendered '42' / '42.5' by ->>) and the string form;
       // everything else, including exponent notation, reads as no value instead of failing the cast.
+      // The digit counts are the cast guard, not cosmetic: an unbounded run of digits still matches
+      // "a number" but overflows double precision (400 nines) or underflows it (400 zeros after the
+      // point), and either raises 22003 for the whole query rather than nulling that one row. 15
+      // integer digits sit far inside the type's range and a duration in seconds never approaches
+      // them — ingestion clamps its own at a week.
       sql: `
         CASE
-          WHEN ${CUBE}.metadata->>'duration_seconds' ~ '^-?[0-9]+(\\.[0-9]+)?$'
+          WHEN ${CUBE}.metadata->>'duration_seconds' ~ '^-?[0-9]{1,15}(\\.[0-9]{1,6})?$'
             THEN (${CUBE}.metadata->>'duration_seconds')::double precision
         END
       `,
@@ -506,15 +511,11 @@ cube(`FeedbackRecords`, {
 
     // Response-context companions. Only the values a person, a user agent or an importing client
     // supplies get one; metadataEndingId and metadataSurveyType are values this product generates,
-    // so they cannot drift in casing.
+    // so they cannot drift in casing. metadataUrl is excluded for a different reason: scheme and
+    // host are case-insensitive but the path is not, so folding case there would make /Foo and /foo
+    // the same bucket for an exact filter when they are two different pages.
     metadataSourceNormalized: {
       sql: `LOWER(TRIM(${CUBE}.metadata->>'source'))`,
-      type: `string`,
-      shown: false,
-    },
-
-    metadataUrlNormalized: {
-      sql: `LOWER(TRIM(${CUBE}.metadata->>'url'))`,
       type: `string`,
       shown: false,
     },
