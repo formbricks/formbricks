@@ -1,8 +1,8 @@
 import "server-only";
 import type { z } from "zod";
 import type { logger } from "@formbricks/logger";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { type InvalidParam, problemForbidden, problemInternalError } from "@/app/api/v3/lib/response";
+import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import type { InvalidParam } from "@/app/api/v3/lib/response";
 
 /**
  * Error mapping for the feedback-records surface: the detail strings only this surface can explain, and
@@ -35,22 +35,17 @@ export const EMBEDDINGS_UNAVAILABLE_DETAIL =
 export const EMBEDDING_PENDING_DETAIL =
   "This feedback record has no embedding, so similar records cannot be found. If it was just created, embeddings are generated in the background — retry in a moment. If it has no text, or its text was cleared by an update, it has no embedding at all and retrying will not help.";
 
+/**
+ * Positional wrapper over the shared mapper, kept because every feedback-records operation already calls
+ * it this way; the mapping itself lives in `@/app/api/v3/lib/errors`.
+ */
 export function handleUnexpectedError(
   err: unknown,
   log: ReturnType<typeof logger.withContext>,
   requestId: string,
   instance: string
 ): Response {
-  if (err instanceof ResourceNotFoundError) {
-    log.warn({ statusCode: 403, errorCode: err.name }, "Resource not found");
-    return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-  }
-  if (err instanceof DatabaseError) {
-    log.error({ error: err, statusCode: 500 }, "Database error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
-  }
-  log.error({ error: err, statusCode: 500 }, "Unexpected error");
-  return problemInternalError(requestId, "An unexpected error occurred.", instance);
+  return mapV3ThrownError(err, { log, requestId, instance, operation: "feedbackRecords" });
 }
 
 export const toInvalidParams = (error: z.ZodError): InvalidParam[] =>

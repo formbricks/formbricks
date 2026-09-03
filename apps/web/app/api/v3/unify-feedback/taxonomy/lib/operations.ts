@@ -19,7 +19,6 @@ import {
   renameTaxonomyNode,
 } from "@/modules/hub/service";
 import type { TaxonomyScopeInput, TaxonomyScopeType } from "@/modules/hub/types";
-import { type HubError, isHubNotConfigured } from "@/modules/hub/utils";
 import { getSessionUserId, requireUnifyDirectoryAccess, requireUnifyDirectoryMutationAccess } from "./access";
 
 type TBaseParams = {

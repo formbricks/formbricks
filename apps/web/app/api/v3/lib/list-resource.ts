@@ -1,9 +1,10 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { paginateByIdCursor } from "@/app/api/v3/lib/cursor-pagination";
-import { problemBadRequest, problemInternalError, successListResponse } from "@/app/api/v3/lib/response";
+import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { problemBadRequest, successListResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 
 /** Shared params for the workspace-scoped v3 reference-list endpoints (action classes, attribute keys). */
@@ -85,10 +86,6 @@ export async function listV3WorkspaceResource<TRow extends { id: string }, TOut>
         instance,
       });
     }
-    log.error(
-      { err },
-      `${err instanceof DatabaseError ? "Database error" : "Unexpected error"} while listing ${resourceName}`
-    );
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    return mapV3ThrownError(err, { log, requestId, instance, operation: `${resourceName}.list` });
   }
 }

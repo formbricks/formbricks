@@ -1,14 +1,14 @@
 import "server-only";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   createdResponse,
   noContentResponse,
   problemBadRequest,
   problemForbidden,
-  problemInternalError,
   problemUnprocessableContent,
   successListResponse,
   successResponse,
@@ -207,16 +207,7 @@ export async function listV3Surveys({
       { requestId, cache: "private, no-store" }
     );
   } catch (err) {
-    if (err instanceof ResourceNotFoundError) {
-      log.warn({ statusCode: 403, errorCode: err.name }, "Resource not found");
-      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-    }
-    if (err instanceof DatabaseError) {
-      log.error({ error: err, statusCode: 500 }, "Database error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
-    }
-    log.error({ error: err, statusCode: 500 }, "V3 surveys list unexpected error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    return mapV3ThrownError(err, { log, requestId, instance, operation: "surveys.list" });
   }
 }
 
@@ -277,13 +268,7 @@ function mapV3SurveyCreateError(
       instance,
     });
   }
-  if (err instanceof DatabaseError) {
-    log.error({ error: err, statusCode: 500 }, "Database error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
-  }
-
-  log.error({ error: err, statusCode: 500 }, "V3 survey create unexpected error");
-  return problemInternalError(requestId, "An unexpected error occurred.", instance);
+  return mapV3ThrownError(err, { log, requestId, instance, operation: "surveys.create" });
 }
 
 export async function createV3SurveyResponse({
@@ -446,39 +431,8 @@ export async function getV3Survey({
       throw error;
     }
   } catch (error) {
-    if (error instanceof DatabaseError) {
-      log.error({ error, statusCode: 500 }, "Database error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
-    }
-
-    log.error({ error, statusCode: 500 }, "V3 survey get unexpected error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "surveys.get" });
   }
-}
-
-// Shared catch-block mapper for the single-survey mutation ops (delete/archive/restore): they share
-// one error contract — not-found → 403, DatabaseError → 500, anything else → 500.
-function mapV3SurveyMutationError(
-  error: unknown,
-  {
-    log,
-    requestId,
-    instance,
-    operation,
-  }: { log: ReturnType<typeof logger.withContext>; requestId: string; instance: string; operation: string }
-): Response {
-  if (error instanceof ResourceNotFoundError) {
-    log.warn({ errorCode: error.name, statusCode: 403 }, "Survey not found or not accessible");
-    return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-  }
-
-  if (error instanceof DatabaseError) {
-    log.error({ error, statusCode: 500 }, "Database error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
-  }
-
-  log.error({ error, statusCode: 500 }, `V3 survey ${operation} unexpected error`);
-  return problemInternalError(requestId, "An unexpected error occurred.", instance);
 }
 
 export async function deleteV3Survey({
@@ -514,7 +468,7 @@ export async function deleteV3Survey({
 
     return noContentResponse({ requestId });
   } catch (error) {
-    return mapV3SurveyMutationError(error, { log, requestId, instance, operation: "delete" });
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "surveys.delete" });
   }
 }
 
@@ -568,7 +522,7 @@ async function runV3SurveyLifecycleMutation(
     };
     return successResponse(ack, { requestId, cache: "private, no-store" });
   } catch (error) {
-    return mapV3SurveyMutationError(error, { log, requestId, instance, operation });
+    return mapV3ThrownError(error, { log, requestId, instance, operation: `surveys.${operation}` });
   }
 }
 
@@ -636,13 +590,13 @@ function mapV3SurveyPatchError(
     });
   }
 
-  if (err instanceof DatabaseError) {
-    log.error({ error: err, workspaceId, statusCode: 500 }, "Database error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
-  }
-
-  log.error({ error: err, workspaceId, statusCode: 500 }, "V3 survey patch unexpected error");
-  return problemInternalError(requestId, "An unexpected error occurred.", instance);
+  return mapV3ThrownError(err, {
+    log,
+    requestId,
+    instance,
+    operation: "surveys.patch",
+    logFields: { workspaceId },
+  });
 }
 
 export async function patchV3SurveyResponse({
@@ -787,13 +741,7 @@ export async function validateV3Survey({
       }
     );
   } catch (error) {
-    if (error instanceof DatabaseError) {
-      log.error({ error, statusCode: 500 }, "Database error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
-    }
-
-    log.error({ error, statusCode: 500 }, "V3 survey validation unexpected error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "surveys.validate" });
   }
 }
 

@@ -5,11 +5,11 @@ import {
   ResourceNotFoundError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
+import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   problemAIUnavailable,
   problemBadGateway,
   problemBadRequest,
-  problemNotFound,
   problemTooManyRequests,
   problemUnprocessableContent,
 } from "@/app/api/v3/lib/response";
@@ -90,8 +90,19 @@ export function mapV3SurveyGenerateError(
     );
   }
 
+  /**
+   * The organization behind a workspace the caller already has access to. A 404 here both contradicts
+   * `problemNotFound`'s own contract — its body carries `resource_type` and `resource_id`, which must not
+   * go to a caller who may not know the resource exists — and reports a server-derived id back as though
+   * the caller had asked for it. 403 matches every other v3 surface.
+   */
   if (error instanceof ResourceNotFoundError) {
-    return problemNotFound(requestId, "Organization", organizationId, instance);
+    return mapV3ThrownError(error, {
+      log: logger.withContext({ requestId, workspaceId, organizationId }),
+      requestId,
+      instance,
+      operation: "surveys.generate",
+    });
   }
 
   logger.error(
