@@ -308,6 +308,13 @@ const createSsoRecoveryCompletionUrl = (stateId: string): string => {
  * left to decode, and a second Redis read to answer a question this function already knows the answer
  * to would be wasteful — so the answer travels on the error.
  *
+ * `callbackUrl` is only ever set once the caller has proven to be the intent's own user. Attaching it
+ * earlier turned the failure redirect into an unauthenticated oracle: a caller holding a state id got
+ * back the callback stored against it, while an unknown id got a bare redirect — so the response
+ * distinguished "this recovery exists" from "it does not", and leaked where that user was headed. The
+ * state id is 256 bits so it cannot be guessed, but it does travel in a URL and therefore in access
+ * logs and history, and nothing about holding one should reveal the record behind it.
+ *
  * The message stays `OAUTH_ACCOUNT_NOT_LINKED_ERROR`, unchanged from the plain `Error` this replaces.
  */
 export class SsoRecoveryError extends Error {
@@ -476,7 +483,7 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "invalid_provider",
     });
-    throw new SsoRecoveryError(intent.callbackUrl);
+    throw new SsoRecoveryError();
   }
 
   if (!sessionUserId) {
@@ -496,7 +503,7 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "missing_session",
     });
-    throw new SsoRecoveryError(intent.callbackUrl);
+    throw new SsoRecoveryError();
   }
 
   if (sessionUserId !== intent.userId) {
@@ -517,7 +524,7 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "session_user_mismatch",
     });
-    throw new SsoRecoveryError(intent.callbackUrl);
+    throw new SsoRecoveryError();
   }
 
   const user = await prisma.user.findUnique({
@@ -544,6 +551,8 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "user_mismatch",
     });
+    // Past the session check, so this caller IS the intent's user — handing back their own callback
+    // discloses nothing they did not already supply.
     throw new SsoRecoveryError(intent.callbackUrl);
   }
 
