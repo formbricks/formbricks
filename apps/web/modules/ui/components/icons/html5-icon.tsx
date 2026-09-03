@@ -1,4 +1,4 @@
-export const Html5Icon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
+export const Html5Icon: React.FC<Readonly<React.SVGProps<SVGSVGElement>>> = (props) => {
   return (
     <svg
       stroke="#E34F26"

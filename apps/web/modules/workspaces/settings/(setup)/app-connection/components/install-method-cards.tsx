@@ -67,7 +67,7 @@ export const InstallMethodCards = ({
   flutterSnippet,
   aiPrompt,
   showAIPrompt,
-}: InstallMethodCardsProps) => {
+}: Readonly<InstallMethodCardsProps>) => {
   const { t } = useTranslation();
   const [openMethod, setOpenMethod] = useState<TInstallMethodId | null>(null);
   const [websiteSubMethod, setWebsiteSubMethod] = useState("html");

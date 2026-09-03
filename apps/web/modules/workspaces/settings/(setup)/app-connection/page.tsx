@@ -168,7 +168,7 @@ Call setUserId with the authenticated user's ID. Call logout() on sign-out.
 
 ## Validate
 
-Go to Settings → Installation — the widget indicator should turn green.
+Go to Settings → ${t("common.connect_your_app")}. The widget indicator should turn green.
 To debug, add ?formbricksDebug=true to your app URL and check the browser console.`;
 
   const htmlSnippet = `<!-- START Formbricks Surveys -->
