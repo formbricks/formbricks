@@ -23,11 +23,7 @@ import {
   isSsoRecoveryInternalCallbackUrl,
 } from "./constants";
 import { normalizeSsoProvider } from "./provider-normalization";
-import {
-  consumeSsoRecoveryIntent,
-  createSsoRecoveryIntent,
-  readSsoRecoveryIntent,
-} from "./recovery-intent";
+import { consumeSsoRecoveryIntent, createSsoRecoveryIntent, readSsoRecoveryIntent } from "./recovery-intent";
 
 const getSsoRecoveryLogger = (
   event: "sso_recovery_started" | "sso_recovery_completed" | "sso_recovery_failed"
