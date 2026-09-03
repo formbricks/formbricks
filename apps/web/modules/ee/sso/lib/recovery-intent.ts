@@ -155,6 +155,10 @@ export const readSsoRecoveryIntent = async (
   }
 
   if (result.data === null) {
+    // Logged, though a miss is an ordinary outcome (expired, or already consumed): `completeSsoRecovery`
+    // reports the failure without a correlation id of its own, and the hash is the only handle an
+    // operator can join the two lines on. Recoveries are rare, so this does not add meaningful volume.
+    logger.warn({ stateIdHash }, "No SSO recovery intent stored for this state");
     return null;
   }
 
@@ -210,13 +214,22 @@ export const refreshSsoRecoveryIntent = async (
   }
 
   const stateIdHash = hashStateId(stateId);
-  const result = await cache.set(
-    getIntentCacheKey(stateIdHash),
-    intent,
-    Math.min(INTENT_TTL_MS, remainingLifetimeMs)
-  );
+  const ttlSeconds = Math.floor(Math.min(INTENT_TTL_MS, remainingLifetimeMs) / 1000);
 
-  if (!result.ok) {
-    logger.error({ error: result.error, stateIdHash }, "Failed to refresh the SSO recovery intent");
+  try {
+    const redis = await cache.getRedisClient();
+
+    if (!redis) {
+      logger.error({ stateIdHash }, "Redis is required to refresh the SSO recovery intent");
+      return;
+    }
+
+    // EXPIRE rather than writing the record back, for two reasons. It is a no-op on a key that is
+    // already gone, so a resend racing a completion cannot resurrect the intent that completion just
+    // consumed — a rewrite would, and would quietly undo single use. And it never touches the stored
+    // value, so there is no path by which a stale copy read moments earlier gets written back.
+    await redis.expire(getIntentCacheKey(stateIdHash), ttlSeconds);
+  } catch (error) {
+    logger.error({ error, stateIdHash }, "Failed to refresh the SSO recovery intent");
   }
 };

@@ -18,7 +18,9 @@ vi.mock("crypto", async () => await vi.importActual<typeof import("crypto")>("cr
 
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 
-vi.mock("@/lib/cache", () => ({ cache: { get: vi.fn(), set: vi.fn(), del: vi.fn() } }));
+vi.mock("@/lib/cache", () => ({
+  cache: { get: vi.fn(), set: vi.fn(), del: vi.fn(), getRedisClient: vi.fn() },
+}));
 
 const mockCache = vi.mocked(cache);
 
@@ -60,6 +62,16 @@ describe("SSO recovery intent", () => {
       keys.forEach((key) => store.delete(key));
       return { ok: true, data: undefined };
     });
+    // Real EXPIRE semantics, which is the whole point of using it: a no-op returning 0 on a key that is
+    // no longer there. A stub that always "succeeded" would hide the resurrection this guards against.
+    mockCache.getRedisClient.mockResolvedValue({
+      expire: vi.fn(async (key: string, seconds: number) => {
+        const entry = store.get(key);
+        if (!entry) return 0;
+        store.set(key, { ...entry, ttlMs: seconds * 1000 });
+        return 1;
+      }),
+    } as never);
   });
 
   describe("create", () => {
@@ -193,6 +205,28 @@ describe("SSO recovery intent", () => {
     });
 
     /**
+     * A resend and a completion can race. Refresh must extend a live record, never write one back —
+     * otherwise a resend landing just after completion resurrects the intent that completion consumed,
+     * and single use quietly stops holding.
+     */
+    test("cannot resurrect an intent that a completion already consumed", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      await consumeSsoRecoveryIntent(stateId);
+
+      await refreshSsoRecoveryIntent(stateId, storedIntent(Date.now()));
+
+      expect(store.size).toBe(0);
+      await expect(readSsoRecoveryIntent(stateId)).resolves.toBeNull();
+    });
+
+    test("does nothing when Redis is unavailable, rather than throwing at the caller", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      mockCache.getRedisClient.mockResolvedValue(null);
+
+      await expect(refreshSsoRecoveryIntent(stateId, storedIntent(Date.now()))).resolves.toBeUndefined();
+    });
+
+    /**
      * `resendVerificationEmailAction` is unauthenticated, so a plain sliding window would let anyone
      * holding a state id keep an intent alive forever. `createdAt` never moves, so the slide is capped.
      */
@@ -210,20 +244,21 @@ describe("SSO recovery intent", () => {
 
     test("writes nothing once the absolute lifetime has elapsed", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
-      mockCache.set.mockClear();
+      mockCache.getRedisClient.mockClear();
 
       await refreshSsoRecoveryIntent(stateId, storedIntent(Date.now() - MAX_LIFETIME_MS - 1));
 
-      expect(mockCache.set).not.toHaveBeenCalled();
+      expect(mockCache.getRedisClient).not.toHaveBeenCalled();
     });
 
-    test("keeps createdAt fixed, so repeated refreshes measure from the original start", async () => {
+    test("leaves the stored record untouched, so a refresh cannot write back a stale copy", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
-      const createdAt = Date.now() - LINK_TTL_MS;
 
-      await refreshSsoRecoveryIntent(stateId, storedIntent(createdAt));
+      await refreshSsoRecoveryIntent(stateId, storedIntent(Date.now() - LINK_TTL_MS));
 
-      await expect(readSsoRecoveryIntent(stateId)).resolves.toMatchObject({ createdAt });
+      // The intent handed in carries a different createdAt; the record must still hold its own.
+      const stored = await readSsoRecoveryIntent(stateId);
+      expect(stored?.createdAt).toBeGreaterThan(Date.now() - LINK_TTL_MS);
     });
   });
 });
