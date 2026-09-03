@@ -242,13 +242,15 @@ describe("SSO recovery intent", () => {
       expect(createdAt + ttlMs!).toBeLessThanOrEqual(createdAt + MAX_LIFETIME_MS);
     });
 
-    test("writes nothing once the absolute lifetime has elapsed", async () => {
+    test("leaves the expiry alone once the absolute lifetime has elapsed", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
-      mockCache.getRedisClient.mockClear();
+      const before = { ...[...store.values()][0] };
 
       await refreshSsoRecoveryIntent(stateId, storedIntent(Date.now() - MAX_LIFETIME_MS - 1));
 
-      expect(mockCache.getRedisClient).not.toHaveBeenCalled();
+      // The record and its TTL, not the call order: an implementation that reaches Redis and then
+      // declines to extend is equally correct, and asserting "never asked for a client" would fail it.
+      expect([...store.values()][0]).toEqual(before);
     });
 
     test("leaves the stored record untouched, so a refresh cannot write back a stale copy", async () => {

@@ -65,7 +65,8 @@ describe("GET /api/auth/sso/recovery/complete", () => {
       )
     );
 
-    expect(vi.mocked(completeSsoRecovery).mock.calls[0][0].sessionToken).toBeDefined();
+    // The exact value, not just "some token": forwarding the wrong one would still be defined.
+    expect(vi.mocked(completeSsoRecovery).mock.calls[0][0].sessionToken).toBe("token-abc");
   });
 
   test("redirects to the failure page when no state is present", async () => {
