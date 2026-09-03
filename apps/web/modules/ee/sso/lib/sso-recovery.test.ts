@@ -11,8 +11,9 @@ import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl, startSsoRecovery
 
 const mocks = vi.hoisted(() => ({
   createEmailToken: vi.fn(),
-  createSsoRelinkIntent: vi.fn(),
-  verifySsoRelinkIntent: vi.fn(),
+  createSsoRecoveryIntent: vi.fn(),
+  readSsoRecoveryIntent: vi.fn(),
+  consumeSsoRecoveryIntent: vi.fn(),
   queueAuditEventBackground: vi.fn(),
 }));
 
@@ -35,8 +36,12 @@ vi.mock("@/lib/constants", async (importOriginal) => {
 
 vi.mock("@/lib/jwt", () => ({
   createEmailToken: mocks.createEmailToken,
-  createSsoRelinkIntent: mocks.createSsoRelinkIntent,
-  verifySsoRelinkIntent: mocks.verifySsoRelinkIntent,
+}));
+
+vi.mock("./recovery-intent", () => ({
+  createSsoRecoveryIntent: mocks.createSsoRecoveryIntent,
+  readSsoRecoveryIntent: mocks.readSsoRecoveryIntent,
+  consumeSsoRecoveryIntent: mocks.consumeSsoRecoveryIntent,
 }));
 
 vi.mock("@/modules/auth/lib/session-revocation", () => ({
@@ -145,13 +150,14 @@ describe("sso-recovery", () => {
       "/auth/verification-requested?token=email-token&purpose=sso_recovery"
     );
     mocks.createEmailToken.mockReturnValue("email-token");
-    mocks.createSsoRelinkIntent.mockReturnValue("intent-token");
-    mocks.verifySsoRelinkIntent.mockReturnValue({
+    mocks.createSsoRecoveryIntent.mockResolvedValue("state-id");
+    mocks.readSsoRecoveryIntent.mockResolvedValue({
       userId: "user_1",
       email: "john.doe@example.com",
       provider: "google",
       providerAccountId: "provider-account-1",
       callbackUrl: "http://localhost:3000/environments/env_1",
+      createdAt: Date.now(),
     });
   });
 
@@ -182,12 +188,12 @@ describe("sso-recovery", () => {
       id: "user_1",
       email: "john.doe@example.com",
       locale: "en-US",
-      callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=intent-token",
+      callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=state-id",
       purpose: "sso_recovery",
     });
     expect(buildVerificationRequestedPath).toHaveBeenCalledWith({
       token: "email-token",
-      callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=intent-token",
+      callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=state-id",
       purpose: "sso_recovery",
     });
     expect(result).toBe("/auth/verification-requested?token=email-token&purpose=sso_recovery");
@@ -243,7 +249,7 @@ describe("sso-recovery", () => {
     } as any);
 
     const callbackUrl = await completeSsoRecovery({
-      intentToken: "test-intent",
+      stateId: "test-state",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
     });
@@ -357,7 +363,7 @@ describe("sso-recovery", () => {
 
     const completeRecovery = () =>
       completeSsoRecovery({
-        intentToken: "test-intent",
+        stateId: "test-state",
         sessionUserId: "user_1",
         sessionToken: "current-session-token",
       });
@@ -512,6 +518,30 @@ describe("sso-recovery", () => {
     });
   });
 
+  test("consumes the intent once the link commits, but never before", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: false,
+      isActive: true,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+    } as any);
+
+    await completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" });
+
+    expect(mocks.consumeSsoRecoveryIntent).toHaveBeenCalledWith("test-state");
+  });
+
+  test("leaves the intent in place when the recovery is rejected", async () => {
+    // A mail scanner reaching the completion URL has no session, so it lands on `missing_session`.
+    // Consuming there would spend the record before the real user ever clicked their link.
+    await expect(completeSsoRecovery({ stateId: "test-state" })).rejects.toThrow("OAuthAccountNotLinked");
+
+    expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+  });
+
   test("does not clear local auth material for already verified users", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user_1",
@@ -524,7 +554,7 @@ describe("sso-recovery", () => {
     } as any);
 
     await completeSsoRecovery({
-      intentToken: "test-intent",
+      stateId: "test-state",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
     });
@@ -565,7 +595,7 @@ describe("sso-recovery", () => {
     } as any);
 
     await completeSsoRecovery({
-      intentToken: "test-intent",
+      stateId: "test-state",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
     });
@@ -597,7 +627,7 @@ describe("sso-recovery", () => {
     vi.mocked(revokeUserSessionsExcept).mockRejectedValue(new Error("redis unavailable"));
 
     const callbackUrl = await completeSsoRecovery({
-      intentToken: "test-intent",
+      stateId: "test-state",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
     });
@@ -628,7 +658,7 @@ describe("sso-recovery", () => {
   test("rejects recovery when the signed-in user does not match the intent owner", async () => {
     await expect(
       completeSsoRecovery({
-        intentToken: "test-intent",
+        stateId: "test-state",
         sessionUserId: "user_2",
       })
     ).rejects.toThrow("OAuthAccountNotLinked");
@@ -650,7 +680,7 @@ describe("sso-recovery", () => {
   test("rejects recovery when there is no signed-in session", async () => {
     await expect(
       completeSsoRecovery({
-        intentToken: "test-intent",
+        stateId: "test-state",
       })
     ).rejects.toThrow("OAuthAccountNotLinked");
 
@@ -669,7 +699,7 @@ describe("sso-recovery", () => {
   });
 
   test("rejects recovery when the intent provider is invalid", async () => {
-    mocks.verifySsoRelinkIntent.mockReturnValue({
+    mocks.readSsoRecoveryIntent.mockResolvedValue({
       userId: "user_1",
       email: "john.doe@example.com",
       provider: "unknown-provider",
@@ -679,7 +709,7 @@ describe("sso-recovery", () => {
 
     await expect(
       completeSsoRecovery({
-        intentToken: "test-intent",
+        stateId: "test-state",
         sessionUserId: "user_1",
       })
     ).rejects.toThrow("OAuthAccountNotLinked");
@@ -699,13 +729,11 @@ describe("sso-recovery", () => {
   });
 
   test("rejects invalid or expired recovery intents before looking up any user", async () => {
-    mocks.verifySsoRelinkIntent.mockImplementation(() => {
-      throw new Error("expired");
-    });
+    mocks.readSsoRecoveryIntent.mockResolvedValue(null);
 
     await expect(
       completeSsoRecovery({
-        intentToken: "expired-intent",
+        stateId: "expired-state",
         sessionUserId: "user_1",
       })
     ).rejects.toThrow("OAuthAccountNotLinked");
@@ -741,7 +769,7 @@ describe("sso-recovery", () => {
 
     await expect(
       completeSsoRecovery({
-        intentToken: "test-intent",
+        stateId: "test-state",
         sessionUserId: "user_1",
       })
     ).rejects.toThrow("OAuthAccountNotLinked");
@@ -777,7 +805,7 @@ describe("sso-recovery", () => {
 
     await expect(
       completeSsoRecovery({
-        intentToken: "test-intent",
+        stateId: "test-state",
         sessionUserId: "user_1",
       })
     ).resolves.toBe("http://localhost:3000/environments/env_1");

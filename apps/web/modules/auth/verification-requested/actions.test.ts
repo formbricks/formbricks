@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { verifySsoRelinkIntent } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
@@ -53,6 +52,11 @@ const signupIntentMocks = vi.hoisted(() => ({
   createSignupIntentToken: vi.fn(),
 }));
 
+const recoveryIntentMocks = vi.hoisted(() => ({
+  readSsoRecoveryIntent: vi.fn(),
+  refreshSsoRecoveryIntent: vi.fn(),
+}));
+
 vi.mock("@/modules/auth/lib/signup-intent", () => ({
   SIGNUP_INTENT_COOKIE_NAME: "formbricks.signup_intent",
   SIGNUP_INTENT_COOKIE_OPTIONS: { httpOnly: true, secure: false, path: "/", sameSite: "lax", maxAge: 3600 },
@@ -60,8 +64,9 @@ vi.mock("@/modules/auth/lib/signup-intent", () => ({
   createSignupIntentToken: signupIntentMocks.createSignupIntentToken,
 }));
 
-vi.mock("@/lib/jwt", () => ({
-  verifySsoRelinkIntent: vi.fn(),
+vi.mock("@/modules/ee/sso/lib/recovery-intent", () => ({
+  readSsoRecoveryIntent: recoveryIntentMocks.readSsoRecoveryIntent,
+  refreshSsoRecoveryIntent: recoveryIntentMocks.refreshSsoRecoveryIntent,
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -110,9 +115,8 @@ describe("resendVerificationEmailAction", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(verifySsoRelinkIntent).mockImplementation(() => {
-      throw new Error("invalid");
-    });
+    // Default: no stored intent, so a client-supplied recovery callback proves nothing on its own.
+    recoveryIntentMocks.readSsoRecoveryIntent.mockResolvedValue(null);
     cookieMocks.get.mockReturnValue(undefined);
     signupIntentMocks.classifySignupIntent.mockReturnValue("absent");
     signupIntentMocks.createSignupIntentToken.mockReturnValue("fresh-intent-token");
@@ -261,19 +265,20 @@ describe("resendVerificationEmailAction", () => {
         isActive: true,
       };
       vi.mocked(getUserByEmail).mockResolvedValue(verifiedUserWithLocale);
-      vi.mocked(verifySsoRelinkIntent).mockReturnValue({
+      recoveryIntentMocks.readSsoRecoveryIntent.mockResolvedValue({
         callbackUrl: "http://localhost:3000",
         email: mockVerifiedUser.email,
         provider: "google",
         providerAccountId: "provider_123",
         userId: mockVerifiedUser.id,
+        createdAt: Date.now(),
       });
 
       const result = await resendVerificationEmailAction({
         ctx: mockCtx,
         parsedInput: {
           ...validInput,
-          callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent",
+          callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state",
         },
       } as any);
 
@@ -281,7 +286,7 @@ describe("resendVerificationEmailAction", () => {
         id: mockVerifiedUser.id,
         email: mockVerifiedUser.email,
         locale: "en-US",
-        callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent",
+        callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state",
         purpose: "sso_recovery",
       });
       expect(result).toEqual({ success: true });
@@ -302,7 +307,7 @@ describe("resendVerificationEmailAction", () => {
         ctx: mockCtx,
         parsedInput: {
           ...validInput,
-          callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=forged-intent",
+          callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=forged-state",
         },
       } as any);
 
@@ -310,29 +315,30 @@ describe("resendVerificationEmailAction", () => {
       expect(result).toEqual({ success: true });
     });
 
-    test("should fall back to a normal verification email when the relink intent belongs to a different email", async () => {
+    test("should fall back to a normal verification email when the recovery intent belongs to a different email", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
-      vi.mocked(verifySsoRelinkIntent).mockReturnValue({
+      recoveryIntentMocks.readSsoRecoveryIntent.mockResolvedValue({
         callbackUrl: "http://localhost:3000",
         email: "other@example.com",
         provider: "google",
         providerAccountId: "provider_123",
         userId: "user_123",
+        createdAt: Date.now(),
       });
 
       const result = await resendVerificationEmailAction({
         ctx: mockCtx,
         parsedInput: {
           ...validInput,
-          callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent",
+          callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state",
         },
       } as any);
 
       expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
         body: {
           email: mockUser.email,
-          callbackURL: "http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent",
+          callbackURL: "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state",
         },
         headers: expect.any(Headers),
       });

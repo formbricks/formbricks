@@ -1,6 +1,37 @@
 export const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
 export const SSO_RECOVERY_COMPLETION_PATH = "/api/auth/sso/recovery/complete";
 
+/** Better Auth's recovery magic-link endpoint, mounted by `ssoRecoverySignInPlugin` under `/api/auth`. */
+export const SSO_RECOVERY_SIGN_IN_PATH = "/api/auth/sso-recovery/sign-in";
+
+/**
+ * Does this callback URL point back into the recovery flow itself? (ENG-2783)
+ *
+ * `getValidatedCallbackUrl` checks origin, scheme and credentials — never the path — so a recovery URL
+ * is a perfectly valid same-origin callback, and the "log in" link on the verification-requested page
+ * hands one straight back to `/auth/login`. Signing in with the same IdP from there re-enters
+ * `startSsoRecovery` carrying the previous attempt's completion URL, which is the loop that used to
+ * grow the URL past nginx's request line.
+ *
+ * The opaque state id removed the growth, but not the loop: without this check, attempt N's intent
+ * would still store attempt N-1's completion URL, so finishing recovery would redirect into another
+ * completion whose intent is already consumed — dropping the user on "recovery failed" immediately
+ * after a recovery that actually worked.
+ *
+ * Deliberately NOT folded into `getValidatedCallbackUrl`: `buildVerificationLinks` puts the completion
+ * URL on the emailed link *through* that helper, so rejecting the path there would break the mail.
+ */
+export const isSsoRecoveryInternalCallbackUrl = (callbackUrl: string): boolean => {
+  try {
+    // Next normalises a trailing slash away before routing, so compare the same way it does.
+    const pathname = new URL(callbackUrl, "http://localhost").pathname.replace(/\/+$/, "");
+
+    return pathname === SSO_RECOVERY_COMPLETION_PATH || pathname === SSO_RECOVERY_SIGN_IN_PATH;
+  } catch {
+    return false;
+  }
+};
+
 /**
  * The synthetic `Account.issuer` for the providers we configure ourselves (ENG-2343).
  *
