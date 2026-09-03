@@ -16,11 +16,13 @@ import {
   createSignupIntentToken,
 } from "@/modules/auth/lib/signup-intent";
 import { getUserByEmail } from "@/modules/auth/lib/user";
-import { TVerificationRequestPurpose } from "@/modules/auth/lib/verification-links";
+import {
+  SSO_RECOVERY_COMPLETION_PATH,
+  TVerificationRequestPurpose,
+} from "@/modules/auth/lib/verification-links";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { SSO_RECOVERY_COMPLETION_PATH } from "@/modules/ee/sso/lib/constants";
 import {
   type TSsoRecoveryIntent,
   readSsoRecoveryIntent,

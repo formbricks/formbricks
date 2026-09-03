@@ -7,7 +7,10 @@ import { createEmailToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
-import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
+import {
+  SSO_RECOVERY_COMPLETION_PATH,
+  buildVerificationRequestedPath,
+} from "@/modules/auth/lib/verification-links";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
@@ -17,11 +20,7 @@ import {
   TSsoLookupUser,
   syncSsoIdentityForUser,
 } from "./account-linking";
-import {
-  OAUTH_ACCOUNT_NOT_LINKED_ERROR,
-  SSO_RECOVERY_COMPLETION_PATH,
-  isSsoRecoveryInternalCallbackUrl,
-} from "./constants";
+import { OAUTH_ACCOUNT_NOT_LINKED_ERROR, isSsoRecoveryInternalCallbackUrl } from "./constants";
 import { normalizeSsoProvider } from "./provider-normalization";
 import { consumeSsoRecoveryIntent, createSsoRecoveryIntent, readSsoRecoveryIntent } from "./recovery-intent";
 

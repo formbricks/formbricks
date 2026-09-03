@@ -1,7 +1,22 @@
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
-import { SSO_RECOVERY_SIGN_IN_PATH } from "@/modules/ee/sso/lib/constants";
 
 const RELATIVE_URL_BASE = "http://localhost";
+
+/**
+ * The two SSO-recovery route paths.
+ *
+ * They live here, not in `modules/ee/sso/lib/constants.ts`, because OSS code needs them — this file
+ * builds the emailed verify link, and `verification-requested/actions.ts` matches an incoming callback
+ * against the completion path — and `.coderabbit.yaml` (`apps/web/modules/ee/**`) forbids OSS importing
+ * from `modules/ee` outside the `license-check` gate. Route paths carry no entitlement, so the fix is
+ * to own them on this side and let the EE modules import them; that direction is fine. This file is
+ * also reachable from a client component (`signup/components/signup-form.tsx`), which is a second
+ * reason not to pull an EE module in from here.
+ */
+export const SSO_RECOVERY_COMPLETION_PATH = "/api/auth/sso/recovery/complete";
+
+/** Better Auth's recovery magic-link endpoint, mounted by `ssoRecoverySignInPlugin` under `/api/auth`. */
+export const SSO_RECOVERY_SIGN_IN_PATH = "/api/auth/sso-recovery/sign-in";
 
 /**
  * Lifetime of the emailed verification / SSO-recovery magic link.
