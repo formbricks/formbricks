@@ -247,7 +247,7 @@ window.dataLayer.push({
 
 ## Set Embedded Data
 
-`setEmbeddedData()` attaches context to whichever survey is displayed next, without tying it to a trigger. It is the GTM-native way to get a page type, a plan or a campaign onto a response. Read the [full reference](/surveys/embedded-data/set-embedded-data) for the semantics; this is the tag manager wiring.
+`setEmbeddedData()` attaches context to the surveys displayed after it, without tying it to a trigger. A value stays in the bag for the rest of the page load, so it reaches every survey shown from then on until you remove the key. It is the GTM-native way to get a page type, a plan or a campaign onto a response. Read the [full reference](/surveys/embedded-data/set-embedded-data) for the semantics; this is the tag manager wiring.
 
 <Steps>
   <Step title="Declare the fields on the survey">
@@ -276,8 +276,12 @@ if (window.formbricks) {
   </Step>
 
   <Step title="Trigger it">
-    On **All Pages**, plus `formbricks_setup_successful` if your `setup()` is delayed behind a consent
-    banner. The tag is safe to fire more than once: each call merges into the bag rather than replacing it.
+    Attach **two** triggers: **All Pages**, and a Custom Event trigger on `formbricks_setup_successful`.
+
+    Both are needed. The SDK script loads asynchronously, so on an ordinary page load the All Pages trigger
+    can run before `window.formbricks` exists — the tag returns having set nothing. The readiness trigger
+    covers that, and All Pages covers the pushes that happen once the SDK is already running. The tag is
+    safe to fire more than once: each call merges into the bag rather than replacing it.
   </Step>
 </Steps>
 
@@ -290,7 +294,8 @@ if (window.formbricks) {
 <Warning>
   On a single-page app, one page load spans many routes and nothing re-pushes for you, so a `pageType` set on
   the pricing page is still in the bag when a survey opens somewhere else. Fire the tag on your app's own
-  route-change event as well, and push `null` for keys the new route has no value for.
+  route-change event as well, and push `null` for keys the new route has no value for. See
+  [Clearing](/surveys/embedded-data/set-embedded-data#clearing) for removing one key or the whole bag.
 </Warning>
 
 ## Troubleshooting

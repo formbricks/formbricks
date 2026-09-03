@@ -23,11 +23,13 @@ icon: "user"
 - **Action**: The action that triggered the survey. This is only available for App surveys.
 
 <Note>
-  These seven are the ones shown by default. Formbricks captures more than twenty auto-captured fields on
-  every response, including the page path, the campaign parameters, the screen and viewport size, the time
-  zone and the device locale. They are behind a disclosure on the response card and as switchable columns in
-  the response table. See [Reserved Fields](/surveys/embedded-data/reserved-fields) for the full catalog and
-  for what the **Anonymize responses** toggle suppresses.
+  These seven are the ones shown by default. Formbricks captures more than twenty auto-captured fields
+  in total, including the page path, the campaign parameters, the screen and viewport size, the time zone
+  and the device locale. They are behind a disclosure on the response card and as switchable columns in the
+  response table. Which of them actually land depends on the survey type and its settings — a mobile app
+  survey has no host page, so it records nothing for the page and campaign fields. See [Reserved
+  Fields](/surveys/embedded-data/reserved-fields) for the full catalog, what each survey type captures, and
+  what the **Anonymize responses** toggle suppresses.
 </Note>
 
 ## View Response Metadata

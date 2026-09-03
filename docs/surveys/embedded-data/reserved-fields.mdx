@@ -4,7 +4,9 @@ description: "The system fields Formbricks captures on every response without yo
 icon: "list-check"
 ---
 
-Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-data/overview). They are the same for every survey in every workspace, you never declare them, and nothing outside the survey can write them. They are simply there, on every response, ready to be recalled, filtered, grouped and exported.
+Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-data/overview). The catalog is the same for every survey in every workspace, you never declare them, and nothing outside the survey can write them. Whatever gets captured is there to be recalled, filtered, grouped and exported.
+
+**Captured is not the same as declared, though.** A reserved field needs no declaration, but whether a value actually lands depends on the field, the survey type and the survey's settings: `ipAddress` only when the survey captures it, `durationSeconds` only on finished responses, the page and campaign fields only where there is a host page, and none of the newer fields on responses collected before they existed. The catalog and the sections below say which is which.
 
 ## The Catalog
 

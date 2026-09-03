@@ -6,7 +6,7 @@ icon: "code"
 
 In an app survey the integrator usually does not know which action will open a survey: your app fires a dozen of them and Formbricks decides. Passing context on `track()` therefore means repeating the same values on every possible call.
 
-`setEmbeddedData()` decouples the two. You push context whenever you have it, and whichever survey is displayed next picks it up.
+`setEmbeddedData()` decouples the two. You push context whenever you have it, and every survey displayed from then on picks it up — until you remove the key, or the page loads again.
 
 ```js
 formbricks.setEmbeddedData({ pageType: "product", plan: "pro" });
