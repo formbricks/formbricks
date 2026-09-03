@@ -269,6 +269,16 @@ overrides:
   # load-bearing (dev-only, Prisma CLI): apps/web > @better-auth/oauth-provider > better-auth >
   # @better-auth/prisma-adapter > @prisma/client > prisma > @prisma/config resolves 7.1.5.
   deepmerge-ts@7: 8.0.1
+  # ENG-2825 / GHSA-3f6p-5ww8-9rcr: mysql2 <3.22.0 registers mysql_clear_password as a standard auth
+  # plugin without requiring TLS, so a rogue server (or MITM) can force a client to send credentials in
+  # plaintext via an AuthSwitchRequest; patched in 3.22.0.
+  # GHSA-rgwj-5xj2-c3m3: mysql2 <=3.23.0 has no bound on the decompressed size of a zlib-compressed
+  # protocol packet, so a malicious/compromised server can DoS a client via a decompression bomb;
+  # patched in 3.23.1. Surfaced by `pnpm audit` (no Dependabot/Linear issue open for it yet); folded in
+  # here since it is the same package and pin. Raises the floor to 3.23.1 to close both.
+  # load-bearing: prisma resolves 3.15.3 (dev-only Prisma CLI, mysql adapter) and better-auth /
+  # @boxyhq/saml-jackson / typeorm resolve 3.20.0 (runtime, optional mysql adapters).
+  mysql2: 3.23.1
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
   # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.
