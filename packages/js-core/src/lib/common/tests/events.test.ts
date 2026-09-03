@@ -202,6 +202,33 @@ describe("on() / off() subscriptions", () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
+  test("a handler that re-arms itself mid-dispatch is dispatched once, not unboundedly", () => {
+    // `Set.prototype.forEach` visits entries appended during iteration, so without the snapshot in
+    // notifySubscribers the re-arm lands behind the cursor and loops until the page hangs. `other`
+    // is load-bearing: it keeps the Set non-empty, so off() does not drop the map entry and on()
+    // re-adds into the same Set being iterated.
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const other = vi.fn();
+    let calls = 0;
+    const handler = (): void => {
+      calls += 1;
+      if (calls > 2) throw new Error("re-arm re-entered the dispatch in flight");
+      offFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, handler);
+      onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, handler);
+    };
+
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, other);
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, handler);
+
+    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
+    expect(calls).toBe(1);
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    // Still subscribed for the next emit — re-arming is the point.
+    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_2" });
+    expect(calls).toBe(2);
+  });
+
   test("a throwing handler is logged and stops neither the other handlers nor the dataLayer push", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const throwing = vi.fn(() => {
