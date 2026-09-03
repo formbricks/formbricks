@@ -1,4 +1,5 @@
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import { SSO_RECOVERY_SIGN_IN_PATH } from "@/modules/ee/sso/lib/constants";
 
 const RELATIVE_URL_BASE = "http://localhost";
 
@@ -88,7 +89,7 @@ export const buildVerificationLinks = ({
   // flow (ENG-1054), so the legacy /auth/verify page is gone. It resolves at Better Auth's
   // /sso-recovery/sign-in endpoint, which verifies the JWT, establishes the session, and redirects to
   // callbackUrl. (`purpose` still distinguishes the verification-request link below.)
-  const verifyLink = new URL("/api/auth/sso-recovery/sign-in", webAppUrl);
+  const verifyLink = new URL(SSO_RECOVERY_SIGN_IN_PATH, webAppUrl);
   verifyLink.searchParams.set("token", token);
 
   const verificationRequestLink = new URL("/auth/verification-requested", webAppUrl);

@@ -3,7 +3,7 @@ import type { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { Account } from "@formbricks/types/auth";
 import { WEBAPP_URL } from "@/lib/constants";
-import { createEmailToken, createSsoRelinkIntent, verifySsoRelinkIntent } from "@/lib/jwt";
+import { createEmailToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
@@ -17,8 +17,17 @@ import {
   TSsoLookupUser,
   syncSsoIdentityForUser,
 } from "./account-linking";
-import { OAUTH_ACCOUNT_NOT_LINKED_ERROR, SSO_RECOVERY_COMPLETION_PATH } from "./constants";
+import {
+  OAUTH_ACCOUNT_NOT_LINKED_ERROR,
+  SSO_RECOVERY_COMPLETION_PATH,
+  isSsoRecoveryInternalCallbackUrl,
+} from "./constants";
 import { normalizeSsoProvider } from "./provider-normalization";
+import {
+  consumeSsoRecoveryIntent,
+  createSsoRecoveryIntent,
+  readSsoRecoveryIntent,
+} from "./recovery-intent";
 
 const getSsoRecoveryLogger = (
   event: "sso_recovery_started" | "sso_recovery_completed" | "sso_recovery_failed"
@@ -288,11 +297,47 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   };
 };
 
-const createSsoRecoveryCompletionUrl = (intentToken: string): string => {
+const createSsoRecoveryCompletionUrl = (stateId: string): string => {
   const completionUrl = new URL(SSO_RECOVERY_COMPLETION_PATH, WEBAPP_URL);
-  completionUrl.searchParams.set("intent", intentToken);
+  completionUrl.searchParams.set("state", stateId);
 
   return completionUrl.toString();
+};
+
+/**
+ * A failed recovery, carrying the callback the caller should bounce back to.
+ *
+ * The completion route needs that callback to build its failure redirect, and it used to recover it by
+ * decoding the intent JWT a second time. With the intent held server-side there is nothing in the URL
+ * left to decode, and a second Redis read to answer a question this function already knows the answer
+ * to would be wasteful — so the answer travels on the error.
+ *
+ * The message stays `OAUTH_ACCOUNT_NOT_LINKED_ERROR`, unchanged from the plain `Error` this replaces.
+ */
+export class SsoRecoveryError extends Error {
+  readonly callbackUrl?: string;
+
+  constructor(callbackUrl?: string) {
+    super(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+    this.name = "SsoRecoveryError";
+    this.callbackUrl = callbackUrl;
+  }
+}
+
+/**
+ * Where to send the user once recovery completes — never back into recovery itself (ENG-2783).
+ *
+ * See `isSsoRecoveryInternalCallbackUrl` for why a recovery URL reaches this point at all, and why the
+ * check cannot live in `getValidatedCallbackUrl`.
+ */
+const resolveRecoveryCallbackUrl = (callbackUrl: string): string => {
+  const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL);
+
+  if (!validatedCallbackUrl || isSsoRecoveryInternalCallbackUrl(validatedCallbackUrl)) {
+    return WEBAPP_URL;
+  }
+
+  return validatedCallbackUrl;
 };
 
 export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string => {
@@ -318,17 +363,17 @@ export const startSsoRecovery = async ({
   account: Account;
   callbackUrl: string;
 }): Promise<string> => {
-  const originalCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL) ?? WEBAPP_URL;
+  const originalCallbackUrl = resolveRecoveryCallbackUrl(callbackUrl);
 
   try {
-    const recoveryIntent = createSsoRelinkIntent({
+    const stateId = await createSsoRecoveryIntent({
       userId: existingUser.id,
       email: existingUser.email,
       provider,
       providerAccountId: account.providerAccountId,
       callbackUrl: originalCallbackUrl,
     });
-    const completionUrl = createSsoRecoveryCompletionUrl(recoveryIntent);
+    const completionUrl = createSsoRecoveryCompletionUrl(stateId);
 
     await sendVerificationEmail({
       id: existingUser.id,
@@ -384,11 +429,11 @@ export const startSsoRecovery = async ({
 };
 
 export const completeSsoRecovery = async ({
-  intentToken,
+  stateId,
   sessionUserId,
   sessionToken,
 }: {
-  intentToken: string;
+  stateId: string;
   sessionUserId?: string;
   /**
    * The recovering user's own session token, so the post-commit revocation can spare it. Everything else
@@ -396,12 +441,16 @@ export const completeSsoRecovery = async ({
    */
   sessionToken?: string;
 }): Promise<string> => {
-  let intent: ReturnType<typeof verifySsoRelinkIntent>;
+  // Reads without consuming. The completion URL sits in an email, and mail security gateways fetch
+  // every link in a message before the human sees it — burning the intent on read would let a scanner
+  // spend it and lock the real user out. It is consumed after the link commits instead.
+  const intent = await readSsoRecoveryIntent(stateId);
 
-  try {
-    intent = verifySsoRelinkIntent(intentToken);
-  } catch (error) {
-    getSsoRecoveryLogger("sso_recovery_failed").error({ error }, "Invalid or expired SSO recovery intent");
+  if (!intent) {
+    getSsoRecoveryLogger("sso_recovery_failed").error(
+      {},
+      "Missing, expired or malformed SSO recovery intent"
+    );
     queueSsoRecoveryAuditEvent({
       action: "sso_recovery_failed",
       status: "failure",
@@ -410,7 +459,7 @@ export const completeSsoRecovery = async ({
       provider: "unknown",
       failureReason: "invalid_or_expired_intent",
     });
-    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+    throw new SsoRecoveryError();
   }
 
   const provider = normalizeSsoProvider(intent.provider);
@@ -431,7 +480,7 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "invalid_provider",
     });
-    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+    throw new SsoRecoveryError(intent.callbackUrl);
   }
 
   if (!sessionUserId) {
@@ -451,7 +500,7 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "missing_session",
     });
-    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+    throw new SsoRecoveryError(intent.callbackUrl);
   }
 
   if (sessionUserId !== intent.userId) {
@@ -472,7 +521,7 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "session_user_mismatch",
     });
-    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+    throw new SsoRecoveryError(intent.callbackUrl);
   }
 
   const user = await prisma.user.findUnique({
@@ -499,7 +548,7 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "user_mismatch",
     });
-    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+    throw new SsoRecoveryError(intent.callbackUrl);
   }
 
   const reclaimed = await prisma.$transaction(async (tx) => {
@@ -523,6 +572,12 @@ export const completeSsoRecovery = async ({
 
     return outcome;
   });
+
+  // Single use, applied at the only point where it is safe to: the link has committed, so the intent
+  // has done its job and a replay would only redo work. Not on read — see the note above the read.
+  // Best-effort inside the helper: the account is already linked, and a Redis hiccup here must not turn
+  // a completed recovery into a failure. The record expires on its own.
+  await consumeSsoRecoveryIntent(stateId);
 
   // Only when factors were actually stripped: this is the account changing hands, so any session the
   // squatter still holds has to go. Reachable in practice because `signUpEmail` writes
