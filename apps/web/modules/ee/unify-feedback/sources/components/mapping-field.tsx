@@ -314,7 +314,7 @@ export const FormTargetField = ({
                 emptyDropdownText={t("workspace.surveys.edit.no_option_found")}
                 showSearch
                 disabled={disabled}
-                comboboxClasses="h-9 w-full max-w-none [&_[role=combobox]]:h-9"
+                comboboxClasses="h-9 w-full max-w-none"
               />
             </div>
             {!isEnum && mapping?.staticValue && mapping.staticValue !== "$now" && (
