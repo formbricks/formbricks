@@ -9,17 +9,22 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 export function LanguageLabels() {
   const { t } = useTranslation();
   return (
-    <div className="mb-2 grid w-full grid-cols-4 gap-4">
+    <div className="mb-2 grid w-full grid-cols-5 gap-4">
       <Label htmlFor="languagesId">{t("workspace.languages.language")}</Label>
       <Label htmlFor="languagesId">{t("workspace.languages.identifier")}</Label>
       <Label className="flex items-center gap-x-2" htmlFor="Alias">
-        <span>{t("workspace.languages.alias")}</span> <AliasTooltip t={t} />
+        <span>{t("workspace.languages.alias")}</span>
+        <LabelTooltip text={t("workspace.languages.alias_tooltip")} />
+      </Label>
+      <Label className="flex items-center gap-x-2">
+        <span>{t("workspace.languages.default_survey_language")}</span>
+        <LabelTooltip text={t("workspace.languages.default_survey_language_description")} />
       </Label>
     </div>
   );
 }
 
-function AliasTooltip({ t }: Readonly<{ t: TFunction }>) {
+function LabelTooltip({ text }: Readonly<{ text: ReturnType<TFunction> }>) {
   return (
     <TooltipProvider delayDuration={80}>
       <Tooltip>
@@ -28,7 +33,7 @@ function AliasTooltip({ t }: Readonly<{ t: TFunction }>) {
             <InfoIcon className="size-4 text-slate-400" />
           </div>
         </TooltipTrigger>
-        <TooltipContent>{t("workspace.languages.alias_tooltip")}</TooltipContent>
+        <TooltipContent>{text}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

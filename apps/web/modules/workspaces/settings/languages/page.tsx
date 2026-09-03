@@ -6,7 +6,6 @@ import { EditLanguage } from "@/modules/survey/multi-language-surveys/components
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { EditDefaultSurveyLanguageForm } from "@/modules/workspaces/settings/languages/components/edit-default-survey-language-form";
 
 export const LanguagesPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
@@ -26,11 +25,7 @@ export const LanguagesPage = async (props: { params: Promise<{ workspaceId: stri
       <SettingsCard
         title={t("workspace.languages.multi_language_surveys")}
         description={t("workspace.languages.multi_language_surveys_description")}>
-        <div className="flex flex-col gap-y-6">
-          <EditLanguage workspace={workspace} locale={user.locale} isReadOnly={isReadOnly} />
-          {/* Renders nothing until the workspace has a language to default to. */}
-          <EditDefaultSurveyLanguageForm workspace={workspace} locale={user.locale} isReadOnly={isReadOnly} />
-        </div>
+        <EditLanguage workspace={workspace} locale={user.locale} isReadOnly={isReadOnly} />
       </SettingsCard>
     </PageContentWrapper>
   );

@@ -2161,10 +2161,7 @@ checksums:
     workspace/languages/conflict_between_selected_alias_and_another_language: 3df7377a54909e439e38ec76514e5439
     workspace/languages/default_survey_language: caae21df26688376eada35e5f961a7fe
     workspace/languages/default_survey_language_description: 7313d99e4e5ed3274f9a50a0e10aebc1
-    workspace/languages/default_survey_language_placeholder: 1a08ac1e72413da132b3220242878111
-    workspace/languages/default_survey_language_unset_description: f3ee9b44308a12c2b804bb77a42a5f6f
     workspace/languages/default_survey_language_unsupported: 6654b248c077af953061965269a45b7b
-    workspace/languages/default_survey_language_updated_successfully: 5d19009d977e5500539c56396d6fda53
     workspace/languages/delete_language_confirmation: 4f83321fed95d689f7ff3aa47a82ce68
     workspace/languages/duplicate_language_or_language_id: 0e17e3794b24e2428ca6ffadae0d08f3
     workspace/languages/edit_languages: c9d36f6b28557cc7d54e87c37dc18fdd

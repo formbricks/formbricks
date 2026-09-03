@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Language } from "@formbricks/database/prisma-browser";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { isSurveyRuntimeLanguage } from "@formbricks/i18n-utils/src/survey-runtime-languages";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
@@ -14,6 +16,8 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { RadioGroup } from "@/modules/ui/components/radio-group";
+import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 import {
   createLanguageAction,
   deleteLanguageAction,
@@ -79,6 +83,11 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   const { t } = useTranslation();
   const [languages, setLanguages] = useState<Language[]>(workspace.languages);
   const [isEditing, setIsEditing] = useState(false);
+  // Which language new surveys are written in (ENG-2816). Edited with the rows and saved with them, so
+  // "which of these is the default" is one decision in one place rather than a second live control.
+  const [defaultLanguage, setDefaultLanguage] = useState(
+    normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? ""
+  );
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
     text: "",
@@ -89,6 +98,10 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   useEffect(() => {
     setLanguages(workspace.languages);
   }, [workspace.languages]);
+
+  useEffect(() => {
+    setDefaultLanguage(normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? "");
+  }, [workspace.config.defaultSurveyLanguage]);
 
   const router = useRouter();
 
@@ -177,6 +190,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
 
   const handleCancelChanges = async () => {
     setLanguages(workspace.languages);
+    setDefaultLanguage(normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? "");
     setIsEditing(false);
   };
 
@@ -201,6 +215,25 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
       toast.error(getFormattedErrorMessage(errorResult));
       return;
     }
+
+    // Written after the rows, and only when it changed: the default has to name a language that already
+    // exists, which a language added in this same edit does not until the writes above land.
+    const storedDefaultLanguage = normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? "";
+    if (defaultLanguage !== storedDefaultLanguage) {
+      const defaultLanguageResult = await updateWorkspaceAction({
+        workspaceId: workspace.id,
+        data: {
+          // `config` is a JSON column replaced wholesale, so its other keys have to be carried over.
+          config: { ...workspace.config, defaultSurveyLanguage: defaultLanguage || null },
+        },
+      });
+
+      if (!defaultLanguageResult?.data) {
+        toast.error(getFormattedErrorMessage(defaultLanguageResult));
+        return;
+      }
+    }
+
     toast.success(t("workspace.languages.languages_updated_successfully"));
     router.refresh();
     setIsEditing(false);
@@ -212,20 +245,27 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         {languages.length > 0 ? (
           <>
             <LanguageLabels />
-            {languages.map((language, index) => (
-              <LanguageRow
-                isEditing={isEditing}
-                key={language.id}
-                language={language}
-                locale={locale}
-                onDelete={() => handleDeleteLanguage(language.id)}
-                onLanguageChange={(newLanguage: Language) => {
-                  const updatedLanguages = [...languages];
-                  updatedLanguages[index] = newLanguage;
-                  setLanguages(updatedLanguages);
-                }}
-              />
-            ))}
+            <RadioGroup onValueChange={setDefaultLanguage} value={defaultLanguage}>
+              {languages.map((language, index) => {
+                const canonicalCode = normalizeLanguageCode(language.code) ?? language.code;
+                return (
+                  <LanguageRow
+                    canBeDefault={isSurveyRuntimeLanguage(canonicalCode)}
+                    defaultLanguageValue={canonicalCode || null}
+                    isEditing={isEditing}
+                    key={language.id}
+                    language={language}
+                    locale={locale}
+                    onDelete={() => handleDeleteLanguage(language.id)}
+                    onLanguageChange={(newLanguage: Language) => {
+                      const updatedLanguages = [...languages];
+                      updatedLanguages[index] = newLanguage;
+                      setLanguages(updatedLanguages);
+                    }}
+                  />
+                );
+              })}
+            </RadioGroup>
           </>
         ) : (
           <p className="text-sm text-slate-500 italic">{t("workspace.languages.no_language_found")}</p>
