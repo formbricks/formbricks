@@ -157,7 +157,7 @@ export function EndingCard({
           <>
             {endingCard.type === "endScreen" && (
               <div>
-                {media ?? checkmark}
+                {media ?? (endingCard.hideDefaultIcon ? null : checkmark)}
                 <div>
                   <Headline
                     alignTextCenter
