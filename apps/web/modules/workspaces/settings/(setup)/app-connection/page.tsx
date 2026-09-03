@@ -6,13 +6,13 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { WEBAPP_URL } from "@/lib/constants";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getTranslate } from "@/lingodotdev/server";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { CodeBlock } from "@/modules/ui/components/code-block";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { SetupInstructions } from "./components/setup-instructions";
+import { InstallMethodCards } from "./components/install-method-cards";
 
 export const AppConnectionPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
@@ -21,7 +21,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
   const workspaceIdMigrationUrl =
     "https://formbricks.com/docs/surveys/website-app-surveys/workspace-id-migration";
 
-  const { workspace, session } = await getWorkspaceAuth(workspaceId);
+  const { workspace, organization, session } = await getWorkspaceAuth(workspaceId);
   const showAIPrompt = session?.user.id
     ? (await getPostHogFeatureFlag(session.user.id, "a-b_app-connection_ai-prompt", { workspaceId })) ===
       "test"
@@ -147,7 +147,7 @@ Paste this snippet into your <head> on every page:
 
 ## Android (Kotlin)
 1. Add to build.gradle.kts:
-   implementation("com.formbricks:android:1.0.0")
+   implementation("com.formbricks:android:2.1.0")
    Also enable dataBinding = true under android.buildFeatures.
 2. Initialize in your Activity:
 
@@ -168,7 +168,7 @@ Call setUserId with the authenticated user's ID. Call logout() on sign-out.
 
 ## Validate
 
-Go to Settings → Connect your App — the widget indicator should turn green.
+Go to Settings → Installation — the widget indicator should turn green.
 To debug, add ?formbricksDebug=true to your app URL and check the browser console.`;
 
   const htmlSnippet = `<!-- START Formbricks Surveys -->
@@ -180,10 +180,101 @@ var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src
 </script>
 <!-- END Formbricks Surveys -->`;
 
+  const nextjsSnippet = `"use client";
+
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import formbricks from "@formbricks/js";
+
+export default function FormbricksProvider() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    formbricks.setup({ workspaceId: "${workspace.id}", appUrl: "${WEBAPP_URL}" });
+  }, []);
+
+  useEffect(() => {
+    formbricks?.registerRouteChange();
+  }, [pathname, searchParams]);
+
+  return null;
+}`;
+
+  const reactSnippet = `import formbricks from "@formbricks/js";
+
+if (typeof window !== "undefined") {
+  formbricks.setup({
+    workspaceId: "${workspace.id}",
+    appUrl: "${WEBAPP_URL}",
+  });
+}`;
+
+  const vueSnippet = `import formbricks from "@formbricks/js";
+
+if (typeof window !== "undefined") {
+  formbricks.setup({
+    workspaceId: "${workspace.id}",
+    appUrl: "${WEBAPP_URL}",
+  });
+}
+
+export default formbricks;`;
+
+  const reactNativeSnippet = `import Formbricks from "@formbricks/react-native";
+
+const config = {
+  workspaceId: "${workspace.id}",
+  appUrl: "${WEBAPP_URL}",
+};
+
+export default function App() {
+  return (
+    <>
+      {/* Your app content */}
+      <Formbricks initConfig={config} />
+    </>
+  );
+}`;
+
+  const androidSnippet = `val config = FormbricksConfig.Builder(
+    "${WEBAPP_URL}",
+    "${workspace.id}"
+)
+  .setFragmentManager(supportFragmentManager)
+  .build()
+
+Formbricks.setup(this, config)`;
+
+  const swiftSnippet = `import FormbricksSDK
+
+let config = FormbricksConfig.Builder(
+    appUrl: "${WEBAPP_URL}",
+    workspaceId: "${workspace.id}"
+).build()
+
+Formbricks.setup(with: config)`;
+
+  const flutterSnippet = `import 'package:formbricks/formbricks.dart';
+
+Formbricks(
+  appUrl: "${WEBAPP_URL}",
+  workspaceId: "${workspace.id}",
+);`;
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.connect_your_app")} />
       <div className="space-y-4">
+        <Alert variant="info" role="status" className="max-w-4xl rounded-xl">
+          <AlertTitle>{t("workspace.app-connection.invite_banner_title")}</AlertTitle>
+          <AlertDescription>{t("workspace.app-connection.invite_banner_description")}</AlertDescription>
+          <AlertButton asChild>
+            <Link href={organizationSettingsPath(organization.id, "teams")}>
+              {t("workspace.app-connection.invite_banner_button")}
+            </Link>
+          </AlertButton>
+        </Alert>
         <SettingsCard
           title={t("workspace.app-connection.sdk_connection_details")}
           description={t("workspace.app-connection.sdk_connection_details_description")}>
@@ -213,13 +304,18 @@ var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src
         <SettingsCard
           title={t("workspace.app-connection.how_to_setup")}
           description={t("workspace.app-connection.how_to_setup_description")}>
-          {showAIPrompt ? (
-            <SetupInstructions htmlSnippet={htmlSnippet} aiPrompt={aiPrompt} />
-          ) : (
-            <CodeBlock customEditorClass="bg-white! border border-slate-200" language="html" noMargin>
-              {htmlSnippet}
-            </CodeBlock>
-          )}
+          <InstallMethodCards
+            htmlSnippet={htmlSnippet}
+            reactSnippet={reactSnippet}
+            nextjsSnippet={nextjsSnippet}
+            vueSnippet={vueSnippet}
+            reactNativeSnippet={reactNativeSnippet}
+            swiftSnippet={swiftSnippet}
+            androidSnippet={androidSnippet}
+            flutterSnippet={flutterSnippet}
+            aiPrompt={aiPrompt}
+            showAIPrompt={showAIPrompt}
+          />
         </SettingsCard>
         <SettingsCard
           title={t("workspace.app-connection.app_connection")}

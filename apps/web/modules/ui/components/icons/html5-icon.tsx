@@ -1,8 +1,8 @@
 export const Html5Icon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg
-      stroke="currentColor"
-      fill="currentColor"
+      stroke="#E34F26"
+      fill="#E34F26"
       strokeWidth="0"
       viewBox="0 0 512 512"
       height="1em"
