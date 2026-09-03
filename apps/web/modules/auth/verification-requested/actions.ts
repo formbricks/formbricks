@@ -7,7 +7,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
 import { actionClient } from "@/lib/utils/action-client";
-import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import { MAX_CALLBACK_URL_LENGTH, getValidatedCallbackUrl } from "@/lib/utils/url";
 import { auth } from "@/modules/auth/lib/auth";
 import {
   SIGNUP_INTENT_COOKIE_NAME,
@@ -30,7 +30,9 @@ import { sendVerificationEmail } from "@/modules/email";
 
 const ZResendVerificationEmailAction = z.object({
   email: ZUserEmail,
-  callbackUrl: z.string().max(2000).optional(),
+  // The same bound `getValidatedCallbackUrl` enforces, so a callback this action accepts is one the
+  // rest of the app would accept too — two independent numbers here drifted once already.
+  callbackUrl: z.string().max(MAX_CALLBACK_URL_LENGTH).optional(),
 });
 
 /**
