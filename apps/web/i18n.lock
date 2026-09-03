@@ -1799,7 +1799,6 @@ checksums:
     workspace/analysis/charts/save_and_add_to_dashboard: a76ed91c62dae10c5f8a9d48cbacd566
     workspace/analysis/charts/save_chart: 5ca3a2c850277cf4bcd24cc986fa0ea4
     workspace/analysis/charts/save_chart_dialog_title: 2e4505f7bf3d1c35b0b37b1e9d3dc566
-    workspace/analysis/charts/save_requires_chart: 86dd9c5c0f5faf93165878f7245012b9
     workspace/analysis/charts/search_field: 8585baa2984e1d037e2d83815f0df1b6
     workspace/analysis/charts/search_value: c92a85848cc34ea1717daee8d9a34c86
     workspace/analysis/charts/select_data_source: 983394bc0182b65ec68f713a46b97302

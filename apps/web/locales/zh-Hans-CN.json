@@ -1864,7 +1864,6 @@
         "save_and_add_to_dashboard": "保存并添加到仪表板",
         "save_chart": "保存图表",
         "save_chart_dialog_title": "保存图表",
-        "save_requires_chart": "请先构建图表再保存",
         "search_field": "搜索字段...",
         "search_value": "搜索值...",
         "select_data_source": "Select a data source",

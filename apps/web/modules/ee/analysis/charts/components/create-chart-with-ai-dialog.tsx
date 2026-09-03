@@ -181,126 +181,130 @@ export function CreateChartWithAIDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setDialogOpen}>
-      <DialogContent
-        width="narrow"
-        className="overflow-hidden"
-        // A stray click outside must not abandon a generation, but Escape should still work.
-        disableCloseOnOutsideClick
-        closeOnEscape
-        onOpenAutoFocus={(event) => {
-          if (!isAIAvailable) return;
-          event.preventDefault();
-          globalThis.requestAnimationFrame(() => promptInputRef.current?.focus());
-        }}>
-        <DialogHeader>
-          {/* DialogHeader colours its icon through an arbitrary variant that outranks the kit's own
+    <>
+      <Dialog open={open} onOpenChange={setDialogOpen}>
+        <DialogContent
+          width="narrow"
+          className="overflow-hidden"
+          // A stray click outside must not abandon a generation, but Escape should still work.
+          disableCloseOnOutsideClick
+          closeOnEscape
+          onOpenAutoFocus={(event) => {
+            if (!isAIAvailable) return;
+            event.preventDefault();
+            globalThis.requestAnimationFrame(() => promptInputRef.current?.focus());
+          }}>
+          <DialogHeader>
+            {/* DialogHeader colours its icon through an arbitrary variant that outranks the kit's own
               token, so the mark asserts it here. */}
-          <AiIcon aria-hidden="true" className="text-ai-dark!" />
-          <DialogTitle>{t("workspace.analysis.charts.ai_create.dialog_title")}</DialogTitle>
-          <DialogDescription>{t("workspace.analysis.charts.ai_create.dialog_description")}</DialogDescription>
-        </DialogHeader>
+            <AiIcon aria-hidden="true" className="text-ai-dark!" />
+            <DialogTitle>{t("workspace.analysis.charts.ai_create.dialog_title")}</DialogTitle>
+            <DialogDescription>
+              {t("workspace.analysis.charts.ai_create.dialog_description")}
+            </DialogDescription>
+          </DialogHeader>
 
-        <DialogBody className="-mx-1 -mt-1 space-y-4 px-1 pt-1 pb-1">
-          <form className="flex w-full flex-col space-y-4" onSubmit={handleGenerate}>
-            {isAIAvailable && !hasFeedbackDirectory && (
-              // The builder's from-scratch branch renders this same alert; without it the AI branch
-              // was the one path that explained nothing.
-              <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} />
-            )}
+          <DialogBody className="-mx-1 -mt-1 space-y-4 px-1 pt-1 pb-1">
+            <form className="flex w-full flex-col space-y-4" onSubmit={handleGenerate}>
+              {isAIAvailable && !hasFeedbackDirectory && (
+                // The builder's from-scratch branch renders this same alert; without it the AI branch
+                // was the one path that explained nothing.
+                <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} />
+              )}
 
-            {!isAIAvailable && (
-              <Alert variant="info" role="status">
-                <AlertTitle>{t("workspace.analysis.charts.ai_chart_generation")}</AlertTitle>
-                <AlertDescription>{translateAIUnavailableMessage(aiUnavailableReason)}</AlertDescription>
-                {aiUnavailableAction && (
-                  <AlertButton asChild>
-                    <Link href={aiUnavailableAction.href}>
-                      {translateAIUnavailableAction(aiUnavailableAction.type)}
-                    </Link>
-                  </AlertButton>
-                )}
-              </Alert>
-            )}
+              {!isAIAvailable && (
+                <Alert variant="info" role="status">
+                  <AlertTitle>{t("workspace.analysis.charts.ai_chart_generation")}</AlertTitle>
+                  <AlertDescription>{translateAIUnavailableMessage(aiUnavailableReason)}</AlertDescription>
+                  {aiUnavailableAction && (
+                    <AlertButton asChild>
+                      <Link href={aiUnavailableAction.href}>
+                        {translateAIUnavailableAction(aiUnavailableAction.type)}
+                      </Link>
+                    </AlertButton>
+                  )}
+                </Alert>
+              )}
 
-            <div className="space-y-2">
-              <textarea
-                ref={promptInputRef}
-                id="ai-chart-prompt"
-                className="min-h-24 w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-                maxLength={AI_CHART_PROMPT_MAX_LENGTH}
-                placeholder={t("workspace.analysis.charts.ai_create.prompt_placeholder")}
-                value={prompt}
-                disabled={!isAIAvailable || isGenerating}
-                onChange={(event) => onPromptChange(event.target.value)}
-                onKeyDown={handlePromptKeyDown}
-                aria-label={t("workspace.analysis.charts.ai_create.prompt_label")}
-              />
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-                <span>
-                  {t("workspace.analysis.charts.ai_create.characters", {
-                    count: prompt.length,
-                    max: AI_CHART_PROMPT_MAX_LENGTH,
-                  })}
-                </span>
-                <span>{t("workspace.analysis.charts.ai_create.shortcut_hint")}</span>
-              </div>
-            </div>
-
-            {isAIAvailable && !isGenerating && (
               <div className="space-y-2">
-                <p className="text-sm font-medium text-slate-700">
-                  {t("workspace.analysis.charts.ai_create.try_prompt")}
-                </p>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {helperPrompts.map((helperPrompt) => (
-                    <Button
-                      key={helperPrompt.label}
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="group w-full min-w-0 justify-start text-left"
-                      title={helperPrompt.prompt}
-                      aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
-                      onClick={() => onPromptChange(helperPrompt.prompt)}>
-                      <helperPrompt.Icon className="size-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-primary" />
-                      <span className="min-w-0 truncate">{helperPrompt.label}</span>
-                    </Button>
-                  ))}
+                <textarea
+                  ref={promptInputRef}
+                  id="ai-chart-prompt"
+                  className="min-h-24 w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                  maxLength={AI_CHART_PROMPT_MAX_LENGTH}
+                  placeholder={t("workspace.analysis.charts.ai_create.prompt_placeholder")}
+                  value={prompt}
+                  disabled={!isAIAvailable || isGenerating}
+                  onChange={(event) => onPromptChange(event.target.value)}
+                  onKeyDown={handlePromptKeyDown}
+                  aria-label={t("workspace.analysis.charts.ai_create.prompt_label")}
+                />
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                  <span>
+                    {t("workspace.analysis.charts.ai_create.characters", {
+                      count: prompt.length,
+                      max: AI_CHART_PROMPT_MAX_LENGTH,
+                    })}
+                  </span>
+                  <span>{t("workspace.analysis.charts.ai_create.shortcut_hint")}</span>
                 </div>
               </div>
-            )}
 
-            <AiStatusLine
-              isActive={isGenerating}
-              messages={[
-                t("workspace.analysis.charts.ai_status_reading"),
-                t("workspace.analysis.charts.ai_status_choosing"),
-                t("workspace.analysis.charts.ai_status_querying"),
-              ]}
-            />
-
-            <DialogFooter>
-              {isGenerating ? (
-                // One action while generating: a disabled primary beside it only invites clicking.
-                <Button ref={stopButtonRef} type="button" variant="secondary" onClick={handleStop}>
-                  {t("workspace.surveys.ai_create.stop")}
-                </Button>
-              ) : (
-                <>
-                  <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>
-                    {t("common.cancel")}
-                  </Button>
-                  <Button type="submit" variant="ai-primary" disabled={!canGenerate}>
-                    <AiIcon tone="ai-light" />
-                    {t("workspace.analysis.charts.ai_create.generate")}
-                  </Button>
-                </>
+              {isAIAvailable && !isGenerating && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">
+                    {t("workspace.analysis.charts.ai_create.try_prompt")}
+                  </p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {helperPrompts.map((helperPrompt) => (
+                      <Button
+                        key={helperPrompt.label}
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="group w-full min-w-0 justify-start text-left"
+                        title={helperPrompt.prompt}
+                        aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
+                        onClick={() => onPromptChange(helperPrompt.prompt)}>
+                        <helperPrompt.Icon className="size-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-primary" />
+                        <span className="min-w-0 truncate">{helperPrompt.label}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
               )}
-            </DialogFooter>
-          </form>
-        </DialogBody>
-      </DialogContent>
+
+              <AiStatusLine
+                isActive={isGenerating}
+                messages={[
+                  t("workspace.analysis.charts.ai_status_reading"),
+                  t("workspace.analysis.charts.ai_status_choosing"),
+                  t("workspace.analysis.charts.ai_status_querying"),
+                ]}
+              />
+
+              <DialogFooter>
+                {isGenerating ? (
+                  // One action while generating: a disabled primary beside it only invites clicking.
+                  <Button ref={stopButtonRef} type="button" variant="secondary" onClick={handleStop}>
+                    {t("workspace.surveys.ai_create.stop")}
+                  </Button>
+                ) : (
+                  <>
+                    <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>
+                      {t("common.cancel")}
+                    </Button>
+                    <Button type="submit" variant="ai-primary" disabled={!canGenerate}>
+                      <AiIcon tone="ai-light" />
+                      {t("workspace.analysis.charts.ai_create.generate")}
+                    </Button>
+                  </>
+                )}
+              </DialogFooter>
+            </form>
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmationModal
         open={isConfirmingDiscard}
@@ -315,6 +319,6 @@ export function CreateChartWithAIDialog({
           closeAndReset();
         }}
       />
-    </Dialog>
+    </>
   );
 }

@@ -206,7 +206,6 @@ export function CreateChartView({
             isDisabled={queryState.isPending}
             showAddToDashboard={false}
             canSave={canSave}
-            saveHint={t("workspace.analysis.charts.save_requires_chart")}
             onCancelClick={requestClose}
             saveLabel={saveLabel}
           />

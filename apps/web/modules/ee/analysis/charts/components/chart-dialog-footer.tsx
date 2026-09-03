@@ -4,7 +4,6 @@ import { PlusIcon, SaveIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { DialogFooter } from "@/modules/ui/components/dialog";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface ChartDialogFooterProps {
   onSaveClick?: () => void;
@@ -21,8 +20,6 @@ interface ChartDialogFooterProps {
    * unavailable is what tells you the chart is not finished.
    */
   canSave?: boolean;
-  /** Why Save is unavailable, on hover. */
-  saveHint?: string;
 }
 
 export function ChartDialogFooter({
@@ -35,7 +32,6 @@ export function ChartDialogFooter({
   saveLabel,
   showAddToDashboard = true,
   canSave = true,
-  saveHint,
 }: Readonly<ChartDialogFooterProps>) {
   const { t } = useTranslation();
   return (
@@ -55,16 +51,19 @@ export function ChartDialogFooter({
           {t("common.cancel")}
         </Button>
       )}
-      <TooltipRenderer shouldRender={!canSave && Boolean(saveHint)} tooltipContent={saveHint}>
-        <Button
-          type={formId ? "submit" : "button"}
-          form={formId}
-          onClick={formId ? undefined : onSaveClick}
-          disabled={isSaving || isDisabled || !canSave}>
-          <SaveIcon />
-          {saveLabel ?? t("workspace.analysis.charts.save_chart")}
-        </Button>
-      </TooltipRenderer>
+      {/*
+        No tooltip explaining why Save is unavailable: a tooltip on a disabled button never opens for
+        a keyboard user and is not announced, and the preview says the same thing already — visibly,
+        permanently, and in the place the eye is when there is nothing to save yet.
+      */}
+      <Button
+        type={formId ? "submit" : "button"}
+        form={formId}
+        onClick={formId ? undefined : onSaveClick}
+        disabled={isSaving || isDisabled || !canSave}>
+        <SaveIcon />
+        {saveLabel ?? t("workspace.analysis.charts.save_chart")}
+      </Button>
     </DialogFooter>
   );
 }

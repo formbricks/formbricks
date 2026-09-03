@@ -1864,7 +1864,6 @@
         "save_and_add_to_dashboard": "保存してダッシュボードに追加",
         "save_chart": "チャートを保存",
         "save_chart_dialog_title": "チャートを保存",
-        "save_requires_chart": "保存する前にチャートを作成してください",
         "search_field": "フィールドを検索...",
         "search_value": "値を検索...",
         "select_data_source": "Select a data source",
