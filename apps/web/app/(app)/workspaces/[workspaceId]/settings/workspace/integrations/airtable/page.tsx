@@ -10,10 +10,14 @@ import { redactIntegrationCredentials } from "@/lib/integration/redact-credentia
 import { getIntegrations } from "@/lib/integration/service";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getSettingsPageMetadata } from "@/modules/settings/lib/metadata";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
+
+export const generateMetadata = () =>
+  getSettingsPageMetadata("workspace.integrations.airtable.airtable_integration");
 
 const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;

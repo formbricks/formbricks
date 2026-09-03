@@ -1,9 +1,6 @@
 "use client";
 
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
-import Calendar from "react-calendar";
 import { useTranslation } from "react-i18next";
 import type { TimeDimensionConfig } from "@/modules/ee/analysis/lib/query-builder";
 import {
@@ -15,9 +12,8 @@ import {
   getTranslatedGranularityLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { Button } from "@/modules/ui/components/button";
-import "@/modules/ui/components/date-picker/styles.css";
+import { DateRangePicker } from "@/modules/ui/components/date-picker";
 import { Label } from "@/modules/ui/components/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import {
   Select,
   SelectContent,
@@ -51,7 +47,7 @@ export function TimeDimensionPanel({
   hideTitle = false,
   hideGranularity = false,
 }: Readonly<TimeDimensionPanelProps>) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [dateRangeType, setDateRangeType] = useState<"preset" | "custom">(
     timeDimension && typeof timeDimension.dateRange === "string" ? "preset" : "custom"
   );
@@ -208,64 +204,18 @@ export function TimeDimensionPanel({
             </Select>
 
             {dateRangeType === "custom" && (
-              <div className="grid grid-cols-2 gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start bg-white text-left font-normal">
-                      <CalendarIcon className="mr-2 size-4" />
-                      {customStartDate
-                        ? format(customStartDate, "MMM dd, yyyy")
-                        : t("workspace.analysis.charts.start_date")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      onChange={(value) => {
-                        const date = value instanceof Date ? value : new Date();
-                        setCustomStartDate(date);
-                        const end = customEndDate ?? date;
-                        if (timeDimension) {
-                          onTimeDimensionChange({
-                            ...timeDimension,
-                            dateRange: [date, end],
-                          });
-                        }
-                        if (!customEndDate) setCustomEndDate(end);
-                      }}
-                      value={customStartDate || undefined}
-                    />
-                  </PopoverContent>
-                </Popover>
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start bg-white text-left font-normal">
-                      <CalendarIcon className="mr-2 size-4" />
-                      {customEndDate
-                        ? format(customEndDate, "MMM dd, yyyy")
-                        : t("workspace.analysis.charts.end_date")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      onChange={(value) => {
-                        const date = value instanceof Date ? value : new Date();
-                        setCustomEndDate(date);
-                        const start = customStartDate ?? date;
-                        if (timeDimension) {
-                          onTimeDimensionChange({
-                            ...timeDimension,
-                            dateRange: [start, date],
-                          });
-                        }
-                        if (!customStartDate) setCustomStartDate(start);
-                      }}
-                      value={customEndDate || undefined}
-                      minDate={customStartDate || undefined}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+              <DateRangePicker
+                value={{ from: customStartDate ?? undefined, to: customEndDate ?? undefined }}
+                locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
+                triggerClassName="w-full"
+                onChange={({ from, to }) => {
+                  setCustomStartDate(from);
+                  setCustomEndDate(to);
+                  if (timeDimension) {
+                    onTimeDimensionChange({ ...timeDimension, dateRange: [from, to] });
+                  }
+                }}
+              />
             )}
           </div>
         </div>

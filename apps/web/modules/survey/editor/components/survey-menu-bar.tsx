@@ -231,6 +231,15 @@ export const SurveyMenuBar = ({
               newInvalidIds.push(element.id);
             }
             firstInvalidScrollId ??= element?.id ?? null;
+          } else if (issue.path[2] === "name") {
+            // Empty block name: flag the block itself so its card turns red. Block ids never
+            // collide with element or logic-rule ids, so this is unambiguous in invalidElements.
+            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
+
+            if (block && !newInvalidIds.includes(block.id)) {
+              newInvalidIds.push(block.id);
+            }
+            firstInvalidScrollId ??= block?.id ?? null;
           } else if (issue.path[2] === "logic" && typeof issue.path[3] === "number") {
             // Conditional logic error: flag the offending rule so the block card
             // surfaces it. Uses the logic rule id (a CUID, distinct from element ids).
@@ -286,6 +295,18 @@ export const SurveyMenuBar = ({
       }
 
       const firstError = issues[0];
+
+      // The schema can only say "Block name is required"; it has no idea which block. Name it,
+      // so the message matches the card that just turned red.
+      if (firstError.path[0] === "blocks" && firstError.path[2] === "name") {
+        toast.error(
+          t("workspace.surveys.edit.block_name_required_for", {
+            blockNumber: (firstError.path[1] as number) + 1,
+          })
+        );
+        return false;
+      }
+
       if (firstError.code === "custom") {
         const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
         if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
