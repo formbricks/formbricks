@@ -20,6 +20,7 @@ import {
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
+  renderSsoRecoveryFactorsRemovedEmail,
   renderVerificationEmail,
 } from "../index";
 import { exampleData } from "./example-data";
@@ -58,6 +59,15 @@ const renderers: [string, () => Promise<string>][] = [
     () => renderNewEmailVerification({ ...exampleData.newEmailVerification, ...legal, t }),
   ],
   ["renderPasswordResetNotifyEmail", () => renderPasswordResetNotifyEmail({ ...legal, t })],
+  [
+    "renderSsoRecoveryFactorsRemovedEmail",
+    () =>
+      renderSsoRecoveryFactorsRemovedEmail({
+        ...exampleData.ssoRecoveryFactorsRemovedEmail,
+        ...legal,
+        t,
+      }),
+  ],
   ["renderInviteEmail", () => renderInviteEmail({ ...exampleData.inviteEmail, ...legal, t })],
   [
     "renderInviteAcceptedEmail",
@@ -170,6 +180,33 @@ describe("legal footer", () => {
     expect(withoutLegal).not.toContain(legal.imprintUrl);
     expect(withoutLegal).not.toContain(legal.privacyUrl);
     expect(withoutLegal).not.toContain(legal.imprintAddress);
+  });
+});
+
+describe("custom branding", () => {
+  test("response-finished notification falls back to the Formbricks logo when no organization logo is set", async () => {
+    const html = await renderResponseFinishedEmail({
+      ...exampleData.responseFinishedEmail,
+      elements: responseFinishedElements,
+      t,
+    });
+
+    expect(html).toContain('data-testid="default-logo-image"');
+    expect(html).not.toContain('data-testid="logo-image"');
+  });
+
+  test("response-finished notification renders the organization's custom logo when set", async () => {
+    const customLogoUrl = "https://example.com/custom-logo.png";
+    const html = await renderResponseFinishedEmail({
+      ...exampleData.responseFinishedEmail,
+      elements: responseFinishedElements,
+      logoUrl: customLogoUrl,
+      t,
+    });
+
+    expect(html).toContain('data-testid="logo-image"');
+    expect(html).toContain(customLogoUrl);
+    expect(html).not.toContain('data-testid="default-logo-image"');
   });
 });
 

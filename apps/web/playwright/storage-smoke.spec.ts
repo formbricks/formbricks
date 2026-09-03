@@ -2,6 +2,7 @@ import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 import { gotoSurveyList } from "./lib/utils";
 import {
+  addElement,
   createSurveyFromScratch,
   fillRichTextEditor,
   uploadImageChoicesForPictureSelection,
@@ -22,13 +23,7 @@ test.describe("Storage Smoke @storage-smoke", () => {
 
     await fillRichTextEditor(page, "Question*", "Storage smoke question");
 
-    const addBlock = "Add BlockChoose the first question on your Block";
-    await page
-      .locator("div")
-      .filter({ hasText: new RegExp(`^${addBlock}$`) })
-      .nth(1)
-      .click();
-    await page.getByRole("button", { name: "Picture Selection" }).click();
+    await addElement(page, "Picture Selection");
     await fillRichTextEditor(page, "Question*", "Storage smoke picture choice");
     await page.getByRole("button", { name: "Add description" }).click();
     await fillRichTextEditor(page, "Description", "Storage smoke description");

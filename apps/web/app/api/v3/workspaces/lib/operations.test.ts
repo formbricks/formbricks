@@ -1,13 +1,18 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { getOrganizationsByUserId } from "@/lib/organization/service";
-import { getUserWorkspaces, getWorkspace } from "@/lib/workspace/service";
+import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
+import { getOrganizationScopedWorkspacesByIdsForUser, getWorkspacesByIds } from "@/lib/workspace/service";
 import { listV3Workspaces } from "./operations";
 
-vi.mock("@/lib/organization/service", () => ({ getOrganizationsByUserId: vi.fn() }));
-vi.mock("@/lib/workspace/service", () => ({ getUserWorkspaces: vi.fn(), getWorkspace: vi.fn() }));
+const loggerMocks = vi.hoisted(() => ({ error: vi.fn() }));
+
+vi.mock("@/lib/workspace/service", () => ({
+  getWorkspacesByIds: vi.fn(),
+  getOrganizationScopedWorkspacesByIdsForUser: vi.fn(),
+}));
+vi.mock("@/lib/authorization/resource-list", () => ({ lookupAuthorizedWorkspaceIds: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn() })) },
+  logger: { withContext: vi.fn(() => loggerMocks) },
 }));
 
 const sessionAuth = {
@@ -34,18 +39,19 @@ const ws = (id: string, name: string, organizationId: string) =>
   }) as any;
 
 describe("listV3Workspaces", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue([]);
+  });
 
   test("session user: aggregates + dedupes across orgs and returns the minimal DTO only", async () => {
-    vi.mocked(getOrganizationsByUserId).mockResolvedValue([
-      { id: "org_1", name: "Org 1" },
-      { id: "org_2", name: "Org 2" },
-    ] as any);
-    vi.mocked(getUserWorkspaces).mockImplementation(async (_userId: string, orgId: string) =>
-      orgId === "org_1"
-        ? [ws("w1", "Alpha", "org_1"), ws("w2", "Beta", "org_1")]
-        : [ws("w2", "Beta", "org_1"), ws("w3", "Gamma", "org_2")]
-    );
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["w1", "w2", "w3"]);
+    vi.mocked(getOrganizationScopedWorkspacesByIdsForUser).mockResolvedValue([
+      ws("w1", "Alpha", "org_1"),
+      ws("w2", "Beta", "org_1"),
+      ws("w2", "Beta", "org_1"),
+      ws("w3", "Gamma", "org_2"),
+    ]);
 
     const res = await listV3Workspaces(params(sessionAuth));
     expect(res.status).toBe(200);
@@ -59,11 +65,17 @@ describe("listV3Workspaces", () => {
     expect(body.meta.totalCount).toBe(3);
     // Only the DTO fields — no config/styling/entity internals leak.
     expect(Object.keys(body.data[0])).toEqual(["id", "name", "organizationId"]);
+    expect(lookupAuthorizedWorkspaceIds).toHaveBeenCalledExactlyOnceWith({ id: "user_1", type: "user" });
+    expect(getOrganizationScopedWorkspacesByIdsForUser).toHaveBeenCalledExactlyOnceWith("user_1", [
+      "w1",
+      "w2",
+      "w3",
+    ]);
   });
 
   test("returns workspaces in a deterministic order (name, then id)", async () => {
-    vi.mocked(getOrganizationsByUserId).mockResolvedValue([{ id: "org_1", name: "Org 1" }] as any);
-    vi.mocked(getUserWorkspaces).mockResolvedValue([
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["w3", "w1", "w2"]);
+    vi.mocked(getOrganizationScopedWorkspacesByIdsForUser).mockResolvedValue([
       ws("w3", "Zeta", "org_1"),
       ws("w1", "alpha", "org_1"),
       ws("w2", "Beta", "org_1"),
@@ -75,47 +87,52 @@ describe("listV3Workspaces", () => {
     expect(body.data.map((w: { name: string }) => w.name)).toEqual(["alpha", "Beta", "Zeta"]);
   });
 
-  test("session user with no orgs → empty list, no workspace lookups", async () => {
-    vi.mocked(getOrganizationsByUserId).mockResolvedValue([] as any);
+  test("session user with no authorized workspaces → empty list", async () => {
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue([]);
+    vi.mocked(getOrganizationScopedWorkspacesByIdsForUser).mockResolvedValue([]);
 
     const res = await listV3Workspaces(params(sessionAuth));
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body.data).toEqual([]);
-    expect(getUserWorkspaces).not.toHaveBeenCalled();
+    expect(lookupAuthorizedWorkspaceIds).toHaveBeenCalledExactlyOnceWith({ id: "user_1", type: "user" });
+    expect(getOrganizationScopedWorkspacesByIdsForUser).toHaveBeenCalledExactlyOnceWith("user_1", []);
   });
 
-  test("api key: returns only the workspaces in workspacePermissions", async () => {
+  test("api key: returns only same-organization workspaces in workspacePermissions", async () => {
     const keyAuth = {
       apiKeyId: "key_1",
+      organizationId: "org_1",
       workspacePermissions: [
         { workspaceId: "w1", permission: "read" },
         { workspaceId: "w9", permission: "write" },
       ],
     } as unknown as TV3Authentication;
-    vi.mocked(getWorkspace).mockImplementation(async (id: string) =>
-      id === "w1" ? ws("w1", "Alpha", "org_1") : id === "w9" ? ws("w9", "Zeta", "org_2") : null
-    );
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["w1", "w9"]);
+    vi.mocked(getWorkspacesByIds).mockResolvedValue([ws("w1", "Alpha", "org_1")]);
 
     const res = await listV3Workspaces(params(keyAuth));
     const body = await res.json();
 
-    expect(body.data).toEqual([
-      { id: "w1", name: "Alpha", organizationId: "org_1" },
-      { id: "w9", name: "Zeta", organizationId: "org_2" },
-    ]);
-    // API-key path must never fall back to the user/org aggregation.
-    expect(getOrganizationsByUserId).not.toHaveBeenCalled();
+    expect(body.data).toEqual([{ id: "w1", name: "Alpha", organizationId: "org_1" }]);
+    expect(getWorkspacesByIds).toHaveBeenCalledExactlyOnceWith("org_1", ["w1", "w9"]);
+    // API-key path must never use the user membership resolver.
+    expect(getOrganizationScopedWorkspacesByIdsForUser).not.toHaveBeenCalled();
+    expect(lookupAuthorizedWorkspaceIds).toHaveBeenCalledExactlyOnceWith({
+      id: "key_1",
+      type: "apiKey",
+    });
   });
 
   test("no authentication → 401", async () => {
     const res = await listV3Workspaces(params(null));
     expect(res.status).toBe(401);
+    expect(lookupAuthorizedWorkspaceIds).not.toHaveBeenCalled();
   });
 
   test("an unexpected service failure is logged and returned as a 500 (never thrown)", async () => {
-    vi.mocked(getOrganizationsByUserId).mockRejectedValue(new Error("db exploded"));
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockRejectedValue(new Error("AuthZed exploded"));
     const res = await listV3Workspaces(params(sessionAuth));
     expect(res.status).toBe(500);
   });

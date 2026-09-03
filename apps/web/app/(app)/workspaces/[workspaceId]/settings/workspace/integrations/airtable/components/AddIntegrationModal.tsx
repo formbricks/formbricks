@@ -216,6 +216,7 @@ export const AddIntegrationModal = ({
     } else {
       reset();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-seed the form when edit mode toggles; adding the other deps would reset user edits
   }, [isEditMode]);
 
   const survey = watch("survey");

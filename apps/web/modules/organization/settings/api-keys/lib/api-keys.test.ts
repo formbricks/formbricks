@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ApiKey, ApiKeyPermission, Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import {
   createApiKey,
@@ -55,6 +57,20 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("./workspaces", () => ({
   getWorkspacesByOrganizationId: vi.fn(),
+}));
+
+vi.mock("@/lib/authzed/api-key", () => ({
+  reconcileApiKeyRelationships: vi.fn(),
+}));
+
+vi.mock("@/lib/authzed/projection-boundary", () => ({
+  runPostCommitProjection: vi.fn(async (_operation: string, projection: () => Promise<unknown>) => {
+    try {
+      await projection();
+    } catch {
+      // Post-commit projection failures must never replace a successful source mutation.
+    }
+  }),
 }));
 
 vi.mock("crypto", async () => {
@@ -392,6 +408,20 @@ describe("API Key Management", () => {
           id: mockApiKey.id,
         },
       });
+      expect(runPostCommitProjection).toHaveBeenCalledWith(
+        "api_key_delete_relationship_reconciliation",
+        expect.any(Function)
+      );
+      expect(reconcileApiKeyRelationships).toHaveBeenCalledWith({
+        apiKeyIds: [mockApiKey.id],
+      });
+    });
+
+    test("preserves a successful deletion when projection fails", async () => {
+      vi.mocked(prisma.apiKey.delete).mockResolvedValueOnce(mockApiKey);
+      vi.mocked(reconcileApiKeyRelationships).mockRejectedValueOnce(new Error("projection failed"));
+
+      await expect(deleteApiKey(mockApiKey.id)).resolves.toEqual(mockApiKey);
     });
 
     test("throws DatabaseError on prisma error", async () => {
@@ -402,6 +432,7 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.delete).mockRejectedValueOnce(errToThrow);
 
       await expect(deleteApiKey(mockApiKey.id)).rejects.toThrow(DatabaseError);
+      expect(reconcileApiKeyRelationships).not.toHaveBeenCalled();
     });
 
     test("throws error if prisma throws an error", async () => {
@@ -409,6 +440,7 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.delete).mockRejectedValueOnce(errToThrow);
 
       await expect(deleteApiKey(mockApiKey.id)).rejects.toThrow(errToThrow);
+      expect(reconcileApiKeyRelationships).not.toHaveBeenCalled();
     });
   });
 
@@ -454,6 +486,13 @@ describe("API Key Management", () => {
           apiKeyWorkspaces: true,
         },
       });
+      expect(runPostCommitProjection).toHaveBeenCalledWith(
+        "api_key_create_relationship_reconciliation",
+        expect.any(Function)
+      );
+      expect(reconcileApiKeyRelationships).toHaveBeenCalledWith({
+        apiKeyIds: [mockApiKey.id],
+      });
     });
 
     test("creates an API key with environment permissions successfully", async () => {
@@ -488,6 +527,16 @@ describe("API Key Management", () => {
       expect(prisma.apiKey.create).not.toHaveBeenCalled();
     });
 
+    test("preserves the one-time API key when projection fails", async () => {
+      vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKey);
+      vi.mocked(reconcileApiKeyRelationships).mockRejectedValueOnce(new Error("projection failed"));
+
+      await expect(createApiKey("org123", "user123", mockApiKeyData)).resolves.toEqual({
+        ...mockApiKey,
+        actualKey: "fbk_testSecret123",
+      });
+    });
+
     test("rejects create input with duplicate workspaceId", async () => {
       await expect(
         createApiKey("org123", "user123", {
@@ -510,6 +559,7 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.create).mockRejectedValueOnce(errToThrow);
 
       await expect(createApiKey("org123", "user123", mockApiKeyData)).rejects.toThrow(DatabaseError);
+      expect(reconcileApiKeyRelationships).not.toHaveBeenCalled();
     });
 
     test("throws error if prisma throws an error", async () => {
@@ -518,6 +568,7 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.create).mockRejectedValueOnce(errToThrow);
 
       await expect(createApiKey("org123", "user123", mockApiKeyData)).rejects.toThrow(errToThrow);
+      expect(reconcileApiKeyRelationships).not.toHaveBeenCalled();
     });
   });
 
@@ -530,6 +581,7 @@ describe("API Key Management", () => {
 
       expect(result).toEqual(updatedApiKey);
       expect(prisma.apiKey.update).toHaveBeenCalled();
+      expect(reconcileApiKeyRelationships).not.toHaveBeenCalled();
     });
 
     test("throws DatabaseError on prisma error", async () => {

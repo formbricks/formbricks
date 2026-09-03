@@ -5,8 +5,10 @@ import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { CONTACTS_API_V1_NOT_ENABLED_MESSAGE } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
 
@@ -20,9 +22,7 @@ export const GET = withV1ApiWrapper({
       const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
-          response: responses.forbiddenResponse(
-            "Contacts are only enabled for Enterprise Edition, please upgrade."
-          ),
+          response: responses.forbiddenResponse(CONTACTS_API_V1_NOT_ENABLED_MESSAGE),
         };
       }
 
@@ -56,9 +56,7 @@ export const POST = withV1ApiWrapper({
       const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
-          response: responses.forbiddenResponse(
-            "Contacts are only enabled for Enterprise Edition, please upgrade."
-          ),
+          response: responses.forbiddenResponse(CONTACTS_API_V1_NOT_ENABLED_MESSAGE),
         };
       }
 
@@ -79,11 +77,7 @@ export const POST = withV1ApiWrapper({
       }
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveBodyIds(
-        contactAttributeKeyInput,
-        authentication.workspacePermissions,
-        "POST"
-      );
+      const resolved = await resolveBodyIds(contactAttributeKeyInput, authentication, "POST");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZContactAttributeKeyCreateInput.safeParse(resolved.body);
@@ -99,7 +93,11 @@ export const POST = withV1ApiWrapper({
       }
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.workspacePermissions, inputValidation.data.workspaceId, "POST")
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("POST"),
+          { type: "workspace", id: inputValidation.data.workspaceId }
+        ))
       ) {
         return { response: responses.unauthorizedResponse() };
       }

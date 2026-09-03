@@ -1,3 +1,6 @@
+x-formbricks-database: &formbricks-database
+  DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?schema=public"
+
 x-environment: &environment
   environment: &app-environment
     ######################################################## REQUIRED ########################################################
@@ -10,7 +13,7 @@ x-environment: &environment
     NEXTAUTH_URL:
 
     # PostgreSQL DB for Formbricks to connect to
-    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+    <<: *formbricks-database
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
@@ -162,7 +165,7 @@ x-environment: &environment
     # OIDC_SIGNING_ALGORITHM:
 
     # Set the below to SAML Provider if you want to enable SAML
-    # SAML_DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks-saml?sslmode=disable"
+    # SAML_DATABASE_URL: "postgresql://<user>:<password>@postgres:5432/formbricks-saml?sslmode=disable"
 
     ########################################## OPTIONAL (THIRD PARTY INTEGRATIONS) ###########################################
 
@@ -243,14 +246,62 @@ services:
     volumes:
       - postgres:/var/lib/postgresql
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=formbricks
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: formbricks
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 30s
+
+  authzed-db-bootstrap:
+    image: pgvector/pgvector:pg18
+    restart: "no"
+    entrypoint: ["/bin/sh", "/usr/local/bin/authzed-postgres-bootstrap.sh"]
+    environment:
+      POSTGRES_ADMIN_URL: postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/postgres?sslmode=disable
+      AUTHZED_DATABASE_NAME: spicedb
+      AUTHZED_DATABASE_USERNAME: spicedb
+      AUTHZED_DATABASE_PASSWORD: ${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}
+    volumes:
+      - ./authzed-postgres-bootstrap.sh:/usr/local/bin/authzed-postgres-bootstrap.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  spicedb-migrate:
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    restart: "no"
+    command: datastore migrate head
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      SPICEDB_DATASTORE_CONN_URI: postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}@postgres:5432/spicedb?sslmode=disable
+    depends_on:
+      authzed-db-bootstrap:
+        condition: service_completed_successfully
+
+  spicedb:
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    restart: always
+    command: serve
+    mem_limit: 512m
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      SPICEDB_DATASTORE_CONN_URI: postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}@postgres:5432/spicedb?sslmode=disable
+      SPICEDB_GRPC_PRESHARED_KEY: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      SPICEDB_LOG_FORMAT: json
+      SPICEDB_LOG_LEVEL: info
+      SPICEDB_TELEMETRY_ENDPOINT: ""
+    depends_on:
+      spicedb-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=localhost:50051"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
   # Redis/Valkey service for caching, rate limiting, and audit logging
   # Remove this service if you want to use an external Redis/Valkey instance
@@ -260,7 +311,7 @@ services:
   # host firewalls like ufw). Same treatment as the postgres service above.
   redis:
     restart: always
-    image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+    image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
     command: valkey-server --appendonly yes --maxmemory-policy noeviction
     volumes:
       - redis:/data
@@ -308,6 +359,71 @@ services:
     environment:
       <<: *app-environment
       SKIP_STARTUP_MIGRATION: "true"
+      AUTHZED_ENABLED: ${AUTHZED_ENABLED:-true}
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_TOKEN: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
+      AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
+      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-fully_consistent}
+
+  # Opt-in AuthZed health, schema, and relationship-repair commands. This profile never starts with
+  # the normal stack. Example: docker compose --profile authzed-ops run --rm authzed-ops health
+  authzed-ops:
+    profiles: ["authzed-ops"]
+    image: ghcr.io/formbricks/formbricks:latest
+    entrypoint: ["formbricks-authzed"]
+    command: ["health"]
+    environment:
+      # Backfill is the only operation that reads Formbricks PostgreSQL. The other required values are
+      # inert placeholders for the shared server environment validator and are not application secrets.
+      <<: *formbricks-database
+      ENCRYPTION_KEY: authzed-ops-unused
+      CUBEJS_API_SECRET: authzed-ops-unused
+      CUBEJS_API_URL: http://localhost
+      HUB_API_KEY: authzed-ops-unused
+      HUB_API_URL: http://localhost
+      REDIS_URL: redis://localhost
+      LOG_LEVEL: fatal
+      AUTHZED_ENABLED: ${AUTHZED_ENABLED:-true}
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_TOKEN: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
+      AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
+      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-fully_consistent}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      spicedb:
+        condition: service_healthy
+
+  # Idempotently prepares a fresh authorization datastore without making Formbricks startup, health,
+  # readiness, or liveness depend on SpiceDB. Existing installations are gated by formbricks.sh and
+  # the explicit v6 migration acknowledgement before this release is started.
+  authzed-initialize:
+    image: ghcr.io/formbricks/formbricks:latest
+    restart: "no"
+    entrypoint: ["formbricks-authzed"]
+    command: ["upgrade", "prepare"]
+    environment:
+      <<: *formbricks-database
+      ENCRYPTION_KEY: authzed-initialize-unused
+      CUBEJS_API_SECRET: authzed-initialize-unused
+      CUBEJS_API_URL: http://localhost
+      HUB_API_KEY: authzed-initialize-unused
+      HUB_API_URL: http://localhost
+      REDIS_URL: redis://localhost
+      LOG_LEVEL: fatal
+      AUTHZED_ENABLED: ${AUTHZED_ENABLED:-true}
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_TOKEN: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
+      AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
+      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-fully_consistent}
+    depends_on:
+      formbricks-migrate:
+        condition: service_completed_successfully
+      spicedb:
+        condition: service_healthy
 
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
   # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.
@@ -322,7 +438,7 @@ services:
         'if [ -x /usr/local/bin/goose ] && [ -x /usr/local/bin/river ]; then /usr/local/bin/goose -dir /app/migrations postgres "$$DATABASE_URL" up && /usr/local/bin/river migrate-up --database-url "$$DATABASE_URL"; else echo ''Migration tools (goose/river) not in image.''; exit 1; fi',
       ]
     environment:
-      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?sslmode=disable}
     depends_on:
       formbricks-migrate:
         condition: service_completed_successfully
@@ -338,7 +454,7 @@ services:
         condition: service_healthy
     environment:
       API_KEY: ${HUB_API_KEY:-}
-      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?sslmode=disable}
       TAXONOMY_SERVICE_URL: ${TAXONOMY_SERVICE_URL:-}
       TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
       HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
@@ -455,7 +571,7 @@ services:
       CUBEJS_DB_HOST: ${CUBEJS_DB_HOST:-postgres}
       CUBEJS_DB_NAME: ${CUBEJS_DB_NAME:-formbricks}
       CUBEJS_DB_USER: ${CUBEJS_DB_USER:-postgres}
-      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-postgres}
+      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}
       CUBEJS_DB_PORT: ${CUBEJS_DB_PORT:-5432}
       CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:-}
       CUBEJS_JWT_ISSUER: ${CUBEJS_JWT_ISSUER:-formbricks-web}

@@ -166,7 +166,7 @@ describe("executeTenantScopedQuery", () => {
     expect(result).toEqual(rows);
   });
 
-  test("keeps a synthesized empty date bucket at 0 but preserves a real null in the same result", async () => {
+  test("leaves a ratio measure null in a synthesized empty date bucket, alongside a real null", async () => {
     const DAY = "FeedbackRecords.collectedAt.day";
     // The pivot invents 2026-01-03 to fill the gap; 2026-01-02 is a day Cube returned, where the
     // measure is genuinely NULL (responses that day, none of them answering this question).
@@ -192,8 +192,40 @@ describe("executeTenantScopedQuery", () => {
       { [DAY]: "2026-01-01", "FeedbackRecords.npsScore": "72.92" },
       // real bucket, nothing to compute → no data
       { [DAY]: "2026-01-02", "FeedbackRecords.npsScore": null },
-      // bucket the pivot invented → a measured zero
-      { [DAY]: "2026-01-03", "FeedbackRecords.npsScore": 0 },
+      // Invented bucket: nobody answered, so there is no NPS to report. A 0 here is a real score
+      // (as many detractors as promoters) and would pull the line down to the baseline.
+      { [DAY]: "2026-01-03", "FeedbackRecords.npsScore": null },
+    ]);
+  });
+
+  test("splits an invented bucket by measure: the count is 0, the ratio beside it stays null", async () => {
+    const DAY = "FeedbackRecords.collectedAt.day";
+    mockTablePivot.mockImplementation((pivotConfig?: { fillMissingDates?: boolean }) => {
+      const real = [{ [DAY]: "2026-01-01", "FeedbackRecords.count": 12, "FeedbackRecords.npsScore": "50" }];
+      if (pivotConfig?.fillMissingDates === false) return real;
+      return [
+        ...real,
+        {
+          [DAY]: "2026-01-02",
+          "FeedbackRecords.count": "__formbricks_null__",
+          "FeedbackRecords.npsScore": "__formbricks_null__",
+        },
+      ];
+    });
+
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count", "FeedbackRecords.npsScore"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "day" }],
+      },
+    });
+
+    // One empty day, two answers: it genuinely collected zero responses, and it has no NPS at all.
+    expect(result).toEqual([
+      { [DAY]: "2026-01-01", "FeedbackRecords.count": 12, "FeedbackRecords.npsScore": "50" },
+      { [DAY]: "2026-01-02", "FeedbackRecords.count": 0, "FeedbackRecords.npsScore": null },
     ]);
   });
 

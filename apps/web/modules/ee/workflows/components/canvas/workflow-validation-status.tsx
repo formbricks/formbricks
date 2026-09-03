@@ -5,7 +5,7 @@ import { CheckIcon, TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { useWorkflowSurveyEndings } from "@/modules/ee/workflows/list/hooks/use-trigger-survey-picker";
+import { useWorkflowSurveyEndings } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
 import {
   deriveTriggerEndingProblems,
   workflowAtom,

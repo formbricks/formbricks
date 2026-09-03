@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { can } from "@/lib/authorization";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
 
@@ -16,9 +17,18 @@ const LandingLayout = async (props: {
     return redirect(`/auth/login`);
   }
 
-  const membership = await getMembershipByUserIdOrganizationId(session.user.id, params.organizationId);
+  // ENG-2388: was a direct `getMembershipByUserIdOrganizationId` truthiness check. `organization.read`
+  // is the same set — the schema grants it to every membership role (owner, manager, member, billing)
+  // and to nobody else — so a non-member still gets `notFound()` and every member still passes. Routing
+  // it here is what puts the decision on the shadow-comparison path.
+  const isMember = await withAuthorizationSurface("page", () =>
+    can({ type: "user", id: session.user.id }, "organization.read", {
+      type: "organization",
+      id: params.organizationId,
+    })
+  );
 
-  if (!membership) {
+  if (!isMember) {
     return notFound();
   }
 

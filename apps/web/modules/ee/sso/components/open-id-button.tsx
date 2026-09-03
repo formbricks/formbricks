@@ -54,7 +54,7 @@ export const OpenIdButton = ({
       type="button"
       onClick={handleLogin}
       variant={variant}
-      className="w-full items-center justify-center gap-2 px-2">
+      className="h-11 w-full min-w-0 items-center justify-center gap-2 px-2 sm:h-9">
       <span className="truncate">{text || t("auth.continue_with_openid")}</span>
       {lastUsed && <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>

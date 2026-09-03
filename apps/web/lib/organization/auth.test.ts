@@ -1,38 +1,94 @@
-import { describe, expect, test, vi } from "vitest";
-import { TOrganization } from "@formbricks/types/organizations";
-import { canUserAccessOrganization } from "./auth";
-import { getOrganizationsByUserId } from "./service";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { can } from "../authorization";
+import { validateInputs } from "../utils/validate";
+import { canUserAccessOrganization, verifyUserRoleAccess } from "./auth";
 
-vi.mock("./service", () => ({
-  getOrganizationsByUserId: vi.fn(),
+vi.mock("../authorization", () => ({
+  can: vi.fn(),
 }));
 
-describe("auth", () => {
-  describe("canUserAccessOrganization", () => {
-    test("returns true when user has access to organization", async () => {
-      const mockOrganizations: TOrganization[] = [
-        {
-          id: "org1",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          name: "Org 1",
-          billing: {
-            stripeCustomerId: null,
-            limits: {
-              workspaces: 3,
-              monthly: {
-                responses: 1500,
-              },
-            },
-            usageCycleAnchor: new Date(),
-          },
-          isAISmartToolsEnabled: false,
-        },
-      ];
-      vi.mocked(getOrganizationsByUserId).mockResolvedValue(mockOrganizations);
+vi.mock("../utils/validate", () => ({
+  validateInputs: vi.fn(),
+}));
 
-      const result = await canUserAccessOrganization("user1", "org1");
-      expect(result).toBe(true);
+describe("organization authorization helpers", () => {
+  const userId = "user1";
+  const organizationId = "org1";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("canUserAccessOrganization delegates to organization.read", async () => {
+    vi.mocked(can).mockResolvedValue(true);
+
+    await expect(canUserAccessOrganization(userId, organizationId)).resolves.toBe(true);
+
+    expect(validateInputs).toHaveBeenCalledWith(
+      [userId, expect.anything()],
+      [organizationId, expect.anything()]
+    );
+    expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "organization.read", {
+      type: "organization",
+      id: organizationId,
     });
+  });
+
+  test.each([
+    {
+      name: "owner",
+      owner: true,
+      manager: true,
+      expected: {
+        hasCreateOrUpdateAccess: true,
+        hasDeleteAccess: true,
+        hasCreateOrUpdateMembersAccess: true,
+        hasDeleteMembersAccess: true,
+        hasBillingAccess: true,
+      },
+    },
+    {
+      name: "manager",
+      owner: false,
+      manager: true,
+      expected: {
+        hasCreateOrUpdateAccess: false,
+        hasDeleteAccess: false,
+        hasCreateOrUpdateMembersAccess: true,
+        hasDeleteMembersAccess: true,
+        hasBillingAccess: true,
+      },
+    },
+    {
+      name: "member",
+      owner: false,
+      manager: false,
+      expected: {
+        hasCreateOrUpdateAccess: false,
+        hasDeleteAccess: false,
+        hasCreateOrUpdateMembersAccess: false,
+        hasDeleteMembersAccess: false,
+        hasBillingAccess: false,
+      },
+    },
+  ])("preserves the $name role access bundle", async ({ owner, manager, expected }) => {
+    vi.mocked(can).mockResolvedValueOnce(owner).mockResolvedValueOnce(manager);
+
+    await expect(verifyUserRoleAccess(organizationId, userId)).resolves.toEqual(expected);
+
+    expect(can).toHaveBeenNthCalledWith(1, { type: "user", id: userId }, "organization.write", {
+      type: "organization",
+      id: organizationId,
+    });
+    expect(can).toHaveBeenNthCalledWith(2, { type: "user", id: userId }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
+    });
+  });
+
+  test("propagates evaluator failures", async () => {
+    vi.mocked(can).mockRejectedValue(new Error("database unavailable"));
+
+    await expect(verifyUserRoleAccess(organizationId, userId)).rejects.toThrow("database unavailable");
   });
 });

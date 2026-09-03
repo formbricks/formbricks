@@ -54,6 +54,10 @@ export const EndScreenForm = ({
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
   );
 
+  // The checkmark only renders when the card carries no media, so the toggle is meaningless once an
+  // image or video is set.
+  const hasMedia = Boolean(endingCard.imageUrl ?? endingCard.videoUrl);
+
   return (
     <form>
       <ElementFormInput
@@ -108,6 +112,27 @@ export const EndScreenForm = ({
           </Button>
         )}
       </div>
+      {!hasMedia && (
+        <div className="mt-4 flex items-center gap-x-1">
+          <Switch
+            id="showCheckmarkIcon"
+            checked={!endingCard.hideDefaultIcon}
+            onCheckedChange={(checked) => {
+              updateSurvey({ hideDefaultIcon: checked ? undefined : true });
+            }}
+          />
+          <Label htmlFor="showCheckmarkIcon" className="cursor-pointer">
+            <div className="ml-2">
+              <h3 className="text-sm font-semibold text-slate-700">
+                {t("workspace.surveys.edit.show_checkmark_icon")}
+              </h3>
+              <p className="text-xs font-normal text-slate-500">
+                {t("workspace.surveys.edit.show_checkmark_icon_description")}
+              </p>
+            </div>
+          </Label>
+        </div>
+      )}
       <div className="mt-4">
         <div className="flex items-center gap-x-1">
           <Switch

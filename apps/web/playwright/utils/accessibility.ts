@@ -26,6 +26,11 @@ type TLegacyQuestions = Parameters<typeof transformQuestionsToBlocks>[0];
  * row + `SurveyLanguage` join, and patches Arabic translation keys into the
  * stored blocks so axe scans genuine RTL content; `?lang=ar-EG` then renders the
  * survey with `dir="rtl"` (see packages/surveys/src/lib/utils.ts `isRTLLanguage`).
+ *
+ * A THIRD fixture — the "answered states" survey — carries the cards whose
+ * post-interaction DOM the kitchen-sink walker can never reach, plus the one
+ * question type the kitchen sink cannot hold at all (ENG-1298). See
+ * `buildAnsweredStatesQuestions` for what each card is there to expose.
  */
 
 type I18n = { default: string; [lang: string]: string };
@@ -130,6 +135,8 @@ const buildKitchenSinkQuestions = (baseURL: string) => [
   // NOTE: no `cal` question on purpose — the Cal.com embed loads a live third-party
   // iframe, which would make the unattended axe walk depend on external network and
   // markup we do not control (its violations would all be wontfix-allowlisted anyway).
+  // The wrapper Formbricks DOES own is scanned in `buildAnsweredStatesQuestions`
+  // below, where the spec blocks the embed origin instead of loading it.
   {
     id: createId(),
     type: "pictureSelection",
@@ -152,10 +159,74 @@ const buildKitchenSinkQuestions = (baseURL: string) => [
 ];
 
 /**
+ * Builds the "answered states" question list (ENG-1298).
+ *
+ * The kitchen-sink walker scans each card exactly once, BEFORE it answers it, and
+ * skips the file input entirely — so a whole class of DOM has never reached axe:
+ * the markup a card only renders once the respondent has interacted with it. Each
+ * card below is here for one specific unscanned state, and the spec asserts it
+ * actually reached that state before scanning (a no-op must not pass as clean).
+ *
+ * | Card                        | State axe has never seen                                         |
+ * | --------------------------- | ---------------------------------------------------------------- |
+ * | `date`                      | the SELECTED day cell (`bg-brand` + `text-primary-foreground`)   |
+ * | `cta` with `buttonExternal` | the in-card external-link button; the kitchen sink sets it false |
+ * | `fileUpload`                | the uploaded-file chip + its `Delete …` control, uploader hidden |
+ * | `cal`                       | our wrapper around the scheduler — never scanned at all          |
+ *
+ * `fileUpload` is deliberately REQUIRED here: advancing past it is then only
+ * possible if the mocked upload really registered a response, which is what makes
+ * the "fully exercised" claim checkable rather than asserted.
+ */
+const buildAnsweredStatesQuestions = (baseURL: string) => [
+  {
+    id: createId(),
+    type: "date",
+    headline: i18nValue(DATE_HEADLINE),
+    subheader: i18nValue("Pick any day that suits you."),
+    required: true,
+    format: "M-d-y",
+  },
+  {
+    id: createId(),
+    type: "cta",
+    headline: i18nValue(CTA_EXTERNAL_HEADLINE),
+    subheader: i18nValue("The guide opens in a new tab."),
+    required: false,
+    buttonExternal: true,
+    // Same-origin on purpose: `buttonUrl` has to satisfy `isSafeLinkUrl`, and a
+    // fixture must never point a click at a live external site. The transform
+    // moves `buttonLabel` to `ctaButtonLabel`, which is what the button renders.
+    buttonUrl: new URL("/", baseURL).toString(),
+    buttonLabel: i18nValue(CTA_EXTERNAL_BUTTON_LABEL),
+  },
+  {
+    id: createId(),
+    type: "fileUpload",
+    headline: i18nValue(FILE_UPLOAD_HEADLINE),
+    required: true,
+    allowMultipleFiles: false,
+  },
+  {
+    id: createId(),
+    type: "cal",
+    headline: i18nValue(CAL_HEADLINE),
+    subheader: i18nValue("Any 30 minute slot works."),
+    // Optional because a real booking is impossible here: the only value the
+    // element ever writes is "booked", and that comes from Cal's own iframe.
+    required: false,
+    calUserName: CAL_USER_NAME,
+  },
+];
+
+/**
  * Survey name of the single-language kitchen-sink fixture. The public survey exposes it as its
  * one top-level `<h1>` (ENG-2336), so the heading-structure spec asserts against it.
  */
 export const A11Y_SURVEY_NAME = "A11y Kitchen Sink";
+
+/** Survey name of the answered-states fixture, exposed as that survey's one `<h1>`. */
+export const A11Y_ANSWERED_STATES_SURVEY_NAME = "A11y Answered States";
 
 /** Welcome-card headline, exposed as an `<h2>` like every other card headline. */
 export const WELCOME_CARD_HEADLINE = "Welcome to our feedback survey";
@@ -165,6 +236,35 @@ export const OPEN_TEXT_HEADLINE = "What feedback do you have for us?";
 
 /** Headline of the single-select question, which names its radiogroup via aria-labelledby. */
 export const SINGLE_SELECT_HEADLINE = "Which plan are you on?";
+
+/**
+ * Headlines of the answered-states cards. The spec walks that survey by headline rather than by
+ * card index so reordering the fixture cannot silently point a scan at the wrong card.
+ */
+export const DATE_HEADLINE = "Which day works best for you?";
+export const CTA_EXTERNAL_HEADLINE = "Read the setup guide";
+export const FILE_UPLOAD_HEADLINE = "Attach a screenshot of the problem";
+export const CAL_HEADLINE = "Book a call with our team";
+
+/**
+ * Label of the CTA card's in-card external-link button. The transform renames the legacy
+ * `buttonLabel` to `ctaButtonLabel`, which is the field that button renders from — so this is
+ * also the assertion that the rename still holds.
+ */
+export const CTA_EXTERNAL_BUTTON_LABEL = "Open the setup guide";
+
+/**
+ * Cal.com handle for the scheduler fixture. Deliberately not a real one: the spec aborts every
+ * request to `CAL_EMBED_ORIGIN` so the third-party snippet never loads, never resolves this
+ * handle, and never injects its iframe. Only the wrapper around it is ours to scan.
+ */
+export const CAL_USER_NAME = "formbricks-a11y-fixture/30min";
+
+/**
+ * Origin the Cal.com embed snippet is fetched from (see packages/surveys cal-embed.tsx). The spec
+ * blocks it, so the unattended axe run stays free of external network and of markup we do not own.
+ */
+export const CAL_EMBED_ORIGIN = "cal.com";
 
 const buildWelcomeCard = () => ({
   enabled: true,
@@ -189,18 +289,23 @@ const buildEndings = () => [
   },
 ];
 
+/** The two fixture question lists this file can create a survey from. */
+type FixtureQuestionList =
+  | ReturnType<typeof buildKitchenSinkQuestions>
+  | ReturnType<typeof buildAnsweredStatesQuestions>;
+
 /**
- * Creates a published kitchen-sink link survey directly through Prisma. The legacy
- * `questions` list is converted to blocks with the same transform the v1 management
+ * Creates a published link survey directly through Prisma from a legacy `questions`
+ * list. The list is converted to blocks with the same transform the v1 management
  * API applies server-side, so the stored shape cannot drift from the API contract.
  */
-const createKitchenSinkSurvey = async (
+const createLinkSurvey = async (
   workspaceId: string,
   createdBy: string,
   name: string,
-  baseURL: string
+  questionList: FixtureQuestionList
 ): Promise<string> => {
-  const questions = buildKitchenSinkQuestions(baseURL) as unknown as TLegacyQuestions;
+  const questions = questionList as unknown as TLegacyQuestions;
   const endings = buildEndings() as unknown as TSurveyEnding[];
   const blocks = transformQuestionsToBlocks(questions, endings);
 
@@ -310,12 +415,14 @@ export interface SeededAccessibilitySurveys {
   surveyUrl: string;
   /** Published multi-language kitchen-sink survey link forced to Arabic, e.g. `/s/<id>?lang=ar-EG`. */
   rtlSurveyUrl: string;
+  /** Published answered-states survey link (date / external CTA / file upload / cal), e.g. `/s/<id>`. */
+  answeredStatesSurveyUrl: string;
 }
 
 /**
- * Seeds a workspace user plus two published kitchen-sink link surveys (one
- * default-language, one with an Arabic RTL variant) entirely through Prisma —
- * no login or dashboard interaction — and returns their public `/s/<id>` links.
+ * Seeds a workspace user plus three published link surveys — the kitchen sink, its
+ * Arabic RTL twin, and the answered-states fixture — entirely through Prisma, with
+ * no login or dashboard interaction, and returns their public `/s/<id>` links.
  */
 export const seedAccessibilitySurveys = async (
   users: UsersFixture,
@@ -327,9 +434,15 @@ export const seedAccessibilitySurveys = async (
     throw new Error("users.create() did not return a workspaceId");
   }
 
-  const [mainSurveyId, rtlSurveyId] = await Promise.all([
-    createKitchenSinkSurvey(workspaceId, user.id, A11Y_SURVEY_NAME, baseURL),
-    createKitchenSinkSurvey(workspaceId, user.id, `${A11Y_SURVEY_NAME} (RTL)`, baseURL),
+  const [mainSurveyId, rtlSurveyId, answeredStatesSurveyId] = await Promise.all([
+    createLinkSurvey(workspaceId, user.id, A11Y_SURVEY_NAME, buildKitchenSinkQuestions(baseURL)),
+    createLinkSurvey(workspaceId, user.id, `${A11Y_SURVEY_NAME} (RTL)`, buildKitchenSinkQuestions(baseURL)),
+    createLinkSurvey(
+      workspaceId,
+      user.id,
+      A11Y_ANSWERED_STATES_SURVEY_NAME,
+      buildAnsweredStatesQuestions(baseURL)
+    ),
   ]);
   await attachArabicLanguage(rtlSurveyId, workspaceId);
 
@@ -337,5 +450,6 @@ export const seedAccessibilitySurveys = async (
     workspaceId,
     surveyUrl: `/s/${mainSurveyId}`,
     rtlSurveyUrl: `/s/${rtlSurveyId}?lang=ar-EG`,
+    answeredStatesSurveyUrl: `/s/${answeredStatesSurveyId}`,
   };
 };

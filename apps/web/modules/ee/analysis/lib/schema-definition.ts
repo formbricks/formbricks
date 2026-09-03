@@ -244,24 +244,26 @@ export const FEEDBACK_FIELDS = {
   measures: [
     {
       id: "FeedbackRecords.count",
-      label: "Responses",
+      label: "Feedback Records",
       type: "count",
       group: "count",
-      description: "Total number of feedback responses",
+      description: "Total number of feedback records",
     },
     {
       id: "FeedbackRecords.uniqueRespondents",
       label: "Unique respondents",
       type: "number",
       group: "count",
-      description: "Number of unique users who provided feedback",
+      description:
+        "Unique identified people who gave feedback, deduplicated by person — one respondent answering 3 questions counts once. Anonymous feedback (no identified respondent) isn't counted here, even though it counts as a Feedback Record.",
     },
     {
       id: "FeedbackRecords.uniqueResponses",
       label: "Unique responses",
       type: "number",
       group: "count",
-      description: "Number of unique survey submissions",
+      description:
+        "Unique survey submissions, deduplicated by submission — one respondent submitting twice counts twice",
     },
     {
       id: "FeedbackRecords.npsScore",
@@ -337,10 +339,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.csatCount",
-      label: "CSAT: Responses",
+      label: "CSAT: Records",
       type: "count",
       group: "count",
-      description: "Number of CSAT responses",
+      description: "Number of answered feedback records from CSAT questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.cesAverage",
@@ -352,10 +354,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.cesCount",
-      label: "CES: Responses",
+      label: "CES: Records",
       type: "count",
       group: "count",
-      description: "Number of CES responses",
+      description: "Number of answered feedback records from CES questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.ratingAverage",
@@ -371,10 +373,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.ratingCount",
-      label: "Rating: Responses",
+      label: "Rating: Records",
       type: "count",
       group: "count",
-      description: "Number of answered rating responses (dismissed responses excluded)",
+      description: "Number of answered feedback records from rating questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.sentimentAverage",
@@ -395,6 +397,19 @@ export const FEEDBACK_MEASURE_IDS: string[] = FEEDBACK_FIELDS.measures.map((m) =
  * or undefined for measures whose axis should stay data-driven. */
 export const getMeasureAxisMaxCandidates = (measureId: string): readonly number[] | undefined =>
   FEEDBACK_FIELDS.measures.find((m) => m.id === measureId)?.axisMaxCandidates;
+
+/**
+ * True for a measure computed *over* the responses in a group — a score or an average — rather
+ * than by counting them. The distinction decides what an empty group means: a count genuinely
+ * counted zero there, while a ratio has nothing to divide, so it has no value at all. It also
+ * decides whether per-group values can be folded into one, since ratios cannot be added.
+ *
+ * False for anything not in the schema, so an unrecognized column keeps the additive treatment.
+ */
+export const isRatioMeasure = (measureId: string): boolean => {
+  const group = FEEDBACK_FIELDS.measures.find((m) => m.id === measureId)?.group;
+  return group === "score" || group === "average";
+};
 
 export const FEEDBACK_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
 
@@ -647,20 +662,31 @@ export function getFieldById(id: string): FieldDefinition | MeasureDefinition | 
  * Translate a field/measure ID. Each t() call uses a literal key so the i18n scanner can detect it.
  */
 /**
- * Translated description for the dimensions whose copy guides a chart-building decision. The rest of
- * the schema descriptions are still the inline English in FEEDBACK_FIELDS, so this falls back to that
- * rather than showing a key.
+ * Translated description for the members whose copy guides a chart-building decision — two
+ * dimensions (Value (Option) vs Value (Text)) and the three count measures a user has to choose
+ * between. The rest of the schema descriptions are still the inline English in FEEDBACK_FIELDS, so
+ * this falls back to that rather than showing a key.
  */
 export function getTranslatedFieldDescription(
   id: string,
   fallback: string | undefined,
   t: TFunction
 ): string | undefined {
-  const descriptions: Record<string, string> = {
-    "FeedbackRecords.valueId": t("workspace.analysis.charts.field_description_value_option"),
-    "FeedbackRecords.valueText": t("workspace.analysis.charts.field_description_value_text"),
-  };
-  return descriptions[id] ?? fallback;
+  // A `Map`, not an object literal: `descriptions[id]` resolves inherited members, so an id of
+  // "constructor" or "toString" returned a function where a description string was expected. Same
+  // lookup shape #8985 converted for the same reason. Not reachable from today's call sites — they
+  // all pass ids from the hardcoded FEEDBACK_FIELDS arrays — but it costs nothing to close.
+  const descriptions = new Map<string, string>([
+    ["FeedbackRecords.valueId", t("workspace.analysis.charts.field_description_value_option")],
+    ["FeedbackRecords.valueText", t("workspace.analysis.charts.field_description_value_text")],
+    ["FeedbackRecords.count", t("workspace.analysis.charts.field_description_count")],
+    [
+      "FeedbackRecords.uniqueRespondents",
+      t("workspace.analysis.charts.field_description_unique_respondents"),
+    ],
+    ["FeedbackRecords.uniqueResponses", t("workspace.analysis.charts.field_description_unique_responses")],
+  ]);
+  return descriptions.get(id) ?? fallback;
 }
 
 export function getTranslatedFieldLabel(id: string, t: TFunction): string {

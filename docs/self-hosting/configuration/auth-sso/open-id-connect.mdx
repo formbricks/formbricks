@@ -23,6 +23,15 @@ Integrating your own OIDC (OpenID Connect) instance with your Formbricks instanc
   `{WEBAPP_URL}/api/auth/oauth2/callback/openid`.
 </Note>
 
+<Note>
+  **Using Microsoft Entra ID?** Configure it through the dedicated [Azure AD
+  provider](/self-hosting/configuration/auth-sso/azure-ad-oauth) rather than here — it maps Entra's
+  profile correctly. If you do point `OIDC_ISSUER` at a multi-tenant authority
+  (`login.microsoftonline.com/common` or `/organizations`), Formbricks skips OpenID discovery for it
+  and logs a warning at startup: those authorities advertise a placeholder issuer instead of a real
+  one, so id_tokens cannot be verified against it and sign-in would otherwise fail.
+</Note>
+
 <Warning>
   **Upgrading from v5.1 or earlier?** This path changed once, at v5.2:
 

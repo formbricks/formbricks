@@ -64,6 +64,9 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   buttonLink: ZEndingCardUrl.optional(),
   imageUrl: ZStorageUrl.optional(),
   videoUrl: ZStorageUrl.optional(),
+  // Absent means "show it": the checkmark predates this field, so every survey written before it has to
+  // keep rendering the icon.
+  hideDefaultIcon: z.boolean().optional(),
 });
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
@@ -970,7 +973,6 @@ export const ZSurveyBase = z.object({
   singleUse: ZSurveySingleUse.nullable(),
   isVerifyEmailEnabled: z.boolean(),
   recaptcha: ZSurveyRecaptcha.nullable(),
-  isSingleResponsePerEmailEnabled: z.boolean(),
   isBackButtonHidden: z.boolean(),
   isAutoProgressingEnabled: z.boolean().optional().prefault(false),
   isCaptureIpEnabled: z.boolean(),

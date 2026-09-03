@@ -187,6 +187,34 @@ describe("importHistoricalResponses", () => {
     expect(result.skipped).toBe(0);
   });
 
+  // `transformResponseToFeedbackRecords` filters on `m.surveyId === survey.id`, so counting every
+  // mapping the source holds would report the *other* survey's mappings as records that were
+  // expected and never arrived. No behavioural change while a source binds one survey; this pins it
+  // for the multi-survey source the schema already permits.
+  test("counts only this survey's mappings towards skipped", async () => {
+    const twoSurveySource: TFeedbackSourceWithMappings = {
+      ...mockFeedbackSource,
+      formbricksMappings: [
+        mockFeedbackSource.formbricksMappings[0],
+        {
+          ...mockFeedbackSource.formbricksMappings[0],
+          id: "mapping-2",
+          surveyId: "clxxxxxxxxxxxxxxxx009",
+          elementId: "el-2",
+        },
+      ],
+    };
+
+    getResponses.mockResolvedValueOnce([{ id: "r1" }] as never);
+    getResponses.mockResolvedValueOnce([]);
+    transformResponseToFeedbackRecords.mockReturnValueOnce([{ field: "record1" }] as never);
+    reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, superseded: 0, failures: [] });
+
+    const result = await importHistoricalResponses(twoSurveySource, mockSurvey);
+
+    expect(result).toEqual({ successes: 1, failures: 0, skipped: 0 });
+  });
+
   test("paginates through responses in batches", async () => {
     const batch1 = Array.from({ length: 50 }, (_, i) => ({ id: `r${i}` }));
     const batch2 = [{ id: "r50" }];
