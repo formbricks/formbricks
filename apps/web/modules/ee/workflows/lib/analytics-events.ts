@@ -25,6 +25,14 @@ export const WORKFLOW_LIFECYCLE_EVENTS: Record<WorkflowAnalyticsOperation, strin
 /** Emitted by the runner once per run that ends `failed`, never per attempt. */
 export const WORKFLOW_RUN_FAILED_EVENT = "workflow_run_failed";
 
+/**
+ * Daily state snapshots (one per organization with a live workflow, and one per organization and
+ * node type), emitted by the `workflows-usage.snapshot` job. Dashboards read them with `max` or
+ * `unique organizations` per day, never `sum`: the job may legitimately run twice in a day.
+ */
+export const WORKFLOW_USAGE_SNAPSHOT_EVENT = "workflow_usage_snapshot";
+export const WORKFLOW_NODE_TYPE_SNAPSHOT_EVENT = "workflow_node_type_snapshot";
+
 /** Which surface issued the mutation; the same handler serves all three. */
 export type TWorkflowAnalyticsVia = "ui" | "api" | "mcp";
 

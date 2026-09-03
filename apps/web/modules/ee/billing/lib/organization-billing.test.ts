@@ -116,6 +116,7 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: mocks.capturePostHogEvent,
+  groupIdentifyPostHog: vi.fn(),
 }));
 
 vi.mock("./stripe-plan", async (importOriginal) => {
