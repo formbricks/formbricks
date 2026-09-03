@@ -61,8 +61,8 @@ checksums:
     auth/oauth/authorization_request: 6d8eb57099973efaa1c9a7a77e494d7f
     auth/oauth/authorize_description: 7f444eb5f25da4be3f051801c9a79cf5
     auth/oauth/authorize_title: 5eaa94202f80888bf44a411134a2262a
-    auth/oauth/authorized_apps_description: df1dfe7f7499d590f72405f4f879b2ba
-    auth/oauth/authorized_apps_title: 4f7da2cd10a8f71d3262dcf82851af80
+    auth/oauth/authorized_apps_description: 564a2c25a2073dc60579c9b974d74ef7
+    auth/oauth/authorized_apps_title: 5e0f7ea1005beb1a067ef8262e91cf63
     auth/oauth/client: 59db31dfaf498183184421a0a1725711
     auth/oauth/client_uri: 39d52c7cfea1185b843e6388d65df4bd
     auth/oauth/consent_failed: d6c92762fac20817ff0ec8d9cbc0412c
@@ -73,7 +73,8 @@ checksums:
     auth/oauth/invalid_oauth_request_description: 39322e962c0c20c766ae82d0b8917ebb
     auth/oauth/localhost_redirect_warning: e0368262d25dc98ea02158eebd0066c1
     auth/oauth/localhost_redirect_warning_description: 39fae40369bcfc0befb9fac263730436
-    auth/oauth/no_authorized_apps: ace2f8aab84860bab39e96368531981d
+    auth/oauth/mcp_docs_link: cbca64a281a9b6af65007ea1cc7f0f4d
+    auth/oauth/no_authorized_apps: 123853646aab89b3077d604b7ca8313c
     auth/oauth/permissions: 2160be68b1d6b6577e64634e9feba2ed
     auth/oauth/redirect_host: de1344fc555eea56791de81a90295bf5
     auth/oauth/requested_permissions: 7cd285529a4e57f46975b2623ec87681
@@ -167,7 +168,7 @@ checksums:
     common/are_you_sure: 6d5cd13628a7887711fd0c29f1123652
     common/attempt: fbe2d20432424e164245e13ff9195310
     common/attributes: 86d0ae6fea0fbb119722ed3841f8385a
-    common/authorized_apps: ffed21922e6e9c0975ddcde28e0a266b
+    common/authorized_apps: 62c2c8e6703c9e5224e98294a53e1884
     common/back: f541015a827e37cb3b1234e56bc2aa3c
     common/billing: b01dbdd049ebbd4a349fa64d6ce65a3b
     common/booked: 77603a7aca80b8b333023c5cf39fec4d
