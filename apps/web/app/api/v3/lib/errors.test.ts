@@ -6,6 +6,7 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
   TooManyRequestsError,
+  UniqueConstraintError,
   ValidationError,
 } from "@formbricks/types/errors";
 import { mapV3ThrownError } from "./errors";
@@ -51,6 +52,23 @@ describe("mapV3ThrownError", () => {
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("30");
     expect((await response.json()).instance).toBe(instance);
+  });
+
+  /**
+   * A 500 would invite a retry of a request that can never succeed — the same class of harm as
+   * answering 502 for an upstream 503. The offending value is not echoed: a uniqueness message can
+   * name a column, and a surface with something safe to say maps the error itself.
+   */
+  test("maps a uniqueness conflict to 409, without naming the constraint", async () => {
+    const response = mapV3ThrownError(
+      new UniqueConstraintError('Unique constraint failed on "Response_singleUseId_key"'),
+      ctx()
+    );
+
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.code).toBe("conflict");
+    expect(JSON.stringify(body)).not.toContain("singleUseId");
   });
 
   /**

@@ -6,8 +6,14 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
   TooManyRequestsError,
+  UniqueConstraintError,
 } from "@formbricks/types/errors";
-import { problemForbidden, problemInternalError, problemTooManyRequests } from "@/app/api/v3/lib/response";
+import {
+  problemConflict,
+  problemForbidden,
+  problemInternalError,
+  problemTooManyRequests,
+} from "@/app/api/v3/lib/response";
 
 /**
  * The one place that turns an unexpected throw into a v3 problem response.
@@ -58,7 +64,8 @@ type TV3ErrorContext = {
  * raw Prisma text by codebase convention, which carries table, column and constraint names. And a 4xx
  * only ever carries a fixed string — an `AuthorizationError`'s or `OperationNotAllowedError`'s message
  * is written for a developer, and `@/lib/ai/service` even throws the latter with a machine code as its
- * message.
+ * message. A surface whose conflict or refusal has something specific and safe to say maps that error
+ * itself, above this call, the way the survey mappers do for their own domain errors.
  *
  * The thrown value is logged under the key `err`, not `error`: `@formbricks/logger` registers
  * pino's `stdSerializers.err` for that key only, so any other key logs the enumerable own properties
@@ -100,6 +107,17 @@ export function mapV3ThrownError(err: unknown, ctx: TV3ErrorContext): Response {
       err.retryAfter,
       instance
     );
+  }
+
+  /**
+   * A 500 here would be actively harmful, not merely imprecise: it invites a retry of a request that
+   * can never succeed. `ForeignKeyConstraintError` is deliberately not mapped alongside it despite
+   * declaring the same 409 — a dangling reference is a fault in the caller's input, better answered as
+   * a 422 naming the offending field, which only the surface that knows the field can build.
+   */
+  if (err instanceof UniqueConstraintError) {
+    log.warn({ ...context, statusCode: 409, errorCode: err.name }, "V3 uniqueness conflict");
+    return problemConflict(requestId, "The request conflicts with an existing resource.", instance);
   }
 
   if (err instanceof DatabaseError) {
