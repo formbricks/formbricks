@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
@@ -244,10 +244,6 @@ function mapV3SurveyCreateError(
     log.warn({ statusCode: 403, errorCode: err.name }, "Survey create permission check failed");
     return problemForbidden(requestId, err.message, instance);
   }
-  if (err instanceof ResourceNotFoundError) {
-    log.warn({ statusCode: 403, errorCode: err.name }, "Resource not found");
-    return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-  }
   if (err instanceof InvalidInputError) {
     log.warn({ statusCode: 400, errorCode: err.name }, "Invalid survey input");
     return problemBadRequest(requestId, err.message, {
@@ -261,7 +257,7 @@ function mapV3SurveyCreateError(
     // malformed → 422, in line with the reference-validation branch above. Deliberately keyed on
     // this typed error rather than on `ValidationError`: the latter is also thrown from work
     // `createSurvey` does *after* its transaction commits, where a 4xx would wrongly tell the
-    // caller nothing was written. Those keep the 500 below.
+    // caller nothing was written. Those fall through to the shared mapper's 500.
     log.warn({ statusCode: 422, invalidParams: err.invalidParams }, "Survey input validation failed");
     return problemUnprocessableContent(requestId, "Survey document failed validation", {
       invalid_params: err.invalidParams,
@@ -575,11 +571,6 @@ function mapV3SurveyPatchError(
   if (err instanceof V3SurveyWritePermissionError) {
     log.warn({ statusCode: 403, workspaceId, errorCode: err.name }, "Survey patch permission check failed");
     return problemForbidden(requestId, err.message, instance);
-  }
-
-  if (err instanceof ResourceNotFoundError) {
-    log.warn({ errorCode: err.name, workspaceId, statusCode: 403 }, "Survey not found or not accessible");
-    return problemForbidden(requestId, "You are not authorized to access this resource", instance);
   }
 
   if (err instanceof InvalidInputError) {
