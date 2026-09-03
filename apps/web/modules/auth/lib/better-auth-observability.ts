@@ -270,6 +270,67 @@ const isUnactionableStateError = (code: string | undefined): boolean =>
   code !== undefined && UNACTIONABLE_STATE_ERROR_CODES.has(code);
 
 /**
+ * Emit a Better Auth `warn`-level log, attaching the safe error context when the entry carried an
+ * `Error`.
+ *
+ * `safeMessage` is `unknown` because Better Auth's logger signature is: the message is usually a
+ * string, but a couple of call sites pass the `Error` itself. pino's two-argument form needs a string
+ * in the message slot, hence the narrowing — a non-string falls back to a fixed label rather than
+ * being stringified, since the `Error` is already carried by the context object.
+ */
+const logWarning = (
+  contextLogger: ReturnType<typeof logger.withContext>,
+  safeMessage: unknown,
+  cause: Error | undefined
+): void => {
+  if (!cause) {
+    contextLogger.warn(safeMessage);
+    return;
+  }
+
+  contextLogger.warn(
+    getSafeWarningErrorContext(cause),
+    typeof safeMessage === "string" ? safeMessage : "Better Auth warning"
+  );
+};
+
+/**
+ * Capture a Better Auth `error`-level log to Sentry, but only when it is a GENUINE internal fault.
+ *
+ * Split out of `betterAuthLogger.log` rather than inlined: the three stacked conditions below carried
+ * most of that function's branching, and the decision "does this page?" is a separate concern from
+ * "how is this logged". Behaviour is unchanged — the gate, its order, and the tag set are the same.
+ *
+ * Skips handled rejections: a bare string code (no Error), a client-facing APIError, or a
+ * client/timing-caused OAuth `StateError` (ENG-2471) — so Sentry stays actionable (see the reason-split
+ * on `betterAuthLogger` and UNACTIONABLE_STATE_ERROR_CODES).
+ */
+const captureInternalAuthFault = (
+  cause: Error | undefined,
+  stateErrorCode: string | undefined,
+  request: ReturnType<typeof getBetterAuthRequestContext>
+): void => {
+  if (!SENTRY_DSN || !IS_PRODUCTION) return;
+  if (!cause || isAPIError(cause) || isUnactionableStateError(stateErrorCode)) return;
+
+  // ENG-2259: Better Auth's router logs a non-APIError as `(e.name, e)` and discards the endpoint
+  // (`better-auth/dist/api/index.mjs:210`), so a bare capture arrives with no transaction, URL or
+  // route — which is why FORMBRICKS-183 sat at ~242 events untriageable. Tags don't affect grouping,
+  // so the issue stays one issue with `auth.path` as a facet.
+  Sentry.captureException(cause, {
+    tags: {
+      component: "better-auth",
+      ...(request && { "auth.path": request.path, "http.method": request.method }),
+    },
+    // No `extra`. Forwarding `message` was considered and dropped: `redactEmailsInLogMessage` strips
+    // emails and nothing else, so a plugin logging `error("… <token> …", err)` would put that token in
+    // Sentry verbatim — while the message adds nothing, being either the error's own name or a
+    // sentence accompanying the Error already captured here. Keeping Sentry to `Error`-or-nothing is
+    // what makes the header note above stay true.
+  });
+};
+
+/**
  * Route Better Auth's logger to @formbricks/logger and capture GENUINE internal faults to Sentry in
  * production — replaces auth.ts's placeholder logger (and the route's Sentry.captureException on auth
  * failures).
@@ -313,37 +374,9 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
     const safeMessage = redactEmailsInLogMessage(message);
     if (level === "error") {
       contextLogger.error(safeMessage);
-      if (SENTRY_DSN && IS_PRODUCTION) {
-        // Skip handled rejections: a bare string code (no Error), a client-facing APIError, or a
-        // client/timing-caused OAuth `StateError` (ENG-2471). Capture only genuine internal faults so
-        // Sentry stays actionable (see the reason-split above and UNACTIONABLE_STATE_ERROR_CODES).
-        if (cause && !isAPIError(cause) && !isUnactionableStateError(stateErrorCode)) {
-          // ENG-2259: Better Auth's router logs a non-APIError as `(e.name, e)` and discards the
-          // endpoint (`better-auth/dist/api/index.mjs:210`), so a bare capture arrives with no
-          // transaction, URL or route — which is why FORMBRICKS-183 sat at ~242 events untriageable.
-          // Tags don't affect grouping, so the issue stays one issue with `auth.path` as a facet.
-          Sentry.captureException(cause, {
-            tags: {
-              component: "better-auth",
-              ...(request && { "auth.path": request.path, "http.method": request.method }),
-            },
-            // No `extra`. Forwarding `message` was considered and dropped: `redactEmailsInLogMessage`
-            // strips emails and nothing else, so a plugin logging `error("… <token> …", err)` would
-            // put that token in Sentry verbatim — while the message adds nothing, being either the
-            // error's own name or a sentence accompanying the Error already captured here. Keeping
-            // Sentry to `Error`-or-nothing is what makes the header note above stay true.
-          });
-        }
-      }
+      captureInternalAuthFault(cause, stateErrorCode, request);
     } else if (level === "warn") {
-      if (cause) {
-        contextLogger.warn(
-          getSafeWarningErrorContext(cause),
-          typeof safeMessage === "string" ? safeMessage : "Better Auth warning"
-        );
-      } else {
-        contextLogger.warn(safeMessage);
-      }
+      logWarning(contextLogger, safeMessage, cause);
     } else {
       contextLogger.info(safeMessage);
     }

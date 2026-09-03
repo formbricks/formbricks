@@ -165,6 +165,197 @@ write_rustfs_env_file() {
   upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
 }
 
+formbricks_docker_command=(docker)
+
+configure_formbricks_docker_command() {
+  if docker info >/dev/null 2>&1; then
+    formbricks_docker_command=(docker)
+    return
+  fi
+
+  if command -v sudo >/dev/null 2>&1 && sudo docker info >/dev/null 2>&1; then
+    formbricks_docker_command=(sudo docker)
+    return
+  fi
+
+  return 1
+}
+
+run_formbricks_docker_compose() {
+  "${formbricks_docker_command[@]}" compose "$@"
+}
+
+read_rendered_compose_password() {
+  local compose_file="$1"
+  local env_file="${2:-}"
+  local encoded_password
+  local rendered_config
+  local rendered_password
+  local without_escaped_dollars
+  local compose_args=(-f "$compose_file")
+
+  if [ -n "$env_file" ]; then
+    compose_args=(--env-file "$env_file" "${compose_args[@]}")
+  fi
+
+  if ! command -v docker >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+    return 1
+  fi
+
+  rendered_config=$(
+    unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
+    run_formbricks_docker_compose "${compose_args[@]}" config --format json 2>/dev/null
+  ) || return 1
+  encoded_password=$(printf '%s' "$rendered_config" | jq -er '
+      .services.postgres.environment.POSTGRES_PASSWORD
+      | select(type == "string" and length > 0)
+      | select((contains("\n") or contains("\r")) | not)
+      | @base64
+    ') || return 1
+
+  rendered_password=$(printf '%s' "$encoded_password" | base64 --decode) || return 1
+  # Compose doubles literal dollar signs in its rendered model so that the model can be parsed again.
+  without_escaped_dollars=${rendered_password//\$\$/}
+  if [[ "$without_escaped_dollars" == *\$* ]]; then
+    return 1
+  fi
+
+  printf '%s' "${rendered_password//\$\$/\$}"
+}
+
+read_existing_postgres_password() {
+  local env_file="${1:-.env}"
+  local compose_file="${2:-docker-compose.yml}"
+  local existing_password
+
+  if [ -f "$env_file" ]; then
+    if [ ! -f "$compose_file" ]; then
+      echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite $env_file." >&2
+      return 1
+    fi
+
+    if existing_password=$(read_rendered_compose_password "$compose_file" "$env_file"); then
+      printf '%s' "$existing_password"
+      return
+    fi
+
+    echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite $env_file." >&2
+    return 1
+  fi
+
+  if [ -f "$compose_file" ]; then
+    if existing_password=$(read_rendered_compose_password "$compose_file"); then
+      printf '%s' "$existing_password"
+      return
+    fi
+
+    echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite .env." >&2
+    return 1
+  fi
+
+  return 0
+}
+
+url_encode() {
+  local LC_ALL=C
+  local value="$1"
+  local encoded=""
+  local char
+  local byte
+  local i
+
+  for ((i = 0; i < ${#value}; i++)); do
+    char=${value:i:1}
+    case "$char" in
+      [a-zA-Z0-9.~_-]) encoded+="$char" ;;
+      *)
+        printf -v byte '%d' "'$char"
+        printf -v encoded '%s%%%02X' "$encoded" "$((byte & 255))"
+        ;;
+    esac
+  done
+
+  printf '%s' "$encoded"
+}
+
+serialize_dotenv_value() {
+  local value="$1"
+
+  value=${value//\\/\\\\}
+  value=${value//\"/\\\"}
+  value=${value//\$/\$\$}
+
+  printf '"%s"' "$value"
+}
+
+write_generated_env_file() (
+  local env_file="${1:-.env}"
+  local postgres_password="${2:-}"
+  local hub_api_key="${3:-}"
+  local cubejs_api_secret="${4:-}"
+  local authzed_token="${5:-}"
+  local authzed_database_password="${6:-}"
+  local serialized_postgres_password
+  local postgres_password_url_encoded
+  local tmp_file
+
+  append_if_missing() {
+    local key="$1"
+    local value="$2"
+
+    if ! grep -Eq "^[[:space:]]*(export[[:space:]]+)?${key}[[:space:]]*=" "$tmp_file"; then
+      printf '%s=%s\n' "$key" "$value" >>"$tmp_file"
+    fi
+  }
+
+  umask 077
+  if [ -z "$postgres_password" ]; then
+    postgres_password=$(openssl rand -hex 32)
+  fi
+  if [ -z "$hub_api_key" ]; then
+    hub_api_key=$(openssl rand -hex 32)
+  fi
+  if [ -z "$cubejs_api_secret" ]; then
+    cubejs_api_secret=$(openssl rand -hex 32)
+  fi
+  if [ -z "$authzed_token" ]; then
+    authzed_token=$(openssl rand -hex 32)
+  fi
+  if [ -z "$authzed_database_password" ]; then
+    authzed_database_password=$(openssl rand -hex 32)
+  fi
+  serialized_postgres_password=$(serialize_dotenv_value "$postgres_password")
+  postgres_password_url_encoded=$(url_encode "$postgres_password")
+
+  tmp_file=$(mktemp "${env_file}.tmp.XXXXXX")
+  trap 'rm -f "$tmp_file"' EXIT
+
+  if [ -f "$env_file" ]; then
+    awk '
+      !/^[[:space:]]*(export[[:space:]]+)?(POSTGRES_PASSWORD|POSTGRES_PASSWORD_URL_ENCODED|HUB_API_KEY|CUBEJS_API_SECRET|CUBEJS_JWT_ISSUER|CUBEJS_JWT_AUDIENCE)[[:space:]]*=/
+    ' "$env_file" >"$tmp_file"
+  fi
+
+  cat <<EOF >>"$tmp_file"
+POSTGRES_PASSWORD=$serialized_postgres_password
+POSTGRES_PASSWORD_URL_ENCODED=$postgres_password_url_encoded
+HUB_API_KEY=$hub_api_key
+CUBEJS_API_SECRET=$cubejs_api_secret
+CUBEJS_JWT_ISSUER=formbricks-web
+CUBEJS_JWT_AUDIENCE=formbricks-cube
+EOF
+
+  append_if_missing "AUTHZED_TOKEN" "$authzed_token"
+  append_if_missing "AUTHZED_DATABASE_PASSWORD" "$authzed_database_password"
+  append_if_missing "AUTHZED_ENABLED" "true"
+  append_if_missing "AUTHZED_CONSISTENCY" "fully_consistent"
+  append_if_missing "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED" "true"
+
+  chmod 600 "$tmp_file"
+  mv "$tmp_file" "$env_file"
+  trap - EXIT
+)
+
 write_base_env_file() {
   local env_file="${1:-.env}"
   local hub_key="$2"
@@ -174,16 +365,7 @@ write_base_env_file() {
 
   umask 077
   : >"$env_file"
-  upsert_dotenv_var "HUB_API_KEY" "$hub_key" "$env_file"
-  upsert_dotenv_var "CUBEJS_API_SECRET" "$cube_secret" "$env_file"
-  upsert_dotenv_var "CUBEJS_JWT_ISSUER" "formbricks-web" "$env_file"
-  upsert_dotenv_var "CUBEJS_JWT_AUDIENCE" "formbricks-cube" "$env_file"
-  upsert_dotenv_var "AUTHZED_TOKEN" "$authzed_token" "$env_file"
-  upsert_dotenv_var "AUTHZED_DATABASE_PASSWORD" "$authzed_database_password" "$env_file"
-  upsert_dotenv_var "AUTHZED_ENABLED" "true" "$env_file"
-  upsert_dotenv_var "AUTHZED_CONSISTENCY" "fully_consistent" "$env_file"
-  upsert_dotenv_var "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED" "true" "$env_file"
-  chmod 600 "$env_file"
+  write_generated_env_file "$env_file" "" "$hub_key" "$cube_secret" "$authzed_token" "$authzed_database_password"
 }
 
 add_formbricks_traefik_labels() {
@@ -263,28 +445,12 @@ install_formbricks() {
   sudo apt-get install -y \
     ca-certificates \
     curl \
+    jq \
     lsb-release >/dev/null 2>&1
 
   # Reuse an existing Docker installation instead of replacing it implicitly.
   if command -v docker >/dev/null 2>&1; then
     echo "✅ Docker is already installed."
-
-    if docker info >/dev/null 2>&1 || sudo docker info >/dev/null 2>&1; then
-      echo "✅ Docker daemon is reachable. Reusing the existing Docker installation."
-
-      if docker compose version >/dev/null 2>&1 || sudo docker compose version >/dev/null 2>&1; then
-        echo "✅ Docker Compose is available."
-      else
-        echo "❌ Docker Compose is not available on this system."
-        echo "Please install Docker Compose or upgrade Docker so 'docker compose' works, then rerun this script."
-        exit 1
-      fi
-    else
-      echo "❌ Docker is installed, but the daemon is not reachable."
-      echo "Please start or fix Docker and rerun this script."
-      echo "To avoid modifying an existing Docker setup without your consent, this script will not remove or reinstall Docker automatically."
-      exit 1
-    fi
   else
     # Remove old Docker packages only when Docker is not installed at all.
     echo "⚠️ Legacy Docker-related packages may conflict with Docker CE."
@@ -328,6 +494,21 @@ install_formbricks() {
     fi
   fi
 
+  if ! configure_formbricks_docker_command; then
+    echo "❌ Docker is installed, but the daemon is not reachable."
+    echo "Please start or fix Docker and rerun this script."
+    echo "To avoid modifying an existing Docker setup without your consent, this script will not remove or reinstall Docker automatically."
+    exit 1
+  fi
+  echo "✅ Docker daemon is reachable. Reusing the existing Docker installation."
+
+  if ! run_formbricks_docker_compose version >/dev/null 2>&1; then
+    echo "❌ Docker Compose is not available on this system."
+    echo "Please install Docker Compose or upgrade Docker so 'docker compose' works, then rerun this script."
+    exit 1
+  fi
+  echo "✅ Docker Compose is available."
+
   # Adding your user to the Docker group
   echo "🐳 Adding your user to the Docker group to avoid using sudo with docker commands."
   sudo groupadd docker >/dev/null 2>&1 || true
@@ -337,6 +518,14 @@ install_formbricks() {
 
   mkdir -p formbricks && cd formbricks
   echo "📁 Created Formbricks Quickstart directory at ./formbricks."
+
+  existing_postgres_password=""
+  if [ -f ".env" ] || [ -f "docker-compose.yml" ]; then
+    if ! existing_postgres_password=$(read_existing_postgres_password ".env" "docker-compose.yml"); then
+      echo "Set POSTGRES_PASSWORD in .env manually, then rerun this script."
+      exit 1
+    fi
+  fi
 
   # Ask the user for their domain name (recommend surveys subdomain)
   echo "🔗 Please enter your app domain (e.g., surveys.example.com). 🚨 Do NOT enter the protocol (http/https):"
@@ -619,8 +808,18 @@ EOT
   cubejs_api_secret=$(openssl rand -hex 32)
   authzed_token=$(openssl rand -hex 32)
   authzed_database_password=$(openssl rand -hex 32)
-  write_base_env_file ".env" "$hub_api_key" "$cubejs_api_secret" "$authzed_token" "$authzed_database_password"
-  echo "🚗 Generated Hub, Cube, and AuthZed secrets in .env successfully!"
+  write_generated_env_file \
+    ".env" \
+    "$existing_postgres_password" \
+    "$hub_api_key" \
+    "$cubejs_api_secret" \
+    "$authzed_token" \
+    "$authzed_database_password"
+  if [ -n "$existing_postgres_password" ]; then
+    echo "🚗 Preserved the existing PostgreSQL password and AuthZed credentials while refreshing .env."
+  else
+    echo "🚗 Generated PostgreSQL, Hub, Cube, and AuthZed secrets in .env successfully!"
+  fi
   
   if [[ -n $mail_from ]]; then
     sed -i "s|# MAIL_FROM:|MAIL_FROM: \"$mail_from\"|" docker-compose.yml

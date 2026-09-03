@@ -53,5 +53,41 @@ describe("auto-link matchers", () => {
     test("returns null when there is no email address", () => {
       expect(matchEmail("no address in here")).toBeNull();
     });
+
+    // The local part is capped at RFC 5321's 64 so a long run of local-part characters cannot be
+    // rescanned from every start position. A cap on its own is not enough: `\b` also sits between a
+    // word character and `+`, `-`, `%` or `.`, so the match could restart INSIDE an overlong local
+    // part and link a different address than the one written. These pin "no link" rather than
+    // "a link to something else".
+    test.each([
+      ["plus", "a+"],
+      ["dot", "a."],
+      ["hyphen", "a-"],
+      ["percent", "a%"],
+      ["underscore", "a_"],
+    ])("does not link a truncated suffix of an overlong local part (%s)", (_label, unit) => {
+      // 32 repeats + a trailing "a" is a 65-character local part, one over the cap, with an
+      // interior word boundary after every punctuation character.
+      const overlong = `${unit.repeat(32)}a@example.com`;
+
+      expect(matchEmail(overlong)).toBeNull();
+    });
+
+    test("links a local part exactly at the 64-character cap", () => {
+      const atCap = `${"a".repeat(64)}@example.com`;
+
+      expect(matchEmail(atCap)).toMatchObject({ index: 0, text: atCap });
+    });
+
+    test("keeps linking ordinary addresses that contain local-part punctuation", () => {
+      for (const address of [
+        "first.last+tag@sub.example.co.uk",
+        "user_name@example.org",
+        "user-name@example-host.io",
+        "percent%sign@example.com",
+      ]) {
+        expect(matchEmail(address)).toMatchObject({ index: 0, text: address });
+      }
+    });
   });
 });

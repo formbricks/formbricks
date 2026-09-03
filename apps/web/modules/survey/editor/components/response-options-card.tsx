@@ -335,16 +335,16 @@ export const ResponseOptionsCard = ({
               <DatePicker
                 clearButtonId="clear-publish-on-date"
                 clearButtonLabel={t("workspace.surveys.edit.clear_publish_on_date")}
-                date={publishOn}
+                value={publishOn}
                 locale={locale}
                 minDate={minPublishDate}
-                onClearDate={() => {
+                onClear={() => {
                   setLocalSurvey((currentSurvey) => ({
                     ...currentSurvey,
                     publishOn: null,
                   }));
                 }}
-                updateSurveyDate={(date) => {
+                onChange={(date) => {
                   const nextPublishOn = toDateOnlySelection(date);
                   const nextPublishCalendarDate = toCalendarDate(nextPublishOn);
 
@@ -375,16 +375,16 @@ export const ResponseOptionsCard = ({
               <DatePicker
                 clearButtonId="clear-close-on-date"
                 clearButtonLabel={t("workspace.surveys.edit.clear_close_on_date")}
-                date={closeOn}
+                value={closeOn}
                 locale={locale}
                 minDate={minCloseDate}
-                onClearDate={() => {
+                onClear={() => {
                   setLocalSurvey((currentSurvey) => ({
                     ...currentSurvey,
                     closeOn: null,
                   }));
                 }}
-                updateSurveyDate={(date) => {
+                onChange={(date) => {
                   setLocalSurvey((currentSurvey) => ({
                     ...currentSurvey,
                     closeOn: toDateOnlySelection(date),

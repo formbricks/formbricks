@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -7,7 +7,7 @@ import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib
 import { getSurveyCount, hasArchivedSurveys } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
-import { V3SurveyCreatePermissionError, createV3Survey } from "../create";
+import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "../create";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import { patchV3Survey } from "../patch";
 import { prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "../prepare";
@@ -482,6 +482,48 @@ describe("createV3SurveyResponse", () => {
         })
       ).status
     ).toBe(500);
+  });
+
+  // ENG-2587. The document passes `ZV3CreateSurveyBody` but fails the survey service's stricter
+  // write schema; `executeV3SurveyCreate` catches that with a pre-write parse and throws this typed
+  // error. Before the fix there was no branch for it and it landed on the generic 500.
+  test("maps V3SurveyInputValidationError to 422 naming the offending path", async () => {
+    vi.mocked(createV3Survey).mockRejectedValueOnce(
+      new V3SurveyInputValidationError([{ name: "blocks.0.elements.0.buttonUrl", reason: "Invalid url" }])
+    );
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(422);
+    expect(await readJson(response)).toMatchObject({
+      invalid_params: [expect.objectContaining({ name: "blocks.0.elements.0.buttonUrl" })],
+    });
+  });
+
+  // The reason the branch above is keyed on the typed error and not on `ValidationError`:
+  // `createSurvey` also throws `ValidationError` from work that runs *after* its transaction
+  // commits (`subscribeOrganizationMembersToSurveyResponses` -> `updateUser` re-validates the
+  // user's stored `notificationSettings` JSON). The survey row exists by then, so answering 4xx
+  // would tell the caller nothing was written and invite a duplicate retry — and it would drop a
+  // genuine server fault out of 5xx alerting. Those must keep the 500.
+  test("keeps a bare ValidationError on the 500 path, so post-commit faults are not reported as 4xx", async () => {
+    vi.mocked(createV3Survey).mockRejectedValueOnce(
+      new ValidationError("Validation failed: notificationSettings.alertExpected boolean")
+    );
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(500);
   });
 });
 

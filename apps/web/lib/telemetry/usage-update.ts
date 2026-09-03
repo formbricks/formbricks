@@ -1,4 +1,4 @@
-import { createCacheKey, getCacheService } from "@formbricks/cache";
+import { type CacheService, createCacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { IntegrationType } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
@@ -26,6 +26,10 @@ let nextTelemetryCheck = 0;
  * 1. In-memory check (fast, process-local)
  * 2. Redis check (shared across instances, persists across restarts)
  * 3. Distributed lock (prevents concurrent execution in multi-instance deployments)
+ *
+ * Called from two places, both of which rely on those checks for idempotency: the response pipeline
+ * (so an active instance reports as it is used) and the daily usage telemetry job (so an instance that
+ * collects no responses still reports at least once — see ENG-2107).
  */
 // Hashed license key for log context — allows correlating log entries to a specific license
 // without exposing the raw key. Computed once at module load.
@@ -39,6 +43,58 @@ const isTelemetryDisabledForCE = async (): Promise<boolean> => {
   if (!TELEMETRY_DISABLED) return false;
   const license = await getEnterpriseLicense();
   return !license.active;
+};
+
+/**
+ * Runs the actual send once every check has passed and the lock is held. Pulled out of
+ * `sendTelemetryEvents` so its try/catch/finally isn't nested inside that function's own try block —
+ * nesting is what pushed the caller over the cognitive-complexity threshold, not the branch count.
+ */
+const executeTelemetrySend = async (cache: CacheService, lastSent: number, now: number): Promise<void> => {
+  try {
+    const sent = await sendTelemetry(lastSent);
+
+    if (!sent) {
+      // Nothing was reported (no organization exists yet), so the 24h window must not be consumed:
+      // recording it here would delay the instance's *first* usage update by a day.
+      //
+      // The 1h value is a floor on the next attempt, not a scheduled retry — nothing re-invokes this
+      // hourly. It exists so the next real trigger is not blocked for 24h; those triggers are a
+      // processed response, the next 02:15 UTC tick, or that tick running overdue at the next boot.
+      // So on an instance with no response traffic the first usage update after an organization is
+      // created lands within a day, not within an hour.
+      logger.info(
+        { hashedLicenseKey },
+        "Telemetry skipped - no organization to report on yet, not consuming the 24h window"
+      );
+      nextTelemetryCheck = now + 60 * 60 * 1000;
+      return;
+    }
+
+    // Success: Update Redis with current timestamp so other instances know telemetry was sent.
+    // No TTL - persists indefinitely to support low-volume instances (responses every few days/weeks).
+    await cache.set(TELEMETRY_LAST_SENT_KEY, now.toString());
+
+    // Update in-memory check to prevent this instance from checking again for 24h.
+    nextTelemetryCheck = now + TELEMETRY_INTERVAL_MS;
+  } catch (e) {
+    // Log as warning since telemetry is non-essential
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    logger.warn(
+      { error: e, message: errorMessage, lastSent, now, hashedLicenseKey },
+      "Failed to send telemetry - applying 1h cooldown"
+    );
+
+    // Failure cooldown: Prevent retrying immediately to avoid hammering the endpoint.
+    // Wait 1 hour before allowing this instance to try again. Like the no-organization case above
+    // this is a floor rather than a retry — the next attempt is whenever a trigger next calls in.
+    // Note: Other instances can still try (they'll hit the lock or Redis check).
+    nextTelemetryCheck = now + 60 * 60 * 1000;
+  } finally {
+    // Always release the lock, even if telemetry failed.
+    // This allows other instances to retry if this one failed.
+    await cache.del([TELEMETRY_LOCK_KEY]);
+  }
 };
 
 export const sendTelemetryEvents = async () => {
@@ -124,32 +180,7 @@ export const sendTelemetryEvents = async () => {
     // EXECUTION: Send Telemetry
     // ============================================================
     // We've passed all checks and acquired the lock. Now execute telemetry.
-    try {
-      await sendTelemetry(lastSent);
-
-      // Success: Update Redis with current timestamp so other instances know telemetry was sent.
-      // No TTL - persists indefinitely to support low-volume instances (responses every few days/weeks).
-      await cache.set(TELEMETRY_LAST_SENT_KEY, now.toString());
-
-      // Update in-memory check to prevent this instance from checking again for 24h.
-      nextTelemetryCheck = now + TELEMETRY_INTERVAL_MS;
-    } catch (e) {
-      // Log as warning since telemetry is non-essential
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      logger.warn(
-        { error: e, message: errorMessage, lastSent, now, hashedLicenseKey },
-        "Failed to send telemetry - applying 1h cooldown"
-      );
-
-      // Failure cooldown: Prevent retrying immediately to avoid hammering the endpoint.
-      // Wait 1 hour before allowing this instance to try again.
-      // Note: Other instances can still try (they'll hit the lock or Redis check).
-      nextTelemetryCheck = now + 60 * 60 * 1000;
-    } finally {
-      // Always release the lock, even if telemetry failed.
-      // This allows other instances to retry if this one failed.
-      await cache.del([TELEMETRY_LOCK_KEY]);
-    }
+    await executeTelemetrySend(cache, lastSent, now);
   } catch (error) {
     // Catch-all for any unexpected errors in the wrapper logic (cache failures, lock issues, etc.)
     // Log as warning since telemetry is non-essential functionality
@@ -164,12 +195,15 @@ export const sendTelemetryEvents = async () => {
 /**
  * Gathers telemetry data and sends it to Formbricks Enterprise endpoint.
  * @param lastSent - Timestamp of last telemetry send (used to calculate incremental metrics)
+ * @returns `true` when a usage update was accepted by the endpoint, `false` when there was nothing to
+ * report. Throws when the update could not be delivered, so the caller applies its failure cooldown
+ * instead of recording a send that never happened.
  */
-const sendTelemetry = async (lastSent: number) => {
+const sendTelemetry = async (lastSent: number): Promise<boolean> => {
   // Get the instance info (hashed oldest organization ID and creation date).
   // Using the oldest org ensures the ID doesn't change over time.
   const instanceInfo = await getInstanceInfo();
-  if (!instanceInfo) return; // No organization exists, nothing to report
+  if (!instanceInfo) return false; // No organization exists, nothing to report
 
   const { instanceId, createdAt: instanceCreatedAt } = instanceInfo;
 
@@ -295,14 +329,24 @@ const sendTelemetry = async (lastSent: number) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-  await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-    signal: controller.signal,
-  });
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
 
-  clearTimeout(timeout);
+    // A rejected update must not be recorded as sent, or the instance stays silent for another 24h
+    // while the license server still has no usage for it.
+    if (!res.ok) {
+      throw new Error(`Usage update endpoint responded with status ${res.status}`);
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  return true;
 };
