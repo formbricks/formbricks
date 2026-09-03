@@ -7,6 +7,8 @@ const mockRemoveSurveyArchivePurge = vi.fn();
 const mockUpsertSurveyArchivePurge = vi.fn();
 const mockRemoveWorkflowRunReconcile = vi.fn();
 const mockUpsertWorkflowRunReconcile = vi.fn();
+const mockUpsertAuthzedProjectionDelivery = vi.fn();
+const mockUpsertAuthzedReconciliationAudit = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockWarn = vi.fn();
@@ -17,6 +19,8 @@ const mockProcessSurveySchedulingJob = vi.fn();
 const mockProcessSurveyArchivePurgeJob = vi.fn();
 const mockProcessWorkflowRunJob = vi.fn();
 const mockProcessWorkflowRunReconcileJob = vi.fn();
+const mockProcessAuthzedProjectionDeliveryJob = vi.fn();
+const mockProcessAuthzedScheduledReconciliationJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 
 const slowTest = (name: string, fn: () => Promise<void>): void => {
@@ -31,6 +35,18 @@ vi.mock("@formbricks/jobs", () => ({
     workflowRun: "workflow-run.process",
   },
   recurringJobs: {
+    authzedProjectionDelivery: {
+      name: "authzed-projection.deliver",
+      scheduleId: "authzed-projection-delivery",
+      scope: "global",
+      upsert: mockUpsertAuthzedProjectionDelivery,
+    },
+    authzedReconciliationAudit: {
+      name: "authzed-reconciliation.audit",
+      scheduleId: "authzed-reconciliation-audit",
+      scope: "global",
+      upsert: mockUpsertAuthzedReconciliationAudit,
+    },
     surveyArchivePurge: {
       name: "survey-archive-purge.process",
       remove: mockRemoveSurveyArchivePurge,
@@ -88,6 +104,14 @@ vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-job", () => ({
 
 vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job", () => ({
   processWorkflowRunReconcileJob: mockProcessWorkflowRunReconcileJob,
+}));
+
+vi.mock("@/lib/authzed/outbox-processor", () => ({
+  processAuthzedProjectionDeliveryJob: mockProcessAuthzedProjectionDeliveryJob,
+}));
+
+vi.mock("@/lib/authzed/scheduled-reconciliation", () => ({
+  processAuthzedScheduledReconciliationJob: mockProcessAuthzedScheduledReconciliationJob,
 }));
 
 describe("instrumentation-jobs", () => {
@@ -176,6 +200,8 @@ describe("instrumentation-jobs", () => {
     expect(mockStartJobsRuntime).toHaveBeenCalledWith({
       concurrency: 4,
       jobHandlerOverrides: {
+        "authzed-projection.deliver": expect.any(Function),
+        "authzed-reconciliation.audit": expect.any(Function),
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
         "survey-archive-purge.process": expect.any(Function),
@@ -416,6 +442,16 @@ describe("instrumentation-jobs", () => {
       // The schedule identity and payload now belong to the job declaration in @formbricks/jobs (and are
       // asserted there); what this app owns, and what is asserted here, is the timing per job.
       expect(mockStartJobsRuntime).not.toHaveBeenCalled();
+      expect(mockUpsertAuthzedProjectionDelivery).toHaveBeenCalledOnce();
+      expect(mockUpsertAuthzedProjectionDelivery).toHaveBeenCalledWith({
+        everyMs: 5_000,
+        kind: "every",
+      });
+      expect(mockUpsertAuthzedReconciliationAudit).toHaveBeenCalledOnce();
+      expect(mockUpsertAuthzedReconciliationAudit).toHaveBeenCalledWith({
+        everyMs: 6 * 60 * 60 * 1_000,
+        kind: "every",
+      });
       expect(mockUpsertSurveyScheduling).toHaveBeenCalledTimes(1);
       expect(mockUpsertSurveyScheduling).toHaveBeenCalledWith({
         cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,

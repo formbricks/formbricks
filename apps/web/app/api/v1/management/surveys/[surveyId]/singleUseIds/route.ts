@@ -1,10 +1,11 @@
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { generateSurveySingleUseLinkParamsList } from "@/lib/utils/single-use-surveys";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = withV1ApiWrapper({
   handler: async ({
@@ -29,7 +30,13 @@ export const GET = withV1ApiWrapper({
       // unauthenticated POST /api/v1/client/{workspaceId}/responses accepts, so at "read" a
       // reporting-only key — the level you would hand an external analyst or BI tool — could generate
       // thousands of valid submission links and inject responses with them.
-      if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, "POST")) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("POST"),
+          { type: "workspace", id: survey.workspaceId }
+        ))
+      ) {
         return {
           response: responses.unauthorizedResponse(),
         };

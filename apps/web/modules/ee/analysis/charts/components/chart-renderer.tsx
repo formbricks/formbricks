@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { BreakdownBars } from "@/modules/ee/analysis/charts/components/breakdown-bars";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
+import { computeBigNumberValue } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
   CHART_BRAND_DARK,
@@ -364,7 +365,7 @@ export function ChartRenderer({
   config,
 }: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
-  const { barOrientation, pieDisplay } = resolveChartDisplay(config);
+  const { barOrientation, pieDisplay, areaDisplay } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
   const gradientIdPrefix = useId();
 
@@ -446,8 +447,10 @@ export function ChartRenderer({
           isHorizontal={barOrientation === "horizontal"}
         />
       );
-    case "line":
-      // AreaChart with a thin stroke + gradient fade reads as a line with a soft tint.
+    // Line is a display style of this type, not a type of its own: both render the same Recharts
+    // area series over the same axes and differ only in how the band under the stroke is painted.
+    case "area": {
+      const isLine = areaDisplay === "line";
       return (
         <CartesianChart
           chart={AreaChart}
@@ -459,17 +462,25 @@ export function ChartRenderer({
           hasCategoryAxis={hasCategoryAxis}
           xAxisTickFormatter={formatDimensionValue}
           pointScale>
-          <defs>
-            {dataKeys.map((key) => {
-              const color = chartConfig[key]?.color;
-              return (
-                <linearGradient key={key} id={`${gradientIdPrefix}-line-${key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={color} stopOpacity={0.3} />
-                  <stop offset="95%" stopColor={color} stopOpacity={0} />
-                </linearGradient>
-              );
-            })}
-          </defs>
+          {isLine ? (
+            <defs>
+              {dataKeys.map((key) => {
+                const color = chartConfig[key]?.color;
+                return (
+                  <linearGradient
+                    key={key}
+                    id={`${gradientIdPrefix}-line-${key}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1">
+                    <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={color} stopOpacity={0} />
+                  </linearGradient>
+                );
+              })}
+            </defs>
+          ) : null}
           {dataKeys.map((key) => {
             const color = chartConfig[key]?.color;
             return (
@@ -479,9 +490,13 @@ export function ChartRenderer({
                 dataKey={key}
                 stroke={color}
                 strokeWidth={2}
-                fill={`url(#${gradientIdPrefix}-line-${key})`}
+                // A thin stroke over a gradient that fades to nothing reads as a line with a soft
+                // tint; a flat fill reads as an area. 0.6 is Recharts' own default, spelled out
+                // here so the line style keeps the tint it had as a separate chart type.
+                fill={isLine ? `url(#${gradientIdPrefix}-line-${key})` : color}
+                fillOpacity={isLine ? 0.6 : 0.4}
                 dot={false}
-                activeDot={{ r: 5, stroke: color, strokeWidth: 2, fill: "#fff" }}
+                activeDot={isLine ? { r: 5, stroke: color, strokeWidth: 2, fill: "#fff" } : undefined}
                 // Cube returns null for empty buckets; render them as gaps, not a dip to zero.
                 connectNulls={false}
               />
@@ -489,32 +504,7 @@ export function ChartRenderer({
           })}
         </CartesianChart>
       );
-    case "area":
-      return (
-        <CartesianChart
-          chart={AreaChart}
-          data={sortedData}
-          xAxisKey={xAxisKey}
-          dataKeys={dataKeys}
-          chartConfig={chartConfig}
-          showLegend
-          hasCategoryAxis={hasCategoryAxis}
-          xAxisTickFormatter={formatDimensionValue}
-          pointScale>
-          {dataKeys.map((key) => (
-            <Area
-              key={key}
-              type="monotone"
-              dataKey={key}
-              stroke={chartConfig[key]?.color}
-              fill={chartConfig[key]?.color}
-              fillOpacity={0.4}
-              strokeWidth={2}
-              connectNulls={false}
-            />
-          ))}
-        </CartesianChart>
-      );
+    }
     case "pie":
       // A pie and a breakdown bar answer the same question — the share each group takes of the
       // whole — so they are two renderings of one chart type rather than two chart types.
@@ -545,18 +535,13 @@ export function ChartRenderer({
       );
     case "big_number": {
       // A measure with nothing to compute comes back as NULL (see restoreNullMeasures in
-      // cube-client, which maps the pivot's sentinel back to null). Summing it as 0 would print a
-      // confident "0" for "never asked", so count the numeric rows and fall back to a no-data glyph.
-      const numericValues = data
-        .map((row) => row[dataKey])
-        .filter((value) => value !== null && value !== undefined && value !== "")
-        .map(Number)
-        .filter((value) => Number.isFinite(value));
-      const hasValue = numericValues.length > 0;
-      const total = numericValues.reduce((sum, value) => sum + value, 0);
+      // cube-client, which maps the pivot's sentinel back to null). Printing it as 0 would be a
+      // confident "0" for "never asked", so fall back to a no-data glyph instead.
+      const value = computeBigNumberValue(data, dataKey);
+      const hasValue = value !== null;
       // formatCellValue caps at two fraction digits, so a big number and a bar label now agree on
       // precision instead of showing 4.705 next to 4.7.
-      const formatted = hasValue ? formatCellValue(total) : NO_DATA_PLACEHOLDER;
+      const formatted = hasValue ? formatCellValue(value) : NO_DATA_PLACEHOLDER;
       return (
         <div className="flex h-full items-center justify-center p-4">
           <div className="text-center">

@@ -4,7 +4,7 @@ import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
-import { addLiveRegionContainer, closeSurvey, preloadSurveysScript } from "@/lib/survey/widget";
+import { addLiveRegionContainer, closeSurvey, prefetchSurveysScript } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
 import { fetchWorkspaceState } from "@/lib/workspace/state";
@@ -344,8 +344,8 @@ export const setup = async (
   // first survey announces its opening into it.
   addLiveRegionContainer();
 
-  // Preload surveys script so it's ready when a survey triggers
-  preloadSurveysScript(configInput.appUrl);
+  // Prefetch surveys script so it's warm in the cache when a survey triggers
+  prefetchSurveysScript(configInput.appUrl);
 
   setIsSetup(true);
   logger.debug("Set up complete");

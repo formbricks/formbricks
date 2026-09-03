@@ -3,40 +3,27 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TMembership, ZMembership } from "@formbricks/types/memberships";
+import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
 import { validateInputs } from "@/lib/utils/validate";
 
-const findWorkspacesForMembership = async (
+const findWorkspacesForOrganization = async (
   userId: string,
-  orgMembership: TMembership,
+  organizationId: string,
   { writableOnly }: { writableOnly: boolean }
 ): Promise<{ id: string; name: string }[]> => {
-  validateInputs([userId, ZId], [orgMembership, ZMembership]);
-
-  let workspaceWhereClause: Prisma.WorkspaceWhereInput = {};
-
-  if (orgMembership.role === "member") {
-    workspaceWhereClause = {
-      workspaceTeams: {
-        some: {
-          ...(writableOnly && { permission: { in: ["readWrite", "manage"] } }),
-          team: {
-            teamUsers: {
-              some: {
-                userId,
-              },
-            },
-          },
-        },
-      },
-    };
-  }
+  validateInputs([userId, ZId], [organizationId, ZId]);
 
   try {
+    const workspaceIds = await lookupAuthorizedWorkspaceIds(
+      { type: "user", id: userId },
+      writableOnly ? "write" : "read"
+    );
+    if (workspaceIds.length === 0) return [];
+
     const workspaces = await prisma.workspace.findMany({
       where: {
-        organizationId: orgMembership.organizationId,
-        ...workspaceWhereClause,
+        id: { in: [...workspaceIds] },
+        organizationId,
       },
       select: {
         id: true,
@@ -57,11 +44,11 @@ const findWorkspacesForMembership = async (
 };
 
 export const getWorkspacesByUserId = reactCache(
-  async (userId: string, orgMembership: TMembership): Promise<{ id: string; name: string }[]> =>
-    findWorkspacesForMembership(userId, orgMembership, { writableOnly: false })
+  async (userId: string, organizationId: string): Promise<{ id: string; name: string }[]> =>
+    findWorkspacesForOrganization(userId, organizationId, { writableOnly: false })
 );
 
 export const getWritableWorkspacesByUserId = reactCache(
-  async (userId: string, orgMembership: TMembership): Promise<{ id: string; name: string }[]> =>
-    findWorkspacesForMembership(userId, orgMembership, { writableOnly: true })
+  async (userId: string, organizationId: string): Promise<{ id: string; name: string }[]> =>
+    findWorkspacesForOrganization(userId, organizationId, { writableOnly: true })
 );

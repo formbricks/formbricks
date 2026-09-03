@@ -49,6 +49,7 @@ interface LoginFormProps {
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
   oauthError?: string;
+  emailJustVerified?: boolean;
   prefilledEmail?: string;
   inviteToken?: string | null;
   resolvedCallbackPath: string;
@@ -68,6 +69,7 @@ export const LoginForm = ({
   isSsoEnabled,
   samlSsoEnabled,
   oauthError,
+  emailJustVerified,
   prefilledEmail,
   inviteToken,
   resolvedCallbackPath,
@@ -192,6 +194,14 @@ export const LoginForm = ({
     <FormProvider {...form}>
       <div className="text-center">
         <h1 className="mb-4 text-slate-700">{formLabel}</h1>
+        {emailJustVerified && (
+          <Alert variant="success" className="mb-4 text-left" role="status">
+            <AlertTitle>{t("auth.login.email_verified_sign_in_title")}</AlertTitle>
+            <AlertDescription>
+              <p>{t("auth.login.email_verified_sign_in_description")}</p>
+            </AlertDescription>
+          </Alert>
+        )}
         {oauthAccountNotLinked && (
           <Alert variant="error" className="mb-4 text-left" role="status">
             <AlertTitle>{t("auth.login.oauth_account_not_linked_title")}</AlertTitle>

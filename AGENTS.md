@@ -212,6 +212,15 @@ where the behavior only exists once browser, survey bundle, and server are wired
 The spec filenames in `apps/web/playwright/` are the inventory of covered areas — check there before
 concluding an area has no spec.
 
+The PR's Coverage table names each row's level with one of five words, and the first three are claims a
+reviewer can check: `unit (red on main)` fails against the old code, so it proves the bug existed;
+`unit (mutation)` only fails if you break the fix, because the code under test is new; `unit (guard)`
+passes either way, protecting against a future regression; `e2e` and `manual` say where the check ran. Every
+`unit` and `e2e` row names the test or spec it rests on, in the row or in a `Rerun:` line that names
+it — a bare `pnpm test` names nothing. A `unit (red on main)` row is rerunnable from the
+`Rerun:` command, or names its own where that differs; a `unit (mutation)` row names the mutated
+`file:line` a reviewer edits to turn it red.
+
 This raises a floor as well as lowering a ceiling. Every feature area ships a happy-path E2E, and an area
 with none is a gap rather than a saving (Dashboards and Workflows are the current examples — ENG-2314). A
 bug fix inside a feature that already has one almost never needs a second spec — the level still follows
@@ -286,7 +295,10 @@ Do not:
 
 - Keep code DRY and small; remove dead code and unused imports.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
-- Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`.
+- Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`. This is enforced:
+  `@typescript-eslint/no-explicit-any` is an error in `packages/*` and a warning in `apps/web`, where the
+  typescript-eslint baseline is being ratcheted to error rule by rule (ENG-2264). Never add new `any`s —
+  a warning today becomes an error once its rule's backlog is cleared.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
 
 ## Commit & Pull Request Guidelines
@@ -294,6 +306,10 @@ Do not:
 Commits follow a lightweight Conventional Commit format (`fix:`, `chore:`, `feat:`) and usually append the PR number, e.g. `fix: update OpenAPI schema (#6617)`. Keep commits scoped and lint-clean. Pull requests should outline the problem, summarize the solution, and link to issues or product specs. Attach screenshots or gifs for UI-facing work, and record any migrations or env changes under `Migrations & env`, breaking or not. Don't restate what CI already reports (lint, typecheck, unit tests, build, Sonar) — the description carries what those checks cannot show.
 
 Every PR must use `.github/pull_request_template.md` and follow its inline guidance — the template is the source of truth for PR structure. The ticket line at the top is the only place a magic word (`Fixes`, `Ref`, `Closes`) may sit next to a ticket id: Linear and GitHub scan the whole body, so the same pair written in prose — inside backticks too — links and closes that ticket as well. When you need to name the convention in prose, write it without a resolvable id. All QA for a change happens on its own PR before review: the creator shows that every behaviour the diff changes is covered, and lists what is not under `Open gaps`; the reviewer challenges that list and asks for the missing coverage. There is no separate release QA pass per PR — release review only looks for problems arising from the interplay of several changes. Fill every section from the actual diff on PR open, and re-update it in the same turn on every change (new commits, scope or review fixes) so it never drifts — treat a stale section as a bug.
+
+**A PR description is read, not filed.** Keep the whole thing under 350 words outside `<details>` folds — one screen — with lists of at most three bullets of at most twenty words and a Coverage table of at most six rows. Open `## What & why` with a `**Was:**` / `**Now:**` pair: one plain sentence for how it behaved before, one for what happens now. User-visible effect first, mechanism second, written for a colleague who has not read the ticket. Under `## Where to look`, link the one to three places that carry the risk so a reviewer can spot-check the code without reading all of it. Detail that does not fit goes into a fold rather than being dropped — the evidence stays in the PR, out of the reviewer's way. Four things never belong at any length: blame archaeology, a defence of a choice nobody questioned or of what you deliberately did not do, commentary on how strong your own tests are, and anything the `Rerun:` line already carries.
+
+The agent note names the exact model id the vendor serves — `claude-opus-5`, `gpt-5.1-codex` — not the harness it runs in; Claude Code, Codex CLI and Cursor are harnesses, so name one in parentheses only when it adds something (`claude-opus-5 (Claude Code 2.1.237)`). The reasoning level is whatever knob that vendor exposes, in its own units: an effort level (`max`, `high`), a thinking budget (`32k tokens`), or `n/a`. Read both out of the tool, never from memory — Claude Code reports them in `/status` or as the session's `model` and `effort_level`, Codex CLI in `/model` or its startup line. A value you cannot look up is `unknown`, never a guess and never the harness name standing in for the model.
 
 The checkbox under `## Breaking changes` is a decision you own, not a formality: judge the diff against the template's list of breaking changes and tick it (`- [x]`) when one applies, leave it unticked when none does. The template also lists what is **not** breaking — purely additive changes, and anything internal to this repo that no external consumer reaches — and an uncertain call is an unticked box with a line of reasoning, never a defensive tick. It is the only input to the `breaking-change` label, which feeds the release notes and the self-hoster migration guide, so a wrong answer either invents a migration entry or hides one. Re-check it whenever the diff grows. `pr-label-sync.yml` reads nothing but the tick, so the prose below the checkbox cannot change the label — but it is not free-form either: the CodeRabbit `Breaking changes match the diff` check compares the tick against the diff and expects a ticked box to document each breaking change, so explain your answer there in whatever shape fits (table or prose).
 

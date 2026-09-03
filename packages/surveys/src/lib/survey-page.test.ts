@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
-import { getSurveyPagePosition, hasSurveyInstructions } from "./survey-page";
+import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
+import { getSurveyDisplayName, getSurveyPagePosition, hasSurveyInstructions } from "./survey-page";
 
 const block = (id: string) => ({ id, name: id, elements: [] });
 
@@ -123,5 +124,30 @@ describe("hasSurveyInstructions", () => {
         makeSurvey({ welcomeCardEnabled: false, welcomeCardSubheader: { default: "Take a minute." } })
       )
     ).toBe(true);
+  });
+});
+
+describe("getSurveyDisplayName", () => {
+  test("keeps a real survey name", () => {
+    expect(getSurveyDisplayName("Product feedback")).toBe("Product feedback");
+  });
+
+  test("drops the public client API's placeholder", () => {
+    // An app survey is fetched from the public client API, which substitutes this for every name.
+    // Rendering it would announce an internal deprecation notice as the dialog's accessible name.
+    expect(getSurveyDisplayName(PUBLIC_API_SURVEY_NAME_PLACEHOLDER)).toBeUndefined();
+  });
+
+  test("drops a missing or empty name", () => {
+    expect(getSurveyDisplayName(undefined)).toBeUndefined();
+    expect(getSurveyDisplayName("")).toBeUndefined();
+    expect(getSurveyDisplayName("   ")).toBeUndefined();
+  });
+
+  test("keeps a name that merely contains the placeholder as a substring", () => {
+    // Only an exact match is the API's substitution; anything else is a name someone chose.
+    expect(getSurveyDisplayName(`Re: ${PUBLIC_API_SURVEY_NAME_PLACEHOLDER}`)).toBe(
+      `Re: ${PUBLIC_API_SURVEY_NAME_PLACEHOLDER}`
+    );
   });
 });

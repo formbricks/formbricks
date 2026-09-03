@@ -119,7 +119,7 @@ export const ElementFormInput = ({
       : isEndingCard
         ? localSurvey.endings[elementIdx - elements.length].id
         : currentElement.id;
-  }, [isWelcomeCard, isEndingCard, currentElement?.id]);
+  }, [isWelcomeCard, isEndingCard, currentElement?.id, elementIdx, elements.length, localSurvey.endings]);
   const endingCard = localSurvey.endings.find((ending) => ending.id === elementId);
 
   const surveyLanguageCodes = useMemo(

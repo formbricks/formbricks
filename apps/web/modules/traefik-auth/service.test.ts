@@ -10,7 +10,7 @@ const {
   mockVerifyFeedbackRecordsGatewayToken,
   mockGetFeedbackDirectoryAuthContext,
   mockGetFeedbackRecordTenant,
-  mockCheckAuthorizationUpdated,
+  mockCan,
   mockUserFindUnique,
   mockGetIsFeedbackDirectoriesEnabled,
 } = vi.hoisted(() => ({
@@ -21,7 +21,7 @@ const {
   mockVerifyFeedbackRecordsGatewayToken: vi.fn(),
   mockGetFeedbackDirectoryAuthContext: vi.fn(),
   mockGetFeedbackRecordTenant: vi.fn(),
-  mockCheckAuthorizationUpdated: vi.fn(),
+  mockCan: vi.fn(),
   mockUserFindUnique: vi.fn(),
   mockGetIsFeedbackDirectoriesEnabled: vi.fn(),
 }));
@@ -64,8 +64,8 @@ vi.mock("@/modules/hub/service", () => ({
   getFeedbackRecordTenant: mockGetFeedbackRecordTenant,
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: mockCheckAuthorizationUpdated,
+vi.mock("@/lib/authorization", () => ({
+  can: mockCan,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -125,7 +125,7 @@ describe("authorizeTraefikRequest", () => {
       data: { tenantId: feedbackDirectoryId },
       error: null,
     });
-    mockCheckAuthorizationUpdated.mockResolvedValue(true);
+    mockCan.mockResolvedValue(true);
     mockUserFindUnique.mockResolvedValue({ id: "user_1", isActive: true });
     mockGetIsFeedbackDirectoriesEnabled.mockResolvedValue(true);
   });
@@ -204,15 +204,9 @@ describe("authorizeTraefikRequest", () => {
 
     expect(response.status).toBe(200);
     expect(mockGetFeedbackRecordTenant).toHaveBeenCalledWith(feedbackRecordId);
-    expect(mockCheckAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId: "org_1",
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    expect(mockCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
+      type: "organization",
+      id: "org_1",
     });
   });
 
