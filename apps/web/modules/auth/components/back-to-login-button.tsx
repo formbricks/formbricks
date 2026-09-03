@@ -13,10 +13,10 @@ export const BackToLoginButton = async ({ callbackUrl }: Readonly<{ callbackUrl?
   const t = await getTranslate();
   const href = callbackUrl ? `/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/auth/login";
   return (
-    <Button variant="default" className="w-full justify-center">
-      <Link href={href} className="h-full w-full">
-        {t("auth.signup.log_in")}
-      </Link>
+    // asChild makes the Link the button, so it must not carry its own sizing — Radix Slot
+    // concatenates classNames and `h-full` then measures against the card, not the button.
+    <Button variant="default" className="h-11 w-full justify-center sm:h-9" asChild>
+      <Link href={href}>{t("auth.signup.log_in")}</Link>
     </Button>
   );
 };

@@ -147,7 +147,6 @@ const currentSurvey = {
   singleUse: null,
   isVerifyEmailEnabled: false,
   recaptcha: null,
-  isSingleResponsePerEmailEnabled: false,
   isBackButtonHidden: false,
   isAutoProgressingEnabled: false,
   isCaptureIpEnabled: false,

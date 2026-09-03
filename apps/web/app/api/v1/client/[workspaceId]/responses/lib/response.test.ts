@@ -163,7 +163,7 @@ describe("createResponse", () => {
 
   test("should throw DatabaseError on Prisma known request error", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-      code: "P2002",
+      code: "P2025",
       clientVersion: "test",
     });
     vi.mocked(prisma.response.create).mockRejectedValue(prismaError);

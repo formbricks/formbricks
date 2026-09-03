@@ -50,6 +50,7 @@ vi.mock("@/modules/auth/lib/oauth-urls", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/auth/lib/oauth-urls")>()),
   getAuthIssuerUrl: () => "http://localhost/api/auth",
   getMcpOrigin: () => "http://localhost",
+  getMcpOAuthJwksUrl: () => "http://formbricks:3000/api/auth/jwks",
   getMcpProtectedResourceMetadataUrl: () => "http://localhost/.well-known/oauth-protected-resource/api/mcp",
   getMcpResourceUrl: () => "http://localhost/api/mcp",
 }));
@@ -453,6 +454,7 @@ describe("POST /api/mcp", () => {
     expect(verifyBearerTokenMock).toHaveBeenCalledWith(
       "eyJhbGciOiJFZERTQSJ9.payload.signature",
       expect.objectContaining({
+        jwksUrl: "http://formbricks:3000/api/auth/jwks",
         verifyOptions: expect.objectContaining({
           audience: "http://localhost/api/mcp",
           issuer: "http://localhost/api/auth",

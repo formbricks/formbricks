@@ -343,6 +343,32 @@ describe("updateResponse", () => {
         })
       );
     });
+
+    test("preserves stored data and language when the input omits them", async () => {
+      // The management API accepts partial bodies (e.g. `{ "finished": true }`), so `data` and
+      // `language` can both be absent. Absent must mean "leave the stored column alone" — never
+      // overwrite it with an empty value (ENG-2425).
+      const currentResponse = createMockCurrentResponse({
+        data: { question1: "answer1" },
+        language: "de-DE",
+      }) as unknown as NonNullable<Awaited<ReturnType<typeof prisma.response.findUnique>>>;
+
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+
+      await updateResponse(mockResponseId, { finished: true });
+
+      expect(prisma.response.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            finished: true,
+            data: { question1: "answer1" },
+            // undefined is a Prisma no-op; null or "" would wipe the stored language
+            language: undefined,
+          }),
+        })
+      );
+    });
   });
 
   describe("variables merging behavior", () => {

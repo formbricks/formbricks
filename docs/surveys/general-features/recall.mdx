@@ -17,27 +17,21 @@ You can recall data from the following sources:
 ## Recalling from a previous question
 
 <Note>
-  The recall functionality is disabled on the first question of the survey since
-  there’s no preceding question to recall data from.
+  On the first question the menu lists only hidden fields and variables — there is no earlier answer
+  to recall yet.
 </Note>
 
-### **Pre-requisite**
+### Step 1: Insert the recall
 
-Ensure the answer you wish to recall precedes the question in which it will be recalled. Here’s an example of setting up the first question:
+Type **`@`** in the question or description where the value should appear. A menu opens listing everything available at that point in the survey — the questions before this one, the hidden fields, and the variables.
 
-![Survey setup example with link survey template](/images/surveys/general-features/recall/step-three.webp)
+![The recall menu, listing earlier questions, hidden fields and variables](/images/surveys/general-features/recall/recall-menu.webp)
 
-### **Step 1: Recall Data**
+### Step 2: Set a fallback
 
-Type **`@`** in the question or description field where you want to insert a recall. This triggers a dropdown menu listing all preceding questions. Select the question you want to recall data from.
+Pick a source and the editor asks for a fallback: the text to show when there is nothing to recall. An optional question that was skipped, or a hidden field the URL never filled, would otherwise leave a gap in the sentence.
 
-![Dropdown menu for recalling data in survey](/images/surveys/general-features/recall/step-two.webp)
-
-### **Step 2: Set a Fallback**
-
-To ensure the survey remains coherent when a response is missing (or the question is optional), you should set a fallback option.
-
-![Setting fallback option in survey question](/images/surveys/general-features/recall/step-one.webp)
+![The fallback prompt that opens after picking a recall source](/images/surveys/general-features/recall/fallback.webp)
 
 
 ## Recalling from the URL
@@ -56,7 +50,7 @@ To ensure the survey remains coherent when a response is missing (or the questio
 
 2. Use the `@` symbol in a question or description to recall the value of the variable
 
-3. Set a fallback in case the variable is not being filled by a URL parameter
+3. Set a fallback in case the variable has not been calculated yet when the question is shown
 
 ## Live Demo
 

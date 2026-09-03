@@ -3,12 +3,20 @@ import { OperationNotAllowedError, ValidationError } from "@formbricks/types/err
 import { updateMembershipAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
+  applyRateLimit: vi.fn(),
+  assertCan: vi.fn(),
+  can: vi.fn(),
   checkAuthorizationUpdated: vi.fn(),
   getAccessControlPermission: vi.fn(),
   getMembershipByUserIdOrganizationId: vi.fn(),
   getOrganization: vi.fn(),
   getOrganizationOwnerCount: vi.fn(),
   updateMembership: vi.fn(),
+}));
+
+vi.mock("@/lib/authorization", () => ({
+  assertCan: mocks.assertCan,
+  can: mocks.can,
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -24,6 +32,10 @@ vi.mock("@formbricks/database/prisma", () => ({
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
   USER_MANAGEMENT_MINIMUM_ROLE: "manager",
+}));
+
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyRateLimit: mocks.applyRateLimit,
 }));
 
 vi.mock("@/lib/membership/service", () => ({
@@ -90,6 +102,9 @@ describe("updateMembershipAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    mocks.applyRateLimit.mockResolvedValue(undefined);
+    mocks.assertCan.mockResolvedValue(undefined);
+    mocks.can.mockResolvedValue(true);
     mocks.checkAuthorizationUpdated.mockResolvedValue(undefined);
     mocks.getAccessControlPermission.mockResolvedValue(true);
     mocks.getOrganization.mockResolvedValue({ id: organizationId });

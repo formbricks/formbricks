@@ -38,7 +38,18 @@ interface WorkflowEmailActionFormProps {
 // The internal "default language" slot recall/headline resolution uses when no language is selected.
 const DEFAULT_LANGUAGE_CODE = "default";
 
-const HTML_TAG_PATTERN = /<[a-z][\s\S]*>/i;
+// Index scans, not `/<[a-z][\s\S]*>/i`: that pattern is O(N^2) on a long run of `<a` with no `>`,
+// since the greedy `[\s\S]*` rescans to the end from every one. Identical predicate — `[\s\S]*`
+// matches anything, so the regex holds exactly when some `<` + letter is followed later by any `>`,
+// i.e. when the LAST `>` sits after the FIRST `<letter`.
+const HTML_OPENING_TAG_PATTERN = /<[a-z]/i;
+
+const containsHtmlTag = (value: string): boolean => {
+  const openingTag = HTML_OPENING_TAG_PATTERN.exec(value);
+  if (!openingTag) return false;
+
+  return value.lastIndexOf(">") > openingTag.index + 1;
+};
 
 const escapeHtml = (value: string): string =>
   value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -49,7 +60,7 @@ const escapeHtml = (value: string): string =>
 // node ("Only element or decorator nodes can be inserted to the root node").
 const toEditorHtml = (body: string): string => {
   if (!body) return "";
-  if (HTML_TAG_PATTERN.test(body)) return body;
+  if (containsHtmlTag(body)) return body;
   return body
     .split(/\n{2,}/)
     .map((paragraph) => `<p>${escapeHtml(paragraph).replaceAll("\n", "<br>")}</p>`)

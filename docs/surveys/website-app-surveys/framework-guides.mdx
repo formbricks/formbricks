@@ -622,6 +622,59 @@ To this:
 
 ![second validate](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738122750/image_ymaenn.jpg)
 
+## Content Security Policy
+
+If your app serves a strict `Content-Security-Policy` header, the browser can block the Formbricks widget before anything renders. Three directives are involved.
+
+<Note>
+  This applies to the JavaScript SDK only. Link surveys are served by Formbricks itself, and the mobile
+  SDKs render surveys in a WebView, so neither is affected by your app's CSP.
+</Note>
+
+### Allowing scripts and API calls
+
+The SDK loads two scripts from your Formbricks instance: `formbricks.umd.cjs` (the SDK) and `surveys.umd.cjs` (the survey renderer, fetched the first time a survey is shown). It then talks to the client API on the same host. Both directives need to point at your `appUrl`:
+
+```text
+script-src 'self' https://app.formbricks.com;
+connect-src 'self' https://app.formbricks.com;
+```
+
+The SDK does not put a nonce on the script tags it creates, so allowlisting the host is what makes them load. `'strict-dynamic'` works instead of a host allowlist, but only if the script that loads the SDK carries a matching nonce or hash of its own — both bundles are inserted programmatically, so they inherit trust from that root. Without a trusted root, `'strict-dynamic'` blocks the SDK before it ever reaches `surveys.umd.cjs`.
+
+### Passing a nonce for survey styles
+
+Surveys are styled by two `<style>` elements the renderer appends to `<head>`: `formbricks__css` for the base stylesheet and `formbricks__css__custom` for your workspace and survey theme. `style-src` treats an injected `<style>` element as inline CSS, so a policy without `'unsafe-inline'` blocks both and surveys appear unstyled.
+
+Instead of loosening the policy, hand the SDK the nonce your server already generated for the request. `setNonce` stamps it onto both style elements, which satisfies `style-src 'nonce-...'`:
+
+```javascript Setting the CSP nonce
+formbricks.setNonce("<your-request-nonce>");
+
+formbricks.setup({
+  workspaceId: "<workspace-id>",
+  appUrl: "<app-url>",
+});
+```
+
+The matching header side, with the nonce in both style directives:
+
+```text
+style-src 'self' 'nonce-<your-request-nonce>';
+style-src-elem 'self' 'nonce-<your-request-nonce>';
+```
+
+`style-src-elem` is what the browser consults for `<style>` elements whenever it is present, and it does not fall back to `style-src` — so a nonce listed only under `style-src` leaves surveys unstyled on any policy that sets both. If your policy has no `style-src-elem`, the first line alone is enough.
+
+Pass the raw value only — not the `nonce-` prefix that appears in the header. Passing `undefined` stops the SDK nonce-ing style elements it creates from then on; elements already in the page keep the attribute they were given.
+
+<Note>
+  **Note**: call `setNonce` before `setup`. The SDK stores the nonce and applies it when the survey
+  renderer loads, so setting it early covers every survey in the page's lifetime. A nonce must be
+  regenerated per response and match the one in the header, so read it from wherever your framework
+  exposes it rather than hardcoding a value.
+</Note>
+
 ## Debugging Formbricks Integration
 
 <Note>

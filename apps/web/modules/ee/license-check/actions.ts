@@ -2,14 +2,9 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import {
-  AuthenticationError,
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-} from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -25,6 +20,7 @@ import {
   fetchLicenseFresh,
   getCacheKeys,
 } from "./lib/license";
+import { assertCanRecheckLicense } from "./lib/recheck-authorization";
 
 const ZRecheckLicenseAction = z.object({
   workspaceId: ZId,
@@ -57,15 +53,7 @@ export const recheckLicenseAction = authenticatedActionClient
         throw new ResourceNotFoundError("Organization", null);
       }
 
-      // Check user is owner or manager (not member)
-      const currentUserMembership = await getMembershipByUserIdOrganizationId(ctx.user.id, organization.id);
-      if (!currentUserMembership) {
-        throw new AuthenticationError("User not a member of this organization");
-      }
-
-      if (currentUserMembership.role === "member") {
-        throw new OperationNotAllowedError("Only owners and managers can recheck license");
-      }
+      await assertCanRecheckLicense(ctx.user.id, organization.id);
 
       // Clear main license cache (preserves previous result cache for grace period)
       // This prevents instant downgrade if the license server is temporarily unreachable

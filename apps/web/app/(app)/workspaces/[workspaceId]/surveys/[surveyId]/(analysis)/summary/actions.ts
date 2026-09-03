@@ -7,11 +7,11 @@ import { getEmailTemplateHtml } from "@/app/(app)/workspaces/[workspaceId]/surve
 import { generateExampleResponseDataset } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/example-responses";
 import { persistExampleResponseDataset } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/example-responses-persistence";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
+import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { convertToCsv } from "@/lib/utils/file-conversion";
 import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -34,20 +34,9 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     const survey = await getSurvey(parsedInput.surveyId);
@@ -80,20 +69,9 @@ export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSur
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -149,20 +127,9 @@ export const generateExampleResponsesAction = authenticatedActionClient
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
       const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
       });
 
       // Set before the gates below so a rejected or failed attempt is still attributed to the right
@@ -229,20 +196,9 @@ const ZGetEmailHtmlAction = z.object({
 export const getEmailHtmlAction = authenticatedActionClient
   .inputSchema(ZGetEmailHtmlAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     return await getEmailTemplateHtml(parsedInput.surveyId, ctx.user.locale);
@@ -264,20 +220,9 @@ export const generatePersonalLinksAction = authenticatedActionClient
       throw new OperationNotAllowedError("Contacts are not enabled for this workspace");
     }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId,
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
 
     // Get contacts and generate personal links
@@ -350,20 +295,9 @@ const ZUpdateSingleUseLinksAction = z.object({
 export const updateSingleUseLinksAction = authenticatedActionClient
   .inputSchema(ZUpdateSingleUseLinksAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     const survey = await getSurvey(parsedInput.surveyId);

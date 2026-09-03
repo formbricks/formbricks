@@ -3,11 +3,13 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateWorkspaceBranding } from "@/modules/ee/whitelabel/remove-branding/lib/workspace";
@@ -25,21 +27,11 @@ export const updateWorkspaceBrandingAction = authenticatedActionClient
     withAuditLogging("updated", "workspace", async ({ ctx, parsedInput }) => {
       const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            workspaceId: parsedInput.workspaceId,
-            minPermission: "manage",
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
+        type: "workspace",
+        id: parsedInput.workspaceId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
 
       if (
         parsedInput.data.inAppSurveyBranding !== undefined ||

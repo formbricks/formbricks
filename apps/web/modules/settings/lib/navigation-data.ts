@@ -107,7 +107,7 @@ export const getSettingsLayoutData = async (
     getAccessControlPermission(organization.id),
     getEnterpriseLicense(),
     getOrganizationWorkspacesLimit(organization.id),
-    getWorkspacesByUserId(userId, membership),
+    getWorkspacesByUserId(userId, organization.id),
   ]);
 
   const responseCount = IS_FORMBRICKS_CLOUD ? await getMonthlyOrganizationResponseCount(organization.id) : 0;

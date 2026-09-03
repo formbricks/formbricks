@@ -15,6 +15,12 @@ const buttonVariants = cva(
           "border border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground enabled:hover:bg-secondary/30 border border-primary/5 hover:border-primary/20",
+        // AI flavours. These deliberately step outside the Quiet Primary Rule: a generative action
+        // is a different class of thing from a save, and marking it is the point. Reserved for
+        // actions that actually invoke a model — a save that follows one stays `default`.
+        "ai-primary": "bg-ai-strong text-white enabled:hover:bg-ai-strong/90",
+        "ai-secondary":
+          "bg-ai-subtle text-ai-dark border border-ai-dark/10 enabled:hover:bg-ai-subtle/60 hover:border-ai-dark/20",
         ghost: "enabled:hover:bg-accent enabled:hover:text-accent-foreground text-primary",
         link: "text-primary underline-offset-4 enabled:hover:underline",
       },

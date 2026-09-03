@@ -161,6 +161,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     if (!isOpen) {
       clearItem();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- clearItem is recreated each render; effect must fire only when isOpen toggles, not on every render
   }, [isOpen]);
 
   const handleAddNewFilter = () => {
