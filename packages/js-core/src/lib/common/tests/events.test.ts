@@ -1,27 +1,24 @@
-import { type Mock, beforeEach, describe, expect, test } from "vitest";
-import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
-
-const dispatchEventMock = window.dispatchEvent as unknown as Mock;
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  FORMBRICKS_EVENTS,
+  emitFormbricksEvent,
+  offFormbricksEvent,
+  onFormbricksEvent,
+  resetFormbricksEventSubscribers,
+} from "@/lib/common/events";
 
 describe("emitFormbricksEvent", () => {
   beforeEach(() => {
-    // The emitter creates `window.dataLayer` when absent; start every test from that state.
+    // The emitter creates `window.dataLayer` when absent; start every test from that state, and
+    // from a subscriber-free registry.
     delete (window as { dataLayer?: unknown }).dataLayer;
+    resetFormbricksEventSubscribers();
   });
 
-  test("every event name carries the formbricks_ namespace — the string GTM triggers match", () => {
+  test("every event name carries the formbricks_ namespace — the string GTM triggers and on() match", () => {
     for (const name of Object.values(FORMBRICKS_EVENTS)) {
       expect(name).toMatch(/^formbricks_/);
     }
-  });
-
-  test("dispatches a CustomEvent on window with the payload as detail", () => {
-    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
-
-    expect(dispatchEventMock).toHaveBeenCalledTimes(1);
-    const event = dispatchEventMock.mock.calls[0][0] as CustomEvent;
-    expect(event.type).toBe("formbricks_survey_shown");
-    expect(event.detail).toEqual({ surveyId: "survey_1" });
   });
 
   test("creates window.dataLayer when absent and pushes the nested envelope", () => {
@@ -71,23 +68,6 @@ describe("emitFormbricksEvent", () => {
     });
   });
 
-  test("both transports fire for one emit, carrying the same payload", () => {
-    emitFormbricksEvent(FORMBRICKS_EVENTS.setupSuccessful, { workspaceId: "ws_1" });
-
-    const event = dispatchEventMock.mock.calls[0][0] as CustomEvent;
-    expect(event.detail).toEqual({ workspaceId: "ws_1" });
-    expect(window.dataLayer?.[0]).toEqual({
-      event: "formbricks_setup_successful",
-      formbricks: {
-        workspaceId: "ws_1",
-        surveyId: null,
-        responseId: null,
-        finished: null,
-        action: null,
-      },
-    });
-  });
-
   test("a payload key present with value undefined falls back to the null sentinel, not undefined", () => {
     // `responseId` is typed optional by the widened callbacks, so an emit can carry it as an
     // explicit undefined. If that survived the merge it would replace the null sentinel — and GTM's
@@ -121,30 +101,130 @@ describe("emitFormbricksEvent", () => {
     expect(window.dataLayer).toHaveLength(1);
   });
 
-  test("a throwing event listener cannot silence the dataLayer transport", () => {
-    dispatchEventMock.mockImplementationOnce(() => {
-      throw new Error("host listener exploded");
-    });
-
-    expect(() => {
-      emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
-    }).not.toThrow();
-
-    expect(window.dataLayer).toHaveLength(1);
-  });
-
-  test("a throwing dataLayer.push (GTM replaces it with host-owned code) never escapes into SDK flow", () => {
+  test("a throwing dataLayer.push (GTM replaces it with host-owned code) never escapes, and subscribers still fire", () => {
     const poisoned: Record<string, unknown>[] = [];
     poisoned.push = () => {
       throw new Error("host push exploded");
     };
     window.dataLayer = poisoned;
 
+    const handler = vi.fn();
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, handler);
+
     expect(() => {
       emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
     }).not.toThrow();
 
-    // The CustomEvent transport still fired: the two are isolated separately.
-    expect(dispatchEventMock).toHaveBeenCalledTimes(1);
+    // The subscription surface still fired: the two are isolated separately.
+    expect(handler).toHaveBeenCalledWith({ surveyId: "survey_1" });
+  });
+});
+
+describe("on() / off() subscriptions", () => {
+  beforeEach(() => {
+    delete (window as { dataLayer?: unknown }).dataLayer;
+    resetFormbricksEventSubscribers();
+    vi.restoreAllMocks();
+  });
+
+  test("notifies every handler of the emitted event with its payload, and no other event's handlers", () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const other = vi.fn();
+
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, first);
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, second);
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyClosed, other);
+
+    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
+
+    expect(first).toHaveBeenCalledWith({ surveyId: "survey_1" });
+    expect(second).toHaveBeenCalledWith({ surveyId: "survey_1" });
+    expect(other).not.toHaveBeenCalled();
+  });
+
+  test("registering the same handler twice notifies it once", () => {
+    const handler = vi.fn();
+
+    onFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, handler);
+    onFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, handler);
+
+    emitFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, { surveyId: "survey_1", finished: false });
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("the function returned by on() removes the subscription; off() removes only the handler it names", () => {
+    const viaReturn = vi.fn();
+    const viaOff = vi.fn();
+    const kept = vi.fn();
+
+    const unsubscribe = onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, viaReturn);
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, viaOff);
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, kept);
+
+    unsubscribe();
+    offFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, viaOff);
+    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
+
+    expect(viaReturn).not.toHaveBeenCalled();
+    expect(viaOff).not.toHaveBeenCalled();
+    expect(kept).toHaveBeenCalledTimes(1);
+  });
+
+  test("off() on an unknown handler or event is a no-op", () => {
+    const handler = vi.fn();
+
+    expect(() => {
+      offFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, handler);
+    }).not.toThrow();
+
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, handler);
+    offFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, vi.fn());
+    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("a handler that unsubscribes itself still receives the event it is handling", () => {
+    const handler = vi.fn(() => {
+      offFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, handler);
+    });
+
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, handler);
+
+    expect(() => {
+      emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
+    }).not.toThrow();
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_2" });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("a throwing handler is logged and stops neither the other handlers nor the dataLayer push", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const throwing = vi.fn(() => {
+      throw new Error("host blew up");
+    });
+    const healthy = vi.fn();
+
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyClosed, throwing);
+    onFormbricksEvent(FORMBRICKS_EVENTS.surveyClosed, healthy);
+
+    expect(() => {
+      emitFormbricksEvent(FORMBRICKS_EVENTS.surveyClosed, { surveyId: "survey_1" });
+    }).not.toThrow();
+
+    expect(healthy).toHaveBeenCalledTimes(1);
+    expect(window.dataLayer).toHaveLength(1);
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
+  test("emitting with no subscribers still pushes to the dataLayer", () => {
+    expect(() => {
+      emitFormbricksEvent(FORMBRICKS_EVENTS.setupSuccessful, { workspaceId: "ws_1" });
+    }).not.toThrow();
+    expect(window.dataLayer).toHaveLength(1);
   });
 });

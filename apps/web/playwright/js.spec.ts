@@ -7,20 +7,22 @@ import { useSelectedTemplate } from "./utils/helper";
 
 const HTML_TEMPLATE = `<head>
   <script type="text/javascript">
-    // Registered before the SDK loads, which is the load order the event bus is designed for
-    // (ENG-1846): a host page must be able to subscribe without knowing when the SDK arrives.
-    window.formbricksEvents = [];
-    window.addEventListener("formbricks_response_submitted", function (e) {
-      window.formbricksEvents.push(e.detail);
-    });
-  </script>
-  <script type="text/javascript">
     !(function () {
       var t = document.createElement("script");
       (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
       var e = document.getElementsByTagName("script")[0];
       t.onload = function(){
         if (window.formbricks) {
+          // formbricks.on() is the only JS subscription surface (ENG-1814); registered before
+          // setup(), which the API promises works. Same names as the GTM dataLayer pushes.
+          window.formbricksEvents = [];
+          ["formbricks_survey_shown", "formbricks_response_submitted", "formbricks_survey_closed"].forEach(
+            function (name) {
+              window.formbricks.on(name, function (payload) {
+                window.formbricksEvents.push(Object.assign({ event: name }, payload));
+              });
+            }
+          );
           window.formbricks.setup({workspaceId: "WORKSPACE_ID", appUrl: "http://localhost:3000"});
         } else {
           console.error("Formbricks library failed to load properly. The formbricks object is not available.");
@@ -139,16 +141,25 @@ test.describe("JS Package Test", async () => {
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(5000);
 
-    // The `responseId` on the bus is the PERSISTED id (ENG-1846). This is the only level that can
-    // prove it: the id is minted by the server, so `onResponseCreated`/`onFinished` can only carry it
-    // by firing from the response queue's creation ack — and the renderer that passes it lives in a
-    // .tsx, which the repo does not unit-test. Asserted against the stored row rather than for
-    // self-consistency, so a client-minted or dropped id fails here.
-    await test.step("the submitted event carries the persisted responseId", async () => {
+    // The `responseId` on the events is the PERSISTED id (ENG-1846). This is the only level that
+    // can prove it: the id is minted by the server, so `onResponseCreated`/`onFinished` can only
+    // carry it by firing from the response queue's creation ack — and the renderer that passes it
+    // lives in a .tsx, which the repo does not unit-test. Asserted against the stored row rather
+    // than for self-consistency, so a client-minted or dropped id fails here (ENG-1814: the
+    // formbricks.on() surface, registered before setup(), is what captured them).
+    await test.step("the journey reaches formbricks.on subscribers with the persisted responseId", async () => {
       const events = await page.evaluate(
         () =>
-          (window as unknown as { formbricksEvents: { responseId?: string; finished?: boolean }[] })
-            .formbricksEvents
+          (
+            window as unknown as {
+              formbricksEvents: {
+                event: string;
+                surveyId: string;
+                responseId?: string;
+                finished?: boolean;
+              }[];
+            }
+          ).formbricksEvents
       );
 
       const storedResponse = await prisma.response.findFirst({
@@ -158,11 +169,20 @@ test.describe("JS Package Test", async () => {
       });
       expect(storedResponse).not.toBeNull();
 
-      expect(events.length).toBeGreaterThan(0);
-      expect(events.some((event) => event.finished === true)).toBe(true);
+      // Shown, first answer, completion, and — after the ending card auto-closes the modal —
+      // closed exactly once. One vocabulary, in order.
+      expect(events.map((event) => event.event)).toEqual([
+        "formbricks_survey_shown",
+        "formbricks_response_submitted",
+        "formbricks_response_submitted",
+        "formbricks_survey_closed",
+      ]);
+      expect(events.map((event) => event.finished)).toEqual([undefined, false, true, undefined]);
       for (const event of events) {
-        expect(event.responseId).toBe(storedResponse?.id);
+        expect(event.surveyId).toBe(surveyId);
       }
+      expect(events[1].responseId).toBe(storedResponse?.id);
+      expect(events[2].responseId).toBe(storedResponse?.id);
     });
 
     // Validate displays and response

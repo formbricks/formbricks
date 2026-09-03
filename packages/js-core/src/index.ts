@@ -1,4 +1,10 @@
 import { CommandQueue, CommandType } from "@/lib/common/command-queue";
+import {
+  type TFormbricksEventName,
+  type TFormbricksEventPayloads,
+  offFormbricksEvent,
+  onFormbricksEvent,
+} from "@/lib/common/events";
 import * as Setup from "@/lib/common/setup";
 import { getIsDebug } from "@/lib/common/utils";
 import * as Action from "@/lib/survey/action";
@@ -107,6 +113,41 @@ const clearEmbeddedData = (...args: [] | [key: string]): void => {
 };
 
 /**
+ * Subscribe to a Formbricks event (ENG-1814).
+ *
+ * The host application is notified about what the SDK actually did — a survey reached the screen
+ * (`formbricks_survey_shown`), was answered (`formbricks_response_submitted`, with the persisted
+ * `responseId` and a `finished` flag), was dismissed or completed (`formbricks_survey_closed`), an
+ * action was tracked, or setup finished — so it can drive frequency capping and analytics off
+ * reality rather than off the `track()` calls it made. The same events, under the same names, go
+ * out as `window.dataLayer` pushes for Google Tag Manager.
+ *
+ * Subscriptions are independent of setup(): registering before or after setup() both work, and a
+ * handler stays registered across logout() until it is removed.
+ *
+ * @param event - Full event name, e.g. "formbricks_survey_shown"
+ * @param handler - Called with that event's payload (survey id, and where it applies the response id)
+ * @returns A function that removes this subscription. `off()` with the same arguments does the same.
+ */
+const on = <E extends TFormbricksEventName>(
+  event: E,
+  handler: (payload: TFormbricksEventPayloads[E]) => void
+): (() => void) => onFormbricksEvent(event, handler);
+
+/**
+ * Remove a subscription registered with on().
+ *
+ * @param event - The event name the handler was registered for
+ * @param handler - The same function reference that was passed to on()
+ */
+const off = <E extends TFormbricksEventName>(
+  event: E,
+  handler: (payload: TFormbricksEventPayloads[E]) => void
+): void => {
+  offFormbricksEvent(event, handler);
+};
+
+/**
  * Set the CSP nonce for inline styles
  * @param nonce - The CSP nonce value (without 'nonce-' prefix), or undefined to clear
  */
@@ -134,6 +175,8 @@ const formbricks = {
   setNonce,
   setEmbeddedData,
   clearEmbeddedData,
+  on,
+  off,
 };
 
 // Explicitly assign to globalThis so the wrapper SDK (@formbricks/js) can
@@ -145,4 +188,5 @@ const formbricks = {
 
 type TFormbricks = typeof formbricks;
 export type { TFormbricks };
+export type { TFormbricksEventName, TFormbricksEventPayloads } from "@/lib/common/events";
 export default formbricks;

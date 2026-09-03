@@ -1,5 +1,6 @@
 import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
+import { onFormbricksEvent, resetFormbricksEventSubscribers } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import type * as CommonUtils from "@/lib/common/utils";
 import { filterSurveys, getLanguageCode, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
@@ -923,6 +924,143 @@ describe("widget-file", () => {
           formbricks: { ...base, surveyId: mockSurvey.id, responseId: "resp_123", finished: true },
         },
       ]);
+    });
+  });
+
+  describe("survey lifecycle via formbricks.on (ENG-1814)", () => {
+    // The subscription surface over the same emits as the dataLayer transport: which renderer
+    // callback maps to which event, the survey id it names, and the closed-once guard.
+    const renderAndGetLifecycleCallbacks = async (): Promise<{
+      onDisplayCreated: () => void;
+      onResponseCreated: (responseId?: string) => void;
+      onClose: () => void;
+    }> => {
+      const mockConfigValue = {
+        get: vi.fn().mockReturnValue({
+          appUrl: "https://fake.app",
+          workspaceId: "env_123",
+          workspace: {
+            data: {
+              settings: { clickOutsideClose: true, overlay: "none", placement: "bottomRight" },
+            },
+          },
+          user: {
+            data: {
+              userId: null,
+              contactId: "contact_abc",
+              displays: [],
+              responses: [],
+              lastDisplayAt: null,
+            },
+          },
+        }),
+        update: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
+      (filterSurveys as Mock).mockReturnValue([]);
+      widget.setIsSurveyRunning(false);
+      window.formbricksSurveys = createMockFormbricksSurveys();
+
+      vi.useFakeTimers();
+      await widget.renderWidget({ ...mockSurvey, delay: 0 } as unknown as TWorkspaceStateSurvey);
+      vi.advanceTimersByTime(0);
+      vi.useRealTimers();
+
+      return (getFormbricksSurveys().renderSurvey as Mock).mock.calls[0][0] as {
+        onDisplayCreated: () => void;
+        onResponseCreated: (responseId?: string) => void;
+        onClose: () => void;
+      };
+    };
+
+    beforeEach(() => {
+      // Drop any survey an earlier test left on screen, then start from a subscriber-free registry.
+      widget.closeSurvey();
+      resetFormbricksEventSubscribers();
+      delete (window as { dataLayer?: unknown }).dataLayer;
+    });
+
+    test("notifies formbricks_survey_shown subscribers once the display is created, not on render", async () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_shown", handler);
+
+      const callbacks = await renderAndGetLifecycleCallbacks();
+      expect(handler).not.toHaveBeenCalled();
+
+      callbacks.onDisplayCreated();
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({ surveyId: mockSurvey.id });
+    });
+
+    test("notifies formbricks_response_submitted subscribers with the server-acked responseId", async () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_response_submitted", handler);
+
+      const callbacks = await renderAndGetLifecycleCallbacks();
+      callbacks.onResponseCreated("resp_123");
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({
+        surveyId: mockSurvey.id,
+        responseId: "resp_123",
+        finished: false,
+      });
+    });
+
+    test("emits formbricks_survey_closed once — to subscribers AND the dataLayer — and not again on a repeated close", async () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_closed", handler);
+
+      const callbacks = await renderAndGetLifecycleCallbacks();
+      callbacks.onClose();
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith({ surveyId: mockSurvey.id });
+      // The same moment reaches GTM through the dataLayer transport.
+      const base = { workspaceId: null, surveyId: null, responseId: null, finished: null, action: null };
+      expect(window.dataLayer).toEqual([
+        { event: "formbricks_survey_closed", formbricks: { ...base, surveyId: mockSurvey.id } },
+      ]);
+
+      widget.closeSurvey();
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(window.dataLayer).toHaveLength(1);
+    });
+
+    test("emits nothing when closeSurvey runs with no survey on screen", () => {
+      const handler = vi.fn();
+      onFormbricksEvent("formbricks_survey_closed", handler);
+
+      widget.closeSurvey();
+
+      expect(handler).not.toHaveBeenCalled();
+      expect(window.dataLayer).toBeUndefined();
+    });
+
+    test("renders and closes normally when no host has subscribed", async () => {
+      const callbacks = await renderAndGetLifecycleCallbacks();
+
+      expect(() => {
+        callbacks.onDisplayCreated();
+        callbacks.onResponseCreated("resp_123");
+        callbacks.onClose();
+      }).not.toThrow();
+    });
+
+    test("a throwing host handler does not break the survey it is reporting on", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+      onFormbricksEvent("formbricks_survey_shown", () => {
+        throw new Error("host blew up");
+      });
+
+      const callbacks = await renderAndGetLifecycleCallbacks();
+
+      expect(() => {
+        callbacks.onDisplayCreated();
+      }).not.toThrow();
+      expect(errorSpy).toHaveBeenCalled();
     });
   });
 

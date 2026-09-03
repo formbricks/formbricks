@@ -18,6 +18,13 @@ import { type TTrackProperties } from "@/types/survey";
 
 let isSurveyRunning = false;
 
+// The survey handed to the renderer, held only while it is on screen. `closeSurvey` is the single
+// close path — the renderer's onClose, and tearDown on logout / error — but it is called without
+// arguments, so this is what lets the "formbricks_survey_closed" event name the survey it belongs
+// to. It is set when the widget actually renders (after the delay, after every skip check), so a
+// survey that was never shown never reports a close.
+let activeSurveyId: string | null = null;
+
 export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
 };
@@ -161,6 +168,8 @@ export const renderWidget = async (
   }
 
   const timeoutId = setTimeout(() => {
+    activeSurveyId = survey.id;
+
     formbricksSurveys.renderSurvey({
       appUrl: config.get().appUrl,
       workspaceId: config.get().workspaceId,
@@ -293,6 +302,14 @@ export const closeSurvey = (): void => {
   });
 
   setIsSurveyRunning(false);
+
+  // Last, so host handlers observe settled state. Guarded on activeSurveyId: closeSurvey also runs
+  // on paths where nothing is open (tearDown), and it must report each rendered survey exactly once.
+  if (activeSurveyId) {
+    const closedSurveyId = activeSurveyId;
+    activeSurveyId = null;
+    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyClosed, { surveyId: closedSurveyId });
+  }
 };
 
 export const addWidgetContainer = (): void => {
