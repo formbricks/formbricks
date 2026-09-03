@@ -19,7 +19,7 @@ const WORKSPACE_NAV_LABELS = [
   "General",
   "Team Access",
   "Survey Languages",
-  "Connect Your App",
+  "Installation",
   "Integrations",
   "Appearance",
   "User Actions",
