@@ -36,7 +36,13 @@ export const FormbricksProvider = ({
         await formbricks.setUserId(userId);
         const attributes: Record<string, string> = {};
         if (userEmail) attributes.email = userEmail;
-        if (userName) attributes.name = userName;
+        // Default contact attributes are camelCase (firstName/lastName), matching
+        // DEFAULT_ATTRIBUTES in apps/web/modules/ee/contacts/lib/attributes.ts.
+        if (userName) {
+          const [firstName, ...rest] = userName.trim().split(/\s+/);
+          if (firstName) attributes.firstName = firstName;
+          if (rest.length > 0) attributes.lastName = rest.join(" ");
+        }
         if (Object.keys(attributes).length > 0) {
           await formbricks.setAttributes(attributes);
         }
