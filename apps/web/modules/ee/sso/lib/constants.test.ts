@@ -7,10 +7,8 @@ import { describe, expect, test } from "vitest";
 import {
   SSO_RECOVERY_COMPLETION_PATH,
   SSO_RECOVERY_SIGN_IN_PATH,
-  canonicalAccountIssuer,
-  isSsoRecoveryInternalCallbackUrl,
-  ssoAccountIssuer,
-} from "./constants";
+} from "@/modules/auth/lib/verification-links";
+import { canonicalAccountIssuer, isSsoRecoveryInternalCallbackUrl, ssoAccountIssuer } from "./constants";
 
 const WEBAPP_URL = "https://app.example.com";
 

@@ -1,8 +1,9 @@
-export const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
-export const SSO_RECOVERY_COMPLETION_PATH = "/api/auth/sso/recovery/complete";
+import {
+  SSO_RECOVERY_COMPLETION_PATH,
+  SSO_RECOVERY_SIGN_IN_PATH,
+} from "@/modules/auth/lib/verification-links";
 
-/** Better Auth's recovery magic-link endpoint, mounted by `ssoRecoverySignInPlugin` under `/api/auth`. */
-export const SSO_RECOVERY_SIGN_IN_PATH = "/api/auth/sso-recovery/sign-in";
+export const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
 
 /**
  * Does this callback URL point back into the recovery flow itself? (ENG-2783)
