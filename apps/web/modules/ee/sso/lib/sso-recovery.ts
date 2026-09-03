@@ -301,14 +301,14 @@ const createSsoRecoveryCompletionUrl = (stateId: string): string => {
 };
 
 /**
- * A failed recovery, carrying the callback the caller should bounce back to.
+ * A failed recovery, sometimes carrying the callback the caller should bounce back to.
  *
- * The completion route needs that callback to build its failure redirect, and it used to recover it by
+ * The completion route builds its failure redirect from that callback, and it used to recover one by
  * decoding the intent JWT a second time. With the intent held server-side there is nothing in the URL
- * left to decode, and a second Redis read to answer a question this function already knows the answer
- * to would be wasteful — so the answer travels on the error.
+ * left to decode, so the answer travels on the error instead of costing a second Redis read.
  *
- * `callbackUrl` is only ever set once the caller has proven to be the intent's own user. Attaching it
+ * "Sometimes" is the load-bearing word: `callbackUrl` is set only once the caller has proven to be the
+ * intent's own user, which in practice is the `user_mismatch` branch alone. Attaching it
  * earlier turned the failure redirect into an unauthenticated oracle: a caller holding a state id got
  * back the callback stored against it, while an unknown id got a bare redirect — so the response
  * distinguished "this recovery exists" from "it does not", and leaked where that user was headed. The

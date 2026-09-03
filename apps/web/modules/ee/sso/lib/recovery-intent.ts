@@ -196,9 +196,10 @@ export const consumeSsoRecoveryIntent = async (stateId: string): Promise<void> =
  * outlives the intent it depends on and the user is signed in only to be told recovery failed — the
  * same pairing bug the sign-up intent cookie's resend refresh exists to avoid.
  *
- * The record is rewritten unchanged, `createdAt` included, so every refresh is measured against the
- * original start and the window cannot slide past {@link INTENT_MAX_LIFETIME_MS}. Best-effort, never
- * throws: the mail has already gone out, so a failure here costs the pairing, not the resend.
+ * Only the expiry moves — the stored record, `createdAt` included, is never rewritten. So every refresh
+ * is measured against the original start and the window cannot slide past {@link INTENT_MAX_LIFETIME_MS},
+ * which matters because the caller is unauthenticated. Best-effort, never throws: the mail has already
+ * gone out, so a failure here costs the pairing, not the resend.
  */
 export const refreshSsoRecoveryIntent = async (
   stateId: string,

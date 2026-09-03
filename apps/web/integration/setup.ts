@@ -36,6 +36,9 @@ vi.mock("server-only", () => ({}));
 // type wrong — which is exactly how the undefined-vs-boolean bug above got in. Add senders here.
 vi.mock("@/modules/email", () => ({
   sendVerificationLinkEmail: vi.fn(async () => true),
+  // The SSO-recovery pair (ENG-2783): startSsoRecovery sends the first, completeSsoRecovery the second.
+  sendVerificationEmail: vi.fn(async () => true),
+  sendSsoRecoveryFactorsRemovedEmail: vi.fn(async () => true),
   sendPasswordResetLinkEmail: vi.fn(async () => true),
   sendPasswordResetNotifyEmail: vi.fn(async () => true),
   sendDeleteAccountConfirmationEmail: vi.fn(async () => true),
