@@ -134,6 +134,30 @@ const EMAIL_IN_MESSAGE = /[^\s@]{1,64}@([\w-]{1,63}(?:\.[\w-]{1,63}){1,8})/g;
 export const redactEmailsInLogMessage = (message: unknown): unknown =>
   typeof message === "string" ? message.replace(EMAIL_IN_MESSAGE, "[redacted]@$1") : message;
 
+const SAFE_WARNING_ERROR_NAMES = new Set([
+  "Error",
+  "TypeError",
+  "PrismaClientInitializationError",
+  "PrismaClientKnownRequestError",
+  "PrismaClientUnknownRequestError",
+]);
+const PRISMA_ERROR_CODE = /^P\d{4}$/;
+
+/**
+ * Warning causes stay in application logs only as a small allowlisted summary. Passing the Error to
+ * Pino's `err` serializer would also emit its message, stack, and enumerable properties, any of which
+ * can contain credentials supplied by an upstream provider.
+ */
+const getSafeWarningErrorContext = (cause: Error): { errorType: string; errorCode?: string } => {
+  const errorType = SAFE_WARNING_ERROR_NAMES.has(cause.name) ? cause.name : "Error";
+  const code = (cause as Error & { code?: unknown }).code;
+
+  return {
+    errorType,
+    ...(typeof code === "string" && PRISMA_ERROR_CODE.test(code) && { errorCode: code }),
+  };
+};
+
 /**
  * `StateError` codes whose events are client- or timing-caused, and so are not actionable in Sentry
  * (ENG-2471). `StateError extends BetterAuthError` and carries a stable `code`, which is what we match
@@ -246,6 +270,67 @@ const isUnactionableStateError = (code: string | undefined): boolean =>
   code !== undefined && UNACTIONABLE_STATE_ERROR_CODES.has(code);
 
 /**
+ * Emit a Better Auth `warn`-level log, attaching the safe error context when the entry carried an
+ * `Error`.
+ *
+ * `safeMessage` is `unknown` because Better Auth's logger signature is: the message is usually a
+ * string, but a couple of call sites pass the `Error` itself. pino's two-argument form needs a string
+ * in the message slot, hence the narrowing — a non-string falls back to a fixed label rather than
+ * being stringified, since the `Error` is already carried by the context object.
+ */
+const logWarning = (
+  contextLogger: ReturnType<typeof logger.withContext>,
+  safeMessage: unknown,
+  cause: Error | undefined
+): void => {
+  if (!cause) {
+    contextLogger.warn(safeMessage);
+    return;
+  }
+
+  contextLogger.warn(
+    getSafeWarningErrorContext(cause),
+    typeof safeMessage === "string" ? safeMessage : "Better Auth warning"
+  );
+};
+
+/**
+ * Capture a Better Auth `error`-level log to Sentry, but only when it is a GENUINE internal fault.
+ *
+ * Split out of `betterAuthLogger.log` rather than inlined: the three stacked conditions below carried
+ * most of that function's branching, and the decision "does this page?" is a separate concern from
+ * "how is this logged". Behaviour is unchanged — the gate, its order, and the tag set are the same.
+ *
+ * Skips handled rejections: a bare string code (no Error), a client-facing APIError, or a
+ * client/timing-caused OAuth `StateError` (ENG-2471) — so Sentry stays actionable (see the reason-split
+ * on `betterAuthLogger` and UNACTIONABLE_STATE_ERROR_CODES).
+ */
+const captureInternalAuthFault = (
+  cause: Error | undefined,
+  stateErrorCode: string | undefined,
+  request: ReturnType<typeof getBetterAuthRequestContext>
+): void => {
+  if (!SENTRY_DSN || !IS_PRODUCTION) return;
+  if (!cause || isAPIError(cause) || isUnactionableStateError(stateErrorCode)) return;
+
+  // ENG-2259: Better Auth's router logs a non-APIError as `(e.name, e)` and discards the endpoint
+  // (`better-auth/dist/api/index.mjs:210`), so a bare capture arrives with no transaction, URL or
+  // route — which is why FORMBRICKS-183 sat at ~242 events untriageable. Tags don't affect grouping,
+  // so the issue stays one issue with `auth.path` as a facet.
+  Sentry.captureException(cause, {
+    tags: {
+      component: "better-auth",
+      ...(request && { "auth.path": request.path, "http.method": request.method }),
+    },
+    // No `extra`. Forwarding `message` was considered and dropped: `redactEmailsInLogMessage` strips
+    // emails and nothing else, so a plugin logging `error("… <token> …", err)` would put that token in
+    // Sentry verbatim — while the message adds nothing, being either the error's own name or a
+    // sentence accompanying the Error already captured here. Keeping Sentry to `Error`-or-nothing is
+    // what makes the header note above stay true.
+  });
+};
+
+/**
  * Route Better Auth's logger to @formbricks/logger and capture GENUINE internal faults to Sentry in
  * production — replaces auth.ts's placeholder logger (and the route's Sentry.captureException on auth
  * failures).
@@ -255,7 +340,8 @@ const isUnactionableStateError = (code: string | undefined): boolean =>
  *   1. OAuth callback rejections logged as a bare string code (`logger.error("account_not_linked")`,
  *      `"unable_to_create_user"`, `"unable_to_get_user_info"`, … via `redirectOnError`) — no Error
  *      object; these are client-facing redirects, e.g. our blocked-domain / SSO provisioning gate
- *      returning `false`. These were the top volume in Sentry (FORMBRICKS-16Q).
+ *      rejecting a sign-up. These were the top volume in Sentry (FORMBRICKS-16Q); the SSO gate now
+ *      rejects by throwing an APIError, which this branch skips by design (ENG-2537).
  *   2. Credential-path rejections thrown as a Better Auth `APIError` (`FAILED_TO_CREATE_USER`,
  *      `USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`, invalid-input codes) — a 4xx-equivalent response, not a
  *      server fault.
@@ -289,30 +375,9 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
     const safeMessage = redactEmailsInLogMessage(message);
     if (level === "error") {
       contextLogger.error(safeMessage);
-      if (SENTRY_DSN && IS_PRODUCTION) {
-        // Skip handled rejections: a bare string code (no Error), a client-facing APIError, or a
-        // client/timing-caused OAuth `StateError` (ENG-2471). Capture only genuine internal faults so
-        // Sentry stays actionable (see the reason-split above and UNACTIONABLE_STATE_ERROR_CODES).
-        if (cause && !isAPIError(cause) && !isUnactionableStateError(stateErrorCode)) {
-          // ENG-2259: Better Auth's router logs a non-APIError as `(e.name, e)` and discards the
-          // endpoint (`better-auth/dist/api/index.mjs:210`), so a bare capture arrives with no
-          // transaction, URL or route — which is why FORMBRICKS-183 sat at ~242 events untriageable.
-          // Tags don't affect grouping, so the issue stays one issue with `auth.path` as a facet.
-          Sentry.captureException(cause, {
-            tags: {
-              component: "better-auth",
-              ...(request && { "auth.path": request.path, "http.method": request.method }),
-            },
-            // No `extra`. Forwarding `message` was considered and dropped: `redactEmailsInLogMessage`
-            // strips emails and nothing else, so a plugin logging `error("… <token> …", err)` would
-            // put that token in Sentry verbatim — while the message adds nothing, being either the
-            // error's own name or a sentence accompanying the Error already captured here. Keeping
-            // Sentry to `Error`-or-nothing is what makes the header note above stay true.
-          });
-        }
-      }
+      captureInternalAuthFault(cause, stateErrorCode, request);
     } else if (level === "warn") {
-      contextLogger.warn(safeMessage);
+      logWarning(contextLogger, safeMessage, cause);
     } else {
       contextLogger.info(safeMessage);
     }
@@ -406,5 +471,245 @@ export const auditPasswordReset = async (userId: string): Promise<void> => {
     });
   } catch {
     logger.withContext({ source: "better-auth" }).error("Failed to queue password-reset audit event");
+  }
+};
+
+/**
+ * Providers whose id may appear in an SSO callback outcome record (ENG-2551).
+ *
+ * An allow-list rather than a sanitising regex, because the provider id comes from the request path
+ * and anyone can call `/api/auth/callback/<anything>`. A regex would bound the *shape* of the value
+ * but not the number of distinct values, so it would hand a caller unbounded control over a log
+ * field's cardinality — the thing that makes a log-based alert unusable. Anything unrecognised
+ * buckets to `unknown`.
+ *
+ * Deliberately not imported from the SSO provider config: this module must not depend on the EE
+ * surface, and the list answers a different question anyway ("what may we label") rather than "what
+ * is registered on this instance".
+ */
+const SSO_CALLBACK_PROVIDER_IDS = new Set(["google", "github", "azuread", "openid", "saml"]);
+
+/**
+ * A callback path, capturing the provider id.
+ *
+ * Answers two questions: which provider a request is for, and — applied to a *redirect target* —
+ * whether Better Auth is bouncing a `form_post` callback to its GET twin rather than concluding.
+ */
+const SSO_CALLBACK_PATH = /\/callback\/([^/?#]+)\/?$/;
+
+/**
+ * `success` and `failure` are the two an alert divides; `incomplete` is deliberately neither.
+ *
+ * A ratio of `failure / (success + failure)` stays meaningful only while both sides really are
+ * completed sign-ins or broken ones. Verify-before-link recovery is neither — it ends on the "check
+ * your inbox" page by design — so it gets its own value rather than being forced into one, and an
+ * alert should exclude it explicitly.
+ */
+type SsoCallbackRecord = { outcome: "success" | "failure" | "incomplete"; reason?: string };
+
+/**
+ * Better Auth mints the session cookie only on a completed sign-in, which is why this is the success
+ * signal rather than the redirect target: the success destination is the caller's `callbackURL` and
+ * the failure destination its `errorCallbackURL`, and both are ordinary app pages here.
+ */
+const hasSessionCookie = (response: Response): boolean =>
+  response.headers.getSetCookie().some((cookie) => cookie.includes("session_token"));
+
+/**
+ * Callback failure reasons that may be recorded verbatim (ENG-2551).
+ *
+ * This has to be an allow-list for the same reason the provider id does, and the reason is easy to
+ * miss: Better Auth **echoes the inbound `error` query parameter** into its own redirect
+ * (`api/routes/callback.mjs`, `if (error) redirectOnError(error, error_description)`). Any caller can
+ * obtain a parseable `state` by starting a sign-in and then request
+ * `/api/auth/callback/<id>?state=…&error=<anything>`, so the value that lands here is outside
+ * attacker control only if we bound it to a known set. A charset regex would bound the *shape* of the
+ * value but not the *number of distinct values*, which is the property an alert needs.
+ *
+ * Two consequences of that echo, both closed by bucketing to `other`: an outsider cannot inflate the
+ * cardinality of this field, and cannot forge a specific reason to make a real outage look like
+ * something else.
+ *
+ * Read from `better-auth/dist/oauth2/errors.mjs` (OAUTH_CALLBACK_ERROR_CODES), the two route-level
+ * codes in `api/routes/callback.mjs`, the five `StateError` codes in `state.mjs`, and the codes this
+ * app redirects with itself. A code that disappears upstream simply stops occurring; a new one
+ * buckets to `other` until it is added, which is the safe direction.
+ */
+const SSO_CALLBACK_REASONS = new Set([
+  // Better Auth OAUTH_CALLBACK_ERROR_CODES
+  "account_already_linked_to_different_user",
+  "email_does_not_match",
+  "email_not_found",
+  "email_not_verified",
+  "invalid_code",
+  "issuer_mismatch",
+  "issuer_missing",
+  "no_callback_url",
+  "no_code",
+  "nonce_binding_missing",
+  "oauth_provider_not_found",
+  "unable_to_get_user_info",
+  "unable_to_link_account",
+  // Better Auth callback route, and the codes its redirectOnError call sites pass. `internal_server_error`
+  // is the important one and was found by smoke-testing rather than by reading the enum: stopping the
+  // database mid-callback produces it, so it is the code an infrastructure outage actually arrives as.
+  "invalid_callback_request",
+  "internal_server_error",
+  "invalid_payload",
+  "invalid_profile",
+  "missing_profile",
+  "payload_expired",
+  "user_creation_failed",
+  // Better Auth StateError codes
+  "state_generation_error",
+  "state_invalid",
+  "state_mismatch",
+  "state_not_found",
+  "state_security_mismatch",
+  // Emitted by this app
+  "OAuthAccountNotLinked",
+  "account_not_linked",
+  "invalid_scope",
+  "unable_to_create_user",
+]);
+
+/**
+ * Record the outcome of an SSO callback, so a total sign-in outage announces itself (ENG-2551).
+ *
+ * The problem this solves is that every SSO outage so far has had a *novel cause* and an *identical
+ * symptom*. ENG-1800 (RFC 9207 `iss`), ENG-2555 (wrong `Account.issuer`), ENG-2750 (placeholder
+ * issuer) and the suppressed `state_mismatch` class each needed their own diagnosis, and each ended
+ * with the callback redirecting to `?error=…` instead of to the callbackURL. Alerting on causes means
+ * adding a rule after every incident; alerting on the outcome covers the next one for free.
+ *
+ * ENG-2750 is why this exists at all: it failed 100% of Cloud Microsoft sign-ins for ~18 hours and
+ * produced **no Sentry event**, because Better Auth logs that failure as a bare message with no
+ * `Error` argument, so the capture gate above never has anything to capture. A log line keyed on a
+ * stable field is what an alert can actually watch.
+ *
+ * Emits on success too: the useful alert threshold is a *ratio* ("failures exceed N% of callbacks
+ * over 15 minutes"), which survives traffic swings, campaigns and quiet weekends in a way an
+ * absolute count does not.
+ *
+ * Failures log at `warn`, not `error`. A single failed callback is routinely the user's own doing — a
+ * stale tab, an expired state, a declined consent — and promoting each one to `error` would degrade
+ * the signal this is meant to create. The alert keys on `ssoCallbackOutcome`, so the level is
+ * presentation, not meaning.
+ *
+ * Never throws: observability must not be able to fail a sign-in that otherwise succeeded.
+ */
+/** A response that minted no session: either a named failure, or a flow that never claimed to sign in. */
+const sessionlessOutcome = (target: URL): SsoCallbackRecord => {
+  const error = target.searchParams.get("error");
+
+  // `?error=` and a bare `?error` both read back as `""`. An error parameter that is present but
+  // empty says something went wrong without saying what, so it belongs on the failure side.
+  if (error !== null) {
+    return { outcome: "failure", reason: SSO_CALLBACK_REASONS.has(error) ? error : "other" };
+  }
+
+  // No session and no error is neither: verify-before-link recovery ends exactly here, redirecting to
+  // the "check your inbox" page on purpose (`ssoRecoveryAfterHandler`). Counting it as a failure would
+  // inflate the ratio during a perfectly healthy flow, and as a success would claim a sign-in that did
+  // not happen — so it is named and left out of both sides.
+  return { outcome: "incomplete", reason: "no_session" };
+};
+
+/** The outcome carried by a redirect, or `null` when this redirect decides nothing. */
+const redirectOutcome = (target: URL, response: Response): SsoCallbackRecord | null => {
+  // `response_mode=form_post`: Better Auth 1.7 turns a POST callback into a 302 to the GET callback
+  // *before* it validates state or exchanges the code (`api/routes/callback.mjs`), and
+  // `legacy-sso-callback.ts` deliberately preserves that flow. Recording the hop would score every
+  // form_post sign-in as one extra outcome, and — because the hop carries no `error` — it would score
+  // it as a success, capping a totally broken form_post flow at a 50% failure ratio. The GET that
+  // follows is the one that knows what happened, so say nothing here.
+  if (SSO_CALLBACK_PATH.test(target.pathname)) return null;
+
+  // A completed sign-in is the one thing that mints a session, and Better Auth decides that rather
+  // than it being inferred from where the browser is sent next. That matters because the success
+  // destination is the caller's `callbackURL` — `getSsoReturnToUrl` preserves its query string, so a
+  // legitimate target like `/page?error=retry` exists — while the failure destination is the caller's
+  // `errorCallbackURL` (`/auth/login` for every button here). Reading the `error` key off whichever
+  // URL came back cannot tell those apart; the session cookie can.
+  return hasSessionCookie(response) ? { outcome: "success" } : sessionlessOutcome(target);
+};
+
+export const recordSsoCallbackOutcome = (requestUrl: string, response: Response): void => {
+  emitSsoCallbackRecord(requestUrl, (): SsoCallbackRecord | null => {
+    // A 4xx/5xx on the callback is a failed sign-in too — this is how the SSO licence gate's 403 and
+    // any unhandled 500 present, and neither redirects.
+    if (response.status >= 400) return { outcome: "failure", reason: `http_${response.status}` };
+
+    if (response.status < 300) {
+      return hasSessionCookie(response)
+        ? { outcome: "success" }
+        : { outcome: "incomplete", reason: "no_session" };
+    }
+
+    // A redirect the browser cannot follow is a failed sign-in, not a quiet success. Both shapes below
+    // would otherwise corrupt the ratio rather than merely lose detail: a missing `Location` counted as
+    // success inflates the healthy side, and a malformed one threw into the outer catch, dropping the
+    // callback from both sides.
+    const location = response.headers.get("location");
+    if (!location) return { outcome: "failure", reason: "missing_location" };
+
+    // The catch guards the parse and nothing else: wrapping the classification too would relabel any
+    // fault inside it as a malformed `Location`, which is a different and misleading claim.
+    let target: URL;
+    try {
+      target = new URL(location, requestUrl);
+    } catch {
+      return { outcome: "failure", reason: "malformed_location" };
+    }
+
+    return redirectOutcome(target, response);
+  });
+};
+
+/**
+ * Record an SSO callback that threw rather than returning a response (ENG-2551).
+ *
+ * The most severe callback failure there is: the request never produces a redirect, Next answers 500,
+ * and the user simply cannot sign in. Recording only responses would have left exactly that case
+ * invisible to the alert this signal exists to feed.
+ */
+export const recordSsoCallbackThrow = (requestUrl: string): void => {
+  emitSsoCallbackRecord(requestUrl, () => ({ outcome: "failure", reason: "exception" }));
+};
+
+/**
+ * Shared emitter: resolves the provider from the path, applies the outcome, logs once. Never throws —
+ * observability must not be able to fail a sign-in that otherwise succeeded, nor mask the original
+ * error on the throwing path.
+ */
+const emitSsoCallbackRecord = (requestUrl: string, resolveOutcome: () => SsoCallbackRecord | null): void => {
+  try {
+    const path = new URL(requestUrl).pathname;
+    // The internal path Better Auth actually serves. `mapLegacySsoCallbackRequest` has already
+    // rewritten the pinned `/oauth2/callback/:id` form by the time a response exists, so matching the
+    // internal shape covers both.
+    const providerSegment = SSO_CALLBACK_PATH.exec(path)?.[1];
+    if (!providerSegment) return;
+
+    const provider = SSO_CALLBACK_PROVIDER_IDS.has(providerSegment.toLowerCase())
+      ? providerSegment.toLowerCase()
+      : "unknown";
+    // `null` means "this request is not the one that decides the outcome" — see the form_post hop.
+    const record = resolveOutcome();
+    if (!record) return;
+    const { outcome, reason } = record;
+
+    const contextLogger = logger.withContext({
+      source: "sso-callback",
+      ssoCallbackOutcome: outcome,
+      ssoProvider: provider,
+      ...(reason ? { ssoCallbackReason: reason } : {}),
+    });
+
+    if (outcome === "failure") contextLogger.warn("SSO callback failed");
+    else if (outcome === "incomplete") contextLogger.info("SSO callback did not complete a sign-in");
+    else contextLogger.info("SSO callback succeeded");
+  } catch {
+    // A malformed URL is not worth failing or logging a sign-in over.
   }
 };

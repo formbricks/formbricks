@@ -1567,7 +1567,7 @@ export const PricingTable = ({
                 </div>
                 <Button variant="default" className="shrink-0" asChild>
                   <Link
-                    href="https://app.formbricks.com/s/trvp8tzy5uvsps9rc9qi9l9w?delivery=cloud&source=billingView"
+                    href="https://app.formbricks.com/s/trvp8tzy5uvsps9rc9qi9l9w?delivery=cloud&source=billingView&type=pricingRequest"
                     target="_blank"
                     rel="noopener noreferrer">
                     {t("workspace.settings.billing.contact_sales_cta")}

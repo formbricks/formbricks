@@ -3,8 +3,11 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
+  assertFeedbackDirectoryAssignmentAccess,
   assertRecordBelongsToWorkspace,
   ensureDeleteAccess,
   ensureReadAccess,
@@ -42,6 +45,11 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
         recordResult.data.tenant_id,
         parsedInput.recordId
       );
+      await assertFeedbackDirectoryAssignmentAccess(
+        ctx.user.id,
+        recordResult.data.tenant_id,
+        parsedInput.workspaceId
+      );
 
       return recordResult.data;
     }
@@ -53,6 +61,7 @@ export const deleteFeedbackRecordAction = authenticatedActionClient
     withAuditLogging("deleted", "feedbackRecord", async ({ ctx, parsedInput }) => {
       // Set before the access check so a refused or failed attempt is still attributable.
       ctx.auditLoggingCtx.feedbackRecordId = parsedInput.recordId;
+      await applyRateLimit(rateLimitConfigs.actions.feedbackRecordDeletion, ctx.user.id);
 
       const [organizationId, workspaceDirectoryIds] = await Promise.all([
         ensureDeleteAccess(ctx.user.id, parsedInput.workspaceId),
@@ -69,6 +78,11 @@ export const deleteFeedbackRecordAction = authenticatedActionClient
         workspaceDirectoryIds,
         currentRecordResult.data.tenant_id,
         parsedInput.recordId
+      );
+      await assertFeedbackDirectoryAssignmentAccess(
+        ctx.user.id,
+        currentRecordResult.data.tenant_id,
+        parsedInput.workspaceId
       );
 
       const deleteResult = await deleteFeedbackRecord(parsedInput.recordId);

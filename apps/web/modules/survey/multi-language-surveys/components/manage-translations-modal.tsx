@@ -111,6 +111,7 @@ export const ManageTranslationsModal = ({
       if (!aEmpty && bEmpty) return 1;
       return 0;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `isDraftEmpty` is intentionally excluded so rows don't re-sort on every keystroke; the order snapshots on strings/missingFirst changes
   }, [strings, missingFirst]);
 
   // Merge draft translations into localSurvey so that the recall dropdown

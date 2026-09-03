@@ -123,6 +123,10 @@ export const SurveyClientWrapper = ({
     }
   }, []);
 
+  // Serialized so the memo below is keyed on the field ids' contents rather than the array identity,
+  // which changes on every parent render (see ENG-2366).
+  const hiddenFieldIdsKey = JSON.stringify(survey.hiddenFields.fieldIds || []);
+
   // Extract hidden fields from URL parameters
   const hiddenFieldsRecord = useMemo(() => {
     const fieldsRecord: Record<string, string> = {};
@@ -131,8 +135,8 @@ export const SurveyClientWrapper = ({
       if (answer) fieldsRecord[field] = answer;
     }
     return fieldsRecord;
-    // eslint-disable-next-line react-hooks/use-memo -- migration ENG-2366
-  }, [searchParams, JSON.stringify(survey.hiddenFields.fieldIds || [])]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on hiddenFieldIdsKey so the record recomputes on field-id content changes, not on every new array instance
+  }, [searchParams, hiddenFieldIdsKey]);
 
   // Include verified email in hidden fields if available
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {

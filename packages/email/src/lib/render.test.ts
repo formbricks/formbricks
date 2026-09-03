@@ -20,6 +20,7 @@ import {
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
+  renderSsoRecoveryFactorsRemovedEmail,
   renderVerificationEmail,
 } from "../index";
 import { exampleData } from "./example-data";
@@ -58,6 +59,15 @@ const renderers: [string, () => Promise<string>][] = [
     () => renderNewEmailVerification({ ...exampleData.newEmailVerification, ...legal, t }),
   ],
   ["renderPasswordResetNotifyEmail", () => renderPasswordResetNotifyEmail({ ...legal, t })],
+  [
+    "renderSsoRecoveryFactorsRemovedEmail",
+    () =>
+      renderSsoRecoveryFactorsRemovedEmail({
+        ...exampleData.ssoRecoveryFactorsRemovedEmail,
+        ...legal,
+        t,
+      }),
+  ],
   ["renderInviteEmail", () => renderInviteEmail({ ...exampleData.inviteEmail, ...legal, t })],
   [
     "renderInviteAcceptedEmail",

@@ -15,6 +15,7 @@ import {
   problemUnauthorized,
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { parseApiKeyV2 } from "@/lib/crypto";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
@@ -22,6 +23,7 @@ import {
   MCP_CHALLENGE_SCOPE,
   MCP_RESOURCE_SCOPES,
   getAuthIssuerUrl,
+  getMcpOAuthJwksUrl,
   getMcpOrigin,
   getMcpProtectedResourceMetadataUrl,
   getMcpResourceUrl,
@@ -46,6 +48,37 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
 const JWT_ACCESS_TOKEN_TYPE = "at+jwt";
 
 const oauthResourceClient = oauthProviderResourceClient(auth);
+
+const JWKS_FAILURE_CODES = new Set([
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "ENETUNREACH",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ERR_JWKS_MULTIPLE_MATCHING_KEYS",
+  "ERR_JWKS_NO_MATCHING_KEY",
+  "ERR_JWKS_TIMEOUT",
+]);
+
+const getErrorCode = (error: unknown): string | undefined => {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return undefined;
+  }
+
+  return typeof error.code === "string" ? error.code : undefined;
+};
+
+const getMcpOAuthFailureDetails = (error: unknown) => {
+  const errorName = error instanceof Error ? error.name : "UnknownError";
+  const cause = error instanceof Error ? error.cause : undefined;
+  const errorCode = getErrorCode(error) ?? getErrorCode(cause);
+  const failureSource =
+    errorName === "TypeError" || (errorCode !== undefined && JWKS_FAILURE_CODES.has(errorCode))
+      ? "jwks_fetch"
+      : "token_verification";
+
+  return { errorCode, errorName, failureSource };
+};
 
 export type TMcpAuthInfo = AuthInfo & {
   extra: {
@@ -427,14 +460,15 @@ async function authenticateMcpOAuthBearer(
         // purpose is binding token audiences.
         typ: JWT_ACCESS_TOKEN_TYPE,
       },
-      jwksUrl: `${getAuthIssuerUrl()}/jwks`,
+      jwksUrl: getMcpOAuthJwksUrl(),
     });
-  } catch {
+  } catch (error) {
     return await rejectUnauthenticatedMcpRequest({
       requestId,
       instance,
       log,
       logMessage: "MCP OAuth authentication failed",
+      logContext: getMcpOAuthFailureDetails(error),
     });
   }
 
@@ -623,6 +657,6 @@ export async function handleAuthenticatedMcpRequest(
   }
 
   (request as Request & { auth?: AuthInfo }).auth = authResult.authInfo;
-  const response = await handler(request);
+  const response = await withAuthorizationSurface("mcp", () => handler(request));
   return withMcpResponseHeaders(response, authResult.requestId);
 }

@@ -10,7 +10,6 @@ import {
   LogOutIcon,
   MegaphoneIcon,
   SmileIcon,
-  SparklesIcon,
   ThumbsUpIcon,
   TrendingUpIcon,
   UsersIcon,
@@ -31,6 +30,7 @@ import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { getRoleMapping } from "@/modules/survey/components/template-list/lib/utils";
+import { AiIcon } from "@/modules/ui/components/ai";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -216,7 +216,7 @@ export const FeaturedTemplates = ({
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {!selectedRole && (
           <button type="button" onClick={() => setIsAIDialogOpen(true)} className={cardClass}>
-            <SparklesIcon className="size-12 text-slate-600" strokeWidth={1} absoluteStrokeWidth />
+            <AiIcon size="lg" />
             <div>
               <p className="text-sm font-medium text-slate-800">
                 {t("workspace.surveys.ai_create.create_with_ai")}

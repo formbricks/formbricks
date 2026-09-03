@@ -1,4 +1,3 @@
-import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import {
   getAIUnavailableAction,
@@ -9,7 +8,7 @@ import {
 
 // Echoing the key back keeps the assertions about *which* string each input resolves to, without
 // pinning the English wording.
-const t = ((key: string) => key) as unknown as TFunction;
+const t = (key: string) => key;
 
 const CLOUD = { isFormbricksCloud: true, enterpriseLicenseRequestFormUrl: "https://forms.example/licence" };
 const SELF_HOSTED = {

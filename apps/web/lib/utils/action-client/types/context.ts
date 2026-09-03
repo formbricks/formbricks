@@ -38,6 +38,7 @@ export type AuditLoggingCtx = {
   dashboardWidgetId?: string;
   feedbackDirectoryId?: string;
   feedbackRecordId?: string;
+  feedbackSourceId?: string;
 };
 
 export type ActionClientCtx = {

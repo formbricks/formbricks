@@ -1,6 +1,11 @@
-import type { TFunction } from "i18next";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
+
+/**
+ * Only plain key lookups are needed here, so the narrowest translate signature does — which lets a
+ * server-side caller pass its own translator and a test pass an identity function.
+ */
+type TTranslate = (key: string) => string;
 
 export type TAIUnavailableActionType = "enable_ai" | "upgrade_plan" | "request_license";
 
@@ -59,7 +64,7 @@ export const getAIUnavailableAction = (
  * The one wording for "AI is unavailable", shared by every surface that gates on AI. Takes `t`
  * rather than returning a key so the keys stay visible to `pnpm i18n`'s scanner.
  */
-export const getAIUnavailableMessage = (reason: TAIUnavailableReason | undefined, t: TFunction): string => {
+export const getAIUnavailableMessage = (reason: TAIUnavailableReason | undefined, t: TTranslate): string => {
   switch (reason) {
     case "not_in_plan":
       return t("common.ai_unavailable.not_in_plan");
@@ -91,7 +96,7 @@ const AI_UNAVAILABLE_ERROR_CODE_REASONS = {
  */
 export const getAIUnavailableMessageForErrorCode = (
   errorCode: string | undefined,
-  t: TFunction
+  t: TTranslate
 ): string | undefined => {
   if (!errorCode) return undefined;
   const reason =
@@ -99,7 +104,7 @@ export const getAIUnavailableMessageForErrorCode = (
   return reason ? getAIUnavailableMessage(reason, t) : undefined;
 };
 
-export const getAIUnavailableActionLabel = (type: TAIUnavailableActionType, t: TFunction): string => {
+export const getAIUnavailableActionLabel = (type: TAIUnavailableActionType, t: TTranslate): string => {
   switch (type) {
     case "enable_ai":
       return t("common.ai_unavailable.enable_in_settings");

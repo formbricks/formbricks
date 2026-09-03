@@ -110,6 +110,34 @@ describe("createAuthPathLabeller — labelling rules", () => {
     expect(label("https://app.formbricks.com/api/auth/sign-in/email//")).toBe("/sign-in/email");
   });
 
+  test("a pathological run of slashes stays linear (no catastrophic backtracking)", () => {
+    // Regression guard for the super-linear `replace(/\/+$/, "")` this file used to trim with: the
+    // greedy `\/+` was unanchored at the start, so on a slash run not followed by end-of-string the
+    // engine retried from every offset — O(N^2) on a value taken straight from the request URL.
+    // At this size the old form took ~2.8s locally against ~0.004ms for the reverse scan, so the
+    // budget below is a >5x margin over the slowest plausible CI machine and nowhere near the
+    // regressed cost.
+    const pathological = `https://app.formbricks.com/api/auth/${"/".repeat(100_000)}x`;
+
+    const startedAt = performance.now();
+    const result = label(pathological);
+    const elapsedMs = performance.now() - startedAt;
+
+    expect(result).toBe(UNKNOWN_AUTH_PATH_LABEL);
+    expect(elapsedMs).toBeLessThan(500);
+  });
+
+  test("trailing-slash trimming matches the regex it replaced, including the edge shapes", () => {
+    // The reverse scan has to be exactly `replace(/\/+$/, "")`: same result on no slashes, one, many,
+    // and an all-slash path (where it must not walk past index 0).
+    expect(label("https://app.formbricks.com/api/auth/get-session")).toBe("/get-session");
+    expect(label("https://app.formbricks.com/api/auth/get-session/")).toBe("/get-session");
+    expect(label(`https://app.formbricks.com/api/auth/get-session${"/".repeat(50)}`)).toBe("/get-session");
+    // Path reduces to "" — the loop must stop at index 0 rather than underflow.
+    expect(label("https://app.formbricks.com/api/auth///")).toBe(UNKNOWN_AUTH_PATH_LABEL);
+    expect(label("https://app.formbricks.com/api/auth")).toBe(UNKNOWN_AUTH_PATH_LABEL);
+  });
+
   test("a truncated label never collides with the same-named literal endpoint", () => {
     // `/reset-password` (POST, performs the reset) and `/reset-password/:token` (GET callback) are
     // different endpoints; merging them into one bucket would lose the distinction that matters when

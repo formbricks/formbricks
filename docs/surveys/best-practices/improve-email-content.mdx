@@ -1,66 +1,43 @@
 ---
 title: "Improve Email Content"
-description: "Measure email content quality with Formbricks"
-icon: "envelope"
+description: "Embed a one-click survey in your newsletter and find out whether people actually wanted what you sent."
+icon: "envelope-open-text"
 ---
 
-
-Email remains the predominant way to communicate with your customers. Measure the effectiveness to improve your offering.
+Open rates tell you whether the subject line worked. They tell you nothing about whether the content was worth opening. A one-question survey embedded in the email itself does.
 
 ## Purpose
 
-Measuring the content quality of both transactional and marketing emails is a key element for improving customer communication.
+The reader answers inside the email, without a click-through, so the response rate is far higher than a linked survey — and the answer arrives while they still remember what they read.
 
-## Formbricks Approach
+## 1. Start from the template
 
-* Embed the survey into your email so it’s part of the newsletter.
+Open **Surveys**, click **New Survey** and choose **Choose a template**. Search for **Improve Newsletter Content**, then click the card to create the survey.
 
-* Use link prefilling to store the answer users clicked on in the email.
+![The Improve Newsletter Content template in the template picker](/images/surveys/best-practices/improve-email-content/template.webp)
 
-* Dynamic user identification to append reader's email for personalized profiles and follow ups.
+Keep it to one question. The click from the email lands the reader on the survey page, and every question after the first is one more thing standing between them and a submitted answer.
 
-## Installation
+## 2. Embed it in the email
 
-To embed the newsletter survey into your email, follow these steps:
+Open the survey's **Share** dialog and choose **Email embed**.
 
-1. Create new 'Improve Newsletter Content' survey at [app.formbricks.com](https://app.formbricks.com/)
+![The Email embed panel of the Share dialog](/images/surveys/best-practices/improve-email-content/email-embed.webp)
 
-2. Select how you where you want to display the survey.
+**Email Preview** shows how the survey will render in an inbox. **Embed Code** gives you the HTML to paste into your email tool.
 
-3. Copy the embed code anywhere you want in your newsletter.
+<Note>
+  Email clients strip most JavaScript and much CSS. The embed is deliberately plain HTML for that reason —
+  it will not match your survey's styling theme, and it is not meant to.
+</Note>
 
-### 1. Create new 'Improve Newsletter Content' Survey
+Every answer is a normal response: it lands in the survey's **Responses** tab and counts toward its summary like any other.
 
-If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+## 3. Read the results
 
-Then, create a new survey and look for the [Improve Newsletter Content template](https://formbricks.com/survey-templates/improve-newsletter-content):
+Open the survey's **Summary** tab. With one question and a large send, the useful signal is usually the distribution rather than any individual answer — see [reading survey results](/surveys/analysis/reading-results).
 
-![Create Improve Newsletter Content by template](/images/surveys/best-practices/improve-email-content/improve-newsletter-content-survey-location.webp)
-
-### 2. Customize Survey questions
-
-Customize survey questions, emojis or stars however you like:
-
-![Edit Improve Newsletter Content template](/images/surveys/best-practices/improve-email-content/improve-newsletter-content-editor-formbricks.webp)
-
-### 3. Configure Survey Settings
-
-Navigate to the **Settings** tab and choose the type of survey you want. After that, choose **Link Survey**:
-
-![Choose survey type](/images/surveys/best-practices/improve-email-content/choose-survey-type.webp)
-
-### 4. Choose how you want to embed your survey
-
-After publishing your survey, a modal that prompts you to embed your survey will pop up.
-
-![Embed newsletter survey](/images/surveys/best-practices/improve-email-content/embed-survey-prompt.webp)
-
-Select the Embed Survey card and you will be directed to another modal.
-
-### 5. Copy code to embed the survey in your newsletter
-
-Click the button with the “View Embed Code” text at the top right corner of the modal and simply paste the HTML code for your survey anywhere you want it in your newsletter:
-
-![Embed survey code](/images/surveys/best-practices/improve-email-content/embed-survey-code-in-your-email.webp)
-
-Send a test email to yourself and try it out 🤓
+<Tip>
+  Sending the same survey with every issue makes the number comparable over time. Use [Tags](/surveys/general-features/tags)
+  or a [hidden field](/surveys/general-features/hidden-fields) carrying the issue number to keep them apart.
+</Tip>

@@ -8,6 +8,8 @@ import { FiltersPanel } from "@/modules/ee/analysis/charts/components/filters-pa
 import { MeasuresPanel } from "@/modules/ee/analysis/charts/components/measures-panel";
 import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time-dimension-panel";
 import { useChartQuery } from "@/modules/ee/analysis/charts/hooks/use-chart-query";
+import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
+import { supportsTimeGrouping } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
   type ChartBuilderState,
   type FilterRow,
@@ -80,8 +82,10 @@ const chartBuilderReducer = (state: ChartBuilderState, action: Action): ChartBui
   }
 };
 
-const toComparableQueryJson = (query: TChartQuery): string =>
-  JSON.stringify(buildCubeQuery({ ...initialState, ...parseQueryToState(query) }));
+const toComparableQueryJson = (query: TChartQuery, chartType: TChartType): string =>
+  JSON.stringify(
+    prepareQueryForChartType(buildCubeQuery({ ...initialState, ...parseQueryToState(query) }), chartType)
+  );
 
 export function AdvancedChartBuilder({
   workspaceId,
@@ -116,14 +120,33 @@ export function AdvancedChartBuilder({
   );
   const timeDimensionOpen = state.timeDimension != null;
   const filtersOpen = state.filters.length > 0;
+  const timeGroupingSupported = supportsTimeGrouping(chartType);
 
-  const currentQuery = useMemo(() => buildCubeQuery(state), [state]);
+  // Switching to a chart type that doesn't support time grouping (Big Number, Pie) drops the
+  // granularity left over from a previous type, matching how sanitizeChartDisplay drops other
+  // per-type display settings rather than saving them as dead values. The time dimension itself is
+  // kept: with no granularity it is the chart's date-range filter (see TimeDimensionConfig), not a
+  // grouping, and stripping it would silently widen the chart to all-time.
+  useEffect(() => {
+    if (!timeGroupingSupported && state.timeDimension?.granularity) {
+      const { granularity: _granularity, ...rest } = state.timeDimension;
+      dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: rest });
+    }
+  }, [timeGroupingSupported, state.timeDimension]);
+
+  // The executed query depends on the chart type as well as the form: a big number has nowhere to
+  // put groups, so its query drops them (see prepareQueryForChartType). Switching the chart type
+  // therefore changes the query and re-runs it, rather than re-rendering stale grouped rows.
+  const currentQuery = useMemo(
+    () => prepareQueryForChartType(buildCubeQuery(state), chartType),
+    [state, chartType]
+  );
   const currentQueryJson = JSON.stringify(currentQuery);
 
   // The last query that was executed (or arrived pre-executed via initialQuery, e.g. from the
   // AI section or a saved chart). Auto-run only fires when the form drifts away from it.
   const lastRunQueryJsonRef = useRef<string | null>(
-    initialQuery ? toComparableQueryJson(initialQuery) : null
+    initialQuery ? toComparableQueryJson(initialQuery, chartType) : null
   );
 
   const appliedInitialQueryRef = useRef<TChartQuery | null>(null);
@@ -132,10 +155,14 @@ export function AdvancedChartBuilder({
     if (appliedInitialQueryRef.current === initialQuery) return;
     appliedInitialQueryRef.current = initialQuery;
     const parsed = parseQueryToState(initialQuery);
-    lastRunQueryJsonRef.current = JSON.stringify(buildCubeQuery({ ...initialState, ...parsed }));
+    lastRunQueryJsonRef.current = JSON.stringify(
+      prepareQueryForChartType(buildCubeQuery({ ...initialState, ...parsed }), chartType)
+    );
     dispatch({ type: ACTION.INIT_FROM_QUERY, payload: parsed });
     setDimensionsOpen((parsed.selectedDimensions?.length ?? 0) > 0);
-  }, [initialQuery]);
+    // chartType only feeds the baseline above; a later switch is caught by the guard and left to
+    // drift detection, which is what re-runs the query for the new type.
+  }, [initialQuery, chartType]);
 
   // Incomplete configs (no measure yet, half-filled filter row) are skipped silently instead of
   // surfacing validation toasts on every keystroke; the preview keeps its last valid state.
@@ -254,13 +281,22 @@ export function AdvancedChartBuilder({
           }
         }}
         htmlId="chart-time-dimension-toggle"
-        title={t("workspace.analysis.charts.time_dimension_title")}
-        description={t("workspace.analysis.charts.time_dimension_toggle_description")}
+        title={
+          timeGroupingSupported
+            ? t("workspace.analysis.charts.time_dimension_title")
+            : t("workspace.analysis.charts.time_dimension_title_range_only")
+        }
+        description={
+          timeGroupingSupported
+            ? t("workspace.analysis.charts.time_dimension_toggle_description")
+            : t("workspace.analysis.charts.time_dimension_toggle_description_range_only")
+        }
         customContainerClass="mt-2 px-0"
         childrenContainerClass="flex-col gap-3 p-4"
         childBorder>
         <TimeDimensionPanel
           hideTitle
+          hideGranularity={!timeGroupingSupported}
           timeDimension={state.timeDimension}
           onTimeDimensionChange={(config) => dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: config })}
         />

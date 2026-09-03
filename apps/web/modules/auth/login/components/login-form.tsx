@@ -17,7 +17,8 @@ import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 
 const ZLoginForm = z.object({
@@ -193,7 +194,7 @@ export const LoginForm = ({
   return (
     <FormProvider {...form}>
       <div className="text-center">
-        <h1 className="mb-4 text-slate-700">{formLabel}</h1>
+        <h1 className="mb-4 text-xl font-semibold text-balance text-slate-800">{formLabel}</h1>
         {emailJustVerified && (
           <Alert variant="success" className="mb-4 text-left" role="status">
             <AlertTitle>{t("auth.login.email_verified_sign_in_title")}</AlertTitle>
@@ -219,57 +220,56 @@ export const LoginForm = ({
                 <FormField
                   control={form.control}
                   name="email"
-                  render={({ field, fieldState: { error } }) => (
-                    <FormItem className="w-full">
+                  render={({ field }) => (
+                    <FormItem className="w-full text-left">
+                      <FormLabel>{t("common.email")}</FormLabel>
                       <FormControl>
-                        <div>
-                          <input
-                            id="email"
-                            ref={emailRef}
-                            type="email"
-                            autoComplete="email"
-                            required
-                            value={field.value}
-                            onChange={(email) => field.onChange(email)}
-                            placeholder="work@email.com"
-                            className="block w-full rounded-md border-slate-300 shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
-                          />
-                          {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                        </div>
+                        <Input
+                          ref={emailRef}
+                          type="email"
+                          autoComplete="email"
+                          inputMode="email"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
+                          required
+                          name={field.name}
+                          value={field.value}
+                          onBlur={field.onBlur}
+                          onChange={(email) => field.onChange(email)}
+                          placeholder="work@email.com"
+                        />
                       </FormControl>
+                      <FormError role="alert" />
                     </FormItem>
                   )}
                 />
                 <FormField
                   control={form.control}
                   name="password"
-                  render={({ field, fieldState: { error } }) => (
-                    <FormItem className="w-full">
+                  render={({ field }) => (
+                    <FormItem className="w-full text-left">
+                      <FormLabel>{t("common.password")}</FormLabel>
                       <FormControl>
-                        <div>
-                          <PasswordInput
-                            id="password"
-                            autoComplete="current-password"
-                            placeholder="*******"
-                            aria-placeholder="password"
-                            aria-label="password"
-                            aria-required="true"
-                            required
-                            className="block w-full rounded-md border-slate-300 pr-8 shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
-                            value={field.value}
-                            onChange={(password) => field.onChange(password)}
-                          />
-                          {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                        </div>
+                        <PasswordInput
+                          autoComplete="current-password"
+                          placeholder="*******"
+                          required
+                          name={field.name}
+                          value={field.value}
+                          onBlur={field.onBlur}
+                          onChange={(password) => field.onChange(password)}
+                        />
                       </FormControl>
+                      <FormError role="alert" />
                     </FormItem>
                   )}
                 />
                 {passwordResetEnabled && (
-                  <div className="ml-1 text-right transition-all duration-500 ease-in-out">
+                  <div className="text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
-                      className="text-xs text-slate-500 hover:text-brand-dark">
+                      className="inline-flex min-h-6 items-center rounded-sm py-1 text-sm text-slate-500 hover:text-brand-dark focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:outline-hidden">
                       {t("auth.login.forgot_your_password")}
                     </Link>
                   </div>
@@ -288,11 +288,13 @@ export const LoginForm = ({
                         setTimeout(() => emailRef.current?.focus(), 100);
                       }
                 }
-                className="relative w-full justify-center"
+                className="h-11 w-full min-w-0 justify-center sm:h-9"
                 loading={form.formState.isSubmitting}>
-                {totpLogin ? t("common.submit") : t("auth.login.login_with_email")}
+                <span className="truncate">
+                  {totpLogin ? t("common.submit") : t("auth.login.login_with_email")}
+                </span>
                 {lastLoggedInWith && lastLoggedInWith === "Email" ? (
-                  <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>
+                  <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span>
                 ) : null}
               </Button>
             )}
@@ -315,7 +317,9 @@ export const LoginForm = ({
           <div className="mt-9 text-center text-xs">
             <span className="leading-5 text-slate-500">{t("auth.login.new_to_formbricks")}</span>
             <br />
-            <Link href={signupHref} className="font-semibold text-slate-600 underline hover:text-slate-700">
+            <Link
+              href={signupHref}
+              className="inline-flex min-h-6 items-center justify-center rounded-sm py-1 font-semibold text-slate-600 underline hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:outline-hidden">
               {t("auth.login.create_an_account")}
             </Link>
           </div>
@@ -329,7 +333,7 @@ export const LoginForm = ({
           <div className="flex flex-col">
             <button
               type="button"
-              className="font-semibold text-slate-600 underline hover:text-slate-700"
+              className="inline-flex min-h-6 items-center justify-center rounded-sm py-1 font-semibold text-slate-600 underline hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:outline-hidden"
               onClick={() => {
                 setTotpBackup(true);
               }}>
@@ -338,7 +342,7 @@ export const LoginForm = ({
 
             <button
               type="button"
-              className="mt-4 font-semibold text-slate-600 underline hover:text-slate-700"
+              className="mt-4 inline-flex min-h-6 items-center justify-center rounded-sm py-1 font-semibold text-slate-600 underline hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:outline-hidden"
               onClick={() => {
                 setTotpLogin(false);
               }}>
@@ -352,7 +356,7 @@ export const LoginForm = ({
         <div className="mt-9 text-center text-xs">
           <button
             type="button"
-            className="font-semibold text-slate-600 underline hover:text-slate-700"
+            className="inline-flex min-h-6 items-center justify-center rounded-sm py-1 font-semibold text-slate-600 underline hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:outline-hidden"
             onClick={() => {
               setTotpBackup(false);
             }}>

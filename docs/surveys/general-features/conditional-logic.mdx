@@ -1,100 +1,71 @@
 ---
 title: "Conditional Logic"
-description: "Create complex survey logic with the Logic Editor. Use conditions, actions, and variables to create a personalized survey experience."
+description: "Send different respondents down different paths. Conditional logic reads answers as they come in and decides what happens next."
 icon: "code-branch"
 ---
 
+Conditional logic is a set of rules attached to a **block**. Each rule reads *when this is true, then do that* — skip ahead, require an answer, or update a variable.
 
-![Add conditions](/images/surveys/general-features/conditional-logic/editor.webp)
+## Where logic lives
+
+Logic belongs to the block, not to a single question. Scroll to the foot of any block in the survey editor and you will find **Conditional Logic** below the question list.
+
+![The Conditional Logic section at the foot of a block](/images/surveys/general-features/conditional-logic/add-logic.webp)
 
 ## Terminology
 
-* **Condition**: A rule that determines when an action should be executed.
+* **Condition**: a rule that decides whether an action runs.
 
-* **Action**: A task that is executed when a condition is met.
+* **Action**: what happens when the condition is met.
 
-## **Creating Logic**
+## Building a rule
 
-* **Add a Logic Block**: Click the `Add logic +` button to add a new logic block.
+Click `Add logic +` and fill in the sentence.
 
-![Add conditions](/images/surveys/general-features/conditional-logic/add-logic.webp)
+![A rule that routes savings-account respondents to a second block](/images/surveys/general-features/conditional-logic/logic-rule.webp)
 
-<Note>
-  You can add multiple logic blocks to a survey. Logic blocks are executed in
-  the order they are added. You can rearrange the order of logic blocks.
-</Note>
+<Steps>
+  <Step title="Choose what to test">
+    The **When** row starts with a source. It can be the answer to a **question**, the value of a **variable**, or the value of a **hidden field**.
+  </Step>
 
-* **Add Conditions**: Add conditions to the logic block. Conditions are rules that determine when an action should be executed.
+  <Step title="Choose an operator">
+    The operators on offer depend on the source. A single-select question can be compared with `Equals`, `Does not equal`, `Equals one of` and `Is submitted`; a free text question adds `Contains`, `Starts with`, `Ends with` and their negations.
 
-![Add conditions](/images/surveys/general-features/conditional-logic/conditions.webp)
+    ![The operator list for a single-select question](/images/surveys/general-features/conditional-logic/condition-operators.webp)
+  </Step>
 
-Conditons can be based on:
+  <Step title="Choose a value">
+    Compare against a fixed value, or against another question's answer, a variable, or a hidden field.
+  </Step>
 
-* **Question**: The answer to a question.
+  <Step title="Choose an action">
+    The **Then** row is what happens when the condition holds.
 
-* **Variable**: A variable value.
+    ![The three actions: Calculate, Require Answer and Jump to block](/images/surveys/general-features/conditional-logic/action-options.webp)
+  </Step>
+</Steps>
 
-* **Hidden Field**: The value of a hidden field.2.a **Condition Options**: Choose from a list of available conditions.
+## Actions
 
-![Condition Options](/images/surveys/general-features/conditional-logic/condition-options.webp)
+* **Calculate**: change a variable's value. The result is available to every later question, and to the rules below this one.
 
-* **Condition Operators**: Choose an operator to compare the condition value.
+* **Require Answer**: make an optional question required. Only questions that are optional to begin with can be required this way.
 
-![Condition Operators](/images/surveys/general-features/conditional-logic/condition-operators.webp)
-
-* **Condition Value**: Enter a value to compare the condition against.
-  Comparisons can be made against a fixed value or a dynamic value.
-  Dynamic values can be based on a question, variable, or hidden field.
-
-![Condition Value](/images/surveys/general-features/conditional-logic/condition-value.webp)
-
-<Note>
-  Conditions can be grouped. Conditions can be combined using AND or OR
-  operators. You can add multiple conditions to a logic block. Conditions are
-  evaluated in the order they are added.
-</Note>
-
-![Condition Chaining](/images/surveys/general-features/conditional-logic/condition-chaining.webp)
-
-* **Add Actions**: Add actions to the logic block. Actions are tasks that are executed when a condition is met.
+* **Jump to block**: send the respondent to a specific block instead of the next one.
 
 <Note>
-  You can add multiple actions to a logic block. Actions are executed in the
-  order they are added.
+  A rule can carry several actions. They run in the order they are listed.
 </Note>
 
-* **Action Options**: Choose from a list of available actions.
+## Everyone else
 
-![Add Actions](/images/surveys/general-features/conditional-logic/action-options.webp)
+Under the rules sits **All other answers will continue to**. This is the fallback for respondents who match none of the conditions, and it is set to the next block unless you change it.
 
-Action is of the following types:
+## Several conditions in one rule
 
-  * **Calculate**: Perform a calculation. These variables are then available for use in other questions.
+The `⋮` button beside a condition adds another condition below it, duplicates it, removes it, or wraps it in a **group**. Conditions are joined with `and` or `or`, and a group is how you mix the two without ambiguity — the same reason brackets exist in arithmetic.
 
-    * Calculations can be performed on variables.
+## Several rules in one block
 
-    * Calculations can be based on fixed values or dynamic values.
-
-    ![Action Calculate Variables](/images/surveys/general-features/conditional-logic/action-calculate-variables.webp)
-
-    ![Action Calculate Operators](/images/surveys/general-features/conditional-logic/action-calculate-operators.webp)
-
-    ![Action Calculate value](/images/surveys/general-features/conditional-logic/action-calculate-value.webp)
-
-    ![Action Calculate](/images/surveys/general-features/conditional-logic/action-calculate.webp)
-
-  * **Require Answer**: Make a question required. Only the optional questions can be marked as required while filling the survey.
-  
-  ![Action Require](/images/surveys/general-features/conditional-logic/action-require.webp)
-
-  * **Jump to Block**: Skip to a specific block. The user will be redirected to the specified block based on the condition.
-  
-  ![Action Jump](/images/surveys/general-features/conditional-logic/action-jump.webp)
-
-* **Save Logic**: Click the `Save` button to save the logic block.
-
-## Block Logic
-
-This logic is executed when the user reaches the block. Logic can be as simple as showing a follow-up block based on earlier answers or as complex as calculating a score based on multiple answers.
-
-![Block Logic](/images/surveys/general-features/conditional-logic/question-logic.webp)
+`Add logic +` adds another rule. Rules are evaluated top to bottom, and the first one whose condition holds decides where the respondent goes. Drag them to change the order.

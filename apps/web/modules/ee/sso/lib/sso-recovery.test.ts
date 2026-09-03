@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
-import { sendVerificationEmail } from "@/modules/email";
+import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
 import { syncSsoIdentityForUser } from "./account-linking";
 import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl, startSsoRecovery } from "./sso-recovery";
 
@@ -56,6 +57,7 @@ vi.mock("@/modules/auth/lib/verification-links", async (importOriginal) => {
 
 vi.mock("@/modules/email", () => ({
   sendVerificationEmail: vi.fn(),
+  sendSsoRecoveryFactorsRemovedEmail: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -81,12 +83,18 @@ vi.mock("./account-linking", () => ({
     isActive: true,
     identityProvider: true,
     identityProviderAccountId: true,
+    twoFactorEnabled: true,
   },
   syncSsoIdentityForUser: vi.fn(),
 }));
 
 describe("sso-recovery", () => {
   const txUserUpdate = vi.fn();
+  const txUserUpdateMany = vi.fn();
+  // Both legacy writes go through `user.updateMany`, so the stub answers on the FILTER rather than on
+  // call order: keyed positionally, reordering the two writes would silently swap what each test below
+  // is asserting, and a case meant to prove one factor was untouched would be reading the other's count.
+  const legacyCleared = { twoFactor: 0, password: 0 };
   const txTwoFactorDeleteMany = vi.fn();
   const txAccountUpdateMany = vi.fn();
   const txOauthAccessUpdateMany = vi.fn();
@@ -97,6 +105,7 @@ describe("sso-recovery", () => {
   const tx = {
     user: {
       update: txUserUpdate,
+      updateMany: txUserUpdateMany,
     },
     twoFactor: {
       deleteMany: txTwoFactorDeleteMany,
@@ -117,6 +126,11 @@ describe("sso-recovery", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    legacyCleared.twoFactor = 0;
+    legacyCleared.password = 0; // post-cutover default: neither legacy column holds anything
+    txUserUpdateMany.mockImplementation(async ({ where }: { where: Record<string, unknown> }) =>
+      "password" in where ? { count: legacyCleared.password } : { count: legacyCleared.twoFactor }
+    );
     txTwoFactorDeleteMany.mockResolvedValue({ count: 1 });
     txAccountUpdateMany.mockResolvedValue({ count: 1 });
     txOauthAccessUpdateMany.mockResolvedValue({ count: 1 });
@@ -153,6 +167,7 @@ describe("sso-recovery", () => {
         isActive: true,
         identityProvider: "email",
         identityProviderAccountId: null,
+        twoFactorEnabled: false,
       },
       provider: "google",
       account: {
@@ -191,6 +206,7 @@ describe("sso-recovery", () => {
           isActive: true,
           identityProvider: "email",
           identityProviderAccountId: null,
+          twoFactorEnabled: false,
         },
         provider: "google",
         account: {
@@ -242,17 +258,30 @@ describe("sso-recovery", () => {
       data: {
         backupCodes: null,
         emailVerified: true,
-        password: null,
         twoFactorEnabled: false,
         twoFactorSecret: null,
       },
+    });
+    // The two legacy writes, asserted on the CALL and not only on the counts they feed. Their payloads
+    // are load-bearing for the same reason the exact-match above is: a hash or a latch left behind is a
+    // factor that survives an account changing hands, and `data: {}` would keep every derived count and
+    // every assertion below green.
+    expect(txUserUpdateMany).toHaveBeenCalledWith({
+      where: { id: "user_1", password: { not: null } },
+      data: { password: null },
+    });
+    expect(txUserUpdateMany).toHaveBeenCalledWith({
+      where: { id: "user_1", twoFactorEnabled: true },
+      data: { twoFactorEnabled: false },
     });
     // The live stores, which the pre-ENG-2557 implementation never touched.
     expect(txTwoFactorDeleteMany).toHaveBeenCalledWith({ where: { userId: "user_1" } });
     // Scoped by owner, NOT by `providerAccountId`/`issuer`: those are account-key columns and a drifted key
     // (ENG-2555) would make a key-filtered query walk past a row still holding a live hash.
+    // `password: { not: null }` narrows to rows that actually held a credential, so the reported count
+    // is rows CHANGED rather than rows matched — an already-null row must not read as a factor removed.
     expect(txAccountUpdateMany).toHaveBeenCalledWith({
-      where: { userId: "user_1", provider: "credential" },
+      where: { userId: "user_1", provider: "credential", password: { not: null } },
       data: { password: null },
     });
     // Post-commit, sparing the caller's own session so the redirect still lands signed in.
@@ -279,6 +308,7 @@ describe("sso-recovery", () => {
         status: "success",
         newObject: expect.objectContaining({
           credentialPasswordsCleared: 1,
+          legacyPasswordCleared: false,
           twoFactorRowsRemoved: 1,
           // Distinct fields, and the stub returns distinct counts (1 access / 2 refresh) on purpose: a
           // summed field would read 3 either way and could not catch the two being swapped.
@@ -305,6 +335,181 @@ describe("sso-recovery", () => {
       provider: "google",
     });
     expect(callbackUrl).toBe("http://localhost:3000/environments/env_1");
+  });
+
+  /**
+   * ENG-2633. The strip is correct for a squatter and a silent security downgrade for an owner who
+   * never verified their address — and on the shipped self-hosted defaults, where verification blocks
+   * nothing, the owner is the likelier of the two. Nothing here can tell them apart, so the account
+   * holder has to be told what was removed instead.
+   */
+  describe("notifying the user about removed factors", () => {
+    const asUnverifiedUser = () =>
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: "user_1",
+        email: "john.doe@example.com",
+        locale: "de-DE",
+        emailVerified: false,
+        isActive: true,
+        identityProvider: "email",
+        identityProviderAccountId: null,
+      } as never);
+
+    const completeRecovery = () =>
+      completeSsoRecovery({
+        intentToken: "test-intent",
+        sessionUserId: "user_1",
+        sessionToken: "current-session-token",
+      });
+
+    test("names what was removed, in the user's own locale", async () => {
+      asUnverifiedUser();
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith({
+        email: "john.doe@example.com",
+        locale: "de-DE",
+        passwordRemoved: true,
+        twoFactorRemoved: true,
+      });
+    });
+
+    // Each flag reports what this account actually had, so the mail never claims to have removed a
+    // factor the user never enrolled.
+    test("reports only the factors that were really there", async () => {
+      asUnverifiedUser();
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 }); // no second factor enrolled
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ passwordRemoved: true, twoFactorRemoved: false })
+      );
+    });
+
+    /**
+     * The under-reporting trap. 2FA lives in two stores and the strip clears both, but a user who
+     * enrolled before the backfill shim landed has only the legacy `User.twoFactorEnabled` latch and no
+     * `TwoFactor` row — so counting rows alone would tell exactly that user their second factor was left
+     * alone, on the one occasion it was taken away.
+     */
+    test("reports the second factor for a legacy enrolment with no TwoFactor row", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: "user_1",
+        email: "john.doe@example.com",
+        locale: "en-US",
+        emailVerified: false,
+        isActive: true,
+        identityProvider: "email",
+        identityProviderAccountId: null,
+      } as never);
+      legacyCleared.twoFactor = 1; // this transaction flipped the legacy latch...
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 }); // ...and there was no row to count
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ twoFactorRemoved: true })
+      );
+    });
+
+    /**
+     * The password half of the same trap. A pre-cutover account keeps its hash in `User.password` and
+     * may have no credential `Account` row at all, so counting only those rows would tell that user
+     * their password survived — on the one occasion it did not.
+     */
+    test("reports the password for a legacy hash with no credential account", async () => {
+      asUnverifiedUser();
+      txAccountUpdateMany.mockResolvedValue({ count: 0 }); // no credential row...
+      legacyCleared.password = 1; // ...but a legacy hash was cleared
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 }); // and no second factor was touched
+
+      await completeRecovery();
+
+      // `twoFactorRemoved: false` is the half that only holds once the two legacy writes are told
+      // apart — with a shared count it would read `true` off the password's own result.
+      expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ passwordRemoved: true, twoFactorRemoved: false })
+      );
+    });
+
+    // Recoveries are not locked against each other, and `user` is read before the transaction opens.
+    // A racing second recovery finds the latch already down, so its filtered write matches nothing and
+    // it must not mail the owner about a factor the first one removed.
+    test("a concurrent recovery that changed nothing reports nothing", async () => {
+      // The stale pre-transaction read still says the latch is up — that is the whole trap. Only the
+      // filtered write inside the transaction knows this recovery was not the one that flipped it.
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: "user_1",
+        email: "john.doe@example.com",
+        locale: "de-DE",
+        emailVerified: false,
+        isActive: true,
+        identityProvider: "email",
+        identityProviderAccountId: null,
+        twoFactorEnabled: true,
+      } as never);
+      legacyCleared.twoFactor = 0; // the other transaction got there first
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 });
+      txAccountUpdateMany.mockResolvedValue({ count: 0 });
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).not.toHaveBeenCalled();
+    });
+
+    // `sendEmail` returns false without throwing when SMTP is unconfigured, so the catch never sees it.
+    // Silence there means a second factor was removed and nobody was told — the exact failure this
+    // notification exists to prevent, so it has to be attributable in the log.
+    test("logs when the mail is not delivered rather than failing silently", async () => {
+      asUnverifiedUser();
+      vi.mocked(sendSsoRecoveryFactorsRemovedEmail).mockResolvedValue(false);
+
+      await expect(completeRecovery()).resolves.toBeDefined();
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "user_1" }),
+        expect.stringContaining("notification email was not sent")
+      );
+    });
+
+    // An account with neither factor set has lost nothing, so a mail would be noise.
+    test("says nothing when there was nothing to remove", async () => {
+      asUnverifiedUser();
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 });
+      txAccountUpdateMany.mockResolvedValue({ count: 0 });
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).not.toHaveBeenCalled();
+    });
+
+    test("says nothing when the account was already verified and nothing was stripped", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: "user_1",
+        email: "john.doe@example.com",
+        locale: "en-US",
+        emailVerified: true,
+        isActive: true,
+        identityProvider: "email",
+        identityProviderAccountId: null,
+      } as never);
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).not.toHaveBeenCalled();
+    });
+
+    // The strip has already committed by this point, so a mailer outage must not turn a completed
+    // recovery into a failed sign-in — the user would be locked out of an account that has already
+    // changed shape.
+    test("completes the recovery even when the mail cannot be sent", async () => {
+      asUnverifiedUser();
+      vi.mocked(sendSsoRecoveryFactorsRemovedEmail).mockRejectedValue(new Error("smtp down"));
+
+      await expect(completeRecovery()).resolves.toBe("http://localhost:3000/environments/env_1");
+      expect(finalizeSuccessfulSignIn).toHaveBeenCalled();
+    });
   });
 
   test("does not clear local auth material for already verified users", async () => {
@@ -365,8 +570,10 @@ describe("sso-recovery", () => {
       sessionToken: "current-session-token",
     });
 
+    // `password: { not: null }` narrows to rows that actually held a credential, so the reported count
+    // is rows CHANGED rather than rows matched — an already-null row must not read as a factor removed.
     expect(txAccountUpdateMany).toHaveBeenCalledWith({
-      where: { userId: "user_1", provider: "credential" },
+      where: { userId: "user_1", provider: "credential", password: { not: null } },
       data: { password: null },
     });
     expect(txTwoFactorDeleteMany).toHaveBeenCalledOnce();

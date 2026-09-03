@@ -63,7 +63,7 @@ export const WorkspaceContextWrapper = ({
   organization,
   deployment,
   children,
-}: WorkspaceContextWrapperProps) => {
+}: Readonly<WorkspaceContextWrapperProps>) => {
   const workspaceContextValue = useMemo(
     () => ({
       workspace,

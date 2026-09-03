@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilLineIcon, SparklesIcon, SquareLibraryIcon } from "lucide-react";
+import { PencilLineIcon, SquareLibraryIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import toast from "react-hot-toast";
@@ -12,6 +12,7 @@ import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
+import { AiGlyph } from "@/modules/ui/components/ai";
 
 type TOnboardingSurveyPath = "scratch" | "template" | "ai";
 
@@ -66,7 +67,7 @@ export const CreateFirstSurvey = ({
     {
       title: t("workspace.surveys.ai_create.create_with_ai"),
       description: t("organizations.workspaces.new.survey.create_with_ai_description"),
-      icon: SparklesIcon,
+      icon: AiGlyph,
       disabled: !isAIAvailable,
       disabledDescription: aiDisabledDescription,
       onClick: () => {

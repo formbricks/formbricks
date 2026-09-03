@@ -12,9 +12,10 @@ import {
   handleAuthenticatedMcpRequest,
 } from "./auth";
 
-const { verifyBearerTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
+const { verifyBearerTokenMock, userFindUniqueMock, warnMock } = vi.hoisted(() => ({
   verifyBearerTokenMock: vi.fn(),
   userFindUniqueMock: vi.fn(),
+  warnMock: vi.fn(),
 }));
 
 vi.mock("@better-auth/oauth-provider/resource-client", () => ({
@@ -66,6 +67,7 @@ vi.mock("@/modules/auth/lib/oauth-urls", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/auth/lib/oauth-urls")>()),
   getAuthIssuerUrl: vi.fn(() => "https://app.example.com/api/auth"),
   getMcpOrigin: vi.fn(() => "https://app.example.com"),
+  getMcpOAuthJwksUrl: vi.fn(() => "http://formbricks:3000/api/auth/jwks"),
   getMcpProtectedResourceMetadataUrl: vi.fn(
     () => "https://app.example.com/.well-known/oauth-protected-resource/api/mcp"
   ),
@@ -76,7 +78,7 @@ vi.mock("@/modules/auth/lib/oauth-urls", async (importOriginal) => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({
-      warn: vi.fn(),
+      warn: warnMock,
       error: vi.fn(),
     })),
   },
@@ -340,7 +342,7 @@ describe("authenticateMcpRequest", () => {
         issuer: "https://app.example.com/api/auth",
         typ: "at+jwt",
       },
-      jwksUrl: "https://app.example.com/api/auth/jwks",
+      jwksUrl: "http://formbricks:3000/api/auth/jwks",
     });
     expect(userFindUniqueMock).toHaveBeenCalledWith({
       where: { id: "user_1" },
@@ -535,7 +537,10 @@ describe("authenticateMcpRequest", () => {
   });
 
   test("rejects invalid OAuth bearer tokens with an OAuth challenge", async () => {
-    verifyBearerTokenMock.mockRejectedValue(new Error("Invalid token"));
+    const invalidTokenError = Object.assign(new Error("Invalid token"), {
+      code: "ERR_JWS_SIGNATURE_VERIFICATION_FAILED",
+    });
+    verifyBearerTokenMock.mockRejectedValue(invalidTokenError);
 
     const result = await authenticateMcpRequest(
       createRequest("http://localhost/api/mcp", {
@@ -560,6 +565,44 @@ describe("authenticateMcpRequest", () => {
       });
     }
     expect(applyIPRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:mcp:auth" }));
+    expect(warnMock).toHaveBeenCalledWith(
+      {
+        errorCode: "ERR_JWS_SIGNATURE_VERIFICATION_FAILED",
+        errorName: "Error",
+        failureSource: "token_verification",
+        statusCode: 401,
+      },
+      "MCP OAuth authentication failed"
+    );
+  });
+
+  test("distinguishes an unavailable JWKS endpoint without logging the raw error", async () => {
+    verifyBearerTokenMock.mockRejectedValue(
+      new TypeError("fetch failed", {
+        cause: Object.assign(new Error("connection refused"), { code: "ECONNREFUSED" }),
+      })
+    );
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+    }
+    expect(warnMock).toHaveBeenCalledWith(
+      {
+        errorCode: "ECONNREFUSED",
+        errorName: "TypeError",
+        failureSource: "jwks_fetch",
+        statusCode: 401,
+      },
+      "MCP OAuth authentication failed"
+    );
+    expect(JSON.stringify(warnMock.mock.calls)).not.toContain("connection refused");
   });
 
   test("returns 429 when OAuth requests are rate limited", async () => {
@@ -620,7 +663,7 @@ describe("handleAuthenticatedMcpRequest", () => {
   });
 });
 
-// GHSA-p2fr-6hmx-4528. Everywhere else in this file `verifyAccessToken` is stubbed with a payload,
+// GHSA-p2fr-6hmx-4528. Everywhere else in this file `verifyBearerToken` is stubbed with a payload,
 // which cannot show whether a token is really accepted — the audience rule lives in jose's semantics,
 // not in a fixture. Here the stub does what the real resource client does (hand the token to jose with
 // the production `verifyOptions`), and the tokens are genuinely signed, so these cases exercise the

@@ -5,6 +5,8 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TOrganizationTeam,
@@ -192,6 +194,10 @@ export const createTeam = async (organizationId: string, name: string): Promise<
       },
     });
 
+    await runPostCommitProjection("team_create", () =>
+      reconcileTeamWorkspaceRelationships({ teamIds: [team.id] })
+    );
+
     return team.id;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -282,6 +288,10 @@ export const deleteTeam = async (teamId: string): Promise<boolean> => {
         },
       },
     });
+
+    await runPostCommitProjection("team_delete", () =>
+      reconcileTeamWorkspaceRelationships({ teamIds: [teamId] })
+    );
 
     return true;
   } catch (error) {
@@ -389,6 +399,26 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       where: { id: teamId },
       data: payload,
     });
+
+    const membershipUserIds = new Set([
+      ...currentTeamDetails.members.map((member) => member.userId),
+      ...members.map((member) => member.userId),
+    ]);
+    const grantWorkspaceIds = new Set([
+      ...currentTeamDetails.workspaces.map((workspace) => workspace.workspaceId),
+      ...workspaces.map((workspace) => workspace.workspaceId),
+    ]);
+
+    await runPostCommitProjection("team_details_update", () =>
+      reconcileTeamWorkspaceRelationships({
+        teamIds: [teamId],
+        teamMemberships: [...membershipUserIds].map((userId) => ({ teamId, userId })),
+        workspaceTeamGrants: [...grantWorkspaceIds].map((workspaceId) => ({
+          teamId,
+          workspaceId,
+        })),
+      })
+    );
 
     return true;
   } catch (error) {
