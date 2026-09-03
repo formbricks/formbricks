@@ -13,13 +13,12 @@ The rules are identical everywhere, so read the [`setEmbeddedData` reference](/s
   the field first, then push a value under the same name.
 </Note>
 
-<Warning>
-  **Not in a released SDK version yet.** `setEmbeddedData` and `clearEmbeddedData` are merged on `main` in
-  all four SDKs but ship with each one's next release, so upgrading to today's latest version will not give
-  you them. The [auto-captured fields](#what-mobile-responses-auto-capture) further down are unaffected:
+<Note>
+  `setEmbeddedData` lives in the SDK itself, so adopting it means upgrading the SDK dependency and shipping a
+  new build of your app. The [auto-captured fields](#what-mobile-responses-auto-capture) further down do not:
   those come from the survey renderer, which is loaded from your Formbricks instance at display time, so an
   already-installed app picks them up with no upgrade and no rebuild.
-</Warning>
+</Note>
 
 ## React Native
 
