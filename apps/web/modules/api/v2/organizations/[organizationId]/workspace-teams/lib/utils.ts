@@ -3,7 +3,12 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
+import {
+  canManageOrganizationUsers,
+  getApiKeyCreatorRole,
+} from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import { TGetWorkspaceTeamsFilter } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/types/workspace-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
@@ -88,11 +93,45 @@ export const validateTeamIdAndWorkspaceId = reactCache(
   }
 );
 
+/**
+ * Guards every workspace-team write (POST/PUT/DELETE).
+ *
+ * Org API keys carry read/write/manage flags but no role of their own, so authorization is anchored
+ * to the key creator's current role, mirroring the owner/manager clamp `updateTeamDetailsAction`
+ * applies to workspace access changes on the settings path. Without it a key whose creator was
+ * demoted, removed or deleted keeps granting, raising and revoking a team's workspace access.
+ *
+ * The role check runs before the team/workspace lookup on purpose: a caller that fails it must not
+ * be able to tell a real team or workspace id from a made-up one by the 404 it would get back.
+ */
 export const checkAuthenticationAndAccess = async (
   teamId: string,
   workspaceId: string,
   authentication: TAuthenticationApiKey
 ): Promise<Result<boolean, ApiErrorResponseV2>> => {
+  // The route wrapper would turn a rejected read into a 500 on its own, but it discards the audit
+  // log doing so. Returning a Result keeps a failed lookup on this guard's audit trail.
+  let assignerRole: TOrganizationRole | null;
+  try {
+    assignerRole = await getApiKeyCreatorRole(authentication.apiKeyId, authentication.organizationId);
+  } catch (error) {
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "apiKey", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
+  }
+
+  if (!canManageOrganizationUsers(assignerRole)) {
+    return err({
+      type: "forbidden",
+      details: [
+        { field: "apiKey", issue: "You are not allowed to manage workspace teams in this organization" },
+      ],
+    });
+  }
+
   const hasAccess = await validateTeamIdAndWorkspaceId(authentication.organizationId, teamId, workspaceId);
 
   if (!hasAccess.ok) {
