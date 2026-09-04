@@ -119,6 +119,55 @@ const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExte
   return extensionValidation.success ? extensionValidation.data : null;
 };
 
+/**
+ * The ids of the elements whose answers hold storage URLs.
+ *
+ * Every response-file delete path needs the id set rather than the configs, and it must come from the
+ * union of `blocks` and `questions` — the same source write-time validation reads — because keying off
+ * a single shape silently skips deletes for the other.
+ *
+ * Split from `collectResponseFileUrls` so a caller scanning many responses builds the set once, and so
+ * it can skip its scan entirely when the set is empty.
+ */
+export const getSurveyFileUploadElementIds = (survey: {
+  blocks?: TSurveyBlock[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
+}): Set<string> =>
+  new Set(
+    getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).map(
+      (config) => config.id
+    )
+  );
+
+/**
+ * Pulls the storage URLs out of one response's answers, ready to hand to `deleteResponseFileUrls`.
+ *
+ * Only file-upload answers hold storage URLs, and they are always stored as an array of strings.
+ * Anything else under a matching key is skipped rather than cast, so malformed data cannot produce a
+ * bogus delete target.
+ *
+ * `data` is deliberately `unknown`: callers hand this a raw `Prisma.JsonValue` column or an already
+ * typed `TResponseData`, and the shape is checked here either way rather than cast at each call site.
+ */
+export const collectResponseFileUrls = (data: unknown, fileUploadElementIds: Set<string>): string[] => {
+  if (fileUploadElementIds.size === 0 || !data || typeof data !== "object" || Array.isArray(data)) {
+    return [];
+  }
+
+  const fileUrls: string[] = [];
+  // Typed rather than left as `Object.entries`' implicit `any` values, so the guards below are the only
+  // thing that narrows an answer to a string.
+  const answers: [string, unknown][] = Object.entries(data);
+
+  for (const [elementId, answer] of answers) {
+    if (fileUploadElementIds.has(elementId) && Array.isArray(answer)) {
+      fileUrls.push(...answer.filter((url): url is string => typeof url === "string"));
+    }
+  }
+
+  return fileUrls;
+};
+
 export const validateSurveyAllowsFileUpload = ({
   fileName,
   elementId,

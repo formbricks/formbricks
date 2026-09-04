@@ -151,6 +151,8 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
         }
         case TSurveyElementTypeEnum.NPS:
         case TSurveyElementTypeEnum.Rating:
+        case TSurveyElementTypeEnum.CSAT:
+        case TSurveyElementTypeEnum.CES:
           pushIfI18n(result, element, "lowerLabel", base, did, t("workspace.surveys.edit.lower_label"), eid);
           pushIfI18n(result, element, "upperLabel", base, did, t("workspace.surveys.edit.upper_label"), eid);
           break;

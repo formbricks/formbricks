@@ -352,4 +352,27 @@ describe("createResponseWithQuotaEvaluation", () => {
       quotaFull: mockQuotaFull,
     });
   });
+
+  test("should reuse a caller-supplied transaction instead of opening its own", async () => {
+    // A caller that persists a response as part of a larger all-or-nothing write passes its own
+    // transaction. Opening a second one here would commit the response independently, so the caller's
+    // rollback would leave it behind.
+    const callerTx: MockTx = { response: { create: vi.fn() } };
+    callerTx.response.create.mockResolvedValue(mockResponsePrisma);
+    vi.mocked(evaluateResponseQuotas).mockResolvedValue({
+      shouldEndSurvey: false,
+      quotaFull: undefined,
+    });
+
+    const result = await createResponseWithQuotaEvaluation(
+      mockResponseInput,
+      callerTx as unknown as Prisma.TransactionClient
+    );
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(callerTx.response.create).toHaveBeenCalled();
+    expect(mockTx.response.create).not.toHaveBeenCalled();
+    expect(evaluateResponseQuotas).toHaveBeenCalledWith(expect.objectContaining({ tx: callerTx }));
+    expect(result.id).toBe(responseId);
+  });
 });
