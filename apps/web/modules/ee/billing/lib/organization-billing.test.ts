@@ -2862,19 +2862,14 @@ describe("organization-billing", () => {
       await syncOrganizationBillingFromStripe("org_1", { id: "evt_1", created: 1739923300 });
 
       expect(mocks.groupIdentifyPostHog).toHaveBeenCalledTimes(1);
-      expect(mocks.groupIdentifyPostHog).toHaveBeenCalledWith(
-        "organization",
-        "org_1",
-        expect.objectContaining({ plan: "scale", subscription_status: "active" })
-      );
-      // Additive merge: exactly the plan facts, never the signup-time `name` or `email_domain`.
-      const [, , properties] = mocks.groupIdentifyPostHog.mock.calls[0];
-      expect(Object.keys(properties).sort()).toEqual([
-        "billing_interval",
-        "has_payment_method",
-        "plan",
-        "subscription_status",
-      ]);
+      // Exact object: every plan fact with its value and nothing else. The merge is additive, so the
+      // signup-time `name` and `email_domain` must never be sent from here.
+      expect(mocks.groupIdentifyPostHog).toHaveBeenCalledWith("organization", "org_1", {
+        plan: "scale",
+        billing_interval: "monthly",
+        subscription_status: "active",
+        has_payment_method: false,
+      });
     });
 
     test("does not reject the sync when the owner lookup fails after persistence", async () => {
