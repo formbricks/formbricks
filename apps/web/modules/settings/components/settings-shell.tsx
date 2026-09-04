@@ -1,6 +1,10 @@
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
 import { WorkspaceContextWrapper } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import { IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
+import {
+  ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+  IS_FORMBRICKS_CLOUD,
+  IS_FORMBRICKS_SURVEYS_CONFIGURED,
+} from "@/lib/constants";
 import { SettingsNavigation } from "@/modules/settings/components/settings-navigation";
 import type { TSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
@@ -82,7 +86,13 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
   // they render identically. With no workspace yet, useWorkspace falls back to null on its own.
   if (data.currentWorkspace) {
     return (
-      <WorkspaceContextWrapper workspace={data.currentWorkspace} organization={organization}>
+      <WorkspaceContextWrapper
+        workspace={data.currentWorkspace}
+        organization={organization}
+        deployment={{
+          isFormbricksCloud: IS_FORMBRICKS_CLOUD,
+          enterpriseLicenseRequestFormUrl: ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+        }}>
         {shell}
       </WorkspaceContextWrapper>
     );

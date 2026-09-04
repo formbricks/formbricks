@@ -5,6 +5,7 @@ import { type ReactNode, useCallback, useRef, useState, useTransition } from "re
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
+import { cn } from "@/lib/cn";
 import { CreateWithAIForm } from "@/modules/survey/components/template-list/components/create-with-ai-form";
 import { AiIcon } from "@/modules/ui/components/ai";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -122,7 +123,14 @@ export const CreateWithAIDialog = ({
             never moves again — not on submit, not as questions append, not on completion.
             flex-none is load-bearing: DialogBody is flex-1 by default, which makes it size to its
             content and the height a no-op. */}
-        <DialogBody unconstrained className="-mx-1 -mt-1 flex h-[26rem] flex-none flex-col px-1 pt-1 pb-1">
+        <DialogBody
+          unconstrained
+          className={cn(
+            "-mx-1 -mt-1 flex flex-none flex-col px-1 pt-1 pb-1",
+            // The fixed frame only earns its height when there is a form to hold steady; without
+            // AI the body is one alert, and 26rem of empty modal beneath it.
+            isAIAvailable && "h-[26rem]"
+          )}>
           <CreateWithAIForm
             workspaceId={workspaceId}
             language={language}

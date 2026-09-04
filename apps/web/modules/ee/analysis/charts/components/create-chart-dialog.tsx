@@ -1,8 +1,8 @@
 "use client";
 
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { CreateChartView } from "@/modules/ee/analysis/charts/components/create-chart-view";
 import { ChartsQueryClientProvider } from "@/modules/ee/analysis/charts/components/query-client-provider";
-import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 export interface CreateChartDialogProps {

@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getChartsAction } from "@/modules/ee/analysis/charts/actions";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
-import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { addChartToDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
