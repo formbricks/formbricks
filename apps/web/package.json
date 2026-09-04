@@ -157,7 +157,7 @@
     "react-use": "17.6.1",
     "recharts": "2.15.3",
     "redis": "catalog:",
-    "sanitize-html": "2.17.5",
+    "sanitize-html": "2.17.7",
     "server-only": "0.0.1",
     "sharp": "0.35.0",
     "stripe": "20.4.1",

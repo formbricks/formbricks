@@ -164,7 +164,12 @@ overrides:
   # required. Pinned to the minimal patched version (2.0.1) to stay CJS-compatible with http-proxy-agent@4.
   "@tootallnate/once": 2.0.1
   # SAML and XML processing chains.
-  "@xmldom/xmldom": 0.9.10 # load-bearing: xml-crypto/xml-encryption resolve 0.8.13 and @boxyhq/saml20 resolves 0.9.8, both vulnerable (GHSA-2v35-w6hq-6mfw + 4 more)
+  # ENG-2846 / GHSA-6gmq-8vp8-gcm6 (CVE-2026-83610): an EntityReference created via
+  # createEntityReference(name) with a name containing `; <tag/> &` breaks out of the `&name;` form when
+  # serialized with `requireWellFormed: true`, injecting attacker-controlled XML markup; patched in 0.9.12.
+  # load-bearing: xml-crypto/xml-encryption resolve 0.8.13 and @boxyhq/saml20 resolves 0.9.8, both still
+  # vulnerable to the original chain (GHSA-2v35-w6hq-6mfw + 4 more).
+  "@xmldom/xmldom": 0.9.12
   axios: 1.18.0 # ENG-1958 / GHSA-gcfj-64vw-6mp9: <1.18.0 Node HTTP adapter can use an inherited proxy after interceptor config cloning; patched in 1.18.0. load-bearing: @boxyhq/saml-jackson pins 1.13.5.
   lodash: 4.18.1 # GHSA-r5fr-rjxr-66jc + GHSA-f23m-r3pf-42rh: <=4.17.23 vulnerable, patched in 4.17.24. load-bearing: @boxyhq/saml-jackson and @microsoft/api-extractor resolve 4.17.23.
   node-forge: 1.4.0 # load-bearing: @boxyhq/saml-jackson resolves 1.3.3, still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
@@ -251,7 +256,19 @@ overrides:
   # ENG-2205 / GHSA-7p8r-x3mc-p8w7 (CVE-2026-18446): fast-uri >=3.0.0 <3.1.5 host confusion via a
   # backslash authority introducer; patched in 3.1.5. Previously self-resolved, reopened by the new
   # advisory. load-bearing: @redocly/ajv and ajv pull 3.1.4 (dev-only, API-docs tooling).
-  fast-uri@3: 3.1.5
+  # ENG-2839 / GHSA-f65p-4m7j-42xc (CVE-2026-75975): a malformed bracketed IPv6 literal is silently
+  # truncated to a different valid address instead of rejected (e.g. `[::not-valid]` -> `[::]`),
+  # enabling SSRF past a host-policy check.
+  # ENG-2840 / GHSA-jqff-g426-hqxp (CVE-2026-76172): a percent-encoded scheme (`%2f%2fevil.example:/pwn`)
+  # is unescaped but never re-validated, so a scheme with no authority resolves into one with an
+  # attacker-chosen host (or an injected CRLF).
+  # ENG-2843 / GHSA-fph4-wmhf-6fwf (CVE-2026-75899): a hostname's percent escapes are decoded twice, so a
+  # nested-encoded host (e.g. `%256c%256f...`) survives the first decode and resolves live on the second.
+  # ENG-2844 / GHSA-5jgf-p345-68v8 (CVE-2026-75931): resolve() only canonicalizes a host to ASCII when the
+  # input carries an explicit scheme, so a scheme-relative reference resolved against a scheme-bearing
+  # base emits the host verbatim, letting it re-parse to a different host than resolve() returned.
+  # All four patched in 3.1.6.
+  fast-uri@3: 3.1.6
   # ENG-2433 / ENG-2430 / GHSA-ggr8-5vv4-36mx (CVE-2026-40345): deepmerge-ts <8.0.0 has no cycle
   # detection in its recursive record-merge routine, so two recursive object graphs sharing a
   # property path exhaust the call stack (DoS); patched in 8.0.0. Pinned to 8.0.1 (lowest patched
@@ -279,6 +296,39 @@ overrides:
   # load-bearing: prisma resolves 3.15.3 (dev-only Prisma CLI, mysql adapter) and better-auth /
   # @boxyhq/saml-jackson / typeorm resolve 3.20.0 (runtime, optional mysql adapters).
   mysql2: 3.23.1
+  # === Dependabot security batch (ENG-2821/ENG-2822, ENG-2823/ENG-2824, ENG-2839..ENG-2845) ===
+  # ENG-2823 / GHSA-c83g-rgw3-j3cx (CVE-2026-73089): browserslist's query-result and AST caches grow
+  # without eviction, so a stream of distinct queries (e.g. `since <year>-<month>-<day>`) accumulates
+  # unbounded heap until the process OOMs.
+  # ENG-2824 / GHSA-73wf-gq98-2v4g (CVE-2026-73088): normalizeStats() does an unguarded `for...in` over
+  # untrusted browserslist-stats.json keys, so a key matching an Object.prototype member name (e.g.
+  # `toString`, `__proto__`) crashes the process or repoints the result object's prototype. Both patched
+  # in 4.28.7.
+  # load-bearing: no direct dependency — autoprefixer (packages/surveys, dev) resolves 4.28.1 and the
+  # @babel/core / storybook / webpack build chain (dev-only) resolves 4.28.2.
+  browserslist: 4.28.7
+  # ENG-2841 / GHSA-x5fp-wj9c-mxmx (CVE-2026-82562): qs's comma-array parser enforces `arrayLimit` only
+  # on flat keys, so a bracket-key input (`a[]=1,2,3,4`) bypasses the limit and `throwOnLimitExceeded`,
+  # letting one parameter build an arbitrarily large array (DoS).
+  # ENG-2842 / GHSA-4mjr-xmp4-gh2g (CVE-2026-82417): `qs.stringify()`'s `isBuffer()` duck-type calls
+  # `obj.constructor.isBuffer(obj)` without checking it is callable; an object produced by
+  # `qs.parse(untrusted, { plainObjects: true })` can carry a non-function `constructor.isBuffer`, so
+  # the parse -> stringify round-trip throws an uncaught `TypeError`. Both patched in 6.16.0.
+  # load-bearing: no direct dependency — express (via body-parser, runtime, pulled in by @posthog/mcp)
+  # and googleapis-common (runtime, @boxyhq/saml-jackson's admin API + googleapis) resolve 6.15.2.
+  qs: 6.16.0
+  # ENG-2821 / ENG-2822 / GHSA-g8qq-57p8-ggw5 (CVE-2026-84371): when SVG animation is allowed,
+  # `attributeName="href"` gives the sibling `values` attribute SMIL URI-list semantics that
+  # sanitize-html's scheme check doesn't recognize, so a list starting with a safe fragment
+  # (`#safe;javascript:...`) keeps its later `javascript:` destination; patched in 2.17.7. Bumped
+  # directly in apps/web/package.json (direct dependency), no override needed.
+  # ENG-2845 / GHSA-qxc2-j82w-r537 (CVE-2026-73231): `faker.helpers.fake()`'s `resolveProperty` resolves
+  # a function property without recursing into it first, so a crafted fake-string template
+  # (`{{x.constructor(...)}}`) reaches arbitrary code execution instead of the documented
+  # faker-only substitution; patched in 10.5.0.
+  # load-bearing: dev-only — @redocly/cli's @redocly/respect-core (API-docs contract testing) resolves
+  # 7.6.0.
+  "@faker-js/faker": 10.5.0
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
   # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.
