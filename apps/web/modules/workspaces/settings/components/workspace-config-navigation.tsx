@@ -1,6 +1,6 @@
 "use client";
 
-import { BlocksIcon, BrushIcon, LanguagesIcon, TagIcon, UnplugIcon, UsersIcon } from "lucide-react";
+import { BlocksIcon, BrushIcon, CodeXmlIcon, LanguagesIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
@@ -34,8 +34,8 @@ export const WorkspaceConfigNavigation = ({ activeId, loading }: WorkspaceConfig
     },
     {
       id: "app-connection",
-      label: t("common.connect_your_app"),
-      icon: <UnplugIcon className="size-5" />,
+      label: t("common.web_and_mobile_sdk"),
+      icon: <CodeXmlIcon className="size-5" />,
       href: `${workspaceBasePath}/settings/workspace/app-connection`,
       current: pathname?.includes("/app-connection"),
     },

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { assertCan } from "@/lib/authorization";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
@@ -7,6 +8,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
 import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { ApiKeyList } from "./components/api-key-list";
@@ -46,6 +48,19 @@ export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizati
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.api_keys")} />
+      {workspaces.length > 0 && (
+        <Alert variant="info" role="status" className="max-w-4xl rounded-xl">
+          <AlertTitle>{t("workspace.settings.api_keys.connect_app_banner_title")}</AlertTitle>
+          <AlertDescription>
+            {t("workspace.settings.api_keys.connect_app_banner_description")}
+          </AlertDescription>
+          <AlertButton asChild>
+            <Link href={`/workspaces/${workspaces[0].id}/settings/workspace/app-connection`}>
+              {t("workspace.settings.api_keys.connect_app_banner_link")}
+            </Link>
+          </AlertButton>
+        </Alert>
+      )}
       <SettingsCard
         title={t("common.api_keys")}
         description={t("workspace.settings.api_keys.api_keys_description")}

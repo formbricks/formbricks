@@ -14,16 +14,19 @@ import { test } from "./lib/fixtures";
 const settingsSidebar = (page: Page) => page.getByRole("complementary");
 const topBar = (page: Page) => page.getByTestId("fb__global-top-control-bar");
 
-// Every workspace-scoped settings link, in sidebar order.
-const WORKSPACE_NAV_LABELS = [
-  "General",
-  "Team Access",
-  "Survey Languages",
-  "Connect Your App",
-  "Integrations",
-  "Appearance",
-  "User Actions",
-  "Tags",
+// Every workspace-scoped settings link's route slug, in sidebar order. Slugs are the stable
+// identity to assert on here — display labels are product copy that changes independently of
+// this spec's actual concern (that the breadcrumb change didn't alter the sidebar), so pinning
+// the full label inventory just makes the spec break on every unrelated rename.
+const WORKSPACE_NAV_HREF_SUFFIXES = [
+  "general",
+  "teams",
+  "languages",
+  "app-connection",
+  "integrations",
+  "look",
+  "user-actions",
+  "tags",
 ];
 
 // Distinct, run-unique organization and workspace names so the breadcrumb and the sidebar pill
@@ -53,9 +56,18 @@ const expectSidebarWorkspaceSection = async (page: Page, workspaceId: string, wo
   const sidebar = settingsSidebar(page);
 
   await expect(sidebar.getByText("Workspace", { exact: true })).toBeVisible();
-  await expect(sidebar.locator(`a[href^="/workspaces/${workspaceId}/settings/workspace/"]`)).toHaveText(
-    WORKSPACE_NAV_LABELS
+
+  const workspaceLinks = sidebar.locator(`a[href^="/workspaces/${workspaceId}/settings/workspace/"]`);
+  await expect(workspaceLinks).toHaveCount(WORKSPACE_NAV_HREF_SUFFIXES.length);
+  const hrefs = await workspaceLinks.evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  expect(hrefs).toEqual(
+    WORKSPACE_NAV_HREF_SUFFIXES.map((suffix) => `/workspaces/${workspaceId}/settings/workspace/${suffix}`)
   );
+
+  // The user-visible journey this spec still needs: whatever that fourth link is currently
+  // labeled, it must render as a real, visible link — not just resolve structurally.
+  await expect(workspaceLinks.nth(3)).toBeVisible();
+
   await expect(sidebar.getByRole("button", { name: workspaceName })).toBeVisible();
 };
 

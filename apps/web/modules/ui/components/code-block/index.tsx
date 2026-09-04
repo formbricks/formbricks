@@ -2,6 +2,15 @@
 
 import { CopyIcon } from "lucide-react";
 import Prism from "prismjs";
+// The default prismjs bundle only registers markup, css, clike, and javascript.
+// These languages are used by CodeBlock consumers (e.g. install method snippets)
+// but need their grammars imported explicitly. clike must load before kotlin and
+// dart, which extend it; typescript extends the already-bundled javascript.
+import "prismjs/components/prism-clike";
+import "prismjs/components/prism-dart";
+import "prismjs/components/prism-kotlin";
+import "prismjs/components/prism-swift";
+import "prismjs/components/prism-typescript";
 import "prismjs/themes/prism.css";
 import React, { useEffect } from "react";
 import toast from "react-hot-toast";
