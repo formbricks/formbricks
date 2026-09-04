@@ -1,6 +1,34 @@
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 
 const RELATIVE_URL_BASE = "http://localhost";
+
+/**
+ * The two SSO-recovery route paths.
+ *
+ * They live here, not in `modules/ee/sso/lib/constants.ts`, because OSS code needs them — this file
+ * builds the emailed verify link, and `verification-requested/actions.ts` matches an incoming callback
+ * against the completion path — and `.coderabbit.yaml` (`apps/web/modules/ee/**`) forbids OSS importing
+ * from `modules/ee` outside the `license-check` gate. Route paths carry no entitlement, so the fix is
+ * to own them on this side and let the EE modules import them; that direction is fine. This file is
+ * also reachable from a client component (`signup/components/signup-form.tsx`), which is a second
+ * reason not to pull an EE module in from here.
+ */
+export const SSO_RECOVERY_COMPLETION_PATH = "/api/auth/sso/recovery/complete";
+
+/** Better Auth's recovery magic-link endpoint, mounted by `ssoRecoverySignInPlugin` under `/api/auth`. */
+export const SSO_RECOVERY_SIGN_IN_PATH = "/api/auth/sso-recovery/sign-in";
+
+/**
+ * Lifetime of the emailed verification / SSO-recovery magic link.
+ *
+ * Exported so the SSO recovery intent can be pinned to the SAME number (ENG-2783). The link and the
+ * intent are two halves of one flow — the link mints the session, the intent says what to do with it —
+ * so a shorter intent is a guaranteed failure for anyone who reads their mail later: they get signed in
+ * by a link that is still valid and then land on "recovery failed". This is a leaf module both
+ * `modules/email` and `modules/ee/sso` already import, which is what keeps that pairing in one place
+ * without closing an import cycle.
+ */
+export const VERIFICATION_LINK_TTL_SECONDS = 60 * 60 * 24;
 export const VERIFICATION_REQUEST_PURPOSES = ["email_verification", "sso_recovery"] as const;
 export type TVerificationRequestPurpose = (typeof VERIFICATION_REQUEST_PURPOSES)[number];
 const DEFAULT_VERIFICATION_REQUEST_PURPOSE: TVerificationRequestPurpose = "email_verification";
@@ -76,7 +104,7 @@ export const buildVerificationLinks = ({
   // flow (ENG-1054), so the legacy /auth/verify page is gone. It resolves at Better Auth's
   // /sso-recovery/sign-in endpoint, which verifies the JWT, establishes the session, and redirects to
   // callbackUrl. (`purpose` still distinguishes the verification-request link below.)
-  const verifyLink = new URL("/api/auth/sso-recovery/sign-in", webAppUrl);
+  const verifyLink = new URL(SSO_RECOVERY_SIGN_IN_PATH, webAppUrl);
   verifyLink.searchParams.set("token", token);
 
   const verificationRequestLink = new URL("/auth/verification-requested", webAppUrl);

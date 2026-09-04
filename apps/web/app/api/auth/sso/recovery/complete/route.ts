@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { logger } from "@formbricks/logger";
-import { verifySsoRelinkIntent } from "@/lib/jwt";
 import { getSession } from "@/modules/auth/lib/session";
 import {
   BETTER_AUTH_SESSION_COOKIE_NAMES,
   getSessionTokenFromCookieHeader,
 } from "@/modules/auth/lib/session-cookie";
 import { revokeSessionByToken } from "@/modules/auth/lib/session-revocation";
-import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl } from "@/modules/ee/sso/lib/sso-recovery";
+import {
+  SsoRecoveryError,
+  completeSsoRecovery,
+  getSsoRecoveryFailureRedirectUrl,
+} from "@/modules/ee/sso/lib/sso-recovery";
 
 const clearSessionCookies = (response: NextResponse) => {
   for (const cookieName of BETTER_AUTH_SESSION_COOKIE_NAMES) {
@@ -43,28 +46,31 @@ const buildFailedRecoveryResponse = async (request: Request, callbackUrl?: strin
 
 export const GET = async (request: Request) => {
   const url = new URL(request.url);
-  const intentToken = url.searchParams.get("intent");
+  // An opaque id standing for a server-side record, not a payload (ENG-2783). The intent used to ride
+  // here as a JWT, which is what let each retry nest the previous attempt's whole URL inside the next.
+  const stateId = url.searchParams.get("state");
 
-  if (!intentToken) {
+  if (!stateId) {
     return NextResponse.redirect(getSsoRecoveryFailureRedirectUrl());
   }
 
   try {
     const session = await getSession();
     const callbackUrl = await completeSsoRecovery({
-      intentToken,
+      stateId,
       sessionUserId: session?.user.id,
       // Spared by the post-commit session sweep, so the redirect below still lands signed in.
       sessionToken: getSessionTokenFromCookieHeader(request.headers.get("cookie")) ?? undefined,
     });
 
     return NextResponse.redirect(callbackUrl);
-  } catch {
-    try {
-      const intent = verifySsoRelinkIntent(intentToken);
-      return await buildFailedRecoveryResponse(request, intent.callbackUrl);
-    } catch {
-      return await buildFailedRecoveryResponse(request);
-    }
+  } catch (error) {
+    // The failure redirect wants the callback the user was originally headed for. It used to be
+    // recovered by decoding the intent a second time; now it rides on the error, so there is nothing
+    // to re-read and no second Redis round trip. Absent when the intent could not be read at all.
+    return await buildFailedRecoveryResponse(
+      request,
+      error instanceof SsoRecoveryError ? error.callbackUrl : undefined
+    );
   }
 };

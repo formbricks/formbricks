@@ -51,7 +51,11 @@ import {
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { TElementResponseMappingSurvey, getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
-import { TVerificationRequestPurpose, buildVerificationLinks } from "@/modules/auth/lib/verification-links";
+import {
+  TVerificationRequestPurpose,
+  VERIFICATION_LINK_TTL_SECONDS,
+  buildVerificationLinks,
+} from "@/modules/auth/lib/verification-links";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export { IS_SMTP_CONFIGURED };
@@ -158,7 +162,7 @@ export const sendVerificationEmail = async ({
   try {
     const t = await getTranslate(locale);
     const token = createToken(id, {
-      expiresIn: "1d",
+      expiresIn: VERIFICATION_LINK_TTL_SECONDS,
       purpose,
     });
     const { verifyLink, verificationRequestLink } = buildVerificationLinks({
