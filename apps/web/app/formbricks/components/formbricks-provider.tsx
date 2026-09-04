@@ -36,7 +36,11 @@ export const FormbricksProvider = ({
         await formbricks.setUserId(userId);
         const attributes: Record<string, string> = {};
         if (userEmail) attributes.email = userEmail;
-        if (userName) attributes.name = userName;
+        if (userName) {
+          const [firstName = "", ...rest] = userName.trim().split(/\s+/);
+          attributes.firstName = firstName;
+          attributes.lastName = rest.join(" ");
+        }
         if (Object.keys(attributes).length > 0) {
           await formbricks.setAttributes(attributes);
         }

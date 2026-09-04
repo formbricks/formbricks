@@ -9,6 +9,7 @@ import posthog from "posthog-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
+import formbricks from "@formbricks/js";
 import {
   type TCloudBillingInterval,
   type TOrganization,
@@ -865,6 +866,7 @@ export const PricingTable = ({
           toast.error(getActionErrorMessage(response.serverError, t));
           return;
         }
+        formbricks.track("subscription_cancelled").catch(() => undefined);
         toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
         router.refresh();
         return;
@@ -885,6 +887,13 @@ export const PricingTable = ({
           router.refresh();
           return;
         }
+
+        if (plan === "hobby") {
+          // Fire an in-app code action so a churn survey can be triggered from the dashboard
+          // right after the org drops to the free plan.
+          formbricks.track("subscription_cancelled").catch(() => undefined);
+        }
+
         if (response.data.mode === "immediate") {
           // Force-sync until the converted plan lands, then hand the success toast across a full
           // reload — router.refresh() alone doesn't reliably refetch the billing snapshot, so "current
