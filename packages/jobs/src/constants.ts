@@ -11,9 +11,26 @@ export const JOB_NAMES = {
   surveyScheduling: "survey-scheduling.reconcile",
   surveyArchivePurge: "survey-archive-purge.process",
   usageTelemetry: "usage-telemetry.process",
+  webhookDelivery: "webhook-delivery.process",
   workflowRun: "workflow-run.process",
   workflowRunReconcile: "workflow-run.reconcile",
 } as const;
+
+/**
+ * Retry policy for a single webhook delivery. Deliveries are fanned out one job per webhook, so this
+ * budget belongs to one endpoint and never delays the rest of the pipeline. Five attempts with a 30 s
+ * exponential base spread the retries over roughly 30 s, 1 min, 2 min and 4 min (~7.5 min total): long
+ * enough to ride out a receiver restart or deploy, short enough that a dead endpoint stops costing us
+ * within minutes. Permanent failures (SSRF rejection, 4xx other than 408/429) are raised as
+ * `UnrecoverableError` by the handler and do not consume this budget.
+ */
+export const WEBHOOK_DELIVERY_JOB_OPTIONS = Object.freeze({
+  attempts: 5,
+  backoff: Object.freeze({
+    type: "exponential",
+    delay: 30_000,
+  } as const),
+}) satisfies JobsOptions;
 
 const JOBS_DEFAULT_BACKOFF = Object.freeze({
   type: "exponential",

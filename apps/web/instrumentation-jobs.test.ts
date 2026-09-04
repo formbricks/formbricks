@@ -35,6 +35,7 @@ const slowTest = (name: string, fn: () => Promise<void>): void => {
 vi.mock("@formbricks/jobs", () => ({
   ONE_SHOT_JOB_NAMES: {
     responsePipeline: "response-pipeline.process",
+    webhookDelivery: "webhook-delivery.process",
     workflowRun: "workflow-run.process",
   },
   recurringJobs: {
@@ -225,6 +226,7 @@ describe("instrumentation-jobs", () => {
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
         "survey-archive-purge.process": expect.any(Function),
+        "webhook-delivery.process": expect.any(Function),
         "workflow-run.process": expect.any(Function),
         "test-log.process": mockExistingOverride,
         "usage-telemetry.process": expect.any(Function),

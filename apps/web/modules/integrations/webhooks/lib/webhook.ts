@@ -9,15 +9,14 @@ import {
   ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
-import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "@/lib/constants";
-import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
+import { generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
-import {
-  createPinnedDispatcher,
-  validateAndResolveWebhookUrl,
-  validateWebhookUrl,
-} from "@/lib/utils/validate-webhook-url";
+import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { getTranslate } from "@/lingodotdev/server";
+import {
+  WebhookDeliveryTimeoutError,
+  sendSignedWebhookRequest,
+} from "@/modules/integrations/webhooks/lib/send-signed-webhook";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { TWebhookInput } from "../types/webhooks";
 
@@ -167,59 +166,22 @@ export const getWebhooks = async (workspaceId: string): Promise<Webhook[]> => {
 };
 
 export const testEndpoint = async (url: string, secret?: string): Promise<boolean> => {
-  const address = await validateAndResolveWebhookUrl(url);
-
   if (isDiscordWebhook(url)) {
     throw new UnknownError("Discord webhooks are currently not supported.");
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-  // Hoisted out of the try so the finally can close it on every path.
-  // Pin TCP connect to the validated IP — closes DNS-rebinding TOCTOU between
-  // validation and fetch (undici otherwise resolves the hostname a second time).
-  const dispatcher = address ? createPinnedDispatcher(address) : undefined;
-
   try {
-    const webhookMessageId = uuidv7();
-    const webhookTimestamp = Math.floor(Date.now() / 1000);
-    const body = JSON.stringify({ event: "testEndpoint" });
+    // Same transport as real deliveries (SSRF validation, DNS pinning, signing, redirect policy,
+    // timeout), so what the button proves is what the background worker will do.
+    const { statusCode } = await sendSignedWebhookRequest({
+      url,
+      secret,
+      body: JSON.stringify({ event: "testEndpoint" }),
+      messageId: uuidv7(),
+    });
 
-    const requestHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-      "webhook-id": webhookMessageId,
-      "webhook-timestamp": webhookTimestamp.toString(),
-    };
-
-    if (secret) {
-      requestHeaders["webhook-signature"] = generateStandardWebhookSignature(
-        webhookMessageId,
-        webhookTimestamp,
-        body,
-        secret
-      );
-    }
-
-    // `redirect: "manual"` prevents SSRF via redirect — validateWebhookUrl only checks the
-    // initial URL, so following 30x to a private/internal host (e.g. cloud metadata) would bypass it.
-    // Gated on the same env var as validateWebhookUrl: self-hosters who opted into trusting internal
-    // URLs also get the pre-patch redirect-follow behavior for consistency.
-    const redirectMode: RequestRedirect = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS ? "follow" : "manual";
-    const response = await fetch(url, {
-      method: "POST",
-      body,
-      headers: requestHeaders,
-      signal: controller.signal,
-      redirect: redirectMode,
-      dispatcher,
-    } as RequestInit & { dispatcher?: ReturnType<typeof createPinnedDispatcher> });
-
-    const statusCode = response.status;
-
-    // With `redirect: "manual"`, Node's undici returns the actual 30x response (not the spec's
-    // opaqueredirect filter). Treat any 30x as a redirect rejection so users get a clear error
-    // instead of a misleading success. With `redirect: "follow"`, fetch returns the final 2xx/4xx/5xx
-    // and this branch is unreachable.
+    // With `redirect: "manual"` undici returns the actual 30x. Surface it as a clear error instead of
+    // a misleading success; with `redirect: "follow"` (internal URLs allowed) this branch is unreachable.
     if (statusCode >= 300 && statusCode < 400) {
       throw new InvalidInputError("Webhook endpoint returned a redirect, which is not allowed");
     }
@@ -232,8 +194,8 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
 
     return true;
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new UnknownError("Request timed out after 5 seconds");
+    if (error instanceof WebhookDeliveryTimeoutError) {
+      throw new UnknownError(`Request timed out after ${Math.round(error.timeoutMs / 1000)} seconds`);
     }
 
     if (error instanceof InvalidInputError || error instanceof UnknownError) {
@@ -243,11 +205,5 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
     throw new UnknownError(
       `Error while fetching the URL: ${error instanceof Error ? error.message : "Unknown error occurred"}`
     );
-  } finally {
-    clearTimeout(timeout);
-    // destroy() — not close() — force-kills sockets. close() drains gracefully and
-    // would deadlock if the endpoint accepted TCP but never responded (controller.abort()
-    // above cancels fetch, but destroy is the belt-and-suspenders cleanup).
-    await dispatcher?.destroy();
   }
 };

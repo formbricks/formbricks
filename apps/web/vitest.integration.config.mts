@@ -28,6 +28,16 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    server: {
+      deps: {
+        // Load the built @formbricks/jobs bundle natively instead of inlining it. The dist is a minified
+        // library build whose code contains a labeled statement named `z`; Vitest's SSR import rewrite
+        // mistakes that label for the `z` binding imported from zod and rewrites it to
+        // `__vite_ssr_import_N__.z: for (...)`, which is a SyntaxError. Every other consumer of the package
+        // (Next.js, the unit suites' mocks) never transforms the dist, so nothing else is affected.
+        external: [/\/packages\/jobs\/dist\//],
+      },
+    },
     globalSetup: ["./integration/global-setup.ts"],
     setupFiles: ["./integration/setup.ts"],
     include: ["**/*.integration.test.ts"],

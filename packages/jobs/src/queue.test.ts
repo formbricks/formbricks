@@ -7,11 +7,13 @@ import {
   JOBS_PREFIX,
   JOBS_QUEUE_NAME,
   JOB_NAMES,
+  WEBHOOK_DELIVERY_JOB_OPTIONS,
 } from "./constants";
 import {
   createJobsQueue,
   enqueueResponsePipelineJob,
   enqueueTestLogJob,
+  enqueueWebhookDeliveryJob,
   enqueueWorkflowRunJob,
   getBackgroundJobProducer,
   getJobsQueue,
@@ -80,6 +82,22 @@ const workflowRunJobData = {
   workflowRunId: "cm8cmpnjj000108jfdr9wrun1",
   workflowId: "cm8cmpnjj000108jfdr9wflo1",
   workspaceId: "cm8cmpnjj000108jfdr9wksp1",
+};
+
+const webhookDeliveryJobData = {
+  webhookId: "cm8cmpnjj000108jfdr9whk01",
+  workspaceId: responsePipelineJobData.workspaceId,
+  surveyId: responsePipelineJobData.surveyId,
+  event: "responseFinished" as const,
+  webhookMessageId: "f".repeat(64),
+  response: responsePipelineJobData.response,
+  survey: {
+    name: "Survey",
+    type: "link" as const,
+    status: "inProgress" as const,
+    createdAt: new Date("2026-04-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-04-07T00:00:00.000Z"),
+  },
 };
 
 vi.mock("@formbricks/logger", () => ({
@@ -199,6 +217,44 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.workflowRun, workflowRunJobData, {
       jobId: workflowRunJobData.workflowRunId,
     });
+  });
+
+  test("enqueues a webhook delivery with its own retry policy and the caller's deterministic jobId", async () => {
+    const mockJob = { id: "whd-job-response-1-cm8cmpnjj000108jfdr9whk01" };
+    mockQueueAdd.mockResolvedValue(mockJob);
+
+    const job = await enqueueWebhookDeliveryJob(webhookDeliveryJobData, {
+      jobId: "whd-job-response-1-cm8cmpnjj000108jfdr9whk01",
+    });
+
+    expect(job).toBe(mockJob);
+    // Unlike the other one-shot jobs this one overrides the queue defaults: one endpoint's retries are
+    // its own budget, and the jobId makes a pipeline retry after a partial fan-out idempotent.
+    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.webhookDelivery, webhookDeliveryJobData, {
+      attempts: 5,
+      backoff: { type: "exponential", delay: 30_000 },
+      jobId: "whd-job-response-1-cm8cmpnjj000108jfdr9whk01",
+    });
+    expect(WEBHOOK_DELIVERY_JOB_OPTIONS.attempts).toBeGreaterThan(JOBS_DEFAULT_JOB_OPTIONS.attempts);
+  });
+
+  test("rejects a webhook delivery payload that fails schema validation before touching the queue", async () => {
+    await expect(
+      enqueueWebhookDeliveryJob(
+        { ...webhookDeliveryJobData, webhookMessageId: "not-a-sha256" },
+        { jobId: "x" }
+      )
+    ).rejects.toThrow();
+
+    expect(mockQueueAdd).not.toHaveBeenCalled();
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobName: JOB_NAMES.webhookDelivery,
+        webhookId: webhookDeliveryJobData.webhookId,
+        workspaceId: webhookDeliveryJobData.workspaceId,
+      }),
+      "Failed to enqueue BullMQ webhook delivery job"
+    );
   });
 
   test("exposes response pipeline enqueues through the engine-neutral producer interface", async () => {

@@ -7,6 +7,7 @@ import {
   type TRecurringBackgroundJobSchedule,
   type TRecurringJobKey,
   type TResponsePipelineJobData,
+  type TWebhookDeliveryJobData,
   type TWorkflowRunJobData,
   recurringJobs,
 } from "@formbricks/jobs";
@@ -18,6 +19,7 @@ import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process
 import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
 import { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } from "@/modules/ee/workflows/lib/runner/reconcile-constants";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
+import { processWebhookDeliveryJob } from "@/modules/response-pipeline/lib/process-webhook-delivery-job";
 import {
   SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN,
   SURVEY_ARCHIVE_PURGE_TIME_ZONE,
@@ -136,6 +138,8 @@ export const RECURRING_JOB_REGISTRATIONS: readonly RecurringJobRegistration[] = 
 export const getJobHandlerOverrides = (): JobHandlerOverrides => ({
   [ONE_SHOT_JOB_NAMES.responsePipeline]:
     toJobHandlerOverride<TResponsePipelineJobData>(processResponsePipelineJob),
+  [ONE_SHOT_JOB_NAMES.webhookDelivery]:
+    toJobHandlerOverride<TWebhookDeliveryJobData>(processWebhookDeliveryJob),
   [ONE_SHOT_JOB_NAMES.workflowRun]: toJobHandlerOverride<TWorkflowRunJobData>(processWorkflowRunJob),
   ...Object.fromEntries(
     RECURRING_JOB_REGISTRATIONS.map((registration) => [
