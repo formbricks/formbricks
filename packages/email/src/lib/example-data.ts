@@ -30,6 +30,12 @@ export const exampleData = {
     // No props needed
   },
 
+  ssoRecoveryFactorsRemovedEmail: {
+    passwordRemoved: true,
+    twoFactorRemoved: true,
+    securitySettingsLink: "https://app.formbricks.com/account/settings/profile",
+  },
+
   inviteEmail: {
     inviteeName: "Jane Smith",
     inviterName: "John Doe",
@@ -162,7 +168,7 @@ export const exampleData = {
       {
         id: "var-1",
         name: "Customer ID",
-        type: "text",
+        type: "text" as const,
         value: "CUST-456",
       },
     ],

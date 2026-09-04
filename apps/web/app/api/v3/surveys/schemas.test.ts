@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+import { z } from "zod";
+import { validateElementLabels } from "@formbricks/types/surveys/elements-validation";
 import {
   ZV3CreateSurveyBody,
   ZV3PatchSurveyBody,
@@ -218,6 +220,51 @@ describe("ZV3CreateSurveyBody", () => {
       message: expect.stringContaining("element type 'openText'"),
     });
   });
+
+  // Regression (ENG-2411): `buttonUrl` used to be validated with `z.url()`, which accepts any value
+  // `new URL()` parses — `javascript:` included — so a script-capable scheme reached the renderer, where
+  // it is handed to `window.open()`.
+  const ctaCreateBody = (buttonUrl: string) => ({
+    ...validCreateBody,
+    blocks: [
+      {
+        ...validCreateBody.blocks[0],
+        elements: [
+          {
+            id: "cta",
+            type: "cta",
+            headline: { "en-US": "Read the docs" },
+            required: false,
+            buttonExternal: true,
+            ctaButtonLabel: { "en-US": "Open" },
+            buttonUrl,
+          },
+        ],
+      },
+    ],
+  });
+
+  test.each([
+    "javascript:alert(document.domain)",
+    "JavaScript:alert(1)",
+    "java\tscript:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "vbscript:msgbox(1)",
+  ])("rejects a cta buttonUrl with the script-capable scheme %j", (buttonUrl) => {
+    const result = ZV3CreateSurveyBody.safeParse(ctaCreateBody(buttonUrl));
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path.join("."))).toContain(
+      "blocks.0.elements.0.buttonUrl"
+    );
+  });
+
+  test.each(["https://formbricks.com/docs", "http://localhost:3000/docs", "mailto:support@example.com"])(
+    "accepts a cta buttonUrl with the safe scheme %j",
+    (buttonUrl) => {
+      expect(ZV3CreateSurveyBody.safeParse(ctaCreateBody(buttonUrl)).success).toBe(true);
+    }
+  );
 
   test("rejects choice fields that do not belong to the selected element type", () => {
     const result = ZV3CreateSurveyBody.safeParse({
@@ -545,6 +592,25 @@ describe("ZV3CreateSurveyBody", () => {
     }
   });
 
+  test("accepts hideDefaultIcon on an end screen ending", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      endings: [
+        {
+          id: "clend123456789012345678901",
+          type: "endScreen",
+          headline: { "en-US": "Thanks!" },
+          hideDefaultIcon: true,
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.endings?.[0]).toMatchObject({ hideDefaultIcon: true });
+    }
+  });
+
   test("reports missing required ending fields before shared ending union errors", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,
@@ -802,4 +868,106 @@ describe("ZV3PatchSurveyBody", () => {
     expect(parsed.distribution).toMatchObject({ displayOption: "displayMultiple" });
     expect(parsed.targeting).toEqual({ filters: [] });
   });
+});
+
+describe("formatV3ZodInvalidParams", () => {
+  // Built from the real validator rather than a literal message: the marker only reaches clients
+  // because these shared validators embed it, so a hand-written fixture would assert nothing.
+  const buildBlankTranslationIssue = (): z.core.$ZodIssue => {
+    const language = {
+      id: "clln1234567890123456789012",
+      code: "de-DE",
+      alias: null,
+      workspaceId: "clxx1234567890123456789012",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const issue = validateElementLabels(
+      "headline",
+      { default: "What should we improve?", "de-DE": "   " },
+      [
+        {
+          language: { ...language, id: "clle1234567890123456789012", code: "en-US" },
+          default: true,
+          enabled: true,
+        },
+        { language, default: false, enabled: true },
+      ],
+      0,
+      0
+    );
+
+    if (!issue) {
+      throw new Error("expected the label validator to reject a blank translation");
+    }
+
+    return issue as z.core.$ZodIssue;
+  };
+
+  test("strips the editor-only -fLang- delimiter from the reason", () => {
+    const issue = buildBlankTranslationIssue();
+    expect(issue.message).toContain("-fLang-");
+
+    const [invalidParam] = formatV3ZodInvalidParams(new z.ZodError([issue]), "body");
+
+    expect(invalidParam.reason).not.toContain("-fLang-");
+    expect(invalidParam.reason).toBe(
+      "The question in question 1 of block 1 is missing for the following languages: de-DE"
+    );
+    expect(invalidParam.name).toBe("blocks.0.elements.0.headline");
+  });
+
+  test("leaves a reason without the delimiter untouched", () => {
+    const result = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, defaultLanguage: "not a locale" });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ reason: "Language 'not a locale' is not a valid locale code" }),
+        ])
+      );
+    }
+  });
+
+  test("normalizes the comma-joined ending-card shape too", () => {
+    const issue = {
+      code: "custom",
+      message:
+        "The button label on the Ending card 2 is missing for the following languages:  -fLang- de, fr",
+      path: ["endings", 1, "buttonLabel"],
+    } as z.core.$ZodIssue;
+
+    const [invalidParam] = formatV3ZodInvalidParams(new z.ZodError([issue]), "body");
+
+    expect(invalidParam.reason).toBe(
+      "The button label on the Ending card 2 is missing for the following languages: de, fr"
+    );
+  });
+
+  // A caller-supplied language code reaches `reason` verbatim (createZV3SurveyLanguageTag interpolates
+  // it and only trims the ends), so a long interior whitespace run is reachable from one request. The
+  // previous `/\s*-fLang-\s*/` implementation was quadratic on exactly that input — ~5s server-side at
+  // 100k characters. The timeout is a complexity guard, not a benchmark: the linear implementation
+  // needs microseconds, so the margin here is several orders of magnitude.
+  test.each([
+    ["no marker present", 100_000, false],
+    ["marker present", 100_000, true],
+  ])(
+    "stays linear on a %s whitespace run",
+    (_label, runLength, withMarker) => {
+      const run = " ".repeat(runLength);
+      const message = withMarker
+        ? `Language 'a${run}b' is not valid: -fLang- de-DE`
+        : `Language 'a${run}b' is not a valid locale code`;
+      const issue = { code: "custom", message, path: ["languages", 0, "code"] } as z.core.$ZodIssue;
+
+      const [invalidParam] = formatV3ZodInvalidParams(new z.ZodError([issue]), "body");
+
+      // Whole expected string, not fragments: the caller's interior run survives untouched, only the
+      // marker and the whitespace adjoining it are collapsed, and a marker-free message is identical.
+      expect(invalidParam.reason).toBe(withMarker ? `Language 'a${run}b' is not valid: de-DE` : message);
+    },
+    2_000
+  );
 });

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
+import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 import { executeRecaptcha, loadRecaptchaScript } from "@/modules/ui/components/survey/recaptcha";
 
 const createContainerId = () => `formbricks-survey-container`;
@@ -40,10 +41,7 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     isLoadingScript = true;
     try {
       const scriptUrl = props.appUrl ? `${props.appUrl}/js/surveys.umd.cjs` : "/js/surveys.umd.cjs";
-      const response = await fetch(
-        scriptUrl,
-        process.env.NODE_ENV === "development" ? { cache: "no-store" } : {}
-      );
+      const response = await fetch(scriptUrl, IS_DEVELOPMENT_BUILD ? { cache: "no-store" } : {});
 
       if (!response.ok) {
         throw new Error("Failed to load the surveys package");
@@ -86,6 +84,7 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     };
 
     loadScript();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time script load guarded by hasLoadedRef; depending on loadSurveyScript/renderInline would re-trigger the load
   }, [props]);
 
   useEffect(() => {

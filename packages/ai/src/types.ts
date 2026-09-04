@@ -1,4 +1,11 @@
-import type { FlexibleSchema, LanguageModel, generateText } from "ai";
+import type {
+  AsyncIterableStream,
+  DeepPartial,
+  FlexibleSchema,
+  LanguageModel,
+  generateText,
+  streamText,
+} from "ai";
 
 export const AI_PROVIDERS = ["aws", "google", "azure", "openai-compatible"] as const;
 
@@ -51,6 +58,7 @@ export interface AIConfigurationStatus {
 }
 
 export type AILanguageModel = LanguageModel;
+export type AIResolvedLanguageModel = Exclude<LanguageModel, string>;
 type GenerateTextResult = Awaited<ReturnType<typeof generateText>>;
 
 export type TGenerateObjectOptions<T = unknown> = Omit<
@@ -75,3 +83,33 @@ export interface TGenerateObjectResult<T = unknown> {
 }
 export type TGenerateTextOptions = Omit<Parameters<typeof generateText>[0], "model">;
 export type TGenerateTextResult = GenerateTextResult;
+
+export type TStreamObjectOptions<T = unknown> = Omit<
+  Parameters<typeof streamText>[0],
+  "model" | "output" | "experimental_output"
+> & {
+  schema: FlexibleSchema<T>;
+  schemaName?: string;
+  schemaDescription?: string;
+  output?: "object";
+};
+
+export interface TStreamObjectResult<T = unknown> {
+  /**
+   * Whole-object snapshots as the model writes, not deltas. Deliberately unvalidated: the AI SDK
+   * runs no schema check on partials, so a snapshot can carry a half-written string or a value that
+   * is not yet a legal enum member. Treat it as display-only and read the final object from
+   * `completion`.
+   */
+  readonly partialObjectStream: AsyncIterableStream<DeepPartial<T>>;
+  /**
+   * Resolves to the complete parsed object once the generation finishes. Rejects with
+   * `AIOutputTokenLimitError` when the model hit the output token limit, with the provider error on
+   * a provider failure, and with the abort reason when `abortSignal` fires.
+   *
+   * Intentionally narrower than `TGenerateObjectResult`: `warnings`, `request`, `response` and
+   * `providerMetadata` all resolve through the SDK's `finalStep`, which drains the base stream as a
+   * side effect, so exposing them here would invite an accidental drain of `partialObjectStream`.
+   */
+  readonly completion: Promise<T>;
+}

@@ -13,7 +13,7 @@ export const SurveyLinkDisplay = ({ surveyUrl, enforceSurveyUrlWidth = false }: 
         <Input
           data-testid="survey-url-input"
           className={cn(
-            "h-9 w-full text-ellipsis rounded-lg border bg-white px-3 py-1 text-slate-800 caret-transparent",
+            "h-9 w-full rounded-lg border bg-white px-3 py-1 text-ellipsis text-slate-800 caret-transparent",
             {
               "min-w-96": enforceSurveyUrlWidth,
             }

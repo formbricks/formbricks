@@ -1,4 +1,5 @@
 import "server-only";
+import { google } from "googleapis";
 import { z } from "zod";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZString } from "@formbricks/types/common";
@@ -26,7 +27,23 @@ import { createOrUpdateIntegration } from "@/lib/integration/service";
 import { truncateText } from "../utils/strings";
 import { validateInputs } from "../utils/validate";
 
-const { google } = require("googleapis");
+/**
+ * ENG-2250: `sheets.spreadsheets.values.*` take a node-style callback, so a `throw` inside one escapes
+ * the surrounding `try/catch` and lands as an unhandled rejection — the write fails, the sheet silently
+ * stops receiving responses and the caller is never told. Wrap the call so the error rejects a promise
+ * the caller awaits instead. `invoke` receives the callback rather than the method being detached, to
+ * keep googleapis' own `this` binding intact.
+ */
+const runSheetsWrite = (invoke: (callback: (err: Error | null) => void) => void): Promise<void> =>
+  new Promise((resolve, reject) => {
+    invoke((err) => {
+      if (err) {
+        reject(new UnknownError(`Error while appending data: ${err.message}`));
+        return;
+      }
+      resolve();
+    });
+  });
 
 export const writeData = async (
   integrationData: TIntegrationGoogleSheets,
@@ -55,32 +72,28 @@ export const writeData = async (
     };
 
     const element = { values: [elements] };
-    sheets.spreadsheets.values.update(
-      {
-        spreadsheetId: spreadsheetId,
-        range: "A1",
-        valueInputOption: "RAW",
-        resource: element,
-      },
-      (err: Error) => {
-        if (err) {
-          throw new UnknownError(`Error while appending data: ${err.message}`);
-        }
-      }
+    await runSheetsWrite((callback) =>
+      sheets.spreadsheets.values.update(
+        {
+          spreadsheetId: spreadsheetId,
+          range: "A1",
+          valueInputOption: "RAW",
+          requestBody: element,
+        },
+        callback
+      )
     );
 
-    sheets.spreadsheets.values.append(
-      {
-        spreadsheetId: spreadsheetId,
-        range: "A2",
-        valueInputOption: "RAW",
-        resource: responsesMapped,
-      },
-      (err: Error) => {
-        if (err) {
-          throw new UnknownError(`Error while appending data: ${err.message}`);
-        }
-      }
+    await runSheetsWrite((callback) =>
+      sheets.spreadsheets.values.append(
+        {
+          spreadsheetId: spreadsheetId,
+          range: "A2",
+          valueInputOption: "RAW",
+          requestBody: responsesMapped,
+        },
+        callback
+      )
     );
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -114,7 +127,10 @@ export const getSpreadsheetNameById = async (
     return new Promise((resolve, reject) => {
       sheets.spreadsheets.get(
         { spreadsheetId },
-        (err: Error | null, response: { data: { properties: { title: string } } }) => {
+        (
+          err: Error | null,
+          response?: { data: { properties?: { title?: string | null } | null } } | null
+        ) => {
           if (err) {
             const msg = err.message?.toLowerCase() ?? "";
             const isPermissionError =
@@ -129,7 +145,11 @@ export const getSpreadsheetNameById = async (
             }
             return;
           }
-          const spreadsheetTitle = response.data.properties.title;
+          const spreadsheetTitle = response?.data.properties?.title;
+          if (!spreadsheetTitle) {
+            reject(new UnknownError("Error while fetching spreadsheet data: no title on the response"));
+            return;
+          }
           resolve(spreadsheetTitle);
         }
       );
@@ -183,12 +203,23 @@ const authorize = async (googleSheetIntegrationData: TIntegrationGoogleSheets) =
     return oAuth2Client;
   }
 
+  // Without a refresh token there is nothing to refresh, and googleapis surfaces that as a bare
+  // "No refresh token is set." which reaches the user as a raw toast. Treat it as the reconnect case
+  // instead, which is the only way out of it. `ZGoogleCredential` types both tokens as `z.string()`,
+  // so an empty string is schema-valid and has to be checked for here.
+  if (!key.refresh_token) {
+    throw new AuthenticationError(GOOGLE_SHEET_INTEGRATION_INVALID_GRANT);
+  }
+
   oAuth2Client.setCredentials({ refresh_token: key.refresh_token });
 
   try {
     const { credentials } = await oAuth2Client.refreshAccessToken();
     const mergedCredentials = {
-      ...credentials,
+      scope: credentials.scope ?? key.scope,
+      token_type: "Bearer" as const,
+      expiry_date: credentials.expiry_date ?? key.expiry_date,
+      access_token: credentials.access_token ?? key.access_token,
       refresh_token: credentials.refresh_token ?? key.refresh_token,
     };
     await createOrUpdateIntegration(googleSheetIntegrationData.workspaceId, {

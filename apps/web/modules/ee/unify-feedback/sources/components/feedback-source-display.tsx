@@ -9,8 +9,7 @@ export const getFeedbackSourceIcon = (type: TFeedbackSourceType, className: stri
       return <FormIcon className={className} />;
     case "csv":
       return <FileSpreadsheetIcon className={className} />;
-    default:
-      return <FormIcon className={className} />;
+    /* exhausted */
   }
 };
 
@@ -20,7 +19,6 @@ export const getFeedbackSourceTypeLabelKey = (type: TFeedbackSourceType): string
       return "workspace.unify.formbricks_surveys";
     case "csv":
       return "workspace.unify.csv_import";
-    default:
-      return type;
+    /* exhausted */
   }
 };

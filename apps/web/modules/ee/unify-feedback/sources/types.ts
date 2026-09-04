@@ -1,6 +1,6 @@
 import { TFunction } from "i18next";
 import { z } from "zod";
-import { THubFieldType, ZHubFieldType } from "@formbricks/types/feedback-source";
+import { THubFieldType, ZFeedbackSourceImportMode, ZHubFieldType } from "@formbricks/types/feedback-source";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 
 export interface TUnifySurveyElement {
@@ -288,6 +288,8 @@ export const ZFormbricksFeedbackSourceForm = z.object({
   surveyId: z.string().min(1, "FEEDBACK_SOURCE_SURVEY_REQUIRED"),
   selectedQuestionIds: z.array(z.string()).min(1, "FEEDBACK_SOURCE_QUESTIONS_REQUIRED"),
   importHistorical: z.boolean(),
+  // Persisted on the source, unlike importHistorical, which is a one-shot toggle for this dialog.
+  importMode: ZFeedbackSourceImportMode,
 });
 
 export type TFormbricksFeedbackSourceForm = z.infer<typeof ZFormbricksFeedbackSourceForm>;

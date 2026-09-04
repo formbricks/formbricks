@@ -10,7 +10,8 @@ import { z } from "zod";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
 import { Button } from "@/modules/ui/components/button";
-import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 
 const ZForgotPasswordForm = z.object({
   email: z.email(),
@@ -41,41 +42,41 @@ export const ForgotPasswordForm = () => {
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-800">
-            {t("common.email")}
-          </label>
-          <div className="mt-1">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field, fieldState: { error } }) => (
-                <FormItem className="w-full">
-                  <FormControl>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e)}
-                      autoComplete="email"
-                      required
-                      className="block w-full rounded-md border-slate-300 shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
-                    />
-                  </FormControl>
-                  {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem className="w-full text-left">
+              <FormLabel>{t("common.email")}</FormLabel>
+              <FormControl>
+                <Input
+                  name="email"
+                  type="email"
+                  value={field.value}
+                  onBlur={field.onBlur}
+                  onChange={(e) => field.onChange(e)}
+                  autoComplete="email"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  required
+                />
+              </FormControl>
+              <FormError role="alert" />
+            </FormItem>
+          )}
+        />
 
         <div>
-          <Button type="submit" className="w-full justify-center" loading={form.formState.isSubmitting}>
+          <Button
+            type="submit"
+            className="h-11 w-full justify-center sm:h-9"
+            loading={form.formState.isSubmitting}>
             {t("auth.forgot-password.reset_password")}
           </Button>
           <div className="mt-3 text-center">
-            <Button variant="ghost" className="w-full justify-center" asChild>
+            <Button variant="ghost" className="h-11 w-full justify-center sm:h-9" asChild>
               <Link href="/auth/login">{t("auth.forgot-password.back_to_login")}</Link>
             </Button>
           </div>

@@ -35,7 +35,11 @@ import {
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
-import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
+import {
+  SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
+  isResourceFilter,
+  searchForAttributeKeyInSegment,
+} from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
 
@@ -177,18 +181,28 @@ export const getSurveyRefsForWorkspace = reactCache(
  * {@link getSurveyRefsForWorkspace} (which caps at {@link SURVEY_FILTER_REF_LIMIT} for the picker),
  * this queries by the exact ids being validated, so it stays correct for workspaces with more than
  * that many surveys — a referenced-but-valid survey outside the picker's recent window is no longer
- * wrongly rejected. Returns an empty set for an empty input without hitting the DB.
+ * wrongly rejected. Ids are deduplicated and looked up in bounded sequential batches (ENG-2305),
+ * mirroring {@link getSurveyWorkspaceIdMap}. Returns an empty set for an empty input without
+ * hitting the DB.
  */
 export const getExistingWorkspaceSurveyIds = reactCache(
   async (workspaceId: string, surveyIds: string[]): Promise<Set<string>> => {
     validateInputs([workspaceId, ZId], [surveyIds, z.array(ZId)]);
-    if (surveyIds.length === 0) return new Set();
+    const uniqueSurveyIds = Array.from(new Set(surveyIds));
+    const existingSurveyIds = new Set<string>();
+    if (uniqueSurveyIds.length === 0) return existingSurveyIds;
     try {
-      const surveys = await prisma.survey.findMany({
-        where: { workspaceId, id: { in: surveyIds } },
-        select: { id: true },
-      });
-      return new Set(surveys.map((survey) => survey.id));
+      for (let i = 0; i < uniqueSurveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
+        const batch = uniqueSurveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
+        const surveys = await prisma.survey.findMany({
+          where: { workspaceId, id: { in: batch } },
+          select: { id: true },
+        });
+        for (const survey of surveys) {
+          existingSurveyIds.add(survey.id);
+        }
+      }
+      return existingSurveyIds;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -415,17 +429,37 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
   }
 };
 
-// Batched lookup of the owning workspace for a set of surveys, used to keep segment↔survey links
-// within one workspace (ENG-1920). A single query avoids fanning out one lookup per survey id over
-// a caller-controlled, unbounded array. Missing ids are simply absent from the map.
+/**
+ * Batched lookup of the owning workspace for a set of surveys, used to keep segment↔survey links
+ * within one workspace (ENG-1920). Ids are deduplicated and queried in bounded batches — one query
+ * per batch rather than one per id, so the non-N+1 shape is preserved without letting a
+ * caller-controlled array size the SQL parameter payload (ENG-2004). Batches run sequentially: the
+ * point is to cap concurrent database work, not to fan it out. Missing ids are simply absent from
+ * the returned map.
+ */
 export const getSurveyWorkspaceIdMap = reactCache(
   async (surveyIds: string[]): Promise<Map<string, string>> => {
+    const uniqueSurveyIds = Array.from(new Set(surveyIds));
+    const workspaceIdBySurveyId = new Map<string, string>();
+
+    if (uniqueSurveyIds.length === 0) {
+      return workspaceIdBySurveyId;
+    }
+
     try {
-      const surveys = await prisma.survey.findMany({
-        where: { id: { in: surveyIds } },
-        select: { id: true, workspaceId: true },
-      });
-      return new Map(surveys.map((survey) => [survey.id, survey.workspaceId]));
+      for (let i = 0; i < uniqueSurveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
+        const batch = uniqueSurveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
+        const surveys = await prisma.survey.findMany({
+          where: { id: { in: batch } },
+          select: { id: true, workspaceId: true },
+        });
+
+        for (const survey of surveys) {
+          workspaceIdBySurveyId.set(survey.id, survey.workspaceId);
+        }
+      }
+
+      return workspaceIdBySurveyId;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

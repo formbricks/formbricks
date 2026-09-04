@@ -273,7 +273,13 @@ export interface TLegacyConfigInput {
   attributes?: Record<string, string>;
 }
 
-export type TLegacyConfig = TConfig & {
+export type TLegacyConfig = Omit<TConfig, "user"> & {
+  // Optional and partial all the way down, unlike TConfig: a legacy blob is unchecked JSON from
+  // localStorage — old first-migration formats persisted user-less configs, and a present `user`
+  // may still lack `data`/`expiresAt` or carry an incomplete `data`. `Partial<TUserState>` would
+  // only make `data` itself optional and type a present one as complete, which is the lie this
+  // spells out: nothing inside `data` can be trusted either.
+  user?: { expiresAt?: Date | null; data?: Partial<TUserState["data"]> };
   apiHost?: string;
   attributes?: TAttributes;
   // Intermediate format fields (pre-workspace rename)

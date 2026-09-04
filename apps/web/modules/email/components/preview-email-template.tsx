@@ -14,6 +14,7 @@ import {
   Text,
   render,
 } from "@formbricks/email";
+import { isSafeLinkUrl } from "@formbricks/types/common";
 import {
   type TSurveyAddressElement,
   type TSurveyCTAElement,
@@ -451,27 +452,33 @@ export async function PreviewEmailTemplate({
       const ctaElement = firstQuestion as TSurveyCTAElement;
       return (
         <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
-          {ctaElement.buttonExternal && ctaElement.ctaButtonLabel && ctaElement.buttonUrl && (
-            <Section className="mt-4 text-left" style={{ textAlign: "left" }}>
-              <EmailButton
-                className={SECONDARY_BUTTON_CLASSNAME}
-                style={getPrimaryButtonStyle(styleTokens)}
-                href={ctaElement.buttonUrl}
-                target={PREVIEW_LINK_TARGET}>
-                {getLocalizedValue(ctaElement.ctaButtonLabel, defaultLanguageCode)}
-                <SquareArrowOutUpRightIcon
-                  color={styleTokens.buttonTextColor}
-                  size={16}
-                  strokeWidth={2}
-                  style={{
-                    display: "inline-block",
-                    marginLeft: "8px",
-                    verticalAlign: "text-bottom",
-                  }}
-                />
-              </EmailButton>
-            </Section>
-          )}
+          {/* `isSafeLinkUrl`: the button URL is an editable survey field, and drafts are persisted
+              without schema validation, so a stored value can carry a `javascript:` scheme. Rendering
+              it into an `href` would ship that payload inside the email preview. */}
+          {ctaElement.buttonExternal &&
+            ctaElement.ctaButtonLabel &&
+            ctaElement.buttonUrl &&
+            isSafeLinkUrl(ctaElement.buttonUrl) && (
+              <Section className="mt-4 text-left" style={{ textAlign: "left" }}>
+                <EmailButton
+                  className={SECONDARY_BUTTON_CLASSNAME}
+                  style={getPrimaryButtonStyle(styleTokens)}
+                  href={ctaElement.buttonUrl}
+                  target={PREVIEW_LINK_TARGET}>
+                  {getLocalizedValue(ctaElement.ctaButtonLabel, defaultLanguageCode)}
+                  <SquareArrowOutUpRightIcon
+                    color={styleTokens.buttonTextColor}
+                    size={16}
+                    strokeWidth={2}
+                    style={{
+                      display: "inline-block",
+                      marginLeft: "8px",
+                      verticalAlign: "text-bottom",
+                    }}
+                  />
+                </EmailButton>
+              </Section>
+            )}
         </PreviewQuestionCard>
       );
     }
@@ -1045,7 +1052,7 @@ function EmailFooter({
     <Container className="mx-auto mt-8 text-center">
       <Link
         className="text-signature-color text-xs"
-        href="https://formbricks.com?utm_source=email_branding"
+        href="https://formbricks.com?utm_source=formbricks-app&utm_medium=email&utm_campaign=powered_by_badge"
         style={{ ...getForcedColorStyle(signatureColor), fontFamily }}
         target={PREVIEW_LINK_TARGET}>
         {t("common.powered_by_formbricks")}

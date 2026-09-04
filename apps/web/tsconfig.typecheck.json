@@ -1,19 +1,12 @@
 {
-  "exclude": [
-    "../../.env",
-    ".next",
-    "node_modules",
-    "playwright",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/tests/**",
-    "**/__mocks__/**",
-    "**/__tests__/**"
-  ],
+  "exclude": ["../../.env", ".next", "node_modules", "playwright"],
   "extends": "./tsconfig.json",
+  "files": ["lib/authorization/contract.typecheck.test.ts", "lib/authzed/index.typecheck.test.ts"],
   "include": [
     "next-env.d.ts",
     "**/*.d.ts",
+    "*.ts",
+    "lingodotdev/**/*.ts",
     "app/**/*.ts",
     "app/**/*.tsx",
     "lib/**/*.ts",

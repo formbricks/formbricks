@@ -2,16 +2,12 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
-import {
-  TIntegrationGoogleSheets,
-  ZIntegrationGoogleSheets,
-} from "@formbricks/types/integration/google-sheet";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
+import { assertCan } from "@/lib/authorization";
 import { getSpreadsheetNameById, validateGoogleSheetsConnection } from "@/lib/googleSheet/service";
 import { getIntegrationByType } from "@/lib/integration/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 
 const ZValidateGoogleSheetsConnectionAction = z.object({
   workspaceId: ZId,
@@ -20,20 +16,9 @@ const ZValidateGoogleSheetsConnectionAction = z.object({
 export const validateGoogleSheetsConnectionAction = authenticatedActionClient
   .inputSchema(ZValidateGoogleSheetsConnectionAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
 
     const integration = await getIntegrationByType(parsedInput.workspaceId, "googleSheets");
@@ -46,42 +31,31 @@ export const validateGoogleSheetsConnectionAction = authenticatedActionClient
   });
 
 const ZGetSpreadsheetNameByIdAction = z.object({
-  googleSheetIntegration: ZIntegrationGoogleSheets,
-  workspaceId: z.string(),
+  workspaceId: ZId,
   spreadsheetId: z.string(),
 });
 
 export const getSpreadsheetNameByIdAction = authenticatedActionClient
   .inputSchema(ZGetSpreadsheetNameByIdAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
 
-    // ENG-1921: googleSheetIntegration is fully client-supplied and carries its own workspaceId,
-    // which is used downstream to upsert the integration (incl. OAuth tokens) on the token-refresh
-    // path. Reject it unless it targets the authorized workspace, otherwise a caller could
-    // create/overwrite another tenant's integration.
-    if (parsedInput.googleSheetIntegration.workspaceId !== parsedInput.workspaceId) {
-      throw new OperationNotAllowedError("Integration does not belong to the specified workspace");
+    // The integration is read from the database rather than accepted from the client. The settings page
+    // redacts `config.key` before handing the integration to the client (ENG-2078), so a client-supplied
+    // object arrives with blank OAuth tokens and `authorize()` fails with "No refresh token is set."
+    // (ENG-2303). Reading it server-side also removes the cross-workspace hijack this action had to
+    // guard against explicitly (ENG-1921), since the integration can only come from the authorized
+    // workspace.
+    const integration = await getIntegrationByType(parsedInput.workspaceId, "googleSheets");
+    if (!integration) {
+      // No ID to report: the lookup is by workspace and type, not by integration ID. The constructor
+      // renders `${resource} not found` for a null ID, which keeps the message accurate if it ever
+      // surfaces raw.
+      throw new ResourceNotFoundError("Google Sheets integration", null);
     }
 
-    const integrationData = structuredClone(parsedInput.googleSheetIntegration);
-    integrationData.config.data.forEach((data) => {
-      data.createdAt = new Date(data.createdAt);
-    });
-
-    return await getSpreadsheetNameById(integrationData, parsedInput.spreadsheetId);
+    return await getSpreadsheetNameById(integration as TIntegrationGoogleSheets, parsedInput.spreadsheetId);
   });

@@ -11,8 +11,10 @@ import {
   getMimeType,
   getShuffledChoicesIds,
   getShuffledRowIndices,
+  getSurveyLanguageTag,
   isRTL,
   isRTLLanguage,
+  resolveSelectedLanguageCode,
 } from "./utils";
 
 // Mock crypto.getRandomValues for deterministic shuffle tests
@@ -101,6 +103,113 @@ describe("getDefaultLanguageCode", () => {
       languages: [],
     } as TJsWorkspaceStateSurvey;
     expect(getDefaultLanguageCode(survey)).toBeUndefined();
+  });
+});
+
+describe("resolveSelectedLanguageCode", () => {
+  test("returns the sentinel when the pick is the default language", () => {
+    // Selecting the default must record the same thing as never touching the switcher, because
+    // survey.tsx resolves "default" to the default language's stored code for response.language.
+    expect(resolveSelectedLanguageCode("en-US", "en-US")).toBe("default");
+  });
+
+  test("returns the picked code for a non-default language", () => {
+    expect(resolveSelectedLanguageCode("de-DE", "en-US")).toBe("de-DE");
+  });
+
+  test("returns the sentinel when a canonical pick matches a legacy default code", () => {
+    // The dedupe keeps the canonical row, so the visible default option reads "hi-IN" on a survey
+    // whose default row stores "hi". Comparing raw strings would store "hi-IN" instead of the
+    // sentinel, and response.language would then differ from the untouched-switcher path.
+    expect(resolveSelectedLanguageCode("hi-IN", "hi")).toBe("default");
+  });
+
+  test("returns the sentinel when a legacy pick matches a canonical default code", () => {
+    expect(resolveSelectedLanguageCode("hi", "hi-IN")).toBe("default");
+  });
+
+  test("does not collapse two different languages that share nothing canonical", () => {
+    expect(resolveSelectedLanguageCode("hi-IN", "en-US")).toBe("hi-IN");
+  });
+
+  test("passes the code through untouched when the survey has no default language", () => {
+    expect(resolveSelectedLanguageCode("de-DE", undefined)).toBe("de-DE");
+  });
+});
+
+describe("getSurveyLanguageTag", () => {
+  const languageWithCode = (code: string, isDefault: boolean): TSurveyLanguage => ({
+    default: isDefault,
+    enabled: true,
+    language: {
+      id: `lang-${code}`,
+      code,
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "proj1",
+    },
+  });
+
+  const surveyWithLanguages = (languages: TSurveyLanguage[]): TJsWorkspaceStateSurvey =>
+    ({ ...baseMockSurvey, languages }) as TJsWorkspaceStateSurvey;
+
+  const multiLanguageSurvey = surveyWithLanguages([
+    languageWithCode("en-US", true),
+    languageWithCode("de-DE", false),
+  ]);
+
+  test("returns a configured language code unchanged", () => {
+    expect(getSurveyLanguageTag(multiLanguageSurvey, "de-DE")).toBe("de-DE");
+  });
+
+  test('resolves the "default" sentinel to the default language code', () => {
+    // "default" is the renderer's internal marker, not a language tag: putting it in a lang
+    // attribute would declare a language that does not exist.
+    expect(getSurveyLanguageTag(multiLanguageSurvey, "default")).toBe("en-US");
+  });
+
+  test("resolves an empty language code to the default language code", () => {
+    expect(getSurveyLanguageTag(multiLanguageSurvey, "")).toBe("en-US");
+  });
+
+  test("returns null when the survey has no languages configured", () => {
+    // A single-language survey declares nothing, so the host document's language stands.
+    expect(getSurveyLanguageTag(surveyWithLanguages([]), "default")).toBeNull();
+  });
+
+  test("returns null when no language is marked default", () => {
+    expect(
+      getSurveyLanguageTag(surveyWithLanguages([languageWithCode("de-DE", false)]), "default")
+    ).toBeNull();
+  });
+
+  test("falls back to the default for a code the survey does not have", () => {
+    // The tag lands in a DOM lang attribute, so an unconfigured code would declare a language whose
+    // content is not being rendered — getLocalizedValue falls back to the default text, and a screen
+    // reader would read that text with the wrong pronunciation rules. The offline restore path can
+    // replay a persisted language that has since been removed from the survey.
+    expect(getSurveyLanguageTag(multiLanguageSurvey, "fr-FR")).toBe("en-US");
+  });
+
+  test("falls back to the default for a configured but disabled language", () => {
+    // Same rule the server applies to ?lang=: a language that is not offered is not declared.
+    const survey = surveyWithLanguages([
+      languageWithCode("en-US", true),
+      { ...languageWithCode("de-DE", false), enabled: false },
+    ]);
+    expect(getSurveyLanguageTag(survey, "de-DE")).toBe("en-US");
+  });
+
+  test("resolves a legacy alias to the stored canonical code", () => {
+    // The stored code is what content is keyed under, so that is what the tag has to be.
+    const survey = surveyWithLanguages([languageWithCode("en-US", true), languageWithCode("hi-IN", false)]);
+    expect(getSurveyLanguageTag(survey, "hi")).toBe("hi-IN");
+  });
+
+  test("returns null when nothing matches and there is no default either", () => {
+    const survey = surveyWithLanguages([languageWithCode("de-DE", false)]);
+    expect(getSurveyLanguageTag(survey, "fr-FR")).toBeNull();
   });
 });
 

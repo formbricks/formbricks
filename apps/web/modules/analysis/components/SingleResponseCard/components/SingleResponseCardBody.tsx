@@ -17,7 +17,7 @@ import { getSurveyDateFormatMap } from "@/lib/utils/date-display";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { isValidValue } from "../util";
+import { isValidValue, splitRecallHighlights } from "../util";
 import { AutoCapturedFields } from "./AutoCapturedFields";
 import { ElementSkip } from "./ElementSkip";
 import { HiddenFields } from "./HiddenFields";
@@ -51,9 +51,7 @@ export const SingleResponseCardBody = ({
   const isFirstElementAnswered = elements[0] ? !!response.data[elements[0].id] : false;
   const { t } = useTranslation();
   const formatTextWithSlashes = (text: string) => {
-    // Updated regex to match content between #/ and \#
-    const regex = /#\/(.*?)\\#/g;
-    const parts = text.split(regex);
+    const parts = splitRecallHighlights(text);
 
     return parts.map((part, index) => {
       // Check if the part was inside #/ and \#

@@ -12,12 +12,28 @@ interface ButtonInfo {
   variant: "secondary" | "default" | "outline" | "ghost" | "link";
 }
 
+/**
+ * How the card treats its body:
+ * - `padded` — the default `px-4 pt-4` gutter, for ordinary form content.
+ * - `bleed` — no gutter; the child supplies its own padding.
+ * - `flush` — no gutter *and* no bottom padding, so edge-to-edge content (a table) meets the card's
+ *   bottom border. Pairs with `overflow-hidden` on the card, which clips the content with the card's
+ *   own inner radius — a `rounded-b-*` on the child would be off by the border width.
+ */
+export type TSettingsCardBodyVariant = "padded" | "bleed" | "flush";
+
+const BODY_VARIANT_CLASSES: Record<TSettingsCardBodyVariant, string> = {
+  padded: "px-4 pt-4",
+  bleed: "",
+  flush: "-mb-4",
+};
+
 export const SettingsCard = ({
   title,
   description,
   children,
   soon = false,
-  noPadding = false,
+  bodyVariant = "padded",
   beta,
   className,
   buttonInfo,
@@ -27,7 +43,7 @@ export const SettingsCard = ({
   description: string;
   children: any;
   soon?: boolean;
-  noPadding?: boolean;
+  bodyVariant?: TSettingsCardBodyVariant;
   beta?: boolean;
   className?: string;
   buttonInfo?: ButtonInfo;
@@ -38,6 +54,7 @@ export const SettingsCard = ({
     <div
       className={cn(
         "relative my-4 w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 text-left shadow-xs",
+        bodyVariant === "flush" && "overflow-hidden",
         className
       )}
       id={title}>
@@ -61,7 +78,7 @@ export const SettingsCard = ({
             </Button>
           ))}
       </div>
-      <div className={cn(noPadding ? "" : "px-4 pt-4")}>{children}</div>
+      <div className={BODY_VARIANT_CLASSES[bodyVariant]}>{children}</div>
     </div>
   );
 };

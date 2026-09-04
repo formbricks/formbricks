@@ -1,5 +1,11 @@
 import "server-only";
-import { AUDIT_LOG_ENABLED, IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED } from "@/lib/constants";
+import {
+  AUDIT_LOG_ENABLED,
+  CLOUD_HOBBY_WORKSPACE_LIMIT,
+  COMMUNITY_WORKSPACE_LIMIT,
+  IS_FORMBRICKS_CLOUD,
+  IS_RECAPTCHA_CONFIGURED,
+} from "@/lib/constants";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { hasOrganizationEntitlementWithLicenseGuard } from "@/modules/entitlements/lib/checks";
@@ -189,16 +195,15 @@ export const getOrganizationWorkspacesLimit = async (organizationId: string): Pr
   if (IS_FORMBRICKS_CLOUD) {
     const cloudLicenseAllowsLimits =
       entitlementsContext.licenseStatus === "active" || entitlementsContext.licenseStatus === "no-license";
-    if (!cloudLicenseAllowsLimits) return 3;
+    if (!cloudLicenseAllowsLimits) return CLOUD_HOBBY_WORKSPACE_LIMIT;
     return entitlementsContext.limits.workspaces ?? Infinity;
   }
 
-  if (
-    entitlementsContext.licenseStatus === "active" &&
-    entitlementsContext.licenseFeatures?.workspaces != null
-  ) {
-    return entitlementsContext.licenseFeatures.workspaces;
+  // `workspaces: null` on an active license means unlimited, mirroring the cloud branch above.
+  if (entitlementsContext.licenseStatus === "active" && entitlementsContext.licenseFeatures) {
+    return entitlementsContext.licenseFeatures.workspaces ?? Infinity;
   }
 
-  return 3;
+  // No active license (no-license / expired / invalid / unreachable) — Community Edition.
+  return COMMUNITY_WORKSPACE_LIMIT;
 };

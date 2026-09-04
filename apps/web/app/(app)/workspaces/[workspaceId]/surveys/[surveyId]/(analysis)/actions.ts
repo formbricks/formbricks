@@ -3,11 +3,11 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { assertCan } from "@/lib/authorization";
 import { getDisplaysBySurveyIdWithContact } from "@/lib/display/service";
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
+import { getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { getSurveySummary } from "./summary/lib/surveySummary";
 
 const ZGetResponsesAction = z.object({
@@ -20,22 +20,9 @@ const ZGetResponsesAction = z.object({
 export const getResponsesAction = authenticatedActionClient
   .inputSchema(ZGetResponsesAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          schema: ZResponseFilterCriteria,
-          data: parsedInput.filterCriteria,
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     return getResponses(
@@ -54,22 +41,9 @@ const ZGetSurveySummaryAction = z.object({
 export const getSurveySummaryAction = authenticatedActionClient
   .inputSchema(ZGetSurveySummaryAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          schema: ZResponseFilterCriteria,
-          data: parsedInput.filterCriteria,
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
     return getSurveySummary(parsedInput.surveyId, parsedInput.filterCriteria);
   });
@@ -82,22 +56,9 @@ const ZGetResponseCountAction = z.object({
 export const getResponseCountAction = authenticatedActionClient
   .inputSchema(ZGetResponseCountAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          schema: ZResponseFilterCriteria,
-          data: parsedInput.filterCriteria,
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     return getResponseCountBySurveyId(parsedInput.surveyId, parsedInput.filterCriteria);
@@ -112,20 +73,9 @@ const ZGetDisplaysWithContactAction = z.object({
 export const getDisplaysWithContactAction = authenticatedActionClient
   .inputSchema(ZGetDisplaysWithContactAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     return getDisplaysBySurveyIdWithContact(parsedInput.surveyId, parsedInput.limit, parsedInput.offset);

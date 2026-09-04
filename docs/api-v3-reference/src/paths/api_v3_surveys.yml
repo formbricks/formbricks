@@ -96,7 +96,7 @@ get:
         Sort order. Defaults to `updatedAt`. The `cursor` token is bound to the
         selected sort order.
   responses:
-    '200':
+    "200":
       description: Surveys retrieved successfully
       headers:
         X-Request-Id:
@@ -132,14 +132,14 @@ get:
                   nextCursor:
                     type:
                       - string
-                      - 'null'
+                      - "null"
                     description: >-
                       Opaque cursor for the next page. `null` when there are no
                       more results.
                   totalCount:
                     type:
                       - integer
-                      - 'null'
+                      - "null"
                     minimum: 0
                     description: >-
                       Total number of surveys matching the current filters
@@ -147,21 +147,21 @@ get:
                   hasArchived:
                     type:
                       - boolean
-                      - 'null'
+                      - "null"
                     description: >-
                       `true` when the workspace has at least one archived
                       (soft-deleted) survey. Computed only on the first page
                       (same gate as `totalCount`); `null` when
                       `includeTotalCount=false`.
-    '400':
+    "400":
       $ref: ../components/responses/V3BadRequest.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       $ref: ../components/responses/V3Forbidden.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
@@ -396,7 +396,7 @@ post:
                     en-US: Thanks for your feedback!
                     de-DE: Danke für dein Feedback!
   responses:
-    '201':
+    "201":
       description: Survey created successfully
       headers:
         Location:
@@ -421,7 +421,7 @@ post:
             properties:
               data:
                 $ref: ../components/schemas/SurveyResource.yml
-    '400':
+    "400":
       description: >
         Bad Request — the document failed schema validation, i.e. any rule checkable from the
         request body alone, without consulting stored state. Covers: invalid JSON; unknown or
@@ -439,9 +439,9 @@ post:
         application/problem+json:
           schema:
             $ref: ../components/schemas/Problem.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       description: >-
         Forbidden — no write access, missing external URL permission, missing
         Contacts entitlement for app-survey targeting, or workspace does not
@@ -450,7 +450,7 @@ post:
         application/problem+json:
           schema:
             $ref: ../components/schemas/Problem.yml
-    '422':
+    "422":
       description: >-
         Unprocessable Content — the document passed schema validation but failed a cross-reference
         check that requires stored state to detect: duplicate stable ids, dangling logic/jump
@@ -458,15 +458,18 @@ post:
         `distribution.triggers[].actionClassId` referencing an action class that does not exist in
         the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters`
         entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an
-        unsupported person identifier, or an unknown device value. The `invalid_params`
+        unsupported person identifier, or an unknown device value. Also returned when the document
+        passes this endpoint's request schema but is rejected by the stricter validation the survey
+        service applies on write — for example a CTA `buttonUrl` whose scheme the service does not
+        accept. The `invalid_params`
         array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
       content:
         application/problem+json:
           schema:
             $ref: ../components/schemas/Problem.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []

@@ -1,0 +1,72 @@
+name: Linear Release Smoke
+
+# Dry-run canary for the Linear release flow. dry_run makes the action scan commits and call
+# read-only Linear APIs, then log the action it would have taken; it never mutates the pipeline.
+#
+# It exists because the real flow only runs on a published release, so a stale action pin or a
+# broken install stayed invisible until release day.
+#
+# WHAT THIS DOES NOT PROVE. The pinned CLI returns from its complete command before resolving a
+# release when dry_run is set, so a green run here says nothing about whether an exact version
+# resolves or completes - a nonexistent version passes too. Treat it as "the action installs,
+# authenticates and scans", not as validation of the release flow. Exact-version completion is
+# only exercised by a real published release.
+#
+# TRIGGERS ARE DELIBERATELY TRUSTED-ONLY. This job holds a Linear key that can mutate the
+# pipeline, so it must never run code from outside main. `pull_request` would run the PR's own
+# copy of this file, and `workflow_dispatch` runs the copy on whichever ref the caller picks,
+# so either would let a pushed branch drop dry_run or add an exfiltration step. Hence: no
+# pull_request trigger, push restricted to main, and the ref check on the job below.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to target (blank targets the active started release)"
+        required: false
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/linear-release.yml
+      - .github/workflows/formbricks-release.yml
+      - .github/workflows/linear-release-smoke.yml
+
+permissions:
+  contents: read
+
+jobs:
+  linear-release-smoke:
+    name: Dry-run the Linear release flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Belt to the trigger's braces: a workflow_dispatch runs the file as it exists on the ref
+    # the caller chose, so the key must not be handed to a branch's copy of these steps.
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Dry-run the release sync
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          version: ${{ inputs.version }}
+          dry_run: "true"
+          log_level: verbose
+
+      - name: Dry-run the release completion
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: complete
+          version: ${{ inputs.version }}
+          dry_run: "true"
+          log_level: verbose

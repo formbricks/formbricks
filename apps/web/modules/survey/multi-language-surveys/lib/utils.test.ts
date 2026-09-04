@@ -10,6 +10,8 @@ const t = ((key: string, options?: Record<string, unknown>) => {
     "common.headline": "Headline",
     "common.other_placeholder": "Other Placeholder",
     "workspace.surveys.edit.please_specify": "Please specify",
+    "workspace.surveys.edit.lower_label": "Lower label",
+    "workspace.surveys.edit.upper_label": "Upper label",
   };
 
   return translations[key] ?? key;
@@ -71,6 +73,65 @@ describe("multi-language survey utils", () => {
           path: "blocks.0.elements.1.otherOptionPlaceholder",
           fieldLabel: "Other Placeholder",
           value: { default: "Please specify" },
+        }),
+      ])
+    );
+  });
+
+  test("extracts the scale labels of csat and ces elements", () => {
+    const survey = createSurvey({
+      blocks: [
+        {
+          id: "block-1",
+          elements: [
+            {
+              id: "csat",
+              type: TSurveyElementTypeEnum.CSAT,
+              headline: { default: "How satisfied are you?" },
+              required: true,
+              scale: "smiley",
+              range: 5,
+              lowerLabel: { default: "Not satisfied at all" },
+              upperLabel: { default: "Very satisfied" },
+            },
+            {
+              id: "ces",
+              type: TSurveyElementTypeEnum.CES,
+              headline: { default: "How easy was it?" },
+              required: true,
+              scale: "number",
+              range: 5,
+              lowerLabel: { default: "Very difficult" },
+              upperLabel: { default: "Very easy" },
+            },
+          ],
+        },
+      ],
+    });
+
+    const strings = extractTranslatableStrings(survey, t);
+
+    expect(strings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "blocks.0.elements.0.lowerLabel",
+          fieldLabel: "Lower label",
+          value: { default: "Not satisfied at all" },
+        }),
+        expect.objectContaining({
+          path: "blocks.0.elements.0.upperLabel",
+          fieldLabel: "Upper label",
+          value: { default: "Very satisfied" },
+        }),
+        expect.objectContaining({
+          path: "blocks.0.elements.1.lowerLabel",
+          fieldLabel: "Lower label",
+          value: { default: "Very difficult" },
+        }),
+        expect.objectContaining({
+          path: "blocks.0.elements.1.upperLabel",
+          fieldLabel: "Upper label",
+          value: { default: "Very easy" },
         }),
       ])
     );

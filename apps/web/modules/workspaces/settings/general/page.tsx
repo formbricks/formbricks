@@ -1,6 +1,5 @@
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getWorkspaces } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -18,8 +17,6 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ workspaceId
   const { isReadOnly, isOwner, isManager, workspace, organization } = await getWorkspaceAuth(
     params.workspaceId
   );
-
-  const organizationWorkspaces = await getWorkspaces(organization.id);
 
   const isOwnerOrManager = isOwner || isManager;
 
@@ -49,7 +46,6 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ workspaceId
         <DeleteWorkspace
           organizationId={organization.id}
           currentWorkspace={workspace}
-          organizationWorkspaces={organizationWorkspaces}
           isOwnerOrManager={isOwnerOrManager}
         />
       </SettingsCard>

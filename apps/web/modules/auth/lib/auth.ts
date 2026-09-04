@@ -12,12 +12,14 @@ import type { TUserLocale } from "@formbricks/types/user";
 import {
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
+  PASSWORD_RESET_DISABLED,
   PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
   RATE_LIMITING_DISABLED,
   SESSION_MAX_AGE,
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
+import { BETTER_AUTH_IP_ADDRESS_CONFIG } from "@/lib/utils/client-ip";
 import {
   accountDeletionConfig,
   requireDeletionConfirmationBeforeHandler,
@@ -26,26 +28,22 @@ import { ssoDatabaseHooks, ssoLicenseGateBeforeHandler } from "@/modules/ee/sso/
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recovery-signin";
 import { runAfterAuthHooks } from "./after-auth-hooks";
+import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cookies";
 import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
-import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
+import { runAfterEmailVerificationHooks } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
+import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
+import { signupPolicyBeforeHandler } from "./signup-policy";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
 
-// `__Secure-`/Secure cookies require HTTPS — on http://localhost the browser drops them and the
-// session can't persist. Gate on the configured URL scheme (parity with NextAuth's URL-based
-// useSecureCookies default) instead of hardcoding true, so local/dev over http works.
-//
-// WEBAPP_URL is part of the chain because all three vars are optional: a deployment that sets only
-// WEBAPP_URL=https://… — the primary documented variable — would otherwise fall through to "" and
-// serve the session cookie without `Secure`, letting a downgrade to plaintext HTTP leak it.
-const USE_SECURE_COOKIES = (env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL ?? env.WEBAPP_URL ?? "").startsWith(
-  "https://"
-);
+// `USE_SECURE_COOKIES` and `EMAIL_VERIFICATION_TTL_SECONDS` live in auth-cookies.ts — the sign-up
+// intent cookie (ENG-2562) needs both, and it is reached FROM this module, so keeping them here and
+// exporting them would close an import cycle. Their derivation is documented there.
 
 /** Resolve a user's locale for transactional emails (Better Auth's callback user omits it). */
 export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
@@ -159,12 +157,20 @@ export const auth = betterAuth({
     // this flag BA would throw EMAIL_NOT_VERIFIED without sending anything, leaving no recovery path
     // and making that message untrue. (ENG-1054)
     sendOnSignIn: true,
-    // Establish the session on a successful verification so the user lands in the app instead of
-    // bouncing to /auth/login (ENG-1746). Safe — clicking the signed link proves email ownership.
-    // Distinct from the sibling `autoSignIn: false` above, which stays off (no auto-login at sign-up,
-    // before ownership is proven; also enumeration-safe).
-    autoSignInAfterVerification: true,
-    expiresIn: 60 * 60, // 1 hour
+    // OFF since ENG-2562, and the reason is worth keeping: this used to be `true` "because clicking the
+    // signed link proves email ownership". It does — but it does not prove the clicker chose the
+    // account's PASSWORD, and conflating the two is account pre-hijacking. An attacker registers an
+    // address that has no account yet with a password they pick, Formbricks mails the victim a
+    // verification link, and the victim's click signs the victim into the attacker's account.
+    //
+    // The ENG-1746 UX it existed for (land in the app, not on /auth/login) is preserved for the case it
+    // was actually meant to serve — the same browser that signed up — by
+    // `verificationAutoSignInAfterHandler` in the `hooks.after` chain, which mints the session only
+    // against a sign-up intent cookie. Leaving this `false` is what makes that fail-closed.
+    autoSignInAfterVerification: false,
+    // Shared with the sign-up intent cookie: the cookie has to outlive the link it is paired with, or a
+    // legitimate same-browser sign-up silently loses its session. See auth-cookies.ts.
+    expiresIn: EMAIL_VERIFICATION_TTL_SECONDS,
     // ENG-2091: a failed send must never present as a successful one. Two ways it can hide:
     //  1. a THROW — on the sign-up path Better Auth calls this through `runInBackgroundOrAwait`, whose
     //     catch only logs, so sign-up still resolves 200. (The resend endpoint awaits it directly and
@@ -197,8 +203,10 @@ export const auth = betterAuth({
         throw error;
       }
     },
-    // Re-home the "token" provider's Brevo-on-first-verification side effect (better-auth-email-verification.ts).
-    afterEmailVerification: createBrevoCustomerAfterEmailVerification,
+    // Composed: records the ENG-2562 "this request just verified someone" marker for the auto-sign-in
+    // after-hook, then re-homes the "token" provider's Brevo-on-first-verification side effect. See
+    // better-auth-email-verification.ts for why the marker goes first.
+    afterEmailVerification: runAfterEmailVerificationHooks,
   },
 
   // Hash verification/reset token identifiers at rest (BA default is plaintext) — matches the
@@ -281,6 +289,16 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
+      // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
+      // has disabled password resets (PASSWORD_RESET_DISABLED=1). See better-auth-password-reset-gate.ts.
+      await requirePasswordResetEnabledBeforeHandler(ctx, PASSWORD_RESET_DISABLED);
+      // ENG-2293: enforce the closed-sign-up policy on Better Auth's native /sign-up/email, which is
+      // served beside createUserAction and used to bypass it entirely. Runs BEFORE the endpoint so the
+      // rejection can't double as an account-existence oracle (the handler looks the address up first,
+      // and an address that already has one never reaches a create hook). See signup-policy.ts.
+      // Ordered ahead of the breach check so a sign-up on a closed instance costs no outbound HIBP call.
+      // Path-disjoint from the reset gate above, so their relative order is not load-bearing.
+      await signupPolicyBeforeHandler(ctx);
       // ENG-1587: reject known-breached passwords on set (signup / reset) BEFORE the endpoint runs, so
       // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
       // unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See better-auth-hibp.ts.
@@ -302,6 +320,19 @@ export const auth = betterAuth({
       "/sign-up/email": { window: 60, max: 3 },
       "/request-password-reset": { window: 60, max: 3 },
       "/reset-password": { window: 60, max: 5 },
+      // ENG-2562: the two verification endpoints, deliberately asymmetric because their risk is.
+      //
+      // Sending is the amplification vector — unauthenticated, attacker-triggerable, and it puts mail in
+      // someone else's inbox. Without a cap the 1-hour link expiry is not a real constraint on
+      // pre-hijacking either, since fresh links can be re-issued until the victim clicks. Same budget as
+      // the sibling reset request.
+      "/send-verification-email": { window: 60, max: 3 },
+      // Verifying is the opposite case and must stay generous. It is a top-level GET clicked out of a
+      // mail client — frequently behind a corporate NAT shared by many users, and often prefetched by a
+      // mail-security scanner before the human clicks. It also already requires a signed, expiring
+      // token, so a tight per-IP cap buys very little and risks locking a legitimate user out of
+      // verifying at all. This is a flood guard, not an authorization control.
+      "/verify-email": { window: 60, max: 30 },
       "/oauth2/register": { window: 60, max: 5 },
       "/oauth2/token": { window: 60, max: 20 },
       "/oauth2/introspect": { window: 60, max: 60 },
@@ -325,7 +356,9 @@ export const auth = betterAuth({
     // write path) would reject BA-created users at cutover — caught by the SSO-provisioning test.
     database: { generateId: () => createId() },
     defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: USE_SECURE_COOKIES, path: "/" },
-    ipAddress: { ipAddressHeaders: ["x-forwarded-for"] }, // pin to the trusted proxy header
+    // Proxy has already selected the configured trusted hop. Do not re-parse forwarding chains or add
+    // Better Auth trustedProxies here; the private single-value header is the canonical identity.
+    ipAddress: BETTER_AUTH_IP_ADDRESS_CONFIG,
   },
 
   // Route Better Auth's logs to @formbricks/logger and capture errors to Sentry (Phase 7 parity).

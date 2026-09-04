@@ -97,7 +97,6 @@ const mockBaseSurvey: TSurvey = {
   surveyClosedMessage: null,
   pin: null,
   createdBy: "user_123",
-  isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,
   workspaceOverwrites: null,
   showLanguageSwitch: false,

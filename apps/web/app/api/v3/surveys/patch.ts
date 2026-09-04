@@ -10,6 +10,7 @@ import {
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
+import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { selectSurvey } from "@/lib/survey/service";
 import {
   APP_SURVEY_TRIGGER_REQUIRED_MESSAGE,
@@ -293,6 +294,15 @@ export async function executeV3SurveyPatch(params: {
       // reads back through `selectSurvey`'s deep select, and now adds an indexed read plus a write
       // per changed field — enough to approach Prisma's 5s default on a large survey.
       { timeout: 20_000, maxWait: 10_000 }
+    );
+
+    // ENG-2064: this route writes blocks directly rather than going through updateSurveyInternal, so
+    // it needs the same feedback-source reconciliation — it is the surface an automation would use to
+    // change a survey's questions. Best-effort; failures log without failing the patch.
+    await scheduleFeedbackSourceReconciliation(
+      currentSurvey.id,
+      currentSurvey.workspaceId,
+      persistedSurvey.blocks
     );
 
     return await reconcilePersistedV3SurveyPatch({

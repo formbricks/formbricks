@@ -11,6 +11,7 @@ import {
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
+  renderSsoRecoveryFactorsRemovedEmail,
   renderVerificationEmail,
 } from "@formbricks/email";
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
@@ -127,7 +128,7 @@ export const sendVerificationNewEmail = async (
 ): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
-    const token = createEmailChangeToken(id, email);
+    const token = await createEmailChangeToken(id, email);
     const verifyLink = `${WEBAPP_URL}/verify-email-change?token=${encodeURIComponent(token)}`;
 
     const html = await renderNewEmailVerification({ verifyLink, t, ...legalProps });
@@ -263,6 +264,43 @@ export const sendPasswordResetNotifyEmail = async (user: {
   });
 };
 
+/**
+ * Tell a user that SSO recovery removed the local sign-in factors from their account (ENG-2633).
+ *
+ * Recovery strips the password and any second factor from an account whose address was never proven,
+ * because marking it verified would otherwise leave an attacker who registered on someone else's
+ * address holding a live credential. No signal separates that attacker from an owner who simply never
+ * clicked a verification link, so the strip is unconditional and this mail is what keeps the
+ * legitimate case from being a silent downgrade: it names what went and links to re-enrolment.
+ */
+export const sendSsoRecoveryFactorsRemovedEmail = async ({
+  email,
+  locale,
+  passwordRemoved,
+  twoFactorRemoved,
+}: {
+  email: string;
+  locale: TUserLocale;
+  passwordRemoved: boolean;
+  twoFactorRemoved: boolean;
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderSsoRecoveryFactorsRemovedEmail({
+    passwordRemoved,
+    twoFactorRemoved,
+    // The account profile page is where both factors this mail can name are re-enrolled — the password
+    // form and the 2FA card both live there. There is no separate /settings/security route.
+    securitySettingsLink: `${WEBAPP_URL}/account/settings/profile`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    to: email,
+    subject: t("emails.sso_recovery_factors_removed_email_subject"),
+    html,
+  });
+};
+
 export const sendInviteMemberEmail = async (
   inviteId: string,
   email: string,
@@ -334,6 +372,13 @@ export const sendResponseFinishedEmail = async (
     return element;
   });
 
+  // The whitelabel logo is stored as a relative `/storage/...` path, which an email client cannot
+  // resolve — it has no origin to resolve against, so the `<img>` renders broken. Resolve it to an
+  // absolute URL here, exactly like every other email sender does.
+  const logoUrl = organization.whitelabel?.logoUrl
+    ? resolveStorageUrl(organization.whitelabel.logoUrl)
+    : undefined;
+
   const html = await renderResponseFinishedEmail({
     survey,
     responseCount,
@@ -342,6 +387,7 @@ export const sendResponseFinishedEmail = async (
     workspaceId,
     organization,
     elements: elementsWithResolvedUrls,
+    logoUrl,
     t,
     ...legalProps,
   });

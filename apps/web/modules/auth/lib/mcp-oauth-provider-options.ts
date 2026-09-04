@@ -17,7 +17,53 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
   advertisedMetadata: {
     scopes_supported: [...MCP_OAUTH_SCOPES],
   },
-  validAudiences: [getMcpResourceUrl()],
+  // Better Auth 1.7 replaced the flat `validAudiences` allow-list with persisted resources
+  // (ENG-2343). The difference is the point of the upgrade: 1.6 stamped a token with whatever the
+  // client asked for, checked only against this list, so nothing tied the token to what the user
+  // actually approved (GHSA-p2fr-6hmx-4528). 1.7 binds the grant instead.
+  //
+  // `allowedScopes` intersects the requested scopes rather than rejecting them, so it MUST be the
+  // full MCP_OAUTH_SCOPES set. Narrowing it to the six resource scopes would silently strip openid,
+  // profile, email and offline_access from every token — killing id_tokens and refresh with no error
+  // anywhere. Derived from the constant so the two cannot drift.
+  //
+  // No `accessTokenTtl` on purpose: leaving it unset keeps expiry driven by `accessTokenExpiresIn`
+  // and `scopeExpirations` below, preserving the 15-minute write step-up exactly as it works today.
+  // A per-resource TTL would be min()'d with those and only muddy the derivation.
+  resources: [
+    {
+      identifier: getMcpResourceUrl(),
+      name: "Formbricks MCP",
+      allowedScopes: [...MCP_OAUTH_SCOPES],
+    },
+  ],
+  // Boot-time config never overwrites a row an operator edited through the CRUD endpoints. This is
+  // the upstream default; pinned explicitly because a silent policy revert on restart would be very
+  // hard to attribute.
+  //
+  // ⚠ The flip side, for whoever changes a deployment's WEBAPP_URL after install: the resource
+  // identifier above is derived from it, so a new URL is a NEW resource. insertOnly means boot adds a
+  // second `oauthResource` row and points `clientRegistrationDefaultResources` at it, while every
+  // already-registered client keeps its `oauthClientResource` link to the OLD identifier — and with
+  // `enforcePerClientResources` on, those clients then fail `invalid_target` at the token endpoint,
+  // after the user has already consented. Nothing self-heals it, because insertOnly is what stops boot
+  // from rewriting operator-owned rows.
+  //
+  // Migrating the URL therefore means repointing the links, not just restarting: update the existing
+  // `oauthResource.identifier` in place (the FK from `oauthClientResource.resourceId` is
+  // ON UPDATE CASCADE, so the link rows follow), rather than letting a second row appear. The
+  // alternative — telling every MCP user to re-register their client — is the thing the ENG-2343
+  // backfill exists to avoid.
+  resourceSeedMode: "insertOnly",
+  // Mandatory, not optional. `enforcePerClientResources` defaults to true, and with no registration
+  // resources configured the plugin rejects every explicit resource request — which would break each
+  // MCP client the moment it registered.
+  clientRegistrationDefaultResources: [getMcpResourceUrl()],
+  // `cachedResources` is deliberately NOT set. Its cache is module-scoped with no TTL, invalidated
+  // only by CRUD writes in the same process, so on multiple replicas disabling a resource would not
+  // take effect until every pod restarted — defeating `disabled` as a revocation lever. It would
+  // save one indexed read per /oauth2/token call, which is not the hot path (/api/mcp verifies JWTs
+  // locally against a cached JWKS and never reads these tables).
   allowDynamicClientRegistration: true,
   allowUnauthenticatedClientRegistration: true,
   // Register MCP clients with the full advertised scope set by default so the consent screen offers
@@ -51,10 +97,9 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
     introspect: { window: 60, max: 60 },
     revoke: { window: 60, max: 30 },
   },
-  // Discovery is served by our Next.js catch-all at /.well-known/oauth-authorization-server/api/auth;
-  // Better Auth can't introspect the route, so this acks the (verified-correct) endpoint rather than
-  // masking a real problem. See PR #8447.
-  silenceWarnings: {
-    oauthAuthServerConfig: true,
-  },
+  // `silenceWarnings` was removed in Better Auth 1.7 (ENG-2343). It acknowledged an
+  // `oauthAuthServerConfig` warning: discovery is served by our Next.js catch-all at
+  // /.well-known/oauth-authorization-server/api/auth, which Better Auth cannot introspect, so the
+  // warning was noise about a verified-correct endpoint rather than a real problem (PR #8447).
+  // Nothing replaces it upstream — if 1.7 still emits that warning it is expected and harmless here.
 });

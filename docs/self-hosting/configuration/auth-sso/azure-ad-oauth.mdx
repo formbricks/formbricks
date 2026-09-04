@@ -16,7 +16,20 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 
 - A Formbricks instance running and accessible.
 
-- The callback URI for your Formbricks instance: `{WEBAPP_URL}/api/auth/callback/azure-ad`
+- The callback URI for your Formbricks instance: `{WEBAPP_URL}/api/auth/oauth2/callback/azuread`
+
+<Warning>
+  **Upgrading from v5.1 or earlier?** This path changed once, at v5.2:
+
+  - v5.1 and earlier: `{WEBAPP_URL}/api/auth/callback/azure-ad`
+  - v5.2 and later (current): `{WEBAPP_URL}/api/auth/oauth2/callback/azuread`
+
+  The two are distinct URIs, because the provider id itself also changed (`azure-ad` → `azuread`). Add
+  the current one under **Redirect URIs** in your app registration, or Azure AD sign-in fails with a
+  redirect-URI mismatch. Upgrading from v5.2 or later needs no change — the callback URL is pinned and
+  does not move with Formbricks' authentication library. See the
+  [migration guide](/self-hosting/advanced/migration).
+</Warning>
 
 ## How to connect your Formbricks instance to Microsoft Entra
 
@@ -54,6 +67,20 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
     - On the _Overview_ page, under **Essentials**:
       - Copy the entry for **Application (client) ID** to populate the `AZUREAD_CLIENT_ID` variable.
       - Copy the entry for **Directory (tenant) ID** to populate the `AZUREAD_TENANT_ID` variable.
+
+    <Note>
+      Use the **Directory (tenant) ID** GUID (or a verified domain) — with it set, Formbricks fully
+      verifies Microsoft id_tokens against your tenant's issuer.
+
+      For a multi-tenant app registration, either leave `AZUREAD_TENANT_ID` unset, which is equivalent
+      to `common` and accepts both work/school and personal accounts, or set it to `organizations` to
+      accept work/school accounts only. Those two authorities advertise a placeholder issuer rather
+      than a real one, so Formbricks skips id_token verification for them and takes the signed-in
+      identity from Microsoft's userinfo endpoint — the authority you configure still applies at
+      sign-in, so `organizations` keeps restricting which accounts Microsoft will accept. `consumers`
+      is unaffected: personal Microsoft accounts share one well-known tenant, so its id_tokens are
+      verified normally.
+    </Note>
 
     ![sixth](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738250876/image_dj2vi5.jpg)
   </Step>

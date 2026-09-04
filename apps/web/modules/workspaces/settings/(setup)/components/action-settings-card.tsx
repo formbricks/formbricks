@@ -6,8 +6,6 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { TUserLocale } from "@formbricks/types/user";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { ActionClassesTable } from "@/modules/workspaces/settings/(setup)/components/ActionClassesTable";
-import { ActionClassDataRow } from "@/modules/workspaces/settings/(setup)/components/ActionRowData";
-import { ActionTableHeading } from "@/modules/workspaces/settings/(setup)/components/ActionTableHeading";
 import { AddActionModal } from "@/modules/workspaces/settings/(setup)/components/AddActionModal";
 
 interface ActionSettingsCardProps {
@@ -33,13 +31,11 @@ export const ActionSettingsCard = ({
           text: t("common.add_action"),
           onClick: () => setIsActionModalOpen(true),
           variant: "default",
-        }}>
-        <ActionClassesTable actionClasses={actionClasses} isReadOnly={isReadOnly}>
-          <ActionTableHeading />
-          {actionClasses.map((actionClass) => (
-            <ActionClassDataRow key={actionClass.id} actionClass={actionClass} locale={locale} />
-          ))}
-        </ActionClassesTable>
+        }}
+        // The "Add action" control lives in the card's header, so the table is the only body content and
+        // can run edge to edge with nothing above it needing a gutter.
+        bodyVariant="flush">
+        <ActionClassesTable actionClasses={actionClasses} isReadOnly={isReadOnly} locale={locale} />
       </SettingsCard>
       <AddActionModal
         workspaceId={workspaceId}

@@ -17,7 +17,9 @@ export const getOnboardingRedirectPath = async ({
   workspace,
 }: {
   organizationId: string;
-  workspace: TWorkspace | undefined;
+  // Only the id is read; accepting a narrower shape lets callers that carry a workspace summary
+  // (e.g. the post-deletion redirect) reuse the same gate.
+  workspace: Pick<TWorkspace, "id"> | undefined;
 }): Promise<string | null> => {
   if (!workspace) {
     return null;

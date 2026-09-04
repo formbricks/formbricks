@@ -7,7 +7,9 @@ import { type ApiErrorResponse, type Result, okVoid } from "@/types/error";
 
 const MAX_USER_ID_LENGTH = 255;
 
-export const setUserId = async (userId: string): Promise<Result<void, ApiErrorResponse>> => {
+// Not `async` (nothing to await), but keeps the Promise return type: this is public
+// SDK API and callers rely on awaiting it.
+export const setUserId = (userId: string): Promise<Result<void, ApiErrorResponse>> => {
   const appConfig = Config.getInstance();
   const logger = Logger.getInstance();
   const updateQueue = UpdateQueue.getInstance();
@@ -20,13 +22,13 @@ export const setUserId = async (userId: string): Promise<Result<void, ApiErrorRe
   // does not tear down the existing valid user.
   if (userId.length > MAX_USER_ID_LENGTH) {
     logger.error(`UserId exceeds maximum length of ${String(MAX_USER_ID_LENGTH)} characters`);
-    return okVoid();
+    return Promise.resolve(okVoid());
   }
 
   // If the same userId is already set, no-op
   if (currentUserId === userId) {
     logger.debug("UserId is already set to the same value, skipping");
-    return okVoid();
+    return Promise.resolve(okVoid());
   }
 
   // If a different userId is set, clean up the previous user state first
@@ -43,7 +45,7 @@ export const setUserId = async (userId: string): Promise<Result<void, ApiErrorRe
 
   updateQueue.updateUserId(userId);
   void updateQueue.processUpdates();
-  return okVoid();
+  return Promise.resolve(okVoid());
 };
 
 export const logout = (): Result<void> => {

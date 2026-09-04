@@ -68,6 +68,10 @@ export interface InputComboboxProps {
   emptyDropdownText?: string;
   iconClassName?: string;
   disabled?: boolean;
+  // The interactive trigger renders as a div[role="combobox"], which is not a labelable element,
+  // so a paired <label htmlFor> gives it no accessible name. Callers pass one of these instead.
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
 }
 
 // Helper to flatten all options and their children
@@ -156,6 +160,8 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   emptyDropdownText,
   iconClassName = "h-5 w-5 text-slate-400",
   disabled = false,
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledBy,
 }) => {
   const { t } = useTranslation();
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
@@ -297,9 +303,12 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     Array.isArray(localValue) ? localValue.includes(option.value as string) : localValue === option.value;
 
   return (
+    // The height lives on this wrapper rather than on the trigger below: the wrapper clips its children
+    // (overflow-hidden), so a fixed-height trigger inside a shorter wrapper (comboboxClasses="h-9") gets
+    // cropped and its centered content sits low next to same-height controls in a filter row.
     <div
       className={cn(
-        "group/icon flex max-w-[440px] min-w-0 overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
+        "group/icon flex h-10 max-w-[440px] min-w-0 overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
         disabled && "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60 hover:border-slate-200",
         comboboxClasses
       )}>
@@ -323,11 +332,13 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             id={id}
             role="combobox"
             tabIndex={disabled ? -1 : 0}
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
             aria-controls="options"
             aria-expanded={open}
             aria-disabled={disabled || undefined}
             className={cn(
-              "flex h-10 w-full min-w-0 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
+              "flex h-full w-full min-w-0 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
               {
                 "w-10 shrink-0 justify-center pr-0": withInput && inputType !== "dropdown",
                 "pointer-events-none": isClearing || disabled,

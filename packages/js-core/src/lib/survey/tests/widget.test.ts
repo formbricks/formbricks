@@ -281,6 +281,40 @@ describe("widget-file", () => {
     expect(el).not.toBeNull();
   });
 
+  test("addLiveRegionContainer creates an accessible visually hidden status region", () => {
+    widget.addLiveRegionContainer();
+
+    expect(document.createElement).toHaveBeenCalledWith("div");
+    expect(document.body.appendChild).toHaveBeenCalledTimes(1);
+
+    const liveRegion = vi.mocked(document.body.appendChild).mock.calls[0][0] as HTMLElement;
+    expect(liveRegion.id).toBe("formbricks-live-region");
+    expect(liveRegion.setAttribute).toHaveBeenCalledWith("role", "status");
+    expect(liveRegion.setAttribute).toHaveBeenCalledWith("aria-live", "polite");
+    expect(liveRegion.setAttribute).toHaveBeenCalledWith("aria-atomic", "true");
+    expect(liveRegion.style.cssText).toContain("position:absolute");
+  });
+
+  test("addLiveRegionContainer reuses an existing region", () => {
+    vi.mocked(document.getElementById).mockReturnValueOnce({} as HTMLElement);
+
+    widget.addLiveRegionContainer();
+
+    expect(document.createElement).not.toHaveBeenCalled();
+    expect(document.body.appendChild).not.toHaveBeenCalled();
+  });
+
+  test("addLiveRegionContainer is safe during server-side rendering", () => {
+    const browserDocument = globalThis.document;
+    vi.stubGlobal("document", undefined);
+
+    try {
+      expect(() => widget.addLiveRegionContainer()).not.toThrow();
+    } finally {
+      vi.stubGlobal("document", browserDocument);
+    }
+  });
+
   test("removeWidgetContainer removes #formbricks-container if it exists", () => {
     document.body.innerHTML = `<div id="formbricks-container"></div>`;
     widget.removeWidgetContainer();
@@ -329,7 +363,7 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TWorkspaceStateSurvey);
+    });
 
     expect(mockUpdateQueue.hasPendingWork).toHaveBeenCalled();
     expect(mockUpdateQueue.waitForPendingWork).toHaveBeenCalled();
@@ -391,7 +425,7 @@ describe("widget-file", () => {
     // Through `triggerSurvey`, not `renderWidget`: the deleted filter sat on that hop, so entering
     // lower down would leave the regression this test exists for invisible.
     await widget.triggerSurvey(
-      { ...mockSurvey, delay: 0, displayPercentage: null } as unknown as TWorkspaceStateSurvey,
+      { ...mockSurvey, delay: 0, displayPercentage: null },
       "testAction",
       { hiddenFields }
     );
@@ -449,7 +483,7 @@ describe("widget-file", () => {
     store.setEmbeddedData({ pageType: "product", plan: "from-bag" });
 
     await widget.triggerSurvey(
-      { ...mockSurvey, delay: 0, displayPercentage: null } as unknown as TWorkspaceStateSurvey,
+      { ...mockSurvey, delay: 0, displayPercentage: null },
       "testAction",
       { hiddenFields: { plan: "from-track" } }
     );
@@ -510,7 +544,7 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TWorkspaceStateSurvey);
+    });
 
     expect(mockUpdateQueue.hasPendingWork).toHaveBeenCalled();
     expect(mockUpdateQueue.waitForPendingWork).not.toHaveBeenCalled();
@@ -567,7 +601,7 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TWorkspaceStateSurvey);
+    });
 
     vi.advanceTimersByTime(0);
 
@@ -659,7 +693,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TWorkspaceStateSurvey);
+      });
 
       const scriptEl = getAppendedScript();
 
@@ -686,7 +720,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TWorkspaceStateSurvey);
+      });
 
       const scriptEl = getAppendedScript();
 
@@ -719,7 +753,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TWorkspaceStateSurvey);
+      });
 
       const scriptEl = getAppendedScript();
 
@@ -768,7 +802,7 @@ describe("widget-file", () => {
       await widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TWorkspaceStateSurvey);
+      });
 
       vi.advanceTimersByTime(0);
 
@@ -785,22 +819,22 @@ describe("widget-file", () => {
     });
   });
 
-  test("preloadSurveysScript adds a preload link and deduplicates subsequent calls", () => {
+  test("prefetchSurveysScript adds a prefetch link and deduplicates subsequent calls", () => {
     const createElementSpy = vi.spyOn(document, "createElement");
     const appendChildSpy = vi.spyOn(document.head, "appendChild");
 
-    widget.preloadSurveysScript("https://fake.app");
+    widget.prefetchSurveysScript("https://fake.app");
 
     expect(createElementSpy).toHaveBeenCalledWith("link");
     expect(appendChildSpy).toHaveBeenCalledTimes(1);
 
     const linkEl = createElementSpy.mock.results[0].value as Record<string, string>;
-    expect(linkEl.rel).toBe("preload");
-    expect(linkEl.as).toBe("script");
+    expect(linkEl.rel).toBe("prefetch");
+    expect(linkEl.as).toBeUndefined();
     expect(linkEl.href).toBe("https://fake.app/js/surveys.umd.cjs");
 
     // Second call should be a no-op (deduplication)
-    widget.preloadSurveysScript("https://fake.app");
+    widget.prefetchSurveysScript("https://fake.app");
     expect(appendChildSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -847,7 +881,7 @@ describe("widget-file", () => {
       ...mockSurvey,
       delay: 0,
       segment: undefined,
-    } as unknown as TWorkspaceStateSurvey);
+    });
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       "User identification failed but survey has no segment filters. Proceeding."
@@ -893,7 +927,7 @@ describe("widget-file", () => {
       window.formbricksSurveys = createMockFormbricksSurveys();
 
       vi.useFakeTimers();
-      await widget.renderWidget({ ...mockSurvey, delay: 0 } as unknown as TWorkspaceStateSurvey);
+      await widget.renderWidget({ ...mockSurvey, delay: 0 });
       vi.advanceTimersByTime(0);
       vi.useRealTimers();
 
@@ -963,7 +997,7 @@ describe("widget-file", () => {
       window.formbricksSurveys = createMockFormbricksSurveys();
 
       vi.useFakeTimers();
-      await widget.renderWidget({ ...mockSurvey, delay: 0 } as unknown as TWorkspaceStateSurvey);
+      await widget.renderWidget({ ...mockSurvey, delay: 0 });
       vi.advanceTimersByTime(0);
       vi.useRealTimers();
 
@@ -1046,7 +1080,7 @@ describe("widget-file", () => {
         ...mockSurvey,
         id: "survey_B",
         delay: 0,
-      } as unknown as TWorkspaceStateSurvey);
+      });
       vi.advanceTimersByTime(0);
       vi.useRealTimers();
 
@@ -1156,7 +1190,7 @@ describe("widget-file", () => {
         ...mockSurvey,
         delay: 0,
         ...(interactionRefresh ? { interactionRefresh } : {}),
-      } as unknown as TWorkspaceStateSurvey);
+      });
       vi.advanceTimersByTime(0);
       vi.useRealTimers();
 

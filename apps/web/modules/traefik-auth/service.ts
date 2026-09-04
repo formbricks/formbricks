@@ -14,7 +14,7 @@ export const authorizeTraefikRequest = async (request: NextRequest): Promise<Res
     request,
     originalRequest: requestMetadata.originalRequest,
     authorizers: gatewayRequestAuthorizers,
-    requestId: request.headers.get("x-request-id") ?? request.headers.get("x-forwarded-for") ?? "unknown",
+    requestId: request.headers.get("x-request-id") ?? "unknown",
     buildAllowResponse: buildTraefikAllowResponse,
     unsupportedRouteMessage: "Unsupported Traefik auth route",
   });

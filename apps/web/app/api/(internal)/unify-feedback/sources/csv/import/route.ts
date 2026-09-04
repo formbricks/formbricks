@@ -6,10 +6,11 @@ import {
   InvalidInputError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
+import { assertFeedbackSourceDirectoryAccess } from "@/lib/feedback-source/access";
 import { CsvImportValidationError, importCsvFile } from "@/lib/feedback-source/csv-file-import";
+import { getFeedbackSourceWithMappingsById } from "@/lib/feedback-source/service";
 import { getUser } from "@/lib/user/service";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromFeedbackSourceId } from "@/lib/utils/helper";
 import { getSession } from "@/modules/auth/lib/session";
 import {
   CSV_FILE_TOO_LARGE_ERROR_CODE,
@@ -77,22 +78,18 @@ export const POST = async (request: Request) => {
       throw new InvalidInputError("workspaceId, feedbackSourceId, and file are required");
     }
 
-    const organizationId = await getOrganizationIdFromFeedbackSourceId(feedbackSourceId);
-    await checkAuthorizationUpdated({
-      userId: user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId,
-        },
-      ],
-    });
+    await assertCan({ type: "user", id: user.id }, "workspace.write", { type: "workspace", id: workspaceId });
+
+    const feedbackSource = await getFeedbackSourceWithMappingsById(feedbackSourceId, workspaceId);
+    if (!feedbackSource) {
+      throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
+    }
+    await assertFeedbackSourceDirectoryAccess(
+      user.id,
+      feedbackSource.feedbackDirectoryId,
+      workspaceId,
+      "write"
+    );
 
     const result = await importCsvFile({ feedbackSourceId, workspaceId, file });
 
@@ -121,7 +118,10 @@ export const POST = async (request: Request) => {
       return buildCsvImportErrorResponse(error.message, 400);
     }
 
-    logger.error({ error }, "Failed to import CSV feedback source data");
+    logger.error(
+      { errorName: error instanceof Error ? error.name : "unknown" },
+      "Failed to import CSV feedback source data"
+    );
     return buildCsvImportErrorResponse(CSV_IMPORT_FAILED_ERROR_CODE, 500);
   }
 };

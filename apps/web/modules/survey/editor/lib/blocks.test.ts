@@ -10,10 +10,12 @@ import {
   duplicateBlock,
   duplicateElementInBlock,
   findElementLocation,
+  getBlockDisplayName,
+  isAutoBlockName,
   isElementIdUnique,
   moveBlock,
   moveElementInBlock,
-  renumberBlocks,
+  renumberAutoNamedBlocks,
   updateBlock,
   updateElementInBlock,
 } from "./blocks";
@@ -22,7 +24,9 @@ vi.mock("@paralleldrive/cuid2", () => ({
   createId: vi.fn(() => "test-cuid-" + Math.random().toString(36).substring(7)),
 }));
 
-const mockT = ((key: string) => key) as never;
+// Mirrors the real interpolation for the one key under test; every other key passes through.
+const mockT = ((key: string, options?: { blockNumber?: number }) =>
+  key === "workspace.surveys.edit.block_n" ? `Block ${options?.blockNumber}` : key) as never;
 
 const createMockElement = (id: string): TSurveyElement => ({
   id,
@@ -73,7 +77,6 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   languages: [],
   displayPercentage: null,
   isVerifyEmailEnabled: false,
-  isSingleResponsePerEmailEnabled: false,
   singleUse: null,
   pin: null,
   workspaceOverwrites: null,
@@ -90,47 +93,73 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   slug: null,
 });
 
-describe("renumberBlocks", () => {
-  test("should renumber blocks sequentially starting from 1", () => {
+describe("isAutoBlockName", () => {
+  test("should treat the auto-generated pattern as unset", () => {
+    expect(isAutoBlockName("Block 1")).toBe(true);
+    expect(isAutoBlockName("Block 42")).toBe(true);
+  });
+
+  test("should not treat a blank name as auto-generated", () => {
+    // A cleared field is an edit in progress; renumbering must not overwrite it.
+    expect(isAutoBlockName("")).toBe(false);
+    expect(isAutoBlockName("   ")).toBe(false);
+  });
+
+  test("should treat a creator-set name as set", () => {
+    expect(isAutoBlockName("Screening")).toBe(false);
+    expect(isAutoBlockName("Block A")).toBe(false);
+    expect(isAutoBlockName("Block 1 - Screening")).toBe(false);
+  });
+});
+
+describe("getBlockDisplayName", () => {
+  test("should return the creator's name when set", () => {
+    const block = createMockBlock("block-1", "Screening");
+    expect(getBlockDisplayName(block, 4, mockT)).toBe("Screening");
+  });
+
+  test("should trim the creator's name", () => {
+    const block = createMockBlock("block-1", "  Screening  ");
+    expect(getBlockDisplayName(block, 0, mockT)).toBe("Screening");
+  });
+
+  test("should keep an auto-generated name as-is", () => {
+    // Resequencing auto names is renumberAutoNamedBlocks's job, not the label helper's.
+    const block = createMockBlock("block-1", "Block 3");
+    expect(getBlockDisplayName(block, 0, mockT)).toBe("Block 3");
+  });
+
+  test("should fall back to the current position for a blank name", () => {
+    const block = createMockBlock("block-1", "   ");
+    expect(getBlockDisplayName(block, 1, mockT)).toBe("Block 2");
+  });
+});
+
+describe("renumberAutoNamedBlocks", () => {
+  test("should resequence auto-generated names to match position", () => {
+    const blocks = [createMockBlock("b1", "Block 4"), createMockBlock("b2", "Block 9")];
+
+    expect(renumberAutoNamedBlocks(blocks).map((block) => block.name)).toEqual(["Block 1", "Block 2"]);
+  });
+
+  test("should leave creator-set names untouched", () => {
     const blocks = [
-      createMockBlock("block-1", "Old Name 1"),
-      createMockBlock("block-2", "Old Name 2"),
-      createMockBlock("block-3", "Old Name 3"),
+      createMockBlock("b1", "Screening"),
+      createMockBlock("b2", "Block 7"),
+      createMockBlock("b3", "Feedback"),
     ];
 
-    const result = renumberBlocks(blocks);
-
-    expect(result).toHaveLength(3);
-    expect(result[0].name).toBe("Block 1");
-    expect(result[1].name).toBe("Block 2");
-    expect(result[2].name).toBe("Block 3");
+    expect(renumberAutoNamedBlocks(blocks).map((block) => block.name)).toEqual([
+      "Screening",
+      "Block 2",
+      "Feedback",
+    ]);
   });
 
-  test("should preserve block IDs and other properties", () => {
-    const blocks = [
-      createMockBlock("block-1", "Old Name 1", [createMockElement("q1")]),
-      createMockBlock("block-2", "Old Name 2", [createMockElement("q2")]),
-    ];
+  test("should leave a blank name blank", () => {
+    const blocks = [createMockBlock("b1", "Screening"), createMockBlock("b2", "   ")];
 
-    const result = renumberBlocks(blocks);
-
-    expect(result[0].id).toBe("block-1");
-    expect(result[1].id).toBe("block-2");
-    expect(result[0].elements).toHaveLength(1);
-    expect(result[1].elements).toHaveLength(1);
-  });
-
-  test("should handle empty array", () => {
-    const result = renumberBlocks([]);
-    expect(result).toHaveLength(0);
-  });
-
-  test("should handle single block", () => {
-    const blocks = [createMockBlock("block-1", "Old Name")];
-    const result = renumberBlocks(blocks);
-
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe("Block 1");
+    expect(renumberAutoNamedBlocks(blocks)[1].name).toBe("   ");
   });
 });
 
@@ -233,9 +262,8 @@ describe("addBlock", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.blocks).toHaveLength(3);
-      expect(result.data.blocks[1].name).toBe("Block 2");
-      expect(result.data.blocks[0].name).toBe("Block 1");
-      expect(result.data.blocks[2].name).toBe("Block 3");
+      // The inserted block keeps the name it was given; the auto-named ones it displaced resequence.
+      expect(result.data.blocks.map((block) => block.name)).toEqual(["Block 1", "Block 1.5", "Block 3"]);
     }
   });
 
@@ -362,6 +390,7 @@ describe("duplicateBlock", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.blocks).toHaveLength(2);
+      // The copy carries the source's name, then resequences because that name is auto-generated.
       expect(result.data.blocks[1].name).toBe("Block 2");
       expect(result.data.blocks[1].id).not.toBe("block-1");
       expect(result.data.blocks[1].elements[0].id).not.toBe("q1");
@@ -492,6 +521,63 @@ describe("moveBlock", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.message).toContain('Block with ID "nonexistent" not found');
+    }
+  });
+});
+
+describe("creator-set block names survive block mutations", () => {
+  // Blocks used to be renumbered on every mutation, which silently overwrote any name the
+  // creator had typed. These pin that down: a title has to outlive each block operation.
+  const surveyWithTitledBlock = () =>
+    createMockSurvey([
+      createMockBlock("block-1", "Screening", [createMockElement("q1")]),
+      createMockBlock("block-2", "Block 2", [createMockElement("q2")]),
+      createMockBlock("block-3", "Feedback", [createMockElement("q3")]),
+    ]);
+
+  test("should keep names when a block is added before them", () => {
+    const result = addBlock(mockT, surveyWithTitledBlock(), { elements: [createMockElement("q0")] }, 0);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks.map((block) => block.name)).toEqual([
+        "Block 1",
+        "Screening",
+        "Block 3",
+        "Feedback",
+      ]);
+    }
+  });
+
+  test("should keep names when a block is deleted", () => {
+    const result = deleteBlock(surveyWithTitledBlock(), "block-2");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks.map((block) => block.name)).toEqual(["Screening", "Feedback"]);
+    }
+  });
+
+  test("should carry the name onto a duplicated block", () => {
+    const result = duplicateBlock(surveyWithTitledBlock(), "block-1");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks.map((block) => block.name)).toEqual([
+        "Screening",
+        "Screening",
+        "Block 3",
+        "Feedback",
+      ]);
+    }
+  });
+
+  test("should keep names when blocks are reordered", () => {
+    const result = moveBlock(surveyWithTitledBlock(), "block-3", "up");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks.map((block) => block.name)).toEqual(["Screening", "Feedback", "Block 3"]);
     }
   });
 });

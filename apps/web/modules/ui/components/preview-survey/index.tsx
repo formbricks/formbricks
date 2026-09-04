@@ -170,6 +170,7 @@ export const PreviewSurvey = ({
       resetProgress();
       surveyNameTemp = survey.name;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh preview only when `survey` changes; resetProgress is recreated each render, so depending on it would re-run every render
   }, [survey]);
 
   const resetProgress = () => {

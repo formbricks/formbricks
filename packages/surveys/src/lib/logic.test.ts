@@ -1392,6 +1392,86 @@ describe("Survey Logic", () => {
       ).toBe(false);
     });
 
+    test("evaluates doesNotEqual as the inverse of equals for single-selection answers", () => {
+      const multiSurvey: TJsWorkspaceStateSurvey = {
+        ...mockSurvey,
+        blocks: [
+          ...mockSurvey.blocks,
+          {
+            id: "multiBlock",
+            name: "Multi Choice Block",
+            elements: [
+              {
+                id: "multiQ",
+                type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+                headline: { default: "Multiple Choice" },
+                required: true,
+                choices: [
+                  { id: "opt1", label: { default: "Option 1" } },
+                  { id: "opt2", label: { default: "Option 2" } },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+      // answer labels resolve to choice ids, so a single selection of "Option 1" becomes ["opt1"]
+      const singleSelectionData: TResponseData = { multiQ: ["Option 1"] };
+
+      const condition = (operator: "equals" | "doesNotEqual", value: string): TConditionGroup => ({
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator,
+            leftOperand: { type: "element", value: "multiQ" },
+            rightOperand: { type: "static", value },
+          },
+        ],
+      });
+
+      // the selection matches the condition value: equals is true, so doesNotEqual must be false
+      expect(
+        evaluateLogic(
+          multiSurvey,
+          singleSelectionData,
+          mockVariablesData,
+          condition("equals", "opt1"),
+          "default"
+        )
+      ).toBe(true);
+      expect(
+        evaluateLogic(
+          multiSurvey,
+          singleSelectionData,
+          mockVariablesData,
+          condition("doesNotEqual", "opt1"),
+          "default"
+        )
+      ).toBe(false);
+
+      // the selection does not match: equals is false, doesNotEqual is true
+      expect(
+        evaluateLogic(
+          multiSurvey,
+          singleSelectionData,
+          mockVariablesData,
+          condition("equals", "opt2"),
+          "default"
+        )
+      ).toBe(false);
+      expect(
+        evaluateLogic(
+          multiSurvey,
+          singleSelectionData,
+          mockVariablesData,
+          condition("doesNotEqual", "opt2"),
+          "default"
+        )
+      ).toBe(true);
+    });
+
     test("evaluates isEmpty and isNotEmpty operators", () => {
       // Test isEmpty
       const isEmptyCondition: TConditionGroup = {

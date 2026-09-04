@@ -43,8 +43,8 @@ export const PolishedChartTooltip = ({
   const headerText = hideLabel ? "" : formatHeader(headerSource);
 
   return (
-    <div className="border-border/50 min-w-[180px] rounded-lg border bg-white px-3 py-2.5 shadow-lg dark:bg-gray-950">
-      {headerText && <div className="text-foreground mb-2 text-sm font-medium">{headerText}</div>}
+    <div className="border-border/50 max-w-xs min-w-[180px] rounded-lg border bg-white px-3 py-2.5 shadow-lg dark:bg-gray-950">
+      {headerText && <div className="text-foreground mb-2 text-sm font-medium break-words">{headerText}</div>}
       <div className="flex flex-col gap-1.5">
         {payload.map((item) => {
           const key = item.dataKey ?? String(item.name ?? "");
@@ -55,11 +55,11 @@ export const PolishedChartTooltip = ({
           const indicatorColor = item.payload?.fill ?? item.color ?? CHART_BRAND_DARK;
           return (
             <div key={key} className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <div className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: indicatorColor }} />
-                <span className="text-muted-foreground text-sm">{rowLabel}</span>
+                <span className="text-muted-foreground text-sm break-words">{rowLabel}</span>
               </div>
-              <span className="text-foreground text-sm font-medium tabular-nums">
+              <span className="text-foreground shrink-0 text-sm font-medium tabular-nums">
                 {formatCellValue(item.value)}
               </span>
             </div>

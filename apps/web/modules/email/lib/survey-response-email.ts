@@ -173,7 +173,10 @@ export const buildSurveyResponseEmailHtml = async ({
     responseData: buildResponseData(survey, response, attachResponseData),
     variables: buildVariables(survey, response, attachResponseData, includeVariables),
     hiddenFields: buildHiddenFields(survey, response, attachResponseData, includeHiddenFields),
-    logoUrl,
+    // The whitelabel logo is stored as a relative `/storage/...` path, which an email client cannot
+    // resolve — it has no origin to resolve against, so the `<img>` renders broken. Resolve it to an
+    // absolute URL here, exactly like every other email sender does (see `@/modules/email`).
+    logoUrl: logoUrl ? resolveStorageUrl(logoUrl) : undefined,
     t,
     privacyUrl: PRIVACY_URL || undefined,
     termsUrl: TERMS_URL || undefined,

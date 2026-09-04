@@ -6,7 +6,7 @@
   "homepage": "https://formbricks.com",
   "description": "Storage Controller for Formbricks",
   "main": "./dist/index.js",
-  "types": "./dist/src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"
@@ -20,9 +20,11 @@
     "dist"
   ],
   "exports": {
-    "types": "./dist/src/index.d.ts",
-    "import": "./dist/index.js",
-    "require": "./dist/index.cjs"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage dist",
@@ -43,11 +45,11 @@
     "@formbricks/logger": "workspace:*"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
-    "@vitest/coverage-v8": "4.1.6",
-    "typescript": "5.9.3",
-    "vite": "7.3.5",
-    "vitest": "4.1.6"
+    "@vitest/coverage-v8": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }
