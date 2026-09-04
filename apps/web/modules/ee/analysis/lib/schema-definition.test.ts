@@ -232,13 +232,14 @@ describe("schema-definition", () => {
 
     test("keeps every member's SQL free of JS replacement specials", () => {
       // Cube splices a member's SQL into its filter templates with String.prototype.replace, where
-      // that SQL is the *replacement* argument — so `$'`, `` $` ``, `$&`, `$<name>` and `$1` are
-      // expansion tokens rather than literals there. A regex ending in `$'` is the easy way to hit
-      // this: it swallowed the closing quote, spliced ` IS NULL` inside the string literal, and
-      // turned `set` / `notSet` on metadataDurationSeconds into an HTTP 400. Assert the class, not
-      // that one pattern, and read it off the evaluated model rather than the file text so a member
-      // added later cannot sidestep it.
-      const REPLACEMENT_SPECIAL = /\$(['`&]|<|\d)/;
+      // that SQL is the *replacement* argument — so `$'`, `` $` ``, `$&`, `$<name>`, `$1` and `$$`
+      // are expansion tokens rather than literals there. A regex ending in `$'` is the easy way to
+      // hit this: it swallowed the closing quote, spliced ` IS NULL` inside the string literal, and
+      // turned `set` / `notSet` on metadataDurationSeconds into an HTTP 400. `$$` is the quiet one —
+      // it collapses to a single `$` instead of erroring, so a dollar-quoted body would come out
+      // subtly rewritten rather than rejected. Assert the class, not one pattern, and read it off
+      // the evaluated model rather than the file text so a member added later cannot sidestep it.
+      const REPLACEMENT_SPECIAL = /\$(['`&$]|<|\d)/;
 
       for (const path of [dockerCubeSchemaPath, chartCubeSchemaPath]) {
         let captured:
