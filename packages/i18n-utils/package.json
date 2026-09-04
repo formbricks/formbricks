@@ -15,7 +15,16 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./src/*": "./src/*.ts"
+    "./canonical": {
+      "types": "./dist/canonical.d.ts",
+      "import": "./dist/canonical.js",
+      "require": "./dist/canonical.cjs"
+    },
+    "./utils": {
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.js",
+      "require": "./dist/utils.cjs"
+    }
   },
   "repository": {
     "type": "git",
@@ -28,8 +37,7 @@
     "localization"
   ],
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "go": "vite build --watch --mode dev",

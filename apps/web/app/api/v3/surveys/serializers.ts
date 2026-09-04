@@ -1,4 +1,4 @@
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";

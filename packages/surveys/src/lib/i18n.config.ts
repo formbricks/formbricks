@@ -1,7 +1,7 @@
 import i18n from "i18next";
 import ICU from "i18next-icu";
 import { initReactI18next } from "react-i18next";
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import arEGTranslations from "../../locales/ar-EG.json";
 import daDKTranslations from "../../locales/da-DK.json";
 import deDETranslations from "../../locales/de-DE.json";

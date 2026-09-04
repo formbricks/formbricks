@@ -8,7 +8,7 @@ import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import {
   TMultipleChoiceOptionDisplayType,
   TSurveyElement,
