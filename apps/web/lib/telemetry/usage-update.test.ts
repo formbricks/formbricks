@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { getCacheService } from "@formbricks/cache";
+import { type CacheService, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
-import { IntegrationType } from "@formbricks/database/prisma";
+import { IntegrationType, type Organization } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { sendTelemetryEvents } from "./usage-update";
 
@@ -206,15 +206,19 @@ describe("sendTelemetryEvents", () => {
     }));
     const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./usage-update");
 
-    vi.mocked(getCacheService).mockResolvedValue({ ok: true, data: mockCacheService as any });
+    vi.mocked(getCacheService).mockResolvedValue({
+      ok: true,
+      data: mockCacheService as unknown as CacheService,
+    });
     mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true });
     mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
     mockCacheService.get.mockResolvedValue({ ok: true, data: null });
     mockCacheService.set.mockResolvedValue({ ok: true, data: undefined });
+    // `getInstanceInfo` selects only `id` and `createdAt`; the row is narrowed to the model type it reads.
     vi.mocked(prisma.organization.findFirst).mockResolvedValue({
       id: "org-123",
       createdAt: new Date("2023-01-01"),
-    } as any);
+    } as Organization);
     vi.mocked(prisma.integration.findMany).mockResolvedValue([]);
     vi.mocked(prisma.account.findMany).mockResolvedValue([]);
     fetchMock.mockResolvedValue({ ok: true });

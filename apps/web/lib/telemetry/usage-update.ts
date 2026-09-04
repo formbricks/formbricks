@@ -216,7 +216,9 @@ const getWorkflowNodeTypesInUse = async (): Promise<{ triggerTypes: string[]; ac
         ) as "actionTypes"
     `;
     const toStrings = (value: unknown): string[] =>
-      Array.isArray(value) ? value.filter((item): item is string => typeof item === "string").sort() : [];
+      Array.isArray(value)
+        ? value.filter((item): item is string => typeof item === "string").sort((a, b) => a.localeCompare(b))
+        : [];
     return { triggerTypes: toStrings(row?.triggerTypes), actionTypes: toStrings(row?.actionTypes) };
   } catch (error) {
     logger.warn({ error }, "Failed to read workflow node types for the usage update");
@@ -242,8 +244,8 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
   // Optimize database queries to reduce connection pool usage:
   // Instead of 15 parallel queries (which could exhaust the connection pool),
   // we batch all count queries into a single raw SQL query.
-  // This reduces connection usage from 15 → 3 (batch counts + integrations + accounts).
-  const [countsResult, integrations, ssoProviders] = await Promise.all([
+  // This reduces connection usage from 15 → 4 (batch counts + integrations + accounts + workflow node types).
+  const [countsResult, integrations, ssoProviders, workflowNodeTypes] = await Promise.all([
     // Single query for all counts (13 metrics in one round-trip)
     prisma.$queryRaw<
       [
@@ -290,6 +292,7 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
     // Keep these as separate queries since they need DISTINCT which is harder to optimize
     prisma.integration.findMany({ select: { type: true }, distinct: ["type"] }),
     prisma.account.findMany({ select: { provider: true }, distinct: ["provider"] }),
+    getWorkflowNodeTypesInUse(),
   ]);
 
   // Extract metrics from the batched query result and convert bigints to numbers
@@ -307,7 +310,6 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
   const contactCount = Number(counts.contactCount);
   const segmentCount = Number(counts.segmentCount);
   const newestResponse = counts.newestResponseAt ? { createdAt: counts.newestResponseAt } : null;
-  const workflowNodeTypes = await getWorkflowNodeTypesInUse();
 
   // Convert integration array to boolean map indicating which integrations are configured.
   const integrationMap = {

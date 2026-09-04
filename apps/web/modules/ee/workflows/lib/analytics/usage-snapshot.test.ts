@@ -1,18 +1,11 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { collectOrganizationWorkflowUsage, emitWorkflowUsageSnapshots } from "./usage-snapshot";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@formbricks/database", () => ({
-  prisma: {
-    workflow: { groupBy: vi.fn(), findMany: vi.fn() },
-    workflowRun: { groupBy: vi.fn() },
-    workspace: { findMany: vi.fn() },
-  },
-}));
 vi.mock("@/lib/constants", () => ({ IS_FORMBRICKS_CLOUD: true }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn(), groupIdentifyPostHog: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/license", () => ({ getEnterpriseLicense: vi.fn() }));
@@ -46,7 +39,11 @@ const stripe = {
 const billing = { limits: { workspaces: null, monthly: { responses: null, workflowRuns: 1000 } }, stripe };
 const organizationA = { createdAt: new Date("2026-01-15T00:00:00.000Z"), billing };
 
-const count = (workspaceId: string, status: string, n: number) => ({ workspaceId, status, _count: { _all: n } });
+const count = (workspaceId: string, status: string, n: number) => ({
+  workspaceId,
+  status,
+  _count: { _all: n },
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -71,7 +68,12 @@ beforeEach(() => {
   ] as never);
   vi.mocked(prisma.workflow.findMany).mockResolvedValue([
     { id: "wfA", workspaceId: "ws1", status: "enabled", definition: { trigger, nodes: [sendEmail("e1")] } },
-    { id: "wfB", workspaceId: "ws1", status: "enabled", definition: { trigger, nodes: [ifElse, sendEmail("e2")] } },
+    {
+      id: "wfB",
+      workspaceId: "ws1",
+      status: "enabled",
+      definition: { trigger, nodes: [ifElse, sendEmail("e2")] },
+    },
     { id: "wfC", workspaceId: "ws1", status: "draft", definition: { trigger, nodes: [] } },
     { id: "wfD", workspaceId: "ws2", status: "disabled", definition: { trigger: null, nodes: [] } },
   ] as never);
@@ -174,7 +176,12 @@ describe("emitWorkflowUsageSnapshots", () => {
     expect(capturePostHogEvent).toHaveBeenCalledWith(
       "orgA",
       "workflow_node_type_snapshot",
-      expect.objectContaining({ node_kind: "action", node_type: "if_else", workflows_total: 1, workflows_enabled: 1 }),
+      expect.objectContaining({
+        node_kind: "action",
+        node_type: "if_else",
+        workflows_total: 1,
+        workflows_enabled: 1,
+      }),
       { organizationId: "orgA" }
     );
     const nodeTypeRows = vi
@@ -196,8 +203,14 @@ describe("emitWorkflowUsageSnapshots", () => {
       workflows_enabled: 2,
       organization_created_at: "2026-01-15T00:00:00.000Z",
     });
-    expect(groupIdentifyPostHog).toHaveBeenCalledWith("workspace", "ws1", { workflows_total: 4, workflows_enabled: 2 });
-    expect(groupIdentifyPostHog).toHaveBeenCalledWith("workspace", "ws2", { workflows_total: 1, workflows_enabled: 0 });
+    expect(groupIdentifyPostHog).toHaveBeenCalledWith("workspace", "ws1", {
+      workflows_total: 4,
+      workflows_enabled: 2,
+    });
+    expect(groupIdentifyPostHog).toHaveBeenCalledWith("workspace", "ws2", {
+      workflows_total: 1,
+      workflows_enabled: 0,
+    });
     // The additive merge relies on never sending `name`/`email_domain` from here.
     for (const [, , properties] of vi.mocked(groupIdentifyPostHog).mock.calls) {
       expect(properties).not.toHaveProperty("name");

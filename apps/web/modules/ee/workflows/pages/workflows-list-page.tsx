@@ -3,7 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { TFunction } from "i18next";
 import { X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
 import { ZWorkflowStatus } from "@formbricks/workflows";
@@ -22,10 +22,10 @@ import { WorkflowSortDropdown } from "../components/workflow-sort-dropdown";
 import { WorkflowStatusPill } from "../components/workflow-status-pill";
 import { WorkflowsEmptyState } from "../components/workflows-empty-state";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
+import { useTrackWorkflowListFilters } from "../hooks/use-track-workflow-list-filters";
 import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
 import { useWorkflows } from "../hooks/use-workflows";
-import { trackWorkflowEvent } from "../lib/analytics";
-import { type TWorkflowSurface, WORKFLOW_CLIENT_EVENTS } from "../lib/analytics-events";
+import { resolveWorkflowListSurface } from "../lib/analytics";
 import { computeStatusIn, parseStoredWorkflowFilters } from "../lib/list-filters";
 import { WorkflowsListBodyLoading } from "../loading";
 
@@ -88,23 +88,13 @@ export const WorkflowsListPage = ({
     );
   }, [searchValue, selectedStatuses, sortBy, isFilterInitialized]);
 
-  // Analytics: one `workflow_list_filtered` per settled change. Skips hydration (stored filters are
-  // not a user action) and waits for the search debounce to catch up, so a stored search value does
-  // not fire on load and typing fires once per pause rather than per keystroke.
-  const hasSettledInitialFiltersRef = useRef(false);
-  useEffect(() => {
-    if (!isFilterInitialized || debouncedSearchValue !== searchValue) return;
-    if (!hasSettledInitialFiltersRef.current) {
-      hasSettledInitialFiltersRef.current = true;
-      return;
-    }
-    trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.listFiltered, {
-      has_search: searchValue.trim().length > 0,
-      status_filter: [...selectedStatuses].sort((a, b) => a.localeCompare(b)),
-      sort_by: sortBy,
-      includes_archived: selectedStatuses.includes("archived"),
-    });
-  }, [isFilterInitialized, searchValue, debouncedSearchValue, selectedStatuses, sortBy]);
+  useTrackWorkflowListFilters({
+    isFilterInitialized,
+    searchValue,
+    debouncedSearchValue,
+    selectedStatuses,
+    sortBy,
+  });
 
   const toggleStatus = (value: TWorkflowStatus) => {
     setSelectedStatuses((prev) =>
@@ -154,15 +144,16 @@ export const WorkflowsListPage = ({
   // (even only archived ones), keep the toolbar so the filters stay reachable.
   const isWorkspaceEmpty = isListEmpty && !isProbingAnyWorkflows && anyWorkflows.length === 0;
 
-  // Which of the three list states the user is actually looking at; null while loading or probing,
-  // and on an error, none of which count as a visit.
-  let surface: TWorkflowSurface | null = null;
-  if (isWorkspaceEmpty) {
-    surface = "list_empty";
-  } else if (!showInitialLoading && !isError && !(isListEmpty && isProbingAnyWorkflows)) {
-    surface = workflows.length === 0 ? "list_empty_filtered" : "list";
-  }
-  useTrackWorkflowSurface(surface);
+  useTrackWorkflowSurface(
+    resolveWorkflowListSurface({
+      isWorkspaceEmpty,
+      showInitialLoading,
+      isError,
+      isListEmpty,
+      isProbingAnyWorkflows,
+      workflowCount: workflows.length,
+    })
+  );
 
   if (isWorkspaceEmpty) {
     return (

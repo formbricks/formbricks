@@ -68,6 +68,111 @@ const toOrganizationContext = (
   };
 };
 
+type WorkspaceRow = Awaited<ReturnType<typeof fetchWorkspaces>>[number];
+type WorkflowDefinitionRow = Awaited<ReturnType<typeof fetchDefinitionPage>>[number];
+type CountRow = { workspaceId: string; status: string; _count: { _all: number } };
+
+const fetchWorkspaces = (workspaceIds: string[]) =>
+  prisma.workspace.findMany({
+    where: { id: { in: workspaceIds } },
+    select: {
+      id: true,
+      organizationId: true,
+      organization: { select: { createdAt: true, billing: { select: { limits: true, stripe: true } } } },
+    },
+  });
+
+const fetchDefinitionPage = (cursor?: string) =>
+  prisma.workflow.findMany({
+    where: { status: { not: "archived" } },
+    select: { id: true, workspaceId: true, status: true, definition: true },
+    orderBy: { id: "asc" },
+    take: DEFINITION_PAGE_SIZE,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+
+/**
+ * Organizations keyed by id, created lazily from the workspace a row belongs to. A row whose
+ * workspace the read did not return (deleted in between) resolves to `null` and is skipped.
+ */
+const createUsageIndex = (workspaces: WorkspaceRow[], licenseActive: boolean) => {
+  const workspaceById = new Map(workspaces.map((workspace) => [workspace.id, workspace]));
+  const byOrganization = new Map<string, OrganizationWorkflowUsage>();
+  const forWorkspace = (workspaceId: string): OrganizationWorkflowUsage | null => {
+    const workspace = workspaceById.get(workspaceId);
+    if (!workspace) return null;
+    let usage = byOrganization.get(workspace.organizationId);
+    if (!usage) {
+      usage = {
+        organizationId: workspace.organizationId,
+        context: toOrganizationContext(workspace.organization, licenseActive),
+        statusCounts: emptyStatusCounts(),
+        workspaces: new Map(),
+        nodeTypes: new Map(),
+        runs24h: { total: 0, completed: 0, failed: 0 },
+      };
+      byOrganization.set(workspace.organizationId, usage);
+    }
+    return usage;
+  };
+  return { byOrganization, forWorkspace };
+};
+
+const addStatusRow = (usage: OrganizationWorkflowUsage, row: CountRow): void => {
+  const status = ZWorkflowStatus.safeParse(row.status);
+  if (!status.success) return;
+  const workspaceCounts = usage.workspaces.get(row.workspaceId) ?? emptyStatusCounts();
+  workspaceCounts[status.data] += row._count._all;
+  usage.workspaces.set(row.workspaceId, workspaceCounts);
+  usage.statusCounts[status.data] += row._count._all;
+};
+
+const addRunRow = (usage: OrganizationWorkflowUsage, row: CountRow): void => {
+  usage.runs24h.total += row._count._all;
+  if (row.status === "completed") usage.runs24h.completed += row._count._all;
+  if (row.status === "failed") usage.runs24h.failed += row._count._all;
+};
+
+/** Node-type mix, counting workflows (not nodes): a workflow with two emails is one send_email user. */
+const addDefinition = (usage: OrganizationWorkflowUsage, workflow: WorkflowDefinitionRow): void => {
+  const summary = summarizeWorkflowDefinition(workflow.definition);
+  const seen: Array<[string, NodeKind]> = [
+    ...(summary.triggerType ? [[summary.triggerType, "trigger"] as [string, NodeKind]] : []),
+    ...summary.actionTypes.map((type) => [type, "action"] as [string, NodeKind]),
+  ];
+  for (const [type, kind] of seen) {
+    const entry = usage.nodeTypes.get(type) ?? { kind, workflowsTotal: 0, workflowsEnabled: 0 };
+    entry.workflowsTotal += 1;
+    if (workflow.status === "enabled") entry.workflowsEnabled += 1;
+    usage.nodeTypes.set(type, entry);
+  }
+};
+
+const applyRows = <T extends { workspaceId: string }>(
+  rows: T[],
+  resolve: (workspaceId: string) => OrganizationWorkflowUsage | null,
+  add: (usage: OrganizationWorkflowUsage, row: T) => void
+): void => {
+  for (const row of rows) {
+    const usage = resolve(row.workspaceId);
+    if (usage) add(usage, row);
+  }
+};
+
+/** Walks every live definition a page at a time, continuing from a first page that was already read. */
+const forEachDefinition = async (
+  firstPage: WorkflowDefinitionRow[],
+  visit: (workflow: WorkflowDefinitionRow) => void
+): Promise<void> => {
+  let page = firstPage;
+  for (;;) {
+    for (const workflow of page) visit(workflow);
+    const lastId = page.at(-1)?.id;
+    if (page.length < DEFINITION_PAGE_SIZE || !lastId) return;
+    page = await fetchDefinitionPage(lastId);
+  }
+};
+
 /**
  * One read pass over the workflow tables, aggregated per organization. Status counts come from an
  * index-backed `groupBy`; the node-type mix needs the definitions, which are paged through so the
@@ -82,15 +187,9 @@ export const collectOrganizationWorkflowUsage = async (now: Date): Promise<Organ
   if (statusRows.length === 0) return [];
 
   const workspaceIds = [...new Set(statusRows.map((row) => row.workspaceId))];
-  const [workspaces, runRows, license] = await Promise.all([
-    prisma.workspace.findMany({
-      where: { id: { in: workspaceIds } },
-      select: {
-        id: true,
-        organizationId: true,
-        organization: { select: { createdAt: true, billing: { select: { limits: true, stripe: true } } } },
-      },
-    }),
+  // The first definition page depends on nothing else, so it rides along with the other reads.
+  const [workspaces, runRows, license, firstPage] = await Promise.all([
+    fetchWorkspaces(workspaceIds),
     prisma.workflowRun.groupBy({
       by: ["workspaceId", "status"],
       where: {
@@ -101,76 +200,18 @@ export const collectOrganizationWorkflowUsage = async (now: Date): Promise<Organ
       _count: { _all: true },
     }),
     IS_FORMBRICKS_CLOUD ? Promise.resolve(null) : getEnterpriseLicense(),
+    fetchDefinitionPage(),
   ]);
 
-  const workspaceById = new Map(workspaces.map((workspace) => [workspace.id, workspace]));
-  const usageByOrganization = new Map<string, OrganizationWorkflowUsage>();
-  const usageForWorkspace = (workspaceId: string): OrganizationWorkflowUsage | null => {
-    const workspace = workspaceById.get(workspaceId);
-    if (!workspace) return null;
-    let usage = usageByOrganization.get(workspace.organizationId);
-    if (!usage) {
-      usage = {
-        organizationId: workspace.organizationId,
-        context: toOrganizationContext(workspace.organization, license?.active ?? false),
-        statusCounts: emptyStatusCounts(),
-        workspaces: new Map(),
-        nodeTypes: new Map(),
-        runs24h: { total: 0, completed: 0, failed: 0 },
-      };
-      usageByOrganization.set(workspace.organizationId, usage);
-    }
-    return usage;
-  };
+  const usages = createUsageIndex(workspaces, license?.active ?? false);
+  applyRows(statusRows, usages.forWorkspace, addStatusRow);
+  applyRows(runRows, usages.forWorkspace, addRunRow);
+  await forEachDefinition(firstPage, (workflow) => {
+    const usage = usages.forWorkspace(workflow.workspaceId);
+    if (usage) addDefinition(usage, workflow);
+  });
 
-  for (const row of statusRows) {
-    const usage = usageForWorkspace(row.workspaceId);
-    const status = ZWorkflowStatus.safeParse(row.status);
-    if (!usage || !status.success) continue;
-    const workspaceCounts = usage.workspaces.get(row.workspaceId) ?? emptyStatusCounts();
-    workspaceCounts[status.data] += row._count._all;
-    usage.workspaces.set(row.workspaceId, workspaceCounts);
-    usage.statusCounts[status.data] += row._count._all;
-  }
-
-  for (const row of runRows) {
-    const usage = usageForWorkspace(row.workspaceId);
-    if (!usage) continue;
-    usage.runs24h.total += row._count._all;
-    if (row.status === "completed") usage.runs24h.completed += row._count._all;
-    if (row.status === "failed") usage.runs24h.failed += row._count._all;
-  }
-
-  // Node-type mix, counting workflows (not nodes): a workflow with two emails is one send_email user.
-  let cursor: string | undefined;
-  for (;;) {
-    const page = await prisma.workflow.findMany({
-      where: { status: { not: "archived" } },
-      select: { id: true, workspaceId: true, status: true, definition: true },
-      orderBy: { id: "asc" },
-      take: DEFINITION_PAGE_SIZE,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    });
-    for (const workflow of page) {
-      const usage = usageForWorkspace(workflow.workspaceId);
-      if (!usage) continue;
-      const summary = summarizeWorkflowDefinition(workflow.definition);
-      const seen: Array<[string, NodeKind]> = [
-        ...(summary.triggerType ? [[summary.triggerType, "trigger"] as [string, NodeKind]] : []),
-        ...summary.actionTypes.map((type) => [type, "action"] as [string, NodeKind]),
-      ];
-      for (const [type, kind] of seen) {
-        const entry = usage.nodeTypes.get(type) ?? { kind, workflowsTotal: 0, workflowsEnabled: 0 };
-        entry.workflowsTotal += 1;
-        if (workflow.status === "enabled") entry.workflowsEnabled += 1;
-        usage.nodeTypes.set(type, entry);
-      }
-    }
-    if (page.length < DEFINITION_PAGE_SIZE) break;
-    cursor = page[page.length - 1].id;
-  }
-
-  return [...usageByOrganization.values()].filter((usage) => liveWorkflowCount(usage.statusCounts) > 0);
+  return [...usages.byOrganization.values()].filter((usage) => liveWorkflowCount(usage.statusCounts) > 0);
 };
 
 export interface WorkflowUsageSnapshotSummary {

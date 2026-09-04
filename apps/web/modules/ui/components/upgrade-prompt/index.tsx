@@ -2,8 +2,8 @@
 
 import { KeyIcon } from "lucide-react";
 import Link from "next/link";
-import posthog from "posthog-js";
 import { useEffect } from "react";
+import { capturePostHogClientEvent, capturePostHogClientEventWhenReady } from "@/lib/posthog/client";
 import { Button } from "@/modules/ui/components/button";
 
 export type ModalButton = {
@@ -23,17 +23,15 @@ export const UpgradePrompt = ({ title, description, buttons, feature }: UpgradeP
   const [primaryButton, secondaryButton] = buttons;
 
   // The impression behind `upgrade_cta_clicked`: without it the paywall funnel has a numerator and
-  // no denominator, and a locked feature's page is indistinguishable from an empty one.
+  // no denominator, and a locked feature's page is indistinguishable from an empty one. Deferred
+  // until PostHog is ready: the layout that initialises the SDK runs its effect after this one.
   useEffect(() => {
-    if (posthog.__loaded && feature) {
-      posthog.capture("upgrade_prompt_viewed", { feature });
-    }
+    if (!feature) return;
+    return capturePostHogClientEventWhenReady("upgrade_prompt_viewed", { feature });
   }, [feature]);
 
   const handlePrimaryClick = () => {
-    if (posthog.__loaded && feature) {
-      posthog.capture("upgrade_cta_clicked", { feature });
-    }
+    if (feature) capturePostHogClientEvent("upgrade_cta_clicked", { feature });
     primaryButton.onClick?.();
   };
 

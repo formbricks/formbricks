@@ -815,6 +815,17 @@ describe("processWorkflowRunJob", () => {
     expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
   });
 
+  test("does not report a failure when another delivery already finalized the run (0-row terminal write)", async () => {
+    mockSendEmail.mockRejectedValue(new Error("SMTP provider rejected the message"));
+    mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org_1" });
+    // First updateMany is the queued→running claim; the second is this delivery's terminal write, which loses.
+    mockWorkflowRunUpdateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
+  });
+
   test("marks the run failed for an invalid / non-executable definition (final attempt)", async () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,

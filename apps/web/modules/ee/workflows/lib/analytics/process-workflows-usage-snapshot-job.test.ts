@@ -8,7 +8,13 @@ vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), error: vi.fn(), 
 vi.mock("@/lib/constants", () => mocks.constants);
 vi.mock("./usage-snapshot", () => ({ emitWorkflowUsageSnapshots: vi.fn() }));
 
-const context = { attempt: 1, jobId: "job_1", jobName: "workflows-usage.snapshot", maxAttempts: 3, queueName: "background-jobs" };
+const context = {
+  attempt: 1,
+  jobId: "job_1",
+  jobName: "workflows-usage.snapshot",
+  maxAttempts: 3,
+  queueName: "background-jobs",
+};
 
 describe("processWorkflowsUsageSnapshotJob", () => {
   beforeEach(() => {

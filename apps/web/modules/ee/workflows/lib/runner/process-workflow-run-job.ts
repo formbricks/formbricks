@@ -600,9 +600,12 @@ const handleRunError = async (
 
   // Final attempt: commit a terminal `failed` and swallow. Pool exhaustion on the last attempt must be
   // recorded here rather than rethrown into the void, or the run would stay stuck `running` forever.
-  await recordRunFailure(run.id, data.workspaceId, error, runData, true, logContext);
+  const recorded = await recordRunFailure(run.id, data.workspaceId, error, runData, true, logContext);
   logger.error({ ...logContext, err: error }, "Workflow run job failed after final attempt");
-  await captureWorkflowRunFailed(error, run, data, context.attempt, runData);
+  // Only the delivery whose terminal write landed reports the failure. A losing concurrent delivery
+  // (0 rows, or a persistence error) must neither duplicate the event nor report a failure over a run
+  // another delivery has already completed.
+  if (recorded) await captureWorkflowRunFailed(error, run, data, context.attempt, runData);
 };
 
 /** Coarse, PII-free failure class for analytics; the message itself can name a recipient. */
@@ -628,7 +631,7 @@ const captureWorkflowRunFailed = async (
 ): Promise<void> => {
   try {
     const organization = await getOrganizationByWorkspaceId(data.workspaceId);
-    const failedStep = runData?.steps.filter((step) => step.status === "failed").at(-1);
+    const failedStep = runData?.steps.findLast((step) => step.status === "failed");
     capturePostHogEvent(
       organization?.id ?? data.workspaceId,
       WORKFLOW_RUN_FAILED_EVENT,
@@ -717,7 +720,7 @@ const recordRunFailure = async (
   runData: TWorkflowRunData | undefined,
   isFinalAttempt: boolean,
   logContext: ReturnType<typeof getWorkflowRunLogContext>
-): Promise<void> => {
+): Promise<boolean> => {
   const now = new Date();
   try {
     // Status-guarded: only touch a run that is still non-terminal. A 0-row result means another delivery
@@ -737,7 +740,10 @@ const recordRunFailure = async (
         "Workflow run already finalized by another delivery; skipping failure write"
       );
     }
+    // Whether this delivery's write landed: the caller reports the failure only when it did.
+    return updated.count > 0;
   } catch (persistError) {
     logger.error({ ...logContext, err: persistError }, "Failed to persist workflow run failure state");
+    return false;
   }
 };
