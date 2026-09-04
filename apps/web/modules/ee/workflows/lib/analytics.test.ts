@@ -11,7 +11,7 @@ describe("trackWorkflowEvent", () => {
   test("drops a user-action event until PostHog is initialised", async () => {
     const { trackWorkflowEvent } = await import("./analytics");
 
-    trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.canvasAction, { action: "auto-layout" });
+    trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.listFiltered, { sort_by: "updatedAt" });
 
     expect(mockPosthog.capture).not.toHaveBeenCalled();
   });
@@ -20,9 +20,9 @@ describe("trackWorkflowEvent", () => {
     mockPosthog.__loaded = true;
     const { trackWorkflowEvent } = await import("./analytics");
 
-    trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.canvasAction, { action: "auto-layout" });
+    trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.listFiltered, { sort_by: "updatedAt" });
 
-    expect(mockPosthog.capture).toHaveBeenCalledWith("workflow_canvas_action", { action: "auto-layout" });
+    expect(mockPosthog.capture).toHaveBeenCalledWith("workflow_list_filtered", { sort_by: "updatedAt" });
   });
 });
 

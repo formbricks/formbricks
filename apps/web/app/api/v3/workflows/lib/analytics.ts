@@ -29,7 +29,8 @@ export const resolveWorkflowAnalyticsVia = (
 /**
  * Flatten a package detail into the snake_case property set the dashboards break down on. Pure, so
  * the mapping is unit-tested without PostHog; `now` is injected for the `hours_since_created` math.
- * `deployment` is not set here: `capturePostHogEvent` stamps it on every server event.
+ * The cloud versus self-hosted split is a property of the organization group (refreshed by the
+ * daily snapshot), not of events: in our project every event is cloud anyway.
  */
 export const toWorkflowLifecycleEventProperties = (
   detail: WorkflowAnalyticsDetail,

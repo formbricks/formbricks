@@ -44,7 +44,6 @@ export const WORKFLOW_CLIENT_EVENTS = {
   actionAdded: "workflow_action_added",
   nodeDeleted: "workflow_node_deleted",
   inspectorOpened: "workflow_inspector_opened",
-  canvasAction: "workflow_canvas_action",
   validationProblemsViewed: "workflow_validation_problems_viewed",
   validationProblemFixClicked: "workflow_validation_problem_fix_clicked",
   enableBlocked: "workflow_enable_blocked",

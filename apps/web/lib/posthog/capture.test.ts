@@ -10,8 +10,6 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/constants", () => ({ IS_FORMBRICKS_CLOUD: false }));
-
 vi.mock("@formbricks/logger", () => ({
   logger: { warn: mocks.loggerWarn },
 }));
@@ -39,7 +37,6 @@ describe("capturePostHogEvent", () => {
         key: "value",
         $lib: "posthog-node",
         source: "server",
-        deployment: "self_hosted",
       },
       groups: undefined,
     });
@@ -54,7 +51,6 @@ describe("capturePostHogEvent", () => {
       properties: {
         $lib: "posthog-node",
         source: "server",
-        deployment: "self_hosted",
       },
       groups: undefined,
     });
@@ -75,7 +71,6 @@ describe("capturePostHogEvent", () => {
         key: "value",
         $lib: "posthog-node",
         source: "server",
-        deployment: "self_hosted",
       },
       groups: { organization: "org_1", workspace: "ws_1" },
     });
@@ -90,7 +85,6 @@ describe("capturePostHogEvent", () => {
       properties: {
         $lib: "posthog-node",
         source: "server",
-        deployment: "self_hosted",
       },
       groups: { organization: "org_1" },
     });

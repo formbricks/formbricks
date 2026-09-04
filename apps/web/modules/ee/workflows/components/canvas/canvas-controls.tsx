@@ -10,8 +10,6 @@ import {
   ZoomOutIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
-import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import { Button, type ButtonProps } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
@@ -100,10 +98,7 @@ export const CanvasControls = ({
               aria-label={label}
               aria-pressed={ariaPressed}
               disabled={disabled}
-              onClick={() => {
-                trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.canvasAction, { action: key });
-                onClick();
-              }}>
+              onClick={onClick}>
               <Icon />
             </Button>
           </TooltipRenderer>
