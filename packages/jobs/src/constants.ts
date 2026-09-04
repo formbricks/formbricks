@@ -11,6 +11,7 @@ export const JOB_NAMES = {
   surveyScheduling: "survey-scheduling.reconcile",
   surveyArchivePurge: "survey-archive-purge.process",
   usageTelemetry: "usage-telemetry.process",
+  workflowsUsageSnapshot: "workflows-usage.snapshot",
   workflowRun: "workflow-run.process",
   workflowRunReconcile: "workflow-run.reconcile",
 } as const;

@@ -14,6 +14,11 @@ import { processAuthzedProjectionDeliveryJob } from "@/lib/authzed/outbox-proces
 import { processAuthzedScheduledReconciliationJob } from "@/lib/authzed/scheduled-reconciliation";
 import { USAGE_TELEMETRY_DAILY_CRON_PATTERN, USAGE_TELEMETRY_TIME_ZONE } from "@/lib/telemetry/constants";
 import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetry-job";
+import {
+  WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN,
+  WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE,
+} from "@/modules/ee/workflows/lib/analytics/constants";
+import { processWorkflowsUsageSnapshotJob } from "@/modules/ee/workflows/lib/analytics/process-workflows-usage-snapshot-job";
 import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
 import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
 import { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } from "@/modules/ee/workflows/lib/runner/reconcile-constants";
@@ -124,6 +129,15 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
     schedule: {
       everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
       kind: "every",
+    },
+  },
+  workflowsUsageSnapshot: {
+    handler: processWorkflowsUsageSnapshotJob,
+    job: recurringJobs.workflowsUsageSnapshot,
+    schedule: {
+      cronPattern: WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN,
+      kind: "cron",
+      timeZone: WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE,
     },
   },
 };

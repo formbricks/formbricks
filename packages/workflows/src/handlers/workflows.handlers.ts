@@ -1,4 +1,8 @@
 import {
+  summarizeWorkflowDefinition,
+  summarizeWorkflowDefinitionOptions,
+} from "../analytics/definition-summary";
+import {
   type TWorkflowIdInput,
   type TWorkflowRunIdInput,
   type TWorkflowTestProblem,
@@ -27,7 +31,13 @@ import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
 import { type TWorkflowExecutableDefinition, ZWorkflowExecutableDefinition } from "../types/document";
 import { redactWorkflowDefinitionPII } from "./audit-redaction";
-import type { TriggerSurveyCheck, WorkflowApiAccess, WorkflowApiContext } from "./context";
+import type {
+  TriggerSurveyCheck,
+  WorkflowAnalyticsDetail,
+  WorkflowAnalyticsOperation,
+  WorkflowApiAccess,
+  WorkflowApiContext,
+} from "./context";
 import { parseListWorkflowRunsQuery, parseListWorkflowsQuery } from "./parse-list-query";
 import {
   toWorkflowListItem,
@@ -119,6 +129,37 @@ const recordAuditSafely = async (
     ctx.logger.error({ error }, "Failed to record workflow audit detail");
   }
 };
+
+/** Same contract as `recordAuditSafely`, for the product-analytics sink. */
+const recordAnalyticsSafely = async (
+  ctx: WorkflowApiContext,
+  detail: WorkflowAnalyticsDetail
+): Promise<void> => {
+  try {
+    await ctx.recordAnalytics?.(detail);
+  } catch (error) {
+    ctx.logger.error({ error }, "Failed to record workflow analytics detail");
+  }
+};
+
+/**
+ * Analytics detail for a completed operation. Only shape summaries of the definition leave this
+ * seam (see `WorkflowAnalyticsDetail`); the row's `definition` is read here and nowhere downstream.
+ */
+const toAnalyticsDetail = (
+  operation: WorkflowAnalyticsOperation,
+  row: WorkflowRowWithLastRun,
+  extra: Pick<WorkflowAnalyticsDetail, "previousStatus" | "sourceWorkflowId" | "testOk"> = {}
+): WorkflowAnalyticsDetail => ({
+  operation,
+  workflowId: row.id,
+  workspaceId: row.workspaceId,
+  status: row.status,
+  createdAt: row.createdAt,
+  definition: summarizeWorkflowDefinition(row.definition),
+  options: summarizeWorkflowDefinitionOptions(row.definition),
+  ...extra,
+});
 
 /**
  * The literal email recipients configured on a definition's `send_email` actions. A `to` that is
@@ -261,6 +302,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         workspaceId: created.workspaceId,
         newObject: toAuditSnapshot(created, ctx.auditRedactionKey),
       });
+      await recordAnalyticsSafely(ctx, toAnalyticsDetail("created", created));
 
       return createdResponse(resource, `/api/v3/workflows/${resource.id}`, ctx.requestId);
     } catch (error) {
@@ -328,6 +370,10 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         workspaceId: created.workspaceId,
         newObject: toAuditSnapshot(created, ctx.auditRedactionKey),
       });
+      await recordAnalyticsSafely(
+        ctx,
+        toAnalyticsDetail("duplicated", created, { sourceWorkflowId: loaded.id })
+      );
 
       return createdResponse(resource, `/api/v3/workflows/${resource.id}`, ctx.requestId);
     } catch (error) {
@@ -347,6 +393,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         workspaceId: loaded.workspaceId,
         oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
       });
+      await recordAnalyticsSafely(ctx, toAnalyticsDetail("deleted", loaded));
 
       return noContentResponse(ctx.requestId);
     } catch (error) {
@@ -373,6 +420,10 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
         newObject: toAuditSnapshot(updated, ctx.auditRedactionKey),
       });
+      await recordAnalyticsSafely(
+        ctx,
+        toAnalyticsDetail("archived", updated, { previousStatus: loaded.status })
+      );
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
     } catch (error) {
@@ -399,6 +450,10 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
         newObject: toAuditSnapshot(updated, ctx.auditRedactionKey),
       });
+      await recordAnalyticsSafely(
+        ctx,
+        toAnalyticsDetail("unarchived", updated, { previousStatus: loaded.status })
+      );
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
     } catch (error) {
@@ -461,6 +516,10 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
         newObject: toAuditSnapshot(updated, ctx.auditRedactionKey),
       });
+      await recordAnalyticsSafely(
+        ctx,
+        toAnalyticsDetail("enabled", updated, { previousStatus: loaded.status })
+      );
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
     } catch (error) {
@@ -487,6 +546,10 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
         newObject: toAuditSnapshot(updated, ctx.auditRedactionKey),
       });
+      await recordAnalyticsSafely(
+        ctx,
+        toAnalyticsDetail("disabled", updated, { previousStatus: loaded.status })
+      );
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
     } catch (error) {
@@ -582,6 +645,8 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         ok: problems.length === 0,
         problems,
       });
+
+      await recordAnalyticsSafely(ctx, toAnalyticsDetail("tested", loaded, { testOk: result.ok }));
 
       return dataResponse(result, ctx.requestId);
     } catch (error) {

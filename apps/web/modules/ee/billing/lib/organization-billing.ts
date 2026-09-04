@@ -15,7 +15,7 @@ import {
 } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
-import { capturePostHogEvent } from "@/lib/posthog";
+import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -1675,6 +1675,16 @@ export const syncOrganizationBillingFromStripe = async (
   });
 
   await invalidateOrganizationBillingCache(organizationId);
+
+  // Keep the PostHog organization group's plan facts current on every sync (ENG-2851). The daily
+  // workflows snapshot refreshes them too, but a plan change should be breakdown-able the same day.
+  // Additive merge: `name` and `email_domain` set at signup stay untouched. Never throws.
+  groupIdentifyPostHog("organization", organizationId, {
+    plan: cloudPlan,
+    billing_interval: billingInterval,
+    subscription_status: subscriptionStatus,
+    has_payment_method: hasPaymentMethod,
+  });
 
   await emitSubscriptionLifecycleEvent({
     organizationId,

@@ -22,7 +22,10 @@ import { WorkflowSortDropdown } from "../components/workflow-sort-dropdown";
 import { WorkflowStatusPill } from "../components/workflow-status-pill";
 import { WorkflowsEmptyState } from "../components/workflows-empty-state";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
+import { useTrackWorkflowListFilters } from "../hooks/use-track-workflow-list-filters";
+import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
 import { useWorkflows } from "../hooks/use-workflows";
+import { resolveWorkflowListSurface } from "../lib/analytics";
 import { computeStatusIn, parseStoredWorkflowFilters } from "../lib/list-filters";
 import { WorkflowsListBodyLoading } from "../loading";
 
@@ -85,6 +88,14 @@ export const WorkflowsListPage = ({
     );
   }, [searchValue, selectedStatuses, sortBy, isFilterInitialized]);
 
+  useTrackWorkflowListFilters({
+    isFilterInitialized,
+    searchValue,
+    debouncedSearchValue,
+    selectedStatuses,
+    sortBy,
+  });
+
   const toggleStatus = (value: TWorkflowStatus) => {
     setSelectedStatuses((prev) =>
       prev.includes(value) ? prev.filter((status) => status !== value) : [...prev, value]
@@ -132,6 +143,17 @@ export const WorkflowsListPage = ({
   // Mirror the surveys list: only a genuinely empty workspace hides the toolbar. If any workflow exists
   // (even only archived ones), keep the toolbar so the filters stay reachable.
   const isWorkspaceEmpty = isListEmpty && !isProbingAnyWorkflows && anyWorkflows.length === 0;
+
+  useTrackWorkflowSurface(
+    resolveWorkflowListSurface({
+      isWorkspaceEmpty,
+      showInitialLoading,
+      isError,
+      isListEmpty,
+      isProbingAnyWorkflows,
+      workflowCount: workflows.length,
+    })
+  );
 
   if (isWorkspaceEmpty) {
     return (

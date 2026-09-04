@@ -193,6 +193,40 @@ export const sendTelemetryEvents = async () => {
 };
 
 /**
+ * Distinct trigger and step types across the instance's live workflows, read straight from the JSONB
+ * definitions so a new node kind reports itself. Fail-soft on purpose: this is a nice-to-have on top
+ * of the counts, and a malformed definition must not cost the instance its whole usage report.
+ */
+const getWorkflowNodeTypesInUse = async (): Promise<{ triggerTypes: string[]; actionTypes: string[] }> => {
+  try {
+    const [row] = await prisma.$queryRaw<[{ triggerTypes: unknown; actionTypes: unknown }]>`
+      SELECT
+        COALESCE(
+          (SELECT array_agg(DISTINCT w."definition"->'trigger'->>'triggerType')
+             FROM "Workflow" w
+            WHERE w.status <> 'archived' AND w."definition"->'trigger'->>'triggerType' IS NOT NULL),
+          ARRAY[]::text[]
+        ) as "triggerTypes",
+        COALESCE(
+          (SELECT array_agg(DISTINCT COALESCE(n->>'actionType', n->>'type'))
+             FROM (SELECT "definition" FROM "Workflow"
+                    WHERE status <> 'archived' AND jsonb_typeof("definition"->'nodes') = 'array') w,
+                  jsonb_array_elements(w."definition"->'nodes') n),
+          ARRAY[]::text[]
+        ) as "actionTypes"
+    `;
+    const toStrings = (value: unknown): string[] =>
+      Array.isArray(value)
+        ? value.filter((item): item is string => typeof item === "string").sort((a, b) => a.localeCompare(b))
+        : [];
+    return { triggerTypes: toStrings(row?.triggerTypes), actionTypes: toStrings(row?.actionTypes) };
+  } catch (error) {
+    logger.warn({ error }, "Failed to read workflow node types for the usage update");
+    return { triggerTypes: [], actionTypes: [] };
+  }
+};
+
+/**
  * Gathers telemetry data and sends it to Formbricks Enterprise endpoint.
  * @param lastSent - Timestamp of last telemetry send (used to calculate incremental metrics)
  * @returns `true` when a usage update was accepted by the endpoint, `false` when there was nothing to
@@ -210,8 +244,8 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
   // Optimize database queries to reduce connection pool usage:
   // Instead of 15 parallel queries (which could exhaust the connection pool),
   // we batch all count queries into a single raw SQL query.
-  // This reduces connection usage from 15 → 3 (batch counts + integrations + accounts).
-  const [countsResult, integrations, ssoProviders] = await Promise.all([
+  // This reduces connection usage from 15 → 4 (batch counts + integrations + accounts + workflow node types).
+  const [countsResult, integrations, ssoProviders, workflowNodeTypes] = await Promise.all([
     // Single query for all counts (13 metrics in one round-trip)
     prisma.$queryRaw<
       [
@@ -229,6 +263,10 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
           contactCount: bigint;
           segmentCount: bigint;
           newestResponseAt: Date | null;
+          workflowCount: bigint;
+          enabledWorkflowCount: bigint;
+          workflowRunCountSinceLastUpdate: bigint;
+          workflowRunFailedCountSinceLastUpdate: bigint;
         },
       ]
     >`
@@ -245,11 +283,16 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
         (SELECT COUNT(*) FROM "Display") as "displayCount",
         (SELECT COUNT(*) FROM "Contact") as "contactCount",
         (SELECT COUNT(*) FROM "Segment") as "segmentCount",
-        (SELECT MAX("created_at") FROM "Response") as "newestResponseAt"
+        (SELECT MAX("created_at") FROM "Response") as "newestResponseAt",
+        (SELECT COUNT(*) FROM "Workflow" WHERE status <> 'archived') as "workflowCount",
+        (SELECT COUNT(*) FROM "Workflow" WHERE status = 'enabled') as "enabledWorkflowCount",
+        (SELECT COUNT(*) FROM "WorkflowRun" WHERE "isDryRun" = false AND "created_at" > ${new Date(lastSent || 0)}) as "workflowRunCountSinceLastUpdate",
+        (SELECT COUNT(*) FROM "WorkflowRun" WHERE "isDryRun" = false AND status = 'failed' AND "created_at" > ${new Date(lastSent || 0)}) as "workflowRunFailedCountSinceLastUpdate"
     `,
     // Keep these as separate queries since they need DISTINCT which is harder to optimize
     prisma.integration.findMany({ select: { type: true }, distinct: ["type"] }),
     prisma.account.findMany({ select: { provider: true }, distinct: ["provider"] }),
+    getWorkflowNodeTypesInUse(),
   ]);
 
   // Extract metrics from the batched query result and convert bigints to numbers
@@ -303,6 +346,14 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
     displayCount,
     contactCount,
     segmentCount,
+    // Workflows adoption for self-hosted instances, which send nothing to PostHog (ENG-2851).
+    workflows: {
+      workflowCount: Number(counts.workflowCount),
+      enabledWorkflowCount: Number(counts.enabledWorkflowCount),
+      runCountSinceLastUsageUpdate: Number(counts.workflowRunCountSinceLastUpdate),
+      failedRunCountSinceLastUsageUpdate: Number(counts.workflowRunFailedCountSinceLastUpdate),
+      ...workflowNodeTypes,
+    },
     integrations: integrationMap,
     infrastructure: {
       smtp: !!env.SMTP_HOST,
