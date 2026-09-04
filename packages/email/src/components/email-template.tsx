@@ -61,7 +61,7 @@ export function EmailTemplate({
               />
             )}
           </Section>
-          <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-left">
+          <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-start">
             {children}
           </Container>
 

@@ -241,6 +241,35 @@ describe("follow-up email direction", () => {
     expect(html).toContain(mixedValue);
   });
 
+  test("marks the open-text response value for automatic direction detection", async () => {
+    const html = await renderFollowUpEmail({
+      ...exampleData.followUpEmail,
+      responseData: [
+        {
+          element: "ما أكثر ما أعجبك؟",
+          response: "كانت خدمة العملاء ممتازة!",
+          type: TSurveyElementTypeEnum.OpenText,
+        },
+      ],
+      ...legal,
+      t,
+    });
+
+    // The value is rendered by renderEmailResponseValue rather than by the template, so a
+    // dir="auto" on the label alone would leave the answer under it resolved as LTR.
+    expect(html).toMatch(/<p[^>]*dir="auto"[^>]*>كانت خدمة العملاء ممتازة!<\/p>/);
+  });
+
+  test("lets the card alignment follow the direction of each element", async () => {
+    const html = await renderFollowUpEmail({ ...exampleData.followUpEmail, ...legal, t });
+
+    // dir="auto" only sets `direction`; an inherited `text-align:left` from the card would still
+    // pin RTL paragraphs to the left edge. The card uses `text-start`, which resolves per element.
+    // Asserting the declaration also proves the email Tailwind engine compiles the utility.
+    expect(html).toContain("text-align:start");
+    expect(html).not.toContain("text-align:left");
+  });
+
   test("renders LTR follow-ups exactly as before", async () => {
     const html = await renderFollowUpEmail({ ...exampleData.followUpEmail, ...legal, t });
 
