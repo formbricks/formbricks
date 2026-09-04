@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { createContext, runInContext } from "node:vm";
 import { describe, expect, test } from "vitest";
 import {
   EMOTION_MEASURE_ORDER,
@@ -16,9 +17,11 @@ import {
   getMeasureAxisLabel,
   getSentimentValueForMeasureId,
   getTranslatedDimensionValueLabel,
+  getTranslatedFieldDescription,
   getTranslatedFieldLabel,
   isEnrichmentDimensionId,
   isNotEnrichedDimensionValue,
+  isRatioMeasure,
   isSelectableValueDimension,
   sortMeasureIdsForCategoryAxis,
   sortRowsByEnumDimension,
@@ -70,7 +73,7 @@ describe("schema-definition", () => {
     test("returns measure by id", () => {
       const field = getFieldById("FeedbackRecords.count");
       expect(field).toBeDefined();
-      expect(field?.label).toBe("Responses");
+      expect(field?.label).toBe("Feedback Records");
     });
 
     test("returns undefined for unknown id", () => {
@@ -86,7 +89,7 @@ describe("schema-definition", () => {
 
     test("returns field label for known dimension/measure", () => {
       expect(formatCubeColumnHeader("FeedbackRecords.sourceType")).toBe("Source Type");
-      expect(formatCubeColumnHeader("FeedbackRecords.count")).toBe("Responses");
+      expect(formatCubeColumnHeader("FeedbackRecords.count")).toBe("Feedback Records");
     });
 
     test("converts last segment to title case for unknown keys", () => {
@@ -133,12 +136,32 @@ describe("schema-definition", () => {
     });
 
     test("labels buckets with the 'Domain: Detail' scheme", () => {
+      // `group` only exists on measures, so look the ids up in the measures list directly.
+      const getMeasureById = (id: string) => FEEDBACK_FIELDS.measures.find((m) => m.id === id);
+
       expect(getFieldById("FeedbackRecords.joyCount")?.label).toBe("Emotion: Joy");
       expect(getFieldById("FeedbackRecords.veryPositiveCount")?.label).toBe("Sentiment: Very positive");
       expect(getFieldById("FeedbackRecords.promoterCount")?.label).toBe("NPS: Promoters");
-      expect(getFieldById("FeedbackRecords.promoterCount")?.group).toBe("count");
-      expect(getFieldById("FeedbackRecords.npsAverage")?.group).toBe("average");
-      expect(getFieldById("FeedbackRecords.npsScore")?.group).toBe("score");
+      expect(getMeasureById("FeedbackRecords.promoterCount")?.group).toBe("count");
+      expect(getMeasureById("FeedbackRecords.npsAverage")?.group).toBe("average");
+      expect(getMeasureById("FeedbackRecords.npsScore")?.group).toBe("score");
+    });
+
+    test("classifies scores and averages as ratios, and counts as additive", () => {
+      // Drives two decisions that must not diverge: whether an empty bucket means 0 or "no value",
+      // and whether per-group values may be folded into one.
+      expect(isRatioMeasure("FeedbackRecords.npsScore")).toBe(true);
+      expect(isRatioMeasure("FeedbackRecords.csatScore")).toBe(true);
+      expect(isRatioMeasure("FeedbackRecords.npsAverage")).toBe(true);
+      expect(isRatioMeasure("FeedbackRecords.sentimentAverage")).toBe(true);
+
+      expect(isRatioMeasure("FeedbackRecords.count")).toBe(false);
+      expect(isRatioMeasure("FeedbackRecords.promoterCount")).toBe(false);
+      expect(isRatioMeasure("FeedbackRecords.uniqueRespondents")).toBe(false);
+
+      // Not a measure, and not in the schema at all: both keep the additive default.
+      expect(isRatioMeasure("FeedbackRecords.sourceName")).toBe(false);
+      expect(isRatioMeasure("FeedbackRecords.notAMeasure")).toBe(false);
     });
 
     test("only exposes members present in the deployed Cube schema", () => {
@@ -154,6 +177,132 @@ describe("schema-definition", () => {
 
     test("keeps the Helm and Docker Cube schemas in sync", () => {
       expect(readChartCubeSchema()).toBe(readDockerCubeSchema());
+    });
+  });
+
+  describe("Response context (ENG-1555 metadata)", () => {
+    const metadataDimensionIds = [
+      "FeedbackRecords.metadataSource",
+      "FeedbackRecords.metadataUrl",
+      "FeedbackRecords.metadataBrowser",
+      "FeedbackRecords.metadataOs",
+      "FeedbackRecords.metadataDevice",
+      "FeedbackRecords.metadataCountry",
+      "FeedbackRecords.metadataAction",
+      "FeedbackRecords.metadataFinished",
+      "FeedbackRecords.metadataDurationSeconds",
+      "FeedbackRecords.metadataEndingId",
+      "FeedbackRecords.metadataSurveyType",
+    ];
+
+    test("exposes one dimension per key the ingestion allowlist writes", () => {
+      const dimensionIds = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
+      expect(dimensionIds).toEqual(expect.arrayContaining(metadataDimensionIds));
+    });
+
+    test("types the two non-text keys as their own types rather than strings", () => {
+      // The filter UI picks its operators off this type, so a boolean typed as a string would offer
+      // `contains` on true/false and no gt/lt on the duration.
+      expect(getFieldById("FeedbackRecords.metadataFinished")?.type).toBe("boolean");
+      expect(getFieldById("FeedbackRecords.metadataDurationSeconds")?.type).toBe("number");
+    });
+
+    test("members exist in both deployed Cube schemas", () => {
+      const dockerSchema = readDockerCubeSchema();
+      const chartSchema = readChartCubeSchema();
+
+      for (const id of metadataDimensionIds) {
+        expect(dockerSchema).toContain(`    ${getCubeMemberName(id)}: {`);
+        expect(chartSchema).toContain(`    ${getCubeMemberName(id)}: {`);
+      }
+    });
+
+    test("reads the non-text keys through a guard instead of a bare cast", () => {
+      // `metadata` is free-form jsonb any writer can fill, so a bare ::boolean / ::double precision
+      // on a malformed value fails the whole chart query rather than that one row. The digit bounds
+      // are part of the guard: an unbounded digit run still reads as a number but overflows or
+      // underflows double precision, which raises 22003 for the whole query.
+      for (const schema of [readDockerCubeSchema(), readChartCubeSchema()]) {
+        expect(schema).toContain("LOWER(${CUBE}.metadata->>'finished') IN ('true', 'false')");
+        expect(schema).toContain(
+          "metadata->>'duration_seconds' ~ '\\\\A-?[0-9]{1,15}(\\\\.[0-9]{1,6})?\\\\Z'"
+        );
+      }
+    });
+
+    test("keeps every member's SQL free of JS replacement specials", () => {
+      // Cube splices a member's SQL into its filter templates with String.prototype.replace, where
+      // that SQL is the *replacement* argument — so `$'`, `` $` ``, `$&`, `$<name>`, `$1` and `$$`
+      // are expansion tokens rather than literals there. A regex ending in `$'` is the easy way to
+      // hit this: it swallowed the closing quote, spliced ` IS NULL` inside the string literal, and
+      // turned `set` / `notSet` on metadataDurationSeconds into an HTTP 400. `$$` is the quiet one —
+      // it collapses to a single `$` instead of erroring, so a dollar-quoted body would come out
+      // subtly rewritten rather than rejected. Assert the class, not one pattern, and read it off
+      // the evaluated model rather than the file text so a member added later cannot sidestep it.
+      const REPLACEMENT_SPECIAL = /\$(['`&$]|<|\d)/;
+
+      for (const path of [dockerCubeSchemaPath, chartCubeSchemaPath]) {
+        let captured:
+          | { dimensions: Record<string, { sql?: string }>; measures: Record<string, { sql?: string }> }
+          | undefined;
+        const sandbox = {
+          CUBE: "TBL",
+          cube: (_name: string, definition: typeof captured) => {
+            captured = definition;
+          },
+        };
+        createContext(sandbox);
+        runInContext(readFileSync(path, "utf8"), sandbox);
+
+        const members = [
+          ...Object.entries(captured?.dimensions ?? {}),
+          ...Object.entries(captured?.measures ?? {}),
+        ];
+        expect(members.length).toBeGreaterThan(0);
+
+        const offenders = members
+          .filter(
+            ([, definition]) => typeof definition.sql === "string" && REPLACEMENT_SPECIAL.test(definition.sql)
+          )
+          .map(([name]) => name);
+        expect(offenders).toEqual([]);
+      }
+    });
+
+    test("offers a value pick-list for the low-cardinality keys only", () => {
+      for (const id of [
+        "FeedbackRecords.metadataSource",
+        "FeedbackRecords.metadataSurveyType",
+        "FeedbackRecords.metadataBrowser",
+        "FeedbackRecords.metadataOs",
+        "FeedbackRecords.metadataDevice",
+        "FeedbackRecords.metadataCountry",
+        "FeedbackRecords.metadataAction",
+        "FeedbackRecords.metadataEndingId",
+      ]) {
+        expect(isSelectableValueDimension(id)).toBe(true);
+      }
+      // One bucket per path: a pick-list of URLs is the valueText problem again.
+      expect(isSelectableValueDimension("FeedbackRecords.metadataUrl")).toBe(false);
+    });
+
+    test("labels resolve to i18n keys rather than the raw dimension id", () => {
+      const t = ((key: string) => key) as unknown as TFunction;
+
+      for (const id of metadataDimensionIds) {
+        expect(getTranslatedFieldLabel(id, t)).toMatch(/^workspace\.analysis\.charts\.field_label_/);
+      }
+    });
+
+    test("translates the descriptions that carry a chart-building caveat", () => {
+      const t = ((key: string) => key) as unknown as TFunction;
+
+      expect(getTranslatedFieldDescription("FeedbackRecords.metadataFinished", "fallback", t)).toBe(
+        "workspace.analysis.charts.field_description_completed"
+      );
+      expect(getTranslatedFieldDescription("FeedbackRecords.metadataDurationSeconds", "fallback", t)).toBe(
+        "workspace.analysis.charts.field_description_time_to_complete"
+      );
     });
   });
 
@@ -275,6 +424,45 @@ describe("schema-definition", () => {
         expect(dockerSchema).toContain(`    ${member}: {`);
         expect(chartSchema).toContain(`    ${member}: {`);
       }
+    });
+  });
+
+  describe("getTranslatedFieldDescription", () => {
+    // Returns something distinguishable from the key, so an assertion cannot pass on an id that
+    // resolves to the *wrong* `field_description_*` key — which a key-echoing `t` would allow.
+    const t = ((key: string) => `translated:${key}`) as TFunction;
+
+    // The descriptions these ids carry are the copy that tells a user which of three
+    // near-identical measures to pick. Routing them through `t()` is what puts them in front of a
+    // non-English user; nothing else fails if a key is dropped from the map, because the fallback
+    // silently serves the hardcoded English from FEEDBACK_FIELDS and `pnpm i18n` still passes.
+    test.each([
+      ["FeedbackRecords.valueId", "workspace.analysis.charts.field_description_value_option"],
+      ["FeedbackRecords.valueText", "workspace.analysis.charts.field_description_value_text"],
+      ["FeedbackRecords.count", "workspace.analysis.charts.field_description_count"],
+      ["FeedbackRecords.uniqueRespondents", "workspace.analysis.charts.field_description_unique_respondents"],
+      ["FeedbackRecords.uniqueResponses", "workspace.analysis.charts.field_description_unique_responses"],
+    ])("resolves %s through i18n rather than the English fallback", (id, key) => {
+      expect(getTranslatedFieldDescription(id, "english fallback", t)).toBe(`translated:${key}`);
+    });
+
+    test("falls back to the schema's own description for a member with no key", () => {
+      expect(getTranslatedFieldDescription("FeedbackRecords.sourceType", "english fallback", t)).toBe(
+        "english fallback"
+      );
+    });
+
+    test("passes an absent description through rather than inventing one", () => {
+      expect(getTranslatedFieldDescription("FeedbackRecords.sourceType", undefined, t)).toBeUndefined();
+    });
+
+    // The lookup is an object literal, so an id that collides with a prototype member must not
+    // resolve through the prototype chain — the defect #8985 had to convert its own lookup to a Map
+    // for. Unreachable today (every call site passes an id from the hardcoded FEEDBACK_FIELDS), so
+    // this pins it rather than fixing something live.
+    test("does not resolve an inherited property as a description", () => {
+      expect(getTranslatedFieldDescription("constructor", "english fallback", t)).toBe("english fallback");
+      expect(getTranslatedFieldDescription("toString", undefined, t)).toBeUndefined();
     });
   });
 
@@ -496,6 +684,12 @@ describe("schema-definition", () => {
       "fieldGroupLabelNormalized",
       "languageNormalized",
       "valueTextNormalized",
+      "metadataSourceNormalized",
+      "metadataBrowserNormalized",
+      "metadataOsNormalized",
+      "metadataDeviceNormalized",
+      "metadataCountryNormalized",
+      "metadataActionNormalized",
     ];
 
     test("are present in both Cube schemas with a LOWER(TRIM(...)) sql and hidden", () => {

@@ -1,6 +1,8 @@
+import { formatDate } from "date-fns";
 import { describe, expect, test } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
-import { expandPresetDateRanges } from "./date-presets";
+import { isSubDayDateRangePreset, resolveDateRangePresetBounds } from "@/lib/date-ranges";
+import { DASHBOARD_DATE_PRESETS, expandPresetDateRanges } from "./date-presets";
 
 const queryWithDateRange = (dateRange: string | [string, string]): TChartQuery => ({
   measures: ["FeedbackRecords.count"],
@@ -57,6 +59,29 @@ describe("expandPresetDateRanges", () => {
     expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-01-01", "2026-05-21"]);
   });
 
+  test("'last 24 hours' serializes as UTC timestamps ending now", () => {
+    // Constructed as a UTC instant so the assertion pins the UTC serialization and stays invariant
+    // across the test runner's timezone (a local-time NOW would make this assertion TZ-dependent).
+    const nowUtc = new Date(Date.UTC(2026, 4, 21, 14, 30, 0));
+    const result = expandPresetDateRanges(queryWithDateRange("last 24 hours"), nowUtc);
+    expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-05-20T14:30:00Z", "2026-05-21T14:30:00Z"]);
+  });
+
+  test("'last quarter' is the full previous calendar quarter", () => {
+    const result = expandPresetDateRanges(queryWithDateRange("last quarter"), NOW);
+    expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-01-01", "2026-03-31"]);
+  });
+
+  test("'last 6 months' runs from 6 months back through today", () => {
+    const result = expandPresetDateRanges(queryWithDateRange("last 6 months"), NOW);
+    expect(result.timeDimensions?.[0].dateRange).toEqual(["2025-11-21", "2026-05-21"]);
+  });
+
+  test("'last year' is the full previous calendar year", () => {
+    const result = expandPresetDateRanges(queryWithDateRange("last year"), NOW);
+    expect(result.timeDimensions?.[0].dateRange).toEqual(["2025-01-01", "2025-12-31"]);
+  });
+
   test("leaves explicit [start, end] tuple unchanged", () => {
     const result = expandPresetDateRanges(queryWithDateRange(["2026-01-01", "2026-01-15"]), NOW);
     expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-01-01", "2026-01-15"]);
@@ -93,4 +118,17 @@ describe("expandPresetDateRanges", () => {
     expandPresetDateRanges(q, NOW);
     expect(JSON.stringify(q)).toBe(before);
   });
+
+  // A chart and the survey summary filter set to the same preset must cover the same days, which only
+  // holds while both read their ranges from `@/lib/date-ranges`. Redefine either side and this fails.
+  test.each(DASHBOARD_DATE_PRESETS.filter((preset) => !isSubDayDateRangePreset(preset)))(
+    "'%s' covers the same days as the summary filter",
+    (preset) => {
+      const { from, to } = resolveDateRangePresetBounds(preset, NOW);
+      expect(expandPresetDateRanges(queryWithDateRange(preset), NOW).timeDimensions?.[0].dateRange).toEqual([
+        formatDate(from, "yyyy-MM-dd"),
+        formatDate(to, "yyyy-MM-dd"),
+      ]);
+    }
+  );
 });

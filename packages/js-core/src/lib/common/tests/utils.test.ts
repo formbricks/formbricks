@@ -18,7 +18,6 @@ import {
   wrapThrowsAsync,
 } from "@/lib/common/utils";
 import type {
-  TSurveyStyling,
   TUserState,
   TWorkspaceState,
   TWorkspaceStateActionClass,
@@ -172,7 +171,7 @@ describe("utils.ts", () => {
             placement: "bottomRight",
             inAppSurveyBranding: true,
             styling: { allowStyleOverwrite: false },
-          } as TWorkspaceStateSettings,
+          },
           surveys: [],
           actionClasses: [],
         },
@@ -360,7 +359,7 @@ describe("utils.ts", () => {
         styling: {
           overwriteThemeStyling: true,
           brandColor: { light: "#000" },
-        } as TSurveyStyling,
+        },
       } as TWorkspaceStateSurvey;
 
       const result = getStyling(settings, survey);
@@ -376,7 +375,7 @@ describe("utils.ts", () => {
         styling: {
           overwriteThemeStyling: false,
           brandColor: { light: "#000" },
-        } as TSurveyStyling,
+        },
       } as TWorkspaceStateSurvey;
 
       const result = getStyling(settings, survey);
@@ -392,7 +391,7 @@ describe("utils.ts", () => {
         styling: {
           overwriteThemeStyling: true,
           brandColor: { light: "#000" },
-        } as TSurveyStyling,
+        },
       } as TWorkspaceStateSurvey;
 
       const result = getStyling(settings, survey);
@@ -988,7 +987,7 @@ describe("utils.ts", () => {
           urlFilters: [
             {
               value: "https://example.com/other",
-              rule: "exactMatch" as unknown as TActionClassPageUrlRule,
+              rule: "exactMatch",
             },
           ],
           elementSelector: {
@@ -1022,7 +1021,7 @@ describe("utils.ts", () => {
           urlFilters: [
             {
               value: "path",
-              rule: "contains" as unknown as TActionClassPageUrlRule,
+              rule: "contains",
             },
           ],
           elementSelector: {
@@ -1062,7 +1061,7 @@ describe("utils.ts", () => {
 
       // Before fix: matches() → false → returns false (bug)
       // After fix:  matches() → false → closest() → button → returns true (correct)
-      const result = evaluateNoCodeConfigClick(icon as unknown as HTMLElement, action);
+      const result = evaluateNoCodeConfigClick(icon, action);
       expect(result).toBe(true);
     });
 
@@ -1085,7 +1084,7 @@ describe("utils.ts", () => {
         },
       };
 
-      const result = evaluateNoCodeConfigClick(other as unknown as HTMLElement, action);
+      const result = evaluateNoCodeConfigClick(other, action);
       expect(result).toBe(false);
     });
 
@@ -1109,7 +1108,7 @@ describe("utils.ts", () => {
         },
       };
 
-      const result = evaluateNoCodeConfigClick(button as unknown as HTMLElement, action);
+      const result = evaluateNoCodeConfigClick(button, action);
       expect(result).toBe(true);
       expect(closestSpy).not.toHaveBeenCalled(); // closest() is only a fallback
     });
@@ -1233,7 +1232,7 @@ describe("filterSurveys() — interaction targeting × recontact/display-cap mat
         placement: "bottomRight",
         inAppSurveyBranding: true,
         styling: { allowStyleOverwrite: false },
-      } as TWorkspaceStateSettings,
+      },
       surveys: [survey],
       actionClasses: [],
     },

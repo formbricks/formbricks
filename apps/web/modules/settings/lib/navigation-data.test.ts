@@ -117,6 +117,49 @@ describe("getSettingsLayoutData", () => {
     expect(data?.backUrl).toBe("/workspaces/ws-2/surveys");
   });
 
+  test("resolves the organization of the active workspace when no organization is given", async () => {
+    seedSuccess();
+    mocks.getOrganization.mockImplementation((id: string) =>
+      Promise.resolve({ id, name: `Org ${id}`, billing: {} })
+    );
+    mocks.getOrganizationsByUserId.mockResolvedValue([{ id: "org-1" }, { id: "org-2" }]);
+    mocks.getWorkspacesByUserId.mockResolvedValue([{ id: "ws-2" }]);
+    mocks.getWorkspace.mockResolvedValue({ id: "ws-2", name: "WS", organizationId: "org-2" });
+    mocks.cookieGet.mockReturnValue({ value: "ws-2" });
+
+    const data = await getSettingsLayoutData("user-1");
+
+    // Not org-1: account settings must stay in the organization the user is currently working in.
+    expect(data?.organization.id).toBe("org-2");
+    expect(data?.currentWorkspace?.id).toBe("ws-2");
+  });
+
+  test("falls back to the first organization when the active workspace is no longer accessible", async () => {
+    seedSuccess();
+    mocks.getOrganizationsByUserId.mockResolvedValue([{ id: "org-1" }, { id: "org-2" }]);
+    mocks.getWorkspacesByUserId.mockResolvedValue([{ id: "ws-1" }]);
+    // Workspace of an organization the user is no longer a member of.
+    mocks.getWorkspace.mockResolvedValue({ id: "ws-left", name: "WS", organizationId: "org-left" });
+    mocks.cookieGet.mockReturnValue({ value: "ws-left" });
+
+    const data = await getSettingsLayoutData("user-1");
+
+    expect(data?.organization.id).toBe("org-1");
+  });
+
+  test("falls back to the first organization when the active workspace no longer exists", async () => {
+    seedSuccess();
+    mocks.getOrganizationsByUserId.mockResolvedValue([{ id: "org-1" }, { id: "org-2" }]);
+    mocks.getWorkspacesByUserId.mockResolvedValue([]);
+    mocks.getWorkspace.mockResolvedValue(null);
+    mocks.cookieGet.mockReturnValue({ value: "ws-deleted" });
+
+    const data = await getSettingsLayoutData("user-1");
+
+    expect(data?.organization.id).toBe("org-1");
+    expect(data?.currentWorkspace).toBeNull();
+  });
+
   test("ignores the cookie and falls back to the first workspace when it is not accessible", async () => {
     seedSuccess();
     mocks.getWorkspacesByUserId.mockResolvedValue([{ id: "ws-1" }, { id: "ws-2" }]);

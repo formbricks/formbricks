@@ -1,6 +1,8 @@
 import { TFunction } from "i18next";
+import { toast } from "react-hot-toast";
 import {
   TFeedbackSourceType,
+  TFeedbackSourceWithMappings,
   THubFieldType,
   UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES,
   ZHubFieldType,
@@ -17,6 +19,19 @@ import {
 
 export const getDismissedStorageKey = (workspaceId: string) => `${workspaceId}-dismissedFeedbackSuggestions`;
 
+/**
+ * Surveys to surface as import suggestions below the connected sources.
+ * Excludes surveys already backing a source, and drafts — a draft has never collected responses,
+ * so suggesting it for import would only offer an empty source.
+ */
+export const getSuggestedSurveys = (
+  surveys: TUnifySurvey[],
+  connectedSurveyIds: string[]
+): TUnifySurvey[] => {
+  const connectedSurveyIdSet = new Set(connectedSurveyIds);
+  return surveys.filter((survey) => !connectedSurveyIdSet.has(survey.id) && survey.status !== "draft");
+};
+
 /** Survey element ids that can be mapped to a feedback source (drops unsupported question types). */
 export const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
   survey.elements
@@ -25,14 +40,94 @@ export const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
     )
     .map((element) => element.id);
 
+/**
+ * Distinct surveys a Formbricks source replays responses from.
+ *
+ * `formbricksMappings` holds one row per mapped question, so a source covering five questions has
+ * five rows all naming the same survey — hence the dedupe. It reads every distinct survey rather
+ * than assuming the first because the schema does not forbid more than one:
+ * `@@unique([workspaceId, feedbackSourceId, surveyId, elementId])`. Today's create dialog only
+ * ever binds one survey, so this normally returns a single id; taking `[0]` instead would turn a
+ * future multi-survey source into a silent partial re-import.
+ */
+export const getMappedSurveyIds = (feedbackSource: TFeedbackSourceWithMappings): string[] => [
+  ...new Set(feedbackSource.formbricksMappings.map((mapping) => mapping.surveyId)),
+];
+
+/**
+ * Whether "Re-import historic data" applies to a source.
+ *
+ * Only Formbricks sources replay responses (`importHistoricalResponses` rejects every other type),
+ * and only one that names a survey has anything to replay from.
+ *
+ * `status` is part of the gate because pausing a source is the user's switch for stopping it
+ * writing into its feedback directory — the live pipeline honours it (`getFeedbackSourcesBySurveyId`
+ * filters `status: "active"`). Neither the action nor the import re-checks status, so without this
+ * the menu would offer to replay a whole response history into a directory the user had just
+ * paused the source to keep out of. Create-time import could never reach that case: a source is
+ * active the moment it is created.
+ */
+export const canReimportHistoricalData = (feedbackSource: TFeedbackSourceWithMappings): boolean =>
+  feedbackSource.type === "formbricks_survey" &&
+  feedbackSource.status === "active" &&
+  getMappedSurveyIds(feedbackSource).length > 0;
+
+/**
+ * Counts from a historical import. Structurally identical to `TImportResult` in
+ * `lib/feedback-source/import.ts`, redeclared here because that module is `server-only` and this
+ * one is reached from client components.
+ */
+export interface TFeedbackImportTotals {
+  successes: number;
+  failures: number;
+  skipped: number;
+}
+
+/** One set of totals for a source, however many surveys it replayed. */
+export const sumImportTotals = (totals: TFeedbackImportTotals[]): TFeedbackImportTotals =>
+  totals.reduce<TFeedbackImportTotals>(
+    (acc, next) => ({
+      successes: acc.successes + next.successes,
+      failures: acc.failures + next.failures,
+      skipped: acc.skipped + next.skipped,
+    }),
+    { successes: 0, failures: 0, skipped: 0 }
+  );
+
+/**
+ * Announce an import's totals, picking the toast by `failures` rather than by whether the action
+ * resolved.
+ *
+ * A failed import does not throw: `reconcileFeedbackRecords` folds per-record errors into
+ * `failures` and the action resolves normally, so a Hub outage returns `{ successes: 0,
+ * failures: N }`. Reporting that as a green toast made a run that wrote nothing look identical to
+ * the happy path.
+ *
+ * `showSuccess` is how the create modal keeps its "Feedback records" link on the success toast —
+ * a green toast inviting the user to go and look at records that were never written is the sharper
+ * half of the same bug. Every import site passes the same `message` it would have shown anyway,
+ * so the CSV and historical wordings stay distinct.
+ */
+export const notifyImportResult = (
+  totals: TFeedbackImportTotals,
+  message: string,
+  showSuccess: (message: string) => void = toast.success
+): boolean => {
+  if (totals.failures > 0) {
+    toast.error(message);
+    return false;
+  }
+
+  showSuccess(message);
+  return true;
+};
+
 export type TFeedbackSourceOptionId = TFeedbackSourceType | "api_ingestion" | "feedback_record_mcp";
 
 export interface TFeedbackSourceOption {
   id: TFeedbackSourceOptionId;
   name: string;
   description: string;
-  disabled: boolean;
-  badge?: { text: string; type: "success" | "gray" | "warning" };
 }
 
 export const getFeedbackSourceOptions = (t: TFunction): TFeedbackSourceOption[] => [
@@ -40,27 +135,21 @@ export const getFeedbackSourceOptions = (t: TFunction): TFeedbackSourceOption[] 
     id: "formbricks_survey",
     name: t("workspace.unify.formbricks_surveys"),
     description: t("workspace.unify.source_connect_formbricks_description"),
-    disabled: false,
   },
   {
     id: "csv",
     name: t("workspace.unify.csv_import"),
     description: t("workspace.unify.source_connect_csv_description"),
-    disabled: false,
   },
   {
     id: "api_ingestion",
     name: t("workspace.unify.api_ingestion"),
     description: t("workspace.unify.api_ingestion_settings_description"),
-    disabled: true,
-    badge: { text: t("common.coming_soon"), type: "gray" },
   },
   {
     id: "feedback_record_mcp",
     name: t("workspace.unify.feedback_record_mcp"),
     description: t("workspace.unify.source_connect_feedback_record_mcp_description"),
-    disabled: true,
-    badge: { text: t("common.coming_soon"), type: "gray" },
   },
 ];
 

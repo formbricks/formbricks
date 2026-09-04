@@ -7,11 +7,12 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { getSurvey } from "@/lib/survey/service";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses, getResponsesByWorkspaceIds } from "./lib/response";
 
@@ -36,7 +37,13 @@ export const GET = withV1ApiWrapper({
             response: responses.notFoundResponse("Survey", surveyId, true),
           };
         }
-        if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, "GET")) {
+        if (
+          !(await can(
+            { type: "apiKey", id: authentication.apiKeyId },
+            getWorkspaceAuthorizationActionForMethod("GET"),
+            { type: "workspace", id: survey.workspaceId }
+          ))
+        ) {
           return {
             response: responses.unauthorizedResponse(),
           };
@@ -104,7 +111,7 @@ export const POST = withV1ApiWrapper({
       }
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveBodyIds(jsonInput, authentication.workspacePermissions, "POST");
+      const resolved = await resolveBodyIds(jsonInput, authentication, "POST");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZResponseInput.safeParse(resolved.body);
@@ -122,7 +129,11 @@ export const POST = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.workspacePermissions, responseInput.workspaceId, "POST")
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("POST"),
+          { type: "workspace", id: responseInput.workspaceId }
+        ))
       ) {
         return { response: responses.unauthorizedResponse() };
       }

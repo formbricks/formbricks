@@ -1,7 +1,7 @@
 // Import pino after the mock is defined
 import Pino from "pino";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { LOG_LEVELS } from "../types/logger";
+import { LOG_LEVELS } from "./types/logger";
 
 // Store original environment variables outside any function
 const { mockStreamSym } = vi.hoisted(() => ({ mockStreamSym: Symbol("pino.stream") }));
@@ -13,6 +13,7 @@ const originalOtelLogsEnabled = process.env.OTEL_LOGS_ENABLED;
 const originalOtelServiceName = process.env.OTEL_SERVICE_NAME;
 const originalNpmPackageVersion = process.env.npm_package_version;
 const originalEnvironment = process.env.ENVIRONMENT;
+const processHandlersAttachedKey = Symbol.for("@formbricks/logger/process-handlers-attached");
 
 const restoreEnv = (key: string, value: string | undefined): void => {
   if (value === undefined) {
@@ -109,6 +110,7 @@ describe("Logger", () => {
     delete process.env.OTEL_SERVICE_NAME;
     delete process.env.npm_package_version;
     delete process.env.ENVIRONMENT;
+    Reflect.deleteProperty(process, processHandlersAttachedKey);
   });
 
   afterEach(() => {
@@ -120,6 +122,7 @@ describe("Logger", () => {
     restoreEnv("OTEL_SERVICE_NAME", originalOtelServiceName);
     restoreEnv("npm_package_version", originalNpmPackageVersion);
     restoreEnv("ENVIRONMENT", originalEnvironment);
+    Reflect.deleteProperty(process, processHandlersAttachedKey);
   });
 
   test("logger is created with development config when NODE_ENV is not production", async () => {
@@ -260,8 +263,7 @@ describe("Logger", () => {
 
     const mockLogger = createMockLogger();
     mockLogger.child = childSpy;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
-    vi.mocked(Pino).mockReturnValue(mockLogger as any);
+    vi.mocked(Pino).mockReturnValue(mockLogger as unknown as ReturnType<typeof Pino>);
 
     // Now import the logger with our updated mock
     const { logger } = await import("./logger");
@@ -282,8 +284,7 @@ describe("Logger", () => {
 
     const mockLogger = createMockLogger();
     mockLogger.child = childSpy;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
-    vi.mocked(Pino).mockReturnValue(mockLogger as any);
+    vi.mocked(Pino).mockReturnValue(mockLogger as unknown as ReturnType<typeof Pino>);
 
     // Now import the logger with our updated mock
     const { logger } = await import("./logger");
@@ -322,8 +323,7 @@ describe("Logger", () => {
     (mockLogger as unknown as { [mockStreamSym]: typeof stream })[mockStreamSym] = stream;
     const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
-    vi.mocked(Pino).mockReturnValue(mockLogger as any);
+    vi.mocked(Pino).mockReturnValue(mockLogger as unknown as ReturnType<typeof Pino>);
 
     await import("./logger");
 
@@ -340,8 +340,7 @@ describe("Logger", () => {
 
     process.env.NEXT_RUNTIME = "nodejs";
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
-    vi.mocked(Pino).mockReturnValue(createMockLogger() as any);
+    vi.mocked(Pino).mockReturnValue(createMockLogger() as unknown as ReturnType<typeof Pino>);
 
     await import("./logger");
 
@@ -354,14 +353,62 @@ describe("Logger", () => {
     processSpy.mockRestore();
   });
 
+  test("process handlers are attached only once across bundled logger instances", async () => {
+    const processSpy = vi.spyOn(process, "on");
+    processSpy.mockImplementation(() => process);
+    process.env.NEXT_RUNTIME = "nodejs";
+
+    await import("./logger");
+    vi.resetModules();
+    await import("./logger");
+
+    expect(processSpy).toHaveBeenCalledTimes(4);
+
+    processSpy.mockRestore();
+  });
+
+  test("removes partially attached process handlers before retrying registration", async () => {
+    const registrationError = new Error("registration failed");
+    let registrationCount = 0;
+    const processOnSpy = vi.spyOn(process, "on");
+    const processOffSpy = vi.spyOn(process, "off");
+    processOnSpy.mockImplementation(() => {
+      registrationCount += 1;
+      if (registrationCount === 3) throw registrationError;
+      return process;
+    });
+    processOffSpy.mockImplementation(() => process);
+    process.env.NEXT_RUNTIME = "nodejs";
+
+    await import("./logger");
+    expect(processOffSpy).toHaveBeenCalledTimes(2);
+    expect(processOffSpy).toHaveBeenCalledWith("unhandledRejection", expect.any(Function));
+    expect(processOffSpy).toHaveBeenCalledWith("uncaughtException", expect.any(Function));
+    expect(
+      (process as typeof process & { [key: symbol]: boolean | undefined })[processHandlersAttachedKey]
+    ).toBe(undefined);
+
+    processOnSpy.mockClear();
+    processOnSpy.mockImplementation(() => process);
+    processOffSpy.mockClear();
+    vi.resetModules();
+
+    await import("./logger");
+
+    expect(processOnSpy).toHaveBeenCalledTimes(4);
+    expect(processOffSpy).not.toHaveBeenCalled();
+
+    processOnSpy.mockRestore();
+    processOffSpy.mockRestore();
+  });
+
   test("process handlers are not attached outside Node.js environment", async () => {
     const processSpy = vi.spyOn(process, "on");
     processSpy.mockImplementation(() => process); // Return process for chaining
 
     process.env.NEXT_RUNTIME = "edge";
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
-    vi.mocked(Pino).mockReturnValue(createMockLogger() as any);
+    vi.mocked(Pino).mockReturnValue(createMockLogger() as unknown as ReturnType<typeof Pino>);
 
     await import("./logger");
 

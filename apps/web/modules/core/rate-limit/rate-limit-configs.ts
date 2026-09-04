@@ -19,6 +19,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    internalDatasetPurge: {
+      interval: 3600,
+      allowedPerInterval: 5,
+      namespace: "api:internal:feedback-datasets:purge",
+    }, // 5 per hour — irreversible and dataset-wide; nobody legitimately purges more often than that
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,
@@ -37,11 +42,6 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "action:send-link-survey-email",
     }, // 10 per hour
-    isSurveyResponsePresent: {
-      interval: 60,
-      allowedPerInterval: 10,
-      namespace: "action:survey-response-present",
-    }, // 10 per minute — prevents email-enumeration oracle
     validateSurveyPin: {
       interval: 60,
       allowedPerInterval: 10,
@@ -60,6 +60,43 @@ export const rateLimitConfigs = {
       allowedPerInterval: 1,
       namespace: "action:generate-example-responses",
     }, // 1 per minute per user — closes the multi-click race and bounds LLM spend
+    integrationMutation: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "action:integration-mutation",
+    }, // 30 per minute per user — one save or delete per UI interaction, so this bounds a readWrite
+    // member churning integration rows (each write hits the provider config and the audit log) without
+    // getting in the way of legitimate mapping edits
+    feedbackSourceMutation: {
+      interval: 60,
+      allowedPerInterval: 60,
+      namespace: "action:feedback-source-mutation",
+    }, // 60 per minute per user
+    historicalResponseImport: {
+      interval: 3600,
+      allowedPerInterval: 10,
+      namespace: "action:historical-response-import",
+    }, // 10 per hour per user — bounds repeated full-survey imports
+    chartCreation: {
+      interval: 60,
+      allowedPerInterval: 60,
+      namespace: "action:chart-creation",
+    }, // 60 per minute per user
+    feedbackDirectoryMutation: {
+      interval: 60,
+      allowedPerInterval: 60,
+      namespace: "action:feedback-directory-mutation",
+    }, // 60 per minute per user
+    feedbackRecordDeletion: {
+      interval: 60,
+      allowedPerInterval: 100,
+      namespace: "action:feedback-record-deletion",
+    }, // 100 per minute per user — supports deliberate bulk deletion while bounding abuse
+    stateMutation: {
+      interval: 60,
+      allowedPerInterval: 120,
+      namespace: "action:state-mutation",
+    }, // 120 per minute per organization/workspace — shared guard for authenticated settings writes
   },
 
   storage: {

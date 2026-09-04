@@ -3,12 +3,13 @@ import { v4 as uuidv4 } from "uuid";
 import { logger } from "@formbricks/logger";
 import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
-import { WEBAPP_URL } from "@/lib/constants";
+import { TRUSTED_PROXY_HOP_COUNT, WEBAPP_URL } from "@/lib/constants";
 import { FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
+import { FORMBRICKS_CLIENT_IP_HEADER, resolveClientIp } from "@/lib/utils/client-ip";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getProxySession } from "@/modules/auth/lib/proxy-session";
 
-const handleAuth = async (request: NextRequest): Promise<Response | null> => {
+const handleAuth = async (request: NextRequest): Promise<NextResponse | null> => {
   const session = await getProxySession(request);
 
   if (isAuthProtectedRoute(request.nextUrl.pathname) && !session) {
@@ -33,7 +34,7 @@ const handleAuth = async (request: NextRequest): Promise<Response | null> => {
 /**
  * Handle domain-aware routing based on PUBLIC_URL and WEBAPP_URL
  */
-const handleDomainAwareRouting = (request: NextRequest): Response | null => {
+const handleDomainAwareRouting = (request: NextRequest): NextResponse | null => {
   try {
     const publicDomainConfigured = isPublicDomainConfigured();
 
@@ -67,6 +68,15 @@ export const proxy = async (originalRequest: NextRequest) => {
   const request = new NextRequest(originalRequest, {
     headers: new Headers(originalRequest.headers),
   });
+
+  const clientIp = resolveClientIp(request.headers, TRUSTED_PROXY_HOP_COUNT);
+  if (clientIp) {
+    request.headers.set(FORMBRICKS_CLIENT_IP_HEADER, clientIp);
+  } else {
+    // A caller may send this private header directly. Removing it on failure is what makes Proxy the
+    // trust boundary; downstream code must never see an identity Proxy did not establish itself.
+    request.headers.delete(FORMBRICKS_CLIENT_IP_HEADER);
+  }
 
   request.headers.set("x-request-id", uuidv4());
   request.headers.set("x-start-time", Date.now().toString());
@@ -105,6 +115,18 @@ export const proxy = async (originalRequest: NextRequest) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|js|css|images|fonts|icons|public|animated-bgs).*)",
+    // Keep asset exclusions segment-bound: every dynamic route must traverse Proxy so callers cannot
+    // bypass the private client-IP header overwrite by choosing an asset-like route prefix.
+    //
+    // The `\\.` escapes stay, and S7780's `String.raw` fix must NOT be applied here: Next.js reads this
+    // matcher by statically parsing the file, and its extractor
+    // (`next/dist/build/analysis/extract-const-value.js`, 16.2.11) understands string literals,
+    // template literals, arrays and objects — but not a `TaggedTemplateExpression`. Verified against
+    // Next's own SWC parser: `String.raw` yields `Unsupported node type "TaggedTemplateExpression" at
+    // "config.matcher[0]"`, which throws in dev and, in a production build, only logs an error and
+    // leaves `config` undefined — so `parseMiddlewareConfig` receives nothing and the matcher is
+    // silently DROPPED, running Proxy on every static asset and voiding the exclusions above. A plain
+    // template literal parses, but needs the same `\\.` escapes, so it does not satisfy the rule either.
+    "/((?!_next/(?:static|image)(?:/|$)|(?:favicon\\.ico|sitemap\\.xml|robots\\.txt)$|(?:js|css|images|fonts|icons|public|animated-bgs)(?:/|$)).*)", // NOSONAR(typescript:S7780) -- String.raw breaks Next.js's static matcher extraction; see above
   ],
 };

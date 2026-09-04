@@ -194,7 +194,7 @@ export const EmailCustomizationSettings = ({
       text: t("common.learn_more"),
       href: isFormbricksCloud
         ? `/organizations/${organization.id}/settings/billing`
-        : "https://formbricks.com/learn-more-self-hosting-license",
+        : "https://formbricks.com/learn-more-self-hosting-license?utm_source=formbricks-app&utm_medium=webapp&utm_campaign=ee_lock_email_whitelabel",
     },
   ];
 
@@ -203,7 +203,7 @@ export const EmailCustomizationSettings = ({
       className="overflow-hidden pb-0"
       title={t("workspace.look.email_customization")}
       description={t("workspace.look.email_customization_description")}
-      noPadding>
+      bodyVariant="bleed">
       <div className="px-6 pt-6">
         {hasWhiteLabelPermission ? (
           <div className="flex items-end justify-between gap-4">

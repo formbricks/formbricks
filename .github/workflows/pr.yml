@@ -28,23 +28,73 @@ jobs:
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
-  build:
-    name: Build Formbricks-web
-    uses: ./.github/workflows/build-web.yml
-    secrets: inherit
+  typecheck:
+    name: Run Typecheck
+    uses: ./.github/workflows/typecheck.yml
+
+  # NOTE: there is deliberately no standalone "build the web app" job here. It used to run
+  # `pnpm build --filter=@formbricks/web...` in parallel with e2e-test, which builds the
+  # very same app, and cached the output into a key nothing downstream ever read. Sharing
+  # that build with e2e-test would require `needs: build`, which serializes two jobs that
+  # are currently concurrent and makes the critical path longer, not shorter. The compile
+  # signal is still covered twice: e2e-test builds the app, and docker-build-validation.yml
+  # builds it again in production config.
 
   helm-chart-validation:
     name: Validate Helm Chart
     uses: ./.github/workflows/helm-chart-validation.yml
+
+  coderabbit-config-validation:
+    name: Validate CodeRabbit Config
+    uses: ./.github/workflows/coderabbit-config-validation.yml
 
   e2e-test:
     name: Run E2E Tests
     uses: ./.github/workflows/e2e.yml
     secrets: inherit
 
+  validate-authzed-schema:
+    name: Validate AuthZed Schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+        with:
+          egress-policy: audit
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate schema assertions
+        run: bash authzed/validate.sh
+
+  # No `paths:` filter, deliberately: `required` below fails on a skipped job, and a required check
+  # that never reports would keep every PR out of the merge queue. It runs concurrently with e2e-test,
+  # which is the gate's critical path, so it costs runner minutes rather than wall-clock.
+  api-v3-contract-tests:
+    name: Run API v3 Contract Tests
+    uses: ./.github/workflows/api-v3-contract-tests.yml
+    # Named rather than `inherit`: this job builds and runs PR-head code, and the licence is the only
+    # secret it declares. Inheriting would hand it every other repository and organisation secret too.
+    secrets:
+      ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
+
   required:
     name: PR Check Summary
-    needs: [lint, test, build, helm-chart-validation, e2e-test]
+    needs:
+      [
+        lint,
+        typecheck,
+        test,
+        helm-chart-validation,
+        coderabbit-config-validation,
+        e2e-test,
+        validate-authzed-schema,
+        api-v3-contract-tests,
+      ]
     if: always()
     runs-on: ubuntu-latest
     permissions:

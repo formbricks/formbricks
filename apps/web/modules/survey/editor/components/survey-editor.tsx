@@ -124,22 +124,17 @@ export const SurveyEditor = ({
 
   useDocumentVisibility(fetchLatestWorkspaceData);
 
+  // Recovery only: `localSurvey` is seeded from `survey` in its `useState` initializer, so this is a
+  // no-op unless something ever resets it to null (the `LoadingSkeleton` guard below is the state it
+  // recovers from). Written as an updater rather than reading `localSurvey`, because depending on it
+  // would re-run this on every keystroke in the editor to do nothing — and that shape becomes a real
+  // loop the moment someone edits the guard. The active element is not set here: the
+  // `[localSurvey?.type]` effect below already picks the first element whenever `localSurvey`
+  // appears.
   useEffect(() => {
-    if (survey) {
-      if (localSurvey) return;
-
-      // Must stay identical to the `useState` initializer above: the working copy is compared
-      // against `survey` key-for-key by the menu bar, so any reshaping has to apply to both or
-      // neither. (Unreachable today — the initializer never yields null.)
-      const surveyClone = structuredClone(survey);
-      setLocalSurvey(surveyClone);
-
-      // Set first element from first block
-      const firstBlock = survey.blocks[0];
-      if (firstBlock) {
-        setActiveElementId(firstBlock.elements?.[0]?.id);
-      }
-    }
+    // Must stay identical to the `useState` initializer above: the working copy is compared
+    // against `survey` key-for-key by the menu bar, so any reshaping has to apply to both or neither.
+    setLocalSurvey((current) => current ?? structuredClone(survey));
   }, [survey]);
 
   useEffect(() => {
@@ -166,6 +161,7 @@ export const SurveyEditor = ({
     if (firstBlock) {
       setActiveElementId(firstBlock.elements[0]?.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally resets active element only when the survey type changes, not on every block edit
   }, [localSurvey?.type]);
 
   useEffect(() => {
@@ -196,7 +192,6 @@ export const SurveyEditor = ({
         responseCount={responseCount}
         finishedResponseCount={finishedResponseCount}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         isCxMode={isCxMode}
         locale={locale}
         setIsCautionDialogOpen={setIsCautionDialogOpen}

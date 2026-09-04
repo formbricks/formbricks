@@ -1,7 +1,10 @@
+import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { FeedbackRecordData } from "@/modules/hub/types";
+import { FIELD_TYPE_ICON_MAP } from "./field-type-icons";
 import {
   formatFieldType,
+  formatFieldTypeLabel,
   formatSourceType,
   getReadOnlyMetadataEntries,
   getValueFieldByType,
@@ -12,6 +15,9 @@ import {
   toISOOrUndefined,
   toLocalDateTimeInput,
 } from "./utils";
+
+// Returns the key so the assertions can read which translation key the formatter picked.
+const t = ((key: string) => key) as TFunction;
 
 const makeRecord = (overrides: Partial<FeedbackRecordData> = {}): FeedbackRecordData => ({
   id: "rec-1",
@@ -138,8 +144,6 @@ describe("isPresetSourceType", () => {
 });
 
 describe("formatSourceType", () => {
-  const t = ((key: string) => key) as any;
-
   test("maps known source types", () => {
     expect(formatSourceType("formbricks", t)).toBe("workspace.unify.formbricks_surveys");
     expect(formatSourceType("formbricks_survey", t)).toBe("workspace.unify.formbricks_surveys");
@@ -167,6 +171,22 @@ describe("formatFieldType", () => {
 
   test("returns empty string unchanged", () => {
     expect(formatFieldType("")).toBe("");
+  });
+});
+
+describe("formatFieldTypeLabel", () => {
+  test("maps every icon-mapped field type to a translation key", () => {
+    // The keys of FIELD_TYPE_ICON_MAP are the types the pick-list can render an icon for, and the
+    // icon's aria-label is their only textual form — so each one must resolve to a key, not to the
+    // re-cased raw value.
+    for (const fieldType of Object.keys(FIELD_TYPE_ICON_MAP)) {
+      expect(formatFieldTypeLabel(fieldType, t)).toBe(`workspace.unify.field_type_label_${fieldType}`);
+    }
+  });
+
+  test("falls back to the re-cased raw value for an unmapped type", () => {
+    expect(formatFieldTypeLabel("ranking", t)).toBe("Ranking");
+    expect(formatFieldTypeLabel("", t)).toBe("");
   });
 });
 

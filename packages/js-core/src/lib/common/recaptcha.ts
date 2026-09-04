@@ -3,7 +3,8 @@ import { Logger } from "./logger";
 
 declare global {
   interface Window {
-    grecaptcha: {
+    // Optional: only defined once the reCAPTCHA script has loaded successfully.
+    grecaptcha?: {
       ready: (callback: () => void | Promise<void>) => void;
       execute: (siteKey: string, options: { action: string }) => Promise<string>;
       render: (container: string | HTMLElement) => number;
@@ -76,17 +77,18 @@ export const executeRecaptcha = async (
   try {
     await loadRecaptchaScript(recaptchaSiteKey);
 
-    // Check if grecaptcha is available
+    // Check if grecaptcha is available (captured so the narrowing holds inside the closures below)
+    const { grecaptcha } = window;
 
-    if (!window.grecaptcha) {
+    if (!grecaptcha) {
       logger.debug("reCAPTCHA API not available");
       return null;
     }
 
     return await new Promise<string>((resolve, reject) => {
-      window.grecaptcha.ready(async () => {
+      grecaptcha.ready(async () => {
         try {
-          const token = await window.grecaptcha.execute(recaptchaSiteKey, { action });
+          const token = await grecaptcha.execute(recaptchaSiteKey, { action });
           resolve(token);
         } catch (error) {
           reject(new Error(String(error)));

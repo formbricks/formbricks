@@ -5,6 +5,7 @@ import { HUB_API_KEY, HUB_API_URL, IS_PRODUCTION } from "@/lib/constants";
 import { authorizeGatewayRequest } from "@/modules/gateway-auth/lib/request";
 import { feedbackRecordsGatewayAuthorizer } from "@/modules/hub/feedback-records-gateway";
 import { getFeedbackRecordsHubPathname } from "@/modules/hub/feedback-records-routing";
+import { getHubErrorHint } from "@/modules/hub/utils";
 
 const FORWARDED_CREDENTIAL_HEADERS = ["authorization", "cookie", "x-api-key"] as const;
 const HOP_BY_HOP_REQUEST_HEADERS = [
@@ -88,16 +89,22 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
 
   try {
     return await fetch(buildHubRequest(request, hubUrl), { cache: "no-store" });
-  } catch {
+  } catch (err) {
+    // Deliberately still does not log `err`: a fetch failure embeds the target URL in its message,
+    // which can carry credentials or query parameters, and keeping it out of the logs is the point
+    // of this payload being hand-built. The hint is derived from the error's errno alone and is a
+    // constant string, so it names Hub as the likely cause without reintroducing that detail.
     logger.error(
       {
         requestId,
         method: request.method,
         pathname: originalUrl.pathname,
+        hint: getHubErrorHint(err),
       },
       "Feedback records local proxy request failed"
     );
 
+    // Body stays a constant: the response reaches the browser, so it must not carry the cause.
     return new Response("Bad Gateway", { status: 502 });
   }
 };

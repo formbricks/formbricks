@@ -49,11 +49,29 @@ vi.mock("@formbricks/database", () => ({
       updateMany: mockWorkflowRunLogUpdateMany,
       findFirst: mockWorkflowRunLogFindFirst,
     },
+    // Better Auth 1.7's oauthProvider plugin seeds resources at boot (ENG-2343); this module's import
+    // graph reaches auth.ts, and a boot-time seed against a model this mock doesn't declare throws an
+    // unhandled BetterAuthError.
+    oauthResource: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findFirst: vi.fn().mockResolvedValue(null),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args: { data: unknown }) => Promise.resolve(args.data)),
+      createMany: vi.fn().mockResolvedValue({ count: 0 }),
+      update: vi.fn().mockImplementation((args: { data: unknown }) => Promise.resolve(args.data)),
+      upsert: vi.fn().mockImplementation((args: { create: unknown }) => Promise.resolve(args.create)),
+    },
   },
 }));
 
 // Prisma's known-request-error shape the claim path checks for a P2002 unique-constraint conflict.
 vi.mock("@formbricks/database/prisma", () => ({
+  // The workflow runner's merged import graph reaches the AuthZed projectors, which map these
+  // Prisma enums to relation names at module scope. Values mirror the Prisma schema.
+  ApiKeyPermission: { manage: "manage", read: "read", write: "write" },
+  OrganizationRole: { billing: "billing", manager: "manager", member: "member", owner: "owner" },
+  TeamUserRole: { admin: "admin", contributor: "contributor" },
+  WorkspaceTeamPermission: { manage: "manage", read: "read", readWrite: "readWrite" },
   Prisma: {
     PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
       code: string;
@@ -96,14 +114,19 @@ vi.mock("@/lib/workspace/service", () => ({
   getWorkspaceMemberEmails: mockGetWorkspaceMemberEmails,
 }));
 
-vi.mock("@formbricks/logger", () => ({
-  logger: {
+vi.mock("@formbricks/logger", () => {
+  const mockLogger = {
     debug: vi.fn(),
     error: mockLoggerError,
     info: mockLoggerInfo,
     warn: mockLoggerWarn,
-  },
-}));
+    // Better Auth 1.7 (ENG-2343) warns during init() — via our betterAuthLogger, which calls
+    // logger.withContext(...) — for the oauthAuthServerConfig discovery warning silenceWarnings used
+    // to suppress. Mirror the real logger's child-logger shape so that doesn't crash as unhandled.
+    withContext: vi.fn(() => mockLogger),
+  };
+  return { logger: mockLogger };
+});
 
 const triggerPayload = {
   type: "response.completed" as const,

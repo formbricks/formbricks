@@ -6,6 +6,7 @@ import { TFunction } from "i18next";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { type ClientErrorType, getClientErrorData, isExpectedError } from "@formbricks/types/errors";
+import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 
@@ -26,13 +27,13 @@ const getErrorMessages = (type: ClientErrorType, t: TFunction) => {
   };
 };
 
-const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) => {
+const ErrorBoundary = ({ error, reset }: Readonly<{ error: Error; reset: () => void }>) => {
   const { t } = useTranslation();
   const errorData = getClientErrorData(error);
   const { title, description } = getErrorMessages(errorData.type, t);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
+    if (IS_DEVELOPMENT_BUILD) {
       console.error(error.message);
     } else if (!isExpectedError(error)) {
       Sentry.captureException(error);

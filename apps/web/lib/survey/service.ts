@@ -10,7 +10,13 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
-import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
+import {
+  MAX_SEGMENT_SURVEYS,
+  TBaseFilters,
+  ZSegmentFilters,
+  ZSegmentSurveyIds,
+  getSegmentFilterTreeBoundsViolation,
+} from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   collectDeclaredFieldNames,
@@ -20,6 +26,7 @@ import {
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
+import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -86,7 +93,6 @@ export const selectSurvey = {
   closeOn: true,
   archivedAt: true,
   isVerifyEmailEnabled: true,
-  isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
   isAutoProgressingEnabled: true,
   isCaptureIpEnabled: true,
@@ -385,13 +391,17 @@ export const updateSurveyInternal = async (
       incoming: collectDeclaredFieldNames(updatedSurvey),
     });
 
-    // ENG-1939: validation may only be skipped while the survey is still a draft. Gate on the
-    // PERSISTED status, not the payload's — the lenient draft schema (ZSurveyDraft) does not validate
-    // elements at all, so without this a caller could push structurally invalid blocks onto a live
-    // survey (crashing downstream consumers that trust the schema) and silently revert it to draft,
-    // stopping it from collecting responses. Deliberately placed after the ENG-1749 tenant guards so
-    // a cross-workspace attempt still reports the authorization failure first.
-    if (skipValidation && currentSurvey.status !== "draft") {
+    // ENG-1939/ENG-2115: validation may only be skipped for a draft-to-draft write, so BOTH sides of
+    // the transition are gated. The lenient draft schema (ZSurveyDraft) does not validate elements at
+    // all, so skipping validation on any other transition lets structurally invalid blocks reach the
+    // DB and crash downstream consumers that trust the schema:
+    //   - persisted status (ENG-1939): stops a caller pushing invalid blocks onto a live survey and
+    //     silently reverting it to draft, stopping it from collecting responses.
+    //   - payload status (ENG-2115): stops a caller publishing a draft that never passed ZSurvey.
+    //     `status` is not destructured out of surveyData below, so it flows straight to the write.
+    // Deliberately placed after the ENG-1749 tenant guards so a cross-workspace attempt still reports
+    // the authorization failure first, and before prisma.survey.update so nothing is persisted.
+    if (skipValidation && (currentSurvey.status !== "draft" || updatedSurvey.status !== "draft")) {
       throw new OperationNotAllowedError("Only draft surveys can be updated without validation");
     }
 
@@ -469,10 +479,30 @@ export const updateSurveyInternal = async (
     // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
     if (segment) {
       if (type === "app") {
+        // ENG-2305: tree bounds are enforced UNCONDITIONALLY — the draft save (skipValidation)
+        // deliberately skips full semantic validation so half-built filters can be saved, but an
+        // over-bounds tree persisted through it would break every consumer that parses the row
+        // back (publish validation, clone, evaluation).
+        const boundsViolation = getSegmentFilterTreeBoundsViolation(segment.filters);
+        if (boundsViolation) {
+          throw new InvalidInputError(boundsViolation);
+        }
+
         // parse the segment filters:
         const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
         if (!skipValidation && !parsedFilters.success) {
           throw new InvalidInputError("Invalid user segment filters");
+        }
+
+        // ENG-2305 sibling of the filter-tree gate above: on the draft path (skipValidation)
+        // segment.surveys reaches this point unvalidated — ZSurveyDraft.segment is an untyped
+        // record, so neither the ZId format rule nor the MAX_SEGMENT_SURVEYS cap has applied. Both
+        // must hold unconditionally BEFORE the ids drive the batched workspace lookup below; the
+        // validated (non-draft) path re-checks the same schema it already passed, a no-op.
+        if (segment.surveys && !ZSegmentSurveyIds.safeParse(segment.surveys).success) {
+          throw new InvalidInputError(
+            `Invalid segment surveys: at most ${MAX_SEGMENT_SURVEYS} valid survey ids are allowed`
+          );
         }
 
         // ENG-1749/ENG-1920: the connected survey ids are client-supplied; ensure each belongs to
@@ -703,6 +733,12 @@ export const updateSurveyInternal = async (
       // changed field.
       { timeout: 20_000, maxWait: 10_000 }
     );
+
+    // ENG-2064: keep feedback-source mappings in sync with the survey's questions. Diff against the
+    // blocks that were actually persisted, not the caller's payload — a partial update that omits
+    // blocks leaves the stored questions untouched, and diffing its empty payload would delete every
+    // mapping. Best-effort: a failure logs inside the helper and never blocks the save.
+    await scheduleFeedbackSourceReconciliation(surveyId, currentSurvey.workspaceId, persistedSurvey.blocks);
 
     return await reconcilePersistedSurveySchedulingIfDue({
       logSource: "survey-update",

@@ -3,10 +3,11 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError } from "@formbricks/types/errors";
 import { RequestBodyTooLargeError, readRequestBodyWithLimit } from "@/app/lib/api/request-body";
+import { can } from "@/lib/authorization";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
+import { getFeedbackDirectoryAuthorizationAction } from "@/lib/authorization/permission-action";
 import { verifyFeedbackRecordsGatewayToken } from "@/lib/jwt";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -50,9 +51,11 @@ type TParsedGatewayRoute = {
  * users these are restricted to organization owners and managers. `create` is deliberately not in
  * this set: adding records to a shared directory is ordinary workspace work, like a CSV import.
  *
- * API keys are intentionally not gated on this — they authorize purely on their per-workspace
- * permissions (`hasApiKeyImplicitFeedbackDirectoryAccess`), and what a key should need to mutate a
- * record is being settled separately in #8682.
+ * API keys are gated on this too, by a different rule: a key has no organization role to check, so it
+ * authorizes on its per-workspace permissions and may therefore mutate only a directory that is not
+ * shared at all (ENG-2189, see `canApiKeyMutateFeedbackDirectoryRecords`). Both rules answer the same
+ * question — a workspace permission cannot identify whose records these are — and neither applies to
+ * `create`.
  */
 const RECORD_MUTATING_OPERATIONS = new Set<TFeedbackRecordsGatewayOperation>([
   "update",
@@ -73,7 +76,9 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
       case "POST":
         return { operation: "create", requiredPermission: "write", tenantSource: "body" };
       case "DELETE":
-        return { operation: "bulkDelete", requiredPermission: "write", tenantSource: "query" };
+        // `manage`, not `write`: everywhere else in the API `methodPermissionMap` reserves DELETE for
+        // `manage`, and feedback-record deletion is unrecoverable (ENG-2083).
+        return { operation: "bulkDelete", requiredPermission: "manage", tenantSource: "query" };
       default:
         return null;
     }
@@ -96,7 +101,13 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
       case "PATCH":
         return { operation: "update", requiredPermission: "write", tenantSource: "recordLookup", recordId };
       case "DELETE":
-        return { operation: "delete", requiredPermission: "write", tenantSource: "recordLookup", recordId };
+        // `manage` for the same reason as `bulkDelete` above (ENG-2083).
+        return {
+          operation: "delete",
+          requiredPermission: "manage",
+          tenantSource: "recordLookup",
+          recordId,
+        };
       default:
         return null;
     }
@@ -202,19 +213,13 @@ const resolveTenantId = async (
   const tenantLookup = await getFeedbackRecordTenant(route.recordId!);
   if (tenantLookup.error) {
     if (tenantLookup.error.status === 404) {
-      logger.warn(
-        { requestId, recordId: route.recordId },
-        "Feedback record tenant lookup returned not found"
-      );
+      logger.warn({ requestId }, "Feedback record tenant lookup returned not found");
       return {
         errorResponse: buildGatewayStatusResponse(403, "Forbidden"),
       };
     }
 
-    logger.warn(
-      { requestId, recordId: route.recordId, hubStatus: tenantLookup.error.status },
-      "Feedback record tenant lookup failed"
-    );
+    logger.warn({ requestId, hubStatus: tenantLookup.error.status }, "Feedback record tenant lookup failed");
     return {
       errorResponse: buildGatewayStatusResponse(503, "Feedback record lookup failed"),
     };
@@ -222,10 +227,7 @@ const resolveTenantId = async (
 
   const tenantId = parseTenantId(tenantLookup.data?.tenantId ?? null);
   if (!tenantId) {
-    logger.warn(
-      { requestId, recordId: route.recordId },
-      "Feedback record tenant lookup returned invalid tenant"
-    );
+    logger.warn({ requestId }, "Feedback record tenant lookup returned invalid tenant");
     return {
       errorResponse: buildGatewayStatusResponse(503, "Feedback record lookup failed"),
     };
@@ -254,46 +256,35 @@ const authorizeFeedbackRecordsGatewayRequest = async (
   }
 
   if (principal.type === "apiKey") {
-    return hasApiKeyImplicitFeedbackDirectoryAccess(
+    const legacySafeguardsAllow = hasApiKeyImplicitFeedbackDirectoryAccess(
       principal.authentication,
       feedbackDirectory.organizationId,
       feedbackDirectory.workspaceIds,
-      requiredPermission
-    )
-      ? { allowed: true }
-      : { allowed: false };
+      requiredPermission,
+      isRecordMutation
+    );
+    if (!legacySafeguardsAllow) return { allowed: false };
+
+    const allowed = await can(
+      { type: "apiKey", id: principal.authentication.apiKeyId },
+      getFeedbackDirectoryAuthorizationAction(requiredPermission),
+      { type: "feedbackDirectory", id: feedbackDirectoryId }
+    );
+    return { allowed };
   }
 
-  try {
-    const minPermission: "read" | "readWrite" = requiredPermission === "read" ? "read" : "readWrite";
+  const allowed = isRecordMutation
+    ? await can({ type: "user", id: principal.userId }, "organization.manage", {
+        type: "organization",
+        id: feedbackDirectory.organizationId,
+      })
+    : await can(
+        { type: "user", id: principal.userId },
+        getFeedbackDirectoryAuthorizationAction(requiredPermission),
+        { type: "feedbackDirectory", id: feedbackDirectoryId }
+      );
 
-    await checkAuthorizationUpdated({
-      userId: principal.userId,
-      organizationId: feedbackDirectory.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        // Mutating an existing record is owners/managers only, so no workspace-team fallback.
-        ...(isRecordMutation
-          ? []
-          : feedbackDirectory.workspaceIds.map((workspaceId) => ({
-              type: "workspaceTeam" as const,
-              workspaceId,
-              minPermission,
-            }))),
-      ],
-    });
-
-    return { allowed: true };
-  } catch (error) {
-    if (error instanceof AuthorizationError) {
-      return { allowed: false };
-    }
-
-    throw error;
-  }
+  return { allowed };
 };
 
 export const feedbackRecordsGatewayAuthorizer: TGatewayRequestAuthorizer = {
@@ -302,57 +293,56 @@ export const feedbackRecordsGatewayAuthorizer: TGatewayRequestAuthorizer = {
     getTokenFromHeaders: getFeedbackRecordsGatewayJwtFromHeaders,
     verifyToken: verifyFeedbackRecordsGatewayToken,
   },
-  authorize: async ({ request, originalRequest, principal, requestId }) => {
-    const route = parseFeedbackRecordsGatewayRoute(originalRequest.method, originalRequest.url.pathname);
-    if (!route) {
-      return {
-        status: "deny",
-        response: buildGatewayStatusResponse(400, "Unsupported FeedbackRecords route"),
-      };
-    }
+  authorize: async ({ request, originalRequest, principal, requestId }) =>
+    withAuthorizationSurface("feedback_gateway", async () => {
+      const route = parseFeedbackRecordsGatewayRoute(originalRequest.method, originalRequest.url.pathname);
+      if (!route) {
+        return {
+          status: "deny",
+          response: buildGatewayStatusResponse(400, "Unsupported FeedbackRecords route"),
+        };
+      }
 
-    const tenantResolution = await resolveTenantId(request, route, originalRequest.url, requestId);
-    if ("errorResponse" in tenantResolution) {
-      return {
-        status: "deny",
-        response: tenantResolution.errorResponse,
-      };
-    }
+      const tenantResolution = await resolveTenantId(request, route, originalRequest.url, requestId);
+      if ("errorResponse" in tenantResolution) {
+        return {
+          status: "deny",
+          response: tenantResolution.errorResponse,
+        };
+      }
 
-    const authorizationResult = await authorizeFeedbackRecordsGatewayRequest(
-      principal,
-      tenantResolution.tenantId,
-      route.requiredPermission,
-      route.operation
-    );
-    if (!authorizationResult.allowed) {
+      const authorizationResult = await authorizeFeedbackRecordsGatewayRequest(
+        principal,
+        tenantResolution.tenantId,
+        route.requiredPermission,
+        route.operation
+      );
+      if (!authorizationResult.allowed) {
+        logger.info(
+          {
+            requestId,
+            principalType: principal.type,
+            operation: route.operation,
+            verdict: "deny",
+          },
+          "Feedback records gateway authorization denied"
+        );
+        return {
+          status: "deny",
+          response: buildGatewayStatusResponse(403, "Forbidden"),
+        };
+      }
+
       logger.info(
         {
           requestId,
-          principalType: principal.type,
           operation: route.operation,
-          feedbackDirectoryId: tenantResolution.tenantId,
-          verdict: "deny",
+          principalType: principal.type,
+          verdict: "allow",
         },
-        "Feedback records gateway authorization denied"
+        "Feedback records gateway authorization allowed"
       );
-      return {
-        status: "deny",
-        response: buildGatewayStatusResponse(403, "Forbidden"),
-      };
-    }
 
-    logger.info(
-      {
-        requestId,
-        operation: route.operation,
-        principalType: principal.type,
-        feedbackDirectoryId: tenantResolution.tenantId,
-        verdict: "allow",
-      },
-      "Feedback records gateway authorization allowed"
-    );
-
-    return allowGatewayRequest();
-  },
+      return allowGatewayRequest();
+    }),
 };

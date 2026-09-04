@@ -13,9 +13,61 @@ permissions:
   contents: read
 
 jobs:
+  validate-authzed-compose:
+    name: Validate AuthZed Compose
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: postgresql://test:test@127.0.0.1:5432/formbricks
+      POSTGRES_PASSWORD: build-time-placeholder
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      REDIS_URL: redis://127.0.0.1:6379
+      CUBEJS_API_URL: http://127.0.0.1:4000
+      CUBEJS_API_SECRET: build-time-placeholder
+      HUB_API_URL: http://127.0.0.1:4000
+      HUB_API_KEY: build-time-placeholder
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.x
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
+
+      - name: Build web workspace dependencies
+        run: pnpm build --filter=@formbricks/web^...
+
+      - name: Test AuthZed client and schema lifecycle
+        run: pnpm --dir apps/web test lib/authzed
+
+      - name: Validate Compose contracts
+        run: bash docker/authzed-compose-contract.sh
+
+      - name: Run AuthZed application and persistence smoke test
+        run: bash docker/authzed-smoke.sh
+
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     # Add PostgreSQL and Redis service containers
     services:
@@ -35,7 +87,7 @@ jobs:
           --health-retries 5
 
       redis:
-        image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+        image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
         ports:
           - 6379:6379
 
@@ -49,10 +101,38 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
+      - name: Verify Valkey Image Platforms
+        shell: bash
+        env:
+          AUTHZED_DATABASE_PASSWORD: 0000000000000000000000000000000000000000000000000000000000000002
+          AUTHZED_TOKEN: 0000000000000000000000000000000000000000000000000000000000000001
+          POSTGRES_PASSWORD: build-time-placeholder
+        run: |
+          set -euo pipefail
+
+          valkey_image="$(docker compose -f docker/docker-compose.yml config --format json | jq -r '.services.redis.image')"
+          manifest="$(docker buildx imagetools inspect --raw "$valkey_image")"
+
+          jq -e '
+            .mediaType == "application/vnd.oci.image.index.v1+json" and
+            any(.manifests[]; .platform.os == "linux" and .platform.architecture == "amd64") and
+            any(.manifests[]; .platform.os == "linux" and .platform.architecture == "arm64")
+          ' <<<"$manifest"
+
+      # NOTE: deliberately no `cache-from`/`cache-to: type=gha`. Measured over four runs, exporting
+      # the cache cost 222-407s per run while the layers it could restore add up to 12s of work: the
+      # only steps that ever reported CACHED were the apk/corepack prelude, because `COPY . .` sits
+      # ahead of `pnpm install` in apps/web/Dockerfile and invalidates everything after it on any
+      # diff. Nothing populates a cache scope this job can read either — no workflow runs on pushes
+      # to main, and merge_group runs write to throwaway `gh-readonly-queue/...` scopes. Restoring
+      # the cache is worth revisiting only together with both halves of the fix: reorder the
+      # Dockerfile so the install layer survives a source change, and give the cache a producer PRs
+      # can read (a push-to-main build, or a registry cache, which is not branch-scoped).
       - name: Build Docker Image
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         env:
@@ -63,8 +143,6 @@ jobs:
           push: false
           load: true
           tags: formbricks-test:${{ env.GITHUB_SHA }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
@@ -86,6 +164,56 @@ jobs:
             ! command -v npx >/dev/null 2>&1
             node --version
           '
+
+      - name: Verify Release-Matched AuthZed Operator CLI
+        shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+
+          IMAGE="formbricks-test:$GITHUB_SHA"
+          docker run --rm --entrypoint sh "$IMAGE" -c '
+            set -eu
+            test "$(id -u)" != "0"
+            test -x /usr/local/bin/formbricks-authzed
+            test -r /home/nextjs/authzed-cli/index.mjs
+            test -r /home/nextjs/authzed-cli/schema.zed
+          '
+
+          AUTHZED_CLI_ENV=(
+            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks"
+            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY"
+            -e REDIS_URL="redis://192.0.2.1:6379"
+            -e HUB_API_URL="http://192.0.2.1:4000"
+            -e HUB_API_KEY="build-time-placeholder"
+            -e CUBEJS_API_URL="http://192.0.2.1:4000"
+            -e CUBEJS_API_SECRET="build-time-placeholder"
+            -e AUTHZED_ENABLED="false"
+          )
+
+          set +e
+          output="$(docker run --rm \
+            --entrypoint formbricks-authzed \
+            "${AUTHZED_CLI_ENV[@]}" \
+            "$IMAGE" health 2>&1)"
+          status=$?
+          set -e
+
+          test "$status" -eq 1
+          test "$output" = '{"status":"disabled"}'
+
+          set +e
+          upgrade_output="$(docker run --rm \
+            --entrypoint formbricks-authzed \
+            "${AUTHZED_CLI_ENV[@]}" \
+            "$IMAGE" upgrade check 2>&1)"
+          upgrade_status=$?
+          set -e
+
+          test "$upgrade_status" -eq 1
+          test "$upgrade_output" = '{"code":"authzed_disabled","retryable":false,"status":"failed"}'
 
       - name: Reject Invalid Environment Before Database Setup
         shell: bash
@@ -196,10 +324,13 @@ jobs:
           printf '%s\n' \
             'WEBAPP_URL=http://localhost:3000' \
             'NEXTAUTH_URL=http://localhost:3000' \
+            'POSTGRES_PASSWORD=compose-postgres-placeholder' \
             "ENCRYPTION_KEY=$DUMMY_ENCRYPTION_KEY" \
             "BETTER_AUTH_SECRET=$DUMMY_ENCRYPTION_KEY" \
             'HUB_API_KEY=build-time-placeholder' \
             'CUBEJS_API_SECRET=build-time-placeholder' \
+            'AUTHZED_TOKEN=compose-authzed-token-placeholder' \
+            'AUTHZED_DATABASE_PASSWORD=compose-authzed-database-placeholder' \
             'AI_PROVIDER=compose-provider-secret-sentinel' \
             > docker/.env
 

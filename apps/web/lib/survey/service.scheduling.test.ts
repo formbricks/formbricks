@@ -62,8 +62,7 @@ describe("survey service scheduling", () => {
     // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
     // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
     // the transaction.
-    vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
-      callback(prisma)) as typeof prisma.$transaction);
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     // Both paths also reconcile the Embedded Data tables (ENG-1978); no existing links means the
     // reconcile is a no-op and scheduling behaviour is what these tests still measure.
     vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
@@ -94,13 +93,15 @@ describe("survey service scheduling", () => {
       status: "inProgress",
     } as never);
 
+    // Publishing runs through updateSurveyAction -> updateSurvey, i.e. with validation. Leaving a
+    // draft is never allowed on the skip-validation path (ENG-2115).
     await updateSurveyInternal(
       {
         ...updateSurveyInput,
         publishOn: scheduledPublishSelection,
         status: "inProgress",
       },
-      true
+      false
     );
 
     expect(prisma.survey.update).toHaveBeenCalledWith(
@@ -165,6 +166,8 @@ describe("survey service scheduling", () => {
     } as never);
     prisma.survey.findMany.mockResolvedValueOnce([] as never).mockResolvedValueOnce([] as never);
 
+    // Scheduling a draft also runs through updateSurveyAction -> updateSurvey, i.e. with validation
+    // (ENG-2115: the skip-validation path may not move a survey out of draft).
     await updateSurveyInternal(
       {
         ...updateSurveyInput,
@@ -172,7 +175,7 @@ describe("survey service scheduling", () => {
         publishOn: scheduledPublishSelection,
         status: "paused",
       },
-      true
+      false
     );
 
     expect(prisma.survey.update).toHaveBeenCalledWith(

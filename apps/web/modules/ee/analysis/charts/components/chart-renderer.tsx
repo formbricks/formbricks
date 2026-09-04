@@ -3,9 +3,13 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, PieChart } from "recharts";
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
+import { cn } from "@/lib/cn";
+import { BreakdownBars } from "@/modules/ee/analysis/charts/components/breakdown-bars";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
+import { computeBigNumberValue } from "@/modules/ee/analysis/charts/lib/big-number";
+import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
@@ -14,6 +18,7 @@ import {
   PIVOTED_MEASURE_KEY,
   PIVOTED_VALUE_KEY,
   formatCellValue,
+  formatPercentShare,
   formatXAxisTick,
   getSemanticDimensionColor,
   getSentimentMeasureColor,
@@ -47,26 +52,32 @@ interface PieLabelProps {
 // and `minAngle`-stretched slices don't end up with lines pointing at nothing.
 const PIE_LABEL_MIN_PERCENT = 0.02;
 
-const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) => {
-  if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
-  if (percent < PIE_LABEL_MIN_PERCENT) return null;
-  const RADIAN = Math.PI / 180;
-  const radius = outerRadius + 22;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  const textAnchor = x > cx ? "start" : "end";
-  return (
-    <text
-      x={x}
-      y={y}
-      className="fill-muted-foreground"
-      fontSize={11}
-      textAnchor={textAnchor}
-      dominantBaseline="central">
-      {formatCellValue(value)} ({(percent * 100).toFixed(1)}%)
-    </text>
-  );
-};
+/** Shown instead of a number when a measure had nothing to compute (an en dash, not a zero). */
+const NO_DATA_PLACEHOLDER = "\u2013";
+
+// Curried with the active language: recharts calls the renderer outside React, so the locale has
+// to be closed over rather than read from a hook inside it.
+const createPieLabelRenderer = (locale: string) =>
+  function PieSliceLabel({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) {
+    if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
+    if (percent < PIE_LABEL_MIN_PERCENT) return null;
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius + 22;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const textAnchor = x > cx ? "start" : "end";
+    return (
+      <text
+        x={x}
+        y={y}
+        className="fill-muted-foreground"
+        fontSize={11}
+        textAnchor={textAnchor}
+        dominantBaseline="central">
+        {formatCellValue(value)} ({formatPercentShare(percent, locale)})
+      </text>
+    );
+  };
 
 interface PieLabelLineProps {
   percent?: number;
@@ -132,6 +143,7 @@ interface BarChartViewProps {
   xAxisKey: string;
   chartConfig: ChartConfig;
   formatDimensionValue: (value: unknown) => string;
+  isHorizontal?: boolean;
 }
 
 const BarChartView = ({
@@ -142,8 +154,12 @@ const BarChartView = ({
   xAxisKey,
   chartConfig,
   formatDimensionValue,
+  isHorizontal = false,
 }: Readonly<BarChartViewProps>) => {
   const { t } = useTranslation();
+  // Value labels sit past the end of the bar, which is the top of a vertical bar and the
+  // right-hand end of a horizontal one.
+  const valueLabelPosition = isHorizontal ? "right" : "top";
 
   // Measure-only queries (no dimension or time grouping) return a single row with one
   // column per measure. Rendered as N bar series that row forms a single category band
@@ -179,11 +195,12 @@ const BarChartView = ({
         tooltipCursor={false}
         zeroBaseline
         tooltipHideLabel
+        horizontal={isHorizontal}
         xAxisTickFormatter={formatMeasureLabel}>
         <Bar dataKey={PIVOTED_VALUE_KEY} fill={CHART_BRAND_DARK} radius={4}>
           <LabelList
             dataKey={PIVOTED_VALUE_KEY}
-            position="top"
+            position={valueLabelPosition}
             className="fill-foreground"
             fontSize={11}
             formatter={(value: unknown) => formatCellValue(value)}
@@ -215,6 +232,7 @@ const BarChartView = ({
       tooltipCursor={false}
       zeroBaseline
       hasCategoryAxis={hasCategoryAxis}
+      horizontal={isHorizontal}
       xAxisTickFormatter={formatDimensionValue}
       chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
       {dataKeys.map((key) => (
@@ -222,7 +240,7 @@ const BarChartView = ({
           {!isMultiMeasure && (
             <LabelList
               dataKey={key}
-              position="top"
+              position={valueLabelPosition}
               className="fill-foreground"
               fontSize={11}
               formatter={(value: unknown) => formatCellValue(value)}
@@ -257,7 +275,8 @@ const PieChartView = ({
   chartConfig,
   formatDimensionValue,
 }: Readonly<PieChartViewProps>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const renderPieLabel = createPieLabelRenderer(i18n.language);
 
   // With several measures and no dimension (e.g. the six Emotion counts), each row column is a
   // measure, not a slice — pivot the measures into one slice per measure so the pie shows them
@@ -307,7 +326,13 @@ const PieChartView = ({
             })}
             <Label position="center" content={<PieCenterLabel total={total} label={centerLabel} />} />
           </Pie>
-          <ChartTooltip content={<PolishedChartTooltip labelFormatter={formatDimensionValue} />} />
+          {/* Measure slices carry the measure label on the row itself, so the header (the same
+              slice name) would only repeat it — suppress it like the pivoted bar chart does. */}
+          <ChartTooltip
+            content={
+              <PolishedChartTooltip labelFormatter={formatDimensionValue} hideLabel={useMeasureSlices} />
+            }
+          />
           <Legend
             verticalAlign="bottom"
             height={36}
@@ -327,10 +352,20 @@ interface ChartRendererProps {
   query: TChartQuery;
   /** value_id → default-language label map, present when the query groups by valueId. */
   optionLabels?: Record<string, string>;
+  /** Saved display settings. Charts saved before these existed have an empty config and keep
+   * the previous behavior (vertical bars). */
+  config?: TChartConfig;
 }
 
-export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly<ChartRendererProps>) {
+export function ChartRenderer({
+  chartType,
+  data,
+  query,
+  optionLabels,
+  config,
+}: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
+  const { barOrientation, pieDisplay, areaDisplay } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
   const gradientIdPrefix = useId();
 
@@ -409,10 +444,13 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           xAxisKey={xAxisKey}
           chartConfig={chartConfig}
           formatDimensionValue={formatDimensionValue}
+          isHorizontal={barOrientation === "horizontal"}
         />
       );
-    case "line":
-      // AreaChart with a thin stroke + gradient fade reads as a line with a soft tint.
+    // Line is a display style of this type, not a type of its own: both render the same Recharts
+    // area series over the same axes and differ only in how the band under the stroke is painted.
+    case "area": {
+      const isLine = areaDisplay === "line";
       return (
         <CartesianChart
           chart={AreaChart}
@@ -422,18 +460,27 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           chartConfig={chartConfig}
           showLegend
           hasCategoryAxis={hasCategoryAxis}
-          xAxisTickFormatter={formatDimensionValue}>
-          <defs>
-            {dataKeys.map((key) => {
-              const color = chartConfig[key]?.color;
-              return (
-                <linearGradient key={key} id={`${gradientIdPrefix}-line-${key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={color} stopOpacity={0.3} />
-                  <stop offset="95%" stopColor={color} stopOpacity={0} />
-                </linearGradient>
-              );
-            })}
-          </defs>
+          xAxisTickFormatter={formatDimensionValue}
+          pointScale>
+          {isLine ? (
+            <defs>
+              {dataKeys.map((key) => {
+                const color = chartConfig[key]?.color;
+                return (
+                  <linearGradient
+                    key={key}
+                    id={`${gradientIdPrefix}-line-${key}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1">
+                    <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={color} stopOpacity={0} />
+                  </linearGradient>
+                );
+              })}
+            </defs>
+          ) : null}
           {dataKeys.map((key) => {
             const color = chartConfig[key]?.color;
             return (
@@ -443,9 +490,13 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
                 dataKey={key}
                 stroke={color}
                 strokeWidth={2}
-                fill={`url(#${gradientIdPrefix}-line-${key})`}
+                // A thin stroke over a gradient that fades to nothing reads as a line with a soft
+                // tint; a flat fill reads as an area. 0.6 is Recharts' own default, spelled out
+                // here so the line style keeps the tint it had as a separate chart type.
+                fill={isLine ? `url(#${gradientIdPrefix}-line-${key})` : color}
+                fillOpacity={isLine ? 0.6 : 0.4}
                 dot={false}
-                activeDot={{ r: 5, stroke: color, strokeWidth: 2, fill: "#fff" }}
+                activeDot={isLine ? { r: 5, stroke: color, strokeWidth: 2, fill: "#fff" } : undefined}
                 // Cube returns null for empty buckets; render them as gaps, not a dip to zero.
                 connectNulls={false}
               />
@@ -453,32 +504,22 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           })}
         </CartesianChart>
       );
-    case "area":
-      return (
-        <CartesianChart
-          chart={AreaChart}
-          data={sortedData}
-          xAxisKey={xAxisKey}
-          dataKeys={dataKeys}
-          chartConfig={chartConfig}
-          showLegend
-          hasCategoryAxis={hasCategoryAxis}
-          xAxisTickFormatter={formatDimensionValue}>
-          {dataKeys.map((key) => (
-            <Area
-              key={key}
-              type="monotone"
-              dataKey={key}
-              stroke={chartConfig[key]?.color}
-              fill={chartConfig[key]?.color}
-              fillOpacity={0.4}
-              strokeWidth={2}
-              connectNulls={false}
-            />
-          ))}
-        </CartesianChart>
-      );
+    }
     case "pie":
+      // A pie and a breakdown bar answer the same question — the share each group takes of the
+      // whole — so they are two renderings of one chart type rather than two chart types.
+      if (pieDisplay === "breakdown") {
+        return (
+          <BreakdownBars
+            sortedData={sortedData}
+            dataKeys={dataKeys}
+            dataKey={dataKey}
+            hasCategoryAxis={hasCategoryAxis}
+            xAxisKey={xAxisKey}
+            formatDimensionValue={formatDimensionValue}
+          />
+        );
+      }
       return (
         <PieChartView
           sortedData={sortedData}
@@ -493,15 +534,22 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
         />
       );
     case "big_number": {
-      const total =
-        data.length === 1
-          ? Number(data[0]?.[dataKey]) || 0
-          : data.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
-      const formatted = total.toLocaleString();
+      // A measure with nothing to compute comes back as NULL (see restoreNullMeasures in
+      // cube-client, which maps the pivot's sentinel back to null). Printing it as 0 would be a
+      // confident "0" for "never asked", so fall back to a no-data glyph instead.
+      const value = computeBigNumberValue(data, dataKey);
+      const hasValue = value !== null;
+      // formatCellValue caps at two fraction digits, so a big number and a bar label now agree on
+      // precision instead of showing 4.705 next to 4.7.
+      const formatted = hasValue ? formatCellValue(value) : NO_DATA_PLACEHOLDER;
       return (
         <div className="flex h-full items-center justify-center p-4">
           <div className="text-center">
-            <div className="text-foreground text-5xl font-semibold tracking-tight tabular-nums">
+            <div
+              className={cn(
+                "text-5xl font-semibold tracking-tight tabular-nums",
+                hasValue ? "text-foreground" : "text-muted-foreground"
+              )}>
               {formatted}
             </div>
             <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>

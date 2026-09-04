@@ -13,6 +13,7 @@ import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-han
 import { getIntegrations } from "@/lib/integration/service";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { sendTelemetryEvents } from "@/lib/telemetry/usage-update";
 import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
@@ -26,13 +27,13 @@ import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { getFinishedResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { handleIntegrations } from "./handle-integrations";
-import { sendTelemetryEvents } from "./telemetry";
 
 const WEBHOOK_TIMEOUT_MS = 5_000;
 const DEFAULT_NOTIFICATION_LOCALE: TUserLocale = "en-US";
 
 const pipelineOrganizationSelect = {
   id: true,
+  displayTimeZone: true,
   billing: {
     select: {
       stripeCustomerId: true,
@@ -629,6 +630,7 @@ const handleSurveyAutoCompleteSafely = async ({
 
 const runResponseFinishedSideEffects = async ({
   data,
+  displayTimeZone,
   logContext,
   organizationId,
   stripeCustomerId,
@@ -636,6 +638,7 @@ const runResponseFinishedSideEffects = async ({
   workspaceId,
 }: {
   data: TResponsePipelineJobData;
+  displayTimeZone: string | null;
   logContext: ReturnType<typeof getPipelineLogContext>;
   organizationId: string;
   stripeCustomerId: string | null | undefined;
@@ -680,7 +683,7 @@ const runResponseFinishedSideEffects = async ({
 
   if (integrations.length > 0) {
     try {
-      await handleIntegrations(integrations, data, survey);
+      await handleIntegrations(integrations, data, survey, displayTimeZone ?? "UTC");
     } catch (error) {
       logger.error(
         {
@@ -845,6 +848,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
     if (data.event === "responseFinished") {
       await runResponseFinishedSideEffects({
         data,
+        displayTimeZone: organization.displayTimeZone,
         logContext,
         organizationId: organization.id,
         stripeCustomerId: organization.billing?.stripeCustomerId,

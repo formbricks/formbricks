@@ -72,8 +72,7 @@ describe("EmbeddedDataStore", () => {
 
     const snapshot = store.getSnapshot();
     expect(Object.hasOwn(snapshot, "__proto__")).toBe(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- reading the own property back
-    expect((snapshot as any)["__proto__"]).toBe("value");
+    expect((snapshot as Record<string, unknown>)["__proto__"]).toBe("value");
     expect(Object.keys({})).toEqual([]);
   });
 

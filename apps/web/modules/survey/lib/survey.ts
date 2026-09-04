@@ -33,7 +33,6 @@ export const selectSurvey = {
   publishOn: true,
   closeOn: true,
   isVerifyEmailEnabled: true,
-  isSingleResponsePerEmailEnabled: true,
   isCaptureIpEnabled: true,
   isAnonymizeResponsesEnabled: true,
   redirectUrl: true,

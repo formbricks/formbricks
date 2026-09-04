@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { isSafeLinkUrl } from "@formbricks/survey-ui";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
@@ -92,12 +93,18 @@ export function EndingCard({
     (urlString: string) => {
       try {
         const url = replaceRecallInfo(urlString, responseData, variablesData, languageCode);
-        if (url && new URL(url)) {
+        // The scheme has to be constrained, not just parseable: `new URL()` accepts `javascript:`, which
+        // executes on the survey's own origin once it reaches `location.replace()`. Recall values are
+        // substituted into the URL first, so the check has to run on the final string. Draft surveys are
+        // written without schema validation, so a stored link can carry an unsafe scheme.
+        if (url && isSafeLinkUrl(url)) {
           if (onOpenExternalURL) {
             onOpenExternalURL(url);
           } else {
             window.top?.location.replace(url);
           }
+        } else if (url) {
+          console.error("Refusing to redirect to an unsafe URL after recall processing");
         }
       } catch (error) {
         console.error("Invalid URL after recall processing:", error);
@@ -157,7 +164,7 @@ export function EndingCard({
           <>
             {endingCard.type === "endScreen" && (
               <div>
-                {media ?? checkmark}
+                {media ?? (endingCard.hideDefaultIcon ? null : checkmark)}
                 <div>
                   <Headline
                     alignTextCenter
@@ -167,7 +174,6 @@ export function EndingCard({
                       variablesData,
                       languageCode
                     )}
-                    elementId="EndingCard"
                   />
                   <Subheader
                     subheader={replaceRecallInfo(
@@ -200,11 +206,7 @@ export function EndingCard({
               <>
                 {isPreviewMode ? (
                   <div>
-                    <Headline
-                      alignTextCenter
-                      headline={t("common.respondents_will_not_see_this_card")}
-                      elementId="EndingCard"
-                    />
+                    <Headline alignTextCenter headline={t("common.respondents_will_not_see_this_card")} />
                     <Subheader subheader={t("common.they_will_be_redirected_immediately")} />
                   </div>
                 ) : (
@@ -220,7 +222,9 @@ export function EndingCard({
             <div className="my-3">
               <LoadingSpinner />
             </div>
-            <h1 className="text-brand">{t("common.sending_responses")}</h1>
+            {/* A transient status message, not a section heading — it used to be an <h1>, which
+                put a second top-level heading on the page and skipped the survey's structure. */}
+            <p className="text-brand">{t("common.sending_responses")}</p>
           </>
         )}
         {isOfflineWithPending && isResponseSendingFinished && (

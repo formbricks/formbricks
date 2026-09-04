@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import {
+  TFeedbackSourceImportMode,
   TFeedbackSourceType,
   TFeedbackSourceWithMappings,
   THubTargetField,
@@ -25,7 +26,14 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
 import { TFieldMapping, TUnifySurvey, getTranslatedFeedbackSourceError } from "../types";
-import { getSelectableQuestionIds } from "../utils";
+import {
+  type TFeedbackImportTotals,
+  getMappedSurveyIds,
+  getSelectableQuestionIds,
+  getSuggestedSurveys,
+  notifyImportResult,
+  sumImportTotals,
+} from "../utils";
 import { CreateFeedbackSourceModal } from "./create-feedback-source-modal";
 import { CsvImportModal } from "./csv-import-modal";
 import { EditFeedbackSourceModal } from "./edit-feedback-source-modal";
@@ -70,11 +78,11 @@ export function FeedbackSourcesSection({
       ),
     [initialFeedbackSources]
   );
-  // Surveys that aren't backing a source yet are surfaced as "Suggestions" below the table.
-  const suggestedSurveys = useMemo(() => {
-    const connectedSurveyIdSet = new Set(connectedSurveyIds);
-    return initialSurveys.filter((survey) => !connectedSurveyIdSet.has(survey.id));
-  }, [initialSurveys, connectedSurveyIds]);
+  // Surveys that aren't backing a source yet (and aren't drafts) are surfaced as "Suggestions" below the table.
+  const suggestedSurveys = useMemo(
+    () => getSuggestedSurveys(initialSurveys, connectedSurveyIds),
+    [initialSurveys, connectedSurveyIds]
+  );
   const directoryNames = directories.map((directory) => directory.name).join(", ");
   const feedbackDirectoryAccessText =
     directories.length === 1
@@ -89,6 +97,7 @@ export function FeedbackSourcesSection({
     name: string;
     type: TFeedbackSourceType;
     feedbackDirectoryId: string;
+    importMode?: TFeedbackSourceImportMode;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
@@ -98,6 +107,7 @@ export function FeedbackSourcesSection({
         name: data.name,
         type: data.type,
         feedbackDirectoryId: data.feedbackDirectoryId,
+        importMode: data.importMode,
       },
       formbricksMappings:
         data.type === "formbricks_survey" && data.surveyMappings?.length ? data.surveyMappings : undefined,
@@ -124,6 +134,7 @@ export function FeedbackSourcesSection({
     feedbackSourceId: string;
     workspaceId: string;
     name: string;
+    importMode?: TFeedbackSourceImportMode;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<boolean> => {
@@ -132,6 +143,7 @@ export function FeedbackSourcesSection({
       workspaceId: workspaceId,
       feedbackSourceInput: {
         name: data.name,
+        importMode: data.importMode,
       },
       formbricksMappings: data.surveyMappings?.length ? data.surveyMappings : undefined,
       fieldMappings: data.fieldMappings?.length
@@ -185,10 +197,16 @@ export function FeedbackSourcesSection({
       return;
     }
 
+    // Explicitly completedOnly rather than leaning on the column default: this path imports
+    // immediately with no chance to choose, and "all" pulls in answers respondents never submitted
+    // and sends them to the AI enrichments. A one-click action must not opt someone into that
+    // silently — picking partials is a decision, so it lives on the "Select questions for import"
+    // route beside this button, which opens the modal with the choice.
     const feedbackSourceId = await handleCreateFeedbackSource({
       name: t("workspace.unify.source_connector_name", { surveyName: survey.name }),
       type: "formbricks_survey",
       feedbackDirectoryId,
+      importMode: "completedOnly",
       surveyMappings: [{ surveyId: survey.id, elementIds }],
     });
 
@@ -204,19 +222,75 @@ export function FeedbackSourcesSection({
       });
 
       if (importResult?.data) {
-        toast.success(
-          t("workspace.unify.historical_import_complete", {
-            successes: importResult.data.successes,
-            failures: importResult.data.failures,
-            skipped: importResult.data.skipped,
-          })
-        );
+        announceImportResult(importResult.data);
       } else {
         // The source was created; only the historical import failed.
         toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
       }
     } catch {
       toast.error(t("common.something_went_wrong"));
+    }
+
+    router.refresh();
+  };
+
+  /** Announces the totals, picking the toast by `failures` — see `notifyImportResult`. */
+  const announceImportResult = (totals: TFeedbackImportTotals): void => {
+    const { successes, failures, skipped } = totals;
+    notifyImportResult(
+      totals,
+      t("workspace.unify.historical_import_complete", { successes, failures, skipped })
+    );
+  };
+
+  /**
+   * Replays the linked survey's historic responses into this source again, so questions added to the
+   * mapping after the first import no longer need the source deleted and rebuilt (ENG-1889).
+   *
+   * Safe to run repeatedly: `importHistoricalResponses` reconciles rather than inserts, and carries
+   * a `snapshotAt` so a record the live pipeline has since corrected is not reverted to this older
+   * copy. It also honours the source's saved `importMode`, so a re-import never widens a
+   * completed-only source to partials.
+   *
+   * What it does NOT repair: a question whose mapped `hubFieldType` changed. `field_type` and
+   * `field_label` identify a record on create and are absent from Hub's update request (see
+   * `UPDATE_FIELD_KEYS` in `lib/feedback-source/reconcile.ts`), so an already-imported record keeps
+   * its original type and only gains the new value column. Fixing that belongs in `reconcile.ts`.
+   */
+  const handleReimportHistoricalData = async (feedbackSource: TFeedbackSourceWithMappings): Promise<void> => {
+    const surveyIds = getMappedSurveyIds(feedbackSource);
+    // Unreachable from the menu, which renders the item only under `canReimportHistoricalData` —
+    // itself this same predicate. Kept so a future caller of `onReimport` that does not gate fails
+    // loudly instead of running an import that reports "0 succeeded".
+    if (surveyIds.length === 0) {
+      toast.error(t("workspace.unify.reimport_no_survey_mapped"));
+      return;
+    }
+
+    try {
+      const totals: TFeedbackImportTotals[] = [];
+      // Sequential rather than concurrent: each import walks every response of a survey in batches
+      // and writes them into the same feedback directory, so running them in parallel would only
+      // multiply the load on one directory. Normally there is a single survey anyway.
+      for (const surveyId of surveyIds) {
+        const importResult = await importHistoricalResponsesAction({
+          feedbackSourceId: feedbackSource.id,
+          workspaceId,
+          surveyId,
+        });
+
+        if (!importResult?.data) {
+          toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
+          return;
+        }
+
+        totals.push(importResult.data);
+      }
+
+      announceImportResult(sumImportTotals(totals));
+    } catch {
+      toast.error(t("common.something_went_wrong"));
+      return;
     }
 
     router.refresh();
@@ -261,6 +335,7 @@ export function FeedbackSourcesSection({
         workspaceId={workspaceId}
         onFeedbackSourceClick={setEditingFeedbackSource}
         onCsvImport={setCsvImportFeedbackSource}
+        onReimport={handleReimportHistoricalData}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDeleteFeedbackSource}
         onImportResponses={handleImportResponses}

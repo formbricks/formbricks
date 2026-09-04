@@ -1,7 +1,7 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
-import { getMcpAuthentication, getMcpRequestId } from "../auth";
+import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { registerScopedTool } from "./guard-scopes";
 import { type TMcpListWorkspacesInput, ZMcpListWorkspacesInput } from "./schemas";
@@ -20,7 +20,7 @@ export function registerWorkspaceTools(server: McpServer): void {
       title: "List workspaces",
       description:
         "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow and feedback-record tools.",
-      inputSchema: ZMcpListWorkspacesInput.shape,
+      inputSchema: ZMcpListWorkspacesInput,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -29,10 +29,11 @@ export function registerWorkspaceTools(server: McpServer): void {
       },
     },
     { anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read"] },
-    async (_input: TMcpListWorkspacesInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
+    async (_input: TMcpListWorkspacesInput, ctx) => {
+      const authInfo = getMcpToolAuthInfo(ctx);
+      const requestId = getMcpRequestId(authInfo);
       const response = await listV3Workspaces({
-        authentication: getMcpAuthentication(extra.authInfo),
+        authentication: getMcpAuthentication(authInfo),
         requestId,
         instance: MCP_API_ROUTE,
       });

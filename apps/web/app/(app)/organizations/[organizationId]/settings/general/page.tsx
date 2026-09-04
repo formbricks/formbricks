@@ -2,7 +2,7 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { AISettingsToggle } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/AISettingsToggle";
 import { CreateOrganizationCard } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/CreateOrganizationCard";
 import { DeleteOrganization } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/DeleteOrganization";
-import { EditOrganizationNameForm } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/EditOrganizationNameForm";
+import { EditOrganizationSettingsForm } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/EditOrganizationSettingsForm";
 import { SecurityListTip } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/SecurityListTip";
 import { isInstanceAIConfigured } from "@/lib/ai/service";
 import {
@@ -63,9 +63,9 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
       )}
       {!IS_FORMBRICKS_CLOUD && <SecurityListTip />}
       <SettingsCard
-        title={t("workspace.settings.general.organization_name")}
-        description={t("workspace.settings.general.organization_name_description")}>
-        <EditOrganizationNameForm organization={organization} membershipRole={currentUserRole} />
+        title={t("workspace.settings.general.organization_settings")}
+        description={t("workspace.settings.general.organization_settings_description")}>
+        <EditOrganizationSettingsForm organization={organization} membershipRole={currentUserRole} />
       </SettingsCard>
       <SettingsCard
         title={t("workspace.settings.general.ai_enabled")}

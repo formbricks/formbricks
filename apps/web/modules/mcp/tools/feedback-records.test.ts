@@ -1,4 +1,6 @@
+import { McpServer, createMcpHandler } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import {
   countV3FeedbackRecords,
@@ -22,6 +24,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { registerFeedbackRecordTools } from "./feedback-records";
+import { ZMcpUpdateFeedbackRecordInput } from "./schemas";
 
 // Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
 // itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
@@ -90,6 +93,249 @@ function createToolServer() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+/**
+ * The registered `inputSchema` is what the model is actually shown, and until now nothing executed it:
+ * every test here calls handlers directly with already-shaped objects, so a schema that had silently
+ * degraded — `.shape` coming back undefined and the SDK registering an empty object, which accepts
+ * anything — would have gone unnoticed. These assertions run the real thing.
+ */
+describe("feedback-record tool input schemas", () => {
+  // SDK v2 registers a schema instance rather than a raw shape, so this returns the ZodObject itself and
+  // the field-level assertions below read through `.shape`.
+  const schemaOf = (tool: string) => {
+    const { tools } = createToolServer();
+    return tools.get(tool)!.config.inputSchema as z.ZodObject<Record<string, z.ZodType>>;
+  };
+  const shapeOf = (tool: string) => schemaOf(tool).shape;
+
+  test("exposes every filter the Hub accepts on list_feedback_records", () => {
+    const shape = shapeOf("list_feedback_records");
+
+    expect(Object.keys(shape).sort()).toEqual([
+      "created_since",
+      "created_until",
+      "cursor",
+      "datasetId",
+      "emotions",
+      "field_group_id",
+      "field_id",
+      "field_type",
+      "has_emotions",
+      "has_sentiment",
+      "has_translation",
+      "language",
+      "limit",
+      "order",
+      "sentiment",
+      "sentiment_score_max",
+      "sentiment_score_min",
+      "since",
+      "sort",
+      "source_id",
+      "source_name",
+      "source_type",
+      "submission_id",
+      "until",
+      "user_id",
+      "value_date_max",
+      "value_date_min",
+      "value_id",
+      "value_number_max",
+      "value_number_min",
+      "workspaceId",
+    ]);
+  });
+
+  test("omits ordering from count_feedback_records, which the Hub does not accept it on", () => {
+    const shape = shapeOf("count_feedback_records");
+
+    expect(shape).not.toHaveProperty("sort");
+    expect(shape).not.toHaveProperty("order");
+    expect(shape).not.toHaveProperty("limit");
+    expect(shape).not.toHaveProperty("cursor");
+    // ...but it does take the filters, so a count describes the set the equivalent list returns.
+    expect(shape).toHaveProperty("sentiment");
+    expect(shape).toHaveProperty("has_sentiment");
+  });
+
+  test("validates a multi-value filter and rejects an unknown one", () => {
+    // The schema the model is handed has to accept the array form, or the OR-ing is unreachable in
+    // practice no matter what the operations layer supports. No `.strict()` added here, deliberately:
+    // the registered schema carries it now (ENG-2256), so the unknown-key rejection below is a property
+    // of what the tool actually advertises rather than of this test's own construction.
+    const schema = schemaOf("list_feedback_records");
+
+    expect(schema.safeParse({ workspaceId, source_type: ["survey", "review"] }).success).toBe(true);
+    expect(schema.safeParse({ workspaceId, source_type: "survey" }).success).toBe(true);
+    expect(schema.safeParse({ workspaceId, has_sentiment: false }).success).toBe(true);
+    expect(schema.safeParse({ workspaceId, sentiment: ["nope"] }).success).toBe(false);
+    expect(schema.safeParse({ workspaceId, userId: "u1" }).success).toBe(false);
+  });
+
+  test("describes every filter, since the description is what the model reads", () => {
+    const shape = shapeOf("list_feedback_records");
+
+    for (const [name, field] of Object.entries(shape)) {
+      expect(field.description, `${name} has no description`).toBeTruthy();
+    }
+  });
+});
+
+/**
+ * ENG-2256's reported symptom, pinned end-to-end against the real SDK: `count_feedback_records` with the
+ * pre-#8650 spelling `userId` (instead of `user_id`) had the unknown key stripped, so the query ran
+ * unfiltered and returned the count for every record in the dataset while reporting success.
+ *
+ * Every other test in this file calls the registered handler directly, which skips the SDK's
+ * `validateToolInput` entirely — the exact reason that was invisible from our side of the boundary for as
+ * long as it was. These go through a real `McpServer` and a real `tools/call`.
+ *
+ * What this does NOT prove: that the `.strict()` on `ZMcpCountFeedbackRecordsInput` is load-bearing. That
+ * schema extends the already-`.strict()` `ZV3FeedbackRecordFilters` and Zod 4's `.extend()` carries
+ * strictness over, so these pass either way — for the feedback-record tools the hole closes on the v2
+ * migration alone (a schema instance instead of a raw `.shape`). The equivalent test in `surveys.test.ts`
+ * covers a plain `z.object` schema, where removing `.strict()` does fail.
+ */
+describe("tool arguments are validated by the SDK (ENG-2256)", () => {
+  type ToolCallOutcome = {
+    error?: { code: number; message: string };
+    result?: { isError?: boolean; content?: { type: string; text?: string }[] };
+  };
+
+  /**
+   * `era` picks which protocol leg serves the call. Both are exercised because the one endpoint answers
+   * both (`mcp-handler` serves with `legacy: "stateless"`), and validation must not differ between them.
+   * A 2026-07-28 request carries the `Mcp-Method`/`Mcp-Name` headers and the `_meta` envelope the
+   * revision requires; a legacy one is a plain JSON-RPC POST and comes back SSE-framed.
+   */
+  const callTool = async (
+    name: string,
+    args: Record<string, unknown>,
+    era: "modern" | "legacy" = "modern"
+  ): Promise<ToolCallOutcome> => {
+    const handler = createMcpHandler(() => {
+      const server = new McpServer({ name: "test", version: "0.0.0" });
+      registerFeedbackRecordTools(server);
+      return server;
+    });
+
+    const modern = era === "modern";
+    const response = await handler.fetch(
+      new Request("https://formbricks.test/api/mcp", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json, text/event-stream",
+          ...(modern ? { "Mcp-Method": "tools/call", "Mcp-Name": name } : {}),
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: {
+            name,
+            arguments: args,
+            ...(modern
+              ? {
+                  _meta: {
+                    "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                    "io.modelcontextprotocol/clientCapabilities": {},
+                  },
+                }
+              : {}),
+          },
+        }),
+      }),
+      { authInfo }
+    );
+
+    const text = await response.text();
+    // The legacy leg answers text/event-stream, the modern one application/json.
+    const payload = response.headers.get("content-type")?.includes("text/event-stream")
+      ? text
+          .split("\n")
+          .filter((line) => line.startsWith("data:"))
+          .map((line) => line.slice("data:".length).trim())
+          .join("")
+      : text;
+
+    return JSON.parse(payload) as ToolCallOutcome;
+  };
+
+  const errorText = (outcome: ToolCallOutcome) =>
+    outcome.result?.content?.map((block) => block.text ?? "").join("") ?? "";
+
+  test.each(["modern", "legacy"] as const)(
+    "rejects a misspelled filter instead of running the query unfiltered (%s era)",
+    async (era) => {
+      // Mocked to a wrong-but-plausible answer on purpose: before ENG-2256 this is the number the agent
+      // got back and reported as the count for one user.
+      vi.mocked(countV3FeedbackRecords).mockResolvedValue(successResponse({ count: 9999 }) as never);
+
+      const outcome = await callTool("count_feedback_records", { workspaceId, userId: "user_1" }, era);
+
+      expect(outcome.result?.isError).toBe(true);
+      expect(errorText(outcome)).toContain("userId");
+      // The point of the fix: the operation is never reached, so there is no count to mistake for an
+      // answer. Asserting the error alone would still pass if the query had run first.
+      expect(countV3FeedbackRecords).not.toHaveBeenCalled();
+    }
+  );
+
+  test("accepts the correct spelling and reaches the operation", async () => {
+    vi.mocked(countV3FeedbackRecords).mockResolvedValue(successResponse({ count: 3 }) as never);
+
+    const outcome = await callTool("count_feedback_records", { workspaceId, user_id: "user_1" });
+
+    expect(outcome.result?.isError).toBeUndefined();
+    expect(countV3FeedbackRecords).toHaveBeenCalled();
+  });
+
+  /**
+   * The batch tool's records are array *elements*, so the outer `.strict()` says nothing about them. Found
+   * while re-reviewing the nested-strictness fix: a misspelled `user_id` inside a record was dropped and
+   * every record was created with no user attribution, reported as success — the ticket's own field, in the
+   * one place a silent drop does the most damage.
+   *
+   * The record below is complete and valid on purpose. An earlier version of this test used an invalid
+   * `field_type` and "passed" because the batch rejected *that* instead of the unknown key — a false
+   * positive that hid the bug. Note also that a misspelled *required* value still trips the
+   * field_type/value rule; only optional fields like `user_id` vanish quietly, which is why this asserts
+   * on one of those.
+   */
+  const validRecord = {
+    source_type: "survey",
+    field_id: "q1",
+    field_type: "text" as const,
+    value_text: "it works",
+  };
+
+  test("rejects a misspelled key inside a batch record", async () => {
+    const outcome = await callTool("create_feedback_records", {
+      workspaceId,
+      records: [{ ...validRecord, userId: "user_1" }],
+    });
+
+    expect(outcome.result?.isError).toBe(true);
+    expect(errorText(outcome)).toContain("userId");
+    expect(createV3FeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("still accepts a valid batch record", async () => {
+    vi.mocked(createV3FeedbackRecords).mockResolvedValue(
+      successResponse({ data: [], meta: { failed: 0 } }) as never
+    );
+
+    const outcome = await callTool("create_feedback_records", {
+      workspaceId,
+      records: [{ ...validRecord, user_id: "user_1" }],
+    });
+
+    expect(outcome.result?.isError).toBeUndefined();
+    expect(createV3FeedbackRecords).toHaveBeenCalled();
+  });
 });
 
 describe("registerFeedbackRecordTools", () => {
@@ -162,7 +408,9 @@ describe("list_feedback_datasets", () => {
     );
     const { tools } = createToolServer();
 
-    const result = await tools.get("list_feedback_datasets")!.handler({ workspaceId }, { authInfo });
+    const result = await tools
+      .get("list_feedback_datasets")!
+      .handler({ workspaceId }, { http: { authInfo } });
 
     expect(listV3FeedbackDatasets).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, authentication: apiKeyAuth, instance: "/api/mcp" })
@@ -182,7 +430,7 @@ describe("list_feedback_records", () => {
       .get("list_feedback_records")!
       .handler(
         { workspaceId, datasetId: directoryId, limit: 25, source_type: "survey", field_type: "text" },
-        { authInfo }
+        { http: { authInfo } }
       );
 
     expect(listV3FeedbackRecords).toHaveBeenCalledWith(
@@ -201,7 +449,7 @@ describe("list_feedback_records", () => {
 
     const result = await tools
       .get("list_feedback_records")!
-      .handler({ workspaceId }, { authInfo: noFeedbackScopeAuthInfo });
+      .handler({ workspaceId }, { http: { authInfo: noFeedbackScopeAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(listV3FeedbackRecords).not.toHaveBeenCalled();
@@ -217,7 +465,7 @@ describe("get_feedback_record", () => {
 
     await tools
       .get("get_feedback_record")!
-      .handler({ workspaceId, feedbackRecordId: recordId }, { authInfo });
+      .handler({ workspaceId, feedbackRecordId: recordId }, { http: { authInfo } });
 
     expect(getV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, feedbackRecordId: recordId })
@@ -242,7 +490,7 @@ describe("create_feedback_record", () => {
     );
     const { tools } = createToolServer();
 
-    await tools.get("create_feedback_record")!.handler(body, { authInfo });
+    await tools.get("create_feedback_record")!.handler(body, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(
       apiKeyAuth,
@@ -260,7 +508,9 @@ describe("create_feedback_record", () => {
   test("requires the write scope", async () => {
     const { tools } = createToolServer();
 
-    const result = await tools.get("create_feedback_record")!.handler(body, { authInfo: readOnlyAuthInfo });
+    const result = await tools
+      .get("create_feedback_record")!
+      .handler(body, { http: { authInfo: readOnlyAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(createV3FeedbackRecord).not.toHaveBeenCalled();
@@ -274,7 +524,9 @@ describe("create_feedback_record", () => {
     vi.mocked(createV3FeedbackRecord).mockRejectedValue(new Error("boom"));
     const { tools } = createToolServer();
 
-    await expect(tools.get("create_feedback_record")!.handler(body, { authInfo })).rejects.toThrow("boom");
+    await expect(tools.get("create_feedback_record")!.handler(body, { http: { authInfo } })).rejects.toThrow(
+      "boom"
+    );
 
     expect(auditLog.eventId).toBe("req_tool");
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.anything());
@@ -291,7 +543,7 @@ describe("create_feedback_record", () => {
     );
     const { tools } = createToolServer();
 
-    const result = await tools.get("create_feedback_record")!.handler(body, { authInfo });
+    const result = await tools.get("create_feedback_record")!.handler(body, { http: { authInfo } });
 
     expect(result.isError).toBe(true);
     expect(auditLog.status).toBe("failure");
@@ -309,7 +561,7 @@ describe("delete_feedback_record", () => {
     vi.mocked(deleteV3FeedbackRecord).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
     const { tools } = createToolServer();
 
-    const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo });
+    const result = await tools.get("delete_feedback_record")!.handler(input, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(
       apiKeyAuth,
@@ -336,7 +588,9 @@ describe("delete_feedback_record", () => {
   test("requires the write scope and never reaches the operation", async () => {
     const { tools } = createToolServer();
 
-    const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo: readOnlyAuthInfo });
+    const result = await tools
+      .get("delete_feedback_record")!
+      .handler(input, { http: { authInfo: readOnlyAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(deleteV3FeedbackRecord).not.toHaveBeenCalled();
@@ -350,7 +604,7 @@ describe("delete_feedback_record", () => {
     );
     const { tools } = createToolServer();
 
-    const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo });
+    const result = await tools.get("delete_feedback_record")!.handler(input, { http: { authInfo } });
 
     expect(result.isError).toBe(true);
     expect(auditLog.status).toBe("failure");
@@ -372,7 +626,10 @@ describe("search_feedback_records", () => {
 
     const result = await tools
       .get("search_feedback_records")!
-      .handler({ workspaceId, query: "checkout is confusing", limit: 5, minScore: 0.6 }, { authInfo });
+      .handler(
+        { workspaceId, query: "checkout is confusing", limit: 5, minScore: 0.6 },
+        { http: { authInfo } }
+      );
 
     expect(searchV3FeedbackRecords).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -394,7 +651,7 @@ describe("search_feedback_records", () => {
 
     const result = await tools
       .get("search_feedback_records")!
-      .handler({ workspaceId, query: "anything" }, { authInfo: noFeedbackScopeAuthInfo });
+      .handler({ workspaceId, query: "anything" }, { http: { authInfo: noFeedbackScopeAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(searchV3FeedbackRecords).not.toHaveBeenCalled();
@@ -410,7 +667,7 @@ describe("find_similar_feedback_records", () => {
 
     await tools
       .get("find_similar_feedback_records")!
-      .handler({ workspaceId, feedbackRecordId: recordId, minScore: 0.9 }, { authInfo });
+      .handler({ workspaceId, feedbackRecordId: recordId, minScore: 0.9 }, { http: { authInfo } });
 
     expect(findSimilarV3FeedbackRecords).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, feedbackRecordId: recordId, minScore: 0.9 })
@@ -422,7 +679,7 @@ describe("find_similar_feedback_records", () => {
 
     const result = await tools
       .get("find_similar_feedback_records")!
-      .handler({ workspaceId, feedbackRecordId: recordId }, { authInfo: noFeedbackScopeAuthInfo });
+      .handler({ workspaceId, feedbackRecordId: recordId }, { http: { authInfo: noFeedbackScopeAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(findSimilarV3FeedbackRecords).not.toHaveBeenCalled();
@@ -441,7 +698,7 @@ describe("count_feedback_records", () => {
 
     const result = await tools
       .get("count_feedback_records")!
-      .handler({ workspaceId, user_id: "user-1", field_type: "text" }, { authInfo });
+      .handler({ workspaceId, user_id: "user-1", field_type: "text" }, { http: { authInfo } });
 
     expect(countV3FeedbackRecords).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, user_id: "user-1", field_type: "text", instance: "/api/mcp" })
@@ -454,7 +711,7 @@ describe("count_feedback_records", () => {
 
     const result = await tools
       .get("count_feedback_records")!
-      .handler({ workspaceId }, { authInfo: noFeedbackScopeAuthInfo });
+      .handler({ workspaceId }, { http: { authInfo: noFeedbackScopeAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(countV3FeedbackRecords).not.toHaveBeenCalled();
@@ -476,7 +733,9 @@ describe("create_feedback_records", () => {
   test("requires the write scope", async () => {
     const { tools } = createToolServer();
 
-    const result = await tools.get("create_feedback_records")!.handler(input, { authInfo: readOnlyAuthInfo });
+    const result = await tools
+      .get("create_feedback_records")!
+      .handler(input, { http: { authInfo: readOnlyAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(createV3FeedbackRecords).not.toHaveBeenCalled();
@@ -498,7 +757,7 @@ describe("create_feedback_records", () => {
     });
     const { tools } = createToolServer();
 
-    await tools.get("create_feedback_records")!.handler(input, { authInfo });
+    await tools.get("create_feedback_records")!.handler(input, { http: { authInfo } });
 
     expect(built).toHaveLength(2);
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
@@ -520,7 +779,9 @@ describe("create_feedback_records", () => {
     vi.mocked(createV3FeedbackRecords).mockRejectedValue(new Error("boom"));
     const { tools } = createToolServer();
 
-    await expect(tools.get("create_feedback_records")!.handler(input, { authInfo })).rejects.toThrow("boom");
+    await expect(
+      tools.get("create_feedback_records")!.handler(input, { http: { authInfo } })
+    ).rejects.toThrow("boom");
 
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
     expect(built[0].eventId).toBe("req_tool");
@@ -538,7 +799,7 @@ describe("create_feedback_records", () => {
     );
     const { tools } = createToolServer();
 
-    const result = await tools.get("create_feedback_records")!.handler(input, { authInfo });
+    const result = await tools.get("create_feedback_records")!.handler(input, { http: { authInfo } });
 
     expect(result.isError).toBe(true);
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
@@ -557,7 +818,7 @@ describe("update_feedback_record", () => {
     );
     const { tools } = createToolServer();
 
-    await tools.get("update_feedback_record")!.handler(input, { authInfo });
+    await tools.get("update_feedback_record")!.handler(input, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(
       apiKeyAuth,
@@ -574,9 +835,55 @@ describe("update_feedback_record", () => {
   test("requires the write scope", async () => {
     const { tools } = createToolServer();
 
-    const result = await tools.get("update_feedback_record")!.handler(input, { authInfo: readOnlyAuthInfo });
+    const result = await tools
+      .get("update_feedback_record")!
+      .handler(input, { http: { authInfo: readOnlyAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(updateV3FeedbackRecord).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Pins the sharpest consequence of the ENG-2256 strictness: `update_feedback_record` accepts only the eight
+ * mutable fields, so the obvious read-modify-write loop — fetch a record, change one value, send it back —
+ * is now rejected where it used to have its provenance silently ignored.
+ *
+ * Deliberate (a misspelled `value_text` would otherwise vanish and the update would change nothing), but
+ * only defensible because the rejection is actionable, which is what this asserts: every offending key is
+ * named, so a caller can strip them and retry rather than guessing. Raised in review on #8859.
+ */
+describe("update_feedback_record round-trip", () => {
+  const immutableOnARecord = {
+    source_type: "survey",
+    source_id: "srv_1",
+    source_name: "NPS Q3",
+    field_id: "q1",
+    field_type: "text",
+    field_label: "What could be better?",
+    submission_id: "sub_1",
+    collected_at: "2026-08-01T10:00:00Z",
+  };
+
+  test("rejects an echoed record and names every provenance key to strip", () => {
+    const mutableEdit = {
+      workspaceId,
+      feedbackRecordId: recordId,
+      value_text: "edited answer",
+      user_id: "u_1",
+      language: "en",
+    };
+
+    const result = ZMcpUpdateFeedbackRecordInput.safeParse({ ...mutableEdit, ...immutableOnARecord });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]).toMatchObject({
+      code: "unrecognized_keys",
+      keys: Object.keys(immutableOnARecord),
+    });
+
+    // The same edit with provenance stripped is accepted, so those keys are the only reason for the
+    // rejection above — without this the assertion would hold even if the schema were broken some other way.
+    expect(ZMcpUpdateFeedbackRecordInput.safeParse(mutableEdit).success).toBe(true);
   });
 });

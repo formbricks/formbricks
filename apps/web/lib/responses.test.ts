@@ -254,7 +254,6 @@ describe("Response Processing", () => {
       showLanguageSwitch: false,
       isBackButtonHidden: false,
       isVerifyEmailEnabled: false,
-      isSingleResponsePerEmailEnabled: false,
       displayPercentage: 100,
       styling: null,
       workspaceOverwrites: null,

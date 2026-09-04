@@ -19,15 +19,15 @@ export const AuthLayout = async ({ children }: Readonly<{ children: React.ReactN
   if (isFreshInstance && !isMultiOrgEnabled) {
     redirect("/setup/intro");
   }
+
+  // The backdrop and centring live in FormWrapper so the routes outside this layout
+  // (/invite, /verify-email-change, /email-change-without-verification-success) get
+  // the same shell instead of hand-copying one.
   return (
     <>
       <Toaster />
       <AttributionTracker />
-      <div className="min-h-screen bg-slate-50">
-        <div className="isolate bg-white">
-          <div className="flex min-h-screen bg-gradient-radial from-slate-200 to-slate-50">{children}</div>
-        </div>
-      </div>
+      {children}
     </>
   );
 };

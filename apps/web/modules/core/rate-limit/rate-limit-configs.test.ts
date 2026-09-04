@@ -82,6 +82,7 @@ describe("rateLimitConfigs", () => {
         "v3",
         "mcpAuth",
         "v3SurveyGenerate",
+        "internalDatasetPurge",
         "client",
         "clientEnvironment",
       ]);
@@ -94,13 +95,19 @@ describe("rateLimitConfigs", () => {
         "accountDeletion",
         "surveyFollowUp",
         "sendLinkSurveyEmail",
-        "isSurveyResponsePresent",
         "validateSurveyPin",
         "licenseRecheck",
         "unsplash",
         "inviteMember",
         "bulkInviteMembers",
         "generateExampleResponses",
+        "integrationMutation",
+        "feedbackSourceMutation",
+        "historicalResponseImport",
+        "chartCreation",
+        "feedbackDirectoryMutation",
+        "feedbackRecordDeletion",
+        "stateMutation",
       ]);
 
       // Exact values, not just presence: this quota is the only thing bounding one account from
@@ -110,6 +117,16 @@ describe("rateLimitConfigs", () => {
         interval: 60,
         allowedPerInterval: 30,
         namespace: "action:unsplash",
+      });
+      expect(rateLimitConfigs.actions.historicalResponseImport).toEqual({
+        interval: 3600,
+        allowedPerInterval: 10,
+        namespace: "action:historical-response-import",
+      });
+      expect(rateLimitConfigs.actions.stateMutation).toEqual({
+        interval: 60,
+        allowedPerInterval: 120,
+        namespace: "action:state-mutation",
       });
     });
 

@@ -104,6 +104,8 @@ vi.mock("@/lib/constants", () => ({
   STRIPE_API_VERSION: "2026-01-28.clover",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
+  COMMUNITY_WORKSPACE_LIMIT: 1,
+  CLOUD_HOBBY_WORKSPACE_LIMIT: 1,
 }));
 vi.mock("@/lib/utils/helper");
 vi.mock("@/lib/response/service");

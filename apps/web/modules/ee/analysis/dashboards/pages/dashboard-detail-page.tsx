@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
@@ -6,15 +7,23 @@ import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
+import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { checkFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
+import {
+  applyDashboardDateFilter,
+  getDateFilterCookieName,
+  parseDashboardDateFilter,
+  readStoredDateFilterFromCookie,
+} from "../lib/dashboard-date-filter";
 import { getDashboard } from "../lib/dashboards";
 import { DASHBOARD_WIDGET_LOAD_ERROR, type TDashboardWidgetError } from "../lib/widget-errors";
 
@@ -38,9 +47,9 @@ async function executeWidgetQuery(
   try {
     const tenant = await checkFeedbackDirectoryAccess({
       feedbackDirectoryId,
-      organizationId,
       workspaceId,
       userId,
+      minPermission: "read",
       source: "dashboards.widget",
     });
 
@@ -72,11 +81,21 @@ type WidgetQueryPromiseResult = Promise<WidgetQueryResult | { error: TDashboardW
 
 export async function DashboardDetailPage({
   params,
+  searchParams,
 }: Readonly<{
   params: Promise<{ workspaceId: string; dashboardId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>) {
   const t = await getTranslate();
   const { workspaceId, dashboardId } = await params;
+  // A pinned URL param (shared link, in-app navigation) always wins; otherwise fall back to the
+  // per-dashboard persisted filter from the cookie so a revisit renders filtered on the first pass
+  // rather than after a client round trip.
+  const urlDateFilter = parseDashboardDateFilter(await searchParams);
+  const cookieStore = await cookies();
+  const dateFilter =
+    urlDateFilter ??
+    readStoredDateFilterFromCookie(cookieStore.get(getDateFilterCookieName(dashboardId))?.value);
 
   const { isReadOnly, organization, session } = await getWorkspaceAuth(workspaceId);
 
@@ -108,7 +127,7 @@ export async function DashboardDetailPage({
   }
 
   const [directories, aiConfig] = await Promise.all([
-    getFeedbackDirectoriesByWorkspaceId(workspaceId),
+    getAuthorizedWorkspaceFeedbackDirectories(session.user.id, workspaceId),
     getOrganizationAIConfig(organization.id),
   ]);
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig);
@@ -132,7 +151,12 @@ export async function DashboardDetailPage({
     widgetDataPromises.set(
       widget.id,
       executeWidgetQuery(
-        widget.chart.query,
+        // A big number's query is normalized here too, not only in the builder: widgets saved
+        // before that existed still carry a grouping the single value cannot come from.
+        prepareQueryForChartType(
+          applyDashboardDateFilter(widget.chart.query, dateFilter),
+          resolveChartType(widget.chart.type)
+        ),
         widget.chart.feedbackDirectoryId,
         workspaceId,
         organization.id,
@@ -146,6 +170,7 @@ export async function DashboardDetailPage({
       workspaceId={workspaceId}
       dashboard={dashboard}
       widgetDataPromises={widgetDataPromises}
+      dateFilter={dateFilter}
       directories={directories}
       isReadOnly={isReadOnly}
       isAIAvailable={isAIAvailable}

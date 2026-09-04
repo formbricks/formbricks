@@ -10,8 +10,10 @@ import {
   ZContactAttributeKeyCreateInput,
   ZGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
+import { getAuthorizedApiKeyWorkspaceIds } from "@/modules/api/v2/management/lib/authorized-workspace-ids";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { checkContactsEnabledApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -22,9 +24,12 @@ export const GET = async (request: NextRequest) =>
     handler: async ({ authentication, parsedInput }) => {
       const { query } = parsedInput;
 
-      const workspaceIds = [
-        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
-      ];
+      const contactsNotEnabledError = await checkContactsEnabledApiV2(authentication.organizationId);
+      if (contactsNotEnabledError) {
+        return handleApiError(request, contactsNotEnabledError);
+      }
+
+      const workspaceIds = await getAuthorizedApiKeyWorkspaceIds(authentication);
 
       const res = await getContactAttributeKeys(workspaceIds, query);
 
@@ -47,8 +52,13 @@ export const POST = async (request: NextRequest) =>
       if (!resolved.ok) throw resolved.error;
       return { ...body, ...resolved.data };
     },
-    handler: async ({ parsedInput, auditLog }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { body } = parsedInput;
+
+      const contactsNotEnabledError = await checkContactsEnabledApiV2(authentication.organizationId);
+      if (contactsNotEnabledError) {
+        return handleApiError(request, contactsNotEnabledError, auditLog);
+      }
 
       const createContactAttributeKeyResult = await createContactAttributeKey(body);
 

@@ -13,7 +13,6 @@ import {
   getResponseBySingleUseId,
   getSurveyMetadata,
   getSurveyWithMetadata,
-  isSurveyResponsePresent,
 } from "./data";
 
 vi.mock("server-only", () => ({}));
@@ -78,7 +77,6 @@ describe("data", () => {
       displayPercentage: null,
       autoComplete: null,
       isVerifyEmailEnabled: false,
-      isSingleResponsePerEmailEnabled: false,
       redirectUrl: null,
       pin: null,
       isBackButtonHidden: false,
@@ -218,7 +216,6 @@ describe("data", () => {
         displayPercentage: null,
         autoComplete: null,
         isVerifyEmailEnabled: false,
-        isSingleResponsePerEmailEnabled: false,
         redirectUrl: null,
         pin: null,
         isBackButtonHidden: false,
@@ -318,64 +315,6 @@ describe("data", () => {
       vi.mocked(prisma.response.findFirst).mockRejectedValue(genericError);
 
       await expect(getResponseBySingleUseId(surveyId, singleUseId)()).rejects.toThrow(genericError);
-    });
-  });
-
-  describe("isSurveyResponsePresent", () => {
-    test("should return true when response with email exists", async () => {
-      const surveyId = "survey-1";
-      const email = "test@example.com";
-      const mockResponse = { id: "response-1" };
-
-      vi.mocked(prisma.response.findFirst).mockResolvedValue(mockResponse as any);
-
-      const result = await isSurveyResponsePresent(surveyId, email)();
-
-      expect(result).toBe(true);
-      expect(prisma.response.findFirst).toHaveBeenCalledWith({
-        where: {
-          surveyId,
-          data: {
-            path: ["verifiedEmail"],
-            equals: email,
-          },
-        },
-        select: { id: true },
-      });
-    });
-
-    test("should return false when no response with email exists", async () => {
-      const surveyId = "survey-1";
-      const email = "nonexistent@example.com";
-
-      vi.mocked(prisma.response.findFirst).mockResolvedValue(null);
-
-      const result = await isSurveyResponsePresent(surveyId, email)();
-
-      expect(result).toBe(false);
-    });
-
-    test("should throw DatabaseError on Prisma error", async () => {
-      const surveyId = "survey-1";
-      const email = "test@example.com";
-      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
-        code: "P2025",
-        clientVersion: "5.0.0",
-      });
-
-      vi.mocked(prisma.response.findFirst).mockRejectedValue(prismaError);
-
-      await expect(isSurveyResponsePresent(surveyId, email)()).rejects.toThrow(DatabaseError);
-    });
-
-    test("should rethrow non-Prisma errors", async () => {
-      const surveyId = "survey-1";
-      const email = "test@example.com";
-      const genericError = new Error("Generic error");
-
-      vi.mocked(prisma.response.findFirst).mockRejectedValue(genericError);
-
-      await expect(isSurveyResponsePresent(surveyId, email)()).rejects.toThrow(genericError);
     });
   });
 

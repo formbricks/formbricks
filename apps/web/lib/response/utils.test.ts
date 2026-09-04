@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import {
-  RESERVED_FIELD_CATALOG,
   type TEmbeddedValueResponse,
   deriveLegacyEmbeddedData,
 } from "@formbricks/types/embedded-data-resolver";
@@ -29,8 +28,11 @@ import { RESERVED_FILTER_LOCATORS, buildWhereClause } from "./where-clause";
  * next to the legacy columns, and since ENG-2412 those rows are the only thing the accessors read.
  * Fixtures that declare `variables` / `hiddenFields` alone describe a row nobody reads.
  */
-const asRead = <T extends Partial<TSurvey>>(survey: T): T =>
-  ({ ...survey, embeddedFields: deriveLegacyEmbeddedData(survey) }) as T;
+// Returns a full TSurvey because that is what every consumer below takes. Deliberately not
+// generic: inferring the type parameter from those uses made TypeScript demand the whole survey
+// shape from fixtures that are partial on purpose.
+const asRead = (survey: Partial<TSurvey>): TSurvey =>
+  ({ ...survey, embeddedFields: deriveLegacyEmbeddedData(survey) }) as unknown as TSurvey;
 
 describe("Response Utils", () => {
   describe("calculateTtcTotal", () => {
@@ -1335,6 +1337,37 @@ describe("Response Utils", () => {
       );
       expect(result[0]["person.plan"]).toBe("pro");
       expect(result[0]["person.email"]).toBe("linked@example.com");
+    });
+
+    test("should format the Timestamp in UTC when no time zone is provided", () => {
+      const responsesWithFixedDate = [
+        { ...mockResponses[0], createdAt: new Date("2026-01-01T20:00:00.000Z") },
+      ] as TResponse[];
+      const result = getResponsesJson(
+        mockSurvey as TSurvey,
+        responsesWithFixedDate,
+        [["1. Question 1"]],
+        [],
+        [],
+        false
+      );
+      expect(result[0]["Timestamp"]).toBe("2026-01-01 20:00:00 UTC");
+    });
+
+    test("should format the Timestamp in the configured time zone", () => {
+      const responsesWithFixedDate = [
+        { ...mockResponses[0], createdAt: new Date("2026-01-01T20:00:00.000Z") },
+      ] as TResponse[];
+      const result = getResponsesJson(
+        mockSurvey as TSurvey,
+        responsesWithFixedDate,
+        [["1. Question 1"]],
+        [],
+        [],
+        false,
+        "Asia/Manila"
+      );
+      expect(result[0]["Timestamp"]).toBe("2026-01-02 04:00:00 GMT+8");
     });
   });
 

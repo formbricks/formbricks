@@ -49,7 +49,10 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@/lib/crypto", () => ({
+// Stub only `symmetricDecrypt`. The rest of the module stays real because the single-use signature
+// check on this path runs through `constantTimeEqual` — stubbing it out would reject valid signatures.
+vi.mock("@/lib/crypto", async (importOriginal: () => Promise<typeof import("@/lib/crypto")>) => ({
+  ...(await importOriginal()),
   symmetricDecrypt: vi.fn(),
 }));
 vi.mock("@/lib/constants", () => ({
@@ -92,7 +95,6 @@ const mockSurvey: TSurvey = {
   endings: [],
   followUps: [],
   isBackButtonHidden: false,
-  isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,
   workspaceOverwrites: null,
   showLanguageSwitch: false,

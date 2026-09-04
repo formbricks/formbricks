@@ -26,6 +26,7 @@ export default defineConfig({
             ".next/**",
             "**/*.integration.test.ts",
             "**/*.test.tsx",
+            "**/*.rsc.test.ts",
           ],
         },
       },
@@ -35,6 +36,26 @@ export default defineConfig({
           name: "components",
           environment: "jsdom",
           include: ["**/*.test.tsx"],
+        },
+      },
+      {
+        // ENG-2444: the `page` authorization surface lives in a React `cache()` slot, and `cache` only
+        // does anything in the react-server build — the default build ships it as a permanent no-op,
+        // and the shared vitestSetup mocks it to identity on top of that. So the `unit` project cannot
+        // exercise this surface at all. Here React resolves the way Next.js resolves it for RSC, so
+        // the real implementation runs. `ssr.resolve.conditions` is the knob that works: Vitest loads
+        // test modules through the SSR environment, so a top-level `resolve.conditions` is ignored.
+        //
+        // Deliberately NOT `extends: true`: that merges the root `setupFiles`, which import
+        // react-dom/client (forbidden under the react-server condition) and mock `cache` away.
+        plugins: [tsconfigPaths()],
+        ssr: { resolve: { conditions: ["react-server", "node", "import", "default"] } },
+        test: {
+          name: "rsc",
+          environment: "node",
+          include: ["**/*.rsc.test.ts"],
+          env: loadEnv("", process.cwd(), ""),
+          setupFiles: ["./vitestSetup.rsc.ts"],
         },
       },
     ],
@@ -47,6 +68,7 @@ export default defineConfig({
         "modules/**/*.ts",
         "lib/**/*.ts",
         "lingodotdev/**/*.ts",
+        "instrumentation-node-config.ts",
         "instrumentation-jobs.ts",
         "proxy.ts",
       ],
@@ -91,6 +113,7 @@ export default defineConfig({
         "**/actions.ts", // Server actions (plural)
         "**/action.ts", // Server actions (singular)
         "lib/env.ts", // Environment configuration
+        "lib/env-client.ts", // Environment configuration (client-safe)
         "**/cache.ts", // Cache files
         "**/cache/**", // Cache directories
 
@@ -126,7 +149,6 @@ export default defineConfig({
         // tests, so they are excluded from the unit-coverage gate below (ENG-1054).
         "modules/auth/lib/auth.ts",
         "modules/auth/lib/auth-client.ts",
-        "modules/auth/lib/secondary-storage.ts",
         "modules/auth/lib/better-auth-email-verification.ts",
         "packages/js-core/src/index.ts", // JS Core index file
 
@@ -139,6 +161,12 @@ export default defineConfig({
         // ENG-1054: keep the new Better Auth code well-tested. Glob aggregate (not perFile) so a single
         // thin file can't trip the gate; the integration-only BA instance/wiring is excluded above.
         "modules/auth/lib/**": { statements: 80, branches: 80, functions: 80, lines: 80 },
+        // ENG-1718: keep the AuthZed client, projections, and backfill/repair tooling well-tested —
+        // this code rewrites the authorization graph. Glob aggregate (not perFile) so a single thin
+        // file can't trip the gate. `**/scripts/**` is excluded above, so every decision the tooling
+        // makes (argv parsing, scoping, classification, prune guards, exit codes) lives under
+        // lib/authzed and is covered here; apps/web/scripts/authzed-*.ts stay thin argv shims.
+        "lib/authzed/**": { statements: 80, branches: 80, functions: 80, lines: 80 },
       },
     },
   },

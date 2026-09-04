@@ -117,6 +117,16 @@ test.describe("JS Package Test", async () => {
 
     await page.goto("http://localhost:3004");
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
+
+    // The widget reads the survey from the public client API, which substitutes a placeholder for
+    // every survey name so names are not exposed over an unauthenticated endpoint. This is the only
+    // place the real API, the widget and the dialog are wired together, so it is the only place that
+    // can catch the placeholder leaking into what a screen reader announces: the dialog falls back
+    // to its generic name instead, and no heading carries the placeholder either.
+    const widget = page.locator("#formbricks-modal-container");
+    await expect(widget.getByRole("dialog")).toHaveAttribute("aria-label", "Survey Dialog");
+    await expect(widget.getByText(/\[deprecated] survey name omitted/)).toHaveCount(0);
+
     await expect(
       page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
     ).toBeVisible();

@@ -5,7 +5,7 @@ type: application
 # Helm chart Version
 version: 0.0.0-dev
 # This is the version number of the application being deployed.
-appVersion: "5.0.2"
+appVersion: "5.3.4"
 icon: https://formbricks.com/favicon.ico
 keywords:
   - formbricks
@@ -16,6 +16,11 @@ maintainers:
   - name: Formbricks
     email: info@formbricks.com
 dependencies:
+  - name: spicedb-operator
+    alias: spicedbOperator
+    version: "0.1.0"
+    repository: "file://../spicedb-operator"
+    condition: authzed.operator.install
   - name: postgresql
     version: "16.4.16"
     repository: "oci://registry-1.docker.io/bitnamicharts"

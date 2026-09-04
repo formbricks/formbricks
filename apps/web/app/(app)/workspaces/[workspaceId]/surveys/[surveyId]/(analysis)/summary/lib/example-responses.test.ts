@@ -183,7 +183,12 @@ describe("generateExampleResponseDataset", () => {
       },
     ] as unknown as TSurvey["questions"]);
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
 
     expect(result).toEqual({ responses: [], displays: [], tagName: EXAMPLE_AI_GENERATED_TAG_NAME });
     expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
@@ -206,7 +211,12 @@ describe("generateExampleResponseDataset", () => {
       { ...baseQuestion, id: "q_rating", type: TSurveyElementTypeEnum.Rating, scale: "number", range: 5 },
     ] as unknown as TSurvey["questions"]);
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
     const roleCounts = result.responses.reduce<Record<string, number>>((acc, response) => {
       const role = response.data.q_role;
       if (typeof role === "string") acc[role] = (acc[role] ?? 0) + 1;
@@ -228,7 +238,12 @@ describe("generateExampleResponseDataset", () => {
     ] as unknown as TSurvey["questions"]);
     mockOpenTextAnswers(survey);
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
 
     expect(result.responses[4].data.q_text).toBe("Open text answer 4");
     expect(result.responses[4].data.q_nps).toBeTypeOf("number");
@@ -276,7 +291,12 @@ describe("generateExampleResponseDataset", () => {
       };
     });
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
 
     expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(4);
     expect(result.responses[2].data.q_text_1).toBe("AI row_2 q_text_1");
@@ -318,7 +338,12 @@ describe("generateExampleResponseDataset", () => {
       },
     });
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
     const finished = result.responses.find((response) => response.finished);
 
     expect(finished).toBeDefined();
@@ -353,7 +378,12 @@ describe("generateExampleResponseDataset", () => {
       },
     ] as unknown as TSurvey["questions"]);
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
     const finished = result.responses.find((response) => response.finished);
 
     expect(finished).toBeDefined();
@@ -370,7 +400,12 @@ describe("generateExampleResponseDataset", () => {
     ] as unknown as TSurvey["questions"]);
     mockOpenTextAnswers(survey);
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
     const finished = result.responses.filter((response) => response.finished);
     const dropped = result.responses.filter((response) => !response.finished);
 
@@ -394,7 +429,12 @@ describe("generateExampleResponseDataset", () => {
     const error = new Error("provider failed");
     vi.mocked(mocks.generateOrganizationAIObject).mockRejectedValue(error);
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
 
     expect(result.responses).toHaveLength(EXAMPLE_RESPONSE_COUNT);
     expect(result.responses.some((response) => typeof response.data.q_text === "string")).toBe(true);
@@ -417,7 +457,12 @@ describe("generateExampleResponseDataset", () => {
     ] as unknown as TSurvey["questions"]);
     mockOpenTextAnswers(survey);
 
-    await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
 
     const call = vi.mocked(mocks.generateOrganizationAIObject).mock.calls[0][0];
     expect(call.prompt).toContain("How likely are you to shop today?");
@@ -443,7 +488,12 @@ describe("generateExampleResponseDataset", () => {
       },
     });
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
 
     for (const response of result.responses) {
       const answer = String(response.data.q_reason ?? "");
@@ -477,7 +527,12 @@ describe("generateExampleResponseDataset", () => {
       },
     });
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
 
     for (const response of result.responses) {
       expect(response.data.q_reason).not.toEqual(response.data.q_block);
@@ -536,7 +591,12 @@ describe("generateExampleResponseDataset", () => {
       },
     ] as unknown as TSurvey["questions"]);
 
-    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
     const finished = result.responses.find((response) => response.finished);
 
     expect(finished).toBeDefined();
@@ -559,7 +619,12 @@ describe("generateExampleResponseDataset", () => {
       { ...baseQuestion, id: "q_rating", type: TSurveyElementTypeEnum.Rating, scale: "number", range: 5 },
     ] as unknown as TSurvey["questions"]);
 
-    const result = await generateExampleResponses({ survey, organizationId: "org_1" });
+    const result = await generateExampleResponses({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
 
     expect(result).toHaveLength(EXAMPLE_RESPONSE_COUNT);
   });

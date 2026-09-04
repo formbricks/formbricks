@@ -26,17 +26,18 @@ Ensure you have the following before proceeding:
 ## 1. Install The Chart
 
 <Steps>
-<Step title="Create A Minimal values.yaml">
+  <Step title="Create A Minimal values.yaml">
 
 ```yaml
 formbricks:
   webappUrl: https://surveys.example.com
 ```
 
-Add any additional overrides you need for ingress, external services, secrets, or Enterprise license features.
-</Step>
+    Add any additional overrides you need for ingress, external services, secrets, or Enterprise license features.
 
-<Step title="Install Formbricks">
+  </Step>
+
+  <Step title="Install Formbricks">
 
 ```sh
 helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks \
@@ -45,15 +46,25 @@ helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks \
   -f values.yaml
 ```
 
-By default, the chart deploys:
+    By default, the chart deploys:
 
-- the Formbricks application
-- Formbricks Hub
-- PostgreSQL
-- Redis
-- generated Kubernetes Secrets
-</Step>
+    - the Formbricks application
+    - Formbricks Hub
+    - Cube
+    - PostgreSQL
+    - Redis
+    - generated Kubernetes Secrets
+
+  </Step>
 </Steps>
+
+<Warning>
+  The default values are a starting point, not a production edge or high-availability configuration. Both
+  `ingress.enabled` and `envoy.enabled` default to `false`, so the chart does not expose the application or add
+  the v5 edge rate limits unless you configure them. The defaults also combine `autoscaling.minReplicas: 1` with
+  `pdb.minAvailable: 1`; that PodDisruptionBudget can block a node drain because Kubernetes cannot voluntarily
+  evict the only app pod.
+</Warning>
 
 ## 2. Configure Secrets And External Services
 
@@ -61,6 +72,20 @@ By default, the chart deploys:
 
 The default chart path keeps `secret.enabled: true`, which lets the chart generate the required application
 secrets for you.
+
+### Adding An Enterprise License
+
+There is no separate `enterprise.enabled` switch. Enterprise features are unlocked by a valid
+`ENTERPRISE_LICENSE_KEY`. For a quick-start deployment that uses the chart-generated app Secret, set:
+
+```yaml
+enterprise:
+  licenseKey: your-enterprise-license-key
+```
+
+For production, keep the license out of a values file and provide `ENTERPRISE_LICENSE_KEY` through your existing
+Secret or ExternalSecret instead. The `enterprise.licenseKey` chart value only writes to the generated app Secret
+when `secret.enabled: true`.
 
 ### Using Managed PostgreSQL And Redis
 
@@ -81,6 +106,55 @@ redis:
 If your cluster already uses an external secret manager, enable `externalSecret` and point it at your existing
 SecretStore. Ensure the resulting app secret exposes the values your deployment needs, including `DATABASE_URL`,
 `REDIS_URL`, and `HUB_API_KEY`.
+
+### AuthZed / SpiceDB
+
+Formbricks v6 uses AuthZed as its authorization engine. Fresh chart installations enable a private,
+two-replica SpiceDB cluster and `fully_consistent` decisions by default. If the cluster already has a compatible
+SpiceDB operator, keep the authorization runtime enabled but disable this release's operator installation:
+
+```yaml
+authzed:
+  operator:
+    install: false
+```
+
+The default `authzed.operator.install: true` installs the pinned operator, creates the cluster, and bootstraps a
+dedicated `spicedb` database and login. Install only one operator in a Kubernetes cluster.
+
+For managed PostgreSQL, create a separate SpiceDB database and login first. Store its connection URI and a
+strong API token in a Kubernetes Secret using the keys `datastore_uri` and `preshared_key`, then configure:
+
+```yaml
+authzed:
+  enabled: true
+  auth:
+    existingSecret: formbricks-authzed
+  datastore:
+    existingSecret: formbricks-authzed
+```
+
+Use `authzed.mode: external`, `authzed.operator.install: false`, `authzed.endpoint: <host>:<port>`, and
+`authzed.insecure: false` when connecting
+to an externally managed AuthZed endpoint. The external endpoint must serve TLS because the preshared token is
+sent on every authenticated request. The application endpoint remains internal and uses plaintext gRPC by
+default when the chart owns SpiceDB.
+
+Helm prints release-specific commands that execute the release-matched operator CLI
+inside a Formbricks pod. Start with:
+
+```bash
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade check
+```
+
+A fresh install runs an idempotent initialization Job, but application startup and probes remain independent
+from it. Upgrades never run relationship preparation automatically. Before the first v6 upgrade, run
+`formbricks-authzed upgrade prepare`, require `upgrade check` to exit `0`, and then set
+`authzed.migrationAcknowledged: true`. The chart refuses an unacknowledged upgrade, disabled AuthZed, or weaker
+consistency. Follow [AuthZed Operations](/self-hosting/advanced/authzed-operations) and do not expose SpiceDB
+through an Ingress.
 
 ## 3. v5-Specific Deployment Notes
 
@@ -103,11 +177,41 @@ The chart supports three edge patterns for the v5-covered routes:
 If you use the chart-managed Envoy rate-limiting path, enable a dedicated backend with:
 
 ```yaml
+envoy:
+  enabled: true
+  controller:
+    enabled: true
+
 envoyRedis:
   enabled: true
 ```
 
 This keeps Envoy rate-limiting state separate from the application's own Redis traffic.
+
+The example installs the bundled controller. If your cluster already provides a compatible Envoy Gateway
+controller, set `envoy.controller.enabled: false`. In either mode, configure
+`envoy.formbricks.ingress` or your platform ingress/load balancer so public traffic reaches the Envoy-managed
+routes. If you use an equivalent external edge solution instead, verify that it covers every route in the
+[rate-limiting guide](/self-hosting/advanced/rate-limiting) before exposing Formbricks.
+
+### Production Replicas And Disruption Budgets
+
+For a production deployment that should remain available during a voluntary disruption, run at least two app
+replicas:
+
+```yaml
+autoscaling:
+  enabled: true
+  minReplicas: 2
+
+pdb:
+  enabled: true
+  minAvailable: 1
+```
+
+If you intentionally run a single app replica, either disable the PDB or use `maxUnavailable: 1` instead of
+`minAvailable` and accept downtime during the eviction. Never set both fields; set the unused field to `null` in
+your values file.
 
 ### Cube
 
@@ -226,20 +330,20 @@ For a Formbricks 4.x to 5.0 migration, confirm the following before running the 
 
 ## 5. Key Values
 
-| Field                         | Description                                                   |
-| ----------------------------- | ------------------------------------------------------------- |
-| `formbricks.webappUrl`        | Public base URL for the Formbricks app                        |
-| `deployment.image.tag`        | Formbricks image tag override                                 |
-| `hub.enabled`                 | Must stay `true` in Formbricks v5                             |
-| `hub.image.tag`               | Hub image tag override                                        |
-| `envoy.enabled`               | Enables chart-managed Envoy Gateway resources                 |
-| `envoy.controller.enabled`    | Installs the bundled Envoy controller when `true`             |
-| `envoyRedis.enabled`          | Deploys a dedicated Redis backend for Envoy rate limiting     |
-| `llm.enabled`                 | Deploys the optional bundled Qwen/vLLM runtime                |
-| `llm.autoConfigureApp`        | Injects Formbricks OpenAI-compatible env vars for bundled Qwen |
-| `taxonomy.enabled`            | Deploys the optional standalone AI taxonomy service           |
-| `postgresql.externalDatabaseUrl` | Uses an external PostgreSQL service instead of in-cluster |
-| `redis.externalRedisUrl`      | Uses an external Redis/Valkey service instead of in-cluster   |
+| Field                            | Description                                                    |
+| -------------------------------- | -------------------------------------------------------------- |
+| `formbricks.webappUrl`           | Public base URL for the Formbricks app                         |
+| `deployment.image.tag`           | Formbricks image tag override                                  |
+| `hub.enabled`                    | Must stay `true` in Formbricks v5                              |
+| `hub.image.tag`                  | Hub image tag override                                         |
+| `envoy.enabled`                  | Enables chart-managed Envoy Gateway resources                  |
+| `envoy.controller.enabled`       | Installs the bundled Envoy controller when `true`              |
+| `envoyRedis.enabled`             | Deploys a dedicated Redis backend for Envoy rate limiting      |
+| `llm.enabled`                    | Deploys the optional bundled Qwen/vLLM runtime                 |
+| `llm.autoConfigureApp`           | Injects Formbricks OpenAI-compatible env vars for bundled Qwen |
+| `taxonomy.enabled`               | Deploys the optional standalone AI taxonomy service            |
+| `postgresql.externalDatabaseUrl` | Uses an external PostgreSQL service instead of in-cluster      |
+| `redis.externalRedisUrl`         | Uses an external Redis/Valkey service instead of in-cluster    |
 
 For the complete values surface, refer to the chart README in the repository:
 [charts/formbricks/README.md](https://github.com/formbricks/formbricks/tree/main/charts/formbricks).

@@ -53,27 +53,29 @@ export const LoginPage = async ({
   const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#D9F6F4]">
-      <FormWrapper>
-        <LoginForm
-          emailAuthEnabled={EMAIL_AUTH_ENABLED}
-          publicSignUpEnabled={SIGNUP_ENABLED}
-          passwordResetEnabled={!PASSWORD_RESET_DISABLED}
-          googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
-          githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
-          azureOAuthEnabled={AZURE_OAUTH_ENABLED}
-          oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
-          oidcDisplayName={OIDC_DISPLAY_NAME}
-          isMultiOrgEnabled={isMultiOrgEnabled}
-          isSsoEnabled={isSsoEnabled}
-          samlSsoEnabled={samlSsoEnabled}
-          oauthError={oauthError}
-          prefilledEmail={getSearchParamString(searchParams.email)}
-          inviteToken={inviteToken}
-          resolvedCallbackPath={resolvedCallbackPath}
-          resolvedCallbackUrl={resolvedCallbackUrl}
-        />
-      </FormWrapper>
-    </div>
+    <FormWrapper>
+      <LoginForm
+        emailAuthEnabled={EMAIL_AUTH_ENABLED}
+        publicSignUpEnabled={SIGNUP_ENABLED}
+        passwordResetEnabled={!PASSWORD_RESET_DISABLED}
+        googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
+        githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
+        azureOAuthEnabled={AZURE_OAUTH_ENABLED}
+        oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
+        oidcDisplayName={OIDC_DISPLAY_NAME}
+        isMultiOrgEnabled={isMultiOrgEnabled}
+        isSsoEnabled={isSsoEnabled}
+        samlSsoEnabled={samlSsoEnabled}
+        oauthError={oauthError}
+        // ENG-2562: set when a verification succeeded but the session was withheld, because the
+        // browser presenting the link was not the one that signed up. Without it the user is bounced
+        // here with no explanation right after being told their address was verified.
+        emailJustVerified={getSearchParamString(searchParams.verified) === "1"}
+        prefilledEmail={getSearchParamString(searchParams.email)}
+        inviteToken={inviteToken}
+        resolvedCallbackPath={resolvedCallbackPath}
+        resolvedCallbackUrl={resolvedCallbackUrl}
+      />
+    </FormWrapper>
   );
 };

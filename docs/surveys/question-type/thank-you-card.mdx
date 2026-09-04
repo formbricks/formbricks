@@ -1,0 +1,56 @@
+---
+title: "Thank You Card"
+description: "The Thank You card is the last screen respondents see. Close the loop with a message, send them onwards with a button, or redirect them to another page."
+icon: "handshake"
+---
+
+Every survey ends with an ending card. In the survey editor you find it below your last block, labelled **Ending card**. It is the only card respondents see after they submit, so it is the best place to say thank you and to point people to whatever comes next.
+
+An ending card can be one of two types:
+
+- **Ending card** — shows a message, and optionally a button, inside the survey.
+- **Redirect to URL** — skips the message and sends the respondent straight to another page.
+
+Switch between the two at the top of the card.
+
+## Elements
+
+### Note
+
+The headline of the card, for example "Thank you!". This is the only required field.
+
+### Description
+
+An optional line below the headline, for example "We appreciate your feedback." Remove it with the trash icon, add it back with **Add description**.
+
+Both fields support rich text and [Recall](/surveys/general-features/recall), so you can greet respondents with an answer they gave earlier. You can also [add an image or video](/surveys/general-features/add-image-or-video-question) to the card.
+
+## Button
+
+Turn on **Show Button** to add a call to action below your message. This is how you move respondents on to a booking page, a community, a discount code, or a review page.
+
+![Button settings of the Thank You card](/images/surveys/question-type/thank-you-card/button-settings.webp)
+
+- **Button Label** — the text on the button, for example "Leave a Google review".
+- **Button URL** — where the button leads. Recall is supported here too, so you can build a link that carries an answer from the survey into the target URL.
+
+The survey stays open until the respondent clicks. Use the button when you still want to say thank you, or when the next step should be the respondent's choice.
+
+## Redirect to URL
+
+Choose **Redirect to URL** when respondents should land on another page immediately after submitting, without a thank you screen.
+
+![Redirect settings of the Thank You card](/images/surveys/question-type/thank-you-card/redirect-settings.webp)
+
+- **URL** — the page respondents are sent to. Recall is supported.
+- **Label** — an internal name for this ending, so you can tell your endings apart in the editor and in your logic. Respondents never see it.
+
+<Note>
+  On Formbricks Cloud, custom external URLs in the Button URL and Redirect fields require a paid plan. This helps us prevent phishing. On self-hosted instances there is no such restriction.
+</Note>
+
+## Multiple endings
+
+A survey can have more than one ending. Click **Add ending** below the card to create another one, then use [Conditional Logic](/surveys/general-features/conditional-logic) to decide who lands where — for example a Redirect for respondents who booked a call, and a Thank You card for everyone else.
+
+Endings are also what [Email Follow-ups](/surveys/general-features/email-followups) and [Quotas](/surveys/general-features/quota-management) can be attached to, so splitting your endings up front makes the rest of your setup easier.

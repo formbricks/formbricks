@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
@@ -13,6 +13,7 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
+import { buildSurveyDocumentTitle } from "@/modules/survey/link/lib/document-title";
 import {
   getHiddenFieldsFromSearchParams,
   warnOnMissingIngestRows,
@@ -133,6 +134,9 @@ export const SurveyClientWrapper = ({
   // column (ENG-1843). `locked` fields are deliberately included: the renderer's ingest contract
   // drops their incoming values and logs why, and filtering them out here would silence that
   // diagnostic while duplicating a rule that already has one home.
+  //
+  // Keyed on the ids' contents, not the array identity, which changes on every parent render
+  // (ENG-2366).
   const ingestedStorageKeys = getIngestedStorageKeys(survey);
   const hiddenFieldsRecord = useMemo(() => {
     return getHiddenFieldsFromSearchParams(ingestedStorageKeys, searchParams);
@@ -156,6 +160,13 @@ export const SurveyClientWrapper = ({
     }
     return null;
   }, [survey.isVerifyEmailEnabled, verifiedEmail]);
+
+  // Position label for the card the respondent is on, reported by the survey renderer and already
+  // localized in the survey's active language (see SurveyBaseProps.onPageChange).
+  const [pageLabel, setPageLabel] = useState<string | null>(null);
+  const handlePageChange = useCallback((page: { index: number; total: number; label: string }) => {
+    setPageLabel(page.label);
+  }, []);
 
   const [offlineStatus, setOfflineStatus] = useState({
     isOnline: true,
@@ -208,6 +219,30 @@ export const SurveyClientWrapper = ({
     };
   }, [currentLanguageCode, jsSurvey]);
 
+  // Give every page of the survey a title that says which page it is (WCAG 2.4.2). generateMetadata
+  // cannot do this: the step lives in the renderer's state, which the server never sees.
+  //
+  // The base is the server-rendered title, captured once on mount, so the author's custom link
+  // metadata title and the "| Formbricks" template are respected without reimplementing
+  // getBasicSurveyMetadata's priority chain here. Restored on unmount for the same reason the
+  // lang/dir effect restores: a client-side navigation away must not leave a stale title behind.
+  //
+  // Link surveys own their document. The embedded JS widget never reaches this component, so a host
+  // page's title is never touched.
+  const baseTitleRef = useRef<string | null>(null);
+  useEffect(() => {
+    baseTitleRef.current ??= document.title;
+    const baseTitle = baseTitleRef.current;
+    return () => {
+      document.title = baseTitle;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (baseTitleRef.current === null || !pageLabel) return;
+    document.title = buildSurveyDocumentTitle(baseTitleRef.current, pageLabel);
+  }, [pageLabel]);
+
   return (
     <>
       {/* Inject custom scripts for tracking/analytics (self-hosted only) */}
@@ -243,6 +278,7 @@ export const SurveyClientWrapper = ({
           styling={styling}
           languageCode={languageCode}
           onLanguageChange={setCurrentLanguageCode}
+          onPageChange={handlePageChange}
           isBrandingEnabled={workspace.linkSurveyBranding}
           shouldResetQuestionId={false}
           autoFocus={autoFocus}

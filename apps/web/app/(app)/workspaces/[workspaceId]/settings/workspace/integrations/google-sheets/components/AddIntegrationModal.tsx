@@ -149,7 +149,6 @@ export const AddIntegrationModal = ({
       setIsLinkingSheet(true);
       const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
       const spreadsheetNameResponse = await getSpreadsheetNameByIdAction({
-        googleSheetIntegration,
         workspaceId,
         spreadsheetId,
       });

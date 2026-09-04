@@ -53,7 +53,7 @@ const DropdownMenuSubContent: React.ComponentType<DropdownMenuPrimitive.Dropdown
     <DropdownMenuPrimitive.SubContent
       ref={ref as any}
       className={cn(
-        "z-50 min-w-32 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-600 shadow-xs animate-in slide-in-from-left-1 hover:text-slate-700",
+        "z-50 max-h-[min(20rem,var(--radix-dropdown-menu-content-available-height))] min-w-32 overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-600 shadow-xs animate-in slide-in-from-left-1 hover:text-slate-700",
         className
       )}
       {...props}
@@ -74,7 +74,7 @@ const DropdownMenuContent: React.ComponentType<DropdownMenuPrimitive.DropdownMen
           ref={ref}
           sideOffset={sideOffset}
           className={cn(
-            "z-50 min-w-32 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-700 shadow-xs animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+            "z-50 max-h-[min(20rem,var(--radix-dropdown-menu-content-available-height))] min-w-32 overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-700 shadow-xs animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
             className
           )}
           {...props}
