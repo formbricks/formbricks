@@ -55,9 +55,8 @@ export function FollowUpEmail({
           <Row key={variable.id}>
             <Column className="w-full">
               <Text className="mb-2 text-sm font-semibold text-slate-900" dir="auto">
-                {variable.type === "number"
-                  ? `${t("emails.number_variable")}: ${variable.name}`
-                  : `${t("emails.text_variable")}: ${variable.name}`}
+                {variable.type === "number" ? t("emails.number_variable") : t("emails.text_variable")}:{" "}
+                <span dir="auto">{variable.name}</span>
               </Text>
               <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700" dir="auto">
                 {variable.value}
