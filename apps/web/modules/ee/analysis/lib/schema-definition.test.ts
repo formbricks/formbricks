@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { createContext, runInContext } from "node:vm";
 import { describe, expect, test } from "vitest";
 import {
   EMOTION_MEASURE_ORDER,
@@ -223,7 +224,47 @@ describe("schema-definition", () => {
       // underflows double precision, which raises 22003 for the whole query.
       for (const schema of [readDockerCubeSchema(), readChartCubeSchema()]) {
         expect(schema).toContain("LOWER(${CUBE}.metadata->>'finished') IN ('true', 'false')");
-        expect(schema).toContain("metadata->>'duration_seconds' ~ '^-?[0-9]{1,15}(\\\\.[0-9]{1,6})?$'");
+        expect(schema).toContain(
+          "metadata->>'duration_seconds' ~ '\\\\A-?[0-9]{1,15}(\\\\.[0-9]{1,6})?\\\\Z'"
+        );
+      }
+    });
+
+    test("keeps every member's SQL free of JS replacement specials", () => {
+      // Cube splices a member's SQL into its filter templates with String.prototype.replace, where
+      // that SQL is the *replacement* argument — so `$'`, `` $` ``, `$&`, `$<name>` and `$1` are
+      // expansion tokens rather than literals there. A regex ending in `$'` is the easy way to hit
+      // this: it swallowed the closing quote, spliced ` IS NULL` inside the string literal, and
+      // turned `set` / `notSet` on metadataDurationSeconds into an HTTP 400. Assert the class, not
+      // that one pattern, and read it off the evaluated model rather than the file text so a member
+      // added later cannot sidestep it.
+      const REPLACEMENT_SPECIAL = /\$(['`&]|<|\d)/;
+
+      for (const path of [dockerCubeSchemaPath, chartCubeSchemaPath]) {
+        let captured:
+          | { dimensions: Record<string, { sql?: string }>; measures: Record<string, { sql?: string }> }
+          | undefined;
+        const sandbox = {
+          CUBE: "TBL",
+          cube: (_name: string, definition: typeof captured) => {
+            captured = definition;
+          },
+        };
+        createContext(sandbox);
+        runInContext(readFileSync(path, "utf8"), sandbox);
+
+        const members = [
+          ...Object.entries(captured?.dimensions ?? {}),
+          ...Object.entries(captured?.measures ?? {}),
+        ];
+        expect(members.length).toBeGreaterThan(0);
+
+        const offenders = members
+          .filter(
+            ([, definition]) => typeof definition.sql === "string" && REPLACEMENT_SPECIAL.test(definition.sql)
+          )
+          .map(([name]) => name);
+        expect(offenders).toEqual([]);
       }
     });
 

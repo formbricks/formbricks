@@ -348,9 +348,16 @@ cube(`FeedbackRecords`, {
       // point), and either raises 22003 for the whole query rather than nulling that one row. 15
       // integer digits sit far inside the type's range and a duration in seconds never approaches
       // them — ingestion clamps its own at a week.
+      //
+      // \A and \Z, not ^ and $, and that is load-bearing. Cube splices a dimension's SQL into its
+      // filter templates with String.prototype.replace, where this string is the REPLACEMENT
+      // argument — so a trailing `$'` is not a literal, it is the "everything after the match"
+      // token. Ending the pattern in `)?$'` made `set` / `notSet` on this dimension expand into
+      // the middle of the string literal and come back as HTTP 400. The Postgres string anchors
+      // carry no meaning to `replace` and match identically here.
       sql: `
         CASE
-          WHEN ${CUBE}.metadata->>'duration_seconds' ~ '^-?[0-9]{1,15}(\\.[0-9]{1,6})?$'
+          WHEN ${CUBE}.metadata->>'duration_seconds' ~ '\\A-?[0-9]{1,15}(\\.[0-9]{1,6})?\\Z'
             THEN (${CUBE}.metadata->>'duration_seconds')::double precision
         END
       `,
