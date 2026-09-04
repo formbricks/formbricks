@@ -736,6 +736,51 @@ describe("Dashboard Service", () => {
       });
     });
 
+    test("nextOpenSlot places the widget in the first gap it fits", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.aggregate.mockResolvedValue({ _max: { order: 1 } });
+      mockTxWidget.findMany.mockResolvedValue([
+        { layout: { x: 0, y: 0, w: 4, h: 3 } },
+        { layout: { x: 8, y: 0, w: 4, h: 3 } },
+      ]);
+      mockTxWidget.create.mockResolvedValue(mockWidget);
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await addChartToDashboard({
+        dashboardId: mockDashboardId,
+        chartId: mockChartId,
+        workspaceId: mockWorkspaceId,
+        layout: mockLayout,
+        placement: "nextOpenSlot",
+      });
+
+      expect(mockTxWidget.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ layout: { x: 4, y: 0, w: 4, h: 3 } }),
+      });
+    });
+
+    test("nextOpenSlot drops the widget below a full row", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.aggregate.mockResolvedValue({ _max: { order: 0 } });
+      mockTxWidget.findMany.mockResolvedValue([{ layout: { x: 0, y: 0, w: 12, h: 3 } }]);
+      mockTxWidget.create.mockResolvedValue(mockWidget);
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await addChartToDashboard({
+        dashboardId: mockDashboardId,
+        chartId: mockChartId,
+        workspaceId: mockWorkspaceId,
+        layout: mockLayout,
+        placement: "nextOpenSlot",
+      });
+
+      expect(mockTxWidget.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ layout: { x: 0, y: 3, w: 4, h: 3 } }),
+      });
+    });
+
     test("throws ResourceNotFoundError when chart does not exist", async () => {
       mockTxChart.findFirst.mockResolvedValue(null);
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
