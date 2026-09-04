@@ -1,7 +1,13 @@
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
-import { createRuleParams, getAvailableRuleTypes, getRuleValue } from "./validation-rules-utils";
+import {
+  createRelativeDateParams,
+  createRuleParams,
+  getAvailableRuleTypes,
+  getRuleValue,
+  isRelativeDateParams,
+} from "./validation-rules-utils";
 
 describe("getAvailableRuleTypes", () => {
   test("should return text rules for openText element with text inputType when no rules exist", () => {
@@ -476,5 +482,63 @@ describe("createRuleParams", () => {
   test("should handle invalid string number (defaults to 3 for maxSelections)", () => {
     const params = createRuleParams("maxSelections", "invalid");
     expect(params).toEqual({ max: 3 });
+  });
+});
+
+describe("relative date params", () => {
+  test("isRelativeDateParams distinguishes relative bounds from fixed dates", () => {
+    expect(isRelativeDateParams({ date: "2026-03-01" })).toBe(false);
+    expect(isRelativeDateParams({ startDate: "2026-03-01", endDate: "2026-03-10" })).toBe(false);
+    expect(isRelativeDateParams({ relative: { amount: 3, unit: "calendarDays", direction: "before" } })).toBe(
+      true
+    );
+    expect(
+      isRelativeDateParams({
+        relativeStart: { amount: 3, unit: "calendarDays", direction: "before" },
+        relativeEnd: { amount: 4, unit: "calendarDays", direction: "after" },
+      })
+    ).toBe(true);
+  });
+
+  test("createRelativeDateParams returns a single bound for single-bound rules", () => {
+    expect(createRelativeDateParams("isLaterThan")).toEqual({
+      relative: { amount: 0, unit: "calendarDays", direction: "before" },
+    });
+  });
+
+  test("createRelativeDateParams returns a window straddling the response date for range rules", () => {
+    expect(createRelativeDateParams("isBetween")).toEqual({
+      relativeStart: { amount: 0, unit: "calendarDays", direction: "before" },
+      relativeEnd: { amount: 0, unit: "calendarDays", direction: "after" },
+    });
+  });
+
+  test("getRuleValue returns undefined for relative params so they do not leak into the text input", () => {
+    const singleBound = {
+      id: "1",
+      type: "isLaterThan",
+      params: { relative: { amount: 3, unit: "calendarDays", direction: "before" } },
+    } as unknown as TValidationRule;
+    const range = {
+      id: "2",
+      type: "isBetween",
+      params: {
+        relativeStart: { amount: 3, unit: "workingDays", direction: "before" },
+        relativeEnd: { amount: 4, unit: "workingDays", direction: "after" },
+      },
+    } as unknown as TValidationRule;
+
+    expect(getRuleValue(singleBound)).toBeUndefined();
+    expect(getRuleValue(range)).toBeUndefined();
+  });
+
+  test("getRuleValue still reads fixed date params", () => {
+    const fixed = {
+      id: "1",
+      type: "isBetween",
+      params: { startDate: "2026-03-01", endDate: "2026-03-10" },
+    } as unknown as TValidationRule;
+
+    expect(getRuleValue(fixed)).toBe("2026-03-01,2026-03-10");
   });
 });

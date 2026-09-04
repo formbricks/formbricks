@@ -3,6 +3,7 @@ import {
   APPLICABLE_RULES,
   TAddressField,
   TContactInfoField,
+  TRelativeDateBound,
   TValidationRule,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
@@ -84,6 +85,36 @@ export const RULES_BY_INPUT_TYPE: Record<TSurveyOpenTextElementInputType, TValid
   number: ["minValue", "maxValue", "equals", "doesNotEqual"],
 };
 
+export const DATE_RULE_TYPES: TValidationRuleType[] = [
+  "isLaterThan",
+  "isEarlierThan",
+  "isBetween",
+  "isNotBetween",
+];
+
+const RANGE_DATE_RULE_TYPES = new Set<TValidationRuleType>(["isBetween", "isNotBetween"]);
+
+export const DEFAULT_RELATIVE_BOUND: TRelativeDateBound = {
+  amount: 0,
+  unit: "calendarDays",
+  direction: "before",
+};
+
+/** True when a rule's params hold relative bounds rather than fixed calendar dates. */
+export const isRelativeDateParams = (params: TValidationRule["params"]): boolean =>
+  "relative" in params || ("relativeStart" in params && "relativeEnd" in params);
+
+/** Default params when a date rule is switched into relative mode. */
+export const createRelativeDateParams = (ruleType: TValidationRuleType): TValidationRule["params"] => {
+  if (RANGE_DATE_RULE_TYPES.has(ruleType)) {
+    return {
+      relativeStart: { ...DEFAULT_RELATIVE_BOUND },
+      relativeEnd: { ...DEFAULT_RELATIVE_BOUND, direction: "after" },
+    };
+  }
+  return { relative: { ...DEFAULT_RELATIVE_BOUND } };
+};
+
 /**
  * Get available rule types for an element type, excluding already added rules
  * For OpenText elements, filters rules based on inputType
@@ -147,6 +178,8 @@ export const getAvailableRuleTypes = (
  */
 export const getRuleValue = (rule: TValidationRule): number | string | undefined => {
   const params = rule.params;
+  // Relative date params are edited through their own inputs, not the shared string channel.
+  if (isRelativeDateParams(params)) return undefined;
   if ("min" in params) return params.min;
   if ("max" in params) return params.max;
   if ("pattern" in params) {

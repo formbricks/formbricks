@@ -37,6 +37,7 @@ interface ValidationRuleRowProps {
   onFieldChange: (ruleId: string, field: TAddressField | TContactInfoField | undefined) => void;
   onRuleTypeChange: (ruleId: string, newType: TValidationRuleType) => void;
   onRuleValueChange: (ruleId: string, value: string) => void;
+  onRuleParamsChange: (ruleId: string, params: TValidationRule["params"]) => void;
   onFileExtensionChange: (ruleId: string, extensions: TAllowedFileExtension[]) => void;
   onDelete: (ruleId: string) => void;
   onAdd: (insertAfterIndex: number) => void;
@@ -57,11 +58,12 @@ export const ValidationRuleRow = ({
   onFieldChange,
   onRuleTypeChange,
   onRuleValueChange,
+  onRuleParamsChange,
   onFileExtensionChange,
   onDelete,
   onAdd,
   canAddMore,
-}: ValidationRuleRowProps) => {
+}: Readonly<ValidationRuleRowProps>) => {
   const { t } = useTranslation();
   const ruleType = rule.type;
   const config = RULE_TYPE_CONFIG[ruleType];
@@ -126,6 +128,7 @@ export const ValidationRuleRow = ({
             config={config}
             currentValue={currentValue}
             onChange={(value) => onRuleValueChange(rule.id, value)}
+            onParamsChange={(params) => onRuleParamsChange(rule.id, params)}
             onFileExtensionChange={handleFileExtensionChange}
             element={element}
           />

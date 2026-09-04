@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
+import { ValidationRuleDateValueInput } from "./validation-rule-date-value-input";
 
 interface ValidationRuleValueInputProps {
   rule: TValidationRule;
@@ -22,6 +23,7 @@ interface ValidationRuleValueInputProps {
   currentValue: number | string | undefined;
   onChange: (value: string) => void;
   onFileExtensionChange: (extensions: TAllowedFileExtension[]) => void;
+  onParamsChange: (params: TValidationRule["params"]) => void;
   element?: TSurveyElement;
 }
 
@@ -32,49 +34,25 @@ export const ValidationRuleValueInput = ({
   currentValue,
   onChange,
   onFileExtensionChange,
+  onParamsChange,
   element,
-}: ValidationRuleValueInputProps) => {
+}: Readonly<ValidationRuleValueInputProps>) => {
   const { t } = useTranslation();
 
-  // Determine HTML input type for value inputs
-  let htmlInputType: "number" | "date" | "text" = "text";
-  if (config.valueType === "number") {
-    htmlInputType = "number";
-  } else if (
-    ruleType.startsWith("is") &&
-    (ruleType.includes("Later") || ruleType.includes("Earlier") || ruleType.includes("On"))
-  ) {
-    htmlInputType = "date";
-  }
-
-  // Special handling for date range inputs
-  if (ruleType === "isBetween" || ruleType === "isNotBetween") {
+  if (config.supportsRelative) {
     return (
-      <div className="flex w-full items-center gap-2">
-        <Input
-          type="date"
-          value={(currentValue as string)?.split(",")?.[0] ?? ""}
-          onChange={(e) => {
-            const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
-            onChange(`${e.target.value},${currentEndDate}`);
-          }}
-          placeholder={t("workspace.surveys.edit.validation.start_date")}
-          className="h-9 flex-1 bg-white"
-        />
-        <span className="text-sm text-slate-500">{t("common.and")}</span>
-        <Input
-          type="date"
-          value={(currentValue as string)?.split(",")?.[1] ?? ""}
-          onChange={(e) => {
-            const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
-            onChange(`${currentStartDate},${e.target.value}`);
-          }}
-          placeholder={t("workspace.surveys.edit.validation.end_date")}
-          className="h-9 flex-1 bg-white"
-        />
-      </div>
+      <ValidationRuleDateValueInput
+        rule={rule}
+        ruleType={ruleType}
+        currentValue={currentValue}
+        onChange={onChange}
+        onParamsChange={onParamsChange}
+      />
     );
   }
+
+  // Date rules return above; everything left is a plain text or number input.
+  const htmlInputType = config.valueType === "number" ? "number" : "text";
 
   // Option selector for single select validation rules
   if (config.valueType === "option") {
