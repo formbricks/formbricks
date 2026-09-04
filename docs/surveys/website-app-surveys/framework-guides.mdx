@@ -344,6 +344,21 @@ export default function App() {
 | workspaceId    | string | Formbricks Workspace ID.               |
 | appUrl         | string | URL of the hosted Formbricks instance. |
 
+Drive the SDK through its named exports from anywhere:
+
+```javascript
+import { track, setUserId, setAttributes, setEmbeddedData, logout } from "@formbricks/react-native";
+
+await track("button_clicked");
+await setUserId("user_123");
+setEmbeddedData({ screen: "checkout", plan: "pro" });
+```
+
+<Note>
+  `setEmbeddedData` attaches context to whichever survey is displayed next, without tying it to a trigger.
+  See [Mobile SDKs](/surveys/embedded-data/mobile-sdks) for the full Embedded Data reference.
+</Note>
+
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
 ## Swift
@@ -414,14 +429,23 @@ Formbricks.setAttributes([
 // 6. Change language (no userId required):
 Formbricks.setLanguage("de")
 
-// 7. Log out (no userId required):
+// 7. Attach Embedded Data to future responses
+Formbricks.setEmbeddedData(["screen": "checkout", "plan": "pro"])
+
+// 8. Log out (no userId required):
 Formbricks.logout()
 
-// 8. Clean up SDK state (optional):
+// 9. Clean up SDK state (optional):
 Formbricks.cleanup(waitForOperations: true) {
     print("SDK torn down")
 }
 ```
+
+<Note>
+  `setEmbeddedData` attaches context to whichever survey is displayed next, without tying it to a trigger.
+  See [Mobile SDKs](/surveys/embedded-data/mobile-sdks) for the value types and for the `nil` caveat that is
+  specific to Swift.
+</Note>
 
 ### Required Customizations
 
@@ -493,9 +517,20 @@ Formbricks.setAttributes(mapOf(Pair("attr1", "val1"), Pair("attr2", "val2")))
 // 6. Change language (no userId required):
 Formbricks.setLanguage("de")
 
-// 7. Log out:
+// 7. Attach Embedded Data to future responses
+Formbricks.setEmbeddedData(mapOf(
+  "screen" to EmbeddedDataValue.string("checkout"),
+  "plan" to EmbeddedDataValue.string("pro")
+))
+
+// 8. Log out:
 Formbricks.logout()
 ```
+
+<Note>
+  `setEmbeddedData` attaches context to whichever survey is displayed next, without tying it to a trigger.
+  See [Mobile SDKs](/surveys/embedded-data/mobile-sdks) for the value types and clearing semantics.
+</Note>
 
 ### Required Customizations
 
@@ -561,12 +596,15 @@ await Formbricks.setAttributes({"plan": "pro", "mrr": 99, "signup_date": DateTim
 // 4. Set the survey language.
 await Formbricks.setLanguage("de");
 
-// 5. Reset to an anonymous session on sign-out.
+// 5. Attach Embedded Data to future responses (synchronous, no queue).
+Formbricks.setEmbeddedData({"screen": "checkout", "plan": "pro"});
+
+// 6. Reset to an anonymous session on sign-out.
 await Formbricks.logout();
 ```
 
 <Note>
-  Prefer to initialize before any UI mounts? Call `Formbricks.setup(appUrl: ..., workspaceId: ...)` directly — the widget still needs to be in the tree to render surveys, but it won't re-run setup (setup is idempotent). All static methods are sequenced through an internal command queue, so calls run in submission order and return a `Future<Result<void, FormbricksError>>`.
+  Prefer to initialize before any UI mounts? Call `Formbricks.setup(appUrl: ..., workspaceId: ...)` directly — the widget still needs to be in the tree to render surveys, but it won't re-run setup (setup is idempotent). `setup`, `track`, `setUserId`, `setAttribute`, `setAttributes`, `setLanguage` and `logout` are sequenced through an internal command queue, so they run in submission order and return a `Future<Result<void, FormbricksError>>`. `setEmbeddedData` and `clearEmbeddedData` are the exceptions: they are synchronous and return `void`, so a context push at launch is not dropped while setup is still running.
 </Note>
 
 ### Public API
@@ -580,6 +618,8 @@ await Formbricks.logout();
 | `Formbricks.setAttribute(String key, Object value)` | Set one attribute (`String` / `num` / `DateTime`).                       |
 | `Formbricks.setAttributes(Map<String, Object>)`     | Set several attributes at once.                                          |
 | `Formbricks.setLanguage(String language)`           | Set the survey language.                                                 |
+| `Formbricks.setEmbeddedData(Map<String, Object?>)`  | Attach [Embedded Data](/surveys/embedded-data/mobile-sdks) to future responses. Synchronous. |
+| `Formbricks.clearEmbeddedData('key')`               | Remove one Embedded Data key. With no argument, clears all of them.      |
 | `Formbricks.logout()`                               | Reset to an anonymous session.                                           |
 
 Attribute keys must be lowercase letters, numbers, and underscores, and start with a letter. `DateTime` values are sent as UTC ISO-8601 strings; numbers stay numbers. Identity and attribute changes are debounced (~500 ms) and coalesced into a single backend request.

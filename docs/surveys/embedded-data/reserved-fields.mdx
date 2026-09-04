@@ -1,0 +1,126 @@
+---
+title: "Reserved Fields"
+description: "The system fields Formbricks captures on every response without you declaring anything: page, campaign, device, timing and request context."
+icon: "list-check"
+---
+
+Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-data/overview). The catalog is the same for every survey in every workspace, you never declare them, and nothing outside the survey can write them. Whatever gets captured is there to be recalled, filtered, grouped and exported.
+
+**Captured is not the same as declared, though.** A reserved field needs no declaration, but whether a value actually lands depends on the field, the survey type and the survey's settings: `ipAddress` only when the survey captures it, `durationSeconds` only on finished responses, the page and campaign fields only where there is a host page, and none of the newer fields on responses collected before they existed. The catalog and the sections below say which is which.
+
+## The Catalog
+
+**Captured by** says where the value comes from, and that decides whether a running survey can use it:
+
+- **Browser** — read in the page when the survey is displayed, then frozen. Usable in recall and logic *while the respondent is answering*.
+- **Server** — derived from the request or from the stored response when it reaches Formbricks. Available on the response, in filters and in exports, but not offered to a running survey, because mid-survey the answer does not exist yet.
+
+| Field             | Type      | Captured by     | What it holds                                                                 |
+| ----------------- | --------- | --------------- | ----------------------------------------------------------------------------- |
+| `source`          | `string`  | Browser         | How the response was collected: `link`, `app`, …                              |
+| `url`             | `string`  | Browser         | The page URL the survey ran on. Always read back without its query string     |
+| `pagePath`        | `string`  | Browser         | The same page without the query string, to group by page rather than by visit |
+| `pageReferrer`    | `string`  | Browser         | Where the respondent came from. Also read back without its query string       |
+| `utmSource`       | `string`  | Browser         | `utm_source` from the page's own query string                                 |
+| `utmMedium`       | `string`  | Browser         | `utm_medium`                                                                  |
+| `utmCampaign`     | `string`  | Browser         | `utm_campaign`                                                                |
+| `utmTerm`         | `string`  | Browser         | `utm_term`                                                                    |
+| `utmContent`      | `string`  | Browser         | `utm_content`                                                                 |
+| `action`          | `string`  | Browser         | The action that triggered an app survey                                       |
+| `screenWidth`     | `number`  | Browser         | Screen width in CSS pixels                                                    |
+| `screenHeight`    | `number`  | Browser         | Screen height in CSS pixels                                                   |
+| `viewportWidth`   | `number`  | Browser         | Width of the window the survey was rendered into                              |
+| `viewportHeight`  | `number`  | Browser         | Height of that window                                                         |
+| `timezone`        | `string`  | Browser         | The respondent's IANA time zone, e.g. `Europe/Berlin`                         |
+| `locale`          | `string`  | Browser         | How the device is configured, e.g. `de-AT`, from `navigator.language`         |
+| `language`        | `string`  | Browser, Server | The language the respondent is **answering in**                               |
+| `country`         | `string`  | Server          | Country from the CDN request header. Formbricks runs no GeoIP lookup          |
+| `browser`         | `string`  | Server          | Parsed from the `user-agent` request header                                   |
+| `os`              | `string`  | Server          | Parsed from the `user-agent` request header                                   |
+| `deviceType`      | `string`  | Server          | Parsed from the `user-agent` request header                                   |
+| `ipAddress`       | `string`  | Server          | Only when the survey has **Capture IP address** enabled                       |
+| `finished`        | `boolean` | Server          | Complete vs. partial response                                                 |
+| `durationSeconds` | `number`  | Server          | Total time to complete. Only set on finished responses                        |
+| `startedAt`       | `date`    | Server          | When the response record was opened                                           |
+| `finishedAt`      | `date`    | Server          | When the response was last written, i.e. its submission when finished         |
+| `responseId`      | `string`  | Server          | The response id                                                               |
+| `surveyId`        | `string`  | Server          | The survey id                                                                 |
+
+<Note>
+  `locale` and `language` are different questions. `locale` is how the respondent's device is configured;
+  `language` is the survey language they actually answered in. A German speaker taking an English-only survey
+  has `locale: "de-DE"` and `language: "en"`, and the gap between the two is exactly what "should we translate
+  this survey?" is asking.
+</Note>
+
+<Note>
+  Responses collected before a field existed carry nothing for it and read back as unset, so a filter or an
+  export column can legitimately be empty for older responses.
+</Note>
+
+### What Link, Web and Mobile Each Capture
+
+Link surveys and website & app surveys render through the same component, so both capture the full browser set. What those fields *describe* differs: on a link survey `url`, `pagePath`, `pageReferrer` and `utm*` are about the Formbricks-hosted survey page and how the respondent reached it; on an app survey they are about the host page the survey was triggered on.
+
+Mobile SDKs render the survey in a WebView with no host page, so the page and campaign fields are absent there while the device fields (`screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `locale`) and every server-derived field are captured normally.
+
+<Note>
+  `screenWidth` and `screenHeight` are orientation-invariant on iOS and rotate with the device on Android.
+  That is browser behavior rather than a Formbricks decision, so compare `viewportWidth` against a breakpoint
+  if you want to know how wide the survey actually rendered.
+</Note>
+
+## Name Collisions
+
+A survey may already declare a hidden field called `url`, `country` or `source`. When it does, that name **resolves to the survey's own field** everywhere: in recall, in logic, in the response table and in exports. The reserved field of the same name is not offered and not exported for that survey, so there is never a column that could mean two things.
+
+New fields cannot be created under a reserved name in any casing, which is what keeps this to the surveys that already had one. The rule and the full refused list live on the [Hidden Fields](/surveys/general-features/hidden-fields#naming) page.
+
+## Anonymize Responses
+
+The **Anonymize responses** toggle in the survey editor's **Settings** tab, under **Response Options**, is off by default and decides which reserved fields are captured at all. It acts at ingest, so a suppressed field is never stored rather than stored and hidden, and responses collected before you turned it on are untouched.
+
+| With the toggle on         | Fields                                                                                                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Not captured**           | `country`, `ipAddress`, `browser`, `os`, `deviceType`                                                                                                                                     |
+| **Query string stripped**  | `url`, `pageReferrer`                                                                                                                                                                     |
+| **Captured unchanged**     | `source`, `action`, `pagePath`, all five `utm*`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `locale`, `language`, `finished`, `durationSeconds`, `startedAt`, `finishedAt`, `responseId`, `surveyId` |
+
+A suppressed field resolves as **unset**, never as an empty string or a stale value, so `#recall:country/fallback:unknown#` shows `unknown` and a logic condition on it simply does not match.
+
+Turning the toggle on also disables **Capture IP address** for that survey, because anonymizing drops the IP whatever that switch says. Your stored choice is kept, so turning anonymize back off restores it.
+
+<Warning>
+  **"Anonymize" here means "no direct identifiers", not "not re-identifiable".** The toggle removes the IP
+  address, the country and the parsed device details, and strips query strings from captured URLs. It does
+  **not** coarsen the fields it keeps, and `screenWidth` + `screenHeight` + `viewportWidth` +
+  `viewportHeight` + `timezone` + `locale` taken together are a browser fingerprint that can narrow a
+  respondent down further than `browser: "Chrome"` ever could. Those fields are kept because they are what
+  makes response analysis useful, but if your threat model is re-identification rather than direct
+  identifiers, do not treat this toggle as sufficient on its own.
+</Warning>
+
+### Query Stripping Is Not Only for Anonymized Surveys
+
+`url` and `pageReferrer` are **always** stripped of their query string and fragment before recall, logic or an export can read them, on every survey, whether or not the toggle is on. Only the stored value keeps the full URL, and only while anonymize is off.
+
+That is deliberate: a recall token can end up interpolated into a redirect URL or a follow-up email, and a survey URL's query string can carry a single-use token or an email address. The campaign parameters you actually want are already available as `utmSource` and friends.
+
+<Warning>
+  Query strings are where identifiers hide. Do not pass emails, tokens or personal identifiers in a survey
+  link, whatever this toggle is set to. See [Hidden Fields and
+  Variables](/surveys/embedded-data/migration#dont-pass-sensitive-data-via-the-url).
+</Warning>
+
+## Where Reserved Fields Show Up
+
+**On the response card**, `source`, `url`, `country`, `action`, `browser`, `os` and `deviceType` are always listed. The remaining auto-captured fields sit behind a disclosure so the card does not grow a dozen rows.
+
+**In the response table**, the same seven are visible columns by default, and the other auto-captured fields are real columns that start hidden and can be switched on from the column settings. `responseId`, `surveyId`, `finished`, `language`, `durationSeconds`, `startedAt` and `finishedAt` are not listed as fields on either surface, because the card header and the table's own fixed columns already show them.
+
+**In exports**, the column set is derived from the catalog rather than from whatever the first response happened to carry, so it is stable for the survey: every response gets every column, and absent values export as empty. `Response ID`, `Survey ID`, `Finished` and the timestamp already have fixed basic columns, so they are not repeated. Anonymized surveys omit the columns they never capture, and `Ip Address` is only a column when the survey captures it.
+
+<Note>
+  Export headers are Title Case renderings of the field name (`Page Path`, `Utm Source`) and are deliberately
+  **not** localized, so a download has the same column names whoever clicks it.
+</Note>
