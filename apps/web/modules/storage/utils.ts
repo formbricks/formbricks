@@ -8,15 +8,15 @@ import {
   ZAllowedFileExtension,
 } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { type TFileUploadCandidate, getSurveyFileUploadConfigs } from "./survey-file-upload-elements";
 import { getOriginalFileNameFromUrl } from "./url-helpers";
 
-// Re-export for backward compatibility with server-side code
+// Re-exports for backward compatibility with server-side code
 export { getOriginalFileNameFromUrl } from "./url-helpers";
+export { getSurveyFileUploadConfigs } from "./survey-file-upload-elements";
 
 /**
  * Sanitize a provided file name to a safe subset.
@@ -119,21 +119,6 @@ const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExte
   return extensionValidation.success ? extensionValidation.data : null;
 };
 
-export const getSurveyFileUploadConfigs = ({
-  blocks,
-  questions,
-}: {
-  blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
-}): TSurveyFileUploadElement[] => {
-  return [
-    ...(blocks ?? [])
-      .flatMap((block) => block.elements)
-      .filter((element) => element.type === TSurveyElementTypeEnum.FileUpload),
-    ...(questions ?? []).filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload),
-  ] as TSurveyFileUploadElement[];
-};
-
 /**
  * The ids of the elements whose answers hold storage URLs.
  *
@@ -146,7 +131,7 @@ export const getSurveyFileUploadConfigs = ({
  */
 export const getSurveyFileUploadElementIds = (survey: {
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
 }): Set<string> =>
   new Set(
     getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).map(
@@ -192,7 +177,7 @@ export const validateSurveyAllowsFileUpload = ({
   fileName: string;
   elementId: string;
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
 }): TSurveyFileUploadPermissionResult => {
   const fileUploadConfigs = getSurveyFileUploadConfigs({ blocks, questions });
 
@@ -387,7 +372,7 @@ export const validateClientFileUploads = ({
   workspaceId: string;
   surveyId: string;
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
   // Passed by the management routes (see getWorkspaceLegacyEnvironmentId) so a replayed old response
   // whose file URL predates the scoped shape still validates against a prefix the workspace owns.
   // Omitted by the client widget path, which stays strict on the scoped shape.
