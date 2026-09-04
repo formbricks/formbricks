@@ -438,6 +438,65 @@ describe("triggerV3TaxonomyRun", () => {
     expect(body.detail).toBe("Failed to start taxonomy generation");
     expect(JSON.stringify(body)).not.toContain(HUB_INTERNAL_MARKER);
   });
+
+  /**
+   * The one message on this surface that tells a user what to do next: Generate below the embedded-record
+   * threshold. The Hub keeps `detail` generic and puts the real text in `invalid_params`, so this used to
+   * be thrown away entirely — the request became a 502 carrying only "Failed to start taxonomy
+   * generation" (ENG-2253).
+   */
+  test("relays the Hub's actionable 400 instead of collapsing it into a 502", async () => {
+    vi.mocked(createTaxonomyRun).mockResolvedValue({
+      data: null,
+      error: {
+        status: 400,
+        message: `400 {"type":"https://${HUB_INTERNAL_MARKER}/validation"}`,
+        detail: "",
+        problemDetail: "One or more request parameters are invalid",
+        invalidParams: [
+          {
+            name: "TaxonomyScope.tenant_id",
+            reason: "at least 20 embedded text feedback records are required; found 3",
+          },
+        ],
+      },
+    });
+
+    const response = await triggerV3TaxonomyRun(runParams);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.invalid_params[0].reason).toContain("at least 20 embedded text feedback records");
+    expect(body.invalid_params[0].name).toBe("TaxonomyScope.dataset_id");
+    expect(JSON.stringify(body)).not.toContain(HUB_INTERNAL_MARKER);
+  });
+
+  /**
+   * A genuine upstream 503 is "unavailable, retry later"; the 502 it used to collapse into reads as "the
+   * upstream is broken", and left a self-hoster no signal that a subsystem simply is not configured.
+   * Distinct from the NO_CONFIG 503 above, which is about *our* missing `HUB_API_KEY`.
+   */
+  test("keeps a real Hub 503 a 503 rather than collapsing it into a 502", async () => {
+    vi.mocked(createTaxonomyRun).mockResolvedValue({
+      data: null,
+      error: {
+        status: 503,
+        message: `503 {"type":"https://${HUB_INTERNAL_MARKER}/service-unavailable"}`,
+        detail: "",
+        problemDetail: "Taxonomy service is not available.",
+      },
+    });
+
+    const response = await triggerV3TaxonomyRun(runParams);
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body.code).toBe("service_unavailable");
+    // Names both candidate subsystems rather than guessing: the Hub answers 503 for taxonomy from three
+    // unrelated causes, and only some are reachable from this UI.
+    expect(body.detail).toContain("taxonomy and embedding configuration");
+    expect(JSON.stringify(body)).not.toContain(HUB_INTERNAL_MARKER);
+  });
 });
 
 describe("renameV3TaxonomyNode", () => {

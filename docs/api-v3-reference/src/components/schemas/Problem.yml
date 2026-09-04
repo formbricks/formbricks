@@ -3,6 +3,17 @@ description: >-
   RFC 9457 Problem Details for HTTP APIs (`application/problem+json`). Responses
   typically include a machine-readable `code` field alongside `title`, `status`,
   `detail`, and `requestId`.
+
+
+  Branch on `code`, not on `detail` or `title`: `code` is stable and
+  locale-independent, whereas `detail` is prose that may be reworded. No problem
+  sets `type`, so per RFC 9457 §4.2.1 `title` is always the HTTP reason phrase
+  for `status` and carries no information of its own.
+
+
+  Member naming is frozen as published, mixed conventions included
+  (`requestId` alongside `invalid_params` and `details.resource_type`):
+  renaming any of them would break every client that reads them.
 required:
   - title
   - status

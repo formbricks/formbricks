@@ -5,7 +5,8 @@ import { ZSurveyType } from "@formbricks/types/surveys/types";
 import type { TTemplate } from "@formbricks/types/templates";
 import { ZUserLocale } from "@formbricks/types/user";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { problemBadRequest, problemInternalError } from "@/app/api/v3/lib/response";
+import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { problemBadRequest } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { CUSTOM_SURVEY_TEMPLATE_ID, getTemplateById } from "@/app/lib/templates";
 import { XM_TEMPLATE_IDS } from "@/app/lib/xm-template-ids";
@@ -138,7 +139,6 @@ export async function createTrustedTemplateSurveyResponse({
       },
     });
   } catch (error) {
-    log.error({ error, statusCode: 500 }, "Trusted template survey create unexpected error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "surveys.templates.create" });
   }
 }

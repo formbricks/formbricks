@@ -12,14 +12,26 @@ import type { WorkflowsLogger } from "./services/ports";
  * indistinguishable from the rest of the v3 API.
  */
 
-export type WorkflowProblemCode =
-  | "bad_request"
-  | "forbidden"
-  | "conflict"
-  | "invalid_workflow_state"
-  | "workflow_not_executable"
-  | "unprocessable_content"
-  | "internal_server_error";
+/**
+ * The subset of the v3 API's problem-`code` vocabulary this package emits.
+ *
+ * A runtime array rather than a bare union so `spec-drift.test.ts` can assert every value is published
+ * in `Problem.yml`. That spec file is the shared contract with `apps/web`'s `V3_PROBLEM_CODES`
+ * (`apps/web/app/api/v3/lib/response.ts`), which this list must stay a subset of; the two are checked
+ * against the same YAML rather than importing each other, because this package is deliberately a leaf
+ * and cannot depend on `apps/web`.
+ */
+export const WORKFLOW_PROBLEM_CODES = [
+  "bad_request",
+  "forbidden",
+  "conflict",
+  "invalid_workflow_state",
+  "workflow_not_executable",
+  "unprocessable_content",
+  "internal_server_error",
+] as const;
+
+export type WorkflowProblemCode = (typeof WORKFLOW_PROBLEM_CODES)[number];
 
 export interface WorkflowInvalidParam {
   name: string;

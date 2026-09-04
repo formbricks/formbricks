@@ -12,11 +12,11 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import { buildV3AuditLog, queueV3AuditLog } from "./audit";
+import { mapV3ThrownError } from "./errors";
 import {
   type InvalidParam,
   isInvalidParamCode,
   problemBadRequest,
-  problemInternalError,
   problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
@@ -421,8 +421,10 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         auditLog.eventId = requestId;
         await queueV3AuditLog(auditLog, requestId, log);
       }
-      log.error({ error, statusCode: 500 }, "V3 API unexpected error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
+      // Defence in depth. Operations map their own throws and return a problem response — they have to,
+      // because the MCP tools call them directly, without this wrapper. Anything reaching here escaped
+      // that, so it is mapped by the same rules rather than being flattened into a blanket 500.
+      return ensureRequestIdHeader(mapV3ThrownError(error, { log, requestId, instance }), requestId);
     }
   };
 };

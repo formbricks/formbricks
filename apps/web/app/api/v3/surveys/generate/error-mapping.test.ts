@@ -23,7 +23,7 @@ vi.mock("@/lib/ai/service", () => ({
 }));
 
 vi.mock("@formbricks/logger", () => ({
-  logger: { error: vi.fn() },
+  logger: { error: vi.fn(), withContext: vi.fn(() => ({ warn: vi.fn(), error: vi.fn() })) },
 }));
 
 const context = {
@@ -103,11 +103,18 @@ describe("mapV3SurveyGenerateError", () => {
     await expect(readProblem(response)).resolves.toMatchObject({ code: "ai_output_too_long" });
   });
 
-  test("maps a missing organization to 404", async () => {
+  /**
+   * The organization behind a workspace the caller already reached. Answering 404 put a server-derived id
+   * in the body as `resource_id`, against `problemNotFound`'s own contract; 403 is what every other v3
+   * surface says for a resource the caller may not see.
+   */
+  test("maps a missing organization to 403, without naming the organization", async () => {
     const response = mapV3SurveyGenerateError(new ResourceNotFoundError("Organization", "org_123"), context);
 
-    expect(response.status).toBe(404);
-    await expect(readProblem(response)).resolves.toMatchObject({ code: "not_found" });
+    expect(response.status).toBe(403);
+    const problem = await readProblem(response);
+    expect(problem).toMatchObject({ code: "forbidden" });
+    expect(JSON.stringify(problem)).not.toContain("org_123");
   });
 
   test("falls back to 502 and logs for an unrecognized error", () => {

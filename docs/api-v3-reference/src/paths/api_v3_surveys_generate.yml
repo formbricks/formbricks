@@ -165,7 +165,7 @@ post:
             aiDisabled:
               summary: AI smart tools disabled
               value:
-                title: AI Unavailable
+                title: Forbidden
                 status: 403
                 detail: AI smart tools are disabled for this organization.
                 code: ai_smart_tools_disabled
@@ -173,7 +173,7 @@ post:
             aiNotInPlan:
               summary: AI features not enabled for the plan
               value:
-                title: AI Unavailable
+                title: Forbidden
                 status: 403
                 detail: AI features are not enabled for this organization's plan.
                 code: ai_features_not_enabled
@@ -241,7 +241,7 @@ post:
             instanceNotConfigured:
               summary: AI instance configuration missing
               value:
-                title: AI Unavailable
+                title: Service Unavailable
                 status: 503
                 detail: AI is not configured for this Formbricks instance.
                 code: ai_instance_not_configured

@@ -149,6 +149,10 @@ describe("authenticateMcpRequest", () => {
       // refresh token (ENG-2175). Asserted against the real constant, not a literal.
       expect(result.response.headers.get("WWW-Authenticate")).toContain(`scope="${MCP_CHALLENGE_SCOPE}"`);
       expect(MCP_CHALLENGE_SCOPE).toContain("offline_access");
+      // Exactly one challenge, this one. `problemUnauthorized` now sets a plain bearer challenge by
+      // default (RFC 9110 requires one on any 401), which this must replace rather than join — a client
+      // reading two comma-joined challenges discovers no `resource_metadata`.
+      expect(result.response.headers.get("WWW-Authenticate")).not.toContain('realm="formbricks"');
       expect(await result.response.json()).toMatchObject({
         code: "not_authenticated",
         detail: "API key or OAuth access token required",
