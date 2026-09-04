@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { hasActiveSurveyFilters, normalizeSurveyFilters, parseStoredSurveyFilters } from "./utils";
+import { normalizeSurveyFilters, parseStoredSurveyFilters } from "./utils";
 
 describe("normalizeSurveyFilters", () => {
   test("returns the normalized default filters when input is empty", () => {
@@ -70,29 +70,5 @@ describe("parseStoredSurveyFilters", () => {
       type: ["link"],
       sortBy: "createdAt",
     });
-  });
-});
-
-describe("hasActiveSurveyFilters", () => {
-  test("ignores sort-only changes", () => {
-    expect(
-      hasActiveSurveyFilters({
-        name: "",
-        status: [],
-        type: [],
-        sortBy: "createdAt",
-      })
-    ).toBe(false);
-  });
-
-  test("detects active filters", () => {
-    expect(
-      hasActiveSurveyFilters({
-        name: "CSAT",
-        status: [],
-        type: [],
-        sortBy: "relevance",
-      })
-    ).toBe(true);
   });
 });

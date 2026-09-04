@@ -125,7 +125,7 @@ get:
                   - limit
                   - nextCursor
                   - totalCount
-                  - hasArchived
+                  - workspaceSurveyCount
                 properties:
                   limit:
                     type: integer
@@ -144,15 +144,17 @@ get:
                     description: >-
                       Total number of surveys matching the current filters
                       across all pages. `null` when `includeTotalCount=false`.
-                  hasArchived:
+                  workspaceSurveyCount:
                     type:
-                      - boolean
+                      - integer
                       - "null"
+                    minimum: 0
                     description: >-
-                      `true` when the workspace has at least one archived
-                      (soft-deleted) survey. Computed only on the first page
-                      (same gate as `totalCount`); `null` when
-                      `includeTotalCount=false`.
+                      Total number of surveys in the workspace, archived
+                      (soft-deleted) ones included and independent of the
+                      current filters. `null` when `includeTotalCount=false`
+                      (the same gate as `totalCount`). Replaces the boolean
+                      `hasArchived` field of earlier releases.
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":

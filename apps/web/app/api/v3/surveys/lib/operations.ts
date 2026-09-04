@@ -17,7 +17,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
-import { getSurveyCount, hasArchivedSurveys } from "@/modules/survey/list/lib/survey";
+import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import {
@@ -182,18 +182,18 @@ export async function listV3Surveys({
       sortBy: parsed.sortBy,
       filterCriteria: parsed.filterCriteria,
     });
-    // totalCount and hasArchived are only computed on the first page (same gate),
-    // matching the client which reads them from pages[0].meta.
+    // Both counts are gated on includeTotalCount alone. The list client sends it only on the first
+    // page and reads them from pages[0].meta, but any caller can ask for them on a cursor request.
     const totalCountPromise = parsed.includeTotalCount
       ? getSurveyCount(workspaceId, parsed.filterCriteria)
       : Promise.resolve(null);
-    const hasArchivedPromise = parsed.includeTotalCount
-      ? hasArchivedSurveys(workspaceId)
+    const workspaceSurveyCountPromise = parsed.includeTotalCount
+      ? getWorkspaceSurveyCount(workspaceId)
       : Promise.resolve(null);
-    const [surveyPage, totalCount, hasArchived] = await Promise.all([
+    const [surveyPage, totalCount, workspaceSurveyCount] = await Promise.all([
       surveyPagePromise,
       totalCountPromise,
-      hasArchivedPromise,
+      workspaceSurveyCountPromise,
     ]);
 
     return successListResponse(
@@ -202,7 +202,7 @@ export async function listV3Surveys({
         limit: parsed.limit,
         nextCursor: surveyPage.nextCursor,
         totalCount,
-        hasArchived,
+        workspaceSurveyCount,
       },
       { requestId, cache: "private, no-store" }
     );

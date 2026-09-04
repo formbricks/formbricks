@@ -54,9 +54,14 @@ export function updateSurveyInInfiniteData(
   };
 }
 
+/**
+ * Drop a survey from the cached pages. `removesFromWorkspace` separates a delete, which takes the
+ * survey out of the workspace, from an archive or restore, which only takes it out of this view.
+ */
 export function removeSurveyFromInfiniteData(
   data: InfiniteData<TSurveyListPage> | undefined,
-  surveyId: string
+  surveyId: string,
+  { removesFromWorkspace = false }: { removesFromWorkspace?: boolean } = {}
 ): InfiniteData<TSurveyListPage> | undefined {
   if (!data) {
     return data;
@@ -80,13 +85,18 @@ export function removeSurveyFromInfiniteData(
     return data;
   }
 
+  const decrement = (count: number | null) => (count === null ? null : Math.max(0, count - 1));
+
   return {
     ...data,
     pages: pages.map((page) => ({
       ...page,
       meta: {
         ...page.meta,
-        totalCount: page.meta.totalCount === null ? null : Math.max(0, page.meta.totalCount - 1),
+        totalCount: decrement(page.meta.totalCount),
+        workspaceSurveyCount: removesFromWorkspace
+          ? decrement(page.meta.workspaceSurveyCount)
+          : page.meta.workspaceSurveyCount,
       },
     })),
   };
