@@ -39,6 +39,12 @@ import {
 } from "@/lib/offline-storage";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
+import {
+  END_BLOCK_ID,
+  getForwardTargetFromOffBlockId,
+  getPreviousBlockId,
+  isFinishedBlockId,
+} from "@/lib/survey-navigation";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyPagePosition, hasSurveyInstructions } from "@/lib/survey-page";
 import { SurveyState } from "@/lib/survey-state";
 import { useOnlineStatus } from "@/lib/use-online-status";
@@ -516,7 +522,9 @@ export function Survey({
       // If the survey is fully complete (no pending responses + finished), discard stale
       // progress and start fresh instead of restoring to the ending card.
       if (pendingCount === 0) {
-        const isEndingCard = localSurvey.endings.some((e) => e.id === progress.blockId);
+        // The "end" sentinel counts as an ending card here: a survey with no endings defined
+        // finishes on it, so restoring onto it would resume a session that is already over.
+        const isEndingCard = isFinishedBlockId(localSurvey, progress.blockId);
         const isResponseFinished = progress.surveyStateSnapshot?.responseAcc?.finished === true;
 
         if (isEndingCard || isResponseFinished) {
@@ -765,13 +773,28 @@ export function Survey({
       };
 
     if (!currentBlock) {
-      console.error(
-        "Block not found. blockId:",
-        blockId,
-        "available blocks:",
-        localSurvey.blocks.map((b) => b.id)
-      );
-      throw new Error("Block not found");
+      // `blockId` is not a block: an ending id (the survey already finished), the "end" sentinel,
+      // or a block that no longer exists because the survey was edited after progress was saved.
+      // None of those leaves anything to advance through, so finish rather than throw — throwing
+      // escaped as an unhandled rejection, which dropped the answer in hand and left the Next
+      // button spinning (ENG-2818).
+      const offBlockTarget = getForwardTargetFromOffBlockId(localSurvey, blockId);
+
+      // An ending or the sentinel is an expected position to submit from. A `blockId` that matches
+      // neither is survey drift, and the only remaining signal that it happened.
+      if (!offBlockTarget && blockId !== END_BLOCK_ID) {
+        console.warn(
+          "Formbricks: blockId no longer resolves to a block, finishing the survey. blockId:",
+          blockId,
+          "available blocks:",
+          localSurvey.blocks.map((b) => b.id)
+        );
+      }
+
+      return {
+        nextBlockId: offBlockTarget,
+        calculatedVariables: { ...currentVariables },
+      };
     }
 
     const localResponseData = { ...responseData, ...data };
@@ -1092,22 +1115,22 @@ export function Survey({
   };
 
   const onBack = (): void => {
+    const prevBlockId = getPreviousBlockId(localSurvey, blockId, history);
+
+    // Nothing precedes the current card — the respondent is on the first block, or `blockId` is an
+    // ending / a block that no longer exists and no history was saved. Back is a no-op rather than
+    // a throw (ENG-2818), and nothing is consumed: neither the history nor the variable stack is
+    // popped for a navigation that does not happen.
+    if (!prevBlockId) return;
+
     isNavigatingBackRef.current = true;
     hasUserNavigatedRef.current = true;
     blurOutgoingCard();
 
-    let prevBlockId: string | undefined;
-    // use history if available
     if (history.length > 0) {
-      const newHistory = [...history];
-      prevBlockId = newHistory.pop();
-      setHistory(newHistory);
-    } else {
-      // otherwise go back to previous block in array
-      prevBlockId = localSurvey.blocks[currentBlockIndex - 1]?.id;
+      setHistory(history.slice(0, -1));
     }
     popVariableState();
-    if (!prevBlockId) throw new Error("Block not found");
 
     // Revert required changes by the first element in the previous block
     const prevBlock = localSurvey.blocks.find((b) => b.id === prevBlockId);
