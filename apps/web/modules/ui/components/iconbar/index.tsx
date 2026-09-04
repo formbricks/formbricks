@@ -51,7 +51,7 @@ export const IconBar = ({ actions }: IconBarProps) => {
                 // above is what announces the shortcut itself.
                 <kbd
                   aria-hidden="true"
-                  className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px] leading-none text-slate-500">
+                  className="rounded border border-slate-200 bg-slate-100 px-1.5 py-1 font-mono text-xs leading-none font-semibold text-slate-600">
                   {action.shortcut.toUpperCase()}
                 </kbd>
               ) : null}
