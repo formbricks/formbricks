@@ -34,6 +34,10 @@ interface ChartDisplaySettingsProps {
  * Display settings saved with the chart, so they apply wherever it renders (preview, chart
  * list, dashboard widget) rather than only to the preview. Settings that the current chart
  * type doesn't support are hidden instead of shown inert.
+ *
+ * Rendered as a strip under the chart rather than as a card of its own: these only change how the
+ * chart looks, so their effect is visible in the same glance, and a third card below the preview
+ * was the one thing in this dialog nobody found without scrolling.
  */
 export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<ChartDisplaySettingsProps>) {
   const { t } = useTranslation();
@@ -46,19 +50,17 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
   const pieDisplayLabelId = useId();
   const areaDisplayLabelId = useId();
 
-  // For a chart type with no applicable setting the section would be a heading with nothing under it.
+  // For a chart type with no applicable setting the strip would be an empty band.
   if (!showBarOrientation && !showPieDisplay && !showAreaDisplay) return null;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-xs">
-      <h3 className="mb-4 font-semibold text-gray-900">
-        {t("workspace.analysis.charts.chart_display_settings")}
-      </h3>
-
-      <div className="flex flex-col gap-4">
-        {showAreaDisplay && (
-          <div className="flex flex-col gap-2">
-            <Label id={areaDisplayLabelId}>{t("workspace.analysis.charts.area_display")}</Label>
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      {showAreaDisplay && (
+        <div className="flex min-w-0 items-center gap-3">
+          <Label id={areaDisplayLabelId} className="shrink-0 text-xs text-slate-500">
+            {t("workspace.analysis.charts.area_display")}
+          </Label>
+          <div className="min-w-0">
             <OptionsSwitch
               aria-labelledby={areaDisplayLabelId}
               options={[
@@ -77,10 +79,14 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
               handleOptionChange={(value) => onChange({ ...config, areaDisplay: value as TAreaDisplay })}
             />
           </div>
-        )}
-        {showPieDisplay && (
-          <div className="flex flex-col gap-2">
-            <Label id={pieDisplayLabelId}>{t("workspace.analysis.charts.pie_display")}</Label>
+        </div>
+      )}
+      {showPieDisplay && (
+        <div className="flex min-w-0 items-center gap-3">
+          <Label id={pieDisplayLabelId} className="shrink-0 text-xs text-slate-500">
+            {t("workspace.analysis.charts.pie_display")}
+          </Label>
+          <div className="min-w-0">
             <OptionsSwitch
               aria-labelledby={pieDisplayLabelId}
               options={[
@@ -99,10 +105,14 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
               handleOptionChange={(value) => onChange({ ...config, pieDisplay: value as TPieDisplay })}
             />
           </div>
-        )}
-        {showBarOrientation && (
-          <div className="flex flex-col gap-2">
-            <Label id={barOrientationLabelId}>{t("workspace.analysis.charts.bar_direction")}</Label>
+        </div>
+      )}
+      {showBarOrientation && (
+        <div className="flex min-w-0 items-center gap-3">
+          <Label id={barOrientationLabelId} className="shrink-0 text-xs text-slate-500">
+            {t("workspace.analysis.charts.bar_direction")}
+          </Label>
+          <div className="min-w-0">
             <OptionsSwitch
               aria-labelledby={barOrientationLabelId}
               options={[
@@ -123,8 +133,8 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
               }
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

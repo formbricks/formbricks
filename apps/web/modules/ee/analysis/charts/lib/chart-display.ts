@@ -18,6 +18,13 @@ export const supportsPieDisplay = (chartType: TChartType | undefined): boolean =
 export const supportsAreaDisplay = (chartType: TChartType | undefined): boolean => chartType === "area";
 
 /**
+ * Whether a chart type has any display setting at all. The settings strip under the preview is only
+ * rendered when it would hold something, so it never appears as an empty band.
+ */
+export const hasChartDisplaySettings = (chartType: TChartType | undefined): boolean =>
+  supportsBarOrientation(chartType) || supportsPieDisplay(chartType) || supportsAreaDisplay(chartType);
+
+/**
  * Big Number shows a single snapshot value and Pie shows composition at a point in time — bucketing
  * either into time series by granularity produces a chart that no longer answers the question its
  * type implies, which is what ENG-2541 flagged as confusing. Bar and Line/Area keep it: a trend over

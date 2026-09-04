@@ -66,8 +66,8 @@ export const CreateDashboardButton = ({
   return (
     <>
       <Button size="sm" onClick={() => handleOpenChange(true)} disabled={disabled} {...buttonProps}>
-        <PlusIcon className="mr-2 size-4" />
-        {t("workspace.analysis.dashboards.create_dashboard")}
+        {t("workspace.analysis.dashboards.new_dashboard")}
+        <PlusIcon />
       </Button>
       <CreateDashboardDialog
         open={isCreateDialogOpen}

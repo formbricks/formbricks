@@ -1,8 +1,9 @@
 "use client";
 
-import { CheckIcon, ChevronDownIcon, SparklesIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AiIcon } from "@/modules/ui/components/ai";
 import {
   Command,
   CommandEmpty,
@@ -65,7 +66,7 @@ export function FilterFieldCombobox({ options, value, onChange }: Readonly<Filte
             }
           }}
           className={cn(
-            "flex h-9 w-[200px] items-center justify-between gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden hover:enabled:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:ring-2 data-[state=open]:ring-slate-400 data-[state=open]:ring-offset-1"
+            "flex h-9 min-w-0 flex-1 basis-36 items-center justify-between gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden hover:enabled:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:ring-2 data-[state=open]:ring-slate-400 data-[state=open]:ring-offset-1"
           )}>
           <span className={cn("truncate", !selectedLabel && "text-slate-500")} title={selectedLabel}>
             {selectedLabel ?? t("workspace.analysis.charts.select_field")}
@@ -124,9 +125,7 @@ export function FilterFieldCombobox({ options, value, onChange }: Readonly<Filte
                           onChange(option.value);
                           setOpen(false);
                         }}>
-                        {option.isGenerated && (
-                          <SparklesIcon className="size-4 shrink-0 text-slate-500" aria-hidden="true" />
-                        )}
+                        {option.isGenerated && <AiIcon className="shrink-0" />}
                         <span
                           className={cn("flex-1 truncate", isSelected && "font-medium text-slate-900")}
                           title={option.label}>

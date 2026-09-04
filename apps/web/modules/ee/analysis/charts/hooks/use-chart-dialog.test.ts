@@ -226,6 +226,45 @@ describe("useChartDialog", () => {
     });
   });
 
+  describe("closing clears the session", () => {
+    // A chart left behind after a close is not just stale data: the next open renders one frame
+    // still carrying it, and the unsaved-changes baseline captured on that frame concludes a fresh,
+    // untouched builder already has work in it — which is how "Discard chart?" appeared on an
+    // empty dialog nobody had touched.
+    test("a successful save leaves nothing behind for the next open", async () => {
+      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
+
+      const onOpenChange = vi.fn();
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, onOpenChange }));
+
+      await setHookReady(result);
+      expect(result.current.chartName).toBe("My Chart");
+      expect(result.current.chartData).not.toBeNull();
+
+      await act(async () => {
+        await result.current.handleSaveChart();
+      });
+
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+      expect(result.current.chartName).toBe("");
+      expect(result.current.chartData).toBeNull();
+      expect(result.current.selectedChartType).toBeUndefined();
+      expect(result.current.chartConfig).toEqual({});
+    });
+
+    test("handleClose clears it too, and does nothing mid-save", async () => {
+      const onOpenChange = vi.fn();
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, onOpenChange }));
+
+      await setHookReady(result);
+      act(() => result.current.handleClose());
+
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+      expect(result.current.chartName).toBe("");
+      expect(result.current.chartData).toBeNull();
+    });
+  });
+
   describe("handleAddToDashboard - cleanup behavior", () => {
     test("cleans up newly created chart when widget add fails", async () => {
       mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });

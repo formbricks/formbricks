@@ -1,26 +1,19 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import { cn } from "@/lib/cn";
-import {
-  AdvancedChartBuilder,
-  type ChartQueryState,
-} from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
-import { AIQuerySection } from "@/modules/ee/analysis/charts/components/ai-query-section";
+import type { ChartQueryState } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
+import { ChartBuilderBody } from "@/modules/ee/analysis/charts/components/chart-builder-body";
 import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart-dialog-footer";
 import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/chart-dialog-loading-view";
-import { ChartDisplaySettings } from "@/modules/ee/analysis/charts/components/chart-display-settings";
-import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
-import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
+import { ChartLoadErrorDialog } from "@/modules/ee/analysis/charts/components/chart-load-error-dialog";
+import { NoFeedbackDirectoryAlert } from "@/modules/ee/analysis/charts/components/no-feedback-directory-alert";
 import { useChartDialog } from "@/modules/ee/analysis/charts/hooks/use-chart-dialog";
-import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
+import { useChartDirtyState } from "@/modules/ee/analysis/charts/hooks/use-chart-dirty-state";
 import { DEFAULT_CHART_TYPE } from "@/modules/ee/analysis/charts/lib/chart-types";
-import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
-import { Alert } from "@/modules/ui/components/alert";
-import { Button } from "@/modules/ui/components/button";
+import type { AnalyticsResponse, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
   Dialog,
   DialogBody,
@@ -29,8 +22,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
 
 interface CreateChartViewProps {
   open: boolean;
@@ -38,12 +29,15 @@ interface CreateChartViewProps {
   workspaceId: string;
   chartId?: string;
   initialChart?: TChartWithCreator;
+  generatedChart?: AnalyticsResponse | null;
+  onRequestAIDialog?: () => void;
   autoAddToDashboardId?: string;
   onSuccess?: () => void;
   directories: { id: string; name: string }[];
   isAIAvailable?: boolean;
-  aiUnavailableReason?: TAIUnavailableReason;
 }
+
+const CREATE_CHART_FORM_ID = "create-chart-form";
 
 export function CreateChartView({
   open,
@@ -51,11 +45,12 @@ export function CreateChartView({
   workspaceId,
   chartId,
   initialChart,
+  generatedChart,
+  onRequestAIDialog,
   autoAddToDashboardId,
   onSuccess,
   directories,
   isAIAvailable,
-  aiUnavailableReason,
 }: Readonly<CreateChartViewProps>) {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
@@ -70,7 +65,6 @@ export function CreateChartView({
     chartLoadError,
     chartName,
     setChartName,
-    savedChartName,
     selectedChartType,
     handleChartTypeChange,
     handleChartGenerated,
@@ -89,8 +83,28 @@ export function CreateChartView({
     directories,
   });
 
-  const CREATE_CHART_FORM_ID = "create-chart-form";
-  const [chartNameError, setChartNameError] = useState<string | null>(null);
+  // A chart arriving from the AI dialog is adopted once, then treated like any other draft the
+  // user is editing — so a later manual change is never overwritten by the same hand-off.
+  const adoptedChartRef = useRef<AnalyticsResponse | null>(null);
+  useEffect(() => {
+    if (!open || !generatedChart || adoptedChartRef.current === generatedChart) return;
+    adoptedChartRef.current = generatedChart;
+    handleChartGenerated(generatedChart);
+  }, [open, generatedChart, handleChartGenerated]);
+
+  useEffect(() => {
+    if (!open) adoptedChartRef.current = null;
+  }, [open]);
+
+  const isReady = open && !isLoadingChart && (!isEditing || Boolean(chartData));
+  const { confirmDiscard, isConfirmingDiscard, setIsConfirmingDiscard, runPendingDiscard } =
+    useChartDirtyState({ open, isReady, isSaving, chartName, chartData, chartConfig });
+
+  const requestClose = () => confirmDiscard(handleClose);
+  const handleDialogOpenChange = (isOpen: boolean) => {
+    if (!isOpen) requestClose();
+  };
+
   const [queryState, setQueryState] = useState<ChartQueryState>({
     isLoading: false,
     error: null,
@@ -102,179 +116,112 @@ export function CreateChartView({
   }
 
   if (isEditing && !isLoadingChart && !chartData && !initialChart && chartLoadError) {
-    return (
-      <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-        <DialogContent width="full">
-          <DialogHeader>
-            <DialogTitle>{t("common.error")}</DialogTitle>
-            <DialogDescription />
-          </DialogHeader>
-          <DialogBody>
-            <div className="flex flex-col items-center justify-center gap-4 py-8">
-              <p className="text-sm text-red-600">{chartLoadError}</p>
-              <Button variant="outline" onClick={handleClose}>
-                {t("common.close")}
-              </Button>
-            </div>
-          </DialogBody>
-        </DialogContent>
-      </Dialog>
-    );
+    return <ChartLoadErrorDialog open={open} message={chartLoadError} onClose={handleClose} />;
   }
 
-  const chartType = selectedChartType ?? (isEditing ? (initialChart?.type ?? DEFAULT_CHART_TYPE) : undefined);
-  const hasSelectedDirectory = !!selectedDirectoryId;
+  // Every chart is drawn some way, so the builder is never gated behind picking one: the switch on
+  // the preview starts at the default and the user changes it whenever they like.
+  const chartType = selectedChartType ?? initialChart?.type ?? DEFAULT_CHART_TYPE;
+
   const isAIQueryAvailable = isAIAvailable !== false;
-  const editChartTitle = savedChartName
-    ? t("workspace.analysis.charts.edit_chart_title_named", { name: savedChartName })
-    : t("workspace.analysis.charts.edit_chart_title");
+  const showAIAction = !isEditing && isAIQueryAvailable && Boolean(onRequestAIDialog);
+  const canSave = Boolean(chartData) && !queryState.error;
+  // Close through handleClose rather than letting the parent flip the dialog shut: leaving for the
+  // AI dialog ends this builder session, and a session that ends without a reset leaves its chart
+  // behind for the next one to open on top of.
+  const requestAI = showAIAction
+    ? () =>
+        confirmDiscard(() => {
+          handleClose();
+          onRequestAIDialog?.();
+        })
+    : undefined;
+  const saveLabel = autoAddToDashboardId
+    ? t("workspace.analysis.charts.save_and_add_to_dashboard")
+    : t("workspace.analysis.charts.save_chart");
+  const copy = isEditing
+    ? {
+        title: t("workspace.analysis.charts.edit_chart_title"),
+        description: t("workspace.analysis.charts.edit_chart_description"),
+      }
+    : {
+        title: t("workspace.analysis.charts.create_chart"),
+        description: t("workspace.analysis.charts.create_chart_description"),
+      };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-      <DialogContent
-        width="full"
-        disableCloseOnOutsideClick={!isEditing}
-        closeOnEscape
-        onOpenAutoFocus={(event) => event.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? editChartTitle : t("workspace.analysis.charts.create_chart")}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? t("workspace.analysis.charts.edit_chart_description")
-              : t("workspace.analysis.charts.create_chart_description")}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogBody className="min-h-0">
-          <div className="grid gap-4">
-            {hasSelectedDirectory ? (
-              <div className="grid gap-6 lg:grid-cols-2">
-                <div className="flex min-w-0 flex-col gap-4">
-                  {!isEditing && (
-                    <AIQuerySection
-                      workspaceId={workspaceId}
-                      onChartGenerated={handleChartGenerated}
-                      feedbackDirectoryId={selectedDirectoryId}
-                      isAIAvailable={isAIAvailable}
-                      aiUnavailableReason={aiUnavailableReason}
-                    />
-                  )}
+    <>
+      <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+        <DialogContent
+          width="full"
+          disableCloseOnOutsideClick={!isEditing}
+          closeOnEscape
+          onOpenAutoFocus={(event) => event.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>{copy.title}</DialogTitle>
+            <DialogDescription>{copy.description}</DialogDescription>
+          </DialogHeader>
 
-                  {!isEditing && isAIQueryAvailable && (
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                        <div className="w-full border-t border-gray-200" />
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-white px-2 text-sm text-gray-500">
-                          {t("workspace.analysis.charts.OR")}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <ManualChartBuilder
-                    selectedChartType={chartType}
-                    onChartTypeSelect={handleChartTypeChange}
-                  />
-
-                  {chartType && (
-                    <AdvancedChartBuilder
-                      workspaceId={workspaceId}
-                      chartType={chartType}
-                      initialQuery={chartData?.query ?? initialQuery}
-                      onChartGenerated={handleChartGenerated}
-                      onQueryStateChange={setQueryState}
-                      feedbackDirectoryId={selectedDirectoryId}
-                    />
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <div className="flex flex-col gap-4 lg:sticky lg:top-0">
-                    <ChartPreview
-                      chartData={chartData}
-                      config={chartConfig}
-                      isLoading={isLoadingChart || queryState.isLoading}
-                      error={chartLoadError ?? queryState.error}
-                      emptyMessage={t("workspace.analysis.charts.advanced_chart_builder_config_prompt")}
-                    />
-
-                    {chartData && (
-                      <ChartDisplaySettings
-                        chartType={chartData.chartType}
-                        config={chartConfig}
-                        onChange={setChartConfig}
-                      />
-                    )}
-
-                    <form
-                      id={CREATE_CHART_FORM_ID}
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        setChartNameError(null);
-                        return handleSaveChart();
-                      }}
-                      className="flex flex-col gap-2">
-                      <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
-                        {t("workspace.analysis.charts.chart_name")}
-                      </Label>
-                      <Input
-                        id="create-chart-name"
-                        value={chartName}
-                        onChange={(event) => {
-                          if (chartNameError) setChartNameError(null);
-                          setChartName(event.target.value);
-                        }}
-                        onInvalid={(event) => {
-                          // Suppress the browser tooltip and render our inline message instead.
-                          event.preventDefault();
-                          event.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
-                          event.currentTarget.focus();
-                          setChartNameError(t("workspace.analysis.charts.please_enter_chart_name"));
-                        }}
-                        placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
-                        maxLength={255}
-                        required
-                        isInvalid={!!chartNameError}
-                      />
-                      {chartNameError && <p className="text-sm text-red-500">{chartNameError}</p>}
-                    </form>
-                  </div>
-                </div>
-              </div>
+          {/*
+            Two regions that each mean one thing: a rail of everything you set, and a stage showing
+            what that produces. Only the rail scrolls, so the chart, its type and its display
+            settings are all on screen at once however long the configuration gets.
+          */}
+          <DialogBody
+            unconstrained
+            // Fixed height, with DialogBody's own `flex-1` neutralised (`basis-auto grow-0`): a 0%
+            // flex basis wins over `height` on the main axis, which had the dialog resizing itself
+            // every time the preview swapped between empty, loading and rendered. `shrink` keeps it
+            // clamped on a short viewport.
+            className="flex h-[34rem] min-h-0 shrink grow-0 basis-auto flex-col overflow-y-auto lg:overflow-hidden">
+            {selectedDirectoryId ? (
+              <ChartBuilderBody
+                formId={CREATE_CHART_FORM_ID}
+                workspaceId={workspaceId}
+                feedbackDirectoryId={selectedDirectoryId}
+                chartType={chartType}
+                chartData={chartData}
+                chartConfig={chartConfig}
+                onChartConfigChange={setChartConfig}
+                initialQuery={initialQuery}
+                chartName={chartName}
+                onChartNameChange={setChartName}
+                onSave={handleSaveChart}
+                onChartTypeSelect={handleChartTypeChange}
+                onChartGenerated={handleChartGenerated}
+                onQueryStateChange={setQueryState}
+                queryState={queryState}
+                isLoadingChart={isLoadingChart}
+                chartLoadError={chartLoadError}
+                onRequestAI={requestAI}
+              />
             ) : (
-              <Alert variant="error" size="small" role="status">
-                <div>
-                  <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
-                  {workspace?.organizationId && (
-                    <Link
-                      className="mt-1 inline-block font-medium underline"
-                      href={`/organizations/${workspace.organizationId}/settings/feedback-directories`}>
-                      {t("workspace.analysis.charts.go_to_feedback_directories")}
-                    </Link>
-                  )}
-                </div>
-              </Alert>
+              <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} />
             )}
-          </div>
-        </DialogBody>
+          </DialogBody>
 
-        {chartData && !queryState.error && (
           <ChartDialogFooter
             formId={CREATE_CHART_FORM_ID}
             isSaving={isSaving}
             isDisabled={queryState.isPending}
             showAddToDashboard={false}
-            saveLabel={
-              autoAddToDashboardId
-                ? t("workspace.analysis.charts.save_and_add_to_dashboard")
-                : t("workspace.analysis.charts.save_chart")
-            }
+            canSave={canSave}
+            onCancelClick={requestClose}
+            saveLabel={saveLabel}
           />
-        )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmationModal
+        open={isConfirmingDiscard}
+        setOpen={setIsConfirmingDiscard}
+        title={t("workspace.analysis.charts.discard_chart_title")}
+        body={t("workspace.analysis.charts.discard_chart_body")}
+        buttonText={t("workspace.surveys.ai_create.discard")}
+        buttonVariant="destructive"
+        cancelButtonText={t("workspace.surveys.ai_create.keep_editing")}
+        onConfirm={runPendingDiscard}
+      />
+    </>
   );
 }
