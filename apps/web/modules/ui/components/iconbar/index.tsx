@@ -5,6 +5,11 @@ import { Button } from "../button";
 interface IconAction {
   icon: LucideIcon | null;
   tooltip: string;
+  /**
+   * Single-key shortcut that runs the same action, shown as a key cap next to the tooltip label.
+   * An icon on its own cannot advertise a shortcut, so this is the only place a user meets it.
+   */
+  shortcut?: string;
   onClick?: () => void;
   isVisible?: boolean;
   disabled?: boolean;
@@ -28,7 +33,19 @@ export const IconBar = ({ actions }: IconBarProps) => {
       aria-label="Action buttons">
       {visibleActions.map((action, index) => (
         <span key={`${action.tooltip}-${index}`}>
-          <TooltipRenderer tooltipContent={action.tooltip}>
+          <TooltipRenderer
+            tooltipContent={
+              action.shortcut ? (
+                <span className="flex items-center gap-1.5">
+                  {action.tooltip}
+                  <kbd className="rounded border border-slate-200 bg-slate-100 px-1 font-mono text-xs text-slate-500">
+                    {action.shortcut.toUpperCase()}
+                  </kbd>
+                </span>
+              ) : (
+                action.tooltip
+              )
+            }>
             <Button
               variant="ghost"
               className="border-none hover:bg-slate-50"
@@ -36,6 +53,7 @@ export const IconBar = ({ actions }: IconBarProps) => {
               onClick={action.onClick}
               disabled={action.disabled}
               loading={action.isLoading}
+              aria-keyshortcuts={action.shortcut}
               aria-label={action.tooltip}>
               {action.icon ? <action.icon className={action.iconClassName} /> : null}
             </Button>
