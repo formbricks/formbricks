@@ -887,6 +887,13 @@ export const PricingTable = ({
           router.refresh();
           return;
         }
+
+        if (plan === "hobby") {
+          // Fire an in-app code action so a churn survey can be triggered from the dashboard
+          // right after the org drops to the free plan.
+          formbricks.track("subscription_cancelled").catch(() => undefined);
+        }
+
         if (response.data.mode === "immediate") {
           // Force-sync until the converted plan lands, then hand the success toast across a full
           // reload — router.refresh() alone doesn't reliably refetch the billing snapshot, so "current
@@ -900,11 +907,6 @@ export const PricingTable = ({
         }
       }
 
-      if (plan === "hobby") {
-        // Fire an in-app code action so a churn survey can be triggered from the dashboard
-        // right after the org drops to the free plan.
-        formbricks.track("subscription_cancelled").catch(() => undefined);
-      }
       toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
       router.refresh();
     } catch (error) {
