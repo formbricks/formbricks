@@ -17,11 +17,36 @@ import {
   ZDashboardCreateInput,
   ZDashboardUpdateInput,
 } from "@/modules/ee/analysis/types/analysis";
+import { findNextOpenSlot, parseWidgetLayouts } from "./widget-placement";
 
 const MAX_NAME_ATTEMPTS = 5;
 
 const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout =>
   chartType === "big_number" ? { x: 0, y: 0, w: 3, h: 2 } : { x: 0, y: 0, w: 4, h: 4 };
+
+/**
+ * The `x`/`y` a new widget takes on a dashboard that already holds `existingWidgets`.
+ *
+ * "nextOpenSlot" fills the first gap the widget fits in, so a duplicate lands beside its original
+ * instead of on top of it. The default keeps the requested `x` and starts the row below every
+ * existing widget.
+ */
+const resolveWidgetPosition = (
+  existingWidgets: { layout: unknown }[],
+  baseLayout: TWidgetLayout,
+  placement: TAddWidgetInput["placement"]
+): Pick<TWidgetLayout, "x" | "y"> => {
+  const layouts = parseWidgetLayouts(existingWidgets);
+
+  if (placement === "nextOpenSlot") {
+    return findNextOpenSlot(layouts, baseLayout);
+  }
+
+  return {
+    x: baseLayout.x,
+    y: layouts.reduce((max, layout) => Math.max(max, layout.y + layout.h), 0),
+  };
+};
 
 const selectDashboard = {
   id: true,
@@ -388,18 +413,11 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
         ]);
 
         const baseLayout = data.layout ?? getDefaultWidgetLayout(chart.type as TChartType);
+        // Positioned inside the transaction that creates the widget, off the layouts read within it:
+        // two concurrent adds would otherwise pick the same spot from the same stale read.
         const layout = data.respectY
           ? baseLayout
-          : {
-              ...baseLayout,
-              y: existingWidgets.reduce((max, w) => {
-                const l =
-                  typeof w.layout === "object" && w.layout !== null
-                    ? (w.layout as Partial<{ y: number; h: number }>)
-                    : {};
-                return Math.max(max, (l.y ?? 0) + (l.h ?? 0));
-              }, 0),
-            };
+          : { ...baseLayout, ...resolveWidgetPosition(existingWidgets, baseLayout, data.placement) };
 
         return tx.dashboardWidget.create({
           data: {

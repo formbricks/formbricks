@@ -28,6 +28,7 @@ import {
   type TDashboardDateFilter,
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
+import { EDIT_HOTKEY, hasOpenOverlay, isEditHotkey } from "@/modules/ee/analysis/dashboards/lib/edit-hotkey";
 import {
   DEFAULT_WIDGET_VIEW,
   type TWidgetView,
@@ -265,6 +266,25 @@ export function DashboardDetailClient({
     setIsEditing(true);
   }, [dashboard.widgets, isEditing]);
 
+  // `E` enters edit mode, matching the pencil in the control bar.
+  useEffect(() => {
+    if (isReadOnly || isEditing) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isEditHotkey(event) || hasOpenOverlay()) {
+        return;
+      }
+
+      event.preventDefault();
+      handleEnterEditMode();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleEnterEditMode, isEditing, isReadOnly]);
+
   const handleEditChart = useCallback((chartId: string) => {
     setEditingChartId(chartId);
   }, []);
@@ -498,6 +518,7 @@ export function DashboardDetailClient({
             isAIAvailable={isAIAvailable}
             aiUnavailableReason={aiUnavailableReason}
             onRefresh={() => router.refresh()}
+            editHotkey={EDIT_HOTKEY}
             onEditToggle={handleEnterEditMode}
             onSave={handleSave}
             onCancel={handleCancel}
