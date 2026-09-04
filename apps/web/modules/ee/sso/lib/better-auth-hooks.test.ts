@@ -12,6 +12,7 @@ import {
   getSsoProviderFromContext,
   ssoDatabaseHooks,
   ssoLicenseGateBefore,
+  ssoProfileSyncUpdateBefore,
   ssoRecoveryAfter,
 } from "./better-auth-hooks";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
@@ -626,6 +627,71 @@ describe("blockedSignupDomainRedirectAfter", () => {
       await blockedSignupDomainRedirectAfter(ctx as never);
     });
     expect(redirect).not.toHaveBeenCalled();
+  });
+});
+
+describe("ssoProfileSyncUpdateBefore", () => {
+  // The shape Better Auth writes under `overrideUserInfo`: handleOAuthUserInfo destructures the
+  // resolved userInfo, so name/image/email/emailVerified are all present on this one update.
+  const overrideWrite = {
+    name: "Jane Doe-Smith",
+    image: "https://graph.microsoft.com/v1.0/me/photo/$value",
+    email: "jane@corp.test",
+    emailVerified: true,
+  };
+
+  test("drops `image`, which has no column on User and would fail the update", async () => {
+    const result = await ssoProfileSyncUpdateBefore(overrideWrite, callbackCtx);
+    // `undefined` is how a field is removed: on an update the adapter skips every undefined field
+    // that has no `onUpdate`. Asserting the key is present and undefined, not merely absent, because
+    // the hook's return is shallow-MERGED over the original data — a missing key would keep the URL.
+    expect(result?.data).toHaveProperty("image", undefined);
+  });
+
+  test("keeps the stored email and its verified flag out of the sync", async () => {
+    const result = await ssoProfileSyncUpdateBefore(overrideWrite, callbackCtx);
+    expect(result?.data).toHaveProperty("email", undefined);
+    expect(result?.data).toHaveProperty("emailVerified", undefined);
+  });
+
+  test("syncs the renamed display name", async () => {
+    const result = await ssoProfileSyncUpdateBefore(overrideWrite, callbackCtx);
+    expect(result?.data.name).toBe("Jane Doe-Smith");
+  });
+
+  test("normalizes an IdP name the same way sign-up does (ENG-1743)", async () => {
+    const result = await ssoProfileSyncUpdateBefore(
+      { ...overrideWrite, name: "Jane  Doe-Smith \u2028<script>" },
+      callbackCtx
+    );
+    expect(result?.data.name).toBe("Jane Doe-Smith script");
+  });
+
+  test("leaves the stored name alone when the IdP name normalizes away", async () => {
+    const result = await ssoProfileSyncUpdateBefore({ ...overrideWrite, name: "🎉🎉" }, callbackCtx);
+    // Unlike sign-up there is already a good name in the row, so no email-local-part fallback.
+    expect(result?.data).toHaveProperty("name", undefined);
+  });
+
+  test("ignores updates made outside an SSO callback", async () => {
+    // e.g. POST /change-email — clamping here would silently break it.
+    await expect(
+      ssoProfileSyncUpdateBefore(overrideWrite, { path: "/change-email" })
+    ).resolves.toBeUndefined();
+  });
+
+  test("ignores a same-request update that carries no profile fields", async () => {
+    // account.create.after denormalizes identityProvider via updateUser on this very callback.
+    await expect(
+      ssoProfileSyncUpdateBefore(
+        { identityProvider: "azuread", identityProviderAccountId: "sub-1" },
+        callbackCtx
+      )
+    ).resolves.toBeUndefined();
+  });
+
+  test("ignores the bare emailVerified flip on the link path", async () => {
+    await expect(ssoProfileSyncUpdateBefore({ emailVerified: true }, callbackCtx)).resolves.toBeUndefined();
   });
 });
 
