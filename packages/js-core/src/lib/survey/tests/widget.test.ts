@@ -424,11 +424,9 @@ describe("widget-file", () => {
 
     // Through `triggerSurvey`, not `renderWidget`: the deleted filter sat on that hop, so entering
     // lower down would leave the regression this test exists for invisible.
-    await widget.triggerSurvey(
-      { ...mockSurvey, delay: 0, displayPercentage: null },
-      "testAction",
-      { hiddenFields }
-    );
+    await widget.triggerSurvey({ ...mockSurvey, delay: 0, displayPercentage: null }, "testAction", {
+      hiddenFields,
+    });
 
     vi.advanceTimersByTime(0);
 
@@ -482,11 +480,9 @@ describe("widget-file", () => {
     store.clearEmbeddedData();
     store.setEmbeddedData({ pageType: "product", plan: "from-bag" });
 
-    await widget.triggerSurvey(
-      { ...mockSurvey, delay: 0, displayPercentage: null },
-      "testAction",
-      { hiddenFields: { plan: "from-track" } }
-    );
+    await widget.triggerSurvey({ ...mockSurvey, delay: 0, displayPercentage: null }, "testAction", {
+      hiddenFields: { plan: "from-track" },
+    });
 
     vi.advanceTimersByTime(0);
 

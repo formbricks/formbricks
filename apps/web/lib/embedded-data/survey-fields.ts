@@ -62,7 +62,7 @@ export const inlineSurveyEmbeddedFields = (
  */
 export const withInlinedEmbeddedFields = <T extends TSurveyWithEmbeddedDataLinks>(
   surveyPrisma: T
-): Omit<T, "embeddedDataLinks"> => {
+): Omit<T, "embeddedDataLinks"> & { embeddedFields?: TLinkedEmbeddedField[] } => {
   const { embeddedDataLinks: _links, ...rest } = surveyPrisma;
   const embeddedFields = inlineSurveyEmbeddedFields(surveyPrisma);
   return embeddedFields ? { ...rest, embeddedFields } : rest;

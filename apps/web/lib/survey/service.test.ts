@@ -1229,7 +1229,10 @@ describe("Tests for createSurvey", () => {
       // `findUniqueOrThrow` is given links here while `create` is not, so this fails if the return
       // ever goes back to the pre-reconcile object.
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
-      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput, embeddedDataLinks: [] });
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        embeddedDataLinks: [],
+      } as never);
       prisma.survey.findUniqueOrThrow.mockResolvedValueOnce({
         ...mockSurveyOutput,
         embeddedDataLinks: [

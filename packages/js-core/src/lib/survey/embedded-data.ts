@@ -156,9 +156,7 @@ export const buildDisplayHiddenFields = (
   // makes: `track("evt", { hiddenFields: { plan: dataLayer.plan } })` on a page where `plan` is
   // missing must not evict the ambient value — counting the key as "present" would drop the bag's
   // entry in the fold and then spread `undefined` over it, losing the value entirely.
-  const explicitEntries = Object.entries<unknown>(explicit ?? {}).filter(
-    ([, value]) => value !== undefined
-  );
+  const explicitEntries = Object.entries<unknown>(explicit ?? {}).filter(([, value]) => value !== undefined);
   const explicitKeysFolded = new Set(explicitEntries.map(([key]) => key.toLowerCase()));
   const ambient = Object.entries(EmbeddedDataStore.getInstance().getSnapshot()).filter(
     ([key]) => !explicitKeysFolded.has(key.toLowerCase())
