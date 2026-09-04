@@ -23,6 +23,14 @@ interface FollowUpItemProps {
   mailFrom: string;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
+  /**
+   * Whether a *new* follow-up may still be created. Duplicating mints one with a fresh id, so it
+   * sits behind the same gate as the create buttons: without it a Workflows-enabled deployment
+   * could keep minting follow-ups from any survey that already has one, and an organization whose
+   * entitlement has lapsed could add a row that `checkSurveyFollowUpsPermission` then rejects on
+   * every subsequent save of the survey — including edits unrelated to follow-ups.
+   */
+  canDuplicate?: boolean;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   locale: TUserLocale;
 }
@@ -36,7 +44,8 @@ export const FollowUpItem = ({
   teamMemberDetails,
   setLocalSurvey,
   locale,
-}: FollowUpItemProps) => {
+  canDuplicate = true,
+}: Readonly<FollowUpItemProps>) => {
   const { t } = useTranslation();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
   const [deleteFollowUpModalOpen, setDeleteFollowUpModalOpen] = useState(false);
@@ -170,18 +179,20 @@ export const FollowUpItem = ({
             </Button>
           </TooltipRenderer>
 
-          <TooltipRenderer tooltipContent={t("common.duplicate")}>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={async (e) => {
-                e.stopPropagation();
-                duplicateFollowUp();
-              }}
-              aria-label={t("common.duplicate")}>
-              <CopyIcon className="size-4 text-slate-500" />
-            </Button>
-          </TooltipRenderer>
+          {canDuplicate && (
+            <TooltipRenderer tooltipContent={t("common.duplicate")}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  duplicateFollowUp();
+                }}
+                aria-label={t("common.duplicate")}>
+                <CopyIcon className="size-4 text-slate-500" />
+              </Button>
+            </TooltipRenderer>
+          )}
         </div>
       </div>
 
