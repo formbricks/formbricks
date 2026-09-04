@@ -28,7 +28,7 @@ export function FollowUpEmail({
   return (
     <EmailTemplate logoUrl={logoUrl} t={t} {...legalProps}>
       <>
-        <div dangerouslySetInnerHTML={{ __html: body }} />
+        <div dangerouslySetInnerHTML={{ __html: body }} dir="auto" />
 
         {responseData.length > 0 ? (
           <>
@@ -42,7 +42,9 @@ export function FollowUpEmail({
           return (
             <Row key={e.element}>
               <Column className="w-full">
-                <Text className="mb-2 text-sm font-semibold text-slate-900">{e.element}</Text>
+                <Text className="mb-2 text-sm font-semibold text-slate-900" dir="auto">
+                  {e.element}
+                </Text>
                 {renderEmailResponseValue(e.response, e.type, t, true)}
               </Column>
             </Row>
@@ -52,12 +54,12 @@ export function FollowUpEmail({
         {variables.map((variable) => (
           <Row key={variable.id}>
             <Column className="w-full">
-              <Text className="mb-2 text-sm font-semibold text-slate-900">
+              <Text className="mb-2 text-sm font-semibold text-slate-900" dir="auto">
                 {variable.type === "number"
                   ? `${t("emails.number_variable")}: ${variable.name}`
                   : `${t("emails.text_variable")}: ${variable.name}`}
               </Text>
-              <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700">
+              <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700" dir="auto">
                 {variable.value}
               </Text>
             </Column>
@@ -67,10 +69,10 @@ export function FollowUpEmail({
         {hiddenFields.map((hiddenField) => (
           <Row key={hiddenField.id}>
             <Column className="w-full">
-              <Text className="mb-2 text-sm font-semibold text-slate-900">
+              <Text className="mb-2 text-sm font-semibold text-slate-900" dir="auto">
                 {t("emails.hidden_field")}: {hiddenField.id}
               </Text>
-              <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700">
+              <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700" dir="auto">
                 {hiddenField.value}
               </Text>
             </Column>

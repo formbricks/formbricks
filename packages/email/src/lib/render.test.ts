@@ -210,6 +210,46 @@ describe("custom branding", () => {
   });
 });
 
+describe("follow-up email direction", () => {
+  test("marks the follow-up body and the response/variable/hidden-field text for automatic direction detection", async () => {
+    const html = await renderFollowUpEmail({
+      ...exampleData.followUpEmail,
+      body: "<p>شكرا لملاحظاتك! لقد استلمنا ردك وسنراجعه قريبا.</p>",
+      ...legal,
+      t,
+    });
+
+    // The follow-up body is per-survey authored content in any script, so it gets
+    // dir="auto" rather than a hard rtl/ltr — this is the element from the bug report.
+    expect(html).toMatch(/<div dir="auto">[\s\S]*?شكرا لملاحظاتك/);
+    // Response element labels, variable name/value and hidden-field id/value all carry
+    // their own dir="auto" too, since each can hold independently-directioned content.
+    expect(html.match(/dir="auto"/g)?.length).toBeGreaterThanOrEqual(6);
+  });
+
+  test("keeps an LTR-embedded run (a URL) intact inside RTL variable content", async () => {
+    const mixedValue = "شكرا على الرابط https://example.com/survey/123 وملاحظاتك";
+    const html = await renderFollowUpEmail({
+      ...exampleData.followUpEmail,
+      variables: [{ id: "var-1", name: "Link", type: "text", value: mixedValue }],
+      ...legal,
+      t,
+    });
+
+    // dir="auto" lets the mail client's bidi algorithm keep the LTR URL readable; the
+    // server must not reorder or otherwise mangle the raw text.
+    expect(html).toContain(mixedValue);
+  });
+
+  test("renders LTR follow-ups exactly as before", async () => {
+    const html = await renderFollowUpEmail({ ...exampleData.followUpEmail, ...legal, t });
+
+    expect(html).toContain(exampleData.followUpEmail.responseData[0].element);
+    expect(html).toContain(exampleData.followUpEmail.variables[0].value);
+    expect(html).toContain(exampleData.followUpEmail.hiddenFields[0].value);
+  });
+});
+
 describe("Tailwind render engine", () => {
   // `@react-email/tailwind` — not anything configured in this package — decides which
   // Tailwind version compiles the template classes. Pin that contract: these utilities
