@@ -61,7 +61,7 @@ describe("duplicateChartAndAddWidget", () => {
   });
 
   test("duplicates the chart and adds it as a widget on the same dashboard", async () => {
-    vi.mocked(prisma.dashboard.findFirst).mockResolvedValue({ id: mockDashboardId } as any);
+    vi.mocked(prisma.dashboard.findFirst).mockResolvedValue({ id: mockDashboardId, widgets: [] } as any);
     vi.mocked(duplicateChart).mockResolvedValue(mockDuplicatedChart as any);
     vi.mocked(addChartToDashboard).mockResolvedValue(mockWidget as any);
 
@@ -76,7 +76,7 @@ describe("duplicateChartAndAddWidget", () => {
     expect(result).toEqual({ chart: mockDuplicatedChart, widget: mockWidget });
     expect(prisma.dashboard.findFirst).toHaveBeenCalledWith({
       where: { id: mockDashboardId, workspaceId: mockWorkspaceId },
-      select: { id: true },
+      select: { id: true, widgets: { select: { layout: true } } },
     });
     expect(duplicateChart).toHaveBeenCalledWith(mockChartId, mockWorkspaceId, mockUserId);
     expect(addChartToDashboard).toHaveBeenCalledWith({
@@ -84,11 +84,62 @@ describe("duplicateChartAndAddWidget", () => {
       chartId: mockDuplicatedChart.id,
       workspaceId: mockWorkspaceId,
       layout: mockLayout,
+      respectY: true,
+    });
+  });
+
+  test("keeps the source size but moves the copy into the first free slot", async () => {
+    vi.mocked(prisma.dashboard.findFirst).mockResolvedValue({
+      id: mockDashboardId,
+      widgets: [{ layout: { x: 0, y: 0, w: 4, h: 3 } }, { layout: { x: 8, y: 0, w: 4, h: 3 } }],
+    } as any);
+    vi.mocked(duplicateChart).mockResolvedValue(mockDuplicatedChart as any);
+    vi.mocked(addChartToDashboard).mockResolvedValue(mockWidget as any);
+
+    await duplicateChartAndAddWidget({
+      dashboardId: mockDashboardId,
+      workspaceId: mockWorkspaceId,
+      chartId: mockChartId,
+      createdBy: mockUserId,
+      layout: mockLayout,
+    });
+
+    expect(addChartToDashboard).toHaveBeenCalledWith({
+      dashboardId: mockDashboardId,
+      chartId: mockDuplicatedChart.id,
+      workspaceId: mockWorkspaceId,
+      layout: { x: 4, y: 0, w: 4, h: 3 },
+      respectY: true,
+    });
+  });
+
+  test("places the copy below a full row rather than on top of the original", async () => {
+    vi.mocked(prisma.dashboard.findFirst).mockResolvedValue({
+      id: mockDashboardId,
+      widgets: [{ layout: { x: 0, y: 0, w: 12, h: 3 } }],
+    } as any);
+    vi.mocked(duplicateChart).mockResolvedValue(mockDuplicatedChart as any);
+    vi.mocked(addChartToDashboard).mockResolvedValue(mockWidget as any);
+
+    await duplicateChartAndAddWidget({
+      dashboardId: mockDashboardId,
+      workspaceId: mockWorkspaceId,
+      chartId: mockChartId,
+      createdBy: mockUserId,
+      layout: { x: 0, y: 0, w: 12, h: 3 },
+    });
+
+    expect(addChartToDashboard).toHaveBeenCalledWith({
+      dashboardId: mockDashboardId,
+      chartId: mockDuplicatedChart.id,
+      workspaceId: mockWorkspaceId,
+      layout: { x: 0, y: 3, w: 12, h: 3 },
+      respectY: true,
     });
   });
 
   test("passes an undefined layout through so the widget gets the chart-type default", async () => {
-    vi.mocked(prisma.dashboard.findFirst).mockResolvedValue({ id: mockDashboardId } as any);
+    vi.mocked(prisma.dashboard.findFirst).mockResolvedValue({ id: mockDashboardId, widgets: [] } as any);
     vi.mocked(duplicateChart).mockResolvedValue(mockDuplicatedChart as any);
     vi.mocked(addChartToDashboard).mockResolvedValue(mockWidget as any);
 
@@ -104,6 +155,7 @@ describe("duplicateChartAndAddWidget", () => {
       chartId: mockDuplicatedChart.id,
       workspaceId: mockWorkspaceId,
       layout: undefined,
+      respectY: false,
     });
   });
 
@@ -127,7 +179,7 @@ describe("duplicateChartAndAddWidget", () => {
   });
 
   test("propagates duplicateChart errors without adding a widget", async () => {
-    vi.mocked(prisma.dashboard.findFirst).mockResolvedValue({ id: mockDashboardId } as any);
+    vi.mocked(prisma.dashboard.findFirst).mockResolvedValue({ id: mockDashboardId, widgets: [] } as any);
     vi.mocked(duplicateChart).mockRejectedValue(
       Object.assign(new Error("Chart not found"), { name: "ResourceNotFoundError" })
     );
