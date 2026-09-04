@@ -210,6 +210,61 @@ describe("custom branding", () => {
   });
 });
 
+describe("logo centering (ENG-2438)", () => {
+  // Outlook's Word rendering engine implements neither `margin: auto` nor `rem` units, so the
+  // logo's own `mx-auto` / `w-60` classes buy it nothing there: it lands left-aligned at its
+  // natural size. Centering has to come from the wrapping cell's `align` attribute, and the
+  // width from the image's `width` attribute, both of which Word does honor. These assert the
+  // rendered markup rather than the classes, because the classes were already "correct".
+  const logoCell = (html: string, testId: string): string => {
+    const cell = new RegExp(
+      `<td\\b[^>]*>(?:\\s*<a\\b[^>]*>)?\\s*<img\\b[^>]*data-testid="${testId}"[^>]*>`,
+      "u"
+    ).exec(html);
+    if (!cell) throw new Error(`no <td> directly wrapping [data-testid="${testId}"]`);
+    return cell[0];
+  };
+
+  test("the default logo sits in a center-aligned cell and carries a pixel width", async () => {
+    const html = await renderEmailCustomizationPreviewEmail({
+      ...exampleData.emailCustomizationPreviewEmail,
+      logoUrl: undefined,
+      ...legal,
+      t,
+    });
+    const cell = logoCell(html, "default-logo-image");
+
+    expect(cell).toContain('align="center"');
+    expect(cell).toContain('width="240"');
+    // The attribute mirrors `w-60`; if the class moves and the constant does not, Outlook
+    // silently goes back to rendering the logo at its natural size.
+    expect(cell).toContain("width:15rem");
+    // The modern-client centering path must survive alongside it.
+    expect(cell).toContain("margin-left:auto");
+  });
+
+  test("a custom logo sits in a center-aligned cell and carries a pixel width", async () => {
+    const html = await renderEmailCustomizationPreviewEmail({
+      ...exampleData.emailCustomizationPreviewEmail,
+      logoUrl: "https://example.com/custom-logo.png",
+      ...legal,
+      t,
+    });
+    const cell = logoCell(html, "logo-image");
+
+    expect(cell).toContain('align="center"');
+    expect(cell).toContain('width="320"');
+    expect(cell).toContain("width:20rem"); // mirrors `w-80`, see above
+    expect(cell).toContain("margin-left:auto");
+  });
+
+  test("the centered logo cell is part of the shared chrome, not one email", async () => {
+    const html = await renderInviteEmail({ ...exampleData.inviteEmail, ...legal, t });
+
+    expect(logoCell(html, "default-logo-image")).toContain('align="center"');
+  });
+});
+
 describe("Tailwind render engine", () => {
   // `@react-email/tailwind` — not anything configured in this package — decides which
   // Tailwind version compiles the template classes. Pin that contract: these utilities
