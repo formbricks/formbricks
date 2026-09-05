@@ -4,6 +4,7 @@ import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributesInput, ZContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { retryOnDeadlock } from "@/lib/utils/prisma-deadlock";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import {
@@ -59,6 +60,20 @@ export const formatAttributeMessage = (msg: TAttributeUpdateMessage): string => 
     template = template.replaceAll(`{${key}}`, value);
   }
   return template;
+};
+
+/**
+ * Total, locale-independent ordering of two strings by code unit.
+ *
+ * Deliberately NOT `localeCompare` (ENG-2252): this decides the order in which the attribute
+ * transactions below take their row locks, and that order must be byte-identical on every server in
+ * the fleet. `localeCompare` varies with the runtime's locale, so two pods could sort the same keys
+ * differently, take locks in opposite orders, and reintroduce the deadlock this ordering prevents.
+ */
+const compareCodeUnits = (a: string, b: string): number => {
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
 };
 
 // Default/system attributes that should not be deleted even if missing from payload
@@ -277,31 +292,47 @@ export const updateAttributes = async (
     messages.push({ code: "userid_already_exists", params: {} });
   }
 
-  // Update all existing attributes with typed column values
+  // Update all existing attributes with typed column values.
+  //
+  // Lock in a deterministic order (ENG-2252): concurrent identify calls for the same contact send the
+  // same keys in whatever order the caller's payload carries, and the upserts acquire the
+  // ContactAttribute row locks in exactly that order — so two payloads with opposite key order form a
+  // lock cycle and Postgres aborts one with SQLSTATE 40P01 ("deadlock detected"). Sorting by
+  // attributeKeyId (the locked rows' identity — contactId is constant here) makes every transaction
+  // take the locks in the same order, so no cycle can form between identify calls. The bounded retry
+  // covers what ordering can't: collisions with other write paths touching the same rows. Both are
+  // safe because a deadlock rolls the whole transaction back and the upserts are idempotent.
   if (existingAttributes.length > 0) {
-    await prisma.$transaction(
-      existingAttributes.map(({ attributeKeyId, columns }) =>
-        prisma.contactAttribute.upsert({
-          where: {
-            contactId_attributeKeyId: {
-              contactId,
-              attributeKeyId,
-            },
-          },
-          update: {
-            value: columns.value,
-            valueNumber: columns.valueNumber,
-            valueDate: columns.valueDate,
-          },
-          create: {
-            contactId,
-            attributeKeyId,
-            value: columns.value,
-            valueNumber: columns.valueNumber,
-            valueDate: columns.valueDate,
-          },
-        })
-      )
+    const orderedExistingAttributes = [...existingAttributes].sort((a, b) =>
+      compareCodeUnits(a.attributeKeyId, b.attributeKeyId)
+    );
+    await retryOnDeadlock(
+      () =>
+        prisma.$transaction(
+          orderedExistingAttributes.map(({ attributeKeyId, columns }) =>
+            prisma.contactAttribute.upsert({
+              where: {
+                contactId_attributeKeyId: {
+                  contactId,
+                  attributeKeyId,
+                },
+              },
+              update: {
+                value: columns.value,
+                valueNumber: columns.valueNumber,
+                valueDate: columns.valueDate,
+              },
+              create: {
+                contactId,
+                attributeKeyId,
+                value: columns.value,
+                valueNumber: columns.valueNumber,
+                valueDate: columns.valueDate,
+              },
+            })
+          )
+        ),
+      { operation: "updateAttributes.existingAttributes", contactId, workspaceId }
     );
   }
 
@@ -370,27 +401,37 @@ export const updateAttributes = async (
           messages.push({ code: "new_attribute_created", params: { key, dataType } });
         }
 
-        // Create new attributes since we're under the limit
-        await prisma.$transaction(
-          preparedNewAttributes.map(({ key, dataType, columns }) =>
-            prisma.contactAttributeKey.create({
-              data: {
-                key,
-                name: formatSnakeCaseToTitleCase(key),
-                type: "custom",
-                dataType,
-                workspaceId,
-                attributes: {
-                  create: {
-                    contactId,
-                    value: columns.value,
-                    valueNumber: columns.valueNumber,
-                    valueDate: columns.valueDate,
+        // Create new attributes since we're under the limit. Same discipline as the upsert
+        // transaction above (ENG-2252): a deterministic order — key is the identity the
+        // (key, workspaceId) unique index locks on — plus a bounded deadlock retry. A deadlock rolls
+        // the whole batch back, so re-running it is safe.
+        const orderedNewAttributes = [...preparedNewAttributes].sort((a, b) =>
+          compareCodeUnits(a.key, b.key)
+        );
+        await retryOnDeadlock(
+          () =>
+            prisma.$transaction(
+              orderedNewAttributes.map(({ key, dataType, columns }) =>
+                prisma.contactAttributeKey.create({
+                  data: {
+                    key,
+                    name: formatSnakeCaseToTitleCase(key),
+                    type: "custom",
+                    dataType,
+                    workspaceId,
+                    attributes: {
+                      create: {
+                        contactId,
+                        value: columns.value,
+                        valueNumber: columns.valueNumber,
+                        valueDate: columns.valueDate,
+                      },
+                    },
                   },
-                },
-              },
-            })
-          )
+                })
+              )
+            ),
+          { operation: "updateAttributes.newAttributeKeys", contactId, workspaceId }
         );
       }
     }
