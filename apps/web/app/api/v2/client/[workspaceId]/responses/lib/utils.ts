@@ -1,12 +1,9 @@
-import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
-import { ENCRYPTION_KEY } from "@/lib/constants";
-import { symmetricDecrypt } from "@/lib/crypto";
-import { validateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { verifyResponseRecaptcha } from "@/modules/api/lib/verify-response-recaptcha";
 import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
+import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import { enforceVerifiedEmailGate } from "@/modules/survey/link/lib/verify-email-gate";
 
 export { RECAPTCHA_VERIFICATION_ERROR_CODE } from "@/modules/api/lib/verify-response-recaptcha";
@@ -70,18 +67,13 @@ export const checkSurveyValidity = async (
       });
     }
 
-    let canonicalSingleUseId: string | null = null;
-    try {
-      canonicalSingleUseId = validateSurveySingleUseLinkParams({
-        surveyId: survey.id,
-        suId,
-        suToken,
-        isEncrypted: survey.singleUse.isEncrypted,
-        decrypt: (encryptedSingleUseId: string) => symmetricDecrypt(encryptedSingleUseId, ENCRYPTION_KEY),
-      });
-    } catch (error) {
-      logger.error({ error, surveyId: survey.id, workspaceId }, "Failed to validate single-use id");
-    }
+    const canonicalSingleUseId = resolveSingleUseIdForSurvey({
+      surveyId: survey.id,
+      isEncrypted: survey.singleUse.isEncrypted,
+      suId,
+      suToken,
+      surface: "client_response_v2",
+    });
 
     if (!canonicalSingleUseId || canonicalSingleUseId !== responseInput.singleUseId) {
       return responses.badRequestResponse("Invalid single use id", {
