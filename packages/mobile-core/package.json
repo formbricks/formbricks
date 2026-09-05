@@ -1,0 +1,40 @@
+{
+  "name": "@formbricks/mobile-core",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "version": "1.0.0",
+  "description": "Server-delivered decision logic (the mobile 'brain') for the Formbricks mobile SDKs. Built as a DOM-free bundle that runs in JavaScriptCore / WebView JS engines and is loaded by the native SDK shells over the Formbricks API.",
+  "homepage": "https://formbricks.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formbricks/formbricks"
+  },
+  "keywords": [
+    "Formbricks",
+    "surveys",
+    "experience management"
+  ],
+  "sideEffects": true,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite build --watch --mode dev",
+    "build": "vite build",
+    "build:dev": "vite build --mode dev",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "clean": "rimraf .turbo node_modules dist coverage",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "author": "Formbricks <hola@formbricks.com>",
+  "devDependencies": {
+    "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/config-eslint": "workspace:*",
+    "@vitest/coverage-v8": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}
