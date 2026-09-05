@@ -9,9 +9,21 @@ interface PostHogIdentifyProps {
   userId: string;
   email: string;
   name: string | null;
+  // Most recent survey creation timestamp (ISO 8601) across every organization this person belongs
+  // to, not just the org/workspace open right now — see lib/posthog/last-survey-created.ts. Recomputed
+  // server-side on every app page load, so a teammate creating a survey in a shared organization
+  // still moves this forward for this person the next time they load a page, without this person
+  // having created anything themselves.
+  lastSurveyCreatedAt: string | null;
 }
 
-export const PostHogIdentify = ({ posthogKey, userId, email, name }: PostHogIdentifyProps) => {
+export const PostHogIdentify = ({
+  posthogKey,
+  userId,
+  email,
+  name,
+  lastSurveyCreatedAt,
+}: Readonly<PostHogIdentifyProps>) => {
   const lastIdentifiedUserId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -32,9 +44,9 @@ export const PostHogIdentify = ({ posthogKey, userId, email, name }: PostHogIden
       posthog.reset();
     }
 
-    posthog.identify(userId, { email, name });
+    posthog.identify(userId, { email, name, last_survey_created_at: lastSurveyCreatedAt });
     lastIdentifiedUserId.current = userId;
-  }, [posthogKey, userId, email, name]);
+  }, [posthogKey, userId, email, name, lastSurveyCreatedAt]);
 
   return null;
 };
