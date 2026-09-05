@@ -12,6 +12,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
+import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-logo";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import {
@@ -25,6 +26,7 @@ import { ResetProgressButton } from "@/modules/ui/components/reset-progress-butt
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Modal } from "./components/modal";
 import { TabOption } from "./components/tab-option";
+import { mirrorPlacementForDir } from "./lib/utils";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -69,7 +71,38 @@ export const PreviewSurvey = ({
   const { overlay: surveyOverlay } = workspaceOverwrites || {};
   const { clickOutsideClose: surveyClickOutsideClose } = workspaceOverwrites || {};
 
-  const placement = surveyPlacement || workspace.placement;
+  // Placement mirrors with the previewed language, exactly as the shipped widget does — see
+  // `mirrorPlacementForDir`.
+  //
+  // The input is the language the RENDERED SURVEY is actually on, not the `languageCode` prop. The
+  // previewed survey carries its own language switch (`getShowLanguageSwitch` in survey.tsx gates only
+  // on `showLanguageSwitch` and the enabled-language count, so it is present in preview mode too), and
+  // an author who uses it changes the survey's direction without touching this prop. Keying the mirror
+  // on the prop alone left an LTR survey sitting in the RTL corner on exactly that path — the
+  // contradiction between preview and shipped widget this is here to remove.
+  //
+  // Tracked in local state rather than reported up through `setLanguageCode`: that state is the
+  // editor's *editing* language and also drives the question pane (`survey-editor.tsx`), so a language
+  // switch inside the preview must not retarget what the author is typing into.
+  const [activeLanguageCode, setActiveLanguageCode] = useState(languageCode);
+
+  // The chrome's own language dropdown still wins — it moves the prop, and the survey re-renders on it.
+  useEffect(() => {
+    setActiveLanguageCode(languageCode);
+  }, [languageCode]);
+
+  // Both modal previews are rendered behind a `previewMode === …` gate, so switching between the phone
+  // and browser frames unmounts one and mounts the other — and a fresh RenderSurvey seeds its language
+  // from whatever `languageCode` prop it is handed. Handing it the prop would reset the survey to the
+  // editing language while `placement` still reflected the language the author had switched to, sliding
+  // an Arabic card across the viewport to the LTR corner before the remounted survey reported its own
+  // language back and moved it again. Seeding from the active language keeps content and corner in step
+  // by construction, and carries the author's in-survey choice across the frame toggle.
+
+  const placement = mirrorPlacementForDir(
+    surveyPlacement || workspace.placement,
+    isRTLLanguage(toJsWorkspaceStateSurvey(survey), activeLanguageCode) ? "rtl" : "ltr"
+  );
   const overlay = surveyOverlay ?? workspace.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
 
@@ -279,7 +312,7 @@ export const PreviewSurvey = ({
                       survey={toJsWorkspaceStateSurvey(survey)}
                       isBrandingEnabled={workspace.inAppSurveyBranding}
                       isRedirectDisabled={true}
-                      languageCode={languageCode}
+                      languageCode={activeLanguageCode}
                       styling={styling}
                       isCardBorderVisible={!styling.highlightBorderColor?.light}
                       onClose={handlePreviewModalClose}
@@ -287,6 +320,7 @@ export const PreviewSurvey = ({
                         setBlockId = f;
                       }}
                       onFinished={onFinished}
+                      onLanguageChange={setActiveLanguageCode}
                       placement={placement}
                       isSpamProtectionEnabled={isSpamProtectionEnabled}
                     />
@@ -413,7 +447,7 @@ export const PreviewSurvey = ({
                     survey={toJsWorkspaceStateSurvey(survey)}
                     isBrandingEnabled={workspace.inAppSurveyBranding}
                     isRedirectDisabled={true}
-                    languageCode={languageCode}
+                    languageCode={activeLanguageCode}
                     styling={styling}
                     isCardBorderVisible={!styling.highlightBorderColor?.light}
                     onClose={handlePreviewModalClose}
@@ -421,6 +455,7 @@ export const PreviewSurvey = ({
                       setBlockId = f;
                     }}
                     onFinished={onFinished}
+                    onLanguageChange={setActiveLanguageCode}
                     isSpamProtectionEnabled={isSpamProtectionEnabled}
                     placement={placement}
                   />

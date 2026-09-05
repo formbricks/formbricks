@@ -5,7 +5,7 @@ import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { ensureLiveRegion } from "@/lib/live-region";
 import { SURVEY_INSTRUCTIONS_ID } from "@/lib/survey-page";
 import { useFocusTrap } from "@/lib/use-focus-trap";
-import { cn } from "@/lib/utils";
+import { cn, mirrorPlacementForDir } from "@/lib/utils";
 
 // Give a fallback-created live region (older SDK, see live-region.ts) a beat to be registered by
 // assistive tech before the message lands. Harmless when the region already exists.
@@ -272,7 +272,7 @@ export function SurveyContainer({
             aria-describedby={hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined}
             tabIndex={-1}
             className={cn(
-              getPlacementStyle(placement),
+              getPlacementStyle(mirrorPlacementForDir(placement, dir)),
               isOpen ? "opacity-100" : "opacity-0",
               "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
             )}>

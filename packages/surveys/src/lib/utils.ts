@@ -1,4 +1,5 @@
 import { twMerge } from "tailwind-merge";
+import { type TPlacement } from "@formbricks/types/common";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
@@ -301,6 +302,36 @@ const mimeTypes: Record<string, string> = {
 };
 
 export const getMimeType = (extension: TAllowedFileExtension): string => mimeTypes[extension];
+
+/**
+ * Mirrors a widget placement horizontally for a right-to-left survey.
+ *
+ * Placement is authored once, in LTR terms, and is not per-language — so an Arabic respondent would
+ * otherwise get the popup pinned to the side their eye reaches last, on top of the page corner an RTL
+ * host page is most likely to already be using. Mirroring the corner is the same thing CSS logical
+ * properties do for the survey's own text: the layout as a whole flips, so "bottomRight" means
+ * "bottom, reading-end side" and lands bottom-LEFT in Arabic or Hebrew.
+ *
+ * Vertical placement never flips (RTL reverses the inline axis only), and `center` has no side to
+ * flip. `auto` is left alone deliberately: it means the direction is sniffed from the content at
+ * render time, so there is nothing here to resolve it against.
+ */
+export const mirrorPlacementForDir = (placement: TPlacement, dir: "ltr" | "rtl" | "auto"): TPlacement => {
+  if (dir !== "rtl") return placement;
+
+  switch (placement) {
+    case "bottomRight":
+      return "bottomLeft";
+    case "bottomLeft":
+      return "bottomRight";
+    case "topRight":
+      return "topLeft";
+    case "topLeft":
+      return "topRight";
+    default:
+      return placement;
+  }
+};
 
 /**
  * Returns true if the string contains any RTL character.
