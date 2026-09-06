@@ -102,6 +102,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
+    "@formbricks/mobile-core#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
     "@formbricks/storage#build": {
       "dependsOn": ["@formbricks/logger#build"],
       "outputs": ["dist/**"]

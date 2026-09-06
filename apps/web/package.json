@@ -45,6 +45,7 @@
     "@formbricks/js": "5.0.0",
     "@formbricks/js-core": "workspace:*",
     "@formbricks/logger": "workspace:*",
+    "@formbricks/mobile-core": "workspace:*",
     "@formbricks/storage": "workspace:*",
     "@formbricks/survey-ui": "workspace:*",
     "@formbricks/surveys": "workspace:*",

@@ -6,6 +6,7 @@ interface CopyCompiledAssetsPluginOptions {
   filename: string;
   distDir: string;
   skipDirectoryCheck?: boolean; // New option to skip checking non-existent directories
+  outputSubDir?: string; // Optional subdirectory below apps/web/public/js (e.g. "mobile/v1")
 }
 
 const ensureDirectoryExists = async (dirPath: string): Promise<void> => {
@@ -33,7 +34,7 @@ export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOption
 
     async writeBundle() {
       try {
-        const outputDir = path.resolve(config.root, "../../apps/web/public/js");
+        const outputDir = path.resolve(config.root, "../../apps/web/public/js", options.outputSubDir ?? "");
         const distDir = path.resolve(config.root, options.distDir);
 
         // Create the output directory if it doesn't exist
