@@ -165,22 +165,33 @@ describe("describeDeclaredFieldNameError", () => {
     const reason = reasonFor("country");
 
     expect(reason).toContain("auto-captured system field");
-    expect(reason).not.toContain("never filled from the URL");
+    expect(reason).not.toContain("URL contract");
   });
 
-  test("a link-survey system param is described as unfillable, because it is", () => {
-    // `getHiddenFieldsFromSearchParams` skips these, so a field declared under one stays empty.
+  test("a link-survey system param is described as the URL contract's own, because it is", () => {
+    // `getHiddenFieldsFromSearchParams` never fills a field declared under one of these spellings.
     const reason = reasonFor("lang");
 
+    expect(reason).toContain('"lang"');
     expect(reason).toContain("never filled from the URL");
   });
 
-  test("a name in both lists takes the capture-refusal reason", () => {
+  test("a case variant is refused by naming the reserved spelling it collides with, not the one sent", () => {
+    // A grandfathered `userid` field IS filled by `?userid=` (ENG-2892), so the true statement is about
+    // `userId`, the spelling the URL contract reserves: a field of THAT name is never filled.
+    const reason = reasonFor("userid");
+
+    expect(reason).toContain('"userId"');
+    expect(reason).toContain("never filled from the URL");
+  });
+
+  test("a name in both lists takes the URL-contract reason", () => {
     // `source` is the one Tier-1 field that is also a link-survey system param. Both statements are
     // true of it; the stronger one wins.
     const reason = reasonFor("source");
 
-    expect(reason).toContain("never filled from the URL");
+    expect(reason).toContain("URL contract");
+    expect(reason).not.toContain("auto-captured system field");
   });
 
   test("a name that is merely not a safe identifier keeps the naming-rule reason", () => {

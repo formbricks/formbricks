@@ -68,29 +68,41 @@ export const FORBIDDEN_IDS = [
 ];
 
 /**
- * Link-survey params that drive the runtime rather than carrying response data, and which
- * `FORBIDDEN_IDS` does not already cover. Lowercase because they are only ever compared against a
- * lowercased key. `suToken` in particular is a credential, and the rest would silently capture UI state.
+ * Link-survey params that drive the runtime rather than carrying response data, spelled exactly as
+ * the link survey reads them (`page.tsx`, `survey-renderer.tsx`, `survey-client-wrapper.tsx`).
+ * `suId`/`suToken` are the single-use credential pair, and the rest would silently capture UI state.
+ * `suId` is listed although `FORBIDDEN_IDS` holds `suid`: the exact-spelling set below needs the
+ * casing the runtime actually reads.
  */
 export const LINK_SURVEY_SYSTEM_PARAMS = [
-  "sutoken",
+  "suId",
+  "suToken",
   "lang",
   "preview",
-  "startat",
-  "skipprefilled",
-  "offlinesupport",
+  "startAt",
+  "skipPrefilled",
+  "offlineSupport",
 ];
 
 /**
- * Every name a declared field must never take, lowercased. The single source of truth shared by the
- * two ends that have to agree: `validateId` refuses to create such a name, and
- * `getHiddenFieldsFromSearchParams` refuses to capture a param with such a key. When the two lists
- * disagree the editor happily accepts a field that can never receive a value.
+ * The exact spellings under which the link survey reads its own URL params: `FORBIDDEN_IDS` plus
+ * `LINK_SURVEY_SYSTEM_PARAMS`, case preserved. `getHiddenFieldsFromSearchParams` never fills a
+ * hidden field declared under one of these, whatever casing the param arrives in — the param IS the
+ * system param (`?lang=` is the language switch, not data).
  */
-export const RESERVED_DECLARED_FIELD_NAMES = new Set([
-  ...FORBIDDEN_IDS.map((forbiddenId) => forbiddenId.toLowerCase()),
-  ...LINK_SURVEY_SYSTEM_PARAMS,
-]);
+export const LINK_SURVEY_SYSTEM_PARAM_KEYS = new Set([...FORBIDDEN_IDS, ...LINK_SURVEY_SYSTEM_PARAMS]);
+
+/**
+ * Every name a declared field must never take, lowercased. The single source of truth shared by the
+ * two ends that have to agree: `validateId` refuses to create such a name in any casing, and
+ * `getHiddenFieldsFromSearchParams` refuses to fill a field from a param that matches it only
+ * case-insensitively (`Verify` from `?verify=`). A field a survey already declares under a case
+ * variant keeps being filled by that exact spelling (`Source` from `?Source=`) — the grandfather
+ * rule, and the reason this set gates the case-insensitive path only.
+ */
+export const RESERVED_DECLARED_FIELD_NAMES = new Set(
+  [...LINK_SURVEY_SYSTEM_PARAM_KEYS].map((key) => key.toLowerCase())
+);
 
 const FIELD_TO_LABEL_MAP: Record<string, string> = {
   headline: "question",
@@ -394,8 +406,9 @@ export const validateId = (
 
   // Reserved names stay case-sensitive on the lenient path so element and question id renames keep
   // behaving exactly as before. New declared field names are matched case-insensitively and against
-  // the link-survey system params too, because `getHiddenFieldsFromSearchParams` refuses to capture
-  // any of those under any casing - a name that could never receive a value must not be creatable.
+  // the link-survey system params too: `getHiddenFieldsFromSearchParams` never fills a field named
+  // exactly like one of those params, and never fills any field from a case variant of one (`Verify`
+  // from `?verify=`), so a new name colliding with one in any casing must not be creatable.
   //
   // `RESERVED_FIELD_NAMES` (the Tier-1 Embedded Data catalog: country, url, browser, ...) joins them
   // on the strict path ONLY. It must never move into `RESERVED_DECLARED_FIELD_NAMES`, which is also

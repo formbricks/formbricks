@@ -2,7 +2,7 @@ import type { z } from "zod";
 import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
 import { type TSurveyHiddenFields, ZSurveyVariables } from "./types";
 import {
-  RESERVED_DECLARED_FIELD_NAMES,
+  LINK_SURVEY_SYSTEM_PARAM_KEYS,
   type TValidateIdError,
   TValidateIdErrorCode,
   validateId,
@@ -61,8 +61,9 @@ export const collectDeclaredFieldNames = (source: TDeclaredFieldSource): string[
  * Surveys in production already declare `country`, `url`, `source`, `browser`. Their values live at
  * `response.data["country"]`, `#recall:country#` resolves from there, and nothing may be renamed. So
  * a name already in `existing` returns **no error**, whatever it is — the blocklist applies to names
- * this write is *authoring*. Matching is case-insensitive in both directions, because
- * `getHiddenFieldsFromSearchParams` refuses to capture a reserved param under any casing, and
+ * this write is *authoring*. Matching is case-insensitive in both directions, because a new `Lang`
+ * would collide with the `?lang=` param the link survey reads for itself (only a grandfathered case
+ * variant keeps being filled by its exact spelling, see `getHiddenFieldsFromSearchParams`), and
  * because `Country` and `country` would collide in the recall namespace all the same.
  *
  * Duplicate incoming names yield one error each at most — the caller sees one error per bad name.
@@ -135,8 +136,18 @@ const describeReservedReason = (field: string): string => {
   // the capture-refusal list read by `getHiddenFieldsFromSearchParams`, precisely so `?country=DE`
   // keeps filling the field of a survey that already declares `country`. An integrator told the wrong
   // reason here could go and remove URL params that work.
-  if (RESERVED_DECLARED_FIELD_NAMES.has(field.toLowerCase())) {
-    return "it is reserved by the link-survey URL contract, so a field declared under it is never filled from the URL and would stay empty";
+  //
+  // Named after the reserved spelling rather than the incoming name: a refused `userid` collides with
+  // `userId`, and the true statement is about that name — a hidden field called `userId` is never
+  // filled from the URL, whatever casing the param arrives in. (A grandfathered `UserId` IS filled by
+  // `?UserId=`, so the same sentence about the incoming case variant would be false.) "URL contract"
+  // rather than "URL parameter" because `FORBIDDEN_IDS` also holds internal ids such as `end` and
+  // `welcomeCard`, which no URL carries.
+  const systemParamKey = [...LINK_SURVEY_SYSTEM_PARAM_KEYS].find(
+    (key) => key.toLowerCase() === field.toLowerCase()
+  );
+  if (systemParamKey !== undefined) {
+    return `it collides with "${systemParamKey}", a name the link-survey URL contract reserves for itself, so a hidden field under that name is never filled from the URL`;
   }
 
   if (RESERVED_FIELD_NAMES.has(field.toLowerCase())) {
