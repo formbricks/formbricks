@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "De respons maakt deel uit van de quota voor dit onderzoek. Hoe wilt u omgaan met de quota?",
         "device": "Apparaat",
         "device_info": "Apparaatinformatie",
+        "duration_seconds": "Duur (seconden)",
         "email": "E-mail",
         "error_downloading_responses": "Er is een fout opgetreden bij het downloaden van de antwoorden",
         "first_name": "Voornaam",

@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "Ответ входит в квоты для этого опроса. Как вы хотите обработать квоты?",
         "device": "Устройство",
         "device_info": "Информация об устройстве",
+        "duration_seconds": "Длительность (секунды)",
         "email": "Email",
         "error_downloading_responses": "Произошла ошибка при загрузке ответов",
         "first_name": "Имя",

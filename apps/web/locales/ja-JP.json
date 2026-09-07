@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "この回答は、このアンケートの割り当ての一部です。 割り当てをどのように処理しますか？",
         "device": "デバイス",
         "device_info": "デバイス情報",
+        "duration_seconds": "所要時間（秒）",
         "email": "メールアドレス",
         "error_downloading_responses": "回答のダウンロード中にエラーが発生しました",
         "first_name": "名",

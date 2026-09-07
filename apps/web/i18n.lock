@@ -3581,6 +3581,7 @@ checksums:
     workspace/surveys/responses/delete_response_quotas: 6719c90d8019000ca0a74586fb3b6a65
     workspace/surveys/responses/device: c009f849d689c745de9e38ad17644c7a
     workspace/surveys/responses/device_info: b621ff59202f171e232c1910f9236573
+    workspace/surveys/responses/duration_seconds: 3183e260e571ee2d9aac4979709cc953
     workspace/surveys/responses/email: e7f34943a0c2fb849db1839ff6ef5cb5
     workspace/surveys/responses/error_downloading_responses: 97a79108cfc854834d09cf14c300a291
     workspace/surveys/responses/first_name: cf040a5d6a9fd696be400380cc99f54b

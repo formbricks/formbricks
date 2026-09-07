@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "A resposta faz parte das quotas deste inquérito. Como deseja gerir as quotas?",
         "device": "Dispositivo",
         "device_info": "Informações do dispositivo",
+        "duration_seconds": "Duração (segundos)",
         "email": "Email",
         "error_downloading_responses": "Ocorreu um erro ao transferir as respostas",
         "first_name": "Primeiro Nome",

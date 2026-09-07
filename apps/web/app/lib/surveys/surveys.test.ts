@@ -156,6 +156,32 @@ describe("surveys", () => {
       expect(utmSource?.fieldDataType).toBe("string");
     });
 
+    test("labels every meta option through `t()`, the filter-only durationSeconds included", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        blocks: [],
+        questions: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: "draft",
+        isCaptureIpEnabled: true,
+      } as unknown as TSurvey;
+
+      const metaOptions =
+        genOptions(survey).elementOptions.find((opt) => opt.header === OptionsType.META)?.option ?? [];
+      expect(metaOptions.length).toBeGreaterThan(20);
+
+      // `t` here is the identity, so each label IS the key it was routed through — a label derived from
+      // the catalog name, such as `Duration Seconds`, carries no key and fails the pattern (ENG-2894).
+      for (const { id, label } of metaOptions) {
+        expect(label, id).toMatch(/^(workspace\.surveys\.responses|common)\.[a-z_]+$/);
+      }
+      expect(metaOptions.find((option) => option.id === "durationSeconds")?.label).toBe(
+        "workspace.surveys.responses.duration_seconds"
+      );
+    });
+
     test("reserved options drop shadowed names and respect the IP capture toggle", () => {
       const survey = {
         id: "survey1",

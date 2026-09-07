@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "La réponse fait partie des quotas pour ce sondage. Comment voulez-vous gérer les quotas ?",
         "device": "Dispositif",
         "device_info": "Informations sur l'appareil",
+        "duration_seconds": "Durée (secondes)",
         "email": "Email",
         "error_downloading_responses": "Une erreur s'est produite lors du téléchargement des réponses",
         "first_name": "Prénom",
