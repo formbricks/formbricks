@@ -72,6 +72,25 @@ interface NavigationProps {
   isFormbricksSurveysConfigured: boolean;
 }
 
+/**
+ * A nav section header carrying a Beta badge.
+ *
+ * Analyze and Act are both pre-1.0 surfaces, and the badge is what tells someone the difference
+ * between "this is finished" and "this is early". Extracted rather than duplicated so the two
+ * sections cannot drift into looking subtly different from each other.
+ */
+const sectionLabelWithBeta = (label: React.ReactNode) => (
+  <span className="inline-flex items-center gap-2">
+    <span>{label}</span>
+    <Badge
+      text="Beta"
+      type="gray"
+      size="tiny"
+      className="text-[10px] font-semibold tracking-normal normal-case"
+    />
+  </span>
+);
+
 export const MainNavigation = ({
   organization,
   user,
@@ -151,18 +170,9 @@ export const MainNavigation = ({
       },
       {
         id: "unify-feedback",
-        name: (
-          <span className="inline-flex items-center gap-2">
-            {/* Product section (IA) label — intentionally not localized (kept in English across all locales) */}
-            <span>Unify</span>
-            <Badge
-              text="Beta"
-              type="gray"
-              size="tiny"
-              className="text-[10px] font-semibold tracking-normal normal-case"
-            />
-          </span>
-        ),
+        // Same policy as "Ask" above: product section labels stay English in every locale.
+        // Was "Unify" until ENG-2742 settled on Ask / Analyze / Act as the three pillars.
+        name: sectionLabelWithBeta("Analyze"),
         items: [
           {
             name: t("workspace.unify.feedback_data"),
@@ -184,7 +194,11 @@ export const MainNavigation = ({
       },
       {
         id: "act",
-        name: t("common.act"),
+        // Kept translated, unlike "Ask" and "Analyze" above. Those two are deliberately English in
+        // every locale; this one has been going through t() since it was added. Making the three
+        // consistent means dropping a string 15 locales already translate, which is a naming
+        // decision rather than a side effect of adding a badge — see ENG-2742.
+        name: sectionLabelWithBeta(t("common.act")),
         items: [
           {
             name: t("common.workflows"),
@@ -261,7 +275,7 @@ export const MainNavigation = ({
     const ts = new Date(trialEnd).getTime();
     if (!Number.isFinite(ts)) return null;
     const msPerDay = 86_400_000;
-    // eslint-disable-next-line react-hooks/purity -- migration ENG-1677
+    // eslint-disable-next-line react-hooks/purity -- migration ENG-2366
     return Math.ceil((ts - Date.now()) / msPerDay);
   }, [
     isFormbricksCloud,
@@ -325,7 +339,7 @@ export const MainNavigation = ({
         text: t("workspace.settings.billing.upgrade"),
         href: isLicenseActive
           ? `/organizations/${organization.id}/settings/enterprise`
-          : "https://formbricks.com/upgrade-self-hosted-license",
+          : "https://formbricks.com/upgrade-self-hosted-license?utm_source=formbricks-app&utm_medium=webapp&utm_campaign=upgrade_prompt_nav",
       },
       {
         text: t("common.cancel"),
@@ -353,7 +367,7 @@ export const MainNavigation = ({
         }
       });
     },
-    [router, organization.id, workspace.id]
+    [router, organization.id]
   );
 
   const switcherTriggerClasses = cn(
@@ -516,6 +530,7 @@ export const MainNavigation = ({
 
                 {/* Trial Days Remaining */}
                 {!isCollapsed &&
+                  isOwnerOrManager &&
                   isFormbricksCloud &&
                   trialDaysRemaining !== null &&
                   (newTrialBannerVariant === "test" ? (

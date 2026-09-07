@@ -44,15 +44,15 @@ properties:
   error:
     type:
       - string
-      - 'null'
+      - "null"
   startedAt:
     type:
       - string
-      - 'null'
+      - "null"
     format: date-time
   finishedAt:
     type:
       - string
-      - 'null'
+      - "null"
     format: date-time
 additionalProperties: false

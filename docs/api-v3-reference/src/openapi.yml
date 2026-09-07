@@ -203,6 +203,12 @@ paths:
     $ref: paths/api_v3_action-classes.yml
   /api/v3/contact-attribute-keys:
     $ref: paths/api_v3_contact-attribute-keys.yml
+  /api/v3/tags:
+    $ref: paths/api_v3_tags.yml
+  /api/v3/tags/{tagId}:
+    $ref: paths/api_v3_tags_{tagId}.yml
+  /api/v3/tags/{tagId}/merge:
+    $ref: paths/api_v3_tags_{tagId}_merge.yml
 components:
   securitySchemes:
     sessionAuth:

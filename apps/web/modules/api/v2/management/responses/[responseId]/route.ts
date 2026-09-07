@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
@@ -15,7 +17,6 @@ import {
 } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
@@ -41,7 +42,13 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         return handleApiError(request, workspaceIdResult.error);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "GET")) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("GET"),
+          { type: "workspace", id: workspaceIdResult.data.workspaceId }
+        ))
+      ) {
         return handleApiError(request, {
           type: "unauthorized",
         });
@@ -89,7 +96,13 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
         return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "DELETE")) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("DELETE"),
+          { type: "workspace", id: workspaceIdResult.data.workspaceId }
+        ))
+      ) {
         return handleApiError(
           request,
           {
@@ -142,7 +155,13 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "PUT")) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("PUT"),
+          { type: "workspace", id: workspaceIdResult.data.workspaceId }
+        ))
+      ) {
         return handleApiError(
           request,
           {

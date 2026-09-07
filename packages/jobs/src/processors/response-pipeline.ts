@@ -1,23 +1,9 @@
-import { logger } from "@formbricks/logger";
-import type { JobHandler } from "@/src/contracts";
+import { createMissingOverrideHandler } from "@/src/processors/missing-override";
 import type { TResponsePipelineJobData } from "@/src/types";
 
-export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = (data, context) => {
-  // TODO(#1548): Keep this fallback until every runtime that starts BullMQ registers the app override.
-  logger.error(
-    {
-      attempt: context.attempt,
-      workspaceId: data.workspaceId,
-      surveyId: data.surveyId,
-      event: data.event,
-      jobId: context.jobId,
-      jobName: context.jobName,
-      queueName: context.queueName,
-    },
-    "BullMQ response pipeline processor override is not registered"
-  );
-
-  throw new Error(
-    `BullMQ response pipeline processor override missing for job ${context.jobId} (${data.workspaceId}/${data.surveyId})`
-  );
-};
+// TODO(#1548): Keep this fallback until every runtime that starts BullMQ registers the app override.
+// Only the ids are logged — the payload holds a full survey response and must never reach the logs.
+export const processResponsePipelineJob = createMissingOverrideHandler<TResponsePipelineJobData>(
+  "response pipeline",
+  (data) => ({ event: data.event, surveyId: data.surveyId, workspaceId: data.workspaceId })
+);

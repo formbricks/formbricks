@@ -1,19 +1,12 @@
 import "server-only";
 import { ZId } from "@formbricks/types/common";
-import { getMembershipByUserIdOrganizationId } from "../membership/service";
-import { getAccessFlags } from "../membership/utils";
+import { can } from "../authorization";
 import { validateInputs } from "../utils/validate";
-import { getOrganizationsByUserId } from "./service";
 
 export const canUserAccessOrganization = async (userId: string, organizationId: string): Promise<boolean> => {
   validateInputs([userId, ZId], [organizationId, ZId]);
 
-  try {
-    const userOrganizations = await getOrganizationsByUserId(userId);
-    return userOrganizations.some((organization) => organization.id === organizationId);
-  } catch (error) {
-    throw error;
-  }
+  return can({ type: "user", id: userId }, "organization.read", { type: "organization", id: organizationId });
 };
 
 export const verifyUserRoleAccess = async (
@@ -26,30 +19,18 @@ export const verifyUserRoleAccess = async (
   hasDeleteMembersAccess: boolean;
   hasBillingAccess: boolean;
 }> => {
-  const accessObject = {
-    hasCreateOrUpdateAccess: true,
-    hasDeleteAccess: true,
-    hasCreateOrUpdateMembersAccess: true,
-    hasDeleteMembersAccess: true,
-    hasBillingAccess: true,
+  const actor = { type: "user", id: userId } as const;
+  const organization = { type: "organization", id: organizationId } as const;
+  const [hasOwnerAccess, hasManagerAccess] = await Promise.all([
+    can(actor, "organization.write", organization),
+    can(actor, "organization.manage", organization),
+  ]);
+
+  return {
+    hasCreateOrUpdateAccess: hasOwnerAccess,
+    hasDeleteAccess: hasOwnerAccess,
+    hasCreateOrUpdateMembersAccess: hasManagerAccess,
+    hasDeleteMembersAccess: hasManagerAccess,
+    hasBillingAccess: hasManagerAccess,
   };
-
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organizationId);
-  const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
-
-  if (!isOwner) {
-    accessObject.hasCreateOrUpdateAccess = false;
-    accessObject.hasDeleteAccess = false;
-    accessObject.hasCreateOrUpdateMembersAccess = false;
-    accessObject.hasDeleteMembersAccess = false;
-    accessObject.hasBillingAccess = false;
-  }
-
-  if (isManager) {
-    accessObject.hasCreateOrUpdateMembersAccess = true;
-    accessObject.hasDeleteMembersAccess = true;
-    accessObject.hasBillingAccess = true;
-  }
-
-  return accessObject;
 };

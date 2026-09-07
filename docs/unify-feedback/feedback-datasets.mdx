@@ -18,14 +18,31 @@ Create one dataset per logically separate group of feedback. Common patterns:
 
 Datasets live at the **organization** level but are exposed to **workspaces** through an access list. Each workspace can **only access one dataset.**
 
-Manage dataset access from **Settings → Organization → Feedback Datasets**:
+Manage dataset access from **Settings → Organization → Datasets**:
 
 - Create new datasets
 - Rename or archive datasets
 - Add or remove workspace access
+- Delete all records in a dataset
 
-Only **Owners** and **Managers** can manage datasets. Workspace members see the datasets their workspace has access to inside the Unify section.
+Only **Owners** and **Managers** can manage datasets. Workspace members see the datasets their workspace has access to under **Analyze**.
 
 ## Archiving
 
 Archiving a dataset hides it from default views but does not delete its records. Use it for one-off programs that have ended.
+
+## Delete all records
+
+**Delete all records** empties a dataset while keeping the dataset itself. Open **Settings → Organization → Datasets**, click **Manage** on the dataset, then click **Delete all records**.
+
+<Warning>
+  This cannot be undone, and it is not limited to your workspace. It permanently deletes every feedback record in the dataset — including its AI enrichment and the topics generated from it — for **every workspace the dataset is shared with**.
+</Warning>
+
+The dataset and its sources are kept, so new feedback keeps arriving. Topics are generated again once new feedback comes in, and charts built on the dataset are empty until then.
+
+To confirm, type the dataset's exact name. Only **Owners** and **Managers** can do this; everyone else sees the button disabled.
+
+Deletion runs in the background, so records may still show up for a few minutes after you confirm.
+
+This is what separates it from archiving: archiving keeps the records and hides the dataset, deleting keeps the dataset and removes the records.

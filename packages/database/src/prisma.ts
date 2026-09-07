@@ -81,7 +81,7 @@ export namespace Prisma {
   export type TransactionIsolationLevel = PrismaNamespaceTypes.TransactionIsolationLevel;
   export type TypeMap<
     ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- mirrors the generated Prisma TypeMap default; migration ENG-1677
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- mirrors the generated Prisma TypeMap default
     GlobalOmitOptions = {},
   > = PrismaNamespaceTypes.TypeMap<ExtArgs, GlobalOmitOptions>;
   export type ActionClassSelect = PrismaModelTypes.ActionClassSelect;

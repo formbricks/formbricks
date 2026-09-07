@@ -374,7 +374,7 @@ export const applyIngestContract = ({
   // discards a string, and leaves no own property — the one outcome this function promises cannot
   // happen: no stored value, no drop, no flag. Spread back into a literal on return so callers get an
   // ordinary object (spread copies own properties without invoking setters, so the key survives).
-  const data: TResponseData = Object.create(null);
+  const data = Object.create(null) as TResponseData;
   const flags: TIngestFlag[] = [];
   const dropped: TIngestDrop[] = [];
 

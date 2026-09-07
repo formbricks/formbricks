@@ -48,11 +48,23 @@ export const ResponsePage = ({
   const [isFetchingFirstPage, setIsFetchingFirstPage] = useState<boolean>(false);
   const { selectedFilter, dateRange, resetState, registerAnalysisRefreshHandler } = useResponseFilter();
   const { t } = useTranslation();
-  const filters = useMemo(
+  const computedFilters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
-    [selectedFilter, dateRange]
+    [survey, selectedFilter, dateRange]
   );
+
+  // `survey` is an RSC prop, so every `router.refresh()` (survey status dropdown, share modal, reset
+  // survey) hands down a freshly deserialized object and `computedFilters` takes a new identity for
+  // unchanged content. Memoized so the serialization happens when the filters actually recompute
+  // rather than on every render of this page — each scroll fetch, each row or tag edit.
+  const filtersKey = useMemo(() => JSON.stringify(computedFilters), [computedFilters]);
+
+  // The identity everything downstream keys on, held steady while the filter *value* is unchanged.
+  // Without it a refresh re-creates `fetchNextPage` and `refetchResponses`, which re-registers the
+  // analysis refresh handler and would collapse the infinite-scroll list back to page 1.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the filter value, not its identity
+  const filters = useMemo(() => computedFilters, [filtersKey]);
 
   const searchParams = useSearchParams();
 
@@ -107,7 +119,7 @@ export const ResponsePage = ({
     } finally {
       setIsFetchingFirstPage(false);
     }
-  }, [filters, responsesPerPage, surveyId]);
+  }, [filters, responsesPerPage, surveyId, t]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refetchResponses);
@@ -162,7 +174,9 @@ export const ResponsePage = ({
     };
     fetchFilteredResponses();
     // page is intentionally omitted to avoid refetching after the initial page setup.
-  }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
+    // hasFilters is derived from selectedFilter/dateRange which are already deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- effect must run only when the filter value changes, not on page updates it sets internally
+  }, [filtersKey, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
     <>

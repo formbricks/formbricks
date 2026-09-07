@@ -977,7 +977,9 @@ export const listDisplayableReservedFields = (
   display: TReservedFieldDisplay
 ): TDisplayableReservedField[] => {
   const wanted = entries.filter((entry) => entry.display === display);
-  const values = projectEntries(wanted, response);
+  // Widened to include `undefined`: projectEntries omits a key whose value resolved to undefined, so
+  // the lookup below really can miss — the Record index signature alone would call that impossible.
+  const values: Record<string, string | number | undefined> = projectEntries(wanted, response);
 
   return wanted
     .filter((entry) => values[entry.name] !== undefined)

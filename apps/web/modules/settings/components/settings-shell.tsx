@@ -67,6 +67,9 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
               isOwnerOrManager={data.isOwnerOrManager}
               isAccessControlAllowed={data.isAccessControlAllowed}
               membershipRole={data.membershipRole}
+              // These routes carry no workspaceId, so the top bar must not claim a current
+              // workspace. The sidebar's Workspace section stays as the way to reach one.
+              showWorkspaceBreadcrumb={false}
             />
           )}
           <div className="flex-1 overflow-y-auto">{children}</div>

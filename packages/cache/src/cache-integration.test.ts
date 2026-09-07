@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-non-null-assertion, @typescript-eslint/require-await -- Test file needs template expressions for test output */
+/* eslint-disable @typescript-eslint/require-await -- async helpers mock cache interfaces that must return promises without awaiting anything */
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { logger } from "@formbricks/logger";
 import { createCacheKey } from "./cache-keys";

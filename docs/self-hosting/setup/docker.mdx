@@ -6,7 +6,8 @@ icon: "docker"
 
 Use this guide for a manual Docker Compose setup. It downloads the production Compose file and starts the
 baseline Formbricks stack: Formbricks Web, PostgreSQL, Redis/Valkey, Formbricks Hub, and Cube. Optional
-services such as Qwen/vLLM, AI taxonomy, and RustFS are documented after the baseline stack is running.
+services such as Qwen/vLLM, AI taxonomy, and RustFS are documented after the baseline stack is running. The
+baseline also runs a single SpiceDB instance for Formbricks authorization data.
 
 ### Requirements
 
@@ -49,13 +50,18 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 
 1. **Download the Docker Files**
 
-   Get the Docker Compose file plus the Cube configuration shipped with the baseline stack:
+   Get the Docker Compose file, AuthZed database bootstrap helper, and Cube configuration shipped with the
+   baseline stack:
 
    ```bash
    mkdir -p cube/schema
    curl -fsSL \
      -o docker-compose.yml \
      https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+   curl -fsSL \
+     -o authzed-postgres-bootstrap.sh \
+     https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/authzed-postgres-bootstrap.sh
+   chmod 700 authzed-postgres-bootstrap.sh
    curl -fsSL \
      -o cube/cube.js \
      https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
@@ -71,9 +77,12 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    install, replace both URL values with your public HTTPS URL before starting the stack.
 
    ```bash
+   POSTGRES_PASSWORD=$(openssl rand -hex 32)
    cat <<EOF > .env
    WEBAPP_URL=http://localhost:3000
    NEXTAUTH_URL=http://localhost:3000
+   POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+   POSTGRES_PASSWORD_URL_ENCODED=$POSTGRES_PASSWORD
    NEXTAUTH_SECRET=$(openssl rand -hex 32)
    ENCRYPTION_KEY=$(openssl rand -hex 32)
    CRON_SECRET=$(openssl rand -hex 32)
@@ -81,9 +90,18 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    CUBEJS_API_SECRET=$(openssl rand -hex 32)
    CUBEJS_JWT_ISSUER=formbricks-web
    CUBEJS_JWT_AUDIENCE=formbricks-cube
+   AUTHZED_TOKEN=$(openssl rand -hex 32)
+   AUTHZED_DATABASE_PASSWORD=$(openssl rand -hex 32)
    EOF
    chmod 600 .env
    ```
+
+   Keep `POSTGRES_PASSWORD` unchanged after PostgreSQL initializes the `postgres` volume. The generated
+   hexadecimal value is already URL-safe, so `POSTGRES_PASSWORD_URL_ENCODED` uses the same value. If you replace
+   an existing `docker-compose.yml`, copy the exact password from that deployment instead of generating a new
+   one. If it contains URI-reserved characters, set `POSTGRES_PASSWORD_URL_ENCODED` to its percent-encoded form;
+   otherwise you can use the same value or omit the encoded variable. The PostgreSQL image only applies the raw
+   password when it creates a new database volume.
 
 1. **Validate the Docker Compose Configuration**
 
@@ -99,7 +117,7 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 1. **Start the Docker Setup**
 
    Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with
-   PostgreSQL, Redis, Formbricks Hub, and Cube.
+   PostgreSQL, Redis, Formbricks Hub, Cube, and SpiceDB.
 
    ```bash
    docker compose up -d
@@ -114,11 +132,12 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    ```bash
    docker compose ps -a
    curl -fsS http://localhost:3000/health
-   docker compose logs --tail=100 formbricks-migrate hub-migrate formbricks hub cube
+   docker compose logs --tail=100 formbricks-migrate hub-migrate authzed-db-bootstrap spicedb-migrate
+   docker compose logs --tail=100 formbricks hub cube spicedb
    ```
 
-   `formbricks-migrate` and `hub-migrate` should complete successfully. `postgres`, `redis`, `cube`,
-   `hub`, and `formbricks` should be running or healthy.
+   `formbricks-migrate`, `hub-migrate`, `authzed-db-bootstrap`, and `spicedb-migrate` should complete
+   successfully. `postgres`, `redis`, `cube`, `hub`, `spicedb`, and `formbricks` should be running or healthy.
 
 1. **Open Formbricks in Your Browser**
 
@@ -131,6 +150,57 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
   through `http://hub:8080` and `http://cube:4000`. When AI taxonomy beta is enabled, Hub reaches taxonomy
   internally through `http://taxonomy:8000`.
 </Note>
+
+## AuthZed and SpiceDB
+
+The bundled SpiceDB service stores its data in a dedicated `spicedb` database and login inside the existing
+PostgreSQL container. Database bootstrap, datastore migration, and the release-matched `authzed-initialize`
+service are idempotent. Fresh installs apply the canonical schema and verify an empty or reconciled graph
+without making Formbricks startup or `/health` depend on SpiceDB. SpiceDB is reachable only inside the Compose
+network at `spicedb:50051`; it is not published on the host or routed through Traefik.
+
+The Formbricks container receives the supported AuthZed variables automatically. Keep `AUTHZED_TOKEN` and
+`AUTHZED_DATABASE_PASSWORD` private and include `.env` and the PostgreSQL volume in your backup plan. Running
+`docker compose down` preserves the volume; `docker compose down -v` deletes both Formbricks and SpiceDB data.
+
+The release image includes an opt-in operations CLI. It does not start during normal installation:
+
+```bash
+docker compose --profile authzed-ops run --rm authzed-ops health
+docker compose --profile authzed-ops run --rm authzed-ops schema check
+docker compose --profile authzed-ops run --rm authzed-ops backfill
+docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+```
+
+See [AuthZed Operations](/self-hosting/advanced/authzed-operations) before applying a schema, repairing
+relationships, upgrading SpiceDB, or restoring a backup.
+
+The bundled PostgreSQL service leaves `track_commit_timestamp` at its default `off` value, so SpiceDB reports
+that its Watch API is disabled. This does not affect schema writes, relationship writes, or permission checks.
+If a future integration consumes the Watch API, enable that PostgreSQL setting separately and plan for the
+required database restart.
+
+Repository development exposes SpiceDB on `127.0.0.1:50051`. To start the optional authenticated browser UI:
+
+```bash
+docker compose -f docker-compose.dev.yml --profile authzed-ui up -d authzed-ui
+```
+
+Then open [http://127.0.0.1:50052](http://127.0.0.1:50052). Run `pnpm authzed:smoke` for an isolated
+application-health, authentication-failure, bounded-outage, schema, permission, migration-idempotency, and
+persistence check. The smoke command uses its own Compose project and random host port, then removes its test
+data afterward.
+
+To check the developer stack through the Formbricks AuthZed client without writing data, run:
+
+```bash
+pnpm authzed:health
+```
+
+It reads the repository `.env`, prints one JSON result, and returns exit code `0` only when healthy. An empty
+SpiceDB schema is still a healthy connection. There is no AuthZed browser health page, and the normal
+Formbricks `/health` endpoint deliberately remains independent of SpiceDB. Restart Formbricks after changing
+any `AUTHZED_*` value.
 
 ## Optional Services
 
@@ -285,6 +355,41 @@ memory, and LLM capacity.
 
 See our [migration guide](/self-hosting/advanced/migration) for version-specific steps to update Formbricks.
 
+### Add SpiceDB to an Existing Docker Installation
+
+The normal image update commands do not add new services to an existing customized Compose file. Before the
+first release that requires the AuthZed runtime:
+
+1. Back up `.env`, `docker-compose.yml`, and the PostgreSQL volume.
+2. Download `authzed-postgres-bootstrap.sh` from the same Formbricks release as the Compose file.
+3. Generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with `openssl rand -hex 32` and add them to `.env`.
+4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
+   `authzed-ops` service, plus the six `AUTHZED_*` Formbricks variables, from the released Compose file into your
+   customized file. Use `AUTHZED_CONSISTENCY=fully_consistent`. Preserve proxy, storage, and SMTP settings.
+5. Run `docker compose config` and `docker compose pull`. Apply the release's Formbricks database migrations
+   while the old application remains available: `docker compose run --rm formbricks-migrate`.
+6. Start PostgreSQL and SpiceDB, then run the guarded preparation and read-only gate:
+
+   ```bash
+   docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb
+   docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+   docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+   ```
+
+   A non-empty mismatched schema requires the reviewed `remoteDigest` as described in
+   [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6).
+7. Only after `upgrade check` exits `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
+   run `docker compose up -d`. The one-click updater performs the same preparation before it stops the old app.
+8. Confirm `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy
+   with `docker compose ps -a`.
+9. Back up the new authorization database with
+   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` after validation and
+   include it in future database backup procedures.
+
+To roll back v6, restore the exact bridge-compatible v5 image and configuration kept for the migration. Keep
+outbox delivery enabled, require a clean audit, and do not delete or replace either PostgreSQL database. See the
+rollback procedure in [AuthZed Operations](/self-hosting/advanced/authzed-operations#roll-back-a-v6-upgrade).
+
 <Info>
   For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.
   Pulling images alone is not enough if your stack does not yet include Hub (`HUB_API_KEY`), Cube (`cube/`
@@ -308,6 +413,14 @@ See our [migration guide](/self-hosting/advanced/migration) for version-specific
    ```bash
    docker compose up -d
    ```
+
+<Warning>
+  **Security (existing installs):** these steps — and the [one-click setup script](/self-hosting/setup/one-click)
+  updater, which runs the same `pull` / `down` / `up -d` — do **not** rewrite your existing
+  `docker-compose.yml`. If your bundled `redis` (Valkey) service still publishes `ports: - "6379:6379"`, it
+  stays exposed to the host after updating. See [Debug](#debug) for how to remove the mapping and, if the port
+  was reachable from an untrusted network, invalidate existing sessions.
+</Warning>
 
 ## Optional: Add RustFS for File Storage
 
@@ -403,7 +516,7 @@ services:
       - rustfs-data:/data
 
   rustfs:
-    image: rustfs/rustfs:1.0.0-alpha.93
+    image: rustfs/rustfs:1.0.0-rc.2@sha256:7d6d361c49c08d427250fb59aae5d78df83d644c3405d9ccf4b21cda0b0692d0
     restart: always
     depends_on:
       rustfs-perms:
@@ -416,7 +529,8 @@ services:
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_CONSOLE_ADDRESS: ":9001"
       # CORS for browser uploads: set to your Formbricks origin(s), comma-separated.
-      # Unset = allow all origins; a value is treated as an allow-list. See the File Uploads guide.
+      # Unset = no CORS headers are emitted, so browser uploads fail; a value is treated as an allow-list.
+      # See the File Uploads guide.
       RUSTFS_CORS_ALLOWED_ORIGINS: "https://app.yourdomain.com"
     ports:
       - "9000:9000"
@@ -587,10 +701,41 @@ Common checks:
   exist, then inspect `docker compose logs cube`.
 - **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub
   service.
-- **Port conflicts**: Confirm ports `3000`, `6379`, and any optional service ports you enabled are not already
-  in use on the host.
+- **Port conflicts**: Confirm port `3000` and any optional service ports you enabled are not already in use on
+  the host. The current template does not publish the bundled Valkey (`redis` service) to the host — it is
+  reachable only on the internal compose network — so a fresh install does not need port `6379` free on the
+  host.
 - **Optional Qwen/vLLM issues**: Check GPU availability, NVIDIA Container Toolkit installation, and
   `docker compose --profile qwen logs --tail=200 vllm`.
+
+<Warning>
+  **Existing installs: remove the bundled Valkey host port.** Older templates published the `redis`
+  (Valkey) service on `0.0.0.0:6379` with no password. That instance stores Better Auth sessions and
+  verification tokens, so an exposed port lets anyone who can reach it read live sessions and take over
+  accounts. Updating Formbricks (`docker compose pull` / `up -d`) does **not** rewrite your existing
+  `docker-compose.yml`, so the mapping stays until you remove it. Open your `docker-compose.yml`, delete the
+  ```yaml
+  ports:
+    - "6379:6379"
+  ```
+  lines from the `redis:` service, then run `docker compose up -d`. The app reaches Valkey over the internal
+  compose network, so no other configuration change is needed. Only keep a publish if an external tool
+  genuinely needs it, and then bind it to loopback (`127.0.0.1:6379:6379`) rather than all interfaces.
+
+  **If the port was reachable from an untrusted network, also invalidate existing sessions.** Valkey persists
+  to its `redis` volume, so removing the port does not clear session or token state an attacker may already
+  have written — a forged session can remain valid afterward. After closing the port, set a new
+  `NEXTAUTH_SECRET` in your `.env`, then recreate the app container so it picks up the change:
+  ```bash
+  docker compose up -d --force-recreate formbricks
+  ```
+  A plain `docker compose restart` keeps the container's original environment, so the rotated secret would not
+  take effect. Recreating invalidates every session cookie, so all users must sign in again, while stored
+  data, the job queue, and the cache stay intact. (If you added `BETTER_AUTH_SECRET` to the `formbricks`
+  service environment yourself, rotate that instead — Better Auth prefers it over `NEXTAUTH_SECRET`; the
+  bundled compose ships only `NEXTAUTH_SECRET`.) Leave `ENCRYPTION_KEY` unchanged, and do **not** run a blanket
+  `FLUSHDB` — the same Valkey also holds BullMQ job queues and the application cache.
+</Warning>
 
 <Note>
   To edit any of the available environment variables, check out our

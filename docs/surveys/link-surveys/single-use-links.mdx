@@ -5,35 +5,178 @@ description:
 icon: "link"
 ---
 
-This guide will help you understand how to generate and use single-use links within our application.
+A single-use link is a survey link that accepts exactly one completed response. Instead of sharing
+one URL with everyone, you hand each respondent their own URL. Once that URL has been used to
+finish the survey, it stops working — everyone else's links are unaffected.
 
-## Purpose
-
-- Single-use links (or one-time / disposable links) are URLs that grant access to a survey only once.
-
-- The primary purpose of single-use links is to assure that no respondent submits a survey twice.
+Use them when you invite a known list of people (customers, panelists, employees) and want one
+response per invitation, without asking anyone to log in.
 
 <Note>
-  Want to create up to 5,000 single-use links? Use our [API endpoint for
-  that.](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#c49ef758-a78a-4ef4-a282-262621151f08)
+  **Looking for responses tied to a specific person? Use
+  [Personal Links](/surveys/link-surveys/personal-links) instead.**
+
+  Single-use links are anonymous. Formbricks limits each link to one response but does not know who
+  is behind it, so it is on you to track which link you sent to whom (a custom single-use ID makes
+  that easier).
+
+  Personal links are generated for contacts in a segment. Each response is automatically attributed
+  to that contact, links can be given an expiry date, and the CSV export maps every link to a name
+  and email. Formbricks also blocks a second response from the same contact on its own, so you get
+  the one-response-per-person guarantee whether or not single-use links are switched on.
 </Note>
 
-## How to use single-use links
+## How a single-use link works
 
-Using single-use links with Formbricks is quite straight-forward:
+Every single-use link is your normal survey link plus a **single-use ID** (`suId`), and — depending
+on the mode — a **signature** (`suToken`):
 
-1. On the Summary page, hit "Share survey" in the top right corner to open the sharing modal.
+```
+https://app.formbricks.com/s/<surveyId>?suId=<single-use-id>&suToken=<signature>
+```
 
-2. Toggle "Single Use Link" on in the Anonymous Links tab:
+When someone opens the link, Formbricks:
 
-   ![Single use link survey settings](/images/surveys/link-surveys/single-use-links/single-use-links.webp)
+<Steps>
+  <Step title="Validates the suId">
+    The `suId` must be one Formbricks issued for this survey. If it is missing, malformed, or
+    tampered with, the respondent sees a *"This survey can only be taken by invitation"* page and
+    cannot answer.
+  </Step>
+  <Step title="Looks for an existing response">
+    Formbricks checks whether a response with this `suId` already exists for the survey.
+  </Step>
+  <Step title="Serves, resumes, or blocks">
+    No response yet → the survey opens. An unfinished response → it resumes where the respondent
+    left off. A finished response → they see *"The survey has already been answered."*
+  </Step>
+</Steps>
 
-3. If you'd like to use URL encryption, toggle "URL Encryption" on. You can then customize the number of links you'd like to generate and download as CSV.
+<Note>
+  A link is only spent once the response is **finished**. If a respondent drops off halfway, they
+  can reopen the same link and continue — they do not lose their answers and do not need a new
+  link.
+</Note>
 
-4. If you'd like to set a custom single-use ID, deactivate the "Enable URL Encryption" toggle. You can then customize the single-use ID in the URL or programmatically.
+The `suId` is stored on the response, and the database enforces one response per `suId` per survey.
+So even if two people open the same link at the same time, only the first submission is accepted.
 
-## Check suId of a submission
+## Encrypted vs. custom single-use IDs
 
-You can find the suId of each submission in the submission meta data. You'll find it both in the table as well as in the meta data when hovering over the Avatar:
+Single-use links come in two modes, controlled by the **URL encryption of single-use ID** toggle.
+Both are equally tamper-proof. The difference is who chooses the ID and whether it is readable.
 
-   ![Single use link survey metadata](/images/surveys/link-surveys/single-use-links/suid-metadata.webp)
+| | **URL encryption on** (default) | **URL encryption off** |
+|---|---|---|
+| What `suId` looks like | An AES-encrypted, URL-encoded blob | Whatever you choose, e.g. `?suId=CUSTOMER-4711` |
+| `suToken` in the URL | Not used | Required. An HMAC signature over the survey ID and `suId` |
+| Who creates the ID | Formbricks (UI or API) | You |
+| Best for | Bulk invites where the ID carries no meaning | Mapping responses back to a record in your own system |
+
+<Warning>
+  Both modes are signed or encrypted with your instance's `ENCRYPTION_KEY`, so respondents cannot
+  forge a valid link by guessing an ID. They *can* forward their own link to someone else, so
+  treat a single-use link as a credential.
+</Warning>
+
+## Create single-use links in the app
+
+<Steps>
+  <Step title="Open the share modal">
+    On the survey summary page, click **Share survey** in the top right corner and go to the
+    **Anonymous links** tab.
+  </Step>
+  <Step title="Turn on Single-use links">
+    Toggle **Single-use links** on and confirm.
+
+    ![Single use link survey settings](/images/surveys/link-surveys/single-use-links/single-use-links.webp)
+
+    <Warning>
+      Single-use and multi-use links are mutually exclusive. Enabling single-use links disables the
+      multi-use link, which also disables anything built on it: website and email embeds, social
+      media shares, and QR codes.
+    </Warning>
+  </Step>
+  <Step title="Generate a batch of links">
+    URL encryption is on by default. Enter how many links you need (1–5,000) and click
+    **Generate & download links**. You get a CSV with one link per row.
+  </Step>
+  <Step title="Or set your own single-use ID">
+    Turn **URL encryption of single-use ID** off, type your own ID (e.g. an invoice or customer
+    number), and click **Copy** to get the signed link for it.
+  </Step>
+</Steps>
+
+<Warning>
+  Formbricks does not store the generated links. Save the CSV — links cannot be re-downloaded, and
+  regenerating creates a different set of IDs.
+</Warning>
+
+## Generate links via the API
+
+To generate links programmatically — or more than the UI batch limit in one workflow — use the
+Management API:
+
+```bash
+curl -X GET \
+  'https://app.formbricks.com/api/v1/management/surveys/<surveyId>/singleUseIds?limit=100' \
+  -H 'x-api-key: <your-api-key>'
+```
+
+```json
+{
+  "data": [
+    "https://app.formbricks.com/s/clzqym2l3...?suId=ohkj3qx6d0wdo9r3nfpm3bgj&suToken=9f2b...",
+    "https://app.formbricks.com/s/clzqym2l3...?suId=ci6la2lzj63pvsp6x3eqbhff&suToken=41ce..."
+  ]
+}
+```
+
+The sample above is from a survey with URL encryption off, so each link carries a readable `suId`
+plus its `suToken`. With encryption on, the `suId` is an encrypted blob and there is no `suToken`.
+
+- `limit` defaults to `10` and accepts up to `5000` per call.
+- The survey must be a link survey with single-use links enabled, otherwise the endpoint returns a
+  400.
+- The API key needs **write** access to the survey's workspace. Even though this is a `GET`, it
+  mints links that can be used to submit responses, so read-only keys are rejected.
+- Links follow the survey's encryption setting. With encryption off, each returned URL also carries
+  its `suToken`.
+
+See the [API reference](/api-reference/management-api--survey/get-singleuse-links) for the full
+endpoint definition.
+
+## Find the single-use ID of a response
+
+Each response records the `suId` it came from. In the responses table it appears as its own column,
+and in the single response card you'll see it in the metadata when hovering over the avatar:
+
+![Single use link survey metadata](/images/surveys/link-surveys/single-use-links/suid-metadata.webp)
+
+Responses fetched via the API expose the same value as the `singleUseId` field, which is how you
+match a response back to the person you sent that link to.
+
+## Submitting responses programmatically
+
+If you build your own survey frontend and post responses to the client API, a single-use survey
+requires two things in the request:
+
+- `singleUseId` in the request body
+- `meta.url` set to the full link the respondent opened, including its `suId` and `suToken`
+
+Formbricks re-validates the URL and rejects the response if the two do not match.
+
+<Note>
+  With URL encryption on, the `suId` in the URL is encrypted while the API expects the decrypted
+  ID, which your backend cannot derive. For programmatic submission, turn URL encryption off and
+  use custom single-use IDs.
+</Note>
+
+## Good to know
+
+- **Self-hosting**: single-use links require `ENCRYPTION_KEY` to be set. Rotating that key
+  invalidates every single-use link that was already handed out.
+- **Since Formbricks 5.0**, unencrypted single-use links must carry a valid `suToken`. Links
+  generated before 5.0 without a token are rejected — regenerate them.
+- The *"already answered"* screen can be customized via the `singleUse.heading` and
+  `singleUse.subheading` fields on the survey in the Management API.

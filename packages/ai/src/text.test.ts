@@ -47,4 +47,18 @@ describe("packages/ai text helpers", () => {
       text: "translated text",
     });
   });
+
+  test("applies wrapModel to the resolved model when provided", async () => {
+    const wrappedModel = { providerName: "google", modelName: "gemini-2.5-flash", wrapped: true };
+    const wrapModel = vi.fn().mockReturnValue(wrappedModel);
+
+    await generateText({ system: "Translate text.", prompt: "Hello world" }, undefined, wrapModel);
+
+    expect(wrapModel).toHaveBeenCalledWith({ providerName: "google", modelName: "gemini-2.5-flash" });
+    expect(mocks.generateText).toHaveBeenCalledWith({
+      system: "Translate text.",
+      prompt: "Hello world",
+      model: wrappedModel,
+    });
+  });
 });

@@ -21,26 +21,28 @@ Attribute-based Targeting helps you achieve a number of goals:
 ## How does Attribute-based Targeting work?
 
 <Steps>
-  <Step title="Create Segment">
-    To get started, go to the Contacts tab and create a new Segment:
+  <Step title="Create a segment">
+    Go to **Contacts → Segments** and click `Create segment`.
 
-    ![Create a new segment](/images/surveys/website-app-surveys/targeting/contacts.webp "Create a new segment")
-
+    ![The Segments list](/images/surveys/website-app-surveys/targeting/segments-list.webp "The Segments list")
   </Step>
 
-  <Step title="Configure Segment based on attributes">
-    In the Segment editor, you can configure your Segment with a combination of Attributes, Segments, Devices, and Survey Interactions. If a user matches either or all of the criteria, they become part of the Segment. See [Segment Configuration](/surveys/website-app-surveys/attribute-based-targeting#segment-configuration) below.
+  <Step title="Configure it">
+    Open the segment and switch to its **Settings** tab. Everything under **Targeting** decides who is in it.
+
+    ![A segment's Settings tab](/images/surveys/website-app-surveys/targeting/segment-editor.webp "A segment's Settings tab")
   </Step>
 
-  <Step title="Create a survey of type Website & App">
-    Create a new survey and go to Settings to change it to Website & App survey:
+  <Step title="Create a Website & App survey">
+    A segment can only target a survey that runs inside your product. In the survey editor, open **Settings → Survey Type**.
 
-    ![Create a new segment of type in-app](/images/surveys/website-app-surveys/targeting/survey-type.webp "Create a new segment")
+    ![The Survey Type section](/images/surveys/website-app-surveys/targeting/survey-type.webp "The Survey Type section")
   </Step>
 
-  <Step title="Choose Segment in Targeting options">
-    ![Choose Segment in Targeting options](/images/surveys/website-app-surveys/targeting/target-audience.webp "Choose Segment in Targeting options")
+  <Step title="Choose the segment">
+    Still in **Settings**, open **Target Audience** and pick the segment.
 
+    ![The Target Audience section](/images/surveys/website-app-surveys/targeting/target-audience.webp "The Target Audience section")
   </Step>
 
   <Step title="Publish your survey" icon="party-horn" iconType="solid" />
@@ -48,22 +50,18 @@ Attribute-based Targeting helps you achieve a number of goals:
 
 ### Segment Configuration
 
+`Add filter` opens one list holding every kind of filter a segment can use.
+
+![The Add filter dialog](/images/surveys/website-app-surveys/targeting/add-filter.webp "The Add filter dialog")
+
 There are four means to move Contacts in or out of Segments: **Attributes**, other **Segments**, **Devices**, and [**Survey Interactions**](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments):
 
 1. **Attributes**: If the value of a specific attribute matches, the user becomes part of the Segment.
 
-  ![Attribute filter](/images/surveys/website-app-surveys/targeting/attribute-filter.webp "Attribute filter")
+2. **Segments**: You can nest Segments meaning that if a user is or is not part of another Segment, they can be included or excluded.
 
-
-2. **Segments**: You can nest Segments meaning that if a user is or is not part of another Segment, they can be included or excluded
-
-   ![Segments filter](/images/surveys/website-app-surveys/targeting/segments-filter.webp "Segments filter")
-
-
-3. **Devices**: If a user uses a Phone or Desktop, you can include or exclude them
-
-   ![Devices filter](/images/surveys/website-app-surveys/targeting/device-filter.webp "Devices filter")
+3. **Devices**: If a user uses a Phone or Desktop, you can include or exclude them.
 
 4. **Survey Interactions**: Include or exclude Contacts based on whether they have seen, started, or completed a survey within a recent time window. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments) for details and use cases like per-survey cooldowns and follow-up funnels.
 
-5. **Filter Groups:** You can group any of the above conditions in group and connect them logically with `AND` or `OR`. This allows for maximum granularity.
+Any of those four can be combined. Conditions are joined with `AND` or `OR`, and a **filter group** wraps several of them so the two can be mixed without ambiguity — the same reason brackets exist in arithmetic.

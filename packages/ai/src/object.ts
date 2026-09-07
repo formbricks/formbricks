@@ -1,16 +1,23 @@
 import { Output, generateText } from "ai";
 import { AIOutputTokenLimitError } from "./errors";
 import { getAiModel } from "./provider";
-import type { AIEnvironment, TGenerateObjectOptions, TGenerateObjectResult } from "./types";
+import type {
+  AIEnvironment,
+  AIResolvedLanguageModel,
+  TGenerateObjectOptions,
+  TGenerateObjectResult,
+} from "./types";
 
 export const generateObject = async <T = unknown>(
   options: TGenerateObjectOptions<T>,
-  environment?: AIEnvironment
+  environment?: AIEnvironment,
+  wrapModel?: (model: AIResolvedLanguageModel) => AIResolvedLanguageModel
 ): Promise<TGenerateObjectResult<T>> => {
   const { schema, schemaName, schemaDescription, output: _output, ...textOptions } = options;
+  const model = getAiModel(environment);
   const request = {
     ...textOptions,
-    model: getAiModel(environment),
+    model: wrapModel ? wrapModel(model as AIResolvedLanguageModel) : model,
     output: Output.object<T>({
       schema,
       name: schemaName,

@@ -1,10 +1,10 @@
 import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { hasFeedbackRecordsInDirectories } from "@/modules/ee/analysis/lib/feedback-records";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
 
-export async function getFeedbackDataAvailability(workspaceId: string) {
+export async function getFeedbackDataAvailability(userId: string, workspaceId: string) {
   const [directories, feedbackSources] = await Promise.all([
-    getFeedbackDirectoriesByWorkspaceId(workspaceId),
+    getAuthorizedWorkspaceFeedbackDirectories(userId, workspaceId),
     getFeedbackSourcesWithMappings(workspaceId),
   ]);
 

@@ -1,25 +1,15 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    /* Bundler mode */
-    "moduleResolution": "bundler",
+    "declaration": false,
+    "declarationMap": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "noEmit": true,
     "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-
-    /* Linting */
-    "strict": true,
-    "target": "ES2020",
-    "useDefineForClassFields": true
+    "resolveJsonModule": true
   },
+  "extends": "@formbricks/config-typescript/react-library.json",
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

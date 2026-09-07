@@ -1,22 +1,17 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEmailTemplateHtml } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
-import {
-  generateExampleResponseDataset,
-  toExampleResponseInput,
-} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/example-responses";
-import { createResponseWithQuotaEvaluation } from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
+import { generateExampleResponseDataset } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/example-responses";
+import { persistExampleResponseDataset } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/example-responses-persistence";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
+import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
-import { addTagToRespone } from "@/lib/tagOnResponse/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { convertToCsv } from "@/lib/utils/file-conversion";
 import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -39,20 +34,9 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     const survey = await getSurvey(parsedInput.surveyId);
@@ -85,20 +69,9 @@ export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSur
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -144,102 +117,77 @@ const ZGenerateExampleResponsesAction = z.object({
 // noise into a live survey).
 export const generateExampleResponsesAction = authenticatedActionClient
   .inputSchema(ZGenerateExampleResponsesAction)
-  .action(async ({ ctx, parsedInput }) => {
-    // Per-user limit (1 per minute). Closes the multi-click race window where
-    // two clicks fired before the first LLM call returns could both pass the
-    // responseCount === 0 check, and bounds a single user's overall LLM spend.
-    await applyRateLimit(rateLimitConfigs.actions.generateExampleResponses, ctx.user.id);
+  .action(
+    withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
+      // Per-user limit (1 per minute). Closes the multi-click race window where
+      // two clicks fired before the first LLM call returns could both pass the
+      // responseCount === 0 check, and bounds a single user's overall LLM spend.
+      await applyRateLimit(rateLimitConfigs.actions.generateExampleResponses, ctx.user.id);
 
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId,
-        },
-      ],
-    });
-
-    // Throws OperationNotAllowedError if AI is unentitled, disabled, or
-    // the instance isn't configured (env vars). Same gating helper that the
-    // existing AI text endpoint uses.
-    await assertOrganizationAIConfigured(organizationId);
-
-    const survey = await getSurvey(parsedInput.surveyId);
-    if (!survey) {
-      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
-    }
-
-    // Same stale-tab defense as the responseCount check below: generating examples is hidden while
-    // archived, but a direct call would still write responses/displays/a tag into an archived survey.
-    if (survey.archivedAt) {
-      throw new OperationNotAllowedError("Cannot generate example responses for an archived survey.");
-    }
-
-    const existingCount = await getResponseCountBySurveyId(parsedInput.surveyId);
-    if (existingCount > 0) {
-      throw new OperationNotAllowedError(
-        "Example responses can only be generated for a survey that has no responses yet."
-      );
-    }
-
-    const generatedDataset = await generateExampleResponseDataset({ survey, organizationId });
-    if (generatedDataset.responses.length === 0) {
-      throw new InvalidInputError(
-        "This survey doesn't contain any question types we can synthesize answers for yet."
-      );
-    }
-
-    // Tag every synthetic response so users can tell them apart from real ones
-    // in the responses list. Upsert handles the case where a previous run (or a
-    // user) already created the tag in this workspace.
-    const aiTag = await prisma.tag.upsert({
-      where: { workspaceId_name: { workspaceId, name: generatedDataset.tagName } },
-      create: { workspaceId, name: generatedDataset.tagName },
-      update: {},
-    });
-
-    for (const item of generatedDataset.responses) {
-      // Each response gets its own Display so the dashboard's "displays" count
-      // and completion-rate calc line up with the response row. Backdate the
-      // display to the same moment as the response — the assertDisplayOwnership
-      // check inside createResponse runs against the matching surveyId.
-      const display = await prisma.display.create({
-        data: { survey: { connect: { id: survey.id } }, createdAt: item.createdAt },
-        select: { id: true },
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
       });
 
-      const response = await createResponseWithQuotaEvaluation(
-        toExampleResponseInput(survey.id, workspaceId, item, display.id)
-      );
-      await addTagToRespone(response.id, aiTag.id);
-      // `createResponse` ignores caller-supplied createdAt; backdate after the
-      // fact so the responses-over-time chart shows a realistic spread.
-      await prisma.response.update({
-        where: { id: response.id },
-        data: { createdAt: item.createdAt },
-      });
-    }
+      // Set before the gates below so a rejected or failed attempt is still attributed to the right
+      // organization and survey — the wrapper audits failures too, which is how a rolled-back batch
+      // leaves a trace now that the write is all-or-nothing.
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+      ctx.auditLoggingCtx.oldObject = null;
 
-    // Extra view-only displays simulate respondents who saw the survey but
-    // didn't submit. Without these the completion rate would read 100%.
-    if (generatedDataset.displays.length > 0) {
-      await prisma.display.createMany({
-        data: generatedDataset.displays.map(({ createdAt }) => ({ surveyId: survey.id, createdAt })),
-      });
-    }
+      // Throws OperationNotAllowedError if AI is unentitled, disabled, or
+      // the instance isn't configured (env vars). Same gating helper that the
+      // existing AI text endpoint uses.
+      await assertOrganizationAIConfigured(organizationId);
 
-    return { createdCount: generatedDataset.responses.length };
-  });
+      const survey = await getSurvey(parsedInput.surveyId);
+      if (!survey) {
+        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+      }
+
+      // Same stale-tab defense as the responseCount check below: generating examples is hidden while
+      // archived, but a direct call would still write responses/displays/a tag into an archived survey.
+      if (survey.archivedAt) {
+        throw new OperationNotAllowedError("Cannot generate example responses for an archived survey.");
+      }
+
+      const existingCount = await getResponseCountBySurveyId(parsedInput.surveyId);
+      if (existingCount > 0) {
+        throw new OperationNotAllowedError(
+          "Example responses can only be generated for a survey that has no responses yet."
+        );
+      }
+
+      const generatedDataset = await generateExampleResponseDataset({
+        survey,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+      });
+      if (generatedDataset.responses.length === 0) {
+        throw new InvalidInputError(
+          "This survey doesn't contain any question types we can synthesize answers for yet."
+        );
+      }
+
+      // Single all-or-nothing write: a failure part-way through the batch leaves no synthetic rows
+      // behind, so the survey stays eligible for another attempt instead of tripping the zero-response
+      // guard above on a partial batch.
+      const result = await persistExampleResponseDataset({
+        surveyId: survey.id,
+        workspaceId,
+        dataset: generatedDataset,
+      });
+
+      ctx.auditLoggingCtx.newObject = { createdCount: result.createdCount };
+
+      return result;
+    })
+  );
 
 const ZGetEmailHtmlAction = z.object({
   surveyId: ZId,
@@ -248,20 +196,9 @@ const ZGetEmailHtmlAction = z.object({
 export const getEmailHtmlAction = authenticatedActionClient
   .inputSchema(ZGetEmailHtmlAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     return await getEmailTemplateHtml(parsedInput.surveyId, ctx.user.locale);
@@ -283,20 +220,9 @@ export const generatePersonalLinksAction = authenticatedActionClient
       throw new OperationNotAllowedError("Contacts are not enabled for this workspace");
     }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId,
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
 
     // Get contacts and generate personal links
@@ -369,20 +295,9 @@ const ZUpdateSingleUseLinksAction = z.object({
 export const updateSingleUseLinksAction = authenticatedActionClient
   .inputSchema(ZUpdateSingleUseLinksAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     const survey = await getSurvey(parsedInput.surveyId);

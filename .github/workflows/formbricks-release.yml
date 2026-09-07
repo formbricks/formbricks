@@ -195,6 +195,8 @@ jobs:
           fi
 
           yq -i ".appVersion = \"${VERSION}\"" charts/formbricks/Chart.yaml
+          perl -0pi -e "s/!\[Version: [^\]]+\]/![Version: ${VERSION}]/" charts/formbricks/README.md
+          perl -0pi -e "s/Version-[0-9A-Za-z._+-]+-informational/Version-${VERSION}-informational/" charts/formbricks/README.md
           perl -0pi -e "s/!\[AppVersion: [^\]]+\]/![AppVersion: ${VERSION}]/" charts/formbricks/README.md
           perl -0pi -e "s/AppVersion-[0-9A-Za-z._+-]+-informational/AppVersion-${VERSION}-informational/" charts/formbricks/README.md
 
@@ -267,12 +269,20 @@ jobs:
     name: Mark Linear release as complete
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # Published artifacts only, and only jobs that always run for a stable release.
+    #
+    # update-helm-app-version opens a follow-up PR against main rather than publishing
+    # anything for this tag, so gating completion on it left Linear stuck on every stable
+    # release its appVersion PR job failed.
+    #
+    # move-stable-tag is excluded for a subtler reason: its called job is gated on
+    # `!is_prerelease && make_latest`, so it is legitimately skipped for any stable release
+    # that is not the latest - every patch on an older line. A skipped dependency skips this
+    # job too, so depending on it would keep Linear stuck on exactly those releases.
     needs:
       - docker-build-community
       - docker-build-cloud
       - helm-chart-release
-      - move-stable-tag
-      - update-helm-app-version
     if: ${{ !github.event.release.prerelease }}
     steps:
       - name: Harden the runner
@@ -285,18 +295,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Stamp the in-progress release with the tag version before completing it.
-      # complete only looks up a release by version, it never assigns one, so a
-      # versioned sync must run first (Linear's recommended scheduled-pipeline flow).
+      # A versioned sync targets the release carrying this exact version, or creates it when
+      # none exists - which is what makes patch releases work, since 5.3.4 never had a
+      # planned train of its own. complete then looks that exact version up; it never
+      # assigns one, so the sync has to run first.
+      #
+      # VERSION is this release's tag with any v-prefix stripped and validated as SemVer by
+      # release-docker-github.yml. Using the raw tag_name instead would silently create a
+      # second, v-prefixed Linear release the first time somebody tags v5.6.0.
       - name: Stamp Linear release version
-        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # v0.7.0
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
-          version: ${{ github.event.release.tag_name }}
+          version: ${{ needs.docker-build-community.outputs.VERSION }}
 
       - name: Complete Linear release
-        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # v0.7.0
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
           command: complete
-          version: ${{ github.event.release.tag_name }}
+          version: ${{ needs.docker-build-community.outputs.VERSION }}

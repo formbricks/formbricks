@@ -244,6 +244,12 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         fitViewOptions={{ padding: 0.25, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4 }}
         defaultViewport={{ x: 0, y: 0, zoom: WORKFLOW_CANVAS_MAX_ZOOM }}
         nodesDraggable={canMutate}
+        // Disable the delete key entirely when mutation is gated. RF's deleteKeyCode defaults to
+        // "Backspace"; leaving it on lets a read-only member (or an editor on an enabled/archived
+        // workflow) visually drop a selected node — applyNodeChanges removes it from local flowNodes
+        // without ever touching the definition, so the change never persists and re-syncs on reload
+        // into an inconsistent canvas (orphaned edge). `null` disables the shortcut in RF 12.
+        deleteKeyCode={canMutate ? "Backspace" : null}
         nodesConnectable={false}
         snapGrid={WORKFLOW_CANVAS_SNAP_GRID}
         snapToGrid={isSnapToCanvasEnabled}

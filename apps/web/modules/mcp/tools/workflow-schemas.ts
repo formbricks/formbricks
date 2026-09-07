@@ -7,130 +7,165 @@ import {
   ZWorkflowStatus,
 } from "@formbricks/workflows";
 
-export const ZMcpListWorkflowsInput = z.object({
-  workspaceId: z.cuid2().describe("Workspace ID whose workflows should be listed."),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(100)
-    .describe("Maximum number of workflows to return. Defaults to 20.")
-    .default(20),
-  cursor: z
-    .string()
-    .min(1)
-    .optional()
-    .describe("Opaque pagination cursor from a previous list_workflows response."),
-  filter: z
-    .object({
-      name: z
-        .object({
-          contains: z
-            .string()
-            .min(1)
-            .max(512)
-            .optional()
-            .describe("Case-insensitive workflow name substring."),
-        })
-        .describe("Filter by workflow name.")
-        .optional(),
-      status: z
-        .object({
-          in: z
-            .array(ZWorkflowStatus)
-            .min(1)
-            .optional()
-            .describe("Workflow statuses to include. Omitting returns every status except archived."),
-        })
-        .describe("Filter by workflow status.")
-        .optional(),
-    })
-    .describe("Optional supported v3 workflow filters.")
-    .optional(),
-  sortBy: ZWorkflowSortBy.optional().describe(
-    "Sort field for pagination. Defaults to the v3 API default of updatedAt."
-  ),
-});
+// Every schema here rejects undeclared arguments, for the reasons documented at the top of
+// `./schemas.ts` (ENG-2256): an undeclared argument must fail loudly rather than be silently dropped.
+// Add `.strict()` to any new schema you add here — except where the base is already a `z.strictObject`,
+// in which case leave it alone and see the note on `ZMcpCreateWorkflowInput`.
+//
+// One exception, and it is not a small one: the `definition` payload on create/patch is open at every
+// level below `definition` itself, so a misspelled key inside a trigger, node, edge or node `config` is
+// still dropped rather than rejected — ENG-2256's failure mode, in a mutation. It cannot be closed here.
+// `definition` is `ZWorkflowDefinition` from `packages/workflows`, which the v3 Workflows REST route
+// parses and the workflow builder posts, so making it strict is a v3 API change (the builder sends `ui`
+// metadata and would have to be checked first) rather than part of an MCP migration. Tracked as
+// ENG-2437; `./schemas.test.ts` pins the hole to this subtree so it cannot quietly spread to a
+// top-level workflow argument.
+
+export const ZMcpListWorkflowsInput = z
+  .object({
+    workspaceId: z.cuid2().describe("Workspace ID whose workflows should be listed."),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .describe("Maximum number of workflows to return. Defaults to 20.")
+      .default(20),
+    cursor: z
+      .string()
+      .min(1)
+      .optional()
+      .describe("Opaque pagination cursor from a previous list_workflows response."),
+    filter: z
+      .strictObject({
+        name: z
+          .strictObject({
+            contains: z
+              .string()
+              .min(1)
+              .max(512)
+              .optional()
+              .describe("Case-insensitive workflow name substring."),
+          })
+          .describe("Filter by workflow name.")
+          .optional(),
+        status: z
+          .strictObject({
+            in: z
+              .array(ZWorkflowStatus)
+              .min(1)
+              .optional()
+              .describe("Workflow statuses to include. Omitting returns every status except archived."),
+          })
+          .describe("Filter by workflow status.")
+          .optional(),
+      })
+      .describe("Optional supported v3 workflow filters.")
+      .optional(),
+    sortBy: ZWorkflowSortBy.optional().describe(
+      "Sort field for pagination. Defaults to the v3 API default of updatedAt."
+    ),
+  })
+  .strict();
 export type TMcpListWorkflowsInput = z.infer<typeof ZMcpListWorkflowsInput>;
 
-export const ZMcpGetWorkflowInput = z.object({
-  workflowId: z.cuid2().describe("Workflow ID to fetch."),
-});
+export const ZMcpGetWorkflowInput = z
+  .object({
+    workflowId: z.cuid2().describe("Workflow ID to fetch."),
+  })
+  .strict();
 export type TMcpGetWorkflowInput = z.infer<typeof ZMcpGetWorkflowInput>;
 
-export const ZMcpListWorkflowRunsInput = z.object({
-  workspaceId: z.cuid2().describe("Workspace ID whose workflow runs should be listed."),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(100)
-    .describe("Maximum number of runs to return. Defaults to 20.")
-    .default(20),
-  cursor: z
-    .string()
-    .min(1)
-    .optional()
-    .describe("Opaque pagination cursor from a previous list_workflow_runs response."),
-  workflowId: z.cuid2().optional().describe("Return only runs of this workflow."),
-  responseId: z.cuid2().optional().describe("Return only runs triggered by this survey response."),
-  filter: z
-    .object({
-      status: z
-        .object({
-          in: z
-            .array(ZWorkflowRunStatus)
-            .min(1)
-            .optional()
-            .describe("Run statuses to include, for example queued or completed."),
-        })
-        .describe("Filter by run status.")
-        .optional(),
-      isDryRun: z.boolean().optional().describe("Filter by dry-run vs real runs. Omit to return both."),
-    })
-    .describe("Optional supported v3 workflow run filters.")
-    .optional(),
-});
+export const ZMcpListWorkflowRunsInput = z
+  .object({
+    workspaceId: z.cuid2().describe("Workspace ID whose workflow runs should be listed."),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .describe("Maximum number of runs to return. Defaults to 20.")
+      .default(20),
+    cursor: z
+      .string()
+      .min(1)
+      .optional()
+      .describe("Opaque pagination cursor from a previous list_workflow_runs response."),
+    workflowId: z.cuid2().optional().describe("Return only runs of this workflow."),
+    responseId: z.cuid2().optional().describe("Return only runs triggered by this survey response."),
+    filter: z
+      .strictObject({
+        status: z
+          .strictObject({
+            in: z
+              .array(ZWorkflowRunStatus)
+              .min(1)
+              .optional()
+              .describe("Run statuses to include, for example queued or completed."),
+          })
+          .describe("Filter by run status.")
+          .optional(),
+        isDryRun: z.boolean().optional().describe("Filter by dry-run vs real runs. Omit to return both."),
+      })
+      .describe("Optional supported v3 workflow run filters.")
+      .optional(),
+  })
+  .strict();
 export type TMcpListWorkflowRunsInput = z.infer<typeof ZMcpListWorkflowRunsInput>;
 
-export const ZMcpGetWorkflowRunInput = z.object({
-  runId: z.cuid2().describe("Workflow run ID to fetch, including its ordered step logs."),
-});
+export const ZMcpGetWorkflowRunInput = z
+  .object({
+    runId: z.cuid2().describe("Workflow run ID to fetch, including its ordered step logs."),
+  })
+  .strict();
 export type TMcpGetWorkflowRunInput = z.infer<typeof ZMcpGetWorkflowRunInput>;
 
-export const ZMcpTestWorkflowInput = z.object({
-  workflowId: z.cuid2().describe("Workflow ID to dry-run (validate + mock execute, no side effects)."),
-});
+export const ZMcpTestWorkflowInput = z
+  .object({
+    workflowId: z.cuid2().describe("Workflow ID to dry-run (validate + mock execute, no side effects)."),
+  })
+  .strict();
 export type TMcpTestWorkflowInput = z.infer<typeof ZMcpTestWorkflowInput>;
 
 // --- Mutations ---
 
 // Reuse the v3 create contract verbatim: workspaceId, name, optional description, and the full
 // workflow definition graph. Workflows are always created as drafts (enable makes them live).
+//
+// No `.strict()` here, unlike its siblings: `ZCreateWorkflowInput` is already a `z.strictObject`, so it
+// would add nothing - and Zod 4's `.strict()` returns a clone that drops `.describe()`, which would
+// silently strip the contract's own "Creates a draft workflow." description from what `tools/list`
+// advertises.
 export const ZMcpCreateWorkflowInput = ZCreateWorkflowInput;
 export type TMcpCreateWorkflowInput = z.infer<typeof ZMcpCreateWorkflowInput>;
 
-export const ZMcpPatchWorkflowInput = z.object({
-  workflowId: z.cuid2().describe("Workflow ID to update."),
-  data: ZPatchWorkflowInput.describe(
-    "Partial update. Provided top-level fields replace that whole subtree; definition edits are only accepted while draft or disabled."
-  ),
-});
+export const ZMcpPatchWorkflowInput = z
+  .object({
+    workflowId: z.cuid2().describe("Workflow ID to update."),
+    data: ZPatchWorkflowInput.describe(
+      "Partial update. Provided top-level fields replace that whole subtree; definition edits are only accepted while draft or disabled."
+    ),
+  })
+  .strict();
 export type TMcpPatchWorkflowInput = z.infer<typeof ZMcpPatchWorkflowInput>;
 
-export const ZMcpDuplicateWorkflowInput = z.object({
-  workflowId: z.cuid2().describe("Workflow ID to duplicate as a new draft."),
-  name: z
-    .string()
-    .min(1)
-    .max(120)
-    .optional()
-    .describe("Optional name for the copy. If omitted, the server picks a non-conflicting name."),
-});
+export const ZMcpDuplicateWorkflowInput = z
+  .object({
+    workflowId: z.cuid2().describe("Workflow ID to duplicate as a new draft."),
+    name: z
+      .string()
+      .min(1)
+      .max(120)
+      .optional()
+      .describe("Optional name for the copy. If omitted, the server picks a non-conflicting name."),
+  })
+  .strict();
 export type TMcpDuplicateWorkflowInput = z.infer<typeof ZMcpDuplicateWorkflowInput>;
 
 // Shared shape for the id-only lifecycle mutations (delete / enable / disable / archive / unarchive).
-export const ZMcpWorkflowIdInput = z.object({
-  workflowId: z.cuid2().describe("Workflow ID."),
-});
+export const ZMcpWorkflowIdInput = z
+  .object({
+    workflowId: z.cuid2().describe("Workflow ID."),
+  })
+  .strict();
 export type TMcpWorkflowIdInput = z.infer<typeof ZMcpWorkflowIdInput>;

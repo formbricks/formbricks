@@ -164,6 +164,7 @@ export const addPageUrlEventListeners = (): void => {
 
   // Monkey patch history methods if not already done
   if (!isHistoryPatched) {
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- deliberate monkey-patch; the original is re-invoked via .apply(this, args)
     const originalPushState = history.pushState;
 
     history.pushState = function (...args) {
@@ -172,6 +173,7 @@ export const addPageUrlEventListeners = (): void => {
       window.dispatchEvent(event);
     };
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- deliberate monkey-patch; the original is re-invoked via .apply(this, args)
     const originalReplaceState = history.replaceState;
 
     history.replaceState = function (...args) {
@@ -184,7 +186,7 @@ export const addPageUrlEventListeners = (): void => {
   }
 
   events.forEach((event) => {
-    window.addEventListener(event, checkPageUrlWrapper as EventListener);
+    window.addEventListener(event, checkPageUrlWrapper);
   });
   arePageUrlEventListenersAdded = true;
 };
@@ -192,7 +194,7 @@ export const addPageUrlEventListeners = (): void => {
 export const removePageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || !arePageUrlEventListenersAdded) return;
   events.forEach((event) => {
-    window.removeEventListener(event, checkPageUrlWrapper as EventListener);
+    window.removeEventListener(event, checkPageUrlWrapper);
   });
   arePageUrlEventListenersAdded = false;
 };

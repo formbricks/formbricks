@@ -1,20 +1,34 @@
 "use client";
 
-import { CopyIcon, Maximize2Icon, MoreVerticalIcon, SquarePenIcon, TrashIcon } from "lucide-react";
+import {
+  ChartColumnIcon,
+  CopyIcon,
+  Maximize2Icon,
+  MoreVerticalIcon,
+  SquarePenIcon,
+  TableIcon,
+  TrashIcon,
+} from "lucide-react";
 import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { type TWidgetView, WIDGET_VIEWS } from "@/modules/ee/analysis/dashboards/lib/widget-view";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface DashboardWidgetProps {
   title: string;
   children: ReactNode;
   isEditing?: boolean;
+  /** Omitted for widgets with no chart or no query behind them. A widget whose query failed still
+   * gets the toggle: the parent cannot know that without awaiting the promise. */
+  view?: TWidgetView;
+  onViewChange?: (view: TWidgetView) => void;
   onEdit?: () => void;
   onDuplicate?: () => void;
   onResize?: () => void;
@@ -25,6 +39,8 @@ export function DashboardWidget({
   title,
   children,
   isEditing,
+  view,
+  onViewChange,
   onEdit,
   onDuplicate,
   onResize,
@@ -42,17 +58,60 @@ export function DashboardWidget({
       )}>
       <div
         className={cn(
-          "flex h-10 items-center justify-between border-b border-gray-100 px-4",
+          "flex min-h-10 items-center justify-between gap-2 border-b border-gray-100 px-4 py-1.5",
           isEditing && "rgl-drag-handle cursor-grab active:cursor-grabbing"
         )}>
-        <h3 className="flex-1 truncate text-sm font-semibold text-gray-800">{title}</h3>
+        {/* A score card's title is the whole survey question, which does not fit one line in a
+            quarter-width widget. Wrap to two lines and keep the full text in the native tooltip
+            rather than clipping it mid-word. */}
+        <h3 className="line-clamp-2 flex-1 text-sm leading-tight font-semibold text-gray-800" title={title}>
+          {title}
+        </h3>
+        {view && onViewChange && (
+          // A fieldset rather than a div with role="group": it carries the grouping semantics
+          // natively, so the two icon buttons read as one control. Tailwind's preflight already
+          // strips the browser's default fieldset margin, padding and border.
+          <fieldset
+            aria-label={t("workspace.analysis.dashboards.widget_view")}
+            className="flex shrink-0 items-center rounded-md border border-gray-200 p-0.5">
+            {WIDGET_VIEWS.map((widgetView) => {
+              const isActive = view === widgetView;
+              const Icon = widgetView === "chart" ? ChartColumnIcon : TableIcon;
+              const label =
+                widgetView === "chart"
+                  ? t("workspace.analysis.charts.chart")
+                  : t("workspace.analysis.charts.chart_data_tab");
+              return (
+                <TooltipRenderer key={widgetView} tooltipContent={label}>
+                  <button
+                    type="button"
+                    aria-label={label}
+                    aria-pressed={isActive}
+                    className={cn(
+                      "flex items-center rounded-sm p-1 transition-colors",
+                      isActive
+                        ? "bg-gray-100 text-gray-700"
+                        : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                    )}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewChange(widgetView);
+                    }}>
+                    <Icon className="size-3.5" />
+                  </button>
+                </TooltipRenderer>
+              );
+            })}
+          </fieldset>
+        )}
         {hasMenuActions && (
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 aria-label={t("common.more_options")}
-                className="ml-2 shrink-0 rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                className="shrink-0 rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}>
                 <MoreVerticalIcon className="size-4" />

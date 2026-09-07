@@ -110,28 +110,32 @@ export function FilterFieldCombobox({ options, value, onChange }: Readonly<Filte
               )}
               {filtered.length > 0 && (
                 <CommandGroup className="overflow-visible">
-                  {filtered.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={() => {
-                        onChange(option.value);
-                        setOpen(false);
-                      }}>
-                      <CheckIcon
-                        className={cn(
-                          "mr-2 size-4 shrink-0",
-                          value === option.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      <span className="flex items-center gap-1.5 truncate" title={option.label}>
+                  {filtered.map((option) => {
+                    const isSelected = value === option.value;
+
+                    // Tick on the right, only when selected — matches the value pick-list next to
+                    // it, so neither dropdown reserves width for an empty checkmark gutter.
+                    return (
+                      <CommandItem
+                        key={option.value}
+                        value={option.value}
+                        className="gap-2"
+                        onSelect={() => {
+                          onChange(option.value);
+                          setOpen(false);
+                        }}>
                         {option.isGenerated && (
                           <SparklesIcon className="size-4 shrink-0 text-slate-500" aria-hidden="true" />
                         )}
-                        {option.label}
-                      </span>
-                    </CommandItem>
-                  ))}
+                        <span
+                          className={cn("flex-1 truncate", isSelected && "font-medium text-slate-900")}
+                          title={option.label}>
+                          {option.label}
+                        </span>
+                        {isSelected && <CheckIcon className="ml-auto size-4 shrink-0" />}
+                      </CommandItem>
+                    );
+                  })}
                 </CommandGroup>
               )}
             </CommandList>

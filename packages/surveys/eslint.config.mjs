@@ -1,3 +1,3 @@
-import reactHooks from "@formbricks/eslint-config/react-hooks";
+import reactHooks from "@formbricks/config-eslint/react-hooks";
 
 export default reactHooks;

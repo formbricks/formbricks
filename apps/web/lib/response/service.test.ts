@@ -4,12 +4,14 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseUpdateInput } from "@formbricks/types/responses";
-import { responseSelection, updateResponse } from "./service";
-import { calculateTtcTotal } from "./utils";
+import { getOrganization } from "../organization/service";
+import { getResponseDownloadFile, responseSelection, updateResponse } from "./service";
+import { calculateTtcTotal, getResponsesJson } from "./utils";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     response: {
+      findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
     },
@@ -28,8 +30,48 @@ vi.mock("./utils", async (importOriginal) => {
       ...ttc,
       _total: Object.values(ttc as Record<string, number>).reduce((a, b) => a + b, 0),
     })),
+    extractSurveyDetails: vi.fn(() => ({
+      metaDataFields: [],
+      elements: [],
+      hiddenFields: [],
+      variables: [],
+      userAttributes: [],
+    })),
+    getResponsesJson: vi.fn(() => []),
   };
 });
+
+vi.mock("../survey/service", () => ({
+  getSurvey: vi.fn(() =>
+    Promise.resolve({
+      id: "survey-123",
+      name: "Test Survey",
+      workspaceId: "workspace-123",
+      isVerifyEmailEnabled: false,
+    })
+  ),
+}));
+
+vi.mock("@/modules/survey/lib/organization", () => ({
+  getOrganizationIdFromWorkspaceId: vi.fn(() => Promise.resolve("org-123")),
+}));
+
+vi.mock("@/modules/survey/lib/survey", () => ({
+  getOrganizationBilling: vi.fn(() => Promise.resolve({ limits: {} })),
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsQuotasEnabled: vi.fn(() => Promise.resolve(false)),
+}));
+
+vi.mock("../organization/service", () => ({
+  getOrganization: vi.fn(),
+}));
+
+vi.mock("../utils/file-conversion", () => ({
+  convertToCsv: vi.fn(() => Promise.resolve("csv-content")),
+  convertToXlsxBuffer: vi.fn(() => Buffer.from("xlsx-content")),
+}));
 
 const mockResponseId = "response-123";
 
@@ -392,6 +434,32 @@ describe("updateResponse", () => {
         })
       );
     });
+
+    test("preserves stored data and language when the input omits them", async () => {
+      // The management API accepts partial bodies (e.g. `{ "finished": true }`), so `data` and
+      // `language` can both be absent. Absent must mean "leave the stored column alone" — never
+      // overwrite it with an empty value (ENG-2425).
+      const currentResponse = createMockCurrentResponse({
+        data: { question1: "answer1" },
+        language: "de-DE",
+      }) as unknown as NonNullable<Awaited<ReturnType<typeof prisma.response.findUnique>>>;
+
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+
+      await updateResponse(mockResponseId, { finished: true });
+
+      expect(prisma.response.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            finished: true,
+            data: { question1: "answer1" },
+            // undefined is a Prisma no-op; null or "" would wipe the stored language
+            language: undefined,
+          }),
+        })
+      );
+    });
   });
 
   describe("variables merging behavior", () => {
@@ -476,5 +544,44 @@ describe("updateResponse", () => {
 
       await expect(updateResponse(mockResponseId, responseInput)).rejects.toThrow(ResourceNotFoundError);
     });
+  });
+});
+
+describe("getResponseDownloadFile", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.response.findMany).mockResolvedValue([] as any);
+  });
+
+  test("forwards the organization display time zone to getResponsesJson", async () => {
+    vi.mocked(getOrganization).mockResolvedValue({ displayTimeZone: "Asia/Manila" } as any);
+
+    await getResponseDownloadFile("survey-123", "csv");
+
+    expect(getResponsesJson).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      false,
+      "Asia/Manila"
+    );
+  });
+
+  test("defaults to UTC when the organization has no display time zone", async () => {
+    vi.mocked(getOrganization).mockResolvedValue({ displayTimeZone: null } as any);
+
+    await getResponseDownloadFile("survey-123", "csv");
+
+    expect(getResponsesJson).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      false,
+      "UTC"
+    );
   });
 });

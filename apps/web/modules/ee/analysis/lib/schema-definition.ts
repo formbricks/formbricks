@@ -38,6 +38,11 @@ export interface MeasureDefinition {
  * enum dimension values: the generated emotion-count measures, the translated
  * value-label maps (typed against these tuples, so additions fail the build until
  * every map is updated), and the ordinal sentiment axis sort all derive from them.
+ *
+ * NOTE: `ZHubSentiment` / `ZHubEmotion` in `@formbricks/types/feedback-source` carry the same two
+ * vocabularies for the feedback-record filter schemas. These stay as `as const` tuples because the
+ * build-time exhaustiveness guard above depends on the literal tuple type; keep both in sync until
+ * ENG-2373 hoists them to one source.
  */
 export const SENTIMENT_VALUE_ORDER = [
   "very_negative",
@@ -100,7 +105,8 @@ const SENTIMENT_COUNT_MEASURES: MeasureDefinition[] = SENTIMENT_MEASURE_ORDER.ma
 export const FEEDBACK_FIELDS = {
   // Ordered by filter/group-by relevance (ENG-1673 follow-up): the fields people reach for most
   // lead the list, so the first entry doubles as the default filter field. Tiers: question →
-  // answer values → AI enrichment → source → time/language → identifiers & Hub meta.
+  // answer values → AI enrichment → source → response context (ENG-1555) → time/language →
+  // identifiers & Hub meta.
   dimensions: [
     {
       id: "FeedbackRecords.fieldLabel",
@@ -115,18 +121,18 @@ export const FEEDBACK_FIELDS = {
       description: "Type of feedback field (e.g., nps, text, rating)",
     },
     {
-      id: "FeedbackRecords.valueText",
-      label: "Value (Text)",
-      type: "string",
-      description:
-        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
-    },
-    {
       id: "FeedbackRecords.valueId",
       label: "Value (Option)",
       type: "string",
       description:
-        "Stable id of a selected choice (single/multi-select). Group by this instead of valueText to consolidate the same option across languages / after a label edit.",
+        "Recommended for single/multi-select answers: the stable option id keeps one option in one bucket across languages, after a label edit, and for free-text 'other' answers. Charts show the option's label, not the id.",
+    },
+    {
+      id: "FeedbackRecords.valueText",
+      label: "Value (Text)",
+      type: "string",
+      description:
+        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Buckets by the exact text, so a translated label, an edited label or a free-text 'other' answer each becomes its own bucket — for choice questions prefer Value (Option). Pair with a fieldType filter to keep types consistent.",
     },
     {
       id: "FeedbackRecords.valueNumber",
@@ -187,6 +193,78 @@ export const FEEDBACK_FIELDS = {
       description: "Stable id of the source (e.g. the survey id).",
     },
     {
+      id: "FeedbackRecords.metadataDevice",
+      label: "Device",
+      type: "string",
+      description: "Device class the response was answered on (e.g. desktop, mobile)",
+    },
+    {
+      id: "FeedbackRecords.metadataCountry",
+      label: "Country",
+      type: "string",
+      description: "Country the response was collected from, as resolved at collection time",
+    },
+    {
+      id: "FeedbackRecords.metadataSource",
+      label: "Channel",
+      type: "string",
+      description:
+        "Channel the response came in through (e.g. link, app, email). Distinct from Source Type, which names the system the record came from (formbricks_survey, csv).",
+    },
+    {
+      id: "FeedbackRecords.metadataSurveyType",
+      label: "Survey Type",
+      type: "string",
+      description:
+        "Type of the survey the response came from (link, app, website). Distinct from Source Type, which names the ingesting system.",
+    },
+    {
+      id: "FeedbackRecords.metadataFinished",
+      label: "Completed",
+      type: "boolean",
+      description:
+        "Whether the respondent completed the survey. Live ingestion only publishes finished responses, so this is true for everything except records from a historical import run over all responses.",
+    },
+    {
+      id: "FeedbackRecords.metadataDurationSeconds",
+      label: "Time To Complete (s)",
+      type: "number",
+      description:
+        "Seconds the respondent took to complete the survey. A response-level value repeated on every record of the submission, so an average across records is weighted by question count.",
+    },
+    {
+      id: "FeedbackRecords.metadataBrowser",
+      label: "Browser",
+      type: "string",
+      description: "Browser reported by the respondent's user agent (e.g. Chrome, Safari)",
+    },
+    {
+      id: "FeedbackRecords.metadataOs",
+      label: "Operating System",
+      type: "string",
+      description: "Operating system reported by the respondent's user agent (e.g. macOS, Android)",
+    },
+    {
+      id: "FeedbackRecords.metadataUrl",
+      label: "Page URL",
+      type: "string",
+      description:
+        "Page the survey was answered on, reduced to origin + path — the query string and any personal-link token are stripped at ingestion. One bucket per path, so expect high cardinality.",
+    },
+    {
+      id: "FeedbackRecords.metadataAction",
+      label: "Trigger Action",
+      type: "string",
+      description: "Name of the action that triggered the survey. App surveys only.",
+    },
+    {
+      id: "FeedbackRecords.metadataEndingId",
+      label: "Ending",
+      type: "string",
+      description:
+        "Id of the ending the respondent reached — the branch they came out of. Stored as the id, not the ending's text.",
+    },
+    {
       id: "FeedbackRecords.collectedAt",
       label: "Collected At",
       type: "time",
@@ -239,24 +317,26 @@ export const FEEDBACK_FIELDS = {
   measures: [
     {
       id: "FeedbackRecords.count",
-      label: "Responses",
+      label: "Feedback Records",
       type: "count",
       group: "count",
-      description: "Total number of feedback responses",
+      description: "Total number of feedback records",
     },
     {
       id: "FeedbackRecords.uniqueRespondents",
       label: "Unique respondents",
       type: "number",
       group: "count",
-      description: "Number of unique users who provided feedback",
+      description:
+        "Unique identified people who gave feedback, deduplicated by person — one respondent answering 3 questions counts once. Anonymous feedback (no identified respondent) isn't counted here, even though it counts as a Feedback Record.",
     },
     {
       id: "FeedbackRecords.uniqueResponses",
       label: "Unique responses",
       type: "number",
       group: "count",
-      description: "Number of unique survey submissions",
+      description:
+        "Unique survey submissions, deduplicated by submission — one respondent submitting twice counts twice",
     },
     {
       id: "FeedbackRecords.npsScore",
@@ -332,10 +412,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.csatCount",
-      label: "CSAT: Responses",
+      label: "CSAT: Records",
       type: "count",
       group: "count",
-      description: "Number of CSAT responses",
+      description: "Number of answered feedback records from CSAT questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.cesAverage",
@@ -347,10 +427,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.cesCount",
-      label: "CES: Responses",
+      label: "CES: Records",
       type: "count",
       group: "count",
-      description: "Number of CES responses",
+      description: "Number of answered feedback records from CES questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.ratingAverage",
@@ -366,10 +446,10 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.ratingCount",
-      label: "Rating: Responses",
+      label: "Rating: Records",
       type: "count",
       group: "count",
-      description: "Number of answered rating responses (dismissed responses excluded)",
+      description: "Number of answered feedback records from rating questions (dismissed excluded)",
     },
     {
       id: "FeedbackRecords.sentimentAverage",
@@ -391,6 +471,19 @@ export const FEEDBACK_MEASURE_IDS: string[] = FEEDBACK_FIELDS.measures.map((m) =
 export const getMeasureAxisMaxCandidates = (measureId: string): readonly number[] | undefined =>
   FEEDBACK_FIELDS.measures.find((m) => m.id === measureId)?.axisMaxCandidates;
 
+/**
+ * True for a measure computed *over* the responses in a group — a score or an average — rather
+ * than by counting them. The distinction decides what an empty group means: a count genuinely
+ * counted zero there, while a ratio has nothing to divide, so it has no value at all. It also
+ * decides whether per-group values can be folded into one, since ratios cannot be added.
+ *
+ * False for anything not in the schema, so an unrecognized column keeps the additive treatment.
+ */
+export const isRatioMeasure = (measureId: string): boolean => {
+  const group = FEEDBACK_FIELDS.measures.find((m) => m.id === measureId)?.group;
+  return group === "score" || group === "average";
+};
+
 export const FEEDBACK_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
 
 export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
@@ -399,6 +492,9 @@ export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
 
 export const SENTIMENT_DIMENSION_ID = "FeedbackRecords.sentiment";
 export const EMOTIONS_DIMENSION_ID = "FeedbackRecords.emotions";
+export const LANGUAGE_DIMENSION_ID = "FeedbackRecords.language";
+export const VALUE_TEXT_DIMENSION_ID = "FeedbackRecords.valueText";
+export const VALUE_ID_DIMENSION_ID = "FeedbackRecords.valueId";
 
 export const isSentimentValue = (value: string): value is TSentimentValue =>
   (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);
@@ -424,6 +520,14 @@ const isEmptyDimensionValue = (value: unknown): boolean =>
  * because the record hasn't been AI-enriched yet. Drives both the label and the gray coloring. */
 export const isNotEnrichedDimensionValue = (dimensionId: string, value: unknown): boolean =>
   isEnrichmentDimensionId(dimensionId) && isEmptyDimensionValue(value);
+
+/** Grouping by language yields an unlabelled bucket beside the explicit codes, and it has more than
+ * one cause: a survey response in its own default language stores no code (transform.ts only writes
+ * `language` when it is not "default"), and a review, support or manually entered record may never
+ * have captured one at all. It is a real group rather than missing data, so it gets a name — but a
+ * neutral one, since "default language" would assert a language those other records never had. */
+export const isUnspecifiedLanguageDimensionValue = (dimensionId: string, value: unknown): boolean =>
+  dimensionId === LANGUAGE_DIMENSION_ID && isEmptyDimensionValue(value);
 
 // The label maps are typed against the enum tuples, so extending
 // SENTIMENT_VALUE_ORDER / EMOTION_VALUES without adding the matching label is a
@@ -466,6 +570,9 @@ export function getTranslatedDimensionValueLabel(
 ): string | undefined {
   if (isNotEnrichedDimensionValue(dimensionId, value)) {
     return t("workspace.analysis.charts.not_enriched");
+  }
+  if (isUnspecifiedLanguageDimensionValue(dimensionId, value)) {
+    return t("workspace.analysis.charts.language_value_unspecified");
   }
   if (typeof value !== "string" || value.length === 0) return undefined;
   if (dimensionId === SENTIMENT_DIMENSION_ID) {
@@ -558,6 +665,17 @@ export const SELECTABLE_VALUE_DIMENSION_IDS = [
   // multi-label sets, so `equals` on a picked combination is a trap — filter it with
   // `contains` instead.
   SENTIMENT_DIMENSION_ID,
+  // Response context (ENG-1555). Every one of these buckets into a small, stable set — user-agent
+  // classes, a country, a channel, an author-defined ending. metadataUrl is excluded for the same
+  // reason valueText is: one bucket per path is not a pick-list.
+  "FeedbackRecords.metadataSource",
+  "FeedbackRecords.metadataSurveyType",
+  "FeedbackRecords.metadataBrowser",
+  "FeedbackRecords.metadataOs",
+  "FeedbackRecords.metadataDevice",
+  "FeedbackRecords.metadataCountry",
+  "FeedbackRecords.metadataAction",
+  "FeedbackRecords.metadataEndingId",
 ] as const;
 
 export type TSelectableValueDimensionId = (typeof SELECTABLE_VALUE_DIMENSION_IDS)[number];
@@ -627,6 +745,42 @@ export function getFieldById(id: string): FieldDefinition | MeasureDefinition | 
 /**
  * Translate a field/measure ID. Each t() call uses a literal key so the i18n scanner can detect it.
  */
+/**
+ * Translated description for the members whose copy guides a chart-building decision — two
+ * dimensions (Value (Option) vs Value (Text)) and the three count measures a user has to choose
+ * between. The rest of the schema descriptions are still the inline English in FEEDBACK_FIELDS, so
+ * this falls back to that rather than showing a key.
+ */
+export function getTranslatedFieldDescription(
+  id: string,
+  fallback: string | undefined,
+  t: TFunction
+): string | undefined {
+  // A `Map`, not an object literal: `descriptions[id]` resolves inherited members, so an id of
+  // "constructor" or "toString" returned a function where a description string was expected. Same
+  // lookup shape #8985 converted for the same reason. Not reachable from today's call sites — they
+  // all pass ids from the hardcoded FEEDBACK_FIELDS arrays — but it costs nothing to close.
+  const descriptions = new Map<string, string>([
+    ["FeedbackRecords.valueId", t("workspace.analysis.charts.field_description_value_option")],
+    ["FeedbackRecords.valueText", t("workspace.analysis.charts.field_description_value_text")],
+    ["FeedbackRecords.count", t("workspace.analysis.charts.field_description_count")],
+    [
+      "FeedbackRecords.uniqueRespondents",
+      t("workspace.analysis.charts.field_description_unique_respondents"),
+    ],
+    ["FeedbackRecords.uniqueResponses", t("workspace.analysis.charts.field_description_unique_responses")],
+    // Two response-context dimensions read wrong without their caveat: "Completed" is true for
+    // everything the live pipeline publishes, and the duration is a per-response value repeated on
+    // each of the submission's records.
+    ["FeedbackRecords.metadataFinished", t("workspace.analysis.charts.field_description_completed")],
+    [
+      "FeedbackRecords.metadataDurationSeconds",
+      t("workspace.analysis.charts.field_description_time_to_complete"),
+    ],
+  ]);
+  return descriptions.get(id) ?? fallback;
+}
+
 export function getTranslatedFieldLabel(id: string, t: TFunction): string {
   const labels: Record<string, string> = {
     "FeedbackRecords.sourceType": t("workspace.analysis.charts.field_label_source_type"),
@@ -643,8 +797,20 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.responseId": t("workspace.analysis.charts.field_label_response_id"),
     "FeedbackRecords.valueNumber": t("workspace.analysis.charts.field_label_value_number"),
     "FeedbackRecords.valueText": t("workspace.analysis.charts.field_label_value_text"),
+    "FeedbackRecords.valueId": t("workspace.analysis.charts.field_label_value_option"),
     "FeedbackRecords.valueBoolean": t("workspace.analysis.charts.field_label_value_boolean"),
     "FeedbackRecords.valueDate": t("workspace.analysis.charts.field_label_value_date"),
+    "FeedbackRecords.metadataSource": t("workspace.analysis.charts.field_label_response_channel"),
+    "FeedbackRecords.metadataUrl": t("workspace.analysis.charts.field_label_page_url"),
+    "FeedbackRecords.metadataBrowser": t("workspace.analysis.charts.field_label_browser"),
+    "FeedbackRecords.metadataOs": t("workspace.analysis.charts.field_label_operating_system"),
+    "FeedbackRecords.metadataDevice": t("workspace.analysis.charts.field_label_device"),
+    "FeedbackRecords.metadataCountry": t("workspace.analysis.charts.field_label_country"),
+    "FeedbackRecords.metadataAction": t("workspace.analysis.charts.field_label_trigger_action"),
+    "FeedbackRecords.metadataFinished": t("workspace.analysis.charts.field_label_completed"),
+    "FeedbackRecords.metadataDurationSeconds": t("workspace.analysis.charts.field_label_time_to_complete"),
+    "FeedbackRecords.metadataEndingId": t("workspace.analysis.charts.field_label_ending"),
+    "FeedbackRecords.metadataSurveyType": t("workspace.analysis.charts.field_label_survey_type"),
     "FeedbackRecords.collectedAt": t("workspace.analysis.charts.field_label_collected_at"),
     "FeedbackRecords.createdAt": t("workspace.analysis.charts.field_label_created_at"),
     "FeedbackRecords.updatedAt": t("workspace.analysis.charts.field_label_updated_at"),
@@ -707,12 +873,16 @@ export function getTranslatedDatePresetLabel(value: string, t: TFunction): strin
   const labels: Record<string, string> = {
     today: t("workspace.analysis.charts.date_preset_today"),
     yesterday: t("workspace.analysis.charts.date_preset_yesterday"),
+    "last 24 hours": t("workspace.analysis.charts.date_preset_last_24_hours"),
     "last 7 days": t("workspace.analysis.charts.date_preset_last_7_days"),
     "last 30 days": t("workspace.analysis.charts.date_preset_last_30_days"),
     "this month": t("workspace.analysis.charts.date_preset_this_month"),
     "last month": t("workspace.analysis.charts.date_preset_last_month"),
     "this quarter": t("workspace.analysis.charts.date_preset_this_quarter"),
+    "last quarter": t("workspace.analysis.charts.date_preset_last_quarter"),
+    "last 6 months": t("workspace.analysis.charts.date_preset_last_6_months"),
     "this year": t("workspace.analysis.charts.date_preset_this_year"),
+    "last year": t("workspace.analysis.charts.date_preset_last_year"),
   };
   return labels[value] ?? value;
 }

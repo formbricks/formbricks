@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import {
   createFeedbackDirectory,
   getFeedbackDirectories,
@@ -14,6 +15,10 @@ import {
 } from "./feedback-directory";
 
 vi.mock("server-only", () => ({}));
+
+vi.mock("@/lib/authzed/feedback-directory", () => ({
+  reconcileFeedbackDirectoryRelationships: vi.fn(),
+}));
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
@@ -68,7 +73,7 @@ const mockDirectoryDetailsDbRow = {
 
 // Mirrors the real P2003 `meta` produced by Prisma 7 with the @prisma/adapter-pg driver: the
 // constraint name is nested under driverAdapterError.cause, not at the top level.
-const makeForeignKeyError = (constraintName: string): Prisma.PrismaClientKnownRequestError =>
+const makeForeignKeyError = (constraintName: string): PrismaClientKnownRequestError =>
   new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
     code: "P2003",
     clientVersion: "7.8.0",
@@ -89,6 +94,8 @@ const makeForeignKeyError = (constraintName: string): Prisma.PrismaClientKnownRe
 describe("FeedbackDirectory Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValue(mockDirectoryDetailsDbRow as any);
+    vi.mocked(reconcileFeedbackDirectoryRelationships).mockResolvedValue({ passes: 1, status: "projected" });
   });
 
   describe("getFeedbackDirectories", () => {
@@ -285,6 +292,10 @@ describe("FeedbackDirectory Service", () => {
         data: { name: "New Directory", organizationId: mockOrganizationId },
         select: { id: true },
       });
+      expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
+        assignments: [],
+        feedbackDirectoryIds: [mockDirectoryId],
+      });
     });
 
     test("creates a directory with workspace links", async () => {
@@ -311,6 +322,13 @@ describe("FeedbackDirectory Service", () => {
           },
         },
         select: { id: true },
+      });
+      expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
+        assignments: [
+          { feedbackDirectoryId: mockDirectoryId, workspaceId: mockWorkspaceId1 },
+          { feedbackDirectoryId: mockDirectoryId, workspaceId: mockWorkspaceId2 },
+        ],
+        feedbackDirectoryIds: [mockDirectoryId],
       });
     });
 
@@ -485,7 +503,7 @@ describe("FeedbackDirectory Service", () => {
       expect(prisma.feedbackDirectory.update).not.toHaveBeenCalled();
     });
 
-    test("updates workspace assignments with diff", async () => {
+    test("reconciles both previous and submitted assignments when removing a workspace", async () => {
       // getFeedbackDirectoryDetails call
       vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
 
@@ -504,6 +522,22 @@ describe("FeedbackDirectory Service", () => {
           organizationId: mockOrganizationId,
         },
       });
+      expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
+        assignments: [
+          { feedbackDirectoryId: mockDirectoryId, workspaceId: mockWorkspaceId1 },
+          { feedbackDirectoryId: mockDirectoryId, workspaceId: mockWorkspaceId2 },
+        ],
+        feedbackDirectoryIds: [mockDirectoryId],
+      });
+    });
+
+    test("does not replace a successful source update when projection unexpectedly rejects", async () => {
+      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(reconcileFeedbackDirectoryRelationships).mockRejectedValueOnce(new Error("spicedb down"));
+
+      await expect(
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, { name: "Updated Name" })
+      ).resolves.toBe(true);
     });
 
     test("blocks removing a workspace that still has feedback sources", async () => {

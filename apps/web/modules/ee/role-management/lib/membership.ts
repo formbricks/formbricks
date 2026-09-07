@@ -5,17 +5,24 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZString } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership, TMembershipUpdateInput, ZMembershipUpdateInput } from "@formbricks/types/memberships";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const updateMembership = async (
   userId: string,
   organizationId: string,
-  data: TMembershipUpdateInput
+  data: TMembershipUpdateInput,
+  tx?: Prisma.TransactionClient
 ): Promise<TMembership> => {
   validateInputs([userId, ZString], [organizationId, ZString], [data, ZMembershipUpdateInput]);
+  const client = tx ?? prisma;
+  let affectedTeamIds: string[] = [];
+  let membershipUpdated = false;
 
   try {
-    const membership = await prisma.membership.update({
+    const membership = await client.membership.update({
       where: {
         userId_organizationId: {
           userId,
@@ -24,21 +31,10 @@ export const updateMembership = async (
       },
       data,
     });
-
-    await prisma.teamUser.findMany({
-      where: {
-        userId,
-        team: {
-          organizationId,
-        },
-      },
-      select: {
-        teamId: true,
-      },
-    });
+    membershipUpdated = true;
 
     if (data.role === "owner" || data.role === "manager") {
-      await prisma.teamUser.updateMany({
+      await client.teamUser.updateMany({
         where: {
           userId,
           team: {
@@ -51,7 +47,20 @@ export const updateMembership = async (
       });
     }
 
-    await prisma.membership.findMany({
+    const teamMemberships = await client.teamUser.findMany({
+      where: {
+        userId,
+        team: {
+          organizationId,
+        },
+      },
+      select: {
+        teamId: true,
+      },
+    });
+    affectedTeamIds = teamMemberships.map(({ teamId }) => teamId);
+
+    await client.membership.findMany({
       where: {
         organizationId,
       },
@@ -70,5 +79,19 @@ export const updateMembership = async (
     }
 
     throw error;
+  } finally {
+    // A transaction-scoped call is projected by the durable PostgreSQL outbox only after the outer
+    // transaction commits. Reading through the global client here could observe the pre-commit role
+    // and would publish stale relationships.
+    if (!tx && membershipUpdated) {
+      await runPostCommitProjection("organization_role_membership_update", () =>
+        reconcileOrganizationMembership(organizationId, userId)
+      );
+      await runPostCommitProjection("organization_role_team_membership_update", () =>
+        reconcileTeamWorkspaceRelationships({
+          teamMemberships: affectedTeamIds.map((teamId) => ({ teamId, userId })),
+        })
+      );
+    }
   }
 };

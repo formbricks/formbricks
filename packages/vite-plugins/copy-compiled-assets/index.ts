@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- Console logs are allowed for plguins*/
 import { access, copyFile, mkdir, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { type Plugin, type ResolvedConfig } from "vite";

@@ -202,6 +202,9 @@ describe("a suppressed reserved field resolves as unset", () => {
     finished: true,
     language: "en",
     ttc: { _total: 60_000 },
+    // Required by TEmbeddedValueResponse; empty because these cases only exercise reserved fields.
+    data: {},
+    variables: {},
     meta,
   });
 

@@ -1,5 +1,4 @@
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { AuthInfo, CallToolResult } from "@modelcontextprotocol/server";
 import { describe, expect, test, vi } from "vitest";
 import { registerScopedTool } from "./guard-scopes";
 
@@ -55,10 +54,10 @@ describe("registerScopedTool", () => {
     registerScopedTool(server as any, "do_thing", CONFIG, ["surveys:read", "surveys:write"], handler as any);
 
     const input = { a: 1 };
-    const extra = { authInfo: authInfoWithScopes(["surveys:read", "surveys:write"]) };
-    const result = await tools.get("do_thing")!.handler(input, extra);
+    const ctx = { http: { authInfo: authInfoWithScopes(["surveys:read", "surveys:write"]) } };
+    const result = await tools.get("do_thing")!.handler(input, ctx);
 
-    expect(handler).toHaveBeenCalledWith(input, extra);
+    expect(handler).toHaveBeenCalledWith(input, ctx);
     expect(result).toBe(handlerResult);
   });
 
@@ -69,7 +68,7 @@ describe("registerScopedTool", () => {
 
     const result = await tools
       .get("do_thing")!
-      .handler({}, { authInfo: authInfoWithScopes(["surveys:read"], "req_denied") });
+      .handler({}, { http: { authInfo: authInfoWithScopes(["surveys:read"], "req_denied") } });
 
     expect(handler).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
@@ -90,7 +89,7 @@ describe("registerScopedTool", () => {
 
     const result = await tools
       .get("do_thing")!
-      .handler({}, { authInfo: authInfoWithScopes(["surveys:read"]) });
+      .handler({}, { http: { authInfo: authInfoWithScopes(["surveys:read"]) } });
 
     expect(handler).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);

@@ -17,6 +17,107 @@ allowBuilds:
   unrs-resolver: true
   "@prisma/client": true
 
+# Single source of truth for the version of every dependency used by two or more
+# workspaces. Packages reference these as `"typescript": "catalog:"` and never as a
+# literal version, so a shared dependency cannot drift between packages: bumping one
+# means editing the entry here, which changes every consumer at once.
+#
+# `scripts/check-catalog.mjs` (run by `pnpm lint`) enforces both halves of that: it
+# fails if a workspace declares a literal version for a name listed here, and if a
+# dependency is declared by 2+ workspaces without being listed here at all.
+#
+# Deps with a single consumer deliberately stay in their own package.json — a catalog
+# entry with one referent is indirection for nothing. `saveExact: true` (below) is why
+# every entry is a bare exact version; the sole exception in the workspace is
+# packages/survey-ui's react/react-dom `peerDependencies`, which are intentionally a
+# `^19.0.0` range (a published package's peer range, not a pinned install) and are
+# therefore excluded from the catalog rather than collapsed into the exact version.
+catalog:
+  # --- build & test toolchain ---
+  typescript: 5.9.3
+  # Vite stays on 7.x. Vite 8 replaces Rollup with rolldown, and @vitejs/plugin-react
+  # has no release accepting both majors (5.1.4 caps at vite 7; 6.1.0 requires ^8.0.0
+  # exclusively plus three new peers), while vite-prerender-plugin — pulled in by
+  # @preact/preset-vite for packages/surveys — caps at 7.x. Moving the repo to Vite 8
+  # is its own migration, tracked separately; see ENG-1689's follow-ups.
+  # Note: the lockfile still resolves a vite 8 for `@vitest/eslint-plugin`, which declares
+  # `vitest` as an OPTIONAL peer with range `*`; `autoInstallPeers` then materialises the
+  # newest vitest, whose own vite peer picks 8. That predates this catalog, no importer
+  # references it, and nothing builds with it — every workspace resolves 7.3.5.
+  vite: 7.3.5
+  vitest: 4.1.6
+  "@vitest/coverage-v8": 4.1.6
+  vite-plugin-dts: 4.5.4
+  vite-tsconfig-paths: 6.1.1
+  "@vitejs/plugin-react": 5.1.4
+  jsdom: 29.1.1
+  postcss: 8.5.23
+  rimraf: 6.1.3
+  tsx: 4.21.0
+  dotenv: 17.3.1
+  dotenv-cli: 11.0.0
+  cross-env: 10.1.0
+  glob: 13.0.6
+  # Read by scripts/check-catalog.mjs; also a packages/workflows dev dep.
+  js-yaml: 4.3.1
+  "@playwright/test": 1.58.2
+  "@testing-library/react": 16.3.2
+  # --- lint & format ---
+  prettier: 3.8.3
+  "@trivago/prettier-plugin-sort-imports": 6.0.2
+  prettier-plugin-sort-json: 4.2.0
+  prettier-plugin-tailwindcss: 0.7.4
+  "@eslint/js": 9.39.5
+  globals: 16.5.0
+  typescript-eslint: 8.63.0
+  eslint-plugin-react-hooks: 7.1.1
+  # --- types ---
+  "@types/js-yaml": 4.0.9
+  "@types/node": 25.4.0
+  "@types/react": 19.2.14
+  "@types/react-dom": 19.2.3
+  # --- storybook ---
+  storybook: 10.3.6
+  "@storybook/react": 10.3.6
+  "@storybook/react-vite": 10.3.6
+  # --- ui runtime shared by apps/web, survey-ui, surveys and email ---
+  react: 19.2.6
+  react-dom: 19.2.6
+  preact: 10.29.1
+  tailwindcss: 4.3.1
+  "@tailwindcss/postcss": 4.3.1
+  "@tailwindcss/vite": 4.3.1
+  clsx: 2.1.1
+  tailwind-merge: 3.5.0
+  class-variance-authority: 0.7.1
+  lucide-react: 0.577.0
+  date-fns: 4.1.0
+  isomorphic-dompurify: 3.9.0
+  "@formkit/auto-animate": 0.9.0
+  react-day-picker: 9.14.0
+  "@radix-ui/react-checkbox": 1.3.3
+  "@radix-ui/react-dropdown-menu": 2.1.16
+  "@radix-ui/react-popover": 1.1.15
+  "@radix-ui/react-radio-group": 1.3.8
+  "@radix-ui/react-slot": 1.2.4
+  i18next: 25.8.20
+  i18next-icu: 2.4.3
+  react-i18next: 16.5.8
+  # --- server runtime ---
+  zod: 4.3.6
+  zod-openapi: 5.4.6
+  "@prisma/client": 7.8.0
+  # redis 5.x. apps/web was on 4.7.1 while @formbricks/cache was on 5.11.0, and because
+  # apps/web has no nested copy its `import type { RedisClientType } from "redis"` in
+  # lib/cache/index.ts resolved to the hoisted v4 type — then used to describe the v5
+  # client that getCacheService() actually returns. Aligning here removes that crossover.
+  redis: 5.11.0
+  pino: 10.3.1
+  bcryptjs: 3.0.3
+  uuid: 14.0.0
+  "@paralleldrive/cuid2": 2.3.1
+  ai: 6.0.177
+
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
 #
@@ -37,6 +138,16 @@ overrides:
   # patched in 2.0.10. Pinned to 2.0.10 to close both.
   # load-bearing: @prisma/dev pins 1.19.11 and @modelcontextprotocol/sdk resolves 1.19.15.
   "@hono/node-server": 2.0.10
+  # ENG-2195 / GHSA-8j4g-w8fx-2239 (CVE-2026-69207): hono's CORS middleware has a ReDoS in the
+  # Access-Control-Request-Headers parser on preflight requests.
+  # ENG-2300 / GHSA-54fx-42gc-7vw4 (CVE-2026-71848): languageDetector middleware algorithmic-complexity
+  # DoS via a long hyphen-separated language tag.
+  # ENG-2319 / GHSA-f23p-vx2j-j53r (CVE-2026-71850): hono/jsx's memo() retains SSR output across
+  # requests, leaking one user's rendered HTML to another.
+  # ENG-2320 / GHSA-79qm-7rj5-m7r9 (CVE-2026-71849): Proxy Helper forwards response headers named in
+  # the origin's Connection header instead of stripping them. All four patched in 4.12.34.
+  # load-bearing: @hono/node-server resolves 4.x via @modelcontextprotocol/sdk and @prisma/dev (dev/MCP-only).
+  hono: 4.12.34
   # OpenTelemetry / protobuf chains.
   # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
   # patched in 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype
@@ -59,13 +170,23 @@ overrides:
   node-forge: 1.4.0 # load-bearing: @boxyhq/saml-jackson resolves 1.3.3, still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
   # Webpack / linting / schema validation chains.
   minimatch@10: 10.2.5 # GHSA-7r86-cg39-jmmj + GHSA-23c5-xmqv-rm74: 10.0.0–10.2.2 vulnerable, patched in 10.2.3. load-bearing: @microsoft/api-extractor pins 10.2.1.
-  # GHSA-r28c-9q8g-f849: postcss <=8.5.17 auto-loads a previous sourceMappingURL
-  # without validating it stays within the project root, allowing arbitrary .map file
-  # disclosure via path traversal; patched in 8.5.18.
+  # GHSA-r28c-9q8g-f849 and GHSA-fxqj-rqcc-2cmp: postcss path traversal and parser
+  # denial-of-service findings are patched in 8.5.23.
   # load-bearing: next pins 8.4.31 and @tailwindcss/postcss pins 8.5.15.
-  postcss: 8.5.18
+  postcss: 8.5.23
   # SDK and runtime transitive security pins.
+  # GHSA-55q2-fjhq-7xh7: DOMPurify <=3.4.12 can be bypassed with crafted HTML; patched in 3.4.13.
+  # load-bearing: isomorphic-dompurify, posthog-js and redoc resolve vulnerable 3.x versions.
+  dompurify: 3.4.13
   fast-xml-parser: 5.7.0 # load-bearing: @aws-sdk/xml-builder pins 5.4.1 / 5.5.8, both <5.7.0 and vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
+  # GHSA-22jq-vg5j-6vgg, GHSA-4xrf-jv44-h6hh and GHSA-mwp4-54f8-5fhr: ip-address parsing
+  # vulnerabilities are all patched in 10.3.1.
+  # load-bearing: socks and express-rate-limit resolve vulnerable 10.x versions.
+  ip-address@10: 10.3.1
+  # ENG-2403 / GHSA-2v37-7h3g-55p8 (CVE-2026-67213): nanoid <3.3.18 customAlphabet/customRandom loop
+  # indefinitely when called with size 0 (DoS). Raises the 3.x pin from 3.3.17 to 3.3.18 (still <4).
+  # load-bearing: postcss resolves 3.3.17.
+  nanoid@3: 3.3.18
   # GHSA-9ggv-8w38-r7pm: @boxyhq/saml-jackson still resolves typeorm 0.3.28; patched in 0.3.29.
   # ENG-1990 / GHSA-2rp8-mm9q-fp49: typeorm <0.3.31 migration:generate template-literal code injection;
   # patched in 0.3.31.
@@ -95,8 +216,17 @@ overrides:
   # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
   # ENG-1952 / GHSA-52cp-r559-cp3m (CVE-2026-59869): js-yaml 4.0.0–4.2.x can spend quadratic CPU on a
   # merge-key mapping chain; patched in 4.3.0. Raises the 4.x pin from 4.2.0 to 4.3.0 (still <5).
+  # ENG-2278 / ENG-2279 / GHSA-5p4m-2wfm-xmqj (CVE-2026-59870): js-yaml 4.0.0–4.3.0 can spend quadratic
+  # CPU resolving a large !!omap (linear indexOf scan per entry); patched in 4.3.1. Raises the 4.x pin
+  # from 4.3.0 to 4.3.1 (still <5).
   # load-bearing: @redocly/openapi-core and @redocly/respect-core pin 4.2.0.
-  js-yaml@4: 4.3.0
+  js-yaml@4: 4.3.1
+  # GHSA-4cwx-7wf7-3272, GHSA-8xcm-r25x-g524, GHSA-jr45-8vmc-qm54,
+  # GHSA-m8rv-5g2x-5cg5 and GHSA-v3r7-h72x-cjcm: undici request handling findings are patched
+  # in 6.28.0 and 7.29.0 respectively.
+  # load-bearing: @redocly resolves the vulnerable 6.x line; apps/web uses the 7.x line directly.
+  undici@6: 6.28.0
+  undici@7: 7.29.0
   # === Dependabot security batch (ENG-1988..ENG-1999) ===
   # ENG-1999 / ENG-1989 / GHSA-f88m-g3jw-g9cj: sharp <0.35.0 inherits libvips vulnerabilities
   # (CVE-2026-33327/33328/35590/35591). apps/web pins 0.35.0 directly; this override also coerces the
@@ -112,16 +242,87 @@ overrides:
   # tooling (@prisma/dev); patched in 1.4.2.
   # load-bearing: @prisma/dev pins 1.2.0.
   valibot: 1.4.2
+  # === Dependabot high-risk batch (ENG-2205, ENG-2206) ===
+  # ip-address@10 (ENG-2196), undici@6/@7 (ENG-2204/ENG-2215) were already pinned on main at the same
+  # versions (see the earlier overrides), so only socket.io-parser and fast-uri remain net-new here.
+  # ENG-2206 / GHSA-2m8v-j782-fhvr (CVE-2026-69185): socket.io-parser <4.2.7 memory exhaustion on a
+  # zero-attachment packet; patched in 4.2.7. load-bearing: socket.io resolves 4.2.6 (runtime).
+  socket.io-parser@4: 4.2.7
+  # ENG-2205 / GHSA-7p8r-x3mc-p8w7 (CVE-2026-18446): fast-uri >=3.0.0 <3.1.5 host confusion via a
+  # backslash authority introducer; patched in 3.1.5. Previously self-resolved, reopened by the new
+  # advisory. load-bearing: @redocly/ajv and ajv pull 3.1.4 (dev-only, API-docs tooling).
+  fast-uri@3: 3.1.5
+  # ENG-2433 / ENG-2430 / GHSA-ggr8-5vv4-36mx (CVE-2026-40345): deepmerge-ts <8.0.0 has no cycle
+  # detection in its recursive record-merge routine, so two recursive object graphs sharing a
+  # property path exhaust the call stack (DoS); patched in 8.0.0. Pinned to 8.0.1 (lowest patched
+  # release, past the `minimumReleaseAge` cooldown as of 2026-08-19). This is a cross-major coercion
+  # of two consumers, both of which declare a 7.x dependency — verified safe: @prisma/config only
+  # merges developer-authored prisma.config.ts contents at CLI time, and next-safe-action merges
+  # middleware context (plain objects, 2-3 levels, no Map/Set) via `deepmerge`, so none of 8.0.0's
+  # breaking changes apply: the deepmergeInto mutation fix and the renamed mergeInfo/
+  # DeepMergeIntoUtils types are out of scope, the mergeMaps collision change needs a Map, and the
+  # new maxDepth defaults to 1000. `prisma generate` / `prisma migrate` still resolve config
+  # correctly under 8.0.1.
+  # load-bearing (runtime): apps/web > next-safe-action (direct, ^7.1.5) merges server-action
+  # middleware ctx (ActionClientCtx — ipAddress/oldObject/newObject can carry request-derived data)
+  # on every invocation.
+  # load-bearing (dev-only, Prisma CLI): apps/web > @better-auth/oauth-provider > better-auth >
+  # @better-auth/prisma-adapter > @prisma/client > prisma > @prisma/config resolves 7.1.5.
+  deepmerge-ts@7: 8.0.1
+  # ENG-2825 / GHSA-3f6p-5ww8-9rcr: mysql2 <3.22.0 registers mysql_clear_password as a standard auth
+  # plugin without requiring TLS, so a rogue server (or MITM) can force a client to send credentials in
+  # plaintext via an AuthSwitchRequest; patched in 3.22.0.
+  # GHSA-rgwj-5xj2-c3m3: mysql2 <=3.23.0 has no bound on the decompressed size of a zlib-compressed
+  # protocol packet, so a malicious/compromised server can DoS a client via a decompression bomb;
+  # patched in 3.23.1. Surfaced by `pnpm audit` (no Dependabot/Linear issue open for it yet); folded in
+  # here since it is the same package and pin. Raises the floor to 3.23.1 to close both.
+  # load-bearing: prisma resolves 3.15.3 (dev-only Prisma CLI, mysql adapter) and better-auth /
+  # @boxyhq/saml-jackson / typeorm resolve 3.20.0 (runtime, optional mysql adapters).
+  mysql2: 3.23.1
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
-  # ajv@6, @babel/core, body-parser, brace-expansion@1/@2/@5, dompurify, engine.io@6, fast-uri@3, hono,
-  # linkify-it, protobufjs@7, undici@7 and uuid@11 all resolve to the patched version on their own now.
+  # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
+  # all resolve to the patched version on their own now.
   # js-cookie, shell-quote and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
   # concurrently to 9.2.4 (shell-quote 1.9.0) and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.
-  # GHSA-mh99-v99m-4gvg (brace-expansion <=5.0.7) is still reported by `pnpm audit` as high: the range
-  # also matches 1.1.16 / 2.1.2, each the latest release in its line with no patch coming. Those paths
-  # are devDependency-only (eslint, prettier plugins and @redocly/cli, all via minimatch) and never run
-  # against untrusted input, so the residual risk is accepted until their consumers move to
-  # brace-expansion@5 — a pin cannot close it.
+  # === Fixable, deferred to its own PR (ENG-2234) — brace-expansion ===
+  # NOT in the list above: every brace-expansion line we resolve (1.1.16, 2.1.2, 5.0.8) is still
+  # vulnerable, and all three are closable by re-pinning. Re-verified 2026-08-05. Two advisories now:
+  # - GHSA-mh99-v99m-4gvg (unbounded expansion length → OOM), re-split upstream into per-major ranges:
+  #   `<1.1.17` and `>=2.0.0 <2.1.3`. The 5.x line is clear of this one.
+  # - GHSA-rgw5-rvv9-x895 (unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation) covers
+  #   all three: `<1.1.18`, `>=2.0.0 <2.1.4` and `>=4.0.0 <5.0.9`.
+  # Pinning the current maintenance releases — 1.1.18 / 2.1.4 / 5.0.9, all published 2026-07-30 and all
+  # past the `minimumReleaseAge` cooldown below — closes both advisories on all three lines. That is a
+  # dependency change needing its own lockfile and test run, so it is deferred to ENG-2234 rather than
+  # folded into an audit-comment sweep; the note here goes away with that PR. (An earlier version of this
+  # note claimed no patch was coming and that a pin could not close it. Both stopped being true on
+  # 2026-07-28.)
+  # Until then the residual risk stays acceptable — but NOT for the "devDependency-only" reason this note
+  # used to give, which was wrong. Every line reaches brace-expansion via minimatch, and they are rooted
+  # in production chains, not only dev ones: the 2.x line through `googleapis` and `@boxyhq/saml-jackson`
+  # (both apps/web `dependencies`, via gaxios>rimraf>glob and typeorm>glob) and `@ai-sdk/google-vertex`
+  # (a packages/ai `dependency`); the 1.x line through node-gyp under that same saml-jackson's
+  # typeorm>sqlite3. `pnpm audit` marks these findings `dev: false`. By contributor, the 1.x line is
+  # dominated by the eslint plugin graph (typescript-eslint, @vitest/eslint-plugin, eslint-config-next,
+  # eslint-plugin-storybook) and the 2.x line by vite-plugin-dts>@vue/language-core across six workspace
+  # packages, plus both prettier plugins. Two roots sit on both lines: @redocly/cli (mostly 2.x) and
+  # @boxyhq/saml-jackson (mostly 1.x, via the node-gyp chain above).
+  # What makes it tolerable is the input, not the dependency type: every one of these call sites expands
+  # glob patterns supplied by library code or developer config (gaxios' cache cleanup, typeorm's entity
+  # discovery, build and lint globs), never by request data.
+  # === Closed by ENG-2343 (kept as a record, like the section above) ===
+  # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider RFC 8707 resource-indicator confusion) was carried
+  # here as an accepted risk for as long as the only patched line was a pre-release. It is fixed as of
+  # better-auth 1.7.0 stable, which this workspace now pins, so `pnpm audit` no longer reports it and
+  # the ~50 lines of justification that used to sit here are gone with it. What replaced them is real
+  # enforcement: the AS binds each token to the resources the authorization actually approved.
+  #
+  # One thing that did NOT go away: the resource server in apps/web/modules/mcp/auth.ts still asserts
+  # the verified `aud` against its own allow-list (ENG-2339). That is not leftover scaffolding from this
+  # acceptance — `hasAcceptedMcpAudience` answers "is this token for ME", which is a different
+  # question from "does each `aud` resolve to a registered resource"; only the first is the one a
+  # resource server must answer. (An earlier note here claimed 1.7 drops `verifyOptions.audience`
+  # from its own jwtVerify. That could not be substantiated and is retracted — see mcp/auth.ts.)
 
 autoInstallPeers: true
 linkWorkspacePackages: true
@@ -151,4 +352,15 @@ minimumReleaseAgeExclude:
   # First-party SDK (published by Formbricks' own CI) — exempt all versions from the release-age gate so
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
   # reliably matched by the exclude, so match by name.
-  - '@formbricks/hub'
+  - "@formbricks/hub"
+
+# ENG-2772 / better-auth#10887: oauth-provider eagerly seeds persisted resources while building its
+# plugin context. A transient database failure rejects Better Auth's process-lifetime context promise,
+# taking every auth endpoint down until restart. Keep eager seeding best-effort so initialization can
+# finish (including the provider's database hooks); its existing lazy resource lookup retries the seed.
+# Remove this version-pinned patch once upstream defers or safely handles eager seed failures.
+patchedDependencies:
+  "@better-auth/oauth-provider@1.7.0": patches/@better-auth__oauth-provider@1.7.0.patch
+  # ENG-2559: a failed secondary-storage session read bypasses Better Auth's configured database
+  # fallback. Remove this version-pinned patch once upstream handles Redis read failures here.
+  "better-auth@1.7.0": patches/better-auth@1.7.0.patch

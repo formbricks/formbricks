@@ -90,13 +90,14 @@ describe("executeRecaptcha", () => {
   test("returns token on success", async () => {
     const result = await executeRecaptcha(mockRecaptchaSiteKey, "my-action");
     expect(result).toBe("token-123");
-    expect(window.grecaptcha.ready).toHaveBeenCalled();
-    expect(window.grecaptcha.execute).toHaveBeenCalledWith("test-site-key", { action: "my-action" });
+    expect(recaptchaMock.ready).toHaveBeenCalled();
+    expect(recaptchaMock.execute).toHaveBeenCalledWith("test-site-key", { action: "my-action" });
   });
 
   test("logs and returns null on error during execution", async () => {
+    // @ts-expect-error -- mock window.grecaptcha
     window.grecaptcha = {
-      ...window.grecaptcha,
+      ...recaptchaMock,
       execute: vi.fn(() => Promise.reject(new Error("fail"))),
     };
     const result = await executeRecaptcha(mockRecaptchaSiteKey);
@@ -107,7 +108,6 @@ describe("executeRecaptcha", () => {
   });
 
   test("logs and returns null if grecaptcha is not available", async () => {
-    // @ts-expect-error intentionally removing grecaptcha
     delete window.grecaptcha;
     const result = await executeRecaptcha(mockRecaptchaSiteKey);
     expect(result).toBeNull();

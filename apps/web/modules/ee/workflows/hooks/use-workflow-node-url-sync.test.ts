@@ -44,6 +44,7 @@ const renderSync = (isEnabled = true) => {
   store.set(hydrateWorkflowEditorAtom, {
     workflow,
     flowNodes: [flowNode("trigger-1"), flowNode("email-1")],
+    isReadOnly: false,
   });
   const wrapper = ({ children }: { children: ReactNode }) => createElement(Provider, { store }, children);
   return { store, ...renderHook(() => useWorkflowNodeUrlSync({ isEnabled }), { wrapper }) };

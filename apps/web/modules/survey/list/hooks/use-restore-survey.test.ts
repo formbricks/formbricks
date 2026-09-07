@@ -35,6 +35,7 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
             createdAt: new Date("2026-04-15T10:00:00.000Z"),
             updatedAt: new Date("2026-04-15T10:00:00.000Z"),
             responseCount: 0,
+            completedResponseCount: 0,
             creator: { name: "Alice" },
             singleUse: null,
           },

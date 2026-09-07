@@ -12,15 +12,16 @@ Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <thead
-      ref={ref}
-      className={cn("pointer-events-none text-slate-800 [&_tr]:border-b", className)}
-      {...props}
-    />
+    <thead ref={ref} className={cn("text-slate-800 [&_tr]:border-b", className)} {...props} />
   )
 );
 TableHeader.displayName = "TableHeader";
 
+/**
+ * The last row draws no bottom border, on the assumption that a frame around the table closes it.
+ * Several consumers re-add `[&_tr:last-child]:border-b` because their container has a radius but no
+ * border, so nothing else draws that line; they lose the override once they gain a real frame.
+ */
 const TableBody = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
     <tbody ref={ref} className={cn("[&_tr:last-child]:border-0", className)} {...props} />
@@ -40,7 +41,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
     <tr
       ref={ref}
       className={cn(
-        "border-b bg-white transition-colors hover:bg-slate-100 data-[state=selected]:bg-slate-100",
+        "border-b border-slate-200 bg-white transition-colors data-[state=selected]:bg-slate-100",
         className
       )}
       {...props}

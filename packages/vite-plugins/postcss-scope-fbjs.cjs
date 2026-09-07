@@ -125,11 +125,7 @@ replaceAtPropertyWithScoped.postcss = true;
 
 // Returns the three scoping plugins as instances, in the order they must run
 // (after Tailwind has compiled). Spread into a PostCSS `plugins` array.
-const scopeFbjsPlugins = () => [
-  stripLayerProperties(),
-  scopeLayerTheme(),
-  replaceAtPropertyWithScoped(),
-];
+const scopeFbjsPlugins = () => [stripLayerProperties(), scopeLayerTheme(), replaceAtPropertyWithScoped()];
 
 module.exports = {
   stripLayerProperties,

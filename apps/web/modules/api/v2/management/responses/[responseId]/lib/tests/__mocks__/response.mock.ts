@@ -26,8 +26,9 @@ export const response: Response = {
   ...responseInput,
 };
 
-export const survey: Pick<Survey, "questions" | "blocks" | "workspaceId"> = {
+export const survey: Pick<Survey, "questions" | "blocks" | "workspaceId" | "isAnonymizeResponsesEnabled"> = {
   workspaceId: "ws_mock_workspace_id",
+  isAnonymizeResponsesEnabled: false,
   questions: [
     {
       id: "ggaw04zw7gx7uxodk5da7if8",

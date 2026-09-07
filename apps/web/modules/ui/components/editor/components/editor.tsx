@@ -117,12 +117,18 @@ export const Editor = (props: TextEditorProps) => {
 
   return (
     <>
-      <div className="editor cursor-text rounded-md">
+      <div className={cn("editor rounded-md", editable ? "cursor-text" : "cursor-not-allowed")}>
         <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
           <SyncEditablePlugin editable={editable} />
           <div
             ref={editorContainerRef}
-            className={cn("editor-container rounded-md p-0", props.isInvalid && "border! border-red-500!")}>
+            className={cn(
+              "editor-container rounded-md p-0",
+              // Defined in styles-editor.css — see the comment there for why this state can't be
+              // expressed as Tailwind utilities.
+              !editable && "editor-container-disabled",
+              props.isInvalid && "border! border-red-500!"
+            )}>
             <ToolbarPlugin
               getText={props.getText}
               setText={props.setText}
@@ -142,9 +148,7 @@ export const Editor = (props: TextEditorProps) => {
               isExternalUrlsAllowed={props.isExternalUrlsAllowed}
             />
             {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
-            <div
-              className={cn("editor-inner scroll-bar", !editable && "bg-muted")}
-              style={{ height: props.height }}>
+            <div className="editor-inner scroll-bar" style={{ height: props.height }}>
               <RichTextPlugin
                 contentEditable={
                   <ContentEditable

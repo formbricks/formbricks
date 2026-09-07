@@ -20,6 +20,9 @@ interface RovingRadioProps {
  * - Home/End jump to the first/last option.
  * - Space (native) or Enter selects the focused option.
  *
+ * `keyboardValue` reports the roving position for those explicit key moves only, so a consumer can
+ * preview a value on arrow-key navigation without also previewing on the card's mount autofocus.
+ *
  * Spread the returned props onto every radio `<input>` of the group, in the
  * same order as `values`.
  */
@@ -36,17 +39,32 @@ export function useRovingRadioGroup({
   onSelect: (value: string) => void;
 }): {
   getRadioProps: (value: string) => RovingRadioProps;
+  /** The option the respondent moved focus to with a key, or null. See the state's comment. */
+  keyboardValue: string | null;
 } {
   const inputRefs = React.useRef<Map<string, HTMLInputElement>>(new Map());
   // The roving position while focus is inside the group; null = follow selection.
   const [focusedValue, setFocusedValue] = React.useState<string | null>(null);
+  // The same position, but only while the respondent is the one who moved it, with a key. Focus
+  // that arrives any other way — the card's mount autofocus, a pointer click — leaves this null,
+  // so a consumer can drive a value *preview* from it (the star scale's cumulative fill) without
+  // painting an answer onto a card the respondent has not touched yet (ENG-2288).
+  const [keyboardValue, setKeyboardValue] = React.useState<string | null>(null);
+  // True only for the synchronous .focus() inside focusValue, which is reached from the arrow /
+  // Home / End handlers alone. A ref, not state: the focus event fires during that same call.
+  const isKeyMove = React.useRef(false);
 
   const rovingValue =
     focusedValue ?? (selectedValue && values.includes(selectedValue) ? selectedValue : values[0]);
 
   const focusValue = (value: string): void => {
     setFocusedValue(value);
+    isKeyMove.current = true;
     inputRefs.current.get(value)?.focus();
+    isKeyMove.current = false;
+    // Also set here, not only from the focus handler: focusing the already-focused option (Home at
+    // the first option, an arrow in a one-option group) fires no focus event.
+    setKeyboardValue(value);
   };
 
   const handleKeyDown = (value: string) => (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -94,7 +112,10 @@ export function useRovingRadioGroup({
     // at the selected option, matching native radio-group behavior.
     const next = e.relatedTarget;
     const leavingGroup = !next || ![...inputRefs.current.values()].includes(next as HTMLInputElement);
-    if (leavingGroup) setFocusedValue(null);
+    if (leavingGroup) {
+      setFocusedValue(null);
+      setKeyboardValue(null);
+    }
   };
 
   const getRadioProps = (value: string): RovingRadioProps => ({
@@ -106,9 +127,12 @@ export function useRovingRadioGroup({
     onKeyDown: handleKeyDown(value),
     onFocus: () => {
       setFocusedValue(value);
+      // Mount autofocus, a click, or Tab entering the group: no preview, and no stale one left
+      // behind from an earlier key move (clicking option 5 after arrowing to 3).
+      setKeyboardValue(isKeyMove.current ? value : null);
     },
     onBlur: handleBlur,
   });
 
-  return { getRadioProps };
+  return { getRadioProps, keyboardValue };
 }

@@ -30,8 +30,12 @@ export const AzureButton = ({
     }
     const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
-    await authClient.signIn.oauth2({
-      providerId: "azuread",
+    // Better Auth 1.7 rebuilt genericOAuth onto the built-in social path (ENG-2343), so
+    // signIn.oauth2({ providerId }) became signIn.social({ provider }). The callback URL is
+    // NOT affected: better-auth-providers.ts pins `redirectURI` to /api/auth/oauth2/callback/azuread,
+    // the URL already registered at every customer IdP, and legacy-sso-callback.ts serves it.
+    await authClient.signIn.social({
+      provider: "azuread",
       callbackURL: returnToUrlWithSource,
       // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
       errorCallbackURL: "/auth/login",
@@ -45,8 +49,12 @@ export const AzureButton = ({
   }, [directRedirect, handleLogin]);
 
   return (
-    <Button type="button" onClick={handleLogin} variant={variant} className="w-full justify-center">
-      {t("auth.continue_with_azure")}
+    <Button
+      type="button"
+      onClick={handleLogin}
+      variant={variant}
+      className="h-11 w-full min-w-0 justify-center sm:h-9">
+      <span className="truncate">{t("auth.continue_with_azure")}</span>
       <MicrosoftIcon />
       {lastUsed && <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>

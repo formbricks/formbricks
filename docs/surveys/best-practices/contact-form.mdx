@@ -1,157 +1,63 @@
 ---
-title: "Contact form"
-icon: "address-book"
-description: "A step-by-step guide to creating a contact form using Formbricks."
+title: "Contact Form"
+description: "Build a contact form as a Formbricks survey and embed it on your website."
+icon: "address-card"
 ---
 
-Welcome to this comprehensive guide on creating a contact form using Formbricks. Whether you're just starting out or you're a seasoned developer, this tutorial will walk you through every step of building an engaging and effective contact form.
+A contact form is a survey that happens to sit on a website. Building it in Formbricks means the submissions land where the rest of your feedback already is, rather than in an inbox.
 
-## What We’ll Build
+## What you will build
 
-By the end of this tutorial, you'll have created a simple contact form featuring:
+A four-question form — name, email, reason for contact, message — embedded on a page of your site.
 
-- A welcoming introduction.
+## 1. Create a link survey
 
-- Fields for collecting the user's name and email.
-
-- A question to find out why they’re contacting you.
-
-- A message field for users to share their queries.
-
-### Setting Up Your Form
-
-First, let's lay the groundwork for your form:
-
-- Head to the Surveys page and click on **New Survey**.
-
-- Select **Start from Scratch** to create a new form.
-
-- In the form editor, click the three dots next to a question, then select **Change Question Type** and choose **Statement (Call to Action)**.
-
-![Toggle button for Statement (Call to Action)](/images/surveys/best-practices/contact-form/welcome1.webp)
-
-- Add a welcoming statement to greet your users and explain the form's purpose.
-
-- Personalize the greeting to make it inviting and encourage engagement.
+Open **Surveys**, click **New Survey** and choose **Start from scratch**. Then open **Settings → Survey Type** and make sure **Link survey** is selected.
 
 <Note>
-  A warm welcome sets the tone for your form. Make it friendly to encourage
-  users to participate.
+  Check it rather than assuming it. A new survey inherits its type from the workspace channel you picked
+  during onboarding, so a workspace set up for a website or app creates **app** surveys by default — only
+  a workspace with no channel set defaults to link.
 </Note>
 
-### Adding the Name Field
+## 2. Add the questions
 
-Next, let's capture the user's name:
+Four questions, each a standard type documented in its own page:
 
-- Click **Add Question**.
+| Field | Question type | Notes |
+| --- | --- | --- |
+| Name | [Free text](/surveys/question-type/free-text) | Text input |
+| Email | [Free text](/surveys/question-type/free-text) | Set the input type to **Email** so the address is validated |
+| Reason for contact | [Select single](/surveys/question-type/select-single) | Sales, support, something else — keep the list short |
+| Message | [Free text](/surveys/question-type/free-text) | Switch on **Long answer** |
 
-![Adding a question in Formbricks](/images/surveys/best-practices/contact-form/add-question.webp)
+<Tip>
+  Use [validation rules](/surveys/general-features/validation-rules) on the message — a minimum length of
+  20 characters or so filters out the "hi" submissions without annoying anyone with something real to say.
+</Tip>
 
-- Enter the prompts for the name field.
+Turn off the welcome card unless you want an extra click before the form, and edit the ending card to say what happens next: how soon someone will reply is the one thing every person filling in a contact form wants to know.
 
-- Turn off the **Long Answer** option at the bottom right.
+## 3. Embed it on your site
 
-- Adjust any **settings**, such as making the field required.
+Open the survey's **Share** dialog and choose **Website embed**.
 
-![Name field configuration](/images/surveys/best-practices/contact-form/name-field.webp)
+![The Website embed panel of the Share dialog](/images/surveys/best-practices/contact-form/embed.webp)
 
-### Adding the Email Field
-
-Now, let’s add a field to collect the user's email address:
-
-- Click **Add Question** again.
-
-- Select Email as the input type.
-
-- Enter a prompt for the email field.
-
-![Email field configuration](/images/surveys/best-practices/contact-form/email-field.webp)
-
-### Adding a Reason for Contact
-
-Let’s now understand why the user is contacting you:
-
-- Click **Add Question** once again.
-
-- Select **Change Question** Type and choose **Single Select**.
-
-- Add the question "Why are you contacting us today?"
-
-![Single Select question configuration](/images/surveys/best-practices/contact-form/single-select-questionare.webp)
+Copy the snippet into the page where the form should appear. The embed is an iframe, so it needs no widget and no SDK — this works on a static site.
 
 <Note>
-  Predefined options help categorize inquiries, making it easier for you to
-  respond appropriately.
+  A contact form is a link survey, not an app survey. It does not need the Formbricks widget, and none
+  of the [app survey](/surveys/website-app-surveys/quickstart) targeting applies to it.
 </Note>
 
-- Add options like "General Inquiry," "Support," and "Feedback."
+## 4. Handle what comes in
 
-![Single Select question configuration](/images/surveys/best-practices/contact-form/query-form.webp)
+Submissions arrive in the survey's **Responses** tab. Two things worth setting up before you announce the form:
 
-### Adding a Message Field
-
-Finally, let’s provide a space for the user’s message:
-
-- Click **Add Question** for the last time.
-
-- Add the question: "Your Message."
-
-- Set the placeholder text to something like "Please write your message here."
-
-![Message field configuration](/images/surveys/best-practices/contact-form/message-field.webp)
-
-- Consider setting a minimum character count to ensure detailed messages.
-
-### Finalizing Your Form
-
-Once your form is complete, follow these final steps:
-
-- Review and rearrange the questions if necessary.
-
-- Test the form by filling it out as a user.
-
-- Customize the **Thank You** message for submissions.
-
-- Publish the form to get a shareable link.
-
-- Enable submission notifications:
-
-   * Go to **Settings → Account → Notifications**.
-
-   * Verify your email address.
-
-   * Ensure that **Survey** notifications are enabled.
-
-### Integrating the Contact Form into Your Website
-
-After publishing the form, follow these steps to integrate it into your site:
-
-- **Copy the Shareable Link**
-   
-![Embed Image configuration](/images/surveys/best-practices/contact-form/embed.webp)
-
-   * Find your form in the Formbricks dashboard, and click Share.
-
-   * Select Embed in a Web Page.
-
-- **Embed the Code**
-
-   * Copy the provided code and paste it into your website where you want the form to appear.
-
-<Note>
-  Note: There is an options toggle button called "Embed Mode." When enabled, it
-  updates the `src` to `"?embed=true"` and displays your survey in a minimalist
-  design, removing padding and background for a cleaner look.
-</Note>
-
-- **Test the Integration**
-
-   * Check if the form displays correctly on your site.
-
-   * Submit a test entry to ensure everything works and notifications are received.
-
-## Conclusion
-
-Congratulations! You’ve successfully created and integrated a professional contact form using Formbricks. This form will help you collect valuable information from your visitors in an efficient, user-friendly way.
-
-A great contact form strikes the balance between collecting necessary details and being simple enough to encourage submissions. **You’ve achieved just that!**
+- A [Workflow](/workflows/overview) that emails an internal teammate — support, sales, whoever answers — on
+  **Response completed**, so nothing waits on someone remembering to check the tab. The literal address you
+  put in the **Send email** action has to belong to a member of this workspace; the workflow will not enable
+  otherwise. To acknowledge the sender instead, point the recipient at the Email question rather than at a
+  literal address.
+- [Tags](/surveys/general-features/tags), so sales and support enquiries stay separable.

@@ -43,8 +43,7 @@ export const CHART_NOT_ENRICHED_COLOR = "#a3a3a3"; // neutral-400
  * yellow; positive is the brand teal and very positive the next-darker brand step
  * (--color-brandnew in globals.css). Validated with the dataviz palette script on white: lightness
  * band and adjacent-pair CVD separation pass (worst adjacent ΔE 16.2, deutan); the dark brand teal
- * sits just under the categorical chroma floor, acceptable for a brand hue. Groundwork for the
- * sentiment-only chart (ENG-1558).
+ * sits just under the categorical chroma floor, acceptable for a brand hue.
  */
 export const CHART_SENTIMENT_COLORS: Record<TSentimentValue, string> = {
   very_negative: "#e34948", // red (palette red — sadness)
@@ -75,13 +74,22 @@ export const getSentimentMeasureColor = (measureId: string): string | undefined 
   return value ? CHART_SENTIMENT_COLORS[value] : undefined;
 };
 
-/** Validate a chart type string, defaulting to "bar" if unrecognized. */
+/**
+ * Chart types that no longer exist, mapped to the type that replaced them. `line` merged into
+ * `area` as the `areaDisplay: "line"` style, so anything still holding the old value — an AI
+ * response, a cached payload — lands on the merged type instead of the "bar" fallback. The
+ * display style is not recovered here; the migration is what carries it for stored charts.
+ */
+const LEGACY_CHART_TYPE_ALIASES = new Map<string, TChartType>([["line", "area"]]);
+
+/** Validate a chart type string, mapping retired types forward and defaulting to "bar". */
 export const resolveChartType = (raw: string): TChartType => {
   const parsed = ZChartType.safeParse(raw);
-  return parsed.success ? parsed.data : "bar";
+  if (parsed.success) return parsed.data;
+  return LEGACY_CHART_TYPE_ALIASES.get(raw) ?? "bar";
 };
 
-const isNumericValue = (val: TChartDataRow[string]): boolean => {
+const isNumericValue = (val: unknown): boolean => {
   if (val === null || val === undefined || val === "") return false;
   const num = Number(val);
   return !Number.isNaN(num) && Number.isFinite(num);
@@ -125,6 +133,10 @@ export const PIE_MEASURE_VALUE_KEY = "__measureValue";
  * Pivot several measures (one/few rows, N measure columns) into one row per measure, so a pie
  * chart with multiple measures and no dimension renders a slice per measure instead of only the
  * first one. Each measure is summed across the given rows.
+ *
+ * The measure label is stored a second time as `tooltipLabel` because the tooltip keys its row
+ * label off the dataKey, which here is the internal PIE_MEASURE_VALUE_KEY rather than a Cube
+ * column — without it the tooltip prettifies that key and shows "__measure Value" (ENG-2346).
  */
 export const prepareMeasureSliceData = (
   rows: TChartDataRow[],
@@ -137,7 +149,84 @@ export const prepareMeasureSliceData = (
       (sum, row) => sum + (isNumericValue(row[key]) ? Number(row[key]) : 0),
       0
     ),
+    tooltipLabel: labelFor(key),
   }));
+
+/**
+ * Format a 0-1 share as a percentage for display, in the app's active language. One fraction digit
+ * throughout: whole percents print a real 0.4% group as "0%" and make three equal groups add up to
+ * 99%, and the pie's slice labels and the breakdown bar's legend must agree to the digit, since
+ * they are two displays of one chart.
+ *
+ * `Intl` rather than `toFixed` so the decimal separator and the percent sign follow the locale
+ * ("12,5 %" in de-DE), which a hardcoded "%" suffix cannot do.
+ */
+export const formatPercentShare = (percent: number, locale?: string): string =>
+  new Intl.NumberFormat(locale, {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(percent);
+
+/** One section of the single-bar distribution chart (a pie chart's "Breakdown bars" display). */
+export interface TDistributionSegment {
+  /** Stable react key: the dimension value or the measure id the segment came from. */
+  key: string;
+  label: string;
+  value: number;
+  /** Share of the total, 0-1. */
+  percent: number;
+  color: string;
+}
+
+/** Input to {@link buildDistributionSegments}: one candidate section, color optional. */
+export interface TDistributionEntry {
+  key: string;
+  label: string;
+  value: unknown;
+  /** Meaning-bound color (sentiment scale, "not enriched" gray); palette color when absent. */
+  color?: string;
+}
+
+/**
+ * Turn labelled values into the sections of a single 100% bar: coerce to numbers, compute each
+ * section's share, and hand out palette colors to the entries that carry no semantic color (so a
+ * semantic bucket never consumes a categorical hue, as in preparePieData).
+ *
+ * Zero and negative entries are dropped: they would render as a zero-width, unhoverable section.
+ * Sections are ordered largest share first, the order and therefore the palette handout
+ * preparePieData uses, so switching a pie between its two displays doesn't move or recolour a
+ * group. Sorting is stable, so equal shares keep the caller's order. Returns null when nothing is
+ * left to show, i.e. the total is not positive.
+ */
+export function buildDistributionSegments(
+  entries: readonly TDistributionEntry[]
+): { segments: TDistributionSegment[]; total: number } | null {
+  let paletteIndex = 0;
+  const scaled = entries
+    .map((entry) => ({
+      key: entry.key,
+      label: entry.label,
+      value: isNumericValue(entry.value) ? Number(entry.value) : 0,
+      color: entry.color,
+    }))
+    .filter((entry) => entry.value > 0)
+    .sort((a, b) => b.value - a.value);
+
+  const total = scaled.reduce((sum, entry) => sum + entry.value, 0);
+  if (total <= 0) return null;
+
+  const segments = scaled.map(({ key, label, value, color }) => {
+    let resolvedColor = color;
+    if (!resolvedColor) {
+      resolvedColor = CHART_MEASURE_COLORS[paletteIndex % CHART_MEASURE_COLORS.length];
+      paletteIndex++;
+    }
+    return { key, label, value, percent: value / total, color: resolvedColor };
+  });
+
+  return { segments, total };
+}
 
 /** Category key for rows produced by {@link pivotMeasuresToCategories}. */
 export const PIVOTED_MEASURE_KEY = "measure";
@@ -150,7 +239,8 @@ export const PIVOTED_VALUE_KEY = "value";
  * band centered in the plot — a wide empty gap before the first bar. Pivoted, the measures
  * become ordinary categories that fill the x-axis from the left.
  *
- * Missing/non-numeric values become 0 so empty measures keep a visible, hoverable slot.
+ * Missing/non-numeric values stay null: the measure keeps its slot on the axis, but renders as a
+ * gap rather than as a zero-height bar labelled 0.
  * `formatLabel` supplies the translated measure label stored as `tooltipLabel` on each row.
  */
 export function pivotMeasuresToCategories(
@@ -170,8 +260,10 @@ export function pivotMeasuresToCategories(
       paletteIndex++;
     }
     return {
+      // A measure that computed to NULL stays null: recharts leaves a gap and the value label
+      // renders empty, so "not asked" no longer looks like a measured zero.
+      [PIVOTED_VALUE_KEY]: isNumericValue(row[key]) && Number.isFinite(num) ? num : null,
       [PIVOTED_MEASURE_KEY]: key,
-      [PIVOTED_VALUE_KEY]: Number.isFinite(num) ? num : 0,
       tooltipLabel: formatLabel(key),
       fill,
     };
@@ -214,3 +306,47 @@ export function formatCellValue(value: unknown): string {
   if (typeof value === "boolean" || typeof value === "bigint") return String(value);
   return "";
 }
+
+// ── Flipped (horizontal) bar chart axis sizing ────────────────────────────────
+// Both of these size a gutter to the text that will actually sit in it, rather than claiming a flat
+// maximum: a flat gutter reads as a broken layout when the labels are short (three numeric
+// categories left ~150px of empty space before the bars started).
+
+/** Approximate advance width (px) of one character at `text-xs`. Errs wide on purpose:
+ * over-estimating leaves a little slack, under-estimating clips or wraps text that had room. */
+const AXIS_CHAR_WIDTH = 6.5;
+/** Gap (px) between a tick's text and the axis line. */
+const AXIS_TICK_GAP = 8;
+
+/** Ceiling (px) for the category gutter: wide enough for a short question label, capped so the bars
+ * keep most of the plot. Longer labels wrap inside it. */
+export const CATEGORY_AXIS_MAX_WIDTH = 160;
+/** Floor (px), so a one-character label still has a readable gutter. */
+export const CATEGORY_AXIS_MIN_WIDTH = 28;
+
+/** Width (px) for the left-hand category gutter of a flipped bar chart, from the labels present. */
+export const getCategoryAxisWidth = (labels: string[]): number => {
+  const longest = labels.reduce((max, label) => Math.max(max, label.length), 0);
+  const needed = Math.ceil(longest * AXIS_CHAR_WIDTH) + AXIS_TICK_GAP * 2;
+  return Math.min(CATEGORY_AXIS_MAX_WIDTH, Math.max(CATEGORY_AXIS_MIN_WIDTH, needed));
+};
+
+/** Ceiling (px) for the value-label gutter — enough for a grouped number like "1,234,567". */
+export const VALUE_LABEL_MAX_PADDING = 72;
+/** Floor (px): a single digit still needs the label to clear the bar's end. */
+export const VALUE_LABEL_MIN_PADDING = 14;
+
+/**
+ * Room (px) to reserve past the end of the value axis on a flipped bar chart, so the label of the
+ * longest bar stays inside the SVG.
+ *
+ * A vertical chart gets this from the y-axis `padding.top`; flipped, the label moves to the right of
+ * the bar's end with nothing holding space for it. Whenever the data max lands exactly on the axis
+ * bound — which the "nice" scale produces routinely, since 10/20/50/100 are all multiples of their
+ * step — the label of the biggest bar, the one read first, was clipped away entirely.
+ */
+export const getValueLabelPadding = (labels: string[]): number => {
+  const longest = labels.reduce((max, label) => Math.max(max, label.length), 0);
+  const needed = Math.ceil(longest * AXIS_CHAR_WIDTH) + AXIS_TICK_GAP;
+  return Math.min(VALUE_LABEL_MAX_PADDING, Math.max(VALUE_LABEL_MIN_PADDING, needed));
+};

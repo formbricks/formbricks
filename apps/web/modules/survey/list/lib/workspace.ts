@@ -5,6 +5,10 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  lookupAuthorizedOrganizationIds,
+  lookupAuthorizedWorkspaceIds,
+} from "@/lib/authorization/resource-list";
 import { validateInputs } from "@/lib/utils/validate";
 import { TWorkspaceWithLanguages } from "@/modules/survey/list/types/surveys";
 import { TUserWorkspace } from "@/modules/survey/list/types/workspaces";
@@ -75,40 +79,21 @@ export const getWorkspaceWithLanguages = reactCache(
 
 export const getUserWorkspaces = reactCache(
   async (userId: string, organizationId: string): Promise<TUserWorkspace[]> => {
+    const actor = { type: "user", id: userId } as const;
+    const [authorizedOrganizationIds, authorizedWorkspaceIds] = await Promise.all([
+      lookupAuthorizedOrganizationIds(actor),
+      lookupAuthorizedWorkspaceIds(actor),
+    ]);
+
+    if (!authorizedOrganizationIds.includes(organizationId)) {
+      throw new ValidationError("User is not a member of this organization");
+    }
+
     try {
-      const orgMembership = await prisma.membership.findFirst({
-        where: {
-          userId,
-          organizationId,
-        },
-      });
-
-      if (!orgMembership) {
-        throw new ValidationError("User is not a member of this organization");
-      }
-
-      let workspaceWhereClause: Prisma.WorkspaceWhereInput = {};
-
-      if (orgMembership.role === "member") {
-        workspaceWhereClause = {
-          workspaceTeams: {
-            some: {
-              team: {
-                teamUsers: {
-                  some: {
-                    userId,
-                  },
-                },
-              },
-            },
-          },
-        };
-      }
-
       const workspaces = await prisma.workspace.findMany({
         where: {
+          id: { in: [...authorizedWorkspaceIds] },
           organizationId,
-          ...workspaceWhereClause,
         },
         select: {
           id: true,

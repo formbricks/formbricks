@@ -10,6 +10,8 @@ jobs:
   validate:
     name: Validate Helm Chart
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
@@ -34,8 +36,89 @@ jobs:
           chart="charts/formbricks"
           render_dir="$(mktemp -d)"
           trap 'rm -rf "$render_dir"' EXIT
+          bundled_model_spec='{"name":"qwen","enabled":true,"repository":"vllm/vllm-openai","tag":"v0.14.0","modelURL":"Qwen/Qwen3-14B-AWQ","replicaCount":1,"requestCPU":4,"requestMemory":"24Gi","limitCPU":8,"limitMemory":"32Gi","requestGPU":1,"requestGPUType":"nvidia.com/gpu","pvcStorage":"100Gi","runtimeClassName":"","shmSize":"8Gi","vllmConfig":{"maxModelLen":65536,"dtype":"float16","tensorParallelSize":1,"maxNumSeqs":8,"gpuMemoryUtilization":0.9,"extraArgs":[]},"lmcacheConfig":{"enabled":false},"keda":{"enabled":false}}'
+          single_bundled_model_spec="[$bundled_model_spec]"
+          multi_bundled_model_spec="$(jq -cn --argjson model "$bundled_model_spec" \
+            '[($model | .name = "small" | .vllmConfig.maxModelLen = 32768), ($model | .name = "large")]')"
+          disabled_bundled_model_spec="$(jq -cn --argjson model "$bundled_model_spec" \
+            '[($model | .name = "disabled-small" | .enabled = false | .vllmConfig.maxModelLen = 8192), ($model | .name = "large")]')"
+
+          expect_taxonomy_render_failure() {
+            local name="$1"
+            local pattern="$2"
+            shift 2
+            if helm template qa "$chart" \
+              --set formbricks.webappUrl=https://qa.example.com \
+              --set taxonomy.enabled=true \
+              --set taxonomy.llm.baseUrl=https://llm.example.com/v1 \
+              --set-string taxonomy.llm.contextWindowTokens=65536 \
+              "$@" \
+              --show-only templates/taxonomy-deployment.yaml \
+              > "$render_dir/$name.yaml" 2>&1; then
+              echo "Expected taxonomy render '$name' to fail" >&2
+              exit 1
+            fi
+            grep -q "$pattern" "$render_dir/$name.yaml"
+          }
 
           helm lint "$chart" --set formbricks.webappUrl=https://qa.example.com
+          bash charts/formbricks/tests/authzed-operations.sh
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/deployment.yaml > "$render_dir/deployment-default.yaml"
+          grep -q 'terminationGracePeriodSeconds: 30' "$render_dir/deployment-default.yaml"
+          if grep -q '^          lifecycle:$' "$render_dir/deployment-default.yaml"; then
+            echo "Expected no lifecycle block in the default render" >&2
+            exit 1
+          fi
+          ! grep -q '^          volumeMounts:$' "$render_dir/deployment-default.yaml"
+          ! grep -q '^      volumes:$' "$render_dir/deployment-default.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set 'deployment.extraVolumes[0].name=custom-ca' \
+            --set 'deployment.extraVolumes[0].configMap.name=custom-ca' \
+            --set 'deployment.extraVolumeMounts[0].name=custom-ca' \
+            --set 'deployment.extraVolumeMounts[0].mountPath=/etc/ssl/formbricks-ca' \
+            --set 'deployment.extraVolumeMounts[0].readOnly=true' \
+            --show-only templates/deployment.yaml > "$render_dir/deployment-volumes.yaml"
+          test "$(grep -c 'name: custom-ca' "$render_dir/deployment-volumes.yaml")" -eq 3
+          test "$(grep -c 'mountPath: /etc/ssl/formbricks-ca' "$render_dir/deployment-volumes.yaml")" -eq 1
+          test "$(grep -c 'readOnly: true' "$render_dir/deployment-volumes.yaml")" -eq 1
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set deployment.terminationGracePeriodSeconds=60 \
+            --set-json 'deployment.lifecycle={"preStop":{"exec":{"command":["sh","-c","sleep 30"]}}}' \
+            --show-only templates/deployment.yaml > "$render_dir/deployment-lifecycle.yaml"
+          grep -q 'terminationGracePeriodSeconds: 60' "$render_dir/deployment-lifecycle.yaml"
+          grep -q '^          lifecycle:$' "$render_dir/deployment-lifecycle.yaml"
+          grep -q '^            preStop:$' "$render_dir/deployment-lifecycle.yaml"
+          grep -q -- '- sleep 30' "$render_dir/deployment-lifecycle.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-default.yaml"
+          if grep -q 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-default.yaml"; then
+            echo "MCP_OAUTH_JWKS_URL must remain opt-in"
+            exit 1
+          fi
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set formbricks.mcpOauthJwksUrl=http://auth-internal:3000/custom/api/auth/jwks \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-jwks-value.yaml"
+          grep -A1 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-value.yaml" \
+            | grep -q 'value: "http://auth-internal:3000/custom/api/auth/jwks"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set-string deployment.env.MCP_OAUTH_JWKS_URL=http://explicit:3000/api/auth/jwks \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-jwks-env.yaml"
+          test "$(grep -c 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-env.yaml")" -eq 1
+          grep -A1 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-env.yaml" \
+            | grep -q 'value: "http://explicit:3000/api/auth/jwks"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -84,6 +167,342 @@ jobs:
             --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-worker-disabled.yaml"
           ! grep -q 'wait-for-hub-api' "$render_dir/hub-worker-disabled.yaml"
           grep -q '/app/hub-worker' "$render_dir/hub-worker-disabled.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set-string hub.embeddings.background.batchMaxWaitMs=37 \
+            --show-only templates/hub-deployment.yaml \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-legacy.yaml"
+          test "$(grep -c 'http://formbricks-hub-embeddings:8080/v1' "$render_dir/hub-embeddings-legacy.yaml")" -eq 2
+          ! grep -q 'hub-embeddings-background:8080/v1' "$render_dir/hub-embeddings-legacy.yaml"
+          grep -A1 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "1"'
+          grep -A1 'name: EMBEDDING_BATCH_MAX_WAIT_MS' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "25"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --show-only templates/hub-deployment.yaml > "$render_dir/hub-embeddings-legacy-api.yaml"
+          ! grep -q 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-legacy-api.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-legacy-worker.yaml"
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-legacy-worker.yaml" | grep -q 'value: "false"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.maxConcurrent=24 \
+            --set-string hub.embeddings.background.batchSize=8 \
+            --set-string hub.embeddings.background.batchMaxWaitMs=25 \
+            --set-string hub.embeddings.background.batchMaxInFlight=3 \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
+            --set hub.embeddings.background.persistence.storageClass=gp3 \
+            --set hub.embeddings.background.autoscaling.enabled=true \
+            --show-only templates/hub-deployment.yaml \
+            --show-only templates/hub-worker-deployment.yaml \
+            --show-only templates/hub-embeddings-background-statefulset.yaml \
+            --show-only templates/hub-embeddings-background-service.yaml \
+            --show-only templates/hub-hpa.yaml > "$render_dir/hub-embeddings-background.yaml"
+          test "$(grep -c 'http://formbricks-hub-embeddings:8080/v1' "$render_dir/hub-embeddings-background.yaml")" -eq 1
+          test "$(grep -c 'http://formbricks-hub-embeddings-background:8080/v1' "$render_dir/hub-embeddings-background.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_MAX_CONCURRENT' "$render_dir/hub-embeddings-background.yaml" | grep -q 'value: "24"'
+          grep -A1 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-embeddings-background.yaml" | grep -q 'value: "8"'
+          grep -q '^kind: StatefulSet$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q 'podManagementPolicy: Parallel' "$render_dir/hub-embeddings-background.yaml"
+          test "$(grep -c 'whenScaled: Retain' "$render_dir/hub-embeddings-background.yaml")" -eq 1
+          grep -q '^  volumeClaimTemplates:$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q 'storageClassName: "gp3"' "$render_dir/hub-embeddings-background.yaml"
+          grep -A3 'kind: StatefulSet' "$render_dir/hub-embeddings-background.yaml" | grep -q 'hub-embeddings-background'
+          grep -q '^  minReplicas: 1$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q '^  maxReplicas: 6$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q 'stabilizationWindowSeconds: 900' "$render_dir/hub-embeddings-background.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
+            --show-only templates/hub-deployment.yaml > "$render_dir/hub-embeddings-background-api.yaml"
+          ! grep -q 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-api.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-background-worker.yaml"
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-worker.yaml" | grep -q 'value: "true"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
+            --set-string hub.env.EMBEDDING_HTTP_DISABLE_KEEP_ALIVES=true \
+            --set-string hub.worker.env.EMBEDDING_HTTP_DISABLE_KEEP_ALIVES=false \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-background-worker-override.yaml"
+          test "$(grep -c 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-worker-override.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-worker-override.yaml" | grep -q 'value: "false"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set hub.embeddings.background.persistence.enabled=false \
+            --show-only templates/hub-embeddings-background-statefulset.yaml > "$render_dir/hub-embeddings-background-ephemeral.yaml"
+          grep -q '^      volumes:$' "$render_dir/hub-embeddings-background-ephemeral.yaml"
+          grep -q 'emptyDir: {}' "$render_dir/hub-embeddings-background-ephemeral.yaml"
+          ! grep -q '^  volumeClaimTemplates:$' "$render_dir/hub-embeddings-background-ephemeral.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            > "$render_dir/hub-embedding-backfill-disabled.yaml"
+          ! grep -q 'app.kubernetes.io/component: hub-embedding-backfill' "$render_dir/hub-embedding-backfill-disabled.yaml"
+
+          if helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddingBackfill.enabled=true \
+            --show-only templates/hub-embedding-backfill-job.yaml > "$render_dir/hub-embedding-backfill-invalid.yaml" 2>&1; then
+            echo "Expected an enabled embedding backfill without runId to fail" >&2
+            exit 1
+          fi
+          grep -q 'hub.embeddingBackfill.runId is required' "$render_dir/hub-embedding-backfill-invalid.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
+            --set hub.embeddingBackfill.enabled=true \
+            --set hub.embeddingBackfill.runId=eu-canary-001 \
+            --set hub.embeddingBackfill.taxonomy=true \
+            --set hub.embeddingBackfill.tenantId=tenant-a \
+            --set hub.embeddingBackfill.countOnly=false \
+            --set hub.embeddingBackfill.maxRecords=500 \
+            --show-only templates/hub-embedding-backfill-job.yaml > "$render_dir/hub-embedding-backfill.yaml"
+          grep -q '^kind: Job$' "$render_dir/hub-embedding-backfill.yaml"
+          grep -q 'embedding-backfill-eu-canary-001' "$render_dir/hub-embedding-backfill.yaml"
+          grep -q -- '- --taxonomy' "$render_dir/hub-embedding-backfill.yaml"
+          grep -A1 -- '- --tenant-id' "$render_dir/hub-embedding-backfill.yaml" | grep -q -- '- "tenant-a"'
+          grep -A1 -- '- --max-records' "$render_dir/hub-embedding-backfill.yaml" | grep -q -- '- "500"'
+          test "$(grep -c 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embedding-backfill.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embedding-backfill.yaml" | grep -q 'value: "true"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set taxonomy.enabled=true \
+            --set taxonomy.llm.provider=openai-compatible \
+            --set taxonomy.llm.model=operator-selected-model \
+            --set taxonomy.llm.baseUrl=https://llm.example.com/v1 \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-openai-compatible.yaml"
+          grep -q 'terminationGracePeriodSeconds: 930' "$render_dir/taxonomy-openai-compatible.yaml"
+          grep -A4 'readinessProbe:' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'path: /health'
+          grep -A1 'name: TAXONOMY_LLM_PROVIDER' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'value: "openai-compatible"'
+          grep -A1 'name: TAXONOMY_LLM_MODEL' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'value: "operator-selected-model"'
+          grep -A1 'name: TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'value: "auto"'
+          grep -A1 'name: TAXONOMY_LLM_CONTEXT_WINDOW_TOKENS' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'value: "65536"'
+          grep -A1 'name: HUB_HEARTBEAT_INTERVAL_SECONDS' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'value: "30"'
+          grep -A1 'name: TAXONOMY_RUN_TIMEOUT_SECONDS' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'value: "900"'
+          grep -A1 'name: TAXONOMY_MAX_RECORDS' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'value: "10000"'
+          ! grep -q 'TAXONOMY_VERTEX_' "$render_dir/taxonomy-openai-compatible.yaml"
+          ! grep -q 'TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON' "$render_dir/taxonomy-openai-compatible.yaml"
+          ! grep -q 'name: AWS_REGION' "$render_dir/taxonomy-openai-compatible.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set taxonomy.enabled=true \
+            --set taxonomy.llm.baseUrl=https://llm.example.com/v1 \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --show-only templates/hub-deployment.yaml > "$render_dir/taxonomy-hub-wiring.yaml"
+          grep -A1 'name: TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS' "$render_dir/taxonomy-hub-wiring.yaml" | grep -q 'value: "1800"'
+          grep -A1 'name: TAXONOMY_REAPER_INTERVAL_SECONDS' "$render_dir/taxonomy-hub-wiring.yaml" | grep -q 'value: "60"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set llm.enabled=true \
+            --set-json "llm.servingEngineSpec.modelSpec=$single_bundled_model_spec" \
+            --set taxonomy.enabled=true \
+            --set taxonomy.llm.structuredOutputMode=json-schema \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-vllm.yaml"
+          grep -A1 'name: TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE' "$render_dir/taxonomy-vllm.yaml" | grep -q 'value: "json-schema"'
+          grep -q 'router-service:8000/v1' "$render_dir/taxonomy-vllm.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set llm.enabled=true \
+            --set-json "llm.servingEngineSpec.modelSpec=$multi_bundled_model_spec" \
+            --set taxonomy.enabled=true \
+            --set taxonomy.llm.bundledModelSpecName=large \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-vllm-selected-model.yaml"
+          grep -q 'router-service:8000/v1' "$render_dir/taxonomy-vllm-selected-model.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set llm.enabled=true \
+            --set-json "llm.servingEngineSpec.modelSpec=$disabled_bundled_model_spec" \
+            --set taxonomy.enabled=true \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-vllm-disabled-model.yaml"
+          grep -q 'router-service:8000/v1' "$render_dir/taxonomy-vllm-disabled-model.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set taxonomy.enabled=true \
+            --set taxonomy.llm.provider=vertex-gemini \
+            --set taxonomy.llm.model=gemini-2.5-flash \
+            --set taxonomy.llm.vertex.project=example-project-id \
+            --set taxonomy.llm.vertex.location=us-central1 \
+            --set-string 'taxonomy.llm.vertex.credentialsJson={}' \
+            --set-string taxonomy.llm.contextWindowTokens=1048576 \
+            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-vertex.yaml"
+          grep -A1 'name: TAXONOMY_LLM_PROVIDER' "$render_dir/taxonomy-vertex.yaml" | grep -q 'value: "vertex-gemini"'
+          grep -A1 'name: TAXONOMY_VERTEX_THINKING_BUDGET' "$render_dir/taxonomy-vertex.yaml" | grep -q 'value: "0"'
+          ! grep -q 'name: TAXONOMY_LLM_BASE_URL' "$render_dir/taxonomy-vertex.yaml"
+          ! grep -q 'name: TAXONOMY_LLM_API_KEY' "$render_dir/taxonomy-vertex.yaml"
+          ! grep -q 'name: AWS_REGION' "$render_dir/taxonomy-vertex.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set taxonomy.enabled=true \
+            --set taxonomy.llm.provider=bedrock \
+            --set taxonomy.llm.model=anthropic.claude-test \
+            --set taxonomy.llm.bedrock.region=eu-central-1 \
+            --set-json taxonomy.env=null \
+            --set-string taxonomy.llm.contextWindowTokens=200000 \
+            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-bedrock.yaml"
+          grep -A1 'name: TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE' "$render_dir/taxonomy-bedrock.yaml" | grep -q 'value: "auto"'
+          grep -A1 'name: AWS_REGION' "$render_dir/taxonomy-bedrock.yaml" | grep -q 'value: "eu-central-1"'
+          ! grep -q 'TAXONOMY_VERTEX_' "$render_dir/taxonomy-bedrock.yaml"
+          ! grep -q 'TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON' "$render_dir/taxonomy-bedrock.yaml"
+          ! grep -q 'name: TAXONOMY_LLM_BASE_URL' "$render_dir/taxonomy-bedrock.yaml"
+          ! grep -q 'name: TAXONOMY_LLM_API_KEY' "$render_dir/taxonomy-bedrock.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set taxonomy.enabled=true \
+            --set taxonomy.llm.provider=bedrock \
+            --set taxonomy.llm.model=operator-selected-bedrock-model \
+            --set-json taxonomy.llm.bedrock=null \
+            --set-string taxonomy.env.AWS_REGION=eu-central-1 \
+            --set-string taxonomy.llm.contextWindowTokens=200000 \
+            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-bedrock-null-map.yaml"
+          grep -A1 'name: AWS_REGION' "$render_dir/taxonomy-bedrock-null-map.yaml" | grep -q 'value: "eu-central-1"'
+
+          expect_taxonomy_render_failure \
+            taxonomy-provider-invalid \
+            "taxonomy.llm.provider must be" \
+            --set taxonomy.llm.provider=unsupported-provider
+
+          expect_taxonomy_render_failure \
+            taxonomy-model-missing \
+            "taxonomy.llm.model is required" \
+            --set-string taxonomy.llm.model=
+
+          expect_taxonomy_render_failure \
+            taxonomy-context-missing \
+            "taxonomy.llm.contextWindowTokens is required" \
+            --set-string taxonomy.llm.contextWindowTokens=
+
+          expect_taxonomy_render_failure \
+            taxonomy-openai-endpoint-missing \
+            "taxonomy.llm.baseUrl or llm.enabled=true is required" \
+            --set-string taxonomy.llm.baseUrl=
+
+          expect_taxonomy_render_failure \
+            taxonomy-structured-output-invalid \
+            "taxonomy.llm.structuredOutputMode must be" \
+            --set taxonomy.llm.structuredOutputMode=unsupported-mode
+
+          expect_taxonomy_render_failure \
+            taxonomy-bedrock-region-missing \
+            "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required" \
+            --set taxonomy.llm.provider=bedrock
+
+          expect_taxonomy_render_failure \
+            taxonomy-bedrock-region-empty \
+            "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required" \
+            --set taxonomy.llm.provider=bedrock \
+            --set-string taxonomy.env.AWS_REGION=
+
+          expect_taxonomy_render_failure \
+            taxonomy-bedrock-region-conflict \
+            "set either taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION" \
+            --set taxonomy.llm.provider=bedrock \
+            --set taxonomy.llm.bedrock.region=eu-central-1 \
+            --set-string taxonomy.env.AWS_REGION=us-east-1
+
+          expect_taxonomy_render_failure \
+            taxonomy-managed-env-conflict \
+            "set taxonomy.heartbeatIntervalSeconds instead of taxonomy.env.HUB_HEARTBEAT_INTERVAL_SECONDS" \
+            --set-string taxonomy.env.HUB_HEARTBEAT_INTERVAL_SECONDS=15
+
+          expect_taxonomy_render_failure \
+            taxonomy-managed-hub-env-conflict \
+            "set taxonomy.hubReaperIntervalSeconds instead of hub.env.TAXONOMY_REAPER_INTERVAL_SECONDS" \
+            --set-string hub.env.TAXONOMY_REAPER_INTERVAL_SECONDS=30
+
+          expect_taxonomy_render_failure \
+            taxonomy-vllm-model-selector-required \
+            "taxonomy.llm.bundledModelSpecName is required when more than one bundled model is enabled" \
+            --set llm.enabled=true \
+            --set-string taxonomy.llm.baseUrl= \
+            --set-json "llm.servingEngineSpec.modelSpec=$multi_bundled_model_spec"
+
+          expect_taxonomy_render_failure \
+            taxonomy-vllm-model-selector-missing \
+            "taxonomy.llm.bundledModelSpecName must identify exactly one enabled" \
+            --set llm.enabled=true \
+            --set-string taxonomy.llm.baseUrl= \
+            --set taxonomy.llm.bundledModelSpecName=missing \
+            --set-json "llm.servingEngineSpec.modelSpec=$multi_bundled_model_spec"
+
+          expect_taxonomy_render_failure \
+            taxonomy-vllm-selected-context-invalid \
+            "selected bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" \
+            --set llm.enabled=true \
+            --set-string taxonomy.llm.baseUrl= \
+            --set taxonomy.llm.bundledModelSpecName=small \
+            --set-json "llm.servingEngineSpec.modelSpec=$multi_bundled_model_spec"
+
+          expect_taxonomy_render_failure \
+            taxonomy-vllm-context-not-numeric \
+            "taxonomy.llm.contextWindowTokens must be a positive integer when taxonomy uses the bundled vLLM runtime" \
+            --set llm.enabled=true \
+            --set-string taxonomy.llm.baseUrl= \
+            --set-string taxonomy.llm.contextWindowTokens=not-a-number \
+            --set-json "llm.servingEngineSpec.modelSpec=$single_bundled_model_spec"
+
+          if helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set llm.enabled=true \
+            --set taxonomy.enabled=true \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --show-only templates/taxonomy-deployment.yaml \
+            > "$render_dir/taxonomy-vllm-context-invalid.yaml" 2>&1; then
+            echo "Expected bundled vLLM context above maxModelLen to fail" >&2
+            exit 1
+          fi
+          grep -q 'selected bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens' \
+            "$render_dir/taxonomy-vllm-context-invalid.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set taxonomy.enabled=true \
+            --set taxonomy.llm.baseUrl=https://llm.example.com/v1 \
+            --set-string taxonomy.maxRecords=50000 \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --set-string taxonomy.env.TAXONOMY_LLM_SUBTREE_MAX_CLUSTERS=30 \
+            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-upgrade.yaml"
+          grep -A1 'name: TAXONOMY_MAX_RECORDS' "$render_dir/taxonomy-upgrade.yaml" | grep -q 'value: "50000"'
+          grep -A1 'name: TAXONOMY_LLM_SUBTREE_MAX_CLUSTERS' "$render_dir/taxonomy-upgrade.yaml" | grep -q 'value: "30"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -136,6 +555,10 @@ jobs:
             --set formbricks.webappUrl=https://qa.example.com \
             --set postgresql.enabled=false \
             --set-string postgresql.externalDatabaseUrl=postgresql://user:password@external-postgresql:5432/formbricks \
+            --set authzed.mode=external \
+            --set authzed.operator.install=false \
+            --set authzed.endpoint=grpc.authzed.com:443 \
+            --set authzed.auth.existingSecret=formbricks-authzed \
             --show-only templates/migration-job.yaml > "$render_dir/external.yaml"
           grep -q 'packages/database/dist/scripts/wait-for-database.js' "$render_dir/external.yaml"
 
@@ -150,3 +573,12 @@ jobs:
             --set formbricks.webappUrl=https://qa.example.com \
             --show-only charts/postgresql/templates/primary/statefulset.yaml > "$render_dir/postgresql.yaml"
           grep -q 'argocd.argoproj.io/sync-wave: "-2"' "$render_dir/postgresql.yaml"
+
+      # The render tests cannot execute the bootstrap SQL, and the SQL is where ENG-2390 actually
+      # broke: an administrator holding the documented CREATEROLE and CREATEDB could not run
+      # `CREATE DATABASE ... OWNER`. This runs the *rendered* script against real PostgreSQL, on both
+      # sides of the 16 CREATEROLE change. It skips itself when Docker is unavailable, so the suite
+      # stays runnable locally.
+      - name: Validate the AuthZed bootstrap against real PostgreSQL
+        shell: bash
+        run: bash charts/formbricks/tests/authzed-bootstrap-runtime.sh

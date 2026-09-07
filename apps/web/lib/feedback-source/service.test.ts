@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   createFeedbackSourceWithMappings,
   deleteFeedbackSource,
   getFeedbackSourceWithMappingsById,
   getFeedbackSourcesBySurveyId,
+  getFeedbackSourcesToReconcile,
   getFeedbackSourcesWithMappings,
   updateFeedbackSource,
   updateFeedbackSourceWithMappings,
@@ -55,7 +56,9 @@ const mockFeedbackSource = {
   name: "Test FeedbackSource",
   type: "formbricks_survey" as const,
   status: "active" as const,
+  importMode: "completedOnly" as const,
   workspaceId: ENV_ID,
+  feedbackDirectoryId: FRD_ID,
   lastSyncAt: null,
   createdBy: null,
 };
@@ -88,7 +91,7 @@ const mockFeedbackSourceWithMappings = {
 // Mirrors the real P2003 `meta` produced by Prisma 7 with the @prisma/adapter-pg driver: the
 // constraint name is nested under driverAdapterError.cause, NOT at the top level. Tests must use
 // this shape so the FK-mapping logic is exercised against what the DB layer actually emits.
-const makeForeignKeyError = (constraintName: string): Prisma.PrismaClientKnownRequestError =>
+const makeForeignKeyError = (constraintName: string): PrismaClientKnownRequestError =>
   new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
     code: "P2003",
     clientVersion: "7.8.0",
@@ -213,6 +216,36 @@ describe("getFeedbackSourceWithMappingsById", () => {
   });
 });
 
+describe("getFeedbackSourcesToReconcile", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // Deliberately NOT filtered to active, unlike the publish-path reader. A paused source is exactly
+  // the one whose rows must not drift: a question retyped to contactInfo while it is paused would keep
+  // its stale mapping, and resuming submits no mappings so nothing would fix it — the first response
+  // after the resume would publish that answer.
+  test("returns sources of every status, so a paused source's rows still get corrected", async () => {
+    vi.mocked(prisma.feedbackSource.findMany).mockResolvedValue([
+      mockFeedbackSourceWithMappingsFromDb,
+    ] as never);
+
+    const result = await getFeedbackSourcesToReconcile(SURVEY_ID);
+
+    expect(prisma.feedbackSource.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          type: "formbricks_survey",
+          formbricksMappings: { some: { surveyId: SURVEY_ID } },
+        },
+      })
+    );
+    const [[args]] = vi.mocked(prisma.feedbackSource.findMany).mock.calls as any;
+    expect(args.where).not.toHaveProperty("status");
+    expect(result).toHaveLength(1);
+  });
+});
+
 describe("getFeedbackSourcesBySurveyId", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -288,6 +321,26 @@ describe("updateFeedbackSource", () => {
 
     const result = await updateFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, { status: "paused" });
     expect(result.status).toBe("paused");
+  });
+
+  /**
+   * ENG-2058. The select constants are `satisfies Prisma.FeedbackSourceSelect` and the mapper casts
+   * the row, so dropping importMode from either one typechecks clean and is simply absent at
+   * runtime — the setting would silently stop round-tripping with nothing going red.
+   */
+  test("persists importMode and selects it back", async () => {
+    const updated = { ...mockFeedbackSource, importMode: "all" };
+    vi.mocked(prisma.feedbackSource.update).mockResolvedValue(updated as never);
+
+    const result = await updateFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, { importMode: "all" });
+
+    expect(prisma.feedbackSource.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ importMode: "all" }),
+        select: expect.objectContaining({ importMode: true }),
+      })
+    );
+    expect(result.importMode).toBe("all");
   });
 
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
@@ -424,6 +477,28 @@ describe("createFeedbackSourceWithMappings", () => {
     expect(result).toEqual(mockFeedbackSourceWithMappings);
   });
 
+  // ENG-2058: the chosen import mode has to reach the row, or the historical import that reads it
+  // back moments later silently falls through to the completedOnly default.
+  test("persists importMode on create and selects it back", async () => {
+    const tx = setupTransaction();
+    tx.feedbackSource.create.mockResolvedValue({ id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID });
+    tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
+
+    await createFeedbackSourceWithMappings(ENV_ID, {
+      name: "New",
+      type: "formbricks_survey",
+      feedbackDirectoryId: FRD_ID,
+      importMode: "all",
+    });
+
+    expect(tx.feedbackSource.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ importMode: "all" }) })
+    );
+    expect(tx.feedbackSource.findUniqueOrThrow).toHaveBeenCalledWith(
+      expect.objectContaining({ select: expect.objectContaining({ importMode: true }) })
+    );
+  });
+
   test("creates feedbackSource with formbricks mappings", async () => {
     const tx = setupTransaction();
     tx.feedbackSource.create.mockResolvedValue({ id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID });
@@ -435,6 +510,7 @@ describe("createFeedbackSourceWithMappings", () => {
       { name: "FB", type: "formbricks_survey", feedbackDirectoryId: FRD_ID },
       {
         type: "formbricks_survey",
+        elementScope: "all",
         mappings: [
           { surveyId: SURVEY_ID, elementId: "el-1", hubFieldType: "text" },
           { surveyId: SURVEY_ID, elementId: "el-2", hubFieldType: "nps" },
@@ -442,6 +518,11 @@ describe("createFeedbackSourceWithMappings", () => {
       }
     );
 
+    // The scope is the only record of whether the operator wanted every question tracked, so a create
+    // that drops it silently turns a "track everything" source into a curated one.
+    expect(tx.feedbackSource.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ elementScope: "all" }) })
+    );
     expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledTimes(2);
     expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -650,10 +731,28 @@ describe("updateFeedbackSourceWithMappings", () => {
     vi.clearAllMocks();
   });
 
-  const setupTransaction = () => {
+  // The source's status as the transaction would leave it, tracked across both write methods so a test
+  // can assert the outcome rather than which Prisma call produced it.
+  let trackedStatus: string;
+  const persistedStatus = () => trackedStatus;
+
+  const setupTransaction = (initialStatus = "active") => {
+    trackedStatus = initialStatus;
+
+    const applyStatus = (args: { where?: { status?: string }; data?: { status?: string } }) => {
+      if (args.data?.status === undefined) return { count: 0 };
+      // Mirror the where filter: a scoped write only lands when the current status matches.
+      if (args.where?.status !== undefined && args.where.status !== trackedStatus) return { count: 0 };
+      trackedStatus = args.data.status;
+      return { count: 1 };
+    };
+
     const txMethods = {
       feedbackSource: {
-        update: vi.fn(),
+        update: vi.fn(applyStatus),
+        // The error -> active reset runs as its own updateMany, so that a healthy source is a no-op
+        // rather than a P2025 from a `status` filter on the main update.
+        updateMany: vi.fn(applyStatus),
         findUniqueOrThrow: vi.fn(),
       },
       feedbackSourceFormbricksMapping: {
@@ -675,7 +774,6 @@ describe("updateFeedbackSourceWithMappings", () => {
 
   test("updates feedbackSource name without changing mappings", async () => {
     const tx = setupTransaction();
-    tx.feedbackSource.update.mockResolvedValue(undefined);
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
     const result = await updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "Updated" });
@@ -693,7 +791,6 @@ describe("updateFeedbackSourceWithMappings", () => {
 
   test("replaces formbricks mappings when provided", async () => {
     const tx = setupTransaction();
-    tx.feedbackSource.update.mockResolvedValue(undefined);
     tx.feedbackSourceFormbricksMapping.deleteMany.mockResolvedValue({ count: 1 });
     tx.feedbackSourceFormbricksMapping.create.mockResolvedValue({});
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
@@ -704,6 +801,7 @@ describe("updateFeedbackSourceWithMappings", () => {
       { name: "Updated" },
       {
         type: "formbricks_survey",
+        elementScope: "all",
         mappings: [{ surveyId: SURVEY_ID, elementId: "el-new", hubFieldType: "nps" }],
       }
     );
@@ -712,11 +810,74 @@ describe("updateFeedbackSourceWithMappings", () => {
       where: { feedbackSourceId: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
     });
     expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledTimes(1);
+    // Re-derived on every save in the same transaction as the rows: this is also what gives sources
+    // created before the column existed their real scope.
+    expect(tx.feedbackSource.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ elementScope: "all" }) })
+    );
+  });
+
+  // ENG-2064: nothing else clears `status`. The edit modal sends only {name, importMode}, `status` is
+  // optional on the input so Prisma leaves it alone, and getFeedbackSourcesBySurveyId filters on
+  // "active" — so a source reconciliation flagged `error` was repaired by a re-map and then stayed
+  // dark forever, reachable only through the unrelated pause/resume toggle.
+  const seedUpdateTransaction = () => {
+    const tx = setupTransaction();
+    tx.feedbackSourceFormbricksMapping.deleteMany.mockResolvedValue({ count: 1 });
+    tx.feedbackSourceFormbricksMapping.create.mockResolvedValue({});
+    tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
+    return tx;
+  };
+  const formbricksMappings = {
+    type: "formbricks_survey" as const,
+    elementScope: "all" as const,
+    mappings: [{ surveyId: SURVEY_ID, elementId: "el-new", hubFieldType: "nps" as const }],
+  };
+
+  test("returns an errored source to active when a re-map gives it rows again", async () => {
+    const tx = seedUpdateTransaction();
+
+    await updateFeedbackSourceWithMappings(
+      FEEDBACK_SOURCE_ID,
+      ENV_ID,
+      { name: "Updated" },
+      formbricksMappings
+    );
+
+    // updateMany, not update: `status` in the where of the main update would miss every healthy
+    // source and throw P2025 on the normal save path.
+    expect(tx.feedbackSource.updateMany).toHaveBeenCalledWith({
+      where: { id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID, status: "error" },
+      data: { status: "active" },
+    });
+  });
+
+  test("leaves status alone when the caller set it explicitly", async () => {
+    const tx = seedUpdateTransaction();
+
+    // The pause/resume toggle. Reviving a source it just paused would fight the operator.
+    await updateFeedbackSourceWithMappings(
+      FEEDBACK_SOURCE_ID,
+      ENV_ID,
+      { name: "Updated", status: "paused" },
+      formbricksMappings
+    );
+
+    expect(tx.feedbackSource.updateMany).not.toHaveBeenCalled();
+  });
+
+  test("does not revive a source when the save supplies no mappings", async () => {
+    const tx = seedUpdateTransaction();
+
+    await updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "Renamed only" });
+
+    // A rename does not repair anything, so there is nothing to come back from.
+    expect(tx.feedbackSource.updateMany).not.toHaveBeenCalled();
   });
 
   test("replaces field mappings when provided", async () => {
-    const tx = setupTransaction();
-    tx.feedbackSource.update.mockResolvedValue(undefined);
+    // Starts errored: a csv save must not clear a flag only the formbricks reconciler can set.
+    const tx = setupTransaction("error");
     tx.feedbackSourceFieldMapping.deleteMany.mockResolvedValue({ count: 1 });
     tx.feedbackSourceFieldMapping.create.mockResolvedValue({});
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue({
@@ -739,6 +900,13 @@ describe("updateFeedbackSourceWithMappings", () => {
       where: { feedbackSourceId: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
     });
     expect(tx.feedbackSourceFieldMapping.create).toHaveBeenCalledTimes(1);
+    // The outcome, not the persistence call: an errored source is still errored afterwards.
+    //
+    // `status: "error"` is written by exactly one thing, the formbricks mapping reconciler, so saving
+    // FIELD mappings cannot be repairing an error it could have caused — and the update action accepts
+    // fieldMappings regardless of source type. `persistedStatus` follows both `update` and `updateMany`,
+    // so this still holds if the clear moves between them.
+    expect(persistedStatus()).toBe("error");
   });
 
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {

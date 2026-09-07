@@ -467,4 +467,3 @@ components:
     responseId:
       type: string
       description: The ID of the response
-

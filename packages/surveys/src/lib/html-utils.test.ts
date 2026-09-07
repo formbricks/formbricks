@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, test } from "vitest";
-import { htmlToPlainText, isValidHTML, stripInlineStyles } from "./html-utils";
+import { htmlToPlainText, isValidHTML, sanitizeSurveyHtml, stripInlineStyles } from "./html-utils";
 
 describe("html-utils", () => {
   describe("stripInlineStyles", () => {
@@ -98,6 +98,17 @@ describe("html-utils", () => {
 
     test("returns empty string unchanged", () => {
       expect(htmlToPlainText("")).toBe("");
+    });
+  });
+
+  // Behavior is covered in survey-ui, which owns the implementation; this checks the
+  // re-export survives the survey bundle's React → Preact aliasing.
+  describe("sanitizeSurveyHtml", () => {
+    test("opens a link pasted as plain text in a new tab", () => {
+      const sanitized = sanitizeSurveyHtml('<p>Read the <a href="https://example.com">policy</a></p>');
+
+      expect(sanitized).toContain('target="_blank"');
+      expect(sanitized).toContain('rel="noopener noreferrer"');
     });
   });
 });

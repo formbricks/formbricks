@@ -37,7 +37,7 @@ export const POST = withV1ApiWrapper({
     // Accept workspaceId
     if (authentication && "apiKeyId" in authentication) {
       // API key auth: resolveBodyIds handles resolution + permission check
-      const resolved = await resolveBodyIds(storageInput, authentication.workspacePermissions, "POST");
+      const resolved = await resolveBodyIds(storageInput, authentication, "POST");
       if (!resolved.ok) return { response: resolved.response };
       storageInput = resolved.body;
     } else if (!storageInput.workspaceId) {

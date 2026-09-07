@@ -1,6 +1,6 @@
 import { useState } from "preact/hooks";
 // Import as Cta to fix sonar issue - "Imported JSX component CTA must be in PascalCase"
-import { CTA as Cta } from "@formbricks/survey-ui";
+import { CTA as Cta, isSafeLinkUrl } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
@@ -36,12 +36,17 @@ export function CTAElement({
     setTtc(updatedTtcObj);
     onChange({ [element.id]: "clicked" });
 
-    // Handle external URL opening if needed
-    if (element.buttonExternal && element.buttonUrl) {
-      if (onOpenExternalURL) {
+    // `onOpenExternalURL` is a host-supplied hook (e.g. a native bridge), and nothing documents that the
+    // URL it receives is pre-validated — so the scheme is checked here too, exactly as the ending card
+    // does before handing its redirect over. The survey-ui CTA opens the URL itself and applies the same
+    // check independently; both fire when a host supplies this callback, so gating only one leaves the
+    // raw value reaching the other.
+    if (element.buttonExternal && element.buttonUrl && onOpenExternalURL) {
+      if (isSafeLinkUrl(element.buttonUrl)) {
         onOpenExternalURL(element.buttonUrl);
+      } else {
+        console.error("Refusing to open an unsafe CTA button URL");
       }
-      // Note: The survey-ui CTA component handles external URL opening itself
     }
   };
 

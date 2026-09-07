@@ -1,3 +1,4 @@
+import { cookies, headers } from "next/headers";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
@@ -11,6 +12,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
 import { AuditLoggingCtx } from "@/lib/utils/action-client/types/context";
 import { auth } from "@/modules/auth/lib/auth";
+import { readSignupIntent } from "@/modules/auth/lib/signup-intent";
 import { updateUser } from "@/modules/auth/lib/user";
 import { getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -18,6 +20,23 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { createUserAction } from "./actions";
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(),
+  headers: vi.fn(),
+}));
+
+const requestHeaders = new Headers({ "x-formbricks-client-ip": "203.0.113.7" });
+/** Captures cookies the action sets, so the ENG-2562 sign-up intent cookie can be asserted on. */
+let setCookies: { name: string; value: string }[] = [];
+const mockNextRequestData = () => {
+  setCookies = [];
+  vi.mocked(headers).mockResolvedValue(requestHeaders as never);
+  vi.mocked(cookies).mockResolvedValue({
+    get: () => undefined,
+    set: (name: string, value: string) => setCookies.push({ name, value }),
+  } as never);
+};
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -74,6 +93,11 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "http://localhost:3000",
   IS_TURNSTILE_CONFIGURED: false,
   TURNSTILE_SECRET_KEY: undefined,
+  // Reached through the ENG-2562 sign-up intent cookie (signup-intent.ts → lib/crypto), which reads
+  // both at module load. A 64-char hex key so `symmetricEncrypt` takes its normal path.
+  ENCRYPTION_KEY: "0".repeat(64),
+  NEXTAUTH_SECRET: "test-nextauth-secret",
+  BETTER_AUTH_SECRET: undefined,
   get IS_FORMBRICKS_CLOUD() {
     return constantsOverrides.IS_FORMBRICKS_CLOUD;
   },
@@ -117,6 +141,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    mockNextRequestData();
     constantsOverrides.IS_FORMBRICKS_CLOUD = false;
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
     constantsOverrides.SIGNUP_ENABLED = true;
@@ -138,6 +163,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
     expect(auth.api.signUpEmail).toHaveBeenCalledWith({
       body: { email: "ada@example.com", password: "Password123!", name: "Ada", callbackURL: undefined },
+      headers: requestHeaders,
     });
   });
 
@@ -178,6 +204,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
         password: "Password123!",
         name: "Ada",
       },
+      headers: requestHeaders,
     });
   });
 
@@ -250,6 +277,23 @@ describe("createUserAction — signup verification email callbackURL", () => {
     // say so explicitly or a false creation record is written.
     expect(ctx.auditLoggingCtx.userId).toBe("");
     expect(ctx.auditLoggingCtx.suppressEvent).toBe(true);
+    // ENG-2562: and no sign-up intent cookie. The caller is an unauthenticated stranger who has proven
+    // nothing about an account that already exists; arming one would hand them the auto-sign-in on the
+    // victim's eventual verification click — the exact pre-hijack this fix withholds — and would leak
+    // that the address is registered.
+    expect(setCookies.map((c) => c.name)).not.toContain("formbricks.signup_intent");
+  });
+
+  // ENG-2562: the other half of the same rule — a real creation DOES get the cookie, because that is
+  // what preserves the ENG-1746 land-in-the-app UX for the browser that actually signed up.
+  test("issues a sign-up intent cookie bound to the created user", async () => {
+    const ctx = newCtx();
+    await createUserAction({ ctx, parsedInput: baseInput } as never);
+
+    const intent = setCookies.find((c) => c.name === "formbricks.signup_intent");
+    expect(intent).toBeDefined();
+    // Bound to this account and not readable as plaintext: assert through the reader, not the shape.
+    expect(readSignupIntent(intent?.value)).toEqual({ userId: createdUser.id, reason: "valid" });
   });
 
   // Regression: signup/page.tsx requires a valid invite once public sign-up is closed, but the action
@@ -335,6 +379,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    mockNextRequestData();
     constantsOverrides.IS_FORMBRICKS_CLOUD = true;
     constantsOverrides.SIGNUP_ENABLED = true;
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);

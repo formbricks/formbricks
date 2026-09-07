@@ -98,6 +98,31 @@ describe("generateObject", () => {
     await expect(response.json()).resolves.toEqual(generated.output);
   });
 
+  test("applies wrapModel to the resolved model when provided", async () => {
+    const schema = { type: "object" } as unknown as TGenerateObjectOptions<{ title: string }>["schema"];
+    const wrappedModel = { provider: "test", modelId: "model", wrapped: true };
+    const wrapModel = vi.fn().mockReturnValue(wrappedModel);
+    mocks.generateText.mockResolvedValueOnce({
+      output: { title: "Survey" },
+      reasoningText: undefined,
+      finishReason: "stop",
+      usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30 },
+      warnings: undefined,
+      request: {},
+      response: {},
+      providerMetadata: undefined,
+    });
+
+    await generateObject<{ title: string }>({ schema, prompt: "Generate a survey" }, undefined, wrapModel);
+
+    expect(wrapModel).toHaveBeenCalledWith({ provider: "test", modelId: "model" });
+    expect(mocks.generateText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: wrappedModel,
+      })
+    );
+  });
+
   test("throws AIOutputTokenLimitError when the generation stops at the output token limit", async () => {
     const schema = { type: "object" } as unknown as TGenerateObjectOptions<{ title: string }>["schema"];
     mocks.generateText.mockResolvedValueOnce({

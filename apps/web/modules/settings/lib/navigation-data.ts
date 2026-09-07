@@ -45,18 +45,43 @@ export interface TSettingsLayoutData {
 }
 
 /**
+ * Resolves the organization for the routes that carry none in the URL (account settings). The
+ * organization of the last active workspace is the organization the user is currently in, so
+ * opening a profile/notifications page keeps the sidebar, banners and billing links on that
+ * organization instead of switching a multi-organization user to their first one.
+ *
+ * The cookie outlives both leaving an organization and deleting a workspace, so it is only trusted
+ * when the workspace still exists and its organization is still one the user is a member of.
+ */
+const resolveActiveOrganizationId = async (
+  userId: string,
+  activeWorkspaceId: string | undefined
+): Promise<string | undefined> => {
+  const organizations = await getOrganizationsByUserId(userId);
+
+  if (activeWorkspaceId) {
+    const activeWorkspace = await getWorkspace(activeWorkspaceId);
+    if (activeWorkspace && organizations.some((org) => org.id === activeWorkspace.organizationId)) {
+      return activeWorkspace.organizationId;
+    }
+  }
+
+  return organizations[0]?.id;
+};
+
+/**
  * Assembles everything the shared settings shell (banners + sidebar + top bar) needs for the
  * org-scoped and account-scoped settings routes, where there is no `workspaceId` in the URL. All of
  * it is organization-level data, so no workspace is required to resolve it; we additionally surface
  * the user's first accessible workspace so the sidebar's Workspace section renders identically.
  *
- * `organizationId` is optional — account settings don't carry one, so we default to the user's first
- * organization.
+ * `organizationId` is optional — account settings don't carry one, so it is resolved from the last
+ * active workspace (see `resolveActiveOrganizationId`).
  *
- * The "current" workspace is resolved from the `formbricks-workspace-id` cookie (set by the proxy from
- * the last visited `/workspaces/[workspaceId]` path), so navigating into the workspace-agnostic
- * org-settings routes keeps the workspace you came from. If the cookie is missing or points at a
- * workspace the user can't access, it falls back to the first accessible workspace.
+ * The "current" workspace is resolved from the same `formbricks-workspace-id` cookie (set by the
+ * proxy from the last visited `/workspaces/[workspaceId]` path), so navigating into the
+ * workspace-agnostic org-settings routes keeps the workspace you came from. If the cookie is missing
+ * or points at a workspace the user can't access, it falls back to the first accessible workspace.
  */
 export const getSettingsLayoutData = async (
   userId: string,
@@ -65,11 +90,10 @@ export const getSettingsLayoutData = async (
   const session = await getSession();
   if (!session?.user) return null;
 
-  let orgId = organizationId;
-  if (!orgId) {
-    const organizations = await getOrganizationsByUserId(userId);
-    orgId = organizations[0]?.id;
-  }
+  const cookieStore = await cookies();
+  const activeWorkspaceId = cookieStore.get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value;
+
+  const orgId = organizationId ?? (await resolveActiveOrganizationId(userId, activeWorkspaceId));
   if (!orgId) return null;
 
   const [user, organization, membership] = await Promise.all([
@@ -83,20 +107,17 @@ export const getSettingsLayoutData = async (
     getAccessControlPermission(organization.id),
     getEnterpriseLicense(),
     getOrganizationWorkspacesLimit(organization.id),
-    getWorkspacesByUserId(userId, membership),
+    getWorkspacesByUserId(userId, organization.id),
   ]);
 
   const responseCount = IS_FORMBRICKS_CLOUD ? await getMonthlyOrganizationResponseCount(organization.id) : 0;
 
-  // Resolve the workspace to display in the shell. Prefer the last active workspace (from the
-  // formbricks-workspace-id cookie the proxy sets on /workspaces/[workspaceId] visits) when it
-  // belongs to the accessible list; otherwise fall back to the first accessible workspace so the
-  // shell always has something to show.
-  const cookieStore = await cookies();
-  const preferredWorkspaceId = cookieStore.get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value;
+  // Resolve the workspace to display in the shell. Prefer the last active workspace when it belongs
+  // to the accessible list; otherwise fall back to the first accessible workspace so the shell
+  // always has something to show.
   const resolvedWorkspaceId =
-    preferredWorkspaceId && workspaces.some((w) => w.id === preferredWorkspaceId)
-      ? preferredWorkspaceId
+    activeWorkspaceId && workspaces.some((w) => w.id === activeWorkspaceId)
+      ? activeWorkspaceId
       : workspaces[0]?.id;
   // Full workspace object (not just id/name) so the shell can supply the WorkspaceContext.
   const currentWorkspace = resolvedWorkspaceId ? await getWorkspace(resolvedWorkspaceId) : null;

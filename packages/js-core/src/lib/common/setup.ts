@@ -5,7 +5,7 @@ import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
-import { closeSurvey, preloadSurveysScript } from "@/lib/survey/widget";
+import { addLiveRegionContainer, closeSurvey, prefetchSurveysScript } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
 import { fetchWorkspaceState } from "@/lib/workspace/state";
@@ -25,7 +25,7 @@ import {
   okVoid,
 } from "@/types/error";
 
-const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
+const migrateLocalStorage = (): { changed: boolean; newState?: TLegacyConfig } => {
   const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
 
   if (existingConfig) {
@@ -62,11 +62,49 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
     }
 
     if (changed) {
-      return { changed: true, newState: parsedConfig as unknown as TConfig };
+      return { changed: true, newState: parsedConfig };
     }
   }
 
   return { changed: false };
+};
+
+/**
+ * Rebuild a legacy `user` into a complete `TUserState`.
+ *
+ * A legacy blob is unchecked JSON: `data` can be absent, or present with missing fields or wrong
+ * types. Spreading it over the default is not enough on its own — a spread only fills keys that are
+ * absent, so a stored `displays: null` would win over the default and reach `filterSurveys`, which
+ * calls `.filter` on it. The three fields it destructures as arrays are therefore type-checked.
+ *
+ * A repaired state is marked already-expired rather than trusted, because a half-empty one is not
+ * merely incomplete, it is wrong: an identified user completed to `segments: []` is filtered down
+ * to no surveys at all. Expiring it makes setup re-sync instead of rendering nothing.
+ */
+const completeLegacyUserState = (legacyUser: TLegacyConfig["user"]): TUserState => {
+  const legacyData = legacyUser?.data;
+
+  if (!legacyData) {
+    return DEFAULT_USER_STATE_NO_USER_ID;
+  }
+
+  const defaults = DEFAULT_USER_STATE_NO_USER_ID.data;
+  const wasRepaired =
+    !Array.isArray(legacyData.segments) ||
+    !Array.isArray(legacyData.displays) ||
+    !Array.isArray(legacyData.responses);
+
+  return {
+    // `new Date(0)` reads as expired wherever `expiresAt` is checked, which is what forces the sync.
+    expiresAt: wasRepaired ? new Date(0) : (legacyUser.expiresAt ?? null),
+    data: {
+      ...defaults,
+      ...legacyData,
+      segments: Array.isArray(legacyData.segments) ? legacyData.segments : defaults.segments,
+      displays: Array.isArray(legacyData.displays) ? legacyData.displays : defaults.displays,
+      responses: Array.isArray(legacyData.responses) ? legacyData.responses : defaults.responses,
+    },
+  };
 };
 
 export const setup = async (
@@ -87,11 +125,11 @@ export const setup = async (
     config.resetConfig();
     config = Config.getInstance();
 
-    // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
-    // otherwise, we just sync again!
-
-    if (newState && !newState.user?.data?.userId) {
-      config.update(newState);
+    // Persist the migrated state for every legacy config, identified or not. `resetConfig()` has
+    // just wiped storage, so skipping the write leaves no config at all and the fresh-setup path
+    // below would silently downgrade an identified user to anonymous.
+    if (newState) {
+      config.update({ ...newState, user: completeLegacyUserState(newState.user) });
     }
   }
 
@@ -282,18 +320,32 @@ export const setup = async (
       });
 
       if (!workspaceResponse.ok) {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- the catch below feeds this structured ApiErrorResponse (code/responseMessage) to handleErrorOnFirstSetup
         throw workspaceResponse.error;
       }
 
       let userState: TUserState = DEFAULT_USER_STATE_NO_USER_ID;
 
-      if ("userId" in configInput && configInput.userId) {
+      // A migrated legacy config reaches this branch whenever it carried no workspace state to
+      // reuse. It can still carry an identified user, so fall back to that id when setup was not
+      // given one — otherwise the migration would turn an identified user into an anonymous one.
+      // Scoped to the config the migration just wrote: another workspace or app URL is another
+      // integration, and its user must not be carried across.
+      const migratedUser =
+        changed && existingConfig?.workspaceId === effectiveId && existingConfig.appUrl === configInput.appUrl
+          ? existingConfig.user
+          : null;
+      const setupUserId = "userId" in configInput && configInput.userId ? configInput.userId : null;
+      const userId = setupUserId ?? migratedUser?.data.userId ?? null;
+
+      if (userId) {
         const updatesResponse = await sendUpdatesToBackend({
           appUrl: configInput.appUrl,
           workspaceId: effectiveId,
           updates: {
-            userId: configInput.userId,
-            attributes: configInput.attributes,
+            userId,
+            // Attributes only ever come from the setup call, never from the migrated state.
+            ...(setupUserId && "attributes" in configInput ? { attributes: configInput.attributes } : {}),
           },
         });
 
@@ -303,6 +355,14 @@ export const setup = async (
           logger.error(
             `Error updating user state: ${updatesResponse.error.code} - ${updatesResponse.error.responseMessage ?? ""}`
           );
+
+          // The migration is one-shot: the config just written no longer looks legacy, so `changed`
+          // is false on every later load and this id is gone for good if it is not kept now. Keep
+          // the migrated state, expired, so the next load retries the sync instead of persisting
+          // the default and stranding the user as anonymous.
+          if (!setupUserId && migratedUser) {
+            userState = { ...migratedUser, expiresAt: new Date(0) };
+          }
         }
       }
 
@@ -331,8 +391,12 @@ export const setup = async (
   addEventListeners();
   addCleanupEventListeners();
 
-  // Preload surveys script so it's ready when a survey triggers
-  preloadSurveysScript(configInput.appUrl);
+  // Mount the status live region now so assistive tech has registered it long before the
+  // first survey announces its opening into it.
+  addLiveRegionContainer();
+
+  // Prefetch surveys script so it's warm in the cache when a survey triggers
+  prefetchSurveysScript(configInput.appUrl);
 
   setIsSetup(true);
   logger.debug("Set up complete");

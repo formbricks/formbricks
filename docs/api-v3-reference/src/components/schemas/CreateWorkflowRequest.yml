@@ -14,7 +14,7 @@ properties:
   description:
     type:
       - string
-      - 'null'
+      - "null"
     maxLength: 500
   status:
     type: string

@@ -3,6 +3,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { type TV3SurveyPrepareResult, prepareV3SurveyCreateInput } from "../prepare";
 import { DEFAULT_V3_SURVEY_LANGUAGE, type TV3CreateSurveyBody, formatV3ZodInvalidParams } from "../schemas";
 import {
@@ -19,7 +20,7 @@ import {
   ZGeneratedSurveyDraftForAI,
 } from "./schemas";
 
-type TV3SurveyGenerateValidation = {
+export type TV3SurveyGenerateValidation = {
   valid: boolean;
   invalid_params: InvalidParam[];
   languages: Array<{ code: string; default: boolean; enabled: boolean }>;
@@ -375,34 +376,71 @@ function serializeValidation(
   };
 }
 
-export async function generateV3SurveyCreatePayloadFromPrompt(params: {
-  organizationId: string;
-  input: TV3SurveyGenerateBody;
-}): Promise<TV3SurveyGenerateResult> {
-  const invalidParams = getPromptInvalidParams(params.input.prompt);
+/**
+ * Throws when the prompt is too thin to generate from. Exported so the streaming route can run the
+ * same guard *before* it opens a response body — once a stream has begun, an RFC 9457 problem
+ * response is no longer possible.
+ */
+export function assertV3SurveyGeneratePrompt(prompt: string): void {
+  const invalidParams = getPromptInvalidParams(prompt);
 
   if (invalidParams.length > 0) {
     throw new V3SurveyGeneratePromptError(invalidParams);
   }
+}
 
-  const generation = await generateOrganizationAIObject({
-    organizationId: params.organizationId,
+/**
+ * The exact model call both the blocking public route and the streaming internal route make. Every
+ * field is common to `TGenerateObjectOptions` and `TStreamObjectOptions`, so both spread it — which
+ * is what keeps a streamed draft identical to a blocking one rather than letting the two drift on a
+ * hand-copied temperature.
+ */
+export function buildV3SurveyGenerationRequest(input: TV3SurveyGenerateBody) {
+  return {
+    // Deliberately the *ForAI* schema (string ranges), not ZGeneratedSurveyDraft, which
+    // z.preprocess-coerces them to numbers. z.preprocess does not survive JSON-Schema conversion,
+    // so swapping the two here breaks provider structured output.
     schema: ZGeneratedSurveyDraftForAI,
     schemaName: "FormbricksSurveyDraft",
     schemaDescription: "A concise Formbricks survey draft that can be converted to a v3 create payload.",
-    system: buildV3SurveyGenerationSystemPrompt(V3_SURVEY_GENERATE_ALLOWED_LOCALES, params.input.type),
+    system: buildV3SurveyGenerationSystemPrompt(V3_SURVEY_GENERATE_ALLOWED_LOCALES, input.type),
     prompt: buildV3SurveyGenerationPrompt(
-      params.input.prompt,
-      params.input.type,
-      params.input.language ?? DEFAULT_V3_SURVEY_LANGUAGE,
+      input.prompt,
+      input.type,
+      input.language ?? DEFAULT_V3_SURVEY_LANGUAGE,
       V3_SURVEY_GENERATE_ALLOWED_LOCALES
     ),
     temperature: 0.2,
     maxOutputTokens: V3_SURVEY_GENERATION_MAX_OUTPUT_TOKENS,
     timeout: V3_SURVEY_GENERATION_TIMEOUT_MS,
-  });
+  };
+}
 
-  const generatedSurvey = ZGeneratedSurveyDraft.safeParse(generation.object);
+/** Tracing context, shared so both routes report under the same PostHog feature. */
+export function buildV3SurveyGenerationTracing(params: { workspaceId: string; userId?: string | null }) {
+  return params.userId
+    ? {
+        distinctId: params.userId,
+        feature: AI_TRACING_FEATURE.SurveyGeneration,
+        workspaceId: params.workspaceId,
+      }
+    : undefined;
+}
+
+/**
+ * Converts a raw model draft into a v3 create payload. Pure and synchronous — no I/O, no AI call.
+ * Both the blocking and the streaming route converge here, so a regression in this function breaks
+ * the documented public endpoint as well as the prototype.
+ *
+ * @param draft the raw model object. Unvalidated by construction, hence the safeParse: a streamed
+ *   partial can carry a half-written string or a value that is not yet a legal enum member, so only
+ *   a terminal draft should ever reach this.
+ */
+export function buildV3SurveyCreatePayloadFromDraft(
+  input: TV3SurveyGenerateBody,
+  draft: unknown
+): TV3SurveyGenerateResult {
+  const generatedSurvey = ZGeneratedSurveyDraft.safeParse(draft);
   if (!generatedSurvey.success) {
     throw new V3SurveyGeneratedPayloadValidationError(
       formatV3ZodInvalidParams(generatedSurvey.error, "generatedSurvey")
@@ -410,7 +448,7 @@ export async function generateV3SurveyCreatePayloadFromPrompt(params: {
   }
 
   const normalizedGeneratedSurvey = normalizeGeneratedSurveyBlocks(generatedSurvey.data);
-  const createPayload = buildCreatePayload(params.input, normalizedGeneratedSurvey);
+  const createPayload = buildCreatePayload(input, normalizedGeneratedSurvey);
   const preparation = prepareV3SurveyCreateInput(createPayload);
   if (!preparation.ok) {
     throw new V3SurveyGeneratedPayloadValidationError(preparation.validation.invalidParams);
@@ -421,4 +459,21 @@ export async function generateV3SurveyCreatePayloadFromPrompt(params: {
     payload: createPayload as TV3CreateSurveyBody,
     validation: serializeValidation(preparation),
   };
+}
+
+export async function generateV3SurveyCreatePayloadFromPrompt(params: {
+  organizationId: string;
+  workspaceId: string;
+  userId?: string | null;
+  input: TV3SurveyGenerateBody;
+}): Promise<TV3SurveyGenerateResult> {
+  assertV3SurveyGeneratePrompt(params.input.prompt);
+
+  const generation = await generateOrganizationAIObject({
+    organizationId: params.organizationId,
+    aiTracing: buildV3SurveyGenerationTracing(params),
+    ...buildV3SurveyGenerationRequest(params.input),
+  });
+
+  return buildV3SurveyCreatePayloadFromDraft(params.input, generation.object);
 }

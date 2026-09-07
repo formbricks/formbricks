@@ -8,7 +8,8 @@
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
     "isolatedModules": true,
-    "moduleResolution": "node",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "preserveWatchOutput": true,
@@ -16,6 +17,6 @@
     "strict": true,
     "strictNullChecks": true
   },
-  "display": "Default",
+  "display": "Base",
   "exclude": ["node_modules", "dist"]
 }

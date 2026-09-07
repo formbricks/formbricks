@@ -1,0 +1,82 @@
+{{- if and .Values.hub.enabled .Values.hub.embeddingBackfill.enabled }}
+{{- if not .Values.hub.embeddings.enabled }}
+  {{- fail "hub.embeddingBackfill.enabled requires hub.embeddings.enabled" }}
+{{- end }}
+{{- if not .Values.hub.embeddingBackfill.runId }}
+  {{- fail "hub.embeddingBackfill.runId is required when the backfill Job is enabled" }}
+{{- end }}
+{{- if not (regexReplaceAll "[^a-z0-9-]+" (.Values.hub.embeddingBackfill.runId | lower) "-" | trimAll "-") }}
+  {{- fail "hub.embeddingBackfill.runId must contain at least one letter or number" }}
+{{- end }}
+{{- if lt (int .Values.hub.embeddingBackfill.maxRecords) 0 }}
+  {{- fail "hub.embeddingBackfill.maxRecords cannot be negative" }}
+{{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "formbricks.hubEmbeddingBackfillName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingBackfillName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-embedding-backfill
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  backoffLimit: {{ .Values.hub.embeddingBackfill.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.hub.embeddingBackfill.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingBackfillName" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: hub-embedding-backfill
+    spec:
+      restartPolicy: Never
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: backfill-embeddings
+          image: {{ include "formbricks.hubImage" . }}
+          imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
+          command:
+            - /app/backfill-embeddings
+          {{- if or .Values.hub.embeddingBackfill.taxonomy .Values.hub.embeddingBackfill.tenantId .Values.hub.embeddingBackfill.countOnly (gt (int .Values.hub.embeddingBackfill.maxRecords) 0) }}
+          args:
+            {{- if .Values.hub.embeddingBackfill.taxonomy }}
+            - --taxonomy
+            {{- end }}
+            {{- with .Values.hub.embeddingBackfill.tenantId }}
+            - --tenant-id
+            - {{ . | quote }}
+            {{- end }}
+            {{- if .Values.hub.embeddingBackfill.countOnly }}
+            - --count-only
+            {{- end }}
+            {{- if gt (int .Values.hub.embeddingBackfill.maxRecords) 0 }}
+            - --max-records
+            - {{ .Values.hub.embeddingBackfill.maxRecords | quote }}
+            {{- end }}
+          {{- end }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          envFrom:
+            - secretRef:
+                name: {{ include "formbricks.hubSecretName" . }}
+          env:
+            {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "worker" true) | nindent 12 }}
+            {{- range $key, $value := .Values.hub.env }}
+            {{- if not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key))) }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
+            {{- end }}
+            {{- end }}
+          {{- with .Values.hub.embeddingBackfill.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

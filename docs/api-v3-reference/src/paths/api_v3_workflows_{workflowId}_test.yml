@@ -21,7 +21,7 @@ post:
   parameters:
     - $ref: ../components/parameters/WorkflowIdPath.yml
   responses:
-    '200':
+    "200":
       description: >
         Validation result. The request succeeded; inspect `data.ok` to see whether the workflow is
         ready, and `data.problems` for any issues.
@@ -77,15 +77,15 @@ post:
                         Recipient outsider@external.example cannot access this workspace. A
                         send_email action may only address someone with access to this workspace or
                         a respondent field.
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       $ref: ../components/responses/V3Forbidden.yml
-    '422':
+    "422":
       $ref: ../components/responses/V3UnprocessableContent.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []

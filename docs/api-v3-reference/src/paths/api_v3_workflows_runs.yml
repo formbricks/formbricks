@@ -60,7 +60,7 @@ get:
 
         for real trigger-initiated runs only (`false`). Omit to return both.
   responses:
-    '200':
+    "200":
       description: Workflow runs retrieved successfully
       headers:
         X-Request-Id:
@@ -85,15 +85,15 @@ get:
                   $ref: ../components/schemas/WorkflowRunListItem.yml
               meta:
                 $ref: ../components/schemas/CursorPaginationMeta.yml
-    '400':
+    "400":
       $ref: ../components/responses/V3BadRequest.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       $ref: ../components/responses/V3Forbidden.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []

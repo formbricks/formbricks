@@ -52,7 +52,7 @@ export const WebhookOverviewTab = ({ webhook, surveys, locale }: ActivityTabProp
           <Label className="text-slate-500">
             {t("workspace.integrations.webhooks.created_by_third_party")}
           </Label>
-          <p className="text-sm capitalize text-slate-900">
+          <p className="text-sm text-slate-900 capitalize">
             {webhook.source === "user" ? "No" : webhook.source}
           </p>
         </div>

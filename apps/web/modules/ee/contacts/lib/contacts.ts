@@ -192,6 +192,32 @@ export const getContact = reactCache(async (contactId: string): Promise<TContact
   }
 });
 
+/**
+ * Workspace-scoped variant of {@link getContact}: returns null when the contact exists but lives in
+ * another workspace, so a caller holding an authorized workspace id cannot read a foreign contact.
+ */
+export const getContactInWorkspace = reactCache(
+  async (contactId: string, workspaceId: string): Promise<TContact | null> => {
+    validateInputs([contactId, ZId], [workspaceId, ZId]);
+
+    try {
+      return await prisma.contact.findFirst({
+        where: {
+          id: contactId,
+          workspaceId,
+        },
+        select: selectContact,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
 export const deleteContact = async (contactId: string): Promise<TContact | null> => {
   validateInputs([contactId, ZId]);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon, SparklesIcon } from "lucide-react";
+import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -28,6 +28,7 @@ import {
 } from "@/modules/survey/list/lib/utils";
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
+import { AiIcon } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -107,9 +108,7 @@ const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuItem
-            icon={<SparklesIcon className="size-4" />}
-            onSelect={() => setIsAIDialogOpen(true)}>
+          <DropdownMenuItem icon={<AiIcon />} onSelect={() => setIsAIDialogOpen(true)}>
             {t("workspace.surveys.ai_create.create_with_ai")}
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -327,10 +326,12 @@ export const SurveysList = ({
     surveyContent = (
       <div>
         <div className="flex-col space-y-3" ref={parent}>
-          <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-8 text-sm text-slate-800">
+          <div
+            className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-8 text-sm text-slate-800"
+            data-testid="survey-list-header">
             <div className="col-span-2 place-self-start">{t("common.name")}</div>
             <div className="col-span-1">{t("common.status")}</div>
-            <div className="col-span-1">{t("common.responses")}</div>
+            <div className="col-span-1">{t("workspace.surveys.completed_responses")}</div>
             <div className="col-span-1">{t("common.type")}</div>
             <div className="col-span-1">{t("common.created_at")}</div>
             <div className="col-span-1">{t("common.updated_at")}</div>

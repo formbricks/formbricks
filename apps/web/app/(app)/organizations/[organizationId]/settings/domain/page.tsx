@@ -58,7 +58,8 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
 
       <SettingsCard
         title={t("workspace.settings.domain.title")}
-        description={t("workspace.settings.domain.description")}>
+        description={t("workspace.settings.domain.description")}
+        bodyVariant="flush">
         <PrettyUrlsTable surveys={surveys} />
       </SettingsCard>
     </PageContentWrapper>

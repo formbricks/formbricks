@@ -89,7 +89,7 @@ const Page = async () => {
                 const clientHost = getHostFromUrl(client?.client_uri);
 
                 return (
-                  <TableRow key={consent.id}>
+                  <TableRow key={consent.id} className="hover:bg-slate-100">
                     <TableCell>
                       <div className="space-y-1">
                         <p className="font-medium text-slate-900">{clientName}</p>

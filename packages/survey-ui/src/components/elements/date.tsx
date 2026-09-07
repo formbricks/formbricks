@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Calendar } from "@/components/general/calendar";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { getDateFnsLocale } from "@/lib/locale";
 
@@ -57,6 +57,8 @@ function DateElement({
   imageUrl,
   videoUrl,
 }: Readonly<DateElementProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   // Initialize date from value string, parsing as local time to avoid timezone issues
   const [date, setDate] = React.useState<Date | undefined>(() => {
     if (!value) return undefined;
@@ -152,6 +154,7 @@ function DateElement({
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader
+        headlineId={`${inputId}-headline`}
         headline={headline}
         description={description}
         required={required}
@@ -162,9 +165,23 @@ function DateElement({
       />
 
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
-        {/* Calendar - Always visible */}
-        <div className="w-full">
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
+        {/* Calendar - Always visible. The value is picked from a grid of day buttons, so there is
+            no single native control to flag: a native <fieldset> wraps them and carries the invalid
+            state. It is named by the headline via aria-labelledby rather than a <legend>, so the
+            headline's media/required badge are not nested in invalid block content;
+            m-0/p-0/border-0/min-w-0 reset the fieldset UA defaults so it lays out like a plain div.
+
+            The fieldset's role is still "group", which ARIA 1.2 does not give aria-invalid (it was
+            global in 1.1, and the native element only keeps the lint rule quiet — it does not make
+            the attribute supported). The day cells belong to the Calendar's own grid, so there is
+            no accurate role to swap in here. aria-invalid stays as a best-effort hook; the live
+            region above plus the focus move are what actually announce the failure. */}
+        <fieldset
+          className="m-0 w-full min-w-0 border-0 p-0"
+          aria-labelledby={`${inputId}-headline`}
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}>
           <Calendar
             mode="single"
             selected={date}
@@ -178,7 +195,7 @@ function DateElement({
             required={required}
             className="rounded-input border-input-border bg-input-bg text-input-text shadow-input mx-auto h-[stretch] w-full max-w-[25rem] border"
           />
-        </div>
+        </fieldset>
       </div>
     </div>
   );

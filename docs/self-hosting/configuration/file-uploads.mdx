@@ -351,17 +351,24 @@ RUSTFS_CORS_ALLOWED_ORIGINS=https://app.yourdomain.com
 ```
 
 <Note>
-  When `RUSTFS_CORS_ALLOWED_ORIGINS` is unset, the RustFS server allows **all** origins; a non-empty value is
-  treated as an allow-list. So if browser uploads fail with a CORS error while the file still appears in RustFS,
-  this variable is most likely already set to a value that excludes your Formbricks origin — add your origin to it
-  (or set it to `*` to allow all). Use an explicit origin list in production.
+  When `RUSTFS_CORS_ALLOWED_ORIGINS` is unset, the RustFS server emits **no** CORS headers at all, so browsers
+  block cross-origin uploads; a non-empty value is treated as an allow-list. So if browser uploads fail with a
+  CORS error while the file still appears in RustFS, this variable is most likely either unset or set to a value
+  that excludes your Formbricks origin — set it to (or add) your origin. Use an explicit origin list in
+  production; `*` allows all origins and should be avoided outside local testing.
+
+  This changed in `1.0.0-beta.2`. Older images baked `RUSTFS_CORS_ALLOWED_ORIGINS=*` in, so leaving it unset
+  was permissive by default — and on versions up to `1.0.0-beta.1` the server reflected the caller's origin back
+  with `Access-Control-Allow-Credentials: true`
+  ([GHSA-x5xv-223c-8vm7](https://github.com/rustfs/rustfs/security/advisories/GHSA-x5xv-223c-8vm7)). The image no
+  longer bakes that value. If you relied on the old default, set this variable explicitly when you upgrade.
 </Note>
 
 <Warning>
   For standalone deployments, prefer the server-level `RUSTFS_CORS_ALLOWED_ORIGINS` variable over manually applying
   a per-bucket CORS policy: RustFS's support for the S3 `PutBucketCors` API has varied across releases and can
-  return "not implemented" on some builds. (The bundled bootstrap pins a RustFS version where per-bucket
-  `mc cors set` works.)
+  return "not implemented" on some builds. (The bundled bootstrap pins `rustfs/rustfs:1.0.0-rc.2`, on which
+  per-bucket `mc cors set` is verified to work.)
 </Warning>
 
 ### RustFS Security

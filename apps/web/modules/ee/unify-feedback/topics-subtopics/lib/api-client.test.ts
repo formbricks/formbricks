@@ -196,6 +196,7 @@ describe("triggerTaxonomyRun", () => {
       triggerTaxonomyRun({
         workspaceId: "w",
         directoryId: "d",
+        scopeType: "field",
         sourceType: "survey",
         sourceId: "",
         fieldId: "q1",

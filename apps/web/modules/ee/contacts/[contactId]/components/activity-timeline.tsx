@@ -8,6 +8,7 @@ import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { IS_PRODUCTION_BUILD } from "@/lib/env-client";
 import { useMembershipRole } from "@/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -32,7 +33,7 @@ interface ActivityTimelineProps {
 }
 
 const warnAboutMissingSurvey = (type: TTimelineItem["type"], id: string, surveyId: string) => {
-  if (process.env.NODE_ENV !== "production") {
+  if (!IS_PRODUCTION_BUILD) {
     console.warn(`Skipping ${type} "${id}" because survey "${surveyId}" was not found.`);
   }
 };

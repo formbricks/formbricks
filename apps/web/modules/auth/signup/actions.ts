@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import {
@@ -12,13 +12,7 @@ import {
   UnknownError,
 } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
-import {
-  IS_FORMBRICKS_CLOUD,
-  IS_TURNSTILE_CONFIGURED,
-  SIGNUP_ENABLED,
-  TURNSTILE_SECRET_KEY,
-} from "@/lib/constants";
-import { getIsFreshInstance } from "@/lib/instance/service";
+import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
@@ -36,6 +30,12 @@ import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/
 import { auth } from "@/modules/auth/lib/auth";
 import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import {
+  SIGNUP_INTENT_COOKIE_NAME,
+  SIGNUP_INTENT_COOKIE_OPTIONS,
+  createSignupIntentToken,
+} from "@/modules/auth/lib/signup-intent";
+import { isUninvitedSignupAllowed } from "@/modules/auth/lib/signup-policy";
 import {
   markSignupDomainAllowed,
   runWithSignupRequestContext,
@@ -138,6 +138,7 @@ async function signUpUserSafely(
     // legacy verification-token email.
     const signUpResult = await auth.api.signUpEmail({
       body: { email: normalizedEmail, password, name },
+      headers: await headers(),
     });
     signedUpUserId = signUpResult.user.id;
   } catch (error) {
@@ -358,14 +359,16 @@ async function assertSignupPolicyAllows(
     throw new InvalidInputError(INVITE_TOKEN_INVALID_ERROR_CODE);
   }
 
-  const isPublicSignupOpen = SIGNUP_ENABLED && (await getIsMultiOrgEnabled());
-  if (isPublicSignupOpen || inviteMatch === "valid") {
+  // A valid invite is an independent grant — it admits the holder whatever the instance policy says.
+  if (inviteMatch === "valid") {
     return;
   }
 
-  // Closed instance and no invite: the only remaining legitimate case is the initial administrator
-  // during fresh-instance setup, who has no invite to present.
-  if (!(await getIsFreshInstance())) {
+  // No invite, so it comes down to instance policy: public sign-up genuinely open, or the initial
+  // administrator during fresh-instance setup, who has no invite to present. That predicate is shared
+  // with the Better Auth hooks (signup-policy.ts) — writing it out twice is what left Better Auth's
+  // native /sign-up/email open after this action was fixed (ENG-2073 → ENG-2293).
+  if (!(await isUninvitedSignupAllowed())) {
     throw new InvalidInputError(SIGNUP_DISABLED_ERROR_CODE);
   }
 }
@@ -408,6 +411,34 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     // so the caller has proven nothing about an account that already exists (ENG-2091).
     if (outcome.status === "created") {
       const { user } = outcome;
+
+      // ENG-2562: remember, in THIS browser, that it is the one that created this account, so the
+      // verification click can be told apart from a stranger's and only this browser is auto-signed-in.
+      //
+      // Issued on the `created` path only, and that exclusion is the security-relevant half: on
+      // `already_existed` the caller is an unauthenticated stranger who has proven nothing about an
+      // account that already exists, so arming a cookie for it would hand them the very auto-sign-in
+      // this fix exists to withhold — and would leak that the address is registered.
+      //
+      // Before the other side effects: those can fail, and a sign-up that created the account but lost
+      // its intent cookie would silently degrade to "verify, then log in".
+      //
+      // Non-fatal for the same reason: the cookie buys UX (auto-sign-in after verification), so a
+      // failure to mint it must cost exactly that UX — never the sign-up itself, which has already
+      // created the account. Concretely reachable when neither secret is set.
+      try {
+        (await cookies()).set(
+          SIGNUP_INTENT_COOKIE_NAME,
+          createSignupIntentToken(user.id),
+          SIGNUP_INTENT_COOKIE_OPTIONS
+        );
+      } catch (error) {
+        logger.error(
+          { error, userId: user.id },
+          "Failed to issue the sign-up intent cookie; verification will require a manual sign-in"
+        );
+      }
+
       await handlePostUserCreation(ctx, outcome, inviteToken);
 
       await subscribeUserToMailingList({

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { getAuthorizedApiKeyWorkspaceIds } from "@/modules/api/v2/management/lib/authorized-workspace-ids";
 import { getWorkspaceIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { createWebhook, getWebhooks } from "@/modules/api/v2/management/webhooks/lib/webhook";
@@ -23,9 +24,7 @@ export const GET = async (request: NextRequest) =>
         });
       }
 
-      const workspaceIds = [
-        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
-      ];
+      const workspaceIds = await getAuthorizedApiKeyWorkspaceIds(authentication);
 
       const res = await getWebhooks(workspaceIds, query);
 

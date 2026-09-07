@@ -1,9 +1,8 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
 import { buildV3AuditLog } from "@/app/api/v3/lib/audit";
 import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflows/lib/context";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
-import { getMcpAuthentication, getMcpRequestId } from "../auth";
+import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { registerScopedTool } from "./guard-scopes";
 import { runMcpMutation } from "./run-mcp-mutation";
@@ -113,15 +112,19 @@ function buildWorkflowsBodyRequest(body: unknown): Request {
  * Run a workflow mutation with the same audit lifecycle the v3 route wrapper provides: build the
  * audit log, inject it into the context (the handlers populate it via ctx.recordAudit post-mutation),
  * mark success/failure, and always queue it. Mirrors the survey mutation tools.
+ *
+ * Two different contexts meet in this file, so they are named apart: `mcpCtx` is the MCP SDK's handler
+ * context (it carries the verified token), while `ctx` stays the v3 workflow API context that
+ * `workflowsHandlers` takes as a named property.
  */
 async function runWorkflowMutation(
-  extra: { authInfo?: NonNullable<Parameters<typeof getMcpAuthentication>[0]> },
+  mcpCtx: TMcpToolContext,
   action: Parameters<typeof buildV3AuditLog>[1],
   run: (ctx: WorkflowApiContext) => Promise<Response>
 ): Promise<CallToolResult> {
   // The shared runner owns the audit lifecycle; workflows only differ in building their API context
   // (which threads the same auditLog through) before delegating to the caller's operation.
-  return runMcpMutation(extra, { action, resource: "workflow" }, ({ authentication, requestId, auditLog }) =>
+  return runMcpMutation(mcpCtx, { action, resource: "workflow" }, ({ authentication, requestId, auditLog }) =>
     run(buildWorkflowApiContext(authentication, requestId, MCP_API_ROUTE, auditLog ?? undefined))
   );
 }
@@ -133,7 +136,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "List workflows",
       description: "List workflows in a Formbricks workspace using the v3 Workflows API contract.",
-      inputSchema: ZMcpListWorkflowsInput.shape,
+      inputSchema: ZMcpListWorkflowsInput,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -142,9 +145,10 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:read"],
-    async (input: TMcpListWorkflowsInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const ctx = buildWorkflowApiContext(getMcpAuthentication(extra.authInfo), requestId, MCP_API_ROUTE);
+    async (input: TMcpListWorkflowsInput, mcpCtx) => {
+      const authInfo = getMcpToolAuthInfo(mcpCtx);
+      const requestId = getMcpRequestId(authInfo);
+      const ctx = buildWorkflowApiContext(getMcpAuthentication(authInfo), requestId, MCP_API_ROUTE);
       const response = await workflowsHandlers.list({
         req: buildWorkflowsListRequest(buildListWorkflowsSearchParams(input)),
         ctx,
@@ -160,7 +164,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "Get workflow",
       description: "Get one Formbricks workflow using the v3 Workflows API contract.",
-      inputSchema: ZMcpGetWorkflowInput.shape,
+      inputSchema: ZMcpGetWorkflowInput,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -169,9 +173,10 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:read"],
-    async (input: TMcpGetWorkflowInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const ctx = buildWorkflowApiContext(getMcpAuthentication(extra.authInfo), requestId, MCP_API_ROUTE);
+    async (input: TMcpGetWorkflowInput, mcpCtx) => {
+      const authInfo = getMcpToolAuthInfo(mcpCtx);
+      const requestId = getMcpRequestId(authInfo);
+      const ctx = buildWorkflowApiContext(getMcpAuthentication(authInfo), requestId, MCP_API_ROUTE);
       const response = await workflowsHandlers.get({ ctx, params: { workflowId: input.workflowId } });
 
       return await responseToMcpToolResult(response, requestId);
@@ -185,7 +190,7 @@ export function registerWorkflowTools(server: McpServer): void {
       title: "List workflow runs",
       description:
         "List workflow runs for a Formbricks workspace (newest first) using the v3 Workflows API contract.",
-      inputSchema: ZMcpListWorkflowRunsInput.shape,
+      inputSchema: ZMcpListWorkflowRunsInput,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -194,9 +199,10 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:read"],
-    async (input: TMcpListWorkflowRunsInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const ctx = buildWorkflowApiContext(getMcpAuthentication(extra.authInfo), requestId, MCP_API_ROUTE);
+    async (input: TMcpListWorkflowRunsInput, mcpCtx) => {
+      const authInfo = getMcpToolAuthInfo(mcpCtx);
+      const requestId = getMcpRequestId(authInfo);
+      const ctx = buildWorkflowApiContext(getMcpAuthentication(authInfo), requestId, MCP_API_ROUTE);
       const response = await workflowsHandlers.listRuns({
         req: buildWorkflowsListRequest(buildListWorkflowRunsSearchParams(input)),
         ctx,
@@ -213,7 +219,7 @@ export function registerWorkflowTools(server: McpServer): void {
       title: "Get workflow run",
       description:
         "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract.",
-      inputSchema: ZMcpGetWorkflowRunInput.shape,
+      inputSchema: ZMcpGetWorkflowRunInput,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -222,9 +228,10 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:read"],
-    async (input: TMcpGetWorkflowRunInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const ctx = buildWorkflowApiContext(getMcpAuthentication(extra.authInfo), requestId, MCP_API_ROUTE);
+    async (input: TMcpGetWorkflowRunInput, mcpCtx) => {
+      const authInfo = getMcpToolAuthInfo(mcpCtx);
+      const requestId = getMcpRequestId(authInfo);
+      const ctx = buildWorkflowApiContext(getMcpAuthentication(authInfo), requestId, MCP_API_ROUTE);
       const response = await workflowsHandlers.getRun({ ctx, params: { runId: input.runId } });
 
       return await responseToMcpToolResult(response, requestId);
@@ -250,12 +257,13 @@ export function registerWorkflowTools(server: McpServer): void {
         idempotentHint: true,
         openWorldHint: true,
       },
-      inputSchema: ZMcpTestWorkflowInput.shape,
+      inputSchema: ZMcpTestWorkflowInput,
     },
     ["workflows:read"],
-    async (input: TMcpTestWorkflowInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const ctx = buildWorkflowApiContext(getMcpAuthentication(extra.authInfo), requestId, MCP_API_ROUTE);
+    async (input: TMcpTestWorkflowInput, mcpCtx) => {
+      const authInfo = getMcpToolAuthInfo(mcpCtx);
+      const requestId = getMcpRequestId(authInfo);
+      const ctx = buildWorkflowApiContext(getMcpAuthentication(authInfo), requestId, MCP_API_ROUTE);
       const response = await workflowsHandlers.testWorkflow({
         ctx,
         params: { workflowId: input.workflowId },
@@ -271,7 +279,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "Create workflow",
       description: "Create a Formbricks workflow (always as a draft) using the v3 Workflows API contract.",
-      inputSchema: ZMcpCreateWorkflowInput.shape,
+      inputSchema: ZMcpCreateWorkflowInput,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -280,8 +288,8 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:write"],
-    async (input: TMcpCreateWorkflowInput, extra) =>
-      runWorkflowMutation(extra, "created", (ctx) =>
+    async (input: TMcpCreateWorkflowInput, mcpCtx) =>
+      runWorkflowMutation(mcpCtx, "created", (ctx) =>
         workflowsHandlers.create({ req: buildWorkflowsBodyRequest(input), ctx })
       )
   );
@@ -295,7 +303,7 @@ export function registerWorkflowTools(server: McpServer): void {
         "Update a Formbricks workflow using the v3 Workflows API patch contract.",
         "Provided top-level fields replace that whole subtree; definition edits are only accepted while draft or disabled.",
       ].join(" "),
-      inputSchema: ZMcpPatchWorkflowInput.shape,
+      inputSchema: ZMcpPatchWorkflowInput,
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -304,8 +312,8 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:write"],
-    async (input: TMcpPatchWorkflowInput, extra) =>
-      runWorkflowMutation(extra, "updated", (ctx) =>
+    async (input: TMcpPatchWorkflowInput, mcpCtx) =>
+      runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.patch({
           req: buildWorkflowsBodyRequest(input.data),
           ctx,
@@ -321,7 +329,7 @@ export function registerWorkflowTools(server: McpServer): void {
       title: "Duplicate workflow",
       description:
         "Duplicate a Formbricks workflow as a new draft (empty run + version history) using the v3 Workflows API contract.",
-      inputSchema: ZMcpDuplicateWorkflowInput.shape,
+      inputSchema: ZMcpDuplicateWorkflowInput,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -330,8 +338,8 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:write"],
-    async (input: TMcpDuplicateWorkflowInput, extra) =>
-      runWorkflowMutation(extra, "created", (ctx) =>
+    async (input: TMcpDuplicateWorkflowInput, mcpCtx) =>
+      runWorkflowMutation(mcpCtx, "created", (ctx) =>
         workflowsHandlers.duplicate({
           req: buildWorkflowsBodyRequest(input.name ? { name: input.name } : {}),
           ctx,
@@ -346,7 +354,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "Delete workflow",
       description: "Delete a Formbricks workflow using the v3 Workflows API contract.",
-      inputSchema: ZMcpWorkflowIdInput.shape,
+      inputSchema: ZMcpWorkflowIdInput,
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -355,8 +363,8 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:write"],
-    async (input: TMcpWorkflowIdInput, extra) =>
-      runWorkflowMutation(extra, "deleted", (ctx) =>
+    async (input: TMcpWorkflowIdInput, mcpCtx) =>
+      runWorkflowMutation(mcpCtx, "deleted", (ctx) =>
         workflowsHandlers.delete({ ctx, params: { workflowId: input.workflowId } })
       )
   );
@@ -371,7 +379,7 @@ export function registerWorkflowTools(server: McpServer): void {
         "validate executability, snapshot an immutable version, and make it live.",
         "Once live it runs on matching survey responses and can send emails.",
       ].join(" "),
-      inputSchema: ZMcpWorkflowIdInput.shape,
+      inputSchema: ZMcpWorkflowIdInput,
       annotations: {
         readOnlyHint: false,
         // Enabling activates a live, email-sending workflow — high impact.
@@ -381,8 +389,8 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:write"],
-    async (input: TMcpWorkflowIdInput, extra) =>
-      runWorkflowMutation(extra, "updated", (ctx) =>
+    async (input: TMcpWorkflowIdInput, mcpCtx) =>
+      runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.enable({ ctx, params: { workflowId: input.workflowId } })
       )
   );
@@ -394,7 +402,7 @@ export function registerWorkflowTools(server: McpServer): void {
       title: "Disable workflow",
       description:
         "Disable a live Formbricks workflow (stops future runs) using the v3 Workflows API contract.",
-      inputSchema: ZMcpWorkflowIdInput.shape,
+      inputSchema: ZMcpWorkflowIdInput,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -403,8 +411,8 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:write"],
-    async (input: TMcpWorkflowIdInput, extra) =>
-      runWorkflowMutation(extra, "updated", (ctx) =>
+    async (input: TMcpWorkflowIdInput, mcpCtx) =>
+      runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.disable({ ctx, params: { workflowId: input.workflowId } })
       )
   );
@@ -415,7 +423,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "Archive workflow",
       description: "Archive a Formbricks workflow using the v3 Workflows API contract.",
-      inputSchema: ZMcpWorkflowIdInput.shape,
+      inputSchema: ZMcpWorkflowIdInput,
       annotations: {
         readOnlyHint: false,
         // Archiving soft-deletes and excludes the workflow from default reads.
@@ -425,8 +433,8 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:write"],
-    async (input: TMcpWorkflowIdInput, extra) =>
-      runWorkflowMutation(extra, "updated", (ctx) =>
+    async (input: TMcpWorkflowIdInput, mcpCtx) =>
+      runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.archive({ ctx, params: { workflowId: input.workflowId } })
       )
   );
@@ -437,7 +445,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "Unarchive workflow",
       description: "Unarchive a Formbricks workflow (back to draft) using the v3 Workflows API contract.",
-      inputSchema: ZMcpWorkflowIdInput.shape,
+      inputSchema: ZMcpWorkflowIdInput,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -446,8 +454,8 @@ export function registerWorkflowTools(server: McpServer): void {
       },
     },
     ["workflows:write"],
-    async (input: TMcpWorkflowIdInput, extra) =>
-      runWorkflowMutation(extra, "updated", (ctx) =>
+    async (input: TMcpWorkflowIdInput, mcpCtx) =>
+      runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.unarchive({ ctx, params: { workflowId: input.workflowId } })
       )
   );

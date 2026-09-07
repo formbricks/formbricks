@@ -7,7 +7,7 @@ export const ResetPasswordSuccessPage = async () => {
   return (
     <FormWrapper>
       <div>
-        <h1 className="leading-2 mb-4 text-center font-bold">
+        <h1 className="mb-4 text-center leading-2 font-bold">
           {t("auth.forgot-password.reset.success.heading")}
         </h1>
         <p className="text-center">{t("auth.forgot-password.reset.success.text")}</p>

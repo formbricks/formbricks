@@ -9,6 +9,27 @@ export type TFeedbackSourceType = z.infer<typeof ZFeedbackSourceType>;
 export const ZFeedbackSourceStatus = z.enum(["active", "paused", "error"]);
 export type TFeedbackSourceStatus = z.infer<typeof ZFeedbackSourceStatus>;
 
+/**
+ * Which survey responses a Formbricks feedback source imports into Hub.
+ *
+ * `completedOnly` matches the live ingestion path, which only runs on `responseFinished`.
+ * `all` additionally imports partial responses — answers a respondent typed but never submitted —
+ * which also means that text reaches Hub's LLM enrichments. Keep `completedOnly` the default.
+ */
+export const ZFeedbackSourceImportMode = z.enum(["completedOnly", "all"]);
+export type TFeedbackSourceImportMode = z.infer<typeof ZFeedbackSourceImportMode>;
+
+/**
+ * Whether a formbricks_survey source tracks every supported element of the surveys it maps, or an
+ * explicit subset. Always derived server-side from the submitted selection — never accepted from a
+ * client — so the scope can never disagree with the mapping rows it describes.
+ *
+ * Orthogonal to `importMode`: that one decides WHICH responses are imported, this one decides WHICH
+ * QUESTIONS a response is imported for.
+ */
+export const ZFeedbackSourceElementScope = z.enum(["all", "specific"]);
+export type TFeedbackSourceElementScope = z.infer<typeof ZFeedbackSourceElementScope>;
+
 // Hub field types (from Hub OpenAPI spec)
 export const ZHubFieldType = z.enum([
   "text",
@@ -22,6 +43,26 @@ export const ZHubFieldType = z.enum([
   "date",
 ]);
 export type THubFieldType = z.infer<typeof ZHubFieldType>;
+
+// Hub enrichment vocabularies (from Hub OpenAPI spec), in the Hub's own order. The Hub caps its
+// `sentiment` and `emotions` filters at these cardinalities rather than at the generic 100-value limit,
+// since more entries than there are labels can only be duplicates.
+//
+// NOTE: apps/web/modules/ee/analysis/lib/schema-definition.ts carries the same two vocabularies as
+// tuples, deliberately typed so that adding a label fails the build until every analysis label map is
+// updated. Keep the two in sync; de-duplicating without losing that exhaustiveness guard is ENG-2373.
+export const ZHubSentiment = z.enum([
+  "very_negative",
+  "negative",
+  "neutral",
+  "positive",
+  "very_positive",
+  "mixed",
+]);
+export type THubSentiment = z.infer<typeof ZHubSentiment>;
+
+export const ZHubEmotion = z.enum(["joy", "anger", "sadness", "fear", "surprise", "disgust"]);
+export type THubEmotion = z.infer<typeof ZHubEmotion>;
 
 // Hub target fields for mapping.
 // `response_value` is a CSV-only synthetic id stored in FeedbackSourceFieldMapping; csv-transform.ts
@@ -57,6 +98,8 @@ export const ZFeedbackSource = z.object({
   name: z.string().min(1),
   type: ZFeedbackSourceType,
   status: ZFeedbackSourceStatus,
+  importMode: ZFeedbackSourceImportMode,
+  elementScope: ZFeedbackSourceElementScope,
   workspaceId: z.cuid2(),
   feedbackDirectoryId: z.cuid2(),
   lastSyncAt: z.date().nullable(),
@@ -100,6 +143,8 @@ export const ZFeedbackSourceCreateInput = z.object({
   name: z.string().min(1),
   type: ZFeedbackSourceType,
   feedbackDirectoryId: z.cuid2(),
+  // Optional so callers that do not care inherit the schema default (completedOnly).
+  importMode: ZFeedbackSourceImportMode.optional(),
   createdBy: z.cuid2().optional(),
 });
 export type TFeedbackSourceCreateInput = z.infer<typeof ZFeedbackSourceCreateInput>;
@@ -127,6 +172,7 @@ export type TFeedbackSourceFieldMappingCreateInput = z.infer<typeof ZFeedbackSou
 export const ZFeedbackSourceUpdateInput = z.object({
   name: z.string().min(1).optional(),
   status: ZFeedbackSourceStatus.optional(),
+  importMode: ZFeedbackSourceImportMode.optional(),
   lastSyncAt: z.date().nullable().optional(),
 });
 export type TFeedbackSourceUpdateInput = z.infer<typeof ZFeedbackSourceUpdateInput>;
@@ -157,6 +203,6 @@ export const ELEMENT_TYPE_TO_HUB_FIELD_TYPE: Record<string, THubFieldType> = {
 };
 
 // Helper function to get Hub field type from element type
-export const getHubFieldTypeFromElementType = (elementType: string): THubFieldType => {
+export const getHubFieldTypeFromElementType = (elementType: string): THubFieldType | undefined => {
   return ELEMENT_TYPE_TO_HUB_FIELD_TYPE[elementType];
 };

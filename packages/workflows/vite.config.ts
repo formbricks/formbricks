@@ -3,7 +3,14 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
 export default defineConfig({
-  plugins: [dts()],
+  plugins: [
+    dts({
+      // Emit declarations rooted at `src` so the types sit next to the JS they describe
+      // (`dist/index.d.ts` beside `dist/index.js`) instead of under a nested `dist/src/`.
+      entryRoot: "src",
+      exclude: ["src/**/*.test.ts", "src/**/*.spec.ts"],
+    }),
+  ],
   build: {
     minify: false,
     lib: {

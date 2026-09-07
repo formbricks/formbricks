@@ -1,0 +1,14 @@
+diff --git a/dist/authorize-BP2_wo6r.mjs b/dist/authorize-BP2_wo6r.mjs
+index 822f08f9af95267d9ef085448741d11370e77fc2..be9e0543e55c8b8d8555fc679df7191a71ae6e34 100644
+--- a/dist/authorize-BP2_wo6r.mjs
++++ b/dist/authorize-BP2_wo6r.mjs
+@@ -4401 +4401,8 @@ const oauthProvider = (options) => {
+-			await seedResources(ctx, opts);
++			try {
++				await seedResources(ctx, opts);
++			} catch (error) {
++				ctx.logger.warn(
++					"oauth-provider: resource seed failed during init; deferring to first resource access.",
++					error
++				);
++			}

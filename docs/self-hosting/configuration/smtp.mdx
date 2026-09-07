@@ -49,10 +49,59 @@ SMTP_SECURE_ENABLED=0
 # If set to 0, the server won't require authentication
 SMTP_AUTHENTICATED=1
 
-# If set to 0, the server will accept connections without requiring
-# authorization from the list of supplied CAs (default is 1)
-SMTP_REJECT_UNAUTHORIZED_TLS=0
+# Verify the SMTP server certificate against trusted CAs (default and recommended)
+SMTP_REJECT_UNAUTHORIZED_TLS=1
 ```
+
+<Warning>
+  Do not set `SMTP_REJECT_UNAUTHORIZED_TLS=0` in production. It disables SMTP server certificate verification
+  and makes encrypted connections vulnerable to an active man-in-the-middle attack. If your SMTP server uses a
+  private certificate authority, mount that CA certificate into the Formbricks container and add it to Node.js'
+  trust store instead.
+</Warning>
+
+## Trusting A Private Certificate Authority
+
+Store the CA certificate as a PEM file, mount it read-only, and set `NODE_EXTRA_CA_CERTS` to the path inside the
+container. Keep `SMTP_REJECT_UNAUTHORIZED_TLS=1`.
+
+For Docker Compose, add the following to the Formbricks service:
+
+```yaml
+volumes:
+  - ./certs/smtp-ca.pem:/etc/ssl/formbricks-ca/smtp-ca.pem:ro
+environment:
+  NODE_EXTRA_CA_CERTS: /etc/ssl/formbricks-ca/smtp-ca.pem
+  SMTP_REJECT_UNAUTHORIZED_TLS: 1
+```
+
+For Kubernetes, create a ConfigMap containing the public CA certificate:
+
+```sh
+kubectl create configmap formbricks-smtp-ca \
+  --from-file=smtp-ca.pem=./smtp-ca.pem \
+  -n formbricks
+```
+
+Then mount it with the Helm chart:
+
+```yaml
+deployment:
+  env:
+    NODE_EXTRA_CA_CERTS: /etc/ssl/formbricks-ca/smtp-ca.pem
+    SMTP_REJECT_UNAUTHORIZED_TLS: "1"
+  extraVolumes:
+    - name: smtp-ca
+      configMap:
+        name: formbricks-smtp-ca
+  extraVolumeMounts:
+    - name: smtp-ca
+      mountPath: /etc/ssl/formbricks-ca
+      readOnly: true
+```
+
+Restart the Formbricks pods after changing the CA file because Node.js reads `NODE_EXTRA_CA_CERTS` when the
+process starts.
 
 ## Enabling Email Features
 

@@ -3,8 +3,8 @@
 import { useSetAtom } from "jotai";
 import { useEffect } from "react";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
+import { useWorkflowSurveyEndings } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
 import { reconcileDefinitionEndingCardIds } from "@/modules/ee/workflows/lib/trigger-ending-cards";
-import { useWorkflowSurveyEndings } from "@/modules/ee/workflows/list/hooks/use-trigger-survey-picker";
 import {
   prunedTriggerEndingCardIdsAtom,
   setWorkflowDefinitionAtom,

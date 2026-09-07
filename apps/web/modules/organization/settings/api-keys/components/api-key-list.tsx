@@ -6,7 +6,6 @@ import { EditAPIKeys } from "./edit-api-keys";
 interface ApiKeyListProps {
   organizationId: string;
   locale: TUserLocale;
-  isReadOnly: boolean;
   workspaces: TOrganizationWorkspace[];
   isFormbricksCloud: boolean;
 }
@@ -14,7 +13,6 @@ interface ApiKeyListProps {
 export const ApiKeyList = async ({
   organizationId,
   locale,
-  isReadOnly,
   workspaces,
   isFormbricksCloud,
 }: ApiKeyListProps) => {
@@ -25,7 +23,6 @@ export const ApiKeyList = async ({
       organizationId={organizationId}
       apiKeys={apiKeys}
       locale={locale}
-      isReadOnly={isReadOnly}
       workspaces={workspaces}
       isFormbricksCloud={isFormbricksCloud}
     />

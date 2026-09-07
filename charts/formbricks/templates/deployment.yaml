@@ -8,13 +8,18 @@ metadata:
     {{- if .Values.deployment.additionalLabels }}
     {{- toYaml .Values.deployment.additionalLabels | nindent 4 }}
     {{- end }}
-  {{- if or .Values.deployment.annotations .Values.deployment.reloadOnChange }}
+  {{- if or .Values.deployment.annotations .Values.deployment.reloadOnChange .Values.authzed.enabled }}
   annotations:
     {{- if .Values.deployment.annotations }}
     {{- toYaml .Values.deployment.annotations | nindent 4 }}
     {{- end }}
   {{- if .Values.deployment.reloadOnChange }}
     reloader.stakater.com/auto: "true"
+  {{- end }}
+  {{- if and .Values.authzed.enabled (not (hasKey (default dict .Values.deployment.annotations) "argocd.argoproj.io/sync-wave")) }}
+    # The release-matched AuthZed preparation runs at wave 1. This orders GitOps reconciliation without
+    # coupling the application process, startup, or probes to SpiceDB availability.
+    argocd.argoproj.io/sync-wave: "2"
   {{- end }}
   {{- end }}
 spec:
@@ -89,6 +94,10 @@ spec:
           args:
             {{- toYaml .Values.deployment.args | nindent 12 }}
           {{- end }}
+          {{- with .Values.deployment.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if .Values.deployment.ports }}
           ports:
             {{- range $name, $config := .Values.deployment.ports }}
@@ -131,6 +140,39 @@ spec:
             - name: SKIP_STARTUP_MIGRATION
               value: "true"
             {{- end }}
+            {{- if and .Values.formbricks.mcpOauthJwksUrl (not (hasKey .Values.deployment.env "MCP_OAUTH_JWKS_URL")) }}
+            - name: MCP_OAUTH_JWKS_URL
+              value: {{ .Values.formbricks.mcpOauthJwksUrl | quote }}
+            {{- end }}
+            {{- if .Values.authzed.enabled }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_ENABLED") }}
+            - name: AUTHZED_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_ENDPOINT") }}
+            - name: AUTHZED_ENDPOINT
+              value: {{ include "formbricks.authzedEndpoint" . | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_TOKEN") }}
+            - name: AUTHZED_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.authzedAuthSecretName" . }}
+                  key: {{ .Values.authzed.auth.tokenKey }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_SYSTEM_KEY") }}
+            - name: AUTHZED_SYSTEM_KEY
+              value: {{ required "authzed.systemKey is required when AuthZed is enabled" .Values.authzed.systemKey | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_INSECURE") }}
+            - name: AUTHZED_INSECURE
+              value: {{ include "formbricks.authzedInsecure" . | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_CONSISTENCY") }}
+            - name: AUTHZED_CONSISTENCY
+              value: {{ .Values.authzed.consistency | quote }}
+            {{- end }}
+            {{- end }}
             {{- if not (hasKey .Values.deployment.env "HUB_API_URL") }}
             - name: HUB_API_URL
               value: "http://{{ include "formbricks.hubname" . }}:8080"
@@ -168,6 +210,10 @@ spec:
           resources:
               {{- toYaml .Values.deployment.resources | nindent 12 }}
           {{- end }}
+          {{- with .Values.deployment.extraVolumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.deployment.probes }}
           {{- if .livenessProbe }}
           livenessProbe:
@@ -182,3 +228,7 @@ spec:
             {{- toYaml .startupProbe | nindent 12 }}
           {{- end }}
           {{- end }}
+      {{- with .Values.deployment.extraVolumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

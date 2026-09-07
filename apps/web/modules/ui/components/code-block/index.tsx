@@ -34,7 +34,7 @@ export const CodeBlock = ({
   return (
     <div className={cn("group relative w-full rounded-md text-xs", noMargin ? "" : "mt-4")}>
       {showCopyToClipboard && (
-        <div className="absolute right-2 top-2 z-20 flex cursor-pointer items-center justify-center p-1.5 text-slate-500 hover:text-slate-900">
+        <div className="absolute top-2 right-2 z-20 flex cursor-pointer items-center justify-center p-1.5 text-slate-500 hover:text-slate-900">
           <CopyIcon
             data-testid="copy-icon"
             onClick={() => {

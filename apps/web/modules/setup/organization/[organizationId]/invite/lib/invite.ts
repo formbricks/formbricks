@@ -42,6 +42,10 @@ export const inviteUser = async ({
         organization: { connect: { id: organizationId } },
         creator: { connect: { id: currentUserId } },
         acceptor: user ? { connect: { id: user.id } } : undefined,
+        // Onboarding invites are owner invites: this matches the default role used when an
+        // organization has no access-control license (see `individual-invite-tab.tsx`). Safe only
+        // because the caller is owner-gated — keep `inviteOrganizationMemberAction` owner-only, or
+        // thread a validated role through instead of widening the caller's roles.
         role: "owner",
         expiresAt,
       },

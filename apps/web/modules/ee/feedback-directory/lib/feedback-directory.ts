@@ -6,6 +6,8 @@ import { Prisma, type PrismaClient } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { isDirectoryWorkspaceFkViolation } from "@/lib/feedback-source/service";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
@@ -339,6 +341,16 @@ export const createFeedbackDirectory = async (
       },
     });
 
+    await runPostCommitProjection("create_feedback_directory", () =>
+      reconcileFeedbackDirectoryRelationships({
+        assignments: (workspaceIds ?? []).map((workspaceId) => ({
+          feedbackDirectoryId: directory.id,
+          workspaceId,
+        })),
+        feedbackDirectoryIds: [directory.id],
+      })
+    );
+
     return directory.id;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
@@ -411,6 +423,7 @@ const buildWorkspaceAssignmentPayload = async (
 const getArchiveUpdate = async (
   prismaClient: FeedbackDirectoryPrismaClient,
   directoryId: string,
+  currentWorkspaceIds: string[],
   isArchived: boolean | undefined
 ): Promise<Pick<Prisma.FeedbackDirectoryUpdateInput, "isArchived">> => {
   if (isArchived === true) {
@@ -424,11 +437,6 @@ const getArchiveUpdate = async (
   }
 
   if (isArchived === false) {
-    const currentWorkspaceIds = await getFeedbackDirectoryWorkspaceIdsWithClient(prismaClient, directoryId);
-    if (!currentWorkspaceIds) {
-      throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
-    }
-
     await assertWorkspacesNotAssignedElsewhere(prismaClient, directoryId, currentWorkspaceIds);
 
     return { isArchived: false };
@@ -441,6 +449,7 @@ const getWorkspaceAssignmentUpdate = async (
   prismaClient: FeedbackDirectoryPrismaClient,
   directoryId: string,
   organizationId: string,
+  currentWorkspaceIds: string[],
   workspaceIds: string[] | undefined
 ): Promise<{
   workspaces?: Prisma.FeedbackDirectoryWorkspaceUpdateManyWithoutFeedbackDirectoryNestedInput;
@@ -450,8 +459,6 @@ const getWorkspaceAssignmentUpdate = async (
     return { removedWorkspaceIds: [] };
   }
 
-  const currentWorkspaceIds =
-    (await getFeedbackDirectoryWorkspaceIdsWithClient(prismaClient, directoryId)) ?? [];
   const assignmentPayload = await buildWorkspaceAssignmentPayload(
     prismaClient,
     directoryId,
@@ -550,17 +557,22 @@ export const updateFeedbackDirectory = async (
   try {
     const { name, workspaceIds, isArchived } = data;
 
-    await prisma.$transaction(
+    const affectedWorkspaceIds = await prisma.$transaction(
       async (tx) => {
+        const previousWorkspaceIds = await getFeedbackDirectoryWorkspaceIdsWithClient(tx, directoryId);
+        if (!previousWorkspaceIds) {
+          throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
+        }
         if (workspaceIds !== undefined) {
           await assertWorkspacesNotAssignedElsewhere(tx, directoryId, workspaceIds);
         }
 
-        const archiveUpdate = await getArchiveUpdate(tx, directoryId, isArchived);
+        const archiveUpdate = await getArchiveUpdate(tx, directoryId, previousWorkspaceIds, isArchived);
         const workspaceAssignmentUpdate = await getWorkspaceAssignmentUpdate(
           tx,
           directoryId,
           organizationId,
+          previousWorkspaceIds,
           workspaceIds
         );
 
@@ -582,10 +594,22 @@ export const updateFeedbackDirectory = async (
           where: { id: directoryId },
           data: payload,
         });
+
+        return [...new Set([...previousWorkspaceIds, ...(workspaceIds ?? previousWorkspaceIds)])];
       },
       {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       }
+    );
+
+    await runPostCommitProjection("update_feedback_directory", () =>
+      reconcileFeedbackDirectoryRelationships({
+        assignments: affectedWorkspaceIds.map((workspaceId) => ({
+          feedbackDirectoryId: directoryId,
+          workspaceId,
+        })),
+        feedbackDirectoryIds: [directoryId],
+      })
     );
 
     return true;

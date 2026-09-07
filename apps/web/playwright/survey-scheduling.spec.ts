@@ -69,24 +69,23 @@ const pickDateForToggle = async (page: Page, toggleTitle: string, dayOffset: num
   await datePickerTrigger.click();
 
   const calendarPopover = page.locator("[data-radix-popper-content-wrapper]").last();
-  const calendar = calendarPopover.locator(".react-calendar");
+  const calendar = calendarPopover.locator(".rdp-root");
   const targetMonthLabel = formatVisibleMonth(targetDate);
 
   for (let attempt = 0; attempt < 12; attempt++) {
-    const visibleMonthLabel = (
-      await calendar.locator(".react-calendar__navigation__label").textContent()
-    )?.trim();
+    const visibleMonthLabel = (await calendar.locator(".rdp-caption_label").textContent())?.trim();
 
     if (visibleMonthLabel?.includes(targetMonthLabel)) {
       break;
     }
 
-    await calendar.locator(".react-calendar__navigation__next-button").click();
+    await calendar.locator(".rdp-button_next").click();
   }
 
+  // `:not(.rdp-outside)` matters: the grid pads with the neighbouring months' days, so a bare day-number
+  // match can hit the same number in the wrong month.
   await calendar
-    .locator(".react-calendar__month-view__days")
-    .locator("button:not([disabled])")
+    .locator(".rdp-day:not(.rdp-outside) .rdp-day_button:not([disabled])")
     .filter({ hasText: new RegExp(`^${targetDate.getDate().toString()}$`) })
     .click();
 

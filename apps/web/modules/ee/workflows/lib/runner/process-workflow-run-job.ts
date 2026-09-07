@@ -32,7 +32,6 @@ import {
 } from "@/modules/email/lib/survey-response-email";
 
 /** Strips CR/LF and other control chars from the subject — defense against SMTP header injection. */
-// eslint-disable-next-line no-control-regex -- intentionally matching control chars to strip them
 const CONTROL_CHARS_PATTERN = /[\x00-\x1f\x7f\u2028\u2029]/g;
 const stripControlChars = (value: string): string => value.replace(CONTROL_CHARS_PATTERN, "");
 

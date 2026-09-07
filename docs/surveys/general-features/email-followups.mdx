@@ -5,9 +5,9 @@ icon: "envelope"
 ---
 
 <Warning>
-  Email Follow-ups are being deprecated in favor of [Workflows](/workflows/overview). Workflows
-  offer the same response- and ending-based email automation plus additional triggers and actions. We recommend
-  building new email automations as Workflows.
+  Email Follow-ups are being deprecated in favor of [Workflows](/workflows/overview). Workflows cover the
+  same ground — a completed response, optionally narrowed to specific ending cards, sending an email — and
+  are where this is being developed. We recommend building new email automations as Workflows.
 </Warning>
 
 <Note>
@@ -35,8 +35,10 @@ Email followups allow you to automatically send customized emails to respondents
 ## Setting Up Email Follow-ups
 
 <Steps>
-  <Step title="Go to Follow-ups Section and Create New Follow-up">
-    Navigate to the survey editor and access the Follow-ups section.
+  <Step title="Open the Follow-ups tab">
+    It sits at the end of the survey editor's tab row, after Settings. `New follow-up` opens the dialog where the rest of these steps happen.
+
+    <Image src="/images/surveys/general-features/email-followups/followups-tab.webp" alt="The Follow-ups tab of the survey editor" />
   </Step>
 
   <Step title="Configure Recipients">
@@ -51,7 +53,7 @@ Email followups allow you to automatically send customized emails to respondents
       <li><strong>Yourself:</strong> Your own email address</li>
     </ul>
 
-    <Image src="/images/xm-and-surveys/core-features/email-followups/followup-recipient.webp" alt="Followup recipient configuration" />
+    <Image src="/images/surveys/general-features/email-followups/new-followup.webp" alt="The Create a new follow-up dialog" />
   </Step>
 
   <Step title="Set Up Reply-To">
@@ -61,8 +63,6 @@ Email followups allow you to automatically send customized emails to respondents
   </Step>
 
   <Step title="Configure Email Content">
-    <Image src="/images/xm-and-surveys/core-features/email-followups/followup-content.webp" alt="Followup content configuration" />
-
     <ul>
       <li><strong>Subject:</strong> Customize your email subject line</li>
       <li><strong>Body:</strong> Supports basic HTML formatting (`p`, `span`, `b`, `strong`, `i`, `em`, `a`, `br` tags)</li>

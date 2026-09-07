@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZIntegrationInput } from "@formbricks/types/integration";
+import { assertCan } from "@/lib/authorization";
 import { withStoredIntegrationKey } from "@/lib/integration/redact-credentials";
 import {
   createOrUpdateIntegration,
@@ -11,12 +12,13 @@ import {
 } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromIntegrationId,
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromIntegrationId,
 } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 const ZCreateOrUpdateIntegrationAction = z.object({
@@ -28,22 +30,15 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
   .inputSchema(ZCreateOrUpdateIntegrationAction)
   .action(
     withAuditLogging("createdUpdated", "integration", async ({ ctx, parsedInput }) => {
+      // Bound before any lookup: every call past this point reads the stored integration and writes the
+      // provider config plus an audit-log entry.
+      await applyRateLimit(rateLimitConfigs.actions.integrationMutation, ctx.user.id);
+
       const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: parsedInput.workspaceId,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -77,7 +72,11 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
         { organizationId, workspaceId: parsedInput.workspaceId }
       );
 
-      return result;
+      // ENG-2292: only the id leaves this action. `result` is the full Prisma row, including the
+      // `config.key` merged back in above — returning it would serialize the provider's access and
+      // refresh tokens into the action response, for the same audience the settings pages redact them
+      // from (readWrite workspace members). The callers only branch on success.
+      return { id: result.id };
     })
   );
 
@@ -87,28 +86,24 @@ const ZDeleteIntegrationAction = z.object({
 
 export const deleteIntegrationAction = authenticatedActionClient.inputSchema(ZDeleteIntegrationAction).action(
   withAuditLogging("deleted", "integration", async ({ ctx, parsedInput }) => {
+    // Same policy as the create/update path — a delete is the cheapest way to churn integration rows.
+    await applyRateLimit(rateLimitConfigs.actions.integrationMutation, ctx.user.id);
+
     const organizationId = await getOrganizationIdFromIntegrationId(parsedInput.integrationId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromIntegrationId(parsedInput.integrationId),
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromIntegrationId(parsedInput.integrationId),
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.integrationId = parsedInput.integrationId;
     const result = await deleteIntegration(parsedInput.integrationId);
     ctx.auditLoggingCtx.oldObject = result;
-    return result;
+
+    // ENG-2292: the deleted row still carries the live OAuth credentials in `config.key`, so returning
+    // it would hand a readWrite member the connecting user's tokens in one call — and the integration
+    // can simply be reconnected afterwards. The callers only check that the delete succeeded.
+    return { id: result.id };
   })
 );

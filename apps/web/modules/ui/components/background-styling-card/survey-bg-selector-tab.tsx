@@ -102,7 +102,7 @@ export const SurveyBgSelectorTab = ({
         tabStyle="button"
         className="bg-slate-100"
       />
-      <div className="w-full rounded-b-lg border-x border-b border-slate-200 px-4 pb-4 pt-2" ref={parent}>
+      <div className="w-full rounded-b-lg border-x border-b border-slate-200 px-4 pt-2 pb-4" ref={parent}>
         {renderContent()}
       </div>
     </div>

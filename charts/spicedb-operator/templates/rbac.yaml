@@ -1,0 +1,59 @@
+{{- $root := . -}}
+{{- $watchNamespaces := .Values.watchNamespaces -}}
+{{- if not $watchNamespaces -}}
+{{- $watchNamespaces = list .Release.Namespace -}}
+{{- end -}}
+{{- range $namespace := $watchNamespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "spicedb-operator.fullname" $root }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "spicedb-operator.labels" $root | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events", "jobs", "secrets", "serviceaccounts", "services"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["delete", "get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  - apiGroups: ["authzed.com"]
+    resources: ["spicedbclusters", "spicedbclusters/status"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["rolebindings", "roles"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "spicedb-operator.fullname" $root }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "spicedb-operator.labels" $root | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "spicedb-operator.fullname" $root }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "spicedb-operator.fullname" $root }}
+    namespace: {{ $root.Release.Namespace }}
+{{- end }}

@@ -100,6 +100,40 @@ spec:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 {{- end }}
+{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled .Values.hub.embeddings.background.enabled .Values.hub.embeddings.background.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "formbricks.hubEmbeddingsBackgroundName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsBackgroundName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-embeddings-background
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.hub.embeddings.background.autoscaling.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.hub.embeddings.background.autoscaling.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: {{ include "formbricks.hubEmbeddingsBackgroundName" . }}
+  minReplicas: {{ .Values.hub.embeddings.background.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.hub.embeddings.background.autoscaling.maxReplicas }}
+  metrics:
+    {{- toYaml .Values.hub.embeddings.background.autoscaling.metrics | nindent 4 }}
+  {{- with .Values.hub.embeddings.background.autoscaling.behavior }}
+  behavior:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
 {{- if and .Values.taxonomy.enabled .Values.taxonomy.autoscaling.enabled }}
 ---
 apiVersion: autoscaling/v2

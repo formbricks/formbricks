@@ -3,6 +3,9 @@ import type { BetterAuthOptions } from "better-auth";
 import { APIError } from "better-auth/api";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/constants";
@@ -68,6 +71,11 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
  * completed delete would be misleading.
  */
 export const accountDeletionAfterDelete: NonNullable<DeleteUserConfig["afterDelete"]> = async (user) => {
+  await runPostCommitProjection("account_delete_organization_cleanup", () =>
+    deleteUserOrganizationRelationships(user.id)
+  );
+  await runPostCommitProjection("account_delete_team_cleanup", () => deleteUserTeamRelationships(user.id));
+
   try {
     await deleteBrevoCustomerByEmail({ email: user.email });
   } catch (error) {

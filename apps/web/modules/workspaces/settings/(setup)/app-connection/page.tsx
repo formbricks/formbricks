@@ -23,7 +23,8 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
 
   const { workspace, session } = await getWorkspaceAuth(workspaceId);
   const showAIPrompt = session?.user.id
-    ? (await getPostHogFeatureFlag(session.user.id, "a-b_app-connection_ai-prompt")) === "test"
+    ? (await getPostHogFeatureFlag(session.user.id, "a-b_app-connection_ai-prompt", { workspaceId })) ===
+      "test"
     : false;
 
   const aiPrompt = `Integrate Formbricks into my app. 

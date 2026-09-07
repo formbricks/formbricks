@@ -36,6 +36,27 @@ export const ZStorageUrl = z.string().refine(
   }
 );
 
+/**
+ * True when a user-authored link target is safe to hand to `window.open()`, `location.replace()` or an
+ * `href`.
+ *
+ * `z.url()` only checks that the value parses as a URL, and `new URL()` happily accepts `javascript:`,
+ * `data:` and `vbscript:` — so validating a link field with `z.url()` turns it into stored XSS. Parsing
+ * (rather than a prefix/regex test) also normalizes obfuscated schemes such as `java\tscript:`, which a
+ * `startsWith` check would wave through.
+ *
+ * The scheme set is an allowlist: `http`/`https` for web links, plus `mailto` and `tel`, which are
+ * legitimate CTA targets, cannot execute script, and are already tolerated by `safeUrlRefinement`.
+ */
+export const isSafeLinkUrl = (url: string): boolean => {
+  try {
+    const { protocol } = new URL(url.trim());
+    return protocol === "https:" || protocol === "http:" || protocol === "mailto:" || protocol === "tel:";
+  } catch {
+    return false;
+  }
+};
+
 export const ZNumber = z.number();
 
 export const ZOptionalNumber = z.number().optional();
@@ -234,3 +255,12 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
 };
 
 export const ZEmail = z.email();
+
+export const isValidIanaTimeZone = (value: string): boolean => {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+};

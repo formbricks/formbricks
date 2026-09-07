@@ -22,18 +22,34 @@ import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation/e
 
 const AUTO_PROGRESS_SUBMIT_DELAY_MS = 350;
 
+/**
+ * Anchors are deliberately absent: they are focusable, but a link is never what a card asks of the
+ * respondent. A headline or subheader may carry one in its prose (a consent element pointing at a
+ * privacy policy), and that link sits *before* the element's own control in the DOM — so mount
+ * focus landed on a word in the question text, ringed, reading as a highlighted suggestion
+ * (ENG-2415), and gave a screen-reader user "Privacy Policy, link" as their orientation instead of
+ * the question's control. Excluding `a` from `[tabindex="0"]` too keeps that uniform for an anchor
+ * made focusable by hand. Nothing is left unfocused by the exclusion: every block renders its
+ * Submit and/or Back button inside `root`, and the only shape without one (an auto-progress
+ * element on the first block) is a radio group.
+ */
 const FOCUSABLE_CONTROL_SELECTOR = [
   'input:not([type="hidden"]):not([tabindex="-1"]):not(:disabled)',
   "textarea:not(:disabled)",
   "select:not(:disabled)",
   "button:not(:disabled)",
-  "a[href]",
-  '[tabindex="0"]',
+  '[tabindex="0"]:not(a)',
 ].join(", ");
 
 /**
  * Focuses the first interactive control inside `root`. With `preferInvalid`,
- * controls flagged aria-invalid win, and scrolling is left to the caller.
+ * controls flagged aria-invalid win. Prose links are not candidates at all (see
+ * FOCUSABLE_CONTROL_SELECTOR).
+ *
+ * Scrolling is always left to the caller. The first control can sit *below* the card's content — a
+ * CTA block has no input of its own, so its first control is the Next button rendered after the
+ * element — and letting focus scroll that into view opens an overflowing card at its end instead of
+ * its start (ENG-2289). The `preferInvalid` callers scroll the field they focus into view themselves.
  */
 const focusFirstControl = (root: HTMLElement, preferInvalid = false): void => {
   const invalidTarget = preferInvalid
@@ -42,7 +58,7 @@ const focusFirstControl = (root: HTMLElement, preferInvalid = false): void => {
       )
     : null;
   const target = invalidTarget ?? root.querySelector<HTMLElement>(FOCUSABLE_CONTROL_SELECTOR);
-  target?.focus({ preventScroll: preferInvalid });
+  target?.focus({ preventScroll: true });
 };
 
 interface BlockConditionalProps {

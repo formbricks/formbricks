@@ -1,17 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "declaration": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "lib": ["es2022", "dom", "dom.iterable"],
     "module": "ESNext",
-    "moduleResolution": "node",
     "outDir": "./dist",
-    "skipLibCheck": true,
-    "strict": true,
     "target": "ES2022"
   },
-  "display": "Node 16",
+  "display": "JS Library",
   "extends": "./base.json"
 }

@@ -134,7 +134,7 @@ export const emitFormbricksEvent = <E extends TFormbricksEventName>(
   payload: TFormbricksEventPayloads[E]
 ): void => {
   // js-core is imported by SSR bundles; emitting is meaningless off the browser.
-  if (globalThis.window === undefined) return;
+  if (typeof window === "undefined") return;
 
   // Both surfaces run host-owned code — subscriber handlers, and `dataLayer.push`, which GTM
   // replaces with its own function once it loads. The emitter's call sites sit at the head of
@@ -151,7 +151,7 @@ export const emitFormbricksEvent = <E extends TFormbricksEventName>(
     // (e.g. `responseId` in preview mode) would replace the `null` sentinel in the spread —
     // re-opening the recursive-merge bleed the sentinel exists to stop.
     const definedPayload = Object.fromEntries(
-      Object.entries(payload).filter(([, value]) => value !== undefined)
+      Object.entries<unknown>(payload).filter(([, value]) => value !== undefined)
     );
     window.dataLayer.push({ event, formbricks: { ...EMPTY_DATALAYER_PAYLOAD, ...definedPayload } });
   } catch (error) {

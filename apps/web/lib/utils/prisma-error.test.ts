@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "./prisma-error";
 
-const knownError = (code: string): Prisma.PrismaClientKnownRequestError =>
+const knownError = (code: string): PrismaClientKnownRequestError =>
   new Prisma.PrismaClientKnownRequestError("boom", { code, clientVersion: "test" });
 
 const uniqueViolation = knownError(PrismaErrorType.UniqueConstraintViolation);

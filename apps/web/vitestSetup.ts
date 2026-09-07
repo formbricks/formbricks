@@ -92,6 +92,22 @@ vi.mock("@formbricks/database/prisma", async () => {
     ...actual,
     Prisma: actual.Prisma,
     PrismaClient: class {
+      // Better Auth 1.7 seeds its `oauthResource` rows when the oauthProvider plugin initialises
+      // (ENG-2343), which happens on any import of modules/auth/lib/auth.ts. Against this stub the
+      // adapter would otherwise throw `Model oauthResource does not exist in the database` as an
+      // unhandled error in every such test file — noise that would sit in the suite forever and
+      // mask a real failure later. A read that returns nothing lets seeding complete quietly;
+      // nothing here asserts on it, and the real behaviour is covered against a real database.
+      oauthResource = {
+        findMany: () => Promise.resolve([]),
+        findFirst: () => Promise.resolve(null),
+        findUnique: () => Promise.resolve(null),
+        create: (args: { data: unknown }) => Promise.resolve(args.data),
+        createMany: () => Promise.resolve({ count: 0 }),
+        update: (args: { data: unknown }) => Promise.resolve(args.data),
+        upsert: (args: { create: unknown }) => Promise.resolve(args.create),
+      };
+
       $connect() {
         return Promise.resolve();
       }

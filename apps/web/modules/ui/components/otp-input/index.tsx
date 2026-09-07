@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Input } from "@/modules/ui/components/input";
 
@@ -21,6 +22,7 @@ export const OTPInput = ({
   inputBoxClassName,
   disabled,
 }: OTPInputProps) => {
+  const { t } = useTranslation();
   const valueItems = useMemo(() => {
     const valueArray = value.split("");
     const items: Array<string> = [];
@@ -129,7 +131,11 @@ export const OTPInput = ({
   };
 
   return (
-    <div className={cn("flex justify-center space-x-2", containerClassName)}>
+    // Fluid boxes rather than a fixed w-10: six 40px boxes plus five 8px gaps need 280px,
+    // which overflows the auth card below 375px and by 56px on a 320px screen (ENG-2428).
+    // Kept as a flex row of direct children because the focus handlers walk
+    // nextElementSibling/previousElementSibling.
+    <div className={cn("flex w-full justify-center gap-1.5 sm:gap-2", containerClassName)}>
       {valueItems.map((digit, idx) => (
         <Input
           key={idx}
@@ -138,8 +144,9 @@ export const OTPInput = ({
           autoComplete="one-time-code"
           pattern="\d{1}"
           maxLength={valueLength}
+          aria-label={t("common.digit_number_of_total", { number: idx + 1, total: valueLength })}
           className={cn(
-            "h-10 w-10 rounded-md border-slate-300 text-center shadow-xs sm:text-sm",
+            "h-11 w-full max-w-12 min-w-0 rounded-md border-slate-300 px-0 text-center shadow-xs sm:h-10",
             inputBoxClassName
           )}
           value={digit}

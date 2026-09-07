@@ -242,6 +242,7 @@ export const RecallWrapper = ({
     };
 
     setRenderedText(processInput());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-render only on text/recall changes; `filterRecallItems` mutates internalValue/recallItems and would loop, localSurvey/usedLanguageCode are captured via those
   }, [internalValue, recallItems]);
 
   return (

@@ -8,25 +8,33 @@ interface TermsPrivacyLinksProps {
   privacyUrl?: string;
 }
 
-export const TermsPrivacyLinks = ({ termsUrl, privacyUrl }: TermsPrivacyLinksProps) => {
+export const TermsPrivacyLinks = ({ termsUrl, privacyUrl }: Readonly<TermsPrivacyLinksProps>) => {
   const { t } = useTranslation();
 
   if (!termsUrl && !privacyUrl) return null;
 
   return (
-    <div className="mt-3 text-center text-xs text-slate-500">
+    <div className="mt-3 text-center text-xs text-pretty text-slate-500">
       {termsUrl && (
-        <Link className="font-semibold" href={termsUrl} rel="noreferrer" target="_blank">
+        <Link
+          className="inline-flex min-h-6 items-center rounded-sm py-1 font-semibold hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:outline-hidden"
+          href={termsUrl}
+          rel="noreferrer"
+          target="_blank">
           {t("auth.signup.terms_of_service")}
         </Link>
       )}
       {termsUrl && privacyUrl && <span> {t("common.and")} </span>}
       {privacyUrl && (
-        <Link className="font-semibold" href={privacyUrl} rel="noreferrer" target="_blank">
+        <Link
+          className="inline-flex min-h-6 items-center rounded-sm py-1 font-semibold hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:outline-hidden"
+          href={privacyUrl}
+          rel="noreferrer"
+          target="_blank">
           {t("auth.signup.privacy_policy")}
         </Link>
       )}
-      <hr className="mx-6 mt-3"></hr>
+      <hr className="mt-3" />
     </div>
   );
 };

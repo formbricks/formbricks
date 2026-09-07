@@ -36,7 +36,7 @@ const setup = async (setupConfig: TConfigInput): Promise<void> => {
       ...setupConfig,
       // @ts-expect-error -- apiHost was in the older type
       ...(setupConfig.apiHost && { appUrl: setupConfig.apiHost as string }),
-    } as unknown as TConfigInput);
+    });
   } else {
     await queue.add(Setup.setup, CommandType.Setup, false, setupConfig);
   }

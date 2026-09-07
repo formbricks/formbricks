@@ -30,7 +30,7 @@ properties:
   archivedAt:
     type:
       - string
-      - 'null'
+      - "null"
     format: date-time
     description: >-
       Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
@@ -53,7 +53,7 @@ properties:
   metadata:
     anyOf:
       - $ref: ./SurveyMetadata.yml
-      - type: 'null'
+      - type: "null"
   defaultLanguage:
     type: string
     description: >-

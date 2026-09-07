@@ -15,9 +15,9 @@ const PASSWORD_REGEX = {
 
 const ValidationIcon = ({ state }: { state: boolean }) =>
   state ? (
-    <CheckIcon className="size-5" />
+    <CheckIcon className="size-5 shrink-0" aria-hidden="true" />
   ) : (
-    <span className="flex size-5 items-center justify-center">
+    <span className="flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
       <i className="inline-block size-2 rounded-full bg-slate-700" />
     </span>
   );
@@ -25,11 +25,14 @@ const ValidationIcon = ({ state }: { state: boolean }) =>
 export const PasswordChecks = ({ password }: PasswordChecksProps) => {
   const { t } = useTranslation();
 
-  const DEFAULT_VALIDATIONS = [
-    { label: t("auth.signup.password_validation_uppercase_and_lowercase"), state: false },
-    { label: t("auth.signup.password_validation_minimum_8_and_maximum_128_characters"), state: false },
-    { label: t("auth.signup.password_validation_contain_at_least_1_number"), state: false },
-  ];
+  const DEFAULT_VALIDATIONS = useMemo(
+    () => [
+      { label: t("auth.signup.password_validation_uppercase_and_lowercase"), state: false },
+      { label: t("auth.signup.password_validation_minimum_8_and_maximum_128_characters"), state: false },
+      { label: t("auth.signup.password_validation_contain_at_least_1_number"), state: false },
+    ],
+    [t]
+  );
 
   const validations = useMemo(() => {
     if (password === null) return DEFAULT_VALIDATIONS;
@@ -48,15 +51,17 @@ export const PasswordChecks = ({ password }: PasswordChecksProps) => {
         state: PASSWORD_REGEX.NUMBER.test(password),
       },
     ];
-  }, [password]);
+  }, [password, DEFAULT_VALIDATIONS, t]);
 
   return (
-    <div className="my-2 text-left text-slate-700 sm:text-sm">
-      <ul aria-label="Password requirements">
+    // text-sm unconditionally: with only `sm:text-sm` the list rendered *larger* on a phone
+    // than on desktop. aria-live announces a rule flipping as the user types (SC 4.1.3).
+    <div className="my-2 text-left text-sm text-slate-700">
+      <ul aria-label={t("auth.signup.password_requirements")} aria-live="polite">
         {validations.map((validation) => (
-          <li key={validation.label} className="flex items-center">
+          <li key={validation.label} className="flex items-start gap-2">
             <ValidationIcon state={validation.state} />
-            {validation.label}
+            <span>{validation.label}</span>
           </li>
         ))}
       </ul>

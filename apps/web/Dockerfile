@@ -107,6 +107,14 @@ RUN chmod 644 ./package.json
 COPY --from=installer /app/apps/web/dist/docker/validate-env.mjs ./validate-env.mjs
 RUN chown nextjs:nextjs ./validate-env.mjs && chmod 444 ./validate-env.mjs
 
+COPY --from=installer /app/apps/web/dist/authzed-cli ./authzed-cli
+RUN chown -R nextjs:nextjs ./authzed-cli \
+    && find ./authzed-cli -type d -exec chmod 555 {} + \
+    && find ./authzed-cli -type f -exec chmod 444 {} +
+
+COPY --from=installer /app/apps/web/scripts/docker/formbricks-authzed /usr/local/bin/formbricks-authzed
+RUN chown root:root /usr/local/bin/formbricks-authzed && chmod 555 /usr/local/bin/formbricks-authzed
+
 COPY --from=installer /app/prisma.config.mjs ./prisma.config.mjs
 RUN chmod 644 ./prisma.config.mjs
 
@@ -117,7 +125,7 @@ COPY --from=installer /app/apps/web/public ./apps/web/public
 RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 
 # Create packages/database directory structure with proper ownership for runtime migrations
-RUN mkdir -p ./packages/database/migrations && chown -R nextjs:nextjs ./packages/database
+RUN mkdir -p ./packages/database/.prisma-migrations && chown -R nextjs:nextjs ./packages/database
 
 COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
 RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json

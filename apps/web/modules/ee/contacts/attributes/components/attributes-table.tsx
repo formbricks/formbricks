@@ -137,6 +137,7 @@ export const AttributesTable = ({
         console.error(err);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loads persisted column settings once per workspace; `table` is an unstable ref and would clobber user changes on every render
   }, [workspaceId]);
 
   // Hide select column when all attributes are system attributes
@@ -254,7 +255,7 @@ export const AttributesTable = ({
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
-            <TableHeader className="pointer-events-auto">
+            <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>

@@ -114,7 +114,6 @@ describe("Quota Evaluation Service", () => {
     createdBy: null,
     followUps: [],
     isVerifyEmailEnabled: false,
-    isSingleResponsePerEmailEnabled: false,
     surveyClosedMessage: null,
     singleUse: null,
     pin: null,

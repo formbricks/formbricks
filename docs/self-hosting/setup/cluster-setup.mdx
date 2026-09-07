@@ -22,6 +22,7 @@ For a Formbricks v5 cluster setup, plan for:
 - shared S3-compatible storage if you use file uploads or organization branding assets
 - a load balancer or ingress layer in front of the app
 - Formbricks Hub as part of the runtime
+- Cube, either bundled or externally managed
 - Envoy Gateway or an equivalent external edge rate limiter for the v5-covered public and API-key routes
 
 ## Architecture
@@ -38,6 +39,7 @@ graph TD
         FB2["Formbricks App 2"]
         FB3["Formbricks App n"]
         HUB["Formbricks Hub"]
+        CUBE["Cube"]
     end
 
     subgraph Data Storage
@@ -64,6 +66,11 @@ graph TD
     FB2 --> HUB
     FB3 --> HUB
 
+    FB1 --> CUBE
+    FB2 --> CUBE
+    FB3 --> CUBE
+    CUBE --> PSQL
+
     FB1 --> S3
     FB2 --> S3
     FB3 --> S3
@@ -82,22 +89,27 @@ graph TD
    - stores and serves Hub-backed feedback record data
    - can share the same PostgreSQL database as the main app when configured that way
 
-3. **PostgreSQL**
+3. **Cube**
+
+   - required for the supported v5 analytics baseline
+   - can run as the bundled service or as an external deployment shared by every app replica
+
+4. **PostgreSQL**
 
    - primary persistent store for the Formbricks app and, by default, Hub
    - should be backed up and monitored like any other stateful production dependency
 
-4. **Redis / Valkey**
+5. **Redis / Valkey**
 
    - required for caching, remaining application-enforced rate limits, and audit-related flows
    - should be shared across all app replicas
 
-5. **S3-Compatible Storage**
+6. **S3-Compatible Storage**
 
    - used for file uploads and media-related features
    - should be shared across all replicas
 
-6. **Edge Layer**
+7. **Edge Layer**
 
    - terminates or routes incoming traffic
    - enforces rate limiting for the route groups that moved out of the application server in v5
@@ -147,10 +159,14 @@ You do not have to use the Formbricks Helm chart's Envoy bundle, but you do need
 the v5-covered public and API-key routes. Use the
 [rate-limiting guide](/self-hosting/advanced/rate-limiting) for the exact route coverage.
 
-### Cube Is Optional
+### Cube Is Part Of The Baseline
 
-Cube is only needed for analytics dashboards or other analysis flows that depend on Cube queries. It is not part
-of the baseline Formbricks v5 cluster runtime.
+Cube is part of the supported Formbricks v5 stack and powers analytics flows that depend on Cube queries. The
+Docker Compose and Helm deployment paths bundle it by default. You can replace the bundled service with an
+external Cube deployment, but do not remove Cube connectivity from the baseline configuration:
+
+- keep the bundled Cube service enabled; or
+- configure every app replica with the same external `CUBEJS_API_URL` and `CUBEJS_API_SECRET`.
 
 ## Kubernetes Setup
 

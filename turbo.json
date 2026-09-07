@@ -1,7 +1,16 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "cacheMaxSize": "10GB",
+  "globalDependencies": [
+    ".nvmrc",
+    "authzed/schema.zed",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "prisma.config.mjs",
+    "turbo.json"
+  ],
   "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
+  "globalPassThroughEnv": ["SEED_API_KEY"],
   "tasks": {
     "@formbricks/ai#build": {
       "dependsOn": ["@formbricks/logger#build"],
@@ -39,19 +48,20 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/database#build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "@formbricks/database#generate"],
       "env": ["DATABASE_URL"],
       "outputs": ["dist/**", "generated/prisma/**"]
+    },
+    "@formbricks/database#generate": {
+      "dependsOn": ["^generate"],
+      "env": ["DATABASE_URL"],
+      "outputs": ["generated/prisma/**"]
     },
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
     "@formbricks/database#typecheck": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#generate"]
-    },
-    "@formbricks/email#build": {
-      "dependsOn": ["^build"],
-      "outputs": []
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
     "@formbricks/i18n-utils#build": {
       "dependsOn": ["^build"],
@@ -74,6 +84,9 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/jobs#test:coverage": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/jobs#typecheck": {
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/js-core#build": {
@@ -197,6 +210,7 @@
         "@formbricks/ai#build",
         "@formbricks/cache#build",
         "@formbricks/database#build",
+        "@formbricks/jobs#build",
         "@formbricks/logger#build",
         "@formbricks/storage#build",
         "@formbricks/surveys#build"
@@ -219,118 +233,44 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "env": [
-        "NODE_ENV",
-        "ASSET_PREFIX_URL",
-        "BASE_PATH",
-        "SENTRY_AUTH_TOKEN",
-        "E2E_TESTING",
-        "WEBAPP_URL",
-        "NEXTAUTH_URL",
-        "S3_ENDPOINT_URL",
-        "POSTHOG_KEY"
+      "env": ["NODE_ENV", "S3_ENDPOINT_URL"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!**/*.test.*",
+        "!**/*.spec.*",
+        "!**/__tests__/**",
+        "!**/vitest.config.*",
+        "!**/vitest.integration.config.*",
+        "!**/playwright/**"
       ],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"],
       "passThroughEnv": [
-        "AUDIT_LOG_ENABLED",
-        "AUDIT_LOG_GET_USER_IP",
-        "AI_AWS_ACCESS_KEY_ID",
-        "AI_AWS_REGION",
-        "AI_AWS_SECRET_ACCESS_KEY",
-        "AI_AWS_SESSION_TOKEN",
-        "AI_AZURE_API_KEY",
-        "AI_AZURE_API_VERSION",
-        "AI_AZURE_BASE_URL",
-        "AI_AZURE_RESOURCE_NAME",
-        "AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS",
-        "AI_GOOGLE_CLOUD_CREDENTIALS_JSON",
-        "AI_GOOGLE_CLOUD_LOCATION",
-        "AI_GOOGLE_CLOUD_PROJECT",
-        "AI_MODEL",
-        "AI_OPENAI_COMPATIBLE_API_KEY",
-        "AI_OPENAI_COMPATIBLE_BASE_URL",
-        "AI_OPENAI_COMPATIBLE_HEADERS_JSON",
-        "AI_OPENAI_COMPATIBLE_PROVIDER_NAME",
-        "AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON",
-        "AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS",
-        "AI_PROVIDER",
-        "AIRTABLE_CLIENT_ID",
-        "AZUREAD_CLIENT_ID",
-        "AZUREAD_CLIENT_SECRET",
-        "AZUREAD_TENANT_ID",
-        "AUTH_SSO_DEFAULT_TEAM_ID",
-        "AUTH_SKIP_INVITE_FOR_SSO",
-        "BULLMQ_EXTERNAL_WORKER_ENABLED",
-        "BULLMQ_WORKER_CONCURRENCY",
-        "BULLMQ_WORKER_COUNT",
-        "BULLMQ_WORKER_ENABLED",
-        "BREVO_API_KEY",
-        "BREVO_LIST_ID",
-        "CRON_SECRET",
-        "CUBEJS_API_SECRET",
-        "CUBEJS_API_URL",
-        "CUBEJS_JWT_AUDIENCE",
-        "CUBEJS_JWT_ISSUER",
-        "DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS",
+        "AUTHZED_CONSISTENCY",
+        "AUTHZED_ENABLED",
+        "AUTHZED_ENDPOINT",
+        "AUTHZED_INSECURE",
+        "AUTHZED_SYSTEM_KEY",
+        "AUTHZED_TOKEN",
         "DATABASE_URL",
         "DEBUG",
-        "DEBUG_SHOW_RESET_LINK",
-        "EMAIL_AUTH_DISABLED",
-        "EMAIL_VERIFICATION_DISABLED",
         "ENCRYPTION_KEY",
-        "ENTERPRISE_LICENSE_KEY",
         "ENVIRONMENT",
-        "GITHUB_ID",
-        "GITHUB_SECRET",
-        "GOOGLE_CLIENT_ID",
-        "GOOGLE_CLIENT_SECRET",
-        "GOOGLE_SHEETS_CLIENT_ID",
-        "GOOGLE_SHEETS_CLIENT_SECRET",
-        "GOOGLE_SHEETS_REDIRECT_URL",
-        "HUB_API_KEY",
-        "HUB_API_URL",
-        "NOTION_OAUTH_CLIENT_ID",
-        "NOTION_OAUTH_CLIENT_SECRET",
-        "HEROKU_APP_NAME",
         "HTTP_PROXY",
         "HTTPS_PROXY",
-        "IMPRINT_URL",
-        "IMPRINT_ADDRESS",
-        "INVITE_DISABLED",
-        "IS_FORMBRICKS_CLOUD",
-        "PLAIN_APP_ID",
-        "PLAIN_CHAT_HMAC_SECRET",
-        "PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID",
-        "FORMBRICKS_WORKSPACE_ID",
-        "FORMBRICKS_APP_URL",
         "LOG_LEVEL",
-        "MAIL_FROM",
-        "MAIL_FROM_NAME",
-        "OPENAI_API_KEY",
+        "NEXT_PHASE",
+        "NEXT_RUNTIME",
         "OTEL_EXPORTER_OTLP_ENDPOINT",
         "OTEL_EXPORTER_OTLP_HEADERS",
         "OTEL_EXPORTER_OTLP_PROTOCOL",
+        "OTEL_LOGS_ENABLED",
         "OTEL_RESOURCE_ATTRIBUTES",
         "OTEL_SERVICE_NAME",
         "OTEL_TRACES_SAMPLER",
         "OTEL_TRACES_SAMPLER_ARG",
-        "NEXT_RUNTIME",
-        "NEXTAUTH_SECRET",
-        "BETTER_AUTH_SECRET",
-        "BETTER_AUTH_URL",
-        "npm_package_version",
-        "OIDC_CLIENT_ID",
-        "OIDC_CLIENT_SECRET",
-        "OIDC_DISPLAY_NAME",
-        "OIDC_ISSUER",
-        "OIDC_SIGNING_ALGORITHM",
-        "PASSWORD_HIBP_CHECK_DISABLED",
-        "PASSWORD_RESET_DISABLED",
-        "PASSWORD_RESET_TOKEN_LIFETIME_MINUTES",
-        "PLAYWRIGHT_CI",
-        "PLAYWRIGHT_SERVICE_URL",
-        "PRIVACY_URL",
-        "RATE_LIMITING_DISABLED",
+        "MCP_OAUTH_JWKS_URL",
+        "PROMETHEUS_ENABLED",
+        "PROMETHEUS_EXPORTER_PORT",
         "REDIS_URL",
         "S3_ACCESS_KEY",
         "S3_BUCKET_NAME",
@@ -338,40 +278,9 @@
         "S3_REGION",
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
-        "SESSION_MAX_AGE",
-        "SENTRY_DSN",
-        "SENTRY_ENVIRONMENT",
-        "SLACK_CLIENT_ID",
-        "SLACK_CLIENT_SECRET",
-        "SMTP_HOST",
-        "SMTP_PASSWORD",
-        "SMTP_PORT",
-        "SMTP_SECURE_ENABLED",
-        "SMTP_USER",
-        "SMTP_REJECT_UNAUTHORIZED_TLS",
-        "SMTP_AUTHENTICATED",
-        "STRAPI_API_KEY",
-        "STRIPE_SECRET_KEY",
-        "STRIPE_WEBHOOK_SECRET",
-        "STRIPE_PUBLISHABLE_KEY",
-        "SURVEYS_PACKAGE_MODE",
-        "SURVEYS_PACKAGE_BUILD",
-        "SURVEY_SCHEDULING_TIME_ZONE",
-        "SURVEY_SCHEDULING_LOCAL_HOUR",
-        "SURVEY_SCHEDULING_LOCAL_MINUTE",
-        "PUBLIC_URL",
-        "TURNSTILE_SECRET_KEY",
-        "TURNSTILE_SITE_KEY",
-        "RECAPTCHA_SITE_KEY",
-        "RECAPTCHA_SECRET_KEY",
-        "TRUSTED_PROXY_HOP_COUNT",
         "TELEMETRY_DISABLED",
-        "TERMS_URL",
         "VERSION",
-        "UNSPLASH_ACCESS_KEY",
-        "PROMETHEUS_ENABLED",
-        "PROMETHEUS_EXPORTER_PORT",
-        "USER_MANAGEMENT_MINIMUM_ROLE"
+        "npm_package_version"
       ]
     },
     "build:dev": {
@@ -395,10 +304,12 @@
       "outputs": []
     },
     "db:push": {
+      "cache": false,
       "outputs": []
     },
     "db:seed": {
-      "env": ["ALLOW_SEED"],
+      "cache": false,
+      "env": ["ALLOW_SEED", "DATABASE_URL"],
       "outputs": []
     },
     "db:setup": {
@@ -439,9 +350,11 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "test": {
+      "cache": false,
       "outputs": []
     },
     "test:coverage": {
+      "cache": false,
       "outputs": []
     },
     "typecheck": {

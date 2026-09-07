@@ -19,20 +19,19 @@ const sendEmailNode = (id: string): TWorkflowExecutableDefinition["nodes"][numbe
 
 const baseDefinition = (
   overrides: Partial<TWorkflowExecutableDefinition> = {}
-): TWorkflowExecutableDefinition =>
-  ({
-    schemaVersion: 1,
-    entryNodeId: "trigger",
-    trigger: {
-      id: "trigger",
-      type: "trigger",
-      triggerType: "response.completed",
-      config: { surveyId: "cm9zr4mps000008l8btfy1vtz", endingCardIds: [] },
-    },
-    nodes: [sendEmailNode("send-email")],
-    edges: [{ id: "e1", source: "trigger", target: "send-email" }],
-    ...overrides,
-  }) as TWorkflowExecutableDefinition;
+): TWorkflowExecutableDefinition => ({
+  schemaVersion: 1,
+  entryNodeId: "trigger",
+  trigger: {
+    id: "trigger",
+    type: "trigger",
+    triggerType: "response.completed",
+    config: { surveyId: "cm9zr4mps000008l8btfy1vtz", endingCardIds: [] },
+  },
+  nodes: [sendEmailNode("send-email")],
+  edges: [{ id: "e1", source: "trigger", target: "send-email" }],
+  ...overrides,
+});
 
 describe("planExecutableSteps", () => {
   test("returns the single send_email step for a linear trigger -> action graph", () => {

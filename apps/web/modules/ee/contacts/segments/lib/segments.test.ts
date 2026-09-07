@@ -198,6 +198,43 @@ describe("Segment Service Tests", () => {
 
       expect(result.size).toBe(0);
     });
+
+    test("short-circuits to an empty map without querying when no ids are given", async () => {
+      const result = await getSurveyWorkspaceIdMap([]);
+
+      expect(result.size).toBe(0);
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
+    });
+
+    test("deduplicates ids before querying", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey1", workspaceId: "ws-a" }] as any);
+
+      const result = await getSurveyWorkspaceIdMap(["survey1", "survey1", "survey1"]);
+
+      expect(result).toEqual(new Map([["survey1", "ws-a"]]));
+      expect(prisma.survey.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.survey.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ["survey1"] } },
+        select: { id: true, workspaceId: true },
+      });
+    });
+
+    test("splits an oversized id list into bounded batches and merges the results", async () => {
+      const surveyIds = Array.from({ length: 450 }, (_, index) => `survey_${index}`);
+      vi.mocked(prisma.survey.findMany).mockImplementation((async ({ where }: any) =>
+        where.id.in.map((id: string) => ({ id, workspaceId: "ws-a" }))) as any);
+
+      const result = await getSurveyWorkspaceIdMap(surveyIds);
+
+      // 450 ids at a batch size of 200 -> 200 / 200 / 50, every id still present in the merged map.
+      const batchSizes = vi
+        .mocked(prisma.survey.findMany)
+        .mock.calls.map(([args]: any) => args.where.id.in.length);
+      expect(batchSizes).toEqual([200, 200, 50]);
+      expect(result.size).toBe(450);
+      expect(result.get("survey_0")).toBe("ws-a");
+      expect(result.get("survey_449")).toBe("ws-a");
+    });
   });
 
   describe("getExistingWorkspaceSurveyIds", () => {
@@ -218,6 +255,40 @@ describe("Segment Service Tests", () => {
 
       expect(result.size).toBe(0);
       expect(prisma.survey.findMany).not.toHaveBeenCalled();
+    });
+
+    test("deduplicates ids before querying", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey1" }] as any);
+
+      const result = await getExistingWorkspaceSurveyIds("ws_1", ["survey1", "survey1", "survey1"]);
+
+      expect(result).toEqual(new Set(["survey1"]));
+      expect(prisma.survey.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.survey.findMany).toHaveBeenCalledWith({
+        where: { workspaceId: "ws_1", id: { in: ["survey1"] } },
+        select: { id: true },
+      });
+    });
+
+    test("splits an oversized id list into bounded batches and still returns only the found subset", async () => {
+      const surveyIds = Array.from({ length: 450 }, (_, index) => `survey_${index}`);
+      // survey_449 (last batch) is foreign/unknown — everything else belongs to the workspace.
+      vi.mocked(prisma.survey.findMany).mockImplementation((async ({ where }: any) =>
+        where.id.in.filter((id: string) => id !== "survey_449").map((id: string) => ({ id }))) as any);
+
+      const result = await getExistingWorkspaceSurveyIds("ws_1", surveyIds);
+
+      // 450 ids at a batch size of 200 -> 200 / 200 / 50, each query scoped to the workspace.
+      const batchSizes = vi
+        .mocked(prisma.survey.findMany)
+        .mock.calls.map(([args]: any) => args.where.id.in.length);
+      expect(batchSizes).toEqual([200, 200, 50]);
+      for (const [args] of vi.mocked(prisma.survey.findMany).mock.calls) {
+        expect((args as any).where.workspaceId).toBe("ws_1");
+      }
+      expect(result.size).toBe(449);
+      expect(result.has("survey_0")).toBe(true);
+      expect(result.has("survey_449")).toBe(false);
     });
   });
 

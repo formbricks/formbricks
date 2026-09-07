@@ -334,13 +334,13 @@ const evaluateSingleCondition = (
           }
         }
 
-        return (
-          (Array.isArray(leftValue) &&
-            leftValue.length === 1 &&
-            typeof rightValue === "string" &&
-            !leftValue.includes(rightValue)) ||
-          leftValue !== rightValue
-        );
+        // decide inside the guard: OR-ing past it would fall through to `leftValue !== rightValue`,
+        // which is always true for an array vs. a string (a matching single selection included)
+        if (Array.isArray(leftValue) && leftValue.length === 1 && typeof rightValue === "string") {
+          return !leftValue.includes(rightValue);
+        }
+
+        return leftValue !== rightValue;
       case "contains":
         return String(leftValue).includes(String(rightValue));
       case "doesNotContain":

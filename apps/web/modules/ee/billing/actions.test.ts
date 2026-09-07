@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { createTrialPaymentCheckoutAction, startHobbyAction, startProTrialAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
-  checkAuthorizationUpdated: vi.fn(),
+  assertCan: vi.fn(),
   getOrganization: vi.fn(),
   getOrganizationIdFromWorkspaceId: vi.fn(),
   getWorkspace: vi.fn(),
@@ -35,8 +35,8 @@ vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: mocks.checkAuthorizationUpdated,
+vi.mock("@/lib/authorization", () => ({
+  assertCan: mocks.assertCan,
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -87,7 +87,7 @@ vi.mock("@/modules/ee/billing/lib/stripe-client", () => ({
 describe("billing actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.checkAuthorizationUpdated.mockResolvedValue(undefined);
+    mocks.assertCan.mockResolvedValue(undefined);
     mocks.getOrganization.mockResolvedValue({
       id: "org_1",
       billing: {
@@ -107,15 +107,9 @@ describe("billing actions", () => {
       parsedInput: { organizationId: "org_1" },
     } as any);
 
-    expect(mocks.checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId: "org_1",
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
+      type: "organization",
+      id: "org_1",
     });
     expect(mocks.getOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.ensureStripeCustomerForOrganization).toHaveBeenCalledWith("org_1");

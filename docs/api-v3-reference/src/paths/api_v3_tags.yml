@@ -1,0 +1,54 @@
+get:
+  operationId: listTagsV3
+  summary: List tags
+  description: |
+    Returns a workspace's response tags, each with the number of responses currently carrying it.
+
+    Session cookie only. Tags are managed from the Formbricks app (Workspace settings → Tags); these
+    endpoints back that screen, so they do not accept `x-api-key`.
+  tags:
+    - V3 Tags
+  parameters:
+    - in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: |
+        Workspace identifier. This is the canonical container ID for v3 APIs.
+  responses:
+    "200":
+      description: Tags retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/TagResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

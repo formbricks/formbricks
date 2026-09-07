@@ -107,7 +107,7 @@ export const SurveyCard = ({
         )}
       </div>
       <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
-        {survey.responseCount}
+        {survey.completedResponseCount}
       </div>
       <div className="col-span-1 flex justify-between">
         <SurveyTypeIndicator type={survey.type} />

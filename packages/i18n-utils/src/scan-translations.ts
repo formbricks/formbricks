@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- CLI script needs synchronous console output */
 /**
  * Translation Key Scanner
  *
@@ -718,7 +717,8 @@ async function main(): Promise<void> {
 // in a process.exit() that could tear the vitest worker down mid-run. Locally the tests finish before
 // the scan gets far, so it looked fine; under CI load it surfaced as an unrelated-looking 5s test
 // timeout in the SonarQube job.
-const isProcessEntrypoint = process.argv[1] !== undefined && path.resolve(process.argv[1]) === __filename;
+const entrypointArg = process.argv.at(1);
+const isProcessEntrypoint = entrypointArg !== undefined && path.resolve(entrypointArg) === __filename;
 
 if (isProcessEntrypoint) {
   void main();

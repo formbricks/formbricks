@@ -1,0 +1,293 @@
+name: API v3 Contract Tests
+
+# Drives a real instance against the committed v3 OpenAPI bundle with Schemathesis and fails when a
+# response violates the documented status codes, content type, or schema — or answers 5xx.
+# api-v3-spec.yml proves the document is well-formed and the bundle is fresh; this proves the running
+# API still matches it. Harness and local instructions: docs/api-v3-reference/contract-tests/.
+#
+# Fast profile on purpose: the `examples` phase only, which is a sampled case per documented
+# operation (~70 requests, ~25s). The job's cost is the Next.js build, not the tests. Deep fuzzing,
+# the coverage phase and stateful suites are deliberately out of the PR gate.
+
+on:
+  workflow_call:
+    secrets:
+      ENTERPRISE_LICENSE_KEY:
+        # Optional: without it every entitlement-gated operation answers its documented 403 instead of
+        # a real payload — the run stays honest, just shallower, which is also the fork-PR path since
+        # secrets are never available there. With it, `contacts` resolves; `workflows` does not yet,
+        # because the CI key's feature set does not grant it (ENG-2553). The probe after boot reports
+        # which of the two you got.
+        required: false
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# No `concurrency` block on purpose: under `workflow_call`, `github.workflow` resolves to the *caller*,
+# so the obvious group expression would collide with pr.yml's own group and let this job cancel its
+# parent. The caller's concurrency already covers superseded runs. e2e.yml omits it for the same reason.
+
+jobs:
+  contract-tests:
+    name: v3 OpenAPI contract tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      # Same pinned images as e2e.yml so both jobs exercise the same engine versions.
+      postgres:
+        image: pgvector/pgvector@sha256:9ae02a756ba16a2d69dd78058e25915e36e189bb36ddf01ceae86390d7ed786a
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      valkey:
+        image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+        ports:
+          - 6379:6379
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false # no later step needs git auth (dangerous-git-checkout re-auths)
+      - uses: ./.github/actions/dangerous-git-checkout
+
+      # This workflow is resolved from the base branch but tests the PR head, so branches cut before
+      # this landed do not contain the harness. Detect it and skip instead of failing every open PR —
+      # same pattern, and same reason, as integration-tests.yml.
+      - name: Detect contract-test harness
+        id: harness
+        shell: bash
+        run: |
+          if [ -f docs/api-v3-reference/contract-tests/hooks.py ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::v3 contract-test harness absent on this ref (branch predates ENG-2191) — skipping."
+          fi
+
+      - name: Install pnpm
+        if: steps.harness.outputs.present == 'true'
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+
+      - name: Setup Node.js (version from .nvmrc)
+        if: steps.harness.outputs.present == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.harness.outputs.present == 'true'
+        run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
+        shell: bash
+
+      # Must exist before the build: @formbricks/database's prisma.config.ts resolves DATABASE_URL at
+      # config load, so `prisma generate` fails without it. Same order as e2e.yml.
+      - name: Create .env
+        if: steps.harness.outputs.present == 'true'
+        run: pnpm dev:setup
+        shell: bash
+
+      - name: Point .env at the CI services
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        # The license reaches the script through `env`, never interpolated into the command: a `${{ }}`
+        # secret pasted into a `sed` expression both breaks on its own metacharacters and is the pattern
+        # GitHub's hardening guidance tells you not to write.
+        env:
+          ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
+        run: |
+          sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
+          sed -i "/^ENTERPRISE_LICENSE_KEY=/d" .env
+          printf 'ENTERPRISE_LICENSE_KEY=%s\n' "${ENTERPRISE_LICENSE_KEY}" >> .env
+          # A burst of cases would otherwise trip the limiter and turn most operations into
+          # documented-but-uninteresting 429s.
+          echo "RATE_LIMITING_DISABLED=1" >> .env
+          sed -i "s|AUTHZED_CONSISTENCY=.*|AUTHZED_CONSISTENCY=fully_consistent|" .env
+          # Not about running Playwright: this is the flag that stops the app sending an instanceId
+          # alongside the shared licence key (license.ts — "Skip instance ID during E2E tests to avoid
+          # license key conflicts"). Without it the licence server answers 403 "bound to another
+          # instance", every entitlement falls back to DEFAULT_FEATURES, and the 13 workflow
+          # operations plus contacts are only ever checked against their documented 403.
+          echo "E2E_TESTING=1" >> .env
+
+      - name: Build App
+        if: steps.harness.outputs.present == 'true'
+        timeout-minutes: 15
+        env:
+          # Turborepo hashes its own process environment, not the `.env` file, and next.config.mjs
+          # reads this at build time — so setting it only in `.env` would let a cached non-E2E build
+          # be replayed here. Same reason e2e.yml passes it twice.
+          E2E_TESTING: "1"
+        run: pnpm build --filter=@formbricks/web...
+        shell: bash
+
+      # Keep the fixture offline during the build: a successful build still proves importing the
+      # authorization runtime does not perform an RPC. Runtime contract requests are authoritative,
+      # however, so install the canonical schema before projecting the seeded PostgreSQL grants.
+      - name: Start AuthZed CI fixture
+        if: steps.harness.outputs.present == 'true'
+        run: bash scripts/start-authzed-ci.sh
+        shell: bash
+
+      - name: Apply Prisma migrations
+        if: steps.harness.outputs.present == 'true'
+        # @formbricks/database is already built by the build step, so run the migration runner
+        # directly rather than db:migrate:dev, which would rebuild and re-generate the package.
+        run: pnpm --filter=@formbricks/database db:migrate:ci
+        shell: bash
+
+      - name: Seed the workspace and a throwaway API key
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        run: |
+          # Generated per run and never leaves this job: the database is disposable and the key only
+          # ever grants access to the seeded workspace on this runner.
+          SEED_API_KEY="$(openssl rand -hex 32)"
+          echo "::add-mask::${SEED_API_KEY}"
+          echo "SEED_API_KEY=${SEED_API_KEY}" >> "$GITHUB_ENV"
+          SEED_API_KEY="${SEED_API_KEY}" pnpm --filter=@formbricks/database db:seed
+
+      - name: Seed the contract fixtures
+        if: steps.harness.outputs.present == 'true'
+        run: pnpm --filter=@formbricks/database db:seed:contract
+        shell: bash
+
+      - name: Project seeded authorization relationships
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        run: |
+          set +e
+          pnpm authzed:backfill --apply > /tmp/authzed-backfill.json
+          backfill_exit=$?
+          set -e
+
+          # Aggregate evidence only: the detailed report contains disposable fixture identifiers.
+          jq -c '{status, code, counters, truncated}' /tmp/authzed-backfill.json || true
+          exit "${backfill_exit}"
+
+      - name: Run App
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        run: |
+          NODE_ENV=test pnpm start --filter=@formbricks/web > app.log 2>&1 &
+          for attempt in {1..20}; do
+            if [ "$(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health)" -eq 200 ]; then
+              echo "Application is ready."
+              exit 0
+            fi
+            echo "Waiting for the application to be ready... (${attempt}/20)"
+            sleep 5
+          done
+          echo "::error::Application failed to start in time."
+          exit 1
+
+      # Guards the failure mode this job is most likely to die of quietly: if seeding or the API key
+      # broke, every operation would answer 401/403 — all documented, so Schemathesis would report a
+      # green run that proved nothing. One authenticated read is enough to know the fixtures are live.
+      - name: Verify the seeded API key reaches real data
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        run: |
+          workspace_id=$(node -p "require('./docs/api-v3-reference/contract-tests/fixtures.json').workspaceId")
+          status=$(curl -o /tmp/preflight.json -s -w "%{http_code}" \
+            -H "x-api-key: fbk_${SEED_API_KEY}" \
+            "http://localhost:3000/api/v3/surveys?workspaceId=${workspace_id}&limit=1")
+          if [ "${status}" -ne 200 ]; then
+            echo "::error::Pre-flight read returned ${status}, expected 200. Seeded data or API key is broken — the contract run would be meaningless."
+            cat /tmp/preflight.json
+            exit 1
+          fi
+
+          # The list endpoint above answers 200 off the base seed alone, so it says nothing about the
+          # contract fixtures. The deepest response schema in the contract — the survey resource —
+          # only gets exercised when the read fixture exists *and* carries the languages the spec's
+          # `lang` examples ask for; without them the operation degrades to a documented 400 and the
+          # suite stays green having validated nothing.
+          survey_id=$(node -p "require('./docs/api-v3-reference/contract-tests/fixtures.json').read.surveyId")
+          survey_status=$(curl -o /tmp/preflight-survey.json -s -w "%{http_code}" \
+            -H "x-api-key: fbk_${SEED_API_KEY}" \
+            "http://localhost:3000/api/v3/surveys/${survey_id}?lang=de-DE")
+          if [ "${survey_status}" -ne 200 ]; then
+            echo "::error::Read fixture check returned ${survey_status}, expected 200. The survey resource schema would not be validated by this run."
+            cat /tmp/preflight-survey.json
+            exit 1
+          fi
+
+          # Entitlement-gated operations answer a documented 403 when the licence does not grant the
+          # feature, so the suite stays green while testing half the contract shallowly. Probe one of
+          # them and say so out loud, rather than leaving that to whoever reads the warnings.
+          workflows_status=$(curl -o /tmp/preflight-workflows.json -s -w "%{http_code}" \
+            -H "x-api-key: fbk_${SEED_API_KEY}" \
+            "http://localhost:3000/api/v3/workflows?workspaceId=${workspace_id}&limit=1")
+          if [ "${workflows_status}" -eq 200 ]; then
+            echo "::notice::Workflows entitlement active — the 13 workflow operations run against real data."
+          elif [ "${workflows_status}" -eq 403 ]; then
+            echo "::warning::Workflows entitlement inactive (GET /api/v3/workflows → ${workflows_status}). The 13 workflow operations are only checked against their documented 403."
+            cat /tmp/preflight-workflows.json
+          else
+            # Anything else is a setup failure, not an entitlement answer. Treating it as "inactive"
+            # would let a 401 or 404 pass as a warning and the run go green having never exercised the
+            # workflow fixtures at all — the shallow-green outcome this whole job exists to prevent.
+            echo "::error::Workflow entitlement probe returned ${workflows_status}, expected 200 or 403."
+            cat /tmp/preflight-workflows.json
+            exit 1
+          fi
+
+      - name: Set up Python
+        if: steps.harness.outputs.present == 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install Schemathesis
+        if: steps.harness.outputs.present == 'true'
+        run: python -m pip install schemathesis==4.25.0
+        shell: bash
+
+      - name: Run v3 contract tests
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        env:
+          SCHEMATHESIS_HOOKS: docs/api-v3-reference/contract-tests/hooks.py
+        run: |
+          schemathesis \
+            --config-file docs/api-v3-reference/contract-tests/schemathesis.toml \
+            run docs/api-v3-reference/openapi.yml \
+            --url http://localhost:3000 \
+            --phases examples \
+            --checks not_a_server_error,status_code_conformance,content_type_conformance,response_schema_conformance \
+            --generation-database=:memory: \
+            --report junit \
+            --report-dir schemathesis-report \
+            -H "x-api-key: fbk_${SEED_API_KEY}"
+
+      - name: Upload contract test report
+        if: always() && steps.harness.outputs.present == 'true'
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: api-v3-contract-report
+          if-no-files-found: ignore
+          path: schemathesis-report/
+
+      # Failure only. A green run's log has nothing to say that the entitlement probe above does not,
+      # and an application log is the wrong thing to ship as an artifact on every green PR.
+      - name: Upload app logs
+        if: failure() && steps.harness.outputs.present == 'true'
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: api-v3-contract-app-logs
+          if-no-files-found: ignore
+          path: app.log

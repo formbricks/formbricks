@@ -17,7 +17,7 @@ post:
         format: cuid2
       description: Survey identifier.
   responses:
-    '200':
+    "200":
       description: Survey archived successfully
       headers:
         X-Request-Id:
@@ -56,7 +56,7 @@ post:
                   archivedAt:
                     type:
                       - string
-                      - 'null'
+                      - "null"
                     format: date-time
                     description: >-
                       Soft-delete/archive marker (ISO 8601). A timestamp after archiving; `null`
@@ -68,16 +68,16 @@ post:
                 data:
                   id: clsv1234567890123456789012
                   status: paused
-                  archivedAt: '2026-05-18T09:24:54.014Z'
-    '400':
+                  archivedAt: "2026-05-18T09:24:54.014Z"
+    "400":
       $ref: ../components/responses/V3BadRequest.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       $ref: ../components/responses/V3Forbidden.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []

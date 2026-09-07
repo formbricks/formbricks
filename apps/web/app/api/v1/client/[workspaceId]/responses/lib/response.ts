@@ -59,9 +59,11 @@ export const responseSelection = {
 
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput,
-  ingestFlags?: readonly TIngestFlag[]
+  ingestFlags?: readonly TIngestFlag[],
+  // Optional caller-owned transaction — see the comment on the client helper this delegates to.
+  tx?: Prisma.TransactionClient
 ): Promise<TResponseWithQuotaFull> => {
-  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse, ingestFlags);
+  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse, ingestFlags, tx);
 };
 
 export const createResponse = async (

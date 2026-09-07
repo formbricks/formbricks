@@ -9,6 +9,10 @@ import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
+import {
+  addLegacyEnvironmentId,
+  addLegacyEnvironmentIdBestEffort,
+} from "@/app/lib/api/legacy-environment-id";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
@@ -19,9 +23,10 @@ import {
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 
 type TSurveyUpdateBody = Record<string, unknown> & {
@@ -39,7 +44,13 @@ const fetchAndAuthorizeSurvey = async (
   if (!survey) {
     return { error: responses.notFoundResponse("Survey", surveyId) };
   }
-  if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, requiredPermission)) {
+  if (
+    !(await can(
+      { type: "apiKey", id: authentication.apiKeyId },
+      getWorkspaceAuthorizationActionForMethod(requiredPermission),
+      { type: "workspace", id: survey.workspaceId }
+    ))
+  ) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -66,8 +77,12 @@ export const GET = withV1ApiWrapper({
       // consumers get a consistent shape regardless of how the survey was built.
       return {
         response: responses.successResponse(
-          addLegacyProjectOverwrites(
-            resolveStorageUrlsInObject(withoutInternalSurveyProjections(withDerivedQuestions(result.survey)))
+          await addLegacyEnvironmentId(
+            addLegacyProjectOverwrites(
+              resolveStorageUrlsInObject(
+                withoutInternalSurveyProjections(withDerivedQuestions(result.survey))
+              )
+            )
           )
         ),
       };
@@ -97,6 +112,8 @@ export const DELETE = withV1ApiWrapper({
     if (auditLog) {
       auditLog.targetId = params.surveyId;
     }
+
+    let deletedSurvey: Awaited<ReturnType<typeof deleteSurvey>>;
     try {
       const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "DELETE");
       if (result.error) {
@@ -108,13 +125,16 @@ export const DELETE = withV1ApiWrapper({
         auditLog.oldObject = result.survey;
       }
 
-      const deletedSurvey = await deleteSurvey(params.surveyId);
-      return {
-        response: responses.successResponse(deletedSurvey),
-      };
+      deletedSurvey = await deleteSurvey(params.surveyId);
     } catch (error) {
       return handleErrorResponse(error);
     }
+
+    // Enrich outside the delete's try/catch: the survey is already gone, so a lookup failure here
+    // must not mask a successful delete behind a generic error response.
+    return {
+      response: responses.successResponse(await addLegacyEnvironmentIdBestEffort(deletedSurvey)),
+    };
   },
   action: "deleted",
   targetType: "survey",
@@ -221,10 +241,15 @@ export const PUT = withV1ApiWrapper({
         }
 
         return {
+          // Best-effort, not strict: the update has committed by now, so a failed workspace lookup
+          // would report a failure for an update that succeeded — and mark the audit entry failed
+          // with it.
           response: responses.successResponse(
-            addLegacyProjectOverwrites(
-              resolveStorageUrlsInObject(
-                withoutInternalSurveyProjections(withDerivedQuestions(updatedSurvey))
+            await addLegacyEnvironmentIdBestEffort(
+              addLegacyProjectOverwrites(
+                resolveStorageUrlsInObject(
+                  withoutInternalSurveyProjections(withDerivedQuestions(updatedSurvey))
+                )
               )
             )
           ),

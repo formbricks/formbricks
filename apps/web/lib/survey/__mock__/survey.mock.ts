@@ -223,7 +223,6 @@ const baseSurveyProperties = {
     enabled: false,
   },
   isVerifyEmailEnabled: false,
-  isSingleResponsePerEmailEnabled: false,
   attributeFilters: [],
   ...commonMockProperties,
 };

@@ -29,12 +29,14 @@ export const POST = withV3ApiWrapper({
     }
 
     try {
+      const userId = getSessionUserId(authentication);
       const result = await generateV3SurveyCreatePayloadFromPrompt({
         organizationId: workspaceAccess.organizationId,
+        workspaceId: workspaceAccess.workspaceId,
+        userId,
         input: body,
       });
 
-      const userId = getSessionUserId(authentication);
       if (userId) {
         capturePostHogEvent(
           userId,

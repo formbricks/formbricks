@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { can } from "@/lib/authorization";
+import {
+  getFeedbackDirectoriesByWorkspaceId,
+  getFeedbackDirectoryAuthContext,
+} from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   countFeedbackRecords,
@@ -37,13 +39,15 @@ vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() })) },
 }));
 
-vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: vi.fn(),
+vi.mock("@/app/api/v3/lib/auth", () => ({
+  getV3AuthorizationActor: vi.fn(),
+  requireV3WorkspaceAccess: vi.fn(),
 }));
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsFeedbackDirectoriesEnabled: vi.fn() }));
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoriesByWorkspaceId: vi.fn(),
+  getFeedbackDirectoryAuthContext: vi.fn(),
 }));
 vi.mock("@/modules/hub/service", () => ({
   listFeedbackRecords: vi.fn(),
@@ -81,14 +85,35 @@ const record: FeedbackRecordData = {
 // A person-shaped principal, as an OAuth/MCP token produces. The shared `base` passes `authentication:
 // null`, which the mutation-role gate skips, so these are used where the caller's role is the subject.
 const sessionAuth = { user: { id: "user_1" } } as TV3Authentication;
-const apiKeyAuth = { apiKeyId: "key_1" } as unknown as TV3Authentication;
+// Carries an `organizationId` because the mutation gate compares the *key's* organization against the
+// dataset's — a fixture without one would let that check pass vacuously.
+const apiKeyAuth = {
+  apiKeyId: "key_1",
+  organizationId: context.organizationId,
+} as unknown as TV3Authentication;
+const foreignOrgApiKeyAuth = {
+  apiKeyId: "key_2",
+  organizationId: "org_other",
+} as unknown as TV3Authentication;
 
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(context);
+  vi.mocked(getV3AuthorizationActor).mockImplementation((authentication) => {
+    if (authentication && "apiKeyId" in authentication && authentication.apiKeyId) {
+      return { type: "apiKey", id: authentication.apiKeyId };
+    }
+    return { type: "user", id: "user_1" };
+  });
+  vi.mocked(can).mockResolvedValue(true);
   vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
   vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([{ id: directoryId, name: "Support" }]);
-  vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
+  // Unshared by default, so only the tests that opt into sharing exercise the ENG-2189 rule.
+  vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue({
+    organizationId: context.organizationId,
+    workspaceIds: [workspaceId],
+    isArchived: false,
+  });
 });
 
 describe("shared authorization + tenant resolution", () => {
@@ -109,6 +134,29 @@ describe("shared authorization + tenant resolution", () => {
     const response = await listV3FeedbackRecords(base);
 
     expect(response.status).toBe(403);
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("denies when the exact dataset assignment is not authorized", async () => {
+    vi.mocked(can).mockResolvedValue(false);
+
+    const response = await listV3FeedbackRecords({ ...base, authentication: sessionAuth });
+
+    expect(response.status).toBe(403);
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "feedbackDirectoryAssignment.read", {
+      type: "feedbackDirectoryAssignment",
+      feedbackDirectoryId: directoryId,
+      workspaceId,
+    });
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("keeps central evaluator failures operational instead of converting them to denial", async () => {
+    vi.mocked(can).mockRejectedValue(new Error("evaluator unavailable"));
+
+    const response = await listV3FeedbackRecords({ ...base, authentication: sessionAuth });
+
+    expect(response.status).toBe(500);
     expect(listFeedbackRecords).not.toHaveBeenCalled();
   });
 
@@ -219,8 +267,9 @@ describe("listV3FeedbackRecords", () => {
       expect.objectContaining({
         tenant_id: directoryId,
         limit: 50,
-        source_type: "survey",
-        field_type: "text",
+        // Single-valued on our side, sent as a one-element OR list since Hub 0.8.4 made these repeatable.
+        source_type: ["survey"],
+        field_type: ["text"],
       })
     );
     expect(body.meta).toEqual({
@@ -488,12 +537,14 @@ describe("createV3FeedbackRecord", () => {
     expect(body.invalid_params).toEqual([{ name: "value_text", reason: "must not contain NULL bytes" }]);
   });
 
-  // The Hub accepts a record with no value at all, and MCP strips unknown keys before we see them, so a
-  // mistyped field name would otherwise store an empty record and report success.
+  // The Hub accepts a record with no value at all, and this body ignores unknown keys, so a mistyped
+  // field name would otherwise store an empty record and report success. Reachable over REST, where the
+  // body is parsed as-is; the MCP tools wrap it in a strict schema and reject the typo before this runs
+  // (ENG-2256), so REST is what this rule now protects.
   test("rejects a body whose field_type has no matching value, naming the expected field", async () => {
     const response = await createV3FeedbackRecord({
       ...base,
-      // `valueText` is what an agent typo looks like after MCP has stripped it: no value at all.
+      // `valueText` is what the typo looks like once the unknown key has been dropped: no value at all.
       body: { source_type: "call_notes", field_id: "note", field_type: "text" },
     });
     const body = await response.json();
@@ -648,13 +699,13 @@ describe("deleteV3FeedbackRecord", () => {
     vi.mocked(deleteFeedbackRecord).mockResolvedValue({ data: { deleted: true }, error: null });
   });
 
-  test("requires readWrite access", async () => {
+  test("requires assignment read access before the organization mutation gate", async () => {
     await deleteV3FeedbackRecord(deleteBase);
 
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
       sessionAuth,
       workspaceId,
-      "readWrite",
+      "read",
       requestId,
       instance
     );
@@ -985,16 +1036,17 @@ describe("countV3FeedbackRecords", () => {
       until: "2026-12-31T00:00:00Z",
     });
 
+    // Every identity filter goes out as a one-element OR list; the two range bounds stay scalar.
     expect(countFeedbackRecords).toHaveBeenCalledWith({
       tenant_id: directoryId,
-      source_type: "survey",
-      source_id: "svy_1",
-      field_type: "text",
-      field_id: "q1",
-      field_group_id: "grp_1",
-      submission_id: "sub-1",
-      user_id: "user-1",
-      value_id: "opt_1",
+      source_type: ["survey"],
+      source_id: ["svy_1"],
+      field_type: ["text"],
+      field_id: ["q1"],
+      field_group_id: ["grp_1"],
+      submission_id: ["sub-1"],
+      user_id: ["user-1"],
+      value_id: ["opt_1"],
       since: "2026-01-01T00:00:00Z",
       until: "2026-12-31T00:00:00Z",
     });
@@ -1058,7 +1110,7 @@ describe("list/count validate their own input", () => {
   });
 });
 
-describe("listV3FeedbackRecords", () => {
+describe("listV3FeedbackRecords error relaying", () => {
   /**
    * Listing does not touch the vector index, so a Hub 503 here is an outage or some *other* unconfigured
    * subsystem. It used to answer with the embeddings message for every operation, which sent an operator
@@ -1104,21 +1156,260 @@ describe("listV3FeedbackRecords filters", () => {
       until: "2026-12-31T00:00:00Z",
     });
 
+    // Same one-element OR lists as the count path; pagination and the range bounds stay scalar.
     expect(listFeedbackRecords).toHaveBeenCalledWith({
       tenant_id: directoryId,
       limit: 10,
       cursor: "abc",
-      source_type: "survey",
-      source_id: "svy_1",
-      field_type: "text",
-      field_id: "q1",
-      field_group_id: "grp_1",
-      submission_id: "sub-1",
-      user_id: "user-1",
-      value_id: "opt_1",
+      source_type: ["survey"],
+      source_id: ["svy_1"],
+      field_type: ["text"],
+      field_id: ["q1"],
+      field_group_id: ["grp_1"],
+      submission_id: ["sub-1"],
+      user_id: ["user-1"],
+      value_id: ["opt_1"],
       since: "2026-01-01T00:00:00Z",
       until: "2026-12-31T00:00:00Z",
     });
+  });
+});
+
+describe("feedback-record filters accept multiple values", () => {
+  beforeEach(() => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 50, next_cursor: undefined },
+      error: null,
+    });
+    vi.mocked(countFeedbackRecords).mockResolvedValue({ data: { count: 0 }, error: null });
+  });
+
+  test("passes a list of values straight through as the Hub's OR list", async () => {
+    await listV3FeedbackRecords({
+      ...base,
+      source_type: ["survey", "review"],
+      field_type: ["text", "rating"],
+    });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source_type: ["survey", "review"],
+        field_type: ["text", "rating"],
+      })
+    );
+  });
+
+  test("accepts a scalar and a list in the same call", async () => {
+    await listV3FeedbackRecords({ ...base, source_type: "survey", user_id: ["u1", "u2"] });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ source_type: ["survey"], user_id: ["u1", "u2"] })
+    );
+  });
+
+  test("counts the same multi-value filter set as list", async () => {
+    // One mapper serves both, so a count always describes the set the equivalent list would return.
+    await countV3FeedbackRecords({ ...base, source_type: ["survey", "review"] });
+
+    expect(countFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ source_type: ["survey", "review"] })
+    );
+  });
+
+  test("rejects more values than the Hub accepts, naming the filter", async () => {
+    const response = await listV3FeedbackRecords({
+      ...base,
+      user_id: Array.from({ length: 101 }, (_, i) => `u${i}`),
+    });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.invalid_params[0].name).toBe("user_id");
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("rejects an enum filter repeated past its label count", async () => {
+    // field_type caps at its own cardinality rather than at 100: more entries can only be duplicates.
+    const response = await listV3FeedbackRecords({
+      ...base,
+      field_type: Array.from({ length: 10 }, () => "text"),
+    });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("field_type");
+  });
+
+  test("names the accepted values when a filter value is not one of them", async () => {
+    // A wrong value matches neither union branch, and zod's own `invalid_union` message is "Invalid
+    // input" — useless to an agent, and a regression on the single-value schema this replaced.
+    // Cast because the params type now rejects this at compile time; the point is the runtime guard, which
+    // is what an MCP client (whose input is untyped JSON) actually hits.
+    const response = await listV3FeedbackRecords({
+      ...base,
+      field_type: "not-a-type" as never,
+    });
+
+    expect(response.status).toBe(422);
+    const [issue] = (await response.json()).invalid_params;
+    expect(issue.name).toBe("field_type");
+    expect(issue.reason).toContain("categorical");
+  });
+
+  test("rejects an empty list rather than running unfiltered", async () => {
+    // The dangerous direction: an empty OR list would drop the filter and widen the result set while the
+    // caller is told the request succeeded.
+    const response = await listV3FeedbackRecords({ ...base, source_type: [] });
+
+    expect(response.status).toBe(422);
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+});
+
+describe("feedback-record filters with meaningful falsy values", () => {
+  beforeEach(() => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 50, next_cursor: undefined },
+      error: null,
+    });
+    vi.mocked(countFeedbackRecords).mockResolvedValue({ data: { count: 0 }, error: null });
+  });
+
+  /**
+   * The mapper guards every filter on `!== undefined`. With a truthiness guard each of these is dropped
+   * and the Hub answers a wider question than the caller asked — `has_sentiment: false` in particular
+   * silently turns "records enrichment has not labelled yet" into "all records".
+   */
+  test.each([
+    ["has_sentiment", { has_sentiment: false }],
+    ["has_emotions", { has_emotions: false }],
+    ["has_translation", { has_translation: false }],
+    ["value_number_min", { value_number_min: 0 }],
+    ["value_number_max", { value_number_max: 0 }],
+    ["sentiment_score_min", { sentiment_score_min: 0 }],
+    ["sentiment_score_max", { sentiment_score_max: 0 }],
+  ])("keeps %s when its value is falsy", async (name, override) => {
+    await listV3FeedbackRecords({ ...base, ...override });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(expect.objectContaining(override));
+    // objectContaining would also pass if the key were absent-but-undefined, so assert presence directly.
+    expect(vi.mocked(listFeedbackRecords).mock.calls[0][0]).toHaveProperty(name);
+  });
+
+  test("keeps a falsy presence filter on the count path too", async () => {
+    await countV3FeedbackRecords({ ...base, has_sentiment: false });
+
+    expect(countFeedbackRecords).toHaveBeenCalledWith(expect.objectContaining({ has_sentiment: false }));
+  });
+
+  test("sends the enrichment and range filters the Hub gained in 0.8.4", async () => {
+    await countV3FeedbackRecords({
+      ...base,
+      source_name: "Q1 NPS",
+      language: ["en", "pt-BR"],
+      sentiment: ["negative", "very_negative"],
+      emotions: ["anger"],
+      created_since: "2026-01-01T00:00:00Z",
+      created_until: "2026-03-31T00:00:00Z",
+      value_date_min: "2026-02-01T00:00:00Z",
+      value_date_max: "2026-02-28T00:00:00Z",
+      value_number_min: 1,
+      value_number_max: 5,
+      sentiment_score_min: -1,
+      sentiment_score_max: 1,
+      has_translation: true,
+    });
+
+    expect(countFeedbackRecords).toHaveBeenCalledWith({
+      tenant_id: directoryId,
+      source_name: ["Q1 NPS"],
+      language: ["en", "pt-BR"],
+      sentiment: ["negative", "very_negative"],
+      emotions: ["anger"],
+      created_since: "2026-01-01T00:00:00Z",
+      created_until: "2026-03-31T00:00:00Z",
+      value_date_min: "2026-02-01T00:00:00Z",
+      value_date_max: "2026-02-28T00:00:00Z",
+      value_number_min: 1,
+      value_number_max: 5,
+      sentiment_score_min: -1,
+      sentiment_score_max: 1,
+      has_translation: true,
+    });
+  });
+
+  test("rejects a sentiment score outside the Hub's -1..1 range", async () => {
+    const response = await listV3FeedbackRecords({ ...base, sentiment_score_min: -2 });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("sentiment_score_min");
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("rejects a language tag longer than the Hub's column", async () => {
+    const response = await listV3FeedbackRecords({ ...base, language: "much-too-long-tag" });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("language");
+  });
+
+  test("orders the list by the requested column and direction", async () => {
+    await listV3FeedbackRecords({ ...base, sort: "created_at", order: "asc" });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ sort: "created_at", order: "asc" })
+    );
+  });
+
+  test("sends no ordering at all when none was asked for", async () => {
+    // The Hub defaults to collected_at/desc, and a cursor issued before sort control existed records no
+    // ordering — so an explicit default is an assumption this layer does not need to make.
+    await listV3FeedbackRecords({ ...base });
+
+    const sent = vi.mocked(listFeedbackRecords).mock.calls[0][0];
+    expect(sent).not.toHaveProperty("sort");
+    expect(sent).not.toHaveProperty("order");
+  });
+
+  test("never sends ordering to the count endpoint, which does not accept it", async () => {
+    // The Hub's /count takes the filters but not sort/order/limit/cursor. Mapping them in the shared
+    // filter builder would 400 every count call.
+    await countV3FeedbackRecords({ ...base, source_type: "survey" });
+
+    const sent = vi.mocked(countFeedbackRecords).mock.calls[0][0];
+    expect(sent).not.toHaveProperty("sort");
+    expect(sent).not.toHaveProperty("order");
+  });
+
+  test("rejects ordering on the count tool rather than silently dropping it", async () => {
+    const response = await countV3FeedbackRecords({
+      ...base,
+      ...({ sort: "created_at" } as object),
+    });
+
+    expect(response.status).toBe(422);
+    expect(countFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("rejects an unknown sort column", async () => {
+    const response = await listV3FeedbackRecords({ ...base, sort: "updated_at" as never });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("sort");
+  });
+
+  test("leaves an inverted timestamp range to the Hub", async () => {
+    // Deliberate asymmetry: two ISO strings with different offsets do not compare lexicographically, so a
+    // local check would reject valid requests. The Hub compares real instants and returns a precise 400,
+    // which relays through. Do not "fix" this by adding a local superRefine.
+    await listV3FeedbackRecords({
+      ...base,
+      since: "2026-12-01T00:00:00Z",
+      until: "2026-01-01T00:00:00Z",
+    });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ since: "2026-12-01T00:00:00Z", until: "2026-01-01T00:00:00Z" })
+    );
   });
 });
 
@@ -1358,13 +1649,13 @@ describe("updateV3FeedbackRecord", () => {
     vi.mocked(updateFeedbackRecord).mockResolvedValue({ data: updated, error: null });
   });
 
-  test("requires readWrite access", async () => {
+  test("requires assignment read access before the organization mutation gate", async () => {
     await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "x" } });
 
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
       sessionAuth,
       workspaceId,
-      "readWrite",
+      "read",
       requestId,
       instance
     );
@@ -1628,15 +1919,19 @@ describe("feedback record mutation role (ENG-1770)", () => {
   test("asks for an organization owner or manager, with no workspace-team fallback", async () => {
     await updateV3FeedbackRecord(updateArgs);
 
-    expect(checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId: context.organizationId,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "feedbackDirectoryAssignment.read", {
+      type: "feedbackDirectoryAssignment",
+      feedbackDirectoryId: directoryId,
+      workspaceId,
+    });
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
+      type: "organization",
+      id: context.organizationId,
     });
   });
 
   test("refuses an update from a workspace member who is not an owner or manager", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("Not authorized"));
+    vi.mocked(can).mockImplementation(async (_actor, action) => action !== "organization.manage");
 
     const response = await updateV3FeedbackRecord(updateArgs);
 
@@ -1647,7 +1942,7 @@ describe("feedback record mutation role (ENG-1770)", () => {
   });
 
   test("refuses a delete from a workspace member who is not an owner or manager", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("Not authorized"));
+    vi.mocked(can).mockImplementation(async (_actor, action) => action !== "organization.manage");
 
     const response = await deleteV3FeedbackRecord(deleteArgs);
 
@@ -1664,17 +1959,159 @@ describe("feedback record mutation role (ENG-1770)", () => {
     expect(deleted.status).toBe(204);
   });
 
-  // Deliberate carve-out: an API key authorizes on its per-workspace permissions, and what a key should
-  // need in order to mutate a record is being settled in #8682.
-  test("leaves API-key callers to their workspace permissions", async () => {
+  // An API key has no organization role, so it takes the equivalent rule instead: it may mutate only a
+  // dataset assigned to exactly one workspace (ENG-2189).
+  test("lets an API key delete in a dataset assigned only to its workspace", async () => {
     const deleted = await deleteV3FeedbackRecord({ ...deleteArgs, authentication: apiKeyAuth });
 
     expect(deleted.status).toBe(204);
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(can).toHaveBeenCalledWith({ type: "apiKey", id: "key_1" }, "feedbackDirectoryAssignment.manage", {
+      type: "feedbackDirectoryAssignment",
+      feedbackDirectoryId: directoryId,
+      workspaceId,
+    });
+    expect(can).not.toHaveBeenCalledWith(expect.anything(), "organization.manage", expect.anything());
   });
 
-  // The API key above is the only shape that skips the role check. Anything that resolves to no user is
-  // refused rather than admitted by the absence of a field — the pass-through has to stay an allowlist.
+  // The positive control for update: without it, a regression refusing every API-key update would still
+  // pass, since the only other update case asserts a refusal.
+  test("lets an API key update in a dataset assigned only to its workspace", async () => {
+    const updated = await updateV3FeedbackRecord({ ...updateArgs, authentication: apiKeyAuth });
+
+    expect(updated.status).toBe(200);
+    expect(can).toHaveBeenCalledWith({ type: "apiKey", id: "key_1" }, "feedbackDirectoryAssignment.write", {
+      type: "feedbackDirectoryAssignment",
+      feedbackDirectoryId: directoryId,
+      workspaceId,
+    });
+    expect(can).not.toHaveBeenCalledWith(expect.anything(), "organization.manage", expect.anything());
+  });
+
+  describe("API key in a shared dataset (ENG-2189)", () => {
+    beforeEach(() => {
+      vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue({
+        organizationId: context.organizationId,
+        workspaceIds: [workspaceId, "clwb1234567890123456789012"],
+        isArchived: false,
+      });
+    });
+
+    test("refuses a delete, before the record is looked up", async () => {
+      const response = await deleteV3FeedbackRecord({ ...deleteArgs, authentication: apiKeyAuth });
+
+      expect(response.status).toBe(403);
+      // The no-oracle ordering has to survive the change: a refused caller learns nothing about ids.
+      expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+      expect(deleteFeedbackRecord).not.toHaveBeenCalled();
+    });
+
+    test("refuses an update too", async () => {
+      const response = await updateV3FeedbackRecord({ ...updateArgs, authentication: apiKeyAuth });
+
+      expect(response.status).toBe(403);
+      // The no-oracle ordering has to survive the change: a refused caller learns nothing about ids.
+      expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+      expect(updateFeedbackRecord).not.toHaveBeenCalled();
+    });
+
+    // The body is the whole user interface for an MCP agent, so the actionable wording is pinned.
+    test("explains that the dataset is shared rather than refusing generically", async () => {
+      const response = await deleteV3FeedbackRecord({ ...deleteArgs, authentication: apiKeyAuth });
+      const problem = await response.json();
+
+      expect(problem.detail).toContain("shared by more than one workspace");
+    });
+  });
+
+  // Defense in depth: each is already implied by how the dataset was resolved, but the values are in hand
+  // and the gateway's twin asserts them, so relying on the transitive invariant would be the same bug
+  // class as ENG-1980. None of them is a sharing problem, so none may claim to be one — an integrator told
+  // to "assign this dataset to a single workspace" would be chasing a problem they do not have.
+  //
+  // The organization case is compared against the *key's* org: asserting the dataset's org against
+  // `resolution.organizationId` would compare two values that are only equal because of the invariant
+  // being distrusted, so it would assert nothing at all.
+  test.each([
+    ["the dataset cannot be resolved", null, apiKeyAuth],
+    [
+      "the dataset belongs to another organization",
+      { organizationId: "org_other", workspaceIds: [workspaceId], isArchived: false },
+      apiKeyAuth,
+    ],
+    [
+      "the key belongs to another organization",
+      { organizationId: context.organizationId, workspaceIds: [workspaceId], isArchived: false },
+      foreignOrgApiKeyAuth,
+    ],
+    [
+      "the dataset is archived",
+      { organizationId: context.organizationId, workspaceIds: [workspaceId], isArchived: true },
+      apiKeyAuth,
+    ],
+    [
+      "the dataset's sole workspace is not the caller's",
+      {
+        organizationId: context.organizationId,
+        workspaceIds: ["clwz1234567890123456789012"],
+        isArchived: false,
+      },
+      apiKeyAuth,
+    ],
+  ])("refuses an API-key delete when %s, without blaming sharing", async (_name, directory, auth) => {
+    vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue(directory);
+
+    const response = await deleteV3FeedbackRecord({ ...deleteArgs, authentication: auth });
+    const problem = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(problem.detail).not.toContain("shared by more than one workspace");
+    // The no-oracle ordering must hold for each refusal reason too.
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+    expect(deleteFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["the dataset cannot be resolved", null, apiKeyAuth],
+    [
+      "the dataset belongs to another organization",
+      { organizationId: "org_other", workspaceIds: [workspaceId], isArchived: false },
+      apiKeyAuth,
+    ],
+    [
+      "the key belongs to another organization",
+      { organizationId: context.organizationId, workspaceIds: [workspaceId], isArchived: false },
+      foreignOrgApiKeyAuth,
+    ],
+    [
+      "the dataset is archived",
+      { organizationId: context.organizationId, workspaceIds: [workspaceId], isArchived: true },
+      apiKeyAuth,
+    ],
+    [
+      "the dataset's sole workspace is not the caller's",
+      {
+        organizationId: context.organizationId,
+        workspaceIds: ["clwz1234567890123456789012"],
+        isArchived: false,
+      },
+      apiKeyAuth,
+    ],
+  ])("refuses an API-key update when %s, without blaming sharing", async (_name, directory, auth) => {
+    vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue(directory);
+
+    const response = await updateV3FeedbackRecord({ ...updateArgs, authentication: auth });
+    const problem = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(problem.detail).not.toContain("shared by more than one workspace");
+    // The no-oracle ordering must hold for each refusal reason too.
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+    expect(updateFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  // The API key above is the only shape routed to the sharing rule instead of the organization role.
+  // Anything else that resolves to no user is refused rather than admitted by the absence of a field —
+  // the dispatch has to stay an allowlist.
   test.each([
     ["no principal", null],
     ["a session with no user id", { user: {} } as TV3Authentication],

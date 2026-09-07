@@ -61,6 +61,71 @@ describe("resolveFormbricksMappingsInput", () => {
         { surveyId: SURVEY_ID, elementId: "el-rating", hubFieldType: "rating" },
         { surveyId: OTHER_SURVEY_ID, elementId: "el-nps", hubFieldType: "nps" },
       ],
+      // Neither survey had its full supported set selected.
+      elementScope: "specific",
+    });
+  });
+
+  // The scope is what later tells reconciliation whether a question added to one of these surveys
+  // should be mapped automatically. Deriving it here — the one moment the full candidate set is
+  // known — is the whole reason it is stored rather than inferred at reconcile time.
+  describe("elementScope derivation", () => {
+    // buildSurvey exposes el-text (openText), el-nps (nps), el-rating (rating) and el-file
+    // (fileUpload, unmappable). "Everything" therefore means the three mappable ones.
+    const EVERY_SUPPORTED_ELEMENT = ["el-text", "el-nps", "el-rating"];
+
+    test("is 'all' when every mappable element of every mapped survey is selected", async () => {
+      getSurvey.mockImplementation(async (surveyId: string) => buildSurvey(surveyId, WORKSPACE_ID));
+
+      const result = await resolveFormbricksMappingsInput(
+        [
+          { surveyId: SURVEY_ID, elementIds: EVERY_SUPPORTED_ELEMENT },
+          { surveyId: OTHER_SURVEY_ID, elementIds: EVERY_SUPPORTED_ELEMENT },
+        ],
+        WORKSPACE_ID
+      );
+
+      expect(result).toMatchObject({ elementScope: "all" });
+    });
+
+    // The unmappable element can never be selected, so its absence must not make the source look
+    // curated — otherwise no survey containing a file upload could ever track everything.
+    test("is 'all' even though the survey holds an element with no Hub field", async () => {
+      getSurvey.mockImplementation(async (surveyId: string) => buildSurvey(surveyId, WORKSPACE_ID));
+
+      const result = await resolveFormbricksMappingsInput(
+        [{ surveyId: SURVEY_ID, elementIds: [...EVERY_SUPPORTED_ELEMENT, "el-file"] }],
+        WORKSPACE_ID
+      );
+
+      expect(result).toMatchObject({ elementScope: "all" });
+    });
+
+    test("is 'specific' when one element is left out", async () => {
+      getSurvey.mockImplementation(async (surveyId: string) => buildSurvey(surveyId, WORKSPACE_ID));
+
+      const result = await resolveFormbricksMappingsInput(
+        [{ surveyId: SURVEY_ID, elementIds: ["el-text", "el-nps"] }],
+        WORKSPACE_ID
+      );
+
+      expect(result).toMatchObject({ elementScope: "specific" });
+    });
+
+    // One scope covers the whole source, so a curated selection on any mapped survey must pull the
+    // source out of "all" — otherwise a later reconcile would re-add what was excluded there.
+    test("is 'specific' when one of several surveys is curated", async () => {
+      getSurvey.mockImplementation(async (surveyId: string) => buildSurvey(surveyId, WORKSPACE_ID));
+
+      const result = await resolveFormbricksMappingsInput(
+        [
+          { surveyId: SURVEY_ID, elementIds: EVERY_SUPPORTED_ELEMENT },
+          { surveyId: OTHER_SURVEY_ID, elementIds: ["el-text"] },
+        ],
+        WORKSPACE_ID
+      );
+
+      expect(result).toMatchObject({ elementScope: "specific" });
     });
   });
 

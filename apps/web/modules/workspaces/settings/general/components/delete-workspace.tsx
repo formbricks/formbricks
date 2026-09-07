@@ -8,16 +8,16 @@ import { DeleteWorkspaceRender } from "@/modules/workspaces/settings/general/com
 interface DeleteWorkspaceProps {
   organizationId: string;
   currentWorkspace: TWorkspace;
-  organizationWorkspaces: TWorkspace[];
   isOwnerOrManager: boolean;
 }
 
+// Where the browser goes after a successful deletion is resolved by the delete action itself, so it
+// reflects the workspaces and survey counts at navigation time rather than at page-render time.
 export const DeleteWorkspace = async ({
   organizationId,
   currentWorkspace,
-  organizationWorkspaces,
   isOwnerOrManager,
-}: DeleteWorkspaceProps) => {
+}: Readonly<DeleteWorkspaceProps>) => {
   const t = await getTranslate();
   const session = await getSession();
   if (!session) {
@@ -33,7 +33,6 @@ export const DeleteWorkspace = async ({
       isDeleteDisabled={isDeleteDisabled}
       isOwnerOrManager={isOwnerOrManager}
       currentWorkspace={currentWorkspace}
-      organizationWorkspaces={organizationWorkspaces}
     />
   );
 };

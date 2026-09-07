@@ -10,6 +10,7 @@ import {
 } from "@formbricks/types/surveys/blocks";
 import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/types/surveys/elements";
 import { type TShuffleOption } from "@formbricks/types/surveys/types";
+import { isSameLanguageCode } from "@/lib/language-options";
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 
 type ClassValue = string | boolean | null | undefined | ClassValue[];
@@ -218,6 +219,57 @@ export const getDefaultLanguageCode = (survey: TJsWorkspaceStateSurvey): string 
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
+/**
+ * Resolves the survey's active language to a real language tag, usable as a `lang` attribute.
+ *
+ * The renderer tracks the active language as either a stored language code or the sentinel
+ * `"default"`. `"default"` is not a language tag and must never reach the DOM, so it is resolved to
+ * the code of the survey's default language. Returns `null` when the survey has no languages
+ * configured at all: such a survey has no language to declare and should inherit the host
+ * document's rather than assert a guess.
+ *
+ * The code is resolved AGAINST the survey's enabled languages rather than trusted, and falls back to
+ * the default language when it does not match one — the same rule the server's `getLanguageCode`
+ * applies to `?lang=`. Without that check a stale code declares a language whose content is not
+ * being rendered: `getLocalizedValue` falls back to the `default` text, so a screen reader would
+ * read English with (say) French pronunciation rules, which is worse than declaring nothing. The
+ * offline restore path is the concrete way to get there — it replays a persisted `selectedLanguage`
+ * without revalidating it against a survey whose languages may since have changed.
+ *
+ * Matching is canonical-aware, so a legacy alias (`hi`) resolves to its stored canonical row
+ * (`hi-IN`), and the STORED code is returned so the tag always matches the content lookup key.
+ */
+export const getSurveyLanguageTag = (
+  survey: TJsWorkspaceStateSurvey,
+  languageCode: string
+): string | null => {
+  if (languageCode && languageCode !== "default") {
+    const configured = survey.languages.find(
+      (surveyLanguage) =>
+        surveyLanguage.enabled && isSameLanguageCode(surveyLanguage.language.code, languageCode)
+    );
+    if (configured) return configured.language.code;
+  }
+  return getDefaultLanguageCode(survey) ?? null;
+};
+
+/**
+ * The code the renderer should store for a language the respondent picked.
+ *
+ * Returns the `"default"` sentinel when the pick IS the survey's default language, so selecting the
+ * default records the same thing as never touching the switcher — `survey.tsx` resolves that sentinel
+ * to the default language's stored code when it writes `response.language`.
+ *
+ * Both sides are compared canonically. The option list is deduped by canonical code and keeps the
+ * canonical row, so a survey whose default row holds a legacy alias (`hi`) shows `hi-IN`; comparing
+ * the raw strings would miss that match and store a concrete code where the sentinel belongs, making
+ * the two paths disagree about the same choice.
+ */
+export const resolveSelectedLanguageCode = (languageCode: string, defaultLanguageCode?: string): string => {
+  if (!defaultLanguageCode) return languageCode;
+  return isSameLanguageCode(languageCode, defaultLanguageCode) ? "default" : languageCode;
+};
+
 // Inlined from @formbricks/types/storage.ts to avoid Zod dependency
 const mimeTypes: Record<string, string> = {
   heic: "image/heic",
@@ -288,10 +340,7 @@ export function isRTLLanguage(survey: TJsWorkspaceStateSurvey, languageCode: str
     }
     return false;
   } else {
-    const code =
-      languageCode === "default"
-        ? survey.languages.find((language) => language.default)?.language.code
-        : languageCode;
+    const code = getSurveyLanguageTag(survey, languageCode);
     const baseCode = code?.split("-")[0].toLowerCase() ?? "en";
     return RTL_LANGUAGES.some((rtl) => rtl.toLowerCase().startsWith(baseCode));
   }

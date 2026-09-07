@@ -15,6 +15,9 @@ import {
   registerWorkflowTools,
 } from "./workflows";
 
+// The registered inputSchema is a Standard Schema; only these two members are read here.
+type ZodObjectLike = { description?: string; safeParse: (value: unknown) => { success: boolean } };
+
 // Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
 // itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
 // invariant that matters is that the audit apiUrl is absolute, because the audit schema validates it
@@ -195,7 +198,7 @@ describe("registerWorkflowTools", () => {
 
     const result = await tools
       .get("list_workflows")!
-      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { authInfo });
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { http: { authInfo } });
 
     expect(buildWorkflowApiContext).toHaveBeenCalledWith(apiKeyAuth, "req_tool", "/api/mcp");
     const callArg = vi.mocked(workflowsHandlers.list).mock.calls[0][0];
@@ -216,7 +219,7 @@ describe("registerWorkflowTools", () => {
 
     const result = await tools
       .get("list_workflow_runs")!
-      .handler({ workspaceId: WORKSPACE_ID, limit: 20, workflowId: WORKFLOW_ID }, { authInfo });
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20, workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     const callArg = vi.mocked(workflowsHandlers.listRuns).mock.calls[0][0];
     expect(callArg.ctx).toEqual({ __ctx: true });
@@ -236,7 +239,9 @@ describe("registerWorkflowTools", () => {
       successResponse({ id: WORKFLOW_ID }, { requestId: "req_tool" })
     );
 
-    const result = await tools.get("get_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+    const result = await tools
+      .get("get_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     expect(workflowsHandlers.get).toHaveBeenCalledWith({
       ctx: { __ctx: true },
@@ -251,7 +256,7 @@ describe("registerWorkflowTools", () => {
       successResponse({ id: RUN_ID }, { requestId: "req_tool" })
     );
 
-    await tools.get("get_workflow_run")!.handler({ runId: RUN_ID }, { authInfo });
+    await tools.get("get_workflow_run")!.handler({ runId: RUN_ID }, { http: { authInfo } });
 
     expect(workflowsHandlers.getRun).toHaveBeenCalledWith({
       ctx: { __ctx: true },
@@ -265,7 +270,7 @@ describe("registerWorkflowTools", () => {
       successResponse({ ok: true, problems: [] }, { requestId: "req_tool" })
     );
 
-    await tools.get("test_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+    await tools.get("test_workflow")!.handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     expect(workflowsHandlers.testWorkflow).toHaveBeenCalledWith({
       ctx: { __ctx: true },
@@ -279,7 +284,9 @@ describe("registerWorkflowTools", () => {
       problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
     );
 
-    const result = await tools.get("get_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+    const result = await tools
+      .get("get_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     expect(result.isError).toBe(true);
     expect(result.structuredContent.error).toMatchObject({
@@ -298,7 +305,7 @@ describe("registerWorkflowTools", () => {
     );
     const body = { workspaceId: WORKSPACE_ID, name: "WF", definition: { nodes: [], edges: [] } };
 
-    const result = await tools.get("create_workflow")!.handler(body, { authInfo });
+    const result = await tools.get("create_workflow")!.handler(body, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "workflow", ABSOLUTE_MCP_AUDIT_URL);
     expect(buildWorkflowApiContext).toHaveBeenCalledWith(apiKeyAuth, "req_tool", "/api/mcp", auditLog);
@@ -318,7 +325,7 @@ describe("registerWorkflowTools", () => {
       successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
     );
 
-    await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+    await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", ABSOLUTE_MCP_AUDIT_URL);
     expect(workflowsHandlers.enable).toHaveBeenCalledWith({
@@ -335,7 +342,9 @@ describe("registerWorkflowTools", () => {
     vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.delete).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
 
-    const result = await tools.get("delete_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+    const result = await tools
+      .get("delete_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "workflow", ABSOLUTE_MCP_AUDIT_URL);
     expect(auditLog.status).toBe("success");
@@ -350,7 +359,9 @@ describe("registerWorkflowTools", () => {
       problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
     );
 
-    const result = await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+    const result = await tools
+      .get("enable_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     expect(result.isError).toBe(true);
     // Audit defaults to "failure" (buildAuditLogBaseObject); only success flips it, so a failed
@@ -368,7 +379,7 @@ describe("registerWorkflowTools", () => {
     const body = { workspaceId: WORKSPACE_ID, name: "WF", definition: { nodes: [], edges: [] } };
 
     // The shared runner must not swallow errors: it flags the audit eventId, queues it, then rethrows.
-    await expect(tools.get("create_workflow")!.handler(body, { authInfo })).rejects.toThrow(boom);
+    await expect(tools.get("create_workflow")!.handler(body, { http: { authInfo } })).rejects.toThrow(boom);
     expect(auditLog).toMatchObject({ eventId: "req_tool" });
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
   });
@@ -381,7 +392,9 @@ describe("registerWorkflowTools", () => {
       successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
     );
 
-    const result = await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+    const result = await tools
+      .get("enable_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     expect(queueV3AuditLog).toHaveBeenCalledWith(null, "req_tool", expect.any(Object));
     expect(result.structuredContent).toEqual({
@@ -400,7 +413,7 @@ describe("registerWorkflowTools", () => {
 
     await tools
       .get("patch_workflow")!
-      .handler({ workflowId: WORKFLOW_ID, data: { name: "Renamed" } }, { authInfo });
+      .handler({ workflowId: WORKFLOW_ID, data: { name: "Renamed" } }, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", ABSOLUTE_MCP_AUDIT_URL);
     const callArg = vi.mocked(workflowsHandlers.patch).mock.calls[0][0];
@@ -418,7 +431,9 @@ describe("registerWorkflowTools", () => {
       createdResponse({ id: "wf2222222222222222222222ab" }, { requestId: "req_tool", location: "/wf" })
     );
 
-    await tools.get("duplicate_workflow")!.handler({ workflowId: WORKFLOW_ID, name: "Copy" }, { authInfo });
+    await tools
+      .get("duplicate_workflow")!
+      .handler({ workflowId: WORKFLOW_ID, name: "Copy" }, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "workflow", ABSOLUTE_MCP_AUDIT_URL);
     const callArg = vi.mocked(workflowsHandlers.duplicate).mock.calls[0][0];
@@ -435,7 +450,7 @@ describe("registerWorkflowTools", () => {
       successResponse({ id: WORKFLOW_ID, status: "archived" }, { requestId: "req_tool" })
     );
 
-    await tools.get("archive_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+    await tools.get("archive_workflow")!.handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", ABSOLUTE_MCP_AUDIT_URL);
     expect(workflowsHandlers.archive).toHaveBeenCalledWith({
@@ -453,7 +468,7 @@ describe("registerWorkflowTools", () => {
       successResponse({ id: WORKFLOW_ID, status: "draft" }, { requestId: "req_tool" })
     );
 
-    await tools.get("unarchive_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+    await tools.get("unarchive_workflow")!.handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", ABSOLUTE_MCP_AUDIT_URL);
     expect(workflowsHandlers.unarchive).toHaveBeenCalledWith({
@@ -500,7 +515,7 @@ describe("MCP scope enforcement (ENG-1967)", () => {
     async ({ name, handlerKey, input }) => {
       const { tools } = createToolServer();
 
-      const result = await tools.get(name)!.handler(input, { authInfo: readOnlyAuthInfo });
+      const result = await tools.get(name)!.handler(input, { http: { authInfo: readOnlyAuthInfo } });
 
       // The mutation never runs, and no audit log is queued for a request that was blocked at the gate.
       expect(workflowsHandlers[handlerKey]).not.toHaveBeenCalled();
@@ -520,7 +535,7 @@ describe("MCP scope enforcement (ENG-1967)", () => {
       successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
     );
 
-    await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+    await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
 
     expect(workflowsHandlers.enable).toHaveBeenCalledTimes(1);
   });
@@ -530,7 +545,7 @@ describe("MCP scope enforcement (ENG-1967)", () => {
 
     const result = await tools
       .get("list_workflows")!
-      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { authInfo: noScopeAuthInfo });
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { http: { authInfo: noScopeAuthInfo } });
 
     expect(workflowsHandlers.list).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
@@ -548,8 +563,66 @@ describe("MCP scope enforcement (ENG-1967)", () => {
 
     await tools
       .get("list_workflows")!
-      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { authInfo: readOnlyAuthInfo });
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { http: { authInfo: readOnlyAuthInfo } });
 
     expect(workflowsHandlers.list).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * A create_workflow payload that passes the v3 contract in full — cuid2 ids, a trigger, and a graph whose
+ * single edge connects the trigger to a real action node. Needed so a strictness assertion can isolate the
+ * unknown key as the only reason for rejection.
+ */
+const VALID_CREATE_WORKFLOW_INPUT = {
+  workspaceId: "cm9zr4mps000008l8btfy1vtz",
+  name: "Notify team",
+  definition: {
+    schemaVersion: 1,
+    trigger: {
+      id: "trigger",
+      type: "trigger",
+      triggerType: "response.completed",
+      config: { surveyId: "cm9zr4q7i000108l84gozfggr", endingCardIds: [] },
+    },
+    nodes: [
+      {
+        id: "send-email",
+        type: "action",
+        actionType: "send_email",
+        config: {
+          from: "noreply@example.com",
+          to: "support@example.com",
+          replyTo: ["support@example.com"],
+          subject: "Thanks",
+          body: "Thanks for your response.",
+          attachResponseData: true,
+        },
+      },
+    ],
+    edges: [{ id: "e1", source: "trigger", target: "send-email" }],
+    entryNodeId: "trigger",
+  },
+};
+
+describe("create_workflow advertised input schema", () => {
+  /**
+   * `ZMcpCreateWorkflowInput` is the one MCP schema that deliberately does NOT append `.strict()`: its
+   * base (`ZCreateWorkflowInput`) is already a `z.strictObject`, and Zod 4's `.strict()` returns a clone
+   * that drops `.describe()`. Appending it for consistency with the sibling schemas would keep validation
+   * identical while silently deleting the contract's own description from `tools/list` — a loss nothing
+   * else here would catch, since a strictness assertion passes either way.
+   */
+  test("carries the contract description and still rejects unknown keys", () => {
+    const { tools } = createToolServer();
+    const schema = tools.get("create_workflow")!.config.inputSchema as ZodObjectLike;
+
+    expect(schema.description).toBe("Creates a draft workflow.");
+
+    // A fully valid payload first, so the rejection below can only be caused by the unknown key. An
+    // earlier version passed `{ workspaceId: "abc", name: "x", definition: {} }` — three separate
+    // validation failures — and so would have passed with strictness removed entirely.
+    expect(schema.safeParse(VALID_CREATE_WORKFLOW_INPUT).success).toBe(true);
+    expect(schema.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, bogus: 1 }).success).toBe(false);
   });
 });

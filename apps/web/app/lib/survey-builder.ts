@@ -84,7 +84,8 @@ export const getDefaultEndingCard = (languages: TSurveyLanguage[], t: TFunction)
     headline: createI18nString(t("templates.default_ending_card_headline"), languageCodes),
     subheader: createI18nString(t("templates.default_ending_card_subheader"), languageCodes),
     buttonLabel: createI18nString(t("templates.default_ending_card_button_label"), languageCodes),
-    buttonLink: "https://formbricks.com",
+    buttonLink:
+      "https://formbricks.com?utm_source=formbricks-app&utm_medium=survey&utm_campaign=default_ending_cta",
   };
 };
 

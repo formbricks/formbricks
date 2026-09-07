@@ -94,6 +94,10 @@ See [Attribute-based Targeting](/surveys/website-app-surveys/attribute-based-tar
 
 Interaction-based segments add a fourth Segment filter type: target users by **how they interacted with your surveys** — seen, started, or completed within a recent window. Because these look at a *specific* survey's own displays and responses, they do what the shared Cooldown Period clock cannot.
 
+<Info>
+  **Mobile apps need a recent Formbricks SDK** — `FormbricksSDK` 2.1.0 on iOS, `com.formbricks:android` 2.1.0, `@formbricks/react-native` 3.1.0, or `formbricks` 1.1.0 on Flutter. Older SDKs target the wrong people here, silently — see the warning at the end of this section. Web has no minimum.
+</Info>
+
 A filter reads as one sentence:
 
 > `<operator>` `<any survey | specific surveys>` **within** `<number>` `<days | weeks | months>`
@@ -135,8 +139,12 @@ flowchart LR
 - **Re-engage drop-offs:** `have started responding to Onboarding AND have not completed Onboarding within 14 days`.
 
 <Note>
-  **Interaction membership refreshes on sync, not instantly.** Recontact and the Cooldown Period react the moment a survey is shown; interaction-segment membership is recalculated when the user's data syncs (on load, on `identify`/`setAttributes`, and periodically). This lag is irrelevant for long windows like the 3-month cadence above — the short Cooldown Period guard covers it — but don't rely on interaction filters for *instant* re-display suppression, and don't pair one with *Show only once*, which already blocks re-display permanently.
+  **Interaction membership refreshes on sync, not instantly.** Recontact and the Cooldown Period react the moment a survey is shown; interaction-segment membership is recalculated when the user's data syncs — on load, when you set a user ID or attributes, and after a survey is displayed, answered or completed. On a supported SDK version that lag is irrelevant for long windows like the 3-month cadence above, since the short Cooldown Period guard covers it — but don't rely on interaction filters for *instant* re-display suppression, and don't pair one with *Show only once*, which already blocks re-display permanently.
 </Note>
+
+<Warning>
+  **On mobile, this needs a recent SDK.** The post-interaction refresh only exists from `FormbricksSDK` **2.1.0** (iOS), `com.formbricks:android` **2.1.0**, `@formbricks/react-native` **3.1.0** and `formbricks` **1.1.0** (Flutter). Older versions keep the segment list they received when the app started, so interaction filters go stale for the whole session: a survey can keep appearing after the user has already seen or completed it, and one that just became eligible won't appear until the app is relaunched. A short Cooldown Period does not compensate — it expires while the membership is still stale. Nothing errors, the targeting is simply wrong. See the [Framework Guides](/surveys/website-app-surveys/framework-guides) for each SDK's install snippet.
+</Warning>
 
 ## Putting it all together
 

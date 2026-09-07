@@ -31,7 +31,7 @@ allOf:
       idempotencyKey:
         type:
           - string
-          - 'null'
+          - "null"
         description: >-
           Deduplication key for this run, unique per workflow. Set from the
           `Idempotency-Key` header on dry runs or from trigger-event
@@ -39,7 +39,7 @@ allOf:
       nextAttemptAt:
         type:
           - string
-          - 'null'
+          - "null"
         format: date-time
         description: >-
           When the next retry attempt is scheduled. `null` when no retry is
@@ -47,5 +47,5 @@ allOf:
       lastErrorAt:
         type:
           - string
-          - 'null'
+          - "null"
         format: date-time

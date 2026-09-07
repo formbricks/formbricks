@@ -7,11 +7,11 @@ properties:
     type: object
     required:
       - x
-      - 'y'
+      - "y"
     properties:
       x:
         type: number
-      'y':
+      "y":
         type: number
     additionalProperties: false
   collapsed:

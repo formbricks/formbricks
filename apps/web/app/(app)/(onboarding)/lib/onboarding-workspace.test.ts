@@ -1,18 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getAccessFlags } from "@/lib/membership/utils";
+import { can } from "@/lib/authorization";
 import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import { getUserWorkspaces, getWorkspaces } from "@/lib/workspace/service";
 import { getIsAISmartToolsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOnboardingWorkspaceContext, selectOldestWorkspace } from "./onboarding-workspace";
 
-vi.mock("@/lib/membership/service", () => ({
-  getMembershipByUserIdOrganizationId: vi.fn(),
-}));
-
-vi.mock("@/lib/membership/utils", () => ({
-  getAccessFlags: vi.fn(),
+vi.mock("@/lib/authorization", () => ({
+  can: vi.fn(),
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -80,18 +75,7 @@ const olderWorkspace = {
 describe("onboarding-workspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({
-      organizationId: "org1",
-      userId: "user1",
-      accepted: true,
-      role: "owner",
-    });
-    vi.mocked(getAccessFlags).mockReturnValue({
-      isOwner: true,
-      isManager: false,
-      isBilling: false,
-      isMember: false,
-    });
+    vi.mocked(can).mockResolvedValue(true);
     vi.mocked(getOrganization).mockResolvedValue(mockOrganization);
     vi.mocked(getIsAISmartToolsEnabled).mockResolvedValue(true);
     vi.mocked(updateOrganization).mockResolvedValue({
@@ -172,16 +156,16 @@ describe("onboarding-workspace", () => {
     expect(updateOrganization).not.toHaveBeenCalled();
   });
 
-  test("throws when user is not owner or manager", async () => {
-    vi.mocked(getAccessFlags).mockReturnValueOnce({
-      isOwner: false,
-      isManager: false,
-      isBilling: false,
-      isMember: false,
-    });
+  test("throws when the user cannot manage the organization", async () => {
+    vi.mocked(can).mockResolvedValue(false);
 
     await expect(getOnboardingWorkspaceContext({ userId: "user1", organizationId: "org1" })).rejects.toThrow(
       AuthorizationError
     );
+
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user1" }, "organization.manage", {
+      type: "organization",
+      id: "org1",
+    });
   });
 });

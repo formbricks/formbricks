@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
-import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
+import { canUserNavigateWorkspace } from "@/lib/workspace/auth";
 import { getSession } from "@/modules/auth/lib/session";
 
 export const GET = async (
@@ -19,7 +19,7 @@ export const GET = async (
   const workspace = await findWorkspaceByIdOrLegacyEnvId(environmentId);
   if (!workspace) return notFound();
 
-  const hasAccess = await hasUserWorkspaceAccess(session.user.id, workspace.id);
+  const hasAccess = await canUserNavigateWorkspace(session.user.id, workspace);
   if (!hasAccess) throw new AuthorizationError("Unauthorized");
 
   return redirect(`/workspaces/${workspace.id}/${path.join("/")}`);

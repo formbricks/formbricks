@@ -10,7 +10,10 @@ import {
   validateSurveySingleUseSignature,
 } from "./single-use-surveys";
 
-vi.mock("@/lib/crypto", () => ({
+// Stub only the two functions these tests assert on. `constantTimeEqual` stays real — signature
+// validation is the behavior under test here, and a stub would make it pass without comparing anything.
+vi.mock("@/lib/crypto", async (importOriginal: () => Promise<typeof import("@/lib/crypto")>) => ({
+  ...(await importOriginal()),
   symmetricEncrypt: vi.fn(),
   symmetricDecrypt: vi.fn(),
 }));

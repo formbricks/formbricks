@@ -46,7 +46,6 @@ const createSurveySeed = async (
       isAutoProgressingEnabled: surveyFixture.isAutoProgressingEnabled,
       isCaptureIpEnabled: surveyFixture.isCaptureIpEnabled,
       isVerifyEmailEnabled: surveyFixture.isVerifyEmailEnabled,
-      isSingleResponsePerEmailEnabled: surveyFixture.isSingleResponsePerEmailEnabled,
       variables,
     },
   });
@@ -109,7 +108,10 @@ test.describe("Survey Email Preview", () => {
     await expect(firstChoiceLink).toHaveAttribute("target", "_blank");
 
     const poweredByLink = previewFrame.getByRole("link", { name: "Powered by Formbricks" });
-    await expect(poweredByLink).toHaveAttribute("href", "https://formbricks.com?utm_source=email_branding");
+    await expect(poweredByLink).toHaveAttribute(
+      "href",
+      "https://formbricks.com?utm_source=formbricks-app&utm_medium=email&utm_campaign=powered_by_badge"
+    );
   });
 
   test("keeps non-option email previews clickable in the summary modal", async ({ page, users }) => {

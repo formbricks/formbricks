@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { getWorkspaceStateData } from "./data";
 
@@ -121,7 +122,7 @@ describe("getWorkspaceStateData", () => {
       surveys: [
         {
           ...mockWorkspaceData.surveys[0],
-          name: "[deprecated] survey name omitted from public API - will be removed soon",
+          name: PUBLIC_API_SURVEY_NAME_PLACEHOLDER,
         },
       ],
       actionClasses: mockWorkspaceData.actionClasses,

@@ -20,8 +20,9 @@ interface MembersViewProps {
   isUserManagementDisabledFromUi: boolean;
 }
 
+// Carries its own gutter for the same reason the controls above do: the card body is flush.
 export const MembersLoading = () => (
-  <div className="px-2">
+  <div className="px-4">
     {Array.from(Array(2)).map((_, index) => (
       <div key={index} className="mt-4">
         <div className={`h-8 w-80 animate-pulse rounded-full bg-slate-200`} />
@@ -58,24 +59,28 @@ export const MembersView = async ({
   return (
     <SettingsCard
       title={t("workspace.settings.general.manage_members")}
-      description={t("workspace.settings.general.manage_members_description")}>
+      description={t("workspace.settings.general.manage_members_description")}
+      bodyVariant="flush">
+      {/* The table is edge-to-edge, so the controls above it carry the card's gutter themselves. */}
       {membershipRole && (
-        <OrganizationActions
-          organization={organization}
-          membershipRole={membershipRole}
-          role={membershipRole}
-          isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
-          isInviteDisabled={INVITE_DISABLED}
-          isAccessControlAllowed={isAccessControlAllowed}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
-          isMultiOrgEnabled={isMultiOrgEnabled}
-          teams={teams}
-          isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
-          isTeamAdmin={isTeamAdminUser}
-          userAdminTeamIds={userAdminTeamIds}
-          isBulkInviteAllowed={isBulkInviteAllowed}
-        />
+        <div className="px-4 pt-4">
+          <OrganizationActions
+            organization={organization}
+            membershipRole={membershipRole}
+            role={membershipRole}
+            isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
+            isInviteDisabled={INVITE_DISABLED}
+            isAccessControlAllowed={isAccessControlAllowed}
+            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+            enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
+            isMultiOrgEnabled={isMultiOrgEnabled}
+            teams={teams}
+            isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+            isTeamAdmin={isTeamAdminUser}
+            userAdminTeamIds={userAdminTeamIds}
+            isBulkInviteAllowed={isBulkInviteAllowed}
+          />
+        </div>
       )}
 
       {membershipRole && (

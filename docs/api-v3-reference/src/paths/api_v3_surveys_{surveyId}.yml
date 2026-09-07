@@ -64,7 +64,7 @@ get:
 
         be completed.
   responses:
-    '200':
+    "200":
       description: Survey retrieved successfully
       headers:
         X-Request-Id:
@@ -91,8 +91,8 @@ get:
                 data:
                   id: clseedsurveycsat000000
                   workspaceId: clseedworkspace000000000
-                  createdAt: '2026-05-18T09:24:54.014Z'
-                  updatedAt: '2026-05-18T09:24:54.014Z'
+                  createdAt: "2026-05-18T09:24:54.014Z"
+                  updatedAt: "2026-05-18T09:24:54.014Z"
                   archivedAt: null
                   name: CSAT Survey
                   type: link
@@ -131,8 +131,8 @@ get:
                 data:
                   id: clseedsurveycsat000000
                   workspaceId: clseedworkspace000000000
-                  createdAt: '2026-05-18T09:24:54.014Z'
-                  updatedAt: '2026-05-18T09:24:54.014Z'
+                  createdAt: "2026-05-18T09:24:54.014Z"
+                  updatedAt: "2026-05-18T09:24:54.014Z"
                   archivedAt: null
                   name: CSAT Survey
                   type: link
@@ -164,7 +164,7 @@ get:
                   hiddenFields:
                     enabled: false
                   variables: []
-    '400':
+    "400":
       description: >-
         Invalid survey id, unsupported query parameter, unknown language, or
         unsupported legacy survey shape
@@ -172,13 +172,13 @@ get:
         application/problem+json:
           schema:
             $ref: ../components/schemas/Problem.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       $ref: ../components/responses/V3Forbidden.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
@@ -270,7 +270,7 @@ patch:
                       range: 5
                       scale: smiley
   responses:
-    '200':
+    "200":
       description: Survey updated successfully
       headers:
         X-Request-Id:
@@ -290,7 +290,7 @@ patch:
             properties:
               data:
                 $ref: ../components/schemas/SurveyResource.yml
-    '400':
+    "400":
       description: >
         Bad Request — the patch failed schema validation, i.e. any rule checkable from the request
         body alone, without consulting stored state. Covers: malformed JSON; an unsupported query
@@ -309,9 +309,9 @@ patch:
         application/problem+json:
           schema:
             $ref: ../components/schemas/Problem.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       description: >-
         Forbidden — no write access, missing external URL permission, missing
         Contacts entitlement for app-survey targeting, or survey does not exist
@@ -320,7 +320,7 @@ patch:
         application/problem+json:
           schema:
             $ref: ../components/schemas/Problem.yml
-    '422':
+    "422":
       description: >-
         Unprocessable Content — the request cannot be processed against stored state. Two cases:
 
@@ -368,9 +368,9 @@ patch:
                     reason: References a block that does not exist in the survey.
                     code: invalid_reference
                     identifier: e0tfwzqk63op37y14z95qq3k
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
@@ -390,7 +390,7 @@ delete:
         format: cuid2
       description: Survey identifier.
   responses:
-    '204':
+    "204":
       description: Survey deleted successfully
       headers:
         X-Request-Id:
@@ -401,15 +401,15 @@ delete:
           schema:
             type: string
           example: private, no-store
-    '400':
+    "400":
       $ref: ../components/responses/V3BadRequest.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       $ref: ../components/responses/V3Forbidden.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []

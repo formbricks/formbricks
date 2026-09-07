@@ -142,6 +142,7 @@ export const ContactsTable = ({
     if (savedExpandedSettings !== null) {
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loads persisted column settings once per workspace; `table` and `data` change every render and would clobber user changes
   }, [workspaceId]);
 
   // Save settings to localStorage when they change
@@ -258,7 +259,7 @@ export const ContactsTable = ({
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
-            <TableHeader className="pointer-events-auto">
+            <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
@@ -302,7 +303,7 @@ export const ContactsTable = ({
                 </TableRow>
               ))}
               {table.getRowModel().rows.length === 0 && (
-                <TableRow className="hover:bg-white">
+                <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
                     <p className="text-slate-400">{t("common.no_results")}</p>
                   </TableCell>

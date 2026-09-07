@@ -43,7 +43,6 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   closeOn: true,
   singleUse: true,
   isVerifyEmailEnabled: true,
-  isSingleResponsePerEmailEnabled: true,
   inlineTriggers: true,
   displayPercentage: true,
   welcomeCard: true,

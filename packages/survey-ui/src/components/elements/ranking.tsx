@@ -1,7 +1,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { cn } from "@/lib/utils";
 
@@ -80,7 +80,10 @@ function RankingItem({
       className={cn(
         "rounded-option flex h-12 cursor-pointer items-center border px-3 transition-all",
         "bg-option-bg border-option-border",
-        "hover:bg-option-hover-bg focus-within:border-brand focus-within:bg-option-selected-bg focus-within:shadow-sm",
+        // No focus-within fill: it repainted the item in the *ranked* colors, so the card's mount
+        // autofocus made the first item look already ranked (ENG-2288). Focus has its own uniform
+        // ring, painted on the item's button by survey-ui's globals.css.
+        "hover:bg-option-hover-bg",
         isRanked && "bg-option-selected-bg border-brand",
         disabled && "cursor-not-allowed opacity-50"
       )}>
@@ -164,6 +167,8 @@ function Ranking({
   imageUrl,
   videoUrl,
 }: Readonly<RankingProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   // Ensure value is always an array
   const rankedIds = React.useMemo(() => (Array.isArray(value) ? value : []), [value]);
 
@@ -224,8 +229,18 @@ function Ranking({
 
       {/* Ranking Options */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
-        <fieldset className="w-full" dir={dir}>
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
+        {/* The <fieldset> is role="group", which ARIA 1.2 gives neither aria-required nor
+            aria-invalid (aria-invalid was global in ARIA 1.1 but is not in 1.2). The items are
+            reorder buttons in an <ol>, not radios, so there is no accurate role that does support
+            them. The visible "Required" badge conveys requiredness; the invalid state is announced
+            by the live region above plus the focus move, and aria-invalid stays only as a
+            best-effort machine-readable hook. */}
+        <fieldset
+          className="w-full"
+          dir={dir}
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}>
           <legend className="sr-only">Ranking options</legend>
           {/* Semantic ordered list so screen readers announce rank position and count;
               role="list" is kept explicitly because list-style removal (Tailwind preflight)

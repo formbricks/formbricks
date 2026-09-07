@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
-import type { RedisClient } from "../types/client";
-import { ErrorCode } from "../types/error";
-import type { CacheKey } from "../types/keys";
 import { CacheService } from "./service";
+import type { RedisClient } from "./types/client";
+import { ErrorCode } from "./types/error";
+import type { CacheKey } from "./types/keys";
 
 // Mock logger
 vi.mock("@formbricks/logger", () => ({
@@ -523,7 +523,7 @@ describe("CacheService", () => {
       const hangingPromise = new Promise(() => {
         // This promise never resolves to simulate timeout
       });
-      mockRedis.ping.mockReturnValue(hangingPromise as Promise<string>);
+      mockRedis.ping.mockReturnValue(hangingPromise);
 
       const result = await cacheService.isRedisAvailable();
 
@@ -641,11 +641,7 @@ describe("CacheService", () => {
 
       mockRedis.get.mockResolvedValue(null); // cache miss
 
-      const result = await cacheService.withCache(
-        fn as unknown as () => Promise<{ data: string }>,
-        key,
-        60000
-      );
+      const result = await cacheService.withCache(fn, key, 60000);
 
       expect(result).toBeNull();
       expect(fn).toHaveBeenCalledOnce();
@@ -764,11 +760,7 @@ describe("CacheService", () => {
 
       mockRedis.get.mockResolvedValue(null);
 
-      const result = await cacheService.withCacheNullable(
-        fn as unknown as () => Promise<{ id: string } | null>,
-        key,
-        60000
-      );
+      const result = await cacheService.withCacheNullable(fn, key, 60000);
 
       expect(result).toBeUndefined();
       expect(fn).toHaveBeenCalledOnce();

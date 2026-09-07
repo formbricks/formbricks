@@ -188,6 +188,7 @@ export const useWorkflowBuilder = ({
         hydrateEditor({
           workflow: loadedWorkflow,
           flowNodes: workflowDefinitionToFlowNodes(loadedWorkflow.definition, t),
+          isReadOnly,
         });
       })
       .catch((error) => {
@@ -202,7 +203,7 @@ export const useWorkflowBuilder = ({
       });
 
     return () => controller.abort();
-  }, [workspaceId, workflowId, hydrateEditor, setWorkflow, store, t, loadOnMount]);
+  }, [workspaceId, workflowId, hydrateEditor, setWorkflow, store, t, loadOnMount, isReadOnly]);
 
   const isArchived = workflow?.status === "archived";
   const isEnabled = workflow?.status === "enabled";
@@ -402,6 +403,10 @@ export const useWorkflowBuilder = ({
   const transition = useCallback(
     async (operation: "enable" | "disable" | "archive" | "unarchive") => {
       if (!workflow) return;
+      // Permission gate at the hook layer, not just the UI: the server rejects every lifecycle call
+      // from a read-only member with 403, so never fire the request (and never flush a save on their
+      // behalf below). The header also hides these controls, but the hook must not rely on that.
+      if (isReadOnly) return;
       // Serialize against a save or another transition in flight; overlapping lifecycle writes
       // race and the last response to land wins, desyncing the displayed status from the server.
       if (store.get(isWorkflowSavingAtom) || store.get(isWorkflowTransitioningAtom)) return;
@@ -457,7 +462,7 @@ export const useWorkflowBuilder = ({
         setIsTransitioning(false);
       }
     },
-    [store, workflow, setWorkflow, setIsTransitioning, save, t]
+    [store, workflow, setWorkflow, setIsTransitioning, save, t, isReadOnly]
   );
 
   return {

@@ -22,7 +22,7 @@ icon: "code"
 </Step>
 
   <Step title="Check for user or visitor qualification">
-    If the user or visitor already filled out a survey in the past couple of days (see [Workspace-wide Survey Cooldown](/surveys/website-app-surveys/recontact#workspace-wide-survey-cooldown)), the survey will not be shown to prevent survey fatigue.
+    If a [Cooldown Period](/surveys/website-app-surveys/cooldown-period) applies and the user or visitor was **shown** a survey inside it, this one will not be shown, to prevent survey fatigue. Three things about that gate are easy to get wrong: the interval is whatever you configured, not a fixed one; a survey can set its own, which overrides the workspace value, and a survey set to ignore the cooldown skips the check entirely; and it counts displays of **any** survey, not answers to this one — so declining to answer, or being shown a different survey, still starts the clock.
 
     Also, if this user or visitor has seen this specific survey before, Formbricks might not show it as this is dependent on the [Recontact Options](/surveys/website-app-surveys/recontact).
 
@@ -57,54 +57,48 @@ Formbricks offers an intuitive No-Code interface that allows you to configure ac
 </Note>
 
 <Steps>
-  <Step title="Visit the Settings tab and click on `User Actions`">
-    ![Action overview on Formbricks Open Source Survey Solution](/images/surveys/website-app-surveys/actions/actions-view.webp "Action overview on Formbricks Open Source Survey Solution")
+  <Step title="Open Settings → Workspace → User Actions">
+    Every action in the workspace is listed here, no-code and code alike.
+
+    ![The User Actions list](/images/surveys/website-app-surveys/actions/user-actions.webp "The User Actions list")
   </Step>
 
-  <Step title="Click on 'Add Action' in the top right corner to see the following:">
-    ![Add action to open source in app survey](/images/surveys/website-app-surveys/actions/i2.webp "Add action to open source in app survey")
+  <Step title="Click Add action">
+    Name the action, say what the user is doing, and — optionally — limit it to certain pages.
+
+    ![The Track New User Action dialog](/images/surveys/website-app-surveys/actions/add-action.webp "The Track New User Action dialog")
   </Step>
 </Steps>
 
-There are four types of No-Code actions:
+There are five types of no-code action.
 
-### 1. Click action
+### 1. Click
 
-![Add click action to open source in app survey](/images/surveys/website-app-surveys/actions/click-action.webp "Add click action to open source in app survey")
+Fires when a user clicks a specific element. Define the element by its **CSS Selector**, its **Inner Text**, or both — with both switched on, the click has to match both to count.
 
-A Click Action is triggered when a user clicks on a specific element within your application. You can define the element's inner text, CSS selector or both to trigger the survey.
+- **Inner Text**: matches the text of the clicked element, such as a button label.
 
-- **Inner Text**: Checks if the innerText of a clicked HTML element, like a button label, matches a specific text. This action allows you to display a survey based on text interactions within your application.
+- **CSS Selector**: matches a class, an id, or any other CSS selector.
 
-- **CSS Selector**: Verifies if a clicked HTML element matches a provided CSS selector, such as a class, ID, or any other CSS selector used in your website. It enables survey triggers based on element interactions.
+### 2. Page View
 
-- **Both**: Only if both is true, the action is triggered
+Fires when a user opens a page. On its own it fires on every page; combine it with a page filter to narrow it down.
 
-### 2. Page view action
+### 3. Exit Intent
 
-![Add page view action to open source in app survey](/images/surveys/website-app-surveys/actions/page-view.webp "Add page view action to open source in app survey")
+Fires when a user looks about to leave — the pointer leaves the viewport. It is how you catch someone before they abandon a form.
 
-This action is triggered when a user visits a page within your application.
+### 4. 50% Scroll
 
-### 3. Exit intent action
+Fires once a user has scrolled halfway down a page. A rough proxy for "read it".
 
-![Add exit intent action to open source in app survey](/images/surveys/website-app-surveys/actions/exit-intent.webp "Add exit intent action to open source in app survey")
+### 5. Time on Page
 
-This action is triggered when a user is about to leave your application. It helps capture user feedback before they exit, providing valuable insights into user experiences and potential improvements.
-
-### 4. 50% scroll action
-
-![Add 50% scroll action to open source in app survey](/images/surveys/website-app-surveys/actions/scroll.webp "Add 50% scroll action to open source in app survey")
-
-This action is triggered when a user scrolls through 50% of a page within your application. It helps capture user feedback at a specific point in their journey, enabling you to gather insights based on user interactions.
-
-This action is triggered when a user visits a specific page within your application. You can define the URL match conditions as follows:
-
-You can combine the url filters with any of the no-code actions to trigger the survey based on the URL match conditions.
+Fires after a user has stayed on a page for a number of seconds that you set.
 
 ### Page filter
 
-You can limit action tracking to specific subpages of your website or web app by using the Page Filter. Here you can use a variety of URL filter settings:
+Every no-code action can be limited to certain pages. Leave it on **On all pages**, or switch to **Limit to specific pages** and add one or more URL rules:
 
 - **exactMatch**: Triggers the action when the URL exactly matches the specified string.
 
@@ -120,15 +114,21 @@ You can limit action tracking to specific subpages of your website or web app by
 
 - **matchesRegex**: Activates when the URL matches the pattern from the specified string.
 
+## Triggering a survey with an Action
+
+An action does nothing until a survey listens for it. In the survey editor, open **Settings → Survey Trigger** and add one. A survey can listen for several actions; any one of them is enough to show it.
+
+![The Survey Trigger section with one action attached](/images/surveys/website-app-surveys/actions/survey-trigger.webp "The Survey Trigger section with one action attached")
+
 ## Setting up code Actions
 
 For more granular control, you can implement actions directly in your code:
 
 <Steps>
   <Step title="Configure action in Formbricks">
-    First, add the action via the Formbricks web interface to make it available for survey configuration:
+    First, add the action via the Formbricks web interface to make it available for survey configuration. Switch the dialog to **Code** and give the action a key — that key is the string your code will send.
 
-![Add a code action to open source in app survey](/images/surveys/website-app-surveys/actions/code-action.webp "Add a code action to open source in app survey")
+![The Track New User Action dialog on its Code tab](/images/surveys/website-app-surveys/actions/code-action.webp "The Track New User Action dialog on its Code tab")
 
   </Step>
 

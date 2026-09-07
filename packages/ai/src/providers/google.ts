@@ -112,7 +112,7 @@ export const googleProviderAdapter: AIProviderAdapter = {
       try {
         googleAuthOptions = {
           credentials: parseGoogleCredentialsJson(credentialsJson),
-        } as GoogleProviderSettings["googleAuthOptions"];
+        };
       } catch {
         throw new AIConfigurationError(
           "providerNotConfigured",
@@ -126,7 +126,7 @@ export const googleProviderAdapter: AIProviderAdapter = {
     } else if (applicationCredentials) {
       googleAuthOptions = {
         keyFilename: applicationCredentials,
-      } as GoogleProviderSettings["googleAuthOptions"];
+      };
     }
 
     const googleCloudProvider = createGoogleCloudProvider({

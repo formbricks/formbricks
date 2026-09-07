@@ -1,10 +1,106 @@
 {{- if .Values.taxonomy.enabled }}
 {{- $provider := .Values.taxonomy.llm.provider | default "openai-compatible" -}}
+{{- $taxonomyEnv := .Values.taxonomy.env | default dict -}}
+{{- $bedrock := .Values.taxonomy.llm.bedrock | default dict -}}
+{{- $bedrockRegion := get $bedrock "region" | default "" -}}
+{{- $bedrockEnvRegion := get $taxonomyEnv "AWS_REGION" | default "" -}}
+{{- $vertex := .Values.taxonomy.llm.vertex | default dict -}}
+{{- $vertexProject := get $vertex "project" | default "" -}}
+{{- $vertexLocation := get $vertex "location" | default "" -}}
 {{- if not (has $provider (list "openai-compatible" "bedrock" "vertex-gemini")) }}
   {{- fail "taxonomy.llm.provider must be 'openai-compatible', 'bedrock', or 'vertex-gemini'" }}
 {{- end }}
-{{- if and (eq $provider "vertex-gemini") (or (not .Values.taxonomy.llm.vertex.project) (not .Values.taxonomy.llm.vertex.location)) }}
+{{- if not .Values.taxonomy.llm.model }}
+  {{- fail "taxonomy.llm.model is required when taxonomy.enabled=true" }}
+{{- end }}
+{{- if and (eq $provider "vertex-gemini") (or (not $vertexProject) (not $vertexLocation)) }}
   {{- fail "taxonomy.llm.vertex.project and taxonomy.llm.vertex.location are required when taxonomy.llm.provider is 'vertex-gemini'" }}
+{{- end }}
+{{- if and (eq $provider "openai-compatible") (not .Values.taxonomy.llm.baseUrl) (not .Values.llm.enabled) }}
+  {{- fail "taxonomy.llm.baseUrl or llm.enabled=true is required when taxonomy.llm.provider is 'openai-compatible'" }}
+{{- end }}
+{{- $structuredOutputMode := .Values.taxonomy.llm.structuredOutputMode | default "auto" -}}
+{{- if not (has $structuredOutputMode (list "auto" "prompt-only" "json-object" "json-schema")) }}
+  {{- fail "taxonomy.llm.structuredOutputMode must be 'auto', 'prompt-only', 'json-object', or 'json-schema'" }}
+{{- end }}
+{{- if not .Values.taxonomy.llm.contextWindowTokens }}
+  {{- fail "taxonomy.llm.contextWindowTokens is required when taxonomy.enabled=true and must match the selected provider/model deployment" }}
+{{- end }}
+{{- if and (eq $provider "openai-compatible") .Values.llm.enabled (not .Values.taxonomy.llm.baseUrl) }}
+  {{- $enabledBundledModels := list -}}
+  {{- range $modelSpec := .Values.llm.servingEngineSpec.modelSpec }}
+    {{- if ne $modelSpec.enabled false }}
+      {{- $enabledBundledModels = append $enabledBundledModels $modelSpec -}}
+    {{- end }}
+  {{- end }}
+  {{- if eq (len $enabledBundledModels) 0 }}
+    {{- fail "llm.servingEngineSpec.modelSpec must contain an enabled model when taxonomy uses the bundled vLLM runtime" }}
+  {{- end }}
+  {{- $bundledModelSpecName := .Values.taxonomy.llm.bundledModelSpecName | default "" -}}
+  {{- $matchingBundledModels := list -}}
+  {{- if $bundledModelSpecName }}
+    {{- range $modelSpec := $enabledBundledModels }}
+      {{- if eq (get $modelSpec "name") $bundledModelSpecName }}
+        {{- $matchingBundledModels = append $matchingBundledModels $modelSpec -}}
+      {{- end }}
+    {{- end }}
+    {{- if ne (len $matchingBundledModels) 1 }}
+      {{- fail "taxonomy.llm.bundledModelSpecName must identify exactly one enabled llm.servingEngineSpec.modelSpec entry" }}
+    {{- end }}
+  {{- else }}
+    {{- if ne (len $enabledBundledModels) 1 }}
+      {{- fail "taxonomy.llm.bundledModelSpecName is required when more than one bundled model is enabled" }}
+    {{- end }}
+    {{- $matchingBundledModels = $enabledBundledModels -}}
+  {{- end }}
+  {{- $bundledModel := index $matchingBundledModels 0 -}}
+  {{- $bundledVllmConfig := get $bundledModel "vllmConfig" | default dict -}}
+  {{- $bundledMaxModelLenValue := get $bundledVllmConfig "maxModelLen" -}}
+  {{- if not (regexMatch "^[1-9][0-9]*$" (toString .Values.taxonomy.llm.contextWindowTokens)) }}
+    {{- fail "taxonomy.llm.contextWindowTokens must be a positive integer when taxonomy uses the bundled vLLM runtime" }}
+  {{- end }}
+  {{- if not (regexMatch "^[1-9][0-9]*$" (toString $bundledMaxModelLenValue)) }}
+    {{- fail "the selected bundled vLLM model vllmConfig.maxModelLen must be a positive integer" }}
+  {{- end }}
+  {{- $bundledMaxModelLen := int $bundledMaxModelLenValue -}}
+  {{- if lt $bundledMaxModelLen (int .Values.taxonomy.llm.contextWindowTokens) }}
+    {{- fail "the selected bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" }}
+  {{- end }}
+{{- end }}
+{{- if and (eq $provider "bedrock") (not $bedrockRegion) (not $bedrockEnvRegion) }}
+  {{- fail "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required when taxonomy.llm.provider is 'bedrock'" }}
+{{- end }}
+{{- if and (eq $provider "bedrock") $bedrockRegion $bedrockEnvRegion }}
+  {{- fail "set either taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION, not both" }}
+{{- end }}
+{{- $managedTaxonomyOverrides := dict
+  "TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE" "taxonomy.llm.structuredOutputMode"
+  "TAXONOMY_LLM_CONTEXT_WINDOW_TOKENS" "taxonomy.llm.contextWindowTokens"
+  "TAXONOMY_LLM_LABEL_MAX_TOKENS" "taxonomy.llm.labelMaxTokens"
+  "TAXONOMY_LLM_TREE_MAX_TOKENS" "taxonomy.llm.treeMaxTokens"
+  "TAXONOMY_LLM_PROMPT_TOKEN_RESERVE" "taxonomy.llm.promptTokenReserve"
+  "TAXONOMY_LLM_PROVIDER_MAX_ATTEMPTS" "taxonomy.llm.providerMaxAttempts"
+  "TAXONOMY_VERTEX_THINKING_BUDGET" "taxonomy.llm.vertex.thinkingBudget"
+  "HUB_CLIENT_MAX_ATTEMPTS" "taxonomy.hubClientMaxAttempts"
+  "HUB_HEARTBEAT_INTERVAL_SECONDS" "taxonomy.heartbeatIntervalSeconds"
+  "TAXONOMY_RUN_TIMEOUT_SECONDS" "taxonomy.runDeadlineSeconds"
+-}}
+{{- range $envName, $valueName := $managedTaxonomyOverrides }}
+  {{- if hasKey $taxonomyEnv $envName }}
+    {{- fail (printf "set %s instead of taxonomy.env.%s" $valueName $envName) }}
+  {{- end }}
+{{- end }}
+{{- if .Values.taxonomy.autoConfigureHub }}
+  {{- $hubEnv := .Values.hub.env | default dict -}}
+  {{- $managedHubOverrides := dict
+    "TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS" "taxonomy.hubStaleRunTimeoutSeconds"
+    "TAXONOMY_REAPER_INTERVAL_SECONDS" "taxonomy.hubReaperIntervalSeconds"
+  -}}
+  {{- range $envName, $valueName := $managedHubOverrides }}
+    {{- if hasKey $hubEnv $envName }}
+      {{- fail (printf "set %s instead of hub.env.%s when taxonomy.autoConfigureHub=true" $valueName $envName) }}
+    {{- end }}
+  {{- end }}
 {{- end }}
 ---
 apiVersion: apps/v1
@@ -40,6 +136,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      terminationGracePeriodSeconds: {{ .Values.taxonomy.terminationGracePeriodSeconds }}
       {{- with .Values.taxonomy.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -153,12 +250,38 @@ spec:
             {{- end }}
             - name: TAXONOMY_LLM_TEMPERATURE
               value: {{ .Values.taxonomy.llm.temperature | quote }}
+            - name: TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE
+              value: {{ $structuredOutputMode | quote }}
+            - name: TAXONOMY_LLM_CONTEXT_WINDOW_TOKENS
+              value: {{ .Values.taxonomy.llm.contextWindowTokens | quote }}
+            - name: TAXONOMY_LLM_LABEL_MAX_TOKENS
+              value: {{ .Values.taxonomy.llm.labelMaxTokens | quote }}
+            - name: TAXONOMY_LLM_TREE_MAX_TOKENS
+              value: {{ .Values.taxonomy.llm.treeMaxTokens | quote }}
+            - name: TAXONOMY_LLM_PROMPT_TOKEN_RESERVE
+              value: {{ .Values.taxonomy.llm.promptTokenReserve | quote }}
+            - name: TAXONOMY_LLM_PROVIDER_MAX_ATTEMPTS
+              value: {{ .Values.taxonomy.llm.providerMaxAttempts | quote }}
             - name: TAXONOMY_LLM_MAX_ATTEMPTS
               value: {{ .Values.taxonomy.llm.maxAttempts | quote }}
             - name: TAXONOMY_LLM_TIMEOUT_SECONDS
               value: {{ .Values.taxonomy.llm.timeoutSeconds | quote }}
+            {{- if and (eq $provider "bedrock") $bedrockRegion }}
+            - name: AWS_REGION
+              value: {{ $bedrockRegion | quote }}
+            {{- end }}
+            {{- if eq $provider "vertex-gemini" }}
+            - name: TAXONOMY_VERTEX_THINKING_BUDGET
+              value: {{ .Values.taxonomy.llm.vertex.thinkingBudget | quote }}
+            {{- end }}
             - name: HUB_CLIENT_TIMEOUT_SECONDS
               value: {{ .Values.taxonomy.hubClientTimeoutSeconds | quote }}
+            - name: HUB_CLIENT_MAX_ATTEMPTS
+              value: {{ .Values.taxonomy.hubClientMaxAttempts | quote }}
+            - name: HUB_HEARTBEAT_INTERVAL_SECONDS
+              value: {{ .Values.taxonomy.heartbeatIntervalSeconds | quote }}
+            - name: TAXONOMY_RUN_TIMEOUT_SECONDS
+              value: {{ .Values.taxonomy.runDeadlineSeconds | quote }}
             - name: TAXONOMY_EMBEDDING_DIMENSION
               value: {{ .Values.taxonomy.embeddingDimension | quote }}
             - name: TAXONOMY_MIN_EMBEDDED_RECORDS

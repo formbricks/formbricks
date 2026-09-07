@@ -1,3 +1,4 @@
+import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { parseApiKeyV2 } from "@/lib/crypto";
 import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
@@ -57,15 +58,24 @@ export const authenticateApiKeyFromHeaders = async (
   // always illegitimate (it can only exist from a pre-fix bug/exploit). Filtering here — the single
   // point where the permission list is built — protects every consumer, including the read/list
   // routes that authorize off this list directly rather than through resolveBodyIdsV2.
-  const workspacePermissions = (apiKeyData.apiKeyWorkspaces ?? [])
-    .filter(
-      (workspacePermission) => workspacePermission.workspace.organizationId === apiKeyData.organizationId
-    )
-    .map((workspacePermission) => ({
-      permission: workspacePermission.permission,
-      workspaceId: workspacePermission.workspaceId,
-      workspaceName: workspacePermission.workspace.name,
-    }));
+  const apiKeyWorkspaces = apiKeyData.apiKeyWorkspaces ?? [];
+  const sameOrganizationWorkspacePermissions = apiKeyWorkspaces.filter(
+    (workspacePermission) => workspacePermission.workspace.organizationId === apiKeyData.organizationId
+  );
+  const crossOrganizationGrantCount = apiKeyWorkspaces.length - sameOrganizationWorkspacePermissions.length;
+
+  if (crossOrganizationGrantCount > 0) {
+    logger.warn(
+      { component: "authorization", crossOrganizationGrantCount },
+      "Cross-organization API-key workspace grants were filtered"
+    );
+  }
+
+  const workspacePermissions = sameOrganizationWorkspacePermissions.map((workspacePermission) => ({
+    permission: workspacePermission.permission,
+    workspaceId: workspacePermission.workspaceId,
+    workspaceName: workspacePermission.workspace.name,
+  }));
 
   // Reject org-only API keys for routes that require workspace-scoped permissions
   // (those routes opt in via allowOrganizationOnlyApiKey when an org-only key is acceptable).

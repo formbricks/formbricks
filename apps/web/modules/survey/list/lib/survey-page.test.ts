@@ -88,7 +88,8 @@ describe("getSurveyListPage", () => {
       makeSurveyRow({ id: "survey_1", updatedAt: new Date("2025-01-02T00:00:00.000Z") }),
     ] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "survey_2", _count: { _all: 3 } },
+      { surveyId: "survey_2", finished: true, _count: { _all: 2 } },
+      { surveyId: "survey_2", finished: false, _count: { _all: 1 } },
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
@@ -106,7 +107,7 @@ describe("getSurveyListPage", () => {
     });
     expect(page.surveys).toHaveLength(1);
     expect(page.surveys[0].responseCount).toBe(3);
-    expect(page.surveys[0]).not.toHaveProperty("_count");
+    expect(page.surveys[0].completedResponseCount).toBe(2);
     expect(page.nextCursor).not.toBeNull();
     expect(decodeSurveyListPageCursor(page.nextCursor as string, "updatedAt")).toEqual({
       version: 1,
@@ -131,7 +132,7 @@ describe("getSurveyListPage", () => {
       makeSurveyRow({ id: "survey_c", name: "Charlie" }),
     ] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "survey_c", _count: { _all: 3 } },
+      { surveyId: "survey_c", finished: true, _count: { _all: 3 } },
     ] as never);
 
     await getSurveyListPage(workspaceId, {
@@ -174,8 +175,8 @@ describe("getSurveyListPage", () => {
         }),
       ] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "survey_in_progress", _count: { _all: 3 } },
-      { surveyId: "survey_other_1", _count: { _all: 2 } },
+      { surveyId: "survey_in_progress", finished: true, _count: { _all: 3 } },
+      { surveyId: "survey_other_1", finished: true, _count: { _all: 2 } },
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
@@ -231,7 +232,7 @@ describe("getSurveyListPage", () => {
         }),
       ] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "survey_in_progress", _count: { _all: 3 } },
+      { surveyId: "survey_in_progress", finished: true, _count: { _all: 3 } },
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
@@ -270,7 +271,7 @@ describe("getSurveyListPage", () => {
       }),
     ] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "survey_other_2", _count: { _all: 3 } },
+      { surveyId: "survey_other_2", finished: true, _count: { _all: 3 } },
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {

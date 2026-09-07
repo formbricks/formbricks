@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -6,13 +7,20 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 vi.mock("server-only", () => ({}));
 
 const mockCreateFeedbackRecordsBatch = vi.fn();
+// reconcile.ts reaches for these two on the 409 path. Without them in the mock the whole path
+// throws "not a function" the moment a conflict appears, which is exactly the case ENG-2058 adds.
+const mockListFeedbackRecords = vi.fn();
+const mockUpdateFeedbackRecord = vi.fn();
 
 vi.mock("@/modules/hub", () => ({
   createFeedbackRecordsBatch: (...args: unknown[]) => mockCreateFeedbackRecordsBatch(...args),
+  listFeedbackRecords: (...args: unknown[]) => mockListFeedbackRecords(...args),
+  updateFeedbackRecord: (...args: unknown[]) => mockUpdateFeedbackRecord(...args),
 }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
@@ -46,7 +54,7 @@ const mockSurvey = {
 } as unknown as TSurvey;
 
 function createFeedbackSource(
-  overrides: Partial<Pick<TFeedbackSourceWithMappings, "id" | "formbricksMappings">> = {}
+  overrides: Partial<Pick<TFeedbackSourceWithMappings, "id" | "formbricksMappings" | "importMode">> = {}
 ): TFeedbackSourceWithMappings {
   return {
     id: "conn-1",
@@ -55,6 +63,8 @@ function createFeedbackSource(
     name: "Test FeedbackSource",
     type: "formbricks_survey",
     status: "active",
+    importMode: "completedOnly",
+    elementScope: "specific" as const,
     workspaceId: "env-1",
     feedbackDirectoryId: "frd-1",
     lastSyncAt: null,
@@ -167,6 +177,65 @@ describe("handleFeedbackSourcePipeline", () => {
     await handleFeedbackSourcePipeline(mockResponse, mockSurvey, "env-1");
 
     expect(updateFeedbackSource).not.toHaveBeenCalled();
+  });
+
+  // A Hub outage is reported once per pipeline run at warn, and the per-record detail sits at debug.
+  // Pinned because the levels are an operator-visible contract, not an implementation detail: the
+  // per-record line used to be error, which made a handled failure look like an unhandled fault and
+  // reported one outage 2N+1 times. Anyone alerting on this path reads the warn.
+  test("reports a Hub outage once at warn, with per-record detail at debug", async () => {
+    vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
+    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
+    mockCreateFeedbackRecordsBatch.mockResolvedValue({
+      results: [
+        { data: null, error: { status: 500, message: "Hub unavailable", detail: "Hub unavailable" } },
+      ],
+    });
+
+    await handleFeedbackSourcePipeline(mockResponse, mockSurvey, "env-1");
+
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ feedbackSourceId: "conn-1", successes: 0, failures: 1 }),
+      expect.stringContaining("1/1 FeedbackRecords failed to send")
+    );
+
+    expect(logger.debug).toHaveBeenCalledWith(
+      expect.objectContaining({ feedbackSourceId: "conn-1", feedbackRecordIndex: 0 }),
+      expect.any(String)
+    );
+
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  /**
+   * ENG-2058, end to end through the pipeline rather than against reconcile directly.
+   *
+   * This is the defect the ticket's setting exposes: a response imported as a partial, then
+   * finished with a changed answer, used to 409 on every field it already had and leave Hub holding
+   * the old value. A 409 must reach Hub as an update, count as a success, and never surface as a
+   * failure — the reconcile unit tests cannot prove the pipeline actually wires that up.
+   */
+  test("a conflicting record is corrected in Hub, not counted as a failure", async () => {
+    vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
+    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
+    mockCreateFeedbackRecordsBatch.mockResolvedValue({
+      results: [{ data: null, error: { status: 409, message: "conflict", detail: "" } }],
+    });
+    mockListFeedbackRecords.mockResolvedValue({
+      data: { data: [{ id: "existing-record" }] },
+      error: null,
+    });
+    mockUpdateFeedbackRecord.mockResolvedValue({ data: { id: "existing-record" }, error: null });
+
+    await handleFeedbackSourcePipeline(mockResponse, mockSurvey, "env-1");
+
+    expect(mockUpdateFeedbackRecord).toHaveBeenCalledWith("existing-record", expect.any(Object));
+    // The tenant boundary (S1): the id patched above is only safe because the lookup was scoped.
+    expect(mockListFeedbackRecords).toHaveBeenCalledWith(expect.objectContaining({ tenant_id: "frd-1" }));
+    expect(logger.warn).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(updateFeedbackSource).toHaveBeenCalled();
   });
 
   test("updates lastSyncAt on partial failure when some creates succeed", async () => {

@@ -5741,9 +5741,6 @@ components:
         isVerifyEmailEnabled:
           type: boolean
           description: Whether email verification is enabled
-        isSingleResponsePerEmailEnabled:
-          type: boolean
-          description: Whether single response per email is enabled
         inlineTriggers:
           type:
             - array
@@ -5829,7 +5826,6 @@ components:
         - styling
         - singleUse
         - isVerifyEmailEnabled
-        - isSingleResponsePerEmailEnabled
         - inlineTriggers
         - isBackButtonHidden
         - isAutoProgressingEnabled

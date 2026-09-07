@@ -320,7 +320,7 @@ describe("Response Lib", () => {
       expect(getSurveyQuestions).toHaveBeenCalledWith(response.surveyId);
       expect(findAndDeleteUploadedFilesInResponse).toHaveBeenCalledWith(
         response.data,
-        survey.questions,
+        survey,
         survey.workspaceId
       );
       expect(result.ok).toBe(true);

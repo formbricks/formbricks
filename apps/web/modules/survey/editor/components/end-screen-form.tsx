@@ -54,6 +54,10 @@ export const EndScreenForm = ({
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
   );
 
+  // The checkmark only renders when the card carries no media, so the toggle is meaningless once an
+  // image or video is set.
+  const hasMedia = Boolean(endingCard.imageUrl ?? endingCard.videoUrl);
+
   return (
     <form>
       <ElementFormInput
@@ -108,6 +112,27 @@ export const EndScreenForm = ({
           </Button>
         )}
       </div>
+      {!hasMedia && (
+        <div className="mt-4 flex items-center gap-x-1">
+          <Switch
+            id="showCheckmarkIcon"
+            checked={!endingCard.hideDefaultIcon}
+            onCheckedChange={(checked) => {
+              updateSurvey({ hideDefaultIcon: checked ? undefined : true });
+            }}
+          />
+          <Label htmlFor="showCheckmarkIcon" className="cursor-pointer">
+            <div className="ml-2">
+              <h3 className="text-sm font-semibold text-slate-700">
+                {t("workspace.surveys.edit.show_checkmark_icon")}
+              </h3>
+              <p className="text-xs font-normal text-slate-500">
+                {t("workspace.surveys.edit.show_checkmark_icon_description")}
+              </p>
+            </div>
+          </Label>
+        </div>
+      )}
       <div className="mt-4">
         <div className="flex items-center gap-x-1">
           <Switch
@@ -119,7 +144,8 @@ export const EndScreenForm = ({
               } else {
                 updateSurvey({
                   buttonLabel: { default: t("workspace.surveys.edit.create_your_own_survey") },
-                  buttonLink: "https://formbricks.com",
+                  buttonLink:
+                    "https://formbricks.com?utm_source=formbricks-app&utm_medium=survey&utm_campaign=default_ending_cta",
                 });
               }
               setshowEndingCardCTA(!showEndingCardCTA);
@@ -179,7 +205,7 @@ export const EndScreenForm = ({
                       <div className="group relative">
                         {/* The highlight container is absolutely positioned behind the input */}
                         <div
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent`}
+                          className={`absolute top-0 z-0 mt-0.5 flex h-10 w-full no-scrollbar overflow-scroll px-3 py-2 text-center text-sm whitespace-nowrap text-transparent`}
                           dir="auto"
                           key={highlightedJSX.toString()}>
                           {highlightedJSX}

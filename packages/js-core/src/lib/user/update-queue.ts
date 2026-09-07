@@ -183,7 +183,7 @@ export class UpdateQueue {
           logger.error(
             `Failed to process updates: ${error instanceof Error ? error.message : "Unknown error"}`
           );
-          reject(error as Error);
+          reject(error instanceof Error ? error : new Error(String(error)));
         }
       };
 

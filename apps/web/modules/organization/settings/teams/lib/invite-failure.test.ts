@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
 import { InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import {
@@ -53,7 +54,11 @@ describe("getInviteFailureReasonFromMessage", () => {
 });
 
 describe("formatInviteFailureMessage", () => {
-  const t = vi.fn((key: string, params?: { email?: string }) => `${key}:${params?.email ?? ""}`);
+  // i18next's TFunction is a branded, overloaded generic interface no test stub can satisfy
+  // structurally — the cast is the standard way to hand a stub to code taking a TFunction.
+  const t = vi.fn(
+    (key: string, params?: { email?: string }) => `${key}:${params?.email ?? ""}`
+  ) as unknown as TFunction;
 
   test("uses reason-specific translation key", () => {
     expect(
@@ -80,7 +85,7 @@ describe("formatInviteFailureMessages", () => {
       return `${key}:${params.count}`;
     }
     return `${key}:${params?.email ?? ""}`;
-  });
+  }) as unknown as TFunction;
 
   test("joins multiple failure lines", () => {
     const message = formatInviteFailureMessages(t, [

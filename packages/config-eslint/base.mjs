@@ -4,7 +4,7 @@ import turbo from "eslint-config-turbo/flat";
 import tseslint from "typescript-eslint";
 
 /*
- * Shared plumbing for every Formbricks flat config (ENG-1677):
+ * Shared plumbing for every Formbricks flat config:
  * - TypeScript parsing for .ts/.tsx files (for tiers that don't pull in typescript-eslint rules)
  * - Turborepo env-var checks
  * - Prettier compatibility (must stay last so it can disable conflicting stylistic rules)
@@ -49,14 +49,29 @@ export const vitestConventions = {
 };
 
 export const commonIgnores = {
-  ignores: ["**/node_modules/**", "**/dist/**", "**/coverage/**", "**/.turbo/**"],
+  // `.local/` is the repo-sanctioned scratch dir (root .gitignore); its files sit outside
+  // every tsconfig, so type-aware linting would hard-error on them.
+  ignores: ["**/node_modules/**", "**/dist/**", "**/coverage/**", "**/.turbo/**", "**/.local/**"],
 };
 
 // Surface stale `eslint-disable` comments everywhere as warnings (non-blocking) so obsolete
-// suppressions can't silently accumulate again after the ENG-1677 cleanup.
+// suppressions can't silently accumulate again after the flat-config migration cleanup.
 export const unusedDirectivesConvention = {
   linterOptions: {
     reportUnusedDisableDirectives: "warn",
+  },
+};
+
+// TODO(ENG-2366): enable incrementally — pre-existing violations from the React Compiler-era
+// react-hooks rules that v7's `flat.recommended` turns on. Only the rules with existing
+// violations in the tiers' consumers are listed; the rest of the v7 rule set stays enforced.
+// `apps/web/eslint.config.mjs` carries the same opt-out for the `next` tier.
+export const reactCompilerRulesOptOut = {
+  rules: {
+    "react-hooks/purity": "off",
+    "react-hooks/immutability": "off",
+    "react-hooks/set-state-in-effect": "off",
+    "react-hooks/refs": "off",
   },
 };
 

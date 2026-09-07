@@ -8,7 +8,7 @@ import {
   CSV_MAX_RECORDS_ERROR_CODE,
   MAX_CSV_VALUES,
 } from "@/modules/ee/unify-feedback/sources/types";
-import { CsvImportValidationError, parseCsvImportFile } from "./csv-file-import";
+import { CsvImportValidationError, type TCsvImportErrorCode, parseCsvImportFile } from "./csv-file-import";
 
 const createFile = (name: string, content: string, type = "text/csv", size?: number) => {
   const file = new File([content], name, { type });
@@ -20,7 +20,7 @@ const createFile = (name: string, content: string, type = "text/csv", size?: num
   return file;
 };
 
-const expectCsvValidationError = async (file: File, code: string) => {
+const expectCsvValidationError = async (file: File, code: TCsvImportErrorCode) => {
   await expect(parseCsvImportFile(file)).rejects.toMatchObject({
     name: "CsvImportValidationError",
     code,

@@ -2,6 +2,7 @@
 
 import posthog from "posthog-js";
 import { useEffect, useRef } from "react";
+import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 
 interface PostHogIdentifyProps {
   posthogKey: string;
@@ -20,7 +21,7 @@ export const PostHogIdentify = ({ posthogKey, userId, email, name }: PostHogIden
         ui_host: "https://eu.i.posthog.com",
         defaults: "2026-01-30",
         capture_exceptions: true,
-        debug: process.env.NODE_ENV === "development",
+        debug: IS_DEVELOPMENT_BUILD,
         session_recording: {
           blockSelector: "iframe[src*='cdn-plain']",
         },

@@ -34,7 +34,7 @@ properties:
   workflowVersionId:
     type:
       - string
-      - 'null'
+      - "null"
     format: cuid2
     description: >
       Immutable workflow version snapshot the run executes against. `null` for
@@ -48,7 +48,7 @@ properties:
     $ref: ./WorkflowRunStatus.yml
   isDryRun:
     type: boolean
-    description: '`true` for runs created by `POST /api/v3/workflows/{workflowId}/test`.'
+    description: "`true` for runs created by `POST /api/v3/workflows/{workflowId}/test`."
   triggerType:
     type: string
     enum:
@@ -56,12 +56,12 @@ properties:
   surveyId:
     type:
       - string
-      - 'null'
+      - "null"
     format: cuid2
   responseId:
     type:
       - string
-      - 'null'
+      - "null"
     format: cuid2
     description: >-
       Survey response that triggered the run. `null` for synthesized dry-run
@@ -69,7 +69,7 @@ properties:
   error:
     type:
       - string
-      - 'null'
+      - "null"
     description: Terminal or most recent failure reason. `null` while the run is healthy.
   attempt:
     type: integer
@@ -86,10 +86,10 @@ properties:
   startedAt:
     type:
       - string
-      - 'null'
+      - "null"
     format: date-time
   finishedAt:
     type:
       - string
-      - 'null'
+      - "null"
     format: date-time

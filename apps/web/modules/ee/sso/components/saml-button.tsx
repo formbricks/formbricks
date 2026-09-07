@@ -36,8 +36,12 @@ export const SamlButton = ({ returnToUrl, lastUsed, source }: Readonly<SamlButto
 
     // tenant/product are static and live server-side in the SAML genericOAuth provider's
     // authorizationUrlParams (better-auth-providers.ts), so the client only selects the provider.
-    await authClient.signIn.oauth2({
-      providerId: "saml",
+    // Better Auth 1.7 rebuilt genericOAuth onto the built-in social path (ENG-2343), so
+    // signIn.oauth2({ providerId }) became signIn.social({ provider }). The callback URL is
+    // NOT affected: better-auth-providers.ts pins `redirectURI` to /api/auth/oauth2/callback/saml,
+    // the URL already registered at every customer IdP, and legacy-sso-callback.ts serves it.
+    await authClient.signIn.social({
+      provider: "saml",
       callbackURL: returnToUrlWithSource,
       // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
       errorCallbackURL: "/auth/login",
@@ -49,12 +53,11 @@ export const SamlButton = ({ returnToUrl, lastUsed, source }: Readonly<SamlButto
       type="button"
       onClick={handleLogin}
       variant="secondary"
-      className="relative w-full justify-center"
+      className="h-11 w-full min-w-0 justify-center sm:h-9"
       loading={isLoading}>
-      {t("auth.continue_with_saml")}
-
+      <span className="truncate">{t("auth.continue_with_saml")}</span>
       <LockIcon />
-      {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
+      {lastUsed && <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>
   );
 };

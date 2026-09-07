@@ -1,0 +1,63 @@
+# ==============================================================================
+#  Formbricks — Code Owners
+# ==============================================================================
+#
+#  ONE RULE, ON PURPOSE. Every pull request gets exactly ONE reviewer.
+#
+#  WHY IT LOOKS LIKE THIS
+#
+#  For each changed FILE, the last matching rule wins and every owner named on
+#  that one line is requested. A pull request's reviewers are then the union of
+#  those per-file winners, and GitHub never thins the result. So the count grows
+#  two ways: several owners on a line, and several areas touched in one PR.
+#
+#  The first version of this file named two to three individuals across 98 path
+#  rules and auto-requested 3-6 reviewers per pull request (mean 3.6, max 6,
+#  measured across 25 merged PRs) — most of the team on every change.
+#
+#  Naming fewer individuals does not fix it. Even one owner per rule measured
+#  2.1 reviewers on average, because a pull request touching several areas has
+#  several different per-file winners. Splitting into domain teams does not fix
+#  it either, and gets worse the more teams you add: three teams measured 1.6,
+#  five measured 1.8.
+#
+#  A TEAM owner is the only thing GitHub will thin, so one team owns everything.
+#  @formbricks/engineering is configured under
+#  Organization -> Teams -> engineering -> Settings -> Code review with:
+#
+#    * How many team members should be assigned to review?  =  1
+#    * Algorithm                                            =  Load balance
+#    * Only notify requested team members                    =  on
+#
+#  GitHub then replaces the team with exactly one of its members on each pull
+#  request. Load balance accounts for how many reviews each member already has
+#  outstanding, rather than only who was asked least recently.
+#
+#  The whole engineering team is in the rotation and shares the review load.
+#
+#  DO NOT ADD PATH RULES, AND DO NOT NAME INDIVIDUALS. Adding either one
+#  silently reintroduces the multi-reviewer problem this file exists to solve.
+#  CI blocks both: a credential-free step asserts this file is exactly the one
+#  rule below, and it runs on every pull request including those from forks,
+#  where the API-backed owner checks cannot run. See
+#  .github/workflows/codeowners-validation.yml.
+#
+#  KNOWN TRADE-OFF
+#
+#  The reviewer is chosen by availability, not by who knows the code best. That
+#  is deliberate. GitHub still surfaces expertise hints to humans in the PR
+#  sidebar ("Suggested reviewers are based on git blame data"), but those must be
+#  clicked and are never assigned automatically.
+#
+#  REQUESTING IS UNCONDITIONAL
+#
+#  Simply having this file causes review requests; there is no setting to turn
+#  that off. The separate "Require review from Code Owners" rule is currently
+#  OFF — it would make the review required to merge, and would not change who
+#  gets requested. Draft pull requests are exempt until marked ready for review.
+#
+#  Reference:
+#  https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# ==============================================================================
+
+*  @formbricks/engineering

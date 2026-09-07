@@ -1,7 +1,8 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { can } from "@/lib/authorization";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
 import { getSession } from "@/modules/auth/lib/session";
@@ -28,8 +29,20 @@ vi.mock("@/modules/auth/lib/session", () => ({
   getSession: vi.fn(),
 }));
 vi.mock("react", () => ({ cache: (fn: Function) => fn }));
+// ENG-2409: the tenancy gate now asks `can(organization.read)`. Mocked rather than left real so the
+// two arms of the throw can be driven independently — under the legacy evaluator they are the same
+// condition (`read` is granted to exactly the roles that have a membership row), so with the real
+// evaluator a deleted `can()` call would still throw via the membership arm and no test would fail.
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
+vi.mock("@/lib/authorization/context", () => ({
+  withAuthorizationSurface: (_surface: string, callback: () => unknown) => callback(),
+}));
 
 describe("getOrganizationAuth", () => {
+  beforeEach(() => {
+    vi.mocked(can).mockResolvedValue(true);
+  });
+
   const mockSession = { user: { id: "user-1" }, expires: new Date().toISOString() };
   const mockOrg = { id: "org-1" } as TOrganization;
   const mockMembership: TMembership = {
@@ -71,5 +84,31 @@ describe("getOrganizationAuth", () => {
     vi.mocked(getOrganization).mockResolvedValue(mockOrg);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(null);
     await expect(getOrganizationAuth("org-1")).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  // ENG-2409: the gate half of that throw, isolated. Unreachable under the legacy evaluator, where
+  // `organization.read` and "has a membership row" are the same condition — but reachable under
+  // SpiceDB enforcement if projection drifts, and this is what proves the decision now actually
+  // depends on `can()` rather than on the row.
+  test("throws when authorization denies even though a membership row exists", async () => {
+    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(getOrganization).mockResolvedValue(mockOrg);
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
+    vi.mocked(can).mockResolvedValue(false);
+
+    await expect(getOrganizationAuth("org-1")).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  test("asks the central interface for organization.read on the acting user", async () => {
+    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(getOrganization).mockResolvedValue(mockOrg);
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
+
+    await getOrganizationAuth("org-1");
+
+    expect(can).toHaveBeenCalledExactlyOnceWith({ type: "user", id: "user-1" }, "organization.read", {
+      type: "organization",
+      id: "org-1",
+    });
   });
 });

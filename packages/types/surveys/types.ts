@@ -66,6 +66,9 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   buttonLink: ZEndingCardUrl.optional(),
   imageUrl: ZStorageUrl.optional(),
   videoUrl: ZStorageUrl.optional(),
+  // Absent means "show it": the checkmark predates this field, so every survey written before it has to
+  // keep rendering the icon.
+  hideDefaultIcon: z.boolean().optional(),
 });
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
@@ -989,7 +992,6 @@ export const ZSurveyBase = z.object({
   singleUse: ZSurveySingleUse.nullable(),
   isVerifyEmailEnabled: z.boolean(),
   recaptcha: ZSurveyRecaptcha.nullable(),
-  isSingleResponsePerEmailEnabled: z.boolean(),
   isBackButtonHidden: z.boolean(),
   isAutoProgressingEnabled: z.boolean().optional().prefault(false),
   isCaptureIpEnabled: z.boolean(),
@@ -2714,6 +2716,9 @@ const validateConditions = (
       // Same as the block-path arm below — see the comment there. The legacy validator carried the
       // identical bare `else`, so a reserved operand on a questions-shaped survey was reported as a
       // missing hidden field too.
+      // Checked rather than a bare `else`: this comes from persisted JSON parsed by a lenient
+      // schema, so a row from a different catalog version can carry a `type` outside the union.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- see above
     } else if (leftOperand.type === "hiddenField") {
       const hiddenFieldId = leftOperand.value;
       const hiddenField = survey.hiddenFields.fieldIds?.find((fieldId) => fieldId === hiddenFieldId);
@@ -2809,9 +2814,9 @@ const validateConditions = (
     group.conditions.forEach((condition) => {
       // Check if it's a group by checking for "conditions" property
       if ("conditions" in condition && "connector" in condition) {
-        validateConditionGroup(condition as TConditionGroup | TConditionGroupDeprecated);
+        validateConditionGroup(condition);
       } else {
-        validateSingleCondition(condition as TSingleCondition);
+        validateSingleCondition(condition);
       }
     });
   };
@@ -3624,6 +3629,9 @@ const validateBlockConditions = (
       // legitimately offers. Operators for reserved operands stay unchecked until they can be judged
       // against the entry's own dataType, which must also tolerate an entry an older self-hosted
       // catalog does not know. An unknown operator evaluates to `false`, so nothing misbehaves.
+      // Checked rather than a bare `else`: this comes from persisted JSON parsed by a lenient
+      // schema, so a row from a different catalog version can carry a `type` outside the union.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- see above
     } else if (leftOperand.type === "hiddenField") {
       const fieldId = leftOperand.value;
       const field = survey.hiddenFields.fieldIds?.find((id) => id === fieldId);
@@ -3927,9 +3935,7 @@ const makeSchemaOptional = <T extends z.ZodRawShape>(
 ): z.ZodObject<{
   [K in keyof T]: z.ZodOptional<T[K]>;
 }> => {
-  return schema.partial() as z.ZodObject<{
-    [K in keyof T]: z.ZodOptional<T[K]>;
-  }>;
+  return schema.partial();
 };
 
 export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)

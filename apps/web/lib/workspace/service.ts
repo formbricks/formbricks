@@ -5,6 +5,10 @@ import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TWorkspace } from "@formbricks/types/workspace";
+import {
+  lookupAuthorizedOrganizationIds,
+  lookupAuthorizedWorkspaceIds,
+} from "@/lib/authorization/resource-list";
 import { ITEMS_PER_PAGE } from "../constants";
 import { normalizeEmailForComparison } from "../utils/email";
 import { validateInputs } from "../utils/validate";
@@ -34,44 +38,21 @@ export const getUserWorkspaces = reactCache(
   async (userId: string, organizationId: string, page?: number): Promise<TWorkspace[]> => {
     validateInputs([userId, ZString], [organizationId, ZId], [page, ZOptionalNumber]);
 
-    const orgMembership = await prisma.membership.findFirst({
-      where: {
-        userId,
-        organizationId,
-      },
-    });
+    const actor = { type: "user", id: userId } as const;
+    const [authorizedOrganizationIds, authorizedWorkspaceIds] = await Promise.all([
+      lookupAuthorizedOrganizationIds(actor),
+      lookupAuthorizedWorkspaceIds(actor),
+    ]);
 
-    if (!orgMembership) {
+    if (!authorizedOrganizationIds.includes(organizationId)) {
       throw new ValidationError("User is not a member of this organization");
-    }
-
-    let workspaceWhereClause: Prisma.WorkspaceWhereInput = {};
-
-    // Only org owners/managers get every workspace. Every other role (member, billing, …) is scoped to
-    // the workspaces whose teams they belong to — mirroring the per-workspace v3 authorization
-    // (`requireV3WorkspaceAccess`: org owner/manager OR workspace-team membership). Special-casing only
-    // `member` here previously leaked all workspaces to `billing` members, who cannot access them.
-    if (orgMembership.role !== "owner" && orgMembership.role !== "manager") {
-      workspaceWhereClause = {
-        workspaceTeams: {
-          some: {
-            team: {
-              teamUsers: {
-                some: {
-                  userId,
-                },
-              },
-            },
-          },
-        },
-      };
     }
 
     try {
       const workspaces = await prisma.workspace.findMany({
         where: {
+          id: { in: [...authorizedWorkspaceIds] },
           organizationId,
-          ...workspaceWhereClause,
         },
         select: selectWorkspace,
         take: page ? ITEMS_PER_PAGE : undefined,
@@ -102,6 +83,64 @@ export const getWorkspaces = reactCache(
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
       });
       return workspaces;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
+/**
+ * Return only the requested workspaces that belong to the supplied organization.
+ *
+ * Authorization-sensitive callers must scope the database read itself instead of fetching by ID and
+ * discarding foreign-organization rows afterwards.
+ */
+export const getWorkspacesByIds = reactCache(
+  async (organizationId: string, workspaceIds: string[]): Promise<TWorkspace[]> => {
+    validateInputs([organizationId, ZId], [workspaceIds, ZId.array()]);
+
+    if (workspaceIds.length === 0) return [];
+
+    try {
+      return await prisma.workspace.findMany({
+        where: {
+          id: { in: workspaceIds },
+          organizationId,
+        },
+        select: selectWorkspace,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
+/**
+ * Resolve authoritative workspace lookup results for a user through their current organization
+ * memberships. The ID allowlist comes from SpiceDB; this query only verifies existence and tenant
+ * membership before returning application data, and never re-evaluates roles or team grants.
+ */
+export const getOrganizationScopedWorkspacesByIdsForUser = reactCache(
+  async (userId: string, workspaceIds: string[]): Promise<TWorkspace[]> => {
+    validateInputs([userId, ZId], [workspaceIds, ZId.array()]);
+    if (workspaceIds.length === 0) return [];
+
+    try {
+      return await prisma.workspace.findMany({
+        where: {
+          id: { in: workspaceIds },
+          organization: { memberships: { some: { userId } } },
+        },
+        select: selectWorkspace,
+      });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -170,8 +209,8 @@ export interface TWorkspaceMember {
  * recipient picker offers options from, so the authoring UI cannot offer an address that the
  * enable-time gate and the runner backstop would then reject (ENG-2186).
  *
- * "Can access" mirrors the authorization the real request path enforces (`checkAuthorizationUpdated`
- * via `requireSessionWorkspaceAccess`): an organization owner/manager reaches every workspace in the
+ * "Can access" mirrors the central `workspace.read` authorization enforced by
+ * `requireSessionWorkspaceAccess`: an organization owner/manager reaches every workspace in the
  * organization, and every other role reaches a workspace only through a team linked to it — at any
  * `WorkspaceTeam` permission, since `read` already grants access.
  *
@@ -245,49 +284,13 @@ export const getUserWorkspacesByOrganizationIds = reactCache(
         return [];
       }
 
-      const memberships = await prisma.membership.findMany({
-        where: {
-          userId,
-          organizationId: {
-            in: organizationIds,
-          },
-        },
-      });
-
-      if (memberships.length === 0) {
-        return [];
-      }
-
-      const whereConditions: Prisma.WorkspaceWhereInput[] = memberships.map((membership) => {
-        let workspaceWhereClause: Prisma.WorkspaceWhereInput = {
-          organizationId: membership.organizationId,
-        };
-
-        // Same scoping as getUserWorkspaces: only owner/manager see all of an org's workspaces; every
-        // other role (member, billing, …) is limited to their team-scoped workspaces.
-        if (membership.role !== "owner" && membership.role !== "manager") {
-          workspaceWhereClause = {
-            ...workspaceWhereClause,
-            workspaceTeams: {
-              some: {
-                team: {
-                  teamUsers: {
-                    some: {
-                      userId,
-                    },
-                  },
-                },
-              },
-            },
-          };
-        }
-
-        return workspaceWhereClause;
-      });
+      const workspaceIds = await lookupAuthorizedWorkspaceIds({ type: "user", id: userId });
+      if (workspaceIds.length === 0) return [];
 
       const workspaces = await prisma.workspace.findMany({
         where: {
-          OR: whereConditions,
+          id: { in: [...workspaceIds] },
+          organizationId: { in: organizationIds },
         },
         select: { id: true },
       });

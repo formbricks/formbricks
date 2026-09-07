@@ -98,7 +98,7 @@ vi.mock("./handle-integrations", () => ({
   handleIntegrations: mockHandleIntegrations,
 }));
 
-vi.mock("./telemetry", () => ({
+vi.mock("@/lib/telemetry/usage-update", () => ({
   sendTelemetryEvents: mockSendTelemetryEvents,
 }));
 
@@ -196,6 +196,7 @@ const organization = {
   billing: {
     stripeCustomerId: "cus_123",
   },
+  displayTimeZone: null,
   id: "org_123",
 };
 
@@ -409,7 +410,8 @@ describe("processResponsePipelineJob", () => {
         ...survey,
         autoComplete: 1,
         followUps: [{ id: "followup_123" }],
-      }
+      },
+      "UTC"
     );
     expect(mockPrismaUserFindMany).toHaveBeenCalledWith({
       select: { email: true, locale: true },
@@ -776,6 +778,31 @@ describe("processResponsePipelineJob", () => {
         maxAttempts: 3,
       }),
       "Response pipeline webhook delivery exhausted retries; continuing with remaining side effects"
+    );
+  });
+
+  test("threads the organization display time zone into integrations", async () => {
+    mockPrismaOrganizationFindFirst.mockResolvedValue({
+      ...organization,
+      displayTimeZone: "Asia/Manila",
+    });
+    mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockHandleIntegrations).toHaveBeenCalledWith(
+      [{ id: "integration_123", type: "slack" }],
+      expect.objectContaining({ event: "responseFinished" }),
+      expect.anything(),
+      "Asia/Manila"
     );
   });
 

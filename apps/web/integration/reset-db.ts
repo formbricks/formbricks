@@ -15,6 +15,13 @@ import { prisma } from "@formbricks/database";
  * INVARIANT: this relies on every table a flow writes being FK-cascade-reachable from one of these
  * three roots. A future flow that writes a non-descendant table (or one with `onDelete: SetNull` /
  * `Restrict`) must be added here, or its rows will bleed across tests.
+ *
+ * `AuthzedProjectionOutbox` is the first table to hit that invariant. It has no foreign keys at all —
+ * the durable projection queue records identifiers by value so a row survives the deletion it
+ * describes — so nothing above cascades to it, and database triggers write to it on every mutation
+ * the three roots cascade through.
  */
 export const resetDb = (): Promise<unknown> =>
-  prisma.$executeRawUnsafe('TRUNCATE "User", "Organization", "Team" RESTART IDENTITY CASCADE;');
+  prisma.$executeRawUnsafe(
+    'TRUNCATE "User", "Organization", "Team", "AuthzedProjectionOutbox" RESTART IDENTITY CASCADE;'
+  );

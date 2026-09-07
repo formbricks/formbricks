@@ -18,11 +18,11 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
-    "postcss": "8.5.18",
-    "typescript": "5.9.3",
-    "vite": "7.3.5",
-    "vitest": "4.1.6"
+    "postcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

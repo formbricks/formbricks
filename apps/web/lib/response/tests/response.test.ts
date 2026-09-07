@@ -1,6 +1,7 @@
 import {
   getMockUpdateResponseInput,
   mockContact,
+  mockContactId,
   mockDisplay,
   mockResponse,
   mockResponseData,
@@ -32,6 +33,7 @@ import {
   getResponseCountBySurveyId,
   getResponseDownloadFile,
   getResponseWithQuotas,
+  getResponsesByContactId,
   getResponsesByWorkspaceId,
   responseSelection,
   updateResponse,
@@ -533,4 +535,28 @@ describe("Tests for getResponseCountBySurveyId service", () => {
       await expect(getResponseCountBySurveyId(mockSurveyId)).rejects.toThrow(Error);
     });
   });
+});
+
+// ENG-2290: a contact id alone is not a tenant boundary. The contact detail page is reached through
+// a workspace id in the URL, so the responses it loads must be filtered through the workspace of the
+// contact they belong to — otherwise an authorized workspace id paired with a foreign contact id
+// reads that contact's answers.
+describe("getResponsesByContactId", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("scopes the query to the workspace of the contact", async () => {
+    prisma.response.findMany.mockResolvedValue([]);
+
+    await getResponsesByContactId(mockContactId, mockWorkspaceId);
+
+    expect(prisma.response.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { contactId: mockContactId, contact: { workspaceId: mockWorkspaceId } },
+      })
+    );
+  });
+
+  testInputValidation(getResponsesByContactId, "123#", mockWorkspaceId);
 });

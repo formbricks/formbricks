@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { Badge } from "@/modules/ui/components/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 
 type TPublicLicenseFeatureKey = Exclude<keyof TEnterpriseLicenseFeatures, "isMultiOrgEnabled">;
 
@@ -103,64 +103,90 @@ interface EnterpriseLicenseFeaturesTableProps {
   features: TEnterpriseLicenseFeatures;
 }
 
-export const EnterpriseLicenseFeaturesTable = ({ features }: EnterpriseLicenseFeaturesTableProps) => {
+/** A feature is on when the flag is true, or when its limit is unlimited (`null`) or greater than zero. */
+const isFeatureEnabled = (value: TEnterpriseLicenseFeatures[TPublicLicenseFeatureKey]): boolean =>
+  typeof value === "boolean" ? value : value === null || value > 0;
+
+const getFeatureValueLabel = (
+  value: TEnterpriseLicenseFeatures[TPublicLicenseFeatureKey],
+  t: TFunction
+): number | string => {
+  if (typeof value === "number") return value;
+  if (value === null) return t("workspace.settings.enterprise.license_features_table_unlimited");
+  return "—";
+};
+
+const getLicenseFeatureColumns = (
+  t: TFunction,
+  features: TEnterpriseLicenseFeatures
+): TSettingsTableColumn<TFeatureDefinition>[] => [
+  {
+    id: "feature",
+    header: t("workspace.settings.enterprise.license_features_table_feature"),
+    headerClassName: "w-[40%]",
+    cellClassName: "font-medium text-slate-900",
+    cell: (feature) => t(feature.labelKey),
+  },
+  {
+    id: "access",
+    header: t("workspace.settings.enterprise.license_features_table_access"),
+    headerClassName: "w-[20%]",
+    cell: (feature) => {
+      const isEnabled = isFeatureEnabled(features[feature.key]);
+
+      return (
+        <Badge
+          type={isEnabled ? "success" : "gray"}
+          size="normal"
+          text={
+            isEnabled
+              ? t("workspace.settings.enterprise.license_features_table_enabled")
+              : t("workspace.settings.enterprise.license_features_table_disabled")
+          }
+        />
+      );
+    },
+  },
+  {
+    id: "value",
+    header: t("workspace.settings.enterprise.license_features_table_value"),
+    headerClassName: "w-[20%]",
+    cellClassName: "text-slate-600",
+    cell: (feature) => getFeatureValueLabel(features[feature.key], t),
+  },
+  {
+    id: "documentation",
+    header: t("common.documentation"),
+    headerClassName: "w-[20%]",
+    cell: (feature) => (
+      <Link
+        href={feature.docsUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900">
+        {t("common.read_docs")}
+      </Link>
+    ),
+  },
+];
+
+export const EnterpriseLicenseFeaturesTable = ({
+  features,
+}: Readonly<EnterpriseLicenseFeaturesTableProps>) => {
   const { t } = useTranslation();
 
   return (
     <SettingsCard
       title={t("workspace.settings.enterprise.license_features_table_title")}
       description={t("workspace.settings.enterprise.license_features_table_description")}
-      noPadding>
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-white">
-            <TableHead>{t("workspace.settings.enterprise.license_features_table_feature")}</TableHead>
-            <TableHead>{t("workspace.settings.enterprise.license_features_table_access")}</TableHead>
-            <TableHead>{t("workspace.settings.enterprise.license_features_table_value")}</TableHead>
-            <TableHead>{t("common.documentation")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {getFeatureDefinitions(t).map((feature) => {
-            const value = features[feature.key];
-            const isEnabled = typeof value === "boolean" ? value : value === null || value > 0;
-            let displayValue: number | string = "—";
-
-            if (typeof value === "number") {
-              displayValue = value;
-            } else if (value === null) {
-              displayValue = t("workspace.settings.enterprise.license_features_table_unlimited");
-            }
-
-            return (
-              <TableRow key={feature.key} className="hover:bg-white">
-                <TableCell className="font-medium text-slate-900">{t(feature.labelKey)}</TableCell>
-                <TableCell>
-                  <Badge
-                    type={isEnabled ? "success" : "gray"}
-                    size="normal"
-                    text={
-                      isEnabled
-                        ? t("workspace.settings.enterprise.license_features_table_enabled")
-                        : t("workspace.settings.enterprise.license_features_table_disabled")
-                    }
-                  />
-                </TableCell>
-                <TableCell className="text-slate-600">{displayValue}</TableCell>
-                <TableCell>
-                  <Link
-                    href={feature.docsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900">
-                    {t("common.read_docs")}
-                  </Link>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+      bodyVariant="flush">
+      <SettingsTable
+        columns={getLicenseFeatureColumns(t, features)}
+        rows={getFeatureDefinitions(t)}
+        getRowId={(feature) => feature.key}
+        // Unreachable: the feature list is a compile-time constant, never empty.
+        emptyMessage={t("common.no_results")}
+      />
     </SettingsCard>
   );
 };

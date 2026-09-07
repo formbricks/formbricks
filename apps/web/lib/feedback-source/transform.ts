@@ -15,6 +15,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import type { FeedbackRecordCreateParams } from "@/modules/hub";
+import { type TResponseMetadata, buildResponseMetadata } from "./response-metadata";
 
 const getHeadlineFromElement = (element?: TSurveyElement): string => {
   if (!element?.headline) return "Untitled";
@@ -158,22 +159,32 @@ type BaseRecordFields = Pick<
 > & {
   language?: string;
   user_id?: string;
+  metadata?: TResponseMetadata;
 };
 
 const buildBaseFields = (
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name">,
+  survey: Pick<TSurvey, "id" | "name" | "type">,
   tenantId: string
-): BaseRecordFields => ({
-  collected_at: getCollectedAt(response),
-  source_type: "formbricks_survey",
-  submission_id: response.id,
-  tenant_id: tenantId,
-  source_id: survey.id,
-  source_name: survey.name,
-  ...(response.language && response.language !== "default" ? { language: response.language } : {}),
-  ...(response.contact?.userId ? { user_id: response.contact.userId } : {}),
-});
+): BaseRecordFields => {
+  // Built once per response and shared by every record of the submission (ENG-1554).
+  const metadata = buildResponseMetadata(response, survey);
+
+  return {
+    collected_at: getCollectedAt(response),
+    source_type: "formbricks_survey",
+    submission_id: response.id,
+    tenant_id: tenantId,
+    source_id: survey.id,
+    source_name: survey.name,
+    ...(response.language && response.language !== "default" ? { language: response.language } : {}),
+    ...(response.contact?.userId ? { user_id: response.contact.userId } : {}),
+    // Omitted rather than sent as {}: Hub stores metadata nullable and compares it byte-wise, so an
+    // empty object on a record that has none would count as a change and fire a pointless
+    // feedback_record.updated webhook.
+    ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+  };
+};
 
 const expandMatrixToRecords = (
   element: TSurveyMatrixElement,
@@ -213,7 +224,9 @@ const expandMatrixToRecords = (
       field_label: getChoiceLabel(row, "default"),
       field_group_id: element.id,
       field_group_label: groupLabel,
-      metadata: { question_type: "matrix" },
+      // Spread the shared response context first: this property overrides the one in ...baseFields,
+      // so anything not re-stated here is dropped from the record.
+      metadata: { ...baseFields.metadata, question_type: "matrix" },
       ...valueFields,
       ...(matchedColumn.valueId ? { value_id: matchedColumn.valueId } : {}),
     });
@@ -250,7 +263,7 @@ const expandRankingToRecords = (
       field_label: getChoiceLabel(choice, "default"),
       field_group_id: element.id,
       field_group_label: groupLabel,
-      metadata: { question_type: "ranking", total_items: value.length },
+      metadata: { ...baseFields.metadata, question_type: "ranking", total_items: value.length },
       value_number: index + 1,
     });
   });
@@ -302,7 +315,7 @@ const expandMultiChoiceToRecords = (
       field_label: fieldLabel,
       field_group_id: element.id,
       field_group_label: fieldLabel,
-      metadata: { question_type: "multipleChoiceMulti" },
+      metadata: { ...baseFields.metadata, question_type: "multipleChoiceMulti" },
       ...valueFields,
       ...(valueId ? { value_id: valueId } : {}),
     });
@@ -357,7 +370,7 @@ const normalizeElementValue = (
  */
 export function transformResponseToFeedbackRecords(
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "blocks" | "languages">,
+  survey: Pick<TSurvey, "id" | "name" | "type" | "blocks" | "languages">,
   mappings: TFeedbackSourceFormbricksMapping[],
   tenantId: string
 ): FeedbackRecordCreateParams[] {
@@ -380,19 +393,30 @@ export function transformResponseToFeedbackRecords(
 
     const element = elementMap.get(mapping.elementId);
 
-    if (element?.type === TSurveyElementTypeEnum.Matrix) {
+    // ENG-2064: a mapping whose element is gone from the survey must not publish. Every branch below
+    // tolerates `element === undefined` — the type checks are optional-chained and the generic path
+    // falls through to `getHeadlineFromElement(undefined)` — so without this the row published a
+    // record labelled "Untitled" against a question that no longer exists, and
+    // `importHistoricalResponses` replayed every historical response through the same loop.
+    //
+    // This is also what makes reconciliation's hold-back honest: `resolveDeletions` keeps orphaned
+    // rows when removing them would leave a survey with none, on the stated grounds that they are
+    // inert. They were not inert until this guard existed.
+    if (!element) continue;
+
+    if (element.type === TSurveyElementTypeEnum.Matrix) {
       feedbackRecords.push(...expandMatrixToRecords(element, mapping, value, baseFields, lookupLanguage));
       continue;
     }
 
-    if (element?.type === TSurveyElementTypeEnum.Ranking) {
+    if (element.type === TSurveyElementTypeEnum.Ranking) {
       feedbackRecords.push(...expandRankingToRecords(element, mapping, value, baseFields, lookupLanguage));
       continue;
     }
 
     // Multi-select splits into one record per selected option so each keeps its own stable
     // value_id (ENG-1702). A single string answer falls through to the generic path below.
-    if (element?.type === TSurveyElementTypeEnum.MultipleChoiceMulti && Array.isArray(value)) {
+    if (element.type === TSurveyElementTypeEnum.MultipleChoiceMulti && Array.isArray(value)) {
       feedbackRecords.push(
         ...expandMultiChoiceToRecords(element, mapping, value, baseFields, lookupLanguage)
       );

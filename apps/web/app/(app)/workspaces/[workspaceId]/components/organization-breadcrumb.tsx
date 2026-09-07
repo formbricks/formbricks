@@ -24,6 +24,9 @@ interface OrganizationBreadcrumbProps {
   currentOrganizationName?: string; // Optional: pass directly if context not available
   isMultiOrgEnabled: boolean;
   currentWorkspaceId?: string;
+  // True when no workspace crumb follows this one, so the closed-state chevron points down (a menu
+  // affordance) instead of right (which would read as a separator before nothing).
+  isLastCrumb?: boolean;
 }
 
 export const OrganizationBreadcrumb = ({
@@ -31,7 +34,8 @@ export const OrganizationBreadcrumb = ({
   currentOrganizationName,
   isMultiOrgEnabled,
   currentWorkspaceId,
-}: OrganizationBreadcrumbProps) => {
+  isLastCrumb = false,
+}: Readonly<OrganizationBreadcrumbProps>) => {
   const { t } = useTranslation();
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
   const router = useRouter();
@@ -92,7 +96,7 @@ export const OrganizationBreadcrumb = ({
             <Building2Icon className="size-3" strokeWidth={1.5} />
             <span>{organizationName}</span>
             {isPending && <Loader2 className="size-3 animate-spin" strokeWidth={1.5} />}
-            {isOrganizationDropdownOpen ? (
+            {isOrganizationDropdownOpen || isLastCrumb ? (
               <ChevronDownIcon className="size-3" strokeWidth={1.5} />
             ) : (
               <ChevronRightIcon className="size-3" strokeWidth={1.5} />

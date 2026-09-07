@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
+import { BETTER_AUTH_IP_ADDRESS_CONFIG } from "@/lib/utils/client-ip";
 import { auth } from "@/modules/auth/lib/auth";
 
 /**
@@ -14,6 +15,10 @@ beforeEach(async () => {
 });
 
 describe("Better Auth email/password (real Postgres)", () => {
+  test("uses the canonical private client-IP configuration", () => {
+    expect(auth.options.advanced?.ipAddress).toEqual(BETTER_AUTH_IP_ADDRESS_CONFIG);
+  });
+
   test("sign-up creates the user and a bcrypt credential account via the Formbricks field mappings", async () => {
     const response = await auth.api.signUpEmail({
       body: { email: "alice@example.com", password: "Sup3rSecret!", name: "Alice Example" },
