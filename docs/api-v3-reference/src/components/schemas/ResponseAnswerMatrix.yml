@@ -1,0 +1,52 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - rows
+    properties:
+      elementType:
+        type: string
+        enum:
+          - matrix
+      rows:
+        type: array
+        description: >-
+          One entry per row the respondent answered. Rows left blank are omitted rather than returned
+          with a null column. Both sides of a matrix cell need resolving against the current
+          definition, so each entry reports its own `match` — see `ResponseValueMatch`.
+        items:
+          type: object
+          required:
+            - rowLabel
+            - rawValue
+            - columnLabel
+            - match
+          properties:
+            rowId:
+              type:
+                - string
+                - "null"
+              description: Resolved row id, or `null` when the row no longer resolves.
+            rowLabel:
+              type: string
+              description: >-
+                Row label in the resolved language, falling back to the stored key when the row no
+                longer resolves.
+            columnId:
+              type:
+                - string
+                - "null"
+              description: Resolved column id, or `null` when the column no longer resolves.
+            columnLabel:
+              type:
+                - string
+                - "null"
+              description: Column label in the resolved language. `null` when `match` is `unmatched`.
+            rawValue:
+              type: string
+              description: The selected column as stored, before resolution.
+            match:
+              $ref: ./ResponseValueMatch.yml
+          additionalProperties: false
+unevaluatedProperties: false
+description: Matrix answer — one selected column per answered row.

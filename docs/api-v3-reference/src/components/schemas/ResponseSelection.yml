@@ -1,0 +1,38 @@
+type: object
+description: >
+  One selected option within a choice-style answer. `optionId` plus `rawValue` is deliberately a
+  two-field split — the same split the Hub stores as `value_id` plus `value_text` — because option
+  ids are stable while labels are editable and language-dependent. Consumers that need to group or
+  compare across time should key on `optionId`; consumers rendering to a human should use
+  `optionLabel`.
+required:
+  - optionId
+  - optionLabel
+  - rawValue
+  - match
+properties:
+  optionId:
+    type:
+      - string
+      - "null"
+    description: >-
+      Resolved option id, or the literal `other` for a write-in. `null` when `match` is
+      `unmatched`.
+  optionLabel:
+    type:
+      - string
+      - "null"
+    description: >-
+      Option label in the resolved language. `null` when `match` is `unmatched`.
+  rawValue:
+    type: string
+    description: The value as stored on the response, before resolution. Always present.
+  match:
+    $ref: ./ResponseValueMatch.yml
+  rank:
+    type: integer
+    minimum: 1
+    description: >-
+      1-based rank, present only for `ranking` elements. Array order already reflects the rank; this
+      field makes it explicit so consumers need not rely on ordering.
+additionalProperties: false

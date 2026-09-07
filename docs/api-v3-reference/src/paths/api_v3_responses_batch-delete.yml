@@ -1,0 +1,92 @@
+post:
+  operationId: batchDeleteResponsesV3
+  summary: Delete responses in bulk
+  description: >
+    Deletes up to 100 responses in one transaction. Requires `manage` access to the workspace.
+
+
+    **A POST custom method, not a `DELETE` on the collection.** A collection-level `DELETE` that loses
+    its filters — through a client bug, a proxy stripping a query string, a copied curl command —
+    degrades into erasing every response in scope. A distinct path cannot be reached by accident.
+    AIP-165 blesses `batchDelete` for exactly this reason.
+
+
+    **It scope-filters rather than rejecting.** Ids belonging to another workspace, and ids that no
+    longer exist, are ignored; the ids in the caller's own workspace are deleted and `deleted` reports
+    how many that was. Rejecting the whole call on a foreign id would do two bad things at once: leak
+    that the id exists somewhere, and break retries — after a partially-applied call, an
+    already-deleted id is indistinguishable from a foreign one. Scope-filtering is idempotent and
+    leaks nothing, so a client can safely retry the same batch.
+
+
+    Because `deleted` can therefore be lower than the number of ids sent — or zero — do not treat a
+    shortfall as an error. Deletion cascades to uploaded files and to the Hub, exactly as the
+    single-response delete does.
+  tags:
+    - V3 Responses
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/BatchDeleteResponsesRequest.yml
+        examples:
+          deleteThree:
+            summary: Delete three responses
+            value:
+              ids:
+                - clrs1234567890123456789012
+                - clrs2234567890123456789012
+                - clrs3234567890123456789012
+  responses:
+    "200":
+      description: >-
+        Batch processed. `deleted` counts the responses actually removed, which may be fewer than the
+        ids submitted.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - deleted
+                properties:
+                  deleted:
+                    type: integer
+                    minimum: 0
+                    description: >-
+                      How many responses were deleted. Lower than `ids.length` when some ids were
+                      already gone or belong to another workspace.
+                additionalProperties: false
+    "400":
+      description: >-
+        Bad Request — malformed body, an empty `ids` array, more than 100 ids, duplicate ids, or an
+        unsupported field.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

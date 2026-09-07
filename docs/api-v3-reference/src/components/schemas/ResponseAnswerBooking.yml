@@ -1,0 +1,20 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - booked
+    properties:
+      elementType:
+        type: string
+        enum:
+          - cal
+      booked:
+        type: boolean
+        description: Whether the respondent completed a booking.
+      rawValue:
+        type: string
+        description: The token as stored — conventionally `booked`.
+unevaluatedProperties: false
+description: >-
+  Scheduling answer for a `cal` element. Only the fact of the booking is recorded on the response;
+  the meeting itself lives in the scheduling provider and is not proxied by this API.

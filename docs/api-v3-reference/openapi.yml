@@ -7,6 +7,8 @@ info:
   description: |
     **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, and **DELETE /api/v3/surveys/{surveyId}**.
 
+    **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
     Authenticate all management endpoints with **session cookie** or **`x-api-key`** (management key with access to the workspace).
@@ -25,6 +27,13 @@ info:
     **Filtering**
     Filters use explicit operator-style query parameters under the **`filter[...]` family**. The survey list supports `filter[name][contains]`, `filter[status][in]`, and `filter[type][in]`. The workflow list supports `filter[name][contains]` and `filter[status][in]`; the workflow run list supports `filter[status][in]` and `filter[isDryRun][eq]`. Resource-scoping identifiers (`workspaceId`, `workflowId`, `responseId`) stay plain query parameters. Multi-value filters use repeated keys or comma-separated values (e.g. `filter[status][in]=draft&filter[status][in]=inProgress` or `filter[status][in]=draft,inProgress`). Sorting remains a flat `sortBy` query parameter.
 
+    **Responses**
+    The response resource is **self-describing**. Answers come back as a typed `answers[]` array in which each entry carries the element's id, label, type and value, rather than as a map keyed by element id — so a consumer holding only a response can read it without fetching the survey and joining. Hidden fields, survey variables and auto-captured context are one `embeddedData[]` collection rather than three parallel concepts, each entry declaring a `kind` and a `type`. Data whose element has since been deleted is reported in `unresolved[]` instead of being dropped silently. Labels are resolved at read time against the current survey definition, and the `resolution` object discloses that policy along with the survey's `updatedAt` so a consumer can detect wording drift.
+    Writes take answers in the **stored map form** (`data`, `variables`) while reads return the typed array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching caller-supplied labels back onto option ids. `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what a write would do, before committing to it.
+    `createdAt` and `updatedAt` are **server-owned** on this resource: they cannot be supplied on create or changed by a patch. Response metering counts rows by `(surveyId, createdAt)`, and a client-chosen `createdAt` also lets rows be inserted into the middle of another consumer's already-paginated stream. Backdating stays available on v2 until a dedicated import path exists. The respondent's IP address and the `contactAttributes` snapshot that v1/v2 expose — and let callers write — are not part of this resource in any view.
+    Response filtering is allow-listed and index-backed: `filter[createdAt][gte|lte]`, `filter[finished][eq]`, `filter[language][in]` and `filter[id][in]`. `filter[finished][eq]` and `filter[language][in]` require `surveyId` or `contactId` as well, because both are heap residuals bounded only by an anchored index range. Per-answer, hidden-field, submission-metadata, contact-attribute, quota and tag filters are **not** offered; each is a JSON path or an unindexed join on the largest table in the product. The in-app dashboard does offer them, so this API is knowingly behind the dashboard here — closing the gap requires index work and is tracked separately rather than quietly omitted.
+    `GET /api/v3/responses/count` answers "how many match?" directly. The list endpoint's `meta.totalCount` covers a caller that is already paging and is **opt-in** via `includeTotalCount` (default `false`, unlike the survey list) because responses are the highest-cardinality table in the product.
+    Bulk deletion is `POST /api/v3/responses/batch-delete`, a custom method rather than a collection-level `DELETE`, so a call that loses its filters cannot degrade into erasing everything in scope. It scope-filters rather than rejecting: foreign and already-deleted ids are ignored and the call reports how many rows it removed, which keeps it both leak-free and safe to retry.
     **Security**
     Missing/forbidden workspace returns **403** with a generic message (not **404**) so resource existence is not leaked. Workflow and workflow-run detail endpoints also return **403** for unknown IDs or inaccessible IDs to avoid IDOR leaks. List responses use `private, no-store`.
 
@@ -57,6 +66,10 @@ info:
     workflow-prisma-schema: packages/database/schema/workflows.prisma (feat/workflows-prisma-schema)
     openapi-generated: false
     spec-source: docs/api-v3-reference/src (regenerate bundle with `pnpm api:v3:bundle`)
+    responses-contract-ticket: ENG-2868
+    responses-rfc: v3 Responses API RFC sections 2b (resource) and 2c (endpoints)
+    responses-stored-shape: packages/types/responses.ts (ZResponse, ZResponseData, ZResponseInput)
+    responses-prisma-model: packages/database/schema/main.prisma (model Response)
     pagination-model: cursor
     cursor-pagination: supported
 servers:
@@ -1282,6 +1295,924 @@ paths:
                       id: clsv1234567890123456789012
                       status: paused
                       archivedAt: null
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/responses:
+    get:
+      operationId: getResponsesV3
+      summary: List responses
+      description: |
+        Returns responses for a workspace, newest first. Session cookie or x-api-key with read access.
+
+        **Scoping.** `workspaceId` is required, as on every v3 collection read. Add `surveyId` to narrow to one survey — the common case, and the one the storage layer is indexed for (`(surveyId, createdAt)`). A workspace-wide list has to reach responses through their surveys and is correspondingly slower, so pass `surveyId` whenever you know it. `contactId` narrows to one respondent.
+
+        **Pagination is keyset**, on `(createdAt, id)`. The `cursor` is opaque and bound to the sort order and the filter set it was issued for; changing either invalidates it. `meta.nextCursor` being `null` is the only end-of-collection signal — do not infer the end from a short page.
+
+        **Filters are allow-listed** and every one of them is index-backed. `filter[finished][eq]` and `filter[language][in]` additionally require `surveyId` or `contactId`, because both are heap residuals that are only bounded when the scan is anchored to one survey or one contact; sending either without such a scope returns **400**.
+
+        **What this endpoint deliberately does not filter on:** individual answers, hidden-field values, submission metadata (`source`, `url`, `country`, `browser`, `os`, `device`), contact attributes, quotas, and tags. Each is a JSON path or an unindexed join on the largest table in the database, where the honest outcome is a timeout rather than a slow query. The in-app dashboard does offer these, so this endpoint is knowingly behind it; closing the gap needs index work and is tracked separately rather than quietly omitted.
+      tags:
+        - V3 Responses
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/CursorQuery'
+        - in: query
+          name: surveyId
+          schema:
+            type: string
+            format: cuid2
+          description: 'Optional survey scoping. Single-valued deliberately: an `[in]` form would defeat the ordered index scan that makes this the fast path.'
+        - in: query
+          name: contactId
+          schema:
+            type: string
+            format: cuid2
+          description: Optional contact scoping. Returns only responses submitted by this contact.
+        - in: query
+          name: includeTotalCount
+          schema:
+            type: boolean
+            default: false
+          description: |
+            Whether to compute `meta.totalCount`. Defaults to **`false`** here, unlike the survey list, because responses are the highest-cardinality table in the product and the extra count is not free at that size. When `false`, `meta.totalCount` is `null`. If all you need is the count, use `GET /api/v3/responses/count` instead of fetching a page to get it.
+        - in: query
+          name: filter[createdAt][gte]
+          schema:
+            type: string
+            format: date-time
+          description: Only responses created at or after this instant (inclusive).
+        - in: query
+          name: filter[createdAt][lte]
+          schema:
+            type: string
+            format: date-time
+          description: Only responses created at or before this instant (inclusive).
+        - in: query
+          name: filter[finished][eq]
+          schema:
+            type: boolean
+          description: Completed (`true`) or partial (`false`) responses only. Omit for both. Requires `surveyId` or `contactId`.
+        - in: query
+          name: filter[language][in]
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          description: |
+            Survey language codes to include. Repeat the parameter or use comma-separated values. Values are survey language codes rather than BCP-47 locales — `default` is legitimate. Requires `surveyId` or `contactId`.
+        - in: query
+          name: filter[id][in]
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              format: cuid2
+          style: form
+          explode: true
+          description: Fetch a specific set of responses by id, at most 100 per call. Ids outside the requested scope are simply absent from the result rather than erroring, so this cannot be used to probe whether an id exists elsewhere.
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum:
+              - '-createdAt'
+              - createdAt
+            default: '-createdAt'
+          description: |
+            Sort order. `-createdAt` (newest first) is the default; `createdAt` sorts oldest first, which is what a consumer doing an incremental backfill wants. The leading `-` marks descending.
+
+            `updatedAt` is not offered: it has no index, no product usage, and being mutable it cannot anchor a keyset cursor.
+      responses:
+        '200':
+          description: Responses retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ResponseListItem'
+                  meta:
+                    type: object
+                    required:
+                      - limit
+                      - nextCursor
+                      - totalCount
+                    properties:
+                      limit:
+                        type: integer
+                        minimum: 1
+                        maximum: 100
+                      nextCursor:
+                        type:
+                          - string
+                          - 'null'
+                        description: Opaque cursor for the next page. `null` when there are no more results — the only reliable end-of-collection signal.
+                      totalCount:
+                        type:
+                          - integer
+                          - 'null'
+                        minimum: 0
+                        description: Total responses matching the current scope and filters across all pages. `null` unless `includeTotalCount=true`.
+                    additionalProperties: false
+              examples:
+                page:
+                  summary: One page of responses, exercising several answer types
+                  value:
+                    data:
+                      - id: clrs1234567890123456789012
+                        surveyId: clsv1234567890123456789012
+                        surveyName: Q3 Product Feedback
+                        workspaceId: clws1234567890123456789012
+                        createdAt: '2026-08-27T09:14:03.417Z'
+                        updatedAt: '2026-08-27T09:17:41.902Z'
+                        finished: true
+                        endingId: cmpthankyou00000000000000
+                        language: de
+                        durationSeconds: 218.4
+                        resolution:
+                          labelPolicy: currentSurveyDefinition
+                          labelsLanguage: de
+                          surveyUpdatedAt: '2026-08-20T11:02:55.000Z'
+                        answers:
+                          - position: 1
+                            elementId: nps_score
+                            elementType: nps
+                            elementLabel: Wie wahrscheinlich ist es, dass Sie uns weiterempfehlen?
+                            valueNumber: 9
+                            range:
+                              min: 0
+                              max: 10
+                            durationSeconds: 12.1
+                          - position: 2
+                            elementId: what_could_be_better
+                            elementType: openText
+                            elementLabel: Was koennten wir besser machen?
+                            valueText: Die Suche ist zu langsam.
+                            inputType: text
+                            durationSeconds: 64.8
+                          - position: 3
+                            elementId: channels
+                            elementType: multipleChoiceMulti
+                            elementLabel: Wie haben Sie von uns erfahren?
+                            selections:
+                              - optionId: ch_2f8a
+                                optionLabel: Ein Freund
+                                rawValue: Ein Freund
+                                match: exact
+                              - optionId: other
+                                optionLabel: Andere
+                                rawValue: Podcast
+                                match: other
+                              - optionId: null
+                                optionLabel: null
+                                rawValue: Twitter
+                                match: unmatched
+                            durationSeconds: 31
+                          - position: 4
+                            elementId: consent_terms
+                            elementType: consent
+                            elementLabel: Ich stimme den Bedingungen zu
+                            valueBoolean: true
+                            rawValue: accepted
+                        embeddedData:
+                          - key: plan
+                            kind: ingested
+                            type: string
+                            label: Plan
+                            value: enterprise
+                          - key: score
+                            kind: computed
+                            type: number
+                            label: Score
+                            value: 12
+                          - key: country
+                            kind: reserved
+                            type: string
+                            label: Country
+                            value: DE
+                        unresolved:
+                          - key: old_question_id
+                            rawValue: some answer
+                            reason: elementNotInSurvey
+                        tags:
+                          - id: cltg1234567890123456789012
+                            name: vip
+                    meta:
+                      limit: 20
+                      nextCursor: eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI3VDA5OjE0OjAzLjQxN1oifQ
+                      totalCount: null
+        '400':
+          description: |
+            Bad Request — invalid or unrecognized query parameters. Covers an unknown `filter[...]` key, a filter value of the wrong type, `filter[id][in]` over 100 ids, a `cursor` that does not match the requested sort order or filter set, and `filter[finished][eq]` or `filter[language][in]` sent without `surveyId` or `contactId`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+    post:
+      operationId: createResponseV3
+      summary: Create a response
+      description: |
+        Records a survey response. Requires read-write access to the workspace, which is resolved from `surveyId` rather than supplied by the caller.
+
+        **This performs a real submission.** It runs the full response pipeline — webhooks, integrations, follow-ups, quota evaluation, and Hub ingestion once the response is finished — and it consumes one metered monthly response. That is the same power a v1/v2 management create has today, and the same power an API key with write access already carries; it is called out because an agent holding that key can create genuine submissions. Use `POST /api/v3/responses/validate` to check a payload without any of that happening.
+
+        `createdAt` cannot be supplied. Bulk historical loading is therefore not what this endpoint is for — see `ResponseListItem.createdAt` for why, and use v2 while a dedicated import path is outstanding.
+      tags:
+        - V3 Responses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResponseRequest'
+            examples:
+              finishedResponse:
+                summary: A complete response with answers, hidden fields and a variable
+                value:
+                  surveyId: clsv1234567890123456789012
+                  finished: true
+                  endingId: cmpthankyou00000000000000
+                  language: de
+                  data:
+                    nps_score: 9
+                    what_could_be_better: Die Suche ist zu langsam.
+                    channels:
+                      - ch_2f8a
+                      - Podcast
+                    plan: enterprise
+                  variables:
+                    score: 12
+              partialResponse:
+                summary: A partial response, still open
+                value:
+                  surveyId: clsv1234567890123456789012
+                  finished: false
+                  data:
+                    nps_score: 7
+              identifiedResponse:
+                summary: A response attributed to a known contact
+                description: |
+                  `contactId` is create-only — a response cannot later be re-attributed to a different person. The contact must already exist in the same workspace.
+                value:
+                  surveyId: clsv1234567890123456789012
+                  finished: true
+                  contactId: clct1234567890123456789012
+                  data:
+                    nps_score: 10
+      responses:
+        '201':
+          description: Response created successfully
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Relative URL of the created response.
+              example: /api/v3/responses/clrs1234567890123456789012
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ResponseResource'
+        '400':
+          description: |
+            Bad Request — the body failed schema validation: invalid JSON, a missing required field, a value of the wrong type, or an unsupported field. Sending a server-owned or create-forbidden field (`createdAt`, `updatedAt`, `contactAttributes`, `meta`, `userId`) is rejected here with `code: unsupported_field` rather than being silently dropped. Failures that need stored state to detect return **422** instead.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          description: |
+            Unprocessable Content — the body is well-formed but conflicts with stored state: `surveyId` does not resolve, `endingId` is not an ending of that survey, `language` is not enabled on it, `contactId` is not a contact in the same workspace, `displayId` already backs another response, `singleUseId` is already used for this survey, or an answer violates the survey's own validation rules. Each is itemized in `invalid_params`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/responses/count:
+    get:
+      operationId: countResponsesV3
+      summary: Count responses
+      description: |
+        Returns how many responses match a scope and filter set, without fetching any of them.
+
+        This exists as its own operation because "how many match this?" is the question asked most often and it should not require paging through data to answer — particularly for agent clients, where a page of payloads to obtain a single integer is pure waste. It takes the same scope and filter parameters as `GET /api/v3/responses`, minus pagination and sorting, so a count and a page are always answering the same question.
+
+        The list endpoint's `meta.totalCount` covers the other case: a caller already paging that also wants the total. That one is opt-in; this one is the direct route.
+      tags:
+        - V3 Responses
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - in: query
+          name: surveyId
+          schema:
+            type: string
+            format: cuid2
+          description: Optional survey scoping.
+        - in: query
+          name: contactId
+          schema:
+            type: string
+            format: cuid2
+          description: Optional contact scoping.
+        - in: query
+          name: filter[createdAt][gte]
+          schema:
+            type: string
+            format: date-time
+          description: Only responses created at or after this instant (inclusive).
+        - in: query
+          name: filter[createdAt][lte]
+          schema:
+            type: string
+            format: date-time
+          description: Only responses created at or before this instant (inclusive).
+        - in: query
+          name: filter[finished][eq]
+          schema:
+            type: boolean
+          description: Completed (`true`) or partial (`false`) responses only. Requires `surveyId` or `contactId`, for the same reason as on the list endpoint.
+        - in: query
+          name: filter[language][in]
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          description: Survey language codes to include. Requires `surveyId` or `contactId`.
+      responses:
+        '200':
+          description: Count retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - count
+                    properties:
+                      count:
+                        type: integer
+                        minimum: 0
+                        description: Responses matching the scope and filters.
+                    additionalProperties: false
+        '400':
+          description: Bad Request — invalid or unrecognized query parameters, including `filter[finished][eq]` or `filter[language][in]` without `surveyId` or `contactId`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/responses/validate:
+    post:
+      operationId: validateResponseV3
+      summary: Validate a response payload
+      description: |
+        Checks a create or patch payload and reports what a real write would do — **without writing anything**. Never has side effects: no response is created, no pipeline fires, nothing is metered.
+
+        Deliberately the same shape as `POST /api/v3/surveys/validate`: same dual auth, a request discriminated on `operation` carrying the body the real call would take, and a result of `valid`, `operation` and `invalid_params` with document-relative paths. The value is that the two endpoints behave alike, so a client can validate uniformly. Answers are checked against the survey's own validation rules, so a payload this endpoint accepts is one the real write accepts.
+
+        **It reports effects, not just a verdict.** When `valid` is `true`, `effects` names the language that would be stamped, the contact and display that would be linked, the quotas that would count, whether the pipeline would fire, and whether the write would be metered. The language is the field that motivated this endpoint: an importer can see that a payload produces language-less responses *before* writing thousands of them.
+
+        Authorization is the same as the operation being validated — read-write for `create` and `patch` — so this cannot be used as a cheaper cross-tenant existence probe than the write itself. An inaccessible `responseId` on a patch validation answers **403**, as the patch would.
+
+        **What it does not do:** an endpoint lets a caller check; it cannot stop a caller writing a bad record anyway. Consistency across the write paths comes from all of them calling the same validator — this endpoint is that validator's public face, not a gate in front of it.
+      tags:
+        - V3 Responses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateResponseRequest'
+            examples:
+              validateCreate:
+                summary: Validate an intended create
+                value:
+                  operation: create
+                  data:
+                    surveyId: clsv1234567890123456789012
+                    finished: true
+                    language: de
+                    data:
+                      nps_score: 9
+                      what_could_be_better: Die Suche ist zu langsam.
+              validatePatch:
+                summary: Validate an intended patch
+                value:
+                  operation: patch
+                  responseId: clrs1234567890123456789012
+                  data:
+                    finished: true
+                    endingId: cmpthankyou00000000000000
+      responses:
+        '200':
+          description: Validation completed. A `200` means the check ran, **not** that the payload is valid — read `valid`.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ResponseValidationResult'
+              examples:
+                valid:
+                  summary: Payload is valid, with the effects a write would have
+                  value:
+                    data:
+                      valid: true
+                      operation: create
+                      invalid_params: []
+                      effects:
+                        language: de
+                        contactId: null
+                        displayId: null
+                        firesPipeline: true
+                        countsTowardMeteredResponses: true
+                        quotas: []
+                invalid:
+                  summary: Payload is invalid, with repairable errors
+                  value:
+                    data:
+                      valid: false
+                      operation: create
+                      invalid_params:
+                        - name: data.nps_score
+                          reason: Value 12 is outside the element's 0–10 range.
+                        - name: language
+                          reason: Language "fr" is not enabled on this survey.
+                          code: unsupported_locale
+                          identifier: fr
+                          referenceType: language
+        '400':
+          description: 'Bad Request — the envelope itself is malformed: missing or unknown `operation`, missing `data`, or a `patch` without `responseId`. Problems *inside* `data` are the point of this endpoint and come back as `200` with `valid: false`, not as a 400.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/responses/batch-delete:
+    post:
+      operationId: batchDeleteResponsesV3
+      summary: Delete responses in bulk
+      description: |
+        Deletes up to 100 responses in one transaction. Requires `manage` access to the workspace.
+
+        **A POST custom method, not a `DELETE` on the collection.** A collection-level `DELETE` that loses its filters — through a client bug, a proxy stripping a query string, a copied curl command — degrades into erasing every response in scope. A distinct path cannot be reached by accident. AIP-165 blesses `batchDelete` for exactly this reason.
+
+        **It scope-filters rather than rejecting.** Ids belonging to another workspace, and ids that no longer exist, are ignored; the ids in the caller's own workspace are deleted and `deleted` reports how many that was. Rejecting the whole call on a foreign id would do two bad things at once: leak that the id exists somewhere, and break retries — after a partially-applied call, an already-deleted id is indistinguishable from a foreign one. Scope-filtering is idempotent and leaks nothing, so a client can safely retry the same batch.
+
+        Because `deleted` can therefore be lower than the number of ids sent — or zero — do not treat a shortfall as an error. Deletion cascades to uploaded files and to the Hub, exactly as the single-response delete does.
+      tags:
+        - V3 Responses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDeleteResponsesRequest'
+            examples:
+              deleteThree:
+                summary: Delete three responses
+                value:
+                  ids:
+                    - clrs1234567890123456789012
+                    - clrs2234567890123456789012
+                    - clrs3234567890123456789012
+      responses:
+        '200':
+          description: Batch processed. `deleted` counts the responses actually removed, which may be fewer than the ids submitted.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - deleted
+                    properties:
+                      deleted:
+                        type: integer
+                        minimum: 0
+                        description: How many responses were deleted. Lower than `ids.length` when some ids were already gone or belong to another workspace.
+                    additionalProperties: false
+        '400':
+          description: Bad Request — malformed body, an empty `ids` array, more than 100 ids, duplicate ids, or an unsupported field.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/responses/{responseId}:
+    get:
+      operationId: getResponseV3
+      summary: Get a response
+      description: |
+        Returns one response in the detailed view — everything the list view carries, plus `contact`, `displayId` and `singleUseId`.
+
+        The workspace is resolved from the response itself, so the caller cannot choose which scope it is authorized against and no `workspaceId` parameter is accepted. An unknown or inaccessible `responseId` answers **403**, not **404**, so response ids cannot be probed for existence.
+      tags:
+        - V3 Responses
+      parameters:
+        - $ref: '#/components/parameters/ResponseIdPath'
+      responses:
+        '200':
+          description: Response retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ResponseResource'
+              examples:
+                identified:
+                  summary: An identified response in the detailed view
+                  value:
+                    data:
+                      id: clrs1234567890123456789012
+                      surveyId: clsv1234567890123456789012
+                      surveyName: Q3 Product Feedback
+                      workspaceId: clws1234567890123456789012
+                      createdAt: '2026-08-27T09:14:03.417Z'
+                      updatedAt: '2026-08-27T09:17:41.902Z'
+                      finished: true
+                      endingId: cmpthankyou00000000000000
+                      language: de
+                      durationSeconds: 218.4
+                      resolution:
+                        labelPolicy: currentSurveyDefinition
+                        labelsLanguage: de
+                        surveyUpdatedAt: '2026-08-20T11:02:55.000Z'
+                      answers:
+                        - position: 1
+                          elementId: satisfaction
+                          elementType: rating
+                          elementLabel: Wie zufrieden sind Sie?
+                          valueNumber: 4
+                          range:
+                            min: 1
+                            max: 5
+                          scale: star
+                          durationSeconds: 8.2
+                        - position: 2
+                          elementId: signup_date
+                          elementType: date
+                          elementLabel: Wann haben Sie sich registriert?
+                          valueDate: '2026-05-14'
+                        - position: 3
+                          elementId: your_address
+                          elementType: address
+                          elementLabel: Ihre Adresse
+                          fields:
+                            - fieldId: city
+                              fieldLabel: Stadt
+                              valueText: Berlin
+                            - fieldId: country
+                              fieldLabel: Land
+                              valueText: Deutschland
+                        - position: 4
+                          elementId: screenshots
+                          elementType: fileUpload
+                          elementLabel: Screenshots
+                          fileUrls:
+                            - https://app.formbricks.com/storage/clws1234567890123456789012/private/shot.png
+                          fileCount: 1
+                        - position: 5
+                          elementId: priorities
+                          elementType: ranking
+                          elementLabel: Bitte sortieren Sie nach Wichtigkeit
+                          selections:
+                            - optionId: opt_speed
+                              optionLabel: Geschwindigkeit
+                              rawValue: Geschwindigkeit
+                              match: exact
+                              rank: 1
+                            - optionId: opt_price
+                              optionLabel: Preis
+                              rawValue: Preis
+                              match: label
+                              rank: 2
+                        - position: 6
+                          elementId: nps_matrix
+                          elementType: matrix
+                          elementLabel: Bewerten Sie die Bereiche
+                          rows:
+                            - rowId: row_support
+                              rowLabel: Support
+                              columnId: col_good
+                              columnLabel: Gut
+                              rawValue: Gut
+                              match: exact
+                      embeddedData:
+                        - key: plan
+                          kind: ingested
+                          type: string
+                          label: Plan
+                          value: enterprise
+                        - key: device_type
+                          kind: reserved
+                          type: string
+                          label: Device type
+                          value: desktop
+                      unresolved: []
+                      tags:
+                        - id: cltg1234567890123456789012
+                          name: vip
+                      contact:
+                        id: clct1234567890123456789012
+                        userId: u_123
+                      displayId: cldp1234567890123456789012
+                      singleUseId: null
+                anonymous:
+                  summary: An anonymous, unfinished response
+                  value:
+                    data:
+                      id: clrs2234567890123456789012
+                      surveyId: clsv1234567890123456789012
+                      surveyName: Q3 Product Feedback
+                      workspaceId: clws1234567890123456789012
+                      createdAt: '2026-08-27T10:01:00.000Z'
+                      updatedAt: '2026-08-27T10:01:30.000Z'
+                      finished: false
+                      endingId: null
+                      language: null
+                      resolution:
+                        labelPolicy: currentSurveyDefinition
+                        labelsLanguage: null
+                        surveyUpdatedAt: '2026-08-20T11:02:55.000Z'
+                      answers:
+                        - position: 1
+                          elementId: cta_intro
+                          elementType: cta
+                          elementLabel: Jetzt starten
+                          valueBoolean: true
+                          rawValue: clicked
+                      embeddedData: []
+                      unresolved: []
+                      tags: []
+                      contact: null
+                      displayId: null
+                      singleUseId: null
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+    patch:
+      operationId: updateResponseV3
+      summary: Update a response
+      description: |
+        Partially updates a response. Requires read-write access; the workspace is resolved from the response. An unknown or inaccessible `responseId` answers **403**.
+
+        `PATCH` is the only update verb — there is no `PUT`. Within it, `data` and `variables` are replaced wholesale rather than deep-merged, so send the complete map. Unknown top-level keys are rejected with **400** rather than ignored.
+
+        Setting `finished` to `true` fires the finish side of the response pipeline, including Hub ingestion. Updates otherwise emit `responseUpdated`.
+      tags:
+        - V3 Responses
+      parameters:
+        - $ref: '#/components/parameters/ResponseIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchResponseRequest'
+            examples:
+              finishResponse:
+                summary: Mark a partial response finished
+                value:
+                  finished: true
+                  endingId: cmpthankyou00000000000000
+              replaceAnswers:
+                summary: Replace the stored answers wholesale
+                description: |
+                  `data` is not merged. Anything omitted from this map is removed from the response.
+                value:
+                  data:
+                    nps_score: 8
+                    what_could_be_better: Etwas schneller wäre gut.
+              retagResponse:
+                summary: Replace the response's tags
+                value:
+                  tags:
+                    - cltg1234567890123456789012
+      responses:
+        '200':
+          description: Response updated successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ResponseResource'
+        '400':
+          description: |
+            Bad Request — the body failed schema validation, or it carried a field that is not patchable. `createdAt`, `updatedAt`, `surveyId`, `contactId`, `displayId`, `singleUseId`, `contactAttributes` and `meta` are all rejected here with `code: unsupported_field`. An empty body is also a 400.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          description: 'Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is not an ending of the response''s survey, `language` is not enabled on it, a tag id does not resolve in the same workspace, or an answer violates the survey''s validation rules.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+    delete:
+      operationId: deleteResponseV3
+      summary: Delete a response
+      description: |
+        Permanently deletes a response. Requires `manage` access; the workspace is resolved from the response, and an unknown or inaccessible `responseId` answers **403**.
+
+        Deletion cascades: any files uploaded with the response are removed from storage, and the corresponding record is deleted from the Hub. No `responseDeleted` webhook is emitted — no such trigger exists.
+      tags:
+        - V3 Responses
+      parameters:
+        - $ref: '#/components/parameters/ResponseIdPath'
+      responses:
+        '204':
+          description: Response deleted successfully. No body.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -2564,12 +3495,13 @@ components:
             - invalid_reference
             - missing_required_field
             - missing_translation
+            - rule_violation
             - unsupported_field
             - unsupported_locale
           description: |
             Machine-readable validation category, when available. `invalid_graph` covers workflow
             graph-structure violations such as a duplicated trigger edge, an unreachable node, or a
-            cycle.
+            cycle. `rule_violation` covers a submitted answer that breaks one of the survey's own validation rules (see `SurveyValidationRule`) — a value below a `minLength`, outside a rating range, or with fewer selections than `minSelections`. It is used by response validation and response writes.
         identifier:
           type: string
           description: Identifier involved in the validation failure, when available. For language errors, this can be the normalized language code.
@@ -2588,7 +3520,12 @@ components:
             - edge
             - survey
             - endingCard
-          description: Identifier namespace involved in the validation failure. `node`, `edge`, `survey`, and `endingCard` are used by workflow validation.
+            - response
+            - contact
+            - display
+            - tag
+            - quota
+          description: Identifier namespace involved in the validation failure. `node`, `edge`, `survey`, and `endingCard` are used by workflow validation. `response`, `contact`, `display`, `tag`, and `quota` are used by response validation and response writes.
         missingId:
           type: string
           description: Referenced id that does not exist in the submitted survey document.
@@ -4686,6 +5623,904 @@ components:
           items:
             $ref: '#/components/schemas/SurveyValidationLanguage'
       additionalProperties: false
+    ResponseResolution:
+      type: object
+      description: |
+        Receipt describing how `answers[]` and `embeddedData[]` labels were produced. It exists so a consumer can tell whether the labels it is reading are the wording the respondent actually saw.
+      required:
+        - labelPolicy
+        - labelsLanguage
+        - surveyUpdatedAt
+      properties:
+        labelPolicy:
+          type: string
+          enum:
+            - currentSurveyDefinition
+          description: |
+            Where labels came from. Today the only value is `currentSurveyDefinition`: labels are resolved at **read time** against the survey as it stands now. Nothing about the survey is snapshotted when a response is written and there is no survey-version model, so a response collected under an older headline reads back under today's wording — text the respondent may never have seen. Typeform, SurveyMonkey, Qualtrics, Google Forms and Jotform all behave this way, so this is the industry norm rather than a shortcut. Compare `surveyUpdatedAt` against the response's `createdAt` to detect that the definition moved after collection. If a write-time label snapshot ever ships, a second value `asAsked` is added here and consumers branch on it — treat this as an open enum.
+        labelsLanguage:
+          type:
+            - string
+            - 'null'
+          description: The language the labels in this payload were resolved in. Follows the response's `language` when it is set and the survey has that language enabled, otherwise the survey's default language. `null` when the survey carries no translations.
+        surveyUpdatedAt:
+          type: string
+          format: date-time
+          description: When the survey definition was last modified. Later than the response's `createdAt` means the wording in `elementLabel` may have drifted from what was asked.
+      additionalProperties: false
+    ResponseAnswerBase:
+      type: object
+      description: Fields every answer carries, whatever the element type. `elementType` selects the value-bearing shape — see `ResponseAnswer`.
+      required:
+        - position
+        - elementId
+        - elementType
+        - elementLabel
+      properties:
+        position:
+          type: integer
+          minimum: 1
+          description: 1-based position of the element in the current survey definition, so a consumer can present answers in survey order without fetching the survey. Elements the respondent never reached are absent from `answers[]` entirely rather than present-and-empty.
+        elementId:
+          type: string
+          description: Stable element id, as authored on the survey.
+        elementType:
+          type: string
+          enum:
+            - openText
+            - multipleChoiceSingle
+            - multipleChoiceMulti
+            - nps
+            - rating
+            - csat
+            - ces
+            - consent
+            - pictureSelection
+            - cta
+            - date
+            - fileUpload
+            - cal
+            - matrix
+            - address
+            - ranking
+            - contactInfo
+          description: The element's type in the current survey definition. Matches the `type` of the corresponding `SurveyElement`.
+        elementLabel:
+          type: string
+          description: The element's headline, resolved in `resolution.labelsLanguage`. Read at request time from the current definition — see `ResponseResolution` for what that means for older responses.
+        durationSeconds:
+          type: number
+          minimum: 0
+          maximum: 86400
+          description: |
+            Seconds the respondent spent on this element. Converted from the stored per-element time-to-complete, which is recorded in milliseconds. This telemetry is reported by the client and is therefore not trustworthy input: it is clamped to at most 24 hours per element at the write boundary, so treat it as an indication rather than a measurement. Absent when the submission carried no timing for this element.
+    ResponseAnswerText:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - valueText
+          properties:
+            elementType:
+              type: string
+              enum:
+                - openText
+            valueText:
+              type: string
+              description: The submitted text, verbatim.
+            inputType:
+              type: string
+              enum:
+                - text
+                - email
+                - url
+                - number
+                - phone
+              description: The element's configured input type in the current definition. Useful for rendering and for knowing how the value was validated at collection time; the value itself is always returned as a string, including for `number`.
+      unevaluatedProperties: false
+      description: Free-text answer to an `openText` element.
+    ResponseAnswerNumber:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - valueNumber
+            - range
+          properties:
+            elementType:
+              type: string
+              enum:
+                - nps
+                - rating
+                - csat
+                - ces
+            valueNumber:
+              type: number
+              description: The submitted score.
+            range:
+              type: object
+              description: The scale the score was collected on, from the current definition. Returned because a bare `8` is uninterpretable without it, and because scales are editable — a consumer comparing scores across time needs to see that the range moved.
+              required:
+                - min
+                - max
+              properties:
+                min:
+                  type: number
+                max:
+                  type: number
+              additionalProperties: false
+            scale:
+              type: string
+              enum:
+                - number
+                - smiley
+                - star
+              description: How the scale was presented. Present for `rating` elements.
+      unevaluatedProperties: false
+      description: Numeric-scale answer. Covers `nps` (0–10), `rating` (configurable range and presentation), `csat` and `ces`.
+    ResponseAnswerBoolean:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - valueBoolean
+            - rawValue
+          properties:
+            elementType:
+              type: string
+              enum:
+                - consent
+                - cta
+            valueBoolean:
+              type: boolean
+              description: Whether the respondent accepted (`consent`) or clicked through (`cta`). Derived from the stored token, which is why `rawValue` is returned alongside it.
+            rawValue:
+              type: string
+              description: The token as stored — conventionally `accepted` for `consent` and `clicked` for `cta`. Returned because the boolean is a derivation and this is the underlying fact.
+      unevaluatedProperties: false
+      description: Acknowledgement answer. Covers `consent` (accepted) and `cta` (clicked through). A `cta` element the respondent skipped has no entry in `answers[]` at all.
+    ResponseValueMatch:
+      type: string
+      enum:
+        - exact
+        - label
+        - other
+        - unmatched
+      description: |
+        How a stored raw value was resolved against the current survey definition. Precedence is fixed and applied in this order:
+
+        - `exact` — the stored value matched an option **id** in the current definition.
+        - `label` — the stored value matched an option's **label text** (ids are stable, labels are
+          editable and language-dependent, so a label match is weaker evidence).
+
+        - `other` — the value arrived through the element's **Other** free-text input. Only reported when
+          the element actually has that input enabled and the value was submitted through it.
+
+        - `unmatched` — no option resolves. The raw value is still returned; it is **not** silently
+          reclassified as `other`, because a *renamed* option is also unmatched text and filing it as a
+          write-in would misattribute the answer.
+    ResponseSelection:
+      type: object
+      description: |
+        One selected option within a choice-style answer. `optionId` plus `rawValue` is deliberately a two-field split — the same split the Hub stores as `value_id` plus `value_text` — because option ids are stable while labels are editable and language-dependent. Consumers that need to group or compare across time should key on `optionId`; consumers rendering to a human should use `optionLabel`.
+      required:
+        - optionId
+        - optionLabel
+        - rawValue
+        - match
+      properties:
+        optionId:
+          type:
+            - string
+            - 'null'
+          description: Resolved option id, or the literal `other` for a write-in. `null` when `match` is `unmatched`.
+        optionLabel:
+          type:
+            - string
+            - 'null'
+          description: Option label in the resolved language. `null` when `match` is `unmatched`.
+        rawValue:
+          type: string
+          description: The value as stored on the response, before resolution. Always present.
+        match:
+          $ref: '#/components/schemas/ResponseValueMatch'
+        rank:
+          type: integer
+          minimum: 1
+          description: 1-based rank, present only for `ranking` elements. Array order already reflects the rank; this field makes it explicit so consumers need not rely on ordering.
+      additionalProperties: false
+    ResponseAnswerSelection:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - selections
+          properties:
+            elementType:
+              type: string
+              enum:
+                - multipleChoiceSingle
+                - multipleChoiceMulti
+                - pictureSelection
+                - ranking
+            selections:
+              type: array
+              description: The chosen options, resolved against the current definition. Always an array, including for `multipleChoiceSingle`, so consumers need one code path rather than two. For `ranking`, the array is in rank order and each entry also carries an explicit `rank`.
+              items:
+                $ref: '#/components/schemas/ResponseSelection'
+      unevaluatedProperties: false
+      description: Choice-style answer. Covers `multipleChoiceSingle`, `multipleChoiceMulti`, `pictureSelection` and `ranking`. See `ResponseValueMatch` for how each selection was resolved and why an unresolvable value is never reclassified as a write-in.
+    ResponseAnswerDate:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - valueDate
+          properties:
+            elementType:
+              type: string
+              enum:
+                - date
+            valueDate:
+              type: string
+              description: The submitted date as stored, an ISO-8601 date or date-time string. No `format` is asserted because historical rows were written by several client versions and the stored precision varies; parse defensively.
+      unevaluatedProperties: false
+      description: Date answer.
+    ResponseAnswerFileUpload:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - fileUrls
+          properties:
+            elementType:
+              type: string
+              enum:
+                - fileUpload
+            fileUrls:
+              type: array
+              description: URLs of the uploaded files. These point at private storage and are not publicly fetchable; access follows the same authorization as the response itself. Deleting the response deletes the underlying files.
+              items:
+                type: string
+            fileCount:
+              type: integer
+              minimum: 0
+              description: Convenience count of `fileUrls`, so a list consumer need not materialize the array.
+      unevaluatedProperties: false
+      description: File-upload answer.
+    ResponseAnswerBooking:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - booked
+          properties:
+            elementType:
+              type: string
+              enum:
+                - cal
+            booked:
+              type: boolean
+              description: Whether the respondent completed a booking.
+            rawValue:
+              type: string
+              description: The token as stored — conventionally `booked`.
+      unevaluatedProperties: false
+      description: Scheduling answer for a `cal` element. Only the fact of the booking is recorded on the response; the meeting itself lives in the scheduling provider and is not proxied by this API.
+    ResponseAnswerMatrix:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - rows
+          properties:
+            elementType:
+              type: string
+              enum:
+                - matrix
+            rows:
+              type: array
+              description: One entry per row the respondent answered. Rows left blank are omitted rather than returned with a null column. Both sides of a matrix cell need resolving against the current definition, so each entry reports its own `match` — see `ResponseValueMatch`.
+              items:
+                type: object
+                required:
+                  - rowLabel
+                  - rawValue
+                  - columnLabel
+                  - match
+                properties:
+                  rowId:
+                    type:
+                      - string
+                      - 'null'
+                    description: Resolved row id, or `null` when the row no longer resolves.
+                  rowLabel:
+                    type: string
+                    description: Row label in the resolved language, falling back to the stored key when the row no longer resolves.
+                  columnId:
+                    type:
+                      - string
+                      - 'null'
+                    description: Resolved column id, or `null` when the column no longer resolves.
+                  columnLabel:
+                    type:
+                      - string
+                      - 'null'
+                    description: Column label in the resolved language. `null` when `match` is `unmatched`.
+                  rawValue:
+                    type: string
+                    description: The selected column as stored, before resolution.
+                  match:
+                    $ref: '#/components/schemas/ResponseValueMatch'
+                additionalProperties: false
+      unevaluatedProperties: false
+      description: Matrix answer — one selected column per answered row.
+    ResponseAnswerComposite:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - fields
+          properties:
+            elementType:
+              type: string
+              enum:
+                - address
+                - contactInfo
+            fields:
+              type: array
+              description: The sub-fields the respondent filled in, in the element's own field order. Fields left blank are omitted. Kept nested under one answer rather than flattened into several top-level answers, so `answers[]` stays one entry per element the respondent saw.
+              items:
+                type: object
+                required:
+                  - fieldId
+                  - fieldLabel
+                  - valueText
+                properties:
+                  fieldId:
+                    type: string
+                    description: Stable sub-field id — for `address` one of `addressLine1`, `addressLine2`, `city`, `state`, `zip`, `country`; for `contactInfo` one of `firstName`, `lastName`, `email`, `phone`, `company`.
+                  fieldLabel:
+                    type: string
+                    description: Sub-field label in the resolved language.
+                  valueText:
+                    type: string
+                    description: The submitted value, verbatim.
+                additionalProperties: false
+      unevaluatedProperties: false
+      description: Composite answer whose value is a set of labelled sub-fields. Covers `address` and `contactInfo`.
+    ResponseAnswer:
+      oneOf:
+        - $ref: '#/components/schemas/ResponseAnswerText'
+        - $ref: '#/components/schemas/ResponseAnswerNumber'
+        - $ref: '#/components/schemas/ResponseAnswerBoolean'
+        - $ref: '#/components/schemas/ResponseAnswerSelection'
+        - $ref: '#/components/schemas/ResponseAnswerDate'
+        - $ref: '#/components/schemas/ResponseAnswerFileUpload'
+        - $ref: '#/components/schemas/ResponseAnswerBooking'
+        - $ref: '#/components/schemas/ResponseAnswerMatrix'
+        - $ref: '#/components/schemas/ResponseAnswerComposite'
+      discriminator:
+        propertyName: elementType
+        mapping:
+          openText: '#/components/schemas/ResponseAnswerText'
+          nps: '#/components/schemas/ResponseAnswerNumber'
+          rating: '#/components/schemas/ResponseAnswerNumber'
+          csat: '#/components/schemas/ResponseAnswerNumber'
+          ces: '#/components/schemas/ResponseAnswerNumber'
+          consent: '#/components/schemas/ResponseAnswerBoolean'
+          cta: '#/components/schemas/ResponseAnswerBoolean'
+          multipleChoiceSingle: '#/components/schemas/ResponseAnswerSelection'
+          multipleChoiceMulti: '#/components/schemas/ResponseAnswerSelection'
+          pictureSelection: '#/components/schemas/ResponseAnswerSelection'
+          ranking: '#/components/schemas/ResponseAnswerSelection'
+          date: '#/components/schemas/ResponseAnswerDate'
+          fileUpload: '#/components/schemas/ResponseAnswerFileUpload'
+          cal: '#/components/schemas/ResponseAnswerBooking'
+          matrix: '#/components/schemas/ResponseAnswerMatrix'
+          address: '#/components/schemas/ResponseAnswerComposite'
+          contactInfo: '#/components/schemas/ResponseAnswerComposite'
+      description: |
+        One answer, carrying the element's id, its label, its type and its value. `elementType` selects the shape: switch on it rather than probing for which value field is present.
+
+        Answers are a **typed array**, not a map keyed by element id, because a consumer holding only a response would otherwise see bare ids and have to fetch the survey and join to learn what was asked — a join that is easy to get wrong and that agent clients cannot make cheaply. The array also separates answers from hidden fields and variables, which the stored representation mixes into one flat map. Non-answer data lives in `embeddedData[]`.
+
+        Several element types share a value shape and therefore a schema — the four numeric scales, the four choice styles, the two composites. All seventeen element types are covered.
+
+        Only elements the respondent actually reached appear here. Data whose element has since been deleted appears in `unresolved[]` instead.
+    ResponseEmbeddedDatum:
+      type: object
+      description: |
+        One piece of non-answer data carried by the response. Survey **variables**, **hidden fields** and **auto-captured context** are one concept here rather than three parallel ones: they all have a key, a provenance, a declared type and a label, and consumers treat them alike.
+
+        Auto-captured (`reserved`) entries are governed by the Embedded Data field catalog, which declares a privacy policy per field (`keep` / `drop` / `redactQuery`). That single classification governs both the list and the detailed view, so the two cannot drift. Fields the catalog drops never appear here at all — notably the respondent's IP address, which is not exposed by this API in any view.
+      required:
+        - key
+        - kind
+        - type
+        - label
+        - value
+      properties:
+        key:
+          type: string
+          description: Stable key. Unique within `embeddedData`.
+        kind:
+          type: string
+          enum:
+            - ingested
+            - computed
+            - reserved
+          description: |
+            Provenance of the value:
+
+            - `ingested` — supplied by the caller or the embedding page (hidden fields).
+            - `computed` — derived during the submission by survey logic (variables).
+            - `reserved` — auto-captured context from the submission environment (for example `country`,
+              `device_type`), drawn from the Embedded Data field catalog.
+        type:
+          type: string
+          enum:
+            - string
+            - number
+            - boolean
+            - date
+          description: Declared type of `value`, so a consumer need not infer it. `computed` entries are only ever `string` or `number`, because survey variables are typed that narrowly.
+        label:
+          type: string
+          description: Human-readable name for the key, in the resolved language where one exists.
+        value:
+          type:
+            - string
+            - number
+            - boolean
+            - 'null'
+          description: The value, matching `type`. `date` values are ISO-8601 strings. `null` when the key was declared for this survey but carries no value on this response.
+      additionalProperties: false
+    ResponseUnresolvedEntry:
+      type: object
+      description: |
+        Stored data whose element no longer exists in the survey definition. Deleting an element leaves its answers behind on already-collected responses and nothing cleans them up, so the payload reports them here instead of dropping them silently or faking them into `answers[]` without a type or a label. Consumers doing analysis can ignore this array; consumers doing export or migration should not.
+      required:
+        - key
+        - rawValue
+        - reason
+      properties:
+        key:
+          type: string
+          description: The key as stored on the response — usually a former element id or hidden-field key.
+        rawValue:
+          description: The stored value, returned verbatim and untyped because nothing describes it any more.
+          oneOf:
+            - type: string
+            - type: number
+            - type: array
+              items:
+                type: string
+            - type: object
+              additionalProperties:
+                type: string
+        reason:
+          type: string
+          enum:
+            - elementNotInSurvey
+            - hiddenFieldNotInSurvey
+            - variableNotInSurvey
+            - valueShapeMismatch
+          description: |
+            Why the entry could not be resolved:
+
+            - `elementNotInSurvey` — no element with this id exists in the current definition.
+            - `hiddenFieldNotInSurvey` — the key is not among the survey's declared hidden fields.
+            - `variableNotInSurvey` — no variable with this id exists in the current definition.
+            - `valueShapeMismatch` — the element exists, but the stored value's shape cannot be read as an
+              answer of that element's type (for example a string where the element expects a selection
+              list). Signals element-type churn rather than deletion.
+      additionalProperties: false
+    ResponseTag:
+      type: object
+      description: |
+        A tag applied to a response, as a lightweight reference. Deliberately **not** the full `TagResource`: that shape carries a `count` of how many responses hold the tag, which would mean an extra aggregate per tag on every row of every page. Read tags in full — with counts and timestamps — from `GET /api/v3/tags`.
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+          description: Tag label as shown in the app.
+      additionalProperties: false
+    ResponseBase:
+      type: object
+      description: |
+        Fields shared by both response views. Self-describing: `answers[]` carries each element's id, label, type and value, so a consumer can read a response without also fetching the survey.
+
+        Deliberately open — `ResponseListItem` and `ResponseResource` compose this and close themselves, so that the detailed view can add fields without the base rejecting them.
+      required:
+        - id
+        - surveyId
+        - surveyName
+        - workspaceId
+        - createdAt
+        - updatedAt
+        - finished
+        - endingId
+        - language
+        - resolution
+        - answers
+        - embeddedData
+        - unresolved
+        - tags
+      properties:
+        id:
+          type: string
+          format: cuid2
+          description: Response identifier.
+        surveyId:
+          type: string
+          format: cuid2
+          description: The survey this response belongs to.
+        surveyName:
+          type: string
+          description: The survey's current name, denormalized into the payload so a consumer listing responses need not resolve survey names separately.
+        workspaceId:
+          type: string
+          format: cuid2
+          description: The owning workspace, resolved through the survey. Responses carry no workspace column of their own; this is a derived field.
+        createdAt:
+          type: string
+          format: date-time
+          description: |
+            When the response was created. **Server-owned** — it cannot be supplied on create or changed by a patch. This is the AIP-148 output-only convention, and it is deliberate on two counts: monthly response metering counts rows by `(surveyId, createdAt)`, and a client-chosen `createdAt` can insert rows into the middle of another consumer's already-paginated stream. Backdating remains available on v1/v2; a dedicated import path is future work.
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the response was last modified. Server-owned. Neither filterable nor sortable — it has no index, and being mutable it cannot anchor a pagination cursor.
+        finished:
+          type: boolean
+          description: Whether the respondent reached an ending.
+        endingId:
+          type:
+            - string
+            - 'null'
+          description: The ending card the respondent reached. `null` for unfinished responses.
+        language:
+          type:
+            - string
+            - 'null'
+          description: The survey language this response was collected in, as a survey language code (not necessarily a BCP-47 locale — `default` is a legitimate value). `null` when the survey is single-language or no language was stamped.
+        durationSeconds:
+          type: number
+          minimum: 0
+          description: Total seconds the respondent spent, summed from per-element timing. Replaces the synthetic `_total` bucket the stored representation keeps alongside real element ids. Absent when the submission carried no timing.
+        resolution:
+          $ref: '#/components/schemas/ResponseResolution'
+        answers:
+          type: array
+          description: One entry per element the respondent reached, in survey order. Empty for a response that recorded no answers.
+          items:
+            $ref: '#/components/schemas/ResponseAnswer'
+        embeddedData:
+          type: array
+          description: Hidden fields, variables and auto-captured context, as one collection. Empty when the response carries none.
+          items:
+            $ref: '#/components/schemas/ResponseEmbeddedDatum'
+        unresolved:
+          type: array
+          description: Stored data whose element or key no longer exists in the survey definition. Empty in the normal case.
+          items:
+            $ref: '#/components/schemas/ResponseUnresolvedEntry'
+        tags:
+          type: array
+          description: Tags applied to this response, as `{ id, name }` references. Empty when the response is untagged.
+          items:
+            $ref: '#/components/schemas/ResponseTag'
+    ResponseListItem:
+      allOf:
+        - $ref: '#/components/schemas/ResponseBase'
+      unevaluatedProperties: false
+      description: |
+        A survey response as returned by the list endpoint. Self-describing: `answers[]` carries each element's id, label, type and value, so a consumer can read a response without also fetching the survey.
+
+        `answers[]` and `embeddedData[]` ship on the list view as well as the detailed view — they are the point of the resource, and withholding them from the list would force consumers into an N+1 of item reads. The list view omits only the identity and provenance fields: `contact`, `displayId` and `singleUseId`. See `ResponseResource` for those.
+    ResponseDataMap:
+      type: object
+      description: |
+        Answers in their **stored** form: a map keyed by element id (and hidden-field key) whose values are the shapes the survey client submits — a string, a number, an array of strings, or a map of strings for matrix and composite elements.
+
+        Writes take this map; reads return the typed `answers[]` array instead. The asymmetry is deliberate: resolving a map of ids into typed, labelled answers is unambiguous, whereas going the other way would mean matching caller-supplied labels back onto option ids and guessing when they no longer match. Callers that need to know what a map will produce before writing it can post it to `POST /api/v3/responses/validate`.
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: number
+          - type: array
+            items:
+              type: string
+          - type: object
+            additionalProperties:
+              type: string
+    ResponseVariablesMap:
+      type: object
+      description: Survey variable values in their stored form, keyed by variable id. Variables are typed as string or number only.
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: number
+    CreateResponseRequest:
+      type: object
+      description: |
+        Creates a survey response. **This is a real submission**: it runs the full response pipeline — webhooks, integrations, follow-ups, quota evaluation, and Hub ingestion once the response is finished — and it counts against metered monthly responses, exactly as a v1/v2 management create does today. It is not an import primitive; a dedicated import path is future work.
+
+        The workspace is resolved from `surveyId`, so unlike `POST /api/v3/surveys` there is no `workspaceId` in the body — the caller cannot choose which scope it is authorized against.
+
+        Unsupported fields are rejected rather than ignored. Notably absent by design: `createdAt` and `updatedAt` (server-owned — see `ResponseListItem.createdAt`), `contactAttributes` and `meta` (auto-captured context is the server's job and is returned as `reserved` entries in `embeddedData`), and `userId` (a contact `userId` is a non-unique attribute and so is not a safe lookup key — link the contact explicitly with `contactId`).
+      required:
+        - surveyId
+        - finished
+        - data
+      properties:
+        surveyId:
+          type: string
+          format: cuid2
+          description: The survey to record the response against. Immutable after creation.
+        finished:
+          type: boolean
+          description: 'Whether this response is complete. Creating with `finished: true` fires the finish side of the pipeline immediately, including Hub ingestion.'
+        data:
+          $ref: '#/components/schemas/ResponseDataMap'
+        variables:
+          $ref: '#/components/schemas/ResponseVariablesMap'
+        endingId:
+          type:
+            - string
+            - 'null'
+          description: The ending card the respondent reached. Must exist in the survey definition.
+        language:
+          type:
+            - string
+            - 'null'
+          description: Survey language code to stamp on the response. Must be a language the survey has enabled. Omit for single-language surveys.
+        contactId:
+          type: string
+          format: cuid2
+          description: Contact to attribute the response to. **Create-only** — a response cannot later be re-linked to a different contact. Must be a contact in the same workspace.
+        displayId:
+          type: string
+          description: Display (survey impression) this response answers. Create-only. Each display can back at most one response.
+        singleUseId:
+          type: string
+          description: Single-use link id, for surveys configured with single-use links. Create-only, and unique per survey.
+      additionalProperties: false
+    ResponseContact:
+      type: object
+      description: |
+        The contact that submitted the response, when the response is identified. Present on the detailed view only — the list view omits it. `null` for anonymous (link-survey) responses.
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: cuid2
+          description: Contact identifier.
+        userId:
+          type:
+            - string
+            - 'null'
+          description: The contact's `userId` attribute — the id your application knows the person by. This is a contact **attribute**, not a column, and it is not guaranteed unique within a workspace, so it identifies the person for display but must not be used as a lookup key. `null` when the contact has no `userId` attribute set.
+      additionalProperties: false
+    ResponseResource:
+      allOf:
+        - $ref: '#/components/schemas/ResponseBase'
+        - type: object
+          required:
+            - contact
+            - displayId
+            - singleUseId
+          properties:
+            contact:
+              anyOf:
+                - $ref: '#/components/schemas/ResponseContact'
+                - type: 'null'
+              description: The contact that submitted the response, or `null` when the response is anonymous. Present on the detailed view only.
+            displayId:
+              type:
+                - string
+                - 'null'
+              description: The display (survey impression) this response was submitted against, when one was recorded.
+            singleUseId:
+              type:
+                - string
+                - 'null'
+              description: The single-use link id this response was submitted through, when the survey uses single-use links.
+      unevaluatedProperties: false
+      description: |
+        A survey response in the detailed view, as returned by `GET /api/v3/responses/{responseId}` and by the write endpoints. Everything in `ResponseListItem`, plus the identity and provenance fields the list view omits.
+
+        **Never exposed on this resource, in either view:** the respondent's IP address, and the `contactAttributes` snapshot that v1/v2 return and let callers write. That snapshot is stale PII by construction — `contact` covers the legitimate need to know who answered.
+    ValidateResponseCreateRequest:
+      type: object
+      required:
+        - operation
+        - data
+      properties:
+        operation:
+          type: string
+          enum:
+            - create
+        data:
+          description: Intended create payload. Invalid documents are allowed so the endpoint can return repairable validation errors.
+          anyOf:
+            - $ref: '#/components/schemas/CreateResponseRequest'
+            - type: object
+              additionalProperties: true
+      additionalProperties: false
+    PatchResponseRequest:
+      type: object
+      description: |
+        Partially updates a response. Strict at the top level: unknown keys return **400** rather than being ignored, and at least one patchable field must be present.
+
+        `data` and `variables` are **replaced wholesale**, not deep-merged — send the complete map you want stored. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
+
+        Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`, `displayId`, `singleUseId`, `contactAttributes`, `meta`. `contactId` is create-only deliberately — re-attributing an existing response to a different person is a capability only v2 offers, and it is not carried forward.
+      minProperties: 1
+      properties:
+        finished:
+          type: boolean
+        endingId:
+          type:
+            - string
+            - 'null'
+        language:
+          type:
+            - string
+            - 'null'
+        data:
+          $ref: '#/components/schemas/ResponseDataMap'
+        variables:
+          $ref: '#/components/schemas/ResponseVariablesMap'
+        tags:
+          type: array
+          description: Complete set of tag ids for this response, replacing whatever is currently applied. Tags must already exist in the same workspace — create them via `POST /api/v3/tags`.
+          items:
+            type: string
+            format: cuid2
+      additionalProperties: false
+    ValidateResponsePatchRequest:
+      type: object
+      required:
+        - operation
+        - responseId
+        - data
+      properties:
+        operation:
+          type: string
+          enum:
+            - patch
+        responseId:
+          type: string
+          format: cuid2
+        data:
+          description: Intended patch payload. Invalid documents are allowed so the endpoint can return repairable validation errors.
+          anyOf:
+            - $ref: '#/components/schemas/PatchResponseRequest'
+            - type: object
+              additionalProperties: true
+      additionalProperties: false
+    ValidateResponseRequest:
+      oneOf:
+        - $ref: '#/components/schemas/ValidateResponseCreateRequest'
+        - $ref: '#/components/schemas/ValidateResponsePatchRequest'
+      discriminator:
+        propertyName: operation
+        mapping:
+          create: '#/components/schemas/ValidateResponseCreateRequest'
+          patch: '#/components/schemas/ValidateResponsePatchRequest'
+    ResponseValidationEffects:
+      type: object
+      description: |
+        What a successful write **would** do, reported without doing it. This mirrors the detail that makes `POST /api/v3/surveys/validate` useful: it reports effects, not just a verdict, so a caller can see the consequences of a payload before committing thousands of them.
+
+        Present only when `valid` is `true`.
+      required:
+        - language
+        - firesPipeline
+        - countsTowardMeteredResponses
+      properties:
+        language:
+          type:
+            - string
+            - 'null'
+          description: The survey language code that would be stamped on the response. `null` means the response would be stored **without** a language — the case worth catching before a bulk write, since language-less responses cannot later be told apart by language.
+        contactId:
+          type:
+            - string
+            - 'null'
+          description: The contact that would be linked, or `null` if the response would be anonymous.
+        displayId:
+          type:
+            - string
+            - 'null'
+          description: The display that would be linked, or `null` if none.
+        firesPipeline:
+          type: boolean
+          description: Whether a real write would run the response pipeline — webhooks, integrations, follow-ups, and Hub ingestion. True for a create, and for a patch that transitions the response to finished.
+        countsTowardMeteredResponses:
+          type: boolean
+          description: Whether a real write would consume one metered monthly response.
+        quotas:
+          type: array
+          description: Quotas this response would count against, and whether it would fill them. Empty when the survey defines no quotas or the plan does not include them.
+          items:
+            type: object
+            required:
+              - quotaId
+              - quotaName
+              - wouldCount
+            properties:
+              quotaId:
+                type: string
+                format: cuid2
+              quotaName:
+                type: string
+              wouldCount:
+                type: boolean
+                description: Whether this response matches the quota's criteria.
+              wouldFill:
+                type: boolean
+                description: Whether counting this response would take the quota to its limit. Absent when `wouldCount` is `false`.
+            additionalProperties: false
+        tagsToApply:
+          type: array
+          description: Tag ids that would end up applied to the response. Patch operations only.
+          items:
+            type: string
+            format: cuid2
+      additionalProperties: false
+    ResponseValidationResult:
+      type: object
+      description: |
+        Outcome of a dry-run validation. Deliberately the same shape as `SurveyValidationResult` — the value of this endpoint is that the two behave alike, so a client can treat validation uniformly.
+
+        Answers are checked against the survey's own validation rules (`SurveyValidationRule`) rather than a parallel rule set, so a payload this endpoint accepts is a payload the real write accepts.
+      required:
+        - valid
+        - operation
+        - invalid_params
+      properties:
+        valid:
+          type: boolean
+          description: Whether the submitted payload would be accepted by the real operation.
+        operation:
+          type: string
+          enum:
+            - create
+            - patch
+        invalid_params:
+          type: array
+          description: Repairable validation errors, using paths relative to the submitted `data` document.
+          items:
+            $ref: '#/components/schemas/InvalidParam'
+        effects:
+          $ref: '#/components/schemas/ResponseValidationEffects'
+      additionalProperties: false
+    BatchDeleteResponsesRequest:
+      type: object
+      description: |
+        Ids to delete. A POST custom method rather than a `DELETE` on the collection: a collection-level `DELETE` that loses its filters degrades into erasing every response in scope, and a distinct path cannot be reached by accident. AIP-165 blesses this shape and v3 already uses POST-based batch operations elsewhere.
+      required:
+        - ids
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          description: Response ids to delete, at most 100 per call.
+          items:
+            type: string
+            format: cuid2
+      additionalProperties: false
     WorkflowStatus:
       type: string
       enum:
@@ -5679,6 +7514,14 @@ components:
       schema:
         type: string
       description: Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
+    ResponseIdPath:
+      in: path
+      name: responseId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Response identifier.
     WorkflowRunIdPath:
       in: path
       name: runId

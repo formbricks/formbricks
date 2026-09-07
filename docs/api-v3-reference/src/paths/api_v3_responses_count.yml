@@ -1,0 +1,109 @@
+get:
+  operationId: countResponsesV3
+  summary: Count responses
+  description: >
+    Returns how many responses match a scope and filter set, without fetching any of them.
+
+
+    This exists as its own operation because "how many match this?" is the question asked most often
+    and it should not require paging through data to answer — particularly for agent clients, where a
+    page of payloads to obtain a single integer is pure waste. It takes the same scope and filter
+    parameters as `GET /api/v3/responses`, minus pagination and sorting, so a count and a page are
+    always answering the same question.
+
+
+    The list endpoint's `meta.totalCount` covers the other case: a caller already paging that also
+    wants the total. That one is opt-in; this one is the direct route.
+  tags:
+    - V3 Responses
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - in: query
+      name: surveyId
+      schema:
+        type: string
+        format: cuid2
+      description: Optional survey scoping.
+    - in: query
+      name: contactId
+      schema:
+        type: string
+        format: cuid2
+      description: Optional contact scoping.
+    - in: query
+      name: filter[createdAt][gte]
+      schema:
+        type: string
+        format: date-time
+      description: Only responses created at or after this instant (inclusive).
+    - in: query
+      name: filter[createdAt][lte]
+      schema:
+        type: string
+        format: date-time
+      description: Only responses created at or before this instant (inclusive).
+    - in: query
+      name: filter[finished][eq]
+      schema:
+        type: boolean
+      description: >-
+        Completed (`true`) or partial (`false`) responses only. Requires `surveyId` or `contactId`,
+        for the same reason as on the list endpoint.
+    - in: query
+      name: filter[language][in]
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+      description: >-
+        Survey language codes to include. Requires `surveyId` or `contactId`.
+  responses:
+    "200":
+      description: Count retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - count
+                properties:
+                  count:
+                    type: integer
+                    minimum: 0
+                    description: Responses matching the scope and filters.
+                additionalProperties: false
+    "400":
+      description: >-
+        Bad Request — invalid or unrecognized query parameters, including `filter[finished][eq]` or
+        `filter[language][in]` without `surveyId` or `contactId`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

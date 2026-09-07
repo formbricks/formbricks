@@ -31,6 +31,7 @@ properties:
       - invalid_reference
       - missing_required_field
       - missing_translation
+      - rule_violation
       - unsupported_field
       - unsupported_locale
     description: >
@@ -40,7 +41,10 @@ properties:
       graph-structure violations such as a duplicated trigger edge, an
       unreachable node, or a
 
-      cycle.
+      cycle. `rule_violation` covers a submitted answer that breaks one of the
+      survey's own validation rules (see `SurveyValidationRule`) — a value below
+      a `minLength`, outside a rating range, or with fewer selections than
+      `minSelections`. It is used by response validation and response writes.
   identifier:
     type: string
     description: >-
@@ -61,9 +65,16 @@ properties:
       - edge
       - survey
       - endingCard
+      - response
+      - contact
+      - display
+      - tag
+      - quota
     description: >-
       Identifier namespace involved in the validation failure. `node`, `edge`,
-      `survey`, and `endingCard` are used by workflow validation.
+      `survey`, and `endingCard` are used by workflow validation. `response`,
+      `contact`, `display`, `tag`, and `quota` are used by response validation
+      and response writes.
   missingId:
     type: string
     description: Referenced id that does not exist in the submitted survey document.

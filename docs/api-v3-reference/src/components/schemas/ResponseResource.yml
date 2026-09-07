@@ -1,0 +1,38 @@
+allOf:
+  - $ref: ./ResponseBase.yml
+  - type: object
+    required:
+      - contact
+      - displayId
+      - singleUseId
+    properties:
+      contact:
+        anyOf:
+          - $ref: ./ResponseContact.yml
+          - type: "null"
+        description: >-
+          The contact that submitted the response, or `null` when the response is anonymous. Present
+          on the detailed view only.
+      displayId:
+        type:
+          - string
+          - "null"
+        description: >-
+          The display (survey impression) this response was submitted against, when one was recorded.
+      singleUseId:
+        type:
+          - string
+          - "null"
+        description: >-
+          The single-use link id this response was submitted through, when the survey uses single-use
+          links.
+unevaluatedProperties: false
+description: >
+  A survey response in the detailed view, as returned by `GET /api/v3/responses/{responseId}` and by
+  the write endpoints. Everything in `ResponseListItem`, plus the identity and provenance fields the
+  list view omits.
+
+
+  **Never exposed on this resource, in either view:** the respondent's IP address, and the
+  `contactAttributes` snapshot that v1/v2 return and let callers write. That snapshot is stale PII by
+  construction — `contact` covers the legitimate need to know who answered.

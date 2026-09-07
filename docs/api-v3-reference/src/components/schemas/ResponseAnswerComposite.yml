@@ -1,0 +1,40 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - fields
+    properties:
+      elementType:
+        type: string
+        enum:
+          - address
+          - contactInfo
+      fields:
+        type: array
+        description: >-
+          The sub-fields the respondent filled in, in the element's own field order. Fields left
+          blank are omitted. Kept nested under one answer rather than flattened into several
+          top-level answers, so `answers[]` stays one entry per element the respondent saw.
+        items:
+          type: object
+          required:
+            - fieldId
+            - fieldLabel
+            - valueText
+          properties:
+            fieldId:
+              type: string
+              description: >-
+                Stable sub-field id — for `address` one of `addressLine1`, `addressLine2`, `city`,
+                `state`, `zip`, `country`; for `contactInfo` one of `firstName`, `lastName`, `email`,
+                `phone`, `company`.
+            fieldLabel:
+              type: string
+              description: Sub-field label in the resolved language.
+            valueText:
+              type: string
+              description: The submitted value, verbatim.
+          additionalProperties: false
+unevaluatedProperties: false
+description: >-
+  Composite answer whose value is a set of labelled sub-fields. Covers `address` and `contactInfo`.

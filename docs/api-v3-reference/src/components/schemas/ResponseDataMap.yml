@@ -1,0 +1,22 @@
+type: object
+description: >
+  Answers in their **stored** form: a map keyed by element id (and hidden-field key) whose values are
+  the shapes the survey client submits — a string, a number, an array of strings, or a map of strings
+  for matrix and composite elements.
+
+
+  Writes take this map; reads return the typed `answers[]` array instead. The asymmetry is
+  deliberate: resolving a map of ids into typed, labelled answers is unambiguous, whereas going the
+  other way would mean matching caller-supplied labels back onto option ids and guessing when they
+  no longer match. Callers that need to know what a map will produce before writing it can post it to
+  `POST /api/v3/responses/validate`.
+additionalProperties:
+  oneOf:
+    - type: string
+    - type: number
+    - type: array
+      items:
+        type: string
+    - type: object
+      additionalProperties:
+        type: string

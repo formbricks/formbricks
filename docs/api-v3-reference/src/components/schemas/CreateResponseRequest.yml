@@ -1,0 +1,64 @@
+type: object
+description: >
+  Creates a survey response. **This is a real submission**: it runs the full response pipeline —
+  webhooks, integrations, follow-ups, quota evaluation, and Hub ingestion once the response is
+  finished — and it counts against metered monthly responses, exactly as a v1/v2 management create
+  does today. It is not an import primitive; a dedicated import path is future work.
+
+
+  The workspace is resolved from `surveyId`, so unlike `POST /api/v3/surveys` there is no
+  `workspaceId` in the body — the caller cannot choose which scope it is authorized against.
+
+
+  Unsupported fields are rejected rather than ignored. Notably absent by design: `createdAt` and
+  `updatedAt` (server-owned — see `ResponseListItem.createdAt`), `contactAttributes` and `meta`
+  (auto-captured context is the server's job and is returned as `reserved` entries in
+  `embeddedData`), and `userId` (a contact `userId` is a non-unique attribute and so is not a safe
+  lookup key — link the contact explicitly with `contactId`).
+required:
+  - surveyId
+  - finished
+  - data
+properties:
+  surveyId:
+    type: string
+    format: cuid2
+    description: The survey to record the response against. Immutable after creation.
+  finished:
+    type: boolean
+    description: >-
+      Whether this response is complete. Creating with `finished: true` fires the finish side of the
+      pipeline immediately, including Hub ingestion.
+  data:
+    $ref: ./ResponseDataMap.yml
+  variables:
+    $ref: ./ResponseVariablesMap.yml
+  endingId:
+    type:
+      - string
+      - "null"
+    description: The ending card the respondent reached. Must exist in the survey definition.
+  language:
+    type:
+      - string
+      - "null"
+    description: >-
+      Survey language code to stamp on the response. Must be a language the survey has enabled.
+      Omit for single-language surveys.
+  contactId:
+    type: string
+    format: cuid2
+    description: >-
+      Contact to attribute the response to. **Create-only** — a response cannot later be re-linked to
+      a different contact. Must be a contact in the same workspace.
+  displayId:
+    type: string
+    description: >-
+      Display (survey impression) this response answers. Create-only. Each display can back at most
+      one response.
+  singleUseId:
+    type: string
+    description: >-
+      Single-use link id, for surveys configured with single-use links. Create-only, and unique per
+      survey.
+additionalProperties: false

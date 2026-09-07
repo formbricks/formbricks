@@ -1,0 +1,24 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - fileUrls
+    properties:
+      elementType:
+        type: string
+        enum:
+          - fileUpload
+      fileUrls:
+        type: array
+        description: >-
+          URLs of the uploaded files. These point at private storage and are not publicly fetchable;
+          access follows the same authorization as the response itself. Deleting the response deletes
+          the underlying files.
+        items:
+          type: string
+      fileCount:
+        type: integer
+        minimum: 0
+        description: Convenience count of `fileUrls`, so a list consumer need not materialize the array.
+unevaluatedProperties: false
+description: File-upload answer.

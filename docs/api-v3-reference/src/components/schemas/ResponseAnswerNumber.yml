@@ -1,0 +1,43 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - valueNumber
+      - range
+    properties:
+      elementType:
+        type: string
+        enum:
+          - nps
+          - rating
+          - csat
+          - ces
+      valueNumber:
+        type: number
+        description: The submitted score.
+      range:
+        type: object
+        description: >-
+          The scale the score was collected on, from the current definition. Returned because a bare
+          `8` is uninterpretable without it, and because scales are editable — a consumer comparing
+          scores across time needs to see that the range moved.
+        required:
+          - min
+          - max
+        properties:
+          min:
+            type: number
+          max:
+            type: number
+        additionalProperties: false
+      scale:
+        type: string
+        enum:
+          - number
+          - smiley
+          - star
+        description: How the scale was presented. Present for `rating` elements.
+unevaluatedProperties: false
+description: >-
+  Numeric-scale answer. Covers `nps` (0–10), `rating` (configurable range and presentation), `csat`
+  and `ces`.

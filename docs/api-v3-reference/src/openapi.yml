@@ -12,6 +12,12 @@ info:
     **DELETE /api/v3/surveys/{surveyId}**.
 
 
+    **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST
+    /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET
+    /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH
+    /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
+
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST
     /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH
     /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**,
@@ -79,6 +85,50 @@ info:
     `filter[status][in]=draft,inProgress`). Sorting remains a flat `sortBy`
     query parameter.
 
+
+    **Responses**
+
+    The response resource is **self-describing**. Answers come back as a typed `answers[]` array in
+    which each entry carries the element's id, label, type and value, rather than as a map keyed by
+    element id — so a consumer holding only a response can read it without fetching the survey and
+    joining. Hidden fields, survey variables and auto-captured context are one `embeddedData[]`
+    collection rather than three parallel concepts, each entry declaring a `kind` and a `type`. Data
+    whose element has since been deleted is reported in `unresolved[]` instead of being dropped
+    silently. Labels are resolved at read time against the current survey definition, and the
+    `resolution` object discloses that policy along with the survey's `updatedAt` so a consumer can
+    detect wording drift.
+
+    Writes take answers in the **stored map form** (`data`, `variables`) while reads return the typed
+    array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching
+    caller-supplied labels back onto option ids. `POST /api/v3/responses/validate` exists so a caller
+    can see what a map would produce, and what a write would do, before committing to it.
+
+    `createdAt` and `updatedAt` are **server-owned** on this resource: they cannot be supplied on
+    create or changed by a patch. Response metering counts rows by `(surveyId, createdAt)`, and a
+    client-chosen `createdAt` also lets rows be inserted into the middle of another consumer's
+    already-paginated stream. Backdating stays available on v2 until a dedicated import path exists.
+    The respondent's IP address and the `contactAttributes` snapshot that v1/v2 expose — and let
+    callers write — are not part of this resource in any view.
+
+    Response filtering is allow-listed and index-backed: `filter[createdAt][gte|lte]`,
+    `filter[finished][eq]`, `filter[language][in]` and `filter[id][in]`. `filter[finished][eq]` and
+    `filter[language][in]` require `surveyId` or `contactId` as well, because both are heap residuals
+    bounded only by an anchored index range. Per-answer, hidden-field, submission-metadata,
+    contact-attribute, quota and tag filters are **not** offered; each is a JSON path or an unindexed
+    join on the largest table in the product. The in-app dashboard does offer them, so this API is
+    knowingly behind the dashboard here — closing the gap requires index work and is tracked
+    separately rather than quietly omitted.
+
+    `GET /api/v3/responses/count` answers "how many match?" directly. The list endpoint's
+    `meta.totalCount` covers a caller that is already paging and is **opt-in** via
+    `includeTotalCount` (default `false`, unlike the survey list) because responses are the
+    highest-cardinality table in the product.
+
+    Bulk deletion is `POST /api/v3/responses/batch-delete`, a custom method rather than a
+    collection-level `DELETE`, so a call that loses its filters cannot degrade into erasing
+    everything in scope. It scope-filters rather than rejecting: foreign and already-deleted ids are
+    ignored and the call reports how many rows it removed, which keeps it both leak-free and safe to
+    retry.
 
     **Security**
 
@@ -159,6 +209,10 @@ info:
     workflow-prisma-schema: packages/database/schema/workflows.prisma (feat/workflows-prisma-schema)
     openapi-generated: false
     spec-source: docs/api-v3-reference/src (regenerate bundle with `pnpm api:v3:bundle`)
+    responses-contract-ticket: ENG-2868
+    responses-rfc: v3 Responses API RFC sections 2b (resource) and 2c (endpoints)
+    responses-stored-shape: packages/types/responses.ts (ZResponse, ZResponseData, ZResponseInput)
+    responses-prisma-model: packages/database/schema/main.prisma (model Response)
     pagination-model: cursor
     cursor-pagination: supported
 servers:
@@ -179,6 +233,16 @@ paths:
     $ref: paths/api_v3_surveys_{surveyId}_archive.yml
   /api/v3/surveys/{surveyId}/restore:
     $ref: paths/api_v3_surveys_{surveyId}_restore.yml
+  /api/v3/responses:
+    $ref: paths/api_v3_responses.yml
+  /api/v3/responses/count:
+    $ref: paths/api_v3_responses_count.yml
+  /api/v3/responses/validate:
+    $ref: paths/api_v3_responses_validate.yml
+  /api/v3/responses/batch-delete:
+    $ref: paths/api_v3_responses_batch-delete.yml
+  /api/v3/responses/{responseId}:
+    $ref: paths/api_v3_responses_{responseId}.yml
   /api/v3/workflows:
     $ref: paths/api_v3_workflows.yml
   /api/v3/workflows/runs:
