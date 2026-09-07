@@ -82,6 +82,7 @@ ${operatorsText}
 ## Guidelines
 - Always include at least one measure. If unspecified, default to \`${CUBE_NAME}.count\`.
 - Use dimension IDs exactly as shown (e.g. \`FeedbackRecords.sourceType\`, \`FeedbackRecords.collectedAt\`).
+- Only add a timeDimension when the request actually concerns time: it names a period ("last quarter", "since June"), or it asks for a trend ("over time", "by week"). A request that does neither — "responses by source", "average rating per question" — must omit timeDimensions entirely, so the chart covers all the data. Do not add a default window: a chart is saved and reopened, and a range nobody asked for becomes a silent filter on every later viewing.
 - For time-based filtering (date range only, no time grouping): add a timeDimension with dimension \`${CUBE_NAME}.collectedAt\` and a date range in the form described above. Do NOT include granularity (default is None / filter only).
 - For time-series or trend questions (e.g. "over time", "by day", "weekly", "monthly"): add a timeDimension with dimension, granularity (hour/day/week/month/quarter/year), and a date range.
 - Choose the most appropriate chart type from ${chartTypesText}; use \`big_number\` for single-number queries. There is no separate line type — \`area\` renders as a line through a display setting, so answer requests for a line chart with \`area\`.
