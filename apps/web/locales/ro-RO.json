@@ -3293,6 +3293,7 @@
         "follow_ups_include_variables": "Include valorile variabilelor",
         "follow_ups_item_ending_tag": "Finalizare",
         "follow_ups_item_issue_detected_tag": "Problemă detectată",
+        "follow_ups_item_not_sending_tag": "Nu se trimite",
         "follow_ups_item_response_tag": "Orice răspuns",
         "follow_ups_item_send_email_tag": "Trimite email",
         "follow_ups_modal_action_attach_response_data_description": "Atașează doar întrebările la care s-a răspuns în răspunsul sondajului",

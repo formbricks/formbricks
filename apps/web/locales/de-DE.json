@@ -3293,6 +3293,7 @@
         "follow_ups_include_variables": "Variablenwerte einbeziehen",
         "follow_ups_item_ending_tag": "Abschluss/Abschlüsse",
         "follow_ups_item_issue_detected_tag": "Problem erkannt",
+        "follow_ups_item_not_sending_tag": "Wird nicht gesendet",
         "follow_ups_item_response_tag": "Beliebige Antwort",
         "follow_ups_item_send_email_tag": "E-Mail senden",
         "follow_ups_modal_action_attach_response_data_description": "Fügt nur die Fragen bei, die in der Umfrageantwort beantwortet wurden",

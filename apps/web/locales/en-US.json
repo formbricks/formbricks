@@ -3293,6 +3293,7 @@
         "follow_ups_include_variables": "Include variable values",
         "follow_ups_item_ending_tag": "Ending(s)",
         "follow_ups_item_issue_detected_tag": "Issue detected",
+        "follow_ups_item_not_sending_tag": "Not sending",
         "follow_ups_item_response_tag": "Any response",
         "follow_ups_item_send_email_tag": "Send email",
         "follow_ups_modal_action_attach_response_data_description": "Attaches only the questions that were answered in the survey response",

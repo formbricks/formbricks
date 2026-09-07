@@ -3293,6 +3293,7 @@
         "follow_ups_include_variables": "Változó értékeinek felvétele",
         "follow_ups_item_ending_tag": "Befejezések",
         "follow_ups_item_issue_detected_tag": "Probléma észlelve",
+        "follow_ups_item_not_sending_tag": "Nem küldi",
         "follow_ups_item_response_tag": "Bármilyen válasz",
         "follow_ups_item_send_email_tag": "E-mail küldése",
         "follow_ups_modal_action_attach_response_data_description": "Csak azokat a kérdéseket csatolja, amelyek megválaszolásra kerültek a kérdőív válaszában",

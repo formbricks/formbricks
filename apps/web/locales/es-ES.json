@@ -3293,6 +3293,7 @@
         "follow_ups_include_variables": "Incluir valores de variables",
         "follow_ups_item_ending_tag": "Finalización(es)",
         "follow_ups_item_issue_detected_tag": "Problema detectado",
+        "follow_ups_item_not_sending_tag": "No se está enviando",
         "follow_ups_item_response_tag": "Cualquier respuesta",
         "follow_ups_item_send_email_tag": "Enviar correo electrónico",
         "follow_ups_modal_action_attach_response_data_description": "Adjunta solo las preguntas que fueron respondidas en la respuesta de la encuesta",

@@ -3293,6 +3293,7 @@
         "follow_ups_include_variables": "包括变量值",
         "follow_ups_item_ending_tag": "结尾",
         "follow_ups_item_issue_detected_tag": "问题 检测",
+        "follow_ups_item_not_sending_tag": "未发送",
         "follow_ups_item_response_tag": "任何 响应",
         "follow_ups_item_send_email_tag": "发送 邮件",
         "follow_ups_modal_action_attach_response_data_description": "仅附加调查响应中已回答的问题",

@@ -3293,6 +3293,7 @@
         "follow_ups_include_variables": "Включить значения переменных",
         "follow_ups_item_ending_tag": "Финал(ы)",
         "follow_ups_item_issue_detected_tag": "Обнаружена проблема",
+        "follow_ups_item_not_sending_tag": "Не отправляется",
         "follow_ups_item_response_tag": "Любой ответ",
         "follow_ups_item_send_email_tag": "Отправить email",
         "follow_ups_modal_action_attach_response_data_description": "Прикрепляет только те вопросы, на которые был дан ответ в опросе",

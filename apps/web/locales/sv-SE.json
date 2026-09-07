@@ -3293,6 +3293,7 @@
         "follow_ups_include_variables": "Inkludera värden för variabler",
         "follow_ups_item_ending_tag": "Avslutning(ar)",
         "follow_ups_item_issue_detected_tag": "Problem upptäckt",
+        "follow_ups_item_not_sending_tag": "Skickas inte",
         "follow_ups_item_response_tag": "Alla svar",
         "follow_ups_item_send_email_tag": "Skicka e-post",
         "follow_ups_modal_action_attach_response_data_description": "Lägg till data från enkätsvaret i uppföljningen",

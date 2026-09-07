@@ -138,6 +138,7 @@ export const FollowUpsView = ({
                 teamMemberDetails={teamMemberDetails}
                 locale={locale}
                 canDuplicate={canCreateFollowUps}
+                isSending={isSurveyFollowUpsAllowed}
               />
             );
           })}

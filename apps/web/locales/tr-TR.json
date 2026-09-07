@@ -3293,6 +3293,7 @@
         "follow_ups_include_variables": "Değişken değerlerini dahil et",
         "follow_ups_item_ending_tag": "Bitiş(ler)",
         "follow_ups_item_issue_detected_tag": "Sorun tespit edildi",
+        "follow_ups_item_not_sending_tag": "Gönderilmiyor",
         "follow_ups_item_response_tag": "Herhangi bir yanıt",
         "follow_ups_item_send_email_tag": "E-posta gönder",
         "follow_ups_modal_action_attach_response_data_description": "Sadece anket yanıtında cevaplanmış soruları ekler",
