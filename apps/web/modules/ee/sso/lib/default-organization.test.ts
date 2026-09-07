@@ -105,6 +105,17 @@ describe("ensureDefaultOrganization — creating the organization", () => {
     await ensureDefaultOrganization("Ada");
     expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("default-org");
   });
+
+  test("a failing Stripe setup is logged, not fatal — the user still gets the org", async () => {
+    constantsOverrides.IS_FORMBRICKS_CLOUD = true;
+    vi.mocked(ensureCloudStripeSetupForOrganization).mockRejectedValue(new Error("stripe down"));
+    expect(await ensureDefaultOrganization("Ada")).toEqual({
+      organizationId: "default-org",
+      role: "owner",
+    });
+    // The rejection is handled off the await path, so let its `.catch` run before asserting.
+    await vi.waitFor(() => expect(logger.error).toHaveBeenCalled());
+  });
 });
 
 describe("ensureDefaultOrganization — nothing to assign", () => {

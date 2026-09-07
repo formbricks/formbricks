@@ -40,21 +40,24 @@ export const ensureDefaultOrganization = async (
   const defaultOrganizationId = DEFAULT_ORGANIZATION_ID;
   if (!defaultOrganizationId) return null;
 
-  try {
-    // Read through prisma rather than the reactCache'd `getOrganization`: this is called from a
-    // retried post-commit path, where a cached miss from the previous attempt would send us into a
-    // second create and a guaranteed unique-constraint failure.
+  // Read through prisma rather than the reactCache'd `getOrganization`: this is called from a retried
+  // post-commit path, where a cached miss from the previous attempt would send us into a second create
+  // and a guaranteed unique-constraint failure.
+  const findExisting = async (): Promise<TDefaultOrganizationAssignment | null> => {
     const existing = await prisma.organization.findUnique({
       where: { id: defaultOrganizationId },
       select: { id: true },
     });
+    if (!existing) return null;
+    return {
+      organizationId: existing.id,
+      role: DEFAULT_ORGANIZATION_ROLE ?? FALLBACK_EXISTING_ORGANIZATION_ROLE,
+    };
+  };
 
-    if (existing) {
-      return {
-        organizationId: existing.id,
-        role: DEFAULT_ORGANIZATION_ROLE ?? FALLBACK_EXISTING_ORGANIZATION_ROLE,
-      };
-    }
+  try {
+    const existing = await findExisting();
+    if (existing) return existing;
 
     const organization = await createOrganization({
       id: defaultOrganizationId,
@@ -78,16 +81,8 @@ export const ensureDefaultOrganization = async (
     // is not a cuid2 (ZOrganizationCreateInput rejects it), or a concurrent first sign-up won the
     // create. Re-read once so the concurrent case still assigns, and otherwise give up on the
     // assignment — never throw, or an already-created user would see a mid-sign-in error.
-    const raced = await prisma.organization
-      .findUnique({ where: { id: defaultOrganizationId }, select: { id: true } })
-      .catch(() => null);
-
-    if (raced) {
-      return {
-        organizationId: raced.id,
-        role: DEFAULT_ORGANIZATION_ROLE ?? FALLBACK_EXISTING_ORGANIZATION_ROLE,
-      };
-    }
+    const raced = await findExisting().catch(() => null);
+    if (raced) return raced;
 
     logger.error(
       error,

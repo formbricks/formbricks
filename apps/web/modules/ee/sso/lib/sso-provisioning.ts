@@ -17,7 +17,10 @@ import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-doma
 import { updateUser } from "@/modules/auth/lib/user";
 import { resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { ensureDefaultOrganization } from "@/modules/ee/sso/lib/default-organization";
+import {
+  type TDefaultOrganizationAssignment,
+  ensureDefaultOrganization,
+} from "@/modules/ee/sso/lib/default-organization";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 
@@ -168,13 +171,83 @@ export const gateSsoProvisioning = async ({
 };
 
 /**
+ * The membership WRITES for one resolved organization, retried once and never thrown out of.
+ *
+ * Extracted from `provisionSsoUserMemberships` to keep that function under the cognitive-complexity
+ * budget (the same reason `validateSsoInviteToken` sits outside `gateSsoProvisioning`); its behavior
+ * is covered by sso-provisioning.test.ts.
+ *
+ * The retry exists because the user + account are already committed by Better Auth: throwing here
+ * would not roll them back and would break an otherwise successful sign-in. On the final attempt we
+ * log an error for alerting instead — there is no automatic retry on later sign-ins, so a sustained
+ * failure needs manual reconciliation, and the writes are idempotent (`createMembership` /
+ * `createDefaultTeamMembership` upsert) so an operational retry is safe.
+ */
+const assignSsoUserToOrganization = async ({
+  userId,
+  organizationId,
+  role,
+  assignToDefaultTeam,
+}: {
+  userId: string;
+  organizationId: string;
+  role: TOrganizationRole;
+  assignToDefaultTeam: boolean;
+}): Promise<void> => {
+  const MAX_ATTEMPTS = 2;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      await prisma.$transaction(async (tx) => {
+        await createMembership(
+          organizationId,
+          userId,
+          { role, accepted: true },
+          { projection: "deferred", transaction: tx }
+        );
+        if (assignToDefaultTeam) {
+          await createDefaultTeamMembership(userId, { projection: "deferred", transaction: tx });
+        }
+        const dbUser = await tx.user.findUnique({
+          where: { id: userId },
+          select: { notificationSettings: true },
+        });
+        const current = (dbUser?.notificationSettings ?? {}) as TUserNotificationSettings;
+        await updateUser(
+          userId,
+          {
+            notificationSettings: {
+              ...current,
+              alert: { ...current.alert },
+              unsubscribedOrganizationIds: Array.from(
+                new Set([...(current.unsubscribedOrganizationIds ?? []), organizationId])
+              ),
+            },
+          },
+          tx
+        );
+      });
+      await reconcileOrganizationMembership(organizationId, userId);
+      if (assignToDefaultTeam && DEFAULT_TEAM_ID) {
+        const defaultTeamId = DEFAULT_TEAM_ID;
+        await runPostCommitProjection("sso_default_team_membership_create", () =>
+          reconcileTeamWorkspaceRelationships({ teamMemberships: [{ teamId: defaultTeamId, userId }] })
+        );
+      }
+      return;
+    } catch (error) {
+      if (attempt === MAX_ATTEMPTS) {
+        logger.error(error, "SSO provisioning: failed to assign new SSO user to its organization");
+      }
+    }
+  }
+};
+
+/**
  * Provisioning WRITES for a newly created SSO user — mirrors the legacy NextAuth SSO provisioning
  * writes. Called from
  * `databaseHooks.user.create.after` (post-commit), so it CANNOT share Better Auth's user/account
- * transaction (design doc §13). It runs its own transaction and is idempotent + best-effort:
- * `createMembership`/`createDefaultTeamMembership` upsert, and a failure is retried once then logged
- * (for alerting) rather than thrown — throwing here would not roll back the already-committed user and
- * would surface a confusing mid-sign-in error. Analytics/CRM sync runs regardless (parity).
+ * transaction (design doc §13). The membership writes and their retry live in
+ * `assignSsoUserToOrganization` above; analytics/CRM sync runs regardless of them (parity).
  */
 export const provisionSsoUserMemberships = async ({
   userId,
@@ -199,75 +272,23 @@ export const provisionSsoUserMemberships = async ({
   /** Marketing attribution read from the request cookie in `user.create.before`. */
   attributionProperties?: Record<string, string>;
 }): Promise<void> => {
-  // Resolved before the retry loop so a create is attempted at most once per sign-up; on the legacy
-  // path (no `DEFAULT_ORGANIZATION_ID`) the role stays `member`, as it has been since the migration.
-  let targetOrganizationId = organizationId;
-  let membershipRole: TOrganizationRole = "member";
+  // Resolved before the writes so a create is attempted at most once per sign-up. On the legacy path
+  // (no `DEFAULT_ORGANIZATION_ID`) the gate already resolved the org and the role stays `member`, as
+  // it has been since the migration; the default-organization path find-or-creates it instead.
+  let assignment: TDefaultOrganizationAssignment | null = null;
   if (useDefaultOrganization) {
-    const assignment = await ensureDefaultOrganization(name || email.split("@")[0]);
-    targetOrganizationId = assignment?.organizationId ?? null;
-    membershipRole = assignment?.role ?? membershipRole;
+    assignment = await ensureDefaultOrganization(name || email.split("@")[0]);
+  } else if (organizationId) {
+    assignment = { organizationId, role: "member" };
   }
 
-  if (targetOrganizationId) {
-    // `const` so it narrows inside the transaction closure below.
-    const assignedOrganizationId = targetOrganizationId;
-    const MAX_ATTEMPTS = 2;
-    let assigned = false;
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS && !assigned; attempt++) {
-      try {
-        await prisma.$transaction(async (tx) => {
-          await createMembership(
-            assignedOrganizationId,
-            userId,
-            { role: membershipRole, accepted: true },
-            { projection: "deferred", transaction: tx }
-          );
-          if (assignToDefaultTeam) {
-            await createDefaultTeamMembership(userId, {
-              projection: "deferred",
-              transaction: tx,
-            });
-          }
-          const dbUser = await tx.user.findUnique({
-            where: { id: userId },
-            select: { notificationSettings: true },
-          });
-          const current = (dbUser?.notificationSettings ?? {}) as TUserNotificationSettings;
-          await updateUser(
-            userId,
-            {
-              notificationSettings: {
-                ...current,
-                alert: { ...current.alert },
-                unsubscribedOrganizationIds: Array.from(
-                  new Set([...(current.unsubscribedOrganizationIds ?? []), assignedOrganizationId])
-                ),
-              },
-            },
-            tx
-          );
-        });
-        await reconcileOrganizationMembership(assignedOrganizationId, userId);
-        if (assignToDefaultTeam && DEFAULT_TEAM_ID) {
-          const defaultTeamId = DEFAULT_TEAM_ID;
-          await runPostCommitProjection("sso_default_team_membership_create", () =>
-            reconcileTeamWorkspaceRelationships({
-              teamMemberships: [{ teamId: defaultTeamId, userId }],
-            })
-          );
-        }
-        assigned = true;
-      } catch (error) {
-        // The user + account are already committed by Better Auth; never throw here (it would not
-        // roll them back and would break sign-in). On the final attempt, log an error for alerting:
-        // there is no automatic retry on later sign-ins, so a sustained failure needs manual
-        // reconciliation (the writes are idempotent, so an operational retry is safe).
-        if (attempt === MAX_ATTEMPTS) {
-          logger.error(error, "SSO provisioning: failed to assign new SSO user to its organization");
-        }
-      }
-    }
+  if (assignment) {
+    await assignSsoUserToOrganization({
+      userId,
+      organizationId: assignment.organizationId,
+      role: assignment.role,
+      assignToDefaultTeam,
+    });
   }
 
   // Best-effort analytics + CRM sync, regardless of org assignment (parity with provisionNewSsoUser).
@@ -281,6 +302,6 @@ export const provisionSsoUserMemberships = async ({
     auth_provider: provider,
     email_domain: email.split("@")[1],
     signup_source: signupSource,
-    invite_organization_id: targetOrganizationId,
+    invite_organization_id: assignment ? assignment.organizationId : null,
   });
 };
