@@ -12,8 +12,6 @@ import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-prev
 import { ChartTypeSwitch } from "@/modules/ee/analysis/charts/components/chart-type-switch";
 import { hasChartDisplaySettings } from "@/modules/ee/analysis/charts/lib/chart-display";
 import type { AnalyticsResponse, TChartType } from "@/modules/ee/analysis/types/analysis";
-import { AiIcon } from "@/modules/ui/components/ai";
-import { Button } from "@/modules/ui/components/button";
 
 interface ChartBuilderBodyProps {
   formId: string;
@@ -33,8 +31,6 @@ interface ChartBuilderBodyProps {
   queryState: ChartQueryState;
   isLoadingChart: boolean;
   chartLoadError: string | null;
-  /** Rendered in the empty stage when this workspace can generate a chart with AI. */
-  onRequestAI?: () => void;
 }
 
 /**
@@ -60,7 +56,6 @@ export function ChartBuilderBody({
   queryState,
   isLoadingChart,
   chartLoadError,
-  onRequestAI,
 }: Readonly<ChartBuilderBodyProps>) {
   const { t } = useTranslation();
   const showsDisplaySettings = Boolean(chartData) && hasChartDisplaySettings(chartData?.chartType);
@@ -87,14 +82,6 @@ export function ChartBuilderBody({
         isLoading={isLoadingChart || queryState.isLoading}
         error={chartLoadError ?? queryState.error}
         emptyMessage={t("workspace.analysis.charts.advanced_chart_builder_config_prompt")}
-        emptyAction={
-          onRequestAI ? (
-            <Button type="button" variant="ai-secondary" onClick={onRequestAI}>
-              <AiIcon tone="inherit" />
-              {t("workspace.analysis.charts.ai_create.generate_with_ai")}
-            </Button>
-          ) : undefined
-        }
         typeControl={<ChartTypeSwitch selectedChartType={chartType} onChartTypeSelect={onChartTypeSelect} />}
         displaySettings={
           showsDisplaySettings ? (

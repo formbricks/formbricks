@@ -13,11 +13,8 @@ export interface CreateChartDialogProps {
   initialChart?: TChartWithCreator;
   /** A chart the AI dialog just produced, opened here for review and naming. */
   generatedChart?: AnalyticsResponse | null;
-  /** Reopens the AI dialog for someone who started from scratch and wants a hand. */
-  onRequestAIDialog?: () => void;
   onSuccess?: () => void;
   directories: { id: string; name: string }[];
-  isAIAvailable?: boolean;
 }
 
 export function CreateChartDialog({
@@ -28,10 +25,8 @@ export function CreateChartDialog({
   autoAddToDashboardId,
   initialChart,
   generatedChart,
-  onRequestAIDialog,
   onSuccess,
   directories,
-  isAIAvailable,
 }: Readonly<CreateChartDialogProps>) {
   return (
     <ChartsQueryClientProvider>
@@ -42,11 +37,9 @@ export function CreateChartDialog({
         chartId={chartId}
         initialChart={initialChart}
         generatedChart={generatedChart}
-        onRequestAIDialog={onRequestAIDialog}
         autoAddToDashboardId={autoAddToDashboardId}
         onSuccess={onSuccess}
         directories={directories}
-        isAIAvailable={isAIAvailable}
       />
     </ChartsQueryClientProvider>
   );

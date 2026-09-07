@@ -580,7 +580,6 @@ export function DashboardDetailClient({
             });
           }}
           directories={directories}
-          isAIAvailable={isAIAvailable}
         />
       )}
     </PageContentWrapper>

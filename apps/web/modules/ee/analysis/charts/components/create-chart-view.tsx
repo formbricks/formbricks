@@ -30,11 +30,9 @@ interface CreateChartViewProps {
   chartId?: string;
   initialChart?: TChartWithCreator;
   generatedChart?: AnalyticsResponse | null;
-  onRequestAIDialog?: () => void;
   autoAddToDashboardId?: string;
   onSuccess?: () => void;
   directories: { id: string; name: string }[];
-  isAIAvailable?: boolean;
 }
 
 const CREATE_CHART_FORM_ID = "create-chart-form";
@@ -46,11 +44,9 @@ export function CreateChartView({
   chartId,
   initialChart,
   generatedChart,
-  onRequestAIDialog,
   autoAddToDashboardId,
   onSuccess,
   directories,
-  isAIAvailable,
 }: Readonly<CreateChartViewProps>) {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
@@ -123,19 +119,7 @@ export function CreateChartView({
   // the preview starts at the default and the user changes it whenever they like.
   const chartType = selectedChartType ?? initialChart?.type ?? DEFAULT_CHART_TYPE;
 
-  const isAIQueryAvailable = isAIAvailable !== false;
-  const showAIAction = !isEditing && isAIQueryAvailable && Boolean(onRequestAIDialog);
   const canSave = Boolean(chartData) && !queryState.error;
-  // Close through handleClose rather than letting the parent flip the dialog shut: leaving for the
-  // AI dialog ends this builder session, and a session that ends without a reset leaves its chart
-  // behind for the next one to open on top of.
-  const requestAI = showAIAction
-    ? () =>
-        confirmDiscard(() => {
-          handleClose();
-          onRequestAIDialog?.();
-        })
-    : undefined;
   const saveLabel = autoAddToDashboardId
     ? t("workspace.analysis.charts.save_and_add_to_dashboard")
     : t("workspace.analysis.charts.save_chart");
@@ -193,7 +177,6 @@ export function CreateChartView({
                 queryState={queryState}
                 isLoadingChart={isLoadingChart}
                 chartLoadError={chartLoadError}
-                onRequestAI={requestAI}
               />
             ) : (
               <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} />

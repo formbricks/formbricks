@@ -65,12 +65,15 @@ export function CreateChartButton({
               <ChevronDownIcon />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuItem icon={<AiIcon />} onSelect={() => setIsAIDialogOpen(true)}>
-              {t("workspace.analysis.charts.ai_create.generate_with_ai")}
-            </DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-56">
+            {/* Building by hand leads: it is the path that always produces the chart someone asked
+                for. AI generation sits second and says Beta, because it reads the dataset's sources
+                and questions but still guesses at everything else. */}
             <DropdownMenuItem icon={<PlusCircleIcon className="size-4" />} onSelect={() => openBuilder(null)}>
               {t("workspace.analysis.charts.from_scratch")}
+            </DropdownMenuItem>
+            <DropdownMenuItem icon={<AiIcon />} onSelect={() => setIsAIDialogOpen(true)}>
+              {t("workspace.analysis.charts.ai_create.generate_with_ai_beta")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -104,12 +107,7 @@ export function CreateChartButton({
         autoAddToDashboardId={autoAddToDashboardId}
         directories={directories}
         generatedChart={generatedChart}
-        onRequestAIDialog={() => {
-          setIsBuilderOpen(false);
-          setIsAIDialogOpen(true);
-        }}
         onSuccess={onSuccess}
-        isAIAvailable={isAIAvailable}
       />
     </>
   );

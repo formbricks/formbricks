@@ -1586,12 +1586,12 @@ checksums:
     workspace/analysis/charts/advanced_chart_builder_config_prompt: e65524208f5d88030cb920dafab7fca9
     workspace/analysis/charts/ai_chart_generation: add72413077023d31590374e179d8784
     workspace/analysis/charts/ai_create/characters: 94b5a8b5c869a7e9bc031f59de56de44
+    workspace/analysis/charts/ai_create/create_chart: 636969b904e88bef5c93e859dd8a1656
     workspace/analysis/charts/ai_create/dialog_description: b59407aca0b54768dea200015a508d7a
     workspace/analysis/charts/ai_create/dialog_title: ec5f8ea1138dbfb447b98db0c81b49e0
     workspace/analysis/charts/ai_create/discard_generation_body: 9b6db0874c080129e9bf0da8000e0fe6
     workspace/analysis/charts/ai_create/discard_generation_title: 8c5317fdbafda4715e2eb4f983ec0b9c
-    workspace/analysis/charts/ai_create/generate: 0345bf322c191e70d01fd6607ec5c2f8
-    workspace/analysis/charts/ai_create/generate_with_ai: 5d8c659f559f1343bb23fd191a6556ad
+    workspace/analysis/charts/ai_create/generate_with_ai_beta: 2cbc2d0622c5fa2353eda6506532531a
     workspace/analysis/charts/ai_create/prompt_helper_aria: 941af5c22696eb9b8aca0354c4271e6f
     workspace/analysis/charts/ai_create/prompt_helper_breakdown: 46ecdc7514c17710f4a786f04944969e
     workspace/analysis/charts/ai_create/prompt_helper_breakdown_label: 3563fa5dc7da1e95f2d7c635b7c98d82
@@ -2893,7 +2893,7 @@ checksums:
     workspace/surveys/ai_create/card_title: 5d8c659f559f1343bb23fd191a6556ad
     workspace/surveys/ai_create/characters: 94b5a8b5c869a7e9bc031f59de56de44
     workspace/surveys/ai_create/choose_template: dc3f22a8178d5aef8bdac9d3fc7cc268
-    workspace/surveys/ai_create/create: 0345bf322c191e70d01fd6607ec5c2f8
+    workspace/surveys/ai_create/create: 1cfbba08d34876566d84b2960054a987
     workspace/surveys/ai_create/create_with_ai: 5d8c659f559f1343bb23fd191a6556ad
     workspace/surveys/ai_create/create_with_ai_description: 7aa3fe0237ead1066e01f3e1abd7c0ad
     workspace/surveys/ai_create/dialog_description: 2c93d5a3152989234ed3819308037a53

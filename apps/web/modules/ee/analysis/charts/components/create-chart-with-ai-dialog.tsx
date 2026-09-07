@@ -302,7 +302,7 @@ export function CreateChartWithAIDialog({
                     </Button>
                     <Button type="submit" variant="ai-primary" disabled={!canGenerate}>
                       <AiIcon tone="ai-light" />
-                      {t("workspace.analysis.charts.ai_create.generate")}
+                      {t("workspace.analysis.charts.ai_create.create_chart")}
                     </Button>
                   </>
                 )}
