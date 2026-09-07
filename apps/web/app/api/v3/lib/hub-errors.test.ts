@@ -61,7 +61,8 @@ describe("hubErrorToProblemResponse", () => {
         problemDetail: "a feedback record with this tenant_id, submission_id, and field_id already exists",
       }),
       requestId,
-      instance
+      instance,
+      { renameTenantId: true }
     ).json();
 
     expect(body.detail).toBe(
@@ -79,7 +80,8 @@ describe("hubErrorToProblemResponse", () => {
     const body = await hubErrorToProblemResponse(
       hubError(409, { problemDetail: "tenant_id ".repeat(200) }),
       requestId,
-      instance
+      instance,
+      { renameTenantId: true }
     ).json();
 
     expect(body.detail.length).toBeLessThanOrEqual(512);
@@ -90,10 +92,29 @@ describe("hubErrorToProblemResponse", () => {
     const body = await hubErrorToProblemResponse(
       hubError(400, { invalidParams: [{ name: "tenant_id", reason: "tenant_id is required" }] }),
       requestId,
-      instance
+      instance,
+      { renameTenantId: true }
     ).json();
 
     expect(body.invalid_params).toEqual([{ name: "dataset_id", reason: "dataset_id is required" }]);
+  });
+
+  /**
+   * The rename is one surface's vocabulary, not the mapper's. feedbackRecords exposes `dataset_id`, so it
+   * opts in; taxonomy's outward identifier is `directoryId`, so renaming there would relay a field name
+   * belonging to neither side — worse than the Hub's own `tenant_id`, which at least says truthfully where
+   * the complaint came from. Pinned as a default so a future caller inherits the safe behaviour.
+   */
+  test("leaves tenant_id alone unless the caller opts in", async () => {
+    const body = await hubErrorToProblemResponse(
+      hubError(400, { invalidParams: [{ name: "TaxonomyScope.tenant_id", reason: "tenant_id is required" }] }),
+      requestId,
+      instance
+    ).json();
+
+    expect(body.invalid_params).toEqual([
+      { name: "TaxonomyScope.tenant_id", reason: "tenant_id is required" },
+    ]);
   });
 
   // Word-bounded, so it renames the term without corrupting text that merely contains it.
@@ -266,7 +287,8 @@ describe("hubErrorToProblemResponse", () => {
 
     expect(body.status).toBe(400);
     expect(body.invalid_params[0].reason).toContain("at least 20 embedded text feedback records");
-    // Renamed on the way out, like every other relayed string: the Hub's tenant is this API's dataset.
-    expect(body.invalid_params[0].name).toBe("TaxonomyScope.dataset_id");
+    // NOT renamed: this is the taxonomy shape (see `badGatewayDetail`), and that surface's outward
+    // identifier is `directoryId`. `dataset_id` is the feedbackRecords vocabulary, which opts in.
+    expect(body.invalid_params[0].name).toBe("TaxonomyScope.tenant_id");
   });
 });

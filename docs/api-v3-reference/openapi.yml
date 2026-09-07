@@ -612,7 +612,7 @@ paths:
                   value:
                     title: Forbidden
                     status: 403
-                    detail: AI features are not enabled for this organization's plan.
+                    detail: AI smart tools are not available for this organization.
                     code: ai_features_not_enabled
                     requestId: req_123
         '422':

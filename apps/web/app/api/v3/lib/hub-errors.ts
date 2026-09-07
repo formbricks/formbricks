@@ -60,9 +60,15 @@ const RELAYABLE_HUB_STATUSES = new Set([400, 409, 413, 422]);
  *
  * Word-bounded so it renames the term and nothing else. Applied to every relayed string — detail and
  * `invalid_params` alike — because the Hub names fields in both.
+ *
+ * **Opt-in, because it is one surface's vocabulary, not this mapper's.** feedbackRecords really does
+ * expose `dataset_id` outward, so the rename is right there. Taxonomy does not: its outward identifier
+ * is `directoryId`, so renaming would relay a field name that exists on *neither* side — worse than the
+ * Hub's own `tenant_id`, which is at least truthful about where the complaint came from. A shared mapper
+ * cannot know which, so the caller says.
  */
-function toApiVocabulary(text: string): string {
-  return text.replace(/\btenant_id\b/g, "dataset_id");
+function toApiVocabulary(text: string, rename: boolean): string {
+  return rename ? text.replace(/\btenant_id\b/g, "dataset_id") : text;
 }
 
 /**
@@ -74,7 +80,11 @@ function toApiVocabulary(text: string): string {
  * whole-request problem responses and for the per-record failures of a batch write, so neither can drift
  * into leaking more than the other.
  */
-export function relayableHubDetail(error: HubError | null, fallback: string): string {
+export function relayableHubDetail(
+  error: HubError | null,
+  fallback: string,
+  renameTenantId = false
+): string {
   // `problemDetail`, never `detail` or `message`: those two are the SDK's error text, which folds the
   // *entire* RFC 9457 body into a string (internal Hub URLs, problem type URIs, its request id).
   // Relaying either is the disclosure bug this surface already had once (ENG-2048 Part 1 / ENG-1886).
@@ -83,19 +93,27 @@ export function relayableHubDetail(error: HubError | null, fallback: string): st
   }
   // Rewritten before slicing, not after: `dataset_id` is a character longer than `tenant_id`, so a
   // slice-then-rewrite could push the result past the cap it is supposed to enforce.
-  return toApiVocabulary(error.problemDetail).slice(0, MAX_RELAYED_DETAIL_LENGTH);
+  return toApiVocabulary(error.problemDetail, renameTenantId).slice(0, MAX_RELAYED_DETAIL_LENGTH);
 }
 
 /** Only name/reason cross over: the Hub's `code` vocabulary is its own, not the v3 InvalidParamCode set. */
-function relayableInvalidParams(error: HubError | null): InvalidParam[] | undefined {
+function relayableInvalidParams(
+  error: HubError | null,
+  renameTenantId: boolean
+): InvalidParam[] | undefined {
   // Bounded on both axes — the Hub is a remote service, so we don't let it size our response body.
   return error?.invalidParams?.slice(0, MAX_RELAYED_INVALID_PARAMS).map(({ name, reason }) => ({
-    name: toApiVocabulary(name).slice(0, MAX_RELAYED_DETAIL_LENGTH),
-    reason: toApiVocabulary(reason).slice(0, MAX_RELAYED_DETAIL_LENGTH),
+    name: toApiVocabulary(name, renameTenantId).slice(0, MAX_RELAYED_DETAIL_LENGTH),
+    reason: toApiVocabulary(reason, renameTenantId).slice(0, MAX_RELAYED_DETAIL_LENGTH),
   }));
 }
 
 export type THubProblemOptions = {
+  /**
+   * Rename the Hub's `tenant_id` to `dataset_id` in relayed text. Only for surfaces whose outward
+   * vocabulary is actually `dataset_id` — see `toApiVocabulary`.
+   */
+  renameTenantId?: boolean;
   /**
    * What a Hub 503 means for this operation. Worth passing from any caller that can actually receive one;
    * the rest get a message that names no subsystem.
@@ -161,7 +179,7 @@ export function hubErrorToProblemResponse(
   if (status === 409) {
     return problemConflict(
       requestId,
-      relayableHubDetail(error, "The feedback service reported a conflict."),
+      relayableHubDetail(error, "The feedback service reported a conflict.", options?.renameTenantId),
       instance
     );
   }
@@ -170,7 +188,7 @@ export function hubErrorToProblemResponse(
   if (status === 413) {
     return problemPayloadTooLarge(
       requestId,
-      relayableHubDetail(error, "The feedback record is too large."),
+      relayableHubDetail(error, "The feedback record is too large.", options?.renameTenantId),
       instance
     );
   }
@@ -187,8 +205,8 @@ export function hubErrorToProblemResponse(
   }
 
   if (status === 400 || status === 422) {
-    const invalidParams = relayableInvalidParams(error);
-    const detail = relayableHubDetail(error, "The feedback service rejected the request.");
+    const invalidParams = relayableInvalidParams(error, options?.renameTenantId ?? false);
+    const detail = relayableHubDetail(error, "The feedback service rejected the request.", options?.renameTenantId);
 
     return status === 400
       ? problemBadRequest(requestId, detail, { instance, invalid_params: invalidParams })

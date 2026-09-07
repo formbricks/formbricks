@@ -467,7 +467,10 @@ describe("triggerV3TaxonomyRun", () => {
 
     expect(response.status).toBe(400);
     expect(body.invalid_params[0].reason).toContain("at least 20 embedded text feedback records");
-    expect(body.invalid_params[0].name).toBe("TaxonomyScope.dataset_id");
+    // The Hub's own field name, relayed unchanged. The `tenant_id` -> `dataset_id` rename belongs to the
+    // feedbackRecords surface, which really does expose `dataset_id`; this surface's outward identifier is
+    // `directoryId`, so renaming here would name a parameter that exists on neither side.
+    expect(body.invalid_params[0].name).toBe("TaxonomyScope.tenant_id");
     expect(JSON.stringify(body)).not.toContain(HUB_INTERNAL_MARKER);
   });
 

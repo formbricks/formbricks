@@ -247,7 +247,10 @@ export const toProblemResponse = (error: unknown, ctx: ProblemContext): Response
     });
   }
 
-  ctx.logger.error({ error, statusCode: 500 }, "Unexpected workflow API error");
+  // `err`, not `error`: `@formbricks/logger` registers pino's `stdSerializers.err` for that key only, so
+  // any other key logs the enumerable own properties and silently drops `message` and `stack` — which is
+  // most of what a 500's log is for. Same fix as the nine boundaries in `app/api/v3`.
+  ctx.logger.error({ err: error, statusCode: 500 }, "Unexpected workflow API error");
   return problemResponse(500, "An unexpected error occurred.", {
     requestId: ctx.requestId,
     code: "internal_server_error",

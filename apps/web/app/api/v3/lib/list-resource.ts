@@ -86,6 +86,9 @@ export async function listV3WorkspaceResource<TRow extends { id: string }, TOut>
         instance,
       });
     }
-    return mapV3ThrownError(err, { log, requestId, instance, operation: `${resourceName}.list` });
+    // Dotted and machine-readable, like every other `operation` label: `resourceName` is human prose
+    // ("action classes"), which would log `operation: "action classes.list"` and break grouping.
+    const operation = `${resourceName.replace(/\s+/g, "-")}.list`;
+    return mapV3ThrownError(err, { log, requestId, instance, operation });
   }
 }

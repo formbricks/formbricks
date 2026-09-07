@@ -84,10 +84,14 @@ export function mapV3ThrownError(err: unknown, ctx: TV3ErrorContext): Response {
   /**
    * 403, not 404: a resource the caller cannot see must not be distinguishable from one that does not
    * exist, or the response becomes an existence oracle. The id is left out of the body for the same
-   * reason — it is in the log, correlated by `requestId`.
+   * reason — it goes to the log instead, correlated by `requestId`, which is the only place it is safe
+   * to say which resource was missing.
    */
   if (err instanceof ResourceNotFoundError) {
-    log.warn({ ...context, statusCode: 403, errorCode: err.name }, "V3 resource not found");
+    log.warn(
+      { ...context, statusCode: 403, errorCode: err.name, resourceId: err.resourceId, resourceType: err.resourceType },
+      "V3 resource not found"
+    );
     return problemForbidden(requestId, undefined, instance);
   }
 

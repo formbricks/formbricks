@@ -27,9 +27,11 @@ const BEARER_CHALLENGE = 'Bearer realm="formbricks"' as const;
  * checking it against the emitters. Codes are additive: removing or renaming one is a breaking change
  * for every client that branches on it.
  *
- * The last two are emitted by `@formbricks/workflows`, which mirrors this vocabulary rather than
- * importing it (it is a leaf package, deliberately dependency-free); its own `WORKFLOW_PROBLEM_CODES` is
- * held to this set by a drift test on the same spec file.
+ * `invalid_workflow_state` and `workflow_not_executable` are emitted only by `@formbricks/workflows`,
+ * which mirrors this vocabulary rather than importing it (it is a leaf package, deliberately
+ * dependency-free) and also emits five of the codes above; its own `WORKFLOW_PROBLEM_CODES` is held to
+ * this set by a drift test on the same spec file. Named rather than counted: the array is kept sorted by
+ * `problem-codes.test.ts`, so any positional claim falsifies itself on the next insertion.
  */
 export const V3_PROBLEM_CODES = [
   "ai_features_not_enabled",
@@ -205,7 +207,7 @@ export function problemForbidden(
  * `title` is the HTTP reason phrase for the status, not a description of the cause. RFC 9457 §4.2.1
  * requires that of a problem whose `type` is absent (and therefore `about:blank`), which is every v3
  * problem. The cause is carried by `code`, which is what clients branch on anyway — see
- * `getAIErrorMessage` in `@/modules/survey/template-list/lib/ai-error-messages`.
+ * `getAiErrorMessage` in `@/modules/survey/components/template-list/lib/ai-error-messages`.
  */
 export function problemAIUnavailable(
   requestId: string,

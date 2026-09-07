@@ -322,7 +322,7 @@ async function applyV3RateLimitOrRespond(params: {
   try {
     await applyRateLimit(config, identifier);
   } catch (error) {
-    log.warn({ error, statusCode: 429 }, "V3 API rate limit exceeded");
+    log.warn({ err: error, statusCode: 429 }, "V3 API rate limit exceeded");
     return problemTooManyRequests(
       requestId,
       error instanceof Error ? error.message : "Rate limit exceeded",
