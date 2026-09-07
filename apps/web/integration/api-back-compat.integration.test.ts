@@ -94,16 +94,13 @@ const readRows = async (surveyId: string) =>
   prisma.surveyEmbeddedData
     .findMany({
       where: { surveyId },
+      orderBy: [{ order: "asc" }, { storageKey: "asc" }],
       select: {
         storageKey: true,
         embeddedData: { select: { name: true, source: true, dataType: true, defaultValue: true } },
       },
     })
-    .then((links) =>
-      links
-        .map(({ storageKey, embeddedData }) => ({ storageKey, ...embeddedData }))
-        .sort((a, b) => a.storageKey.localeCompare(b.storageKey))
-    );
+    .then((links) => links.map(({ storageKey, embeddedData }) => ({ storageKey, ...embeddedData })));
 
 /**
  * The assertion that catches drift: what the legacy columns say, turned into rows, must equal the
@@ -114,7 +111,7 @@ const expectNoDrift = async (surveyId: string) => {
   const fromColumns = toDesiredEmbeddedFields({
     variables: served.variables,
     hiddenFields: served.hiddenFields,
-  }).sort((a, b) => a.storageKey.localeCompare(b.storageKey));
+  });
 
   expect(await readRows(surveyId)).toEqual(fromColumns);
 };
