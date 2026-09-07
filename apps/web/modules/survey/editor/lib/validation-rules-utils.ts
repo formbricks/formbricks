@@ -140,6 +140,95 @@ export const createRelativeDateParams = (ruleType: TValidationRuleType): TValida
   return { relative: { ...DEFAULT_RELATIVE_BOUND } };
 };
 
+type TTranslate = (key: string, options?: Record<string, string | number>) => string;
+
+/** "the submission day" | "3 calendar days before submission" */
+const describeRelativeBound = (bound: TRelativeDateBound, t: TTranslate): string => {
+  if (bound.amount === 0) return t("workspace.surveys.edit.validation.relative_bound_submission_day");
+
+  let days: string;
+  if (bound.unit === "workingDays") {
+    days =
+      bound.amount === 1
+        ? t("workspace.surveys.edit.validation.relative_bound_one_working_day")
+        : t("workspace.surveys.edit.validation.relative_bound_working_days", { count: bound.amount });
+  } else {
+    days =
+      bound.amount === 1
+        ? t("workspace.surveys.edit.validation.relative_bound_one_calendar_day")
+        : t("workspace.surveys.edit.validation.relative_bound_calendar_days", { count: bound.amount });
+  }
+
+  return bound.direction === "before"
+    ? t("workspace.surveys.edit.validation.relative_bound_before_submission", { days })
+    : t("workspace.surveys.edit.validation.relative_bound_after_submission", { days });
+};
+
+const describeSingleRelativeBound = (
+  ruleType: "isLaterThan" | "isEarlierThan",
+  bound: TRelativeDateBound,
+  t: TTranslate
+): string => {
+  if (ruleType === "isLaterThan") {
+    return bound.amount === 0
+      ? t("workspace.surveys.edit.validation.relative_summary_later_than_submission_day")
+      : t("workspace.surveys.edit.validation.relative_summary_later_than", {
+          bound: describeRelativeBound(bound, t),
+        });
+  }
+  return bound.amount === 0
+    ? t("workspace.surveys.edit.validation.relative_summary_earlier_than_submission_day")
+    : t("workspace.surveys.edit.validation.relative_summary_earlier_than", {
+        bound: describeRelativeBound(bound, t),
+      });
+};
+
+/**
+ * One plain sentence saying which dates a relative rule accepts, so the author reads the rule the
+ * way the respondent will meet it. Returns null for fixed-date params and non-date rules.
+ *
+ * The wording is inclusive on purpose: the relative validators compare with >= / <=, unlike the
+ * strict fixed-date comparison, so "from 3 days before submission onwards" is exactly what passes.
+ */
+export const describeRelativeDateRule = (
+  ruleType: TValidationRuleType,
+  params: TValidationRule["params"],
+  t: TTranslate
+): string | null => {
+  if (!isRelativeDateParams(params)) return null;
+
+  const { relative, relativeStart, relativeEnd } = params as {
+    relative?: TRelativeDateBound;
+    relativeStart?: TRelativeDateBound;
+    relativeEnd?: TRelativeDateBound;
+  };
+
+  let sentence: string | null = null;
+  const bounds: TRelativeDateBound[] = [];
+
+  if ((ruleType === "isLaterThan" || ruleType === "isEarlierThan") && relative) {
+    bounds.push(relative);
+    sentence = describeSingleRelativeBound(ruleType, relative, t);
+  } else if (RANGE_DATE_RULE_TYPES.has(ruleType) && relativeStart && relativeEnd) {
+    bounds.push(relativeStart, relativeEnd);
+    const range = {
+      start: describeRelativeBound(relativeStart, t),
+      end: describeRelativeBound(relativeEnd, t),
+    };
+    sentence =
+      ruleType === "isBetween"
+        ? t("workspace.surveys.edit.validation.relative_summary_between", range)
+        : t("workspace.surveys.edit.validation.relative_summary_not_between", range);
+  }
+
+  if (sentence === null) return null;
+
+  const usesWorkingDays = bounds.some((bound) => bound.unit === "workingDays" && bound.amount > 0);
+  return usesWorkingDays
+    ? `${sentence} ${t("workspace.surveys.edit.validation.relative_summary_working_days_note")}`
+    : sentence;
+};
+
 /**
  * Get available rule types for an element type, excluding already added rules
  * For OpenText elements, filters rules based on inputType

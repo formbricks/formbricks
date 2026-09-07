@@ -4,6 +4,7 @@ import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import {
   createRelativeDateParams,
   createRuleParams,
+  describeRelativeDateRule,
   getAvailableRuleTypes,
   getRuleValue,
   isRelativeDateParams,
@@ -578,5 +579,95 @@ describe("parseDateRangeRuleValue", () => {
     });
     expect(parseDateRangeRuleValue("")).toEqual({ from: null, to: null });
     expect(parseDateRangeRuleValue(undefined)).toEqual({ from: null, to: null });
+  });
+});
+
+describe("describeRelativeDateRule", () => {
+  // Mirrors the en-US strings closely enough to read the sentences; interpolates {name} placeholders.
+  const strings: Record<string, string> = {
+    relative_bound_after_submission: "{days} after submission",
+    relative_bound_before_submission: "{days} before submission",
+    relative_bound_calendar_days: "{count} calendar days",
+    relative_bound_one_calendar_day: "1 calendar day",
+    relative_bound_one_working_day: "1 working day",
+    relative_bound_submission_day: "the submission day",
+    relative_bound_working_days: "{count} working days",
+    relative_summary_between: "Accepts dates from {start} to {end}, both included.",
+    relative_summary_earlier_than: "Accepts any date up to {bound}.",
+    relative_summary_earlier_than_submission_day: "Accepts the submission day and any earlier date.",
+    relative_summary_later_than: "Accepts any date from {bound} onwards.",
+    relative_summary_later_than_submission_day: "Accepts the submission day and any later date.",
+    relative_summary_not_between: "Rejects dates from {start} to {end}, both included.",
+    relative_summary_working_days_note: "Working days skip Saturdays and Sundays.",
+  };
+  const t = (key: string, options?: Record<string, string | number>) => {
+    const short = key.replace("workspace.surveys.edit.validation.", "");
+    const template = strings[short];
+    if (!template) throw new Error(`missing key ${key}`);
+    return template.replaceAll(/\{(\w+)\}/g, (_, name: string) => String(options?.[name]));
+  };
+
+  test("returns null for fixed dates and non-date rules", () => {
+    expect(describeRelativeDateRule("isLaterThan", { date: "2026-03-01" }, t)).toBeNull();
+    expect(describeRelativeDateRule("minLength", { min: 3 }, t)).toBeNull();
+  });
+
+  test("reads a single bound as an inclusive edge counted from submission", () => {
+    expect(
+      describeRelativeDateRule(
+        "isLaterThan",
+        { relative: { amount: 3, unit: "calendarDays", direction: "before" } },
+        t
+      )
+    ).toBe("Accepts any date from 3 calendar days before submission onwards.");
+    expect(
+      describeRelativeDateRule(
+        "isEarlierThan",
+        { relative: { amount: 1, unit: "calendarDays", direction: "after" } },
+        t
+      )
+    ).toBe("Accepts any date up to 1 calendar day after submission.");
+  });
+
+  test("names the submission day itself when the amount is 0", () => {
+    expect(
+      describeRelativeDateRule(
+        "isLaterThan",
+        { relative: { amount: 0, unit: "workingDays", direction: "after" } },
+        t
+      )
+    ).toBe("Accepts the submission day and any later date.");
+    expect(
+      describeRelativeDateRule(
+        "isEarlierThan",
+        { relative: { amount: 0, unit: "calendarDays", direction: "before" } },
+        t
+      )
+    ).toBe("Accepts the submission day and any earlier date.");
+  });
+
+  test("describes both bounds of a range and adds the working-day note only when it applies", () => {
+    expect(
+      describeRelativeDateRule(
+        "isBetween",
+        {
+          relativeStart: { amount: 0, unit: "calendarDays", direction: "before" },
+          relativeEnd: { amount: 10, unit: "workingDays", direction: "after" },
+        },
+        t
+      )
+    ).toBe(
+      "Accepts dates from the submission day to 10 working days after submission, both included. Working days skip Saturdays and Sundays."
+    );
+    expect(
+      describeRelativeDateRule(
+        "isNotBetween",
+        {
+          relativeStart: { amount: 2, unit: "calendarDays", direction: "before" },
+          relativeEnd: { amount: 0, unit: "workingDays", direction: "after" },
+        },
+        t
+      )
+    ).toBe("Rejects dates from 2 calendar days before submission to the submission day, both included.");
   });
 });

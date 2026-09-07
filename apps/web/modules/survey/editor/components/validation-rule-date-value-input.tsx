@@ -57,7 +57,7 @@ export const ValidationRuleDateValueInput = ({
         onParamsChange(mode === "relative" ? createRelativeDateParams(ruleType) : createRuleParams(ruleType));
       }}>
       <SelectTrigger
-        className="h-9 w-32 shrink-0 bg-white whitespace-nowrap"
+        className="h-9 w-auto shrink-0 bg-white whitespace-nowrap"
         aria-label={t("workspace.surveys.edit.validation.date_mode")}>
         <SelectValue />
       </SelectTrigger>

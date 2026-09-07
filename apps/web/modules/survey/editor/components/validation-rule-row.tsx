@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { InfoIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import {
@@ -16,7 +16,7 @@ import {
 } from "@formbricks/types/surveys/validation-rules";
 import { Button } from "@/modules/ui/components/button";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
-import { getAvailableRuleTypes, getRuleValue } from "../lib/validation-rules-utils";
+import { describeRelativeDateRule, getAvailableRuleTypes, getRuleValue } from "../lib/validation-rules-utils";
 import { ValidationRuleFieldSelector } from "./validation-rule-field-selector";
 import { ValidationRuleInputTypeSelector } from "./validation-rule-input-type-selector";
 import { ValidationRuleTypeSelector } from "./validation-rule-type-selector";
@@ -89,7 +89,7 @@ export const ValidationRuleRow = ({
     onFileExtensionChange(rule.id, extensions);
   };
 
-  return (
+  const row = (
     <div className="flex w-full items-center gap-2">
       {/* Field Selector (for Address and Contact Info elements) */}
       {needsFieldSelector && (
@@ -168,6 +168,21 @@ export const ValidationRuleRow = ({
           <PlusIcon className="size-4" />
         </Button>
       )}
+    </div>
+  );
+
+  // A relative date rule is an offset expression; the sentence under the row says what it accepts.
+  const relativeSummary = config.supportsRelative ? describeRelativeDateRule(ruleType, rule.params, t) : null;
+
+  if (!relativeSummary) return row;
+
+  return (
+    <div className="flex w-full flex-col gap-1.5">
+      {row}
+      <p className="flex items-start gap-1.5 px-0.5 text-xs text-slate-500">
+        <InfoIcon className="mt-0.5 size-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+        <span>{relativeSummary}</span>
+      </p>
     </div>
   );
 };
