@@ -27,6 +27,34 @@ function buildUserUpdatePayload(parsedInput: TUserPersonalInfoUpdateInput): TUse
   };
 }
 
+/**
+ * Refuse a name change for an SSO user, mirroring the identical guard `handleEmailUpdate` applies to
+ * the address.
+ *
+ * The identity provider owns `User.name` — it is re-read on every sign-in (`overrideUserInfo` in
+ * modules/ee/sso/lib/better-auth-providers.ts) — so `EditProfileDetailsForm` renders the input
+ * disabled. That is presentation, not enforcement: this action takes `name` straight off the request,
+ * so a crafted call would still land a write that sticks until the user's next sign-in silently
+ * reverts it. Enforce it at the boundary instead.
+ *
+ * Only a *differing* name is rejected. The form omits untouched fields, but a client that echoes the
+ * current value back is asking for no change, and erroring on that would be a false positive.
+ */
+function assertNameUpdateAllowed({
+  ctx,
+  parsedInput,
+}: {
+  ctx: AuthenticatedActionClientCtx;
+  parsedInput: TUserPersonalInfoUpdateInput;
+}): void {
+  const inputName = parsedInput.name?.trim();
+  if (!inputName || inputName === ctx.user.name) return;
+
+  if (ctx.user.identityProvider !== "email") {
+    throw new OperationNotAllowedError("Name update is not allowed for non-credential users.");
+  }
+}
+
 async function handleEmailUpdate({
   ctx,
   parsedInput,
@@ -66,6 +94,7 @@ async function handleEmailUpdate({
 export const updateUserAction = authenticatedActionClient.inputSchema(ZUserPersonalInfoUpdateInput).action(
   withAuditLogging("updated", "user", async ({ ctx, parsedInput }) => {
     const oldObject = await getUser(ctx.user.id);
+    assertNameUpdateAllowed({ ctx, parsedInput });
     let payload = buildUserUpdatePayload(parsedInput);
     payload = await handleEmailUpdate({ ctx, parsedInput, payload });
 

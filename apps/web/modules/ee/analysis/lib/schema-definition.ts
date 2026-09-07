@@ -105,7 +105,8 @@ const SENTIMENT_COUNT_MEASURES: MeasureDefinition[] = SENTIMENT_MEASURE_ORDER.ma
 export const FEEDBACK_FIELDS = {
   // Ordered by filter/group-by relevance (ENG-1673 follow-up): the fields people reach for most
   // lead the list, so the first entry doubles as the default filter field. Tiers: question →
-  // answer values → AI enrichment → source → time/language → identifiers & Hub meta.
+  // answer values → AI enrichment → source → response context (ENG-1555) → time/language →
+  // identifiers & Hub meta.
   dimensions: [
     {
       id: "FeedbackRecords.fieldLabel",
@@ -190,6 +191,78 @@ export const FEEDBACK_FIELDS = {
       label: "Source ID",
       type: "string",
       description: "Stable id of the source (e.g. the survey id).",
+    },
+    {
+      id: "FeedbackRecords.metadataDevice",
+      label: "Device",
+      type: "string",
+      description: "Device class the response was answered on (e.g. desktop, mobile)",
+    },
+    {
+      id: "FeedbackRecords.metadataCountry",
+      label: "Country",
+      type: "string",
+      description: "Country the response was collected from, as resolved at collection time",
+    },
+    {
+      id: "FeedbackRecords.metadataSource",
+      label: "Channel",
+      type: "string",
+      description:
+        "Channel the response came in through (e.g. link, app, email). Distinct from Source Type, which names the system the record came from (formbricks_survey, csv).",
+    },
+    {
+      id: "FeedbackRecords.metadataSurveyType",
+      label: "Survey Type",
+      type: "string",
+      description:
+        "Type of the survey the response came from (link, app, website). Distinct from Source Type, which names the ingesting system.",
+    },
+    {
+      id: "FeedbackRecords.metadataFinished",
+      label: "Completed",
+      type: "boolean",
+      description:
+        "Whether the respondent completed the survey. Live ingestion only publishes finished responses, so this is true for everything except records from a historical import run over all responses.",
+    },
+    {
+      id: "FeedbackRecords.metadataDurationSeconds",
+      label: "Time To Complete (s)",
+      type: "number",
+      description:
+        "Seconds the respondent took to complete the survey. A response-level value repeated on every record of the submission, so an average across records is weighted by question count.",
+    },
+    {
+      id: "FeedbackRecords.metadataBrowser",
+      label: "Browser",
+      type: "string",
+      description: "Browser reported by the respondent's user agent (e.g. Chrome, Safari)",
+    },
+    {
+      id: "FeedbackRecords.metadataOs",
+      label: "Operating System",
+      type: "string",
+      description: "Operating system reported by the respondent's user agent (e.g. macOS, Android)",
+    },
+    {
+      id: "FeedbackRecords.metadataUrl",
+      label: "Page URL",
+      type: "string",
+      description:
+        "Page the survey was answered on, reduced to origin + path — the query string and any personal-link token are stripped at ingestion. One bucket per path, so expect high cardinality.",
+    },
+    {
+      id: "FeedbackRecords.metadataAction",
+      label: "Trigger Action",
+      type: "string",
+      description: "Name of the action that triggered the survey. App surveys only.",
+    },
+    {
+      id: "FeedbackRecords.metadataEndingId",
+      label: "Ending",
+      type: "string",
+      description:
+        "Id of the ending the respondent reached — the branch they came out of. Stored as the id, not the ending's text.",
     },
     {
       id: "FeedbackRecords.collectedAt",
@@ -592,6 +665,17 @@ export const SELECTABLE_VALUE_DIMENSION_IDS = [
   // multi-label sets, so `equals` on a picked combination is a trap — filter it with
   // `contains` instead.
   SENTIMENT_DIMENSION_ID,
+  // Response context (ENG-1555). Every one of these buckets into a small, stable set — user-agent
+  // classes, a country, a channel, an author-defined ending. metadataUrl is excluded for the same
+  // reason valueText is: one bucket per path is not a pick-list.
+  "FeedbackRecords.metadataSource",
+  "FeedbackRecords.metadataSurveyType",
+  "FeedbackRecords.metadataBrowser",
+  "FeedbackRecords.metadataOs",
+  "FeedbackRecords.metadataDevice",
+  "FeedbackRecords.metadataCountry",
+  "FeedbackRecords.metadataAction",
+  "FeedbackRecords.metadataEndingId",
 ] as const;
 
 export type TSelectableValueDimensionId = (typeof SELECTABLE_VALUE_DIMENSION_IDS)[number];
@@ -685,6 +769,14 @@ export function getTranslatedFieldDescription(
       t("workspace.analysis.charts.field_description_unique_respondents"),
     ],
     ["FeedbackRecords.uniqueResponses", t("workspace.analysis.charts.field_description_unique_responses")],
+    // Two response-context dimensions read wrong without their caveat: "Completed" is true for
+    // everything the live pipeline publishes, and the duration is a per-response value repeated on
+    // each of the submission's records.
+    ["FeedbackRecords.metadataFinished", t("workspace.analysis.charts.field_description_completed")],
+    [
+      "FeedbackRecords.metadataDurationSeconds",
+      t("workspace.analysis.charts.field_description_time_to_complete"),
+    ],
   ]);
   return descriptions.get(id) ?? fallback;
 }
@@ -708,6 +800,17 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.valueId": t("workspace.analysis.charts.field_label_value_option"),
     "FeedbackRecords.valueBoolean": t("workspace.analysis.charts.field_label_value_boolean"),
     "FeedbackRecords.valueDate": t("workspace.analysis.charts.field_label_value_date"),
+    "FeedbackRecords.metadataSource": t("workspace.analysis.charts.field_label_response_channel"),
+    "FeedbackRecords.metadataUrl": t("workspace.analysis.charts.field_label_page_url"),
+    "FeedbackRecords.metadataBrowser": t("workspace.analysis.charts.field_label_browser"),
+    "FeedbackRecords.metadataOs": t("workspace.analysis.charts.field_label_operating_system"),
+    "FeedbackRecords.metadataDevice": t("workspace.analysis.charts.field_label_device"),
+    "FeedbackRecords.metadataCountry": t("workspace.analysis.charts.field_label_country"),
+    "FeedbackRecords.metadataAction": t("workspace.analysis.charts.field_label_trigger_action"),
+    "FeedbackRecords.metadataFinished": t("workspace.analysis.charts.field_label_completed"),
+    "FeedbackRecords.metadataDurationSeconds": t("workspace.analysis.charts.field_label_time_to_complete"),
+    "FeedbackRecords.metadataEndingId": t("workspace.analysis.charts.field_label_ending"),
+    "FeedbackRecords.metadataSurveyType": t("workspace.analysis.charts.field_label_survey_type"),
     "FeedbackRecords.collectedAt": t("workspace.analysis.charts.field_label_collected_at"),
     "FeedbackRecords.createdAt": t("workspace.analysis.charts.field_label_created_at"),
     "FeedbackRecords.updatedAt": t("workspace.analysis.charts.field_label_updated_at"),
