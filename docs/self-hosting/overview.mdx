@@ -6,9 +6,9 @@ icon: "server"
 
 ## System requirements
 
-Formbricks is not a single container. The v6 baseline runs the Formbricks app, Formbricks Hub (API and
-worker), Cube, PostgreSQL, Redis/Valkey, SpiceDB and the SpiceDB operator, so size the host for the whole
-stack rather than for the app alone.
+Formbricks is not a single container. The v6 baseline runs eight long-running services — the app,
+Formbricks Hub (API and worker), Cube, PostgreSQL, Redis/Valkey, SpiceDB and its operator — so size the
+host for the whole stack rather than for the app alone.
 
 | Deployment                | CPU       | Memory    | Disk      |
 | ------------------------- | --------- | --------- | --------- |
@@ -16,11 +16,8 @@ stack rather than for the app alone.
 | Single server, low load   | 4 vCPU    | 8 GB      | 50 GB SSD |
 | Kubernetes, production    | see below | see below | managed   |
 
-The single-server rows apply to the [Docker](/self-hosting/setup/docker) and
-[one-click](/self-hosting/setup/one-click) installs. Both run every service on one host, so a host reboot or
-a Formbricks upgrade is downtime. At low load that is usually an acceptable trade and not a reason to reach
-for Kubernetes. Choose [Kubernetes](/self-hosting/setup/kubernetes) when you need to survive a node failure
-or carry an uptime SLA, and size it from [Kubernetes production setup](#kubernetes-production-setup).
+Chart defaults request 1.9 vCPU and 2.9 GiB across those services, before the roughly 0.5 vCPU and 1 GB
+that Kubernetes reserves per node. `charts/formbricks/values.yaml` is the source for every figure here.
 
 <Info>
   **HTTPS Required**: Ensure your server runs with a valid HTTPS certificate.
@@ -28,190 +25,53 @@ or carry an uptime SLA, and size it from [Kubernetes production setup](#kubernet
 
 <Warning>
   4 GB is a floor, not a comfortable target. It leaves no headroom for a large response import, a survey
-  bundle rebuild, or any of the optional AI services below.
+  bundle rebuild, or any of the optional AI services.
 </Warning>
 
-### Where the memory goes
+### Single server or Kubernetes
 
-These are the defaults the Helm chart ships, and they are the most precise sizing statement we can give.
-A Docker Compose install runs the same services without enforced limits.
+The single-server rows cover the [Docker](/self-hosting/setup/docker) and
+[one-click](/self-hosting/setup/one-click) installs. Both run every service on one host, so a reboot or an
+upgrade means downtime — usually an acceptable trade at low load, and not on its own a reason to reach for
+Kubernetes. Choose [Kubernetes](/self-hosting/setup/kubernetes) when you need to survive a node failure or
+carry an uptime SLA.
 
-| Component              | CPU request  | Memory request | Memory limit |
-| ---------------------- | ------------ | -------------- | ------------ |
-| Formbricks app         | 1000m        | 1 Gi           | 2 Gi         |
-| Hub API                | not set      | not set        | not set      |
-| Hub worker             | 100m         | 256 Mi         | 512 Mi       |
-| Cube                   | 250m         | 512 Mi         | 1 Gi         |
-| PostgreSQL (bundled)   | 250m         | 512 Mi         | 1 Gi         |
-| Redis/Valkey (bundled) | 100m         | 128 Mi         | 192 Mi       |
-| SpiceDB (2 replicas)   | 200m         | 512 Mi         | 1 Gi         |
-| SpiceDB operator       | 20m          | 64 Mi          | 160 Mi       |
-| **Total**              | **1.9 vCPU** | **2.9 GiB**    | **5.8 GiB**  |
+For Kubernetes, start at 3 nodes of at least 4 vCPU and 8 GB, autoscaling to 6, with PostgreSQL, Redis and
+object storage as managed services outside the cluster. Capacity is deliberately provider-neutral: a 2 vCPU
+node cannot hold the app's 1 vCPU request alongside the platform reserve, some providers exclude burstable
+instance families from system node pools, and a free control-plane tier carries no uptime SLA. Nothing is
+highly available out of the box — every replica count in the chart ships as `1`. Object storage must speak
+the S3 API, so a service without one, such as Azure Blob Storage, needs an
+[S3-compatible gateway](/self-hosting/configuration/file-uploads) in front of it. The
+[Kubernetes deployment guide](/self-hosting/setup/kubernetes) has the replica, autoscaling and
+managed-service settings.
 
-The chart sets neither requests nor limits on the Hub API, so it is scheduled best-effort and is not in that
-total — leave headroom for it. Migration Jobs run alongside this on install and upgrade, and Kubernetes
-itself takes roughly 0.5 vCPU and 1 GB per node before any of it is schedulable. The two bundled data rows
-drop out when you use managed PostgreSQL and Redis.
+### AI services are much heavier
 
-### Optional services are much heavier
+Self-hosted AI is off by default and is a different order of magnitude: Hub embeddings alone request 4 vCPU
+and 8 Gi for the foreground runtime, and 8 vCPU for the worker pool. Prefer an external endpoint unless you
+need them constantly.
 
 <Note>
   AI features are an Enterprise feature. Configure your
   [Enterprise license](/self-hosting/advanced/license) before enabling them.
 </Note>
 
-Everything in this table is disabled by default. Budget for it separately, and prefer an external endpoint
-over self-hosting the model if you only need it occasionally. Setup lives in
-[AI features](/self-hosting/advanced/enterprise-features/ai-features).
-
-| Component              | CPU request | Memory request | Notes               |
-| ---------------------- | ----------- | -------------- | ------------------- |
-| Hub embeddings (TEI)   | 4 vCPU      | 8 Gi           | + 10 Gi model cache |
-| Worker embeddings pool | 8 vCPU      | 8 Gi           | + 10 Gi model cache |
-| AI taxonomy            | 1 vCPU      | 2 Gi           | 4 Gi limit          |
-| Qwen/vLLM router       | 400m        | 1 Gi           | needs GPU nodes     |
-
-The worker-only pool (`hub.embeddings.background`) is the expensive one — 8 vCPU per replica, with its own
-HPA ceiling of 6. Enable it only when the foreground runtime cannot keep up with backfill.
-
-## Kubernetes production setup
-
-A managed Kubernetes cluster with managed data services, sized for a modest steady load and left free to
-autoscale into peaks. The app tier grows by adding replicas and needs no redesign; raising availability
-beyond it, or scaling analytics, does change the topology — see the warning below.
-
-<Warning>
-  Every replica count in the chart ships as `1`, including `autoscaling.minReplicas` for the app. The
-  `minReplicas: 2` in the table below is a required override, not a default. `hub.replicas`,
-  `hub.worker.replicas` and `cube.replicas` stay singletons until you raise them, and Cube cannot simply be
-  raised — the chart refuses to render more than one replica against its default in-memory cache driver, so
-  multiple Cube replicas need Cube Store. Raise the Hub counts and plan Cube Store before promising an SLA
-  that covers Hub and analytics, not just survey delivery.
-</Warning>
-
-### Cluster
-
-| Resource      | Minimum                                                  |
-| ------------- | -------------------------------------------------------- |
-| Node pool     | 3 nodes, at least 4 vCPU and 8 GB each                    |
-| Autoscaling   | Cluster autoscaler 3 → 6 nodes; app HPA `minReplicas: 2` |
-| Control plane | A paid tier that carries an uptime SLA                   |
-| Edge          | A load balancer plus an edge rate limiter                |
-
-Capacity is given provider-neutrally on purpose. A 2 vCPU node cannot hold the app's 1 vCPU request
-alongside the platform reserve and the singletons, and some managed services exclude burstable instance
-families from system node pools entirely — check your provider's supported node types before picking an
-instance size. Free control-plane tiers are positioned for development and testing and carry no financially
-backed uptime SLA, so treat the production tier as part of the cost of the SLA rather than an upsell.
-
-Two app replicas are the reason for the third node. One replica cannot be evicted without downtime, which
-makes node drains and rolling upgrades disruptive — see the
-[Kubernetes deployment guide](/self-hosting/setup/kubernetes) for the replica and PodDisruptionBudget
-settings. The edge rate limiter is not optional either: since v5 several public routes are no longer
-throttled by the application server. See [rate limiting](/self-hosting/advanced/rate-limiting).
-
-#### Match the HPA ceiling to the node pool
-
-The chart ships `autoscaling.maxReplicas: 10` against a 1 vCPU request per app pod, so the HPA can ask for
-10 vCPU of app alone. A pool that cannot supply that leaves the extra replicas `Pending` — an HPA does not
-lower its own ceiling. Size the two together:
-
-- Allocatable CPU is roughly `(node vCPU − 0.5) × nodes`.
-- Subtract about 0.6 vCPU for Hub worker, Cube, SpiceDB and its operator.
-- Subtract headroom for the Hub API, which has no request and still uses CPU.
-- What is left, divided by 1 vCPU, is the highest `maxReplicas` the pool can honor.
-
-Six 4-vCPU nodes clear the shipped ceiling of 10, which is why the autoscaler maximum above is 6. A pool
-that stops lower needs `autoscaling.maxReplicas` lowered to match it.
-
-### Managed data services
-
-Run these outside the cluster. They hold the state, and a managed service gives you backups and failover
-that the bundled charts do not.
-
-| Service        | Minimum                                                     |
-| -------------- | ----------------------------------------------------------- |
-| PostgreSQL     | 2 vCores burstable, 64 GB SSD, `pgvector`, PITR backups     |
-| SpiceDB store  | A separate database and login on the same PostgreSQL server |
-| Redis/Valkey   | 250 MB; 1 GB with Envoy rate limiting; more for backlogs    |
-| Object storage | ~50 GB, S3-compatible                                       |
-| Registry       | A basic private registry, if you mirror Formbricks images   |
-
-Formbricks speaks the S3 API only, so object storage has to be S3-compatible — AWS S3, DigitalOcean Spaces,
-Wasabi, StorJ or a self-hosted equivalent. A service without an S3 API, such as Azure Blob Storage, needs an
-S3-compatible gateway in front of it. See [file uploads](/self-hosting/configuration/file-uploads).
-
-Moving PostgreSQL and Redis out of the cluster frees roughly 350m CPU and 640 Mi of memory across the node
-pool, which is what makes a small pool workable.
-
-<Note>
-  Budget for data egress separately. Survey traffic is served to end users, so egress scales with responses
-  rather than with cluster size.
-</Note>
-
 ### Sizing for a specific load
 
-Two questions come up more than any others, and neither is answered by the tables above, because both are
-about rate and volume rather than about the resting stack.
-
-**25,000 responses arriving at once.** Spread over an hour that is roughly 7 writes a second; compressed
-into ten minutes, roughly 42. The per-IP limit of 100 requests a minute on the public response route does
-not throttle a burst like that, because a campaign burst arrives from thousands of distinct IPs. Plan for
-the job queue behind it instead.
-
-A response enqueues several `response-pipeline.process` jobs, not one: `responseCreated` on the initial
-write, one `responseUpdated` each time the SDK saves progress, and `responseFinished` on submission. So the
-job count scales with how many times a respondent's answers are saved, not with the response count — a
-multi-page survey can be several jobs per response. Size Redis for that queue, not for 25,000 entries.
-
-Consumer capacity is `web replicas × BULLMQ_WORKER_COUNT × BULLMQ_WORKER_CONCURRENCY`, all three of which
-default to `1`. That is a count of jobs in flight, not a rate: throughput also depends on how long the
-average `response-pipeline.process` job takes on your instance. Raising `BULLMQ_WORKER_COUNT` or
-`BULLMQ_WORKER_CONCURRENCY` adds no pods, but the work still lands on the same pod's CPU and memory and on
-Redis and Postgres behind it, so measure before raising either. See
+**A burst of responses** is a queue question rather than a request-rate one. Each response enqueues several
+`response-pipeline.process` jobs — `responseCreated`, one `responseUpdated` per progress save, then
+`responseFinished` — so the count scales with how often answers are saved, and consumers default to one job
+in flight per app replica. Size Redis for the deepest backlog you expect: the chart pins
+`maxmemory-policy noeviction`, so a full Redis refuses writes rather than dropping jobs. See
 [job runner](/self-hosting/configuration/job-runner).
 
-<Warning>
-  The app HPA scales on CPU and memory utilization only. Queue depth is not one of its metrics, so a
-  backlog can grow while both targets sit under their thresholds and no replica is added. Backlog-driven
-  scaling needs a queue-depth metric published to the metrics API and added to the HPA yourself.
-</Warning>
+**A large contact list** is storage rather than throughput. Contact attributes are one row per attribute per
+contact, so 50,000 contacts with 10 attributes each is 500,000 rows before a single response is stored.
 
-Redis is the hard limit on that backlog. The chart pins `maxmemory-policy noeviction` so BullMQ cannot
-silently lose jobs, which means a full Redis refuses writes rather than evicting. Enqueue errors are not
-swallowed: the response row is already committed to Postgres, so no answer is lost, but the client still
-gets an error. Retention settings only trim completed and failed jobs — they do not make the queue
-unbounded. Size Redis for the deepest backlog you expect, not for the steady state.
-
-**50,000 contacts.** This is storage and index growth, not throughput. Contact attributes are one row per
-attribute per contact, so 50,000 contacts with 10 attributes each is 500,000 attribute rows before a single
-response is stored. Size PostgreSQL storage from that plus your response retention, and add vCores when
-segment evaluation or dashboard queries start queuing.
-
-<Note>
-  We do not publish a responses-per-second figure per replica. We have not load-tested one, and it would not
-  transfer: a 40-question survey with file uploads is not the same write as a one-question NPS. Use the
-  levers above to size the queue and the storage, then watch both pod CPU and queue depth through your first
-  real campaign — they move independently.
-</Note>
-
-### What this sizing assumes
-
-- No AI features. Self-hosted embeddings or an in-cluster LLM change the node pool completely — use an
-  external endpoint at this size.
-- A single region and no cross-region replication.
-- Peaks handled by autoscaling rather than by permanently provisioned capacity.
-- Object storage outside the cluster, not a bundled in-cluster S3 service.
-
-### What to scale first
-
-1. **Job concurrency**, via `BULLMQ_WORKER_COUNT` and `BULLMQ_WORKER_CONCURRENCY` — no extra pods, but it
-   spends the pod's own CPU and memory, so raise it against a measurement.
-2. **App replicas**, via the HPA — the app is stateless, so this is the cheapest capacity lever. Check the
-   ceiling still fits the node pool.
-3. **PostgreSQL vCores**, once response writes or dashboard queries start queuing.
-4. **Redis**, which becomes the dominant cost at high request rates. If that matters more than the
-   operational simplicity of a managed cache, run Valkey in-cluster instead.
+We publish no responses-per-second figure per replica: it is not load-tested, and a 40-question survey with
+file uploads is not the same write as a one-question NPS. Watch pod CPU and queue depth separately through
+your first campaign — they move independently.
 
 ## **Self-hosting options**
 
