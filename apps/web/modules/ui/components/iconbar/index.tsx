@@ -1,5 +1,6 @@
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Kbd } from "@/modules/ui/components/kbd";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Button } from "../button";
 
@@ -49,11 +50,7 @@ export const IconBar = ({ actions }: IconBarProps) => {
               {action.shortcut ? (
                 // Hidden from the accessible name, which `aria-label` owns; `aria-keyshortcuts`
                 // above is what announces the shortcut itself.
-                <kbd
-                  aria-hidden="true"
-                  className="rounded border border-slate-200 bg-slate-100 px-1.5 py-1 font-mono text-xs leading-none font-semibold text-slate-600">
-                  {action.shortcut.toUpperCase()}
-                </kbd>
+                <Kbd aria-hidden="true">{action.shortcut.toUpperCase()}</Kbd>
               ) : null}
             </Button>
           </TooltipRenderer>
