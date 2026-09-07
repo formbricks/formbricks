@@ -1,13 +1,22 @@
 "use client";
 
-import { ChartBarIcon, ChartColumnIcon, ChartPieIcon, RectangleHorizontalIcon } from "lucide-react";
+import {
+  AreaChartIcon,
+  ChartBarIcon,
+  ChartColumnIcon,
+  ChartPieIcon,
+  LineChartIcon,
+  RectangleHorizontalIcon,
+} from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
 import {
+  type TAreaDisplay,
   type TBarOrientation,
   type TPieDisplay,
   resolveChartDisplay,
+  supportsAreaDisplay,
   supportsBarOrientation,
   supportsPieDisplay,
 } from "@/modules/ee/analysis/charts/lib/chart-display";
@@ -28,15 +37,17 @@ interface ChartDisplaySettingsProps {
  */
 export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<ChartDisplaySettingsProps>) {
   const { t } = useTranslation();
-  const { barOrientation, pieDisplay } = resolveChartDisplay(config);
+  const { barOrientation, pieDisplay, areaDisplay } = resolveChartDisplay(config);
   const showBarOrientation = supportsBarOrientation(chartType);
   const showPieDisplay = supportsPieDisplay(chartType);
+  const showAreaDisplay = supportsAreaDisplay(chartType);
   // Generated rather than hardcoded: two of these panels on one page would otherwise share ids.
   const barOrientationLabelId = useId();
   const pieDisplayLabelId = useId();
+  const areaDisplayLabelId = useId();
 
   // For a chart type with no applicable setting the section would be a heading with nothing under it.
-  if (!showBarOrientation && !showPieDisplay) return null;
+  if (!showBarOrientation && !showPieDisplay && !showAreaDisplay) return null;
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-xs">
@@ -45,6 +56,28 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
       </h3>
 
       <div className="flex flex-col gap-4">
+        {showAreaDisplay && (
+          <div className="flex flex-col gap-2">
+            <Label id={areaDisplayLabelId}>{t("workspace.analysis.charts.area_display")}</Label>
+            <OptionsSwitch
+              aria-labelledby={areaDisplayLabelId}
+              options={[
+                {
+                  value: "filled",
+                  label: t("workspace.analysis.charts.area_display_filled"),
+                  icon: <AreaChartIcon className="size-4" />,
+                },
+                {
+                  value: "line",
+                  label: t("workspace.analysis.charts.area_display_line"),
+                  icon: <LineChartIcon className="size-4" />,
+                },
+              ]}
+              currentOption={areaDisplay}
+              handleOptionChange={(value) => onChange({ ...config, areaDisplay: value as TAreaDisplay })}
+            />
+          </div>
+        )}
         {showPieDisplay && (
           <div className="flex flex-col gap-2">
             <Label id={pieDisplayLabelId}>{t("workspace.analysis.charts.pie_display")}</Label>

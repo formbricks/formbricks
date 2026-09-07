@@ -97,8 +97,10 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
           open the element picker at all. Letting Radix render its own `<button>` fixes that and
           gives tests a real button role; the data-testid keeps them off the rendered copy, which
           also appears in the live preview. */}
-      <Collapsible.CollapsibleTrigger className="group h-full w-full" data-testid="add-element-trigger">
-        <div className="inline-flex">
+      <Collapsible.CollapsibleTrigger
+        className="group h-full w-full text-left"
+        data-testid="add-element-trigger">
+        <div className="flex">
           <div className="flex w-10 items-center justify-center rounded-l-[7px] bg-brand-dark group-aria-expanded:rounded-br group-aria-expanded:rounded-bl-none">
             <PlusIcon className="size-5 text-white" />
           </div>

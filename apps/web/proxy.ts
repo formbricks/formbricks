@@ -117,6 +117,16 @@ export const config = {
   matcher: [
     // Keep asset exclusions segment-bound: every dynamic route must traverse Proxy so callers cannot
     // bypass the private client-IP header overwrite by choosing an asset-like route prefix.
-    "/((?!_next/(?:static|image)(?:/|$)|(?:favicon\\.ico|sitemap\\.xml|robots\\.txt)$|(?:js|css|images|fonts|icons|public|animated-bgs)(?:/|$)).*)",
+    //
+    // The `\\.` escapes stay, and S7780's `String.raw` fix must NOT be applied here: Next.js reads this
+    // matcher by statically parsing the file, and its extractor
+    // (`next/dist/build/analysis/extract-const-value.js`, 16.2.11) understands string literals,
+    // template literals, arrays and objects — but not a `TaggedTemplateExpression`. Verified against
+    // Next's own SWC parser: `String.raw` yields `Unsupported node type "TaggedTemplateExpression" at
+    // "config.matcher[0]"`, which throws in dev and, in a production build, only logs an error and
+    // leaves `config` undefined — so `parseMiddlewareConfig` receives nothing and the matcher is
+    // silently DROPPED, running Proxy on every static asset and voiding the exclusions above. A plain
+    // template literal parses, but needs the same `\\.` escapes, so it does not satisfy the rule either.
+    "/((?!_next/(?:static|image)(?:/|$)|(?:favicon\\.ico|sitemap\\.xml|robots\\.txt)$|(?:js|css|images|fonts|icons|public|animated-bgs)(?:/|$)).*)", // NOSONAR(typescript:S7780) -- String.raw breaks Next.js's static matcher extraction; see above
   ],
 };

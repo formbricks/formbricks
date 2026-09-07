@@ -2,6 +2,8 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { WorkspaceTeam } from "@formbricks/database/prisma";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getWorkspaceTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/lib/utils";
 import {
   TGetWorkspaceTeamsFilter,
@@ -59,6 +61,12 @@ export const createWorkspaceTeam = async (
       },
     });
 
+    await runPostCommitProjection("api_v2_workspace_team_create", () =>
+      reconcileTeamWorkspaceRelationships({
+        workspaceTeamGrants: [{ teamId, workspaceId }],
+      })
+    );
+
     return ok(workspaceTeam);
   } catch (error) {
     return err({
@@ -86,6 +94,12 @@ export const updateWorkspaceTeam = async (
       data: teamInput,
     });
 
+    await runPostCommitProjection("api_v2_workspace_team_update", () =>
+      reconcileTeamWorkspaceRelationships({
+        workspaceTeamGrants: [{ teamId, workspaceId }],
+      })
+    );
+
     return ok(updatedWorkspaceTeam);
   } catch (error) {
     return err({
@@ -110,6 +124,12 @@ export const deleteWorkspaceTeam = async (
         },
       },
     });
+
+    await runPostCommitProjection("api_v2_workspace_team_delete", () =>
+      reconcileTeamWorkspaceRelationships({
+        workspaceTeamGrants: [{ teamId, workspaceId }],
+      })
+    );
 
     return ok(deletedWorkspaceTeam);
   } catch (error) {

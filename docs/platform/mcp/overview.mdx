@@ -102,6 +102,13 @@ searchable a short while after they arrive, and records without text are never s
   / `BETTER_AUTH_URL`). The discovery metadata and browser redirects are built from that URL, so an
   `http://localhost` or misconfigured origin will break the OAuth flow for remote clients. See the
   [self-hosting configuration](/self-hosting/configuration/environment-variables).
+
+  Kubernetes deployments that cannot reach their own public origin can set `MCP_OAUTH_JWKS_URL` to
+  the internal Formbricks `/api/auth/jwks` endpoint. This changes only the server-side key fetch;
+  OAuth discovery, issuers, redirects, cookies, and audiences remain on the public URL. The standard
+  path applies only when Formbricks is not mounted below a custom subpath. For an installation mounted
+  at `/formbricks`, configure the complete internal URL, for example
+  `http://formbricks:3000/formbricks/api/auth/jwks`.
 </Note>
 
 ## Next steps

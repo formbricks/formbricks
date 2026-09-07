@@ -7,4 +7,5 @@ export enum PrismaErrorType {
   ForeignKeyConstraintViolation = "P2003",
   RelatedRecordNotFound = "P2015",
   RecordNotFound = "P2025",
+  TransactionConflict = "P2034",
 }

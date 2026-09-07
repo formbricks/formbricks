@@ -7,12 +7,14 @@ import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
+import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { checkFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
@@ -45,9 +47,9 @@ async function executeWidgetQuery(
   try {
     const tenant = await checkFeedbackDirectoryAccess({
       feedbackDirectoryId,
-      organizationId,
       workspaceId,
       userId,
+      minPermission: "read",
       source: "dashboards.widget",
     });
 
@@ -125,7 +127,7 @@ export async function DashboardDetailPage({
   }
 
   const [directories, aiConfig] = await Promise.all([
-    getFeedbackDirectoriesByWorkspaceId(workspaceId),
+    getAuthorizedWorkspaceFeedbackDirectories(session.user.id, workspaceId),
     getOrganizationAIConfig(organization.id),
   ]);
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig);
@@ -149,7 +151,12 @@ export async function DashboardDetailPage({
     widgetDataPromises.set(
       widget.id,
       executeWidgetQuery(
-        applyDashboardDateFilter(widget.chart.query, dateFilter),
+        // A big number's query is normalized here too, not only in the builder: widgets saved
+        // before that existed still carry a grouping the single value cannot come from.
+        prepareQueryForChartType(
+          applyDashboardDateFilter(widget.chart.query, dateFilter),
+          resolveChartType(widget.chart.type)
+        ),
         widget.chart.feedbackDirectoryId,
         workspaceId,
         organization.id,

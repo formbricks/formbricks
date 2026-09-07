@@ -123,12 +123,71 @@ Run these commands from the `packages/database` directory:
   - **Note**: Only use Prisma raw queries in data migrations for better performance and to avoid type errors
 - **`pnpm db:seed`**: Run the seeding script
 - **`pnpm db:seed:clear`**: Clear data and run the seeding script
+- **`pnpm lint:migrations migration/<timestamp>/migration.sql`**: Lint one or more new schema
+  migrations with Squawk
+- **`pnpm check:migration-drift`**: Compare the complete checked-in SQL migration history with the
+  Prisma schema (requires a disposable `SHADOW_DATABASE_URL`)
+
+### Migration safety checks
+
+CI runs Squawk only on schema migrations added, copied, renamed, or modified by the pull request. Existing
+migrations are the baseline and are not linted again. To check a migration locally from this package, run:
+
+```bash
+pnpm lint:migrations migration/<timestamp>/migration.sql
+```
+
+Squawk checks PostgreSQL 15 syntax, which remains relevant to older one-click installations in the
+[self-hosted migration guide](../../docs/self-hosting/advanced/migration.mdx#v27), while CI replays the complete
+history on PostgreSQL 18. Prisma 7.8 does not add a transaction wrapper around migration SQL, so concurrent index
+checks remain enabled and migrations must add `BEGIN` and `COMMIT` explicitly when atomic execution is required.
+
+`pnpm create-migration` copies Prisma's generated SQL unchanged. Before committing every generated migration:
+
+1. Add `SET lock_timeout = '1s';` at the top.
+2. Add explicit transaction boundaries when the statements must be atomic.
+3. Change eligible index builds to `CREATE INDEX CONCURRENTLY`, which cannot run inside a transaction.
+4. Run `pnpm lint:migrations migration/<timestamp>/migration.sql` and document targeted exceptions.
+
+Squawk cannot inspect statements hidden inside a `DO $$ ... $$` block. Use such blocks only when PostgreSQL
+procedural logic is required, not to bypass the migration safety checks.
+
+If a warning is intentional, place a statement-level ignore immediately before the affected statement and
+document why it is safe. Package-level exclusions are reserved for rules that conflict with Prisma's generated
+SQL or deployment model; do not add one for a migration-specific exception or use historical path allowlists.
+For example:
+
+```sql
+SET lock_timeout = '1s';
+-- A preceding data migration guarantees that Example has no rows.
+-- squawk-ignore adding-required-field
+ALTER TABLE "Example" ADD COLUMN IF NOT EXISTS "slug" TEXT NOT NULL;
+```
+
+Squawk enforces a short lock timeout, but intentionally does not require a statement timeout. If an operation
+needs one, size it for that operation and table; a blanket value can abort legitimate large-table index builds.
+
+The drift check replays only checked-in `migration.sql` files, so interleaved TypeScript data migrations are
+excluded. Data migrations must remain data-only: DDL in a `migration.ts` file is invisible to the replay and
+causes false drift. Prisma resets the shadow database while evaluating migration history. The helper requires
+the database name to contain `shadow` and rejects the primary database identity, but that marker is only a
+fail-safe: still use a dedicated disposable database and never point this variable at a development, staging, or
+production database:
+
+```bash
+SHADOW_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/formbricks_migration_shadow?schema=public" \
+  pnpm check:migration-drift
+```
+
+Pass `SHADOW_DATABASE_URL` inline or through ephemeral CI configuration. Do not persist it in `.env`, because
+`prisma.config.ts` would then activate that shadow database for other Prisma migration commands as well.
 
 ### Available Scripts
 
 ```json
 {
   "build": "pnpm generate && vite build",
+  "check:migration-drift": "Compare SQL migration history with the Prisma schema",
   "create-migration": "Create new schema migration",
   "db:migrate:deploy": "Apply migrations in production",
   "db:migrate:dev": "Apply migrations in development",
@@ -138,7 +197,8 @@ Run these commands from the `packages/database` directory:
   "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev && pnpm db:seed",
   "dev": "vite build --watch",
   "generate": "prisma generate --config ./prisma.config.ts",
-  "generate-data-migration": "Create new data migration"
+  "generate-data-migration": "Create new data migration",
+  "lint:migrations": "Lint one or more schema migration SQL files"
 }
 ```
 
@@ -180,6 +240,26 @@ By default, the seed script uses `upsert` to ensure it can be run multiple times
    - Generates the new `migration.sql` file in the custom directory
    - Copies the file to Prisma's internal directory
    - Applies the migration to the database
+
+### Indexes Prisma cannot express
+
+Prisma's `@@index` has no `where`, so a **partial index** can only live in hand-written migration SQL. When a
+model needs one, declare **no** `@@index` for it at all and leave a comment on the model pointing at the
+migration — do not also declare an approximate non-partial copy.
+
+Both ways of keeping one are worse than keeping none. Under the same index name, `prisma db push` sees a name
+match with a different definition, drops the index and recreates it without the predicate, and the migration's
+`CREATE INDEX IF NOT EXISTS` then skips it — leaving a silently wrong shape. Under a different name, dev
+databases accumulate both sets.
+
+Deployments are unaffected either way: `prisma migrate deploy` never reads the schema file. A developer who runs
+`db push` must first inspect `pg_indexes.indexdef`, drop any same-name non-partial replacement, and only then rerun
+the migration (or its exact partial-index statements). `CREATE INDEX IF NOT EXISTS` cannot repair a same-name
+index with the wrong predicate because PostgreSQL treats the existing name as success. This is the same contract
+any hand-written trigger or function in a migration already lives under — make the migration rerunnable, but do
+not mistake idempotency for shape validation.
+
+`AuthzedProjectionOutbox` is the worked example.
 
 ### Adding a Data Migration
 

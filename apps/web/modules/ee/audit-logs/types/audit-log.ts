@@ -32,6 +32,7 @@ export const ZAuditTarget = z.enum([
   "cubeQuery",
   "feedbackDirectory",
   "feedbackRecord",
+  "feedbackSource",
 ]);
 export const ZAuditAction = z.enum([
   "created",

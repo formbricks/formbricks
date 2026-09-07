@@ -53,17 +53,60 @@ export const findElementLocation = (
 // ============================================
 
 /**
- * Renumbers all blocks sequentially (Block 1, Block 2, Block 3, etc.)
- * This ensures block names stay in sync with their positions
- * @param blocks - Array of blocks to renumber
- * @returns Array of blocks with updated sequential names
+ * Max length of a creator-set block name, enforced in the editor input.
+ * Deliberately not added to ZSurveyBlock: `name` is a shipped API field, and tightening it
+ * would reject surveys whose existing (e.g. AI-generated) names are longer.
  */
-export const renumberBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] => {
-  return blocks.map((block, index) => ({
-    ...block,
-    name: `Block ${index + 1}`,
-  }));
-};
+export const BLOCK_NAME_MAX_LENGTH = 100;
+
+/**
+ * Matches the auto-generated block name pattern ("Block 1", "Block 2", ...)
+ * Names seeded at block creation follow this shape; a name a creator typed does not.
+ */
+const AUTO_BLOCK_NAME_REGEX = /^Block \d+$/;
+
+/**
+ * Builds the auto-generated name for a block at a given position
+ * @param index - Zero-based position of the block
+ * @returns The auto-generated name, e.g. "Block 1"
+ */
+export const getAutoBlockName = (index: number): string => `Block ${index + 1}`;
+
+/**
+ * Checks whether a block name is one this app generated rather than one the creator typed.
+ *
+ * A blank name is deliberately NOT auto-generated: clearing the field is an edit in progress, and
+ * treating it as auto would overwrite it with "Block N" the moment the list was reordered. An
+ * empty name fails ZSurveyBlock's `name` min(1) at save time instead, which flags the block.
+ * @param name - The block name to check
+ * @returns true if the name was generated from the block's position
+ */
+export const isAutoBlockName = (name: string): boolean => AUTO_BLOCK_NAME_REGEX.test(name.trim());
+
+/**
+ * Resolves the label to display for a block: its own name, falling back to "Block N" from the
+ * block's current position only when the name is blank.
+ * @param block - The block to label
+ * @param index - Zero-based position of the block in the survey
+ * @param t - Translation function
+ * @returns The label to render
+ */
+export const getBlockDisplayName = (block: TSurveyBlock, index: number, t: TFunction): string =>
+  block.name.trim() || t("workspace.surveys.edit.block_n", { blockNumber: index + 1 });
+
+/**
+ * Renumbers only the blocks still carrying an auto-generated name, so their number keeps matching
+ * their position after the list is reordered.
+ *
+ * This used to renumber every block unconditionally, which is why a name a creator typed never
+ * survived an add, delete, duplicate or move. A name that is not auto-generated is now left alone.
+ * @param blocks - Array of blocks to renumber
+ * @returns Array of blocks with auto-generated names resequenced
+ */
+export const renumberAutoNamedBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] =>
+  blocks.map((block, index) =>
+    isAutoBlockName(block.name) ? { ...block, name: getAutoBlockName(index) } : block
+  );
 
 /**
  * Adds a new block to the survey. Always generates a new CUID for the block ID to prevent conflicts
@@ -84,7 +127,7 @@ export const addBlock = (
   const newBlock: TSurveyBlock = {
     ...block,
     id: createId(),
-    name: block.name || t("workspace.surveys.edit.untitled_block"),
+    name: block.name || getAutoBlockName(index ?? blocks.length),
     elements: block.elements || [],
     buttonLabel: createI18nString(block.buttonLabel || t("templates.next"), []),
     backButtonLabel: createI18nString(block.backButtonLabel || t("templates.back"), []),
@@ -100,10 +143,7 @@ export const addBlock = (
     blocks.splice(index, 0, newBlock);
   }
 
-  // Renumber blocks sequentially after adding
-  const renumberedBlocks = renumberBlocks(blocks);
-
-  updatedSurvey.blocks = renumberedBlocks;
+  updatedSurvey.blocks = renumberAutoNamedBlocks(blocks);
   return ok(updatedSurvey);
 };
 
@@ -160,12 +200,9 @@ export const deleteBlock = (survey: TSurvey, blockId: string): Result<TSurvey, E
     return err(new Error(`Block with ID "${blockId}" not found`));
   }
 
-  // Renumber blocks sequentially after deletion
-  const renumberedBlocks = renumberBlocks(filteredBlocks);
-
   return ok({
     ...survey,
-    blocks: renumberedBlocks,
+    blocks: renumberAutoNamedBlocks(filteredBlocks),
   });
 };
 
@@ -192,7 +229,8 @@ export const duplicateBlock = (survey: TSurvey, blockId: string): Result<TSurvey
 
   // Assign new IDs
   duplicatedBlock.id = createId();
-  // Name will be set by renumberBlocks to maintain sequential naming
+  // Name is carried over from the source block: a creator's title is worth keeping on the
+  // copy, and an auto-generated one resolves to the duplicate's own position when displayed.
 
   // Generate new element IDs to avoid conflicts
   duplicatedBlock.elements = duplicatedBlock.elements.map((element) => ({
@@ -209,12 +247,9 @@ export const duplicateBlock = (survey: TSurvey, blockId: string): Result<TSurvey
   const updatedBlocks = [...blocks];
   updatedBlocks.splice(blockIndex + 1, 0, duplicatedBlock);
 
-  // Renumber blocks sequentially after duplication
-  const renumberedBlocks = renumberBlocks(updatedBlocks);
-
   return ok({
     ...survey,
-    blocks: renumberedBlocks,
+    blocks: renumberAutoNamedBlocks(updatedBlocks),
   });
 };
 
@@ -250,12 +285,9 @@ export const moveBlock = (
   // Swap using destructuring assignment
   [blocks[blockIndex], blocks[targetIndex]] = [blocks[targetIndex], blocks[blockIndex]];
 
-  // Renumber blocks sequentially after reordering
-  const renumberedBlocks = renumberBlocks(blocks);
-
   return ok({
     ...survey,
-    blocks: renumberedBlocks,
+    blocks: renumberAutoNamedBlocks(blocks),
   });
 };
 

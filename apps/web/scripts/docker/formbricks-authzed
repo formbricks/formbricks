@@ -1,0 +1,5 @@
+#!/bin/sh
+
+set -eu
+
+exec node /home/nextjs/authzed-cli/index.mjs "$@"

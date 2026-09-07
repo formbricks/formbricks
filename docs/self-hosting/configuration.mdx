@@ -1,0 +1,103 @@
+---
+title: "Configuration"
+sidebarTitle: "Overview"
+description: "Everything you can configure on a self-hosted Formbricks instance, and where each setting lives."
+icon: "sliders"
+---
+
+A fresh instance runs with sensible defaults. Everything below is optional, and most of it is a matter of adding environment variables and restarting your containers.
+
+<Note>
+  Almost every setting on this page is an environment variable. [Environment
+  Variables](/self-hosting/configuration/environment-variables) is the full list, and the page to read
+  first.
+</Note>
+
+## Getting mail out
+
+Formbricks sends verification mail, invitations, email follow-ups and email surveys. None of that works until you point the instance at an SMTP server.
+
+<CardGroup cols={2}>
+  <Card title="SMTP" icon="envelope" href="/self-hosting/configuration/smtp">
+    Point Formbricks at a mail server.
+  </Card>
+
+  <Card title="Job Runner" icon="gears" href="/self-hosting/configuration/job-runner">
+    Run the background worker that sends the mail and processes queued work.
+  </Card>
+</CardGroup>
+
+## Reaching your instance
+
+Where Formbricks lives on the network, and how browsers get to it.
+
+<CardGroup cols={2}>
+  <Card title="Domain Configuration" icon="globe" href="/self-hosting/configuration/domain-configuration">
+    Set the public-facing URL your instance answers on.
+  </Card>
+
+  <Card title="Custom SSL Certificate" icon="lock" href="/self-hosting/configuration/custom-ssl">
+    Bring your own certificate to the One-Click setup.
+  </Card>
+
+  <Card title="Custom Subpath" icon="folder-tree" href="/self-hosting/configuration/custom-subpath">
+    Serve Formbricks under a path prefix instead of a domain root.
+  </Card>
+
+  <Card title="CDN" icon="server" href="/self-hosting/configuration/cdn">
+    Cache public traffic without serving stale survey assets after an upgrade.
+  </Card>
+</CardGroup>
+
+## Storing what people upload
+
+<Card title="File Uploads" icon="upload" href="/self-hosting/configuration/file-uploads">
+  Configure storage for survey images, file-upload answers and workspace assets.
+</Card>
+
+## Connecting an LLM
+
+<Card title="AI Features" icon="sparkles" href="/self-hosting/advanced/enterprise-features/ai-features">
+  Point the instance at Qwen/vLLM, Google Cloud, Azure or Bedrock, and turn AI on for your organization.
+</Card>
+
+## Signing in
+
+Out of the box people sign in with an email address and a password. Point the instance at your own identity provider instead and sign-in follows the rules you already enforce there.
+
+<Note>
+  Single Sign-On is part of the [Enterprise Edition](/self-hosting/advanced/license) — every provider
+  below, not only SAML. SAML additionally needs the `saml` entitlement on the licence.
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Authentication Behavior" icon="user" href="/self-hosting/auth-behavior">
+    Who may sign up, and whether an invitation is required.
+  </Card>
+
+  <Card title="Open ID Connect" icon="id-card" href="/self-hosting/configuration/auth-sso/open-id-connect">
+    The generic OIDC setup. Start here if your provider is not listed separately.
+  </Card>
+
+  <Card title="Keycloak OIDC" icon="shield-halved" href="/self-hosting/configuration/auth-sso/keycloak-oidc">
+    OIDC against a Keycloak realm.
+  </Card>
+
+  <Card title="Azure AD OAuth" icon="microsoft" href="/self-hosting/configuration/auth-sso/azure-ad-oauth">
+    Microsoft Entra ID, formerly Azure AD.
+  </Card>
+
+  <Card title="Google OAuth" icon="google" href="/self-hosting/configuration/auth-sso/google-oauth">
+    Google Workspace accounts.
+  </Card>
+
+  <Card title="SAML SSO" icon="building-lock" href="/self-hosting/configuration/auth-sso/saml-sso">
+    SAML 2.0, for providers that do not speak OIDC.
+  </Card>
+</CardGroup>
+
+## Connecting third-party tools
+
+[Airtable](/self-hosting/configuration/integrations/airtable), [Google Sheets](/self-hosting/configuration/integrations/google-sheets), [Notion](/self-hosting/configuration/integrations/notion) and [Slack](/self-hosting/configuration/integrations/slack) each need an OAuth app you register with the service, and its credentials as environment variables. [n8n](/self-hosting/configuration/integrations/n8n), [Zapier](/self-hosting/configuration/integrations/zapier) and [ActivePieces](/self-hosting/configuration/integrations/activepieces) connect the other way round, through a Formbricks API key, and need no server configuration at all.
+
+Still struggling or something not working as expected? [Join our GitHub Discussions](https://github.com/formbricks/formbricks/discussions) and we'd be glad to assist you!

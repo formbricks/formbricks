@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TypeOf } from "zod";
 import { prisma } from "@formbricks/database";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import {
   TGetWorkspaceTeamsFilter,
   TWorkspaceTeamInput,
@@ -24,6 +25,10 @@ vi.mock("@formbricks/database", () => ({
     },
     $transaction: vi.fn(),
   },
+}));
+
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
 
 describe("WorkspaceTeams Lib", () => {
@@ -65,6 +70,9 @@ describe("WorkspaceTeams Lib", () => {
         teamId: "t1",
       } as TWorkspaceTeamInput & { workspaceId: string });
       expect(result.ok).toBe(true);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+        workspaceTeamGrants: [{ teamId: "t1", workspaceId: "p1" }],
+      });
       if (result.ok) {
         expect((result.data as any).id).toBe("ptx");
       }
@@ -95,6 +103,9 @@ describe("WorkspaceTeams Lib", () => {
         typeof ZWorkspaceZTeamUpdateSchema
       >);
       expect(result.ok).toBe(true);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+        workspaceTeamGrants: [{ teamId: "t1", workspaceId: "p1" }],
+      });
       if (result.ok) {
         expect(result.data.permission).toBe("READ");
       }
@@ -121,6 +132,9 @@ describe("WorkspaceTeams Lib", () => {
       });
       const result = await deleteWorkspaceTeam("t1", "p1");
       expect(result.ok).toBe(true);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+        workspaceTeamGrants: [{ teamId: "t1", workspaceId: "p1" }],
+      });
       if (result.ok) {
         expect(result.data.workspaceId).toBe("p1");
         expect(result.data.teamId).toBe("t1");

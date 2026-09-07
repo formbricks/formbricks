@@ -3,10 +3,10 @@ import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/
 import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
+import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
@@ -74,7 +74,7 @@ export const UnifyFeedbackSourcesPage = async (
   const [feedbackSources, surveys, directories] = await Promise.all([
     getFeedbackSourcesWithMappings(workspaceId),
     getSurveys(workspaceId),
-    getFeedbackDirectoriesByWorkspaceId(workspaceId),
+    getAuthorizedWorkspaceFeedbackDirectories(session.user.id, workspaceId),
   ]);
 
   if (directories.length === 0) {

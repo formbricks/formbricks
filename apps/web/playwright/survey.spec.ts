@@ -958,8 +958,9 @@ test.describe("Testing Survey with advanced logic", async () => {
         timeout: 15000,
       });
 
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(5000);
+      // No settle wait here on purpose: the cell assertions below auto-wait, and
+      // `waitForLoadState("networkidle")` never resolved on this page — it burned the whole 8 minute
+      // test timeout, then a retry, which is what pushed the Playwright step past its 15 minute cap.
 
       // Look for any cell containing "32" or a score-related value
       const scoreCell = page.getByRole("cell").filter({ hasText: /^32/ });

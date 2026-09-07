@@ -1,16 +1,11 @@
 "use client";
 
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import Calendar from "react-calendar";
 import { useTranslation } from "react-i18next";
-import { formatDateForDisplay } from "@/lib/utils/datetime";
+import { formatLocalDay, parseLocalDay } from "@/lib/utils/datetime";
 import { DASHBOARD_DATE_PRESETS } from "@/modules/ee/analysis/lib/date-presets";
 import { getTranslatedDatePresetLabel } from "@/modules/ee/analysis/lib/schema-definition";
-import { Button } from "@/modules/ui/components/button";
-import "@/modules/ui/components/date-picker/styles.css";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { DateRangePicker } from "@/modules/ui/components/date-picker";
 import {
   Select,
   SelectContent,
@@ -30,25 +25,16 @@ interface DashboardDateFilterProps {
   onChange: (filter: TDashboardDateFilter | null) => void;
 }
 
-// Custom-range bounds serialize with the local `format(date, "yyyy-MM-dd")` below, so they must be
-// parsed back as local calendar days too. `new Date("YYYY-MM-DD")` parses as UTC midnight, which
-// shows (and re-emits) a day earlier for anyone west of UTC — parse the parts as local instead to
-// keep the round trip symmetric.
-const parseLocalDate = (iso: string): Date => {
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(year, month - 1, day);
-};
-
 export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateFilterProps>) => {
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? "en-US";
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
   const [isCustomMode, setIsCustomMode] = useState(value?.type === "custom");
   const [customStart, setCustomStart] = useState<Date | null>(
-    value?.type === "custom" ? parseLocalDate(value.range[0]) : null
+    value?.type === "custom" ? parseLocalDay(value.range[0]) : null
   );
   const [customEnd, setCustomEnd] = useState<Date | null>(
-    value?.type === "custom" ? parseLocalDate(value.range[1]) : null
+    value?.type === "custom" ? parseLocalDay(value.range[1]) : null
   );
 
   // Query-only navigation (back/forward, or restoring a persisted filter) keeps this component
@@ -57,8 +43,8 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
   useEffect(() => {
     if (value?.type === "custom") {
       setIsCustomMode(true);
-      setCustomStart(parseLocalDate(value.range[0]));
-      setCustomEnd(parseLocalDate(value.range[1]));
+      setCustomStart(parseLocalDay(value.range[0]));
+      setCustomEnd(parseLocalDay(value.range[1]));
     } else {
       setIsCustomMode(false);
     }
@@ -75,7 +61,7 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
   // previous view rather than navigating to an invalid query.
   const emitCustom = (start: Date | null, end: Date | null) => {
     if (start && end) {
-      onChange({ type: "custom", range: [format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd")] });
+      onChange({ type: "custom", range: [formatLocalDay(start), formatLocalDay(end)] });
     }
   };
 
@@ -121,50 +107,16 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
       </Select>
 
       {selectValue === CUSTOM_VALUE && (
-        <div className="flex items-center gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="justify-start bg-white text-left font-normal">
-                <CalendarIcon className="mr-2 size-4" />
-                {customStart
-                  ? formatDateForDisplay(customStart, locale)
-                  : t("workspace.analysis.charts.start_date")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                onChange={(v) => {
-                  const date = v instanceof Date ? v : new Date();
-                  setCustomStart(date);
-                  emitCustom(date, customEnd);
-                }}
-                value={customStart || undefined}
-              />
-            </PopoverContent>
-          </Popover>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="justify-start bg-white text-left font-normal">
-                <CalendarIcon className="mr-2 size-4" />
-                {customEnd
-                  ? formatDateForDisplay(customEnd, locale)
-                  : t("workspace.analysis.charts.end_date")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                onChange={(v) => {
-                  const date = v instanceof Date ? v : new Date();
-                  setCustomEnd(date);
-                  emitCustom(customStart, date);
-                }}
-                value={customEnd || undefined}
-                minDate={customStart || undefined}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <DateRangePicker
+          value={{ from: customStart ?? undefined, to: customEnd ?? undefined }}
+          locale={locale}
+          triggerClassName="w-64"
+          onChange={({ from, to }) => {
+            setCustomStart(from);
+            setCustomEnd(to);
+            emitCustom(from, to);
+          }}
+        />
       )}
     </div>
   );

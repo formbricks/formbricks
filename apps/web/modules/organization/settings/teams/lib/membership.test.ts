@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import {
   deleteMembership,
   getMembersByOrganizationId,
@@ -28,6 +31,12 @@ vi.mock("@/lib/constants", () => ({ ITEMS_PER_PAGE: 2 }));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
 vi.mock("react", () => ({ cache: (fn: Function) => fn }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
+vi.mock("@/lib/authzed/organization-membership", () => ({
+  reconcileOrganizationMembership: vi.fn(),
+}));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
 
 const organizationId = "org-1";
 const userId = "user-1";
@@ -108,12 +117,68 @@ describe("getOrganizationOwnerCount", () => {
 describe("deleteMembership", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.$transaction).mockImplementation(async (transaction) => {
+      if (typeof transaction !== "function") {
+        throw new Error("Expected an interactive transaction");
+      }
+
+      return transaction(prisma as never);
+    });
   });
   test("deletes membership and returns deleted team memberships", async () => {
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
-    vi.mocked(prisma.$transaction).mockResolvedValue([{}, {}]);
     const result = await deleteMembership(userId, organizationId);
     expect(result[0].teamId).toBe(teamId);
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    });
+    expect(prisma.teamUser.deleteMany).toHaveBeenCalledWith({
+      where: {
+        userId,
+        team: {
+          organizationId,
+        },
+      },
+    });
+    expect(prisma.membership.delete).toHaveBeenCalledWith({
+      where: {
+        userId_organizationId: {
+          organizationId,
+          userId,
+        },
+      },
+    });
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith(organizationId, userId);
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [{ teamId, userId }],
+    });
+  });
+  test("retries a serializable transaction conflict up to a successful attempt", async () => {
+    const transactionConflict = new Prisma.PrismaClientKnownRequestError("transaction conflict", {
+      code: PrismaErrorType.TransactionConflict,
+      clientVersion: "1.0.0",
+    });
+    vi.mocked(prisma.$transaction).mockRejectedValueOnce(transactionConflict);
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
+
+    await expect(deleteMembership(userId, organizationId)).resolves.toEqual([mockTeamMembership]);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(1);
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledTimes(1);
+  });
+  test("stops retrying a serializable transaction conflict after three attempts", async () => {
+    const transactionConflict = new Prisma.PrismaClientKnownRequestError("transaction conflict", {
+      code: PrismaErrorType.TransactionConflict,
+      clientVersion: "1.0.0",
+    });
+    vi.mocked(prisma.$transaction).mockRejectedValue(transactionConflict);
+
+    await expect(deleteMembership(userId, organizationId)).rejects.toThrow(DatabaseError);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(3);
+    expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
+    expect(reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
   });
   test("throws DatabaseError on prisma error", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("db", {

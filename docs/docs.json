@@ -308,6 +308,7 @@
           {
             "group": "Configuration",
             "pages": [
+              "self-hosting/configuration",
               "self-hosting/configuration/custom-ssl",
               "self-hosting/configuration/environment-variables",
               "self-hosting/configuration/job-runner",
@@ -349,6 +350,7 @@
             "group": "Advanced",
             "pages": [
               "self-hosting/advanced/migration",
+              "self-hosting/advanced/authzed-operations",
               "self-hosting/advanced/migrating-surveys",
               "self-hosting/advanced/license",
               "self-hosting/advanced/license-activation",
@@ -426,7 +428,8 @@
                 "icon": "shield",
                 "pages": [
                   "development/standards/qa/code-reviews",
-                  "development/standards/qa/testing-methodology"
+                  "development/standards/qa/testing-methodology",
+                  "development/standards/qa/screen-reader-pass"
                 ]
               }
             ]

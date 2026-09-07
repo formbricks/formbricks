@@ -114,6 +114,7 @@ export const NotificationSwitch = ({
           break;
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount; re-running would re-fire the switch change and toast
   }, []);
 
   return (

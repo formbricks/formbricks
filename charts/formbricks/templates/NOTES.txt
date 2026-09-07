@@ -52,10 +52,7 @@ Database (PostgreSQL) Access:
    - **Username**: `{{ .Values.postgresql.auth.username }}`
 {{- else if .Values.postgresql.externalDatabaseUrl }}
    You're using an external PostgreSQL database.
-   Connection URL:
-   ```sh
-   echo "{{ .Values.postgresql.externalDatabaseUrl }}"
-   ```
+   The connection URL is intentionally omitted from these notes because it may contain credentials.
 {{- end }}
 
 ---
@@ -173,6 +170,36 @@ External Secrets:
 {{- end }}
 
 ---
+
+{{- if .Values.authzed.enabled }}
+AuthZed / SpiceDB Operations:
+
+   SpiceDB is configured in `{{ .Values.authzed.mode }}` mode. It is not part of the Formbricks
+   readiness probe, and its gRPC endpoint should remain private.
+
+   Check the release-matched client connection:
+   ```sh
+   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed health
+   ```
+
+   Check whether the installed authorization schema matches this Formbricks release:
+   ```sh
+   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed schema check
+   ```
+
+   Before upgrading an existing installation to v6, complete the release-matched preparation and
+   read-only gate, then set `authzed.migrationAcknowledged=true`:
+   ```sh
+   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed upgrade prepare
+   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed upgrade check
+   ```
+
+   Schema application and relationship repair are explicit operator actions and never run as Helm
+   hooks. Read the safeguards and backup requirements before changing authorization state:
+   https://formbricks.com/docs/self-hosting/advanced/authzed-operations
+
+---
+{{- end }}
 
 Persistence:
 

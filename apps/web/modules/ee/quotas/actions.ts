@@ -4,8 +4,8 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyQuotaInput } from "@formbricks/types/quota";
+import { assertCan } from "@/lib/authorization";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
   getOrganizationIdFromQuotaId,
@@ -38,20 +38,9 @@ export const deleteQuotaAction = authenticatedActionClient.inputSchema(ZDeleteQu
   withAuditLogging("deleted", "quota", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
     await checkQuotasEnabled(organizationId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -73,20 +62,9 @@ export const updateQuotaAction = authenticatedActionClient.inputSchema(ZUpdateQu
   withAuditLogging("updated", "quota", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
     await checkQuotasEnabled(organizationId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -106,20 +84,9 @@ export const createQuotaAction = authenticatedActionClient.inputSchema(ZCreateQu
   withAuditLogging("created", "quota", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
     await checkQuotasEnabled(organizationId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.quota.surveyId),
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.quota.surveyId),
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -146,20 +113,9 @@ export const getQuotaResponseCountAction = authenticatedActionClient
     }) => {
       const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
       await checkQuotasEnabled(organizationId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            workspaceId: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
-            minPermission: "readWrite",
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
       });
 
       const count = await getQuotaLinkCountByQuotaId(parsedInput.quotaId);

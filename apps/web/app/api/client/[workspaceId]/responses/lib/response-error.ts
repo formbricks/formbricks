@@ -19,13 +19,21 @@ export const isDisplayIdUniqueConstraintError = (error: PrismaClientKnownRequest
  */
 export const handleClientResponseCreateError = (error: unknown, displayId?: string | null): never => {
   if (isPrismaKnownRequestError(error)) {
+    // Captured before the P2002 guards: their negative branches narrow `error` to `never`.
+    const { message } = error;
     if (isDisplayIdUniqueConstraintError(error)) {
       throw new InvalidInputError(`Display ${displayId} is already linked to a response`);
     }
     if (isSingleUseIdUniqueConstraintError(error)) {
       throw new UniqueConstraintError("Response already submitted for this single-use link");
     }
-    throw new DatabaseError(error.message);
+    if (isUniqueConstraintError(error)) {
+      // The adapter recovers the column list by parsing the Postgres error DETAIL, which can be
+      // absent or unparseable (redacted detail, non-English lc_messages). A P2002 is still a
+      // duplicate either way, so it must stay a conflict — never fall through to a 500.
+      throw new UniqueConstraintError("Response already exists");
+    }
+    throw new DatabaseError(message);
   }
   throw error;
 };

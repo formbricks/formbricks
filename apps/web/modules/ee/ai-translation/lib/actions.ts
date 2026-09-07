@@ -3,8 +3,8 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { assertOrganizationAIConfigured, getOrganizationAIConfig } from "@/lib/ai/service";
+import { assertCan } from "@/lib/authorization";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
@@ -20,20 +20,9 @@ export const checkAITranslationAvailableAction = authenticatedActionClient
   .inputSchema(ZCheckAITranslationAvailableAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     const aiConfig = await getOrganizationAIConfig(organizationId);
@@ -65,20 +54,9 @@ export const translateSurveyFieldsAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
 
     await assertOrganizationAIConfigured(organizationId);

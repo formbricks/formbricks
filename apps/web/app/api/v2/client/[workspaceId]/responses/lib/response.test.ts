@@ -202,7 +202,9 @@ describe("createResponse V2", () => {
     ).rejects.toThrow(UniqueConstraintError);
   });
 
-  test("should throw DatabaseError on P2002 without singleUseId or displayId target", async () => {
+  // ENG-2251: a P2002 on this create can only be one of the response table's unique constraints,
+  // so an unmatched (or unrecoverable) target is still a duplicate — a 409, never a 500.
+  test("should throw UniqueConstraintError on P2002 without singleUseId or displayId target", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
       code: "P2002",
       clientVersion: "test",
@@ -211,7 +213,7 @@ describe("createResponse V2", () => {
     vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
     await expect(
       createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
-    ).rejects.toThrow(DatabaseError);
+    ).rejects.toThrow(UniqueConstraintError);
   });
 
   test("should throw InvalidInputError on P2002 with displayId target (race condition)", async () => {

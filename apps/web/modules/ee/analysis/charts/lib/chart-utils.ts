@@ -74,10 +74,19 @@ export const getSentimentMeasureColor = (measureId: string): string | undefined 
   return value ? CHART_SENTIMENT_COLORS[value] : undefined;
 };
 
-/** Validate a chart type string, defaulting to "bar" if unrecognized. */
+/**
+ * Chart types that no longer exist, mapped to the type that replaced them. `line` merged into
+ * `area` as the `areaDisplay: "line"` style, so anything still holding the old value — an AI
+ * response, a cached payload — lands on the merged type instead of the "bar" fallback. The
+ * display style is not recovered here; the migration is what carries it for stored charts.
+ */
+const LEGACY_CHART_TYPE_ALIASES = new Map<string, TChartType>([["line", "area"]]);
+
+/** Validate a chart type string, mapping retired types forward and defaulting to "bar". */
 export const resolveChartType = (raw: string): TChartType => {
   const parsed = ZChartType.safeParse(raw);
-  return parsed.success ? parsed.data : "bar";
+  if (parsed.success) return parsed.data;
+  return LEGACY_CHART_TYPE_ALIASES.get(raw) ?? "bar";
 };
 
 const isNumericValue = (val: unknown): boolean => {

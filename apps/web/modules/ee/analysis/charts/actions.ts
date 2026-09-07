@@ -7,6 +7,8 @@ import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
 import {
@@ -55,6 +57,8 @@ export const createChartAction = authenticatedActionClient.inputSchema(ZCreateCh
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZCreateChartAction>;
     }) => {
+      ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
+      await applyRateLimit(rateLimitConfigs.actions.chartCreation, ctx.user.id);
       const { organizationId, workspaceId } = await checkWorkspaceAccess(
         ctx.user.id,
         parsedInput.workspaceId,
@@ -64,9 +68,9 @@ export const createChartAction = authenticatedActionClient.inputSchema(ZCreateCh
 
       await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.chartInput.feedbackDirectoryId,
-        organizationId,
         workspaceId,
         userId: ctx.user.id,
+        minPermission: "readWrite",
         source: "charts.createChartAction",
       });
 
@@ -278,9 +282,9 @@ export const executeQueryAction = authenticatedActionClient
 
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
-        organizationId,
         workspaceId,
         userId: ctx.user.id,
+        minPermission: "read",
         source: "charts.executeQueryAction",
       });
 
@@ -327,9 +331,9 @@ export const generateAIChartAction = authenticatedActionClient
 
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
-        organizationId,
         workspaceId,
         userId: ctx.user.id,
+        minPermission: "read",
         source: "charts.generateAIChartAction",
       });
 
@@ -400,9 +404,9 @@ export const getDimensionValuesAction = authenticatedActionClient
 
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
-        organizationId,
         workspaceId,
         userId: ctx.user.id,
+        minPermission: "read",
         source: "charts.getDimensionValuesAction",
       });
 

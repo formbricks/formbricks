@@ -53,6 +53,24 @@ jobs:
     uses: ./.github/workflows/e2e.yml
     secrets: inherit
 
+  validate-authzed-schema:
+    name: Validate AuthZed Schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
+        with:
+          egress-policy: audit
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate schema assertions
+        run: bash authzed/validate.sh
+
   # No `paths:` filter, deliberately: `required` below fails on a skipped job, and a required check
   # that never reports would keep every PR out of the merge queue. It runs concurrently with e2e-test,
   # which is the gate's critical path, so it costs runner minutes rather than wall-clock.
@@ -74,6 +92,7 @@ jobs:
         helm-chart-validation,
         coderabbit-config-validation,
         e2e-test,
+        validate-authzed-schema,
         api-v3-contract-tests,
       ]
     if: always()

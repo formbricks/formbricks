@@ -14,17 +14,22 @@ import { ApiErrorDetails } from "@/modules/api/v2/types/api-error";
  * all survey elements regardless of completion status.
  *
  * @param blocks - Survey blocks containing elements with validation rules (preferred)
- * @param responseData - Response data to validate (keyed by element ID)
+ * @param responseData - Response data to validate (keyed by element ID); absent on partial updates
  * @param languageCode - Language code for error messages (defaults to "en")
  * @param questions - Survey questions (legacy format, used as fallback if blocks are empty)
  * @returns Validation error map keyed by element ID, or null if validation passes
  */
 export const validateResponseData = (
   blocks: unknown[] | undefined | null,
-  responseData: TResponseData,
+  responseData: TResponseData | undefined | null,
   languageCode: string = "en",
   questions?: TSurveyQuestion[] | undefined | null
 ): TValidationErrorMap | null => {
+  // Partial updates omit `data` entirely (e.g. `{ "finished": true }`), so there is nothing to
+  // validate. Matches the sibling validators on this path (validateClientFileUploads,
+  // validateOtherOptionLengthForMultipleChoice), which both early-return on absent data.
+  if (!responseData) return null;
+
   // Use blocks if available, otherwise transform questions to blocks
   let blocksToUse: TSurveyBlock[] = [];
 

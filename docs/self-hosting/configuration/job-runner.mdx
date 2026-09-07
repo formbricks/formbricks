@@ -43,6 +43,7 @@ Current workloads on the shared queue include:
 | Response pipeline | `response-pipeline.process`                      | Processes asynchronous response pipeline events.               |
 | Survey scheduling | `survey-scheduling.reconcile`                    | Reconciles scheduled survey state.                             |
 | Survey archive    | `survey-archive-purge.process`                   | Permanently deletes surveys past the archive retention window. |
+| Usage telemetry   | `usage-telemetry.process`                        | Sends the instance's daily usage update.                       |
 | Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs.              |
 
 These are current examples rather than a fixed list. Future Formbricks features can use the same Job Runner for

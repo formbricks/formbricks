@@ -367,7 +367,7 @@ export const MainNavigation = ({
         }
       });
     },
-    [router, organization.id, workspace.id]
+    [router, organization.id]
   );
 
   const switcherTriggerClasses = cn(
@@ -530,6 +530,7 @@ export const MainNavigation = ({
 
                 {/* Trial Days Remaining */}
                 {!isCollapsed &&
+                  isOwnerOrManager &&
                   isFormbricksCloud &&
                   trialDaysRemaining !== null &&
                   (newTrialBannerVariant === "test" ? (

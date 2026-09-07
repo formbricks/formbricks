@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import type { Session } from "@formbricks/types/auth";
 import { DatabaseError } from "@formbricks/types/errors";
-import { hasUserWorkspaceAccessForAction } from "@/lib/workspace/auth";
+import { can } from "@/lib/authorization";
 import { getSession } from "@/modules/auth/lib/session";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TWorkspaceAuth } from "@/modules/workspaces/types/workspace-auth";
@@ -26,8 +26,8 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@/lib/workspace/auth", () => ({
-  hasUserWorkspaceAccessForAction: vi.fn(),
+vi.mock("@/lib/authorization", () => ({
+  can: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/session", () => ({
@@ -52,7 +52,7 @@ vi.mock("react", () => ({
 const mockPrismaSurvey = prisma.survey as Mocked<typeof prisma.survey>;
 const mockGetWorkspaceAuth = vi.mocked(getWorkspaceAuth);
 const mockGetSession = vi.mocked(getSession);
-const mockHasWorkspaceAccess = vi.mocked(hasUserWorkspaceAccessForAction);
+const mockCan = vi.mocked(can);
 
 const ATTACKER_USER_ID = "user_attacker";
 const ATTACKER_WORKSPACE_ID = "workspace_attacker";
@@ -86,7 +86,7 @@ describe("canReadSurveyInWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue(buildSession(ATTACKER_USER_ID));
-    mockHasWorkspaceAccess.mockResolvedValue(true);
+    mockCan.mockResolvedValue(true);
   });
 
   test("is true for a survey in a workspace the caller can read", async () => {
@@ -97,7 +97,10 @@ describe("canReadSurveyInWorkspace", () => {
       where: { id: SURVEY_ID },
       select: { workspaceId: true },
     });
-    expect(mockHasWorkspaceAccess).toHaveBeenCalledWith(ATTACKER_USER_ID, VICTIM_WORKSPACE_ID, "GET");
+    expect(mockCan).toHaveBeenCalledWith({ type: "user", id: ATTACKER_USER_ID }, "workspace.read", {
+      type: "workspace",
+      id: VICTIM_WORKSPACE_ID,
+    });
   });
 
   test("is false when the survey does not exist", async () => {
@@ -110,12 +113,12 @@ describe("canReadSurveyInWorkspace", () => {
     mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
 
     await expect(canReadSurveyInWorkspace(ATTACKER_WORKSPACE_ID, SURVEY_ID)).resolves.toBe(false);
-    expect(mockHasWorkspaceAccess).not.toHaveBeenCalled();
+    expect(mockCan).not.toHaveBeenCalled();
   });
 
   test("is false when the caller has no access to the workspace", async () => {
     mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
-    mockHasWorkspaceAccess.mockResolvedValueOnce(false);
+    mockCan.mockResolvedValueOnce(false);
 
     await expect(canReadSurveyInWorkspace(VICTIM_WORKSPACE_ID, SURVEY_ID)).resolves.toBe(false);
   });

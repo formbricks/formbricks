@@ -2,13 +2,45 @@ import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMember, TMembership } from "@formbricks/types/memberships";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
+
+const MAX_SERIALIZABLE_TRANSACTION_ATTEMPTS = 3;
+
+const runSerializableTransactionWithRetry = async <T>(
+  transaction: (tx: Prisma.TransactionClient) => Promise<T>
+): Promise<T> => {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= MAX_SERIALIZABLE_TRANSACTION_ATTEMPTS; attempt++) {
+    try {
+      return await prisma.$transaction(transaction, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+    } catch (error) {
+      lastError = error;
+      const shouldRetry =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === PrismaErrorType.TransactionConflict &&
+        attempt < MAX_SERIALIZABLE_TRANSACTION_ATTEMPTS;
+
+      if (!shouldRetry) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
+};
 
 export const getMembershipByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> => {
@@ -117,33 +149,42 @@ export const deleteMembership = async (
   validateInputs([userId, ZString], [organizationId, ZString]);
 
   try {
-    const deletedTeamMemberships = await prisma.teamUser.findMany({
-      where: {
-        userId,
-        team: {
-          organizationId,
-        },
-      },
-    });
-
-    await prisma.$transaction([
-      prisma.teamUser.deleteMany({
+    const deletedTeamMemberships = await runSerializableTransactionWithRetry(async (tx) => {
+      const teamMemberships = await tx.teamUser.findMany({
         where: {
           userId,
           team: {
             organizationId,
           },
         },
-      }),
-      prisma.membership.delete({
+      });
+
+      await tx.teamUser.deleteMany({
+        where: {
+          userId,
+          team: {
+            organizationId,
+          },
+        },
+      });
+      await tx.membership.delete({
         where: {
           userId_organizationId: {
             organizationId,
             userId,
           },
         },
-      }),
-    ]);
+      });
+
+      return teamMemberships;
+    });
+
+    await reconcileOrganizationMembership(organizationId, userId);
+    await runPostCommitProjection("organization_membership_team_cleanup", () =>
+      reconcileTeamWorkspaceRelationships({
+        teamMemberships: deletedTeamMemberships.map(({ teamId }) => ({ teamId, userId })),
+      })
+    );
 
     return deletedTeamMemberships;
   } catch (error) {

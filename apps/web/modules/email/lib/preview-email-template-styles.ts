@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
+import { replaceOpeningTags } from "@/lib/utils/html-opening-tag";
 import {
   NESTED_LIST_ITEM_CLASS,
   NESTED_LIST_ITEM_MARKER_STYLE,
@@ -76,8 +77,6 @@ const EMAIL_PREVIEW_ACCENT_COLORS = {
   "rose-100": "#ffe4e6",
 } as const;
 
-const RICH_TEXT_PARAGRAPH_TAG_REGEX = /<p\b([^>]*)>/gi;
-const RICH_TEXT_LIST_ITEM_TAG_REGEX = /<li\b([^>]*)>/gi;
 const RICH_TEXT_STYLE_ATTRIBUTE_REGEX = /\sstyle=(["'])(.*?)\1/i;
 const RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX = /\sstyle=(["'])(.*?)\1/gi;
 const RICH_TEXT_CLASS_ATTRIBUTE_REGEX = /\sclass=(["'])(.*?)\1/i;
@@ -85,7 +84,7 @@ const RICH_TEXT_CLASS_ATTRIBUTE_REGEX = /\sclass=(["'])(.*?)\1/i;
 export const importantStyle = (value: string): string => `${value} !important`;
 
 export const normalizeRichTextSpacing = (html: string): string =>
-  html.replaceAll(RICH_TEXT_PARAGRAPH_TAG_REGEX, (_tag, attributes: string = "") => {
+  replaceOpeningTags(html, "p", (attributes) => {
     if (RICH_TEXT_STYLE_ATTRIBUTE_REGEX.test(attributes)) {
       return `<p${attributes.replaceAll(
         RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX,
@@ -107,7 +106,7 @@ export const normalizeRichTextSpacing = (html: string): string =>
  * list item (best effort: legacy Outlook's Word engine ignores list-style-type).
  */
 export const suppressNestedListMarkers = (html: string): string =>
-  html.replaceAll(RICH_TEXT_LIST_ITEM_TAG_REGEX, (tag: string, attributes: string = "") => {
+  replaceOpeningTags(html, "li", (attributes, tag) => {
     const classMatch = RICH_TEXT_CLASS_ATTRIBUTE_REGEX.exec(attributes);
     const classNames = classMatch ? classMatch[2].split(/\s+/) : [];
     if (!classNames.includes(NESTED_LIST_ITEM_CLASS)) {

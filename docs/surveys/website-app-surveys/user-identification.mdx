@@ -37,6 +37,35 @@ To enable user identification, call the `setUserId` function of Formbricks and p
 formbricks.setUserId("<user-id>");
 ```
 
+### Setting User Email
+
+Use the `setEmail` function to store the user's email address on the contact. Email is one of the built-in contact attributes, so it gets its own column in the Contacts table and is never removed by an attribute update that omits it.
+
+```javascript Setting User Email
+formbricks.setEmail("hola@formbricks.com");
+```
+
+`setEmail` is a shorthand, not a separate identity mechanism. It writes the `email` attribute exactly as `setAttributes` would, so these two calls are equivalent:
+
+```javascript setEmail vs setAttributes
+formbricks.setEmail("hola@formbricks.com");
+formbricks.setAttributes({ email: "hola@formbricks.com" });
+```
+
+Order matters: call `setUserId` before `setEmail`. Attributes are only stored for identified users, so if no user ID has been set yet, Formbricks drops the email and logs an error to the console:
+
+```text
+🧱 Formbricks - <timestamp> [ERROR] - Formbricks can't set attributes without a userId! Please set a userId first with the setUserId function
+```
+
+<Note>
+  **Note**: an email address can belong to only one contact per workspace. If another contact already
+  has the address you pass, Formbricks keeps that contact's email and silently skips the update. The SDK
+  reports this only in [debug mode](/surveys/website-app-surveys/framework-guides#activate-debug-mode),
+  as _"The email already exists for this environment and was not updated."_ The value must be a valid
+  email address of at most 255 characters.
+</Note>
+
 ## Setting Custom User Attributes
 
 Use the `setAttribute` function to set custom attributes for the user (e.g., name, plan).

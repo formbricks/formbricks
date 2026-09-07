@@ -22,7 +22,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
+import { findElementLocation, getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { type TElement, getElementTypes, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
@@ -1020,7 +1020,7 @@ export const getActionTargetOptions = (
     const block = blocks[i];
 
     blockOptions.push({
-      label: block.name,
+      label: getBlockDisplayName(block, i, t),
       value: block.id,
     });
   }

@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
-import { getSurveyCount, hasArchivedSurveys } from "@/modules/survey/list/lib/survey";
+import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
-import { V3SurveyCreatePermissionError, createV3Survey } from "../create";
+import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "../create";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import { patchV3Survey } from "../patch";
 import { prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "../prepare";
@@ -66,7 +66,7 @@ vi.mock("@/modules/survey/lib/surveys", () => ({
 
 vi.mock("@/modules/survey/list/lib/survey", () => ({
   getSurveyCount: vi.fn(),
-  hasArchivedSurveys: vi.fn(),
+  getWorkspaceSurveyCount: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/list/lib/survey-page", () => ({
@@ -182,7 +182,7 @@ describe("listV3Surveys", () => {
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
     vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [survey], nextCursor: "cursor_next" } as any);
     vi.mocked(getSurveyCount).mockResolvedValue(7);
-    vi.mocked(hasArchivedSurveys).mockResolvedValue(false);
+    vi.mocked(getWorkspaceSurveyCount).mockResolvedValue(9);
     vi.mocked(serializeV3SurveyListItem).mockReturnValue(serializedSurvey as any);
   });
 
@@ -210,12 +210,12 @@ describe("listV3Surveys", () => {
     });
     expect(await readJson(response)).toEqual({
       data: [serializedSurvey],
-      meta: { limit: 20, nextCursor: "cursor_next", totalCount: 7, hasArchived: false },
+      meta: { limit: 20, nextCursor: "cursor_next", totalCount: 7, workspaceSurveyCount: 9 },
     });
   });
 
-  test("reports hasArchived when the workspace has archived surveys", async () => {
-    vi.mocked(hasArchivedSurveys).mockResolvedValue(true);
+  test("reports an empty workspace when it holds no survey at all", async () => {
+    vi.mocked(getWorkspaceSurveyCount).mockResolvedValue(0);
 
     const response = await listV3Surveys({
       searchParams: new URLSearchParams({ workspaceId }),
@@ -224,10 +224,10 @@ describe("listV3Surveys", () => {
       instance,
     });
 
-    expect((await readJson(response)).meta.hasArchived).toBe(true);
+    expect((await readJson(response)).meta.workspaceSurveyCount).toBe(0);
   });
 
-  test("skips total count and hasArchived when they are not requested", async () => {
+  test("skips both counts when they are not requested", async () => {
     mockListQuery({ includeTotalCount: false });
 
     const response = await listV3Surveys({
@@ -239,10 +239,10 @@ describe("listV3Surveys", () => {
 
     expect(response.status).toBe(200);
     expect(vi.mocked(getSurveyCount)).not.toHaveBeenCalled();
-    expect(vi.mocked(hasArchivedSurveys)).not.toHaveBeenCalled();
+    expect(vi.mocked(getWorkspaceSurveyCount)).not.toHaveBeenCalled();
     const body = await readJson(response);
     expect(body.meta.totalCount).toBeNull();
-    expect(body.meta.hasArchived).toBeNull();
+    expect(body.meta.workspaceSurveyCount).toBeNull();
   });
 
   test("returns bad request for invalid query parameters", async () => {
@@ -482,6 +482,48 @@ describe("createV3SurveyResponse", () => {
         })
       ).status
     ).toBe(500);
+  });
+
+  // ENG-2587. The document passes `ZV3CreateSurveyBody` but fails the survey service's stricter
+  // write schema; `executeV3SurveyCreate` catches that with a pre-write parse and throws this typed
+  // error. Before the fix there was no branch for it and it landed on the generic 500.
+  test("maps V3SurveyInputValidationError to 422 naming the offending path", async () => {
+    vi.mocked(createV3Survey).mockRejectedValueOnce(
+      new V3SurveyInputValidationError([{ name: "blocks.0.elements.0.buttonUrl", reason: "Invalid url" }])
+    );
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(422);
+    expect(await readJson(response)).toMatchObject({
+      invalid_params: [expect.objectContaining({ name: "blocks.0.elements.0.buttonUrl" })],
+    });
+  });
+
+  // The reason the branch above is keyed on the typed error and not on `ValidationError`:
+  // `createSurvey` also throws `ValidationError` from work that runs *after* its transaction
+  // commits (`subscribeOrganizationMembersToSurveyResponses` -> `updateUser` re-validates the
+  // user's stored `notificationSettings` JSON). The survey row exists by then, so answering 4xx
+  // would tell the caller nothing was written and invite a duplicate retry — and it would drop a
+  // genuine server fault out of 5xx alerting. Those must keep the 500.
+  test("keeps a bare ValidationError on the 500 path, so post-commit faults are not reported as 4xx", async () => {
+    vi.mocked(createV3Survey).mockRejectedValueOnce(
+      new ValidationError("Validation failed: notificationSettings.alertExpected boolean")
+    );
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(500);
   });
 });
 

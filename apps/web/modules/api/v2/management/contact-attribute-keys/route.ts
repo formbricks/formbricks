@@ -10,6 +10,7 @@ import {
   ZContactAttributeKeyCreateInput,
   ZGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
+import { getAuthorizedApiKeyWorkspaceIds } from "@/modules/api/v2/management/lib/authorized-workspace-ids";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { checkContactsEnabledApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
@@ -28,9 +29,7 @@ export const GET = async (request: NextRequest) =>
         return handleApiError(request, contactsNotEnabledError);
       }
 
-      const workspaceIds = [
-        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
-      ];
+      const workspaceIds = await getAuthorizedApiKeyWorkspaceIds(authentication);
 
       const res = await getContactAttributeKeys(workspaceIds, query);
 

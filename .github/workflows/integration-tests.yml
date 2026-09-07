@@ -121,6 +121,12 @@ jobs:
           # PASSWORD_RESET_DISABLED=1 (the .env.example default). Override to 0 so the
           # reset-related test coverage still runs.
           sed -i "s|PASSWORD_RESET_DISABLED=.*|PASSWORD_RESET_DISABLED=0|" .env
+          sed -i "s|AUTHZED_CONSISTENCY=.*|AUTHZED_CONSISTENCY=fully_consistent|" .env
+        shell: bash
+
+      - name: Start AuthZed CI fixture
+        if: steps.harness.outputs.present == 'true'
+        run: bash scripts/start-authzed-ci.sh
         shell: bash
 
       # Build the workspace packages the tests import (@formbricks/logger, cache, types, email, …) so
@@ -165,4 +171,9 @@ jobs:
         run: cd apps/web && pnpm test:integration
         env:
           TEST_DB_PROVISIONED: "1"
+        shell: bash
+
+      - name: Output AuthZed logs
+        if: failure() && steps.harness.outputs.present == 'true'
+        run: docker logs formbricks-authzed-ci 2>&1 || true
         shell: bash
