@@ -9,7 +9,8 @@ description: >
 
 
   Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`,
-  `displayId`, `singleUseId`, `contactAttributes`, `meta`. `contactId` is create-only deliberately —
+  `displayId`, `singleUseId`, `contactAttributes`, and the create-only `ttc` and `meta` — timing and
+  submission context describe the original submission event, so they are set once and not revised. `contactId` is create-only deliberately —
   re-attributing an existing response to a different person is a capability only v2 offers, and it is
   not carried forward.
 minProperties: 1

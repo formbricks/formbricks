@@ -139,8 +139,9 @@ info:
     create or changed by a patch. Response metering counts rows by `(surveyId, createdAt)`, and a
     client-chosen `createdAt` also lets rows be inserted into the middle of another consumer's
     already-paginated stream. Backdating stays available on v2 until a dedicated import path exists.
-    The respondent's IP address and the `contactAttributes` snapshot that v1/v2 expose — and let
-    callers write — are not part of this resource in any view.
+    The respondent's IP address and the `contactAttributes` snapshot that v1/v2 expose are not part
+    of this resource in any view; that snapshot is copied from the contact at submission time and
+    never refreshed, so it is stale PII by construction.
 
     Response filtering is allow-listed and index-backed: `filter[createdAt][gte|lte]`,
     `filter[finished][eq]`, `filter[language][in]` and `filter[id][in]`. `filter[finished][eq]` and

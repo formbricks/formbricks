@@ -1,0 +1,29 @@
+type: object
+description: >
+  Submission context, on the narrow subset a caller can legitimately supply. A management-API create
+  has no browser behind it, so unlike a client-side submission there is nothing for the server to
+  auto-capture — if these are not sent they are simply absent, which is why the API accepts them at
+  all rather than treating all context as server-derived.
+
+
+  Deliberately **not** accepted here: `ipAddress` (never stored or exposed by v3 in any view),
+  and the derived `userAgent`, `country` and `device` family — those describe a real browser session
+  and would be fiction on an API-created response. Reads surface what is stored as `reserved`
+  entries in `embeddedData[]`, governed by the Embedded Data field catalog's privacy policy.
+properties:
+  source:
+    type: string
+    maxLength: 512
+    description: >-
+      Where the submission came from — the integration or channel name. The field most worth setting
+      on an API create, since nothing else can distinguish an imported or integration-created
+      response from an organic one.
+  url:
+    type: string
+    maxLength: 2048
+    description: The page or context the response was collected from.
+  action:
+    type: string
+    maxLength: 512
+    description: The action or trigger that produced the submission, when one applies.
+additionalProperties: false

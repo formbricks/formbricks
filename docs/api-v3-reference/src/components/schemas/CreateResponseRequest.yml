@@ -10,11 +10,22 @@ description: >
   `workspaceId` in the body — the caller cannot choose which scope it is authorized against.
 
 
-  Unsupported fields are rejected rather than ignored. Notably absent by design: `createdAt` and
-  `updatedAt` (server-owned — see `ResponseListItem.createdAt`), `contactAttributes` and `meta`
-  (auto-captured context is the server's job and is returned as `reserved` entries in
-  `embeddedData`), and `userId` (a contact `userId` is a non-unique attribute and so is not a safe
-  lookup key — link the contact explicitly with `contactId`).
+  Unsupported fields are rejected rather than ignored. Absent by design, each for its own reason:
+
+
+  - `createdAt` and `updatedAt` are **server-owned** — see `ResponseListItem.createdAt`. This is the
+    one capability v3 does not carry over from v2, and it is why bulk historical loading still
+    belongs on v2 until a dedicated import path exists.
+
+  - `userId` is not accepted: a contact `userId` is a non-unique **attribute**, not a column, so it
+    cannot safely identify who to attribute a response to. Link the contact explicitly with
+    `contactId`.
+
+  - `contactAttributes` is not accepted, and never was writable — v1/v2 snapshot it from the linked
+    contact. v3 does not expose the snapshot at all; `contact` covers the need.
+
+  - `meta.ipAddress`, and the derived `userAgent` / `country` / `device` family, are not accepted;
+    see `ResponseMetaInput` for what is.
 required:
   - surveyId
   - finished
@@ -33,6 +44,20 @@ properties:
     $ref: ./ResponseDataMap.yml
   variables:
     $ref: ./ResponseVariablesMap.yml
+  ttc:
+    $ref: ./ResponseTtcMap.yml
+  meta:
+    $ref: ./ResponseMetaInput.yml
+  tags:
+    type: array
+    uniqueItems: true
+    description: >-
+      Tag ids to apply, so a tagged response can be created in one call rather than a create
+      followed by a patch. Tags must already exist in the same workspace — create them via
+      `POST /api/v3/tags`. Applied in the same transaction as the response.
+    items:
+      type: string
+      format: cuid2
   endingId:
     type:
       - string

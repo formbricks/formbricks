@@ -69,5 +69,6 @@ description: >
 
 
   **Never exposed on this resource, in either view:** the respondent's IP address, and the
-  `contactAttributes` snapshot that v1/v2 return and let callers write. That snapshot is stale PII by
-  construction — `contact` covers the legitimate need to know who answered.
+  `contactAttributes` snapshot that v1/v2 return. That snapshot is copied from the contact at
+  submission time and never updated after, so it is stale PII by construction — `contact` covers the
+  legitimate need to know who answered.

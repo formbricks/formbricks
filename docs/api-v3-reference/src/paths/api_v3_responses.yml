@@ -373,6 +373,28 @@ post:
               finished: false
               data:
                 nps_score: 7
+          integrationResponse:
+            summary: A response created by an integration, with timing, tags and source
+            description: >
+              `ttc` carries per-element timing in milliseconds and reads back as `durationSeconds`
+              in seconds. `meta.source` is worth setting on any API-created response — nothing else
+              can distinguish it from an organic submission. `tags` are applied in the same
+              transaction, so no follow-up patch is needed.
+            value:
+              surveyId: clsv1234567890123456789012
+              finished: true
+              language: de
+              data:
+                nps_score: 9
+                what_could_be_better: Die Suche ist zu langsam.
+              ttc:
+                nps_score: 12100
+                what_could_be_better: 64800
+              meta:
+                source: zendesk-integration
+                url: https://support.example.com/tickets/4821
+              tags:
+                - cltg1234567890123456789012
           identifiedResponse:
             summary: A response attributed to a known contact
             description: >
