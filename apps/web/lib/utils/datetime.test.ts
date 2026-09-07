@@ -138,6 +138,17 @@ describe("parseStoredDay", () => {
     expect(parsed && [parsed.getFullYear(), parsed.getMonth(), parsed.getDate()]).toEqual([2026, 0, 31]);
   });
 
+  test.each(["2026-08-05T25:99:99Z", "2026-08-05Tnot-a-time", "2026-08-05T"])(
+    "keeps the day when only the time part is malformed: %s",
+    (value) => {
+      // Deliberate: the day is what the picker shows, and the `<input type="date">` this replaced
+      // split on "T" the same way. Blanking a readable day over a broken suffix would lose data.
+      const parsed = parseStoredDay(value);
+
+      expect(parsed && formatLocalDay(parsed)).toBe("2026-08-05");
+    }
+  );
+
   test("returns null when there is no stored value", () => {
     expect(parseStoredDay("")).toBeNull();
     expect(parseStoredDay(null)).toBeNull();
