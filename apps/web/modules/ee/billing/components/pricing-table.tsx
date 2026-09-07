@@ -17,6 +17,7 @@ import {
   type TOrganizationStripeSubscriptionStatus,
 } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import { CHURN_SURVEY_PENDING_KEY } from "@/app/formbricks/components/formbricks-provider";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -888,9 +889,10 @@ export const PricingTable = ({
           return;
         }
 
-        if (plan === "hobby") {
+        if (plan === "hobby" && response.data.mode !== "immediate") {
           // Fire an in-app code action so a churn survey can be triggered from the dashboard
-          // right after the org drops to the free plan.
+          // right after the org drops to the free plan. No reload follows this path, so the SDK
+          // has time to deliver it.
           formbricks.track("subscription_cancelled").catch(() => undefined);
         }
 
@@ -901,6 +903,12 @@ export const PricingTable = ({
           await waitForBillingPlanAction({ organizationId, targetPlan: plan });
           if (globalThis.window !== undefined) {
             globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
+            if (plan === "hobby") {
+              // formbricks.track() only queues the action; a call here would be lost or interrupted
+              // by the reload below. Persist a one-shot marker instead and let FormbricksProvider
+              // fire the code action once the SDK is set up again after reload.
+              globalThis.window.sessionStorage.setItem(CHURN_SURVEY_PENDING_KEY, "1");
+            }
             globalThis.window.location.reload();
             return;
           }

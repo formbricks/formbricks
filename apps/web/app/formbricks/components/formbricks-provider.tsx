@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import formbricks from "@formbricks/js";
 
+export const CHURN_SURVEY_PENDING_KEY = "churnSurveyPending";
+
 interface FormbricksProviderProps {
   workspaceId: string;
   appUrl: string;
@@ -36,14 +38,17 @@ export const FormbricksProvider = ({
         await formbricks.setUserId(userId);
         const attributes: Record<string, string> = {};
         if (userEmail) attributes.email = userEmail;
-        if (userName) {
-          const [firstName = "", ...rest] = userName.trim().split(/\s+/);
-          attributes.firstName = firstName;
-          attributes.lastName = rest.join(" ");
-        }
-        if (Object.keys(attributes).length > 0) {
-          await formbricks.setAttributes(attributes);
-        }
+        const [firstName = "", ...rest] = (userName ?? "").trim().split(/\s+/);
+        attributes.firstName = firstName;
+        attributes.lastName = rest.join(" ");
+        await formbricks.setAttributes(attributes);
+      }
+
+      const churnSurveyPending =
+        globalThis.window !== undefined && globalThis.window.sessionStorage.getItem(CHURN_SURVEY_PENDING_KEY);
+      if (churnSurveyPending) {
+        globalThis.window.sessionStorage.removeItem(CHURN_SURVEY_PENDING_KEY);
+        await formbricks.track("subscription_cancelled").catch(() => undefined);
       }
     };
 
