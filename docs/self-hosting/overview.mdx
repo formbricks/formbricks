@@ -133,7 +133,7 @@ that the bundled charts do not.
 | -------------- | ----------------------------------------------------------- |
 | PostgreSQL     | 2 vCores burstable, 64 GB SSD, `pgvector`, PITR backups     |
 | SpiceDB store  | A separate database and login on the same PostgreSQL server |
-| Redis/Valkey   | 250 MB managed cache; 1 GB once Envoy rate limiting is on   |
+| Redis/Valkey   | 250 MB; 1 GB with Envoy rate limiting; more for backlogs    |
 | Object storage | ~50 GB, S3-compatible                                       |
 | Registry       | A basic private registry, if you mirror Formbricks images   |
 
@@ -166,16 +166,22 @@ multi-page survey can be several jobs per response. Size Redis for that queue, n
 
 Consumer capacity is `web replicas × BULLMQ_WORKER_COUNT × BULLMQ_WORKER_CONCURRENCY`, all three of which
 default to `1`. That is a count of jobs in flight, not a rate: throughput also depends on how long the
-average `response-pipeline.process` job takes on your instance. A queue that grows faster than it drains
-backs up in Redis rather than failing. Raising `BULLMQ_WORKER_COUNT` or `BULLMQ_WORKER_CONCURRENCY` adds no
-pods, but the work still lands on the same pod's CPU and memory and on Redis and Postgres behind it, so
-measure before raising either. See [job runner](/self-hosting/configuration/job-runner).
+average `response-pipeline.process` job takes on your instance. Raising `BULLMQ_WORKER_COUNT` or
+`BULLMQ_WORKER_CONCURRENCY` adds no pods, but the work still lands on the same pod's CPU and memory and on
+Redis and Postgres behind it, so measure before raising either. See
+[job runner](/self-hosting/configuration/job-runner).
 
 <Warning>
   The app HPA scales on CPU and memory utilization only. Queue depth is not one of its metrics, so a
   backlog can grow while both targets sit under their thresholds and no replica is added. Backlog-driven
   scaling needs a queue-depth metric published to the metrics API and added to the HPA yourself.
 </Warning>
+
+Redis is the hard limit on that backlog. The chart pins `maxmemory-policy noeviction` so BullMQ cannot
+silently lose jobs, which means a full Redis refuses writes rather than evicting. Enqueue errors are not
+swallowed: the response row is already committed to Postgres, so no answer is lost, but the client still
+gets an error. Retention settings only trim completed and failed jobs — they do not make the queue
+unbounded. Size Redis for the deepest backlog you expect, not for the steady state.
 
 **50,000 contacts.** This is storage and index growth, not throughput. Contact attributes are one row per
 attribute per contact, so 50,000 contacts with 10 attributes each is 500,000 attribute rows before a single
