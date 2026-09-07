@@ -67,6 +67,12 @@
       "new_to_formbricks": "New to Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_generic_error_description": "We couldn't complete your single sign-on. Please try again - if it keeps failing, contact an administrator.",
+      "oauth_generic_error_title": "Sign-in failed",
+      "oauth_misconfigured_description": "Your identity provider signed you in, but this Formbricks instance is missing part of its single sign-on configuration. Retrying will not help - please contact an administrator.",
+      "oauth_misconfigured_title": "Single sign-on is not fully configured",
+      "oauth_signup_not_allowed_description": "Your identity provider signed you in, but this Formbricks instance is not set up to create new accounts this way. Ask an administrator to invite you, then try again.",
+      "oauth_signup_not_allowed_title": "We couldn't create your account",
       "please_verify_your_email_to_continue": "Please verify your email address. We've sent you a verification link.",
       "use_a_backup_code": "Use a backup code"
     },

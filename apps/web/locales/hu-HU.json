@@ -67,6 +67,12 @@
       "new_to_formbricks": "Új a Formbicksen?",
       "oauth_account_not_linked_description": "Ez az SSO-szolgáltató nincs összekapcsolva egy meglévő Formbricks-fiókkal. Jelentkezzen be az eredetileg használt módszerrel. Ha ez e-mail és jelszó páros volt, akkor először végezze el az e-mail-ellenőrzést, ha a rendszer erre kéri.",
       "oauth_account_not_linked_title": "Ezt az SSO-bejelentkezést nem sikerült összekapcsolni",
+      "oauth_generic_error_description": "Nem sikerült befejezni az egyszeri bejelentkezést. Kérem, próbálja újra – amennyiben továbbra is sikertelen, kérem, lépjen kapcsolatba egy rendszergazdával.",
+      "oauth_generic_error_title": "A bejelentkezés sikertelen volt",
+      "oauth_misconfigured_description": "Az identitásszolgáltatója sikeresen bejelentkeztette Önt, azonban ezen Formbricks példány egyszeri bejelentkezési konfigurációjának egy része hiányzik. Az újrapróbálkozás nem fog segíteni – kérem, lépjen kapcsolatba egy rendszergazdával.",
+      "oauth_misconfigured_title": "Az egyszeri bejelentkezés nincs teljesen konfigurálva",
+      "oauth_signup_not_allowed_description": "Az identitásszolgáltatója sikeresen bejelentkeztette Önt, azonban ezen Formbricks példány nincs úgy beállítva, hogy ezen a módon új fiókokat hozzon létre. Kérjen meg egy rendszergazdát, hogy hívja meg Önt, majd próbálja újra.",
+      "oauth_signup_not_allowed_title": "Nem sikerült létrehozni a fiókját",
       "please_verify_your_email_to_continue": "Kérjük, erősítsd meg az e-mail-címedet. Küldtünk egy megerősítő linket.",
       "use_a_backup_code": "Visszaszerzési kód használata"
     },

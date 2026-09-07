@@ -55,6 +55,12 @@ checksums:
     auth/login/new_to_formbricks: 1a1d45aca05bb21eb8f795d7d62dc4e3
     auth/login/oauth_account_not_linked_description: 74627dc30666699b21de093d16d83312
     auth/login/oauth_account_not_linked_title: 2eb8e132ed37b3b87c1dec392c224933
+    auth/login/oauth_generic_error_description: 25b857a74723e3878c16ebc21d28da7a
+    auth/login/oauth_generic_error_title: 856d019c86bb17aa739fd9c43cc3ed4f
+    auth/login/oauth_misconfigured_description: dec37c5d595b9dc2829e0aafa7c962db
+    auth/login/oauth_misconfigured_title: 8262866791438db1d070fe549be49a1a
+    auth/login/oauth_signup_not_allowed_description: a03f3faa0668235bcf6f91b861d1df4a
+    auth/login/oauth_signup_not_allowed_title: a7a63ee5035a49a0ffcd3d50faa0a703
     auth/login/please_verify_your_email_to_continue: 743d89b04fbd995955312d020bcb9c0e
     auth/login/use_a_backup_code: 181e4ab6ba9e5b063b46925f1925eb2b
     auth/oauth/allow_access: 5eec574c92b23a33fa6e938ae55754ef

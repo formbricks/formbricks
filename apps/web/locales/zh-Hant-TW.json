@@ -67,6 +67,12 @@
       "new_to_formbricks": "初次使用 Formbricks？",
       "oauth_account_not_linked_description": "此 SSO 供應商尚未連結到既有的 Formbricks 帳戶。請改用你最初註冊時的登入方式；若是電子郵件加密碼，遇到提示時請先完成電子郵件驗證。",
       "oauth_account_not_linked_title": "無法連結此 SSO 登入",
+      "oauth_generic_error_description": "我們無法完成你的單一登入。請再試一次 - 如果持續失敗,請聯絡管理員。",
+      "oauth_generic_error_title": "登入失敗",
+      "oauth_misconfigured_description": "你的身分提供者已成功驗證,但這個 Formbricks 實例缺少部分單一登入配置。重試也無法解決 - 請聯絡管理員。",
+      "oauth_misconfigured_title": "單一登入尚未完全配置",
+      "oauth_signup_not_allowed_description": "你的身分提供者已成功驗證,但這個 Formbricks 實例未設定以此方式建立新帳號。請要求管理員邀請你,然後再試一次。",
+      "oauth_signup_not_allowed_title": "我們無法建立你的帳號",
       "please_verify_your_email_to_continue": "請驗證您的電子郵件地址。我們已向您發送了一個驗證連結。",
       "use_a_backup_code": "使用備份碼"
     },

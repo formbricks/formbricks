@@ -67,6 +67,12 @@
       "new_to_formbricks": "Ny på Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_generic_error_description": "Vi kunde inte slutföra din inloggning med enkel inloggning. Försök igen – om det fortsätter misslyckas, kontakta en administratör.",
+      "oauth_generic_error_title": "Inloggningen misslyckades",
+      "oauth_misconfigured_description": "Din identitetsleverantör loggade in dig, men denna Formbricks-instans saknar en del av sin konfiguration för enkel inloggning. Att försöka igen hjälper inte – kontakta en administratör.",
+      "oauth_misconfigured_title": "Enkel inloggning är inte fullständigt konfigurerad",
+      "oauth_signup_not_allowed_description": "Din identitetsleverantör loggade in dig, men denna Formbricks-instans är inte konfigurerad för att skapa nya konton på detta sätt. Be en administratör att bjuda in dig och försök sedan igen.",
+      "oauth_signup_not_allowed_title": "Vi kunde inte skapa ditt konto",
       "please_verify_your_email_to_continue": "Verifiera din e-postadress. Vi har skickat en verifieringslänk till dig.",
       "use_a_backup_code": "Använd en reservkod"
     },

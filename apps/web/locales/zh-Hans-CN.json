@@ -67,6 +67,12 @@
       "new_to_formbricks": "新用户 Formbricks ?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_generic_error_description": "我们无法完成你的单点登录。请重试——如果仍然失败,请联系管理员。",
+      "oauth_generic_error_title": "登录失败",
+      "oauth_misconfigured_description": "你的身份提供商已为你登录,但此 Formbricks 实例缺少部分单点登录配置。重试无济于事——请联系管理员。",
+      "oauth_misconfigured_title": "单点登录配置不完整",
+      "oauth_signup_not_allowed_description": "你的身份提供商已为你登录,但此 Formbricks 实例未设置为通过此方式创建新账户。请让管理员邀请你,然后重试。",
+      "oauth_signup_not_allowed_title": "我们无法创建你的账户",
       "please_verify_your_email_to_continue": "请验证您的电子邮件地址。我们已向您发送了一个验证链接。",
       "use_a_backup_code": "使用 备用代码"
     },

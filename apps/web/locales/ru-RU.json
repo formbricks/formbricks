@@ -67,6 +67,12 @@
       "new_to_formbricks": "Впервые на Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_generic_error_description": "Нам не удалось завершить единый вход. Попробуй ещё раз — если проблема повторяется, обратись к администратору.",
+      "oauth_generic_error_title": "Не удалось войти",
+      "oauth_misconfigured_description": "Твой провайдер идентификации выполнил вход, но в этом экземпляре Formbricks отсутствует часть конфигурации единого входа. Повторная попытка не поможет — пожалуйста, обратись к администратору.",
+      "oauth_misconfigured_title": "Единый вход настроен не полностью",
+      "oauth_signup_not_allowed_description": "Твой провайдер идентификации выполнил вход, но этот экземпляр Formbricks не настроен для создания новых учётных записей таким способом. Попроси администратора отправить тебе приглашение, а затем попробуй снова.",
+      "oauth_signup_not_allowed_title": "Нам не удалось создать твою учётную запись",
       "please_verify_your_email_to_continue": "Пожалуйста, подтвердите свой адрес электронной почты. Мы отправили вам ссылку для подтверждения.",
       "use_a_backup_code": "Использовать резервный код"
     },

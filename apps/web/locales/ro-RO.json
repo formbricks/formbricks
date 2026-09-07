@@ -67,6 +67,12 @@
       "new_to_formbricks": "Nou în Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_generic_error_description": "Nu am putut finaliza autentificarea ta prin single sign-on. Te rugăm să încerci din nou - dacă problema persistă, contactează un administrator.",
+      "oauth_generic_error_title": "Autentificarea a eșuat",
+      "oauth_misconfigured_description": "Furnizorul tău de identitate te-a autentificat, dar acestei instanțe Formbricks îi lipsește o parte din configurația single sign-on. Reîncercarea nu va ajuta - te rugăm să contactezi un administrator.",
+      "oauth_misconfigured_title": "Single sign-on nu este configurat complet",
+      "oauth_signup_not_allowed_description": "Furnizorul tău de identitate te-a autentificat, dar această instanță Formbricks nu este configurată să creeze conturi noi în acest mod. Roagă un administrator să te invite, apoi încearcă din nou.",
+      "oauth_signup_not_allowed_title": "Nu am putut crea contul tău",
       "please_verify_your_email_to_continue": "Te rugăm să îți verifici adresa de e-mail. Ți-am trimis un link de verificare.",
       "use_a_backup_code": "Folosiți un cod de rezervă"
     },

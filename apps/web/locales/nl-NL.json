@@ -67,6 +67,12 @@
       "new_to_formbricks": "Nieuw bij Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_generic_error_description": "We konden je single sign-on niet voltooien. Probeer het opnieuw - als het blijft mislukken, neem dan contact op met een beheerder.",
+      "oauth_generic_error_title": "Inloggen mislukt",
+      "oauth_misconfigured_description": "Je identiteitsprovider heeft je ingelogd, maar deze Formbricks-instantie mist een deel van de single sign-on configuratie. Opnieuw proberen helpt niet - neem alsjeblieft contact op met een beheerder.",
+      "oauth_misconfigured_title": "Single sign-on is niet volledig geconfigureerd",
+      "oauth_signup_not_allowed_description": "Je identiteitsprovider heeft je ingelogd, maar deze Formbricks-instantie is niet ingesteld om op deze manier nieuwe accounts aan te maken. Vraag een beheerder om je uit te nodigen en probeer het daarna opnieuw.",
+      "oauth_signup_not_allowed_title": "We konden je account niet aanmaken",
       "please_verify_your_email_to_continue": "Verifieer je e-mailadres. We hebben je een verificatielink gestuurd.",
       "use_a_backup_code": "Gebruik een back-upcode"
     },

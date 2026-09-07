@@ -67,6 +67,12 @@
       "new_to_formbricks": "Formbricksを初めてご利用ですか？",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_generic_error_description": "シングルサインオンを完了できませんでした。もう一度お試しください。引き続き失敗する場合は、管理者にお問い合わせください。",
+      "oauth_generic_error_title": "サインインに失敗しました",
+      "oauth_misconfigured_description": "IDプロバイダーによるサインインは成功しましたが、このFormbricksインスタンスではシングルサインオンの設定が不完全です。再試行しても解決しません。管理者にお問い合わせください。",
+      "oauth_misconfigured_title": "シングルサインオンが完全に設定されていません",
+      "oauth_signup_not_allowed_description": "IDプロバイダーによるサインインは成功しましたが、このFormbricksインスタンスではこの方法で新しいアカウントを作成できない設定になっています。管理者に招待を依頼してから、もう一度お試しください。",
+      "oauth_signup_not_allowed_title": "アカウントを作成できませんでした",
       "please_verify_your_email_to_continue": "メールアドレスを確認してください。確認リンクをお送りしました。",
       "use_a_backup_code": "バックアップコードを使用"
     },

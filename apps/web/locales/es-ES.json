@@ -67,6 +67,12 @@
       "new_to_formbricks": "¿Nuevo en Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_generic_error_description": "No pudimos completar tu inicio de sesión único. Por favor, inténtalo de nuevo; si sigue fallando, contacta con un administrador.",
+      "oauth_generic_error_title": "Error al iniciar sesión",
+      "oauth_misconfigured_description": "Tu proveedor de identidad te autenticó correctamente, pero a esta instancia de Formbricks le falta parte de su configuración de inicio de sesión único. Reintentar no ayudará; por favor, contacta con un administrador.",
+      "oauth_misconfigured_title": "El inicio de sesión único no está completamente configurado",
+      "oauth_signup_not_allowed_description": "Tu proveedor de identidad te autenticó correctamente, pero esta instancia de Formbricks no está configurada para crear nuevas cuentas de esta manera. Pide a un administrador que te invite y luego inténtalo de nuevo.",
+      "oauth_signup_not_allowed_title": "No pudimos crear tu cuenta",
       "please_verify_your_email_to_continue": "Verifica tu dirección de correo electrónico. Te hemos enviado un enlace de verificación.",
       "use_a_backup_code": "Usar un código de respaldo"
     },

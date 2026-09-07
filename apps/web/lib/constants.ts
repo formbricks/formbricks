@@ -126,6 +126,10 @@ export const CLOUD_HOBBY_WORKSPACE_LIMIT = 1;
 
 export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO === "1";
 export const DEFAULT_TEAM_ID = env.AUTH_DEFAULT_TEAM_ID;
+// Self-hosted SSO auto-provisioning: when set, every new SSO user joins this organization (created on
+// first sign-up if it does not exist yet) without needing an invite. ENG-2089.
+export const DEFAULT_ORGANIZATION_ID = env.DEFAULT_ORGANIZATION_ID;
+export const DEFAULT_ORGANIZATION_ROLE = env.DEFAULT_ORGANIZATION_ROLE;
 
 // Cloud-only kill-switch: when enabled, the personal-email sign-up block also applies to invited
 // users (default exempts invites). See @/modules/auth/lib/signup-email-domain.

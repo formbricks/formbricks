@@ -67,6 +67,12 @@
       "new_to_formbricks": "Formbricks'te yeni misiniz?",
       "oauth_account_not_linked_description": "Bu SSO sağlayıcı mevcut bir Formbricks hesabına bağlı değil. Lütfen başlangıçta kullandığınız yöntemle giriş yap. E-posta ve şifre kullandıysan, istenirse önce e-posta doğrulamasını tamamla.",
       "oauth_account_not_linked_title": "Bu SSO girişi bağlanamadı",
+      "oauth_generic_error_description": "Tek oturum açma işlemini tamamlayamadık. Lütfen tekrar dene - başarısız olmaya devam ederse bir yönetici ile iletişime geç.",
+      "oauth_generic_error_title": "Oturum açma başarısız oldu",
+      "oauth_misconfigured_description": "Kimlik sağlayıcın seni oturum açtırdı, ancak bu Formbricks örneğinde tek oturum açma yapılandırmasının bir kısmı eksik. Tekrar denemek yardımcı olmayacak - lütfen bir yönetici ile iletişime geç.",
+      "oauth_misconfigured_title": "Tek oturum açma tam olarak yapılandırılmamış",
+      "oauth_signup_not_allowed_description": "Kimlik sağlayıcın seni oturum açtırdı, ancak bu Formbricks örneği bu şekilde yeni hesap oluşturacak şekilde ayarlanmamış. Bir yöneticiden seni davet etmesini iste, ardından tekrar dene.",
+      "oauth_signup_not_allowed_title": "Hesabını oluşturamadık",
       "please_verify_your_email_to_continue": "Lütfen e-posta adresinizi doğrulayın. Size bir doğrulama bağlantısı gönderdik.",
       "use_a_backup_code": "Yedek kod kullan"
     },

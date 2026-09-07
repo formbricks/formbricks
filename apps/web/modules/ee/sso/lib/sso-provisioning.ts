@@ -3,11 +3,12 @@ import { prisma } from "@formbricks/database";
 import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import type { TOrganizationRole } from "@formbricks/types/memberships";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
-import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
+import { DEFAULT_ORGANIZATION_ID, DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
@@ -16,6 +17,7 @@ import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-doma
 import { updateUser } from "@/modules/auth/lib/user";
 import { resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { ensureDefaultOrganization } from "@/modules/ee/sso/lib/default-organization";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 
@@ -27,6 +29,12 @@ export type TSsoProvisioningDecision =
       organizationId: string | null;
       assignToDefaultTeam: boolean;
       signupSource: "invite" | "direct";
+      /**
+       * `DEFAULT_ORGANIZATION_ID` path: `organizationId` names an org that may not exist yet, so the
+       * write phase find-or-creates it and derives the membership role from that outcome. Absent on
+       * every other path, where the org was read here and the role is always `member`.
+       */
+      useDefaultOrganization?: boolean;
     };
 
 /**
@@ -72,10 +80,11 @@ const validateSsoInviteToken = async (email: string, callbackUrl: string): Promi
  * `"provision"` decision (resolved org + flags) is carried to the after-hook, which performs the
  * membership writes.
  *
- * Invariants (covered by sso-provisioning.test.ts): fresh-instance & multi-org bypass all gates;
- * single-org + `SKIP_INVITE_FOR_SSO` requires `DEFAULT_TEAM_ID`; otherwise a valid invite token
- * matching the email is required; the assignment org is the default team's org (skip-invite) or the
- * first org; access control without a callback URL is refused.
+ * Invariants (covered by sso-provisioning.test.ts): `DEFAULT_ORGANIZATION_ID` wins over everything
+ * below it; fresh-instance & multi-org bypass all gates; single-org + `SKIP_INVITE_FOR_SSO` requires
+ * `DEFAULT_TEAM_ID`; otherwise a valid invite token matching the email is required; the assignment org
+ * is the default team's org (skip-invite) or the first org; access control without a callback URL is
+ * refused.
  */
 export const gateSsoProvisioning = async ({
   email,
@@ -98,6 +107,25 @@ export const gateSsoProvisioning = async ({
   }
 
   const signupSource = callbackUrl.includes("token=") ? "invite" : "direct";
+
+  // `DEFAULT_ORGANIZATION_ID` short-circuits every gate below, which is exactly what it did before v5
+  // (ENG-2089): the legacy handler only ran its invite/callback-URL checks when the env var was
+  // *unset*, and its assignment block ran regardless of the multi-org license. An operator who names
+  // one organization for every SSO sign-up has already decided who may join — the IdP is the gate, so
+  // there is no invite to check and no org to resolve here. Creation of a missing org, and the role,
+  // are settled in the write phase (`ensureDefaultOrganization`).
+  if (DEFAULT_ORGANIZATION_ID) {
+    return {
+      action: "provision",
+      organizationId: DEFAULT_ORGANIZATION_ID,
+      // The two self-hosting mechanisms are alternatives, not layers: DEFAULT_TEAM_ID's team belongs
+      // to whichever org it belongs to, which need not be this one, and joining a team outside your
+      // own org is not a thing. Parity with the legacy handler, which had no default-team concept.
+      assignToDefaultTeam: false,
+      signupSource,
+      useDefaultOrganization: true,
+    };
+  }
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const isFirstUser = await getIsFreshInstance();
@@ -156,6 +184,7 @@ export const provisionSsoUserMemberships = async ({
   organizationId,
   assignToDefaultTeam,
   signupSource,
+  useDefaultOrganization = false,
   attributionProperties = {},
 }: {
   userId: string;
@@ -165,19 +194,33 @@ export const provisionSsoUserMemberships = async ({
   organizationId: string | null;
   assignToDefaultTeam: boolean;
   signupSource: "invite" | "direct";
+  /** See `TSsoProvisioningDecision`: find-or-create `organizationId` and derive the role from that. */
+  useDefaultOrganization?: boolean;
   /** Marketing attribution read from the request cookie in `user.create.before`. */
   attributionProperties?: Record<string, string>;
 }): Promise<void> => {
-  if (organizationId) {
+  // Resolved before the retry loop so a create is attempted at most once per sign-up; on the legacy
+  // path (no `DEFAULT_ORGANIZATION_ID`) the role stays `member`, as it has been since the migration.
+  let targetOrganizationId = organizationId;
+  let membershipRole: TOrganizationRole = "member";
+  if (useDefaultOrganization) {
+    const assignment = await ensureDefaultOrganization(name || email.split("@")[0]);
+    targetOrganizationId = assignment?.organizationId ?? null;
+    membershipRole = assignment?.role ?? membershipRole;
+  }
+
+  if (targetOrganizationId) {
+    // `const` so it narrows inside the transaction closure below.
+    const assignedOrganizationId = targetOrganizationId;
     const MAX_ATTEMPTS = 2;
     let assigned = false;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !assigned; attempt++) {
       try {
         await prisma.$transaction(async (tx) => {
           await createMembership(
-            organizationId,
+            assignedOrganizationId,
             userId,
-            { role: "member", accepted: true },
+            { role: membershipRole, accepted: true },
             { projection: "deferred", transaction: tx }
           );
           if (assignToDefaultTeam) {
@@ -198,14 +241,14 @@ export const provisionSsoUserMemberships = async ({
                 ...current,
                 alert: { ...current.alert },
                 unsubscribedOrganizationIds: Array.from(
-                  new Set([...(current.unsubscribedOrganizationIds ?? []), organizationId])
+                  new Set([...(current.unsubscribedOrganizationIds ?? []), assignedOrganizationId])
                 ),
               },
             },
             tx
           );
         });
-        await reconcileOrganizationMembership(organizationId, userId);
+        await reconcileOrganizationMembership(assignedOrganizationId, userId);
         if (assignToDefaultTeam && DEFAULT_TEAM_ID) {
           const defaultTeamId = DEFAULT_TEAM_ID;
           await runPostCommitProjection("sso_default_team_membership_create", () =>
@@ -238,6 +281,6 @@ export const provisionSsoUserMemberships = async ({
     auth_provider: provider,
     email_domain: email.split("@")[1],
     signup_source: signupSource,
-    invite_organization_id: organizationId,
+    invite_organization_id: targetOrganizationId,
   });
 };
