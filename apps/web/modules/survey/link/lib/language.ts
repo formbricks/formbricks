@@ -1,3 +1,4 @@
+import "server-only";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { TSurvey } from "@formbricks/types/surveys/types";
 

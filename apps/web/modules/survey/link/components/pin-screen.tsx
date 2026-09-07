@@ -38,7 +38,7 @@ interface PinScreenProps {
   styling: TWorkspaceStyling | TSurveyStyling;
 }
 
-export const PinScreen = (props: PinScreenProps) => {
+export const PinScreen = (props: Readonly<PinScreenProps>) => {
   const {
     surveyId,
     workspace,
