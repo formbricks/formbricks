@@ -20,6 +20,7 @@ import {
   problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
+  withBearerChallenge,
 } from "./response";
 import type { TV3AuditLog, TV3Authentication } from "./types";
 
@@ -290,9 +291,14 @@ async function authenticateV3RequestOrRespond(
   const authentication = await authenticateV3Request(req, authMode);
 
   if (!authentication && authMode !== "none") {
+    const unauthorized = problemUnauthorized(requestId, getUnauthenticatedDetail(authMode), instance);
     return {
       authentication: null,
-      response: problemUnauthorized(requestId, getUnauthenticatedDetail(authMode), instance),
+      // RFC 9110 §15.5.2 wants a challenge *applicable to the target resource*. A "session" route accepts
+      // no HTTP authentication scheme at all — cookies are not one — so there is none to send, and
+      // advertising Bearer would tell a caller to try a credential this route never consults (see the
+      // `authMode === "session"` early return above). The other modes do accept `Authorization: Bearer`.
+      response: authMode === "session" ? unauthorized : withBearerChallenge(unauthorized),
     };
   }
 

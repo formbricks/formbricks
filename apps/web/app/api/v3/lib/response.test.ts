@@ -13,6 +13,7 @@ import {
   problemUnprocessableContent,
   successListResponse,
   successResponse,
+  withBearerChallenge,
 } from "./response";
 
 describe("v3 problem responses", () => {
@@ -38,9 +39,25 @@ describe("v3 problem responses", () => {
     expect(body.code).toBe("not_authenticated");
   });
 
-  test("problemUnauthorized advertises the bearer scheme, as RFC 9110 requires of a 401", async () => {
+  /**
+   * RFC 9110 §15.5.2 asks for a challenge "applicable to the target resource", so the challenge is not
+   * baked into the 401 builder: the same builder serves session-cookie routes, where no HTTP
+   * authentication scheme applies at all and Bearer would be a false statement. The wrapper attaches it
+   * for the auth modes that really do accept `Authorization: Bearer`.
+   */
+  test("problemUnauthorized does not assert a scheme on its own", async () => {
     const res = problemUnauthorized("r1");
+    expect(res.headers.get("WWW-Authenticate")).toBeNull();
+  });
+
+  test("withBearerChallenge adds the RFC 6750 challenge without disturbing the body", async () => {
+    const res = withBearerChallenge(problemUnauthorized("r1", "API key required", "/api/v3/x"));
     expect(res.headers.get("WWW-Authenticate")).toBe('Bearer realm="formbricks"');
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.detail).toBe("API key required");
+    expect(body.code).toBe("not_authenticated");
+    expect(body.instance).toBe("/api/v3/x");
   });
 
   test("problemForbidden", async () => {

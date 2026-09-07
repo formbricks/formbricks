@@ -7,15 +7,36 @@ const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
 
 /**
- * Authentication scheme advertised on a 401, as RFC 9110 §15.5.2 requires ("The server generating a 401
- * response MUST send a WWW-Authenticate header field"). v3 accepts a bearer API key, so RFC 6750 §3 is
- * the applicable challenge.
+ * Authentication scheme advertised on a 401. RFC 9110 §15.5.2 requires "a WWW-Authenticate header field
+ * containing at least one challenge **applicable to the target resource**" — the qualifier is the whole
+ * point, so quote it in full: an inapplicable challenge does not satisfy the requirement, it just makes
+ * a false statement about the endpoint.
  *
- * The MCP surface sends its own richer challenge (with `resource_metadata` and `scope`) by overwriting
- * this header — see `withOAuthChallenge` in `@/modules/mcp/auth` — so a caller-supplied
- * `WWW-Authenticate` always wins over this default.
+ * Bearer is applicable wherever this API accepts `Authorization: Bearer <fbk_…>`, which `api-key-auth.ts`
+ * does — so on the `apiKey` and `both` auth modes, and nowhere else. RFC 6750 §3 requires at least one
+ * auth-param, so the realm stays; a bare `Bearer` would be non-conformant.
+ *
+ * Deliberately NOT sent on `session` routes, and not by `problemUnauthorized` itself: cookies are not an
+ * HTTP authentication scheme (they appear nowhere in the IANA HTTP Authentication Scheme Registry), so a
+ * cookie-only endpoint has no applicable challenge and the MUST is unsatisfiable there. The repo's own
+ * OpenAPI already concedes this by modelling the session as `type: apiKey, in: cookie` rather than
+ * `type: http`. Omitting beats advertising a scheme the route will never honour.
+ *
+ * The MCP surface builds its own richer challenge (`resource_metadata` and `scope`, which its spec
+ * MUSTs and its SDK parses) in `withOAuthChallenge` — see `@/modules/mcp/auth`.
  */
-const BEARER_CHALLENGE = 'Bearer realm="formbricks"' as const;
+export const BEARER_CHALLENGE = 'Bearer realm="formbricks"' as const;
+
+/** Attach the bearer challenge to a 401. Applied by the wrapper for the auth modes it is true of. */
+export function withBearerChallenge(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("WWW-Authenticate", BEARER_CHALLENGE);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
 
 /**
  * The `code` vocabulary of this API's problem responses: a stable, locale-independent discriminator that
@@ -185,7 +206,6 @@ export function problemUnauthorized(
   return problemResponse(401, "Unauthorized", detail, requestId, {
     code: "not_authenticated",
     instance,
-    headers: { "WWW-Authenticate": BEARER_CHALLENGE },
   });
 }
 

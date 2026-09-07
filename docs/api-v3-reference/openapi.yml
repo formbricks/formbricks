@@ -2263,7 +2263,7 @@ paths:
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
-          $ref: '#/components/responses/V3Unauthorized'
+          $ref: '#/components/responses/V3UnauthorizedSession'
         '403':
           $ref: '#/components/responses/V3Forbidden'
         '429':
@@ -2322,7 +2322,7 @@ paths:
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
-          $ref: '#/components/responses/V3Unauthorized'
+          $ref: '#/components/responses/V3UnauthorizedSession'
         '403':
           $ref: '#/components/responses/V3Forbidden'
         '422':
@@ -2369,7 +2369,7 @@ paths:
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
-          $ref: '#/components/responses/V3Unauthorized'
+          $ref: '#/components/responses/V3UnauthorizedSession'
         '403':
           $ref: '#/components/responses/V3Forbidden'
         '429':
@@ -2435,7 +2435,7 @@ paths:
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
-          $ref: '#/components/responses/V3Unauthorized'
+          $ref: '#/components/responses/V3UnauthorizedSession'
         '403':
           $ref: '#/components/responses/V3Forbidden'
         '429':
@@ -5553,7 +5553,7 @@ components:
           schema:
             type: string
           example: Bearer realm="formbricks"
-          description: Authentication scheme challenge, as required on a 401 by RFC 9110. The MCP endpoints send a richer OAuth challenge carrying `resource_metadata` and `scope`.
+          description: 'Authentication scheme challenge. RFC 9110 §15.5.2 asks a 401 for a challenge "applicable to the target resource", and Bearer is applicable here because these operations accept the API key as `Authorization: Bearer <key>` as well as `x-api-key`. Session-cookie-only operations send no challenge — see `V3UnauthorizedSession`. The MCP endpoints send a richer OAuth challenge carrying `resource_metadata` and `scope`.'
         X-Request-Id:
           schema:
             type: string
@@ -5652,6 +5652,21 @@ components:
                 $ref: '#/components/schemas/WorkflowResource'
     V3Conflict:
       description: Conflict — an `Idempotency-Key` retry arrived while the original request was still being processed (IETF `draft-ietf-httpapi-idempotency-key-header` semantics). Retry after the original request completes to receive its stored result.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3UnauthorizedSession:
+      description: Not authenticated (no valid session).
       headers:
         X-Request-Id:
           schema:

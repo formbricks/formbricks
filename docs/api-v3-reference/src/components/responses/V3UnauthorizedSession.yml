@@ -1,0 +1,21 @@
+description: Not authenticated (no valid session).
+# No `WWW-Authenticate`, deliberately. RFC 9110 §15.5.2 asks a 401 for a challenge "applicable to the
+# target resource", and these operations authenticate by session cookie only — which is not an HTTP
+# authentication scheme at all (it appears nowhere in the IANA HTTP Authentication Scheme Registry, and
+# this spec models it as `type: apiKey, in: cookie` for exactly that reason). There is therefore no
+# applicable challenge to send, and advertising `Bearer` would tell an integrator to try a credential
+# these operations never consult. Operations that do accept `Authorization: Bearer <api key>` use
+# `V3Unauthorized`, which carries the challenge.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

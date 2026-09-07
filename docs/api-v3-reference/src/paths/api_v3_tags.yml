@@ -43,7 +43,7 @@ get:
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":
-      $ref: ../components/responses/V3Unauthorized.yml
+      $ref: ../components/responses/V3UnauthorizedSession.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
     "429":

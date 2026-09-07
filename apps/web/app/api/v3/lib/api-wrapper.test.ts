@@ -304,6 +304,37 @@ describe("withV3ApiWrapper", () => {
     );
   });
 
+  /**
+   * RFC 9110 §15.5.2 asks a 401 for a challenge "applicable to the target resource". Bearer is applicable
+   * where this API accepts `Authorization: Bearer <fbk_…>` — the `apiKey` and `both` modes — and is a
+   * false statement on a session-cookie route, which consults no HTTP authentication scheme at all.
+   * Pinned per mode, because the difference is the whole point and a single default cannot express it.
+   */
+  test("a 401 on a bearer-accepting route carries the challenge", async () => {
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      handler: vi.fn(async () => Response.json({ ok: true })),
+    });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {} as never);
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("WWW-Authenticate")).toBe('Bearer realm="formbricks"');
+  });
+
+  test("a 401 on a session-only route carries no challenge", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const wrapped = withV3ApiWrapper({
+      auth: "session",
+      handler: vi.fn(async () => Response.json({ ok: true })),
+    });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/tags"), {} as never);
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("WWW-Authenticate")).toBeNull();
+  });
+
   test("returns 400 problem response for invalid query input", async () => {
     mockGetSession.mockResolvedValue({
       user: { id: "user_1" },
