@@ -279,6 +279,13 @@ overrides:
   # load-bearing: prisma resolves 3.15.3 (dev-only Prisma CLI, mysql adapter) and better-auth /
   # @boxyhq/saml-jackson / typeorm resolve 3.20.0 (runtime, optional mysql adapters).
   mysql2: 3.23.1
+  # ENG-2887 / GHSA-px8p-9vwx-vf98 (CVE-2026-45820): fflate's unzipSync() can loop indefinitely on a
+  # malformed ZIP archive whose central-directory entry declares the ZIP64 sentinel
+  # (compressed_size=0xFFFFFFFF) but omits the required ZIP64 extra field; the out-of-bounds read that
+  # should supply the real size returns undefined, which coerces to 0 and keeps the loop condition true
+  # forever (DoS). Affects the 0.4.x line from 0.4.5; patched in 0.4.9.
+  # load-bearing: posthog-js (browser, apps/web) resolves 0.4.8.
+  fflate: 0.4.9
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
   # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.
