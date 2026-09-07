@@ -42,13 +42,14 @@ export const FormbricksProvider = ({
         attributes.firstName = firstName;
         attributes.lastName = rest.join(" ");
         await formbricks.setAttributes(attributes);
-      }
 
-      const churnSurveyPending =
-        globalThis.window !== undefined && globalThis.window.sessionStorage.getItem(CHURN_SURVEY_PENDING_KEY);
-      if (churnSurveyPending) {
-        globalThis.window.sessionStorage.removeItem(CHURN_SURVEY_PENDING_KEY);
-        await formbricks.track("subscription_cancelled").catch(() => undefined);
+        const churnSurveyPending = globalThis.window?.sessionStorage.getItem(CHURN_SURVEY_PENDING_KEY);
+        if (churnSurveyPending) {
+          // Only clear the marker once the code action is actually queued; if track() rejects, leave
+          // it in place so the next setup run retries it instead of losing the event silently.
+          await formbricks.track("subscription_cancelled");
+          globalThis.window?.sessionStorage.removeItem(CHURN_SURVEY_PENDING_KEY);
+        }
       }
     };
 
