@@ -8,7 +8,7 @@ import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
+import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
@@ -87,12 +87,13 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   let singleUseId: string | undefined = undefined;
 
   if (isSingleUseSurvey) {
-    const validatedSingleUseId = checkAndValidateSingleUseId(
+    const validatedSingleUseId = resolveSingleUseIdForSurvey({
+      surveyId: survey.id,
+      isEncrypted: Boolean(isSingleUseSurveyEncrypted),
       suId,
-      isSingleUseSurveyEncrypted,
-      survey.id,
-      suToken
-    );
+      suToken,
+      surface: "link_page",
+    });
     if (!validatedSingleUseId) {
       // Need to fetch workspace for error page - fetch environmentContext for it
       const environmentContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);

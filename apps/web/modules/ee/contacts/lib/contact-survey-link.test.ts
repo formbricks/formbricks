@@ -166,14 +166,19 @@ describe("Contact Survey Link", () => {
         id: mockSurveyId,
         singleUse: { enabled: true, isEncrypted: true },
       } as TSurvey);
-      mockedGenerateSurveySingleUseLinkParams.mockReturnValue({ suId: "suId-encrypted" });
+      // Encrypted links carry a binding token too since ENG-2758. This fixture used to assert the
+      // opposite -- an encrypted contact link with no suToken -- which is the vulnerable contract.
+      mockedGenerateSurveySingleUseLinkParams.mockReturnValue({
+        suId: "suId-encrypted",
+        suToken: "signed-token",
+      });
 
       const result = await contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId);
 
       expect(mockedGenerateSurveySingleUseLinkParams).toHaveBeenCalledWith(mockSurveyId, true);
       expect(result).toEqual({
         ok: true,
-        data: `${getPublicDomain()}/c/${mockToken}?suId=suId-encrypted`,
+        data: `${getPublicDomain()}/c/${mockToken}?suId=suId-encrypted&suToken=signed-token`,
       });
     });
 

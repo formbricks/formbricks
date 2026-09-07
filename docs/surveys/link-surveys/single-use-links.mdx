@@ -28,8 +28,8 @@ response per invitation, without asking anyone to log in.
 
 ## How a single-use link works
 
-Every single-use link is your normal survey link plus a **single-use ID** (`suId`), and — depending
-on the mode — a **signature** (`suToken`):
+Every single-use link is your normal survey link plus a **single-use ID** (`suId`) and a
+**signature** (`suToken`) that binds it to one specific survey:
 
 ```
 https://app.formbricks.com/s/<surveyId>?suId=<single-use-id>&suToken=<signature>
@@ -64,19 +64,20 @@ So even if two people open the same link at the same time, only the first submis
 ## Encrypted vs. custom single-use IDs
 
 Single-use links come in two modes, controlled by the **URL encryption of single-use ID** toggle.
-Both are equally tamper-proof. The difference is who chooses the ID and whether it is readable.
+Both are bound to their survey by the same signature. The difference is who chooses the ID and
+whether it is readable.
 
 | | **URL encryption on** (default) | **URL encryption off** |
 |---|---|---|
 | What `suId` looks like | An AES-encrypted, URL-encoded blob | Whatever you choose, e.g. `?suId=CUSTOMER-4711` |
-| `suToken` in the URL | Not used | Required. An HMAC signature over the survey ID and `suId` |
+| `suToken` in the URL | Required. An HMAC signature over the survey ID and `suId` | Required. An HMAC signature over the survey ID and `suId` |
 | Who creates the ID | Formbricks (UI or API) | You |
 | Best for | Bulk invites where the ID carries no meaning | Mapping responses back to a record in your own system |
 
 <Warning>
-  Both modes are signed or encrypted with your instance's `ENCRYPTION_KEY`, so respondents cannot
-  forge a valid link by guessing an ID. They *can* forward their own link to someone else, so
-  treat a single-use link as a credential.
+  Both modes are signed with your instance's `ENCRYPTION_KEY`, so respondents cannot forge a valid
+  link by guessing an ID, and a link issued for one survey is not accepted by any other survey.
+  They *can* forward their own link to someone else, so treat a single-use link as a credential.
 </Warning>
 
 ## Create single-use links in the app
@@ -132,16 +133,17 @@ curl -X GET \
 }
 ```
 
-The sample above is from a survey with URL encryption off, so each link carries a readable `suId`
-plus its `suToken`. With encryption on, the `suId` is an encrypted blob and there is no `suToken`.
+The sample above is from a survey with URL encryption off, so each link carries a readable `suId`.
+With encryption on the `suId` is an encrypted blob instead. Either way each link carries its own
+`suToken`.
 
 - `limit` defaults to `10` and accepts up to `5000` per call.
 - The survey must be a link survey with single-use links enabled, otherwise the endpoint returns a
   400.
 - The API key needs **write** access to the survey's workspace. Even though this is a `GET`, it
   mints links that can be used to submit responses, so read-only keys are rejected.
-- Links follow the survey's encryption setting. With encryption off, each returned URL also carries
-  its `suToken`.
+- Links follow the survey's encryption setting. Each returned URL carries its own `suToken` in both
+  modes.
 
 See the [API reference](/api-reference/management-api--survey/get-singleuse-links) for the full
 endpoint definition.
@@ -178,5 +180,9 @@ Formbricks re-validates the URL and rejects the response if the two do not match
   invalidates every single-use link that was already handed out.
 - **Since Formbricks 5.0**, unencrypted single-use links must carry a valid `suToken`. Links
   generated before 5.0 without a token are rejected — regenerate them.
+- **Since Formbricks 6.0**, the same applies to *encrypted* single-use links: they now carry a
+  `suToken` binding them to one survey. Encrypted links generated before 6.0 have no token and are
+  rejected — regenerate them. See the
+  [migration guide](/self-hosting/advanced/migration) if you handed out a batch before upgrading.
 - The *"already answered"* screen can be customized via the `singleUse.heading` and
   `singleUse.subheading` fields on the survey in the Management API.

@@ -1,9 +1,13 @@
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 
-export const copySurveyLink = (surveyUrl: string, singleUseId?: string): string => {
-  return singleUseId ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl;
-};
+/**
+ * The `singleUseId` parameter was removed with ENG-2758: it appended `?suId=` with no `suToken`, and
+ * since single-use links are now bound to their survey by that signature, such a URL can never
+ * validate. Its only caller never passed one. Build single-use links with
+ * `generateSurveySingleUseLinkParams`, which returns both halves.
+ */
+export const copySurveyLink = (surveyUrl: string): string => surveyUrl;
 
 /**
  * Derives a flat array of elements from the survey's blocks structure.

@@ -307,7 +307,10 @@ describe("checkSurveyValidity", () => {
 
   test("should return badRequestResponse if isEncrypted and decrypted suId does not match singleUseId", async () => {
     const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: true }, workspaceId: "ws-1" };
-    const url = "https://example.com/?suId=encrypted-id";
+    // Signed for this survey, so validation reaches the decrypt-and-compare step instead of
+    // short-circuiting at the binding check (ENG-2758).
+    const suToken = generateSurveySingleUseSignature(mockSurvey.id, "encrypted-id");
+    const url = `https://example.com/?suId=encrypted-id&suToken=${suToken}`;
     vi.mocked(symmetricDecrypt).mockReturnValue("decrypted-id");
     const resultEncryptedMismatch = await checkSurveyValidity(survey, "ws-1", {
       ...mockResponseInput,
@@ -369,16 +372,59 @@ describe("checkSurveyValidity", () => {
     expect(responseInput.singleUseId).toBe("su-1");
   });
 
-  test("should return null if singleUse is enabled, encrypted, and decrypted suId matches singleUseId", async () => {
-    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: true }, workspaceId: "ws-1" };
-    const url = "https://example.com/?suId=encrypted-id";
-    vi.mocked(symmetricDecrypt).mockReturnValue(validSingleUseId);
-    const _resultEncryptedMatch = await checkSurveyValidity(survey, "ws-1", {
-      ...mockResponseInput,
-      singleUseId: validSingleUseId,
-      meta: { url },
+  describe("encrypted single-use links are bound to their survey (ENG-2758)", () => {
+    const encryptedSurvey = () => ({
+      ...mockSurvey,
+      singleUse: { enabled: true, isEncrypted: true },
+      workspaceId: "ws-1",
     });
-    expect(symmetricDecrypt).toHaveBeenCalledWith("encrypted-id", "test-key");
-    expect(_resultEncryptedMatch).toBeNull();
+    const urlFor = (suToken?: string) =>
+      `https://example.com/?suId=encrypted-id${suToken ? `&suToken=${suToken}` : ""}`;
+
+    test("rejects an encrypted suId that carries no binding token, without decrypting it", async () => {
+      // This assertion used to be the opposite: the gate accepted a tokenless encrypted suId, which
+      // is the vulnerability -- nothing tied the ciphertext to this survey.
+      vi.mocked(symmetricDecrypt).mockReturnValue(validSingleUseId);
+
+      const result = await checkSurveyValidity(encryptedSurvey(), "ws-1", {
+        ...mockResponseInput,
+        singleUseId: validSingleUseId,
+        meta: { url: urlFor() },
+      });
+
+      expect(result?.status).toBe(400);
+      expect(symmetricDecrypt).not.toHaveBeenCalled();
+    });
+
+    test("rejects an encrypted suId whose token is bound to a different survey", async () => {
+      // Minted on the attacker's own survey and replayed here. One shared ENCRYPTION_KEY means the
+      // ciphertext decrypts fine; only the HMAC tells the two surveys apart.
+      vi.mocked(symmetricDecrypt).mockReturnValue(validSingleUseId);
+
+      const result = await checkSurveyValidity(encryptedSurvey(), "ws-1", {
+        ...mockResponseInput,
+        singleUseId: validSingleUseId,
+        meta: { url: urlFor(generateSurveySingleUseSignature("cm0attacker00000000000001", "encrypted-id")) },
+      });
+
+      expect(result?.status).toBe(400);
+      expect(responses.badRequestResponse).toHaveBeenCalledWith("Invalid single use id", {
+        surveyId: mockSurvey.id,
+        workspaceId: "ws-1",
+      });
+    });
+
+    test("accepts an encrypted suId bound to this survey, and canonicalises it", async () => {
+      vi.mocked(symmetricDecrypt).mockReturnValue(validSingleUseId);
+      const responseInput = {
+        ...mockResponseInput,
+        singleUseId: validSingleUseId,
+        meta: { url: urlFor(generateSurveySingleUseSignature(mockSurvey.id, "encrypted-id")) },
+      };
+
+      expect(await checkSurveyValidity(encryptedSurvey(), "ws-1", responseInput)).toBeNull();
+      expect(symmetricDecrypt).toHaveBeenCalledWith("encrypted-id", "test-key");
+      expect(responseInput.singleUseId).toBe(validSingleUseId);
+    });
   });
 });
