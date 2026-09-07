@@ -223,7 +223,7 @@ checksums:
     common/customer_success: 9b8100f7cc9078702012617237f5b884
     common/dark_overlay: 173e84b526414dbc70dbf9737e443b60
     common/dashboard: c9380ea68c8c76ea451bd9613329a07c
-    common/dashboards: 4bc47e48559a6b688684dcb7ac4babc9
+    common/dashboards: 30c54e4dc4ce599b87d94be34a8617f5
     common/data_refreshed_successfully: 85728c61a9e1a16e46af69ddf0dbcda6
     common/date: 56f41c5d30a76295bb087b20b7bee4c3
     common/days: c95fe8aedde21a0b5653dbd0b3c58b48
