@@ -1,6 +1,8 @@
 // extend this object in order to add more validation rules
 import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
+import { z } from "zod";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { ZEndingCardUrl } from "@formbricks/types/common";
 import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -313,6 +315,194 @@ export const isSurveyValid = (
   }
 
   return true;
+};
+
+// Element fields holding a TI18nString: in an issue path the segment right after them is a language code.
+const I18N_STRING_FIELDS = new Set([
+  "headline",
+  "subheader",
+  "html",
+  "label",
+  "placeholder",
+  "upperLabel",
+  "lowerLabel",
+  "buttonLabel",
+  "backButtonLabel",
+  "dismissButtonLabel",
+  "ctaButtonLabel",
+]);
+
+// Collections inside an element whose entries are numbered in the editor UI.
+const NUMBERED_COLLECTION_LABEL_KEYS: Record<string, string> = {
+  rows: "common.row_n",
+  columns: "common.column_n",
+  choices: "common.choice_n",
+};
+
+// Element fields whose schema name is not what the author sees in the editor.
+const ELEMENT_FIELD_LABEL_KEYS: Record<string, string> = {
+  shuffleOption: "workspace.surveys.edit.field_label_shuffle_option",
+};
+
+/**
+ * A Zod issue as this module reads it. Beyond the path and the message it keeps the fields Zod's own
+ * locale map renders from, because `isZodGeneratedMessage` replays that map to tell a generated
+ * message from an authored one. Pass a whole issue, not a subset — a stripped one reads as authored.
+ */
+interface TDescribableIssue {
+  path: PropertyKey[];
+  message: string;
+  code?: string;
+  expected?: string;
+  values?: unknown[];
+  errors?: unknown[];
+  origin?: string;
+  minimum?: unknown;
+  maximum?: unknown;
+  inclusive?: boolean;
+  format?: string;
+  pattern?: string;
+  prefix?: string;
+  suffix?: string;
+  includes?: string;
+  divisor?: number;
+  keys?: string[];
+  algorithm?: string;
+}
+
+// Zod always builds its own messages from the English locale map, whatever the app language is.
+const zodEnLocale = z.core.locales.en();
+
+// `received` is derived from the input, which a finalized issue no longer carries, so the
+// reconstruction below ends at "expected string," where the real message says ", received number".
+const stripReceived = (message: string): string => message.split(", received ")[0];
+
+/**
+ * Whether Zod wrote this message itself, rather than a schema authoring one.
+ *
+ * Sniffing the wording does not survive Zod's own phrasing: a bad enum reads "Invalid option: expected
+ * one of …", a bad union "Invalid input", a bad type "Invalid input: expected string, received number".
+ * So ask Zod instead — rebuild what its locale map would have said for this issue and compare. A schema
+ * that authored a message ("Cal user name is required") does not match its own default.
+ *
+ * An issue shape the locale map cannot render counts as authored, so its message still reaches the
+ * author; the caller prepends the location either way.
+ */
+const isZodGeneratedMessage = (issue: TDescribableIssue): boolean => {
+  try {
+    // A finalized issue carries every field the locale map reads; only its `input` is stripped.
+    const zodDefault = zodEnLocale.localeError(issue as unknown as z.core.$ZodRawIssue);
+    const defaultMessage = typeof zodDefault === "string" ? zodDefault : zodDefault?.message;
+
+    if (!defaultMessage) return false;
+
+    return stripReceived(defaultMessage) === stripReceived(issue.message);
+  } catch {
+    return false;
+  }
+};
+
+// "shuffleOption" -> "shuffle option". Schema field names are camelCase; authors do not read camelCase.
+const humanizeFieldName = (field: string): string =>
+  field.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
+
+interface TElementIssueDescription {
+  message: string;
+  /** Set when the issue points at a single language of a translated field, so the caller can open the Language tab. */
+  languageCode?: string;
+}
+
+/**
+ * Locates a Zod issue for the survey author: names the block and the question it belongs to, and — when
+ * the issue carries no message of its own — the field it points at.
+ *
+ * Zod's own defaults name nothing, so an element that fails validation leaves an author with a red card
+ * and no idea which field to fix. The issue path does carry that (e.g.
+ * `blocks.0.elements.0.rows.1.label.de`), so the message is built from it instead. A message the schema
+ * authored ("Cal user name is required") is kept as-is and only gets its location prepended.
+ *
+ * Returns null for paths outside an element; those keep their own message.
+ */
+export const describeElementIssue = (
+  issue: TDescribableIssue,
+  t: TFunction,
+  locale: string
+): TElementIssueDescription | null => {
+  const [root, blockIndex, elementsKey, elementIndex, ...fieldPath] = issue.path;
+
+  if (
+    root !== "blocks" ||
+    elementsKey !== "elements" ||
+    typeof blockIndex !== "number" ||
+    typeof elementIndex !== "number"
+  ) {
+    return null;
+  }
+
+  const blockNumber = blockIndex + 1;
+  const questionNumber = elementIndex + 1;
+
+  if (!isZodGeneratedMessage(issue)) {
+    return {
+      message: t("workspace.surveys.edit.issue_in_question", {
+        message: issue.message,
+        questionNumber,
+        blockNumber,
+      }),
+    };
+  }
+
+  let languageCode: string | undefined;
+  const fieldParts: string[] = [];
+
+  fieldPath.forEach((segment, index) => {
+    if (typeof segment === "number") {
+      const collectionKey = NUMBERED_COLLECTION_LABEL_KEYS[String(fieldPath[index - 1])];
+      // Numbered entry of a known collection: replace the raw "rows"/"1" pair with "Row 2".
+      if (collectionKey) {
+        fieldParts.pop();
+        fieldParts.push(t(collectionKey, { n: segment + 1 }));
+      } else {
+        fieldParts.push(String(segment + 1));
+      }
+      return;
+    }
+
+    if (typeof segment === "string") {
+      // The segment after a translated field is a language code, not a field of its own.
+      if (index > 0 && I18N_STRING_FIELDS.has(String(fieldPath[index - 1]))) {
+        languageCode = segment;
+        return;
+      }
+      fieldParts.push(
+        ELEMENT_FIELD_LABEL_KEYS[segment] ? t(ELEMENT_FIELD_LABEL_KEYS[segment]) : humanizeFieldName(segment)
+      );
+    }
+  });
+
+  if (!fieldParts.length) {
+    return {
+      message: t("workspace.surveys.edit.invalid_question_in_block", { questionNumber, blockNumber }),
+    };
+  }
+
+  const field = fieldParts.join(" ");
+
+  if (languageCode) {
+    return {
+      languageCode,
+      message: t("workspace.surveys.edit.invalid_field_in_question_for_languages", {
+        field,
+        questionNumber,
+        blockNumber,
+        languages: getLanguageLabel(languageCode, locale) ?? languageCode,
+      }),
+    };
+  }
+
+  return {
+    message: t("workspace.surveys.edit.invalid_field_in_question", { field, questionNumber, blockNumber }),
+  };
 };
 
 export const getValidateIdErrorMessage = (

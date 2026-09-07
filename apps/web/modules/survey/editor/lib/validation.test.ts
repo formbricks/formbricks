@@ -24,6 +24,7 @@ import {
   TSurveyLanguage,
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
+  ZSurvey,
 } from "@formbricks/types/surveys/types";
 import {
   TValidateIdErrorCode,
@@ -1445,5 +1446,298 @@ describe("validation.isBlockLogicItemValid", () => {
 
   test("returns false when the rule id is not a valid cuid", () => {
     expect(validation.isBlockLogicItemValid({ ...validLogicItem, id: "logic-1" })).toBe(false);
+  });
+});
+
+// Mirrors the en-US strings the element-issue messages are built from, so the assertions below read
+// as the author sees them rather than as raw keys.
+const elementIssueMessages: Record<string, string> = {
+  "common.row_n": "Row {n}",
+  "common.column_n": "Column {n}",
+  "common.choice_n": "Choice {n}",
+  "workspace.surveys.edit.invalid_field_in_question":
+    "Check {field} in question {questionNumber} of block {blockNumber}",
+  "workspace.surveys.edit.invalid_field_in_question_for_languages":
+    "Check {field} in question {questionNumber} of block {blockNumber} for the following languages: {languages}",
+  "workspace.surveys.edit.invalid_question_in_block":
+    "Check question {questionNumber} in block {blockNumber}",
+  "workspace.surveys.edit.issue_in_question": "Question {questionNumber} of block {blockNumber}: {message}",
+  "workspace.surveys.edit.field_label_shuffle_option": "ordering",
+};
+
+const elementIssueT: TFunction = ((key: string, params?: Record<string, string | number>) => {
+  const template = elementIssueMessages[key] ?? key;
+  if (!params) return template;
+  return Object.entries(params).reduce((str, [k, v]) => str.replace(`{${k}}`, String(v)), template);
+}) as TFunction;
+
+describe("validation.describeElementIssue", () => {
+  test("names the matrix row, question and block, and reports the failing language", () => {
+    const result = validation.describeElementIssue(
+      {
+        code: "invalid_type",
+        expected: "string",
+        path: ["blocks", 0, "elements", 0, "rows", 1, "label", "de"],
+        message: "Invalid input: expected string, received undefined",
+      },
+      elementIssueT,
+      "en-US"
+    );
+
+    expect(result).toEqual({
+      languageCode: "de",
+      message: "Check Row 2 label in question 1 of block 1 for the following languages: German",
+    });
+  });
+
+  test("names a matrix column without a language when the path has none", () => {
+    const result = validation.describeElementIssue(
+      {
+        code: "invalid_type",
+        expected: "string",
+        path: ["blocks", 2, "elements", 1, "columns", 0, "label"],
+        message: "Invalid input: expected string, received undefined",
+      },
+      elementIssueT,
+      "en-US"
+    );
+
+    expect(result).toEqual({ message: "Check Column 1 label in question 2 of block 3" });
+  });
+
+  test("falls back to the language code when the locale has no label for it", () => {
+    const result = validation.describeElementIssue(
+      {
+        code: "invalid_type",
+        expected: "string",
+        path: ["blocks", 0, "elements", 0, "headline", "xx-not-a-language"],
+        message: "Invalid input: expected string, received undefined",
+      },
+      elementIssueT,
+      "en-US"
+    );
+
+    expect(result).toEqual({
+      languageCode: "xx-not-a-language",
+      message: "Check headline in question 1 of block 1 for the following languages: xx-not-a-language",
+    });
+  });
+
+  test("names only the question and block when the issue points at the element itself", () => {
+    const result = validation.describeElementIssue(
+      { code: "invalid_union", errors: [], path: ["blocks", 1, "elements", 3], message: "Invalid input" },
+      elementIssueT,
+      "en-US"
+    );
+
+    expect(result).toEqual({ message: "Check question 4 in block 2" });
+  });
+
+  test("keeps a message the schema authored and only prepends its location", () => {
+    const result = validation.describeElementIssue(
+      {
+        code: "too_small",
+        origin: "array",
+        minimum: 2,
+        path: ["blocks", 0, "elements", 0, "choices"],
+        message: "Multiple Choice Element must have at least two choices",
+      },
+      elementIssueT,
+      "en-US"
+    );
+
+    expect(result).toEqual({
+      message: "Question 1 of block 1: Multiple Choice Element must have at least two choices",
+    });
+  });
+
+  test("returns null for issues outside an element so their own message is kept", () => {
+    expect(
+      validation.describeElementIssue(
+        {
+          code: "too_small",
+          origin: "string",
+          minimum: 1,
+          path: ["blocks", 0, "name"],
+          message: "Block name is required",
+        },
+        elementIssueT,
+        "en-US"
+      )
+    ).toBeNull();
+    expect(
+      validation.describeElementIssue(
+        { code: "invalid_union", errors: [], path: ["endings", 0, "headline"], message: "Invalid input" },
+        elementIssueT,
+        "en-US"
+      )
+    ).toBeNull();
+  });
+});
+
+describe("ZSurvey element issues reach the editor with a usable path", () => {
+  const buildLanguage = (id: string, code: string, isDefault: boolean): TSurveyLanguage => ({
+    language: {
+      id,
+      code,
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "cl9dsxhzt0000qz0h5z6z6z62",
+    },
+    default: isDefault,
+    enabled: true,
+  });
+
+  const buildSurveyWithElement = (element: Record<string, unknown>) => ({
+    id: "cl9dsxhzt0000qz0h5z6z6z61",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: "Matrix survey",
+    type: "link",
+    workspaceId: "cl9dsxhzt0000qz0h5z6z6z62",
+    createdBy: null,
+    status: "draft",
+    publishOn: null,
+    closeOn: null,
+    displayOption: "displayOnce",
+    autoClose: null,
+    triggers: [],
+    recontactDays: null,
+    displayLimit: null,
+    welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
+    questions: [],
+    blocks: [{ id: "block1", name: "Block 1", elements: [element] }],
+    endings: [],
+    hiddenFields: { enabled: false },
+    delay: 0,
+    displayPercentage: null,
+    autoComplete: null,
+    surveyClosedMessage: { enabled: false },
+    workspaceOverwrites: null,
+    recaptcha: null,
+    singleUse: null,
+    styling: null,
+    segment: null,
+    languages: [
+      buildLanguage("cl9dsxhzt0000qz0h5z6z6z6a", "en", true),
+      buildLanguage("cl9dsxhzt0000qz0h5z6z6z6b", "de", false),
+    ],
+    showLanguageSwitch: false,
+    isVerifyEmailEnabled: false,
+    variables: [],
+    followUps: [],
+    isBackButtonHidden: false,
+    isAutoProgressingEnabled: true,
+    metadata: {},
+    slug: null,
+    isCaptureIpEnabled: false,
+  });
+
+  // A matrix element whose second row label has no value for the enabled `de` language. This is the
+  // shape a survey ends up in when a translation is dropped, and it must not parse.
+  const buildSurveyWithBrokenMatrixRow = () =>
+    buildSurveyWithElement({
+      id: "matrix1",
+      type: "matrix",
+      headline: { default: "How satisfied are you?", de: "Wie zufrieden sind Sie?" },
+      required: true,
+      rows: [
+        { id: "r1", label: { default: "Design", de: "Design" } },
+        { id: "r2", label: { default: "Performance", de: undefined } },
+      ],
+      columns: [{ id: "c1", label: { default: "Good", de: "Gut" } }],
+    });
+
+  // The shape that blocked the reported survey: a multi-select whose ordering holds a value the
+  // enum does not know. `shuffleOption` is what the author has to fix, so the toast has to name it.
+  const buildSurveyWithShuffleOption = (shuffleOption: unknown) =>
+    buildSurveyWithElement({
+      id: "choice1",
+      type: "multipleChoiceMulti",
+      headline: { default: "What got in the way?", de: "Was stand im Weg?" },
+      required: true,
+      shuffleOption,
+      choices: [
+        { id: "c1", label: { default: "Time", de: "Zeit" } },
+        { id: "c2", label: { default: "Budget", de: "Budget" } },
+      ],
+    });
+
+  test("a matrix row label missing an enabled language points at the row, not at the element", () => {
+    const result = ZSurvey.safeParse(buildSurveyWithBrokenMatrixRow());
+
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues[0];
+
+    // Before the element union was discriminated, this was a single `invalid_union` issue at
+    // ["blocks", 0, "elements", 0] carrying Zod's bare "Invalid input" — no field, nothing actionable.
+    expect(issue?.path).toEqual(["blocks", 0, "elements", 0, "rows", 1, "label", "de"]);
+  });
+
+  test("the editor turns that issue into a message naming the row, question and block", () => {
+    const result = ZSurvey.safeParse(buildSurveyWithBrokenMatrixRow());
+    const issue = result.error?.issues[0];
+
+    const described = validation.describeElementIssue(
+      { ...issue, path: issue?.path ?? [], message: issue?.message ?? "" },
+      elementIssueT,
+      "en-US"
+    );
+
+    expect(described).toEqual({
+      languageCode: "de",
+      message: "Check Row 2 label in question 1 of block 1 for the following languages: German",
+    });
+  });
+
+  test("an out-of-enum shuffleOption points at the field, not at the element", () => {
+    const result = ZSurvey.safeParse(buildSurveyWithShuffleOption("random"));
+
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues[0];
+
+    // On the plain union this was ["blocks", 0, "elements", 0] with the bare "Invalid input" the
+    // customer saw. The field name is the one word an author needs to unblock themselves.
+    expect(issue?.path).toEqual(["blocks", 0, "elements", 0, "shuffleOption"]);
+    expect(issue?.code).toBe("invalid_value");
+  });
+
+  test("the editor names the ordering field for that issue", () => {
+    const result = ZSurvey.safeParse(buildSurveyWithShuffleOption("random"));
+    const issue = result.error?.issues[0];
+
+    const described = validation.describeElementIssue(
+      { ...issue, path: issue?.path ?? [], message: issue?.message ?? "" },
+      elementIssueT,
+      "en-US"
+    );
+
+    // Zod renders this as `Invalid option: expected one of "none"|"all"|…`, which is generated rather
+    // than schema-authored — so the message is built from the path instead of passed through.
+    expect(described).toEqual({ message: "Check ordering in question 1 of block 1" });
+  });
+
+  test("an empty shuffleOption is healed on read rather than blocking publish", () => {
+    const result = ZSurvey.safeParse(buildSurveyWithShuffleOption(""));
+
+    expect(result.success).toBe(true);
+    expect(result.data?.blocks[0].elements[0]).toMatchObject({ shuffleOption: undefined });
+  });
+
+  test("an empty shuffleOption on a matrix falls back to its default", () => {
+    const survey = buildSurveyWithElement({
+      id: "matrix1",
+      type: "matrix",
+      headline: { default: "How satisfied are you?", de: "Wie zufrieden sind Sie?" },
+      required: true,
+      shuffleOption: "",
+      rows: [{ id: "r1", label: { default: "Design", de: "Design" } }],
+      columns: [{ id: "c1", label: { default: "Good", de: "Gut" } }],
+    });
+    const result = ZSurvey.safeParse(survey);
+
+    expect(result.success).toBe(true);
+    expect(result.data?.blocks[0].elements[0]).toMatchObject({ shuffleOption: "none" });
   });
 });
