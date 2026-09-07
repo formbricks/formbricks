@@ -103,17 +103,26 @@ export const ZAIQueryResponse = z.object({
         // wrong, the explicit pair is the escape hatch for a window no preset covers, and both
         // encode in every provider's structured-output dialect. A single `dateRange: string` is what
         // let the model answer with an ISO 8601 interval nothing downstream could read.
+        // The descriptions carry the exclusivity rule because they are the only part of this that
+        // reaches the model: `Output.object` sends the schema to the provider as JSON Schema, which
+        // cannot express "one of these, never both". A cross-field refinement would therefore
+        // constrain nothing at generation time and only turn a model that answered with both into a
+        // failed request — so the rule is stated here, and `resolveAIDateRange` breaks the tie.
         dateRangePreset: ZDatePreset.nullable().describe(
-          "Named range covering the request; prefer this over explicit dates whenever one fits"
+          "Named range covering the request. Use this OR the explicit start/end pair, never both; prefer a preset whenever one fits. Null when giving explicit dates."
         ),
         dateRangeStart: z
           .string()
           .nullable()
-          .describe("Inclusive start as YYYY-MM-DD; only when no preset covers the request"),
+          .describe(
+            "Inclusive start as YYYY-MM-DD. Only when no preset covers the request, and only with dateRangePreset null and dateRangeEnd also given."
+          ),
         dateRangeEnd: z
           .string()
           .nullable()
-          .describe("Inclusive end as YYYY-MM-DD; only when no preset covers the request"),
+          .describe(
+            "Inclusive end as YYYY-MM-DD. Only when no preset covers the request, and only with dateRangePreset null and dateRangeStart also given."
+          ),
       })
     )
     .nullable(),
