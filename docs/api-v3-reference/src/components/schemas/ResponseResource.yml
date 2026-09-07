@@ -11,7 +11,6 @@ allOf:
       data:
         allOf:
           - $ref: ./ResponseDataMap.yml
-        readOnly: true
         description: >
           Answers in their **stored** form — byte-for-byte the same map `POST /api/v3/responses` and
           `PATCH /api/v3/responses/{responseId}` accept. Returned so that a read can be edited and
@@ -30,7 +29,6 @@ allOf:
       variables:
         allOf:
           - $ref: ./ResponseVariablesMap.yml
-        readOnly: true
         description: >-
           Survey variable values in their stored form, as the write side accepts them. Same rationale
           as `data`; read `embeddedData[]` for the typed, labelled view.
@@ -61,11 +59,26 @@ description: >
   list view omits.
 
 
-  It also carries `data` and `variables`, the stored maps the write endpoints accept, so this
-  representation can be edited and passed straight back in a request — the property Azure's and
-  Zalando's REST guidelines both ask for, and the one v1/v2 had by virtue of being symmetric. They
-  are marked `readOnly` because they are echoes: the write schemas
-  (`CreateResponseRequest`, `PatchResponseRequest`) are where they are accepted.
+  It also carries `data` and `variables` — the resource's **writable state**, returned unchanged, so
+  a client can read a response, edit an answer and send it straight back. That is the property v1/v2
+  had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating
+  `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is
+  "burdensome for clients, particularly when the JSON data is complex or deeply nested".
+
+
+  Note which fields carry `readOnly` here and which do not, because it is the opposite of what an
+  "echo" framing would suggest. `readOnly` means a value is managed exclusively by the server, so it
+  marks the **derived** views — `answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the
+  denormalized `surveyName` and `workspaceId`, the timestamps, `durationSeconds` and `id`.
+  `data` and `variables` are *not* read-only: they are exactly what the write endpoints accept, and
+  leaving them unmarked is what makes this representation round-trippable rather than merely
+  informative.
+
+
+  To correct one answer, read this resource, take `data`, change the entry you want and `PATCH`
+  `{ "data": … }`. Send only the fields you are changing — `PATCH` rejects unknown and non-patchable
+  keys, so passing the whole representation back verbatim is not the intended flow; passing `data`
+  back is.
 
 
   **Never exposed on this resource, in either view:** the respondent's IP address, and the

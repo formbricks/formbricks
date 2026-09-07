@@ -24,6 +24,7 @@ required:
   - tags
 properties:
   id:
+    readOnly: true
     type: string
     format: cuid2
     description: Response identifier.
@@ -32,17 +33,20 @@ properties:
     format: cuid2
     description: The survey this response belongs to.
   surveyName:
+    readOnly: true
     type: string
     description: >-
       The survey's current name, denormalized into the payload so a consumer listing responses need
       not resolve survey names separately.
   workspaceId:
+    readOnly: true
     type: string
     format: cuid2
     description: >-
       The owning workspace, resolved through the survey. Responses carry no workspace column of their
       own; this is a derived field.
   createdAt:
+    readOnly: true
     type: string
     format: date-time
     description: >
@@ -52,6 +56,7 @@ properties:
       `createdAt` can insert rows into the middle of another consumer's already-paginated stream.
       Backdating remains available on v1/v2; a dedicated import path is future work.
   updatedAt:
+    readOnly: true
     type: string
     format: date-time
     description: >-
@@ -74,6 +79,7 @@ properties:
       necessarily a BCP-47 locale — `default` is a legitimate value). `null` when the survey is
       single-language or no language was stamped.
   durationSeconds:
+    readOnly: true
     type: number
     minimum: 0
     description: >-
@@ -81,8 +87,10 @@ properties:
       `_total` bucket the stored representation keeps alongside real element ids. Absent when the
       submission carried no timing.
   resolution:
+    readOnly: true
     $ref: ./ResponseResolution.yml
   answers:
+    readOnly: true
     type: array
     description: >-
       One entry per element the respondent reached, in survey order. Empty for a response that
@@ -90,6 +98,7 @@ properties:
     items:
       $ref: ./ResponseAnswer.yml
   embeddedData:
+    readOnly: true
     type: array
     description: >-
       Hidden fields, variables and auto-captured context, as one collection. Empty when the response
@@ -97,6 +106,7 @@ properties:
     items:
       $ref: ./ResponseEmbeddedDatum.yml
   unresolved:
+    readOnly: true
     type: array
     description: >-
       Stored data whose element or key no longer exists in the survey definition. Empty in the normal

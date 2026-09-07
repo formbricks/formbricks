@@ -34,7 +34,7 @@ info:
 
     **Responses**
     The response resource is **self-describing**. Answers come back as a typed `answers[]` array in which each entry carries the element's id, label, type and value, rather than as a map keyed by element id — so a consumer holding only a response can read it without fetching the survey and joining. Hidden fields, survey variables and auto-captured context are one `embeddedData[]` collection rather than three parallel concepts, each entry declaring a `kind` and a `type`. Data whose element has since been deleted is reported in `unresolved[]` instead of being dropped silently. Labels are resolved at read time against the current survey definition, and the `resolution` object discloses that policy along with the survey's `updatedAt` so a consumer can detect wording drift.
-    Writes take answers in the **stored map form** (`data`, `variables`) while reads return the typed array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching caller-supplied labels back onto option ids, so the write side keeps the stored shape. To stop that costing round-trippability, the **detailed read echoes `data` and `variables` back** as `readOnly` fields — so a single-response read can be edited and passed straight back into a `PATCH`, and the typed `answers[]` array is an addition rather than a replacement. The list view omits the echo, since a page of 250 would otherwise carry every answer twice. `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what a write would do, before committing to it.
+    Writes take answers in the **stored map form** (`data`, `variables`) while reads return the typed array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching caller-supplied labels back onto option ids, so the write side keeps the stored shape. To stop that costing round-trippability, the **detailed read returns `data` and `variables` unchanged** — so a single-response read can be edited and sent back as `PATCH { "data": … }`, and the typed `answers[]` array is an addition rather than a replacement. Those two are the resource's writable state and carry no `readOnly`; the derived views (`answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the timestamps) are marked `readOnly` instead, per its meaning of server-managed. The list view omits the stored maps, since a bulk reader is not editing. `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what a write would do, before committing to it.
     `createdAt` and `updatedAt` are **server-owned** on this resource: they cannot be supplied on create or changed by a patch. Response metering counts rows by `(surveyId, createdAt)`, and a client-chosen `createdAt` also lets rows be inserted into the middle of another consumer's already-paginated stream. Backdating stays available on v2 until a dedicated import path exists. The respondent's IP address and the `contactAttributes` snapshot that v1/v2 expose are not part of this resource in any view; that snapshot is copied from the contact at submission time and never refreshed, so it is stale PII by construction.
     Response filtering is allow-listed and index-backed: `filter[createdAt][gte|lte]`, `filter[finished][eq]`, `filter[language][in]` and `filter[id][in]`. `filter[finished][eq]` and `filter[language][in]` require `surveyId` or `contactId` as well, because both are heap residuals bounded only by an anchored index range. Per-answer, hidden-field, submission-metadata, contact-attribute, quota and tag filters are **not** offered; each is a JSON path or an unindexed join on the largest table in the product. The in-app dashboard does offer them, so this API is knowingly behind the dashboard here — closing the gap requires index work and is tracked separately rather than quietly omitted.
     `GET /api/v3/responses/count` answers "how many match?" directly. The list endpoint's `meta.totalCount` covers a caller that is already paging and is **opt-in** via `includeTotalCount` (default `false`, unlike the survey list) because responses are the highest-cardinality table in the product. Both response counts are **capped at 10 000** and carry an exactness flag — `meta.totalCountRelation` on the list, `data.relation` on `/count` — reading `eq` when the figure is exact and `gte` when the cap was reached and it is a lower bound. An exact count over this table grows superlinearly with the data while a capped one stays flat, so an uncapped total would be the only part of a response whose cost is unbounded. `/count` accepts `precision=exact` for the cases that genuinely need a precise figure, documented as the deliberate slow path. The survey list's `totalCount` stays exact and uncapped: surveys are low-cardinality and that count has a covering index built for it.
@@ -6292,6 +6292,7 @@ components:
         - tags
       properties:
         id:
+          readOnly: true
           type: string
           format: cuid2
           description: Response identifier.
@@ -6300,18 +6301,22 @@ components:
           format: cuid2
           description: The survey this response belongs to.
         surveyName:
+          readOnly: true
           type: string
           description: The survey's current name, denormalized into the payload so a consumer listing responses need not resolve survey names separately.
         workspaceId:
+          readOnly: true
           type: string
           format: cuid2
           description: The owning workspace, resolved through the survey. Responses carry no workspace column of their own; this is a derived field.
         createdAt:
+          readOnly: true
           type: string
           format: date-time
           description: |
             When the response was created. **Server-owned** — it cannot be supplied on create or changed by a patch. This is the AIP-148 output-only convention, and it is deliberate on two counts: monthly response metering counts rows by `(surveyId, createdAt)`, and a client-chosen `createdAt` can insert rows into the middle of another consumer's already-paginated stream. Backdating remains available on v1/v2; a dedicated import path is future work.
         updatedAt:
+          readOnly: true
           type: string
           format: date-time
           description: When the response was last modified. Server-owned. Neither filterable nor sortable — it has no index, and being mutable it cannot anchor a pagination cursor.
@@ -6329,22 +6334,27 @@ components:
             - 'null'
           description: The survey language this response was collected in, as a survey language code (not necessarily a BCP-47 locale — `default` is a legitimate value). `null` when the survey is single-language or no language was stamped.
         durationSeconds:
+          readOnly: true
           type: number
           minimum: 0
           description: Total seconds the respondent spent, summed from per-element timing. Replaces the synthetic `_total` bucket the stored representation keeps alongside real element ids. Absent when the submission carried no timing.
         resolution:
+          readOnly: true
           $ref: '#/components/schemas/ResponseResolution'
         answers:
+          readOnly: true
           type: array
           description: One entry per element the respondent reached, in survey order. Empty for a response that recorded no answers.
           items:
             $ref: '#/components/schemas/ResponseAnswer'
         embeddedData:
+          readOnly: true
           type: array
           description: Hidden fields, variables and auto-captured context, as one collection. Empty when the response carries none.
           items:
             $ref: '#/components/schemas/ResponseEmbeddedDatum'
         unresolved:
+          readOnly: true
           type: array
           description: Stored data whose element or key no longer exists in the survey definition. Empty in the normal case.
           items:
@@ -6533,7 +6543,6 @@ components:
             data:
               allOf:
                 - $ref: '#/components/schemas/ResponseDataMap'
-              readOnly: true
               description: |
                 Answers in their **stored** form — byte-for-byte the same map `POST /api/v3/responses` and `PATCH /api/v3/responses/{responseId}` accept. Returned so that a read can be edited and written straight back: take this map, change what you need, and `PATCH` it. Without it a client wanting to correct one answer would have to rebuild the map from `answers[]`, which is possible but is work the server can simply not impose.
 
@@ -6543,7 +6552,6 @@ components:
             variables:
               allOf:
                 - $ref: '#/components/schemas/ResponseVariablesMap'
-              readOnly: true
               description: Survey variable values in their stored form, as the write side accepts them. Same rationale as `data`; read `embeddedData[]` for the typed, labelled view.
             contact:
               anyOf:
@@ -6564,7 +6572,11 @@ components:
       description: |
         A survey response in the detailed view, as returned by `GET /api/v3/responses/{responseId}` and by the write endpoints. Everything in `ResponseListItem`, plus the identity and provenance fields the list view omits.
 
-        It also carries `data` and `variables`, the stored maps the write endpoints accept, so this representation can be edited and passed straight back in a request — the property Azure's and Zalando's REST guidelines both ask for, and the one v1/v2 had by virtue of being symmetric. They are marked `readOnly` because they are echoes: the write schemas (`CreateResponseRequest`, `PatchResponseRequest`) are where they are accepted.
+        It also carries `data` and `variables` — the resource's **writable state**, returned unchanged, so a client can read a response, edit an answer and send it straight back. That is the property v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is "burdensome for clients, particularly when the JSON data is complex or deeply nested".
+
+        Note which fields carry `readOnly` here and which do not, because it is the opposite of what an "echo" framing would suggest. `readOnly` means a value is managed exclusively by the server, so it marks the **derived** views — `answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the denormalized `surveyName` and `workspaceId`, the timestamps, `durationSeconds` and `id`. `data` and `variables` are *not* read-only: they are exactly what the write endpoints accept, and leaving them unmarked is what makes this representation round-trippable rather than merely informative.
+
+        To correct one answer, read this resource, take `data`, change the entry you want and `PATCH` `{ "data": … }`. Send only the fields you are changing — `PATCH` rejects unknown and non-patchable keys, so passing the whole representation back verbatim is not the intended flow; passing `data` back is.
 
         **Never exposed on this resource, in either view:** the respondent's IP address, and the `contactAttributes` snapshot that v1/v2 return. That snapshot is copied from the contact at submission time and never updated after, so it is stale PII by construction — `contact` covers the legitimate need to know who answered.
     ValidateResponseCreateRequest:
