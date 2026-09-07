@@ -5,10 +5,12 @@ import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/survey
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   getElementsFromSurveyBlocks,
+  getGateLocale,
   getSurveyLanguageTag,
   getWebAppLocale,
   isRTL,
   isRTLLanguage,
+  resolveWebAppLocale,
 } from "./utils";
 
 const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
@@ -103,6 +105,85 @@ describe("getWebAppLocale", () => {
   test("matches base language code for variants", () => {
     expect(getWebAppLocale("pt-PT", createMockSurvey())).toBe("pt-PT");
     expect(getWebAppLocale("es-MX", createMockSurvey())).toBe("es-ES");
+  });
+});
+
+const createLanguage = (code: string, isDefault = false, enabled = true) => ({
+  language: {
+    id: `l-${code}`,
+    code,
+    alias: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    workspaceId: "p1",
+  },
+  default: isDefault,
+  enabled,
+});
+
+describe("resolveWebAppLocale", () => {
+  test("returns null instead of English when the app has no translation for the language", () => {
+    // A Hebrew survey must not drag the chrome to English — the caller keeps its own fallback.
+    expect(resolveWebAppLocale("he", createMockSurvey())).toBeNull();
+    expect(resolveWebAppLocale("xx", createMockSurvey())).toBeNull();
+    expect(resolveWebAppLocale("default", createMockSurvey())).toBeNull();
+  });
+
+  test("keeps a variant the app ships rather than collapsing to the base language", () => {
+    expect(resolveWebAppLocale("pt-PT", createMockSurvey())).toBe("pt-PT");
+    expect(resolveWebAppLocale("pt", createMockSurvey())).toBe("pt-BR");
+    expect(resolveWebAppLocale("pt-BR", createMockSurvey())).toBe("pt-BR");
+  });
+
+  test("distinguishes the Chinese scripts, which share a base code", () => {
+    expect(resolveWebAppLocale("zh-Hant", createMockSurvey())).toBe("zh-Hant-TW");
+    expect(resolveWebAppLocale("zh-Hans", createMockSurvey())).toBe("zh-Hans-CN");
+    expect(resolveWebAppLocale("zh", createMockSurvey())).toBe("zh-Hans-CN");
+  });
+
+  test("matches survey language codes regardless of case", () => {
+    expect(resolveWebAppLocale("DE-de", createMockSurvey())).toBe("de-DE");
+    expect(resolveWebAppLocale("zh-hant-tw", createMockSurvey())).toBe("zh-Hant-TW");
+  });
+
+  test("resolves 'default' through the survey's default language", () => {
+    expect(resolveWebAppLocale("default", createMockSurvey([createLanguage("de", true)]))).toBe("de-DE");
+  });
+});
+
+describe("getGateLocale", () => {
+  const survey = createMockSurvey([createLanguage("en", true), createLanguage("de")]);
+
+  test("uses the requested language, so the gate matches the survey behind it", () => {
+    expect(getGateLocale({ langParam: "de-DE", languageCode: "de", survey, fallbackLocale: "en-US" })).toBe(
+      "de-DE"
+    );
+  });
+
+  test("keeps the Accept-Language locale when the link requests no language", () => {
+    expect(
+      getGateLocale({ langParam: undefined, languageCode: "default", survey, fallbackLocale: "fr-FR" })
+    ).toBe("fr-FR");
+    // An empty `?lang=` is no request either.
+    expect(getGateLocale({ langParam: "", languageCode: "default", survey, fallbackLocale: "fr-FR" })).toBe(
+      "fr-FR"
+    );
+  });
+
+  test("keeps the Accept-Language locale when the requested language is not one the app speaks", () => {
+    // `?lang=` was given but resolves to a language with no app translation (Hebrew here): the
+    // respondent's own browser locale is a better guess than forcing English on them.
+    expect(getGateLocale({ langParam: "he", languageCode: "he", survey, fallbackLocale: "fr-FR" })).toBe(
+      "fr-FR"
+    );
+  });
+
+  test("follows the survey default for a language the survey has not enabled", () => {
+    // getLanguageCode resolves an unknown or disabled `?lang=` to "default", and the content will
+    // render in the survey's default language — so the gate reads that language, not the browser's.
+    expect(
+      getGateLocale({ langParam: "it-IT", languageCode: "default", survey, fallbackLocale: "fr-FR" })
+    ).toBe("en-US");
   });
 });
 

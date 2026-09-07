@@ -52,6 +52,7 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { TElementResponseMappingSurvey, getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import { TVerificationRequestPurpose, buildVerificationLinks } from "@/modules/auth/lib/verification-links";
+import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export { IS_SMTP_CONFIGURED };
@@ -459,19 +460,14 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const logoUrl = data.logoUrl ? resolveStorageUrl(data.logoUrl) : "";
   const token = createTokenForLinkSurvey(surveyId, email);
   const t = await getTranslate(data.locale);
-  const getSurveyLink = (): string => {
-    if (singleUseId) {
-      const surveyLink = new URL(`${getPublicDomain()}/s/${surveyId}`);
-      surveyLink.searchParams.set("verify", token);
-      surveyLink.searchParams.set("suId", singleUseId);
-      if (singleUseToken) {
-        surveyLink.searchParams.set("suToken", singleUseToken);
-      }
-      return surveyLink.toString();
-    }
-    return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
-  };
-  const surveyLink = getSurveyLink();
+  const surveyLink = buildVerifiedLinkSurveyUrl({
+    publicDomain: getPublicDomain(),
+    surveyId,
+    token,
+    singleUseId,
+    singleUseToken,
+    surveyLanguageCode: data.surveyLanguageCode,
+  });
 
   const html = await renderLinkSurveyEmail({ surveyName, surveyLink, logoUrl, t, ...legalProps });
   return await sendEmail({

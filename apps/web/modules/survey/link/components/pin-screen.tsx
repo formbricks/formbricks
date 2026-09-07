@@ -5,11 +5,13 @@ import { useTranslation } from "react-i18next";
 import { Response, Workspace } from "@formbricks/database/prisma-browser";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
+import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface PinScreenProps {
@@ -24,6 +26,8 @@ interface PinScreenProps {
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
   languageCode: string;
+  /** Locale for the gate's own chrome, resolved server-side from `?lang=` or Accept-Language. */
+  locale: TUserLocale;
   isEmbed: boolean;
   isPreview: boolean;
   contactId?: string;
@@ -47,6 +51,7 @@ export const PinScreen = (props: PinScreenProps) => {
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
     languageCode,
+    locale,
     isEmbed,
     isPreview,
     contactId,
@@ -60,6 +65,7 @@ export const PinScreen = (props: PinScreenProps) => {
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const { t } = useTranslation();
+  useAppLocale(locale);
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
   const [pinAuthToken, setPinAuthToken] = useState<string | undefined>();
