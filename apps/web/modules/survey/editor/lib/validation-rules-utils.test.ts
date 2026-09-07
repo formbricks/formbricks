@@ -1,7 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import {
+  MAX_RELATIVE_DATE_AMOUNT,
+  TValidationRule,
+  ZRelativeDateBound,
+} from "@formbricks/types/surveys/validation-rules";
+import {
+  clampRelativeAmount,
   createRelativeDateParams,
   createRuleParams,
   describeRelativeDateRule,
@@ -669,5 +674,43 @@ describe("describeRelativeDateRule", () => {
         t
       )
     ).toBe("Rejects dates from 2 calendar days before submission to the submission day, both included.");
+  });
+});
+
+describe("clampRelativeAmount", () => {
+  test("keeps a whole number inside the schema's range", () => {
+    expect(clampRelativeAmount("3")).toBe(3);
+    expect(clampRelativeAmount("0")).toBe(0);
+    expect(clampRelativeAmount(String(MAX_RELATIVE_DATE_AMOUNT))).toBe(MAX_RELATIVE_DATE_AMOUNT);
+  });
+
+  test("caps an amount the schema would reject", () => {
+    expect(clampRelativeAmount("5000000")).toBe(MAX_RELATIVE_DATE_AMOUNT);
+    expect(clampRelativeAmount(String(MAX_RELATIVE_DATE_AMOUNT + 1))).toBe(MAX_RELATIVE_DATE_AMOUNT);
+  });
+
+  test("floors a negative amount to zero", () => {
+    expect(clampRelativeAmount("-7")).toBe(0);
+  });
+
+  test("truncates a fractional amount rather than rounding", () => {
+    expect(clampRelativeAmount("2.9")).toBe(2);
+  });
+
+  test("reads an unparseable field as zero", () => {
+    expect(clampRelativeAmount("")).toBe(0);
+    expect(clampRelativeAmount("abc")).toBe(0);
+    expect(clampRelativeAmount("Infinity")).toBe(0);
+  });
+
+  test("every clamped amount parses against ZRelativeDateBound", () => {
+    for (const raw of ["-7", "", "abc", "2.9", "5000000", "3", String(MAX_RELATIVE_DATE_AMOUNT + 1)]) {
+      const result = ZRelativeDateBound.safeParse({
+        amount: clampRelativeAmount(raw),
+        unit: "calendarDays",
+        direction: "before",
+      });
+      expect(result.success, `raw input ${JSON.stringify(raw)} should clamp to a valid amount`).toBe(true);
+    }
   });
 });

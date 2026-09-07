@@ -3,6 +3,7 @@
 import { CalendarCheckIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
+  MAX_RELATIVE_DATE_AMOUNT,
   TRelativeDateBound,
   TRelativeDateDirection,
   TRelativeDateUnit,
@@ -15,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { clampRelativeAmount } from "../lib/validation-rules-utils";
 
 interface ValidationRuleRelativeDateInputProps {
   bound: TRelativeDateBound;
@@ -71,9 +73,12 @@ export const ValidationRuleRelativeDateInput = ({
       <Input
         type="number"
         min={0}
+        max={MAX_RELATIVE_DATE_AMOUNT}
         step={1}
         value={bound.amount}
-        onChange={(e) => onChange({ ...bound, amount: Math.max(0, Math.trunc(Number(e.target.value) || 0)) })}
+        // Clamped to the schema's own bound: without this the field happily takes an amount that
+        // ZRelativeDateBound rejects, and the author only finds out when the survey fails to save.
+        onChange={(e) => onChange({ ...bound, amount: clampRelativeAmount(e.target.value) })}
         className="h-9 w-16 shrink-0 bg-white"
         aria-label={t("workspace.surveys.edit.validation.relative_date_amount")}
       />

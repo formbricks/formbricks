@@ -1,6 +1,7 @@
 import { TSurveyElementTypeEnum, TSurveyOpenTextElementInputType } from "@formbricks/types/surveys/elements";
 import {
   APPLICABLE_RULES,
+  MAX_RELATIVE_DATE_AMOUNT,
   TAddressField,
   TContactInfoField,
   TRelativeDateBound,
@@ -94,6 +95,17 @@ export const DATE_RULE_TYPES: TValidationRuleType[] = [
 ];
 
 const RANGE_DATE_RULE_TYPES = new Set<TValidationRuleType>(["isBetween", "isNotBetween"]);
+
+/**
+ * Whole days inside the range ZRelativeDateBound accepts. Without the clamp the editor's number
+ * field takes an amount the schema rejects, and the author only finds out when the survey fails
+ * to save. Anything unparseable reads as 0, the same as an emptied field.
+ */
+export const clampRelativeAmount = (raw: string): number => {
+  const parsed = Math.trunc(Number(raw));
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.min(MAX_RELATIVE_DATE_AMOUNT, Math.max(0, parsed));
+};
 
 export const DEFAULT_RELATIVE_BOUND: TRelativeDateBound = {
   amount: 0,
