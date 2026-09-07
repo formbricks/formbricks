@@ -1999,13 +1999,10 @@
       "invite_banner_title": "Пригласи технического специалиста для настройки Formbricks SDK",
       "receiving_data": "Получение данных 💃🕺",
       "recheck": "Проверить ещё раз",
-      "sdk_connection_details": "Детали SDK",
-      "sdk_connection_details_description": "Уникальный ID рабочего пространства и URL подключения SDK для интеграции Formbricks с вашим приложением.",
-      "setup_alert_description": "Следуйте этой пошаговой инструкции, чтобы установить Formbricks в своё веб- или мобильное приложение менее чем за 5 минут.",
-      "setup_alert_title": "Как установить",
       "webapp_url": "URL подключения SDK",
-      "workspace_id": "ID вашего рабочего пространства",
-      "workspace_id_description": "Этот ID уникально идентифицирует данное рабочее пространство Formbricks."
+      "workspace_details": "Детали рабочего пространства",
+      "workspace_details_description": "Ваш уникальный ID рабочего пространства и URL подключения SDK для интеграции Formbricks с вашим приложением.",
+      "workspace_id": "ID вашего рабочего пространства"
     },
     "contacts": {
       "add_attribute": "Добавить атрибут",

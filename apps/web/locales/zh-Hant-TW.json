@@ -1999,13 +1999,10 @@
       "invite_banner_title": "邀請技術團隊成員設定 Formbricks SDK",
       "receiving_data": "資料接收中 💃🕺",
       "recheck": "重新檢查",
-      "sdk_connection_details": "SDK 詳細資訊",
-      "sdk_connection_details_description": "您專屬的工作區 ID 和 SDK 連線網址，用於將 Formbricks 整合到您的應用程式。",
-      "setup_alert_description": "按照此逐步教學，在 5 分鐘內於您的網頁或行動應用程式上安裝 Formbricks。",
-      "setup_alert_title": "如何安裝",
       "webapp_url": "SDK 連線 URL",
-      "workspace_id": "您的工作區 ID",
-      "workspace_id_description": "此 ID 用於唯一識別這個 Formbricks 工作區。"
+      "workspace_details": "工作區詳細資料",
+      "workspace_details_description": "您用於整合 Formbricks 與應用程式的唯一工作區 ID 和 SDK 連線網址。",
+      "workspace_id": "您的工作區 ID"
     },
     "contacts": {
       "add_attribute": "新增屬性",

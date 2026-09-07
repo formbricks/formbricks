@@ -1999,13 +1999,10 @@
       "invite_banner_title": "技術チームメンバーを招待してFormbricks SDKをセットアップ",
       "receiving_data": "データを受信中 💃🕺",
       "recheck": "再確認",
-      "sdk_connection_details": "SDK詳細",
-      "sdk_connection_details_description": "アプリケーションとFormbricksを統合するための固有のワークスペースIDとSDK接続URLです。",
-      "setup_alert_description": "このステップバイステップのチュートリアルに従って、5分以内にWebアプリまたはモバイルアプリにFormbricksをインストールできます。",
-      "setup_alert_title": "インストール方法",
       "webapp_url": "SDK接続URL",
-      "workspace_id": "ワークスペースID",
-      "workspace_id_description": "このIDは、このFormbricksワークスペースを一意に識別します。"
+      "workspace_details": "ワークスペースの詳細",
+      "workspace_details_description": "アプリケーションにFormbricksを統合するための固有のワークスペースIDとSDK接続URL。",
+      "workspace_id": "ワークスペースID"
     },
     "contacts": {
       "add_attribute": "属性を追加",

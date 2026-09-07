@@ -1994,18 +1994,15 @@
       "install_method_wordpress_step_2": "从此页面复制你的工作区 ID 到插件设置中。",
       "install_method_wordpress_step_3": "如果你自托管 Formbricks,还需要在插件设置中更新 API 主机地址。",
       "install_method_wordpress_step_4": "发布一个带有新会话触发器的调查问卷,然后重新加载页面进行测试。",
-      "invite_banner_button": "邀请开发者",
-      "invite_banner_description": "设置通常只需开发人员不到 5 分钟。",
+      "invite_banner_button": "邀请团队成员",
+      "invite_banner_description": "几分钟内即可完成设置。",
       "invite_banner_title": "邀请技术团队成员设置 Formbricks SDK",
       "receiving_data": "正在接收数据 💃🕺",
       "recheck": "重新检查",
-      "sdk_connection_details": "SDK 详情",
-      "sdk_connection_details_description": "用于将 Formbricks 与你的应用集成的唯一工作区 ID 和 SDK 连接 URL。",
-      "setup_alert_description": "按照此分步教程，在 5 分钟内完成 Formbricks 在你的网页或移动应用中的安装。",
-      "setup_alert_title": "如何安装",
       "webapp_url": "SDK 连接 URL",
-      "workspace_id": "您的工作区 ID",
-      "workspace_id_description": "此 ID 唯一标识这个 Formbricks 工作区。"
+      "workspace_details": "工作区详情",
+      "workspace_details_description": "用于将 Formbricks 与你的应用程序集成的唯一工作区 ID 和 SDK 连接 URL。",
+      "workspace_id": "您的工作区 ID"
     },
     "contacts": {
       "add_attribute": "添加属性",

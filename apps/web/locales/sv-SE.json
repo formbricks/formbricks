@@ -1999,13 +1999,10 @@
       "invite_banner_title": "Bjud in en teknisk teammedlem för att sätta upp Formbricks SDK",
       "receiving_data": "Tar emot data 💃🕺",
       "recheck": "Kontrollera igen",
-      "sdk_connection_details": "SDK-detaljer",
-      "sdk_connection_details_description": "Ditt unika arbetsyte-ID och SDK-anslutnings-URL för att integrera Formbricks med din applikation.",
-      "setup_alert_description": "Följ denna steg-för-steg-guide för att installera Formbricks i din webb- eller mobilapp på under 5 minuter.",
-      "setup_alert_title": "Så här installerar du",
       "webapp_url": "SDK-anslutnings-URL",
-      "workspace_id": "Ditt arbetsyte-ID",
-      "workspace_id_description": "Detta ID identifierar unikt denna Formbricks-arbetsyta."
+      "workspace_details": "Arbetsytans information",
+      "workspace_details_description": "Ditt unika arbetsyte-ID och SDK-anslutnings-URL för att integrera Formbricks med din applikation.",
+      "workspace_id": "Ditt arbetsyte-ID"
     },
     "contacts": {
       "add_attribute": "Lägg till attribut",

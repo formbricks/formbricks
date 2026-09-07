@@ -17,7 +17,6 @@ import { InstallMethodCards } from "./components/install-method-cards";
 export const AppConnectionPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
   const { workspaceId } = await params;
-  const frameworkGuidesUrl = "https://formbricks.com/docs/surveys/website-app-surveys/framework-guides";
   const workspaceIdMigrationUrl =
     "https://formbricks.com/docs/surveys/website-app-surveys/workspace-id-migration";
 
@@ -276,8 +275,25 @@ Formbricks(
           </AlertButton>
         </Alert>
         <SettingsCard
-          title={t("workspace.app-connection.sdk_connection_details")}
-          description={t("workspace.app-connection.sdk_connection_details_description")}>
+          title={t("workspace.app-connection.app_connection")}
+          description={t("workspace.app-connection.app_connection_description")}>
+          {workspace && (
+            <div className="space-y-4">
+              <WidgetStatusIndicator workspace={workspace} />
+              {workspace.appSetupCompleted && (
+                <Alert variant="warning" role="status">
+                  <AlertTitle>{t("workspace.app-connection.cache_update_delay_title")}</AlertTitle>
+                  <AlertDescription>
+                    {t("workspace.app-connection.cache_update_delay_description")}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+        </SettingsCard>
+        <SettingsCard
+          title={t("workspace.app-connection.workspace_details")}
+          description={t("workspace.app-connection.workspace_details_description")}>
           <div className="space-y-3">
             <IdBadge id={workspace.id} label={t("workspace.app-connection.workspace_id")} />
             {workspace.legacyEnvironmentId && (
@@ -316,33 +332,6 @@ Formbricks(
             aiPrompt={aiPrompt}
             showAIPrompt={showAIPrompt}
           />
-        </SettingsCard>
-        <SettingsCard
-          title={t("workspace.app-connection.app_connection")}
-          description={t("workspace.app-connection.app_connection_description")}>
-          {workspace && (
-            <div className="space-y-4">
-              <WidgetStatusIndicator workspace={workspace} />
-              {workspace.appSetupCompleted ? (
-                <Alert variant="warning" role="status">
-                  <AlertTitle>{t("workspace.app-connection.cache_update_delay_title")}</AlertTitle>
-                  <AlertDescription>
-                    {t("workspace.app-connection.cache_update_delay_description")}
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <Alert variant="info" role="status">
-                  <AlertTitle>{t("workspace.app-connection.setup_alert_title")}</AlertTitle>
-                  <AlertDescription>{t("workspace.app-connection.setup_alert_description")}</AlertDescription>
-                  <AlertButton asChild>
-                    <Link href={frameworkGuidesUrl} target="_blank" rel="noopener noreferrer">
-                      {t("common.learn_more")}
-                    </Link>
-                  </AlertButton>
-                </Alert>
-              )}
-            </div>
-          )}
         </SettingsCard>
       </div>
     </PageContentWrapper>

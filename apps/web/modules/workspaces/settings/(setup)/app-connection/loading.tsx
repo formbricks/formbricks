@@ -14,6 +14,11 @@ export const AppConnectionLoading = () => {
       skeletonLines: [{ classes: " h-44 max-w-full rounded-lg" }],
     },
     {
+      title: t("workspace.app-connection.workspace_details"),
+      description: t("workspace.app-connection.workspace_details_description"),
+      skeletonLines: [{ classes: "h-12 w-4/6 rounded-lg" }],
+    },
+    {
       title: t("workspace.app-connection.how_to_setup"),
       description: t("workspace.app-connection.how_to_setup_description"),
       skeletonLines: [
@@ -24,11 +29,6 @@ export const AppConnectionLoading = () => {
         { classes: "h-10 w-60 rounded-lg" },
         { classes: "h-10 w-60 rounded-lg" },
       ],
-    },
-    {
-      title: t("workspace.app-connection.workspace_id"),
-      description: t("workspace.app-connection.workspace_id_description"),
-      skeletonLines: [{ classes: "h-12 w-4/6 rounded-lg" }],
     },
   ];
 

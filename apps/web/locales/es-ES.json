@@ -1999,13 +1999,10 @@
       "invite_banner_title": "Invita a un miembro técnico del equipo para configurar el SDK de Formbricks",
       "receiving_data": "Recibiendo datos 💃🕺",
       "recheck": "Volver a comprobar",
-      "sdk_connection_details": "Detalles del SDK",
-      "sdk_connection_details_description": "Tu ID único de espacio de trabajo y URL de conexión del SDK para integrar Formbricks con tu aplicación.",
-      "setup_alert_description": "Sigue este tutorial paso a paso para instalar Formbricks en tu aplicación web o móvil en menos de 5 minutos.",
-      "setup_alert_title": "Cómo instalar",
       "webapp_url": "URL de conexión del SDK",
-      "workspace_id": "ID de tu espacio de trabajo",
-      "workspace_id_description": "Este ID identifica de forma única este espacio de trabajo de Formbricks."
+      "workspace_details": "Detalles del espacio de trabajo",
+      "workspace_details_description": "Tu ID único de espacio de trabajo y URL de conexión del SDK para integrar Formbricks con tu aplicación.",
+      "workspace_id": "ID de tu espacio de trabajo"
     },
     "contacts": {
       "add_attribute": "Añadir atributo",

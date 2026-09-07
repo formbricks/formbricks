@@ -1,7 +1,7 @@
 export const NextjsIcon: React.FC<Readonly<React.SVGProps<SVGSVGElement>>> = (props) => {
   return (
     <svg
-      fill="#000000"
+      fill="currentColor"
       viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg"
       width="1em"

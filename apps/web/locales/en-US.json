@@ -1937,7 +1937,7 @@
       "workspace_access_empty": "No workspaces added yet."
     },
     "app-connection": {
-      "app_connection": "Connection Status",
+      "app_connection": "Connection status",
       "app_connection_description": "Set up Formbricks on your web or mobile app.",
       "cache_update_delay_description": "When you make updates to surveys, contacts, actions, or other data, it can take up to 1 minute for those changes to appear in your local app running the Formbricks SDK.",
       "cache_update_delay_title": "Changes will be reflected after ~1 minute due to caching",
@@ -1994,18 +1994,15 @@
       "install_method_wordpress_step_2": "Copy your Workspace ID from this page into the plugin settings.",
       "install_method_wordpress_step_3": "If you self-host Formbricks, also update the API host in the plugin settings.",
       "install_method_wordpress_step_4": "Publish a survey with the New Session trigger and reload your page to test it.",
-      "invite_banner_button": "Invite a Developer",
-      "invite_banner_description": "Setup usually takes a developer less than 5 minutes.",
+      "invite_banner_button": "Invite team member",
+      "invite_banner_description": "The setup can be done in a couple of minutes.",
       "invite_banner_title": "Invite a technical team member to set up Formbricks SDK",
       "receiving_data": "Receiving data 💃🕺",
       "recheck": "Re-check",
-      "sdk_connection_details": "SDK Details",
-      "sdk_connection_details_description": "Your unique Workspace ID and SDK connection URL for integrating Formbricks with your application.",
-      "setup_alert_description": "Follow this step-by-step tutorial to install Formbricks on your web or mobile app in under 5 minutes.",
-      "setup_alert_title": "How to install",
       "webapp_url": "SDK Connection URL",
-      "workspace_id": "Your Workspace ID",
-      "workspace_id_description": "This id uniquely identifies this Formbricks Workspace."
+      "workspace_details": "Workspace details",
+      "workspace_details_description": "Your unique Workspace ID and SDK connection URL for integrating Formbricks with your application.",
+      "workspace_id": "Your Workspace ID"
     },
     "contacts": {
       "add_attribute": "Add Attribute",

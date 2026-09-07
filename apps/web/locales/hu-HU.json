@@ -1999,13 +1999,10 @@
       "invite_banner_title": "Hívjon meg egy műszaki csapattagot a Formbricks SDK beállításához",
       "receiving_data": "Adatok fogadása 💃🕺",
       "recheck": "Újraellenőrzés",
-      "sdk_connection_details": "SDK részletek",
-      "sdk_connection_details_description": "Az egyedi munkaterület-azonosítója és SDK-kapcsolati URL-je ahhoz, hogy a Formbricks programot a saját alkalmazásba integrálja.",
-      "setup_alert_description": "Kövesse ezt a lépésről lépésre haladó útmutatót a Formbricks webes vagy mobil alkalmazására történő telepítéséhez 5 percen belül.",
-      "setup_alert_title": "Telepítési útmutató",
       "webapp_url": "SDK-kapcsolati URL",
-      "workspace_id": "Az Ön munkaterület-azonosítója",
-      "workspace_id_description": "Ez az azonosító egyedileg azonosítja ezt a Formbricks munkaterületet."
+      "workspace_details": "Munkaterület részletei",
+      "workspace_details_description": "Az Ön egyedi munkaterület-azonosítója és SDK kapcsolati URL-je a Formbricks alkalmazásával való integrációhoz.",
+      "workspace_id": "Az Ön munkaterület-azonosítója"
     },
     "contacts": {
       "add_attribute": "Attribútum hozzáadása",

@@ -1937,7 +1937,7 @@
       "workspace_access_empty": "Henüz çalışma alanı eklenmedi."
     },
     "app-connection": {
-      "app_connection": "Bağlantı Durumu",
+      "app_connection": "Bağlantı durumu",
       "app_connection_description": "Formbricks'i web veya mobil uygulamanızda kurun.",
       "cache_update_delay_description": "Anketler, kişiler, eylemler veya diğer verilerde güncelleme yaptığında, bu değişikliklerin Formbricks SDK'sını çalıştıran yerel uygulamanda görünmesi 1 dakikaya kadar sürebilir.",
       "cache_update_delay_title": "Önbelleğe alma nedeniyle değişiklikler yaklaşık 1 dakika sonra yansıtılacak",
@@ -1994,18 +1994,15 @@
       "install_method_wordpress_step_2": "Bu sayfadaki Çalışma Alanı ID'nizi kopyalayıp eklenti ayarlarına yapıştır.",
       "install_method_wordpress_step_3": "Formbricks'i kendi sunucunda barındırıyorsan, eklenti ayarlarındaki API host'u da güncelle.",
       "install_method_wordpress_step_4": "Yeni Oturum tetikleyicisiyle bir anket yayınla ve test etmek için sayfanı yeniden yükle.",
-      "invite_banner_button": "Geliştirici Davet Et",
-      "invite_banner_description": "Kurulum genellikle bir geliştirici için 5 dakikadan az sürer.",
+      "invite_banner_button": "Ekip üyesi davet et",
+      "invite_banner_description": "Kurulum birkaç dakika içinde tamamlanabilir.",
       "invite_banner_title": "Formbricks SDK'yı kurmak için teknik ekip üyesini davet et",
       "receiving_data": "Veri alınıyor 💃🕺",
       "recheck": "Yeniden kontrol et",
-      "sdk_connection_details": "SDK Detayları",
-      "sdk_connection_details_description": "Formbricks'i uygulamanızla entegre etmek için benzersiz çalışma alanı kimliğiniz ve SDK bağlantı URL'niz.",
-      "setup_alert_description": "Formbricks'i web veya mobil uygulamanıza 5 dakikadan kısa sürede kurmak için bu adım adım öğreticiyi takip edin.",
-      "setup_alert_title": "Nasıl yüklenir",
       "webapp_url": "SDK Bağlantı URL'si",
-      "workspace_id": "Çalışma Alanı Kimliğiniz",
-      "workspace_id_description": "Bu kimlik, bu Formbricks Çalışma Alanını benzersiz şekilde tanımlar."
+      "workspace_details": "Çalışma alanı detayları",
+      "workspace_details_description": "Formbricks'i uygulamanla entegre etmek için benzersiz Çalışma Alanı ID'n ve SDK bağlantı URL'n.",
+      "workspace_id": "Çalışma Alanı Kimliğiniz"
     },
     "contacts": {
       "add_attribute": "Özellik Ekle",

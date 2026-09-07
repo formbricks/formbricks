@@ -1999,13 +1999,10 @@
       "invite_banner_title": "Invită un membru al echipei tehnice pentru a configura SDK-ul Formbricks",
       "receiving_data": "Date primite 💃🕺",
       "recheck": "Verifică din nou",
-      "sdk_connection_details": "Detalii SDK",
-      "sdk_connection_details_description": "ID-ul unic al Workspace-ului tău și URL-ul de conexiune SDK pentru integrarea Formbricks cu aplicația ta.",
-      "setup_alert_description": "Urmează acest tutorial pas cu pas pentru a instala Formbricks pe aplicația ta web sau mobilă în mai puțin de 5 minute.",
-      "setup_alert_title": "Cum se instalează",
       "webapp_url": "URL de conectare SDK",
-      "workspace_id": "ID-ul spațiului tău de lucru",
-      "workspace_id_description": "Acest ID identifică în mod unic acest Workspace Formbricks."
+      "workspace_details": "Detalii spațiu de lucru",
+      "workspace_details_description": "ID-ul tău unic de spațiu de lucru și URL-ul de conexiune SDK pentru integrarea Formbricks cu aplicația ta.",
+      "workspace_id": "ID-ul spațiului tău de lucru"
     },
     "contacts": {
       "add_attribute": "Adaugă atribut",
