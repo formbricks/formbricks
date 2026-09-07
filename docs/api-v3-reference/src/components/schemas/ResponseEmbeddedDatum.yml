@@ -50,12 +50,17 @@ properties:
     type: string
     description: Human-readable name for the key, in the resolved language where one exists.
   value:
-    type:
-      - string
-      - number
-      - boolean
-      - "null"
+    oneOf:
+      - type: string
+      - type: number
+      - type: boolean
+      - type: array
+        items:
+          type: string
+      - type: "null"
     description: >-
-      The value, matching `type`. `date` values are ISO-8601 strings. `null` when the key was
+      The value, matching `type`. `date` values are ISO-8601 strings. An **array of string** occurs
+      when a hidden field was ingested with multiple values — the stored map permits it, so the
+      payload must be able to carry it rather than silently dropping the key. `null` when the key was
       declared for this survey but carries no value on this response.
 additionalProperties: false

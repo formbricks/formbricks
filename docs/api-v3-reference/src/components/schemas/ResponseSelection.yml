@@ -26,7 +26,12 @@ properties:
       Option label in the resolved language. `null` when `match` is `unmatched`.
   rawValue:
     type: string
-    description: The value as stored on the response, before resolution. Always present.
+    description: >-
+      The value as stored on the response, verbatim and before resolution — always present, and the
+      string to use when rebuilding the stored map. Note what is stored differs by element type:
+      `multipleChoiceSingle`, `multipleChoiceMulti` and `ranking` store the option **label** in the
+      respondent's language, while `pictureSelection` stores the option **id**. `""` occurs when the
+      respondent selected Other and left it blank, and is returned rather than dropped.
   match:
     $ref: ./ResponseValueMatch.yml
   rank:

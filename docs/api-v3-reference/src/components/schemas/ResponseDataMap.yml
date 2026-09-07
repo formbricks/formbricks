@@ -1,15 +1,31 @@
 type: object
 description: >
-  Answers in their **stored** form: a map keyed by element id (and hidden-field key) whose values are
-  the shapes the survey client submits — a string, a number, an array of strings, or a map of strings
-  for matrix and composite elements.
+  Answers in their **stored** form: a map keyed by element id (and hidden-field key). The value shape
+  depends on the element type, and it is not uniform — these are the four shapes that actually occur:
 
 
-  Writes take this map; reads return the typed `answers[]` array instead. The asymmetry is
-  deliberate: resolving a map of ids into typed, labelled answers is unambiguous, whereas going the
-  other way would mean matching caller-supplied labels back onto option ids and guessing when they
-  no longer match. Callers that need to know what a map will produce before writing it can post it to
-  `POST /api/v3/responses/validate`.
+  - **`string`** — `openText` (always a string, even when `inputType` is `number`), `date`
+    (`YYYY-MM-DD`), and the single-token answers `consent` (`accepted`), `cta` (`clicked`) and `cal`
+    (`booked`). A single-choice answer is also a bare string.
+
+  - **`number`** — the numeric scales `nps`, `rating`, `csat` and `ces`.
+
+  - **`array of string`** — three different things: choice **labels** in the respondent's language
+    for `multipleChoiceMulti` and `ranking` (rank order); choice **ids** for `pictureSelection`;
+    private-storage URLs for `fileUpload`; and, for `address` and `contactInfo`, a **positional,
+    fixed-length list of sub-field values** — `address` is 6 slots
+    (`addressLine1`, `addressLine2`, `city`, `state`, `zip`, `country`) and `contactInfo` is 5
+    (`firstName`, `lastName`, `email`, `phone`, `company`), with blanks carried as `""` so the slots
+    stay aligned.
+
+  - **`object`** — `matrix` only, and it is keyed by the **localized row label** with the
+    **localized column label** as the value. Not by row and column id.
+
+
+  Writes take this map; reads return the typed `answers[]` array instead. The array is a lossless
+  superset — every stored key and value comes back verbatim in `rawValue`, `rawKey`, `valueText`,
+  `valueDate`, `fileUrls` or a composite slot — so a client can rebuild this map from a read without
+  refetching the survey. See the round-trip note on `GET /api/v3/responses/{responseId}`.
 additionalProperties:
   oneOf:
     - type: string

@@ -3,6 +3,7 @@ allOf:
   - type: object
     required:
       - booked
+      - rawValue
     properties:
       elementType:
         type: string
@@ -13,7 +14,10 @@ allOf:
         description: Whether the respondent completed a booking.
       rawValue:
         type: string
-        description: The token as stored — conventionally `booked`.
+        description: >-
+          The token as stored, verbatim — conventionally `booked`. Required, like the equivalent
+          field on `consent` and `cta`, because `booked` is a derivation and this is the underlying
+          value a client needs to rebuild the stored map.
 unevaluatedProperties: false
 description: >-
   Scheduling answer for a `cal` element. Only the fact of the booking is recorded on the response;

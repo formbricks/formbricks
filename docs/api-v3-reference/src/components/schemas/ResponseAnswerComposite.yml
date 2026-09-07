@@ -11,30 +11,52 @@ allOf:
           - contactInfo
       fields:
         type: array
-        description: >-
-          The sub-fields the respondent filled in, in the element's own field order. Fields left
-          blank are omitted. Kept nested under one answer rather than flattened into several
-          top-level answers, so `answers[]` stays one entry per element the respondent saw.
+        description: >
+          The element's sub-fields, **every slot, in storage order**, including ones the respondent
+          left blank (`valueText: ""`). Blanks are returned rather than omitted because the stored
+          value is a positional fixed-length array — `address` has 6 slots, `contactInfo` has 5 — so
+          dropping an empty slot would shift every later value onto the wrong field and make the
+          stored array impossible to rebuild.
         items:
           type: object
           required:
+            - slot
             - fieldId
             - fieldLabel
             - valueText
           properties:
+            slot:
+              type: integer
+              minimum: 0
+              description: >-
+                0-based index of this sub-field in the stored array. Reconstruct the stored value by
+                ordering on this and taking `valueText`.
             fieldId:
               type: string
+              enum:
+                - addressLine1
+                - addressLine2
+                - city
+                - state
+                - zip
+                - country
+                - firstName
+                - lastName
+                - email
+                - phone
+                - company
               description: >-
-                Stable sub-field id — for `address` one of `addressLine1`, `addressLine2`, `city`,
-                `state`, `zip`, `country`; for `contactInfo` one of `firstName`, `lastName`, `email`,
+                Stable sub-field id. `address` uses `addressLine1`, `addressLine2`, `city`, `state`,
+                `zip`, `country` in that order; `contactInfo` uses `firstName`, `lastName`, `email`,
                 `phone`, `company`.
             fieldLabel:
               type: string
               description: Sub-field label in the resolved language.
             valueText:
               type: string
-              description: The submitted value, verbatim.
+              description: The submitted value, verbatim. `""` when the respondent left it blank.
           additionalProperties: false
 unevaluatedProperties: false
 description: >-
   Composite answer whose value is a set of labelled sub-fields. Covers `address` and `contactInfo`.
+  Stored as a positional array of strings, which is why every slot is reported.

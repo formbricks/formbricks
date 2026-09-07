@@ -9,6 +9,21 @@ get:
     The workspace is resolved from the response itself, so the caller cannot choose which scope it is
     authorized against and no `workspaceId` parameter is accepted. An unknown or inaccessible
     `responseId` answers **403**, not **404**, so response ids cannot be probed for existence.
+
+
+    **Round-tripping.** Reads return the typed `answers[]` array while writes take the stored map
+    (`data`, `variables`) — the shapes differ, but no information is lost between them. Together,
+    `answers[]`, `embeddedData[]` and `unresolved[]` carry every stored key and value **verbatim**,
+    so a client can rebuild the write-shaped payload from a read and `PATCH` it back without
+    refetching the survey. Two rules make that guarantee hold, and both are contractual:
+
+
+    `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls` and composite slot values are always
+    the stored bytes, never resolved or reformatted — the resolved forms live in the separate
+    `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present
+    values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but
+    unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data`
+    wholesale, so an omitted key is a deleted answer rather than an unchanged one.
   tags:
     - V3 Responses
   parameters:
@@ -74,10 +89,28 @@ get:
                       elementType: address
                       elementLabel: Ihre Adresse
                       fields:
-                        - fieldId: city
+                        - slot: 0
+                          fieldId: addressLine1
+                          fieldLabel: Adresszeile 1
+                          valueText: Hauptstrasse 1
+                        - slot: 1
+                          fieldId: addressLine2
+                          fieldLabel: Adresszeile 2
+                          valueText: ""
+                        - slot: 2
+                          fieldId: city
                           fieldLabel: Stadt
                           valueText: Berlin
-                        - fieldId: country
+                        - slot: 3
+                          fieldId: state
+                          fieldLabel: Bundesland
+                          valueText: ""
+                        - slot: 4
+                          fieldId: zip
+                          fieldLabel: PLZ
+                          valueText: "10115"
+                        - slot: 5
+                          fieldId: country
                           fieldLabel: Land
                           valueText: Deutschland
                     - position: 4
@@ -107,7 +140,8 @@ get:
                       elementType: matrix
                       elementLabel: Bewerten Sie die Bereiche
                       rows:
-                        - rowId: row_support
+                        - rawKey: Support
+                          rowId: row_support
                           rowLabel: Support
                           columnId: col_good
                           columnLabel: Gut

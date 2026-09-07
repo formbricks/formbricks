@@ -1974,6 +1974,10 @@ paths:
         Returns one response in the detailed view — everything the list view carries, plus `contact`, `displayId` and `singleUseId`.
 
         The workspace is resolved from the response itself, so the caller cannot choose which scope it is authorized against and no `workspaceId` parameter is accepted. An unknown or inaccessible `responseId` answers **403**, not **404**, so response ids cannot be probed for existence.
+
+        **Round-tripping.** Reads return the typed `answers[]` array while writes take the stored map (`data`, `variables`) — the shapes differ, but no information is lost between them. Together, `answers[]`, `embeddedData[]` and `unresolved[]` carry every stored key and value **verbatim**, so a client can rebuild the write-shaped payload from a read and `PATCH` it back without refetching the survey. Two rules make that guarantee hold, and both are contractual:
+
+        `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one.
       tags:
         - V3 Responses
       parameters:
@@ -2039,10 +2043,28 @@ paths:
                           elementType: address
                           elementLabel: Ihre Adresse
                           fields:
-                            - fieldId: city
+                            - slot: 0
+                              fieldId: addressLine1
+                              fieldLabel: Adresszeile 1
+                              valueText: Hauptstrasse 1
+                            - slot: 1
+                              fieldId: addressLine2
+                              fieldLabel: Adresszeile 2
+                              valueText: ''
+                            - slot: 2
+                              fieldId: city
                               fieldLabel: Stadt
                               valueText: Berlin
-                            - fieldId: country
+                            - slot: 3
+                              fieldId: state
+                              fieldLabel: Bundesland
+                              valueText: ''
+                            - slot: 4
+                              fieldId: zip
+                              fieldLabel: PLZ
+                              valueText: '10115'
+                            - slot: 5
+                              fieldId: country
                               fieldLabel: Land
                               valueText: Deutschland
                         - position: 4
@@ -2072,7 +2094,8 @@ paths:
                           elementType: matrix
                           elementLabel: Bewerten Sie die Bereiche
                           rows:
-                            - rowId: row_support
+                            - rawKey: Support
+                              rowId: row_support
                               rowLabel: Support
                               columnId: col_good
                               columnLabel: Gut
@@ -5855,7 +5878,7 @@ components:
           description: Option label in the resolved language. `null` when `match` is `unmatched`.
         rawValue:
           type: string
-          description: The value as stored on the response, before resolution. Always present.
+          description: 'The value as stored on the response, verbatim and before resolution — always present, and the string to use when rebuilding the stored map. Note what is stored differs by element type: `multipleChoiceSingle`, `multipleChoiceMulti` and `ranking` store the option **label** in the respondent''s language, while `pictureSelection` stores the option **id**. `""` occurs when the respondent selected Other and left it blank, and is returned rather than dropped.'
         match:
           $ref: '#/components/schemas/ResponseValueMatch'
         rank:
@@ -5928,6 +5951,7 @@ components:
         - type: object
           required:
             - booked
+            - rawValue
           properties:
             elementType:
               type: string
@@ -5938,7 +5962,7 @@ components:
               description: Whether the respondent completed a booking.
             rawValue:
               type: string
-              description: The token as stored — conventionally `booked`.
+              description: The token as stored, verbatim — conventionally `booked`. Required, like the equivalent field on `consent` and `cta`, because `booked` is a derivation and this is the underlying value a client needs to rebuild the stored map.
       unevaluatedProperties: false
       description: Scheduling answer for a `cal` element. Only the fact of the booking is recorded on the response; the meeting itself lives in the scheduling provider and is not proxied by this API.
     ResponseAnswerMatrix:
@@ -5958,24 +5982,28 @@ components:
               items:
                 type: object
                 required:
+                  - rawKey
                   - rowLabel
                   - rawValue
                   - columnLabel
                   - match
                 properties:
+                  rawKey:
+                    type: string
+                    description: The stored map key for this row, verbatim. Matrix answers are stored keyed by the **localized row label** in the respondent's language, not by row id — so this is the string to use when rebuilding the stored object, and it is not necessarily equal to `rowLabel`, which is resolved in the *current* definition's language.
                   rowId:
                     type:
                       - string
                       - 'null'
-                    description: Resolved row id, or `null` when the row no longer resolves.
+                    description: Row id resolved from the current definition, or `null` when the stored key matches no current row. Derived, never stored.
                   rowLabel:
                     type: string
-                    description: Row label in the resolved language, falling back to the stored key when the row no longer resolves.
+                    description: Row label in the resolved language. Falls back to `rawKey` when the row no longer resolves.
                   columnId:
                     type:
                       - string
                       - 'null'
-                    description: Resolved column id, or `null` when the column no longer resolves.
+                    description: Column id resolved from the current definition, or `null` when it no longer resolves. Derived, never stored.
                   columnLabel:
                     type:
                       - string
@@ -5983,7 +6011,7 @@ components:
                     description: Column label in the resolved language. `null` when `match` is `unmatched`.
                   rawValue:
                     type: string
-                    description: The selected column as stored, before resolution.
+                    description: The selected column as stored, verbatim — the localized column label, not a column id. This is the value to use when rebuilding the stored object.
                   match:
                     $ref: '#/components/schemas/ResponseValueMatch'
                 additionalProperties: false
@@ -6003,26 +6031,44 @@ components:
                 - contactInfo
             fields:
               type: array
-              description: The sub-fields the respondent filled in, in the element's own field order. Fields left blank are omitted. Kept nested under one answer rather than flattened into several top-level answers, so `answers[]` stays one entry per element the respondent saw.
+              description: |
+                The element's sub-fields, **every slot, in storage order**, including ones the respondent left blank (`valueText: ""`). Blanks are returned rather than omitted because the stored value is a positional fixed-length array — `address` has 6 slots, `contactInfo` has 5 — so dropping an empty slot would shift every later value onto the wrong field and make the stored array impossible to rebuild.
               items:
                 type: object
                 required:
+                  - slot
                   - fieldId
                   - fieldLabel
                   - valueText
                 properties:
+                  slot:
+                    type: integer
+                    minimum: 0
+                    description: 0-based index of this sub-field in the stored array. Reconstruct the stored value by ordering on this and taking `valueText`.
                   fieldId:
                     type: string
-                    description: Stable sub-field id — for `address` one of `addressLine1`, `addressLine2`, `city`, `state`, `zip`, `country`; for `contactInfo` one of `firstName`, `lastName`, `email`, `phone`, `company`.
+                    enum:
+                      - addressLine1
+                      - addressLine2
+                      - city
+                      - state
+                      - zip
+                      - country
+                      - firstName
+                      - lastName
+                      - email
+                      - phone
+                      - company
+                    description: Stable sub-field id. `address` uses `addressLine1`, `addressLine2`, `city`, `state`, `zip`, `country` in that order; `contactInfo` uses `firstName`, `lastName`, `email`, `phone`, `company`.
                   fieldLabel:
                     type: string
                     description: Sub-field label in the resolved language.
                   valueText:
                     type: string
-                    description: The submitted value, verbatim.
+                    description: The submitted value, verbatim. `""` when the respondent left it blank.
                 additionalProperties: false
       unevaluatedProperties: false
-      description: Composite answer whose value is a set of labelled sub-fields. Covers `address` and `contactInfo`.
+      description: Composite answer whose value is a set of labelled sub-fields. Covers `address` and `contactInfo`. Stored as a positional array of strings, which is why every slot is reported.
     ResponseAnswer:
       oneOf:
         - $ref: '#/components/schemas/ResponseAnswerText'
@@ -6103,12 +6149,15 @@ components:
           type: string
           description: Human-readable name for the key, in the resolved language where one exists.
         value:
-          type:
-            - string
-            - number
-            - boolean
-            - 'null'
-          description: The value, matching `type`. `date` values are ISO-8601 strings. `null` when the key was declared for this survey but carries no value on this response.
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: array
+              items:
+                type: string
+            - type: 'null'
+          description: The value, matching `type`. `date` values are ISO-8601 strings. An **array of string** occurs when a hidden field was ingested with multiple values — the stored map permits it, so the payload must be able to carry it rather than silently dropping the key. `null` when the key was declared for this survey but carries no value on this response.
       additionalProperties: false
     ResponseUnresolvedEntry:
       type: object
@@ -6261,9 +6310,26 @@ components:
     ResponseDataMap:
       type: object
       description: |
-        Answers in their **stored** form: a map keyed by element id (and hidden-field key) whose values are the shapes the survey client submits — a string, a number, an array of strings, or a map of strings for matrix and composite elements.
+        Answers in their **stored** form: a map keyed by element id (and hidden-field key). The value shape depends on the element type, and it is not uniform — these are the four shapes that actually occur:
 
-        Writes take this map; reads return the typed `answers[]` array instead. The asymmetry is deliberate: resolving a map of ids into typed, labelled answers is unambiguous, whereas going the other way would mean matching caller-supplied labels back onto option ids and guessing when they no longer match. Callers that need to know what a map will produce before writing it can post it to `POST /api/v3/responses/validate`.
+        - **`string`** — `openText` (always a string, even when `inputType` is `number`), `date`
+          (`YYYY-MM-DD`), and the single-token answers `consent` (`accepted`), `cta` (`clicked`) and `cal`
+          (`booked`). A single-choice answer is also a bare string.
+
+        - **`number`** — the numeric scales `nps`, `rating`, `csat` and `ces`.
+        - **`array of string`** — three different things: choice **labels** in the respondent's language
+          for `multipleChoiceMulti` and `ranking` (rank order); choice **ids** for `pictureSelection`;
+          private-storage URLs for `fileUpload`; and, for `address` and `contactInfo`, a **positional,
+          fixed-length list of sub-field values** — `address` is 6 slots
+          (`addressLine1`, `addressLine2`, `city`, `state`, `zip`, `country`) and `contactInfo` is 5
+          (`firstName`, `lastName`, `email`, `phone`, `company`), with blanks carried as `""` so the slots
+          stay aligned.
+
+        - **`object`** — `matrix` only, and it is keyed by the **localized row label** with the
+          **localized column label** as the value. Not by row and column id.
+
+
+        Writes take this map; reads return the typed `answers[]` array instead. The array is a lossless superset — every stored key and value comes back verbatim in `rawValue`, `rawKey`, `valueText`, `valueDate`, `fileUrls` or a composite slot — so a client can rebuild this map from a read without refetching the survey. See the round-trip note on `GET /api/v3/responses/{responseId}`.
       additionalProperties:
         oneOf:
           - type: string
