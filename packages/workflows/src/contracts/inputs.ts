@@ -75,7 +75,7 @@ export type TWorkflowSortBy = z.infer<typeof ZWorkflowSortBy>;
 export const ZListWorkflowsInput = z
   .strictObject({
     workspaceId: z.cuid2(),
-    limit: z.number().int().min(1).max(250).default(20),
+    limit: z.number().int().min(1).max(100).default(20),
     cursor: z.string().min(1).optional().describe("Opaque cursor from the previous page's meta.nextCursor."),
     statusIn: z
       .array(ZWorkflowStatus)
@@ -98,7 +98,7 @@ export type TListWorkflowsInput = z.infer<typeof ZListWorkflowsInput>;
 export const ZListWorkflowRunsInput = z
   .strictObject({
     workspaceId: z.cuid2(),
-    limit: z.number().int().min(1).max(250).default(20),
+    limit: z.number().int().min(1).max(100).default(20),
     cursor: z.string().min(1).optional().describe("Opaque cursor from the previous page's meta.nextCursor."),
     workflowId: z.cuid2().optional().describe("Returns only runs of this workflow."),
     responseId: z.cuid2().optional().describe("Returns only runs triggered by this survey response."),

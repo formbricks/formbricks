@@ -106,7 +106,7 @@ describe("workflow operation inputs", () => {
     const parsed = ZListWorkflowsInput.parse({ workspaceId });
     expect(parsed.limit).toBe(20);
     expect(parsed.sortBy).toBe("updatedAt");
-    expect(ZListWorkflowsInput.safeParse({ workspaceId, limit: 251 }).success).toBe(false);
+    expect(ZListWorkflowsInput.safeParse({ workspaceId, limit: 101 }).success).toBe(false);
     expect(ZListWorkflowRunsInput.safeParse({ workspaceId, statusIn: [] }).success).toBe(false);
   });
 

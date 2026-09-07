@@ -4,10 +4,7 @@ export const ZIsoDateTime = z.iso.datetime({ offset: true });
 
 export const ZCursorPaginationMeta = z
   .strictObject({
-    // No upper bound: this echoes the page size the server applied. `validateOutput` checks it
-    // against the requested limit, so capping it here would surface an out-of-range request as a
-    // 500 (WorkflowSerializationError) instead of the 400 the input schema already returns.
-    limit: z.number().int().min(1),
+    limit: z.number().int().min(1).max(100),
     nextCursor: z
       .string()
       .min(1)

@@ -23,7 +23,7 @@ info:
 
     **Pagination**
     Cursor-based pagination with **limit** + opaque **cursor** token. Responses return `meta.nextCursor`; pass that value back as `cursor` to fetch the next page. Survey list responses also include `meta.totalCount`, the total number of surveys matching the current filters across all pages. Workflow list responses do not require total counts in Scope 1. There is no `offset` in this contract.
-    The page-size **maximum is 250** across every v3 collection; only the *default* varies by resource (20 for surveys and workflows, 50 for the workspace reference lists). A `limit` above the maximum is rejected with **400** rather than silently reduced, consistent with v3 rejecting unrecognized query parameters instead of ignoring them. The echoed `meta.limit` reports the page size actually applied and is deliberately unbounded in the response schema, so an out-of-range request fails request validation rather than output validation. Callers should not infer the end of a collection from a page shorter than `limit`; `meta.nextCursor` of `null` is the only end-of-collection signal. Note that array-valued *input* bounds are a separate concern and stay at 100 — `filter[id][in]` and the batch-delete id list are bounded by write and payload risk, not by page cost.
+    The page-size **maximum is 250** for responses, surveys, action classes and contact attribute keys; only the *default* varies by resource (20 for surveys, 50 for the workspace reference lists). **The workflows and workflow-run lists remain at 100** — their bound lives in the `packages/workflows` contracts and moves with that package, so each documents the value it actually enforces. A `limit` above an endpoint's maximum is rejected with **400** rather than silently reduced, consistent with v3 rejecting unrecognized query parameters instead of ignoring them. Callers should not infer the end of a collection from a page shorter than `limit`; `meta.nextCursor` of `null` is the only end-of-collection signal. Note that array-valued *input* bounds are a separate concern and stay at 100 — `filter[id][in]` and the batch-delete id list are bounded by write and payload risk, not by page cost.
 
     **Strictness**
     A query parameter that an operation does not declare returns **400**, with the offending key reported in `invalid_params[].name` — including on operations that declare no query parameters at all. Unknown parameters are rejected rather than ignored on purpose: a silently-dropped filter returns *more* data than the caller believes they asked for, and a typo in a filter name is indistinguishable from no filter at all. The same applies to request bodies, where unsupported fields are rejected instead of stripped.
@@ -2343,7 +2343,14 @@ paths:
         - V3 Workflows
       parameters:
         - $ref: '#/components/parameters/WorkspaceIdQuery'
-        - $ref: '#/components/parameters/LimitQuery'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Page size (max 100). The workflows endpoints have not yet moved to the v3-wide maximum of 250 — their bound lives in the shared `packages/workflows` contracts, which are owned alongside the workflows feature rather than by this spec. Documented at the value actually enforced rather than at the platform norm; tracked separately.
         - $ref: '#/components/parameters/CursorQuery'
         - in: query
           name: filter[name][contains]
@@ -2531,7 +2538,14 @@ paths:
         - V3 Workflows
       parameters:
         - $ref: '#/components/parameters/WorkspaceIdQuery'
-        - $ref: '#/components/parameters/LimitQuery'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Page size (max 100). The workflows endpoints have not yet moved to the v3-wide maximum of 250 — their bound lives in the shared `packages/workflows` contracts, which are owned alongside the workflows feature rather than by this spec. Documented at the value actually enforced rather than at the platform norm; tracked separately.
         - $ref: '#/components/parameters/CursorQuery'
         - in: query
           name: workflowId
@@ -6934,7 +6948,7 @@ components:
         limit:
           type: integer
           minimum: 1
-          description: 'The page size actually applied. Deliberately carries no `maximum`: this is an echo of what the server used, not a bound on what the caller may ask for. Constraining it here would make an out-of-range request fail output validation — a 500 — instead of being rejected as a 400 by the request schema.'
+          maximum: 100
         nextCursor:
           type:
             - string
