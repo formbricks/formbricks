@@ -76,6 +76,12 @@ A survey may already declare a hidden field called `url`, `country` or `source`.
 
 New fields cannot be created under a reserved name in any casing, which is what keeps this to the surveys that already had one. The rule and the full refused list live on the [Hidden Fields](/surveys/general-features/hidden-fields#naming) page.
 
+For filling from the URL, the spelling decides:
+
+- A field a survey already declares under a different casing of a reserved name — `Source`, `SurveyId`, `devicetype` — keeps filling from its own spelling (`?Source=newsletter`), as it did before Embedded Data.
+- A field named exactly like a link-survey parameter (`lang`, `userId`, `verify`, `suToken`, …) never fills from the URL, whatever the casing of the parameter: that parameter is the survey link's own.
+- A parameter that matches a field only case-insensitively and is itself a reserved name (`?verify=` for a field called `Verify`) is refused, and the browser console says which spelling fills the field.
+
 ## Anonymize Responses
 
 The **Anonymize responses** toggle in the survey editor's **Settings** tab, under **Response Options**, is off by default and decides which reserved fields are captured at all. It acts at ingest, so a suppressed field is never stored rather than stored and hidden, and responses collected before you turned it on are untouched.
@@ -87,6 +93,8 @@ The **Anonymize responses** toggle in the survey editor's **Settings** tab, unde
 | **Captured unchanged**     | `source`, `action`, `pagePath`, all five `utm*`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `locale`, `language`, `finished`, `durationSeconds`, `startedAt`, `finishedAt`, `responseId`, `surveyId` |
 
 A suppressed field resolves as **unset**, never as an empty string or a stale value, so `#recall:country/fallback:unknown#` shows `unknown` and a logic condition on it simply does not match.
+
+Exports keep the `Country`, `Browser`, `Os` and `Device Type` columns whatever the toggle says: responses collected before you turned it on still hold those values and keep showing them in the response table, so the CSV/XLSX carries the same history and leaves the cells empty for anonymized responses. The response filter only offers the fields the survey still captures.
 
 Turning the toggle on also disables **Capture IP address** for that survey, because anonymizing drops the IP whatever that switch says. Your stored choice is kept, so turning anonymize back off restores it.
 
@@ -118,7 +126,7 @@ That is deliberate: a recall token can end up interpolated into a redirect URL o
 
 **In the response table**, the same seven are visible columns by default, and the other auto-captured fields are real columns that start hidden and can be switched on from the column settings. `responseId`, `surveyId`, `finished`, `language`, `durationSeconds`, `startedAt` and `finishedAt` are not listed as fields on either surface, because the card header and the table's own fixed columns already show them.
 
-**In exports**, the column set is derived from the catalog rather than from whatever the first response happened to carry, so it is stable for the survey: every response gets every column, and absent values export as empty. `Response ID`, `Survey ID`, `Finished` and the timestamp already have fixed basic columns, so they are not repeated. Anonymized surveys omit the columns they never capture, and `Ip Address` is only a column when the survey captures it.
+**In exports**, the column set is derived from the catalog rather than from whatever the first response happened to carry, so it is stable for the survey: every response gets every column, and absent values export as empty. `Response ID`, `Survey ID`, `Finished` and the timestamp already have fixed basic columns, so they are not repeated. Turning **Anonymize responses** on removes no column: `Country`, `Browser`, `Os` and `Device Type` stay, responses collected before the toggle keep their values in them, and anonymized responses export them empty. `Ip Address` is only a column when the survey captures it.
 
 <Note>
   Export headers are Title Case renderings of the field name (`Page Path`, `Utm Source`) and are deliberately
