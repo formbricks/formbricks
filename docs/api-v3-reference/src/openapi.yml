@@ -83,6 +83,22 @@ info:
     not by page cost.
 
 
+    **Strictness**
+
+    A query parameter that an operation does not declare returns **400**, with the offending key
+    reported in `invalid_params[].name` — including on operations that declare no query parameters at
+    all. Unknown parameters are rejected rather than ignored on purpose: a silently-dropped filter
+    returns *more* data than the caller believes they asked for, and a typo in a filter name is
+    indistinguishable from no filter at all. The same applies to request bodies, where unsupported
+    fields are rejected instead of stripped.
+
+    Unrecognized **headers** are tolerated, as gateways and proxies legitimately add them; strictness
+    is about parameters and body fields, not transport metadata.
+
+    This is the rule for the surveys, responses, tags and workspace reference-list operations. The
+    workflows family does not enforce it today, so treat parameter strictness there as unspecified
+    rather than guaranteed.
+
     **Filtering**
 
     Filters use explicit operator-style query parameters under the
@@ -133,7 +149,14 @@ info:
     `GET /api/v3/responses/count` answers "how many match?" directly. The list endpoint's
     `meta.totalCount` covers a caller that is already paging and is **opt-in** via
     `includeTotalCount` (default `false`, unlike the survey list) because responses are the
-    highest-cardinality table in the product.
+    highest-cardinality table in the product. Both response counts are **capped at 10 000** and
+    carry an exactness flag — `meta.totalCountRelation` on the list, `data.relation` on `/count` —
+    reading `eq` when the figure is exact and `gte` when the cap was reached and it is a lower bound.
+    An exact count over this table grows superlinearly with the data while a capped one stays flat,
+    so an uncapped total would be the only part of a response whose cost is unbounded. `/count`
+    accepts `precision=exact` for the cases that genuinely need a precise figure, documented as the
+    deliberate slow path. The survey list's `totalCount` stays exact and uncapped: surveys are
+    low-cardinality and that count has a covering index built for it.
 
     Bulk deletion is `POST /api/v3/responses/batch-delete`, a custom method rather than a
     collection-level `DELETE`, so a call that loses its filters cannot degrade into erasing

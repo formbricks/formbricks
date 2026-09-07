@@ -1,0 +1,9 @@
+in: query
+name: filter[createdAt][gt]
+schema:
+  type: string
+  format: date-time
+description: >-
+  Only records created strictly after this instant (**exclusive**). Pair with
+  `filter[createdAt][lt]` to express a half-open `[start, end)` window without redefining the
+  inclusive bounds. Mutually exclusive with `filter[createdAt][gte]` — sending both is a **400**.

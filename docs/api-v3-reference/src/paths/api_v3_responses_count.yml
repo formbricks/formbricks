@@ -30,18 +30,10 @@ get:
         type: string
         format: cuid2
       description: Optional contact scoping.
-    - in: query
-      name: filter[createdAt][gte]
-      schema:
-        type: string
-        format: date-time
-      description: Only responses created at or after this instant (inclusive).
-    - in: query
-      name: filter[createdAt][lte]
-      schema:
-        type: string
-        format: date-time
-      description: Only responses created at or before this instant (inclusive).
+    - $ref: ../components/parameters/CreatedAtGteQuery.yml
+    - $ref: ../components/parameters/CreatedAtGtQuery.yml
+    - $ref: ../components/parameters/CreatedAtLteQuery.yml
+    - $ref: ../components/parameters/CreatedAtLtQuery.yml
     - in: query
       name: filter[finished][eq]
       schema:
@@ -59,6 +51,25 @@ get:
       explode: true
       description: >-
         Survey language codes to include. Requires `surveyId` or `contactId`.
+    - in: query
+      name: precision
+      schema:
+        type: string
+        enum:
+          - capped
+          - exact
+        default: capped
+      description: >
+        How hard to count. `capped` (the default) stops at 10 000 and reports `relation: gte` at the
+        cap — flat cost, safe to call on anything. `exact` counts every matching row and reports
+        `relation: eq` always.
+
+
+        `exact` is the deliberate slow path: cost grows superlinearly with the matching set, so on a
+        large or loosely-filtered scope it is markedly more expensive than a page of data. Ask for it
+        when a person needs a precise figure, not on a dashboard poll. It exists so that the capped
+        default is a sensible default rather than a limitation, and so the cap cannot be sidestepped
+        by accident.
   responses:
     "200":
       description: Count retrieved successfully
@@ -82,16 +93,33 @@ get:
                 type: object
                 required:
                   - count
+                  - relation
                 properties:
                   count:
                     type: integer
                     minimum: 0
-                    description: Responses matching the scope and filters.
+                    description: >-
+                      Responses matching the scope and filters. With `precision=capped` this stops at
+                      10 000; read `relation` before presenting it as a total.
+                  relation:
+                    type: string
+                    enum:
+                      - eq
+                      - gte
+                    description: >-
+                      `eq` when `count` is exact, `gte` when the 10 000 cap was reached and `count` is
+                      a lower bound. Always `eq` when `precision=exact`. Same convention as
+                      `meta.totalCountRelation` on the list endpoint.
                 additionalProperties: false
     "400":
-      description: >-
+      description: >
         Bad Request — invalid or unrecognized query parameters, including `filter[finished][eq]` or
         `filter[language][in]` without `surveyId` or `contactId`.
+
+
+        Date bounds follow the same pairing rule as the list endpoint: at most one lower bound (`gte`
+        xor `gt`), at most one upper bound (`lte` xor `lt`), and the lower bound must not fall after
+        the upper one.
       content:
         application/problem+json:
           schema:

@@ -25,6 +25,10 @@ info:
     Cursor-based pagination with **limit** + opaque **cursor** token. Responses return `meta.nextCursor`; pass that value back as `cursor` to fetch the next page. Survey list responses also include `meta.totalCount`, the total number of surveys matching the current filters across all pages. Workflow list responses do not require total counts in Scope 1. There is no `offset` in this contract.
     The page-size **maximum is 250** across every v3 collection; only the *default* varies by resource (20 for surveys and workflows, 50 for the workspace reference lists). A `limit` above the maximum is rejected with **400** rather than silently reduced, consistent with v3 rejecting unrecognized query parameters instead of ignoring them. The echoed `meta.limit` reports the page size actually applied and is deliberately unbounded in the response schema, so an out-of-range request fails request validation rather than output validation. Callers should not infer the end of a collection from a page shorter than `limit`; `meta.nextCursor` of `null` is the only end-of-collection signal. Note that array-valued *input* bounds are a separate concern and stay at 100 — `filter[id][in]` and the batch-delete id list are bounded by write and payload risk, not by page cost.
 
+    **Strictness**
+    A query parameter that an operation does not declare returns **400**, with the offending key reported in `invalid_params[].name` — including on operations that declare no query parameters at all. Unknown parameters are rejected rather than ignored on purpose: a silently-dropped filter returns *more* data than the caller believes they asked for, and a typo in a filter name is indistinguishable from no filter at all. The same applies to request bodies, where unsupported fields are rejected instead of stripped.
+    Unrecognized **headers** are tolerated, as gateways and proxies legitimately add them; strictness is about parameters and body fields, not transport metadata.
+    This is the rule for the surveys, responses, tags and workspace reference-list operations. The workflows family does not enforce it today, so treat parameter strictness there as unspecified rather than guaranteed.
     **Filtering**
     Filters use explicit operator-style query parameters under the **`filter[...]` family**. The survey list supports `filter[name][contains]`, `filter[status][in]`, and `filter[type][in]`. The workflow list supports `filter[name][contains]` and `filter[status][in]`; the workflow run list supports `filter[status][in]` and `filter[isDryRun][eq]`. Resource-scoping identifiers (`workspaceId`, `workflowId`, `responseId`) stay plain query parameters. Multi-value filters use repeated keys or comma-separated values (e.g. `filter[status][in]=draft&filter[status][in]=inProgress` or `filter[status][in]=draft,inProgress`). Sorting remains a flat `sortBy` query parameter.
 
@@ -33,7 +37,7 @@ info:
     Writes take answers in the **stored map form** (`data`, `variables`) while reads return the typed array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching caller-supplied labels back onto option ids. `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what a write would do, before committing to it.
     `createdAt` and `updatedAt` are **server-owned** on this resource: they cannot be supplied on create or changed by a patch. Response metering counts rows by `(surveyId, createdAt)`, and a client-chosen `createdAt` also lets rows be inserted into the middle of another consumer's already-paginated stream. Backdating stays available on v2 until a dedicated import path exists. The respondent's IP address and the `contactAttributes` snapshot that v1/v2 expose — and let callers write — are not part of this resource in any view.
     Response filtering is allow-listed and index-backed: `filter[createdAt][gte|lte]`, `filter[finished][eq]`, `filter[language][in]` and `filter[id][in]`. `filter[finished][eq]` and `filter[language][in]` require `surveyId` or `contactId` as well, because both are heap residuals bounded only by an anchored index range. Per-answer, hidden-field, submission-metadata, contact-attribute, quota and tag filters are **not** offered; each is a JSON path or an unindexed join on the largest table in the product. The in-app dashboard does offer them, so this API is knowingly behind the dashboard here — closing the gap requires index work and is tracked separately rather than quietly omitted.
-    `GET /api/v3/responses/count` answers "how many match?" directly. The list endpoint's `meta.totalCount` covers a caller that is already paging and is **opt-in** via `includeTotalCount` (default `false`, unlike the survey list) because responses are the highest-cardinality table in the product.
+    `GET /api/v3/responses/count` answers "how many match?" directly. The list endpoint's `meta.totalCount` covers a caller that is already paging and is **opt-in** via `includeTotalCount` (default `false`, unlike the survey list) because responses are the highest-cardinality table in the product. Both response counts are **capped at 10 000** and carry an exactness flag — `meta.totalCountRelation` on the list, `data.relation` on `/count` — reading `eq` when the figure is exact and `gte` when the cap was reached and it is a lower bound. An exact count over this table grows superlinearly with the data while a capped one stays flat, so an uncapped total would be the only part of a response whose cost is unbounded. `/count` accepts `precision=exact` for the cases that genuinely need a precise figure, documented as the deliberate slow path. The survey list's `totalCount` stays exact and uncapped: surveys are low-cardinality and that count has a covering index built for it.
     Bulk deletion is `POST /api/v3/responses/batch-delete`, a custom method rather than a collection-level `DELETE`, so a call that loses its filters cannot degrade into erasing everything in scope. It scope-filters rather than rejecting: foreign and already-deleted ids are ignored and the call reports how many rows it removed, which keeps it both leak-free and safe to retry.
     **Security**
     Missing/forbidden workspace returns **403** with a generic message (not **404**) so resource existence is not leaked. Workflow and workflow-run detail endpoints also return **403** for unknown IDs or inaccessible IDs to avoid IDOR leaks. List responses use `private, no-store`.
@@ -1320,7 +1324,11 @@ paths:
 
         **Pagination is keyset**, on `(createdAt, id)`. The `cursor` is opaque and bound to the sort order and the filter set it was issued for; changing either invalidates it. `meta.nextCursor` being `null` is the only end-of-collection signal — do not infer the end from a short page.
 
-        **Filters are allow-listed** and every one of them is index-backed. `filter[finished][eq]` and `filter[language][in]` additionally require `surveyId` or `contactId`, because both are heap residuals that are only bounded when the scan is anchored to one survey or one contact; sending either without such a scope returns **400**.
+        `id` is there purely as a tie-breaker, and it makes the order **total**, so no row is ever skipped or repeated across pages. What it is not is a finer-grained clock: `createdAt` is stored to millisecond precision, so responses sharing a millisecond — everything written in one bulk insert, for instance — come back in an order that is stable and repeatable but is not their true creation order. Do not read the sequence within a millisecond as meaningful.
+
+        **Filters are allow-listed**, and each one on its own is either served by an index or bounded by one. `filter[finished][eq]` and `filter[language][in]` additionally require `surveyId` or `contactId`, because both are heap residuals that are only bounded when the scan is anchored to one survey or one contact; sending either without such a scope returns **400**.
+
+        Be aware that **combining** a `filter[createdAt]` bound with `filter[finished][eq]` is the one case no single index covers: the ordered scan uses `(surveyId, createdAt)` and `finished` stays a heap residual, so a page whose matches are sparse reads far more rows than it returns. Prefer narrowing by `surveyId` and a tight `createdAt` window, and treat that combination as the slow path until a covering index exists.
 
         **What this endpoint deliberately does not filter on:** individual answers, hidden-field values, submission metadata (`source`, `url`, `country`, `browser`, `os`, `device`), contact attributes, quotas, and tags. Each is a JSON path or an unindexed join on the largest table in the database, where the honest outcome is a timeout rather than a slow query. The in-app dashboard does offer these, so this endpoint is knowingly behind it; closing the gap needs index work and is tracked separately rather than quietly omitted.
       tags:
@@ -1347,19 +1355,13 @@ paths:
             type: boolean
             default: false
           description: |
-            Whether to compute `meta.totalCount`. Defaults to **`false`** here, unlike the survey list, because responses are the highest-cardinality table in the product and the extra count is not free at that size. When `false`, `meta.totalCount` is `null`. If all you need is the count, use `GET /api/v3/responses/count` instead of fetching a page to get it.
-        - in: query
-          name: filter[createdAt][gte]
-          schema:
-            type: string
-            format: date-time
-          description: Only responses created at or after this instant (inclusive).
-        - in: query
-          name: filter[createdAt][lte]
-          schema:
-            type: string
-            format: date-time
-          description: Only responses created at or before this instant (inclusive).
+            Whether to compute `meta.totalCount`. Defaults to **`false`** here, unlike the survey list, because responses are the highest-cardinality table in the product and the extra count is not free at that size. When `false`, both `meta.totalCount` and `meta.totalCountRelation` are `null`.
+
+            When `true`, the count is capped at 10 000 and `meta.totalCountRelation` says whether the figure is exact (`eq`) or a lower bound (`gte`). If all you need is the count, use `GET /api/v3/responses/count` rather than fetching a page to get it — and if you need an exact figure beyond the cap, that endpoint takes an explicit `precision=exact`.
+        - $ref: '#/components/parameters/CreatedAtGteQuery'
+        - $ref: '#/components/parameters/CreatedAtGtQuery'
+        - $ref: '#/components/parameters/CreatedAtLteQuery'
+        - $ref: '#/components/parameters/CreatedAtLtQuery'
         - in: query
           name: filter[finished][eq]
           schema:
@@ -1428,6 +1430,7 @@ paths:
                       - limit
                       - nextCursor
                       - totalCount
+                      - totalCountRelation
                     properties:
                       limit:
                         type: integer
@@ -1443,7 +1446,20 @@ paths:
                           - integer
                           - 'null'
                         minimum: 0
-                        description: Total responses matching the current scope and filters across all pages. `null` unless `includeTotalCount=true`.
+                        description: |
+                          Responses matching the current scope and filters across all pages, **counted only up to 10 000**. Exact below that; at the cap the value is exactly `10000` and means "at least 10 000", which `totalCountRelation` states explicitly. `null` unless `includeTotalCount=true`.
+
+                          The cap is not timidity — an exact count over this table grows superlinearly with the data while a capped one stays flat, so an uncapped total is the one part of a page whose cost is unbounded. Read `totalCountRelation` rather than testing for the magic number.
+                      totalCountRelation:
+                        type:
+                          - string
+                          - 'null'
+                        enum:
+                          - eq
+                          - gte
+                          - null
+                        description: |
+                          How to read `totalCount`: `eq` when it is exact, `gte` when the 10 000 cap was reached and it is a lower bound, `null` when `includeTotalCount=false`. This is the same eq/gte convention Elasticsearch uses for `hits.total.relation`, so a consumer can render "10,000+" honestly instead of claiming a precise figure it does not have.
                     additionalProperties: false
               examples:
                 page:
@@ -1530,11 +1546,14 @@ paths:
                             name: vip
                     meta:
                       limit: 20
+                      totalCountRelation: null
                       nextCursor: eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI3VDA5OjE0OjAzLjQxN1oifQ
                       totalCount: null
         '400':
           description: |
             Bad Request — invalid or unrecognized query parameters. Covers an unknown `filter[...]` key, a filter value of the wrong type, `filter[id][in]` over 100 ids, a `cursor` that does not match the requested sort order or filter set, and `filter[finished][eq]` or `filter[language][in]` sent without `surveyId` or `contactId`.
+
+            Date bounds are also validated as a pair: at most **one lower bound** (`gte` xor `gt`) and at most **one upper bound** (`lte` xor `lt`), and the lower bound must not fall after the upper one. Sending both forms of the same bound is rejected rather than resolved by a precedence rule nobody can guess.
           content:
             application/problem+json:
               schema:
@@ -1678,18 +1697,10 @@ paths:
             type: string
             format: cuid2
           description: Optional contact scoping.
-        - in: query
-          name: filter[createdAt][gte]
-          schema:
-            type: string
-            format: date-time
-          description: Only responses created at or after this instant (inclusive).
-        - in: query
-          name: filter[createdAt][lte]
-          schema:
-            type: string
-            format: date-time
-          description: Only responses created at or before this instant (inclusive).
+        - $ref: '#/components/parameters/CreatedAtGteQuery'
+        - $ref: '#/components/parameters/CreatedAtGtQuery'
+        - $ref: '#/components/parameters/CreatedAtLteQuery'
+        - $ref: '#/components/parameters/CreatedAtLtQuery'
         - in: query
           name: filter[finished][eq]
           schema:
@@ -1704,6 +1715,18 @@ paths:
           style: form
           explode: true
           description: Survey language codes to include. Requires `surveyId` or `contactId`.
+        - in: query
+          name: precision
+          schema:
+            type: string
+            enum:
+              - capped
+              - exact
+            default: capped
+          description: |
+            How hard to count. `capped` (the default) stops at 10 000 and reports `relation: gte` at the cap — flat cost, safe to call on anything. `exact` counts every matching row and reports `relation: eq` always.
+
+            `exact` is the deliberate slow path: cost grows superlinearly with the matching set, so on a large or loosely-filtered scope it is markedly more expensive than a page of data. Ask for it when a person needs a precise figure, not on a dashboard poll. It exists so that the capped default is a sensible default rather than a limitation, and so the cap cannot be sidestepped by accident.
       responses:
         '200':
           description: Count retrieved successfully
@@ -1727,14 +1750,24 @@ paths:
                     type: object
                     required:
                       - count
+                      - relation
                     properties:
                       count:
                         type: integer
                         minimum: 0
-                        description: Responses matching the scope and filters.
+                        description: Responses matching the scope and filters. With `precision=capped` this stops at 10 000; read `relation` before presenting it as a total.
+                      relation:
+                        type: string
+                        enum:
+                          - eq
+                          - gte
+                        description: '`eq` when `count` is exact, `gte` when the 10 000 cap was reached and `count` is a lower bound. Always `eq` when `precision=exact`. Same convention as `meta.totalCountRelation` on the list endpoint.'
                     additionalProperties: false
         '400':
-          description: Bad Request — invalid or unrecognized query parameters, including `filter[finished][eq]` or `filter[language][in]` without `surveyId` or `contactId`.
+          description: |
+            Bad Request — invalid or unrecognized query parameters, including `filter[finished][eq]` or `filter[language][in]` without `surveyId` or `contactId`.
+
+            Date bounds follow the same pairing rule as the list endpoint: at most one lower bound (`gte` xor `gt`), at most one upper bound (`lte` xor `lt`), and the lower bound must not fall after the upper one.
           content:
             application/problem+json:
               schema:
@@ -7515,6 +7548,34 @@ components:
       schema:
         type: string
       description: Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
+    CreatedAtGteQuery:
+      in: query
+      name: filter[createdAt][gte]
+      schema:
+        type: string
+        format: date-time
+      description: Only records created at or after this instant (**inclusive**). Mutually exclusive with `filter[createdAt][gt]` — sending both is a **400**.
+    CreatedAtGtQuery:
+      in: query
+      name: filter[createdAt][gt]
+      schema:
+        type: string
+        format: date-time
+      description: Only records created strictly after this instant (**exclusive**). Pair with `filter[createdAt][lt]` to express a half-open `[start, end)` window without redefining the inclusive bounds. Mutually exclusive with `filter[createdAt][gte]` — sending both is a **400**.
+    CreatedAtLteQuery:
+      in: query
+      name: filter[createdAt][lte]
+      schema:
+        type: string
+        format: date-time
+      description: Only records created at or before this instant (**inclusive**). Mutually exclusive with `filter[createdAt][lt]` — sending both is a **400**.
+    CreatedAtLtQuery:
+      in: query
+      name: filter[createdAt][lt]
+      schema:
+        type: string
+        format: date-time
+      description: Only records created strictly before this instant (**exclusive**). The upper bound of a half-open `[start, end)` window, which is what makes consecutive windows tile without overlapping or dropping a record on the boundary. Mutually exclusive with `filter[createdAt][lte]` — sending both is a **400**.
     ResponseIdPath:
       in: path
       name: responseId
