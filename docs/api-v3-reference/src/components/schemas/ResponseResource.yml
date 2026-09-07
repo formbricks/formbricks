@@ -5,7 +5,35 @@ allOf:
       - contact
       - displayId
       - singleUseId
+      - data
+      - variables
     properties:
+      data:
+        allOf:
+          - $ref: ./ResponseDataMap.yml
+        readOnly: true
+        description: >
+          Answers in their **stored** form — byte-for-byte the same map `POST /api/v3/responses` and
+          `PATCH /api/v3/responses/{responseId}` accept. Returned so that a read can be edited and
+          written straight back: take this map, change what you need, and `PATCH` it. Without it a
+          client wanting to correct one answer would have to rebuild the map from `answers[]`,
+          which is possible but is work the server can simply not impose.
+
+
+          `answers[]` remains the field to read — it is typed, labelled and ordered, and it
+          separates answers from hidden fields. This is the same data in the shape the write side
+          speaks, offered alongside rather than instead.
+
+
+          Present on the detailed view only. The list view omits it deliberately: on a page of 250
+          it would carry every answer twice, and a bulk reader is not editing.
+      variables:
+        allOf:
+          - $ref: ./ResponseVariablesMap.yml
+        readOnly: true
+        description: >-
+          Survey variable values in their stored form, as the write side accepts them. Same rationale
+          as `data`; read `embeddedData[]` for the typed, labelled view.
       contact:
         anyOf:
           - $ref: ./ResponseContact.yml
@@ -31,6 +59,13 @@ description: >
   A survey response in the detailed view, as returned by `GET /api/v3/responses/{responseId}` and by
   the write endpoints. Everything in `ResponseListItem`, plus the identity and provenance fields the
   list view omits.
+
+
+  It also carries `data` and `variables`, the stored maps the write endpoints accept, so this
+  representation can be edited and passed straight back in a request — the property Azure's and
+  Zalando's REST guidelines both ask for, and the one v1/v2 had by virtue of being symmetric. They
+  are marked `readOnly` because they are echoes: the write schemas
+  (`CreateResponseRequest`, `PatchResponseRequest`) are where they are accepted.
 
 
   **Never exposed on this resource, in either view:** the respondent's IP address, and the

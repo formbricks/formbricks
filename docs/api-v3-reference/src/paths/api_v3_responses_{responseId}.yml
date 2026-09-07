@@ -167,6 +167,25 @@ get:
                     userId: u_123
                   displayId: cldp1234567890123456789012
                   singleUseId: null
+                  data:
+                    satisfaction: 4
+                    signup_date: 2026-05-14
+                    your_address:
+                      - Hauptstrasse 1
+                      - ""
+                      - Berlin
+                      - ""
+                      - "10115"
+                      - Deutschland
+                    screenshots:
+                      - https://app.formbricks.com/storage/clws1234567890123456789012/private/shot.png
+                    priorities:
+                      - Geschwindigkeit
+                      - Preis
+                    nps_matrix:
+                      Support: Gut
+                    plan: enterprise
+                  variables: {}
             anonymous:
               summary: An anonymous, unfinished response
               value:
@@ -197,6 +216,9 @@ get:
                   contact: null
                   displayId: null
                   singleUseId: null
+                  data:
+                    cta_intro: clicked
+                  variables: {}
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":
