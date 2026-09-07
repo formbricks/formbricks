@@ -32,7 +32,7 @@ info:
     `POST /api/v3/surveys/generate` returns a draft `POST /api/v3/surveys` payload plus validation metadata. It does not create a survey. It generates survey content for both `link` and `app` surveys; for `app` it seeds a default `distribution` (display once, no triggers, no targeting) that you finish configuring before publishing.
     Prompt text is sent to the configured AI provider for generation, but it is not stored by this endpoint, not logged by default, and not included in audit data.
 
-    **Feedback Records** `/api/v3/feedbackRecords` is served by the **API gateway** (Envoy on Formbricks Cloud, Traefik in the one-click Docker install), which authorizes each call against the dataset and forwards it to the feedback store — not by the application routes that serve the rest of v3. Three consequences: the payload is the store's own, so members and filters are **`snake_case`** (`tenant_id`, `value_text`) rather than v3's camelCase; the dataset is named **`tenant_id`** on the wire and is required on every collection operation (it is the feedback dataset id, which the MCP `list_feedback_datasets` tool reports as `dataset_id`); and errors come in two shapes — gateway refusals (**400**, **401**, **403**, **413**, **503**) are `text/plain`, while the store's own problems are `application/problem+json` with a stable `code`. Only the eight documented operations are reachable; any other path under the prefix answers **400**. Authenticate with **`x-api-key`**: the key needs a permission on a workspace the dataset is assigned to — `read` to list, get and search, `write` to create and update, `manage` to delete — and may update or delete only in a dataset assigned to exactly one workspace.
+    **Feedback Records** `/api/v3/feedbackRecords` is served by the **API gateway** (Envoy on Formbricks Cloud, Traefik in the one-click Docker install), which authorizes each call against the dataset and forwards it to the feedback store — not by the application routes that serve the rest of v3. Three consequences: the payload is the store's own, so members and filters are **`snake_case`** (`tenant_id`, `value_text`) rather than v3's camelCase; the dataset is named **`tenant_id`** on the wire and is required on every collection operation (it is the feedback dataset id, which the MCP `list_feedback_datasets` tool reports as `dataset_id`); and errors come in two shapes — gateway refusals (**400**, **401**, **403**, **413**, **503**) are `text/plain`, while the store's own problems are `application/problem+json` with a stable `code`. Only the eight documented operations exist; any other path the gateway receives under the prefix answers **400**. Authenticate with **`x-api-key`**: the key needs a permission on a workspace the dataset is assigned to — `read` to list, get and search, `write` to create and update, `manage` to delete — and may update or delete only in a dataset assigned to exactly one workspace.
     **OpenAPI**
     This spec is **not** produced by `pnpm generate-api-specs` (that script only builds v2 → `docs/api-v2-reference/openapi.yml`). When the route contract changes, edit the files under `docs/api-v3-reference/src/`, then run `pnpm api:v3:bundle` to regenerate the committed single-file bundle. `pnpm api:v3:lint` lints the source tree; `pnpm api:v3:check` (CI) fails when the bundle is stale.
 
@@ -6716,9 +6716,8 @@ components:
           description: Opaque keyset cursor for the next page. Present only when a full page was returned and there may be more results. Pass it back unchanged as `cursor`.
     UpdateFeedbackRecordRequest:
       type: object
-      description: A partial update. Only the members sent are changed; at least one is required. Provenance (`tenant_id`, `source_*`, `field_*`, `submission_id`, `collected_at`) is immutable.
+      description: A partial update. Only the members sent are changed; an empty body is accepted and changes nothing. Provenance (`tenant_id`, `source_*`, `field_*`, `submission_id`, `collected_at`) is immutable.
       additionalProperties: false
-      minProperties: 1
       properties:
         value_text:
           type: string
@@ -6886,7 +6885,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     FeedbackRecordsBadRequest:
-      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`, a request body that is not JSON, or a path under `/api/v3/feedbackRecords` that is not one of the documented operations (e.g. `/count`). From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, an id that is not a UUID, or a string with NULL bytes or invalid UTF-8.'
+      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`, a request body that is not JSON, a record id that is not a UUID, or a path under `/api/v3/feedbackRecords` that is not one of the documented operations (e.g. `/count`). From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
       content:
         text/plain:
           schema:

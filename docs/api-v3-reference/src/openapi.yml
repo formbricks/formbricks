@@ -111,7 +111,7 @@ info:
     `list_feedback_datasets` tool reports as `dataset_id`); and errors come in two shapes — gateway
     refusals (**400**, **401**, **403**, **413**, **503**) are `text/plain`, while the store's own
     problems are `application/problem+json` with a stable `code`. Only the eight documented
-    operations are reachable; any other path under the prefix answers **400**. Authenticate with
+    operations exist; any other path the gateway receives under the prefix answers **400**. Authenticate with
     **`x-api-key`**: the key needs a permission on a workspace the dataset is assigned to — `read` to
     list, get and search, `write` to create and update, `manage` to delete — and may update or delete
     only in a dataset assigned to exactly one workspace.

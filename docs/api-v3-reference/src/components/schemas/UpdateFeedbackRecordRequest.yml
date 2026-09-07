@@ -1,9 +1,9 @@
 type: object
 description: >-
-  A partial update. Only the members sent are changed; at least one is required. Provenance
-  (`tenant_id`, `source_*`, `field_*`, `submission_id`, `collected_at`) is immutable.
+  A partial update. Only the members sent are changed; an empty body is accepted and changes
+  nothing. Provenance (`tenant_id`, `source_*`, `field_*`, `submission_id`, `collected_at`) is
+  immutable.
 additionalProperties: false
-minProperties: 1
 properties:
   value_text:
     type: string
