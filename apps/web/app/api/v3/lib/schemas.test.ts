@@ -45,7 +45,7 @@ describe("ZV3WorkspaceListQuery", () => {
       ZV3WorkspaceListQuery.safeParse({ workspaceId: "clseedworkspace000000000", limit: 0 }).success
     ).toBe(false);
     expect(
-      ZV3WorkspaceListQuery.safeParse({ workspaceId: "clseedworkspace000000000", limit: 101 }).success
+      ZV3WorkspaceListQuery.safeParse({ workspaceId: "clseedworkspace000000000", limit: 251 }).success
     ).toBe(false);
   });
 });

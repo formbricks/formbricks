@@ -6,7 +6,11 @@ properties:
   limit:
     type: integer
     minimum: 1
-    maximum: 100
+    description: >-
+      The page size actually applied. Deliberately carries no `maximum`: this is an echo of what the
+      server used, not a bound on what the caller may ask for. Constraining it here would make an
+      out-of-range request fail output validation — a 500 — instead of being rejected as a 400 by
+      the request schema.
   nextCursor:
     type:
       - string

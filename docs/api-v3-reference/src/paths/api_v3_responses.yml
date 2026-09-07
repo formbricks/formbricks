@@ -153,7 +153,9 @@ get:
                   limit:
                     type: integer
                     minimum: 1
-                    maximum: 100
+                    description: >-
+                      The page size actually applied. Carries no `maximum` — it echoes what the
+                      server used rather than bounding what may be asked for.
                   nextCursor:
                     type:
                       - string

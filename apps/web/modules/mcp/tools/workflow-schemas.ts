@@ -24,6 +24,8 @@ import {
 export const ZMcpListWorkflowsInput = z
   .object({
     workspaceId: z.cuid2().describe("Workspace ID whose workflows should be listed."),
+    // Deliberately capped below the HTTP API's 250: for an agent client the binding constraint is
+    // context window, not server cost, so a larger page is a cost rather than a convenience.
     limit: z
       .number()
       .int()
@@ -79,6 +81,8 @@ export type TMcpGetWorkflowInput = z.infer<typeof ZMcpGetWorkflowInput>;
 export const ZMcpListWorkflowRunsInput = z
   .object({
     workspaceId: z.cuid2().describe("Workspace ID whose workflow runs should be listed."),
+    // Deliberately capped below the HTTP API's 250: for an agent client the binding constraint is
+    // context window, not server cost, so a larger page is a cost rather than a convenience.
     limit: z
       .number()
       .int()

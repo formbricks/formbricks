@@ -71,6 +71,17 @@ info:
     responses do not require total counts in Scope 1. There is no `offset` in
     this contract.
 
+    The page-size **maximum is 250** across every v3 collection; only the *default* varies by
+    resource (20 for surveys and workflows, 50 for the workspace reference lists). A `limit` above
+    the maximum is rejected with **400** rather than silently reduced, consistent with v3 rejecting
+    unrecognized query parameters instead of ignoring them. The echoed `meta.limit` reports the page
+    size actually applied and is deliberately unbounded in the response schema, so an out-of-range
+    request fails request validation rather than output validation. Callers should not infer the end
+    of a collection from a page shorter than `limit`; `meta.nextCursor` of `null` is the only
+    end-of-collection signal. Note that array-valued *input* bounds are a separate concern and stay
+    at 100 — `filter[id][in]` and the batch-delete id list are bounded by write and payload risk,
+    not by page cost.
+
 
     **Filtering**
 

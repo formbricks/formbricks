@@ -23,6 +23,7 @@ info:
 
     **Pagination**
     Cursor-based pagination with **limit** + opaque **cursor** token. Responses return `meta.nextCursor`; pass that value back as `cursor` to fetch the next page. Survey list responses also include `meta.totalCount`, the total number of surveys matching the current filters across all pages. Workflow list responses do not require total counts in Scope 1. There is no `offset` in this contract.
+    The page-size **maximum is 250** across every v3 collection; only the *default* varies by resource (20 for surveys and workflows, 50 for the workspace reference lists). A `limit` above the maximum is rejected with **400** rather than silently reduced, consistent with v3 rejecting unrecognized query parameters instead of ignoring them. The echoed `meta.limit` reports the page size actually applied and is deliberately unbounded in the response schema, so an out-of-range request fails request validation rather than output validation. Callers should not infer the end of a collection from a page shorter than `limit`; `meta.nextCursor` of `null` is the only end-of-collection signal. Note that array-valued *input* bounds are a separate concern and stay at 100 — `filter[id][in]` and the batch-delete id list are bounded by write and payload risk, not by page cost.
 
     **Filtering**
     Filters use explicit operator-style query parameters under the **`filter[...]` family**. The survey list supports `filter[name][contains]`, `filter[status][in]`, and `filter[type][in]`. The workflow list supports `filter[name][contains]` and `filter[status][in]`; the workflow run list supports `filter[status][in]` and `filter[isDryRun][eq]`. Resource-scoping identifiers (`workspaceId`, `workflowId`, `responseId`) stay plain query parameters. Multi-value filters use repeated keys or comma-separated values (e.g. `filter[status][in]=draft&filter[status][in]=inProgress` or `filter[status][in]=draft,inProgress`). Sorting remains a flat `sortBy` query parameter.
@@ -98,9 +99,9 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100
+            maximum: 250
             default: 20
-          description: Page size (max 100)
+          description: Page size (max 250)
         - in: query
           name: cursor
           schema:
@@ -1431,7 +1432,7 @@ paths:
                       limit:
                         type: integer
                         minimum: 1
-                        maximum: 100
+                        description: The page size actually applied. Carries no `maximum` — it echoes what the server used rather than bounding what may be asked for.
                       nextCursor:
                         type:
                           - string
@@ -3005,9 +3006,9 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100
+            maximum: 250
             default: 50
-          description: Page size (max 100).
+          description: Page size (max 250).
         - in: query
           name: cursor
           schema:
@@ -3089,9 +3090,9 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100
+            maximum: 250
             default: 50
-          description: Page size (max 100).
+          description: Page size (max 250).
         - in: query
           name: cursor
           schema:
@@ -6719,7 +6720,7 @@ components:
         limit:
           type: integer
           minimum: 1
-          maximum: 100
+          description: 'The page size actually applied. Deliberately carries no `maximum`: this is an echo of what the server used, not a bound on what the caller may ask for. Constraining it here would make an out-of-range request fail output validation — a 500 — instead of being rejected as a 400 by the request schema.'
         nextCursor:
           type:
             - string
@@ -7505,9 +7506,9 @@ components:
       schema:
         type: integer
         minimum: 1
-        maximum: 100
+        maximum: 250
         default: 20
-      description: Page size (max 100).
+      description: Page size. A value above the maximum is rejected with **400** rather than silently reduced to it — v3 rejects unusable input instead of substituting its own, the same way it rejects unrecognized query parameters. The server may still return fewer items than requested, so treat `meta.nextCursor` as the only end-of-collection signal rather than comparing the page length against `limit`.
     CursorQuery:
       in: query
       name: cursor
