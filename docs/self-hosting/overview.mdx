@@ -77,14 +77,15 @@ HPA ceiling of 6. Enable it only when the foreground runtime cannot keep up with
 ## Kubernetes production setup
 
 A managed Kubernetes cluster with managed data services, sized for a modest steady load and left free to
-autoscale into peaks. It is the same shape as a large deployment, just narrower — nothing here has to be
-re-architected when traffic grows.
+autoscale into peaks. The app tier grows by adding replicas and needs no redesign; raising availability
+beyond it, or scaling analytics, does change the topology — see the warning below.
 
 <Warning>
-  Chart defaults make the **app** tier highly available and leave everything else a singleton:
-  `hub.replicas`, `hub.worker.replicas` and `cube.replicas` all ship as `1`. Cube cannot simply be raised —
-  the chart refuses to render more than one replica against its default in-memory cache driver, so multiple
-  Cube replicas need Cube Store. Raise the Hub replica counts and plan Cube Store before promising an SLA
+  Every replica count in the chart ships as `1`, including `autoscaling.minReplicas` for the app. The
+  `minReplicas: 2` in the table below is a required override, not a default. `hub.replicas`,
+  `hub.worker.replicas` and `cube.replicas` stay singletons until you raise them, and Cube cannot simply be
+  raised — the chart refuses to render more than one replica against its default in-memory cache driver, so
+  multiple Cube replicas need Cube Store. Raise the Hub counts and plan Cube Store before promising an SLA
   that covers Hub and analytics, not just survey delivery.
 </Warning>
 
@@ -155,25 +156,38 @@ about rate and volume rather than about the resting stack.
 
 **25,000 responses arriving at once.** Spread over an hour that is roughly 7 writes a second; compressed
 into ten minutes, roughly 42. The per-IP limit of 100 requests a minute on the public response route does
-not throttle a burst like that, because a campaign burst arrives from thousands of distinct IPs. The job
-runner does: every response enqueues a `response-pipeline.process` job, and a completed one enqueues two —
-`responseCreated` and `responseFinished`. Every app replica ships a single worker at a concurrency of one,
-so drain rate is `replicas × BULLMQ_WORKER_CONCURRENCY`, and 25,000 finished responses is 50,000 jobs. A
-burst that outruns the drain rate backs up in Redis rather than failing. Raise
-`BULLMQ_WORKER_CONCURRENCY` first — it costs no pods — then let the HPA add replicas, and give Redis room
-for the queue. See [job runner](/self-hosting/configuration/job-runner).
+not throttle a burst like that, because a campaign burst arrives from thousands of distinct IPs. Plan for
+the job queue behind it instead.
+
+A response enqueues several `response-pipeline.process` jobs, not one: `responseCreated` on the initial
+write, one `responseUpdated` each time the SDK saves progress, and `responseFinished` on submission. So the
+job count scales with how many times a respondent's answers are saved, not with the response count — a
+multi-page survey can be several jobs per response. Size Redis for that queue, not for 25,000 entries.
+
+Consumer capacity is `web replicas × BULLMQ_WORKER_COUNT × BULLMQ_WORKER_CONCURRENCY`, all three of which
+default to `1`. That is a count of jobs in flight, not a rate: throughput also depends on how long the
+average `response-pipeline.process` job takes on your instance. A queue that grows faster than it drains
+backs up in Redis rather than failing. Raising `BULLMQ_WORKER_COUNT` or `BULLMQ_WORKER_CONCURRENCY` adds no
+pods, but the work still lands on the same pod's CPU and memory and on Redis and Postgres behind it, so
+measure before raising either. See [job runner](/self-hosting/configuration/job-runner).
+
+<Warning>
+  The app HPA scales on CPU and memory utilization only. Queue depth is not one of its metrics, so a
+  backlog can grow while both targets sit under their thresholds and no replica is added. Backlog-driven
+  scaling needs a queue-depth metric published to the metrics API and added to the HPA yourself.
+</Warning>
 
 **50,000 contacts.** This is storage and index growth, not throughput. Contact attributes are one row per
 attribute per contact, so 50,000 contacts with 10 attributes each is 500,000 attribute rows before a single
 response is stored. Size PostgreSQL storage from that plus your response retention, and add vCores when
 segment evaluation or dashboard queries start queuing.
 
-<Warning>
+<Note>
   We do not publish a responses-per-second figure per replica. We have not load-tested one, and it would not
   transfer: a 40-question survey with file uploads is not the same write as a one-question NPS. Use the
-  levers above to size the queue and the storage, then watch HPA CPU utilization and job-queue depth through
-  your first real campaign.
-</Warning>
+  levers above to size the queue and the storage, then watch both pod CPU and queue depth through your first
+  real campaign — they move independently.
+</Note>
 
 ### What this sizing assumes
 
@@ -185,14 +199,15 @@ segment evaluation or dashboard queries start queuing.
 
 ### What to scale first
 
-1. **Job concurrency**, via `BULLMQ_WORKER_CONCURRENCY` — the only lever here that costs no capacity.
+1. **Job concurrency**, via `BULLMQ_WORKER_COUNT` and `BULLMQ_WORKER_CONCURRENCY` — no extra pods, but it
+   spends the pod's own CPU and memory, so raise it against a measurement.
 2. **App replicas**, via the HPA — the app is stateless, so this is the cheapest capacity lever. Check the
    ceiling still fits the node pool.
 3. **PostgreSQL vCores**, once response writes or dashboard queries start queuing.
 4. **Redis**, which becomes the dominant cost at high request rates. If that matters more than the
    operational simplicity of a managed cache, run Valkey in-cluster instead.
 
-## **Self-Hosting Options**
+## **Self-hosting options**
 
 * [**One-Click Setup**](/self-hosting/setup/one-click)**:** Set up Formbricks on Ubuntu in minutes with our shell script.
 
@@ -208,7 +223,7 @@ segment evaluation or dashboard queries start queuing.
 
 * [**Licensing**](/self-hosting/advanced/license)**:**  Learn more about our AGPL Formbricks Core and its open-source license & Unlock advanced features tailored for larger teams and enterprises with the EE License.
 
-## **Hosting Options**
+## **Hosting options**
 
 * **Cloud Hosting:** Hassle-free managed deployment at [app.formbricks.com](https://app.formbricks.com).
 
@@ -216,7 +231,7 @@ segment evaluation or dashboard queries start queuing.
 
 * **Self-Hosting with EE License:** Unlock advanced features for large teams or enterprises.
 
-## **Licensing Options Comparison**:
+## **Licensing options comparison**
 
 For Self Hosting, our core product is free however certain advanced features are a part of our Enterprise License offering. Please refer this table to understand if you want the features that are a part of it and then we’ll reach out to you!
 
