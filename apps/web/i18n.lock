@@ -1673,16 +1673,21 @@ checksums:
     workspace/analysis/charts/failed_to_load_dashboards: 876c54d9cc69ceda6f808231e2557eb2
     workspace/analysis/charts/failed_to_save_chart: e237cf1a56a8f9ee30067fdb0757f7c5
     workspace/analysis/charts/field: cfd632297d7809a3539e90c9cd4728d9
+    workspace/analysis/charts/field_description_completed: c4d0a62abdc2ec375a6bfe15d81b0ce6
     workspace/analysis/charts/field_description_count: 2b6f5cbf709a37078e593b4d872b62e5
+    workspace/analysis/charts/field_description_time_to_complete: b19b6f940a44f1f3f333bb24d6fcde21
     workspace/analysis/charts/field_description_unique_respondents: 05c3a11103d1732b51173df13d646131
     workspace/analysis/charts/field_description_unique_responses: 15960fdaa5d1051115ad21c0773e29a4
     workspace/analysis/charts/field_description_value_option: 2ecc1ce47d49fde628db9dc222c3d326
     workspace/analysis/charts/field_description_value_text: 25fe1780ca3a8a8edbe8b3e6a08f933a
     workspace/analysis/charts/field_label_anger_count: f9ecf779605526904e029876a47f119d
+    workspace/analysis/charts/field_label_browser: e58e554eb7b0761ede25f2425173d31f
     workspace/analysis/charts/field_label_ces_average: 98e1c184a86562976de0e1b2f68eafcd
     workspace/analysis/charts/field_label_ces_count: ddaa91375dce90d07a40b1927b9a5a5c
     workspace/analysis/charts/field_label_collected_at: b41902ddb4586ba4a4611d726b5014aa
+    workspace/analysis/charts/field_label_completed: 0e4bbce9985f25eb673d9a054c8d5334
     workspace/analysis/charts/field_label_count: e24cf48bb6985910f4ffe5e00512d388
+    workspace/analysis/charts/field_label_country: 73581fc33a1e83e6a56db73558e7b5c6
     workspace/analysis/charts/field_label_created_at: 9ce495d7fc74e1a2ae86c07206a3e531
     workspace/analysis/charts/field_label_csat_average: 342a07ae9ff87a75b60d8cdc50c9225a
     workspace/analysis/charts/field_label_csat_count: c7201bda7ab4cb4a1cccfceedadc9221
@@ -1691,8 +1696,10 @@ checksums:
     workspace/analysis/charts/field_label_csat_satisfied_count: b5cdd879d5bf7e2edceb724045bd9e64
     workspace/analysis/charts/field_label_csat_score: 23330014b021e5e677ffa37d314e6528
     workspace/analysis/charts/field_label_detractor_count: eea170636b3fb5ab038fc33f07f6941f
+    workspace/analysis/charts/field_label_device: c009f849d689c745de9e38ad17644c7a
     workspace/analysis/charts/field_label_disgust_count: bf410db5c34e5f438c257e7c92843c3f
     workspace/analysis/charts/field_label_emotions: 130553c4f824567f63931b26e7340a78
+    workspace/analysis/charts/field_label_ending: 48c0a4d745cb6d8d373e8e3ac50087a7
     workspace/analysis/charts/field_label_fear_count: ef764a97055d15465eeca1fea1071c76
     workspace/analysis/charts/field_label_field_type: 2581066dc304c853a4a817c20996fa08
     workspace/analysis/charts/field_label_joy_count: 592a0fc5564d60333fd956db11413639
@@ -1702,6 +1709,8 @@ checksums:
     workspace/analysis/charts/field_label_neutral_count: b8ee4cd0e5f7a5f2c0a2d7242f4528a2
     workspace/analysis/charts/field_label_nps_average: 6620fa7368f625ebf68e72af30423683
     workspace/analysis/charts/field_label_nps_score: 2b0c5712d01ae74ca6171821d3910927
+    workspace/analysis/charts/field_label_operating_system: 4eb7b91ecafb7ae1d35c5e54333b7db2
+    workspace/analysis/charts/field_label_page_url: be321bd63cf738d3fa413cb66b8106d0
     workspace/analysis/charts/field_label_passive_count: 55dad43e81b39a82504fc2bb103579c3
     workspace/analysis/charts/field_label_positive_count: 64d3ec35ea658421865bcb78a0df12ef
     workspace/analysis/charts/field_label_promoter_count: 81777f53b8067d63500314e24370dcf9
@@ -1709,6 +1718,7 @@ checksums:
     workspace/analysis/charts/field_label_question_group: b007e2cfd1262272de3260f8d14d5833
     workspace/analysis/charts/field_label_rating_average: 04c27b457a97c3d46a6d983d7e32d18f
     workspace/analysis/charts/field_label_rating_count: b3e1b302d3dd4f7ac5fc5af17d9cd37a
+    workspace/analysis/charts/field_label_response_channel: 89535a22807168b618310afdf02be9a3
     workspace/analysis/charts/field_label_response_id: 73375099cc976dc7203b8e27f5f709e0
     workspace/analysis/charts/field_label_sadness_count: 403dd156f90a59d1da049eda7fcd3a76
     workspace/analysis/charts/field_label_sentiment: 9ba5719c80c0136c2d0644217619aff6
@@ -1718,6 +1728,9 @@ checksums:
     workspace/analysis/charts/field_label_source_name: 157675beca12efcd8ec512c5256b1a61
     workspace/analysis/charts/field_label_source_type: d1ff69af76c687eb189db72030717570
     workspace/analysis/charts/field_label_surprise_count: dc72d86e49a621972c24fc445554a38d
+    workspace/analysis/charts/field_label_survey_type: 417fcfecf8eaedefc4f11172426811f9
+    workspace/analysis/charts/field_label_time_to_complete: 6eafe35fd0ed5c819688a937574ccb54
+    workspace/analysis/charts/field_label_trigger_action: 3176ea2100d248e1b00a06b612473dd7
     workspace/analysis/charts/field_label_unique_respondents: fb3aecc7a21a723d03829a158d963715
     workspace/analysis/charts/field_label_unique_responses: e7bdc5ccacebc4e567a7148486df803a
     workspace/analysis/charts/field_label_updated_at: a3730393cce5adfd9e50123d96640fd6
