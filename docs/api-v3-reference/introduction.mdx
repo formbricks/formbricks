@@ -1,0 +1,96 @@
+---
+title: "API v3 Reference (Private Beta)"
+description: "The next generation of the Formbricks management API, including the Feedback Records API"
+icon: "code-compare"
+hidden: true
+---
+
+<Warning>
+  API v3 is in **private beta**. This reference is unlisted: it is not in the docs navigation and can change
+  without notice. Please share the URL only with people who have been invited to the beta.
+</Warning>
+
+API v3 is the management API the Formbricks app and the [MCP server](/platform/mcp/overview) are built on. It
+covers surveys, workflows, action classes, contact attribute keys and — the reason most beta users are here —
+**Feedback Records**, the normalized store behind Unify Feedback.
+
+Every operation is listed in the sidebar of this section. This page covers what is not obvious from the
+operation pages.
+
+## Authentication
+
+Create a management API key — **API Keys** in the organization dropdown of the breadcrumbs, see
+[Generate API key](/api-reference/generate-key) — and send it in the `x-api-key` header. Keys carry per-workspace permissions — `read`, `write` or
+`manage` — and every operation states which one it needs.
+
+```bash
+curl "https://app.formbricks.com/api/v3/surveys?workspaceId=<workspaceId>" \
+  -H "x-api-key: $FORMBRICKS_API_KEY"
+```
+
+Self-hosted instances substitute their own origin. Operations also accept a signed-in browser session, which is
+how the Formbricks app itself calls them; the operation pages document the API-key contract.
+
+## Feedback Records
+
+A [Feedback Record](/unify-feedback/feedback-records) is one piece of feedback in a normalized shape, stored in a
+[Feedback Dataset](/unify-feedback/feedback-datasets). The eight operations under `/api/v3/feedbackRecords` let
+you list, filter, search, create, correct and delete them.
+
+They are served by the **API gateway** rather than by the application routes that serve the rest of v3: the
+gateway authenticates you, checks that the API key may act on the dataset, then forwards the call to the
+feedback store. Three things follow from that, and they trip people up.
+
+### `tenant_id` is your dataset id
+
+The wire name for the dataset is **`tenant_id`**. It is required on every collection operation — as a query
+parameter on `GET` and `DELETE /api/v3/feedbackRecords`, in the JSON body on `POST /api/v3/feedbackRecords` and
+`POST /api/v3/feedbackRecords/search/semantic`. Single-record operations (`/{id}`, `/{id}/similar`) do not take
+it: the gateway resolves the dataset from the record.
+
+The dataset id is not shown in the app today. Get it from the MCP server's `list_feedback_datasets` tool, which
+reports it as `dataset_id`, or ask your Formbricks contact.
+
+### Field names are `snake_case`
+
+The payload is the feedback store's own, passed through unchanged, so members and filters are `snake_case`
+(`value_text`, `submission_id`, `created_since`) where the rest of v3 is camelCase. Filters on a value read off a
+response use the same name as the response.
+
+### Errors come in two shapes
+
+| Layer | Statuses | Body |
+| ---------------- | --------------------------------------------- | ------------------------------------------------------------ |
+| Gateway refusals | `400`, `401`, `403`, `413`, `503` | `text/plain` — a constant message such as `Forbidden` |
+| Feedback store | `400`, `409`, `500`, `503` | `application/problem+json` with a stable `code` to branch on |
+
+The gateway never answers `404`: an unknown dataset or record id is a `403`, so ids cannot be probed. The one
+`404` you can see comes from the store, on `/{id}/similar` for a record that exists but has no embedding yet. Any path
+under `/api/v3/feedbackRecords` that is not one of the eight documented operations answers `400`.
+
+### Permissions
+
+| Operation | API key permission on a workspace the dataset is assigned to |
+| ------------------------------------------------- | ----------------------------------------------------------- |
+| List, get, semantic search, similar records | `read` |
+| Create, update | `write` |
+| Delete one record, delete a user's records | `manage` |
+
+An API key may **update or delete** only in a dataset assigned to exactly one workspace. On a shared dataset no
+workspace permission can say whose records they are, so those calls answer `403`; reading and creating stay
+allowed. The organization must hold the Unify Feedback entitlement.
+
+### Example
+
+```bash
+# The 20 most recent negative text answers in a dataset
+curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&field_type=text&sentiment=negative&sentiment=very_negative&limit=20" \
+  -H "x-api-key: $FORMBRICKS_API_KEY"
+```
+
+Pagination is keyset: pass the response's `next_cursor` back as `cursor` with the same `sort` and `order`. It is
+absent on the last page.
+
+## Feedback
+
+Beta feedback goes to your Formbricks contact or to [hola@formbricks.com](mailto:hola@formbricks.com).
