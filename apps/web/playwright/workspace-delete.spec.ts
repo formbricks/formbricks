@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
+import { FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import { test } from "./lib/fixtures";
 
 test("requires workspace name confirmation before deleting a workspace", async ({ page, users }) => {
@@ -238,7 +239,7 @@ test("keeps the organization in account settings when the delete lands on the on
 
   // Deliberately no survey, so the deletion lands on the onboarding flow rather than on a
   // /workspaces/:id path — the branch where the proxy does not refresh the workspace cookie.
-  await prisma.workspace.create({
+  const remainingWorkspace = await prisma.workspace.create({
     data: { name: `Remaining Workspace ${timestamp}`, organizationId: user.organizationId },
     select: { id: true },
   });
@@ -258,6 +259,22 @@ test("keeps the organization in account settings when the delete lands on the on
 
   // The cookie still named the workspace we just deleted until the delete action started repointing
   // it, which sent account settings to the *other* organization via the organizations[0] fallback.
+  //
+  // Waited on rather than assumed: the repoint rides the delete action's own response, while
+  // `waitForURL` only proves the client navigated. The settings shell reads this cookie once per
+  // render, so entering account settings before the repoint lands resolves the wrong organization
+  // and no later re-render corrects it — the assertion below would then time out pointing at a
+  // missing sidebar link instead of at the cookie that actually decided the outcome.
+  await expect
+    .poll(
+      async () => {
+        const cookies = await page.context().cookies();
+        return cookies.find((cookie) => cookie.name === FORMBRICKS_WORKSPACE_ID_COOKIE)?.value;
+      },
+      { timeout: 15000 }
+    )
+    .toBe(remainingWorkspace.id);
+
   await page.goto("/account/settings/profile", { waitUntil: "domcontentloaded" });
   // `domcontentloaded` returns before the settings shell has resolved its organization, and this
   // route compiles cold on CI, so the default 5s expect timeout is not enough under worker
