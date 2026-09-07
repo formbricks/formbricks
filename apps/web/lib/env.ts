@@ -317,7 +317,10 @@ const parsedEnv = createEnv({
     DEBUG: z.string().optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
-    DEFAULT_ORGANIZATION_ID: z.string().optional(),
+    // cuid2 rather than a bare string so a typo'd or foreign id (a uuid, an uppercase value) fails
+    // at boot instead of silently provisioning SSO users into no organization at all. Permissive
+    // enough for the cuid v1 ids that `Organization.id @default(cuid())` has always produced.
+    DEFAULT_ORGANIZATION_ID: z.cuid2().optional(),
     DEFAULT_ORGANIZATION_ROLE: z.enum(["owner", "manager", "member", "billing"]).optional(),
     AUTHZED_CONSISTENCY: ZAuthzedConsistency,
     AUTHZED_ENABLED: ZAuthzedBoolean.optional(),

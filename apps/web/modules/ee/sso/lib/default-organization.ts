@@ -55,6 +55,11 @@ export const ensureDefaultOrganization = async (
     };
   };
 
+  // Set once `createOrganization` has committed. After that point the organization exists, so a later
+  // failure must not be read back as "a concurrent sign-up created it" and answered with the
+  // configured role — see the catch below.
+  let createdOrganizationId: string | null = null;
+
   try {
     const existing = await findExisting();
     if (existing) return existing;
@@ -63,6 +68,7 @@ export const ensureDefaultOrganization = async (
       id: defaultOrganizationId,
       name: `${userName}'s Organization`,
     });
+    createdOrganizationId = organization.id;
 
     if (IS_FORMBRICKS_CLOUD) {
       ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
@@ -77,10 +83,25 @@ export const ensureDefaultOrganization = async (
 
     return { organizationId: organization.id, role: "owner" };
   } catch (error) {
-    // Two realistic causes, both operator-facing rather than user-facing: `DEFAULT_ORGANIZATION_ID`
-    // is not a cuid2 (ZOrganizationCreateInput rejects it), or a concurrent first sign-up won the
-    // create. Re-read once so the concurrent case still assigns, and otherwise give up on the
-    // assignment — never throw, or an already-created user would see a mid-sign-in error.
+    // Never throw from here: this runs post-commit, after Better Auth has created the user, so a
+    // throw would surface as a mid-sign-in error without undoing anything.
+    if (createdOrganizationId) {
+      // The organization committed and its setup then failed, most likely the workspace. There is no
+      // transaction spanning the two — `createOrganization` and `createWorkspace` each commit their
+      // own — so nothing rolls back, and the org may be sitting there without a workspace.
+      //
+      // Still answer `owner` rather than falling through to the re-read below. This user is the
+      // organization's only member; an owner can create the missing workspace from the UI, whereas
+      // the configured role (`manager` by default) can leave it with nobody able to administer it.
+      logger.error(
+        error,
+        `Default organization "${defaultOrganizationId}" was created but its setup did not finish; it may have no workspace`
+      );
+      return { organizationId: createdOrganizationId, role: "owner" };
+    }
+
+    // Otherwise the create itself failed — most realistically a concurrent first sign-up won the
+    // race. Re-read once so that case still assigns, and give up on the assignment if not.
     const raced = await findExisting().catch(() => null);
     if (raced) return raced;
 

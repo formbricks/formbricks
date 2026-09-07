@@ -1,14 +1,11 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { createOrganization } from "@/lib/organization/service";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { ensureDefaultOrganization } from "./default-organization";
 
-vi.mock("@formbricks/database", () => ({
-  prisma: { organization: { findUnique: vi.fn() } },
-}));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 vi.mock("@/lib/organization/service", () => ({ createOrganization: vi.fn() }));
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
@@ -42,14 +39,13 @@ beforeEach(() => {
   constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
   constantsOverrides.DEFAULT_ORGANIZATION_ROLE = undefined;
   constantsOverrides.IS_FORMBRICKS_CLOUD = false;
-  vi.mocked(prisma.organization.findUnique).mockReset();
   vi.mocked(createOrganization).mockReset();
   vi.mocked(createWorkspace).mockResolvedValue({ id: "ws-1" } as never);
 });
 
 describe("ensureDefaultOrganization — existing organization", () => {
   beforeEach(() => {
-    vi.mocked(prisma.organization.findUnique).mockResolvedValue({ id: "default-org" } as never);
+    prisma.organization.findUnique.mockResolvedValue({ id: "default-org" } as never);
   });
 
   test("assigns manager by default — the legacy role for an org that already existed", async () => {
@@ -72,7 +68,7 @@ describe("ensureDefaultOrganization — existing organization", () => {
 
 describe("ensureDefaultOrganization — creating the organization", () => {
   beforeEach(() => {
-    vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
+    prisma.organization.findUnique.mockResolvedValue(null);
     vi.mocked(createOrganization).mockResolvedValue({ id: "default-org" } as never);
   });
 
@@ -92,6 +88,21 @@ describe("ensureDefaultOrganization — creating the organization", () => {
   test("owner wins over DEFAULT_ORGANIZATION_ROLE, so the first user can administer the new org", async () => {
     constantsOverrides.DEFAULT_ORGANIZATION_ROLE = "member";
     expect(await ensureDefaultOrganization("Ada")).toMatchObject({ role: "owner" });
+  });
+
+  test("hands the creator owner and logs when setup fails after the org committed", async () => {
+    // createOrganization and createWorkspace commit separately, so a workspace failure leaves the
+    // organization in place. The creator must not be downgraded to the configured role: they are its
+    // only member, and an owner can still create the missing workspace.
+    // findUnique stays null (this describe's beforeEach): the org does not exist, so we create it and
+    // only then fail. A non-null first read would return early and never reach the create at all.
+    vi.mocked(createWorkspace).mockRejectedValue(new Error("workspace insert failed"));
+
+    expect(await ensureDefaultOrganization("Ada")).toEqual({
+      organizationId: "default-org",
+      role: "owner",
+    });
+    expect(logger.error).toHaveBeenCalled();
   });
 
   test("skips Stripe setup when not on Formbricks Cloud", async () => {
@@ -125,22 +136,22 @@ describe("ensureDefaultOrganization — nothing to assign", () => {
     expect(prisma.organization.findUnique).not.toHaveBeenCalled();
   });
 
-  test("returns null and logs when the id is unusable, e.g. not a cuid2", async () => {
-    vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
+  test("returns null and logs when the organization cannot be created at all", async () => {
+    prisma.organization.findUnique.mockResolvedValue(null);
     vi.mocked(createOrganization).mockRejectedValue(new Error("Invalid organization id"));
     expect(await ensureDefaultOrganization("Ada")).toBeNull();
     expect(logger.error).toHaveBeenCalled();
   });
 
   test("never throws — the SSO user is already committed by the time this runs", async () => {
-    vi.mocked(prisma.organization.findUnique).mockRejectedValue(new Error("db down"));
+    prisma.organization.findUnique.mockRejectedValue(new Error("db down"));
     await expect(ensureDefaultOrganization("Ada")).resolves.toBeNull();
   });
 });
 
 describe("ensureDefaultOrganization — concurrent first sign-up", () => {
   test("re-reads and assigns to the org the racing sign-up created, instead of giving up", async () => {
-    vi.mocked(prisma.organization.findUnique)
+    prisma.organization.findUnique
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: "default-org" } as never);
     vi.mocked(createOrganization).mockRejectedValue(new Error("Unique constraint failed"));
