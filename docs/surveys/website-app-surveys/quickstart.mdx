@@ -10,22 +10,37 @@ sidebarTitle: "Quickstart"
     While you can [self-host](/self-hosting/overview) Formbricks, the quickest and easiest way to get started is with the free Cloud plan. Just [sign up here](https://app.formbricks.com/auth/signup) and click through the onboarding.
   </Step>
 
-  <Step title="Open Connect Your App">
-    In your workspace, go to **Settings** and open **Connect Your App** under **Workspace**. This page holds the two values the SDK needs — your **Workspace ID** and your **SDK Connection URL** — and it tells you whether Formbricks has heard from your app yet.
+  <Step title="Open Web & Mobile SDK">
+    In your workspace, go to **Settings** and open **Web & Mobile SDK** under **Workspace**. **Workspace details** holds the two values the SDK needs — your **Workspace ID** and your **SDK Connection URL** — and the **Connection status** card tells you whether Formbricks has heard from your app yet.
 
-    ![The Connect Your App settings page with the Workspace ID, the SDK Connection URL, the code snippet and an App Connection card reading "Formbricks SDK is not yet connected"](/images/surveys/website-app-surveys/quickstart/connect-your-app.webp)
+    ![The Web & Mobile SDK settings page with a grey Connection status card reading "Formbricks SDK is not yet connected", the Workspace details card and the How to install card](/images/surveys/website-app-surveys/quickstart/web-and-mobile-sdk.webp)
+
+    <Note>
+      Not the person who will add the SDK? The banner at the top of the page invites a technical team member into the organization so they can do this step for you.
+    </Note>
   </Step>
 
   <Step title="Add the Formbricks SDK to your app">
-    Copy the snippet under **How to setup** and paste it into the `<head>` of every page of your website. It already carries your Workspace ID and SDK Connection URL, so there is nothing left to fill in.
+    Under **How to install**, expand the method that matches your stack:
 
-    Running React, Next.js, Vue, React Native, Flutter, Swift or Kotlin instead? The [framework guides](/surveys/website-app-surveys/framework-guides) wire up the same two values for each of them.
+    | Method | Covers |
+    | :--- | :--- |
+    | **Website** | HTML, React.js, Next.js, Vue.js |
+    | **Mobile** | React Native, Swift, Android, Flutter |
+    | **Google Tag Manager** | Any website, without touching its code |
+    | **WordPress** | WordPress sites, via the official plugin |
+
+    Each method gives you a handful of numbered steps and a snippet that already carries your Workspace ID and SDK Connection URL, so there is nothing left to fill in. For plain HTML, paste the snippet into the `<head>` of every page of your website.
+
+    ![The How to install card with the Website method expanded, showing the HTML, React.js, Next.js and Vue.js tabs and the pre-filled HTML snippet](/images/surveys/website-app-surveys/quickstart/how-to-install.webp)
+
+    Each method also links out to its full guide: the [framework guides](/surveys/website-app-surveys/framework-guides) for code, [Google Tag Manager](/surveys/website-app-surveys/google-tag-manager) and [WordPress](/platform/features/integrations/wordpress) for the no-code routes.
   </Step>
 
   <Step title="Confirm the connection">
-    Load the page you added the SDK to, then come back to **Connect Your App**. As soon as Formbricks receives the first data point, the **App Connection** card turns green:
+    Load the page you added the SDK to, then come back to **Web & Mobile SDK**. As soon as Formbricks receives the first data point, the **Connection status** card turns green:
 
-    ![The App Connection card, green, reading "Receiving data" and "Formbricks SDK is connected"](/images/surveys/website-app-surveys/quickstart/connection-status.webp)
+    ![The Connection status card, green, reading "Receiving data" and "Formbricks SDK is connected"](/images/surveys/website-app-surveys/quickstart/connection-status.webp)
 
     <Note>
       Still grey? Hit **Re-check** — the page does not poll on its own. If it stays grey, turn on [Debug Mode](/surveys/website-app-surveys/framework-guides#activate-debug-mode) and read your browser console.
