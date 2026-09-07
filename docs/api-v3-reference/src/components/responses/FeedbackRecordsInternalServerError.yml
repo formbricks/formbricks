@@ -1,0 +1,7 @@
+description: >-
+  Internal Server Error from the feedback store (`application/problem+json`,
+  `code: internal_server_error`).
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/HubProblem.yml

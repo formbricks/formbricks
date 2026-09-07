@@ -1,0 +1,33 @@
+description: >-
+  Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`, a request
+  body that is not JSON, or a path under `/api/v3/feedbackRecords` that is not one of the
+  documented operations (e.g. `/count`). From the **feedback store** (`application/problem+json`):
+  schema validation failures — an unknown enum value, an inverted range, a malformed or
+  re-ordered cursor, an id that is not a UUID, or a string with NULL bytes or invalid UTF-8.
+content:
+  text/plain:
+    schema:
+      type: string
+    examples:
+      missingTenant:
+        summary: Gateway — tenant_id missing or malformed
+        value: Invalid or missing tenant_id
+      unsupportedRoute:
+        summary: Gateway — not a documented operation
+        value: Unsupported FeedbackRecords route
+  application/problem+json:
+    schema:
+      $ref: ../schemas/HubProblem.yml
+    examples:
+      invertedRange:
+        summary: Feedback store — a range filter supplied backwards
+        value:
+          type: https://hub.formbricks.com/problems/validation
+          title: Validation Failed
+          status: 400
+          code: validation
+          detail: One or more request parameters are invalid
+          request_id: 0190a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b
+          invalid_params:
+            - name: sentiment_score_min
+              reason: must be less than or equal to sentiment_score_max

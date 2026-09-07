@@ -1,0 +1,10 @@
+in: path
+name: id
+required: true
+schema:
+  type: string
+  format: uuid
+description: >-
+  Feedback record id (UUID). The dataset is resolved from the record itself, so the caller cannot
+  choose which dataset it is authorized against. An id that is not a UUID answers **400**; an
+  unknown or inaccessible id answers **403**, never **404**.

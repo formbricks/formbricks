@@ -1,0 +1,11 @@
+in: query
+name: tenant_id
+required: true
+schema:
+  type: string
+  format: cuid2
+description: >-
+  The feedback dataset to operate on (the dataset id, as shown by the MCP `list_feedback_datasets`
+  tool). **Required by the gateway on every collection operation**: a missing or malformed value
+  answers **400** before the request reaches the feedback store; a dataset the API key's workspace
+  is not assigned to answers **403**.

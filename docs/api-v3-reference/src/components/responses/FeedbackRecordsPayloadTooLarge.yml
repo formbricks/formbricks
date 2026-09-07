@@ -1,0 +1,8 @@
+description: >-
+  Payload Too Large — the gateway buffers request bodies to authorize them and refuses bodies over
+  1 MiB. Answered as `text/plain`.
+content:
+  text/plain:
+    schema:
+      type: string
+    example: Payload Too Large

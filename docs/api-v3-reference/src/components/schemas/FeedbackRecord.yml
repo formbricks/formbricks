@@ -1,0 +1,129 @@
+type: object
+description: >-
+  One piece of feedback in the normalized Feedback Record shape. Field names are `snake_case`: the
+  payload is the Hub's, passed through the API gateway unchanged. Optional members are **absent**
+  (not `null`) when unset.
+additionalProperties: false
+required:
+  - id
+  - collected_at
+  - created_at
+  - updated_at
+  - source_type
+  - field_id
+  - field_type
+  - submission_id
+  - tenant_id
+properties:
+  id:
+    type: string
+    format: uuid
+    description: UUIDv7 primary key.
+  tenant_id:
+    type: string
+    format: cuid2
+    description: The feedback dataset this record belongs to (the dataset id, as shown by the MCP `list_feedback_datasets` tool).
+  collected_at:
+    type: string
+    format: date-time
+    description: When the feedback was given.
+  created_at:
+    type: string
+    format: date-time
+    description: When the record was stored. Diverges from `collected_at` on a historical re-import.
+  updated_at:
+    type: string
+    format: date-time
+    description: When the record was last changed.
+  source_type:
+    type: string
+    description: Type of feedback source, e.g. `survey`, `review`, `feedback_form`.
+  source_id:
+    type: string
+    description: Reference to the survey / form / ticket the record came from.
+  source_name:
+    type: string
+    description: Human-readable name of the source.
+  submission_id:
+    type: string
+    description: >-
+      Identifier of the logical submission this record belongs to (e.g. a response id). Records are
+      unique per (`tenant_id`, `submission_id`, `field_id`).
+  field_id:
+    type: string
+    description: Identifier of the question / field.
+  field_label:
+    type: string
+    description: The question text.
+  field_group_id:
+    type: string
+    description: Stable identifier grouping related fields (ranking, matrix and grid questions).
+  field_group_label:
+    type: string
+    description: Human-readable question text for the group.
+  field_type:
+    $ref: ./FeedbackRecordFieldType.yml
+  language:
+    type: string
+    description: ISO language code the feedback was given in.
+  user_id:
+    type: string
+    description: End-user identifier (e.g. an anonymous id or an email hash).
+  value_text:
+    type: string
+    description: Text answer.
+  value_id:
+    type: string
+    description: >-
+      Stable id of the selected option in the source system (e.g. a survey choice id), stored
+      alongside `value_text` so choice answers keep their identity across label edits and
+      languages. Opaque. Absent for free-text and non-choice answers.
+  value_number:
+    type: number
+    format: double
+    description: Numeric answer (ratings, NPS scores, numbers).
+  value_boolean:
+    type: boolean
+    description: Yes / no answer.
+  value_date:
+    type: string
+    format: date-time
+    description: Date answer.
+  metadata:
+    type: [object, array, string, number, boolean, "null"]
+    items: {}
+    description: >-
+      Arbitrary context stored with the record and returned with equivalent values (key order and
+      number formatting are normalized). Omitted when the record has no metadata; a record
+      explicitly stored with a JSON `null` returns `null`. An object is the supported shape and the
+      only one the write operations accept; the wider union exists so records written before that
+      convention still deserialize.
+  sentiment:
+    $ref: ./FeedbackRecordSentiment.yml
+  sentiment_score:
+    type: number
+    format: double
+    minimum: -1
+    maximum: 1
+    description: >-
+      Signed sentiment polarity from `-1.0` (very negative) to `1.0` (very positive). Read-only;
+      absent until the record is enriched.
+  emotions:
+    type: array
+    minItems: 1
+    items:
+      $ref: ./FeedbackRecordEmotion.yml
+    description: >-
+      Emotions inferred from `value_text`; multi-label from a fixed set. Read-only; absent until
+      the record is enriched, and never an empty array.
+  value_text_translated:
+    type: string
+    description: >-
+      `value_text` translated into the dataset's configured target language. Read-only; absent
+      until the record is enriched.
+  translation_lang_key:
+    type: string
+    maxLength: 35
+    description: >-
+      BCP-47 locale that `value_text_translated` was produced in. Read-only; absent until the
+      record is enriched.

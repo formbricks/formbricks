@@ -1,0 +1,11 @@
+description: >-
+  Forbidden. Answered by the gateway as `text/plain` whenever the request cannot be authorized:
+  the dataset does not exist, is archived, or is not assigned to a workspace the API key has the
+  required permission on; the organization lacks the Unify Feedback entitlement; a mutation was
+  attempted with an API key on a dataset shared by more than one workspace; or the record id does
+  not exist. **404 is never used** — existence of datasets and records is not leaked.
+content:
+  text/plain:
+    schema:
+      type: string
+    example: Forbidden

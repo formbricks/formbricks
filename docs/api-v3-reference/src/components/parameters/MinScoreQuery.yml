@@ -1,0 +1,12 @@
+in: query
+name: min_score
+schema:
+  type: number
+  format: float
+  minimum: 0
+  maximum: 1
+  default: 0.7
+description: >-
+  Only matches with `score >= min_score` are returned. The default of `0.7` is conservative:
+  measured query→record similarities for genuinely relevant text often land around `0.55–0.7`, so
+  lower it (e.g. `0.5`) and filter on the returned `value_text` if a good query returns nothing.

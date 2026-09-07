@@ -38,7 +38,7 @@ const localRedoclyBin = (() => {
 
 const HEADER = `# GENERATED FILE — do not edit. Source of truth: docs/api-v3-reference/src/ (one file per path/schema).
 # Regenerate with \`pnpm api:v3:bundle\`; CI verifies freshness with \`pnpm api:v3:check\`.
-# V3 API — Surveys and Workflows extension (hand-maintained source; not produced by generate-api-specs).
+# V3 API — surveys, workflows, action classes, contact attribute keys, tags and feedback records (hand-maintained source; not produced by generate-api-specs).
 `;
 
 const redocly = (args, opts = {}) =>

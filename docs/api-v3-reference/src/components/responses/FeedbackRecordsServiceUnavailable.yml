@@ -1,0 +1,14 @@
+description: >-
+  Service Unavailable. From the **gateway** (`text/plain`): the record's dataset could not be
+  resolved because the feedback store did not answer, or the authorization service itself was
+  unreachable. From the **feedback store** (`application/problem+json`, `code:
+  service_unavailable`): the operation needs a capability that is not configured on this instance
+  — semantic search and similar records require an embedding model.
+content:
+  text/plain:
+    schema:
+      type: string
+    example: Feedback record lookup failed
+  application/problem+json:
+    schema:
+      $ref: ../schemas/HubProblem.yml
