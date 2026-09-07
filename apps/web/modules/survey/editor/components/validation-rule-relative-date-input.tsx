@@ -24,7 +24,7 @@ interface ValidationRuleRelativeDateInputProps {
 /**
  * One relative bound, read left to right as an expression: "Submission day − 3 calendar days".
  * The anchor is a fixed token so the author sees what the offset counts from; the sign stands in
- * for the stored before/after direction and hides at 0, where both directions name the same day.
+ * for the stored before/after direction.
  */
 export const ValidationRuleRelativeDateInput = ({
   bound,
@@ -45,29 +45,29 @@ export const ValidationRuleRelativeDateInput = ({
   ];
 
   return (
-    <div className="flex shrink-0 items-center gap-2">
-      <span className="flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 text-sm whitespace-nowrap text-slate-700">
-        <CalendarCheckIcon className="size-3.5 text-slate-500" aria-hidden="true" />
-        {t("workspace.surveys.edit.validation.relative_anchor_submission_day")}
+    <div className="flex min-w-0 items-center gap-2">
+      <span className="flex h-9 min-w-[88px] items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 text-sm text-slate-700">
+        <CalendarCheckIcon className="size-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+        <span className="truncate">
+          {t("workspace.surveys.edit.validation.relative_anchor_submission_day")}
+        </span>
       </span>
-      {bound.amount > 0 ? (
-        <Select
-          value={bound.direction}
-          onValueChange={(value) => onChange({ ...bound, direction: value as TRelativeDateDirection })}>
-          <SelectTrigger
-            className="h-9 w-16 shrink-0 bg-white whitespace-nowrap"
-            aria-label={t("workspace.surveys.edit.validation.relative_date_direction")}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {directionOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : null}
+      <Select
+        value={bound.direction}
+        onValueChange={(value) => onChange({ ...bound, direction: value as TRelativeDateDirection })}>
+        <SelectTrigger
+          className="h-9 w-16 shrink-0 bg-white whitespace-nowrap"
+          aria-label={t("workspace.surveys.edit.validation.relative_date_direction")}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {directionOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <Input
         type="number"
         min={0}
@@ -81,7 +81,7 @@ export const ValidationRuleRelativeDateInput = ({
         value={bound.unit}
         onValueChange={(value) => onChange({ ...bound, unit: value as TRelativeDateUnit })}>
         <SelectTrigger
-          className="h-9 w-36 shrink-0 bg-white whitespace-nowrap"
+          className="h-9 w-36 min-w-[96px] bg-white whitespace-nowrap"
           aria-label={t("workspace.surveys.edit.validation.relative_date_unit")}>
           <SelectValue />
         </SelectTrigger>

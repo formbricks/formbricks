@@ -57,7 +57,7 @@ export const ValidationRuleDateValueInput = ({
         onParamsChange(mode === "relative" ? createRelativeDateParams(ruleType) : createRuleParams(ruleType));
       }}>
       <SelectTrigger
-        className="h-9 w-auto shrink-0 bg-white whitespace-nowrap"
+        className="h-9 w-auto min-w-[112px] bg-white whitespace-nowrap"
         aria-label={t("workspace.surveys.edit.validation.date_mode")}>
         <SelectValue />
       </SelectTrigger>
@@ -77,14 +77,14 @@ export const ValidationRuleDateValueInput = ({
       relativeEnd?: TRelativeDateBound;
     };
 
-    // Two relative bounds are six controls, which will not sit on one line next to the rule-type
-    // select. Stack them so the amount / unit / direction columns line up instead of wrapping
-    // ragged; "before" and "after" already say which bound is which, so no connective word.
+    // Two relative bounds are eight controls, which will not sit on one line next to the rule-type
+    // select. Stack them so the anchor / sign / amount / unit columns line up instead of wrapping
+    // ragged; the signs already say which bound is which, so no connective word.
     return (
-      <div className="flex flex-[3] items-start gap-2">
+      <div className="flex min-w-0 flex-[3] items-start gap-2">
         {modeSelect}
         {isRange && relativeStart && relativeEnd ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex min-w-0 flex-col gap-2">
             <ValidationRuleRelativeDateInput
               bound={relativeStart}
               onChange={(bound) => onParamsChange({ relativeStart: bound, relativeEnd })}
@@ -111,7 +111,7 @@ export const ValidationRuleDateValueInput = ({
     const { from, to } = parseDateRangeRuleValue(currentValue as string | undefined);
 
     return (
-      <div className="flex flex-[3] items-center gap-2">
+      <div className="flex min-w-0 flex-[3] items-center gap-2">
         {modeSelect}
         <DateRangePicker
           value={{ from: from ?? undefined, to: to ?? undefined }}
@@ -124,7 +124,7 @@ export const ValidationRuleDateValueInput = ({
   }
 
   return (
-    <div className="flex flex-[3] items-center gap-2">
+    <div className="flex min-w-0 flex-[3] items-center gap-2">
       {modeSelect}
       <div className="min-w-0 flex-1">
         <DatePicker

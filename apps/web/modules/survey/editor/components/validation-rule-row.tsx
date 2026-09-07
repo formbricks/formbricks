@@ -14,6 +14,7 @@ import {
   TValidationRule,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
 import { describeRelativeDateRule, getAvailableRuleTypes, getRuleValue } from "../lib/validation-rules-utils";
@@ -89,8 +90,13 @@ export const ValidationRuleRow = ({
     onFileExtensionChange(rule.id, extensions);
   };
 
+  // Date rules put up to eight controls on the value side. The operator select soaks up whatever width
+  // those controls leave and shrinks first when space is short; only at its floor do the value
+  // controls start truncating their labels.
+  const isDateRule = Boolean(config.supportsRelative);
+
   const row = (
-    <div className="flex w-full items-center gap-2">
+    <div className={cn("flex w-full gap-2", isDateRule ? "items-start" : "items-center")}>
       {/* Field Selector (for Address and Contact Info elements) */}
       {needsFieldSelector && (
         <ValidationRuleFieldSelector
@@ -117,11 +123,16 @@ export const ValidationRuleRow = ({
         availableTypes={availableTypesForSelect}
         ruleLabels={ruleLabels}
         needsValue={config.needsValue}
+        className={isDateRule ? "min-w-[140px] flex-[1_1_0%]" : undefined}
       />
 
       {/* Value Input (if needed) */}
       {config.needsValue && (
-        <div className="flex w-full items-center gap-2">
+        <div
+          className={cn(
+            "flex min-w-0 gap-2",
+            isDateRule ? "flex-[0_1_auto] items-start" : "w-full items-center"
+          )}>
           <ValidationRuleValueInput
             rule={rule}
             ruleType={ruleType}
