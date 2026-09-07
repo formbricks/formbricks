@@ -7,6 +7,7 @@ import {
   TValidationRule,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
+import { formatLocalDay, parseLocalDay } from "@/lib/utils/datetime";
 
 const stringRules: TValidationRuleType[] = [
   "minLength",
@@ -100,9 +101,33 @@ export const DEFAULT_RELATIVE_BOUND: TRelativeDateBound = {
   direction: "before",
 };
 
+/** The `yyyy-MM-dd` shape a fixed date rule stores. */
+const ISO_DAY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
 /** True when a rule's params hold relative bounds rather than fixed calendar dates. */
 export const isRelativeDateParams = (params: TValidationRule["params"]): boolean =>
   "relative" in params || ("relativeStart" in params && "relativeEnd" in params);
+
+/**
+ * Parses a fixed date rule value (`yyyy-MM-dd`) into the local-midnight Date the shared picker takes.
+ * Returns null for an unset or malformed value, which is what an untouched rule holds.
+ */
+export const parseDateRuleValue = (value: string | undefined): Date | null => {
+  if (!value || !ISO_DAY_REGEX.test(value)) return null;
+
+  const parsed = parseLocalDay(value);
+  // Rejects a well-formed but impossible day (2026-02-30), which Date would silently roll over.
+  return Number.isNaN(parsed.getTime()) || formatLocalDay(parsed) !== value ? null : parsed;
+};
+
+/** Splits a stored `"start,end"` range value into its two bounds. */
+export const parseDateRangeRuleValue = (
+  value: string | undefined
+): { from: Date | null; to: Date | null } => {
+  const [start, end] = (value ?? "").split(",");
+
+  return { from: parseDateRuleValue(start?.trim()), to: parseDateRuleValue(end?.trim()) };
+};
 
 /** Default params when a date rule is switched into relative mode. */
 export const createRelativeDateParams = (ruleType: TValidationRuleType): TValidationRule["params"] => {

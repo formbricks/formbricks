@@ -3551,7 +3551,6 @@
           "delete_validation_rule": "刪除驗證規則",
           "does_not_contain": "不包含",
           "email": "是有效的電子郵件",
-          "end_date": "結束日期",
           "file_extension_is": "檔案副檔名為",
           "file_extension_is_not": "檔案副檔名不是",
           "fixed_date": "固定日期",
@@ -3583,7 +3582,6 @@
           "relative_to_response": "相對於",
           "select_file_extensions": "請選擇檔案副檔名…",
           "select_option": "選擇選項",
-          "start_date": "開始日期",
           "url": "是有效的 URL",
           "working_days": "工作日"
         },

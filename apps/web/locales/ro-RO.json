@@ -3551,7 +3551,6 @@
           "delete_validation_rule": "Șterge regula de validare",
           "does_not_contain": "Nu conține",
           "email": "Este un email valid",
-          "end_date": "Data de sfârșit",
           "file_extension_is": "Extensia fișierului este",
           "file_extension_is_not": "Extensia fișierului nu este",
           "fixed_date": "Dată fixă",
@@ -3583,7 +3582,6 @@
           "relative_to_response": "Relativ",
           "select_file_extensions": "Selectați extensiile de fișiere…",
           "select_option": "Selectează opțiunea",
-          "start_date": "Data de început",
           "url": "Este un URL valid",
           "working_days": "Zile lucrătoare"
         },

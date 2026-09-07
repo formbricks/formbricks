@@ -3551,7 +3551,6 @@
           "delete_validation_rule": "Doğrulama kuralını sil",
           "does_not_contain": "İçermez",
           "email": "Geçerli e-posta",
-          "end_date": "Bitiş tarihi",
           "file_extension_is": "Dosya uzantısı",
           "file_extension_is_not": "Dosya uzantısı değil",
           "fixed_date": "Sabit tarih",
@@ -3583,7 +3582,6 @@
           "relative_to_response": "Göreceli",
           "select_file_extensions": "Dosya uzantılarını seç…",
           "select_option": "Seçenek seç",
-          "start_date": "Başlangıç tarihi",
           "url": "Geçerli bir URL",
           "working_days": "İş günleri"
         },

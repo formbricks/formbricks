@@ -3551,7 +3551,6 @@
           "delete_validation_rule": "Ellenőrzési szabály törlése",
           "does_not_contain": "Nem tartalmazza",
           "email": "Érvényes e-mail-cím",
-          "end_date": "Befejezési dátum",
           "file_extension_is": "A fájlkiterjesztés ez",
           "file_extension_is_not": "A fájlkiterjesztés nem ez",
           "fixed_date": "Rögzített dátum",
@@ -3583,7 +3582,6 @@
           "relative_to_response": "Relatív",
           "select_file_extensions": "Fájlkiterjesztések kiválasztása…",
           "select_option": "Lehetőség kiválasztása",
-          "start_date": "Kezdési dátum",
           "url": "Érvényes URL",
           "working_days": "Munkanapok"
         },

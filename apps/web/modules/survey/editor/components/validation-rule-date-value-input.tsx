@@ -6,7 +6,8 @@ import {
   TValidationRule,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
-import { Input } from "@/modules/ui/components/input";
+import { formatLocalDay } from "@/lib/utils/datetime";
+import { DatePicker, DateRangePicker } from "@/modules/ui/components/date-picker";
 import {
   Select,
   SelectContent,
@@ -18,6 +19,8 @@ import {
   createRelativeDateParams,
   createRuleParams,
   isRelativeDateParams,
+  parseDateRangeRuleValue,
+  parseDateRuleValue,
 } from "../lib/validation-rules-utils";
 import { ValidationRuleRelativeDateInput } from "./validation-rule-relative-date-input";
 
@@ -40,8 +43,9 @@ export const ValidationRuleDateValueInput = ({
   onChange,
   onParamsChange,
 }: Readonly<ValidationRuleDateValueInputProps>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const isRelative = isRelativeDateParams(rule.params);
   const isRange = ruleType === "isBetween" || ruleType === "isNotBetween";
 
@@ -101,27 +105,19 @@ export const ValidationRuleDateValueInput = ({
     );
   }
 
-  // Fixed range dates are stored as one "start,end" string.
+  // Fixed range dates are stored as one "start,end" string. One range calendar rather than two single
+  // ones: the second bound is picked against the first, and a half-picked range never lands.
   if (isRange) {
-    const [startDate = "", endDate = ""] = ((currentValue as string) ?? "").split(",");
+    const { from, to } = parseDateRangeRuleValue(currentValue as string | undefined);
 
     return (
-      <div className="flex flex-[3] flex-wrap items-center gap-2">
+      <div className="flex flex-[3] items-center gap-2">
         {modeSelect}
-        <Input
-          type="date"
-          value={startDate}
-          onChange={(e) => onChange(`${e.target.value},${endDate}`)}
-          placeholder={t("workspace.surveys.edit.validation.start_date")}
-          className="h-9 flex-1 bg-white"
-        />
-        <span className="text-sm text-slate-500">{t("common.and")}</span>
-        <Input
-          type="date"
-          value={endDate}
-          onChange={(e) => onChange(`${startDate},${e.target.value}`)}
-          placeholder={t("workspace.surveys.edit.validation.end_date")}
-          className="h-9 flex-1 bg-white"
+        <DateRangePicker
+          value={{ from: from ?? undefined, to: to ?? undefined }}
+          locale={locale}
+          triggerClassName="h-9 flex-1"
+          onChange={(range) => onChange(`${formatLocalDay(range.from)},${formatLocalDay(range.to)}`)}
         />
       </div>
     );
@@ -130,12 +126,14 @@ export const ValidationRuleDateValueInput = ({
   return (
     <div className="flex flex-[3] items-center gap-2">
       {modeSelect}
-      <Input
-        type="date"
-        value={(currentValue as string) ?? ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-9 flex-1 bg-white"
-      />
+      <div className="min-w-0 flex-1">
+        <DatePicker
+          value={parseDateRuleValue(currentValue as string | undefined)}
+          locale={locale}
+          triggerClassName="h-9 w-full"
+          onChange={(date) => onChange(formatLocalDay(date))}
+        />
+      </div>
     </div>
   );
 };

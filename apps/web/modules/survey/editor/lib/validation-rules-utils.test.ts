@@ -7,6 +7,8 @@ import {
   getAvailableRuleTypes,
   getRuleValue,
   isRelativeDateParams,
+  parseDateRangeRuleValue,
+  parseDateRuleValue,
 } from "./validation-rules-utils";
 
 describe("getAvailableRuleTypes", () => {
@@ -540,5 +542,41 @@ describe("relative date params", () => {
     } as unknown as TValidationRule;
 
     expect(getRuleValue(fixed)).toBe("2026-03-01,2026-03-10");
+  });
+});
+
+describe("parseDateRuleValue", () => {
+  test("parses a stored day to local midnight, so the picker shows the day that was saved", () => {
+    const parsed = parseDateRuleValue("2026-03-01");
+
+    expect(parsed?.getFullYear()).toBe(2026);
+    expect(parsed?.getMonth()).toBe(2);
+    expect(parsed?.getDate()).toBe(1);
+    expect(parsed?.getHours()).toBe(0);
+  });
+
+  test.each([undefined, "", "not-a-date", "2026-3-1", "2026-02-30"])(
+    "returns null for %s rather than an invalid or rolled-over Date",
+    (value) => {
+      expect(parseDateRuleValue(value)).toBeNull();
+    }
+  );
+});
+
+describe("parseDateRangeRuleValue", () => {
+  test("splits the stored start,end pair", () => {
+    const { from, to } = parseDateRangeRuleValue("2026-03-01,2026-03-10");
+
+    expect(from?.getDate()).toBe(1);
+    expect(to?.getDate()).toBe(10);
+  });
+
+  test("leaves a half-set or empty range unparsed instead of guessing a bound", () => {
+    expect(parseDateRangeRuleValue("2026-03-01,")).toEqual({
+      from: new Date(2026, 2, 1),
+      to: null,
+    });
+    expect(parseDateRangeRuleValue("")).toEqual({ from: null, to: null });
+    expect(parseDateRangeRuleValue(undefined)).toEqual({ from: null, to: null });
   });
 });

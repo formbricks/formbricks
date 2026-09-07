@@ -3551,7 +3551,6 @@
           "delete_validation_rule": "Удалить правило проверки",
           "does_not_contain": "Не содержит",
           "email": "Корректный email",
-          "end_date": "Дата окончания",
           "file_extension_is": "Расширение файла —",
           "file_extension_is_not": "Расширение файла не является",
           "fixed_date": "Фиксированная дата",
@@ -3583,7 +3582,6 @@
           "relative_to_response": "Относительно",
           "select_file_extensions": "Выберите расширения файлов…",
           "select_option": "Выберите вариант",
-          "start_date": "Дата начала",
           "url": "Корректный URL",
           "working_days": "Рабочие дни"
         },

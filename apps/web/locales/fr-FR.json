@@ -3551,7 +3551,6 @@
           "delete_validation_rule": "Supprimer la règle de validation",
           "does_not_contain": "Ne contient pas",
           "email": "Est un e-mail valide",
-          "end_date": "Date de fin",
           "file_extension_is": "L'extension de fichier est",
           "file_extension_is_not": "L'extension de fichier n'est pas",
           "fixed_date": "Date fixe",
@@ -3583,7 +3582,6 @@
           "relative_to_response": "Relatif",
           "select_file_extensions": "Sélectionner les extensions de fichier…",
           "select_option": "Sélectionner une option",
-          "start_date": "Date de début",
           "url": "Est une URL valide",
           "working_days": "Jours ouvrés"
         },

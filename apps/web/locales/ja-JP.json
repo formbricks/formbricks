@@ -3551,7 +3551,6 @@
           "delete_validation_rule": "検証ルールを削除",
           "does_not_contain": "を含まない",
           "email": "有効なメールアドレスである",
-          "end_date": "終了日",
           "file_extension_is": "ファイル拡張子が次と一致",
           "file_extension_is_not": "ファイル拡張子が次と一致しない",
           "fixed_date": "固定日",
@@ -3583,7 +3582,6 @@
           "relative_to_response": "相対的",
           "select_file_extensions": "ファイル拡張子を選択…",
           "select_option": "オプションを選択",
-          "start_date": "開始日",
           "url": "有効なURLである",
           "working_days": "営業日"
         },
