@@ -1,6 +1,7 @@
 // extend this object in order to add more validation rules
 import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
+import { z } from "zod";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { ZEndingCardUrl } from "@formbricks/types/common";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -338,9 +339,72 @@ const NUMBERED_COLLECTION_LABEL_KEYS: Record<string, string> = {
   choices: "common.choice_n",
 };
 
-// Every message Zod generates itself starts with this — "Invalid input" for a union, "Invalid input:
-// expected string, received undefined" for a type mismatch. A message a schema authored does not.
-const ZOD_DEFAULT_MESSAGE_PREFIX = "Invalid input";
+// Element fields whose schema name is not what the author sees in the editor.
+const ELEMENT_FIELD_LABEL_KEYS: Record<string, string> = {
+  shuffleOption: "workspace.surveys.edit.field_label_shuffle_option",
+};
+
+/**
+ * A Zod issue as this module reads it. Beyond the path and the message it keeps the fields Zod's own
+ * locale map renders from, because `isZodGeneratedMessage` replays that map to tell a generated
+ * message from an authored one. Pass a whole issue, not a subset — a stripped one reads as authored.
+ */
+interface TDescribableIssue {
+  path: PropertyKey[];
+  message: string;
+  code?: string;
+  expected?: string;
+  values?: unknown[];
+  errors?: unknown[];
+  origin?: string;
+  minimum?: unknown;
+  maximum?: unknown;
+  inclusive?: boolean;
+  format?: string;
+  pattern?: string;
+  prefix?: string;
+  suffix?: string;
+  includes?: string;
+  divisor?: number;
+  keys?: string[];
+  algorithm?: string;
+}
+
+// Zod always builds its own messages from the English locale map, whatever the app language is.
+const zodEnLocale = z.core.locales.en();
+
+// `received` is derived from the input, which a finalized issue no longer carries, so the
+// reconstruction below ends at "expected string," where the real message says ", received number".
+const stripReceived = (message: string): string => message.split(", received ")[0];
+
+/**
+ * Whether Zod wrote this message itself, rather than a schema authoring one.
+ *
+ * Sniffing the wording does not survive Zod's own phrasing: a bad enum reads "Invalid option: expected
+ * one of …", a bad union "Invalid input", a bad type "Invalid input: expected string, received number".
+ * So ask Zod instead — rebuild what its locale map would have said for this issue and compare. A schema
+ * that authored a message ("Cal user name is required") does not match its own default.
+ *
+ * An issue shape the locale map cannot render counts as authored, so its message still reaches the
+ * author; the caller prepends the location either way.
+ */
+const isZodGeneratedMessage = (issue: TDescribableIssue): boolean => {
+  try {
+    // A finalized issue carries every field the locale map reads; only its `input` is stripped.
+    const zodDefault = zodEnLocale.localeError(issue as unknown as z.core.$ZodRawIssue);
+    const defaultMessage = typeof zodDefault === "string" ? zodDefault : zodDefault?.message;
+
+    if (!defaultMessage) return false;
+
+    return stripReceived(defaultMessage) === stripReceived(issue.message);
+  } catch {
+    return false;
+  }
+};
+
+// "shuffleOption" -> "shuffle option". Schema field names are camelCase; authors do not read camelCase.
+const humanizeFieldName = (field: string): string =>
+  field.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
 
 interface TElementIssueDescription {
   message: string;
@@ -360,7 +424,7 @@ interface TElementIssueDescription {
  * Returns null for paths outside an element; those keep their own message.
  */
 export const describeElementIssue = (
-  issue: { path: PropertyKey[]; message: string },
+  issue: TDescribableIssue,
   t: TFunction,
   locale: string
 ): TElementIssueDescription | null => {
@@ -378,7 +442,7 @@ export const describeElementIssue = (
   const blockNumber = blockIndex + 1;
   const questionNumber = elementIndex + 1;
 
-  if (!issue.message.startsWith(ZOD_DEFAULT_MESSAGE_PREFIX)) {
+  if (!isZodGeneratedMessage(issue)) {
     return {
       message: t("workspace.surveys.edit.issue_in_question", {
         message: issue.message,
@@ -410,7 +474,9 @@ export const describeElementIssue = (
         languageCode = segment;
         return;
       }
-      fieldParts.push(segment);
+      fieldParts.push(
+        ELEMENT_FIELD_LABEL_KEYS[segment] ? t(ELEMENT_FIELD_LABEL_KEYS[segment]) : humanizeFieldName(segment)
+      );
     }
   });
 

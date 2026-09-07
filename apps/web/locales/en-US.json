@@ -3252,6 +3252,7 @@
         "fallback_missing": "Fallback missing",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} is used in logic of question {questionIndex}. Please remove it from logic first.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Hidden field “{fieldId}” is being used in “{quotaName}” quota",
+        "field_label_shuffle_option": "ordering",
         "field_name_eg_score_price": "Field name e.g, score, price",
         "first_name": "First Name",
         "five_points_recommended": "5 points (recommended)",
