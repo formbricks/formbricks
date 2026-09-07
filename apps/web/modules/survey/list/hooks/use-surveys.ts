@@ -40,14 +40,13 @@ export const useSurveys = ({
   });
 
   const surveys = flattenSurveyPages(query.data);
-  const totalCount = query.data?.pages[0]?.meta.totalCount ?? 0;
-  const hasArchived = query.data?.pages[0]?.meta.hasArchived ?? false;
+  // Read from page one: cursor pages are requested with includeTotalCount=false and carry null.
+  const workspaceSurveyCount = query.data?.pages[0]?.meta.workspaceSurveyCount ?? null;
 
   return {
     ...query,
     queryKey,
     surveys,
-    totalCount,
-    hasArchived,
+    workspaceSurveyCount,
   };
 };

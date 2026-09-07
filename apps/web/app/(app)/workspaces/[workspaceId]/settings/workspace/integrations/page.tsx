@@ -17,10 +17,13 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getIntegrations } from "@/lib/integration/service";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getTranslate } from "@/lingodotdev/server";
+import { getSettingsPageMetadata } from "@/modules/settings/lib/metadata";
 import { Card } from "@/modules/ui/components/integration-card";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
+
+export const generateMetadata = () => getSettingsPageMetadata("common.integrations");
 
 const getStatusText = (count: number, t: TFunction, type: string) => {
   if (count === 1) return `1 ${type}`;

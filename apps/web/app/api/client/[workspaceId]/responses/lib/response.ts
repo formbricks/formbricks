@@ -30,13 +30,20 @@ export const buildClientResponse = (
 
 export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEvaluationResponseInput>(
   responseInput: TInput,
-  createResponse: (responseInput: TInput, tx: Prisma.TransactionClient) => Promise<TResponse>
+  createResponse: (responseInput: TInput, tx: Prisma.TransactionClient) => Promise<TResponse>,
+  // Callers that persist a response as part of a larger all-or-nothing write pass their own
+  // transaction so the response and their surrounding rows share one commit. Prisma has no nested
+  // interactive transactions, so opening a second one here would commit independently — the caller's
+  // rollback would then leave the response behind. Omitted by the request paths, which own a single
+  // response each and get their own transaction below.
+  tx?: Prisma.TransactionClient
 ) => {
   // Canonicalize once so quota evaluation uses the same code persisted on the response (createResponse
   // canonicalizes the stored value via the same helper). Keeps a request internally consistent.
   const canonicalLanguage = normalizeResponseLanguage(responseInput.language) ?? undefined;
-  return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const response = await createResponse(responseInput, tx);
+
+  const create = async (txClient: Prisma.TransactionClient) => {
+    const response = await createResponse(responseInput, txClient);
 
     const quotaResult = await evaluateResponseQuotas({
       surveyId: responseInput.surveyId,
@@ -45,12 +52,18 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
       variables: responseInput.variables,
       language: canonicalLanguage,
       responseFinished: response.finished,
-      tx,
+      tx: txClient,
     });
 
     return {
       ...response,
       ...(quotaResult.quotaFull && { quotaFull: quotaResult.quotaFull }),
     };
-  });
+  };
+
+  if (tx) {
+    return await create(tx);
+  }
+
+  return await prisma.$transaction(create);
 };

@@ -14,6 +14,8 @@ import huHUTranslations from "../../locales/hu-HU.json";
 import idIDTranslations from "../../locales/id-ID.json";
 import itITTranslations from "../../locales/it-IT.json";
 import jaJPTranslations from "../../locales/ja-JP.json";
+import kmKHTranslations from "../../locales/km-KH.json";
+import neNPTranslations from "../../locales/ne-NP.json";
 import nlNLTranslations from "../../locales/nl-NL.json";
 import ptBRTranslations from "../../locales/pt-BR.json";
 import roROTranslations from "../../locales/ro-RO.json";
@@ -79,6 +81,8 @@ i18n
       "id-ID",
       "it-IT",
       "ja-JP",
+      "km-KH",
+      "ne-NP",
       "nl-NL",
       "pt-BR",
       "ro-RO",
@@ -105,6 +109,8 @@ i18n
       "id-ID": { translation: idIDTranslations },
       "it-IT": { translation: itITTranslations },
       "ja-JP": { translation: jaJPTranslations },
+      "km-KH": { translation: kmKHTranslations },
+      "ne-NP": { translation: neNPTranslations },
       "nl-NL": { translation: nlNLTranslations },
       "pt-BR": { translation: ptBRTranslations },
       "ro-RO": { translation: roROTranslations },

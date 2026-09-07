@@ -10,7 +10,7 @@ import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
-import { sendVerificationEmail } from "@/modules/email";
+import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
 import {
   LINKED_SSO_LOOKUP_SELECT,
   TSsoAccountLinkInput,
@@ -70,7 +70,9 @@ const queueSsoRecoveryAuditEvent = ({
       ...(reclaimed
         ? {
             credentialPasswordsCleared: reclaimed.credentialPasswordsCleared,
+            legacyPasswordCleared: reclaimed.legacyPasswordCleared,
             twoFactorRowsRemoved: reclaimed.twoFactorRowsRemoved,
+            legacyTwoFactorDisarmed: reclaimed.legacyTwoFactorDisarmed,
             // Reported separately, not summed. In this configuration access tokens are self-contained
             // JWTs that are never persisted (see the revocation block below), so the access count is
             // ~always 0 and a combined "grants" total would be the refresh count wearing a plural name —
@@ -95,7 +97,16 @@ const queueSsoRecoveryAuditEvent = ({
  */
 type TReclaimOutcome = {
   credentialPasswordsCleared: number;
+  /** The pre-cutover `User.password` hash, which lives in a different store to the credential account. */
+  legacyPasswordCleared: boolean;
   twoFactorRowsRemoved: number;
+  /**
+   * Whether THIS transaction flipped the legacy `User.twoFactorEnabled` latch. 2FA lives in two stores and the
+   * strip clears both, but a user who enrolled before the backfill shim landed has only the legacy
+   * columns — no `TwoFactor` row for `twoFactorRowsRemoved` to count. Reporting the row count alone
+   * would tell that user, and the audit trail, that their second factor was left alone.
+   */
+  legacyTwoFactorDisarmed: boolean;
   oauthAccessTokensRevoked: number;
   oauthRefreshTokensRevoked: number;
   oauthConsentsRevoked: number;
@@ -145,7 +156,7 @@ type TReclaimOutcome = {
  * AsyncLocalStorage, so a revocation issued in here would execute outside `tx` and survive a rollback.
  *
  * Not locked against concurrent recoveries (upstream takes a DB advisory lock for its equivalent). Every
- * write here is idempotent — two `deleteMany`/`updateMany` calls and an update to fixed values — so a race
+ * write here is idempotent — the `deleteMany`/`updateMany` calls and an update to fixed values — so a race
  * converges on the same state rather than corrupting it.
  */
 const reclaimUnverifiedLocalAuthIfNeeded = async ({
@@ -181,9 +192,9 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   // told. Correct for a squatter, a silent downgrade for the owner.
   //
   // Left as-is on purpose: there is no signal here that separates the two populations, and weakening the
-  // guard would reopen the takeover. What is missing is telling the user — mail them what was removed and
-  // prompt re-enrolment. That needs a new transactional template, so it is tracked separately rather than
-  // widened into a fix that backports to two release branches.
+  // guard would reopen the takeover. What was missing was telling the user, and the completion path now
+  // does — `sendSsoRecoveryFactorsRemovedEmail` names what was removed and links to re-enrolment
+  // (ENG-2633). The in-app re-enrolment prompt is still open on that ticket.
   if (user.emailVerified) {
     return null;
   }
@@ -193,19 +204,42 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   //
   // The legacy columns: the 2FA pair is load-bearing (see the backfill note above); `password` is a no-op
   // for post-cutover users and kept only so a pre-cutover row cannot survive here.
+  // The latch is flipped by its own filtered write so the count reflects what THIS transaction
+  // changed. `user` was read before the transaction opened, and recoveries are deliberately not
+  // locked against each other, so deriving the flag from that stale read lets two concurrent
+  // recoveries both report they disarmed a factor only one of them touched — a duplicate mail and a
+  // false audit record. The unconditional nulls below still run for everyone: a secret left at rest
+  // on an account that changed hands is the thing the strip exists to prevent, and filtering those
+  // on the latch would skip an account whose `twoFactorEnabled` was already false.
+  const legacyTwoFactorRows = await tx.user.updateMany({
+    where: { id: user.id, twoFactorEnabled: true },
+    data: { twoFactorEnabled: false },
+  });
   await tx.user.update({
     where: { id: user.id },
     data: {
       backupCodes: null,
       emailVerified: true,
-      password: null,
       twoFactorEnabled: false,
       twoFactorSecret: null,
     },
   });
+  // The legacy `User.password`, cleared as its own counted write rather than a field on the update
+  // above. Pre-cutover accounts keep their hash here and may have no credential `Account` row at all,
+  // so counting only those rows would tell such a user — and the audit trail — that nothing was taken
+  // from them. `password: { not: null }` makes the count rows CHANGED, and reading it this way keeps
+  // the hash itself out of the lookup select and out of memory.
+  const legacyPasswordRows = await tx.user.updateMany({
+    where: { id: user.id, password: { not: null } },
+    data: { password: null },
+  });
   const twoFactorRows = await tx.twoFactor.deleteMany({ where: { userId: user.id } });
   const credentialRows = await tx.account.updateMany({
-    where: { userId: user.id, provider: "credential" },
+    // `password: { not: null }` narrows this to rows that actually HELD a credential. `updateMany`
+    // reports rows matched, not rows changed, so without it an account whose password was already null
+    // reports one cleared — which the audit trail records as a factor taken away, and the notification
+    // mail tells the user they lost a password they never had.
+    where: { userId: user.id, provider: "credential", password: { not: null } },
     data: { password: null },
   });
 
@@ -245,7 +279,9 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
 
   return {
     credentialPasswordsCleared: credentialRows.count,
+    legacyPasswordCleared: legacyPasswordRows.count > 0,
     twoFactorRowsRemoved: twoFactorRows.count,
+    legacyTwoFactorDisarmed: legacyTwoFactorRows.count > 0,
     oauthAccessTokensRevoked: accessRows.count,
     oauthRefreshTokensRevoked: refreshRows.count,
     oauthConsentsRevoked: consentRows.count,
@@ -509,6 +545,44 @@ export const completeSsoRecovery = async ({
       logger.error(
         { error, userId: user.id },
         "Failed to revoke sessions after reclaiming unverified local auth"
+      );
+    }
+  }
+
+  // Tell the account holder what recovery removed (ENG-2633). The strip is correct for a squatter and a
+  // silent security downgrade for the owner — and on a default self-hosted install, where verification
+  // blocks nothing, the owner is the likelier of the two. Nothing here can distinguish them, so the
+  // answer is to say what happened rather than to weaken the guard.
+  //
+  // After commit and best-effort, for the same reason the session revocation above is: the strip has
+  // already landed, and a mailer failure must not turn a completed recovery into a failed sign-in.
+  const twoFactorRemoved = Boolean(
+    reclaimed && (reclaimed.twoFactorRowsRemoved > 0 || reclaimed.legacyTwoFactorDisarmed)
+  );
+  const passwordRemoved = Boolean(
+    reclaimed && (reclaimed.credentialPasswordsCleared > 0 || reclaimed.legacyPasswordCleared)
+  );
+  if (passwordRemoved || twoFactorRemoved) {
+    try {
+      const sent = await sendSsoRecoveryFactorsRemovedEmail({
+        email: user.email,
+        locale: user.locale,
+        passwordRemoved,
+        twoFactorRemoved,
+      });
+      // `sendEmail` returns false without throwing when SMTP is unconfigured, so the catch below never
+      // sees it. Silence there would mean a user's second factor was removed and nobody — not them, not
+      // the operator — was told, which is the whole failure this notification exists to prevent.
+      if (!sent) {
+        logger.error(
+          { userId: user.id, passwordRemoved, twoFactorRemoved },
+          "SSO recovery removed local sign-in factors but the notification email was not sent"
+        );
+      }
+    } catch (error) {
+      logger.error(
+        { error, userId: user.id },
+        "Failed to notify the user that SSO recovery removed their local sign-in factors"
       );
     }
   }

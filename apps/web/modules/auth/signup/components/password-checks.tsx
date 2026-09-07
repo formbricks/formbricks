@@ -15,9 +15,9 @@ const PASSWORD_REGEX = {
 
 const ValidationIcon = ({ state }: { state: boolean }) =>
   state ? (
-    <CheckIcon className="size-5" />
+    <CheckIcon className="size-5 shrink-0" aria-hidden="true" />
   ) : (
-    <span className="flex size-5 items-center justify-center">
+    <span className="flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
       <i className="inline-block size-2 rounded-full bg-slate-700" />
     </span>
   );
@@ -54,12 +54,14 @@ export const PasswordChecks = ({ password }: PasswordChecksProps) => {
   }, [password, DEFAULT_VALIDATIONS, t]);
 
   return (
-    <div className="my-2 text-left text-slate-700 sm:text-sm">
-      <ul aria-label="Password requirements">
+    // text-sm unconditionally: with only `sm:text-sm` the list rendered *larger* on a phone
+    // than on desktop. aria-live announces a rule flipping as the user types (SC 4.1.3).
+    <div className="my-2 text-left text-sm text-slate-700">
+      <ul aria-label={t("auth.signup.password_requirements")} aria-live="polite">
         {validations.map((validation) => (
-          <li key={validation.label} className="flex items-center">
+          <li key={validation.label} className="flex items-start gap-2">
             <ValidationIcon state={validation.state} />
-            {validation.label}
+            <span>{validation.label}</span>
           </li>
         ))}
       </ul>

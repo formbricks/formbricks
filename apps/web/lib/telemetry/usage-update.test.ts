@@ -3,7 +3,7 @@ import { getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { IntegrationType } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { sendTelemetryEvents } from "./telemetry";
+import { sendTelemetryEvents } from "./usage-update";
 
 // Mock dependencies
 vi.mock("@formbricks/cache", () => ({
@@ -219,7 +219,7 @@ describe("sendTelemetryEvents", () => {
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
     }));
-    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./usage-update");
 
     // Ensure we can acquire lock by setting last sent time far in the past
     const oldTime = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago
@@ -271,7 +271,7 @@ describe("sendTelemetryEvents", () => {
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
     }));
-    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./usage-update");
 
     // Ensure we can acquire lock by setting last sent time far in the past
     const oldTime = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago
@@ -290,9 +290,7 @@ describe("sendTelemetryEvents", () => {
 
     await freshSendTelemetryEvents();
 
-    // sendTelemetry returns early when no org exists
-    // Since it returns (not throws), the try block completes successfully
-    // Then cache.set is called, and finally block executes
+    // sendTelemetry returns early when no org exists, so nothing is reported
     expect(fetchMock).not.toHaveBeenCalled();
 
     // Verify lock was acquired (prerequisite for finally block to execute)
@@ -301,9 +299,73 @@ describe("sendTelemetryEvents", () => {
     // Lock should be released in finally block
     expect(mockCacheService.del).toHaveBeenCalledWith(["telemetry_lock"]);
 
-    // Note: The current implementation calls cache.set even when no org exists
-    // This might be a bug, but we test the actual behavior
-    expect(mockCacheService.set).toHaveBeenCalled();
+    // The 24h window must not be consumed when nothing was reported: recording it would delay this
+    // instance's *first* usage update by a day (ENG-2107).
+    expect(mockCacheService.set).not.toHaveBeenCalled();
+
+    // A 1h cooldown applies instead of the full 24h, so the retry lands once an org exists.
+    vi.clearAllMocks();
+    vi.mocked(getCacheService).mockResolvedValue({ ok: true, data: mockCacheService as any });
+    vi.setSystemTime(new Date(Date.now() + 61 * 60 * 1000));
+    mockCacheService.get.mockResolvedValue({ ok: true, data: String(oldTime) });
+    mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true });
+    mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
+    mockCacheService.set.mockResolvedValue({ ok: true, data: undefined });
+    vi.mocked(prisma.organization.findFirst).mockResolvedValue({
+      id: "org-123",
+      createdAt: new Date("2023-01-01"),
+    } as any);
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      {
+        organizationCount: BigInt(1),
+        userCount: BigInt(1),
+        teamCount: BigInt(1),
+        workspaceCount: BigInt(1),
+        surveyCount: BigInt(0),
+        inProgressSurveyCount: BigInt(0),
+        completedSurveyCount: BigInt(0),
+        responseCountAllTime: BigInt(0),
+        responseCountSinceLastUpdate: BigInt(0),
+        displayCount: BigInt(0),
+        contactCount: BigInt(0),
+        segmentCount: BigInt(0),
+        newestResponseAt: null,
+      },
+    ] as any);
+    vi.mocked(prisma.integration.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.account.findMany).mockResolvedValue([] as any);
+    fetchMock.mockResolvedValue({ ok: true });
+
+    await freshSendTelemetryEvents();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mockCacheService.set).toHaveBeenCalledWith("telemetry_last_sent_ts", expect.any(String));
+  });
+
+  test("should not record a send when the usage update endpoint rejects it", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({
+      E2E_TESTING: false,
+      IS_DEVELOPMENT: false,
+      TELEMETRY_DISABLED: false,
+    }));
+    vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
+    }));
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./usage-update");
+
+    fetchMock.mockResolvedValue({ ok: false, status: 503 });
+
+    await freshSendTelemetryEvents();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // A rejected update is a failure, not a send: the timestamp stays put so the next run retries.
+    expect(mockCacheService.set).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "Usage update endpoint responded with status 503" }),
+      "Failed to send telemetry - applying 1h cooldown"
+    );
+    expect(mockCacheService.del).toHaveBeenCalledWith(["telemetry_lock"]);
   });
 
   test("should skip telemetry when TELEMETRY_DISABLED is true and no active EE license", async () => {
@@ -316,7 +378,7 @@ describe("sendTelemetryEvents", () => {
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
     }));
-    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./usage-update");
 
     await freshSendTelemetryEvents();
 
@@ -335,7 +397,7 @@ describe("sendTelemetryEvents", () => {
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: true }),
     }));
-    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./usage-update");
 
     // Re-setup mocks after resetModules
     vi.mocked(getCacheService).mockResolvedValue({
@@ -388,7 +450,7 @@ describe("sendTelemetryEvents", () => {
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: true }),
     }));
-    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./usage-update");
 
     await freshSendTelemetryEvents();
 
@@ -407,7 +469,7 @@ describe("sendTelemetryEvents", () => {
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: true }),
     }));
-    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./usage-update");
 
     await freshSendTelemetryEvents();
 

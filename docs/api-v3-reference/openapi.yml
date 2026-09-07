@@ -176,7 +176,7 @@ paths:
                       - limit
                       - nextCursor
                       - totalCount
-                      - hasArchived
+                      - workspaceSurveyCount
                     properties:
                       limit:
                         type: integer
@@ -191,11 +191,12 @@ paths:
                           - 'null'
                         minimum: 0
                         description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
-                      hasArchived:
+                      workspaceSurveyCount:
                         type:
-                          - boolean
+                          - integer
                           - 'null'
-                        description: '`true` when the workspace has at least one archived (soft-deleted) survey. Computed only on the first page (same gate as `totalCount`); `null` when `includeTotalCount=false`.'
+                        minimum: 0
+                        description: Total number of surveys in the workspace, archived (soft-deleted) ones included and independent of the current filters. `null` when `includeTotalCount=false` (the same gate as `totalCount`). Replaces the boolean `hasArchived` field of earlier releases.
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -448,7 +449,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
-          description: 'Unprocessable Content — the document passed schema validation but failed a cross-reference check that requires stored state to detect: duplicate stable ids, dangling logic/jump references, undeclared locale keys used in content, invalid media URLs, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).'
+          description: 'Unprocessable Content — the document passed schema validation but failed a cross-reference check that requires stored state to detect: duplicate stable ids, dangling logic/jump references, undeclared locale keys used in content, invalid media URLs, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. Also returned when the document passes this endpoint''s request schema but is rejected by the stricter validation the survey service applies on write — for example a CTA `buttonUrl` whose scheme the service does not accept. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).'
           content:
             application/problem+json:
               schema:
@@ -3653,6 +3654,9 @@ components:
           type: string
         videoUrl:
           type: string
+        hideDefaultIcon:
+          type: boolean
+          description: Hides the default checkmark icon rendered above the headline when the ending carries no image or video. Omit to keep the icon.
       additionalProperties: false
     SurveyRedirectEnding:
       type: object

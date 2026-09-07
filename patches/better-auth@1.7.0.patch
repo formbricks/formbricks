@@ -1,0 +1,19 @@
+diff --git a/dist/db/internal-adapter.mjs b/dist/db/internal-adapter.mjs
+index 0f88105d21dea1c2cc9a8f1ab268faede029b47a..c4a61e12810e17d3b2444252448e75155468294e 100644
+--- a/dist/db/internal-adapter.mjs
++++ b/dist/db/internal-adapter.mjs
+@@ -321,7 +321,13 @@ const createInternalAdapter = (adapter, ctx) => {
+ 		},
+ 		findSession: async (token) => {
+ 			if (secondaryStorage) {
+-				const sessionStringified = await secondaryStorage.get(token);
++				let sessionStringified;
++				try {
++					sessionStringified = await secondaryStorage.get(token);
++				} catch (error) {
++					if (!options.session?.storeSessionInDatabase || ctx.options.session?.preserveSessionInDatabase) throw error;
++					logger.error("Failed to read session from secondary storage; falling back to database", error);
++				}
+ 				if (!sessionStringified && (!options.session?.storeSessionInDatabase || ctx.options.session?.preserveSessionInDatabase)) return null;
+ 				if (sessionStringified) {
+ 					const s = safeJSONParse(sessionStringified);

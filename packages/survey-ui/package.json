@@ -48,7 +48,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles": "./dist/survey-ui.css"
+    "./styles": "./dist/survey-ui.css",
+    "./youtube-id": {
+      "types": "./dist/lib/youtube-id.d.ts",
+      "import": "./dist/lib/youtube-id.js"
+    }
   },
   "scripts": {
     "dev": "vite build --watch --mode dev",

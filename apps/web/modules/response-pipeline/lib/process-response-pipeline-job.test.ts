@@ -97,7 +97,7 @@ vi.mock("./handle-integrations", () => ({
   handleIntegrations: mockHandleIntegrations,
 }));
 
-vi.mock("./telemetry", () => ({
+vi.mock("@/lib/telemetry/usage-update", () => ({
   sendTelemetryEvents: mockSendTelemetryEvents,
 }));
 

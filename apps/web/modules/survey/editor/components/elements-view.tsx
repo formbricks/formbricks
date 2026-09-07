@@ -40,9 +40,10 @@ import {
   deleteElementFromBlock,
   duplicateBlock as duplicateBlockHelper,
   findElementLocation,
+  getAutoBlockName,
   moveBlock as moveBlockHelper,
   moveElementInBlock,
-  renumberBlocks,
+  renumberAutoNamedBlocks,
   updateElementInBlock,
 } from "@/modules/survey/editor/lib/blocks";
 import {
@@ -120,10 +121,6 @@ export const ElementsView = ({
   }, [elements]);
 
   const surveyLanguages = localSurvey.languages;
-
-  const getBlockName = (index: number): string => {
-    return `Block ${index + 1}`;
-  };
 
   const handleElementLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     const updateConditions = (conditions: TConditionGroup): TConditionGroup => {
@@ -339,6 +336,22 @@ export const ElementsView = ({
     });
   };
 
+  // Update block name (block-level property)
+  const updateBlockName = (blockIdx: number, name: string) => {
+    if (blockIdx < 0 || blockIdx >= localSurvey.blocks.length) return;
+
+    setLocalSurvey((prevSurvey) => {
+      const blocks = [...(prevSurvey.blocks ?? [])];
+      blocks[blockIdx] = {
+        // Written through verbatim, including empty: clearing the field must leave it cleared
+        // rather than snapping back to the auto name. isSurveyValid blocks the save instead.
+        ...blocks[blockIdx],
+        name,
+      };
+      return { ...prevSurvey, blocks };
+    });
+  };
+
   // Update block button label (block-level property)
   const updateBlockButtonLabel = (
     blockIndex: number,
@@ -492,7 +505,7 @@ export const ElementsView = ({
 
       const newBlock = {
         id: newBlockId,
-        name: getBlockName(index ?? prevSurvey.blocks.length),
+        name: getAutoBlockName(index ?? prevSurvey.blocks.length),
         elements: [{ ...updatedElement, isDraft: true }],
         buttonLabel: createI18nString("", []),
         backButtonLabel: createI18nString("", []),
@@ -772,10 +785,15 @@ export const ElementsView = ({
       }
     });
 
-    // Live-clear conditional logic errors as they get fixed. We only clear
+    // Live-clear conditional logic and block-name errors as they get fixed. We only clear
     // here (never add) so freshly added, not-yet-filled-in rules aren't
     // flagged prematurely — logic errors are added on save/publish instead.
     localSurvey.blocks.forEach((block) => {
+      if (currentInvalidSet.has(block.id) && block.name.trim()) {
+        currentInvalidSet.delete(block.id);
+        hasChanges = true;
+      }
+
       (block.logic ?? []).forEach((logicItem) => {
         if (currentInvalidSet.has(logicItem.id) && isBlockLogicItemValid(logicItem)) {
           currentInvalidSet.delete(logicItem.id);
@@ -829,10 +847,7 @@ export const ElementsView = ({
       const [movedBlock] = blocks.splice(sourceBlockIndex, 1);
       blocks.splice(destBlockIndex, 0, movedBlock);
 
-      // Renumber blocks sequentially after drag-and-drop reordering
-      const renumberedBlocks = renumberBlocks(blocks);
-
-      setLocalSurvey({ ...localSurvey, blocks: renumberedBlocks });
+      setLocalSurvey({ ...localSurvey, blocks: renumberAutoNamedBlocks(blocks) });
     }
   };
 
@@ -880,6 +895,7 @@ export const ElementsView = ({
           updateElement={updateElement}
           updateBlockLogic={updateBlockLogic}
           updateBlockLogicFallback={updateBlockLogicFallback}
+          updateBlockName={updateBlockName}
           updateBlockButtonLabel={updateBlockButtonLabel}
           duplicateElement={duplicateElement}
           deleteElement={deleteElement}

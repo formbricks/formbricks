@@ -378,7 +378,7 @@ export const updateUser = async (
       const results = await prisma.$transaction(operations);
 
       // Retrieve the updated user result. Since the update was the last operation, it is the last item.
-      updatedUser = results[results.length - 1];
+      updatedUser = results.at(-1);
     }
 
     await reconcileOrganizationMembership(organizationId, updatedUser.id);
