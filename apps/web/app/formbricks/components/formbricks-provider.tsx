@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import formbricks from "@formbricks/js";
 
 export const CHURN_SURVEY_PENDING_KEY = "churnSurveyPending";
@@ -26,6 +26,9 @@ export const FormbricksProvider = ({
   userName,
 }: Readonly<FormbricksProviderProps>) => {
   const pathname = usePathname();
+  // Guards against a second effect run (deps changing mid-flight) reading and tracking the same
+  // marker again before the first run has cleared it.
+  const churnTrackInFlightRef = useRef(false);
 
   // Set up the SDK and identify the user.
   useEffect(() => {
@@ -43,12 +46,19 @@ export const FormbricksProvider = ({
         attributes.lastName = rest.join(" ");
         await formbricks.setAttributes(attributes);
 
-        const churnSurveyPending = globalThis.window?.sessionStorage.getItem(CHURN_SURVEY_PENDING_KEY);
-        if (churnSurveyPending) {
-          // Only clear the marker once the code action is actually queued; if track() rejects, leave
-          // it in place so the next setup run retries it instead of losing the event silently.
-          await formbricks.track("subscription_cancelled");
-          globalThis.window?.sessionStorage.removeItem(CHURN_SURVEY_PENDING_KEY);
+        // Marker value is the userId that requested the churn survey, so a logout/login in the same
+        // tab before this runs doesn't attribute the cancellation to whoever is now signed in.
+        const churnSurveyPendingFor = globalThis.window?.sessionStorage.getItem(CHURN_SURVEY_PENDING_KEY);
+        if (churnSurveyPendingFor === userId && !churnTrackInFlightRef.current) {
+          churnTrackInFlightRef.current = true;
+          try {
+            // Only clear the marker once the code action is actually queued; if track() rejects,
+            // leave it in place so the next setup run retries it instead of losing the event silently.
+            await formbricks.track("subscription_cancelled");
+            globalThis.window?.sessionStorage.removeItem(CHURN_SURVEY_PENDING_KEY);
+          } finally {
+            churnTrackInFlightRef.current = false;
+          }
         }
       }
     };

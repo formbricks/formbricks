@@ -69,6 +69,7 @@ type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
 type TStandardPlan = "hobby" | "pro" | "scale";
 
 interface PricingTableProps {
+  userId: string;
   organization: TOrganization;
   responseCount: number;
   workspaceCount: number;
@@ -298,6 +299,7 @@ const PlanFeatureContent = ({
 };
 
 export const PricingTable = ({
+  userId,
   organization,
   responseCount,
   workspaceCount,
@@ -906,8 +908,10 @@ export const PricingTable = ({
             if (plan === "hobby") {
               // formbricks.track() only queues the action; a call here would be lost or interrupted
               // by the reload below. Persist a one-shot marker instead and let FormbricksProvider
-              // fire the code action once the SDK is set up again after reload.
-              globalThis.window.sessionStorage.setItem(CHURN_SURVEY_PENDING_KEY, "1");
+              // fire the code action once the SDK is set up again after reload. Scoped to the
+              // originating user so a logout/login in the same tab before it's consumed can't
+              // attribute the cancellation to whoever is signed in when it fires.
+              globalThis.window.sessionStorage.setItem(CHURN_SURVEY_PENDING_KEY, userId);
             }
             globalThis.window.location.reload();
             return;
