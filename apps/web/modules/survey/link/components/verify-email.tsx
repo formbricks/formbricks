@@ -48,7 +48,7 @@ export const VerifyEmail = ({
   locale,
 }: VerifyEmailProps) => {
   const { t } = useTranslation();
-  useAppLocale(locale);
+  const isLocaleReady = useAppLocale(locale);
 
   const form = useForm<TVerifyEmailInput>({
     defaultValues: {
@@ -103,6 +103,10 @@ export const VerifyEmail = ({
     setShowPreviewQuestions(false);
     setEmailSent(false);
   };
+
+  // The gate is nothing but translated chrome, so it waits for its locale instead of asking for an
+  // email address in the browser's language and switching a frame later.
+  if (!isLocaleReady) return null;
 
   if (isErrorComponent) {
     return (

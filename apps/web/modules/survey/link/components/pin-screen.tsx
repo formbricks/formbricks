@@ -65,7 +65,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const { t } = useTranslation();
-  useAppLocale(locale);
+  const isLocaleReady = useAppLocale(locale);
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
   const [pinAuthToken, setPinAuthToken] = useState<string | undefined>();
@@ -111,6 +111,10 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
   }, [localPinEntry, surveyId]);
 
   if (!survey) {
+    // The gate is nothing but translated chrome, so it waits for its locale instead of asking for the
+    // PIN in the browser's language and switching a frame later.
+    if (!isLocaleReady) return null;
+
     return (
       <div
         className={cn(
