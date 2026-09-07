@@ -61,10 +61,13 @@ export type TSurveyListPage = {
   meta: {
     limit: number;
     nextCursor: string | null;
+    // Surveys matching the current filter.
     totalCount: number | null;
-    // Whether the workspace has any archived surveys. Only computed on the first
-    // page (when includeTotalCount is not false); null on subsequent pages.
-    hasArchived: boolean | null;
+    // Every survey in the workspace, archived ones included — filter-independent, so the list can
+    // tell an empty workspace from an empty result.
+    // Both counts are null when the request sets includeTotalCount=false, which this client does for
+    // every page after the first.
+    workspaceSurveyCount: number | null;
   };
 };
 

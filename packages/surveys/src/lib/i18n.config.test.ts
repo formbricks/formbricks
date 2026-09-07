@@ -52,6 +52,8 @@ describe("resolveFallbackBundles", () => {
     expect(resolveFallbackBundles("id")).toEqual(["id-ID", "en-US"]);
     expect(resolveFallbackBundles("ur")).toEqual(["ur-PK", "en-US"]);
     expect(resolveFallbackBundles("vi")).toEqual(["vi-VN", "en-US"]);
+    expect(resolveFallbackBundles("km")).toEqual(["km-KH", "en-US"]);
+    expect(resolveFallbackBundles("ne")).toEqual(["ne-NP", "en-US"]);
   });
 
   test("an unknown but syntactically valid tag falls back to English", () => {
@@ -77,7 +79,7 @@ describe("shipped bundles", () => {
   });
 
   test("survey strings resolve for the shipped languages", () => {
-    for (const code of ["id-ID", "ur-PK", "vi-VN", "zh-Hant-TW"]) {
+    for (const code of ["id-ID", "km-KH", "ne-NP", "ur-PK", "vi-VN", "zh-Hant-TW"]) {
       const required = i18n.getFixedT(code)("common.required");
       expect(required).not.toBe("common.required");
       expect(required).not.toBe(i18n.getFixedT("en-US")("common.required"));

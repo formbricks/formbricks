@@ -133,9 +133,13 @@ test("stays in the same organization when deleting a workspace as a member of mu
   // This lands on a /workspaces/:id path, so the proxy refreshes that cookie on its own — the spec
   // below covers the branch where it does not.
   await page.goto("/account/settings/profile", { waitUntil: "domcontentloaded" });
+  // `domcontentloaded` returns before the settings shell has resolved its organization, and this
+  // route compiles cold on CI, so the default 5s expect timeout is not enough under worker
+  // contention. The positive assertion has to settle first: it is what proves the sidebar rendered
+  // at all, and without it the `toHaveCount(0)` below would pass on an empty page.
   await expect(
     page.locator(`a[href^="/organizations/${user.organizationId}/settings/"]`).first()
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30000 });
   await expect(page.locator(`a[href^="/organizations/${otherOrganization.id}/"]`)).toHaveCount(0);
 });
 
@@ -255,8 +259,12 @@ test("keeps the organization in account settings when the delete lands on the on
   // The cookie still named the workspace we just deleted until the delete action started repointing
   // it, which sent account settings to the *other* organization via the organizations[0] fallback.
   await page.goto("/account/settings/profile", { waitUntil: "domcontentloaded" });
+  // `domcontentloaded` returns before the settings shell has resolved its organization, and this
+  // route compiles cold on CI, so the default 5s expect timeout is not enough under worker
+  // contention. The positive assertion has to settle first: it is what proves the sidebar rendered
+  // at all, and without it the `toHaveCount(0)` below would pass on an empty page.
   await expect(
     page.locator(`a[href^="/organizations/${user.organizationId}/settings/"]`).first()
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30000 });
   await expect(page.locator(`a[href^="/organizations/${otherOrganization.id}/"]`)).toHaveCount(0);
 });

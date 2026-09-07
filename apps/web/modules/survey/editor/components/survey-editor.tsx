@@ -185,7 +185,6 @@ export const SurveyEditor = ({
         responseCount={responseCount}
         finishedResponseCount={finishedResponseCount}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         isCxMode={isCxMode}
         locale={locale}
         setIsCautionDialogOpen={setIsCautionDialogOpen}

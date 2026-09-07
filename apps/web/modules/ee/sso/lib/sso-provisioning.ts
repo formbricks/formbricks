@@ -67,7 +67,7 @@ const validateSsoInviteToken = async (email: string, callbackUrl: string): Promi
  * Better Auth SSO sign-up flow (introduced by the NextAuth→Better Auth migration, ENG-1054).
  *
  * MUST be called from `databaseHooks.user.create.before`, which Better Auth runs INSIDE the
- * user+account transaction: a `"reject"` there → return `false` → the row rolls back, so no orphan
+ * user+account transaction: a `"reject"` there → throw an APIError → the row rolls back, so no orphan
  * user is created (design doc §13; the post-commit `user.create.after` could not reject safely). The
  * `"provision"` decision (resolved org + flags) is carried to the after-hook, which performs the
  * membership writes.
