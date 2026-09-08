@@ -1,9 +1,11 @@
 description: >-
   Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`, a request
-  body that is not JSON, a record id that is not a UUID, or a path under `/api/v3/feedbackRecords`
-  that is not one of the documented operations (e.g. `/count`). From the **feedback store**
-  (`application/problem+json`): schema validation failures — an unknown enum value, an inverted
-  range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.
+  body that is not JSON, or a path under `/api/v3/feedbackRecords` that is not one of the
+  documented operations. A record id that is not a UUID and a path such as `/count` both fall in
+  that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be
+  told apart from the response. From the **feedback store** (`application/problem+json`): schema
+  validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor,
+  or a string with NULL bytes or invalid UTF-8.
 content:
   text/plain:
     schema:

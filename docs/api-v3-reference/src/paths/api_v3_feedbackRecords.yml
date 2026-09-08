@@ -499,7 +499,7 @@ delete:
     "403":
       $ref: ../components/responses/FeedbackRecordsForbidden.yml
     "409":
-      $ref: ../components/responses/FeedbackRecordsConflict.yml
+      $ref: ../components/responses/FeedbackRecordsWriteConflict.yml
     "500":
       $ref: ../components/responses/FeedbackRecordsInternalServerError.yml
     "503":

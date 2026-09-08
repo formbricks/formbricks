@@ -49,6 +49,8 @@ get:
       $ref: ../components/responses/FeedbackRecordsUnauthorized.yml
     "403":
       $ref: ../components/responses/FeedbackRecordsForbidden.yml
+    "404":
+      $ref: ../components/responses/FeedbackRecordsRecordNotFound.yml
     "500":
       $ref: ../components/responses/FeedbackRecordsInternalServerError.yml
     "503":
@@ -124,8 +126,10 @@ patch:
       $ref: ../components/responses/FeedbackRecordsUnauthorized.yml
     "403":
       $ref: ../components/responses/FeedbackRecordsForbidden.yml
+    "404":
+      $ref: ../components/responses/FeedbackRecordsRecordNotFound.yml
     "409":
-      $ref: ../components/responses/FeedbackRecordsConflict.yml
+      $ref: ../components/responses/FeedbackRecordsWriteConflict.yml
     "413":
       $ref: ../components/responses/FeedbackRecordsPayloadTooLarge.yml
     "500":
@@ -155,8 +159,10 @@ delete:
       $ref: ../components/responses/FeedbackRecordsUnauthorized.yml
     "403":
       $ref: ../components/responses/FeedbackRecordsForbidden.yml
+    "404":
+      $ref: ../components/responses/FeedbackRecordsRecordNotFound.yml
     "409":
-      $ref: ../components/responses/FeedbackRecordsConflict.yml
+      $ref: ../components/responses/FeedbackRecordsWriteConflict.yml
     "500":
       $ref: ../components/responses/FeedbackRecordsInternalServerError.yml
     "503":

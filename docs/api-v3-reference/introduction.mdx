@@ -20,8 +20,9 @@ operation pages.
 ## Authentication
 
 Create a management API key — **API Keys** in the organization dropdown of the breadcrumbs, see
-[Generate API key](/api-reference/generate-key) — and send it in the `x-api-key` header. Keys carry per-workspace permissions — `read`, `write` or
-`manage` — and every operation states which one it needs.
+[Generate API key](/api-reference/generate-key) — and send it in the `x-api-key` header (an
+`Authorization: Bearer <key>` header carrying the same key is also accepted). Keys carry per-workspace
+permissions — `read`, `write` or `manage` — and every operation states which one it needs.
 
 ```bash
 curl "https://app.formbricks.com/api/v3/surveys?workspaceId=<workspaceId>" \
@@ -62,12 +63,16 @@ response use the same name as the response.
 | Layer | Statuses | Body |
 | ---------------- | --------------------------------------------- | ------------------------------------------------------------ |
 | Gateway refusals | `400`, `401`, `403`, `413`, `503` | `text/plain` — a constant message such as `Forbidden` |
-| Feedback store | `400`, `409`, `500`, `503` | `application/problem+json` with a stable `code` to branch on |
+| Feedback store | `400`, `404`, `409`, `500`, `503` | `application/problem+json` with a stable `code` to branch on |
 
-The gateway never answers `404`: an unknown dataset or record id is a `403`, so ids cannot be probed. The one
-`404` you can see comes from the store, on `/{id}/similar` for a record that exists but has no embedding yet. Any
-other path the gateway receives under `/api/v3/feedbackRecords` answers `400` — only the eight documented
-operations exist.
+An unknown dataset or record id is a `403` rather than a `404`, so ids cannot be probed, and any path under
+`/api/v3/feedbackRecords` that is not one of the eight answers `400`. The `404`s that do exist all come from the
+store: on `/{id}/similar` for a record that has no embedding yet, and on the single-record operations for a
+record deleted in the last minute — the gateway caches the record's dataset for 60 seconds, so during that
+window the call is still authorized and reaches a store that no longer has the record.
+
+The `413` is the one refusal the application does not write itself: the proxy in front of it stops reading the
+body at 1 MiB and answers on its own, so branch on that status rather than on its body.
 
 ### Permissions
 

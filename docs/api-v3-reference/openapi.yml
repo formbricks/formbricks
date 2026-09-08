@@ -32,7 +32,7 @@ info:
     `POST /api/v3/surveys/generate` returns a draft `POST /api/v3/surveys` payload plus validation metadata. It does not create a survey. It generates survey content for both `link` and `app` surveys; for `app` it seeds a default `distribution` (display once, no triggers, no targeting) that you finish configuring before publishing.
     Prompt text is sent to the configured AI provider for generation, but it is not stored by this endpoint, not logged by default, and not included in audit data.
 
-    **Feedback Records** `/api/v3/feedbackRecords` is served by the **API gateway** (Envoy on Formbricks Cloud, Traefik in the one-click Docker install), which authorizes each call against the dataset and forwards it to the feedback store — not by the application routes that serve the rest of v3. Three consequences: the payload is the store's own, so members and filters are **`snake_case`** (`tenant_id`, `value_text`) rather than v3's camelCase; the dataset is named **`tenant_id`** on the wire and is required on every collection operation (it is the feedback dataset id, which the MCP `list_feedback_datasets` tool reports as `dataset_id`); and errors come in two shapes — gateway refusals (**400**, **401**, **403**, **413**, **503**) are `text/plain`, while the store's own problems are `application/problem+json` with a stable `code`. Only the eight documented operations exist; any other path the gateway receives under the prefix answers **400**. Authenticate with **`x-api-key`**: the key needs a permission on a workspace the dataset is assigned to — `read` to list, get and search, `write` to create and update, `manage` to delete — and may update or delete only in a dataset assigned to exactly one workspace.
+    **Feedback Records** `/api/v3/feedbackRecords` is served by the **API gateway** (Envoy on Formbricks Cloud, Traefik in the one-click Docker install), which authorizes each call against the dataset and forwards it to the feedback store — not by the application routes that serve the rest of v3. Three consequences: the payload is the store's own, so members and filters are **`snake_case`** (`tenant_id`, `value_text`) rather than v3's camelCase; the dataset is named **`tenant_id`** on the wire and is required on every collection operation (it is the feedback dataset id, which the MCP `list_feedback_datasets` tool reports as `dataset_id`); and errors come in two shapes — gateway refusals (**400**, **401**, **403**, **413**, **503**) are `text/plain`, while the store's own problems are `application/problem+json` with a stable `code`. These eight operations are the whole of the gateway-served surface; any other path it receives under the prefix answers **400**. Authenticate with **`x-api-key`**: the key needs a permission on a workspace the dataset is assigned to — `read` to list, get and search, `write` to create and update, `manage` to delete — and may update or delete only in a dataset assigned to exactly one workspace.
     **OpenAPI**
     This spec is **not** produced by `pnpm generate-api-specs` (that script only builds v2 → `docs/api-v2-reference/openapi.yml`). When the route contract changes, edit the files under `docs/api-v3-reference/src/`, then run `pnpm api:v3:bundle` to regenerate the committed single-file bundle. `pnpm api:v3:lint` lints the source tree; `pnpm api:v3:check` (CI) fails when the bundle is stale.
 
@@ -2936,7 +2936,7 @@ paths:
         '403':
           $ref: '#/components/responses/FeedbackRecordsForbidden'
         '409':
-          $ref: '#/components/responses/FeedbackRecordsConflict'
+          $ref: '#/components/responses/FeedbackRecordsWriteConflict'
         '500':
           $ref: '#/components/responses/FeedbackRecordsInternalServerError'
         '503':
@@ -3059,6 +3059,8 @@ paths:
           $ref: '#/components/responses/FeedbackRecordsUnauthorized'
         '403':
           $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '404':
+          $ref: '#/components/responses/FeedbackRecordsRecordNotFound'
         '500':
           $ref: '#/components/responses/FeedbackRecordsInternalServerError'
         '503':
@@ -3134,8 +3136,10 @@ paths:
           $ref: '#/components/responses/FeedbackRecordsUnauthorized'
         '403':
           $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '404':
+          $ref: '#/components/responses/FeedbackRecordsRecordNotFound'
         '409':
-          $ref: '#/components/responses/FeedbackRecordsConflict'
+          $ref: '#/components/responses/FeedbackRecordsWriteConflict'
         '413':
           $ref: '#/components/responses/FeedbackRecordsPayloadTooLarge'
         '500':
@@ -3165,8 +3169,10 @@ paths:
           $ref: '#/components/responses/FeedbackRecordsUnauthorized'
         '403':
           $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '404':
+          $ref: '#/components/responses/FeedbackRecordsRecordNotFound'
         '409':
-          $ref: '#/components/responses/FeedbackRecordsConflict'
+          $ref: '#/components/responses/FeedbackRecordsWriteConflict'
         '500':
           $ref: '#/components/responses/FeedbackRecordsInternalServerError'
         '503':
@@ -6885,7 +6891,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     FeedbackRecordsBadRequest:
-      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`, a request body that is not JSON, a record id that is not a UUID, or a path under `/api/v3/feedbackRecords` that is not one of the documented operations (e.g. `/count`). From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
+      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`, a request body that is not JSON, or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
       content:
         text/plain:
           schema:
@@ -6934,7 +6940,7 @@ components:
           schema:
             $ref: '#/components/schemas/HubProblem'
     FeedbackRecordsServiceUnavailable:
-      description: 'Service Unavailable. From the **gateway** (`text/plain`): the record''s dataset could not be resolved because the feedback store did not answer, or the authorization service itself was unreachable. From the **feedback store** (`application/problem+json`, `code: service_unavailable`): the operation needs a capability that is not configured on this instance — semantic search and similar records require an embedding model.'
+      description: 'Service Unavailable. From the **gateway** (`text/plain`): the record''s dataset could not be resolved because the feedback store did not answer, the authorization service itself was unreachable, or the record''s stored `tenant_id` is not a dataset id this API can address. From the **feedback store** (`application/problem+json`, `code: service_unavailable`): the operation needs a capability that is not configured on this instance — semantic search and similar records require an embedding model.'
       content:
         text/plain:
           schema:
@@ -6950,14 +6956,25 @@ components:
           schema:
             $ref: '#/components/schemas/HubProblem'
     FeedbackRecordsPayloadTooLarge:
-      description: Payload Too Large — the gateway buffers request bodies to authorize them and refuses bodies over 1 MiB. Answered as `text/plain`.
+      description: Payload Too Large. The gateway buffers the request body in order to authorize it, and the proxy in front of it stops reading at 1 MiB — Envoy's `maxRequestBytes` on Formbricks Cloud, Traefik's `maxbodysize` in the Docker install. The refusal is therefore generated by that proxy rather than by the application, so its body is not part of this contract; branch on the status alone.
       content:
         text/plain:
           schema:
             type: string
-          example: Payload Too Large
+    FeedbackRecordsWriteConflict:
+      description: 'Conflict (`application/problem+json`, `code: tenant_write_conflict`). The dataset is being **purged** while you write to it. Transient: retry the request unchanged once the purge completes. Only creates can conflict on a duplicate, so this operation never answers `code: conflict`.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/HubProblem'
+    FeedbackRecordsRecordNotFound:
+      description: 'Not Found from the feedback store (`application/problem+json`, `code: not_found`). The record was deleted after the gateway resolved its dataset: that lookup is cached for 60 seconds, so for up to a minute after a delete the call is still authorized and reaches the store, which no longer has the record. Once the cache entry expires the same id answers **403** instead. Treat both as "this record is not available to you".'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/HubProblem'
     FeedbackRecordsNotFound:
-      description: 'Not Found from the feedback store (`application/problem+json`, `code: not_found`). The record exists — the gateway has already authorized against its dataset — but has no embedding for the current model: it has no text, or was created moments ago and is not embedded yet.'
+      description: 'Not Found from the feedback store (`application/problem+json`, `code: not_found`), for one of two reasons. Usually the record exists but has **no embedding** for the current model: it has no text, or was created moments ago and is not embedded yet. It can also mean the record itself is **gone** — deleted after the gateway authorized the call against its cached dataset (see the `id` parameter).'
       content:
         application/problem+json:
           schema:
@@ -7009,16 +7026,14 @@ components:
       schema:
         type: string
         format: cuid2
-      description: 'The feedback dataset to operate on (the dataset id, as shown by the MCP `list_feedback_datasets` tool). **Required by the gateway on every collection operation**: a missing or malformed value answers **400** before the request reaches the feedback store; a dataset the API key''s workspace is not assigned to answers **403**.'
+      description: 'The feedback dataset to operate on (the dataset id, as shown by the MCP `list_feedback_datasets` tool). **Required by the gateway on this operation**: a missing or malformed value answers **400** before the request reaches the feedback store, and a dataset the API key''s workspace is not assigned to answers **403**. The two `POST` operations take the same value in the request body instead, and the single-record operations derive it from the record.'
     SimilarityLimitQuery:
       in: query
       name: limit
       schema:
         type: integer
-        minimum: 1
-        maximum: 100
         default: 10
-      description: Page size (max 100).
+      description: 'Page size, at most 100. Unlike the `limit` on `GET /api/v3/feedbackRecords`, this one is never rejected: the search endpoints **clamp** instead of answering 400. A value above 100 is reduced to 100, and `0`, a negative number or a non-numeric value falls back to the default of 10. Read the `limit` in the response to see what was actually applied.'
     SimilarityCursorQuery:
       in: query
       name: cursor
@@ -7031,10 +7046,8 @@ components:
       schema:
         type: number
         format: float
-        minimum: 0
-        maximum: 1
         default: 0.7
-      description: 'Only matches with `score >= min_score` are returned. The default of `0.7` is conservative: measured query→record similarities for genuinely relevant text often land around `0.55–0.7`, so lower it (e.g. `0.5`) and filter on the returned `value_text` if a good query returns nothing.'
+      description: 'Only matches with `score >= min_score` are returned. Like `limit`, this value is **clamped rather than rejected**: above `1` it becomes `1`, below `0` it becomes `0`, and a non-numeric value falls back to the default of `0.7`. That default is conservative — on the embedding model we measured, query→record similarities for genuinely relevant text often landed around `0.55–0.7` — so if a good query returns nothing, lower it (e.g. `0.5`) and filter on the returned `value_text`. Score distributions differ per model, so treat those numbers as an observation rather than a guarantee.'
     FeedbackRecordIdPath:
       in: path
       name: id
@@ -7042,4 +7055,4 @@ components:
       schema:
         type: string
         format: uuid
-      description: Feedback record id (UUID). The dataset is resolved from the record itself, so the caller cannot choose which dataset it is authorized against. An id that is not a UUID answers **400**; an unknown or inaccessible id answers **403**, never **404**.
+      description: Feedback record id (UUID). The dataset is resolved from the record itself, so the caller cannot choose which dataset it is authorized against. An id that is not a UUID answers **400**, and an id whose dataset the API key cannot reach answers **403** rather than 404, so ids cannot be probed. The gateway caches the record→dataset lookup for 60 seconds, so for up to a minute after a delete the id is still authorized and the store answers **404**; after that the same id answers **403**.
