@@ -1,0 +1,19 @@
+diff --git a/lib/xml/xmldom.js b/lib/xml/xmldom.js
+index 752c353f0c97f86280c96984fe963c8b6f6d0c6c..f17ec1ecbd3db26b5cdc2caf9de6021e7f2bc035 100644
+--- a/lib/xml/xmldom.js
++++ b/lib/xml/xmldom.js
+@@ -5,12 +5,12 @@ function parseFromString(string) {
+     var error = null;
+ 
+     var domParser = new xmldom.DOMParser({
+-        errorHandler: function(level, message) {
++        onError: function(level, message) {
+             error = {level: level, message: message};
+         }
+     });
+ 
+-    var document = domParser.parseFromString(string);
++    var document = domParser.parseFromString(string, "text/xml");
+ 
+     if (error === null) {
+         return document;

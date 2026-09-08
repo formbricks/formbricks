@@ -69,6 +69,8 @@ const MESSAGES: Record<TImportIssueCode, (vars?: TVars) => string> = {
   no_text_extracted: () => "We couldn't find any text in this file. Scanned PDFs need OCR first.",
   archive_rejected: () => "This file could not be opened safely and was rejected.",
   document_encrypted: () => "This PDF is password-protected. Remove the password and try again.",
+  document_unreadable: (v) => `We couldn't read this file (${str(v, "detail")}). It may be corrupted.`,
+  extraction_timeout: () => "Reading this file took too long. Try a smaller or simpler file.",
   nothing_extracted: () => "No questions were found in this document.",
   chunked: (v) => `The document was read in ${str(v, "count")} parts.`,
   chunk_failed: (v) =>

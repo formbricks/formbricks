@@ -107,6 +107,8 @@ export const IMPORT_ISSUE_CODES = [
   "no_text_extracted",
   "archive_rejected",
   "document_encrypted",
+  "document_unreadable",
+  "extraction_timeout",
   "nothing_extracted",
   "chunked",
   "chunk_failed",
