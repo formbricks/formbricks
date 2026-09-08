@@ -482,6 +482,173 @@ describe("withV3ApiWrapper", () => {
     );
   });
 
+  describe("multipart bodies", () => {
+    const multipartHandlerSchema = z.object({
+      fields: z.object({ workspaceId: z.string() }),
+      files: z.array(
+        z.object({
+          name: z.string(),
+          fileName: z.string(),
+          mimeType: z.string(),
+          bytes: z.instanceof(Buffer),
+        })
+      ),
+    });
+
+    function multipartRequest(formData: FormData, headers: Record<string, string> = {}): NextRequest {
+      // Let the platform serialize the boundary; NextRequest copies the body and content-type over.
+      const base = new Request("http://localhost/api/v3/surveys/import/convert", {
+        method: "POST",
+        body: formData,
+      });
+      return new NextRequest(base.url, {
+        method: "POST",
+        body: base.body,
+        headers: { "content-type": base.headers.get("content-type") ?? "", ...headers },
+        // @ts-expect-error duplex is required by undici for streamed bodies and not in the DOM typings
+        duplex: "half",
+      });
+    }
+
+    test("hands fields and files to the handler", async () => {
+      const handler = vi.fn(async ({ parsedInput }) => Response.json({ received: parsedInput.body }));
+      const wrapped = withV3ApiWrapper({
+        auth: "none",
+        body: "multipart",
+        schemas: { body: multipartHandlerSchema },
+        handler,
+      });
+
+      const formData = new FormData();
+      formData.set("workspaceId", "clxx1234567890123456789012");
+      formData.set("file", new File(["hello"], "survey.formbricks.json", { type: "application/json" }));
+
+      const response = await wrapped(
+        multipartRequest(formData, { "x-request-id": "req-multipart" }),
+        {} as never
+      );
+
+      expect(response.status).toBe(200);
+      const parsed = handler.mock.calls[0][0].parsedInput.body;
+      expect(parsed.fields).toEqual({ workspaceId: "clxx1234567890123456789012" });
+      expect(parsed.files).toHaveLength(1);
+      expect(parsed.files[0]).toMatchObject({
+        name: "file",
+        fileName: "survey.formbricks.json",
+        mimeType: "application/json",
+      });
+      expect(parsed.files[0].bytes.toString("utf8")).toBe("hello");
+    });
+
+    test("returns 415 for a non-multipart request on a multipart route", async () => {
+      const handler = vi.fn(async () => Response.json({ ok: true }));
+      const wrapped = withV3ApiWrapper({
+        auth: "none",
+        body: "multipart",
+        schemas: { body: multipartHandlerSchema },
+        handler,
+      });
+
+      const response = await wrapped(
+        new NextRequest("http://localhost/api/v3/surveys/import/convert", {
+          method: "POST",
+          body: "plain text",
+          headers: { "Content-Type": "text/plain", "x-request-id": "req-415" },
+        }),
+        {} as never
+      );
+
+      expect(response.status).toBe(415);
+      expect(handler).not.toHaveBeenCalled();
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({ code: "unsupported_media_type", status: 415, requestId: "req-415" })
+      );
+    });
+
+    test("returns 413 from the declared content-length and from the counted bytes", async () => {
+      const handler = vi.fn(async () => Response.json({ ok: true }));
+      const wrapped = withV3ApiWrapper({
+        auth: "none",
+        body: "multipart",
+        bodyLimitBytes: 64,
+        schemas: { body: multipartHandlerSchema },
+        handler,
+      });
+
+      const small = new FormData();
+      small.set("workspaceId", "x");
+      const declared = await wrapped(multipartRequest(small, { "content-length": "9999" }), {} as never);
+      expect(declared.status).toBe(413);
+
+      // A body larger than the cap, with no content-length header to pre-check against.
+      const big = new FormData();
+      big.set("file", new File(["x".repeat(512)], "big.txt", { type: "text/plain" }));
+      const counted = await wrapped(multipartRequest(big), {} as never);
+      expect(counted.status).toBe(413);
+      await expect(counted.json()).resolves.toEqual(expect.objectContaining({ code: "payload_too_large" }));
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    test("returns 400 for malformed multipart data and for a body the schema rejects", async () => {
+      const handler = vi.fn(async () => Response.json({ ok: true }));
+      const wrapped = withV3ApiWrapper({
+        auth: "none",
+        body: "multipart",
+        schemas: {
+          body: multipartHandlerSchema.extend({ files: z.array(z.unknown()).min(1, "A file is required") }),
+        },
+        handler,
+      });
+
+      const malformed = await wrapped(
+        new NextRequest("http://localhost/api/v3/surveys/import/convert", {
+          method: "POST",
+          body: "--nope\r\nthis is not multipart\r\n",
+          headers: { "Content-Type": "multipart/form-data; boundary=other", "x-request-id": "req-malformed" },
+        }),
+        {} as never
+      );
+      expect(malformed.status).toBe(400);
+      await expect(malformed.json()).resolves.toEqual(
+        expect.objectContaining({
+          invalid_params: [
+            { name: "body", reason: "Malformed multipart form data, please check your request body" },
+          ],
+        })
+      );
+
+      const noFile = new FormData();
+      noFile.set("workspaceId", "clxx1234567890123456789012");
+      const rejected = await wrapped(multipartRequest(noFile), {} as never);
+      expect(rejected.status).toBe(400);
+      await expect(rejected.json()).resolves.toEqual(
+        expect.objectContaining({ invalid_params: [{ name: "files", reason: "A file is required" }] })
+      );
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    test("JSON routes are unaffected by the body mode option", async () => {
+      const handler = vi.fn(async ({ parsedInput }) => Response.json(parsedInput.body));
+      const wrapped = withV3ApiWrapper({
+        auth: "none",
+        schemas: { body: z.object({ name: z.string() }) },
+        handler,
+      });
+
+      const response = await wrapped(
+        new NextRequest("http://localhost/api/v3/surveys", {
+          method: "POST",
+          body: JSON.stringify({ name: "Survey" }),
+          headers: { "Content-Type": "application/json" },
+        }),
+        {} as never
+      );
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({ name: "Survey" });
+    });
+  });
+
   test("returns 400 problem response for invalid route params", async () => {
     const handler = vi.fn(async () => Response.json({ ok: true }));
     const wrapped = withV3ApiWrapper({

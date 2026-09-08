@@ -1,0 +1,113 @@
+post:
+  operationId: convertSurveyImportFileV3
+  summary: Convert a survey file for import
+  description: >
+    Turns an uploaded survey file into a reviewed v3 survey document and an import report, without
+    persisting anything. The file is detected by content first, then by extension: a Formbricks
+    export (`.formbricks.json`) or raw v3 document today; Qualtrics `.qsf` and DOCX, PDF, Markdown,
+    TXT, CSV and XLSX documents as their lanes ship (until then those answer `400
+    lane_not_available`). The document is resolved for the target workspace exactly as
+    `POST /api/v3/surveys/import` would in dry-run mode.
+
+
+    `multipart/form-data` only: a `file` part and a `workspaceId` field, up to 15 MB per file. A
+    request that is not multipart answers **415**; a file the allowlist rejects (unknown type,
+    legacy `.doc`/`.xls`, empty, broken JSON) answers **422**; a file over the cap answers **413**.
+    A file the lane cannot read still answers **200** with `document: null` and the reasons in
+    `report.issues`.
+
+
+    Self-hosters: a reverse proxy in front of Formbricks must allow request bodies of 16 MB for this
+    endpoint (nginx defaults `client_max_body_size` to 1 MB).
+  tags:
+    - V3 Surveys
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          required:
+            - workspaceId
+            - file
+          properties:
+            workspaceId:
+              type: string
+              format: cuid2
+              description: Target workspace. Requires read/write access.
+            type:
+              type: string
+              enum:
+                - link
+                - app
+              description: Survey type hint for lanes that cannot infer it (documents). Ignored by the lossless lane.
+            language:
+              type: string
+              description: Language hint (BCP-47) that breaks language-detection ties in the AI lane.
+            file:
+              type: string
+              format: binary
+              description: The survey file. 15 MB maximum.
+          additionalProperties: false
+  responses:
+    "200":
+      description: File converted. The document may be `null` when the report carries errors; nothing was written.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyImportConvertResult.yml
+    "400":
+      description: >-
+        Bad Request — malformed multipart body, missing `file` part or `workspaceId`, or a file kind
+        whose import lane is not available yet (`code: lane_not_available`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "413":
+      description: Payload Too Large — the request body exceeds 16 MB (15 MB file plus multipart framing).
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "415":
+      description: Unsupported Media Type — the request body is not `multipart/form-data`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "422":
+      description: >-
+        Unprocessable Content — the uploaded file is not something Formbricks imports:
+        `code: unsupported_source` for an unknown type, empty file or broken JSON,
+        `code: legacy_office_format` for `.doc`/`.xls` (save as `.docx`/`.xlsx`). `invalid_params`
+        names the `file` part.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

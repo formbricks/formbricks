@@ -34,17 +34,21 @@ const assertBodySize = (actualBytes: number, limitBytes: number): void => {
   }
 };
 
-export const readRequestBodyWithLimit = async (
+/**
+ * Read a request body as bytes, counting while reading. `Content-Length` is checked first when
+ * present, but the byte count is what enforces the limit: the header can be absent or lie.
+ */
+export const readRequestBodyBytesWithLimit = async (
   request: Request,
   limitBytes: number = DEFAULT_REQUEST_BODY_LIMIT_BYTES
-): Promise<string> => {
+): Promise<Uint8Array> => {
   const contentLength = getContentLength(request.headers);
   if (contentLength !== null) {
     assertBodySize(contentLength, limitBytes);
   }
 
   if (!request.body) {
-    return "";
+    return new Uint8Array(0);
   }
 
   const reader = request.body.getReader();
@@ -66,12 +70,8 @@ export const readRequestBodyWithLimit = async (
     chunks.push(value);
   }
 
-  if (chunks.length === 0) {
-    return "";
-  }
-
   if (chunks.length === 1) {
-    return textDecoder.decode(chunks[0]);
+    return chunks[0];
   }
 
   const body = new Uint8Array(receivedBytes);
@@ -81,7 +81,15 @@ export const readRequestBodyWithLimit = async (
     offset += chunk.byteLength;
   }
 
-  return textDecoder.decode(body);
+  return body;
+};
+
+export const readRequestBodyWithLimit = async (
+  request: Request,
+  limitBytes: number = DEFAULT_REQUEST_BODY_LIMIT_BYTES
+): Promise<string> => {
+  const body = await readRequestBodyBytesWithLimit(request, limitBytes);
+  return body.byteLength === 0 ? "" : textDecoder.decode(body);
 };
 
 export const parseJsonBodyWithLimit = async <TJson = unknown>(

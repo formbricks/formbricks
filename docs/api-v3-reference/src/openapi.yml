@@ -13,7 +13,9 @@ info:
     /api/v3/surveys/{surveyId}/export**, which returns a portable
     `.formbricks.json` envelope, and **POST /api/v3/surveys/import**, which
     creates a survey from such an envelope or a raw v3 document in any
-    workspace or instance (with a dry-run mode).
+    workspace or instance (with a dry-run mode). **POST
+    /api/v3/surveys/import/convert** turns an uploaded survey file into a
+    reviewed document plus import report without persisting anything.
 
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST
@@ -187,6 +189,8 @@ paths:
     $ref: paths/api_v3_surveys_{surveyId}_export.yml
   /api/v3/surveys/import:
     $ref: paths/api_v3_surveys_import.yml
+  /api/v3/surveys/import/convert:
+    $ref: paths/api_v3_surveys_import_convert.yml
   /api/v3/workflows:
     $ref: paths/api_v3_workflows.yml
   /api/v3/workflows/runs:

@@ -5,7 +5,7 @@ openapi: 3.1.1
 info:
   title: Formbricks API v3
   description: |
-    **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, **DELETE /api/v3/surveys/{surveyId}**, **GET /api/v3/surveys/{surveyId}/export**, which returns a portable `.formbricks.json` envelope, and **POST /api/v3/surveys/import**, which creates a survey from such an envelope or a raw v3 document in any workspace or instance (with a dry-run mode).
+    **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, **DELETE /api/v3/surveys/{surveyId}**, **GET /api/v3/surveys/{surveyId}/export**, which returns a portable `.formbricks.json` envelope, and **POST /api/v3/surveys/import**, which creates a survey from such an envelope or a raw v3 document in any workspace or instance (with a dry-run mode). **POST /api/v3/surveys/import/convert** turns an uploaded survey file into a reviewed document plus import report without persisting anything.
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
@@ -1504,6 +1504,102 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+  /api/v3/surveys/import/convert:
+    post:
+      operationId: convertSurveyImportFileV3
+      summary: Convert a survey file for import
+      description: |
+        Turns an uploaded survey file into a reviewed v3 survey document and an import report, without persisting anything. The file is detected by content first, then by extension: a Formbricks export (`.formbricks.json`) or raw v3 document today; Qualtrics `.qsf` and DOCX, PDF, Markdown, TXT, CSV and XLSX documents as their lanes ship (until then those answer `400 lane_not_available`). The document is resolved for the target workspace exactly as `POST /api/v3/surveys/import` would in dry-run mode.
+
+        `multipart/form-data` only: a `file` part and a `workspaceId` field, up to 15 MB per file. A request that is not multipart answers **415**; a file the allowlist rejects (unknown type, legacy `.doc`/`.xls`, empty, broken JSON) answers **422**; a file over the cap answers **413**. A file the lane cannot read still answers **200** with `document: null` and the reasons in `report.issues`.
+
+        Self-hosters: a reverse proxy in front of Formbricks must allow request bodies of 16 MB for this endpoint (nginx defaults `client_max_body_size` to 1 MB).
+      tags:
+        - V3 Surveys
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - workspaceId
+                - file
+              properties:
+                workspaceId:
+                  type: string
+                  format: cuid2
+                  description: Target workspace. Requires read/write access.
+                type:
+                  type: string
+                  enum:
+                    - link
+                    - app
+                  description: Survey type hint for lanes that cannot infer it (documents). Ignored by the lossless lane.
+                language:
+                  type: string
+                  description: Language hint (BCP-47) that breaks language-detection ties in the AI lane.
+                file:
+                  type: string
+                  format: binary
+                  description: The survey file. 15 MB maximum.
+              additionalProperties: false
+      responses:
+        '200':
+          description: File converted. The document may be `null` when the report carries errors; nothing was written.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SurveyImportConvertResult'
+        '400':
+          description: 'Bad Request — malformed multipart body, missing `file` part or `workspaceId`, or a file kind whose import lane is not available yet (`code: lane_not_available`).'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: Payload Too Large — the request body exceeds 16 MB (15 MB file plus multipart framing).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '415':
+          description: Unsupported Media Type — the request body is not `multipart/form-data`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: 'Unprocessable Content — the uploaded file is not something Formbricks imports: `code: unsupported_source` for an unknown type, empty file or broken JSON, `code: legacy_office_format` for `.doc`/`.xls` (save as `.docx`/`.xlsx`). `invalid_params` names the `file` part.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
   /api/v3/workflows:
     get:
       operationId: listWorkflowsV3
@@ -2842,12 +2938,16 @@ components:
             - forbidden
             - internal_server_error
             - invalid_workflow_state
+            - lane_not_available
+            - legacy_office_format
             - not_authenticated
             - not_found
             - payload_too_large
             - service_unavailable
             - too_many_requests
             - unprocessable_content
+            - unsupported_media_type
+            - unsupported_source
             - workflow_not_executable
         requestId:
           type: string
@@ -5266,6 +5366,32 @@ components:
           $ref: '#/components/schemas/SurveyResource'
         report:
           $ref: '#/components/schemas/SurveyImportReport'
+      additionalProperties: false
+    SurveyImportConvertResult:
+      type: object
+      description: |
+        A converted file: the resolved document (public shape; `null` when the report has errors), the action-class references it travelled with, the report, the validation and the detected source. Nothing was persisted. To create the survey, send `document` and `references` to `POST /api/v3/surveys/import`.
+      required:
+        - document
+        - references
+        - report
+        - validation
+        - source
+      properties:
+        document:
+          oneOf:
+            - $ref: '#/components/schemas/SurveyExportDocument'
+            - type: 'null'
+        references:
+          oneOf:
+            - $ref: '#/components/schemas/SurveyExportReferences'
+            - type: 'null'
+        report:
+          $ref: '#/components/schemas/SurveyImportReport'
+        validation:
+          $ref: '#/components/schemas/SurveyImportValidation'
+        source:
+          $ref: '#/components/schemas/SurveyImportSource'
       additionalProperties: false
     WorkflowStatus:
       type: string

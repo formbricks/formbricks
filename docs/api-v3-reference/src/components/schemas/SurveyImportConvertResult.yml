@@ -1,0 +1,28 @@
+type: object
+description: >
+  A converted file: the resolved document (public shape; `null` when the report has errors), the
+  action-class references it travelled with, the report, the validation and the detected source.
+  Nothing was persisted. To create the survey, send `document` and `references` to
+  `POST /api/v3/surveys/import`.
+required:
+  - document
+  - references
+  - report
+  - validation
+  - source
+properties:
+  document:
+    oneOf:
+      - $ref: ./SurveyExportDocument.yml
+      - type: "null"
+  references:
+    oneOf:
+      - $ref: ./SurveyExportReferences.yml
+      - type: "null"
+  report:
+    $ref: ./SurveyImportReport.yml
+  validation:
+    $ref: ./SurveyImportValidation.yml
+  source:
+    $ref: ./SurveyImportSource.yml
+additionalProperties: false

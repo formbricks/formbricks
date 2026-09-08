@@ -21,6 +21,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    v3SurveyImportConvert: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "api:v3:surveys:import:convert",
+    }, // 30 per minute per user or key — deterministic file conversions; the AI lane additionally spends from v3SurveyGenerate
     internalDatasetPurge: {
       interval: 3600,
       allowedPerInterval: 5,

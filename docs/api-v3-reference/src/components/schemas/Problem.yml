@@ -34,12 +34,16 @@ properties:
       - forbidden
       - internal_server_error
       - invalid_workflow_state
+      - lane_not_available
+      - legacy_office_format
       - not_authenticated
       - not_found
       - payload_too_large
       - service_unavailable
       - too_many_requests
       - unprocessable_content
+      - unsupported_media_type
+      - unsupported_source
       - workflow_not_executable
   requestId:
     type: string
