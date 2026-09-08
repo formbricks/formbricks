@@ -2,6 +2,7 @@ import dns from "node:dns";
 import type { Agent } from "undici";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
+  WebhookDnsResolutionError,
   createPinnedDispatcher,
   validateAndResolveWebhookUrl,
   validateWebhookUrl,
@@ -446,6 +447,39 @@ describe("validateWebhookUrl", () => {
   describe("error type", () => {
     test("throws InvalidInputError (not generic Error)", async () => {
       await expect(validateWebhookUrl("http://127.0.0.1/")).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
+    });
+
+    // The delivery worker retries the subclass (a resolver hiccup is transient) and treats the base
+    // class as permanent, so the two must stay distinguishable while both remain 400s for the API.
+    test("DNS failures are the WebhookDnsResolutionError subclass, still a 400 InvalidInputError", async () => {
+      setupDnsResolution(null, null);
+      const rejection = validateWebhookUrl("https://nonexistent.invalid/path");
+      // `instanceof` is what the delivery worker's retry classification tests, so pin the class itself
+      // and not just its name.
+      await expect(rejection).rejects.toBeInstanceOf(WebhookDnsResolutionError);
+      await expect(rejection).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    test("a DNS timeout is also the WebhookDnsResolutionError subclass", async () => {
+      vi.useFakeTimers();
+      mockResolve.mockImplementation((() => {}) as never);
+
+      const rejection = validateWebhookUrl("https://slow-dns.example.com/webhook");
+      const assertion = Promise.all([
+        expect(rejection).rejects.toBeInstanceOf(WebhookDnsResolutionError),
+        expect(rejection).rejects.toMatchObject({ statusCode: 400 }),
+      ]);
+      await vi.advanceTimersByTimeAsync(3000);
+      await assertion;
+
+      vi.useRealTimers();
+    });
+
+    test("a policy rejection after successful resolution is the plain InvalidInputError, not the DNS subclass", async () => {
+      setupDnsResolution(["192.168.1.1"]);
+      await expect(validateWebhookUrl("https://private.example.com/webhook")).rejects.toMatchObject({
         name: "InvalidInputError",
       });
     });

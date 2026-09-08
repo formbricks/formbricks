@@ -2,9 +2,15 @@ import { JOB_NAMES } from "@/src/constants";
 import { type AnyBackgroundJobDefinition, toAnyBackgroundJobDefinition } from "@/src/contracts";
 import { processResponsePipelineJob } from "@/src/processors/response-pipeline";
 import { processTestLogJob } from "@/src/processors/test-log";
+import { processWebhookDeliveryJob } from "@/src/processors/webhook-delivery";
 import { processWorkflowRunJob } from "@/src/processors/workflow-run";
 import { recurringJobDefinitions } from "@/src/recurring";
-import { ZResponsePipelineJobData, ZTestLogJobData, ZWorkflowRunJobData } from "@/src/types";
+import {
+  ZResponsePipelineJobData,
+  ZTestLogJobData,
+  ZWebhookDeliveryJobData,
+  ZWorkflowRunJobData,
+} from "@/src/types";
 
 /**
  * Every job the worker can process. The recurring jobs come from their declarations in `recurring.ts`,
@@ -22,6 +28,11 @@ export const backgroundJobDefinitions: Record<string, AnyBackgroundJobDefinition
     handle: processTestLogJob,
     name: JOB_NAMES.testLog,
     schema: ZTestLogJobData,
+  }),
+  [JOB_NAMES.webhookDelivery]: toAnyBackgroundJobDefinition({
+    handle: processWebhookDeliveryJob,
+    name: JOB_NAMES.webhookDelivery,
+    schema: ZWebhookDeliveryJobData,
   }),
   [JOB_NAMES.workflowRun]: toAnyBackgroundJobDefinition({
     handle: processWorkflowRunJob,
