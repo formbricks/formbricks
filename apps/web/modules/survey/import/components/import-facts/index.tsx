@@ -2,6 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { getImportSourceLabel } from "@/modules/survey/import/lib/import-i18n";
 import type { TImportReportSource, TImportReportSummary } from "@/modules/survey/import/types";
 
 type ImportFactsProps = {
@@ -33,7 +34,7 @@ export const ImportFacts = ({ summary, source, className }: Readonly<ImportFacts
     );
   }
   if (source) {
-    facts.push(t(`workspace.surveys.import.source_${source.kind}`));
+    facts.push(getImportSourceLabel(source.kind, t));
   }
 
   return (

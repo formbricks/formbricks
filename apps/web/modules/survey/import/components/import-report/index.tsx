@@ -4,6 +4,7 @@ import { AlertTriangleIcon, ChevronDownIcon, InfoIcon, XCircleIcon } from "lucid
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { getImportIssueMessage } from "@/modules/survey/import/lib/import-i18n";
 import { countIssues } from "@/modules/survey/import/report";
 import type { TImportIssue, TImportIssueSeverity } from "@/modules/survey/import/types";
 
@@ -23,19 +24,6 @@ const SeverityIcon = ({ severity }: { severity: TImportIssueSeverity }) => {
     return <AlertTriangleIcon className="size-4 shrink-0 text-amber-600" aria-hidden="true" />;
   return <InfoIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />;
 };
-
-/**
- * Message by `code`, so the report reads in the user's language even though the API answers in
- * English. Falls back to the server message for a code the locale has no entry for yet.
- */
-export function getImportIssueMessage(
-  issue: TImportIssue,
-  t: (key: string, options?: Record<string, unknown>) => string
-): string {
-  const key = `workspace.surveys.import.issues.${issue.code}`;
-  const translated = t(key, { ...issue.vars, defaultValue: issue.message });
-  return translated === key ? issue.message : translated;
-}
 
 /**
  * Every strip, match and creation the import made, in plain language. Collapsible so a clean import

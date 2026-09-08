@@ -5,6 +5,7 @@ import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
 import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
 import { getImportAcceptList } from "@/modules/survey/import/file-types";
+import { getImportFormatLabel } from "@/modules/survey/import/lib/import-i18n";
 import { AiIcon } from "@/modules/ui/components/ai";
 import { FileDropZone } from "@/modules/ui/components/file-drop-zone";
 
@@ -51,7 +52,7 @@ export const ImportDropzone = ({
                 ? "border-green-600 bg-green-50 text-green-800"
                 : "border-slate-200 bg-slate-50 text-slate-600"
             )}>
-            {t(`workspace.surveys.import.format_${format}`)}
+            {getImportFormatLabel(format, t)}
           </li>
         ))}
         {AI_FORMATS.map((format) => (

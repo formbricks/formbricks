@@ -55,6 +55,11 @@ export function getAiErrorMessage(code: string | undefined, t: TranslateFn): str
       return t("workspace.surveys.import.errors.legacy_questions_unsupported");
     case "invalid_document":
       return t("workspace.surveys.import.errors.invalid_document");
+    // Raised in the browser before upload (`checkImportFile`).
+    case "ai_unavailable_for_file":
+      return t("workspace.surveys.import.errors.ai_unavailable_for_file");
+    case "empty_file":
+      return t("workspace.surveys.import.errors.empty_file");
     default:
       return t("common.something_went_wrong_please_try_again");
   }
