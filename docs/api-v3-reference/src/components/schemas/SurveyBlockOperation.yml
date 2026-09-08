@@ -1,0 +1,56 @@
+oneOf:
+  - type: object
+    additionalProperties: false
+    required:
+      - op
+      - id
+      - block
+    properties:
+      op:
+        type: string
+        enum:
+          - update
+      id:
+        type: string
+        description: Block to replace.
+      block:
+        allOf:
+          - $ref: SurveyBlock.yml
+        description: >
+          Replaces the target block entirely — the same whole-subtree rule PATCH uses. If `block.id`
+          is present it must equal `id`.
+  - type: object
+    additionalProperties: false
+    required:
+      - op
+      - block
+      - position
+    properties:
+      op:
+        type: string
+        enum:
+          - insert
+      block:
+        allOf:
+          - $ref: SurveyBlock.yml
+        description: New block. Must carry an `id` that does not already exist on the survey.
+      position:
+        $ref: SurveyBlockInsertPosition.yml
+  - type: object
+    additionalProperties: false
+    required:
+      - op
+      - id
+    properties:
+      op:
+        type: string
+        enum:
+          - remove
+      id:
+        type: string
+        description: >
+          Block to delete, along with every element in it. Answers already collected for those
+          elements are orphaned and the API cannot undo that.
+discriminator:
+  propertyName: op
+description: A single block operation.

@@ -1,0 +1,21 @@
+type: object
+additionalProperties: false
+required:
+  - order
+properties:
+  order:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items:
+      type: string
+    description: >
+      Every current block id, exactly once, in the desired order. A missing or unknown id is a
+      **422** — which is what makes this safer than resending the blocks, since a dropped block
+      cannot pass unnoticed.
+  expectedUpdatedAt:
+    type: string
+    format: date-time
+    description: >
+      Optimistic-concurrency precondition: the survey's `updatedAt` from your last read. If the
+      survey changed since, the write is rejected with **409**.
