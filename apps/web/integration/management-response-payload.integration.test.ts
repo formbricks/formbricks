@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ZResponse } from "@formbricks/database/zod/responses";
+import { ZResponse as ZV1Response } from "@formbricks/types/responses";
 import { resetDb } from "@/integration/reset-db";
 import { getResponse as getV1Response } from "@/lib/response/service";
 import {
@@ -27,6 +28,9 @@ import { ZGetResponsesFilter } from "@/modules/api/v2/management/responses/types
 const INGEST_FLAGS = [{ key: "plan", reason: "coercion_failed" }];
 
 const DOCUMENTED_KEYS = Object.keys(ZResponse.shape).sort();
+
+// v1 documents its own shape — `tags` and `contact` included — so it is pinned to that, not to v2's.
+const V1_DOCUMENTED_KEYS = Object.keys(ZV1Response.shape).sort();
 
 const BLOCKS = [
   {
@@ -130,13 +134,14 @@ describe("what the management APIs serve for a response", () => {
     expect(result.data).not.toHaveProperty("ingestFlags");
   });
 
-  test("v1 agrees with v2", async () => {
+  test("v1 serves exactly its own documented keys, which never included the column", async () => {
     // v1 always selected its columns (`responseSelection`), so this is the baseline v2 now matches.
     const { responseId } = await seedResponse();
 
     const served = await getV1Response(responseId);
 
     expect(served).not.toBeNull();
-    expect(served).not.toHaveProperty("ingestFlags");
+    expect(servedKeys(served as object)).toEqual(V1_DOCUMENTED_KEYS);
+    expect(V1_DOCUMENTED_KEYS).not.toContain("ingestFlags");
   });
 });
