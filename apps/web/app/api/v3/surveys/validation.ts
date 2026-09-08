@@ -167,6 +167,8 @@ export function getV3SurveyMediaInvalidParams(blocks: TV3SurveyDocument["blocks"
  * contains a forward recall unpatchable, including by a patch that never touches it.
  */
 export type TV3SurveyPrecedencePolicy =
+  // Not reached in production today: enforcing the full set anywhere would reject input that is
+  // currently valid. Kept for the rollout that tightens create behind a version bump.
   | { mode: "enforce" }
   | { mode: "introduced"; baseline: TV3SurveyDocument }
   // Building the *stored* document: never judge its ordering. We did not author it, and failing here

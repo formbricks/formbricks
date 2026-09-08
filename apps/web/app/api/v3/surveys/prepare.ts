@@ -403,7 +403,13 @@ function splitLanguageAliases(
 export function prepareV3SurveyCreate<TDocument extends TV3CreateSurveyBody>(
   document: TDocument
 ): TV3SurveyPrepareResult<TDocument> {
-  return validPreparation(document);
+  // `skip`, not `enforce`, and deliberately so. Turning the ordering rule on here would reject create
+  // payloads that succeeded yesterday — a breaking change to a public endpoint, which by the ENG-1652
+  // convention needs an info.version bump, a release note and the breaking-change label. That rollout
+  // does not belong in a PR about block editing. Note the logic-condition and requireAnswer rules are
+  // already enforced on create by surveyRefinement (ZSurveyCreateInput), so the only rule missing here
+  // is recall precedence, and a survey created with one stays exactly as patchable as it is today.
+  return validPreparation(document, { mode: "skip" });
 }
 
 export function prepareV3SurveyCreateInput(input: unknown): TV3SurveyPrepareResult<TV3CreateSurveyBody> {
