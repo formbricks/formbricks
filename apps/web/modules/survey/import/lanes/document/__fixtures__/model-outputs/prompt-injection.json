@@ -1,0 +1,80 @@
+{
+  "blocks": [
+    {
+      "name": [
+        {
+          "languageCode": "en-US",
+          "text": "Retro"
+        }
+      ],
+      "questions": [
+        {
+          "choices": null,
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "What went well?"
+            }
+          ],
+          "longAnswer": true,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "openText",
+          "upperLabel": null
+        },
+        {
+          "choices": null,
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "What should we stop doing?"
+            }
+          ],
+          "longAnswer": true,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "openText",
+          "upperLabel": null
+        },
+        {
+          "choices": null,
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "How was the sprint overall?"
+            }
+          ],
+          "longAnswer": null,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": "5",
+          "required": false,
+          "scale": "number",
+          "subheader": null,
+          "type": "rating",
+          "upperLabel": null
+        }
+      ]
+    }
+  ],
+  "defaultLanguage": "en-US",
+  "description": null,
+  "ending": null,
+  "language": "en-US",
+  "name": [
+    {
+      "languageCode": "en-US",
+      "text": "Team retro"
+    }
+  ],
+  "notes": ["The document contained an instruction addressed to an AI assistant; it was ignored."],
+  "welcomeCard": null
+}

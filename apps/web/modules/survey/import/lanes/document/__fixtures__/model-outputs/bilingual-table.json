@@ -1,0 +1,507 @@
+{
+  "blocks": [
+    {
+      "name": [
+        {
+          "languageCode": "en-US",
+          "text": "Onboarding"
+        },
+        {
+          "languageCode": "de-DE",
+          "text": "Onboarding"
+        }
+      ],
+      "questions": [
+        {
+          "choices": null,
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "How satisfied are you with our onboarding?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Wie zufrieden sind Sie mit unserem Onboarding?"
+            }
+          ],
+          "longAnswer": null,
+          "lowerLabel": "very dissatisfied",
+          "placeholder": null,
+          "range": "5",
+          "required": true,
+          "scale": "number",
+          "subheader": null,
+          "type": "rating",
+          "upperLabel": "very satisfied"
+        },
+        {
+          "allowOther": true,
+          "choices": [
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Surveys"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Umfragen"
+              }
+            ],
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Dashboards"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Dashboards"
+              }
+            ],
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Integrations"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Integrationen"
+              }
+            ]
+          ],
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "Which features do you use weekly?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Welche Funktionen nutzen Sie wöchentlich?"
+            }
+          ],
+          "longAnswer": null,
+          "lowerLabel": null,
+          "otherLabel": [
+            {
+              "languageCode": "en-US",
+              "text": "Other (please specify)"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Sonstiges (bitte angeben)"
+            }
+          ],
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "multipleChoiceMulti",
+          "upperLabel": null
+        },
+        {
+          "choices": null,
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "How likely are you to recommend us?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Wie wahrscheinlich ist es, dass Sie uns empfehlen?"
+            }
+          ],
+          "longAnswer": null,
+          "lowerLabel": "not likely",
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "nps",
+          "upperLabel": "very likely"
+        },
+        {
+          "choices": null,
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "What would you improve first?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Was würden Sie zuerst verbessern?"
+            }
+          ],
+          "longAnswer": true,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "openText",
+          "upperLabel": null
+        }
+      ]
+    },
+    {
+      "name": [
+        {
+          "languageCode": "en-US",
+          "text": "Usage"
+        },
+        {
+          "languageCode": "de-DE",
+          "text": "Nutzung"
+        }
+      ],
+      "questions": [
+        {
+          "choices": null,
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "How easy was the setup?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Wie einfach war die Einrichtung?"
+            }
+          ],
+          "longAnswer": null,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": "7",
+          "required": false,
+          "scale": "number",
+          "subheader": null,
+          "type": "ces",
+          "upperLabel": null
+        },
+        {
+          "choices": [
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Yes"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Ja"
+              }
+            ],
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Partly"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Teilweise"
+              }
+            ],
+            [
+              {
+                "languageCode": "en-US",
+                "text": "No"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Nein"
+              }
+            ]
+          ],
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "Did the documentation answer your questions?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Hat die Dokumentation Ihre Fragen beantwortet?"
+            }
+          ],
+          "longAnswer": null,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "multipleChoiceSingle",
+          "upperLabel": null
+        },
+        {
+          "choices": [
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Never"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Nie"
+              }
+            ],
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Monthly"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Monatlich"
+              }
+            ],
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Weekly"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Wöchentlich"
+              }
+            ]
+          ],
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "How often do you contact support?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Wie oft kontaktieren Sie den Support?"
+            }
+          ],
+          "longAnswer": null,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "multipleChoiceSingle",
+          "upperLabel": null
+        },
+        {
+          "choices": [
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Free"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Kostenlos"
+              }
+            ],
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Startup"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Startup"
+              }
+            ],
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Enterprise"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Enterprise"
+              }
+            ]
+          ],
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "Which plan are you on?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Welchen Tarif nutzen Sie?"
+            }
+          ],
+          "longAnswer": null,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "multipleChoiceSingle",
+          "upperLabel": null
+        }
+      ]
+    },
+    {
+      "name": [
+        {
+          "languageCode": "en-US",
+          "text": "About you"
+        },
+        {
+          "languageCode": "de-DE",
+          "text": "Über Sie"
+        }
+      ],
+      "questions": [
+        {
+          "choices": null,
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "How many teammates use the product?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Wie viele Kolleginnen und Kollegen nutzen das Produkt?"
+            }
+          ],
+          "longAnswer": false,
+          "lowerLabel": null,
+          "notes": ["Source type: numeric input"],
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "openText",
+          "upperLabel": null
+        },
+        {
+          "choices": [
+            [
+              {
+                "languageCode": "en-US",
+                "text": "Yes"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Ja"
+              }
+            ],
+            [
+              {
+                "languageCode": "en-US",
+                "text": "No"
+              },
+              {
+                "languageCode": "de-DE",
+                "text": "Nein"
+              }
+            ]
+          ],
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "Would you pay for priority support?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Würden Sie für bevorzugten Support bezahlen?"
+            }
+          ],
+          "longAnswer": null,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "multipleChoiceSingle",
+          "upperLabel": null
+        },
+        {
+          "choices": null,
+          "fields": ["company", "email"],
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "What is your role?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Was ist Ihre Rolle?"
+            }
+          ],
+          "longAnswer": null,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "contactInfo",
+          "upperLabel": null
+        },
+        {
+          "choices": null,
+          "headline": [
+            {
+              "languageCode": "en-US",
+              "text": "Anything else you want to tell us?"
+            },
+            {
+              "languageCode": "de-DE",
+              "text": "Möchten Sie uns noch etwas mitteilen?"
+            }
+          ],
+          "longAnswer": true,
+          "lowerLabel": null,
+          "placeholder": null,
+          "range": null,
+          "required": false,
+          "scale": null,
+          "subheader": null,
+          "type": "openText",
+          "upperLabel": null
+        }
+      ]
+    }
+  ],
+  "defaultLanguage": "en-US",
+  "description": null,
+  "ending": null,
+  "language": "en-US",
+  "name": [
+    {
+      "languageCode": "en-US",
+      "text": "Customer onboarding survey"
+    },
+    {
+      "languageCode": "de-DE",
+      "text": "Kundenumfrage Onboarding"
+    }
+  ],
+  "notes": ["The table's first column was a row number and was ignored."],
+  "welcomeCard": {
+    "buttonLabel": null,
+    "enabled": true,
+    "headline": [
+      {
+        "languageCode": "en-US",
+        "text": "Customer onboarding survey"
+      },
+      {
+        "languageCode": "de-DE",
+        "text": "Kundenumfrage Onboarding"
+      }
+    ],
+    "subheader": [
+      {
+        "languageCode": "en-US",
+        "text": "Please answer in English or German."
+      },
+      {
+        "languageCode": "de-DE",
+        "text": "Bitte antworten Sie auf Englisch oder Deutsch."
+      }
+    ]
+  }
+}

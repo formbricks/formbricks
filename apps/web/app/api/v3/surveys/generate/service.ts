@@ -221,12 +221,21 @@ function buildChoiceElement(
   element: TGeneratedDraftElementLike,
   ctx: TBuildContext
 ) {
+  const choices = (element.choices ?? []).map((choice, choiceIndex) =>
+    createLabeledItem("choice", choice, choiceIndex, ctx, `${baseElement.id}.choices`)
+  );
+  // "Other (please specify)" is the free-text `other` choice in Formbricks, never a plain label (import only).
+  if (element.allowOther) {
+    choices.push({
+      id: "other",
+      label: ctx.resolve(element.otherLabel ?? "Other", `${baseElement.id}.choices.other`),
+    });
+  }
+
   return {
     ...baseElement,
     type: element.type as "multipleChoiceSingle" | "multipleChoiceMulti",
-    choices: (element.choices ?? []).map((choice, choiceIndex) =>
-      createLabeledItem("choice", choice, choiceIndex, ctx, `${baseElement.id}.choices`)
-    ),
+    choices,
     shuffleOption: "none" as const,
     displayType: "list" as const,
   };

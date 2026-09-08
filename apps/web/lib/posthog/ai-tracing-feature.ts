@@ -4,6 +4,7 @@
 // of `ai-tracing.ts` keeps those callers free of the SDK entirely.
 export const AI_TRACING_FEATURE = {
   SurveyGeneration: "ai_survey_generation",
+  SurveyImport: "ai_survey_import",
   ChartQuery: "ai_chart_query",
   Translation: "ai_translation",
   ExampleResponses: "ai_example_responses",

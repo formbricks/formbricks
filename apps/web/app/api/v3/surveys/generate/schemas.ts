@@ -232,6 +232,10 @@ export function createGeneratedSurveyDraftSchema<
       .array(z.enum([...IMPORT_ADDRESS_FIELDS, ...IMPORT_CONTACT_INFO_FIELDS] as [string, ...string[]]))
       .nullable()
       .optional(),
+    /** Choice questions: the source offered "Other (please specify)"; becomes the `other` choice, not a label. */
+    allowOther: z.boolean().nullable().optional(),
+    /** The wording of that "Other" option when the source has one. */
+    otherLabel: choice.nullable().optional(),
     /** The source's original type name when it was approximated, or anything worth reporting. */
     notes: z.array(z.string().trim().min(1).max(200)).nullable().optional(),
   };
@@ -369,6 +373,8 @@ export type TGeneratedDraftElementLike = {
   buttonUrl?: string | null;
   label?: TGeneratedDraftText | null;
   fields?: string[] | null;
+  allowOther?: boolean | null;
+  otherLabel?: TGeneratedDraftText | null;
   notes?: string[] | null;
 };
 

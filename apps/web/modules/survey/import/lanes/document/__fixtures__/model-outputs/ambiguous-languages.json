@@ -1,0 +1,22 @@
+{
+  "ambiguityReasons": ["German and Dutch sentences alternate without being translations of each other."],
+  "isAmbiguous": true,
+  "languages": [
+    {
+      "code": "German",
+      "confidence": 0.55,
+      "evidence": ["Wie zufrieden sind Sie"]
+    },
+    {
+      "code": "de",
+      "confidence": 0.5,
+      "evidence": ["Welchen Tarif"]
+    },
+    {
+      "code": "nl",
+      "confidence": 0.35,
+      "evidence": ["Hoe tevreden"]
+    }
+  ],
+  "primaryLanguageCode": "de"
+}
