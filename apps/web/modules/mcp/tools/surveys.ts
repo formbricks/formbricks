@@ -229,8 +229,10 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Patch survey",
       description: [
-        "Update a Formbricks survey using the v3 Surveys API patch contract.",
-        "Provided top-level arrays and objects replace that whole subtree.",
+        "Update survey-level fields — name, status, languages, endings, welcomeCard, variables, hiddenFields — using the v3 Surveys API patch contract.",
+        "For block changes prefer edit_survey_blocks (update, insert, remove) or set_survey_block_order (reorder): they address blocks by id, cost a fraction of the tokens, and cannot drop a block by omission.",
+        "Provided top-level arrays and objects replace that whole subtree, so a partial `blocks` array deletes every block it leaves out.",
+        "The full get_survey output can be sent back unchanged; `updatedAt` is then an optimistic-concurrency precondition and a mismatch returns 409.",
       ].join(" "),
       inputSchema: ZMcpPatchSurveyInput,
       annotations: {
@@ -263,7 +265,8 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Edit survey blocks",
       description: [
-        "Edit a survey's blocks in place: update, insert or remove whole blocks without resending the others.",
+        "Preferred tool for changing a survey's questions: update, insert or remove whole blocks by id without resending the others.",
+        "Use it for any wording, add or delete change — patch_survey would resend every block to alter one.",
         "Operations apply in order and atomically — either all of them land or none do.",
         "Call get_survey first and pass its `updatedAt` as `expectedUpdatedAt`; on a 409 re-read and retry.",
         "An `update` replaces the whole block, so build it from a fresh read — anything you omit is dropped, and block content must carry every configured language.",
@@ -314,8 +317,9 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Set survey block order",
       description: [
-        "Reorder a survey's blocks by listing every block id exactly once, in the order you want.",
-        "Cheaper and safer than resending the blocks: a missing or duplicated id is rejected, which catches a dropped block.",
+        "Preferred tool for reordering a survey's questions — moving, swapping or promoting a block to first or last.",
+        "List every block id exactly once, in the order you want.",
+        "Cheaper and safer than resending the blocks through patch_survey: a missing or duplicated id is rejected, which catches a dropped block.",
         "Call get_survey first and pass its `updatedAt` as `expectedUpdatedAt`; on a 409 re-read and retry.",
         "To repeat a call safely, refresh `expectedUpdatedAt` from the previous response or omit it — reusing the old value is a stale precondition and returns 409, which is the precondition working, not the reorder failing.",
       ].join(" "),

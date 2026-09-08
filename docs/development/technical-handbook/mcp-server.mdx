@@ -763,7 +763,9 @@ the survey changed since your read.
 
 <Note>
   For agent workflows, fetch the current survey first, modify only the intended top-level fields, run
-  `validate_survey` with `operation: "patch"`, and then submit the same patch with `patch_survey`.
+  `validate_survey` with `operation: "patch"`, and then submit the same patch with `patch_survey`. If
+  the change is confined to blocks, stop here and use `edit_survey_blocks` or
+  `set_survey_block_order` instead — they are cheaper and cannot drop a block by omission.
 </Note>
 
 Input:
