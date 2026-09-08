@@ -797,7 +797,9 @@ apply in order against a single snapshot and land atomically: either all of them
 Blocks are addressed by id, never by position, so a concurrent edit cannot redirect an operation onto
 a different block. An `update` replaces the target block entirely, and the replacement must carry
 every language the survey has configured. An `insert` anchors at `start`, `end`, or `after` a block
-id — including one an earlier operation in the same request inserted.
+id — including one an earlier operation in the same request inserted. `block.id` is optional on
+both: an insert without one gets a server-generated id, returned in the concise response's `applied`
+list, and an update takes it from the operation's `id`.
 
 Removing a block orphans any answers already collected for its elements, and the API cannot undo
 that. The editor shows a human a caution before this; an agent has no equivalent, so confirm with the
@@ -1515,6 +1517,8 @@ survey operations used by the REST routes:
 | `create_survey`   | `POST /api/v3/surveys`              |
 | `validate_survey` | `POST /api/v3/surveys/validate`     |
 | `patch_survey`    | `PATCH /api/v3/surveys/{surveyId}`  |
+| `edit_survey_blocks` | `PATCH /api/v3/surveys/{surveyId}/blocks` |
+| `set_survey_block_order` | `PUT /api/v3/surveys/{surveyId}/blocks/order` |
 | `delete_survey`   | `DELETE /api/v3/surveys/{surveyId}` |
 
 When the v3 OpenAPI contract changes, update the MCP schemas and this page together. The hand-maintained

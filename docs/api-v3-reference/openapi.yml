@@ -5003,9 +5003,9 @@ components:
               description: Block to replace.
             block:
               allOf:
-                - $ref: '#/components/schemas/SurveyBlock'
+                - $ref: '#/components/schemas/CreateSurveyBlock'
               description: |
-                Replaces the target block entirely — the same whole-subtree rule PATCH uses. If `block.id` is present it must equal `id`.
+                Replaces the target block entirely — the same whole-subtree rule PATCH uses. `block.id` is optional and taken from `id` when omitted; if present it must equal `id`.
         - type: object
           additionalProperties: false
           required:
@@ -5019,7 +5019,7 @@ components:
                 - insert
             block:
               allOf:
-                - $ref: '#/components/schemas/SurveyBlock'
+                - $ref: '#/components/schemas/CreateSurveyBlock'
               description: |
                 New block. `id` is optional and generated when omitted, matching survey creation. Supply one only when a later operation in the same request anchors after it; if supplied it must not already exist on the survey.
             position:
