@@ -31,15 +31,17 @@ const scripted = (events: TDraftStreamEvent[]) =>
     events.forEach(onEvent);
   });
 
+type TCreate = (payload: TV3CreateSurveyBody, report: unknown) => Promise<{ id: string }>;
+
 const renderDraftHook = (
   overrides: {
     canSubmit?: boolean;
     stream?: ReturnType<typeof scripted>;
-    create?: ReturnType<typeof vi.fn>;
+    create?: ReturnType<typeof vi.fn<TCreate>>;
   } = {}
 ) => {
   const stream = overrides.stream ?? scripted([]);
-  const create = overrides.create ?? vi.fn(async () => ({ id: "survey1" }));
+  const create = overrides.create ?? vi.fn<TCreate>(async () => ({ id: "survey1" }));
   const onSuccess = vi.fn();
   const hook = renderHook(
     () =>
@@ -118,7 +120,7 @@ describe("useDraftCreation", () => {
   test("creating hands payload and report to the injected create and reports success", async () => {
     const report = { issues: [] };
     const stream = scripted([{ type: "done", payload, report }]);
-    const create = vi.fn(async () => ({ id: "survey42" }));
+    const create = vi.fn<TCreate>(async () => ({ id: "survey42" }));
     const { result, onSuccess } = renderDraftHook({ stream, create });
 
     await act(async () => result.current.submit({ fileName: "a.json" }));

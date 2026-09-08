@@ -7,7 +7,7 @@ import type { TV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schema
 import { AI_SURVEY_PROMPT_MIN_LENGTH } from "@/modules/survey/components/template-list/lib/ai-create-utils";
 import { streamSurveyGeneration } from "@/modules/survey/components/template-list/lib/ai-generate-stream-client";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
-import { useDraftCreation } from "./use-draft-creation";
+import { type TDraftStreamHandlers, useDraftCreation } from "./use-draft-creation";
 
 type UseCreateSurveyWithAIProps = {
   workspaceId: string;
@@ -36,8 +36,7 @@ export const useCreateSurveyWithAI = ({
   const hasUsablePrompt = isAIAvailable && prompt.trim().length >= AI_SURVEY_PROMPT_MIN_LENGTH;
 
   const stream = useCallback(
-    (body: TV3SurveyGenerateBody, handlers: Parameters<typeof streamSurveyGeneration>[1]) =>
-      streamSurveyGeneration(body, handlers),
+    (body: TV3SurveyGenerateBody, handlers: TDraftStreamHandlers) => streamSurveyGeneration(body, handlers),
     []
   );
 

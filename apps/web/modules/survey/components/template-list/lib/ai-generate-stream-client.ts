@@ -6,7 +6,9 @@ import { NdjsonParser } from "./ai-stream-parser";
 export const SURVEY_GENERATION_STREAM_ENDPOINT = "/api/internal/surveys/generate/stream";
 
 /** Any NDJSON event the import stream may add on top of the generation events. */
-export type TSurveyStreamEvent<TExtra = never> = TSurveyGenerationStreamEvent | TExtra;
+export type TSurveyStreamEvent<TExtra extends { type: string } = never> =
+  | TSurveyGenerationStreamEvent
+  | TExtra;
 
 /**
  * Read a survey-draft stream, handing each event to `onEvent` as it arrives.
@@ -19,7 +21,7 @@ export type TSurveyStreamEvent<TExtra = never> = TSurveyGenerationStreamEvent | 
  * The body is JSON by default; a `FormData` body (the import stream sends a file) is passed through
  * so the browser sets the multipart boundary. `endpoint` defaults to the generation stream.
  */
-export async function streamSurveyGeneration<TExtra = never>(
+export async function streamSurveyGeneration<TExtra extends { type: string } = never>(
   body: TV3SurveyGenerateBody | FormData,
   {
     signal,
