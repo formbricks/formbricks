@@ -11,6 +11,7 @@ import {
   ZV3FeedbackRecordSimilarityFilters,
   ZV3FeedbackRecordUpdateBodyFields,
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
+import { ZV3EditSurveyBlocksBody, ZV3SetSurveyBlockOrderBody } from "@/app/api/v3/surveys/schemas";
 
 /**
  * Every schema here is `.strict()`, so an argument a tool does not declare is a loud error instead of a
@@ -168,6 +169,32 @@ export const ZMcpPatchSurveyInput = z
   })
   .strict();
 
+/**
+ * Block-level editing (ENG-3069). The bodies are the v3 REST schemas plus `surveyId`, so the two
+ * surfaces cannot drift: one Zod definition, one set of messages.
+ *
+ * `response_format` defaults to `concise` here but not on REST. A 31-block survey serializes to
+ * ~15k tokens, and returning that from every edit would refill the agent's context as fast as the
+ * old whole-array patch did — the concise payload carries `updatedAt`, which is precisely the
+ * `expectedUpdatedAt` the next call needs, so edits chain without re-reading.
+ */
+const ZMcpBlockResponseFormat = z
+  .enum(["concise", "detailed"])
+  .default("concise")
+  .describe(
+    "concise (default) returns id, updatedAt, blockCount and the ops applied. detailed returns the full survey resource."
+  );
+
+export const ZMcpEditSurveyBlocksInput = ZV3EditSurveyBlocksBody.extend({
+  surveyId: z.cuid2().describe("Survey ID whose blocks should be edited."),
+  response_format: ZMcpBlockResponseFormat.optional(),
+}).strict();
+
+export const ZMcpSetSurveyBlockOrderInput = ZV3SetSurveyBlockOrderBody.extend({
+  surveyId: z.cuid2().describe("Survey ID whose block order should be set."),
+  response_format: ZMcpBlockResponseFormat.optional(),
+}).strict();
+
 export const ZMcpValidateSurveyInput = z
   .object({
     operation: z.enum(["create", "patch"]).describe("Validation operation to run."),
@@ -303,6 +330,8 @@ export type TMcpListWorkspacesInput = z.infer<typeof ZMcpListWorkspacesInput>;
 export type TMcpGetSurveyInput = z.infer<typeof ZMcpGetSurveyInput>;
 export type TMcpCreateSurveyInput = z.infer<typeof ZMcpCreateSurveyInput>;
 export type TMcpPatchSurveyInput = z.infer<typeof ZMcpPatchSurveyInput>;
+export type TMcpEditSurveyBlocksInput = z.infer<typeof ZMcpEditSurveyBlocksInput>;
+export type TMcpSetSurveyBlockOrderInput = z.infer<typeof ZMcpSetSurveyBlockOrderInput>;
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
 export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
 export type TMcpListFeedbackDatasetsInput = z.infer<typeof ZMcpListFeedbackDatasetsInput>;
