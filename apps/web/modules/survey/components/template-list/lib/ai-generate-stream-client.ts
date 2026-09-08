@@ -3,31 +3,41 @@ import type { TV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schema
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { NdjsonParser } from "./ai-stream-parser";
 
-const STREAM_ENDPOINT = "/api/internal/surveys/generate/stream";
+export const SURVEY_GENERATION_STREAM_ENDPOINT = "/api/internal/surveys/generate/stream";
+
+/** Any NDJSON event the import stream may add on top of the generation events. */
+export type TSurveyStreamEvent<TExtra = never> = TSurveyGenerationStreamEvent | TExtra;
 
 /**
- * Read the survey-generation stream, handing each event to `onEvent` as it arrives.
+ * Read a survey-draft stream, handing each event to `onEvent` as it arrives.
  *
  * A pre-stream failure still comes back as `problem+json`, so a non-OK response throws a
  * `V3ApiError` exactly like the blocking endpoint — the caller's existing error handling covers it
  * unchanged. Failures *after* the body opened arrive as `error` events instead, because the status
  * code is already spent by then.
+ *
+ * The body is JSON by default; a `FormData` body (the import stream sends a file) is passed through
+ * so the browser sets the multipart boundary. `endpoint` defaults to the generation stream.
  */
-export async function streamSurveyGeneration(
-  body: TV3SurveyGenerateBody,
+export async function streamSurveyGeneration<TExtra = never>(
+  body: TV3SurveyGenerateBody | FormData,
   {
     signal,
     onEvent,
+    endpoint = SURVEY_GENERATION_STREAM_ENDPOINT,
   }: {
     signal: AbortSignal;
-    onEvent: (event: TSurveyGenerationStreamEvent) => void;
+    onEvent: (event: TSurveyStreamEvent<TExtra>) => void;
+    endpoint?: string;
   }
 ): Promise<void> {
-  const response = await fetch(STREAM_ENDPOINT, {
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const response = await fetch(endpoint, {
     method: "POST",
     cache: "no-store",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    ...(isFormData
+      ? { body }
+      : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
     signal,
   });
 
@@ -43,10 +53,10 @@ export async function streamSurveyGeneration(
   // TextDecoder with { stream: true } rather than TextDecoderStream, so the line splitting stays a
   // pure string function that can be unit-tested without constructing a stream.
   const decoder = new TextDecoder();
-  const parser = new NdjsonParser<TSurveyGenerationStreamEvent>();
+  const parser = new NdjsonParser<TSurveyStreamEvent<TExtra>>();
   let sawTerminalEvent = false;
 
-  const handle = (event: TSurveyGenerationStreamEvent) => {
+  const handle = (event: TSurveyStreamEvent<TExtra>) => {
     if (event.type === "done" || event.type === "error") {
       sawTerminalEvent = true;
     }

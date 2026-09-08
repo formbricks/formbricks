@@ -3741,6 +3741,18 @@
         "complete_responses": "Teljes válaszok",
         "partial_responses": "Részleges válaszok"
       },
+      "import": {
+        "errors": {
+          "export_format_unsupported": "Ezt az exportálást egy újabb Formbricks verzió készítette. Kérem, exportálja újra egy aktuális példányból, vagy frissítse a rendszert.",
+          "invalid_document": "Ez a fájl nem olyan felmérés, amelyet a Formbricks képes lenne beolvasni.",
+          "lane_not_available": "Ezen fájltípus importálása jelenleg még nem érhető el.",
+          "legacy_office_format": "Az örökölt Office formátumok nem támogatottak. Kérem, mentse el a fájlt .docx vagy .xlsx formátumban, majd próbálja újra.",
+          "legacy_questions_unsupported": "Ez a fájl az örökölt kérdésformátumot használja. Kérem, exportálja újra a felmérést egy aktuális Formbricks példányból.",
+          "no_text_extracted": "Nem sikerült szöveget találnunk ebben a fájlban. A beolvasott PDF-ek esetében előbb OCR szükséges.",
+          "payload_too_large": "Ez a fájl nagyobb, mint 15 MB. Kérem, ossza fel a felmérést, vagy távolítsa el a beágyazott médiaelemeket, majd próbálja újra.",
+          "unsupported_source": "Ez a fájltípus nem támogatott. Kérem, használjon Formbricks exportálást (.json), Qualtrics .qsf fájlt, vagy .docx, .pdf, .md, .txt, .csv, illetve .xlsx dokumentumot."
+        }
+      },
       "new_survey": "Új kérdőív",
       "no_other_workspaces_available": "Nem áll rendelkezésre más munkaterület, amelyre ezt a felmérést másolni lehetne.",
       "open_options": "Beállítások megnyitása",

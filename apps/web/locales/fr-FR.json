@@ -3741,6 +3741,18 @@
         "complete_responses": "Réponses complètes",
         "partial_responses": "Réponses partielles"
       },
+      "import": {
+        "errors": {
+          "export_format_unsupported": "Cet export a été créé par une version plus récente de Formbricks. Exporte-le à nouveau depuis une instance à jour ou effectue une mise à niveau.",
+          "invalid_document": "Ce fichier n'est pas un sondage que Formbricks peut lire.",
+          "lane_not_available": "L'importation de ce type de fichier n'est pas encore disponible.",
+          "legacy_office_format": "Les anciens formats Office ne sont pas pris en charge. Enregistre le fichier au format .docx ou .xlsx et réessaie.",
+          "legacy_questions_unsupported": "Ce fichier utilise l'ancien format de questions. Exporte le sondage à nouveau depuis une instance Formbricks à jour.",
+          "no_text_extracted": "Nous n'avons trouvé aucun texte dans ce fichier. Les PDF scannés nécessitent d'abord un traitement OCR.",
+          "payload_too_large": "Ce fichier dépasse 15 Mo. Divise le sondage ou supprime les médias intégrés et réessaie.",
+          "unsupported_source": "Ce type de fichier n'est pas pris en charge. Utilise un export Formbricks (.json), un fichier Qualtrics .qsf ou un document .docx, .pdf, .md, .txt, .csv ou .xlsx."
+        }
+      },
       "new_survey": "Nouveau Sondage",
       "no_other_workspaces_available": "Aucun autre espace de travail disponible pour copier cette enquête.",
       "open_options": "Ouvrir les options",

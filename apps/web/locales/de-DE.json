@@ -3741,6 +3741,18 @@
         "complete_responses": "Vollständige Antworten",
         "partial_responses": "Teilweise Antworten"
       },
+      "import": {
+        "errors": {
+          "export_format_unsupported": "Dieser Export wurde mit einer neueren Formbricks-Version erstellt. Exportiere ihn erneut aus einer aktuellen Instanz oder führe ein Upgrade durch.",
+          "invalid_document": "Diese Datei ist keine Umfrage, die Formbricks lesen kann.",
+          "lane_not_available": "Der Import dieses Dateityps ist noch nicht verfügbar.",
+          "legacy_office_format": "Legacy-Office-Formate werden nicht unterstützt. Speichere die Datei als .docx oder .xlsx und versuche es erneut.",
+          "legacy_questions_unsupported": "Diese Datei verwendet das alte Fragenformat. Exportiere die Umfrage erneut aus einer aktuellen Formbricks-Instanz.",
+          "no_text_extracted": "Wir konnten keinen Text in dieser Datei finden. Gescannte PDFs benötigen zuerst eine OCR-Verarbeitung.",
+          "payload_too_large": "Diese Datei ist größer als 15 MB. Teile die Umfrage auf oder entferne eingebettete Medien und versuche es erneut.",
+          "unsupported_source": "Dieser Dateityp wird nicht unterstützt. Verwende einen Formbricks-Export (.json), eine Qualtrics-Datei (.qsf) oder ein .docx-, .pdf-, .md-, .txt-, .csv- oder .xlsx-Dokument."
+        }
+      },
       "new_survey": "Neue Umfrage",
       "no_other_workspaces_available": "Keine weiteren Workspaces verfügbar, in die du diese Umfrage kopieren kannst.",
       "open_options": "Optionen öffnen",

@@ -3741,6 +3741,18 @@
         "complete_responses": "Tamamlanmış yanıtlar",
         "partial_responses": "Yarım yanıtlar"
       },
+      "import": {
+        "errors": {
+          "export_format_unsupported": "Bu dışa aktarma daha yeni bir Formbricks sürümü tarafından yapıldı. Güncel bir örnekten tekrar dışa aktar veya yükselt.",
+          "invalid_document": "Bu dosya Formbricks'in okuyabileceği bir anket değil.",
+          "lane_not_available": "Bu dosya türünü içe aktarma henüz mevcut değil.",
+          "legacy_office_format": "Eski Office formatları desteklenmiyor. Dosyayı .docx veya .xlsx olarak kaydet ve tekrar dene.",
+          "legacy_questions_unsupported": "Bu dosya eski soru formatını kullanıyor. Anketi güncel bir Formbricks örneğinden tekrar dışa aktar.",
+          "no_text_extracted": "Bu dosyada herhangi bir metin bulamadık. Taranmış PDF'ler önce OCR'den geçmeli.",
+          "payload_too_large": "Bu dosya 15 MB'den büyük. Anketi böl veya gömülü medyayı kaldır ve tekrar dene.",
+          "unsupported_source": "Bu dosya türü desteklenmiyor. Bir Formbricks dışa aktarımı (.json), Qualtrics .qsf veya .docx, .pdf, .md, .txt, .csv ya da .xlsx belgesi kullan."
+        }
+      },
       "new_survey": "Yeni Anket",
       "no_other_workspaces_available": "Bu anketi kopyalamak için başka çalışma alanı yok.",
       "open_options": "Seçenekleri aç",

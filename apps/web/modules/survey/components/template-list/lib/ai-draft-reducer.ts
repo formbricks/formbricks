@@ -11,6 +11,8 @@ export interface TAiDraftQuestion {
   type?: string;
   headline?: string;
   choiceCount?: number;
+  /** Language codes the row already has text for; import drafts carry several, prompts none. */
+  languages?: readonly string[];
 }
 
 export interface TAiDraftState {
@@ -40,9 +42,11 @@ export const EMPTY_AI_DRAFT: TAiDraftState = { questions: [] };
  */
 export function mergeAiDraftSnapshot(
   previous: TAiDraftState,
-  snapshot: TSurveyGenerationDraftSnapshot
+  snapshot: TSurveyGenerationDraftSnapshot,
+  /** Blocks already finalized by earlier chunks of a long import; the snapshot's indices start after them. */
+  blockOffset = 0
 ): TAiDraftState {
-  const incoming = flattenSnapshotQuestions(snapshot);
+  const incoming = flattenSnapshotQuestions(snapshot, blockOffset);
   const byKey = new Map(previous.questions.map((question) => [question.key, question]));
   const questions: TAiDraftQuestion[] = [...previous.questions];
   let changed = false;
@@ -64,6 +68,9 @@ export function mergeAiDraftSnapshot(
       type: incomingQuestion.type ?? previousQuestion.type,
       headline: incomingQuestion.headline ?? previousQuestion.headline,
       choiceCount: incomingQuestion.choiceCount ?? previousQuestion.choiceCount,
+      ...((incomingQuestion.languages ?? previousQuestion.languages)
+        ? { languages: incomingQuestion.languages ?? previousQuestion.languages }
+        : {}),
     };
 
     if (isSameQuestion(previousQuestion, merged)) continue;
@@ -97,18 +104,23 @@ function comparePosition(a: string, b: string): number {
 }
 
 /** Rows currently worth rendering: a question exists once the model has committed to its type. */
-function flattenSnapshotQuestions(snapshot: TSurveyGenerationDraftSnapshot): TAiDraftQuestion[] {
+function flattenSnapshotQuestions(
+  snapshot: TSurveyGenerationDraftSnapshot,
+  blockOffset: number
+): TAiDraftQuestion[] {
   const blocks = Array.isArray(snapshot.blocks) ? snapshot.blocks : [];
   const questions: TAiDraftQuestion[] = [];
 
-  blocks.forEach((block, blockIndex) => {
+  blocks.forEach((block, localBlockIndex) => {
+    const blockIndex = localBlockIndex + blockOffset;
     const blockQuestions = Array.isArray(block?.questions) ? block.questions : [];
 
     blockQuestions.forEach((question, questionIndex) => {
       if (!question) return;
 
       const type = typeof question.type === "string" ? question.type : undefined;
-      const headline = typeof question.headline === "string" ? question.headline : undefined;
+      const localized = readLocalizedText(question.headline);
+      const headline = localized.text;
 
       // A row earns its place as soon as either field lands; before that there is nothing to show
       // and a placeholder would just be a row that appears and then jumps.
@@ -121,6 +133,7 @@ function flattenSnapshotQuestions(snapshot: TSurveyGenerationDraftSnapshot): TAi
         type,
         headline,
         choiceCount: Array.isArray(question.choices) ? question.choices.length : undefined,
+        ...(localized.languages ? { languages: localized.languages } : {}),
       });
     });
   });
@@ -128,12 +141,35 @@ function flattenSnapshotQuestions(snapshot: TSurveyGenerationDraftSnapshot): TAi
   return questions;
 }
 
+/**
+ * A draft text is a plain string (Create with AI) or, for multilingual imports, a list of
+ * `{ languageCode, text }` entries (D2). The row shows the first text and badges the languages.
+ */
+function readLocalizedText(value: unknown): { text?: string; languages?: string[] } {
+  if (typeof value === "string") return { text: value };
+  if (!Array.isArray(value)) return {};
+
+  const entries = value.filter(
+    (entry): entry is { languageCode?: string; text?: string } => typeof entry === "object" && entry !== null
+  );
+  const first = entries.find((entry) => typeof entry.text === "string");
+  const languages = entries
+    .map((entry) => entry.languageCode)
+    .filter((code): code is string => typeof code === "string" && code.length > 0);
+
+  return {
+    ...(first ? { text: first.text } : {}),
+    ...(languages.length > 0 ? { languages } : {}),
+  };
+}
+
 function isSameQuestion(a: TAiDraftQuestion, b: TAiDraftQuestion): boolean {
   return (
     a.type === b.type &&
     a.headline === b.headline &&
     a.choiceCount === b.choiceCount &&
-    a.blockName === b.blockName
+    a.blockName === b.blockName &&
+    (a.languages ?? []).join(",") === (b.languages ?? []).join(",")
   );
 }
 

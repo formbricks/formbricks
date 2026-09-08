@@ -229,3 +229,47 @@ describe("block structure", () => {
     expect(groupAiDraftByBlock([])).toEqual([]);
   });
 });
+
+describe("multilingual import drafts", () => {
+  test("reads the first localized text and badges every language on the row", () => {
+    const merged = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, {
+      name: "Umfrage",
+      blocks: [
+        {
+          name: "Block",
+          questions: [
+            {
+              type: "openText",
+              headline: [
+                { languageCode: "en-US", text: "How was it?" },
+                { languageCode: "de-DE", text: "Wie war es?" },
+              ],
+            },
+          ],
+        },
+      ],
+    } as unknown as Parameters<typeof mergeAiDraftSnapshot>[1]);
+
+    expect(merged.questions[0]).toMatchObject({
+      key: "0:0",
+      headline: "How was it?",
+      languages: ["en-US", "de-DE"],
+    });
+  });
+
+  test("blockOffset shifts keys so chunked imports append instead of overwriting", () => {
+    const chunkOne = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, {
+      blocks: [{ name: "A", questions: [{ type: "nps", headline: "First" }] }],
+    } as unknown as Parameters<typeof mergeAiDraftSnapshot>[1]);
+    const chunkTwo = mergeAiDraftSnapshot(
+      chunkOne,
+      { blocks: [{ name: "B", questions: [{ type: "nps", headline: "Second" }] }] } as unknown as Parameters<
+        typeof mergeAiDraftSnapshot
+      >[1],
+      1
+    );
+
+    expect(chunkTwo.questions.map((question) => question.key)).toEqual(["0:0", "1:0"]);
+    expect(groupAiDraftByBlock(chunkTwo.questions).map((block) => block.name)).toEqual(["A", "B"]);
+  });
+});

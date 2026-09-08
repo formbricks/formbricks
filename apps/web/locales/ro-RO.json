@@ -3741,6 +3741,18 @@
         "complete_responses": "Răspunsuri complete",
         "partial_responses": "Răspunsuri parțiale"
       },
+      "import": {
+        "errors": {
+          "export_format_unsupported": "Acest export a fost realizat de o versiune mai nouă a Formbricks. Exportă-l din nou dintr-o instanță actuală sau actualizează versiunea.",
+          "invalid_document": "Acest fișier nu este un sondaj pe care Formbricks îl poate citi.",
+          "lane_not_available": "Importul acestui tip de fișier nu este disponibil încă.",
+          "legacy_office_format": "Formatele Office vechi nu sunt suportate. Salvează fișierul ca .docx sau .xlsx și încearcă din nou.",
+          "legacy_questions_unsupported": "Acest fișier folosește formatul vechi de întrebări. Exportă sondajul din nou dintr-o instanță actuală Formbricks.",
+          "no_text_extracted": "Nu am putut găsi niciun text în acest fișier. PDF-urile scanate necesită mai întâi OCR.",
+          "payload_too_large": "Acest fișier este mai mare de 15 MB. Împarte sondajul sau elimină conținutul media încorporat și încearcă din nou.",
+          "unsupported_source": "Acest tip de fișier nu este suportat. Folosește un export Formbricks (.json), un Qualtrics .qsf sau un document .docx, .pdf, .md, .txt, .csv sau .xlsx."
+        }
+      },
       "new_survey": "Chestionar nou",
       "no_other_workspaces_available": "Nu există alte spații de lucru disponibile în care să copiezi acest chestionar.",
       "open_options": "Opțiuni deschise",

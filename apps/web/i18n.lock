@@ -3611,6 +3611,14 @@ checksums:
     workspace/surveys/filter/complete_and_partial_responses: 3c272e4b148421da0027c35562b969db
     workspace/surveys/filter/complete_responses: cd495765bf63f5bfdb341eadc4f60ac7
     workspace/surveys/filter/partial_responses: cc88893d0defaf64f46f17a1cb8c886d
+    workspace/surveys/import/errors/export_format_unsupported: 704d7fe8e0b0897dab134ca5979ea959
+    workspace/surveys/import/errors/invalid_document: 6bb5e18f64f6860e1bce7ea5a4de649b
+    workspace/surveys/import/errors/lane_not_available: 4dad9db95318524be488c51ce12cfdeb
+    workspace/surveys/import/errors/legacy_office_format: ec30b6e124e7033bb0d778f22825774e
+    workspace/surveys/import/errors/legacy_questions_unsupported: 1a3954be592dbc59965d80fd768b3398
+    workspace/surveys/import/errors/no_text_extracted: a7c1771c9ebbe5357f5865ec703db51d
+    workspace/surveys/import/errors/payload_too_large: aa8d28f475d84630f03c73a67c6df500
+    workspace/surveys/import/errors/unsupported_source: 64c672063b65b97f18da5e1f9146aa82
     workspace/surveys/new_survey: 82503c2dba9f071c93860e5ce9584e14
     workspace/surveys/no_other_workspaces_available: c6f91e9290d4fbeec6b34f7a09759395
     workspace/surveys/open_options: a4578c0afbfdf4a76d5952a53085b72a

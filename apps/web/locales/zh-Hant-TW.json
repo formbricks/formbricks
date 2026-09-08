@@ -3741,6 +3741,18 @@
         "complete_responses": "完整回應",
         "partial_responses": "部分回應"
       },
+      "import": {
+        "errors": {
+          "export_format_unsupported": "此匯出檔是由較新版本的 Formbricks 製作的。請從目前的執行個體重新匯出，或升級您的版本。",
+          "invalid_document": "此檔案不是 Formbricks 可以讀取的問卷。",
+          "lane_not_available": "尚未支援匯入此檔案類型。",
+          "legacy_office_format": "不支援舊版 Office 格式。請將檔案儲存為 .docx 或 .xlsx 後再試一次。",
+          "legacy_questions_unsupported": "此檔案使用舊版問題格式。請從目前的 Formbricks 執行個體重新匯出問卷。",
+          "no_text_extracted": "我們無法在此檔案中找到任何文字。掃描的 PDF 需要先進行 OCR 處理。",
+          "payload_too_large": "此檔案大於 15 MB。請拆分問卷或移除嵌入的媒體後再試一次。",
+          "unsupported_source": "不支援此檔案類型。請使用 Formbricks 匯出檔 (.json)、Qualtrics .qsf 檔，或 .docx、.pdf、.md、.txt、.csv 或 .xlsx 文件。"
+        }
+      },
       "new_survey": "新增問卷",
       "no_other_workspaces_available": "沒有其他可用的工作區可複製此問卷。",
       "open_options": "開啟選項",

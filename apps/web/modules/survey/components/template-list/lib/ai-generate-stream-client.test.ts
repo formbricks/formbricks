@@ -54,6 +54,38 @@ describe("streamSurveyGeneration", () => {
     await expect(collect()).rejects.toThrow(/without a result/);
   });
 
+  test("posts JSON to the generation endpoint by default", async () => {
+    respondWith(['{"type":"done","language":"en","payload":{},"validation":{}}\n']);
+
+    await collect();
+
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/internal/surveys/generate/stream",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+    );
+  });
+
+  test("passes a FormData body through untouched to a custom endpoint", async () => {
+    respondWith(['{"type":"done","payload":{},"report":{}}\n']);
+    const formData = new FormData();
+    formData.set("workspaceId", "w1");
+
+    await streamSurveyGeneration(formData, {
+      signal: new AbortController().signal,
+      onEvent: () => undefined,
+      endpoint: "/api/internal/surveys/import/stream",
+    });
+
+    const [url, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/internal/surveys/import/stream");
+    expect(init.body).toBe(formData);
+    expect(init.headers).toBeUndefined();
+  });
+
   test("does not throw once a terminal event has arrived", async () => {
     respondWith(['{"type":"done","language":"en","payload":{},"validation":{}}\n']);
 

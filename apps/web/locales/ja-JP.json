@@ -3741,6 +3741,18 @@
         "complete_responses": "完了した回答",
         "partial_responses": "部分的な回答"
       },
+      "import": {
+        "errors": {
+          "export_format_unsupported": "このエクスポートは新しいバージョンのFormbricksで作成されました。最新のインスタンスから再度エクスポートするか、アップグレードしてください。",
+          "invalid_document": "このファイルはFormbricksが読み取れるアンケートではありません。",
+          "lane_not_available": "このファイル形式のインポートはまだ利用できません。",
+          "legacy_office_format": "レガシーOffice形式はサポートされていません。ファイルを .docx または .xlsx として保存して再度お試しください。",
+          "legacy_questions_unsupported": "このファイルはレガシーの質問形式を使用しています。最新のFormbricksインスタンスからアンケートを再度エクスポートしてください。",
+          "no_text_extracted": "このファイルからテキストが見つかりませんでした。スキャンしたPDFは先にOCR処理が必要です。",
+          "payload_too_large": "このファイルは15MBを超えています。アンケートを分割するか、埋め込みメディアを削除して再度お試しください。",
+          "unsupported_source": "このファイル形式はサポートされていません。Formbricksエクスポート（.json）、Qualtrics .qsf、または .docx、.pdf、.md、.txt、.csv、.xlsx のドキュメントをご使用ください。"
+        }
+      },
       "new_survey": "新規フォーム",
       "no_other_workspaces_available": "このアンケートをコピーできる他のワークスペースがありません。",
       "open_options": "オプションを開く",

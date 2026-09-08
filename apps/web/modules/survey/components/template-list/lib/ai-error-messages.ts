@@ -38,6 +38,23 @@ export function getAiErrorMessage(code: string | undefined, t: TranslateFn): str
       return t("workspace.surveys.ai_create.too_many_requests");
     case "bad_request":
       return t("workspace.surveys.ai_create.request_rejected");
+    // Import codes: the convert/import routes and their lanes.
+    case "unsupported_source":
+      return t("workspace.surveys.import.errors.unsupported_source");
+    case "legacy_office_format":
+      return t("workspace.surveys.import.errors.legacy_office_format");
+    case "payload_too_large":
+      return t("workspace.surveys.import.errors.payload_too_large");
+    case "lane_not_available":
+      return t("workspace.surveys.import.errors.lane_not_available");
+    case "no_text_extracted":
+      return t("workspace.surveys.import.errors.no_text_extracted");
+    case "export_format_unsupported":
+      return t("workspace.surveys.import.errors.export_format_unsupported");
+    case "legacy_questions_unsupported":
+      return t("workspace.surveys.import.errors.legacy_questions_unsupported");
+    case "invalid_document":
+      return t("workspace.surveys.import.errors.invalid_document");
     default:
       return t("common.something_went_wrong_please_try_again");
   }
