@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "Yanıt bu anket için kotaların bir parçası. Kotaları nasıl işlemek istiyorsun?",
         "device": "Cihaz",
         "device_info": "Cihaz bilgisi",
+        "duration_seconds": "Süre (saniye)",
         "email": "E-posta",
         "error_downloading_responses": "Yanıtlar indirilirken bir hata oluştu",
         "first_name": "Ad",

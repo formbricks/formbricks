@@ -46,6 +46,7 @@ describe("utils", () => {
       "workspace.surveys.responses.utm_term": "UTM Term",
       "workspace.surveys.responses.viewport_height": "Viewport Height",
       "workspace.surveys.responses.viewport_width": "Viewport Width",
+      "workspace.surveys.responses.duration_seconds": "Duration (seconds)",
     };
     return translations[key] || key;
   }) as unknown as TFunction;
@@ -175,6 +176,14 @@ describe("utils", () => {
         expect(getReservedColumnLabel(name, mockT), name).toBe(label);
         expect(mockT, name).toHaveBeenCalledWith(`workspace.surveys.responses.${key}`);
       }
+    });
+
+    test("routes the filter-only `durationSeconds` entry through `t()` as well", () => {
+      // `display: "none"`, so no column shows it — but the response filter offers it (ENG-1848) through
+      // this same switch, and it was the one offered entry still left to the derived fallback, reading
+      // `Duration Seconds` in every locale (ENG-2894).
+      expect(getReservedColumnLabel("durationSeconds", mockT)).toBe("Duration (seconds)");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.duration_seconds");
     });
 
     test("still derives a label for a catalog entry nobody has written a key for yet", () => {

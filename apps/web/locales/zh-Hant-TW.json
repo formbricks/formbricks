@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "此回應屬於此問卷的配額。你想如何處理配額？",
         "device": "裝置",
         "device_info": "裝置資訊",
+        "duration_seconds": "持續時間（秒）",
         "email": "電子郵件",
         "error_downloading_responses": "下載回應時發生錯誤",
         "first_name": "名字",

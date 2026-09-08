@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "A válasz a kérdőív kvótáinak részét képezik. Hogyan szeretné kezelni a kvótákat?",
         "device": "Eszköz",
         "device_info": "Eszközinformációk",
+        "duration_seconds": "Időtartam (másodperc)",
         "email": "E-mail",
         "error_downloading_responses": "Hiba történt a válaszok letöltése során",
         "first_name": "Keresztnév",

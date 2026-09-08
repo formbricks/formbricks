@@ -20,10 +20,12 @@ import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
 /**
  * The human-readable label for a reserved field (ENG-2540).
  *
- * **Every field either surface displays today has its own key.** All twenty-one `display !== "none"`
- * catalog entries are listed below, so `Page Path`, `UTM Source` and `Timezone` are translated in
- * every locale rather than rendered as English derived from the catalog name — which is what the
- * repo's i18n rule asks for, and what shipping them derived would have quietly broken.
+ * **Every field either surface displays today has its own key, and so does the one filter-only
+ * entry.** All twenty-one `display !== "none"` catalog entries are listed below, plus
+ * `durationSeconds`, which no column shows but the response filter offers (ENG-1848). So `Page Path`,
+ * `UTM Source` and `Duration (seconds)` are translated in every locale rather than rendered as
+ * English derived from the catalog name — which is what the repo's i18n rule asks for, and what
+ * shipping them derived would have quietly broken.
  *
  * `formatFieldNameToTitleCase` — the same helper the recall and logic pickers use — stays as the
  * `default` arm, deliberately, as a **last resort rather than the rule**: ENG-1858's next batch of
@@ -83,6 +85,10 @@ export const getReservedFieldLabel = (name: string, t: TFunction): string => {
       return t("workspace.surveys.responses.viewport_height");
     case "viewportWidth":
       return t("workspace.surveys.responses.viewport_width");
+    // The one `display: "none"` entry the response filter offers (ENG-1848): never a column, so this
+    // key is only ever read by the filter picker (ENG-2894).
+    case "durationSeconds":
+      return t("workspace.surveys.responses.duration_seconds");
     default:
       return formatFieldNameToTitleCase(name);
   }

@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "A resposta faz parte das cotas desta pesquisa. Como você quer gerenciar as cotas?",
         "device": "dispositivo",
         "device_info": "Informações do dispositivo",
+        "duration_seconds": "Duração (segundos)",
         "email": "Email",
         "error_downloading_responses": "Ocorreu um erro ao baixar as respostas",
         "first_name": "Primeiro Nome",

@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "Svaret är del av kvoter för denna enkät. Hur vill du hantera kvoterna?",
         "device": "Enhet",
         "device_info": "Enhetsinformation",
+        "duration_seconds": "Varaktighet (sekunder)",
         "email": "E-post",
         "error_downloading_responses": "Ett fel uppstod vid nedladdning av svar",
         "first_name": "Förnamn",

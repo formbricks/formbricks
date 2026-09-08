@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "La respuesta forma parte de cuotas para esta encuesta. ¿Cómo quieres gestionar las cuotas?",
         "device": "Dispositivo",
         "device_info": "Información del dispositivo",
+        "duration_seconds": "Duración (segundos)",
         "email": "Correo electrónico",
         "error_downloading_responses": "Se produjo un error al descargar las respuestas",
         "first_name": "Nombre",

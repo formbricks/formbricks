@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "该响应是 此 调查配额 的一部分。 您 希望 如何 处理 这些 配额？",
         "device": "设备",
         "device_info": "设备信息",
+        "duration_seconds": "持续时间（秒）",
         "email": "邮件",
         "error_downloading_responses": "下载答复时发生错误",
         "first_name": "名字",

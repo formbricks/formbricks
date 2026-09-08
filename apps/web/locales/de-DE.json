@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "Die Antwort ist Teil von Kontingenten für diese Umfrage. Wie möchtest du mit den Kontingenten verfahren?",
         "device": "Gerät",
         "device_info": "Geräte-Info",
+        "duration_seconds": "Dauer (Sekunden)",
         "email": "E-Mail",
         "error_downloading_responses": "Beim Herunterladen der Antworten ist ein Fehler aufgetreten",
         "first_name": "Vorname",

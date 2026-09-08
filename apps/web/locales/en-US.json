@@ -3708,6 +3708,7 @@
         "delete_response_quotas": "The response is part of quotas for this survey. How do you want to handle the quotas?",
         "device": "Device",
         "device_info": "Device info",
+        "duration_seconds": "Duration (seconds)",
         "email": "Email",
         "error_downloading_responses": "An error occurred while downloading responses",
         "first_name": "First Name",
