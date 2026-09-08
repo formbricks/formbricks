@@ -9,7 +9,7 @@ import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "../create";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
-import { V3SurveyStaleError, patchV3Survey } from "../patch";
+import { V3SurveyStaleError, V3SurveyStoredDocumentError, patchV3Survey } from "../patch";
 import { prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "../prepare";
 import { V3SurveyReferenceValidationError } from "../reference-validation";
 import { ZV3CreateSurveyBody } from "../schemas";
@@ -94,6 +94,12 @@ vi.mock("../parse-v3-surveys-list-query", () => ({
 
 vi.mock("../patch", () => ({
   patchV3Survey: vi.fn(),
+  V3SurveyStoredDocumentError: class V3SurveyStoredDocumentError extends Error {
+    constructor(readonly invalidParams: unknown[]) {
+      super("Stored survey does not satisfy the v3 survey document contract");
+      this.name = "V3SurveyStoredDocumentError";
+    }
+  },
   // Real class, not a vi.fn: operations.ts branches on `instanceof` to map the 409.
   V3SurveyStaleError: class V3SurveyStaleError extends Error {
     constructor(
@@ -712,6 +718,32 @@ describe("patchV3SurveyResponse", () => {
         ? (serializedUpdatedSurvey as any)
         : (serializedSurvey as any);
     });
+  });
+
+  test("reports a stored survey that fails the v3 contract as a state error, not a client error", async () => {
+    // ENG-3070: the caller sent { name }, so invalid_params naming blocks.* is about the stored
+    // survey. A distinct code says so rather than looking like a malformed request.
+    vi.mocked(patchV3Survey).mockRejectedValue(
+      new V3SurveyStoredDocumentError([
+        { name: "blocks.0.elements.0.headline", reason: "missing translation" },
+      ])
+    );
+
+    const response = await patchV3SurveyResponse({
+      surveyId: "survey_1",
+      body: { name: "Renamed" },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.code).toBe("stored_survey_invalid");
+    expect(body.detail).toMatch(/not evaluated/);
+    expect(body.invalid_params).toEqual([
+      expect.objectContaining({ name: "blocks.0.elements.0.headline" }),
+    ]);
   });
 
   test("patches an authorized survey, serializes it, and enriches the audit log", async () => {
