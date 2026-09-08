@@ -30,6 +30,7 @@ properties:
       - invalid_locale
       - invalid_reference
       - missing_required_field
+      - misordered_reference
       - missing_translation
       - read_only_field
       - unsupported_field

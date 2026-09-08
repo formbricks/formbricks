@@ -13,7 +13,11 @@ import {
   createZV3SurveyDocumentBaseSchema,
   formatV3ZodInvalidParams,
 } from "./schemas";
-import { type TV3SurveyDocumentValidationResult, validateV3SurveyDocument } from "./validation";
+import {
+  type TV3SurveyDocumentValidationResult,
+  type TV3SurveyPrecedencePolicy,
+  validateV3SurveyDocument,
+} from "./validation";
 
 type TV3SurveyPrepareSuccess<TDocument> = {
   ok: true;
@@ -56,9 +60,10 @@ function invalidPreparation(
 }
 
 function validPreparation<TDocument extends TV3SurveyDocument>(
-  document: TDocument
+  document: TDocument,
+  precedence?: TV3SurveyPrecedencePolicy
 ): TV3SurveyPrepareResult<TDocument> {
-  const validation = validateV3SurveyDocument(document);
+  const validation = validateV3SurveyDocument(document, precedence);
 
   if (!validation.valid) {
     return invalidPreparation(validation.invalidParams);
@@ -444,7 +449,10 @@ export function prepareV3SurveyPatchInput(
     return invalidPreparation(immutableElementIdIssues);
   }
 
-  const prepared = validPreparation(patchedDocument);
+  const prepared = validPreparation(patchedDocument, {
+    mode: "introduced",
+    baseline: currentDocument.document,
+  });
   return prepared.ok && readOnly.precondition
     ? { ...prepared, precondition: readOnly.precondition }
     : prepared;

@@ -112,7 +112,10 @@ describe("v3 problem responses", () => {
 
   test("problemConflict carries machine-readable details", async () => {
     const res = problemConflict("r7", "stale", "/p", {
-      details: { expectedUpdatedAt: "2026-01-01T00:00:00.000Z", currentUpdatedAt: "2026-01-02T00:00:00.000Z" },
+      details: {
+        expectedUpdatedAt: "2026-01-01T00:00:00.000Z",
+        currentUpdatedAt: "2026-01-02T00:00:00.000Z",
+      },
     });
     expect(res.status).toBe(409);
     const body = await res.json();

@@ -1571,11 +1571,10 @@ query, like `create_feedback_record`.
 - `edit_survey_blocks` and `set_survey_block_order` operate on whole blocks. There is no element-level
   operation: elements travel inside the block payload, and going finer would reintroduce the same
   resend problem one level down.
-- Neither block tool validates that a reorder keeps `#recall:` references pointing backwards. The
-  document validator checks that a recall target exists, never that it appears earlier in the flow, so
-  a reorder can produce a survey that passes every server check and misbehaves at runtime. This
-  predates the tools — whole-array replacement allows it too — but a one-call reorder makes it easier
-  to reach.
+- Ordering is validated as a delta: a change may not *introduce* a `#recall:` that points forwards, a
+  logic condition reading a later block, or a `requireAnswer` targeting an earlier one
+  (`misordered_reference`). Violations a survey already contains are left alone, so an existing survey
+  never becomes unpatchable — enforcing the full set would repeat the ENG-3070 failure.
 - `stored_survey_invalid` (422) means the *stored* survey no longer satisfies the v3 document
   contract, so the request was never evaluated; the reported paths are into the survey, not the
   request. Repair it in the editor.

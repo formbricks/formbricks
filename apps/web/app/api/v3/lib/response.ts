@@ -14,6 +14,7 @@ export const INVALID_PARAM_CODES = [
   "immutable_identifier",
   "invalid_locale",
   "invalid_reference",
+  "misordered_reference",
   "missing_required_field",
   "missing_translation",
   "read_only_field",
