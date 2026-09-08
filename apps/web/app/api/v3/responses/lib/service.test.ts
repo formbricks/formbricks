@@ -58,7 +58,7 @@ const deletedRow = (over: Record<string, unknown> = {}) => ({
   data: {},
   meta: {},
   displayId: null,
-  survey: { blocks: [] },
+  survey: { blocks: [], questions: [] },
   ...over,
 });
 
@@ -93,7 +93,8 @@ describe("deleteScopedResponse", () => {
 
     const { select } = mockTxDelete.mock.calls[0][0];
     expect(select.data).toBe(true);
-    expect(select.survey).toStrictEqual({ select: { blocks: true } });
+    // Both shapes, matching v1/v2 and the helper's documented union — not just `blocks`.
+    expect(select.survey).toStrictEqual({ select: { blocks: true, questions: true } });
     // What the audit event records. Losing any of these silently thins the trail.
     for (const field of ["id", "createdAt", "finished", "surveyId", "meta", "ttc", "variables", "language"]) {
       expect(select[field]).toBe(true);

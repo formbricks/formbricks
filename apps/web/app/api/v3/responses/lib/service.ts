@@ -99,6 +99,8 @@ const deletedResponseSelect = {
   displayId: true,
 } satisfies Prisma.ResponseSelect;
 
+export type TDeletedResponse = Prisma.ResponseGetPayload<{ select: typeof deletedResponseSelect }>;
+
 /**
  * Delete one response inside its workspace, and clean up everything that goes with it.
  *
@@ -119,8 +121,6 @@ const deletedResponseSelect = {
  * three existing delete implementations dispatches one. The Hub cascade is ENG-2855's, after the Hub
  * release; this just does not make it harder to add.
  */
-export type TDeletedResponse = Prisma.ResponseGetPayload<{ select: typeof deletedResponseSelect }>;
-
 export async function deleteScopedResponse(
   responseId: string,
   { workspaceId }: TWorkspaceScope
@@ -136,8 +136,13 @@ export async function deleteScopedResponse(
       const deletedRow = await tx.response.delete({
         where: { id: responseId, survey: { workspaceId } },
         // The survey join is for the file cleanup below, not for the audit record — it is dropped
-        // before the row is returned.
-        select: { ...deletedResponseSelect, survey: { select: { blocks: true } } },
+        // before the row is returned. Both shapes: `getSurveyFileUploadElementIds` documents the union
+        // as mandatory and v1/v2 pass both, so v3 matches rather than betting on `questions` staying
+        // empty everywhere.
+        select: {
+          ...deletedResponseSelect,
+          survey: { select: { blocks: true, questions: true } },
+        },
       });
 
       if (deletedRow.displayId) {
@@ -159,7 +164,10 @@ export async function deleteScopedResponse(
       const { survey, ...row } = deletedRow;
       return {
         row,
-        fileUrls: collectResponseFileUrls(row.data, getSurveyFileUploadElementIds({ blocks: survey.blocks })),
+        fileUrls: collectResponseFileUrls(
+          row.data,
+          getSurveyFileUploadElementIds({ blocks: survey.blocks, questions: survey.questions })
+        ),
       };
     });
   } catch (error) {
