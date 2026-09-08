@@ -224,6 +224,9 @@ describe("chart Cube actions", () => {
     expect(mocks.generateAIChartQuery).toHaveBeenCalledWith({
       organizationId: "organization-1",
       workspaceId: "workspace-1",
+      // The generator profiles this directory for the system prompt, so it has to arrive here —
+      // without it the model is back to guessing filter values off the schema alone.
+      feedbackDirectoryId: "frd-1",
       userId: "user-1",
       prompt: "responses by sentiment",
     });

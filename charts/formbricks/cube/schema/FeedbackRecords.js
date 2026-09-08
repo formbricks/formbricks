@@ -277,6 +277,106 @@ cube(`FeedbackRecords`, {
       description: `Response language code (e.g., "en", "de"). NULL when language is "default".`,
     },
 
+    // ── Response context (ENG-1554 metadata) ──────────────────────────────────
+    // Projections of the allowlisted keys `HUB_METADATA_FIELDS`
+    // (apps/web/lib/feedback-source/response-metadata.ts) writes onto every record of a
+    // submission. `metadata` is a free-form jsonb column that the public API, CSV import and MCP
+    // can also fill, so the two non-text dimensions read their value through a CASE that yields
+    // NULL for anything unparseable: a bare cast fails the whole query on a single malformed row.
+    // Records ingested before those keys existed carry no metadata and read as NULL here.
+    metadataSource: {
+      sql: `${CUBE}.metadata->>'source'`,
+      type: `string`,
+      description: `Channel the response came in through (e.g. link, app, email). Distinct from sourceType, which names the system the record came from (formbricks_survey, csv).`,
+    },
+
+    metadataUrl: {
+      sql: `${CUBE}.metadata->>'url'`,
+      type: `string`,
+      description: `Page the survey was answered on, reduced to origin + path — the query string and any personal-link token are stripped at ingestion. High cardinality: one bucket per path.`,
+    },
+
+    metadataBrowser: {
+      sql: `${CUBE}.metadata->>'browser'`,
+      type: `string`,
+      description: `Browser reported by the respondent's user agent (e.g. Chrome, Safari)`,
+    },
+
+    metadataOs: {
+      sql: `${CUBE}.metadata->>'os'`,
+      type: `string`,
+      description: `Operating system reported by the respondent's user agent (e.g. macOS, Android)`,
+    },
+
+    metadataDevice: {
+      sql: `${CUBE}.metadata->>'device'`,
+      type: `string`,
+      description: `Device class reported by the respondent's user agent (e.g. desktop, mobile)`,
+    },
+
+    metadataCountry: {
+      sql: `${CUBE}.metadata->>'country'`,
+      type: `string`,
+      description: `Country the response was collected from, as resolved at collection time`,
+    },
+
+    metadataAction: {
+      sql: `${CUBE}.metadata->>'action'`,
+      type: `string`,
+      description: `Name of the action that triggered the survey. App surveys only; NULL for link surveys.`,
+    },
+
+    metadataFinished: {
+      // LOWER on the extracted text rather than a jsonb_typeof check: a boolean stored as jsonb
+      // renders as 'true'/'false' here anyway, and this also accepts the string form a CSV or API
+      // writer can put in the same key. Anything else is NULL rather than a failed cast.
+      sql: `
+        CASE
+          WHEN LOWER(${CUBE}.metadata->>'finished') IN ('true', 'false')
+            THEN LOWER(${CUBE}.metadata->>'finished')::boolean
+        END
+      `,
+      type: `boolean`,
+      description: `Whether the respondent completed the survey. Live ingestion runs on responseFinished only, so this is true for everything except records from a historical import run over all responses.`,
+    },
+
+    metadataDurationSeconds: {
+      // The regex accepts both a jsonb number (rendered '42' / '42.5' by ->>) and the string form;
+      // everything else, including exponent notation, reads as no value instead of failing the cast.
+      // The digit counts are the cast guard, not cosmetic: an unbounded run of digits still matches
+      // "a number" but overflows double precision (400 nines) or underflows it (400 zeros after the
+      // point), and either raises 22003 for the whole query rather than nulling that one row. 15
+      // integer digits sit far inside the type's range and a duration in seconds never approaches
+      // them — ingestion clamps its own at a week.
+      //
+      // \A and \Z, not ^ and $, and that is load-bearing. Cube splices a dimension's SQL into its
+      // filter templates with String.prototype.replace, where this string is the REPLACEMENT
+      // argument — so a trailing `$'` is not a literal, it is the "everything after the match"
+      // token. Ending the pattern in `)?$'` made `set` / `notSet` on this dimension expand into
+      // the middle of the string literal and come back as HTTP 400. The Postgres string anchors
+      // carry no meaning to `replace` and match identically here.
+      sql: `
+        CASE
+          WHEN ${CUBE}.metadata->>'duration_seconds' ~ '\\A-?[0-9]{1,15}(\\.[0-9]{1,6})?\\Z'
+            THEN (${CUBE}.metadata->>'duration_seconds')::double precision
+        END
+      `,
+      type: `number`,
+      description: `Seconds the respondent took to complete the survey. A response-level value repeated on every record of the submission, so an average across records is weighted by question count.`,
+    },
+
+    metadataEndingId: {
+      sql: `${CUBE}.metadata->>'ending_id'`,
+      type: `string`,
+      description: `Id of the ending the respondent reached — the branch they came out of. Stored as the id, not the ending's text.`,
+    },
+
+    metadataSurveyType: {
+      sql: `${CUBE}.metadata->>'survey_type'`,
+      type: `string`,
+      description: `Type of the survey the response came from (link, app, website). Distinct from sourceType, which names the ingesting system.`,
+    },
+
     // ── Hub enrichment fields ─────────────────────────────────────────────────
     // Server-generated by the Hub enrichment workers (migrations 014/015); NULL
     // until a record is enriched. Values are machine-generated lowercase tokens.
@@ -412,6 +512,47 @@ cube(`FeedbackRecords`, {
 
     valueTextNormalized: {
       sql: `LOWER(TRIM(value_text))`,
+      type: `string`,
+      shown: false,
+    },
+
+    // Response-context companions. Only the values a person, a user agent or an importing client
+    // supplies get one; metadataEndingId and metadataSurveyType are values this product generates,
+    // so they cannot drift in casing. metadataUrl is excluded for a different reason: scheme and
+    // host are case-insensitive but the path is not, so folding case there would make /Foo and /foo
+    // the same bucket for an exact filter when they are two different pages.
+    metadataSourceNormalized: {
+      sql: `LOWER(TRIM(${CUBE}.metadata->>'source'))`,
+      type: `string`,
+      shown: false,
+    },
+
+    metadataBrowserNormalized: {
+      sql: `LOWER(TRIM(${CUBE}.metadata->>'browser'))`,
+      type: `string`,
+      shown: false,
+    },
+
+    metadataOsNormalized: {
+      sql: `LOWER(TRIM(${CUBE}.metadata->>'os'))`,
+      type: `string`,
+      shown: false,
+    },
+
+    metadataDeviceNormalized: {
+      sql: `LOWER(TRIM(${CUBE}.metadata->>'device'))`,
+      type: `string`,
+      shown: false,
+    },
+
+    metadataCountryNormalized: {
+      sql: `LOWER(TRIM(${CUBE}.metadata->>'country'))`,
+      type: `string`,
+      shown: false,
+    },
+
+    metadataActionNormalized: {
+      sql: `LOWER(TRIM(${CUBE}.metadata->>'action'))`,
       type: `string`,
       shown: false,
     },
