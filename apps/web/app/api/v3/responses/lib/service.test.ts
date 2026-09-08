@@ -52,10 +52,13 @@ const runTransaction = (result: unknown) => {
 };
 
 const deletedRow = (over: Record<string, unknown> = {}) => ({
-  displayId: null,
+  id: RESPONSE_ID,
+  finished: true,
+  surveyId: "svy_1",
   data: {},
+  meta: {},
+  displayId: null,
   survey: { blocks: [] },
-  quotaLinks: [],
   ...over,
 });
 
@@ -79,41 +82,64 @@ describe("deleteScopedResponse", () => {
   });
 
   /**
-   * Both of these vanish with the row — the file URLs live only inside `response.data`, and `quotaLinks`
-   * go with ON DELETE CASCADE. Reading them after the delete returns nothing, so the delete's own select
-   * is the only place they can come from.
+   * The file URLs live only inside `response.data`, so reading them after the delete returns nothing —
+   * the delete's own select is the only place they can come from. The same select carries the scalars
+   * the audit trail records, for the same reason: the row is gone afterwards.
    */
-  test("captures the file data and quota links in the delete's own select", async () => {
+  test("captures the file data and the audit scalars in the delete's own select", async () => {
     runTransaction(deletedRow());
 
     await deleteScopedResponse(RESPONSE_ID, SCOPE);
 
     const { select } = mockTxDelete.mock.calls[0][0];
     expect(select.data).toBe(true);
-    expect(select.quotaLinks).toBeDefined();
-    // Only the links that actually counted: a screened-out response never consumed quota capacity.
-    expect(select.quotaLinks.where).toStrictEqual({ status: "screenedIn" });
+    expect(select.survey).toStrictEqual({ select: { blocks: true } });
+    // What the audit event records. Losing any of these silently thins the trail.
+    for (const field of ["id", "createdAt", "finished", "surveyId", "meta", "ttc", "variables", "language"]) {
+      expect(select[field]).toBe(true);
+    }
   });
 
   /**
-   * The cascade removes the links, which fixes the count. It does not touch `SurveyQuota.limit`, so
-   * without this a deleted response keeps consuming capacity forever. Both management APIs miss it
-   * today; only the dashboard opts in.
+   * Regression guard, and the reason it is phrased as a never-call.
+   *
+   * `ResponseQuotaLink` is `onDelete: Cascade` and the repo's only fullness predicate is
+   * `screenedInCount >= quota.limit` over those live rows, so the cascade already returns the capacity.
+   * `reduceQuotaLimits` decrements `SurveyQuota.limit` — the customer's configured target — which
+   * cancels the freed slot and ratchets the limit down irreversibly. The dashboard exposes that as an
+   * explicit opt-in checkbox; an API delete must not do it silently.
+   *
+   * Asserted against the mock rather than the DB because the earlier version of this test asserted only
+   * that the mock *was* called, which cannot observe the direction of the effect. The real-Postgres
+   * counterpart in `service.integration.test.ts` measures the quota state itself.
    */
-  test("gives back the quota capacity the response consumed", async () => {
-    runTransaction(deletedRow({ quotaLinks: [{ quota: { id: "q_1" } }, { quota: { id: "q_2" } }] }));
-
-    await deleteScopedResponse(RESPONSE_ID, SCOPE);
-
-    expect(mockReduceQuotas).toHaveBeenCalledWith(["q_1", "q_2"], expect.anything());
-  });
-
-  test("skips the quota write when the response counted against nothing", async () => {
+  test("never shrinks the configured quota limit", async () => {
     runTransaction(deletedRow());
 
     await deleteScopedResponse(RESPONSE_ID, SCOPE);
 
     expect(mockReduceQuotas).not.toHaveBeenCalled();
+  });
+
+  /**
+   * A delete that does not record what it destroyed is not a reviewable audit trail. The survey join is
+   * a means to the file cleanup, not part of the row, so it must not ride along into the audit payload.
+   */
+  test("returns the deleted row for the audit trail, without the survey join", async () => {
+    runTransaction(deletedRow({ data: { q1: "answer" }, singleUseId: "sui_1" }));
+
+    const returned = await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(returned).toStrictEqual({
+      id: RESPONSE_ID,
+      finished: true,
+      surveyId: "svy_1",
+      data: { q1: "answer" },
+      meta: {},
+      displayId: null,
+      singleUseId: "sui_1",
+    });
+    expect(returned).not.toHaveProperty("survey");
   });
 
   test("deletes the linked display inside the same transaction", async () => {
@@ -156,13 +182,14 @@ describe("deleteScopedResponse", () => {
 
   /**
    * A failed file cleanup must not report a failed delete: the row is already gone and the caller's
-   * request succeeded. Orphaned objects are a storage problem, logged loudly.
+   * request succeeded. Orphaned objects are a storage problem, logged loudly. The audit row still comes
+   * back — the delete happened, so the trail must record it even though cleanup did not finish.
    */
-  test("still succeeds when storage cleanup fails", async () => {
+  test("still succeeds when storage cleanup fails, and still returns the audit row", async () => {
     runTransaction(deletedRow({ data: { screenshots: ["https://s/a.png"] } }));
     mockDeleteFiles.mockRejectedValue(new Error("storage down"));
 
-    await expect(deleteScopedResponse(RESPONSE_ID, SCOPE)).resolves.toBeUndefined();
+    await expect(deleteScopedResponse(RESPONSE_ID, SCOPE)).resolves.toMatchObject({ id: RESPONSE_ID });
   });
 
   /**

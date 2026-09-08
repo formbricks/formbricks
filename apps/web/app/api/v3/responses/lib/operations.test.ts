@@ -33,11 +33,18 @@ const wire = async (res: Response) => ({
   body: res.status === 204 ? null : await res.json(),
 });
 
+const DELETED_ROW = {
+  id: "clrsaaaaaaaaaaaaaaaaaaaa",
+  finished: true,
+  surveyId: "svy_1",
+  data: { q1: "answer" },
+} as never;
+
 describe("deleteV3Response", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRequireAccess.mockResolvedValue({ workspaceId: "ws_1", organizationId: "org_1" });
-    mockDelete.mockResolvedValue(undefined);
+    mockDelete.mockResolvedValue(DELETED_ROW);
   });
 
   test("deletes and answers 204 with no body", async () => {
@@ -121,5 +128,28 @@ describe("deleteV3Response", () => {
     await deleteV3Response({ ...params, auditLog });
 
     expect(auditLog).toMatchObject({ targetId: params.responseId, organizationId: "org_1" });
+  });
+
+  /**
+   * The row is gone after this, so the audit event is the only remaining record of what was destroyed.
+   * v1, v2 and `deleteV3FeedbackRecord` all record `oldObject`; a delete that omits it leaves an entry
+   * saying something was deleted and nothing about what.
+   */
+  test("records the deleted response as the audit event's oldObject", async () => {
+    mockGetWorkspaceId.mockResolvedValue("ws_1");
+    const auditLog = {} as never;
+
+    await deleteV3Response({ ...params, auditLog });
+
+    expect(auditLog).toHaveProperty("oldObject", DELETED_ROW);
+  });
+
+  test("records no oldObject when the delete never happened", async () => {
+    mockGetWorkspaceId.mockResolvedValue(null);
+    const auditLog = {} as never;
+
+    await deleteV3Response({ ...params, auditLog });
+
+    expect(auditLog).not.toHaveProperty("oldObject");
   });
 });
