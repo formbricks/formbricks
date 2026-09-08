@@ -19,9 +19,9 @@ import {
 } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
-  collectDeclaredFieldNames,
+  type TDeclaredFieldSource,
   describeDeclaredFieldNameErrors,
-  validateNewDeclaredFieldNames,
+  validateNewDeclaredFields,
 } from "@formbricks/types/surveys/declared-field-guard";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
@@ -52,16 +52,20 @@ import {
 } from "./utils";
 
 /**
- * ENG-1839: refuse reserved names for newly declared fields, as an `InvalidInputError` — which
- * `handleApiError` maps to a 400 carrying this message, and the editor surfaces as a toast. Thrown
- * before any transaction is opened, so a refusal never fails inside an interactive transaction.
+ * ENG-1839 / ENG-2933: refuse a reserved name, or a name shared by a variable and a hidden field,
+ * for newly declared fields — as an `InvalidInputError`, which `handleApiError` maps to a 400
+ * carrying this message, and the editor surfaces as a toast. Thrown before any transaction is
+ * opened, so a refusal never fails inside an interactive transaction.
  *
  * Deliberately NOT inside `reconcileEmbeddedData`: that runs in the transaction, and the survey copy
  * flow feeds a whole survey's fields to it as "new" against zero existing rows — guarding there
  * would make duplicating a grandfathered survey fail.
  */
-const assertNoReservedNewDeclaredFieldNames = (params: { existing: string[]; incoming: string[] }): void => {
-  const errors = validateNewDeclaredFieldNames(params);
+const assertValidNewDeclaredFields = (params: {
+  existing: TDeclaredFieldSource;
+  incoming: TDeclaredFieldSource;
+}): void => {
+  const errors = validateNewDeclaredFields(params);
   if (errors.length > 0) {
     throw new InvalidInputError(describeDeclaredFieldNameErrors(errors));
   }
@@ -379,17 +383,16 @@ export const updateSurveyInternal = async (
     // tenant's language. Mirrors the create path guard (covers drafts too — runs before validation).
     await assertSurveyLanguagesBelongToWorkspace(currentSurvey.workspaceId, languages);
 
-    // ENG-1839: a newly declared field may not take a reserved name. Runs here — before the
-    // transaction, and regardless of `skipValidation` — because this is an input-boundary check, not
-    // schema validation: `ZSurveyHiddenFields` stays lenient by design (the same schema parses
-    // surveys loaded from the database), so without this `PUT /api/v1/management/surveys/<id>` can
-    // still create a hidden field named `country` or `lang` that can never receive a value.
-    // Grandfathering is what makes it safe: `existing` carries everything this survey already
-    // declares, and any name in it passes untouched.
-    assertNoReservedNewDeclaredFieldNames({
-      existing: collectDeclaredFieldNames(currentSurvey),
-      incoming: collectDeclaredFieldNames(updatedSurvey),
-    });
+    // ENG-1839: a newly declared field may not take a reserved name. ENG-2933: nor may a variable and
+    // a hidden field newly share one — the reconcile cannot see that clash, because a variable is
+    // stored under its id and a hidden field under its name. Runs here — before the transaction, and
+    // regardless of `skipValidation` — because this is an input-boundary check, not schema
+    // validation: `ZSurveyHiddenFields` stays lenient by design (the same schema parses surveys
+    // loaded from the database), so without this `PUT /api/v1/management/surveys/<id>` can still
+    // create a hidden field named `country` or `lang` that can never receive a value, or a variable
+    // named after an existing hidden field. Grandfathering is what makes it safe: `existing` is
+    // everything this survey already declares, and any name — or clash — in it passes untouched.
+    assertValidNewDeclaredFields({ existing: currentSurvey, incoming: updatedSurvey });
 
     // ENG-1939/ENG-2115: validation may only be skipped for a draft-to-draft write, so BOTH sides of
     // the transition are gated. The lenient draft schema (ZSurveyDraft) does not validate elements at
@@ -884,10 +887,7 @@ export const createSurvey = async (
     // grandfather yet. Covers templates, `POST /api/v1/management/surveys` and the v3 create route.
     // The survey COPY flow does its own `tx.survey.create` and never reaches here, which is what
     // keeps duplicating a survey that already declares `country` working.
-    assertNoReservedNewDeclaredFieldNames({
-      existing: [],
-      incoming: collectDeclaredFieldNames(restSurveyBody),
-    });
+    assertValidNewDeclaredFields({ existing: {}, incoming: restSurveyBody });
 
     // An app survey can never be shown without a trigger, so block creating one directly in a
     // non-draft status with zero triggers (mirrors the editor's publish guard).
