@@ -161,3 +161,37 @@ describe("deleteScopedResponse quota effects, against real Postgres", () => {
     expect(await readQuotaState(quotaId)).toStrictEqual({ limit: 3, screenedInCount: 0, isFull: false });
   });
 });
+
+/**
+ * Concurrency, measured against real Postgres.
+ *
+ * The scoped `delete` is the ownership check *and* the write, and a loser must be refused rather than
+ * told it succeeded. That guarantee turned out to depend on the delete's `select`: on Prisma 7 a
+ * `delete` whose select pulls a relation is compiled as read-then-delete and hands back the read
+ * payload without checking the DELETE matched a row, so both racers resolve. Scalars only, and exactly
+ * one raises `P2025`. A live two-request race against the dev server produced two 204s before the fix.
+ */
+describe("deleteScopedResponse under concurrency, against real Postgres", () => {
+  test("two simultaneous deletes of the same response: exactly one succeeds", async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const mine = await makeWorkspaceWithResponse(`Race${attempt}`);
+
+      const outcomes = await Promise.allSettled([
+        deleteScopedResponse(mine.responseId, { workspaceId: mine.workspaceId }),
+        deleteScopedResponse(mine.responseId, { workspaceId: mine.workspaceId }),
+      ]);
+
+      const fulfilled = outcomes.filter((o) => o.status === "fulfilled");
+      const refused = outcomes.filter(
+        (o) => o.status === "rejected" && o.reason instanceof ResourceNotFoundError
+      );
+
+      expect({ attempt, fulfilled: fulfilled.length, refused: refused.length }).toStrictEqual({
+        attempt,
+        fulfilled: 1,
+        refused: 1,
+      });
+      expect(await prisma.response.count({ where: { id: mine.responseId } })).toBe(0);
+    }
+  });
+});
