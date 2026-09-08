@@ -480,4 +480,60 @@ describe("grandfathering at the v1 / v2 write boundary (updateSurvey)", () => {
     expect(served.variables).toHaveLength(1);
     await expectNoDrift(survey.id);
   });
+
+  // ENG-2933: the one write this boundary accepted and no other surface did. The reconcile cannot see
+  // it — a variable is stored under its cuid, a hidden field under its name — so the name guard is
+  // where it is refused, grandfathered exactly like a reserved name.
+  test("a PUT that gives a variable an existing hidden field's name is refused", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+
+    expect(
+      await putOutcome(survey, { variables: [{ id: VARIABLE_ID, name: "plan", type: "text", value: "" }] })
+    ).toEqual({ refused: "InvalidInputError" });
+
+    // Refused before the transaction opened: nothing was written.
+    expect((await readAsLegacyApi(survey.id)).variables).toEqual([]);
+  });
+
+  test("a PUT that gives a hidden field an existing variable's name is refused", async () => {
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
+    });
+
+    expect(await putOutcome(survey, { hiddenFields: { enabled: true, fieldIds: ["score"] } })).toEqual({
+      refused: "InvalidInputError",
+    });
+  });
+
+  test("a full PUT that resends a clash the survey already holds is accepted", async () => {
+    // The 46 production surveys: written straight into the columns before any surface checked. Their
+    // read-modify-write PUT resends both sides and must keep working.
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "first_name", type: "text", value: "" }],
+      hiddenFields: { enabled: true, fieldIds: ["first_name"] },
+    });
+
+    expect(await putOutcome(survey, { name: "Renamed via PUT" })).toBe("accepted");
+
+    const served = await readAsLegacyApi(survey.id);
+    expect(served.variables.map((variable) => variable.name)).toEqual(["first_name"]);
+    expect(served.hiddenFields.fieldIds).toEqual(["first_name"]);
+    await expectNoDrift(survey.id);
+  });
+
+  test("a grandfathered clash does not license a new one", async () => {
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "first_name", type: "text", value: "" }],
+      hiddenFields: { enabled: true, fieldIds: ["first_name", "plan"] },
+    });
+
+    expect(
+      await putOutcome(survey, {
+        variables: [
+          ...survey.variables,
+          { id: "clvar123456789012345678903", name: "plan", type: "text", value: "" },
+        ],
+      })
+    ).toEqual({ refused: "InvalidInputError" });
+  });
 });
