@@ -785,6 +785,28 @@ async function runV3SurveyDocumentMutation({
       });
     }
 
+    // Legacy question-based surveys have no v3 block list. Without this the block endpoints would
+    // reach the serializer, throw V3SurveyUnsupportedShapeError and answer 400 — attributing a
+    // property of the stored survey to the caller's request, and contradicting the 422
+    // `stored_survey_invalid` the contract documents. PATCH already reports it that way via prepare.
+    if (Array.isArray(survey.questions) && survey.questions.length > 0) {
+      log.warn({ statusCode: 422, workspaceId }, "Legacy question-based survey is not v3-editable");
+      return problemUnprocessableContent(
+        requestId,
+        "The stored survey does not satisfy the v3 survey document contract, so this request was not evaluated. Legacy question-based surveys are not supported by the v3 survey management API.",
+        {
+          code: "stored_survey_invalid",
+          instance,
+          invalid_params: [
+            {
+              name: "survey",
+              reason: "Legacy question-based surveys are not supported by the v3 survey management API",
+            },
+          ],
+        }
+      );
+    }
+
     // Serialized lazily: PATCH must not pay for it, and a legacy question-based survey would throw
     // out of the serializer as a 400 here instead of the 422 the prepare step already gives it.
     let cachedResource: ReturnType<typeof serializeV3SurveyResource> | undefined;
