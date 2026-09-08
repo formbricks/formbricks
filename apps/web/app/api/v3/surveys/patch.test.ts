@@ -12,7 +12,7 @@ import {
   normalizeSurveyScheduling,
   reconcileDueSurveySchedules,
 } from "@/modules/survey/scheduling/lib/survey-scheduling";
-import { executeV3SurveyPatch, patchV3Survey } from "./patch";
+import { V3SurveyStaleError, executeV3SurveyPatch, patchV3Survey } from "./patch";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import {
@@ -31,6 +31,7 @@ vi.mock("@formbricks/database", () => {
     },
     survey: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       update: vi.fn(),
     },
     segment: {
@@ -843,6 +844,94 @@ describe("patchV3Survey", () => {
       ).rejects.toThrow(V3SurveyReferenceValidationError);
 
       expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("optimistic concurrency (ENG-3069)", () => {
+    const expectedUpdatedAt = new Date("2026-04-21T10:00:00.000Z");
+    const movedOnAt = new Date("2026-04-21T11:30:00.000Z");
+
+    const rejectWithP2025 = (): void => {
+      vi.mocked(prisma.survey.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("no rows", { code: "P2025", clientVersion: "7" })
+      );
+    };
+
+    test("passes the expected updatedAt into the update's where clause", async () => {
+      await patchV3Survey(currentSurvey, { name: "CAS" }, "req_cas_1", "org_1", { expectedUpdatedAt });
+
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: currentSurvey.id, updatedAt: expectedUpdatedAt } })
+      );
+    });
+
+    test("omits updatedAt from the where clause when no precondition is supplied", async () => {
+      await patchV3Survey(currentSurvey, { name: "no CAS" }, "req_cas_2", "org_1");
+
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: currentSurvey.id } })
+      );
+    });
+
+    test("rejects a stale precondition before attempting the write", async () => {
+      const stale = new Date("2026-04-20T09:00:00.000Z");
+
+      await expect(
+        patchV3Survey(currentSurvey, { name: "stale" }, "req_cas_3", "org_1", { expectedUpdatedAt: stale })
+      ).rejects.toMatchObject({
+        name: "V3SurveyStaleError",
+        detectedAt: "read",
+        expectedUpdatedAt: stale,
+        currentUpdatedAt: currentSurvey.updatedAt,
+      });
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("turns a P2025 under a precondition into a stale error carrying the live updatedAt", async () => {
+      // The row moved on between the authorized read and the compare-and-set — the race the early
+      // check cannot see.
+      rejectWithP2025();
+      vi.mocked(prisma.survey.findFirst).mockResolvedValue({ updatedAt: movedOnAt } as never);
+
+      await expect(
+        patchV3Survey(currentSurvey, { name: "raced" }, "req_cas_4", "org_1", { expectedUpdatedAt })
+      ).rejects.toMatchObject({
+        name: "V3SurveyStaleError",
+        detectedAt: "write",
+        currentUpdatedAt: movedOnAt,
+      });
+
+      expect(prisma.survey.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: currentSurvey.id, workspaceId: currentSurvey.workspaceId },
+        })
+      );
+    });
+
+    test("turns a P2025 into not-found when the survey is actually gone", async () => {
+      rejectWithP2025();
+      vi.mocked(prisma.survey.findFirst).mockResolvedValue(null as never);
+
+      await expect(
+        patchV3Survey(currentSurvey, { name: "deleted" }, "req_cas_5", "org_1", { expectedUpdatedAt })
+      ).rejects.toBeInstanceOf(ResourceNotFoundError);
+    });
+
+    test("leaves P2025 as a database error when there is no precondition", async () => {
+      rejectWithP2025();
+
+      await expect(
+        patchV3Survey(currentSurvey, { name: "x" }, "req_cas_6", "org_1")
+      ).rejects.toBeInstanceOf(DatabaseError);
+      expect(prisma.survey.findFirst).not.toHaveBeenCalled();
+    });
+
+    test("V3SurveyStaleError carries both timestamps for the 409 body", () => {
+      const err = new V3SurveyStaleError(expectedUpdatedAt, movedOnAt, "write");
+      expect(err.name).toBe("V3SurveyStaleError");
+      expect(err.expectedUpdatedAt).toBe(expectedUpdatedAt);
+      expect(err.currentUpdatedAt).toBe(movedOnAt);
     });
   });
 });

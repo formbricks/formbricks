@@ -168,13 +168,54 @@ async function buildV3AppSurveyPatchWrites(params: {
   return { segmentId, filters: nextFilters };
 }
 
+/**
+ * Optimistic-concurrency precondition (ENG-3069): the `updatedAt` the caller last read.
+ * Enforced as a compare-and-set in the UPDATE's own `where`, so there is no read-then-write window.
+ */
+export type TV3SurveyWritePrecondition = { expectedUpdatedAt: Date };
+
+export class V3SurveyStaleError extends Error {
+  constructor(
+    readonly expectedUpdatedAt: Date,
+    readonly currentUpdatedAt: Date,
+    /** Whether the early read caught it, or the compare-and-set did. Useful for judging real races. */
+    readonly detectedAt: "read" | "write"
+  ) {
+    super("Survey was modified since it was last read");
+    this.name = "V3SurveyStaleError";
+  }
+}
+
+/**
+ * A P2025 under a precondition is ambiguous: either the row moved on, or the survey is gone. One
+ * cheap re-read separates the 409 from the existing not-found path. Scoped by workspace even though
+ * the caller is already authorized for this id — an unscoped findUnique-by-id is the shape that gets
+ * copy-pasted somewhere it is not safe.
+ */
+async function resolveStaleOrMissing(
+  currentSurvey: TSurvey,
+  precondition: TV3SurveyWritePrecondition
+): Promise<Error> {
+  const row = await prisma.survey.findFirst({
+    where: { id: currentSurvey.id, workspaceId: currentSurvey.workspaceId },
+    select: { updatedAt: true },
+  });
+
+  if (!row) {
+    return new ResourceNotFoundError("Survey", currentSurvey.id);
+  }
+
+  return new V3SurveyStaleError(precondition.expectedUpdatedAt, row.updatedAt, "write");
+}
+
 export async function executeV3SurveyPatch(params: {
   currentSurvey: TSurvey;
   document: TV3SurveyDocument;
   languageRequests: TV3SurveyLanguageRequest[];
   requestId?: string;
+  precondition?: TV3SurveyWritePrecondition;
 }): Promise<TSurvey> {
-  const { currentSurvey, document, languageRequests, requestId } = params;
+  const { currentSurvey, document, languageRequests, requestId, precondition } = params;
   const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
   if (mediaInvalidParams.length > 0) {
     throw new V3SurveyReferenceValidationError(mediaInvalidParams);
@@ -220,7 +261,18 @@ export async function executeV3SurveyPatch(params: {
       : null;
 
   const runSurveyUpdate = (client: Prisma.TransactionClient = prisma) =>
-    client.survey.update({ where: { id: currentSurvey.id }, data, select: selectSurvey });
+    client.survey.update({
+      // ENG-3069: compare-and-set. `updatedAt` is legal in a unique where (extendedWhereUnique), and
+      // Survey's @updatedAt bumps on every writer — so the row matches only if nobody has written
+      // since the caller's read. Two agents editing different blocks can no longer silently
+      // overwrite each other's whole `blocks` array.
+      where: {
+        id: currentSurvey.id,
+        ...(precondition ? { updatedAt: precondition.expectedUpdatedAt } : {}),
+      },
+      data,
+      select: selectSurvey,
+    });
 
   try {
     // Segment filters live on a separate row; when they change, write them in the SAME transaction as
@@ -248,6 +300,10 @@ export async function executeV3SurveyPatch(params: {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // Only meaningful under a precondition: without one, P2025 keeps its existing 500 semantics.
+      if (error.code === "P2025" && precondition) {
+        throw await resolveStaleOrMissing(currentSurvey, precondition);
+      }
       throw new DatabaseError(error.message);
     }
 
@@ -259,11 +315,18 @@ export async function patchV3Survey(
   currentSurvey: TSurvey,
   input: unknown,
   requestId?: string,
-  organizationId?: string
+  organizationId?: string,
+  precondition?: TV3SurveyWritePrecondition
 ): Promise<TSurvey> {
   const preparation = prepareV3SurveyPatchInput(currentSurvey, input);
   if (!preparation.ok) {
     throw new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
+  }
+
+  // Cheap pre-flight so a stale caller gets an accurate 409 without a write attempt. The
+  // compare-and-set below remains the actual guarantee — this only improves the error.
+  if (precondition && currentSurvey.updatedAt.getTime() !== precondition.expectedUpdatedAt.getTime()) {
+    throw new V3SurveyStaleError(precondition.expectedUpdatedAt, currentSurvey.updatedAt, "read");
   }
 
   await assertV3SurveyWritePermissions(
@@ -286,5 +349,6 @@ export async function patchV3Survey(
     document: preparation.document,
     languageRequests: preparation.languageRequests,
     requestId,
+    precondition,
   });
 }
