@@ -67,15 +67,16 @@ const runOneRecoveryAttempt = async (
   let redirectedTo = "";
   const redirect = (url: string) => {
     redirectedTo = url;
-    return new Error("redirect");
+    return new Error("sso-recovery-redirect");
   };
 
   await runWithSsoRequestContext(async () => {
     captureSsoIdentity({ email: VICTIM_EMAIL, providerAccountId });
-    // The handler signals its redirect by throwing, exactly as Better Auth expects.
-    await expect(
-      ssoRecoveryAfterHandler(makeCollisionCtx(redirect, providerId) as never)
-    ).rejects.toBeDefined();
+    // The handler signals its redirect by throwing, exactly as Better Auth expects. Matched on the
+    // sentinel rather than `toBeDefined()`, so a crash on the way there cannot read as a redirect.
+    await expect(ssoRecoveryAfterHandler(makeCollisionCtx(redirect, providerId) as never)).rejects.toThrow(
+      "sso-recovery-redirect"
+    );
   });
 
   expect(redirectedTo).toContain("/auth/verification-requested");

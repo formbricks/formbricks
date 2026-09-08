@@ -236,15 +236,21 @@ describe("SSO recovery intent", () => {
      * holding a state id keep an intent alive forever. `createdAt` never moves, so the slide is capped.
      */
     test("clamps the TTL so a refresh cannot push expiry past the absolute lifetime", async () => {
+      const now = Date.now();
       const stateId = await createSsoRecoveryIntent(intentInput);
-      // Six and a half days in: less than one link TTL of absolute lifetime is left.
-      const createdAt = Date.now() - (MAX_LIFETIME_MS - LINK_TTL_MS / 2);
+      // Six and a half days in: half a link TTL of absolute lifetime left. The record keeps the full
+      // TTL it was issued with, so a refresh that does nothing also fails the expiry assertion below.
+      const createdAt = now - (MAX_LIFETIME_MS - LINK_TTL_MS / 2);
 
       await refreshSsoRecoveryIntent(stateId, storedIntent(createdAt));
 
       const { ttlMs } = [...store.values()][0];
+      // The resulting EXPIRY, measured from now — not the TTL in isolation. `createdAt + ttlMs` versus
+      // `createdAt + MAX_LIFETIME_MS` cancels `createdAt` and only says `ttlMs <= MAX_LIFETIME_MS`,
+      // which a full link TTL always satisfies. Elapsed time cannot flake this: any drift after `now`
+      // shrinks the remaining lifetime, so `ttlMs` only ever comes out smaller.
+      expect(now + ttlMs!).toBeLessThanOrEqual(createdAt + MAX_LIFETIME_MS);
       expect(ttlMs).toBeLessThan(LINK_TTL_MS);
-      expect(createdAt + ttlMs!).toBeLessThanOrEqual(createdAt + MAX_LIFETIME_MS);
     });
 
     test("leaves the expiry alone once the absolute lifetime has elapsed", async () => {
