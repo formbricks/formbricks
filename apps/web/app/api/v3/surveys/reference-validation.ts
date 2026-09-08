@@ -486,6 +486,38 @@ function misorderedIssue(
   return { name, reason, code: "misordered_reference", identifier, referenceType };
 }
 
+/** Report every `#recall:` token in one string that points at or after `position`. */
+function addRecallViolationsInText(
+  text: string,
+  path: string,
+  position: number,
+  scopeKey: string,
+  positions: Map<string, TElementPosition>,
+  violations: TPrecedenceViolation[]
+): void {
+  for (const match of text.matchAll(/#recall:([A-Za-z0-9_-]+)/g)) {
+    const recallId = match[1];
+    const target = positions.get(recallId);
+    // Unknown ids, variables and hidden fields are not position-checked: the first is a dangling
+    // reference (reported elsewhere) and the other two are available from the start.
+    if (!target || target.flatIndex < position) {
+      continue;
+    }
+
+    violations.push({
+      key: `recall|${scopeKey}|${recallId}`,
+      issue: misorderedIssue(
+        path,
+        position < 0
+          ? `Recall reference '${recallId}' cannot be used here because no element has been answered yet; only hidden fields and variables can be recalled before the first block`
+          : `Recall reference '${recallId}' points at an element that appears later in the survey (${target.path}); a recall can only use elements shown before it`,
+        recallId,
+        "recall"
+      ),
+    });
+  }
+}
+
 /** Walk any nested value for `#recall:` tokens, reporting those that point at or after `position`. */
 function addRecallPrecedenceViolations(
   value: unknown,
@@ -496,27 +528,7 @@ function addRecallPrecedenceViolations(
   violations: TPrecedenceViolation[]
 ): void {
   if (typeof value === "string") {
-    for (const match of value.matchAll(/#recall:([A-Za-z0-9_-]+)/g)) {
-      const recallId = match[1];
-      const target = positions.get(recallId);
-      // Unknown ids, variables and hidden fields are not position-checked: the first is a dangling
-      // reference (reported elsewhere) and the other two are available from the start.
-      if (!target || target.flatIndex < position) {
-        continue;
-      }
-
-      violations.push({
-        key: `recall|${scopeKey}|${recallId}`,
-        issue: misorderedIssue(
-          path,
-          position < 0
-            ? `Recall reference '${recallId}' cannot be used here because no element has been answered yet; only hidden fields and variables can be recalled before the first block`
-            : `Recall reference '${recallId}' points at an element that appears later in the survey (${target.path}); a recall can only use elements shown before it`,
-          recallId,
-          "recall"
-        ),
-      });
-    }
+    addRecallViolationsInText(value, path, position, scopeKey, positions, violations);
     return;
   }
 

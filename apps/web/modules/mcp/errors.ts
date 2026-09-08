@@ -15,8 +15,8 @@ type TMcpErrorPayload = {
     // ENG-3069: a 409 carries `expectedUpdatedAt`/`currentUpdatedAt` here. Dropping it would leave an
     // agent with a retry it cannot perform — it would have to re-read the whole survey to learn the
     // timestamp the error already knew.
-    details?: ProblemBody["details"];
-    invalid_params?: ProblemBody["invalid_params"];
+    details?: NonNullable<ProblemBody["details"]>;
+    invalid_params?: NonNullable<ProblemBody["invalid_params"]>;
   };
 };
 
