@@ -1,7 +1,316 @@
 {
+  "name": "Logic showcase",
+  "surveyId": "SV_fixture000000000",
+  "defaultLanguageCode": "en-US",
+  "languageCodes": [],
+  "unknownLanguageCodes": [],
+  "questions": {
+    "QID1": {
+      "qid": "QID1",
+      "exportTag": "Q1",
+      "type": "MC",
+      "selector": "SAVR",
+      "subSelector": "TX",
+      "text": "Do you use our product?",
+      "description": "Do you use our product?",
+      "choices": [
+        {
+          "id": "1",
+          "display": "Yes",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "No",
+          "textEntry": false
+        }
+      ],
+      "answers": [],
+      "validation": {
+        "forceResponse": "ON",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": [
+        {
+          "SkipLogicID": "SL_1",
+          "ChoiceLocator": "q://QID1/SelectableChoice/2",
+          "Condition": "Selected",
+          "SkipToDestination": "ENDOFSURVEY",
+          "SkipToDescription": "End of Survey",
+          "Locator": "q://QID1/SelectableChoice/2",
+          "Type": "SkipLogic"
+        }
+      ],
+      "randomization": null,
+      "translations": {}
+    },
+    "QID2": {
+      "qid": "QID2",
+      "exportTag": "Q2",
+      "type": "MC",
+      "selector": "SAVR",
+      "subSelector": "TX",
+      "text": "How often?",
+      "description": "How often?",
+      "choices": [
+        {
+          "id": "1",
+          "display": "Daily",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "Weekly",
+          "textEntry": false
+        },
+        {
+          "id": "3",
+          "display": "Rarely",
+          "textEntry": false
+        }
+      ],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": {
+        "0": {
+          "0": {
+            "LogicType": "Question",
+            "QuestionID": "QID1",
+            "QuestionIsInLoop": "no",
+            "ChoiceLocator": "q://QID1/SelectableChoice/1",
+            "Operator": "Selected",
+            "QuestionIDFromLocator": "QID1",
+            "LeftOperand": "q://QID1/SelectableChoice/1",
+            "Type": "Expression",
+            "Description": "If Do you use our product? Yes Is Selected"
+          },
+          "Type": "If"
+        },
+        "Type": "BooleanExpression",
+        "inPage": false
+      },
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID3": {
+      "qid": "QID3",
+      "exportTag": "Q3",
+      "type": "MC",
+      "selector": "DL",
+      "subSelector": null,
+      "text": "Which region are you in?",
+      "description": "Which region are you in?",
+      "choices": [
+        {
+          "id": "1",
+          "display": "EU",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "US",
+          "textEntry": false
+        },
+        {
+          "id": "3",
+          "display": "Other",
+          "textEntry": false
+        }
+      ],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": [
+        {
+          "SkipLogicID": "SL_2",
+          "ChoiceLocator": "q://QID3/SelectableChoice/3",
+          "Condition": "Selected",
+          "SkipToDestination": "QID5",
+          "SkipToDescription": "Any final comments?",
+          "Locator": "q://QID3/SelectableChoice/3",
+          "Type": "SkipLogic"
+        }
+      ],
+      "randomization": null,
+      "translations": {}
+    },
+    "QID4": {
+      "qid": "QID4",
+      "exportTag": "Q4",
+      "type": "MC",
+      "selector": "SAVR",
+      "subSelector": "TX",
+      "text": "EU: are you GDPR compliant?",
+      "description": "EU: are you GDPR compliant?",
+      "choices": [
+        {
+          "id": "1",
+          "display": "Yes",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "No",
+          "textEntry": false
+        }
+      ],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": {
+        "0": {
+          "0": {
+            "LogicType": "EmbeddedField",
+            "LeftOperand": "region",
+            "Operator": "EqualTo",
+            "RightOperand": "DE",
+            "Type": "Expression",
+            "Description": "If region Is Equal to DE"
+          },
+          "Type": "If"
+        },
+        "Type": "BooleanExpression",
+        "inPage": false
+      },
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID5": {
+      "qid": "QID5",
+      "exportTag": "Q5",
+      "type": "TE",
+      "selector": "ML",
+      "subSelector": null,
+      "text": "Any final comments?",
+      "description": "Any final comments?",
+      "choices": [],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID6": {
+      "qid": "QID6",
+      "exportTag": "Q6",
+      "type": "TE",
+      "selector": "SL",
+      "subSelector": null,
+      "text": "Unreadable logic",
+      "description": "Unreadable logic",
+      "choices": [],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": {
+        "0": {
+          "0": {
+            "Type": "Expression",
+            "LogicType": "Quota"
+          },
+          "Type": "If"
+        },
+        "Type": "BooleanExpression"
+      },
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    }
+  },
   "blocks": [
     {
+      "id": "BL_1",
       "description": "Usage",
+      "type": "Default",
       "elements": [
         {
           "kind": "question",
@@ -18,23 +327,23 @@
           "kind": "question",
           "qid": "QID3"
         }
-      ],
-      "id": "BL_1",
-      "type": "Default"
+      ]
     },
     {
+      "id": "BL_2",
       "description": "Compliance",
+      "type": "Standard",
       "elements": [
         {
           "kind": "question",
           "qid": "QID4"
         }
-      ],
-      "id": "BL_2",
-      "type": "Standard"
+      ]
     },
     {
+      "id": "BL_3",
       "description": "Wrap up",
+      "type": "Standard",
       "elements": [
         {
           "kind": "question",
@@ -44,372 +353,67 @@
           "kind": "question",
           "qid": "QID6"
         }
-      ],
-      "id": "BL_3",
-      "type": "Standard"
+      ]
     }
   ],
-  "defaultLanguageCode": "en-US",
-  "embeddedDataFields": ["region"],
   "flow": [
     {
-      "fields": ["region"],
-      "type": "EmbeddedData"
+      "type": "EmbeddedData",
+      "fields": [
+        "region"
+      ]
     },
     {
-      "id": "BL_1",
-      "type": "Block"
+      "type": "Block",
+      "id": "BL_1"
     },
     {
-      "children": [
-        {
-          "id": "BL_2",
-          "type": "Block"
-        }
-      ],
-      "description": "EU branch",
+      "type": "Branch",
       "logic": {
         "0": {
           "0": {
-            "ChoiceLocator": "q://QID3/SelectableChoice/1",
-            "Description": "If Which region are you in? EU Is Selected",
-            "LeftOperand": "q://QID3/SelectableChoice/1",
             "LogicType": "Question",
-            "Operator": "Selected",
             "QuestionID": "QID3",
-            "QuestionIDFromLocator": "QID3",
             "QuestionIsInLoop": "no",
-            "Type": "Expression"
+            "ChoiceLocator": "q://QID3/SelectableChoice/1",
+            "Operator": "Selected",
+            "QuestionIDFromLocator": "QID3",
+            "LeftOperand": "q://QID3/SelectableChoice/1",
+            "Type": "Expression",
+            "Description": "If Which region are you in? EU Is Selected"
           },
           "Type": "If"
         },
         "Type": "BooleanExpression",
         "inPage": false
       },
-      "type": "Branch"
+      "description": "EU branch",
+      "children": [
+        {
+          "type": "Block",
+          "id": "BL_2"
+        }
+      ]
     },
     {
-      "id": "BL_3",
-      "type": "Block"
+      "type": "Block",
+      "id": "BL_3"
     },
     {
       "type": "EndSurvey"
     }
   ],
-  "issues": [],
-  "languageCodes": [],
-  "name": "Logic showcase",
   "options": {
     "backButton": false,
+    "progressBar": "None",
     "eosMessage": null,
     "eosRedirectUrl": null,
     "nextButtonLabel": "→",
-    "partialData": "+1 week",
     "previousButtonLabel": "←",
-    "progressBar": "None"
+    "partialData": "+1 week"
   },
-  "questions": {
-    "QID1": {
-      "answers": [],
-      "choices": [
-        {
-          "display": "Yes",
-          "id": "1",
-          "textEntry": false
-        },
-        {
-          "display": "No",
-          "id": "2",
-          "textEntry": false
-        }
-      ],
-      "configuration": {
-        "descriptionOption": "UseText",
-        "gridLines": null,
-        "numDecimals": null,
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        },
-        "sliderMax": null,
-        "sliderMin": null
-      },
-      "description": "Do you use our product?",
-      "displayLogic": null,
-      "exportTag": "Q1",
-      "qid": "QID1",
-      "randomization": null,
-      "selector": "SAVR",
-      "skipLogic": [
-        {
-          "ChoiceLocator": "q://QID1/SelectableChoice/2",
-          "Condition": "Selected",
-          "Locator": "q://QID1/SelectableChoice/2",
-          "SkipLogicID": "SL_1",
-          "SkipToDescription": "End of Survey",
-          "SkipToDestination": "ENDOFSURVEY",
-          "Type": "SkipLogic"
-        }
-      ],
-      "subSelector": "TX",
-      "text": "Do you use our product?",
-      "translations": {},
-      "type": "MC",
-      "validation": {
-        "contentType": null,
-        "forceResponse": "ON",
-        "maxChars": null,
-        "minChars": null
-      }
-    },
-    "QID2": {
-      "answers": [],
-      "choices": [
-        {
-          "display": "Daily",
-          "id": "1",
-          "textEntry": false
-        },
-        {
-          "display": "Weekly",
-          "id": "2",
-          "textEntry": false
-        },
-        {
-          "display": "Rarely",
-          "id": "3",
-          "textEntry": false
-        }
-      ],
-      "configuration": {
-        "descriptionOption": "UseText",
-        "gridLines": null,
-        "numDecimals": null,
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        },
-        "sliderMax": null,
-        "sliderMin": null
-      },
-      "description": "How often?",
-      "displayLogic": {
-        "0": {
-          "0": {
-            "ChoiceLocator": "q://QID1/SelectableChoice/1",
-            "Description": "If Do you use our product? Yes Is Selected",
-            "LeftOperand": "q://QID1/SelectableChoice/1",
-            "LogicType": "Question",
-            "Operator": "Selected",
-            "QuestionID": "QID1",
-            "QuestionIDFromLocator": "QID1",
-            "QuestionIsInLoop": "no",
-            "Type": "Expression"
-          },
-          "Type": "If"
-        },
-        "Type": "BooleanExpression",
-        "inPage": false
-      },
-      "exportTag": "Q2",
-      "qid": "QID2",
-      "randomization": null,
-      "selector": "SAVR",
-      "skipLogic": null,
-      "subSelector": "TX",
-      "text": "How often?",
-      "translations": {},
-      "type": "MC",
-      "validation": {
-        "contentType": null,
-        "forceResponse": "OFF",
-        "maxChars": null,
-        "minChars": null
-      }
-    },
-    "QID3": {
-      "answers": [],
-      "choices": [
-        {
-          "display": "EU",
-          "id": "1",
-          "textEntry": false
-        },
-        {
-          "display": "US",
-          "id": "2",
-          "textEntry": false
-        },
-        {
-          "display": "Other",
-          "id": "3",
-          "textEntry": false
-        }
-      ],
-      "configuration": {
-        "descriptionOption": "UseText",
-        "gridLines": null,
-        "numDecimals": null,
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        },
-        "sliderMax": null,
-        "sliderMin": null
-      },
-      "description": "Which region are you in?",
-      "displayLogic": null,
-      "exportTag": "Q3",
-      "qid": "QID3",
-      "randomization": null,
-      "selector": "DL",
-      "skipLogic": [
-        {
-          "ChoiceLocator": "q://QID3/SelectableChoice/3",
-          "Condition": "Selected",
-          "Locator": "q://QID3/SelectableChoice/3",
-          "SkipLogicID": "SL_2",
-          "SkipToDescription": "Any final comments?",
-          "SkipToDestination": "QID5",
-          "Type": "SkipLogic"
-        }
-      ],
-      "subSelector": null,
-      "text": "Which region are you in?",
-      "translations": {},
-      "type": "MC",
-      "validation": {
-        "contentType": null,
-        "forceResponse": "OFF",
-        "maxChars": null,
-        "minChars": null
-      }
-    },
-    "QID4": {
-      "answers": [],
-      "choices": [
-        {
-          "display": "Yes",
-          "id": "1",
-          "textEntry": false
-        },
-        {
-          "display": "No",
-          "id": "2",
-          "textEntry": false
-        }
-      ],
-      "configuration": {
-        "descriptionOption": "UseText",
-        "gridLines": null,
-        "numDecimals": null,
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        },
-        "sliderMax": null,
-        "sliderMin": null
-      },
-      "description": "EU: are you GDPR compliant?",
-      "displayLogic": {
-        "0": {
-          "0": {
-            "Description": "If region Is Equal to DE",
-            "LeftOperand": "region",
-            "LogicType": "EmbeddedField",
-            "Operator": "EqualTo",
-            "RightOperand": "DE",
-            "Type": "Expression"
-          },
-          "Type": "If"
-        },
-        "Type": "BooleanExpression",
-        "inPage": false
-      },
-      "exportTag": "Q4",
-      "qid": "QID4",
-      "randomization": null,
-      "selector": "SAVR",
-      "skipLogic": null,
-      "subSelector": "TX",
-      "text": "EU: are you GDPR compliant?",
-      "translations": {},
-      "type": "MC",
-      "validation": {
-        "contentType": null,
-        "forceResponse": "OFF",
-        "maxChars": null,
-        "minChars": null
-      }
-    },
-    "QID5": {
-      "answers": [],
-      "choices": [],
-      "configuration": {
-        "descriptionOption": "UseText",
-        "gridLines": null,
-        "numDecimals": null,
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        },
-        "sliderMax": null,
-        "sliderMin": null
-      },
-      "description": "Any final comments?",
-      "displayLogic": null,
-      "exportTag": "Q5",
-      "qid": "QID5",
-      "randomization": null,
-      "selector": "ML",
-      "skipLogic": null,
-      "subSelector": null,
-      "text": "Any final comments?",
-      "translations": {},
-      "type": "TE",
-      "validation": {
-        "contentType": null,
-        "forceResponse": "OFF",
-        "maxChars": null,
-        "minChars": null
-      }
-    },
-    "QID6": {
-      "answers": [],
-      "choices": [],
-      "configuration": {
-        "descriptionOption": "UseText",
-        "gridLines": null,
-        "numDecimals": null,
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        },
-        "sliderMax": null,
-        "sliderMin": null
-      },
-      "description": "Unreadable logic",
-      "displayLogic": {
-        "0": {
-          "0": {
-            "LogicType": "Quota",
-            "Type": "Expression"
-          },
-          "Type": "If"
-        },
-        "Type": "BooleanExpression"
-      },
-      "exportTag": "Q6",
-      "qid": "QID6",
-      "randomization": null,
-      "selector": "SL",
-      "skipLogic": null,
-      "subSelector": null,
-      "text": "Unreadable logic",
-      "translations": {},
-      "type": "TE",
-      "validation": {
-        "contentType": null,
-        "forceResponse": "OFF",
-        "maxChars": null,
-        "minChars": null
-      }
-    }
-  },
-  "surveyId": "SV_fixture000000000",
-  "unknownLanguageCodes": []
+  "embeddedDataFields": [
+    "region"
+  ],
+  "issues": []
 }

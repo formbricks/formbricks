@@ -31,3 +31,6 @@ charts/**/templates/
 # otherwise every regeneration of the block turns format:check red on whichever
 # unrelated PR happens to carry it.
 AGENTS.md
+
+# QSF parser goldens are byte-exact JSON.stringify output written by vitest toMatchFileSnapshot
+apps/web/modules/survey/import/lanes/qsf/__fixtures__/*.expected.json
