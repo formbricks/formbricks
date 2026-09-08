@@ -1,0 +1,37 @@
+oneOf:
+  - type: object
+    additionalProperties: false
+    required:
+      - type
+    properties:
+      type:
+        type: string
+        enum:
+          - start
+        description: Insert before every existing block.
+  - type: object
+    additionalProperties: false
+    required:
+      - type
+    properties:
+      type:
+        type: string
+        enum:
+          - end
+        description: Insert after every existing block.
+  - type: object
+    additionalProperties: false
+    required:
+      - type
+      - blockId
+    properties:
+      type:
+        type: string
+        enum:
+          - after
+      blockId:
+        type: string
+        description: >
+          Block to insert after. May be a block inserted by an earlier operation in the same
+          request, since operations are applied in order.
+description: Where an inserted block goes. Anchored to a block id, never to a positional index.

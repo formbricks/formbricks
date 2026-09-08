@@ -1136,6 +1136,262 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+  /api/v3/surveys/{surveyId}/blocks:
+    patch:
+      operationId: editSurveyBlocksV3
+      summary: Edit survey blocks
+      description: |
+        Edits a survey's blocks in place — update, insert or remove whole blocks without resending the ones you are not changing. Operations apply in order against a single snapshot and are applied atomically: either all of them land or none do.
+
+        Blocks are addressed by id, never by position, so a concurrent edit cannot silently redirect an operation onto a different block. An `update` replaces the target block entirely, the same whole-subtree rule `PATCH /api/v3/surveys/{surveyId}` uses, and the replacement must carry every language the survey has configured.
+
+        Pass `expectedUpdatedAt` (the `updatedAt` from your last read) to make the write conditional; see the **409** response. Session cookie or x-api-key.
+      tags:
+        - V3 Surveys
+      parameters:
+        - in: path
+          name: surveyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Survey identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditSurveyBlocksRequest'
+            examples:
+              updateOneBlock:
+                summary: Replace a single block
+                value:
+                  ops:
+                    - op: update
+                      id: k1p9wq2m4x7c3v8b5n6t0j2r
+                      block:
+                        id: k1p9wq2m4x7c3v8b5n6t0j2r
+                        name: Satisfaction
+                        elements:
+                          - id: satisfaction
+                            type: openText
+                            headline:
+                              en-US: How satisfied were you?
+                            required: true
+                            inputType: text
+                  expectedUpdatedAt: '2026-04-21T10:00:00.000Z'
+              insertAndRemove:
+                summary: Add a block after another and drop a third
+                value:
+                  ops:
+                    - op: insert
+                      position:
+                        type: after
+                        blockId: k1p9wq2m4x7c3v8b5n6t0j2r
+                      block:
+                        id: b4h8s2d6f0g3j5k7l9z1x3c5
+                        name: Follow-up
+                        elements:
+                          - id: followup
+                            type: openText
+                            headline:
+                              en-US: Anything else?
+                            required: false
+                            inputType: text
+                    - op: remove
+                      id: n7m4q8w2e6r0t3y5u1i9o2p4
+      responses:
+        '200':
+          description: Blocks updated; returns the full survey resource.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SurveyResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '409':
+          description: |
+            The survey changed since the `expectedUpdatedAt` you supplied. Nothing was written. The problem's `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`, so a client can re-read and retry without guessing.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: Survey was modified since it was last read; updatedAt is now 2026-04-21T11:30:00.000Z. Re-read the survey and retry.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  expectedUpdatedAt: '2026-04-21T10:00:00.000Z'
+                  currentUpdatedAt: '2026-04-21T11:30:00.000Z'
+        '422':
+          description: |
+            The request is well-formed but could not be applied. `invalid_params[].name` points at the operation that failed — `ops.<i>.…` — including for problems found while validating the resulting document, so a path always names something the caller sent. Blocks the request did not touch keep their `blocks.<i>` path, because a problem there is in the stored survey.
+
+            Common codes: `dangling_reference` (an id that is not on the survey), `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an inserted block with no id), `immutable_identifier` (`block.id` contradicting the op's `id`), and `stored_survey_invalid` when the stored survey itself fails the document contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                unknownBlock:
+                  summary: An operation names a block that is not on the survey
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: Block operations could not be applied
+                    code: unprocessable_content
+                    requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                    invalid_params:
+                      - name: ops.1.id
+                        reason: Block 'n7m4q8w2e6r0t3y5u1i9o2p4' does not exist on this survey
+                        code: dangling_reference
+                        identifier: n7m4q8w2e6r0t3y5u1i9o2p4
+                        referenceType: block
+                        missingId: n7m4q8w2e6r0t3y5u1i9o2p4
+                storedSurveyInvalid:
+                  summary: The stored survey fails the document contract
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: The stored survey does not satisfy the v3 survey document contract, so this request was not evaluated. The reported paths are into the stored survey, not your request; repair them in the editor.
+                    code: stored_survey_invalid
+                    requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                    invalid_params:
+                      - name: blocks.0.elements.0.headline
+                        reason: Translatable field is missing configured language 'de-DE'
+                        code: missing_translation
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/surveys/{surveyId}/blocks/order:
+    put:
+      operationId: setSurveyBlockOrderV3
+      summary: Set survey block order
+      description: |
+        Replaces the order of a survey's blocks. The body lists every current block id exactly once, in the order you want; block content is untouched.
+
+        Idempotent: the same `order` always yields the same survey, and an order that already matches performs no write at all, so `updatedAt` does not move and other callers' preconditions stay valid. Because the list must be a permutation, a dropped or duplicated block is rejected rather than silently applied — the failure mode that resending the whole `blocks` array cannot catch.
+
+        Pass `expectedUpdatedAt` (the `updatedAt` from your last read) to make the write conditional; see the **409** response. Session cookie or x-api-key.
+      tags:
+        - V3 Surveys
+      parameters:
+        - in: path
+          name: surveyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Survey identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetSurveyBlockOrderRequest'
+            examples:
+              reorder:
+                summary: Move the third block to the front
+                value:
+                  order:
+                    - b4h8s2d6f0g3j5k7l9z1x3c5
+                    - k1p9wq2m4x7c3v8b5n6t0j2r
+                    - n7m4q8w2e6r0t3y5u1i9o2p4
+                  expectedUpdatedAt: '2026-04-21T10:00:00.000Z'
+      responses:
+        '200':
+          description: Order applied (or already matching); returns the full survey resource.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SurveyResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '409':
+          description: |
+            The survey changed since the `expectedUpdatedAt` you supplied. Nothing was written; `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: Survey was modified since it was last read; updatedAt is now 2026-04-21T11:30:00.000Z. Re-read the survey and retry.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  expectedUpdatedAt: '2026-04-21T10:00:00.000Z'
+                  currentUpdatedAt: '2026-04-21T11:30:00.000Z'
+        '422':
+          description: |
+            The order is not a permutation of the survey's blocks. Unknown ids (`dangling_reference`), repeated ids (`duplicate_identifier`) and omitted blocks (`missing_required_field`, reported at `order`) are returned together.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Unprocessable Content
+                status: 422
+                detail: Block order must list every block exactly once
+                code: unprocessable_content
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                invalid_params:
+                  - name: order
+                    reason: Block 'n7m4q8w2e6r0t3y5u1i9o2p4' is missing from the order; list every block exactly once
+                    code: missing_required_field
+                    identifier: n7m4q8w2e6r0t3y5u1i9o2p4
+                    referenceType: block
+                    missingId: n7m4q8w2e6r0t3y5u1i9o2p4
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
   /api/v3/surveys/{surveyId}/archive:
     post:
       operationId: archiveSurveyV3
@@ -2565,6 +2821,7 @@ components:
             - invalid_reference
             - missing_required_field
             - missing_translation
+            - read_only_field
             - unsupported_field
             - unsupported_locale
           description: |
@@ -2639,6 +2896,7 @@ components:
             - payload_too_large
             - service_unavailable
             - too_many_requests
+            - stored_survey_invalid
             - unprocessable_content
             - workflow_not_executable
         requestId:
@@ -4687,6 +4945,136 @@ components:
           items:
             $ref: '#/components/schemas/SurveyValidationLanguage'
       additionalProperties: false
+    SurveyBlockInsertPosition:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - start
+              description: Insert before every existing block.
+        - type: object
+          additionalProperties: false
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - end
+              description: Insert after every existing block.
+        - type: object
+          additionalProperties: false
+          required:
+            - type
+            - blockId
+          properties:
+            type:
+              type: string
+              enum:
+                - after
+            blockId:
+              type: string
+              description: |
+                Block to insert after. May be a block inserted by an earlier operation in the same request, since operations are applied in order.
+      description: Where an inserted block goes. Anchored to a block id, never to a positional index.
+    SurveyBlockOperation:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required:
+            - op
+            - id
+            - block
+          properties:
+            op:
+              type: string
+              enum:
+                - update
+            id:
+              type: string
+              description: Block to replace.
+            block:
+              allOf:
+                - $ref: '#/components/schemas/SurveyBlock'
+              description: |
+                Replaces the target block entirely — the same whole-subtree rule PATCH uses. If `block.id` is present it must equal `id`.
+        - type: object
+          additionalProperties: false
+          required:
+            - op
+            - block
+            - position
+          properties:
+            op:
+              type: string
+              enum:
+                - insert
+            block:
+              allOf:
+                - $ref: '#/components/schemas/SurveyBlock'
+              description: New block. Must carry an `id` that does not already exist on the survey.
+            position:
+              $ref: '#/components/schemas/SurveyBlockInsertPosition'
+        - type: object
+          additionalProperties: false
+          required:
+            - op
+            - id
+          properties:
+            op:
+              type: string
+              enum:
+                - remove
+            id:
+              type: string
+              description: |
+                Block to delete, along with every element in it. Answers already collected for those elements are orphaned and the API cannot undo that.
+      discriminator:
+        propertyName: op
+      description: A single block operation.
+    EditSurveyBlocksRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - ops
+      properties:
+        ops:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/SurveyBlockOperation'
+          description: |
+            Operations applied in order against a single snapshot, atomically — either all of them land or none do. Each operation resolves against the state left by the previous one, so an insert may anchor after a block an earlier operation inserted, and a remove followed by an insert of the same id is legal.
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: |
+            Optimistic-concurrency precondition: the survey's `updatedAt` from your last read. If the survey changed since, the write is rejected with **409** and the response carries the current value. Omit it to accept last-write-wins.
+    SetSurveyBlockOrderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - order
+      properties:
+        order:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+          description: |
+            Every current block id, exactly once, in the desired order. A missing or unknown id is a **422** — which is what makes this safer than resending the blocks, since a dropped block cannot pass unnoticed.
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: |
+            Optimistic-concurrency precondition: the survey's `updatedAt` from your last read. If the survey changed since, the write is rejected with **409**.
     WorkflowStatus:
       type: string
       enum:

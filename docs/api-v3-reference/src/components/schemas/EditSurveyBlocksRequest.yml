@@ -1,0 +1,23 @@
+type: object
+additionalProperties: false
+required:
+  - ops
+properties:
+  ops:
+    type: array
+    minItems: 1
+    maxItems: 100
+    items:
+      $ref: SurveyBlockOperation.yml
+    description: >
+      Operations applied in order against a single snapshot, atomically — either all of them land or
+      none do. Each operation resolves against the state left by the previous one, so an insert may
+      anchor after a block an earlier operation inserted, and a remove followed by an insert of the
+      same id is legal.
+  expectedUpdatedAt:
+    type: string
+    format: date-time
+    description: >
+      Optimistic-concurrency precondition: the survey's `updatedAt` from your last read. If the
+      survey changed since, the write is rejected with **409** and the response carries the current
+      value. Omit it to accept last-write-wins.
