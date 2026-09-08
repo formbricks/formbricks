@@ -38,6 +38,15 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   patchV3SurveyResponse: vi.fn(),
   editV3SurveyBlocksResponse: vi.fn(),
   setV3SurveyBlockOrderResponse: vi.fn(),
+  // Real behaviour, not a vi.fn: the handler mints insert ids through this before building the
+  // `applied` list, so stubbing it out would hide whether the id reaches the caller. The real
+  // implementation is covered in app/api/v3/surveys/lib/operations.test.ts.
+  withGeneratedInsertIds: (ops: { op: string; block?: Record<string, unknown> }[]) =>
+    ops.map((op) =>
+      op.op === "insert" && op.block?.id === undefined
+        ? { ...op, block: { ...op.block, id: "generated_block_id" } }
+        : op
+    ),
   validateV3SurveyFromRawInput: vi.fn(),
 }));
 
@@ -761,6 +770,29 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
           applied: [{ op: "remove", id: "blk_b" }],
         },
         requestId: "req_tool",
+      });
+    });
+
+    test("reports the generated id of an inserted block, so the agent can reference it", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
+        successResponse(fullResource, { requestId: "req_tool" })
+      );
+
+      const result = await tools
+        .get("edit_survey_blocks")!
+        .handler(
+          { surveyId, ops: [{ op: "insert", block: { name: "No id" }, position: { type: "end" } }] },
+          { http: { authInfo } }
+        );
+
+      expect((result.structuredContent as any).data.applied).toEqual([
+        { op: "insert", id: "generated_block_id" },
+      ]);
+      // and the operation receives the same minted id, not a second one
+      expect(vi.mocked(editV3SurveyBlocksResponse).mock.calls[0][0].body).toMatchObject({
+        ops: [{ block: { id: "generated_block_id" } }],
       });
     });
 
