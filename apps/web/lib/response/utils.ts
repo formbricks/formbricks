@@ -152,7 +152,11 @@ const gateReservedEntries = (
   const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
   const shadowingNames = listShadowingNames(getSurveyEmbeddedFields(survey), elementIds);
 
-  return dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, shadowingNames).filter(isEligible);
+  return dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, shadowingNames).filter((entry) => {
+    if (!isEligible(entry)) return false;
+    if (entry.name === "ipAddress" && !survey.isCaptureIpEnabled) return false;
+    return true;
+  });
 };
 
 /**
@@ -168,18 +172,14 @@ const gateReservedEntries = (
  * - shadowed entries drop (`dropShadowedReservedEntries`) — a survey declaring `url` keeps its
  *   declared column and never gets the reserved one, same rule as the renderer and response table;
  * - the four facts the fixed basic columns already carry are skipped (one column per fact);
+ * - `ipAddress` is only a column when the survey captures it (`isCaptureIpEnabled`).
  *
- * **Neither privacy toggle is a gate here (ENG-2892).** Both act at ingest — `applyAnonymizePolicy`
- * for `isAnonymizeResponsesEnabled`, the capture check for `isCaptureIpEnabled` — so responses
- * collected before either was turned off still hold the values, the response card and table keep
- * showing them, and `isAnonymizeResponsesEnabled`'s own description promises that responses already
- * collected are not changed. Gating the columns hid that history from the CSV/XLSX alone, which is
- * the one surface that cannot show a value it has no column for.
- *
- * That covers all five `privacy: "drop"` entries, `ipAddress` included: gating four of them on one
- * toggle and the fifth on another would make the same field's column presence depend on which
- * toggle an operator reached for. Responses that never captured a field export empty cells for it
- * through `projectReservedValues`, whichever toggle stopped the capture.
+ * The anonymize toggle is deliberately NOT a gate here (ENG-2892). It acts at ingest
+ * (`applyAnonymizePolicy`), so responses collected before it was turned on still hold `country`,
+ * `browser`, `os` and `deviceType`; the response card and table keep showing them, and the toggle's
+ * own description promises that responses already collected are not changed. Dropping the columns
+ * hid that history from the CSV/XLSX alone. The columns stay, and anonymized responses export empty
+ * cells for them through `projectReservedValues`.
  */
 export const getReservedExportEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] =>
   gateReservedEntries(survey, (entry) => !EXPORT_BASICS_COVERED_RESERVED_NAMES.has(entry.name));
@@ -200,17 +200,15 @@ export const getReservedExportHeader = (entry: TReservedFieldCatalogEntry): stri
  *   (`buildWhereClause` enforces the same rule server-side against crafted criteria);
  * - on an anonymized survey, `privacy: "drop"` entries are no longer captured, and `ipAddress` is
  *   only captured when `isCaptureIpEnabled` — offering either would let users build filters on what
- *   the survey no longer collects. Both gates live here rather than in `gateReservedEntries`,
- *   because they are this surface's rule: the picker follows what the survey captures, while the
- *   export (`getReservedExportEntries`) follows what its responses hold and so keeps the columns.
+ *   the survey no longer collects. The picker follows what the survey captures; the export
+ *   (`getReservedExportEntries`) follows what its responses hold, so it keeps those columns.
  */
 export const getReservedFilterEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] =>
   gateReservedEntries(
     survey,
     (entry) =>
       (entry.display !== "none" || entry.name === "durationSeconds") &&
-      !(survey.isAnonymizeResponsesEnabled && entry.privacy === "drop") &&
-      !(entry.name === "ipAddress" && !survey.isCaptureIpEnabled)
+      !(survey.isAnonymizeResponsesEnabled && entry.privacy === "drop")
   );
 
 /**

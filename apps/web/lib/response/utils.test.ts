@@ -1057,12 +1057,10 @@ describe("Response Utils", () => {
         expect(result.hiddenFields).toContain("url");
       });
 
-      test("an anonymized survey keeps every privacy-drop column, Ip Address included", () => {
-        // ENG-2892. Both privacy toggles act at ingest, so responses collected before either was
-        // turned off still hold country/browser/os/deviceType/ipAddress and the response table keeps
-        // showing them — only the export hid them. Red on main, where `Country` was omitted, and red
-        // on the first ENG-2892 pass, which kept the `isCaptureIpEnabled` gate and so still omitted
-        // `Ip Address` here.
+      test("an anonymized survey keeps the privacy-drop columns; Ip Address still follows its capture toggle", () => {
+        // ENG-2892. Anonymize acts at ingest, so responses collected before the toggle still hold
+        // country/browser/os/deviceType and the response table keeps showing them — only the export
+        // hid them. Red on main, where `Country` was omitted.
         const anonymizedSurvey = {
           ...(mockSurvey as TSurvey),
           isAnonymizeResponsesEnabled: true,
@@ -1071,9 +1069,10 @@ describe("Response Utils", () => {
 
         const result = extractSurveyDetails(anonymizedSurvey, mockResponses as TResponse[]);
 
-        for (const kept of ["Country", "Browser", "Os", "Device Type", "Utm Source", "Ip Address"]) {
+        for (const kept of ["Country", "Browser", "Os", "Device Type", "Utm Source"]) {
           expect(result.metaDataFields).toContain(kept);
         }
+        expect(result.metaDataFields).not.toContain("Ip Address");
       });
 
       test("facts the fixed basic columns already carry never become reserved columns", () => {
@@ -1087,18 +1086,16 @@ describe("Response Utils", () => {
         expect(result.metaDataFields).toContain("Duration Seconds");
       });
 
-      test("ipAddress stays a column with capture off, so responses that hold one still export it", () => {
-        // The capture toggle stops new captures; it does not erase the ones already stored. A survey
-        // that collected IPs and then turned capture off would otherwise lose that history from the
-        // CSV alone — the same asymmetry ENG-2892 removed for the anonymize toggle.
+      test("ipAddress is a column only when the survey captures it", () => {
         const withIp = { ...(mockSurvey as TSurvey), isCaptureIpEnabled: true } as TSurvey;
         const withoutIp = { ...(mockSurvey as TSurvey), isCaptureIpEnabled: false } as TSurvey;
 
-        for (const survey of [withIp, withoutIp]) {
-          expect(extractSurveyDetails(survey, mockResponses as TResponse[]).metaDataFields).toContain(
-            "Ip Address"
-          );
-        }
+        expect(extractSurveyDetails(withIp, mockResponses as TResponse[]).metaDataFields).toContain(
+          "Ip Address"
+        );
+        expect(extractSurveyDetails(withoutIp, mockResponses as TResponse[]).metaDataFields).not.toContain(
+          "Ip Address"
+        );
       });
     });
 
