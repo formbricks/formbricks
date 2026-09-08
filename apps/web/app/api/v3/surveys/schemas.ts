@@ -394,6 +394,10 @@ const ROOT_KEYS = new Set([
   "distribution",
   "targeting",
 ]);
+// The create root keys minus `workspaceId`: the shape of a portable v3 survey document (export files,
+// raw documents pasted from the MCP `create_survey` tool) that names its own `type`.
+const TYPED_DOCUMENT_ROOT_KEYS = new Set([...ROOT_KEYS].filter((key) => key !== "workspaceId"));
+export const V3_SURVEY_DOCUMENT_ROOT_KEYS: ReadonlySet<string> = TYPED_DOCUMENT_ROOT_KEYS;
 const PATCH_ROOT_KEYS = new Set([
   "name",
   "status",
@@ -971,7 +975,7 @@ function validateTargeting(value: unknown, path: string, issues: InvalidParam[])
   addUnknownKeyIssues(value, TARGETING_KEYS, path, issues, "survey targeting");
 }
 
-function getUnsupportedV3SurveyDocumentFields(
+export function getUnsupportedV3SurveyDocumentFields(
   value: unknown,
   rootKeys: Set<string>,
   fallbackDefaultLanguage = DEFAULT_V3_SURVEY_LANGUAGE,
@@ -1242,6 +1246,47 @@ export const ZV3CreateSurveyBody = z
   })
   .pipe(ZV3CreateSurveyBodyBase);
 
+/**
+ * A v3 survey document that carries its own `type` but no `workspaceId` — the `survey` member of an
+ * export envelope, or a raw document produced by the MCP `create_survey` tool. Same normalizer,
+ * strictness and language rules as `ZV3CreateSurveyBody`; the importer adds the target workspace.
+ */
+export function createZV3TypedSurveyDocumentSchema(options?: TV3SurveyDocumentSchemaOptions) {
+  return z
+    .unknown()
+    .superRefine((value, ctx) => {
+      for (const issue of getUnsupportedV3SurveyDocumentFields(
+        value,
+        TYPED_DOCUMENT_ROOT_KEYS,
+        options?.fallbackDefaultLanguage,
+        options
+      )) {
+        addInvalidParamZodIssue(ctx, issue);
+      }
+    })
+    .pipe(
+      z.preprocess(
+        createV3SurveyDocumentNormalizer({
+          allowInternalDefaultTranslationKey: options?.allowInternalDefaultTranslationKey,
+          fallbackDefaultLanguage: options?.fallbackDefaultLanguage,
+          applyDefaultLanguage: true,
+          generateMissingCreateIds: true,
+          allowedLanguageCodes: options?.allowedLanguageCodes,
+        }),
+        z
+          .object({
+            type: ZSurveyType.prefault("link"),
+            ...createV3SurveyDocumentShape(options),
+          })
+          .strict()
+          .superRefine(addLanguageIssues)
+          .superRefine((body, ctx) => addAppDistributionIssues(body, body.type, ctx))
+      )
+    );
+}
+
+export const ZV3TypedSurveyDocument = createZV3TypedSurveyDocumentSchema();
+
 export const ZV3CreateSurveyQuery = z.object({
   createdFrom: z.enum(["blank", "template", "xm-template", "ai"]).optional(),
 });
@@ -1351,6 +1396,7 @@ export function formatV3ZodInvalidParams(error: z.ZodError, fallbackName: string
 }
 
 export type TV3SurveyDocument = z.infer<typeof ZV3SurveyDocumentBase>;
+export type TV3TypedSurveyDocument = z.infer<typeof ZV3TypedSurveyDocument>;
 export type TV3CreateSurveyBody = z.infer<typeof ZV3CreateSurveyBody>;
 export type TV3PatchSurveyBody = z.infer<typeof ZV3PatchSurveyBody>;
 export type TV3SurveyValidationRequestBody = z.infer<typeof ZV3SurveyValidationRequestBody>;

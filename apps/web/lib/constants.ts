@@ -272,6 +272,18 @@ export const SENTRY_RELEASE = (() => {
     return undefined;
   }
 })();
+
+// The app version as built (package.json `version` is stamped by the release build; "0.0.0" in dev).
+// Read once, never thrown: an unreadable package.json must not take the process down.
+export const APP_VERSION: string = (() => {
+  try {
+    const pkg = require("../package.json") as { version?: string };
+    return typeof pkg.version === "string" && pkg.version.length > 0 ? pkg.version : "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+})();
+
 export const SENTRY_ENVIRONMENT = env.SENTRY_ENVIRONMENT;
 export const SENTRY_DSN = env.SENTRY_DSN;
 
