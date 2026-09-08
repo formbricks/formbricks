@@ -14,3 +14,13 @@ export const ZV3WorkspaceListQuery = z
   .strict();
 
 export type TV3WorkspaceListQuery = z.infer<typeof ZV3WorkspaceListQuery>;
+
+/**
+ * For operations that accept no query parameters at all. `.strict()` is the point: without it an
+ * unrecognized parameter is silently ignored, and a silently-ignored filter returns more data than the
+ * caller believes they asked for.
+ *
+ * Lived in `surveys/schemas.ts` until the response operations needed it too; it was never
+ * survey-specific.
+ */
+export const ZV3EmptyQuery = z.object({}).strict();
