@@ -139,6 +139,27 @@ export const getResponsesFileName = (surveyName: string, extension: string) => {
 const EXPORT_BASICS_COVERED_RESERVED_NAMES = new Set(["responseId", "surveyId", "finished", "startedAt"]);
 
 /**
+ * The gates every reserved-entry consumer shares: shadowed entries drop (a declared field owns its
+ * name) and `ipAddress` needs its capture toggle. What differs per surface is `isEligible` — which
+ * entries are offered at all, and whether the anonymize toggle hides `privacy: "drop"` entries: the
+ * filter picker does (`getReservedFilterEntries`), the export deliberately does not
+ * (`getReservedExportEntries`).
+ */
+const gateReservedEntries = (
+  survey: TSurvey,
+  isEligible: (entry: TReservedFieldCatalogEntry) => boolean
+): TReservedFieldCatalogEntry[] => {
+  const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
+  const shadowingNames = listShadowingNames(getSurveyEmbeddedFields(survey), elementIds);
+
+  return dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, shadowingNames).filter((entry) => {
+    if (!isEligible(entry)) return false;
+    if (entry.name === "ipAddress" && !survey.isCaptureIpEnabled) return false;
+    return true;
+  });
+};
+
+/**
  * The reserved fields one survey's export carries as columns — the catalog, minus what cannot or
  * must not appear (ENG-1847).
  *
@@ -151,30 +172,15 @@ const EXPORT_BASICS_COVERED_RESERVED_NAMES = new Set(["responseId", "surveyId", 
  * - shadowed entries drop (`dropShadowedReservedEntries`) — a survey declaring `url` keeps its
  *   declared column and never gets the reserved one, same rule as the renderer and response table;
  * - the four facts the fixed basic columns already carry are skipped (one column per fact);
- * - on an anonymized survey, `privacy: "drop"` entries are never captured, so their always-empty
- *   columns are omitted;
  * - `ipAddress` is only a column when the survey captures it (`isCaptureIpEnabled`).
+ *
+ * The anonymize toggle is deliberately NOT a gate here (ENG-2892). It acts at ingest
+ * (`applyAnonymizePolicy`), so responses collected before it was turned on still hold `country`,
+ * `browser`, `os` and `deviceType`; the response card and table keep showing them, and the toggle's
+ * own description promises that responses already collected are not changed. Dropping the columns
+ * hid that history from the CSV/XLSX alone. The columns stay, and anonymized responses export empty
+ * cells for them through `projectReservedValues`.
  */
-/**
- * The gates every reserved-entry consumer shares: shadowed entries drop (a declared field owns its
- * name), anonymized surveys drop `privacy: "drop"` entries (never captured), and `ipAddress` needs
- * its capture toggle. What differs per surface is only which entries are eligible at all.
- */
-const gateReservedEntries = (
-  survey: TSurvey,
-  isEligible: (entry: TReservedFieldCatalogEntry) => boolean
-): TReservedFieldCatalogEntry[] => {
-  const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
-  const shadowingNames = listShadowingNames(getSurveyEmbeddedFields(survey), elementIds);
-
-  return dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, shadowingNames).filter((entry) => {
-    if (!isEligible(entry)) return false;
-    if (survey.isAnonymizeResponsesEnabled && entry.privacy === "drop") return false;
-    if (entry.name === "ipAddress" && !survey.isCaptureIpEnabled) return false;
-    return true;
-  });
-};
-
 export const getReservedExportEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] =>
   gateReservedEntries(survey, (entry) => !EXPORT_BASICS_COVERED_RESERVED_NAMES.has(entry.name));
 
@@ -192,11 +198,18 @@ export const getReservedExportHeader = (entry: TReservedFieldCatalogEntry): stri
  * ticket names explicitly even though the table hides it. The gates:
  * - shadowed entries drop — filters fail closed on a name the survey's declared fields own
  *   (`buildWhereClause` enforces the same rule server-side against crafted criteria);
- * - on an anonymized survey, `privacy: "drop"` entries are never captured, and `ipAddress` is only
- *   captured when `isCaptureIpEnabled` — offering either would let users build always-empty filters.
+ * - on an anonymized survey, `privacy: "drop"` entries are no longer captured, and `ipAddress` is
+ *   only captured when `isCaptureIpEnabled` — offering either would let users build filters on what
+ *   the survey no longer collects. The picker follows what the survey captures; the export
+ *   (`getReservedExportEntries`) follows what its responses hold, so it keeps those columns.
  */
 export const getReservedFilterEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] =>
-  gateReservedEntries(survey, (entry) => entry.display !== "none" || entry.name === "durationSeconds");
+  gateReservedEntries(
+    survey,
+    (entry) =>
+      (entry.display !== "none" || entry.name === "durationSeconds") &&
+      !(survey.isAnonymizeResponsesEnabled && entry.privacy === "drop")
+  );
 
 /**
  * Upper bound on distinct dropdown options collected per field. Free-text fields like `url` or

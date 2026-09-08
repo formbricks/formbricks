@@ -846,7 +846,9 @@ describe("Response Utils", () => {
       expect(names).toContain("pagePath");
     });
 
-    test("anonymized surveys drop never-captured fields; ipAddress follows its capture toggle", () => {
+    test("anonymized surveys keep hiding never-captured fields from the picker; ipAddress follows its capture toggle", () => {
+      // ENG-2892 lifted the anonymize gate from the export only: the picker is about what the survey
+      // collects from now on, the reserved export columns about what its responses hold.
       const anonymized = getReservedFilterEntries({
         ...baseSurvey,
         isAnonymizeResponsesEnabled: true,
@@ -1055,16 +1057,22 @@ describe("Response Utils", () => {
         expect(result.hiddenFields).toContain("url");
       });
 
-      test("an anonymized survey omits the privacy-drop columns and keeps the rest", () => {
+      test("an anonymized survey keeps the privacy-drop columns; Ip Address still follows its capture toggle", () => {
+        // ENG-2892. Anonymize acts at ingest, so responses collected before the toggle still hold
+        // country/browser/os/deviceType and the response table keeps showing them — only the export
+        // hid them. Red on main, where `Country` was omitted.
         const anonymizedSurvey = {
           ...(mockSurvey as TSurvey),
           isAnonymizeResponsesEnabled: true,
+          isCaptureIpEnabled: false,
         } as TSurvey;
 
         const result = extractSurveyDetails(anonymizedSurvey, mockResponses as TResponse[]);
 
-        expect(result.metaDataFields).not.toContain("Country");
-        expect(result.metaDataFields).toContain("Utm Source");
+        for (const kept of ["Country", "Browser", "Os", "Device Type", "Utm Source"]) {
+          expect(result.metaDataFields).toContain(kept);
+        }
+        expect(result.metaDataFields).not.toContain("Ip Address");
       });
 
       test("facts the fixed basic columns already carry never become reserved columns", () => {
@@ -1266,6 +1274,31 @@ describe("Response Utils", () => {
       expect(String(result[0]["Url"])).not.toContain("leak@example.com");
       // a column whose value this response never captured is an empty cell, not a missing key
       expect(result[0]["Utm Source"]).toBe("");
+    });
+
+    test("an anonymized survey exports the privacy-drop columns: older values kept, anonymized rows empty", () => {
+      // ENG-2892: the toggle acts at ingest, so a response collected before it still holds its country
+      // while one captured afterwards never did. Both rows get the cell; only its content differs.
+      const anonymizedSurvey = { ...(mockSurvey as TSurvey), isAnonymizeResponsesEnabled: true } as TSurvey;
+      const olderResponse = {
+        ...mockResponses[0],
+        meta: { country: "DE", userAgent: { browser: "Chrome", os: "macOS", device: "desktop" } },
+      } as TResponse;
+      const anonymizedResponse = { ...mockResponses[0], id: "response2", meta: {} } as TResponse;
+
+      const result = getResponsesJson(
+        anonymizedSurvey,
+        [olderResponse, anonymizedResponse],
+        [["1. Question 1"]],
+        [],
+        [],
+        false
+      );
+
+      expect(result[0]["Country"]).toBe("DE");
+      expect(result[0]["Device Type"]).toBe("desktop");
+      expect(result[1]["Country"]).toBe("");
+      expect(result[1]["Device Type"]).toBe("");
     });
 
     test("an ingested number stays a number in the cell", () => {

@@ -58,9 +58,11 @@ describe("validateId", () => {
   });
 
   /**
-   * A new declared field name must be refused whenever `getHiddenFieldsFromSearchParams` would refuse
-   * to capture it, otherwise the editor accepts a field that can never receive a value. Both ends read
-   * `RESERVED_DECLARED_FIELD_NAMES`, so these cases pin the two together.
+   * A new declared field name must be refused whenever it collides, in any casing, with a param the
+   * link survey reads for itself: `getHiddenFieldsFromSearchParams` never fills a field named exactly
+   * like one, and fills a case variant only from its own exact spelling (the grandfather rule for
+   * surveys that already declare one). Both ends read `RESERVED_DECLARED_FIELD_NAMES`, so these cases
+   * pin the two together.
    */
   describe("reserved names in strict mode", () => {
     const strict = { requireSafeIdentifier: true };
