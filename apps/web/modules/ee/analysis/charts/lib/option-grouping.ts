@@ -76,7 +76,7 @@ const getMappingEffectiveLabel = async (
 };
 
 /**
- * Users filter by "Question" (fieldLabel) rather than the internal fieldId, so we resolve the
+ * Users filter by "Field Label" (fieldLabel) rather than the internal fieldId, so we resolve the
  * label → elementId by matching each mapping's effective label. If zero or multiple mappings
  * share the same label (ambiguous), returns undefined rather than guessing.
  */

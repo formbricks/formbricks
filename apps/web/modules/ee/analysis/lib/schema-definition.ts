@@ -110,7 +110,7 @@ export const FEEDBACK_FIELDS = {
   dimensions: [
     {
       id: "FeedbackRecords.fieldLabel",
-      label: "Question",
+      label: "Field Label",
       type: "string",
       description: "Human-readable label of the question/field",
     },
@@ -278,14 +278,14 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.fieldId",
-      label: "Field ID/Question ID",
+      label: "Field ID",
       type: "string",
       description:
         "Stable question/field identifier (the survey element id). Unlike the label it is consistent across languages and duplicate labels, so group or filter by this to treat them as one question.",
     },
     {
       id: "FeedbackRecords.fieldGroupLabel",
-      label: "Question Group",
+      label: "Field Group",
       type: "string",
       description: "Label of the parent composite question for matrix/ranking rows",
     },
@@ -787,8 +787,9 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.sourceName": t("workspace.analysis.charts.field_label_source_name"),
     "FeedbackRecords.sourceId": t("workspace.analysis.charts.field_label_source_id"),
     "FeedbackRecords.fieldType": t("workspace.analysis.charts.field_label_field_type"),
-    "FeedbackRecords.fieldLabel": t("workspace.analysis.charts.field_label_question"),
-    "FeedbackRecords.fieldGroupLabel": t("workspace.analysis.charts.field_label_question_group"),
+    "FeedbackRecords.fieldLabel": t("workspace.analysis.charts.field_label_field_label"),
+    "FeedbackRecords.fieldGroupLabel": t("workspace.analysis.charts.field_label_field_group"),
+    "FeedbackRecords.fieldId": t("workspace.analysis.charts.field_label_field_id"),
     "FeedbackRecords.language": t("workspace.analysis.charts.field_label_language"),
     "FeedbackRecords.sentiment": t("workspace.analysis.charts.field_label_sentiment"),
     "FeedbackRecords.sentimentScore": t("workspace.analysis.charts.field_label_sentiment_score"),
