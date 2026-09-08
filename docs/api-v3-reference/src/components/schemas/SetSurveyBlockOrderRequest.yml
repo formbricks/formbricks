@@ -9,6 +9,7 @@ properties:
     uniqueItems: true
     items:
       type: string
+      maxLength: 128
     description: >
       Every current block id, exactly once, in the desired order. A missing or unknown id is a
       **422** — which is what makes this safer than resending the blocks, since a dropped block

@@ -1308,7 +1308,10 @@ export const ZV3PatchSurveyBody = createZV3PatchSurveyBodySchema();
  */
 export const V3_SURVEY_BLOCK_OPS_MAX = 100;
 
-const ZV3BlockRef = z.string().trim().min(1);
+// Bounded per the ENG-1652 policy: a reference is echoed back in `invalid_params[].reason` when it
+// does not resolve, so an unbounded id would let a caller inflate the error body. cuid2 is 24-32
+// chars; 128 is generous for any legitimate id.
+const ZV3BlockRef = z.string().trim().min(1).max(128);
 
 const ZV3SurveyBlockPayload = z
   .record(z.string(), z.unknown())
