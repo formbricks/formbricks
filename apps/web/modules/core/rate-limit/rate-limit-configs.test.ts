@@ -99,7 +99,6 @@ describe("rateLimitConfigs", () => {
         "licenseRecheck",
         "unsplash",
         "inviteMember",
-        "bulkInviteMembers",
         "generateExampleResponses",
         "integrationMutation",
         "feedbackSourceMutation",
@@ -117,6 +116,11 @@ describe("rateLimitConfigs", () => {
         interval: 60,
         allowedPerInterval: 30,
         namespace: "action:unsplash",
+      });
+      expect(rateLimitConfigs.actions.inviteMember).toEqual({
+        interval: 3600 * 24,
+        allowedPerInterval: 50,
+        namespace: "action:invite-member",
       });
       expect(rateLimitConfigs.actions.historicalResponseImport).toEqual({
         interval: 3600,
