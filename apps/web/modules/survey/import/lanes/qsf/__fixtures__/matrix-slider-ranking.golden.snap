@@ -1,0 +1,476 @@
+{
+  "document": {
+    "name": "Advanced types",
+    "type": "link",
+    "status": "draft",
+    "metadata": {
+      "title": {
+        "en-US": "Advanced types"
+      }
+    },
+    "defaultLanguage": "en-US",
+    "languages": [
+      {
+        "code": "en-US",
+        "default": true,
+        "enabled": true
+      }
+    ],
+    "welcomeCard": {
+      "enabled": true,
+      "headline": {
+        "en-US": "Welcome to the advanced section. Item"
+      },
+      "buttonLabel": {
+        "en-US": "Start"
+      },
+      "timeToFinish": false,
+      "showResponseCount": false
+    },
+    "blocks": [
+      {
+        "id": "<cuid>",
+        "name": "Advanced · Page 1",
+        "elements": [
+          {
+            "id": "Q1",
+            "type": "matrix",
+            "headline": {
+              "en-US": "Rate our service"
+            },
+            "required": true,
+            "rows": [
+              {
+                "id": "row_1",
+                "label": {
+                  "en-US": "Speed"
+                }
+              },
+              {
+                "id": "row_2",
+                "label": {
+                  "en-US": "Friendliness"
+                }
+              }
+            ],
+            "columns": [
+              {
+                "id": "column_1",
+                "label": {
+                  "en-US": "Poor"
+                }
+              },
+              {
+                "id": "column_2",
+                "label": {
+                  "en-US": "OK"
+                }
+              },
+              {
+                "id": "column_3",
+                "label": {
+                  "en-US": "Great"
+                }
+              }
+            ],
+            "shuffleOption": "none"
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Advanced · Page 2",
+        "elements": [
+          {
+            "id": "Q3_1",
+            "type": "rating",
+            "headline": {
+              "en-US": "The product is fast"
+            },
+            "required": false,
+            "scale": "number",
+            "range": 10,
+            "isColorCodingEnabled": false,
+            "subheader": {
+              "en-US": "How much do you agree?"
+            }
+          },
+          {
+            "id": "Q3_2",
+            "type": "rating",
+            "headline": {
+              "en-US": "The product is stable"
+            },
+            "required": false,
+            "scale": "number",
+            "range": 10,
+            "isColorCodingEnabled": false,
+            "subheader": {
+              "en-US": "How much do you agree?"
+            }
+          },
+          {
+            "id": "Q4",
+            "type": "rating",
+            "headline": {
+              "en-US": "Star rating"
+            },
+            "required": false,
+            "scale": "star",
+            "range": 5,
+            "isColorCodingEnabled": false
+          },
+          {
+            "id": "Q5",
+            "type": "ranking",
+            "headline": {
+              "en-US": "Rank these priorities"
+            },
+            "required": false,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "Speed"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "Price"
+                }
+              },
+              {
+                "id": "choice_3",
+                "label": {
+                  "en-US": "Support"
+                }
+              },
+              {
+                "id": "choice_4",
+                "label": {
+                  "en-US": "Design"
+                }
+              }
+            ]
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Advanced · Page 3",
+        "elements": [
+          {
+            "id": "Q7",
+            "type": "fileUpload",
+            "headline": {
+              "en-US": "Upload a screenshot"
+            },
+            "required": false,
+            "allowMultipleFiles": false
+          },
+          {
+            "id": "Q8_1",
+            "type": "openText",
+            "headline": {
+              "en-US": "First name"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": false,
+            "charLimit": {
+              "enabled": false
+            },
+            "subheader": {
+              "en-US": "Contact details"
+            }
+          },
+          {
+            "id": "Q8_2",
+            "type": "openText",
+            "headline": {
+              "en-US": "Last name"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": false,
+            "charLimit": {
+              "enabled": false
+            },
+            "subheader": {
+              "en-US": "Contact details"
+            }
+          },
+          {
+            "id": "Q8_3",
+            "type": "openText",
+            "headline": {
+              "en-US": "Company"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": false,
+            "charLimit": {
+              "enabled": false
+            },
+            "subheader": {
+              "en-US": "Contact details"
+            }
+          },
+          {
+            "id": "Q12",
+            "type": "ranking",
+            "headline": {
+              "en-US": "Twenty-six options"
+            },
+            "required": false,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "Option 1"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "Option 2"
+                }
+              },
+              {
+                "id": "choice_3",
+                "label": {
+                  "en-US": "Option 3"
+                }
+              },
+              {
+                "id": "choice_4",
+                "label": {
+                  "en-US": "Option 4"
+                }
+              },
+              {
+                "id": "choice_5",
+                "label": {
+                  "en-US": "Option 5"
+                }
+              },
+              {
+                "id": "choice_6",
+                "label": {
+                  "en-US": "Option 6"
+                }
+              },
+              {
+                "id": "choice_7",
+                "label": {
+                  "en-US": "Option 7"
+                }
+              },
+              {
+                "id": "choice_8",
+                "label": {
+                  "en-US": "Option 8"
+                }
+              },
+              {
+                "id": "choice_9",
+                "label": {
+                  "en-US": "Option 9"
+                }
+              },
+              {
+                "id": "choice_10",
+                "label": {
+                  "en-US": "Option 10"
+                }
+              },
+              {
+                "id": "choice_11",
+                "label": {
+                  "en-US": "Option 11"
+                }
+              },
+              {
+                "id": "choice_12",
+                "label": {
+                  "en-US": "Option 12"
+                }
+              },
+              {
+                "id": "choice_13",
+                "label": {
+                  "en-US": "Option 13"
+                }
+              },
+              {
+                "id": "choice_14",
+                "label": {
+                  "en-US": "Option 14"
+                }
+              },
+              {
+                "id": "choice_15",
+                "label": {
+                  "en-US": "Option 15"
+                }
+              },
+              {
+                "id": "choice_16",
+                "label": {
+                  "en-US": "Option 16"
+                }
+              },
+              {
+                "id": "choice_17",
+                "label": {
+                  "en-US": "Option 17"
+                }
+              },
+              {
+                "id": "choice_18",
+                "label": {
+                  "en-US": "Option 18"
+                }
+              },
+              {
+                "id": "choice_19",
+                "label": {
+                  "en-US": "Option 19"
+                }
+              },
+              {
+                "id": "choice_20",
+                "label": {
+                  "en-US": "Option 20"
+                }
+              },
+              {
+                "id": "choice_21",
+                "label": {
+                  "en-US": "Option 21"
+                }
+              },
+              {
+                "id": "choice_22",
+                "label": {
+                  "en-US": "Option 22"
+                }
+              },
+              {
+                "id": "choice_23",
+                "label": {
+                  "en-US": "Option 23"
+                }
+              },
+              {
+                "id": "choice_24",
+                "label": {
+                  "en-US": "Option 24"
+                }
+              },
+              {
+                "id": "choice_25",
+                "label": {
+                  "en-US": "Option 25"
+                }
+              }
+            ]
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "<cuid>",
+        "type": "redirectToUrl",
+        "url": "https://example.com/thanks",
+        "label": "Thank you!"
+      }
+    ],
+    "hiddenFields": {
+      "enabled": false
+    },
+    "variables": []
+  },
+  "issues": [
+    {
+      "severity": "warning",
+      "code": "unsupported_question_type",
+      "message": "QID2 uses the type 'Matrix/Likert/MultipleAnswer', which Formbricks does not support. It was not imported.",
+      "sourceRef": "QID2",
+      "vars": {
+        "sourceRef": "QID2",
+        "type": "Matrix/Likert/MultipleAnswer"
+      }
+    },
+    {
+      "severity": "warning",
+      "code": "unsupported_question_type",
+      "message": "QID9 uses the type 'Timing', which Formbricks does not support. It was not imported.",
+      "sourceRef": "QID9",
+      "vars": {
+        "sourceRef": "QID9",
+        "type": "Timing"
+      }
+    },
+    {
+      "severity": "warning",
+      "code": "unsupported_question_type",
+      "message": "QID10 uses the type 'Constant sum', which Formbricks does not support. It was not imported.",
+      "sourceRef": "QID10",
+      "vars": {
+        "sourceRef": "QID10",
+        "type": "Constant sum"
+      }
+    },
+    {
+      "severity": "warning",
+      "code": "unsupported_question_type",
+      "message": "QID11 uses the type 'Side by side', which Formbricks does not support. It was not imported.",
+      "sourceRef": "QID11",
+      "vars": {
+        "sourceRef": "QID11",
+        "type": "Side by side"
+      }
+    },
+    {
+      "severity": "warning",
+      "code": "choices_truncated",
+      "message": "Only the first 25 options were kept.",
+      "sourceRef": "QID12",
+      "vars": {
+        "sourceRef": "QID12",
+        "max": 25
+      }
+    },
+    {
+      "severity": "info",
+      "code": "welcome_card_from_descriptive_text",
+      "message": "The first text page became the welcome card.",
+      "sourceRef": "QID6",
+      "vars": {
+        "sourceRef": "QID6"
+      }
+    }
+  ],
+  "logicRulesReported": 0
+}

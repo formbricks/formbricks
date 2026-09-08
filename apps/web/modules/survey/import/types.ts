@@ -165,6 +165,8 @@ export type TImportCandidate = {
   references?: TSurveyExportReferences;
   issues: TImportIssue[];
   source: TImportReportSource;
+  /** Source logic rules that were described in the report instead of imported (QSF, D5). */
+  logicRulesReported?: number;
 };
 
 export type TImportSourceContent =

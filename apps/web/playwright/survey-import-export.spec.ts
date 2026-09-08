@@ -225,5 +225,38 @@ test.describe("Survey import & export", () => {
       await expect(page.getByText(surveyName, { exact: true })).toBeVisible({ timeout: 15000 });
       await expect(page.getByText(`${surveyName} (imported)`, { exact: true })).toBeVisible();
     });
+
+    await test.step("import qsf", async () => {
+      // The structured lane: a Qualtrics export goes through the multipart convert endpoint.
+      const qsf = readFileSync(join(__dirname, "../modules/survey/import/lanes/qsf/__fixtures__/simple.qsf"));
+      await page.getByRole("button", { name: "New Survey" }).click();
+      await page.getByTestId("import-survey-menu-item").click();
+
+      const convert = page.waitForResponse(
+        (response) =>
+          response.url().endsWith("/api/v3/surveys/import/convert") && response.request().method() === "POST"
+      );
+      await page.locator("#import-survey-file").setInputFiles({
+        name: "simple.qsf",
+        mimeType: "application/octet-stream",
+        buffer: qsf,
+      });
+      expect((await convert).status()).toBe(200);
+
+      const dialog = page.getByRole("dialog");
+      await expect(dialog.getByText("5 questions", { exact: true })).toBeVisible({ timeout: 15000 });
+      await expect(dialog.getByText("Qualtrics QSF", { exact: true })).toBeVisible();
+      await expect(dialog.getByLabel("Survey name")).toHaveValue("Customer feedback (imported)");
+
+      const create = page.waitForResponse(
+        (response) =>
+          response.url().endsWith("/api/v3/surveys/import") &&
+          response.request().method() === "POST" &&
+          response.status() === 201
+      );
+      await dialog.getByRole("button", { name: "Open in editor" }).click();
+      await create;
+      await page.waitForURL(/\/surveys\/[^/]+\/edit/, { timeout: 30000 });
+    });
   });
 });
