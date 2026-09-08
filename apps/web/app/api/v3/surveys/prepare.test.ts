@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { serializeV3SurveyResource } from "./serializers";
 import { prepareV3SurveyCreate, prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "./prepare";
 import { ZV3CreateSurveyBody } from "./schemas";
 
@@ -336,26 +337,44 @@ describe("v3 survey preparation", () => {
     }
   });
 
-  test("rejects patch input with immutable fields as validation results", () => {
+  test("rejects a changed server-owned field with read_only_field (ENG-3069)", () => {
+    // Echoing the value GET returned is a no-op; changing one is the error. workspaceId here matches
+    // the survey, so only defaultLanguage is reported.
     const preparation = prepareV3SurveyPatchInput(survey, {
+      name: "Renamed",
       workspaceId,
       defaultLanguage: "de-DE",
     });
 
     expect(preparation.ok).toBe(false);
     if (!preparation.ok) {
-      expect(preparation.validation.invalidParams).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            name: "workspaceId",
-            code: "unsupported_field",
-          }),
-          expect.objectContaining({
-            name: "defaultLanguage",
-            code: "unsupported_field",
-          }),
-        ])
-      );
+      expect(preparation.validation.invalidParams).toEqual([
+        expect.objectContaining({
+          name: "defaultLanguage",
+          code: "read_only_field",
+          identifier: "de-DE",
+          referenceType: "language",
+        }),
+      ]);
+    }
+  });
+
+  test("rejects a changed id, type, createdAt or archivedAt", () => {
+    const cases: [string, Record<string, unknown>][] = [
+      ["id", { id: "clsvzzzzzzzzzzzzzzzzzzzzzz" }],
+      ["type", { type: "app" }],
+      ["createdAt", { createdAt: "2020-01-01T00:00:00.000Z" }],
+      ["archivedAt", { archivedAt: "2020-01-01T00:00:00.000Z" }],
+    ];
+
+    for (const [field, patch] of cases) {
+      const preparation = prepareV3SurveyPatchInput(survey, { name: "Renamed", ...patch });
+      expect(preparation.ok, field).toBe(false);
+      if (!preparation.ok) {
+        expect(preparation.validation.invalidParams).toEqual([
+          expect.objectContaining({ name: field, code: "read_only_field" }),
+        ]);
+      }
     }
   });
 
@@ -537,6 +556,42 @@ describe("v3 survey preparation", () => {
           }),
         ])
       );
+    }
+  });
+
+  test("accepts its own GET output unchanged — the round trip (ENG-3069)", () => {
+    // The regression this whole change exists for: fetch a survey, send it straight back, and the
+    // eight server-owned fields GET emits used to produce a 400 naming fields the caller never chose.
+    const resource = serializeV3SurveyResource(survey);
+
+    const preparation = prepareV3SurveyPatchInput(survey, JSON.parse(JSON.stringify(resource)));
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual([]);
+    }
+  });
+
+  test("surfaces a round-tripped updatedAt as the write precondition, without comparing it", () => {
+    const stale = "2020-01-01T00:00:00.000Z";
+
+    const preparation = prepareV3SurveyPatchInput(survey, { name: "Renamed", updatedAt: stale });
+
+    expect(preparation.ok).toBe(true);
+    if (preparation.ok) {
+      // Not an error here: staleness is enforced by the compare-and-set at the write.
+      expect(preparation.precondition).toEqual({ expectedUpdatedAt: new Date(stale) });
+    }
+  });
+
+  test("rejects an updatedAt that is not a date-time", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, { name: "Renamed", updatedAt: "yesterday" });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual([
+        expect.objectContaining({ name: "updatedAt", code: "read_only_field" }),
+      ]);
     }
   });
 });
