@@ -101,9 +101,9 @@ const config = [
       // separately (ENG-3071) rather than bundled into the lint change. Promote to "error" once
       // that lands.
       "react-hooks/immutability": "warn",
-      // 96 violations across 77 files — far too broad to fix in one change, and each one needs a
-      // judgement call about whether the effect should derive state instead. Ratcheted under
-      // ENG-3072.
+      // ~98 violations across ~78 files — far too broad to fix in one change, and each one needs
+      // a judgement call about whether the effect should derive state instead. The count drifts as
+      // new code lands; it is a ratchet baseline, not an assertion. Ratcheted under ENG-3072.
       "react-hooks/set-state-in-effect": "warn",
 
       // Compiler-conditional advisories: with no compiler in the build these report what *would*
