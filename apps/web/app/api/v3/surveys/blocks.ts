@@ -75,6 +75,137 @@ function summarize(ops: readonly TV3SurveyBlockOp[]): TV3BlockOpsSummary {
   };
 }
 
+type TV3BlockUpdateOp = Extract<TV3SurveyBlockOp, { op: "update" }>;
+type TV3BlockInsertOp = Extract<TV3SurveyBlockOp, { op: "insert" }>;
+type TV3BlockRemoveOp = Extract<TV3SurveyBlockOp, { op: "remove" }>;
+
+/**
+ * The block list being built, and in parallel which op produced each entry.
+ * `origins[i] === null` means block `i` is untouched by this request, so a downstream issue keeps its
+ * `blocks.<i>` path instead of being remapped onto an op the caller never sent.
+ */
+type TWorkingBlocks = {
+  blocks: TV3PublicBlock[];
+  origins: (number | null)[];
+};
+
+/** `null` = the op applied; otherwise the issues that stopped it. */
+type TOpOutcome = InvalidParam[] | null;
+
+function danglingBlockIssue(name: string, id: string): InvalidParam {
+  return {
+    name,
+    reason: `Block '${id}' does not exist on this survey`,
+    code: "dangling_reference",
+    identifier: id,
+    referenceType: "block",
+    missingId: id,
+  };
+}
+
+function applyUpdateOp(state: TWorkingBlocks, opIndex: number, op: TV3BlockUpdateOp): TOpOutcome {
+  const targetIndex = state.blocks.findIndex((block) => block.id === op.id);
+  if (targetIndex === -1) {
+    return [danglingBlockIssue(`ops.${opIndex}.id`, op.id)];
+  }
+
+  const suppliedId = blockIdOf(op.block);
+  if (suppliedId !== null && suppliedId !== op.id) {
+    return [
+      {
+        name: `ops.${opIndex}.block.id`,
+        reason: "block.id must equal the op id; use remove + insert to give a block a new id",
+        code: "immutable_identifier",
+        identifier: suppliedId,
+        referenceType: "block",
+      },
+    ];
+  }
+
+  state.blocks[targetIndex] = { ...op.block, id: op.id };
+  state.origins[targetIndex] = opIndex;
+  return null;
+}
+
+function resolveInsertIndex(
+  state: TWorkingBlocks,
+  opIndex: number,
+  position: TV3BlockInsertOp["position"]
+): { ok: true; index: number } | { ok: false; invalidParams: InvalidParam[] } {
+  if (position.type === "start") {
+    return { ok: true, index: 0 };
+  }
+  if (position.type === "end") {
+    return { ok: true, index: state.blocks.length };
+  }
+
+  const anchorIndex = state.blocks.findIndex((block) => block.id === position.blockId);
+  return anchorIndex === -1
+    ? {
+        ok: false,
+        invalidParams: [danglingBlockIssue(`ops.${opIndex}.position.blockId`, position.blockId)],
+      }
+    : { ok: true, index: anchorIndex + 1 };
+}
+
+function applyInsertOp(state: TWorkingBlocks, opIndex: number, op: TV3BlockInsertOp): TOpOutcome {
+  const newId = blockIdOf(op.block);
+  if (newId === null) {
+    return [
+      {
+        name: `ops.${opIndex}.block.id`,
+        reason: "An inserted block must carry its own id",
+        code: "missing_required_field",
+        referenceType: "block",
+      },
+    ];
+  }
+
+  const existingIndex = state.blocks.findIndex((block) => block.id === newId);
+  if (existingIndex !== -1) {
+    return [
+      {
+        name: `ops.${opIndex}.block.id`,
+        reason: `Block '${newId}' already exists on this survey`,
+        code: "duplicate_identifier",
+        identifier: newId,
+        referenceType: "block",
+        firstUsedAt: `blocks.${existingIndex}.id`,
+      },
+    ];
+  }
+
+  const position = resolveInsertIndex(state, opIndex, op.position);
+  if (!position.ok) {
+    return position.invalidParams;
+  }
+
+  state.blocks.splice(position.index, 0, { ...op.block, id: newId });
+  state.origins.splice(position.index, 0, opIndex);
+  return null;
+}
+
+function applyRemoveOp(state: TWorkingBlocks, opIndex: number, op: TV3BlockRemoveOp): TOpOutcome {
+  const removeIndex = state.blocks.findIndex((block) => block.id === op.id);
+  if (removeIndex === -1) {
+    return [danglingBlockIssue(`ops.${opIndex}.id`, op.id)];
+  }
+
+  state.blocks.splice(removeIndex, 1);
+  state.origins.splice(removeIndex, 1);
+  return null;
+}
+
+function applyOp(state: TWorkingBlocks, opIndex: number, op: TV3SurveyBlockOp): TOpOutcome {
+  if (op.op === "update") {
+    return applyUpdateOp(state, opIndex, op);
+  }
+  if (op.op === "insert") {
+    return applyInsertOp(state, opIndex, op);
+  }
+  return applyRemoveOp(state, opIndex, op);
+}
+
 /**
  * Apply `ops` in order to a copy of `currentBlocks`.
  *
@@ -87,145 +218,42 @@ export function applySurveyBlockOperations(
   ops: readonly TV3SurveyBlockOp[]
 ): TV3BlockOpsResult {
   const summary = summarize(ops);
-  const working: TV3PublicBlock[] = [...currentBlocks];
-  // null = untouched by this request, so a downstream issue keeps its `blocks.<i>` path.
-  const origins: (number | null)[] = currentBlocks.map(() => null);
-
-  const fail = (failedOpIndex: number, invalidParams: InvalidParam[]): TV3BlockOpsResult => ({
-    ok: false,
-    invalidParams,
-    failedOpIndex,
-    summary,
-  });
+  const state: TWorkingBlocks = {
+    blocks: [...currentBlocks],
+    origins: currentBlocks.map(() => null),
+  };
 
   for (const [opIndex, op] of ops.entries()) {
-    if (op.op === "update") {
-      const targetIndex = working.findIndex((block) => block.id === op.id);
-      if (targetIndex === -1) {
-        return fail(opIndex, [
-          {
-            name: `ops.${opIndex}.id`,
-            reason: `Block '${op.id}' does not exist on this survey`,
-            code: "dangling_reference",
-            identifier: op.id,
-            referenceType: "block",
-            missingId: op.id,
-          },
-        ]);
-      }
-
-      const suppliedId = blockIdOf(op.block);
-      if (suppliedId !== null && suppliedId !== op.id) {
-        return fail(opIndex, [
-          {
-            name: `ops.${opIndex}.block.id`,
-            reason: "block.id must equal the op id; use remove + insert to give a block a new id",
-            code: "immutable_identifier",
-            identifier: suppliedId,
-            referenceType: "block",
-          },
-        ]);
-      }
-
-      working[targetIndex] = { ...op.block, id: op.id };
-      origins[targetIndex] = opIndex;
-      continue;
+    const invalidParams = applyOp(state, opIndex, op);
+    if (invalidParams) {
+      return { ok: false, invalidParams, failedOpIndex: opIndex, summary };
     }
-
-    if (op.op === "insert") {
-      const newId = blockIdOf(op.block);
-      if (newId === null) {
-        return fail(opIndex, [
-          {
-            name: `ops.${opIndex}.block.id`,
-            reason: "An inserted block must carry its own id",
-            code: "missing_required_field",
-            referenceType: "block",
-          },
-        ]);
-      }
-
-      const existingIndex = working.findIndex((block) => block.id === newId);
-      if (existingIndex !== -1) {
-        return fail(opIndex, [
-          {
-            name: `ops.${opIndex}.block.id`,
-            reason: `Block '${newId}' already exists on this survey`,
-            code: "duplicate_identifier",
-            identifier: newId,
-            referenceType: "block",
-            firstUsedAt: `blocks.${existingIndex}.id`,
-          },
-        ]);
-      }
-
-      // Bound to a local: narrowing on `op.position` is lost inside the findIndex closure.
-      const position = op.position;
-      let insertAt: number;
-      if (position.type === "start") {
-        insertAt = 0;
-      } else if (position.type === "end") {
-        insertAt = working.length;
-      } else {
-        const anchorId = position.blockId;
-        const anchorIndex = working.findIndex((block) => block.id === anchorId);
-        if (anchorIndex === -1) {
-          return fail(opIndex, [
-            {
-              name: `ops.${opIndex}.position.blockId`,
-              reason: `Block '${anchorId}' does not exist on this survey`,
-              code: "dangling_reference",
-              identifier: anchorId,
-              referenceType: "block",
-              missingId: anchorId,
-            },
-          ]);
-        }
-        insertAt = anchorIndex + 1;
-      }
-
-      working.splice(insertAt, 0, { ...op.block, id: newId });
-      origins.splice(insertAt, 0, opIndex);
-      continue;
-    }
-
-    const removeIndex = working.findIndex((block) => block.id === op.id);
-    if (removeIndex === -1) {
-      return fail(opIndex, [
-        {
-          name: `ops.${opIndex}.id`,
-          reason: `Block '${op.id}' does not exist on this survey`,
-          code: "dangling_reference",
-          identifier: op.id,
-          referenceType: "block",
-          missingId: op.id,
-        },
-      ]);
-    }
-
-    working.splice(removeIndex, 1);
-    origins.splice(removeIndex, 1);
   }
 
-  if (working.length === 0) {
+  if (state.blocks.length === 0) {
     // Attributed to the last op: reaching an empty list means the last op was necessarily a remove.
-    return fail(ops.length - 1, [
-      {
-        name: `ops.${ops.length - 1}.id`,
-        reason: "These operations would leave the survey with no blocks; a survey needs at least one",
-        referenceType: "block",
-      },
-    ]);
+    return {
+      ok: false,
+      invalidParams: [
+        {
+          name: `ops.${ops.length - 1}.id`,
+          reason: "These operations would leave the survey with no blocks; a survey needs at least one",
+          referenceType: "block",
+        },
+      ],
+      failedOpIndex: ops.length - 1,
+      summary,
+    };
   }
 
   const originOpIndexByBlockIndex = new Map<number, number>();
-  origins.forEach((opIndex, blockIndex) => {
+  state.origins.forEach((opIndex, blockIndex) => {
     if (opIndex !== null) {
       originOpIndexByBlockIndex.set(blockIndex, opIndex);
     }
   });
 
-  return { ok: true, blocks: working, originOpIndexByBlockIndex, summary };
+  return { ok: true, blocks: state.blocks, originOpIndexByBlockIndex, summary };
 }
 
 /**

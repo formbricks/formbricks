@@ -243,6 +243,84 @@ function sameInstant(submitted: unknown, stored: Date | null): boolean {
   return typeof submitted === "string" && new Date(submitted).getTime() === stored.getTime();
 }
 
+type TReadOnlyPatchKey = (typeof READ_ONLY_PATCH_KEYS)[number];
+
+type TReadOnlyCheckContext = {
+  survey: TInternalSurvey;
+  storedDocument: TV3SurveyDocument;
+};
+
+/** Verify one echoed server-owned field: `null` when it matches, otherwise the issue to report. */
+type TReadOnlyFieldCheck = (submitted: unknown, ctx: TReadOnlyCheckContext) => InvalidParam | null;
+
+/**
+ * `updatedAt` is absent on purpose — it is the one key that produces a precondition rather than a
+ * comparison, so it is handled separately in the loop below.
+ */
+const READ_ONLY_FIELD_CHECKS: Record<Exclude<TReadOnlyPatchKey, "updatedAt">, TReadOnlyFieldCheck> = {
+  id: (submitted, { survey }) =>
+    submitted === survey.id
+      ? null
+      : readOnlyIssue(
+          "id",
+          "Field 'id' is read-only and must match the survey being patched; omit it or echo the value returned by GET",
+          submitted
+        ),
+  workspaceId: (submitted, { survey }) =>
+    submitted === survey.workspaceId
+      ? null
+      : readOnlyIssue(
+          "workspaceId",
+          "Field 'workspaceId' is read-only; a survey cannot be moved to another workspace",
+          submitted
+        ),
+  type: (submitted, { survey }) =>
+    submitted === survey.type
+      ? null
+      : readOnlyIssue(
+          "type",
+          "Field 'type' is immutable after creation; create a new survey to change between link and app",
+          submitted
+        ),
+  createdAt: (submitted, { survey }) =>
+    sameInstant(submitted, survey.createdAt)
+      ? null
+      : readOnlyIssue(
+          "createdAt",
+          "Field 'createdAt' is server-owned and cannot be changed; omit it or echo the value returned by GET",
+          submitted
+        ),
+  archivedAt: (submitted, { survey }) =>
+    sameInstant(submitted, survey.archivedAt ?? null)
+      ? null
+      : readOnlyIssue(
+          "archivedAt",
+          "Field 'archivedAt' is server-owned; use the archive and restore endpoints to change it",
+          submitted
+        ),
+  defaultLanguage: (submitted, { storedDocument }) =>
+    typeof submitted === "string" &&
+    submitted.toLowerCase() === storedDocument.defaultLanguage.toLowerCase()
+      ? null
+      : {
+          ...readOnlyIssue(
+            "defaultLanguage",
+            "Field 'defaultLanguage' cannot be changed through PATCH; the default language is the languages[] entry with default: true and is fixed for the survey",
+            submitted
+          ),
+          referenceType: "language",
+        },
+};
+
+/** The precondition, or `null` when the value is not a usable ISO 8601 instant. */
+function parseExpectedUpdatedAt(submitted: unknown): { expectedUpdatedAt: Date } | null {
+  if (typeof submitted !== "string") {
+    return null;
+  }
+  const parsed = new Date(submitted);
+  return Number.isNaN(parsed.getTime()) ? null : { expectedUpdatedAt: parsed };
+}
+
 function splitReadOnlyPatchFields(
   survey: TInternalSurvey,
   storedDocument: TV3SurveyDocument,
@@ -254,6 +332,7 @@ function splitReadOnlyPatchFields(
 
   const body = { ...(input as Record<string, unknown>) };
   const issues: InvalidParam[] = [];
+  const ctx: TReadOnlyCheckContext = { survey, storedDocument };
   let precondition: { expectedUpdatedAt: Date } | undefined;
 
   for (const key of READ_ONLY_PATCH_KEYS) {
@@ -261,91 +340,26 @@ function splitReadOnlyPatchFields(
     const submitted = body[key];
     delete body[key];
 
-    switch (key) {
-      case "id":
-        if (submitted !== survey.id) {
-          issues.push(
-            readOnlyIssue(
-              "id",
-              "Field 'id' is read-only and must match the survey being patched; omit it or echo the value returned by GET",
-              submitted
-            )
-          );
-        }
-        break;
-      case "workspaceId":
-        if (submitted !== survey.workspaceId) {
-          issues.push(
-            readOnlyIssue(
-              "workspaceId",
-              "Field 'workspaceId' is read-only; a survey cannot be moved to another workspace",
-              submitted
-            )
-          );
-        }
-        break;
-      case "type":
-        if (submitted !== survey.type) {
-          issues.push(
-            readOnlyIssue(
-              "type",
-              "Field 'type' is immutable after creation; create a new survey to change between link and app",
-              submitted
-            )
-          );
-        }
-        break;
-      case "createdAt":
-        if (!sameInstant(submitted, survey.createdAt)) {
-          issues.push(
-            readOnlyIssue(
-              "createdAt",
-              "Field 'createdAt' is server-owned and cannot be changed; omit it or echo the value returned by GET",
-              submitted
-            )
-          );
-        }
-        break;
-      case "archivedAt":
-        if (!sameInstant(submitted, survey.archivedAt ?? null)) {
-          issues.push(
-            readOnlyIssue(
-              "archivedAt",
-              "Field 'archivedAt' is server-owned; use the archive and restore endpoints to change it",
-              submitted
-            )
-          );
-        }
-        break;
-      case "defaultLanguage":
-        if (
-          typeof submitted !== "string" ||
-          submitted.toLowerCase() !== storedDocument.defaultLanguage.toLowerCase()
-        ) {
-          issues.push({
-            ...readOnlyIssue(
-              "defaultLanguage",
-              "Field 'defaultLanguage' cannot be changed through PATCH; the default language is the languages[] entry with default: true and is fixed for the survey",
-              submitted
-            ),
-            referenceType: "language",
-          });
-        }
-        break;
-      case "updatedAt":
-        // Not compared: this is the optimistic-concurrency precondition, enforced at the write.
-        if (typeof submitted === "string" && !Number.isNaN(new Date(submitted).getTime())) {
-          precondition = { expectedUpdatedAt: new Date(submitted) };
-        } else {
-          issues.push(
-            readOnlyIssue(
-              "updatedAt",
-              "Field 'updatedAt' must be the ISO 8601 date-time returned by GET; it acts as an optimistic-concurrency precondition",
-              submitted
-            )
-          );
-        }
-        break;
+    if (key === "updatedAt") {
+      // Not compared: this is the optimistic-concurrency precondition, enforced at the write.
+      const parsed = parseExpectedUpdatedAt(submitted);
+      if (parsed) {
+        precondition = parsed;
+      } else {
+        issues.push(
+          readOnlyIssue(
+            "updatedAt",
+            "Field 'updatedAt' must be the ISO 8601 date-time returned by GET; it acts as an optimistic-concurrency precondition",
+            submitted
+          )
+        );
+      }
+      continue;
+    }
+
+    const issue = READ_ONLY_FIELD_CHECKS[key](submitted, ctx);
+    if (issue) {
+      issues.push(issue);
     }
   }
 

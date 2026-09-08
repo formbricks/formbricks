@@ -187,9 +187,12 @@ function toReferenceInput(document: TV3SurveyDocument) {
   };
 }
 
+/** Hoisted so the default is one shared frozen policy rather than a fresh literal per call. */
+const ENFORCE_PRECEDENCE: TV3SurveyPrecedencePolicy = { mode: "enforce" };
+
 export function validateV3SurveyDocument(
   document: TV3SurveyDocument,
-  precedence: TV3SurveyPrecedencePolicy = { mode: "enforce" }
+  precedence: TV3SurveyPrecedencePolicy = ENFORCE_PRECEDENCE
 ): TV3SurveyDocumentValidationResult {
   const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
   const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
