@@ -6,7 +6,9 @@ get:
     authorizes against that, so no `tenant_id` is sent. Requires an API key with **read**
     permission (or higher) on a workspace the record's dataset is assigned to.
 
-    An unknown id, or one in a dataset you cannot read, answers **403** — never **404**.
+    An unknown id, or one in a dataset you cannot read, answers **403** rather than 404, so ids
+    cannot be probed. The exception is the minute after a delete: the gateway still has the
+    record's dataset cached, authorizes the call, and the store answers **404**.
   tags:
     - V3 Feedback Records
   parameters:

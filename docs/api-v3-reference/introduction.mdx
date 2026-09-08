@@ -62,7 +62,8 @@ response use the same name as the response.
 
 | Layer | Statuses | Body |
 | ---------------- | --------------------------------------------- | ------------------------------------------------------------ |
-| Gateway refusals | `400`, `401`, `403`, `413`, `503` | `text/plain` — a constant message such as `Forbidden` |
+| Gateway refusals | `400`, `401`, `403`, `503` | `text/plain` — a constant message such as `Forbidden` |
+| Proxy refusal | `413` | `text/plain`, but the body is not contractual — see below |
 | Feedback store | `400`, `404`, `409`, `500`, `503` | `application/problem+json` with a stable `code` to branch on |
 
 An unknown dataset or record id is a `403` rather than a `404`, so ids cannot be probed, and any path under

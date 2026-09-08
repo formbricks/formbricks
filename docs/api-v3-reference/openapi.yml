@@ -3016,7 +3016,9 @@ paths:
         authorizes against that, so no `tenant_id` is sent. Requires an API key with **read**
         permission (or higher) on a workspace the record's dataset is assigned to.
 
-        An unknown id, or one in a dataset you cannot read, answers **403** — never **404**.
+        An unknown id, or one in a dataset you cannot read, answers **403** rather than 404, so ids
+        cannot be probed. The exception is the minute after a delete: the gateway still has the
+        record's dataset cached, authorizes the call, and the store answers **404**.
       tags:
         - V3 Feedback Records
       parameters:
@@ -6927,7 +6929,7 @@ components:
             type: string
           example: Unauthorized
     FeedbackRecordsForbidden:
-      description: 'Forbidden. Answered by the gateway as `text/plain` whenever the request cannot be authorized: the dataset does not exist, is archived, or is not assigned to a workspace the API key has the required permission on; the organization lacks the Unify Feedback entitlement; a mutation was attempted with an API key on a dataset shared by more than one workspace; or the record id does not exist. **404 is never used** — existence of datasets and records is not leaked.'
+      description: 'Forbidden. Answered by the gateway as `text/plain` whenever the request cannot be authorized: the dataset does not exist, is archived, or is not assigned to a workspace the API key has the required permission on; the organization lacks the Unify Feedback entitlement; a mutation was attempted with an API key on a dataset shared by more than one workspace; or the record id does not exist. Existence is not leaked: an unknown dataset or record is refused here rather than with a 404. The single-record operations are the one exception, and only for a minute after a delete — see their `404`.'
       content:
         text/plain:
           schema:
