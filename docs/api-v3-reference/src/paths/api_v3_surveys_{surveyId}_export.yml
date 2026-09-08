@@ -1,0 +1,123 @@
+get:
+  operationId: exportSurveyV3
+  summary: Export a survey
+  description: >
+    Returns the portable export envelope for one survey: export metadata, the v3 survey document and
+    the action-class definitions its triggers reference. Save the `data` member as a
+    `.formbricks.json` file; it imports into any workspace, organization or instance through
+    `POST /api/v3/surveys/import`.
+
+
+    The document is the `GET /api/v3/surveys/{surveyId}` resource without the instance-bound fields.
+    Styling, follow-ups, quotas, survey settings (single-use, PIN, reCAPTCHA, closed message, language
+    switch), slug, custom scripts, the publish schedule, targeting and responses are not exported.
+    Legacy question-based surveys are converted to blocks. A translation missing on a draft is filled
+    from the default language so the file stays importable.
+
+
+    Read access is sufficient. Every export is written to the organization audit log as `exported`.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+  responses:
+    "200":
+      description: Export envelope built successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyExportEnvelope.yml
+          examples:
+            linkSurvey:
+              summary: Exported link survey
+              value:
+                data:
+                  formbricks:
+                    exportFormat: 1
+                    exportedAt: "2026-09-08T12:00:00.000Z"
+                    appVersion: 6.2.0
+                    source:
+                      url: https://app.formbricks.com
+                      workspaceId: clxx1234567890123456789012
+                      surveyId: clsv1234567890123456789012
+                  survey:
+                    name: Product Feedback
+                    type: link
+                    status: inProgress
+                    metadata: {}
+                    defaultLanguage: en-US
+                    languages:
+                      - code: en-US
+                        default: true
+                        enabled: true
+                    welcomeCard:
+                      enabled: false
+                    blocks:
+                      - id: clbk1234567890123456789012
+                        name: Main Block
+                        elements:
+                          - id: satisfaction
+                            type: openText
+                            headline:
+                              en-US: What should we improve?
+                            required: true
+                    endings: []
+                    hiddenFields:
+                      enabled: false
+                    variables: []
+                  references:
+                    actionClasses: []
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      description: >-
+        Unprocessable Content — the survey cannot be exported in its current state: it has no
+        questions, or its document would not re-import (a dangling logic target, an invalid media
+        URL). `invalid_params` itemizes each issue with the v3 path format.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            empty:
+              summary: Empty survey
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: Survey cannot be exported in its current state
+                code: unprocessable_content
+                requestId: req_clsv1234567890123456789012
+                invalid_params:
+                  - name: survey.blocks
+                    reason: Empty surveys cannot be exported. Add at least one question first.
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

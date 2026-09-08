@@ -1,0 +1,40 @@
+type: object
+description: >
+  Definition of an action class an exported app survey's trigger points at. On import the target
+  workspace matches it by `key` (code actions), by `noCodeConfig` (no-code actions) or by `name`, and
+  creates it when nothing matches.
+required:
+  - id
+  - name
+  - key
+  - type
+  - noCodeConfig
+  - description
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: Id in the source workspace, referenced by `survey.distribution.triggers[].actionClassId`.
+  name:
+    type: string
+  key:
+    type:
+      - string
+      - "null"
+    description: Code-action key; `null` for no-code actions.
+  type:
+    type: string
+    enum:
+      - code
+      - noCode
+  noCodeConfig:
+    type:
+      - object
+      - "null"
+    description: No-code trigger configuration (click, pageView, exitIntent, fiftyPercentScroll, pageDwell); `null` for code actions.
+    additionalProperties: true
+  description:
+    type:
+      - string
+      - "null"
+additionalProperties: false

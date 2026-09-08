@@ -1,0 +1,66 @@
+type: object
+description: >
+  The exported v3 survey document: the `GET /api/v3/surveys/{surveyId}` resource without the
+  instance-bound fields (`id`, `workspaceId`, `createdAt`, `updatedAt`, `archivedAt`) and without
+  `targeting`. Translatable fields are locale-code maps, so `{ workspaceId, ...survey }` is a valid
+  `POST /api/v3/surveys` body. Styling, follow-ups, quotas, survey settings, slug, custom scripts and
+  the publish schedule are not part of the document and do not travel.
+required:
+  - name
+  - type
+  - status
+  - metadata
+  - defaultLanguage
+  - languages
+  - welcomeCard
+  - blocks
+  - endings
+  - hiddenFields
+  - variables
+properties:
+  name:
+    type: string
+    minLength: 1
+  type:
+    type: string
+    enum:
+      - link
+      - app
+  status:
+    type: string
+    enum:
+      - draft
+      - inProgress
+      - paused
+      - completed
+    description: Status at export time. Import always creates a draft.
+  metadata:
+    $ref: ./SurveyMetadata.yml
+  defaultLanguage:
+    $ref: ./LocaleCode.yml
+  languages:
+    type: array
+    items:
+      $ref: ./CreateSurveyLanguage.yml
+  welcomeCard:
+    $ref: ./SurveyWelcomeCard.yml
+  blocks:
+    type: array
+    minItems: 1
+    items:
+      $ref: ./SurveyBlock.yml
+  endings:
+    type: array
+    items:
+      $ref: ./SurveyEnding.yml
+  hiddenFields:
+    $ref: ./SurveyHiddenFields.yml
+  variables:
+    type: array
+    items:
+      $ref: ./SurveyVariable.yml
+  distribution:
+    allOf:
+      - $ref: ./SurveyDistribution.yml
+    description: App-survey runtime settings and triggers. Present only for app surveys.
+additionalProperties: false

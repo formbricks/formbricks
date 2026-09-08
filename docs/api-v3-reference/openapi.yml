@@ -5,7 +5,7 @@ openapi: 3.1.1
 info:
   title: Formbricks API v3
   description: |
-    **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, and **DELETE /api/v3/surveys/{surveyId}**.
+    **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, **DELETE /api/v3/surveys/{surveyId}**, and **GET /api/v3/surveys/{surveyId}/export**, which returns a portable `.formbricks.json` envelope that re-imports into any workspace or instance.
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
@@ -1289,6 +1289,118 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/surveys/{surveyId}/export:
+    get:
+      operationId: exportSurveyV3
+      summary: Export a survey
+      description: |
+        Returns the portable export envelope for one survey: export metadata, the v3 survey document and the action-class definitions its triggers reference. Save the `data` member as a `.formbricks.json` file; it imports into any workspace, organization or instance through `POST /api/v3/surveys/import`.
+
+        The document is the `GET /api/v3/surveys/{surveyId}` resource without the instance-bound fields. Styling, follow-ups, quotas, survey settings (single-use, PIN, reCAPTCHA, closed message, language switch), slug, custom scripts, the publish schedule, targeting and responses are not exported. Legacy question-based surveys are converted to blocks. A translation missing on a draft is filled from the default language so the file stays importable.
+
+        Read access is sufficient. Every export is written to the organization audit log as `exported`.
+      tags:
+        - V3 Surveys
+      parameters:
+        - in: path
+          name: surveyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Survey identifier.
+      responses:
+        '200':
+          description: Export envelope built successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SurveyExportEnvelope'
+              examples:
+                linkSurvey:
+                  summary: Exported link survey
+                  value:
+                    data:
+                      formbricks:
+                        exportFormat: 1
+                        exportedAt: '2026-09-08T12:00:00.000Z'
+                        appVersion: 6.2.0
+                        source:
+                          url: https://app.formbricks.com
+                          workspaceId: clxx1234567890123456789012
+                          surveyId: clsv1234567890123456789012
+                      survey:
+                        name: Product Feedback
+                        type: link
+                        status: inProgress
+                        metadata: {}
+                        defaultLanguage: en-US
+                        languages:
+                          - code: en-US
+                            default: true
+                            enabled: true
+                        welcomeCard:
+                          enabled: false
+                        blocks:
+                          - id: clbk1234567890123456789012
+                            name: Main Block
+                            elements:
+                              - id: satisfaction
+                                type: openText
+                                headline:
+                                  en-US: What should we improve?
+                                required: true
+                        endings: []
+                        hiddenFields:
+                          enabled: false
+                        variables: []
+                      references:
+                        actionClasses: []
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          description: 'Unprocessable Content — the survey cannot be exported in its current state: it has no questions, or its document would not re-import (a dangling logic target, an invalid media URL). `invalid_params` itemizes each issue with the v3 path format.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                empty:
+                  summary: Empty survey
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: Survey cannot be exported in its current state
+                    code: unprocessable_content
+                    requestId: req_clsv1234567890123456789012
+                    invalid_params:
+                      - name: survey.blocks
+                        reason: Empty surveys cannot be exported. Add at least one question first.
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4686,6 +4798,174 @@ components:
           description: Languages that a successful write would connect or create. Present only when `valid=true`.
           items:
             $ref: '#/components/schemas/SurveyValidationLanguage'
+      additionalProperties: false
+    SurveyExportMetadata:
+      type: object
+      description: Export metadata. `exportFormat` is bumped only for incompatible changes; an instance refuses files newer than it understands.
+      required:
+        - exportFormat
+        - exportedAt
+        - appVersion
+        - source
+      properties:
+        exportFormat:
+          type: integer
+          enum:
+            - 1
+          description: Envelope format version. Currently always `1`.
+        exportedAt:
+          type: string
+          format: date-time
+        appVersion:
+          type: string
+          description: Formbricks version that produced the file (`0.0.0` on development builds).
+        source:
+          type: object
+          required:
+            - url
+            - workspaceId
+            - surveyId
+          properties:
+            url:
+              type: string
+              format: uri
+              description: Public URL of the exporting instance.
+            workspaceId:
+              type: string
+              format: cuid2
+            surveyId:
+              type: string
+              format: cuid2
+          additionalProperties: false
+      additionalProperties: false
+    SurveyExportDocument:
+      type: object
+      description: |
+        The exported v3 survey document: the `GET /api/v3/surveys/{surveyId}` resource without the instance-bound fields (`id`, `workspaceId`, `createdAt`, `updatedAt`, `archivedAt`) and without `targeting`. Translatable fields are locale-code maps, so `{ workspaceId, ...survey }` is a valid `POST /api/v3/surveys` body. Styling, follow-ups, quotas, survey settings, slug, custom scripts and the publish schedule are not part of the document and do not travel.
+      required:
+        - name
+        - type
+        - status
+        - metadata
+        - defaultLanguage
+        - languages
+        - welcomeCard
+        - blocks
+        - endings
+        - hiddenFields
+        - variables
+      properties:
+        name:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum:
+            - link
+            - app
+        status:
+          type: string
+          enum:
+            - draft
+            - inProgress
+            - paused
+            - completed
+          description: Status at export time. Import always creates a draft.
+        metadata:
+          $ref: '#/components/schemas/SurveyMetadata'
+        defaultLanguage:
+          $ref: '#/components/schemas/LocaleCode'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateSurveyLanguage'
+        welcomeCard:
+          $ref: '#/components/schemas/SurveyWelcomeCard'
+        blocks:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SurveyBlock'
+        endings:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyEnding'
+        hiddenFields:
+          $ref: '#/components/schemas/SurveyHiddenFields'
+        variables:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyVariable'
+        distribution:
+          allOf:
+            - $ref: '#/components/schemas/SurveyDistribution'
+          description: App-survey runtime settings and triggers. Present only for app surveys.
+      additionalProperties: false
+    SurveyExportActionClass:
+      type: object
+      description: |
+        Definition of an action class an exported app survey's trigger points at. On import the target workspace matches it by `key` (code actions), by `noCodeConfig` (no-code actions) or by `name`, and creates it when nothing matches.
+      required:
+        - id
+        - name
+        - key
+        - type
+        - noCodeConfig
+        - description
+      properties:
+        id:
+          type: string
+          format: cuid2
+          description: Id in the source workspace, referenced by `survey.distribution.triggers[].actionClassId`.
+        name:
+          type: string
+        key:
+          type:
+            - string
+            - 'null'
+          description: Code-action key; `null` for no-code actions.
+        type:
+          type: string
+          enum:
+            - code
+            - noCode
+        noCodeConfig:
+          type:
+            - object
+            - 'null'
+          description: No-code trigger configuration (click, pageView, exitIntent, fiftyPercentScroll, pageDwell); `null` for code actions.
+          additionalProperties: true
+        description:
+          type:
+            - string
+            - 'null'
+      additionalProperties: false
+    SurveyExportReferences:
+      type: object
+      description: Workspace-scoped definitions the document refers to by id. Empty for link surveys.
+      required:
+        - actionClasses
+      properties:
+        actionClasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyExportActionClass'
+      additionalProperties: false
+    SurveyExportEnvelope:
+      type: object
+      description: |
+        Portable survey export (`.formbricks.json`). Three top-level keys, nothing else: import rejects unknown keys with their path. The same file imports into any workspace, organization or instance through `POST /api/v3/surveys/import`.
+      required:
+        - formbricks
+        - survey
+        - references
+      properties:
+        formbricks:
+          $ref: '#/components/schemas/SurveyExportMetadata'
+        survey:
+          $ref: '#/components/schemas/SurveyExportDocument'
+        references:
+          $ref: '#/components/schemas/SurveyExportReferences'
       additionalProperties: false
     WorkflowStatus:
       type: string
