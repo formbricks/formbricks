@@ -8,15 +8,11 @@ import {
   Loader2,
   MessageCircle,
   MessageSquareTextIcon,
-  PanelLeftCloseIcon,
-  PanelLeftOpenIcon,
   PlusIcon,
   SettingsIcon,
   UserIcon,
   WorkflowIcon,
 } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
@@ -27,11 +23,11 @@ import {
   getOrganizationsForSwitcherAction,
   getWorkspacesForSwitcherAction,
 } from "@/app/(app)/workspaces/[workspaceId]/actions";
+import { MainNavigationHeader } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigationHeader";
 import { MainNavigationNotices } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigationNotices";
 import { NavigationLink } from "@/app/(app)/workspaces/[workspaceId]/components/NavigationLink";
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
-import { isNewerVersion } from "@/app/(app)/workspaces/[workspaceId]/lib/utils";
-import FBLogo from "@/images/formbricks-wordmark.svg";
+import { useLatestStableRelease } from "@/app/(app)/workspaces/[workspaceId]/lib/use-latest-stable-release";
 import { cn } from "@/lib/cn";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -39,7 +35,6 @@ import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dro
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { Badge } from "@/modules/ui/components/badge";
-import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -50,8 +45,6 @@ import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
 import { CreateWorkspaceModal } from "@/modules/workspaces/components/create-workspace-modal";
 import { WorkspaceLimitModal } from "@/modules/workspaces/components/workspace-limit-modal";
-import { getLatestStableFbReleaseAction } from "@/modules/workspaces/settings/(setup)/app-connection/actions";
-import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
   user: TUser;
@@ -152,7 +145,6 @@ export const MainNavigation = ({
   const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTextVisible, setIsTextVisible] = useState(true);
-  const [latestVersion, setLatestVersion] = useState("");
 
   const [isPending, startTransition] = useTransition();
   const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
@@ -162,6 +154,7 @@ export const MainNavigation = ({
     : t("common.you_are_not_authorized_to_perform_this_action");
 
   const isOwnerOrManager = isManager || isOwner;
+  const latestVersion = useLatestStableRelease(isOwnerOrManager);
   const isSettingsMode = pathname?.includes("/settings");
 
   const toggleSidebar = () => {
@@ -293,21 +286,6 @@ export const MainNavigation = ({
       void loadOrganizations();
     }
   }, [isOrganizationDropdownOpen, loadOrganizations]);
-
-  useEffect(() => {
-    async function loadReleases() {
-      const res = await getLatestStableFbReleaseAction();
-      if (res?.data) {
-        const latestVersionTag = res.data;
-        const currentVersionTag = `v${packageJson.version}`;
-
-        if (isNewerVersion(currentVersionTag, latestVersionTag)) {
-          setLatestVersion(latestVersionTag);
-        }
-      }
-    }
-    if (isOwnerOrManager) loadReleases();
-  }, [isOwnerOrManager]);
 
   const mainNavigationLink = isBilling
     ? getBillingFallbackPath(organization.id, isFormbricksCloud)
@@ -453,35 +431,12 @@ export const MainNavigation = ({
             <div>
               {/* Logo and Toggle */}
 
-              <div
-                className={cn(
-                  "flex items-center px-3 pb-4",
-                  isCollapsed ? "justify-center" : "justify-between"
-                )}>
-                {!isCollapsed && (
-                  <Link
-                    href={mainNavigationLink}
-                    className={cn(
-                      "flex items-center justify-center transition-opacity duration-100",
-                      isTextVisible ? "opacity-0" : "opacity-100"
-                    )}>
-                    <Image src={FBLogo} width={160} height={30} alt={t("workspace.formbricks_logo")} />
-                  </Link>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleSidebar}
-                  className={cn(
-                    "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:ring-0 focus:ring-transparent focus:outline-hidden"
-                  )}>
-                  {isCollapsed ? (
-                    <PanelLeftOpenIcon strokeWidth={1.5} />
-                  ) : (
-                    <PanelLeftCloseIcon strokeWidth={1.5} />
-                  )}
-                </Button>
-              </div>
+              <MainNavigationHeader
+                isCollapsed={isCollapsed}
+                isTextVisible={isTextVisible}
+                homeHref={mainNavigationLink}
+                onToggle={toggleSidebar}
+              />
 
               {/* Main Nav */}
               <ul className="space-y-2">
