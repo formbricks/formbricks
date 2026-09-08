@@ -119,8 +119,10 @@ export const ZResponse = z.object({
   displayId: z.string().nullable().describe("The display ID of the response"),
   // `ingestFlags` is deliberately omitted rather than described: this schema is the management API's
   // public shape and the OpenAPI document, and the column is internal Embedded Data bookkeeping
-  // (ENG-1845) that no route selects. Documenting it would advertise a field the API never returns;
-  // exposing it belongs to the release that surfaces coercion failures in the UI.
+  // (ENG-1845) that the Prisma client omits from every read without a `select`
+  // (`PRISMA_GLOBAL_OMIT`, ENG-2955) — so a payload built from a whole row matches this shape exactly.
+  // Documenting it would advertise a field the API never returns; exposing it belongs to the release
+  // that surfaces coercion failures in the UI.
 }) satisfies z.ZodType<Omit<Response, "ingestFlags">>;
 
 ZResponse.meta({
