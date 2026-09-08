@@ -8,7 +8,8 @@ put:
 
     Idempotent: the same `order` always yields the same survey, and an order that already matches
     performs no write at all, so `updatedAt` does not move and other callers' preconditions stay
-    valid. Because the list must be a permutation, a dropped or duplicated block is rejected rather
+    valid. A stale `expectedUpdatedAt` is still rejected with **409** on that path — the precondition
+    is evaluated before the method, so a no-op outcome never reports success to a stale caller. Because the list must be a permutation, a dropped or duplicated block is rejected rather
     than silently applied — the failure mode that resending the whole `blocks` array cannot catch.
 
 

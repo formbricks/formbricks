@@ -200,6 +200,23 @@ export class V3SurveyStaleError extends Error {
 }
 
 /**
+ * Throw when the caller's precondition no longer matches the stored survey.
+ *
+ * Exported because the no-write paths need it too. RFC 9110 evaluates a precondition *before* the
+ * method, so an outcome that happens to be a no-op does not excuse a stale caller: reordering blocks
+ * into the order they already hold must still fail, or a caller whose view of the survey is out of
+ * date gets a 200 that reads as confirmation.
+ */
+export function assertV3SurveyPrecondition(
+  currentSurvey: { updatedAt: Date },
+  precondition: TV3SurveyWritePrecondition | undefined
+): void {
+  if (precondition && currentSurvey.updatedAt.getTime() !== precondition.expectedUpdatedAt.getTime()) {
+    throw new V3SurveyStaleError(precondition.expectedUpdatedAt, currentSurvey.updatedAt, "read");
+  }
+}
+
+/**
  * A P2025 under a precondition is ambiguous: either the row moved on, or the survey is gone. One
  * cheap re-read separates the 409 from the existing not-found path. Scoped by workspace even though
  * the caller is already authorized for this id — an unscoped findUnique-by-id is the shape that gets
@@ -344,12 +361,7 @@ export async function patchV3Survey(
 
   // Cheap pre-flight so a stale caller gets an accurate 409 without a write attempt. The
   // compare-and-set below remains the actual guarantee — this only improves the error.
-  if (
-    effectivePrecondition &&
-    currentSurvey.updatedAt.getTime() !== effectivePrecondition.expectedUpdatedAt.getTime()
-  ) {
-    throw new V3SurveyStaleError(effectivePrecondition.expectedUpdatedAt, currentSurvey.updatedAt, "read");
-  }
+  assertV3SurveyPrecondition(currentSurvey, effectivePrecondition);
 
   await assertV3SurveyWritePermissions(
     {

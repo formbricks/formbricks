@@ -299,8 +299,7 @@ const READ_ONLY_FIELD_CHECKS: Record<Exclude<TReadOnlyPatchKey, "updatedAt">, TR
           submitted
         ),
   defaultLanguage: (submitted, { storedDocument }) =>
-    typeof submitted === "string" &&
-    submitted.toLowerCase() === storedDocument.defaultLanguage.toLowerCase()
+    typeof submitted === "string" && submitted.toLowerCase() === storedDocument.defaultLanguage.toLowerCase()
       ? null
       : {
           ...readOnlyIssue(
