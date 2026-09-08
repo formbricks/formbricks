@@ -1,266 +1,7 @@
 {
-  "name": "Customer feedback",
-  "surveyId": "SV_fixture000000000",
-  "defaultLanguageCode": "en-US",
-  "languageCodes": [],
-  "unknownLanguageCodes": [],
-  "questions": {
-    "QID1": {
-      "qid": "QID1",
-      "exportTag": "Q1",
-      "type": "MC",
-      "selector": "SAVR",
-      "subSelector": "TX",
-      "text": "How did you hear about us?",
-      "description": "How did you hear about us?",
-      "choices": [
-        {
-          "id": "1",
-          "display": "Search engine",
-          "textEntry": false
-        },
-        {
-          "id": "2",
-          "display": "A friend",
-          "textEntry": false
-        },
-        {
-          "id": "3",
-          "display": "Other",
-          "textEntry": true
-        }
-      ],
-      "answers": [],
-      "validation": {
-        "forceResponse": "ON",
-        "contentType": null,
-        "minChars": null,
-        "maxChars": null
-      },
-      "configuration": {
-        "sliderMin": null,
-        "sliderMax": null,
-        "gridLines": null,
-        "numDecimals": null,
-        "descriptionOption": "UseText",
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        }
-      },
-      "displayLogic": null,
-      "skipLogic": null,
-      "randomization": null,
-      "translations": {}
-    },
-    "QID2": {
-      "qid": "QID2",
-      "exportTag": "Q2",
-      "type": "MC",
-      "selector": "NPS",
-      "subSelector": null,
-      "text": "How likely are you to recommend us to a friend?",
-      "description": "How likely are you to recommend us to a friend?",
-      "choices": [
-        {
-          "id": "1",
-          "display": "0",
-          "textEntry": false
-        },
-        {
-          "id": "2",
-          "display": "1",
-          "textEntry": false
-        },
-        {
-          "id": "3",
-          "display": "2",
-          "textEntry": false
-        },
-        {
-          "id": "4",
-          "display": "3",
-          "textEntry": false
-        },
-        {
-          "id": "5",
-          "display": "4",
-          "textEntry": false
-        },
-        {
-          "id": "6",
-          "display": "5",
-          "textEntry": false
-        },
-        {
-          "id": "7",
-          "display": "6",
-          "textEntry": false
-        },
-        {
-          "id": "8",
-          "display": "7",
-          "textEntry": false
-        },
-        {
-          "id": "9",
-          "display": "8",
-          "textEntry": false
-        },
-        {
-          "id": "10",
-          "display": "9",
-          "textEntry": false
-        },
-        {
-          "id": "11",
-          "display": "10",
-          "textEntry": false
-        }
-      ],
-      "answers": [],
-      "validation": {
-        "forceResponse": "ON",
-        "contentType": null,
-        "minChars": null,
-        "maxChars": null
-      },
-      "configuration": {
-        "sliderMin": null,
-        "sliderMax": null,
-        "gridLines": null,
-        "numDecimals": null,
-        "descriptionOption": "UseText",
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        }
-      },
-      "displayLogic": null,
-      "skipLogic": null,
-      "randomization": null,
-      "translations": {}
-    },
-    "QID3": {
-      "qid": "QID3",
-      "exportTag": "Q3",
-      "type": "TE",
-      "selector": "ML",
-      "subSelector": null,
-      "text": "What should we <strong>improve</strong>?",
-      "description": "What should we improve?",
-      "choices": [],
-      "answers": [],
-      "validation": {
-        "forceResponse": "OFF",
-        "contentType": null,
-        "minChars": null,
-        "maxChars": null
-      },
-      "configuration": {
-        "sliderMin": null,
-        "sliderMax": null,
-        "gridLines": null,
-        "numDecimals": null,
-        "descriptionOption": "UseText",
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        }
-      },
-      "displayLogic": null,
-      "skipLogic": null,
-      "randomization": null,
-      "translations": {}
-    },
-    "QID4": {
-      "qid": "QID4",
-      "exportTag": "Q4",
-      "type": "TE",
-      "selector": "SL",
-      "subSelector": null,
-      "text": "Your email",
-      "description": "Your email",
-      "choices": [],
-      "answers": [],
-      "validation": {
-        "forceResponse": "REQUEST",
-        "contentType": "ValidEmail",
-        "minChars": null,
-        "maxChars": null
-      },
-      "configuration": {
-        "sliderMin": null,
-        "sliderMax": null,
-        "gridLines": null,
-        "numDecimals": null,
-        "descriptionOption": "UseText",
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        }
-      },
-      "displayLogic": null,
-      "skipLogic": null,
-      "randomization": null,
-      "translations": {}
-    },
-    "QID5": {
-      "qid": "QID5",
-      "exportTag": "Q5",
-      "type": "MC",
-      "selector": "MAVR",
-      "subSelector": "TX",
-      "text": "Which features do you use?",
-      "description": "Which features do you use?",
-      "choices": [
-        {
-          "id": "1",
-          "display": "Surveys",
-          "textEntry": false
-        },
-        {
-          "id": "2",
-          "display": "Contacts",
-          "textEntry": false
-        },
-        {
-          "id": "3",
-          "display": "Integrations",
-          "textEntry": false
-        }
-      ],
-      "answers": [],
-      "validation": {
-        "forceResponse": "OFF",
-        "contentType": null,
-        "minChars": null,
-        "maxChars": null
-      },
-      "configuration": {
-        "sliderMin": null,
-        "sliderMax": null,
-        "gridLines": null,
-        "numDecimals": null,
-        "descriptionOption": "UseText",
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        }
-      },
-      "displayLogic": null,
-      "skipLogic": null,
-      "randomization": {
-        "type": "All",
-        "raw": {
-          "Type": "All",
-          "Advanced": null,
-          "TotalRandSubset": ""
-        }
-      },
-      "translations": {}
-    }
-  },
   "blocks": [
     {
-      "id": "BL_default",
       "description": "Default Question Block",
-      "type": "Default",
       "elements": [
         {
           "kind": "question",
@@ -282,27 +23,286 @@
           "kind": "question",
           "qid": "QID5"
         }
-      ]
+      ],
+      "id": "BL_default",
+      "type": "Default"
     }
   ],
+  "defaultLanguageCode": "en-US",
+  "embeddedDataFields": [],
   "flow": [
     {
-      "type": "Block",
-      "id": "BL_default"
+      "id": "BL_default",
+      "type": "Block"
     },
     {
       "type": "EndSurvey"
     }
   ],
+  "issues": [],
+  "languageCodes": [],
+  "name": "Customer feedback",
   "options": {
     "backButton": false,
-    "progressBar": "None",
     "eosMessage": "Thank you for your feedback!",
     "eosRedirectUrl": null,
     "nextButtonLabel": "→",
+    "partialData": "+1 week",
     "previousButtonLabel": "←",
-    "partialData": "+1 week"
+    "progressBar": "None"
   },
-  "embeddedDataFields": [],
-  "issues": []
+  "questions": {
+    "QID1": {
+      "answers": [],
+      "choices": [
+        {
+          "display": "Search engine",
+          "id": "1",
+          "textEntry": false
+        },
+        {
+          "display": "A friend",
+          "id": "2",
+          "textEntry": false
+        },
+        {
+          "display": "Other",
+          "id": "3",
+          "textEntry": true
+        }
+      ],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "How did you hear about us?",
+      "displayLogic": null,
+      "exportTag": "Q1",
+      "qid": "QID1",
+      "randomization": null,
+      "selector": "SAVR",
+      "skipLogic": null,
+      "subSelector": "TX",
+      "text": "How did you hear about us?",
+      "translations": {},
+      "type": "MC",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "ON",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID2": {
+      "answers": [],
+      "choices": [
+        {
+          "display": "0",
+          "id": "1",
+          "textEntry": false
+        },
+        {
+          "display": "1",
+          "id": "2",
+          "textEntry": false
+        },
+        {
+          "display": "2",
+          "id": "3",
+          "textEntry": false
+        },
+        {
+          "display": "3",
+          "id": "4",
+          "textEntry": false
+        },
+        {
+          "display": "4",
+          "id": "5",
+          "textEntry": false
+        },
+        {
+          "display": "5",
+          "id": "6",
+          "textEntry": false
+        },
+        {
+          "display": "6",
+          "id": "7",
+          "textEntry": false
+        },
+        {
+          "display": "7",
+          "id": "8",
+          "textEntry": false
+        },
+        {
+          "display": "8",
+          "id": "9",
+          "textEntry": false
+        },
+        {
+          "display": "9",
+          "id": "10",
+          "textEntry": false
+        },
+        {
+          "display": "10",
+          "id": "11",
+          "textEntry": false
+        }
+      ],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "How likely are you to recommend us to a friend?",
+      "displayLogic": null,
+      "exportTag": "Q2",
+      "qid": "QID2",
+      "randomization": null,
+      "selector": "NPS",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "How likely are you to recommend us to a friend?",
+      "translations": {},
+      "type": "MC",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "ON",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID3": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "What should we improve?",
+      "displayLogic": null,
+      "exportTag": "Q3",
+      "qid": "QID3",
+      "randomization": null,
+      "selector": "ML",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "What should we <strong>improve</strong>?",
+      "translations": {},
+      "type": "TE",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID4": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Your email",
+      "displayLogic": null,
+      "exportTag": "Q4",
+      "qid": "QID4",
+      "randomization": null,
+      "selector": "SL",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "Your email",
+      "translations": {},
+      "type": "TE",
+      "validation": {
+        "contentType": "ValidEmail",
+        "forceResponse": "REQUEST",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID5": {
+      "answers": [],
+      "choices": [
+        {
+          "display": "Surveys",
+          "id": "1",
+          "textEntry": false
+        },
+        {
+          "display": "Contacts",
+          "id": "2",
+          "textEntry": false
+        },
+        {
+          "display": "Integrations",
+          "id": "3",
+          "textEntry": false
+        }
+      ],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Which features do you use?",
+      "displayLogic": null,
+      "exportTag": "Q5",
+      "qid": "QID5",
+      "randomization": {
+        "raw": {
+          "Advanced": null,
+          "TotalRandSubset": "",
+          "Type": "All"
+        },
+        "type": "All"
+      },
+      "selector": "MAVR",
+      "skipLogic": null,
+      "subSelector": "TX",
+      "text": "Which features do you use?",
+      "translations": {},
+      "type": "MC",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    }
+  },
+  "surveyId": "SV_fixture000000000",
+  "unknownLanguageCodes": []
 }

@@ -1,78 +1,7 @@
 {
-  "name": "Embedded data",
-  "surveyId": "SV_fixture000000000",
-  "defaultLanguageCode": "en-US",
-  "languageCodes": [],
-  "unknownLanguageCodes": [],
-  "questions": {
-    "QID1": {
-      "qid": "QID1",
-      "exportTag": "Q1",
-      "type": "TE",
-      "selector": "ML",
-      "subSelector": null,
-      "text": "Hello ${e://Field/firstName}, how was your visit to ${e://Field/Store-Name}?",
-      "description": "Hello ${e://Field/firstName}, how was your visit to ${e://Fi",
-      "choices": [],
-      "answers": [],
-      "validation": {
-        "forceResponse": "OFF",
-        "contentType": null,
-        "minChars": null,
-        "maxChars": null
-      },
-      "configuration": {
-        "sliderMin": null,
-        "sliderMax": null,
-        "gridLines": null,
-        "numDecimals": null,
-        "descriptionOption": "UseText",
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        }
-      },
-      "displayLogic": null,
-      "skipLogic": null,
-      "randomization": null,
-      "translations": {}
-    },
-    "QID2": {
-      "qid": "QID2",
-      "exportTag": "Q2",
-      "type": "TE",
-      "selector": "SL",
-      "subSelector": null,
-      "text": "You said: ${q://QID1/ChoiceTextEntryValue}. Anything to add? ${loc://something}",
-      "description": "You said: ${q://QID1/ChoiceTextEntryValue}. Anything to add?",
-      "choices": [],
-      "answers": [],
-      "validation": {
-        "forceResponse": "OFF",
-        "contentType": null,
-        "minChars": null,
-        "maxChars": null
-      },
-      "configuration": {
-        "sliderMin": null,
-        "sliderMax": null,
-        "gridLines": null,
-        "numDecimals": null,
-        "descriptionOption": "UseText",
-        "raw": {
-          "QuestionDescriptionOption": "UseText"
-        }
-      },
-      "displayLogic": null,
-      "skipLogic": null,
-      "randomization": null,
-      "translations": {}
-    }
-  },
   "blocks": [
     {
-      "id": "BL_1",
       "description": "Default Question Block",
-      "type": "Default",
       "elements": [
         {
           "kind": "question",
@@ -82,41 +11,102 @@
           "kind": "question",
           "qid": "QID2"
         }
-      ]
+      ],
+      "id": "BL_1",
+      "type": "Default"
     }
   ],
+  "defaultLanguageCode": "en-US",
+  "embeddedDataFields": ["firstName", "Store-Name", "userId", "plan tier"],
   "flow": [
     {
-      "type": "EmbeddedData",
-      "fields": [
-        "firstName",
-        "Store-Name",
-        "userId",
-        "plan tier"
-      ]
+      "fields": ["firstName", "Store-Name", "userId", "plan tier"],
+      "type": "EmbeddedData"
     },
     {
-      "type": "Block",
-      "id": "BL_1"
+      "id": "BL_1",
+      "type": "Block"
     },
     {
       "type": "EndSurvey"
     }
   ],
+  "issues": [],
+  "languageCodes": [],
+  "name": "Embedded data",
   "options": {
     "backButton": false,
-    "progressBar": "None",
     "eosMessage": null,
     "eosRedirectUrl": null,
     "nextButtonLabel": "→",
+    "partialData": "+1 week",
     "previousButtonLabel": "←",
-    "partialData": "+1 week"
+    "progressBar": "None"
   },
-  "embeddedDataFields": [
-    "firstName",
-    "Store-Name",
-    "userId",
-    "plan tier"
-  ],
-  "issues": []
+  "questions": {
+    "QID1": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Hello ${e://Field/firstName}, how was your visit to ${e://Fi",
+      "displayLogic": null,
+      "exportTag": "Q1",
+      "qid": "QID1",
+      "randomization": null,
+      "selector": "ML",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "Hello ${e://Field/firstName}, how was your visit to ${e://Field/Store-Name}?",
+      "translations": {},
+      "type": "TE",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID2": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "You said: ${q://QID1/ChoiceTextEntryValue}. Anything to add?",
+      "displayLogic": null,
+      "exportTag": "Q2",
+      "qid": "QID2",
+      "randomization": null,
+      "selector": "SL",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "You said: ${q://QID1/ChoiceTextEntryValue}. Anything to add? ${loc://something}",
+      "translations": {},
+      "type": "TE",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    }
+  },
+  "surveyId": "SV_fixture000000000",
+  "unknownLanguageCodes": []
 }
