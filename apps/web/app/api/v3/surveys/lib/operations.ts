@@ -24,6 +24,12 @@ import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/l
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import {
+  applySurveyBlockOperations,
+  readPublicBlocks,
+  remapBlockInvalidParamPath,
+  reorderSurveyBlocks,
+} from "../blocks";
+import {
   type TV3SurveyCreateOptions,
   V3SurveyCreatePermissionError,
   V3SurveyInputValidationError,
@@ -36,12 +42,6 @@ import {
   V3SurveyStoredDocumentError,
   patchV3Survey,
 } from "../patch";
-import {
-  applySurveyBlockOperations,
-  readPublicBlocks,
-  remapBlockInvalidParamPath,
-  reorderSurveyBlocks,
-} from "../blocks";
 import {
   type TV3SurveyPrepareResult,
   prepareV3SurveyCreateInput,
@@ -868,10 +868,7 @@ async function runV3SurveyDocumentMutation({
   }
 }
 
-export async function patchV3SurveyResponse({
-  body,
-  ...params
-}: TPatchV3SurveyParams): Promise<Response> {
+export async function patchV3SurveyResponse({ body, ...params }: TPatchV3SurveyParams): Promise<Response> {
   return runV3SurveyDocumentMutation({
     ...params,
     body,
@@ -969,9 +966,7 @@ export async function setV3SurveyBlockOrderResponse({
         return {
           ok: false,
           detail: "This survey's blocks cannot be reordered through the v3 API",
-          invalidParams: [
-            { name: "order", reason: "The stored survey does not expose a v3 block list." },
-          ],
+          invalidParams: [{ name: "order", reason: "The stored survey does not expose a v3 block list." }],
         };
       }
 

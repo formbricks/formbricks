@@ -197,10 +197,13 @@ describe("applySurveyBlockOperations — remove and sequencing", () => {
   test("emptying the survey is rejected once, at the end, not per-op", () => {
     // remove(only) -> insert(new) must stay legal, so the check cannot fire mid-sequence.
     const rescued = expectOk(
-      applySurveyBlockOperations([A], [
-        { op: "remove", id: "blk_a" },
-        { op: "insert", block: block("blk_new"), position: { type: "end" } },
-      ])
+      applySurveyBlockOperations(
+        [A],
+        [
+          { op: "remove", id: "blk_a" },
+          { op: "insert", block: block("blk_new"), position: { type: "end" } },
+        ]
+      )
     );
     expect(ids(rescued.blocks)).toEqual(["blk_new"]);
 

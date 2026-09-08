@@ -1358,10 +1358,7 @@ export const ZV3EditSurveyBlocksBody = z.strictObject({
 });
 
 export const ZV3SetSurveyBlockOrderBody = z.strictObject({
-  order: z
-    .array(ZV3BlockRef)
-    .min(1)
-    .describe("Every current block id, exactly once, in the desired order."),
+  order: z.array(ZV3BlockRef).min(1).describe("Every current block id, exactly once, in the desired order."),
   expectedUpdatedAt: ZV3ExpectedUpdatedAt.optional(),
 });
 

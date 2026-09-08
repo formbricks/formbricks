@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { serializeV3SurveyResource } from "./serializers";
 import { prepareV3SurveyCreate, prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "./prepare";
 import { ZV3CreateSurveyBody } from "./schemas";
+import { serializeV3SurveyResource } from "./serializers";
 
 vi.mock("server-only", () => ({}));
 
