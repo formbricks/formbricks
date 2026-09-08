@@ -5,7 +5,7 @@ openapi: 3.1.1
 info:
   title: Formbricks API v3
   description: |
-    **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, **DELETE /api/v3/surveys/{surveyId}**, and **GET /api/v3/surveys/{surveyId}/export**, which returns a portable `.formbricks.json` envelope that re-imports into any workspace or instance.
+    **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, **DELETE /api/v3/surveys/{surveyId}**, **GET /api/v3/surveys/{surveyId}/export**, which returns a portable `.formbricks.json` envelope, and **POST /api/v3/surveys/import**, which creates a survey from such an envelope or a raw v3 document in any workspace or instance (with a dry-run mode).
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
@@ -1401,6 +1401,102 @@ paths:
                     invalid_params:
                       - name: survey.blocks
                         reason: Empty surveys cannot be exported. Add at least one question first.
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/surveys/import:
+    post:
+      operationId: importSurveyV3
+      summary: Import a survey
+      description: |
+        Imports a `.formbricks.json` export or a raw v3 survey document into a workspace. The document is made to fit the target workspace before it is created: the survey becomes a draft; the link slug, schedule and instance-bound fields are dropped; unknown fields are stripped with a report line; languages the workspace lacks are created; app-survey triggers are matched to existing action classes by key, configuration or name and created otherwise; targeting is not imported; external links are removed when the organization is not entitled to them; invalid media is removed. Every change is one line in `report.issues`.
+
+        With `options.dryRun: true` the endpoint answers **200** with the resolved document, the report and the validation and writes nothing. Otherwise a document that cannot be imported answers **422** (the report rides in `details.report`), and a valid one is created through the same path as `POST /api/v3/surveys` and answers **201** with the survey and the report.
+      tags:
+        - V3 Surveys
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyImportRequest'
+            examples:
+              dryRun:
+                summary: Check a raw document without creating it
+                value:
+                  workspaceId: clxx1234567890123456789012
+                  document:
+                    name: Onboarding feedback
+                    type: link
+                    defaultLanguage: en-US
+                    blocks:
+                      - id: clbk1234567890123456789012
+                        name: Main
+                        elements:
+                          - id: why
+                            type: openText
+                            headline:
+                              en-US: Why did you stop?
+                            required: true
+                  options:
+                    dryRun: true
+      responses:
+        '200':
+          description: Dry run completed. The document may still be invalid; nothing was written.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SurveyImportDryRunResult'
+        '201':
+          description: Survey imported. `Location` points at the new survey.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Location:
+              schema:
+                type: string
+              description: URL of the created survey
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SurveyImportResult'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          description: 'Unprocessable Content — the document cannot be imported: an unknown element type or logic operator (a file from a newer instance), a newer export format, the legacy question format, or a v3 validation failure such as a dangling logic target. `invalid_params` itemizes each issue; `details.report` carries the full import report.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4966,6 +5062,210 @@ components:
           $ref: '#/components/schemas/SurveyExportDocument'
         references:
           $ref: '#/components/schemas/SurveyExportReferences'
+      additionalProperties: false
+    SurveyImportRequest:
+      type: object
+      description: |
+        Import request. Provide exactly one of `export` (a `.formbricks.json` envelope as returned by `GET /api/v3/surveys/{surveyId}/export`) or `document` (a raw v3 survey document). `references` carries action-class definitions for a `document` whose triggers point at another workspace's action classes — the dialog sends a resolved draft back this way.
+      required:
+        - workspaceId
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+          description: Target workspace. Requires read/write access.
+        export:
+          type: object
+          description: 'An export envelope (see `SurveyExportEnvelope`). Deliberately loose here: unknown keys, a hand-edited `slug` or a pre-release `extensions` block are reported in the import report instead of being rejected at the door.'
+          additionalProperties: true
+        document:
+          type: object
+          description: A raw v3 survey document (see `SurveyExportDocument`). Same leniency as `export`; omitted fields take the create defaults.
+          additionalProperties: true
+        references:
+          $ref: '#/components/schemas/SurveyExportReferences'
+        options:
+          type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 200
+              description: Overrides the survey name.
+            dryRun:
+              type: boolean
+              description: Resolve and validate only; nothing is written and no action classes or languages are created.
+          additionalProperties: false
+      additionalProperties: false
+    SurveyImportSource:
+      type: object
+      description: What was imported and through which lane.
+      required:
+        - lane
+        - kind
+      properties:
+        lane:
+          type: string
+          enum:
+            - lossless
+            - structured
+            - ai
+        kind:
+          type: string
+          enum:
+            - formbricks-export
+            - v3-document
+            - qsf
+            - docx
+            - pdf
+            - markdown
+            - text
+            - csv
+            - xlsx
+        fileName:
+          type: string
+        detectedLanguages:
+          type: array
+          items:
+            type: object
+            required:
+              - code
+              - confidence
+            properties:
+              code:
+                type: string
+              confidence:
+                type: number
+            additionalProperties: false
+        chunks:
+          type: integer
+          description: Number of model calls the AI lane made for this file.
+      additionalProperties: false
+    SurveyImportIssue:
+      type: object
+      description: One line of the import report. `code` is stable and machine-readable; `message` is English prose.
+      required:
+        - severity
+        - code
+        - message
+      properties:
+        severity:
+          type: string
+          enum:
+            - error
+            - warning
+            - info
+          description: '`error` stops the import; `warning` changed the document; `info` is worth knowing.'
+        code:
+          type: string
+          description: Stable issue code, e.g. `unknown_field_stripped`, `trigger_created`, `language_created`, `external_url_removed`, `settings_not_exported`, `unknown_element`, `export_format_unsupported`.
+        path:
+          type: string
+          description: v3 document path the issue points at (`blocks.2.elements.0.headline`).
+        message:
+          type: string
+        sourceRef:
+          type: string
+          description: Where in the source file the issue comes from (a Qualtrics `QID`, a document heading).
+        vars:
+          type: object
+          description: Interpolation values for a translated rendering of `code`.
+          additionalProperties: true
+      additionalProperties: false
+    SurveyImportReport:
+      type: object
+      description: |
+        Everything the import changed or could not carry over. Nothing is dropped silently: every strip, match or creation is one issue.
+      required:
+        - source
+        - summary
+        - issues
+      properties:
+        source:
+          $ref: '#/components/schemas/SurveyImportSource'
+        summary:
+          type: object
+          required:
+            - blocks
+            - elements
+            - endings
+            - languages
+            - logicRules
+            - logicRulesReported
+            - hiddenFields
+          properties:
+            blocks:
+              type: integer
+            elements:
+              type: integer
+            endings:
+              type: integer
+            languages:
+              type: array
+              items:
+                type: string
+            logicRules:
+              type: integer
+              description: Logic rules in the imported document.
+            logicRulesReported:
+              type: integer
+              description: Source logic rules that were described in the report instead of imported (QSF).
+            hiddenFields:
+              type: integer
+          additionalProperties: false
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyImportIssue'
+      additionalProperties: false
+    SurveyImportValidation:
+      type: object
+      description: Outcome of the v3 create validation on the resolved document.
+      required:
+        - valid
+        - invalid_params
+      properties:
+        valid:
+          type: boolean
+        invalid_params:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvalidParam'
+      additionalProperties: false
+    SurveyImportDryRunResult:
+      type: object
+      description: |
+        Result of a dry run: the resolved document in its public shape (send it back as `document` together with `references` to create it), the report and the validation. `document` is `null` when the report contains errors.
+      required:
+        - document
+        - references
+        - report
+        - validation
+      properties:
+        document:
+          oneOf:
+            - $ref: '#/components/schemas/SurveyExportDocument'
+            - type: 'null'
+        references:
+          oneOf:
+            - $ref: '#/components/schemas/SurveyExportReferences'
+            - type: 'null'
+        report:
+          $ref: '#/components/schemas/SurveyImportReport'
+        validation:
+          $ref: '#/components/schemas/SurveyImportValidation'
+      additionalProperties: false
+    SurveyImportResult:
+      type: object
+      description: The created survey and the report of what changed on the way in.
+      required:
+        - survey
+        - report
+      properties:
+        survey:
+          $ref: '#/components/schemas/SurveyResource'
+        report:
+          $ref: '#/components/schemas/SurveyImportReport'
       additionalProperties: false
     WorkflowStatus:
       type: string

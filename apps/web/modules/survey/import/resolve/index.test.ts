@@ -394,6 +394,40 @@ describe("resolveImportCandidate", () => {
     expect(deps.listWorkspaceLanguageCodes).toHaveBeenCalledTimes(1);
   });
 
+  test("a minimal raw document comes back complete, with the create defaults filled in", async () => {
+    const result = await resolveImportCandidate(
+      {
+        document: {
+          name: "Minimal",
+          blocks: [
+            {
+              name: "Main",
+              elements: [{ id: "why", type: "openText", headline: { "en-US": "Why?" }, required: true }],
+            },
+          ],
+        },
+        issues: [],
+        source: { lane: "lossless", kind: "v3-document" },
+      },
+      resolveCtx,
+      deps
+    );
+
+    expect(result.validation.valid).toBe(true);
+    expect(result.document).toMatchObject({
+      type: "link",
+      status: "draft",
+      metadata: {},
+      defaultLanguage: "en-US",
+      languages: [],
+      welcomeCard: { enabled: false },
+      endings: [],
+      hiddenFields: { enabled: false },
+      variables: [],
+    });
+    expect(JSON.stringify(result.document)).not.toContain('"default"');
+  });
+
   test("the QSF source kind does not get the settings note", async () => {
     const candidate = await candidateFor(FIXTURE_LINK_SURVEY);
     const result = await resolveImportCandidate(

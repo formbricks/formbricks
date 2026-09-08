@@ -1,0 +1,41 @@
+type: object
+description: >
+  Import request. Provide exactly one of `export` (a `.formbricks.json` envelope as returned by
+  `GET /api/v3/surveys/{surveyId}/export`) or `document` (a raw v3 survey document). `references`
+  carries action-class definitions for a `document` whose triggers point at another workspace's
+  action classes — the dialog sends a resolved draft back this way.
+required:
+  - workspaceId
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+    description: Target workspace. Requires read/write access.
+  export:
+    type: object
+    description: >-
+      An export envelope (see `SurveyExportEnvelope`). Deliberately loose here: unknown keys, a
+      hand-edited `slug` or a pre-release `extensions` block are reported in the import report
+      instead of being rejected at the door.
+    additionalProperties: true
+  document:
+    type: object
+    description: >-
+      A raw v3 survey document (see `SurveyExportDocument`). Same leniency as `export`; omitted
+      fields take the create defaults.
+    additionalProperties: true
+  references:
+    $ref: ./SurveyExportReferences.yml
+  options:
+    type: object
+    properties:
+      name:
+        type: string
+        minLength: 1
+        maxLength: 200
+        description: Overrides the survey name.
+      dryRun:
+        type: boolean
+        description: Resolve and validate only; nothing is written and no action classes or languages are created.
+    additionalProperties: false
+additionalProperties: false

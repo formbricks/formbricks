@@ -9,9 +9,11 @@ info:
     **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST
     /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET
     /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**,
-    **DELETE /api/v3/surveys/{surveyId}**, and **GET
+    **DELETE /api/v3/surveys/{surveyId}**, **GET
     /api/v3/surveys/{surveyId}/export**, which returns a portable
-    `.formbricks.json` envelope that re-imports into any workspace or instance.
+    `.formbricks.json` envelope, and **POST /api/v3/surveys/import**, which
+    creates a survey from such an envelope or a raw v3 document in any
+    workspace or instance (with a dry-run mode).
 
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST
@@ -183,6 +185,8 @@ paths:
     $ref: paths/api_v3_surveys_{surveyId}_restore.yml
   /api/v3/surveys/{surveyId}/export:
     $ref: paths/api_v3_surveys_{surveyId}_export.yml
+  /api/v3/surveys/import:
+    $ref: paths/api_v3_surveys_import.yml
   /api/v3/workflows:
     $ref: paths/api_v3_workflows.yml
   /api/v3/workflows/runs:

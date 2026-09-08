@@ -1,0 +1,46 @@
+type: object
+description: >
+  Everything the import changed or could not carry over. Nothing is dropped silently: every strip,
+  match or creation is one issue.
+required:
+  - source
+  - summary
+  - issues
+properties:
+  source:
+    $ref: ./SurveyImportSource.yml
+  summary:
+    type: object
+    required:
+      - blocks
+      - elements
+      - endings
+      - languages
+      - logicRules
+      - logicRulesReported
+      - hiddenFields
+    properties:
+      blocks:
+        type: integer
+      elements:
+        type: integer
+      endings:
+        type: integer
+      languages:
+        type: array
+        items:
+          type: string
+      logicRules:
+        type: integer
+        description: Logic rules in the imported document.
+      logicRulesReported:
+        type: integer
+        description: Source logic rules that were described in the report instead of imported (QSF).
+      hiddenFields:
+        type: integer
+    additionalProperties: false
+  issues:
+    type: array
+    items:
+      $ref: ./SurveyImportIssue.yml
+additionalProperties: false

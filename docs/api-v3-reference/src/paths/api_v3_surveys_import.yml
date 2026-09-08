@@ -1,0 +1,109 @@
+post:
+  operationId: importSurveyV3
+  summary: Import a survey
+  description: >
+    Imports a `.formbricks.json` export or a raw v3 survey document into a workspace. The document
+    is made to fit the target workspace before it is created: the survey becomes a draft; the link
+    slug, schedule and instance-bound fields are dropped; unknown fields are stripped with a report
+    line; languages the workspace lacks are created; app-survey triggers are matched to existing
+    action classes by key, configuration or name and created otherwise; targeting is not imported;
+    external links are removed when the organization is not entitled to them; invalid media is
+    removed. Every change is one line in `report.issues`.
+
+
+    With `options.dryRun: true` the endpoint answers **200** with the resolved document, the report
+    and the validation and writes nothing. Otherwise a document that cannot be imported answers
+    **422** (the report rides in `details.report`), and a valid one is created through the same path
+    as `POST /api/v3/surveys` and answers **201** with the survey and the report.
+  tags:
+    - V3 Surveys
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/SurveyImportRequest.yml
+        examples:
+          dryRun:
+            summary: Check a raw document without creating it
+            value:
+              workspaceId: clxx1234567890123456789012
+              document:
+                name: Onboarding feedback
+                type: link
+                defaultLanguage: en-US
+                blocks:
+                  - id: clbk1234567890123456789012
+                    name: Main
+                    elements:
+                      - id: why
+                        type: openText
+                        headline:
+                          en-US: Why did you stop?
+                        required: true
+              options:
+                dryRun: true
+  responses:
+    "200":
+      description: Dry run completed. The document may still be invalid; nothing was written.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyImportDryRunResult.yml
+    "201":
+      description: Survey imported. `Location` points at the new survey.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Location:
+          schema:
+            type: string
+          description: URL of the created survey
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyImportResult.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      description: >-
+        Unprocessable Content — the document cannot be imported: an unknown element type or logic
+        operator (a file from a newer instance), a newer export format, the legacy question format,
+        or a v3 validation failure such as a dangling logic target. `invalid_params` itemizes each
+        issue; `details.report` carries the full import report.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

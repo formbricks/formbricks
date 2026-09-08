@@ -143,9 +143,39 @@ export async function resolveImportCandidate(
   }
 
   return {
-    document,
+    document: withCreateDefaults(document, preparation.document),
     createBody: preparation.document,
     report,
     validation: { valid: true, invalid_params: [] },
   };
+}
+
+/**
+ * Fields the create schema defaults when a raw document omits them. Copied back so the public
+ * document the dialog receives is complete; none of these carry translatable text in their default
+ * form, so the internal `default` key never leaks into the public shape.
+ */
+const DEFAULTED_DOCUMENT_FIELDS = [
+  "type",
+  "status",
+  "metadata",
+  "defaultLanguage",
+  "languages",
+  "welcomeCard",
+  "endings",
+  "hiddenFields",
+  "variables",
+] as const;
+
+function withCreateDefaults(
+  document: Record<string, unknown>,
+  createBody: TV3CreateSurveyBody
+): Record<string, unknown> {
+  const complete = { ...document };
+  for (const field of DEFAULTED_DOCUMENT_FIELDS) {
+    if (complete[field] === undefined) {
+      complete[field] = createBody[field];
+    }
+  }
+  return complete;
 }

@@ -63,10 +63,14 @@ type TCreateV3SurveyParams = {
   requestId: string;
   instance: string;
   auditLog?: TV3AuditLog;
-  createdFrom?: "blank" | "template" | "xm-template" | "ai";
+  createdFrom?: TV3SurveyCreatedFrom;
   createOptions?: TV3SurveyCreateOptions;
   authResult?: V3WorkspaceContext;
+  /** Extra `survey_created` properties the import route passes through from its report. */
+  analyticsProperties?: Record<string, string | number | boolean | null | undefined>;
 };
+
+export type TV3SurveyCreatedFrom = "blank" | "template" | "xm-template" | "ai" | "import";
 
 type TRawCreateV3SurveyParams = Omit<TCreateV3SurveyParams, "body"> & {
   body: unknown;
@@ -295,6 +299,7 @@ export async function createV3SurveyResponse({
   createdFrom,
   createOptions,
   authResult: providedAuthResult,
+  analyticsProperties,
 }: TCreateV3SurveyParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId: body.workspaceId });
 
@@ -345,6 +350,7 @@ export async function createV3SurveyResponse({
           workspace_id: authResult.workspaceId,
           question_count: survey.questions?.length ?? 0,
           created_from: createdFrom,
+          ...analyticsProperties,
         },
         { organizationId: authResult.organizationId, workspaceId: authResult.workspaceId }
       );

@@ -293,7 +293,7 @@ export async function validateSurveyCreatePayload(
 
 export async function createV3Survey(
   payload: TV3CreateSurveyBody,
-  createdFrom?: "blank" | "template" | "xm-template" | "ai"
+  createdFrom?: "blank" | "template" | "xm-template" | "ai" | "import"
 ): Promise<TV3CreateSurveyResponse["data"]> {
   const url = createdFrom
     ? `/api/v3/surveys?createdFrom=${encodeURIComponent(createdFrom)}`

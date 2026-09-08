@@ -1288,7 +1288,7 @@ export function createZV3TypedSurveyDocumentSchema(options?: TV3SurveyDocumentSc
 export const ZV3TypedSurveyDocument = createZV3TypedSurveyDocumentSchema();
 
 export const ZV3CreateSurveyQuery = z.object({
-  createdFrom: z.enum(["blank", "template", "xm-template", "ai"]).optional(),
+  createdFrom: z.enum(["blank", "template", "xm-template", "ai", "import"]).optional(),
 });
 
 export type TV3CreateSurveyQuery = z.infer<typeof ZV3CreateSurveyQuery>;
