@@ -677,4 +677,35 @@ describe("v3 survey preparation", () => {
       );
     }
   });
+
+  test("create does not reject a forward recall — deliberately not a breaking change here", () => {
+    // Turning the ordering rule on for create would reject payloads that succeed today. That needs a
+    // version bump and a release note, which is its own change. Guards the decision so a future edit
+    // to the default policy cannot make create breaking by accident.
+    const preparation = prepareV3SurveyCreateInput({
+      workspaceId,
+      name: "Forward recall on create",
+      blocks: [
+        {
+          id: "clbk1111111111111111111111",
+          name: "A",
+          elements: [
+            {
+              id: "q1",
+              type: "openText",
+              headline: { "en-US": "Hi #recall:q2/fallback:x#" },
+              required: false,
+            },
+          ],
+        },
+        {
+          id: "clbk2222222222222222222222",
+          name: "B",
+          elements: [{ id: "q2", type: "openText", headline: { "en-US": "Two" }, required: false }],
+        },
+      ],
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
 });
