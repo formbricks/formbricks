@@ -340,6 +340,7 @@ export const generateAIChartAction = authenticatedActionClient
       const { chartType, query, name } = await generateAIChartQuery({
         organizationId,
         workspaceId,
+        feedbackDirectoryId,
         userId: ctx.user.id,
         prompt: parsedInput.prompt,
       });

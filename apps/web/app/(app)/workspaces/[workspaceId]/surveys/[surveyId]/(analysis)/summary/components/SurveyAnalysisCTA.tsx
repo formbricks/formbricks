@@ -13,6 +13,7 @@ import { SuccessMessage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[su
 import { ShareSurveyModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
+import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
@@ -184,14 +185,8 @@ export const SurveyAnalysisCTA = ({
     if (isGeneratingExamples) {
       return t("workspace.surveys.summary.generating_example_responses");
     }
-    if (aiUnavailableReason === "not_in_plan") {
-      return t("workspace.surveys.summary.generate_example_responses_locked_plan");
-    }
-    if (aiUnavailableReason === "not_enabled") {
-      return t("workspace.surveys.summary.generate_example_responses_locked_disabled");
-    }
-    if (aiUnavailableReason === "instance_not_configured") {
-      return t("workspace.surveys.summary.generate_example_responses_locked_instance");
+    if (aiUnavailableReason !== null) {
+      return getAIUnavailableMessage(aiUnavailableReason, t);
     }
     if (responseCount > 0) {
       return t("workspace.surveys.summary.generate_example_responses_disabled_has_responses");

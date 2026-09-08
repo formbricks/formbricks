@@ -1,7 +1,15 @@
+export { AndroidIcon } from "./android-icon";
+export { FlutterIcon } from "./flutter-icon";
 export { GithubIcon } from "./github-icon";
 export { GoogleIcon } from "./google-icon";
+export { GoogleTagManagerIcon } from "./google-tag-manager-icon";
 export { Html5Icon } from "./html5-icon";
 export { MicrosoftIcon } from "./microsoft-icon";
 export { NetPromoterScoreIcon } from "./net-promoter-score-icon";
+export { NextjsIcon } from "./nextjs-icon";
 export { NpmIcon } from "./npm-icon";
+export { ReactIcon } from "./react-icon";
 export { SlackIcon } from "./slack-icon";
+export { SwiftIcon } from "./swift-icon";
+export { VueIcon } from "./vue-icon";
+export { WordpressIcon } from "./wordpress-icon";

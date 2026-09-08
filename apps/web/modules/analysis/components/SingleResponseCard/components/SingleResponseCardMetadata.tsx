@@ -3,7 +3,7 @@
 import { LanguagesIcon, LucideIcon, MonitorIcon, SmartphoneIcon, Tag } from "lucide-react";
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { TResponse } from "@formbricks/types/responses";
 import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@/modules/ui/components/button";
