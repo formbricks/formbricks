@@ -89,7 +89,8 @@ export const RenameSurveyModal = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
-        <DialogHeader>
+        {/* DialogHeader pins its icon to the first line; center it on the title + description block. */}
+        <DialogHeader className="[&>svg]:top-1/2 [&>svg]:-translate-y-1/2">
           <PencilIcon />
           <DialogTitle>{t("workspace.surveys.rename_survey")}</DialogTitle>
           <DialogDescription>{t("workspace.surveys.rename_survey_description")}</DialogDescription>
