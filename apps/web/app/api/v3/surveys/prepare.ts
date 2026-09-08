@@ -30,17 +30,28 @@ type TV3SurveyPrepareSuccess<TDocument> = {
 type TV3SurveyPrepareFailure = {
   ok: false;
   validation: Extract<TV3SurveyDocumentValidationResult, { valid: false }>;
+  /**
+   * ENG-3070: whether the request or the *stored* survey is at fault. A stored survey that no longer
+   * satisfies the v3 document contract fails every patch, including one that never touches the
+   * offending field — and reporting that as `invalid_params` on paths the caller never sent reads as
+   * a client error when it is a state error.
+   */
+  origin?: "request" | "storedSurvey";
 };
 
 export type TV3SurveyPrepareResult<TDocument> = TV3SurveyPrepareSuccess<TDocument> | TV3SurveyPrepareFailure;
 
-function invalidPreparation(invalidParams: InvalidParam[]): TV3SurveyPrepareFailure {
+function invalidPreparation(
+  invalidParams: InvalidParam[],
+  origin: "request" | "storedSurvey" = "request"
+): TV3SurveyPrepareFailure {
   return {
     ok: false,
     validation: {
       valid: false,
       invalidParams,
     },
+    origin,
   };
 }
 
@@ -85,12 +96,15 @@ function buildDocumentFromSurvey(
   allowedLanguageCodes = getV3SurveyPatchAllowedLanguageCodes(survey)
 ): TV3SurveyPrepareResult<TV3SurveyDocument> {
   if (Array.isArray(survey.questions) && survey.questions.length > 0) {
-    return invalidPreparation([
-      {
-        name: "survey",
-        reason: "Legacy question-based surveys are not supported by the v3 survey management API",
-      },
-    ]);
+    return invalidPreparation(
+      [
+        {
+          name: "survey",
+          reason: "Legacy question-based surveys are not supported by the v3 survey management API",
+        },
+      ],
+      "storedSurvey"
+    );
   }
 
   const defaultLanguage = getV3SurveyDefaultLanguage(survey, DEFAULT_V3_SURVEY_LANGUAGE);
@@ -119,7 +133,7 @@ function buildDocumentFromSurvey(
   });
 
   if (!documentResult.success) {
-    return invalidPreparation(formatV3ZodInvalidParams(documentResult.error, "survey"));
+    return invalidPreparation(formatV3ZodInvalidParams(documentResult.error, "survey"), "storedSurvey");
   }
 
   return validPreparation(documentResult.data);

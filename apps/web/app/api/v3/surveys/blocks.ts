@@ -159,22 +159,25 @@ export function applySurveyBlockOperations(
         ]);
       }
 
+      // Bound to a local: narrowing on `op.position` is lost inside the findIndex closure.
+      const position = op.position;
       let insertAt: number;
-      if (op.position.type === "start") {
+      if (position.type === "start") {
         insertAt = 0;
-      } else if (op.position.type === "end") {
+      } else if (position.type === "end") {
         insertAt = working.length;
       } else {
-        const anchorIndex = working.findIndex((block) => block.id === op.position.blockId);
+        const anchorId = position.blockId;
+        const anchorIndex = working.findIndex((block) => block.id === anchorId);
         if (anchorIndex === -1) {
           return fail(opIndex, [
             {
               name: `ops.${opIndex}.position.blockId`,
-              reason: `Block '${op.position.blockId}' does not exist on this survey`,
+              reason: `Block '${anchorId}' does not exist on this survey`,
               code: "dangling_reference",
-              identifier: op.position.blockId,
+              identifier: anchorId,
               referenceType: "block",
-              missingId: op.position.blockId,
+              missingId: anchorId,
             },
           ]);
         }

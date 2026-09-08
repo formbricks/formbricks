@@ -33,6 +33,7 @@ import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import {
   type TV3SurveyWritePrecondition,
   V3SurveyStaleError,
+  V3SurveyStoredDocumentError,
   patchV3Survey,
 } from "../patch";
 import {
@@ -636,6 +637,22 @@ function mapV3SurveyPatchError(
   if (err instanceof V3SurveyWritePermissionError) {
     log.warn({ statusCode: 403, workspaceId, errorCode: err.name }, "Survey patch permission check failed");
     return problemForbidden(requestId, err.message, instance);
+  }
+
+  if (err instanceof V3SurveyStoredDocumentError) {
+    log.warn(
+      { statusCode: 422, workspaceId, invalidParamCount: err.invalidParams.length },
+      "Stored survey does not satisfy the v3 document contract"
+    );
+    return problemUnprocessableContent(
+      requestId,
+      "The stored survey does not satisfy the v3 survey document contract, so this request was not evaluated. The reported paths are into the stored survey, not your request; repair them in the editor.",
+      {
+        code: "stored_survey_invalid",
+        invalid_params: err.invalidParams,
+        instance,
+      }
+    );
   }
 
   if (err instanceof V3SurveyStaleError) {

@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { selectSurvey } from "@/lib/survey/service";
@@ -174,6 +175,18 @@ async function buildV3AppSurveyPatchWrites(params: {
  */
 export type TV3SurveyWritePrecondition = { expectedUpdatedAt: Date };
 
+/**
+ * ENG-3070: the *stored* survey does not satisfy the v3 document contract, so the request was never
+ * evaluated. Distinct from a reference-validation failure because the fix is to repair the survey,
+ * not the payload — and because reporting it as `invalid_params` on request paths misattributes it.
+ */
+export class V3SurveyStoredDocumentError extends Error {
+  constructor(readonly invalidParams: InvalidParam[]) {
+    super("Stored survey does not satisfy the v3 survey document contract");
+    this.name = "V3SurveyStoredDocumentError";
+  }
+}
+
 export class V3SurveyStaleError extends Error {
   constructor(
     readonly expectedUpdatedAt: Date,
@@ -320,7 +333,9 @@ export async function patchV3Survey(
 ): Promise<TSurvey> {
   const preparation = prepareV3SurveyPatchInput(currentSurvey, input);
   if (!preparation.ok) {
-    throw new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
+    throw preparation.origin === "storedSurvey"
+      ? new V3SurveyStoredDocumentError(preparation.validation.invalidParams)
+      : new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
   }
 
   // Two ways in: the block endpoints pass `expectedUpdatedAt` explicitly, while a PATCH caller
