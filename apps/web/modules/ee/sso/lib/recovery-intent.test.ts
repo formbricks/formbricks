@@ -198,10 +198,15 @@ describe("SSO recovery intent", () => {
 
     test("re-pairs a resent link with a full TTL while well inside the absolute lifetime", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
+      const [key] = [...store.keys()];
+      // Age it first, as a link resent hours later would find it. Asserted against a record still
+      // carrying its issued TTL, this cannot fail: a refresh that does nothing at all leaves the same
+      // value, which is what made an earlier version of this test green against a no-op.
+      store.set(key, { ...store.get(key)!, ttlMs: 60 * 1000 });
 
       await refreshSsoRecoveryIntent(stateId, storedIntent(Date.now()));
 
-      expect([...store.values()][0].ttlMs).toBe(LINK_TTL_MS);
+      expect(store.get(key)!.ttlMs).toBe(LINK_TTL_MS);
     });
 
     /**
@@ -261,12 +266,14 @@ describe("SSO recovery intent", () => {
 
     test("leaves the stored record untouched, so a refresh cannot write back a stale copy", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
+      const issuedCreatedAt = (await readSsoRecoveryIntent(stateId))!.createdAt;
+      // A createdAt a refresh would visibly overwrite if it wrote the record back at all, rather than
+      // one the issued value already satisfies.
+      const staleCreatedAt = issuedCreatedAt - LINK_TTL_MS;
 
-      await refreshSsoRecoveryIntent(stateId, storedIntent(Date.now() - LINK_TTL_MS));
+      await refreshSsoRecoveryIntent(stateId, storedIntent(staleCreatedAt));
 
-      // The intent handed in carries a different createdAt; the record must still hold its own.
-      const stored = await readSsoRecoveryIntent(stateId);
-      expect(stored?.createdAt).toBeGreaterThan(Date.now() - LINK_TTL_MS);
+      expect((await readSsoRecoveryIntent(stateId))?.createdAt).toBe(issuedCreatedAt);
     });
   });
 });
