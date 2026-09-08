@@ -28,7 +28,12 @@ import {
   type TDashboardDateFilter,
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
-import { EDIT_HOTKEY, hasOpenOverlay, isEditHotkey } from "@/modules/ee/analysis/dashboards/lib/edit-hotkey";
+import {
+  EDIT_HOTKEY,
+  hasOpenOverlay,
+  isEditHotkey,
+  resolveEditHotkeyAction,
+} from "@/modules/ee/analysis/dashboards/lib/edit-hotkey";
 import {
   DEFAULT_WIDGET_VIEW,
   type TWidgetView,
@@ -266,25 +271,6 @@ export function DashboardDetailClient({
     setIsEditing(true);
   }, [dashboard.widgets, isEditing]);
 
-  // `E` enters edit mode, matching the pencil in the control bar.
-  useEffect(() => {
-    if (isReadOnly || isEditing) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isEditHotkey(event) || hasOpenOverlay()) {
-        return;
-      }
-
-      event.preventDefault();
-      handleEnterEditMode();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleEnterEditMode, isEditing, isReadOnly]);
-
   const handleEditChart = useCallback((chartId: string) => {
     setEditingChartId(chartId);
   }, []);
@@ -455,6 +441,29 @@ export function DashboardDetailClient({
       setIsSaving(false);
     }
   }, [name, widgets, dashboard, workspaceId, router, t, startTransition]);
+
+  // `E` toggles edit mode: it enters from view mode, and inside edit mode it saves when there is
+  // something to save and cancels otherwise - the same button the key cap sits on in the control bar.
+  useEffect(() => {
+    const action = resolveEditHotkeyAction({ isReadOnly, isEditing, hasChanges, isSaving });
+    if (!action) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isEditHotkey(event) || hasOpenOverlay()) {
+        return;
+      }
+
+      event.preventDefault();
+      if (action === "enter") handleEnterEditMode();
+      else if (action === "save") void handleSave();
+      else handleCancel();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleCancel, handleEnterEditMode, handleSave, hasChanges, isEditing, isReadOnly, isSaving]);
 
   const applyDateFilterToUrl = useCallback(
     (filter: TDashboardDateFilter | null) => {

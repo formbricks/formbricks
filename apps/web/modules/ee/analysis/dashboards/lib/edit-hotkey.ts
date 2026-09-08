@@ -1,5 +1,34 @@
-/** Single-key shortcut that puts a dashboard into edit mode. */
+/**
+ * Single-key shortcut that toggles a dashboard's edit mode: it enters edit mode, and from inside it
+ * saves when there is something to save and cancels otherwise.
+ */
 export const EDIT_HOTKEY = "e";
+
+export type TEditHotkeyAction = "enter" | "save" | "cancel";
+
+interface EditHotkeyState {
+  isReadOnly: boolean;
+  isEditing: boolean;
+  hasChanges: boolean;
+  isSaving: boolean;
+}
+
+/**
+ * What `E` does in the dashboard's current state, or `null` when it does nothing. A read-only viewer
+ * has no edit mode; while a save is in flight the key stays quiet so it cannot cancel a half-written
+ * layout or queue a second save.
+ */
+export const resolveEditHotkeyAction = ({
+  isReadOnly,
+  isEditing,
+  hasChanges,
+  isSaving,
+}: EditHotkeyState): TEditHotkeyAction | null => {
+  if (isReadOnly) return null;
+  if (!isEditing) return "enter";
+  if (isSaving) return null;
+  return hasChanges ? "save" : "cancel";
+};
 
 const TYPING_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 

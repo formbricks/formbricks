@@ -25,7 +25,10 @@ interface DashboardControlBarProps {
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
   onRefresh: () => void;
-  /** Single-key shortcut that also enters edit mode, shown as a key cap on the pencil's tooltip. */
+  /**
+   * Single-key shortcut that toggles edit mode. Its key cap sits on whichever button it currently
+   * triggers: the pencil in view mode, save while there are changes, cancel while there are none.
+   */
   editHotkey?: string;
   onEditToggle: () => void;
   onSave: () => void;
@@ -79,6 +82,7 @@ export const DashboardControlBar = ({
     {
       icon: isSaving ? null : CheckIcon,
       tooltip: hasChanges ? t("common.save") : t("common.no_changes"),
+      shortcut: hasChanges && !isSaving ? editHotkey : undefined,
       onClick: onSave,
       isVisible: true,
       isLoading: isSaving,
@@ -87,6 +91,7 @@ export const DashboardControlBar = ({
     {
       icon: XIcon,
       tooltip: t("common.cancel"),
+      shortcut: !hasChanges && !isSaving ? editHotkey : undefined,
       onClick: onCancel,
       isVisible: true,
       disabled: isSaving,

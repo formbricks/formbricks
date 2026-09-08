@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { EDIT_HOTKEY, isEditHotkey } from "./edit-hotkey";
+import { EDIT_HOTKEY, isEditHotkey, resolveEditHotkeyAction } from "./edit-hotkey";
 
 const bareEvent = (overrides: Record<string, unknown> = {}) =>
   ({
@@ -43,5 +43,32 @@ describe("isEditHotkey", () => {
 
   test("fires when the focused element does not take text", () => {
     expect(isEditHotkey(bareEvent({ target: { tagName: "BUTTON", isContentEditable: false } }))).toBe(true);
+  });
+});
+
+describe("resolveEditHotkeyAction", () => {
+  const viewing = { isReadOnly: false, isEditing: false, hasChanges: false, isSaving: false };
+  const editing = { ...viewing, isEditing: true };
+
+  test("enters edit mode from view mode", () => {
+    expect(resolveEditHotkeyAction(viewing)).toBe("enter");
+  });
+
+  test("saves when edit mode holds changes", () => {
+    expect(resolveEditHotkeyAction({ ...editing, hasChanges: true })).toBe("save");
+  });
+
+  test("cancels when edit mode holds no changes", () => {
+    expect(resolveEditHotkeyAction(editing)).toBe("cancel");
+  });
+
+  test("does nothing while a save is in flight", () => {
+    expect(resolveEditHotkeyAction({ ...editing, hasChanges: true, isSaving: true })).toBeNull();
+    expect(resolveEditHotkeyAction({ ...editing, isSaving: true })).toBeNull();
+  });
+
+  test("does nothing for a read-only viewer", () => {
+    expect(resolveEditHotkeyAction({ ...viewing, isReadOnly: true })).toBeNull();
+    expect(resolveEditHotkeyAction({ ...editing, isReadOnly: true, hasChanges: true })).toBeNull();
   });
 });
