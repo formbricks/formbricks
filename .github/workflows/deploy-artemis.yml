@@ -1,0 +1,26 @@
+name: Deploy Selected Branch to Artemis
+run-name: Deploy ${{ github.ref_name }} to Artemis
+
+on:
+  # Select the source branch from the Run workflow branch dropdown.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-artemis
+  cancel-in-progress: false
+
+jobs:
+  build-and-promote:
+    name: Build and promote to Artemis
+    uses: ./.github/workflows/build-and-push-ecr.yml
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+    with:
+      image_tag: 0.0.0-artemis-${{ github.sha }}
+      deployment_tag: staging-artemis

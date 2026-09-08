@@ -50,6 +50,10 @@ inputs:
     description: "Tag image for staging deployment"
     required: false
     default: "false"
+  deployment_tag:
+    description: "Additional mutable environment tag (staging or staging-artemis)"
+    required: false
+    default: ""
   is_prerelease:
     description: "Whether this is a prerelease (auto-tags for staging/production)"
     required: false
@@ -92,6 +96,7 @@ runs:
         ECR_REGION: ${{ inputs.ecr_region }}
         AWS_ROLE_ARN: ${{ inputs.aws_role_arn }}
         GHCR_IMAGE_NAME: ${{ inputs.ghcr_image_name }}
+        DEPLOYMENT_TAG: ${{ inputs.deployment_tag }}
       run: |
         set -euo pipefail
 
@@ -112,6 +117,11 @@ runs:
             echo "ERROR: GHCR builds require ghcr_image_name"
             exit 1
           fi
+        fi
+
+        if [[ -n "$DEPLOYMENT_TAG" && "$DEPLOYMENT_TAG" != "staging" && "$DEPLOYMENT_TAG" != "staging-artemis" ]]; then
+          echo "ERROR: deployment_tag must be 'staging' or 'staging-artemis', got: $DEPLOYMENT_TAG"
+          exit 1
         fi
 
         echo "SUCCESS: Input validation passed for $REGISTRY_TYPE build"
@@ -157,6 +167,7 @@ runs:
         ECR_REPOSITORY: ${{ inputs.ecr_repository }}
         DEPLOY_PRODUCTION: ${{ inputs.deploy_production }}
         DEPLOY_STAGING: ${{ inputs.deploy_staging }}
+        DEPLOYMENT_TAG: ${{ inputs.deployment_tag }}
         IS_PRERELEASE: ${{ inputs.is_prerelease }}
         MAKE_LATEST: ${{ inputs.make_latest }}
       run: |
@@ -182,6 +193,10 @@ runs:
         if [[ "${DEPLOY_STAGING}" == "true" ]]; then
           TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:staging"
           echo "Adding staging tag (manual override)"
+        fi
+        if [[ -n "${DEPLOYMENT_TAG}" ]]; then
+          TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:${DEPLOYMENT_TAG}"
+          echo "Adding ${DEPLOYMENT_TAG} environment tag"
         fi
 
         echo "ECR tags generated:"
@@ -319,12 +334,16 @@ runs:
         REGISTRY_TYPE: ${{ inputs.registry_type }}
         IMAGE_TAG: ${{ steps.version.outputs.version }}
         VERSION_SOURCE: ${{ steps.version.outputs.source }}
+        DEPLOYMENT_TAG: ${{ inputs.deployment_tag }}
       run: |
         echo "SUCCESS: Built and pushed Docker image to $REGISTRY_TYPE"
         echo "Image Tag: $IMAGE_TAG (source: $VERSION_SOURCE)"
         if [[ "$REGISTRY_TYPE" == "ecr" ]]; then
           echo "ECR Registry: ${{ inputs.ecr_registry }}"
           echo "ECR Repository: ${{ inputs.ecr_repository }}"
+          if [[ -n "$DEPLOYMENT_TAG" ]]; then
+            echo "Environment Tag: $DEPLOYMENT_TAG"
+          fi
         else
           echo "GHCR Image: ghcr.io/${{ inputs.ghcr_image_name }}"
         fi
