@@ -1,0 +1,26 @@
+name: Deploy Selected Branch to Apollo
+run-name: Deploy ${{ github.ref_name }} to Apollo
+
+on:
+  # Select the source branch from the Run workflow branch dropdown.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-apollo
+  cancel-in-progress: false
+
+jobs:
+  build-and-promote:
+    name: Build and promote to Apollo
+    uses: ./.github/workflows/build-and-push-ecr.yml
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+    with:
+      image_tag: 0.0.0-apollo-${{ github.sha }}
+      deployment_tag: staging

@@ -37,6 +37,11 @@ on:
         required: false
         type: boolean
         default: false
+      deployment_tag:
+        description: "Additional mutable environment tag for a manual environment deployment"
+        required: false
+        type: string
+        default: ""
     outputs:
       IMAGE_TAG:
         description: "Normalized image tag used for the build"
@@ -84,6 +89,7 @@ jobs:
           version: ${{ inputs.version_override || inputs.image_tag }}
           deploy_production: ${{ inputs.deploy_production }}
           deploy_staging: ${{ inputs.deploy_staging }}
+          deployment_tag: ${{ inputs.deployment_tag }}
           is_prerelease: ${{ inputs.IS_PRERELEASE }}
           make_latest: ${{ inputs.MAKE_LATEST }}
         env:
