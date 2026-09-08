@@ -1,5 +1,6 @@
 import { fileUploadQuestion, openTextQuestion, responseData, workspaceId } from "./__mocks__/utils.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { Response } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -64,6 +65,25 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
 
     expect(deleteFile).toHaveBeenCalledTimes(1);
     expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "block-file.png", workspaceId);
+    expect(result).toEqual(okVoid());
+  });
+
+  // Before ENG-2547 this path cast a matching answer straight to string[], so a non-array value became
+  // a delete target: a bare string holding a valid same-workspace URL was deleted off malformed data.
+  test("not call deleteFile for a non-array answer under a file-upload key", async () => {
+    // A plain string is a valid TResponseData value, so this needs no cast — which is exactly why the
+    // old `as string[]` cast was unsafe.
+    const malformedData: Response["data"] = {
+      [fileUploadQuestion.id]: `https://example.com/storage/${workspaceId}/private/file1.png`,
+    };
+
+    const result = await findAndDeleteUploadedFilesInResponse(
+      malformedData,
+      questionsSurvey([fileUploadQuestion]),
+      workspaceId
+    );
+
+    expect(deleteFile).not.toHaveBeenCalled();
     expect(result).toEqual(okVoid());
   });
 

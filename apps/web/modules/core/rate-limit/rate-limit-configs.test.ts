@@ -64,7 +64,19 @@ describe("rateLimitConfigs", () => {
 
     test("should have all auth configurations", () => {
       const authConfigs = Object.keys(rateLimitConfigs.auth);
-      expect(authConfigs).toEqual(["login", "signup", "forgotPassword", "verifyEmail", "emailToken"]);
+      expect(authConfigs).toEqual([
+        "login",
+        "signup",
+        "forgotPassword",
+        "resetPassword",
+        "verifyEmail",
+        "emailToken",
+      ]);
+      expect(rateLimitConfigs.auth.resetPassword).toEqual({
+        interval: 3600,
+        allowedPerInterval: 5,
+        namespace: "auth:reset-password",
+      });
       // The values, not just the key: emailToken throttles an unauthenticated endpoint that also
       // reveals whether an address is registered, so a loosened quota is a security regression.
       expect(rateLimitConfigs.auth.emailToken).toEqual({

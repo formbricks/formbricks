@@ -4407,13 +4407,6 @@ export const ZSurveyFilters = z.object({
 
 export type TSurveyFilters = z.infer<typeof ZSurveyFilters>;
 
-export const ZFilterOption = z.object({
-  label: z.string(),
-  value: z.string(),
-});
-
-export type TFilterOption = z.infer<typeof ZFilterOption>;
-
 export const ZSortOption = z.object({
   label: z.string(),
   value: z.enum(["createdAt", "updatedAt", "name", "relevance"]),

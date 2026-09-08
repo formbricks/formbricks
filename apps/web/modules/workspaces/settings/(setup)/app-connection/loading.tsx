@@ -14,6 +14,11 @@ export const AppConnectionLoading = () => {
       skeletonLines: [{ classes: " h-44 max-w-full rounded-lg" }],
     },
     {
+      title: t("workspace.app-connection.workspace_details"),
+      description: t("workspace.app-connection.workspace_details_description"),
+      skeletonLines: [{ classes: "h-12 w-4/6 rounded-lg" }],
+    },
+    {
       title: t("workspace.app-connection.how_to_setup"),
       description: t("workspace.app-connection.how_to_setup_description"),
       skeletonLines: [
@@ -25,16 +30,11 @@ export const AppConnectionLoading = () => {
         { classes: "h-10 w-60 rounded-lg" },
       ],
     },
-    {
-      title: t("workspace.app-connection.workspace_id"),
-      description: t("workspace.app-connection.workspace_id_description"),
-      skeletonLines: [{ classes: "h-12 w-4/6 rounded-lg" }],
-    },
   ];
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.connect_your_app")} />
+      <PageHeader pageTitle={t("common.web_and_mobile_sdk")} />
       <div className="mt-4 flex max-w-4xl animate-pulse items-center gap-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-xs md:gap-y-0 md:text-base"></div>
       {cards.map((card) => (
         <LoadingCard key={card.title} {...card} />
