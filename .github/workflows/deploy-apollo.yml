@@ -20,7 +20,18 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    secrets: inherit
+    secrets:
+      AWS_ECR_PUSH_ROLE_ARN: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
+      DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+      DUMMY_DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}
+      DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
+      DUMMY_REDIS_URL: ${{ secrets.DUMMY_REDIS_URL }}
+      DUMMY_HUB_API_URL: ${{ secrets.DUMMY_HUB_API_URL }}
+      DUMMY_HUB_API_KEY: ${{ secrets.DUMMY_HUB_API_KEY }}
+      DUMMY_CUBEJS_API_URL: ${{ secrets.DUMMY_CUBEJS_API_URL }}
+      DUMMY_CUBEJS_API_SECRET: ${{ secrets.DUMMY_CUBEJS_API_SECRET }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
     with:
       image_tag: 0.0.0-apollo-${{ github.sha }}
       deployment_tag: staging
