@@ -34,7 +34,9 @@ describe("parseQsf", () => {
   test.each(GOLDEN_FIXTURES)("%s parses to its golden model", async (name) => {
     const model = parseFixture(name);
     await expect(JSON.stringify(toGolden(model), null, 2)).toMatchFileSnapshot(
-      join(FIXTURES, name.replace(/\.qsf$/, ".expected.json"))
+      // `.snap`, not `.json`: prettier never touches snapshot files, so the byte-exact golden survives
+      // a `prettier --write` on this directory.
+      join(FIXTURES, name.replace(/\.qsf$/, ".expected.snap"))
     );
   });
 
