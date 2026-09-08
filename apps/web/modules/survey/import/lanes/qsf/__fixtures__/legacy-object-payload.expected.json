@@ -1,0 +1,142 @@
+{
+  "blocks": [
+    {
+      "description": "Standardfrageblock",
+      "elements": [
+        {
+          "kind": "question",
+          "qid": "QID1"
+        },
+        {
+          "kind": "question",
+          "qid": "QID2"
+        }
+      ],
+      "id": "BL_1",
+      "type": "Default"
+    }
+  ],
+  "defaultLanguageCode": "de-DE",
+  "embeddedDataFields": [],
+  "flow": [
+    {
+      "id": "BL_1",
+      "type": "Block"
+    },
+    {
+      "rawType": "WebService",
+      "type": "Unknown"
+    },
+    {
+      "type": "EndSurvey"
+    }
+  ],
+  "issues": [
+    {
+      "code": "unknown_element",
+      "message": "Flow element 'WebService' is not known and was skipped.",
+      "severity": "info",
+      "sourceRef": "Survey Flow",
+      "vars": {
+        "sourceRef": "Survey Flow",
+        "type": "WebService"
+      }
+    },
+    {
+      "code": "unknown_element",
+      "message": "Survey element 'XYZ' is not known and was skipped.",
+      "severity": "info",
+      "vars": {
+        "type": "XYZ"
+      }
+    }
+  ],
+  "languageCodes": [],
+  "name": "Legacy export",
+  "options": {
+    "backButton": false,
+    "eosMessage": null,
+    "eosRedirectUrl": null,
+    "nextButtonLabel": "→",
+    "partialData": "+1 week",
+    "previousButtonLabel": "←",
+    "progressBar": "None"
+  },
+  "questions": {
+    "QID1": {
+      "answers": [],
+      "choices": [
+        {
+          "display": "Gut",
+          "id": "1",
+          "textEntry": false
+        },
+        {
+          "display": "Schlecht",
+          "id": "2",
+          "textEntry": false
+        }
+      ],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Wie geht es Ihnen?",
+      "displayLogic": null,
+      "exportTag": "Q1",
+      "qid": "QID1",
+      "randomization": null,
+      "selector": "SAVR",
+      "skipLogic": null,
+      "subSelector": "TX",
+      "text": "Wie geht es Ihnen?",
+      "translations": {},
+      "type": "MC",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID2": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Kommentar",
+      "displayLogic": null,
+      "exportTag": "Q2",
+      "qid": "QID2",
+      "randomization": null,
+      "selector": "ML",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "Kommentar",
+      "translations": {},
+      "type": "TE",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    }
+  },
+  "surveyId": "SV_fixture000000000",
+  "unknownLanguageCodes": []
+}

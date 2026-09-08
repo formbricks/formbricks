@@ -1,0 +1,212 @@
+{
+  "blocks": [
+    {
+      "description": "Feedback",
+      "elements": [
+        {
+          "kind": "question",
+          "qid": "QID1"
+        },
+        {
+          "kind": "question",
+          "qid": "QID2"
+        },
+        {
+          "kind": "question",
+          "qid": "QID3"
+        }
+      ],
+      "id": "BL_1",
+      "type": "Default"
+    }
+  ],
+  "defaultLanguageCode": "en-US",
+  "embeddedDataFields": [],
+  "flow": [
+    {
+      "id": "BL_1",
+      "type": "Block"
+    },
+    {
+      "type": "EndSurvey"
+    }
+  ],
+  "issues": [],
+  "languageCodes": ["de-DE"],
+  "name": "Produktfeedback",
+  "options": {
+    "backButton": false,
+    "eosMessage": "Danke! / Thank you!",
+    "eosRedirectUrl": null,
+    "nextButtonLabel": "→",
+    "partialData": "+1 week",
+    "previousButtonLabel": "←",
+    "progressBar": "None"
+  },
+  "questions": {
+    "QID1": {
+      "answers": [],
+      "choices": [
+        {
+          "display": "Very satisfied",
+          "id": "1",
+          "textEntry": false
+        },
+        {
+          "display": "Satisfied",
+          "id": "2",
+          "textEntry": false
+        },
+        {
+          "display": "Unsatisfied",
+          "id": "3",
+          "textEntry": false
+        }
+      ],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "How satisfied are you?",
+      "displayLogic": null,
+      "exportTag": "Q1",
+      "qid": "QID1",
+      "randomization": null,
+      "selector": "SAVR",
+      "skipLogic": null,
+      "subSelector": "TX",
+      "text": "How satisfied are you?",
+      "translations": {
+        "de-DE": {
+          "choices": {
+            "1": "Sehr zufrieden",
+            "2": "Zufrieden",
+            "3": "Unzufrieden"
+          },
+          "text": "Wie zufrieden sind Sie?"
+        }
+      },
+      "type": "MC",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "ON",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID2": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Anything else?",
+      "displayLogic": null,
+      "exportTag": "Q2",
+      "qid": "QID2",
+      "randomization": null,
+      "selector": "ML",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "Anything else?",
+      "translations": {
+        "de-DE": {
+          "text": "Noch etwas?"
+        }
+      },
+      "type": "TE",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID3": {
+      "answers": [
+        {
+          "display": "Agree",
+          "id": "1",
+          "textEntry": false
+        },
+        {
+          "display": "Neutral",
+          "id": "2",
+          "textEntry": false
+        },
+        {
+          "display": "Disagree",
+          "id": "3",
+          "textEntry": false
+        }
+      ],
+      "choices": [
+        {
+          "display": "Easy to use",
+          "id": "1",
+          "textEntry": false
+        },
+        {
+          "display": "Good value",
+          "id": "2",
+          "textEntry": false
+        }
+      ],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Rate these statements",
+      "displayLogic": null,
+      "exportTag": "Q3",
+      "qid": "QID3",
+      "randomization": null,
+      "selector": "Likert",
+      "skipLogic": null,
+      "subSelector": "SingleAnswer",
+      "text": "Rate these statements",
+      "translations": {
+        "de-DE": {
+          "answers": {
+            "1": "Stimme zu",
+            "2": "Neutral",
+            "3": "Stimme nicht zu"
+          },
+          "choices": {
+            "1": "Einfach zu bedienen",
+            "2": "Gutes Preis-Leistungs-Verhältnis"
+          },
+          "text": "Bewerten Sie diese Aussagen"
+        }
+      },
+      "type": "Matrix",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    }
+  },
+  "surveyId": "SV_fixture000000000",
+  "unknownLanguageCodes": []
+}

@@ -1,0 +1,246 @@
+{
+  "blocks": [
+    {
+      "description": "Block A",
+      "elements": [
+        {
+          "kind": "question",
+          "qid": "QID1"
+        },
+        {
+          "kind": "pageBreak"
+        },
+        {
+          "kind": "question",
+          "qid": "QID2"
+        }
+      ],
+      "id": "BL_a",
+      "type": "Default"
+    },
+    {
+      "description": "Block B",
+      "elements": [
+        {
+          "kind": "question",
+          "qid": "QID3"
+        }
+      ],
+      "id": "BL_b",
+      "type": "Standard"
+    },
+    {
+      "description": "Not in flow",
+      "elements": [
+        {
+          "kind": "question",
+          "qid": "QID5"
+        }
+      ],
+      "id": "BL_orphan",
+      "type": "Standard"
+    },
+    {
+      "description": "Trash / Unused Questions",
+      "elements": [
+        {
+          "kind": "question",
+          "qid": "QID4"
+        }
+      ],
+      "id": "BL_trash",
+      "type": "Trash"
+    }
+  ],
+  "defaultLanguageCode": "en-US",
+  "embeddedDataFields": [],
+  "flow": [
+    {
+      "id": "BL_b",
+      "type": "Block"
+    },
+    {
+      "children": [
+        {
+          "id": "BL_a",
+          "type": "Block"
+        }
+      ],
+      "type": "BlockRandomizer"
+    },
+    {
+      "type": "EndSurvey"
+    }
+  ],
+  "issues": [],
+  "languageCodes": [],
+  "name": "Pages and blocks",
+  "options": {
+    "backButton": true,
+    "eosMessage": null,
+    "eosRedirectUrl": null,
+    "nextButtonLabel": "Continue",
+    "partialData": "+1 week",
+    "previousButtonLabel": "Back",
+    "progressBar": "Text"
+  },
+  "questions": {
+    "QID1": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Page one question",
+      "displayLogic": null,
+      "exportTag": "Q1",
+      "qid": "QID1",
+      "randomization": null,
+      "selector": "SL",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "Page one question",
+      "translations": {},
+      "type": "TE",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID2": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Page two question",
+      "displayLogic": null,
+      "exportTag": "Q2",
+      "qid": "QID2",
+      "randomization": null,
+      "selector": "SL",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "Page two question",
+      "translations": {},
+      "type": "TE",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID3": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Second block question",
+      "displayLogic": null,
+      "exportTag": "Q3",
+      "qid": "QID3",
+      "randomization": null,
+      "selector": "SL",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "Second block question",
+      "translations": {},
+      "type": "TE",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID4": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Trashed question",
+      "displayLogic": null,
+      "exportTag": "Q4",
+      "qid": "QID4",
+      "randomization": null,
+      "selector": "SL",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "Trashed question",
+      "translations": {},
+      "type": "TE",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    },
+    "QID5": {
+      "answers": [],
+      "choices": [],
+      "configuration": {
+        "descriptionOption": "UseText",
+        "gridLines": null,
+        "numDecimals": null,
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "sliderMax": null,
+        "sliderMin": null
+      },
+      "description": "Orphan block question",
+      "displayLogic": null,
+      "exportTag": "Q5",
+      "qid": "QID5",
+      "randomization": null,
+      "selector": "SL",
+      "skipLogic": null,
+      "subSelector": null,
+      "text": "Orphan block question",
+      "translations": {},
+      "type": "TE",
+      "validation": {
+        "contentType": null,
+        "forceResponse": "OFF",
+        "maxChars": null,
+        "minChars": null
+      }
+    }
+  },
+  "surveyId": "SV_fixture000000000",
+  "unknownLanguageCodes": []
+}
