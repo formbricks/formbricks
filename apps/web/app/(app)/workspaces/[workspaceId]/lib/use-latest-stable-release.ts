@@ -25,19 +25,33 @@ export const useLatestStableRelease = (isOwnerOrManager: boolean): string => {
       return;
     }
 
+    // Guard against a response landing after the role changed and this effect was torn down: the
+    // in-flight request cannot be aborted, so drop its result instead of writing it to state.
+    let cancelled = false;
+
     const loadLatestRelease = async () => {
       const res = await getLatestStableFbReleaseAction();
+      if (cancelled) {
+        return;
+      }
+
       const latestVersionTag = res?.data;
       if (!latestVersionTag) {
         return;
       }
 
+      // Argument order matters: isNewerVersion(current, latest) is true when `latest` is ahead of
+      // `current` — see its own tests in ./utils.test.ts.
       if (isNewerVersion(`v${packageJson.version}`, latestVersionTag)) {
         setLatestVersion(latestVersionTag);
       }
     };
 
     void loadLatestRelease();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOwnerOrManager]);
 
   return latestVersion;
