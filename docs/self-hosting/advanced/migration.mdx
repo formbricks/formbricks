@@ -32,6 +32,12 @@ publication. Existing installations opt into v6 explicitly during that migration
 
 ### Changes in Environment Variables
 
+<Note>
+  Both variables below drive SSO just-in-time provisioning, which is part of the Formbricks
+  [Enterprise Edition](/self-hosting/advanced/license). On a community instance they have no effect, so
+  there is nothing to rename.
+</Note>
+
 - **DEFAULT_ORGANIZATION_ID** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ID**, matching the
   `AUTH_SSO_DEFAULT_TEAM_ID` naming pattern. Rename the variable in your configuration; the value is
   unchanged. Support for this variable was missing between v3.0 and v5.x, so it takes effect again on v6.
