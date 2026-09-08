@@ -1,9 +1,14 @@
+import { detectJsonSourceKind } from "./detect-json";
 import {
-  IMPORT_ALLOWED_EXTENSIONS,
-  IMPORT_LEGACY_OFFICE_EXTENSIONS,
-  type TImportAllowedExtension,
-  type TImportSourceKind,
-} from "./types";
+  IMPORT_KIND_BY_EXTENSION,
+  getImportAcceptList,
+  getImportFileExtension,
+  isImportAllowedExtension,
+  isLegacyOfficeExtension,
+} from "./file-types";
+import type { TImportAllowedExtension, TImportSourceKind } from "./types";
+
+export { detectJsonSourceKind, getImportAcceptList, getImportFileExtension };
 
 export type TImportDetectionFailureCode =
   | "empty_file"
@@ -27,16 +32,6 @@ const PDF_MAGIC = Buffer.from("%PDF");
 const ZIP_SNIFF_BYTES = 64 * 1024;
 const JSON_SNIFF_BYTES = 16 * 1024 * 1024;
 
-export function getImportFileExtension(fileName: string | null | undefined): string | null {
-  if (!fileName) return null;
-  const match = /\.([a-z0-9]+)$/i.exec(fileName.trim());
-  return match ? match[1].toLowerCase() : null;
-}
-
-function isAllowedExtension(extension: string): extension is TImportAllowedExtension {
-  return Object.hasOwn(IMPORT_ALLOWED_EXTENSIONS, extension);
-}
-
 const MIME_TO_EXTENSION: Record<string, TImportAllowedExtension> = {
   "application/pdf": "pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
@@ -49,48 +44,8 @@ const MIME_TO_EXTENSION: Record<string, TImportAllowedExtension> = {
   "text/json": "json",
 };
 
-const EXTENSION_TO_KIND: Record<TImportAllowedExtension, TImportSourceKind> = {
-  json: "v3-document",
-  qsf: "qsf",
-  docx: "docx",
-  pdf: "pdf",
-  md: "markdown",
-  txt: "text",
-  csv: "csv",
-  xlsx: "xlsx",
-};
-
 function stripBom(text: string): string {
   return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function looksLikeExportEnvelope(value: Record<string, unknown>): boolean {
-  return isRecord(value.formbricks) && "exportFormat" in value.formbricks;
-}
-
-function looksLikeQsf(value: Record<string, unknown>): boolean {
-  return "SurveyEntry" in value && "SurveyElements" in value;
-}
-
-function looksLikeV3Document(value: Record<string, unknown>): boolean {
-  return typeof value.name === "string" && Array.isArray(value.blocks);
-}
-
-/** Classify parsed JSON: an export envelope, a QSF, a v3 document (optionally wrapped in `{ data }`), or none. */
-export function detectJsonSourceKind(value: unknown): TImportSourceKind | null {
-  if (!isRecord(value)) return null;
-  if (looksLikeExportEnvelope(value)) return "formbricks-export";
-  if (looksLikeQsf(value)) return "qsf";
-  if (looksLikeV3Document(value)) return "v3-document";
-  if (isRecord(value.data)) {
-    if (looksLikeExportEnvelope(value.data)) return "formbricks-export";
-    if (looksLikeV3Document(value.data)) return "v3-document";
-  }
-  return null;
 }
 
 function detectZipKind(bytes: Buffer): TImportSourceKind | null {
@@ -129,7 +84,7 @@ export function detectImportSource(input: TDetectInput): TImportDetection {
   const extension = getImportFileExtension(input.fileName);
   const bytes = input.bytes ? Buffer.from(input.bytes) : null;
 
-  if (extension && (IMPORT_LEGACY_OFFICE_EXTENSIONS as readonly string[]).includes(extension)) {
+  if (isLegacyOfficeExtension(extension)) {
     return { ok: false, code: "legacy_office_format", extension };
   }
 
@@ -161,7 +116,7 @@ export function detectImportSource(input: TDetectInput): TImportDetection {
   }
 
   const resolvedExtension =
-    extension && isAllowedExtension(extension)
+    extension && isImportAllowedExtension(extension)
       ? extension
       : input.mimeType
         ? MIME_TO_EXTENSION[input.mimeType.split(";")[0].trim().toLowerCase()]
@@ -175,13 +130,5 @@ export function detectImportSource(input: TDetectInput): TImportDetection {
     return { ok: true, kind: "v3-document" };
   }
 
-  return { ok: true, kind: EXTENSION_TO_KIND[resolvedExtension] };
-}
-
-/** The `accept` attribute for the drop zone: extensions plus their MIME types. */
-export function getImportAcceptList(): string[] {
-  return Object.entries(IMPORT_ALLOWED_EXTENSIONS).flatMap(([extension, mimeTypes]) => [
-    `.${extension}`,
-    ...mimeTypes,
-  ]);
+  return { ok: true, kind: IMPORT_KIND_BY_EXTENSION[resolvedExtension] };
 }

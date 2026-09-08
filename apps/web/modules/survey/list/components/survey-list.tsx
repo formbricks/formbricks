@@ -1,7 +1,7 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon } from "lucide-react";
+import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon, UploadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -15,6 +15,7 @@ import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
+import { ImportSurveyDialog } from "@/modules/survey/import/components/import-survey-dialog";
 import { useArchiveSurvey } from "@/modules/survey/list/hooks/use-archive-survey";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
 import { useRestoreSurvey } from "@/modules/survey/list/hooks/use-restore-survey";
@@ -57,12 +58,20 @@ type NewSurveyMenuProps = {
   language: TUserLocale;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
+  isReadOnly?: boolean;
 };
 
-const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason }: NewSurveyMenuProps) => {
+const NewSurveyMenu = ({
+  workspace,
+  language,
+  isAIAvailable,
+  aiUnavailableReason,
+  isReadOnly = false,
+}: NewSurveyMenuProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const createSurveyMutation = useCreateSurveyFromTemplate();
   const workspaceBasePath = `/workspaces/${workspace.id}`;
 
@@ -107,6 +116,14 @@ const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason
           <DropdownMenuItem icon={<AiIcon />} onSelect={() => setIsAIDialogOpen(true)}>
             {t("workspace.surveys.ai_create.create_with_ai")}
           </DropdownMenuItem>
+          {!isReadOnly && (
+            <DropdownMenuItem
+              data-testid="import-survey-menu-item"
+              icon={<UploadIcon className="size-4" />}
+              onSelect={() => setIsImportDialogOpen(true)}>
+              {t("workspace.surveys.import.entry")}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             icon={<LayoutTemplateIcon className="size-4" />}
             onSelect={() => router.push(`${workspaceBasePath}/surveys/templates`)}>
@@ -131,6 +148,16 @@ const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason
         open={isAIDialogOpen}
         onOpenChange={setIsAIDialogOpen}
       />
+      {!isReadOnly && (
+        <ImportSurveyDialog
+          workspaceId={workspace.id}
+          isAIAvailable={isAIAvailable}
+          aiUnavailableReason={aiUnavailableReason}
+          entryPoint="new_survey_menu"
+          open={isImportDialogOpen}
+          onOpenChange={setIsImportDialogOpen}
+        />
+      )}
     </>
   );
 };
@@ -237,6 +264,7 @@ export const SurveysList = ({
       language={locale}
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
+      isReadOnly={isReadOnly}
     />
   );
 

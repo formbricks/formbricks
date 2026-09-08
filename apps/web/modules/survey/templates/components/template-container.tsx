@@ -68,6 +68,7 @@ export const TemplateContainerWithPreview = ({
               defaultLanguage={defaultLanguage}
               templateSearch={templateSearch ?? ""}
               showAICreateCard={!isTemplatePage}
+              showImportCard
               language={language}
               isAIAvailable={isAIAvailable}
               aiUnavailableReason={aiUnavailableReason}
