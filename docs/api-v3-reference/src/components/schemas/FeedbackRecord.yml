@@ -114,8 +114,11 @@ properties:
     items:
       $ref: ./FeedbackRecordEmotion.yml
     description: >-
-      Emotions inferred from `value_text`; multi-label from a fixed set. Read-only; absent until
-      the record is enriched, and never an empty array.
+      Emotions inferred from `value_text`; multi-label from a fixed set. Read-only, and **never an
+      empty array** — the column is either absent or has at least one label. Absent covers two
+      different states: not yet classified, and classified with no emotion detected. Do not read
+      absence as "not enriched yet"; `has_emotions=false` selects both, and the enrichment-status
+      endpoint is what distinguishes them.
   value_text_translated:
     type: string
     description: >-
