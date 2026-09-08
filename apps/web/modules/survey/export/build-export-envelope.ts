@@ -1,5 +1,10 @@
 import { type Result, err, ok } from "@formbricks/types/error-handlers";
-import type { TSurvey } from "@formbricks/types/surveys/types";
+import type {
+  TSurvey,
+  TSurveyHiddenFields,
+  TSurveyStatus,
+  TSurveyVariables,
+} from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import {
   SURVEY_EXPORT_FORMAT,
@@ -9,7 +14,11 @@ import {
 } from "@/app/api/v3/surveys/export/schemas";
 import { getV3SurveyLanguages } from "@/app/api/v3/surveys/language";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
-import { DEFAULT_V3_SURVEY_LANGUAGE, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
+import {
+  DEFAULT_V3_SURVEY_LANGUAGE,
+  type TV3SurveyDistribution,
+  formatV3ZodInvalidParams,
+} from "@/app/api/v3/surveys/schemas";
 import { serializeV3SurveyResource } from "@/app/api/v3/surveys/serializers";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 
@@ -20,17 +29,45 @@ export type TSurveyExportContext = {
   exportedAt?: Date;
 };
 
-type TSerializedSurveyResource = ReturnType<typeof serializeV3SurveyResource>;
+/** A translatable field in the file: a public locale-code map (`{ "en-US": "…", "de-DE": "…" }`). */
+export type TSurveyExportI18n = Record<string, string>;
+
+/** Public shapes of the document's parts. Loose on purpose: element and ending fields vary by type. */
+export type TSurveyExportElement = { id: string; type: string; headline?: TSurveyExportI18n } & Record<
+  string,
+  unknown
+>;
+export type TSurveyExportBlock = {
+  id: string;
+  name: string;
+  elements: TSurveyExportElement[];
+  logic?: unknown[];
+  logicFallback?: string;
+} & Record<string, unknown>;
+export type TSurveyExportEnding = { id: string; type: "endScreen" | "redirectToUrl" } & Record<
+  string,
+  unknown
+>;
 
 /**
  * The `survey` member of the envelope as written to the file: the v3 GET resource minus every
  * instance-bound field. Locale maps are public (`{ "en-US": … }`), so the file round-trips through
  * `POST /api/v3/surveys` unchanged apart from `workspaceId`.
  */
-export type TSurveyExportDocument = Omit<
-  TSerializedSurveyResource,
-  "id" | "workspaceId" | "createdAt" | "updatedAt" | "archivedAt" | "targeting" | "languages"
-> & { languages: { code: string; default: boolean; enabled: boolean }[] };
+export type TSurveyExportDocument = {
+  name: string;
+  type: TSurvey["type"];
+  status: TSurveyStatus;
+  metadata: Record<string, unknown>;
+  defaultLanguage: string;
+  languages: { code: string; default: boolean; enabled: boolean }[];
+  welcomeCard: Record<string, unknown>;
+  blocks: TSurveyExportBlock[];
+  endings: TSurveyExportEnding[];
+  hiddenFields: TSurveyHiddenFields;
+  variables: TSurveyVariables;
+  distribution?: TV3SurveyDistribution;
+};
 
 export type TSurveyExportEnvelopeFile = {
   formbricks: TSurveyExportMetadata;
@@ -128,14 +165,16 @@ export function buildSurveyExportEnvelope(
     ...rest
   } = resource;
   // Aliases are a workspace setting, not part of the survey document: the create schema rejects them.
-  const document: TSurveyExportDocument = {
+  // The serializer types translatable values loosely (`TSerializedValue`); the create-side validation
+  // below is what proves the shape, so the cast states the contract rather than inventing one.
+  const document = {
     ...rest,
     languages: languages.map(({ code, default: isDefault, enabled }) => ({
       code,
       default: isDefault,
       enabled,
     })),
-  };
+  } as unknown as TSurveyExportDocument;
 
   const preparation = prepareV3SurveyCreateInput({ workspaceId: survey.workspaceId, ...document });
   if (!preparation.ok) {

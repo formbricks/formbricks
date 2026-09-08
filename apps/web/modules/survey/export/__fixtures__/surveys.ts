@@ -51,7 +51,7 @@ export const FIXTURE_LANGUAGES: TSurvey["languages"] = [
 ];
 
 /** One element of every type the v3 document supports, across three blocks. */
-export const FIXTURE_BLOCKS: TSurvey["blocks"] = [
+export const FIXTURE_BLOCKS = [
   {
     id: FIXTURE_BLOCK_1_ID,
     name: "Basics",
@@ -254,7 +254,7 @@ export const FIXTURE_BLOCKS: TSurvey["blocks"] = [
       },
     ],
   },
-];
+] as unknown as TSurvey["blocks"];
 
 export const FIXTURE_ENDINGS: TSurvey["endings"] = [
   {
