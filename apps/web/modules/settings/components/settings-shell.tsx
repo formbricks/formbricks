@@ -1,6 +1,7 @@
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
 import { WorkspaceContextWrapper } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
+import { getPendingDowngradeSchedule } from "@/modules/ee/license-check/lib/license";
 import { SettingsNavigation } from "@/modules/settings/components/settings-navigation";
 import type { TSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
@@ -34,7 +35,7 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
 
       <PendingDowngradeBanner
         organizationId={data.organization.id}
-        lastChecked={lastChecked}
+        {...getPendingDowngradeSchedule(lastChecked)}
         isPendingDowngrade={isPendingDowngrade ?? false}
         active={active}
         locale={data.user.locale}

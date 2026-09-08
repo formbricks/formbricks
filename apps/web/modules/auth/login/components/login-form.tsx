@@ -167,7 +167,10 @@ export const LoginForm = ({
     }
   }, []);
 
-  const formLabel = useMemo(() => {
+  // Neither of these was memoized for a reason worth keeping: one picks a translated string, the
+  // other builds a single element. Both listed `form`, which react-hook-form mutates in place, so
+  // the memo could hold a value built against form state that has since moved on (ENG-2366).
+  const getFormLabel = () => {
     if (totpBackup) {
       return t("auth.login.enter_your_backup_code");
     }
@@ -177,9 +180,10 @@ export const LoginForm = ({
     }
 
     return t("auth.login.login_to_your_account");
-  }, [t, totpBackup, totpLogin]);
+  };
+  const formLabel = getFormLabel();
 
-  const TwoFactorComponent = useMemo(() => {
+  const renderTwoFactor = () => {
     if (totpBackup) {
       return <TwoFactorBackup form={form} />;
     }
@@ -189,7 +193,8 @@ export const LoginForm = ({
     }
 
     return null;
-  }, [form, totpBackup, totpLogin]);
+  };
+  const TwoFactorComponent = renderTwoFactor();
 
   return (
     <FormProvider {...form}>

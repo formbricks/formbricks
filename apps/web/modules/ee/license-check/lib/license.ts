@@ -43,6 +43,22 @@ const CONFIG = {
 
 export const GRACE_PERIOD_MS = CONFIG.CACHE.GRACE_PERIOD_MS;
 
+/**
+ * Grace-period view of a license's last successful check, for the pending-downgrade banner.
+ *
+ * The clock is read here rather than in the banner: the banner is a client component rendered on
+ * both the server pass and hydration, so a `Date.now()` comparison there is impure and can disagree
+ * with itself across the two passes (ENG-2366). Keeping it here also means the 3-day window has a
+ * single definition — the banner used to carry its own copy of the constant, which would silently
+ * drift from the real grace period.
+ */
+export const getPendingDowngradeSchedule = (
+  lastChecked: Date
+): { isWithinGracePeriod: boolean; scheduledDowngradeDate: Date } => ({
+  isWithinGracePeriod: Date.now() - lastChecked.getTime() < GRACE_PERIOD_MS,
+  scheduledDowngradeDate: new Date(lastChecked.getTime() + GRACE_PERIOD_MS),
+});
+
 /** TTL in ms for successful license fetch results (24h). Re-export for use in actions. */
 export const FETCH_LICENSE_TTL_MS = CONFIG.CACHE.FETCH_LICENSE_TTL_MS;
 /** TTL in ms for failed license fetch results (10 min). Re-export for use in actions. */

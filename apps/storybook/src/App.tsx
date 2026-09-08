@@ -7,10 +7,12 @@ export const App = () => {
   return (
     <>
       <div>
-        <a href="https://vitejs.dev" target="_blank">
+        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
           <img className="logo" alt="Vite logo" />
         </a>
-        <a href="https://react.dev" target="_blank"></a>
+        <a href="https://react.dev" target="_blank" rel="noreferrer">
+          React
+        </a>
       </div>
       <h1 className="bg-orange-200 p-4 font-bold">Vite + React</h1>
       <div className="card">

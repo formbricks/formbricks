@@ -70,6 +70,10 @@ interface NavigationProps {
   responseCount: number;
   newTrialBannerVariant: string | boolean;
   isFormbricksSurveysConfigured: boolean;
+  // Whole days left in the trial, or null when there is no trial to count down. Computed by the
+  // server layout: deriving it here would mean reading `Date.now()` during render, which diverges
+  // between the server pass and hydration and then goes stale as the tab sits open (ENG-2366).
+  trialDaysRemaining: number | null;
 }
 
 /**
@@ -105,7 +109,8 @@ export const MainNavigation = ({
   responseCount,
   newTrialBannerVariant,
   isFormbricksSurveysConfigured,
-}: NavigationProps) => {
+  trialDaysRemaining,
+}: Readonly<NavigationProps>) => {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
@@ -267,21 +272,6 @@ export const MainNavigation = ({
     }
     if (isOwnerOrManager) loadReleases();
   }, [isOwnerOrManager]);
-
-  const trialDaysRemaining = useMemo(() => {
-    if (!isFormbricksCloud || organization.billing?.stripe?.subscriptionStatus !== "trialing") return null;
-    const trialEnd = organization.billing.stripe.trialEnd;
-    if (!trialEnd) return null;
-    const ts = new Date(trialEnd).getTime();
-    if (!Number.isFinite(ts)) return null;
-    const msPerDay = 86_400_000;
-    // eslint-disable-next-line react-hooks/purity -- migration ENG-2366
-    return Math.ceil((ts - Date.now()) / msPerDay);
-  }, [
-    isFormbricksCloud,
-    organization.billing?.stripe?.subscriptionStatus,
-    organization.billing?.stripe?.trialEnd,
-  ]);
 
   const mainNavigationLink = isBilling
     ? getBillingFallbackPath(organization.id, isFormbricksCloud)

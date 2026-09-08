@@ -9,6 +9,7 @@ import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getTranslate } from "@/lingodotdev/server";
 import { TrialEndingWarningModal } from "@/modules/ee/billing/components/trial-ending-warning-modal";
 import { TrialResponseWarningModal } from "@/modules/ee/billing/components/trial-response-warning-modal";
+import { getPendingDowngradeSchedule } from "@/modules/ee/license-check/lib/license";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
@@ -39,15 +40,29 @@ const getResponseWarningThreshold = (
   return null;
 };
 
-// Show the loss-aversion trial-ending modal once on each of the last 3 days of the trial.
-const getTrialEndingDaysRemaining = (trialEnd: string | Date, cookieStore: TCookieStore): number | null => {
-  const MS_PER_DAY = 86_400_000;
+const MS_PER_DAY = 86_400_000;
+
+// Whole days left in the trial, rounded up, or null if the stored trialEnd isn't a usable date.
+// Read the clock here, on the server, rather than in the client components that display the count:
+// `Date.now()` during a client render is impure, so the number would differ between the server pass
+// and hydration and then go stale as the tab sits open (ENG-2366).
+const getTrialDaysRemaining = (trialEnd: string | Date): number | null => {
   const trialEndTime = new Date(trialEnd).getTime();
   if (!Number.isFinite(trialEndTime)) {
     return null;
   }
-  const daysRemaining = Math.ceil((trialEndTime - Date.now()) / MS_PER_DAY);
-  if (daysRemaining >= 1 && daysRemaining <= 3 && !cookieStore.get(`trial_ending_shown_${daysRemaining}`)) {
+  return Math.ceil((trialEndTime - Date.now()) / MS_PER_DAY);
+};
+
+// Show the loss-aversion trial-ending modal once on each of the last 3 days of the trial.
+const getTrialEndingDaysRemaining = (trialEnd: string | Date, cookieStore: TCookieStore): number | null => {
+  const daysRemaining = getTrialDaysRemaining(trialEnd);
+  if (
+    daysRemaining !== null &&
+    daysRemaining >= 1 &&
+    daysRemaining <= 3 &&
+    !cookieStore.get(`trial_ending_shown_${daysRemaining}`)
+  ) {
     return daysRemaining;
   }
   return null;
@@ -110,6 +125,10 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
       ? getTrialEndingDaysRemaining(trialEnd, cookieStore)
       : null;
 
+  // Countdown for the sidebar's TrialAlert. `isTrialing` already carries the same cloud +
+  // "trialing" subscription guard the sidebar used to apply itself.
+  const trialDaysRemaining = isTrialing && trialEnd ? getTrialDaysRemaining(trialEnd) : null;
+
   const billingHref = `/workspaces/${workspace.id}/settings/organization/billing`;
 
   return (
@@ -121,7 +140,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
 
       <PendingDowngradeBanner
         organizationId={organization.id}
-        lastChecked={lastChecked}
+        {...getPendingDowngradeSchedule(lastChecked)}
         isPendingDowngrade={isPendingDowngrade ?? false}
         active={active}
         locale={user.locale}
@@ -155,6 +174,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           responseCount={responseCount}
           newTrialBannerVariant={newTrialBannerVariant}
           isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
+          trialDaysRemaining={trialDaysRemaining}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar
