@@ -445,6 +445,7 @@
     "refresh": "Actualiser",
     "remove": "Retirer",
     "remove_from_team": "Retirer de l'équipe",
+    "rename": "Renommer",
     "reorder_and_hide_columns": "Réorganiser et masquer des colonnes",
     "replace": "Remplacer",
     "report_survey": "Rapport d'enquête",
@@ -3661,6 +3662,7 @@
       },
       "error_archiving_survey": "Impossible d'archiver le sondage, réessaye",
       "error_deleting_survey": "Une erreur s'est produite lors de la suppression du sondage",
+      "error_renaming_survey": "Erreur lors du renommage de l'enquête",
       "error_restoring_survey": "Impossible de restaurer le sondage, réessaye",
       "error_updating_status": "Une erreur s'est produite lors de la mise à jour du statut de l'enquête",
       "featured_templates": {
@@ -3685,6 +3687,9 @@
       "preview_survey_in_a_new_tab": "Aperçu de l'enquête dans un nouvel onglet",
       "read_only_user_not_allowed_to_create_survey_warning": "En tant qu'utilisateur en lecture seule, vous n'êtes pas autorisé à créer des enquêtes. Veuillez demander à un utilisateur ayant un accès en écriture de créer une enquête ou à un responsable de mettre à jour votre rôle.",
       "relevance": "Pertinence",
+      "rename_survey": "Renommer l'enquête",
+      "rename_survey_description": "Donne un nouveau nom à cette enquête.",
+      "rename_survey_placeholder": "Nom de l'enquête",
       "responses": {
         "address_line_1": "Ligne d'adresse 1",
         "address_line_2": "Ligne d'adresse 2",
@@ -3981,6 +3986,8 @@
       "survey_archived_successfully": "Sondage archivé",
       "survey_deleted_successfully": "Enquête supprimée avec succès !",
       "survey_duplicated_successfully": "Enquête dupliquée avec succès.",
+      "survey_name_required": "Merci de saisir un nom d'enquête.",
+      "survey_renamed_successfully": "Enquête renommée avec succès",
       "survey_restored_successfully": "Sondage restauré",
       "templates": {
         "all_channels": "Tous les canaux",

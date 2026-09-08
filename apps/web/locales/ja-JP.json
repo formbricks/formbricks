@@ -445,6 +445,7 @@
     "refresh": "更新",
     "remove": "削除",
     "remove_from_team": "チームから削除",
+    "rename": "名前を変更",
     "reorder_and_hide_columns": "列の並び替えと非表示",
     "replace": "置き換え",
     "report_survey": "フォームを報告",
@@ -3661,6 +3662,7 @@
       },
       "error_archiving_survey": "アンケートをアーカイブできませんでした。もう一度お試しください",
       "error_deleting_survey": "アンケートの削除中にエラーが発生しました",
+      "error_renaming_survey": "アンケートの名前変更エラー",
       "error_restoring_survey": "アンケートを復元できませんでした。もう一度お試しください",
       "error_updating_status": "アンケートのステータス更新中にエラーが発生しました",
       "featured_templates": {
@@ -3685,6 +3687,9 @@
       "preview_survey_in_a_new_tab": "新しいタブでフォームをプレビュー",
       "read_only_user_not_allowed_to_create_survey_warning": "読み取り専用ユーザーはフォームを作成できません。書き込みアクセスを持つユーザーにフォームの作成を依頼するか、管理者にあなたの役割をアップグレードするように依頼してください。",
       "relevance": "関連性",
+      "rename_survey": "アンケート名を変更",
+      "rename_survey_description": "このアンケートに新しい名前を付けてください。",
+      "rename_survey_placeholder": "アンケート名",
       "responses": {
         "address_line_1": "住所1",
         "address_line_2": "住所2",
@@ -3981,6 +3986,8 @@
       "survey_archived_successfully": "アンケートをアーカイブしました",
       "survey_deleted_successfully": "フォームを正常に削除しました！",
       "survey_duplicated_successfully": "フォームを正常に複製しました。",
+      "survey_name_required": "アンケート名を入力してください。",
+      "survey_renamed_successfully": "アンケート名を変更しました",
       "survey_restored_successfully": "アンケートを復元しました",
       "templates": {
         "all_channels": "すべてのチャネル",

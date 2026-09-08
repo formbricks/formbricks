@@ -445,6 +445,7 @@
     "refresh": "刷新",
     "remove": "移除",
     "remove_from_team": "从团队中移除",
+    "rename": "重命名",
     "reorder_and_hide_columns": "重新排序和隐藏列",
     "replace": "替换",
     "report_survey": "报告调查",
@@ -3661,6 +3662,7 @@
       },
       "error_archiving_survey": "无法归档问卷，请重试",
       "error_deleting_survey": "删除问卷时发生错误",
+      "error_renaming_survey": "重命名调查失败",
       "error_restoring_survey": "无法恢复问卷，请重试",
       "error_updating_status": "更新调查状态时出错",
       "featured_templates": {
@@ -3685,6 +3687,9 @@
       "preview_survey_in_a_new_tab": "在 新 标签 中 预览 survey",
       "read_only_user_not_allowed_to_create_survey_warning": "作为 只读 用户，你 无法 创建 调查。请 询问 一位 具有 写 访问 权限 的 用户 创建 调查 或 请 一位 经理 升级 你的 角色。",
       "relevance": "相关性",
+      "rename_survey": "重命名调查",
+      "rename_survey_description": "为这个调查起一个新名称。",
+      "rename_survey_placeholder": "调查名称",
       "responses": {
         "address_line_1": "地址 第1行",
         "address_line_2": "地址 第2行",
@@ -3981,6 +3986,8 @@
       "survey_archived_successfully": "问卷已归档",
       "survey_deleted_successfully": "调查 删除 成功",
       "survey_duplicated_successfully": "调查成功复制。",
+      "survey_name_required": "请输入调查名称。",
+      "survey_renamed_successfully": "调查重命名成功",
       "survey_restored_successfully": "问卷已恢复",
       "templates": {
         "all_channels": "所有 渠道",

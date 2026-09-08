@@ -445,6 +445,7 @@
     "refresh": "Обновить",
     "remove": "Удалить",
     "remove_from_team": "Удалить из команды",
+    "rename": "Переименовать",
     "reorder_and_hide_columns": "Изменить порядок и скрыть столбцы",
     "replace": "Заменить",
     "report_survey": "Пожаловаться на опрос",
@@ -3661,6 +3662,7 @@
       },
       "error_archiving_survey": "Не удалось архивировать опрос, попробуй ещё раз",
       "error_deleting_survey": "Произошла ошибка при удалении опроса",
+      "error_renaming_survey": "Ошибка при переименовании опроса",
       "error_restoring_survey": "Не удалось восстановить опрос, попробуй ещё раз",
       "error_updating_status": "Произошла ошибка при обновлении статуса опроса",
       "featured_templates": {
@@ -3685,6 +3687,9 @@
       "preview_survey_in_a_new_tab": "Просмотреть опрос в новой вкладке",
       "read_only_user_not_allowed_to_create_survey_warning": "Пользователям с правами только для чтения нельзя создавать опросы. Попросите пользователя с правами на запись создать опрос или обратитесь к менеджеру для повышения вашей роли.",
       "relevance": "Актуальность",
+      "rename_survey": "Переименовать опрос",
+      "rename_survey_description": "Дайте этому опросу новое название.",
+      "rename_survey_placeholder": "Название опроса",
       "responses": {
         "address_line_1": "Адрес, строка 1",
         "address_line_2": "Адрес, строка 2",
@@ -3981,6 +3986,8 @@
       "survey_archived_successfully": "Опрос архивирован",
       "survey_deleted_successfully": "Опрос успешно удалён!",
       "survey_duplicated_successfully": "Опрос успешно продублирован.",
+      "survey_name_required": "Пожалуйста, введите название опроса.",
+      "survey_renamed_successfully": "Опрос успешно переименован",
       "survey_restored_successfully": "Опрос восстановлен",
       "templates": {
         "all_channels": "Все каналы",

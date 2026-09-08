@@ -445,6 +445,7 @@
     "refresh": "Aktualisieren",
     "remove": "Entfernen",
     "remove_from_team": "Aus Team entfernen",
+    "rename": "Umbenennen",
     "reorder_and_hide_columns": "Spalten neu anordnen und ausblenden",
     "replace": "Ersetzen",
     "report_survey": "Umfrage melden",
@@ -3661,6 +3662,7 @@
       },
       "error_archiving_survey": "Umfrage konnte nicht archiviert werden, versuch es noch mal",
       "error_deleting_survey": "Beim Löschen der Umfrage ist ein Fehler aufgetreten",
+      "error_renaming_survey": "Fehler beim Umbenennen der Umfrage",
       "error_restoring_survey": "Umfrage konnte nicht wiederhergestellt werden, versuch es noch mal",
       "error_updating_status": "Beim Aktualisieren des Umfragestatus ist ein Fehler aufgetreten",
       "featured_templates": {
@@ -3685,6 +3687,9 @@
       "preview_survey_in_a_new_tab": "Umfrage in neuem Tab in der Vorschau anzeigen",
       "read_only_user_not_allowed_to_create_survey_warning": "Als Nutzer mit Lesezugriff darfst du keine Umfragen erstellen. Bitte einen Nutzer mit Schreibzugriff, eine Umfrage zu erstellen, oder einen Manager, deine Rolle zu erweitern.",
       "relevance": "Relevanz",
+      "rename_survey": "Umfrage umbenennen",
+      "rename_survey_description": "Gib dieser Umfrage einen neuen Namen.",
+      "rename_survey_placeholder": "Umfragename",
       "responses": {
         "address_line_1": "Adresszeile 1",
         "address_line_2": "Adresszeile 2",
@@ -3981,6 +3986,8 @@
       "survey_archived_successfully": "Umfrage archiviert",
       "survey_deleted_successfully": "Umfrage erfolgreich gelöscht",
       "survey_duplicated_successfully": "Umfrage erfolgreich dupliziert",
+      "survey_name_required": "Bitte gib einen Umfragenamen ein.",
+      "survey_renamed_successfully": "Umfrage erfolgreich umbenannt",
       "survey_restored_successfully": "Umfrage wiederhergestellt",
       "templates": {
         "all_channels": "Alle Kanäle",
