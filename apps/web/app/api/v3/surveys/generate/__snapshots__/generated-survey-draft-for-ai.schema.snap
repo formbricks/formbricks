@@ -1,0 +1,372 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "language": {
+      "type": "string",
+      "enum": [
+        "de-DE",
+        "en-US",
+        "es-ES",
+        "fr-FR",
+        "hu-HU",
+        "ja-JP",
+        "nl-NL",
+        "pt-BR",
+        "pt-PT",
+        "ro-RO",
+        "ru-RU",
+        "sv-SE",
+        "tr-TR",
+        "zh-Hans-CN",
+        "zh-Hant-TW"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "welcomeCard": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "headline": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 220
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "subheader": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 320
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "buttonLabel": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 220
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "enabled",
+            "headline",
+            "subheader",
+            "buttonLabel"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ending": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "headline": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 220
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "subheader": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 320
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "headline",
+            "subheader"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "blocks": {
+      "minItems": 1,
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 220
+          },
+          "questions": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "openText",
+                    "multipleChoiceSingle",
+                    "multipleChoiceMulti",
+                    "nps",
+                    "rating",
+                    "csat",
+                    "ces",
+                    "ranking",
+                    "matrix",
+                    "date"
+                  ]
+                },
+                "headline": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 220
+                },
+                "subheader": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 320
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "placeholder": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "longAnswer": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "choices": {
+                  "anyOf": [
+                    {
+                      "minItems": 2,
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "rows": {
+                  "anyOf": [
+                    {
+                      "minItems": 2,
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "columns": {
+                  "anyOf": [
+                    {
+                      "minItems": 2,
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "lowerLabel": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "upperLabel": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "scale": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "number",
+                        "smiley",
+                        "star"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "format": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "M-d-y",
+                        "d-M-y",
+                        "y-M-d"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "range": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "5",
+                        "7",
+                        "10"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "headline",
+                "subheader",
+                "required",
+                "placeholder",
+                "longAnswer",
+                "choices",
+                "lowerLabel",
+                "upperLabel",
+                "scale",
+                "range"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "name",
+          "questions"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "language",
+    "name",
+    "description",
+    "welcomeCard",
+    "ending",
+    "blocks"
+  ],
+  "additionalProperties": false
+}
