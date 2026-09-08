@@ -141,7 +141,8 @@ function buildDocumentFromSurvey(
     return invalidPreparation(formatV3ZodInvalidParams(documentResult.error, "survey"), "storedSurvey");
   }
 
-  return validPreparation(documentResult.data);
+  // `skip`: the stored document's ordering is not this request's fault. See TV3SurveyPrecedencePolicy.
+  return validPreparation(documentResult.data, { mode: "skip" });
 }
 
 function mergeV3SurveyPatch(document: TV3SurveyDocument, patch: TV3PatchSurveyBody): TV3SurveyDocument {

@@ -168,7 +168,11 @@ export function getV3SurveyMediaInvalidParams(blocks: TV3SurveyDocument["blocks"
  */
 export type TV3SurveyPrecedencePolicy =
   | { mode: "enforce" }
-  | { mode: "introduced"; baseline: TV3SurveyDocument };
+  | { mode: "introduced"; baseline: TV3SurveyDocument }
+  // Building the *stored* document: never judge its ordering. We did not author it, and failing here
+  // would make an existing survey with a forward recall unpatchable — precisely the ENG-3070 bug this
+  // rule is supposed to avoid causing.
+  | { mode: "skip" };
 
 function toReferenceInput(document: TV3SurveyDocument) {
   return {
@@ -196,11 +200,13 @@ export function validateV3SurveyDocument(
     invalidParams.push(...referenceValidation.invalidParams);
   }
 
-  invalidParams.push(
-    ...(precedence.mode === "enforce"
-      ? getV3SurveyPrecedenceInvalidParams(referenceInput)
-      : getV3SurveyIntroducedPrecedenceInvalidParams(toReferenceInput(precedence.baseline), referenceInput))
-  );
+  if (precedence.mode === "enforce") {
+    invalidParams.push(...getV3SurveyPrecedenceInvalidParams(referenceInput));
+  } else if (precedence.mode === "introduced") {
+    invalidParams.push(
+      ...getV3SurveyIntroducedPrecedenceInvalidParams(toReferenceInput(precedence.baseline), referenceInput)
+    );
+  }
 
   if (invalidParams.length > 0) {
     return {
