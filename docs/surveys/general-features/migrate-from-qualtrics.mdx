@@ -1,0 +1,115 @@
+---
+title: "Migrate from Qualtrics"
+description: "Export a survey from Qualtrics as a QSF file and import it into Formbricks with its questions, pages, translations and piped text — logic is listed for a quick rebuild."
+icon: "file-import"
+---
+
+Formbricks reads the `.qsf` file Qualtrics exports and turns it into a draft survey. Questions, pages, languages, piped text and embedded data come across as they are; skip, display and branch logic is not imported but listed line by line in the import report so you can rebuild it in the editor. The conversion is deterministic and needs no AI: what you see in the report is exactly what happened.
+
+---
+
+## Before you export
+
+<Steps>
+  <Step title="Publish the latest version">
+    Qualtrics exports the published survey definition. Publish pending edits first, or you will import an older version.
+  </Step>
+
+  <Step title="Clean up the Trash block">
+    Questions in the **Trash / Unused Questions** block are skipped on import. Restore anything you still want to keep.
+  </Step>
+
+  <Step title="Note the languages in use">
+    Every language with translations in Qualtrics is imported as a survey language. Languages the workspace does not have yet are created for you.
+  </Step>
+
+  <Step title="Export the QSF">
+    In Qualtrics open **Tools → Import/Export → Export Survey** and save the `.qsf` file. One file holds one survey.
+  </Step>
+</Steps>
+
+---
+
+## Import into Formbricks
+
+<Steps>
+  <Step title="Open the import dialog">
+    In your workspace go to **Surveys**, open the **New survey** menu and choose **Import survey**. The same dialog is available as the **Import survey** card on the templates page.
+  </Step>
+
+  <Step title="Drop the file">
+    Drop the `.qsf` file into the dialog or click to browse. Formbricks reads and validates it in a second or two.
+  </Step>
+
+  <Step title="Review the draft and the report">
+    The review screen lists every question that was imported, a facts row (questions, blocks, languages, source) and the **Import report**. Read the report before you continue: it names every rule and question that did not come across.
+  </Step>
+
+  <Step title="Open in editor">
+    Adjust the survey name if you like and click **Open in editor**. The survey is created as a draft; nothing is published.
+  </Step>
+</Steps>
+
+<Note>
+  The report is also available through the API. `POST /api/v3/surveys/import/convert` returns the converted document and the report without creating anything, so you can script a migration or review it elsewhere.
+</Note>
+
+---
+
+## What comes across
+
+| Qualtrics                                                        | Formbricks                                                        |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Multiple choice, single answer (vertical, horizontal, columns)   | Single select                                                     |
+| Multiple choice, dropdown                                        | Single select shown as a dropdown                                 |
+| Multiple choice, multiple answers                                | Multi select                                                      |
+| NPS                                                              | Net Promoter Score                                                |
+| Text entry (single line, multi line, essay)                      | Free text (long answer for multi line and essay)                  |
+| Text entry, form                                                 | One free-text question per form field                             |
+| Matrix table, Likert, single answer                              | Matrix                                                            |
+| Slider (bar or handle) and star rating                           | Rating (number scale, one question per statement; stars for star) |
+| Rank order                                                       | Ranking                                                           |
+| Descriptive text                                                 | Call to action; a leading text page becomes the welcome card      |
+| File upload                                                      | File upload                                                       |
+| Page breaks                                                      | Blocks — one Formbricks block per Qualtrics page                  |
+| Translations                                                     | Survey languages                                                  |
+| Embedded data fields                                             | Hidden fields                                                     |
+| Piped text from a question or an embedded-data field             | Recall                                                            |
+| Force response                                                   | Required                                                          |
+| Content validation (email, phone, number, URL), min/max characters | Input type and character limit                                   |
+| "Other" choice with text entry                                   | "Other" option with a text field                                  |
+| End-of-survey message or redirect URL                            | Ending card or redirect ending                                    |
+
+Qualtrics language codes are mapped to region-qualified codes (`EN` → `en-US`, `DE` → `de-DE`, `ZH-S` → `zh-Hans-CN`). A translation missing for a question is left empty and noted in the report.
+
+---
+
+## What does not
+
+Everything below is named in the import report with the question it belongs to.
+
+- **Logic.** Skip logic, display logic and flow branches are not imported. Each rule appears in the report in plain language — "Q4: if 'How did you hear about us?' = 'Other', skip to Q9" — so you can rebuild it with [conditional logic](/surveys/general-features/conditional-logic) in the editor.
+- **Randomizers, groups and loop & merge.** Blocks inside a randomizer are imported in file order; randomization itself is not.
+- **Question types without an equivalent.** Matrix with multiple answers, side by side, constant sum, hot spot, heat map, drill down, pick-group-rank, signature, timing, meta info, captcha. They are dropped and listed.
+- **Piped text other than question answers and embedded data.** Date, location, loop & merge and random-number pipes are removed from the text and listed.
+- **Quotas, scoring, survey options** such as the back button and the progress bar. Set them up in the editor.
+- **Rank order beyond 25 options.** Only the first 25 are kept.
+
+---
+
+## After the import
+
+1. Work through the report from the top: every line is a decision to make in the editor.
+2. Rebuild the logic. The report gives you each rule with its source and target question.
+3. Check translations in the language switcher; a missing translation shows as an empty field.
+4. Set styling, follow-ups and survey settings — these are not part of any import.
+5. For app or website surveys, add triggers before publishing.
+6. Test with the preview, then publish.
+
+---
+
+## Limits
+
+- One survey per file, up to 15 MB.
+- Surveys with 150 or more questions import fine; the review list windows long lists.
+- The `.qsf` must be a Qualtrics export. A renamed `.json` with the same content works too.
