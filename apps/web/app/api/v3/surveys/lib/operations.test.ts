@@ -143,7 +143,8 @@ const survey = {
   name: "Customer Survey",
   status: "draft",
   type: "link",
-  questions: [{ id: "question_1" }],
+  // A v3-editable survey has no legacy questions; serializeV3SurveyResource rejects one that does.
+  questions: [],
 };
 const serializedSurvey = {
   id: "survey_1",
@@ -399,7 +400,10 @@ describe("createV3SurveyResponse", () => {
         survey_type: "link",
         organization_id: "org_1",
         workspace_id: workspaceId,
-        question_count: 1,
+        // 0, not 1: a v3 survey has blocks, never legacy questions. The old fixture carried a
+        // legacy shape, which is why this used to read 1. See review-followups.md — the
+        // question_count property itself is always 0 for v3 creates.
+        question_count: 0,
         created_from: "template",
       },
       { organizationId: "org_1", workspaceId }
@@ -1195,6 +1199,23 @@ describe("editV3SurveyBlocksResponse", () => {
     expect(body.invalid_params).toEqual([
       expect.objectContaining({ name: "ops.0.id", code: "dangling_reference" }),
     ]);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("reports a legacy question-based survey as a state error, not a 400", async () => {
+    // Without the guard the serializer throws and this answers 400, blaming the caller for a
+    // property of the stored survey — and contradicting the documented 422.
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey: { ...survey, questions: [{ id: "legacy" }] },
+      authResult,
+      response: null,
+    } as any);
+
+    const response = await call({ ops: [{ op: "remove", id: "blk_a" }] });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.code).toBe("stored_survey_invalid");
     expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
   });
 
