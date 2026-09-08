@@ -5,6 +5,7 @@ import {
   problemAIUnavailable,
   problemBadGateway,
   problemBadRequest,
+  problemConflict,
   problemForbidden,
   problemInternalError,
   problemNotFound,
@@ -107,6 +108,26 @@ describe("v3 problem responses", () => {
   test("problemTooManyRequests without Retry-After", async () => {
     const res = problemTooManyRequests("r6", "nope");
     expect(res.headers.get("Retry-After")).toBeNull();
+  });
+
+  test("problemConflict carries machine-readable details", async () => {
+    const res = problemConflict("r7", "stale", "/p", {
+      details: { expectedUpdatedAt: "2026-01-01T00:00:00.000Z", currentUpdatedAt: "2026-01-02T00:00:00.000Z" },
+    });
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.code).toBe("conflict");
+    expect(body.instance).toBe("/p");
+    expect(body.details).toEqual({
+      expectedUpdatedAt: "2026-01-01T00:00:00.000Z",
+      currentUpdatedAt: "2026-01-02T00:00:00.000Z",
+    });
+  });
+
+  test("problemConflict omits details when not supplied", async () => {
+    const res = problemConflict("r8", "conflict");
+    const body = await res.json();
+    expect(body).not.toHaveProperty("details");
   });
 });
 

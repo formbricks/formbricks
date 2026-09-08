@@ -12,6 +12,10 @@ type TMcpErrorPayload = {
     detail: string;
     requestId: string;
     code?: string;
+    // ENG-3069: a 409 carries `expectedUpdatedAt`/`currentUpdatedAt` here. Dropping it would leave an
+    // agent with a retry it cannot perform — it would have to re-read the whole survey to learn the
+    // timestamp the error already knew.
+    details?: ProblemBody["details"];
     invalid_params?: ProblemBody["invalid_params"];
   };
 };
@@ -27,6 +31,10 @@ function toTextResult(payload: TMcpSuccessPayload | TMcpErrorPayload, isError = 
       },
     ],
   };
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 async function readJsonResponse(response: Response): Promise<Record<string, unknown>> {
@@ -64,6 +72,7 @@ export async function responseToMcpToolResult(
         detail: typeof problem.detail === "string" ? problem.detail : response.statusText || "Request failed",
         requestId,
         ...(typeof problem.code === "string" ? { code: problem.code } : {}),
+        ...(isPlainRecord(problem.details) ? { details: problem.details } : {}),
         ...(Array.isArray(problem.invalid_params) ? { invalid_params: problem.invalid_params } : {}),
       },
     },
