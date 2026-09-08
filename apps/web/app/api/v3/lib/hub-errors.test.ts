@@ -107,7 +107,9 @@ describe("hubErrorToProblemResponse", () => {
    */
   test("leaves tenant_id alone unless the caller opts in", async () => {
     const body = await hubErrorToProblemResponse(
-      hubError(400, { invalidParams: [{ name: "TaxonomyScope.tenant_id", reason: "tenant_id is required" }] }),
+      hubError(400, {
+        invalidParams: [{ name: "TaxonomyScope.tenant_id", reason: "tenant_id is required" }],
+      }),
       requestId,
       instance
     ).json();
@@ -122,7 +124,8 @@ describe("hubErrorToProblemResponse", () => {
     const body = await hubErrorToProblemResponse(
       hubError(422, { problemDetail: "my_tenant_identifier and tenant_ids are unaffected" }),
       requestId,
-      instance
+      instance,
+      { renameTenantId: true }
     ).json();
 
     expect(body.detail).toBe("my_tenant_identifier and tenant_ids are unaffected");

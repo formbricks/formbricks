@@ -89,7 +89,13 @@ export function mapV3ThrownError(err: unknown, ctx: TV3ErrorContext): Response {
    */
   if (err instanceof ResourceNotFoundError) {
     log.warn(
-      { ...context, statusCode: 403, errorCode: err.name, resourceId: err.resourceId, resourceType: err.resourceType },
+      {
+        ...context,
+        statusCode: 403,
+        errorCode: err.name,
+        resourceId: err.resourceId,
+        resourceType: err.resourceType,
+      },
       "V3 resource not found"
     );
     return problemForbidden(requestId, undefined, instance);

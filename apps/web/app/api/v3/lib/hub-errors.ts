@@ -80,11 +80,7 @@ function toApiVocabulary(text: string, rename: boolean): string {
  * whole-request problem responses and for the per-record failures of a batch write, so neither can drift
  * into leaking more than the other.
  */
-export function relayableHubDetail(
-  error: HubError | null,
-  fallback: string,
-  renameTenantId = false
-): string {
+export function relayableHubDetail(error: HubError | null, fallback: string, renameTenantId = false): string {
   // `problemDetail`, never `detail` or `message`: those two are the SDK's error text, which folds the
   // *entire* RFC 9457 body into a string (internal Hub URLs, problem type URIs, its request id).
   // Relaying either is the disclosure bug this surface already had once (ENG-2048 Part 1 / ENG-1886).
@@ -97,10 +93,7 @@ export function relayableHubDetail(
 }
 
 /** Only name/reason cross over: the Hub's `code` vocabulary is its own, not the v3 InvalidParamCode set. */
-function relayableInvalidParams(
-  error: HubError | null,
-  renameTenantId: boolean
-): InvalidParam[] | undefined {
+function relayableInvalidParams(error: HubError | null, renameTenantId: boolean): InvalidParam[] | undefined {
   // Bounded on both axes — the Hub is a remote service, so we don't let it size our response body.
   return error?.invalidParams?.slice(0, MAX_RELAYED_INVALID_PARAMS).map(({ name, reason }) => ({
     name: toApiVocabulary(name, renameTenantId).slice(0, MAX_RELAYED_DETAIL_LENGTH),
@@ -206,7 +199,11 @@ export function hubErrorToProblemResponse(
 
   if (status === 400 || status === 422) {
     const invalidParams = relayableInvalidParams(error, options?.renameTenantId ?? false);
-    const detail = relayableHubDetail(error, "The feedback service rejected the request.", options?.renameTenantId);
+    const detail = relayableHubDetail(
+      error,
+      "The feedback service rejected the request.",
+      options?.renameTenantId
+    );
 
     return status === 400
       ? problemBadRequest(requestId, detail, { instance, invalid_params: invalidParams })

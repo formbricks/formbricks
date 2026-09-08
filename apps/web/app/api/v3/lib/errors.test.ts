@@ -148,6 +148,20 @@ describe("mapV3ThrownError", () => {
       expect(fields).not.toHaveProperty("error");
     });
 
+    /**
+     * The 403 body deliberately omits which resource was missing, and the comment justifying that says
+     * the id goes to the log instead. That is only true if it is actually logged — without this, the
+     * fields could be dropped and the body would still look correct.
+     */
+    test("logs which resource was missing, since the body must not say", () => {
+      const log = makeLog();
+      mapV3ThrownError(new ResourceNotFoundError("Response", "clrs_abc"), ctx(log));
+
+      const fields = log.warn.mock.calls[0][0];
+      expect(fields.resourceType).toBe("Response");
+      expect(fields.resourceId).toBe("clrs_abc");
+    });
+
     // The label is what replaced six bespoke message strings, so it has to be queryable as a field.
     test("carries the operation label as a structured field", () => {
       const log = makeLog();

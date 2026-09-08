@@ -3,9 +3,9 @@ import type { z } from "zod";
 import type { logger } from "@formbricks/logger";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
+  type THubProblemOptions,
   hubErrorToProblemResponse as sharedHubErrorToProblemResponse,
   relayableHubDetail as sharedRelayableHubDetail,
-  type THubProblemOptions,
 } from "@/app/api/v3/lib/hub-errors";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 
