@@ -848,7 +848,9 @@ would refill an agent's context as fast as resending the blocks did, so it is op
 Replaces the order of a survey's blocks by listing every current block id exactly once. Block content
 is untouched. The tool writes data and can be destructive, but unlike every other survey write it is
 **idempotent**: the same order yields the same survey, and an order that already matches performs no
-write at all, so `updatedAt` does not move and other callers' preconditions stay valid.
+write at all, so `updatedAt` does not move and other callers' preconditions stay valid. A stale
+`expectedUpdatedAt` still returns `409` on that path: the precondition is evaluated before the
+method, so a no-op outcome never reports success to a caller whose view is out of date.
 
 Because the list must be a permutation, a dropped or duplicated block is rejected rather than
 silently applied — the failure that resending the whole `blocks` array cannot catch.

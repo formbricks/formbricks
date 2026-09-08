@@ -41,6 +41,7 @@ import {
   type TV3SurveyWritePrecondition,
   V3SurveyStaleError,
   V3SurveyStoredDocumentError,
+  assertV3SurveyPrecondition,
   patchV3Survey,
 } from "../patch";
 import {
@@ -831,6 +832,11 @@ async function runV3SurveyDocumentMutation({
     }
 
     if ("unchanged" in built) {
+      // This branch never reaches patchV3Survey, which is where every other write evaluates the
+      // precondition — so evaluate it here. Otherwise a reorder into the order the survey already
+      // holds answers a stale caller with 200, which reads as "your view is current" when it is not.
+      assertV3SurveyPrecondition(survey, precondition);
+
       const resource = getResource();
       if (auditLog) {
         auditLog.targetId = survey.id;

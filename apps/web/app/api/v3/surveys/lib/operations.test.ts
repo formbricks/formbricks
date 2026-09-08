@@ -92,16 +92,9 @@ vi.mock("../parse-v3-surveys-list-query", () => ({
   parseV3SurveysListQuery: vi.fn(),
 }));
 
-vi.mock("../patch", () => ({
-  patchV3Survey: vi.fn(),
-  V3SurveyStoredDocumentError: class V3SurveyStoredDocumentError extends Error {
-    constructor(readonly invalidParams: unknown[]) {
-      super("Stored survey does not satisfy the v3 survey document contract");
-      this.name = "V3SurveyStoredDocumentError";
-    }
-  },
+vi.mock("../patch", () => {
   // Real class, not a vi.fn: operations.ts branches on `instanceof` to map the 409.
-  V3SurveyStaleError: class V3SurveyStaleError extends Error {
+  class V3SurveyStaleError extends Error {
     constructor(
       readonly expectedUpdatedAt: Date,
       readonly currentUpdatedAt: Date,
@@ -110,8 +103,29 @@ vi.mock("../patch", () => ({
       super("Survey was modified since it was last read");
       this.name = "V3SurveyStaleError";
     }
-  },
-}));
+  }
+
+  return {
+    patchV3Survey: vi.fn(),
+    V3SurveyStoredDocumentError: class V3SurveyStoredDocumentError extends Error {
+      constructor(readonly invalidParams: unknown[]) {
+        super("Stored survey does not satisfy the v3 survey document contract");
+        this.name = "V3SurveyStoredDocumentError";
+      }
+    },
+    V3SurveyStaleError,
+    // Real behaviour, not a stub: the no-write path depends on this to reject a stale caller, so a
+    // no-op mock here would let that regression back in without failing a test.
+    assertV3SurveyPrecondition: (
+      currentSurvey: { updatedAt: Date },
+      precondition?: { expectedUpdatedAt: Date }
+    ): void => {
+      if (precondition && currentSurvey.updatedAt.getTime() !== precondition.expectedUpdatedAt.getTime()) {
+        throw new V3SurveyStaleError(precondition.expectedUpdatedAt, currentSurvey.updatedAt, "read");
+      }
+    },
+  };
+});
 
 vi.mock("../prepare", () => ({
   prepareV3SurveyCreateInput: vi.fn(),
@@ -143,6 +157,9 @@ const survey = {
   name: "Customer Survey",
   status: "draft",
   type: "link",
+  // Every stored survey carries one, and the precondition check reads it on both the write and the
+  // no-write path, so a fixture without it hides a 409 behind a TypeError.
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
   // A v3-editable survey has no legacy questions; serializeV3SurveyResource rejects one that does.
   questions: [],
 };
@@ -1367,6 +1384,19 @@ describe("setV3SurveyBlockOrderResponse", () => {
     expect(response.status).toBe(200);
     expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
     expect(auditLog).toMatchObject({ oldObject: serializedWithBlocks, newObject: serializedWithBlocks });
+  });
+
+  test("rejects a stale precondition even when the order would not change anything", async () => {
+    // RFC 9110 evaluates the precondition before the method. Short-circuiting the no-op write first
+    // would answer a caller whose view is out of date with 200, which reads as confirmation that
+    // nothing moved — the precise false reassurance the precondition exists to prevent.
+    const response = await call({
+      order: ["blk_a", "blk_b"],
+      expectedUpdatedAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    expect(response.status).toBe(409);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
   });
 
   test("rejects an order that is not a permutation", async () => {
