@@ -235,10 +235,10 @@ x-environment: &environment
 
     # Set the below to automatically assign every new SSO user to one organization, without requiring
     # an invite. Insert an existing organization id, or a valid CUID2 to have it created on the first
-    # sign-up. DEFAULT_ORGANIZATION_ROLE (owner, manager, member, billing) sets the role they get and
+    # sign-up. AUTH_SSO_DEFAULT_ORGANIZATION_ROLE (owner, manager, member, billing) sets the role and
     # defaults to manager; the sign-up that creates the organization is always owner.
-    # DEFAULT_ORGANIZATION_ID:
-    # DEFAULT_ORGANIZATION_ROLE:
+    # AUTH_SSO_DEFAULT_ORGANIZATION_ID:
+    # AUTH_SSO_DEFAULT_ORGANIZATION_ROLE:
 
     # Configure the minimum role for user management from UI(owner, manager, disabled)
     # USER_MANAGEMENT_MINIMUM_ROLE: "manager"
