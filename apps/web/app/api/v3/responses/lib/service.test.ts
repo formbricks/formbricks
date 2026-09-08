@@ -4,15 +4,23 @@ import { deleteScopedResponse, getResponseWorkspaceId } from "./service";
 
 vi.mock("server-only", () => ({}));
 
-const { mockTxDelete, mockFindFirst, mockTransaction, mockDeleteDisplay, mockReduceQuotas, mockDeleteFiles } =
-  vi.hoisted(() => ({
-    mockTxDelete: vi.fn(),
-    mockFindFirst: vi.fn(),
-    mockTransaction: vi.fn(),
-    mockDeleteDisplay: vi.fn(),
-    mockReduceQuotas: vi.fn(),
-    mockDeleteFiles: vi.fn(),
-  }));
+const {
+  mockTxDelete,
+  mockTxSurvey,
+  mockFindFirst,
+  mockTransaction,
+  mockDeleteDisplay,
+  mockReduceQuotas,
+  mockDeleteFiles,
+} = vi.hoisted(() => ({
+  mockTxDelete: vi.fn(),
+  mockTxSurvey: vi.fn(),
+  mockFindFirst: vi.fn(),
+  mockTransaction: vi.fn(),
+  mockDeleteDisplay: vi.fn(),
+  mockReduceQuotas: vi.fn(),
+  mockDeleteFiles: vi.fn(),
+}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -43,11 +51,16 @@ vi.mock("@/modules/storage/utils", () => ({
 const RESPONSE_ID = "clrsaaaaaaaaaaaaaaaaaaaa";
 const SCOPE = { workspaceId: "ws_1" };
 
-/** Runs the callback with a tx whose `response.delete` is our spy, like a real interactive transaction. */
-const runTransaction = (result: unknown) => {
+/**
+ * Runs the callback with a tx whose `response.delete` and `survey.findUnique` are our spies, like a
+ * real interactive transaction. The survey is a separate query rather than a join precisely so the
+ * delete keeps raising P2025 — see the service's own note.
+ */
+const runTransaction = (result: unknown, survey: unknown = { blocks: [], questions: [] }) => {
   mockTxDelete.mockResolvedValue(result);
+  mockTxSurvey.mockResolvedValue(survey);
   mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
-    fn({ response: { delete: mockTxDelete } })
+    fn({ response: { delete: mockTxDelete }, survey: { findUnique: mockTxSurvey } })
   );
 };
 
@@ -58,7 +71,6 @@ const deletedRow = (over: Record<string, unknown> = {}) => ({
   data: {},
   meta: {},
   displayId: null,
-  survey: { blocks: [], questions: [] },
   ...over,
 });
 
@@ -93,12 +105,32 @@ describe("deleteScopedResponse", () => {
 
     const { select } = mockTxDelete.mock.calls[0][0];
     expect(select.data).toBe(true);
-    // Both shapes, matching v1/v2 and the helper's documented union — not just `blocks`.
-    expect(select.survey).toStrictEqual({ select: { blocks: true, questions: true } });
     // What the audit event records. Losing any of these silently thins the trail.
     for (const field of ["id", "createdAt", "finished", "surveyId", "meta", "ttc", "variables", "language"]) {
       expect(select[field]).toBe(true);
     }
+  });
+
+  /**
+   * Load-bearing, not stylistic. A `delete` whose select pulls a relation is compiled read-then-delete
+   * on Prisma 7 and stops raising P2025 when the row is already gone, so a concurrent loser is told it
+   * succeeded. The real-Postgres race in `service.integration.test.ts` measures that; this pins the
+   * shape cheaply so the join cannot creep back in.
+   */
+  test("keeps the delete's select free of relations, and reads the survey separately", async () => {
+    runTransaction(deletedRow());
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    const { select } = mockTxDelete.mock.calls[0][0];
+    const relations = Object.entries(select).filter(([, v]) => typeof v === "object" && v !== null);
+    expect(relations).toStrictEqual([]);
+
+    // Both shapes, matching v1/v2 and the helper's documented union — not just `blocks`.
+    expect(mockTxSurvey).toHaveBeenCalledWith({
+      where: { id: "svy_1" },
+      select: { blocks: true, questions: true },
+    });
   });
 
   /**
@@ -158,8 +190,9 @@ describe("deleteScopedResponse", () => {
   test("removes stored files only after the transaction commits", async () => {
     const order: string[] = [];
     mockTxDelete.mockResolvedValue(deletedRow({ data: { screenshots: ["https://s/a.png"] } }));
+    mockTxSurvey.mockResolvedValue({ blocks: [], questions: [] });
     mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-      const out = await fn({ response: { delete: mockTxDelete } });
+      const out = await fn({ response: { delete: mockTxDelete }, survey: { findUnique: mockTxSurvey } });
       order.push("commit");
       return out;
     });

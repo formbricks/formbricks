@@ -114,6 +114,13 @@ export type TDeletedResponse = Prisma.ResponseGetPayload<{ select: typeof delete
  * `deleteV3FeedbackRecord` all record it. Field set matches v1's `responseSelection` scalars; the
  * `contact` and `tags` joins it also carries are left out rather than adding joins to a delete.
  *
+ * **The delete's `select` must stay scalar-only.** On Prisma 7 a `delete` whose `select` pulls in a
+ * relation is compiled as read-then-delete, and the client returns the *read* payload without checking
+ * that the DELETE matched a row — so a concurrent caller that lost the race is told it succeeded
+ * instead of raising `P2025`. Measured: with a relation in the select two racing deletes of the same
+ * row both resolved, 3 times out of 3; with scalars only, exactly one raised `P2025` every time. That
+ * is why the survey's element ids are fetched by their own query rather than joined in here.
+ *
  * Storage deletion happens **after** the transaction commits. Inside it, a rollback would leave a live
  * response pointing at deleted objects; both existing delete paths order it this way for that reason.
  *
@@ -135,14 +142,16 @@ export async function deleteScopedResponse(
       // query whose absence a caller could time.
       const deletedRow = await tx.response.delete({
         where: { id: responseId, survey: { workspaceId } },
-        // The survey join is for the file cleanup below, not for the audit record — it is dropped
-        // before the row is returned. Both shapes: `getSurveyFileUploadElementIds` documents the union
-        // as mandatory and v1/v2 pass both, so v3 matches rather than betting on `questions` staying
-        // empty everywhere.
-        select: {
-          ...deletedResponseSelect,
-          survey: { select: { blocks: true, questions: true } },
-        },
+        // Scalars only, deliberately — see the note above the function. The survey's element ids are
+        // read separately, below.
+        select: deletedResponseSelect,
+      });
+
+      // The survey outlives the response, so this reads correctly after the delete. Both shapes:
+      // `getSurveyFileUploadElementIds` documents the union as mandatory and v1/v2 pass both.
+      const survey = await tx.survey.findUnique({
+        where: { id: deletedRow.surveyId },
+        select: { blocks: true, questions: true },
       });
 
       if (deletedRow.displayId) {
@@ -161,12 +170,11 @@ export async function deleteScopedResponse(
       // an irreversible default no caller can decline.
 
       // Read inside the transaction, deleted outside it.
-      const { survey, ...row } = deletedRow;
       return {
-        row,
+        row: deletedRow,
         fileUrls: collectResponseFileUrls(
-          row.data,
-          getSurveyFileUploadElementIds({ blocks: survey.blocks, questions: survey.questions })
+          deletedRow.data,
+          getSurveyFileUploadElementIds({ blocks: survey?.blocks, questions: survey?.questions })
         ),
       };
     });
