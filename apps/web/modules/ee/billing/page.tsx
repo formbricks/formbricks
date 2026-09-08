@@ -49,6 +49,7 @@ export const PricingPage = async (props: { params: Promise<{ organizationId: str
       <PageHeader pageTitle={t("common.billing")} />
 
       <PricingTable
+        userId={session.user.id}
         organization={organizationWithSyncedBilling}
         responseCount={responseCount}
         workspaceCount={workspaceCount}

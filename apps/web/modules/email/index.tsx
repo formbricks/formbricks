@@ -11,6 +11,7 @@ import {
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
+  renderSsoRecoveryFactorsRemovedEmail,
   renderVerificationEmail,
 } from "@formbricks/email";
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
@@ -51,6 +52,7 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { TElementResponseMappingSurvey, getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import { TVerificationRequestPurpose, buildVerificationLinks } from "@/modules/auth/lib/verification-links";
+import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export { IS_SMTP_CONFIGURED };
@@ -261,6 +263,43 @@ export const sendPasswordResetNotifyEmail = async (user: {
   });
 };
 
+/**
+ * Tell a user that SSO recovery removed the local sign-in factors from their account (ENG-2633).
+ *
+ * Recovery strips the password and any second factor from an account whose address was never proven,
+ * because marking it verified would otherwise leave an attacker who registered on someone else's
+ * address holding a live credential. No signal separates that attacker from an owner who simply never
+ * clicked a verification link, so the strip is unconditional and this mail is what keeps the
+ * legitimate case from being a silent downgrade: it names what went and links to re-enrolment.
+ */
+export const sendSsoRecoveryFactorsRemovedEmail = async ({
+  email,
+  locale,
+  passwordRemoved,
+  twoFactorRemoved,
+}: {
+  email: string;
+  locale: TUserLocale;
+  passwordRemoved: boolean;
+  twoFactorRemoved: boolean;
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderSsoRecoveryFactorsRemovedEmail({
+    passwordRemoved,
+    twoFactorRemoved,
+    // The account profile page is where both factors this mail can name are re-enrolled — the password
+    // form and the 2FA card both live there. There is no separate /settings/security route.
+    securitySettingsLink: `${WEBAPP_URL}/account/settings/profile`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    to: email,
+    subject: t("emails.sso_recovery_factors_removed_email_subject"),
+    html,
+  });
+};
+
 export const sendInviteMemberEmail = async (
   inviteId: string,
   email: string,
@@ -421,19 +460,14 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const logoUrl = data.logoUrl ? resolveStorageUrl(data.logoUrl) : "";
   const token = createTokenForLinkSurvey(surveyId, email);
   const t = await getTranslate(data.locale);
-  const getSurveyLink = (): string => {
-    if (singleUseId) {
-      const surveyLink = new URL(`${getPublicDomain()}/s/${surveyId}`);
-      surveyLink.searchParams.set("verify", token);
-      surveyLink.searchParams.set("suId", singleUseId);
-      if (singleUseToken) {
-        surveyLink.searchParams.set("suToken", singleUseToken);
-      }
-      return surveyLink.toString();
-    }
-    return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
-  };
-  const surveyLink = getSurveyLink();
+  const surveyLink = buildVerifiedLinkSurveyUrl({
+    publicDomain: getPublicDomain(),
+    surveyId,
+    token,
+    singleUseId,
+    singleUseToken,
+    surveyLanguageCode: data.surveyLanguageCode,
+  });
 
   const html = await renderLinkSurveyEmail({ surveyName, surveyLink, logoUrl, t, ...legalProps });
   return await sendEmail({

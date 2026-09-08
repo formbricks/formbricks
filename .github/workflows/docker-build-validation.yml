@@ -21,6 +21,7 @@ jobs:
       contents: read
     env:
       DATABASE_URL: postgresql://test:test@127.0.0.1:5432/formbricks
+      POSTGRES_PASSWORD: build-time-placeholder
       ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       REDIS_URL: redis://127.0.0.1:6379
       CUBEJS_API_URL: http://127.0.0.1:4000
@@ -110,6 +111,7 @@ jobs:
         env:
           AUTHZED_DATABASE_PASSWORD: 0000000000000000000000000000000000000000000000000000000000000002
           AUTHZED_TOKEN: 0000000000000000000000000000000000000000000000000000000000000001
+          POSTGRES_PASSWORD: build-time-placeholder
         run: |
           set -euo pipefail
 
@@ -322,6 +324,7 @@ jobs:
           printf '%s\n' \
             'WEBAPP_URL=http://localhost:3000' \
             'NEXTAUTH_URL=http://localhost:3000' \
+            'POSTGRES_PASSWORD=compose-postgres-placeholder' \
             "ENCRYPTION_KEY=$DUMMY_ENCRYPTION_KEY" \
             "BETTER_AUTH_SECRET=$DUMMY_ENCRYPTION_KEY" \
             'HUB_API_KEY=build-time-placeholder' \

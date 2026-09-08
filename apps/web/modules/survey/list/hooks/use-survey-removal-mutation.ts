@@ -11,9 +11,12 @@ import { TSurveyListPage } from "@/modules/survey/list/lib/v3-surveys-client";
 export const useSurveyRemovalMutation = ({
   queryKey,
   mutationFn,
+  removesFromWorkspace = false,
 }: {
   queryKey: ReturnType<typeof surveyKeys.list>;
   mutationFn: (surveyId: string) => Promise<unknown>;
+  /** True only for delete: archive and restore keep the survey in the workspace. */
+  removesFromWorkspace?: boolean;
 }) => {
   const queryClient = useQueryClient();
 
@@ -25,7 +28,7 @@ export const useSurveyRemovalMutation = ({
       const previousData = queryClient.getQueryData<InfiniteData<TSurveyListPage>>(queryKey);
 
       queryClient.setQueryData<InfiniteData<TSurveyListPage> | undefined>(queryKey, (currentData) =>
-        removeSurveyFromInfiniteData(currentData, surveyId)
+        removeSurveyFromInfiniteData(currentData, surveyId, { removesFromWorkspace })
       );
 
       return {

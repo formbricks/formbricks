@@ -23,9 +23,11 @@ If you’re looking to quickly set up a production instance of Formbricks on an 
 </Warning>
 
 <Note>
-  When bundled RustFS is enabled, the installer stores the generated RustFS credentials in `./formbricks/.env`
-  and restricts the file to `0600`. Keep that file private, include it in your server backup plan, and avoid
-  checking it into source control or copying it to shared locations.
+  The installer stores generated PostgreSQL, Hub, Cube, and AuthZed credentials in `./formbricks/.env` and
+  restricts the file to `0600`. PostgreSQL has a raw password for the database plus a URL-encoded companion for
+  connection strings. When bundled RustFS is enabled, its generated credentials are stored there too. Keep that
+  file private, include it in your server backup plan, and avoid checking it into source control or copying it to
+  shared locations.
 </Note>
 
 <Note>
@@ -339,6 +341,9 @@ Starting with v5.4, the updater also recognizes the old amd64-only bundled Valke
 Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
 result before pulling. An already-updated or custom Valkey image is left unchanged. The named `redis` volume
 and its AOF data are preserved.
+
+Existing one-click installations keep the database credentials in their local `docker-compose.yml` or `.env`.
+The update command does not regenerate or rotate them.
 
 <Warning>
   Apart from the exact v5.4 Valkey pin migration described above, `./formbricks.sh update` does **not** rewrite

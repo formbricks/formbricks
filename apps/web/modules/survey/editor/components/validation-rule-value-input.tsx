@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { ALLOWED_FILE_EXTENSIONS, TAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
+import { formatLocalDay, parseStoredDay } from "@/lib/utils/datetime";
+import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import {
@@ -34,45 +36,46 @@ export const ValidationRuleValueInput = ({
   onFileExtensionChange,
   element,
 }: ValidationRuleValueInputProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
-  // Determine HTML input type for value inputs
-  let htmlInputType: "number" | "date" | "text" = "text";
-  if (config.valueType === "number") {
-    htmlInputType = "number";
-  } else if (
-    ruleType.startsWith("is") &&
-    (ruleType.includes("Later") || ruleType.includes("Earlier") || ruleType.includes("On"))
-  ) {
-    htmlInputType = "date";
-  }
+  // Date rules store the day as `yyyy-MM-dd`, and the two range rules store the pair comma-joined.
+  const [startDay = "", endDay = ""] = (typeof currentValue === "string" ? currentValue : "").split(",");
 
-  // Special handling for date range inputs
   if (ruleType === "isBetween" || ruleType === "isNotBetween") {
     return (
       <div className="flex w-full items-center gap-2">
-        <Input
-          type="date"
-          value={(currentValue as string)?.split(",")?.[0] ?? ""}
-          onChange={(e) => {
-            const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
-            onChange(`${e.target.value},${currentEndDate}`);
-          }}
-          placeholder={t("workspace.surveys.edit.validation.start_date")}
-          className="h-9 flex-1 bg-white"
-        />
+        <div className="flex-1">
+          <DatePicker
+            value={parseStoredDay(startDay)}
+            locale={locale}
+            placeholder={t("workspace.surveys.edit.validation.start_date")}
+            triggerClassName="h-9 w-full"
+            onChange={(date) => onChange(`${formatLocalDay(date)},${endDay}`)}
+          />
+        </div>
         <span className="text-sm text-slate-500">{t("common.and")}</span>
-        <Input
-          type="date"
-          value={(currentValue as string)?.split(",")?.[1] ?? ""}
-          onChange={(e) => {
-            const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
-            onChange(`${currentStartDate},${e.target.value}`);
-          }}
-          placeholder={t("workspace.surveys.edit.validation.end_date")}
-          className="h-9 flex-1 bg-white"
-        />
+        <div className="flex-1">
+          <DatePicker
+            value={parseStoredDay(endDay)}
+            locale={locale}
+            placeholder={t("workspace.surveys.edit.validation.end_date")}
+            triggerClassName="h-9 w-full"
+            onChange={(date) => onChange(`${startDay},${formatLocalDay(date)}`)}
+          />
+        </div>
       </div>
+    );
+  }
+
+  if (ruleType === "isLaterThan" || ruleType === "isEarlierThan") {
+    return (
+      <DatePicker
+        value={parseStoredDay(startDay)}
+        locale={locale}
+        triggerClassName="h-9 w-[200px]"
+        onChange={(date) => onChange(formatLocalDay(date))}
+      />
     );
   }
 
@@ -126,9 +129,18 @@ export const ValidationRuleValueInput = ({
   // Default text/number input
   return (
     <Input
-      type={htmlInputType}
+      type={config.valueType === "number" ? "number" : "text"}
       value={currentValue ?? ""}
       onChange={(e) => onChange(e.target.value)}
+      // Browsers accept scientific notation in a number field, so `1e5` would silently store
+      // 100000 and a bare `e` would store 0 while the field still shows the typed text. `.` and
+      // `-` stay allowed: decimal and negative thresholds are valid per the rule schemas.
+      // Modifier chords are let through — Ctrl/Cmd+E moves the caret in Chrome/Safari text fields
+      // and Ctrl/Cmd++ zooms, and swallowing those while this field has focus is not the intent.
+      onKeyDown={(e) => {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (config.valueType === "number" && ["e", "E", "+"].includes(e.key)) e.preventDefault();
+      }}
       placeholder={config.valuePlaceholder}
       className="h-9 min-w-[80px] bg-white"
       min={config.valueType === "number" ? 0 : ""}

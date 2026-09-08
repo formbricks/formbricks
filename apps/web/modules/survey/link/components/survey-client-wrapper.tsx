@@ -2,7 +2,6 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -12,6 +11,7 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
+import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";
 import { buildSurveyDocumentTitle } from "@/modules/survey/link/lib/document-title";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
 import { getUserIdFromSearchParams } from "@/modules/survey/link/lib/user-id";
@@ -67,7 +67,6 @@ export const SurveyClientWrapper = ({
   pinAuthToken,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
-  const { i18n } = useTranslation();
 
   // The survey's active language: starts at the server-provided code, then follows the
   // in-survey language switch (via onLanguageChange). The whole shell (i18n strings, logo
@@ -77,14 +76,7 @@ export const SurveyClientWrapper = ({
     setCurrentLanguageCode(languageCode);
   }, [languageCode]);
 
-  useEffect(() => {
-    const webAppLocale = getWebAppLocale(currentLanguageCode, survey);
-    if (i18n.language !== webAppLocale) {
-      i18n.changeLanguage(webAppLocale).catch(() => {
-        i18n.changeLanguage("en-US");
-      });
-    }
-  }, [currentLanguageCode, survey, i18n]);
+  useAppLocale(getWebAppLocale(currentLanguageCode, survey));
 
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
   const offlineSupport = searchParams.get("offlineSupport") === "true";

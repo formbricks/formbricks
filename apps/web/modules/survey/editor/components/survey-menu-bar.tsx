@@ -17,9 +17,11 @@ import {
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { hasUnsavedSurveyChanges } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -41,7 +43,6 @@ interface SurveyMenuBarProps {
   responseCount: number;
   finishedResponseCount: number;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (selectedLanguage: string) => void;
   isCxMode: boolean;
   locale: string;
   setIsCautionDialogOpen: (open: boolean) => void;
@@ -81,6 +82,11 @@ export const SurveyMenuBar = ({
   const localSurveyRef = useRef(localSurvey);
   const surveyRef = useRef(survey);
   const isSurveySavingRef = useRef(isSurveySaving);
+  // A snapshot of what the last successful save returned. The `survey` prop is the other persisted
+  // state; the two are not interchangeable, so the dirty checks below compare against both. Cloned
+  // rather than aliased, so a later in-place edit of the editor's own survey cannot drag the
+  // snapshot along with it and hide the change.
+  const lastSavedSurveyRef = useRef<TSurvey | null>(null);
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -120,7 +126,7 @@ export const SurveyMenuBar = ({
         return;
       }
 
-      if (!isDeepEqual(localSurvey, survey)) {
+      if (hasUnsavedSurveyChanges(localSurvey, [survey, lastSavedSurveyRef.current])) {
         e.preventDefault();
         return (e.returnValue = warningText);
       }
@@ -172,10 +178,7 @@ export const SurveyMenuBar = ({
   });
 
   const handleBack = () => {
-    const { updatedAt, ...localSurveyRest } = localSurvey;
-    const { updatedAt: _, ...surveyRest } = survey;
-
-    if (!isDeepEqual(localSurveyRest, surveyRest)) {
+    if (hasUnsavedSurveyChanges(localSurvey, [survey, lastSavedSurveyRef.current])) {
       setConfirmDialogOpen(true);
     } else {
       router.back();
@@ -231,6 +234,15 @@ export const SurveyMenuBar = ({
               newInvalidIds.push(element.id);
             }
             firstInvalidScrollId ??= element?.id ?? null;
+          } else if (issue.path[2] === "name") {
+            // Empty block name: flag the block itself so its card turns red. Block ids never
+            // collide with element or logic-rule ids, so this is unambiguous in invalidElements.
+            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
+
+            if (block && !newInvalidIds.includes(block.id)) {
+              newInvalidIds.push(block.id);
+            }
+            firstInvalidScrollId ??= block?.id ?? null;
           } else if (issue.path[2] === "logic" && typeof issue.path[3] === "number") {
             // Conditional logic error: flag the offending rule so the block card
             // surfaces it. Uses the logic rule id (a CUID, distinct from element ids).
@@ -286,6 +298,18 @@ export const SurveyMenuBar = ({
       }
 
       const firstError = issues[0];
+
+      // The schema can only say "Block name is required"; it has no idea which block. Name it,
+      // so the message matches the card that just turned red.
+      if (firstError.path[0] === "blocks" && firstError.path[2] === "name") {
+        toast.error(
+          t("workspace.surveys.edit.block_name_required_for", {
+            blockNumber: (firstError.path[1] as number) + 1,
+          })
+        );
+        return false;
+      }
+
       if (firstError.code === "custom") {
         const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
         if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
@@ -325,12 +349,10 @@ export const SurveyMenuBar = ({
       // Skip if already saving, publishing, or auto-saving
       if (isAutoSavingRef.current || isSurveySavingRef.current || isSurveyPublishingRef.current) return;
 
-      // Check for changes using refs (avoids re-creating interval on every change)
-      const { updatedAt: localUpdatedAt, ...localSurveyRest } = localSurveyRef.current;
-      const { updatedAt: surveyUpdatedAt, ...surveyRest } = surveyRef.current;
-
-      // Skip if no changes
-      if (isDeepEqual(localSurveyRest, surveyRest)) return;
+      // Check for changes using refs (avoids re-creating interval on every change), and skip if
+      // there are none
+      if (!hasUnsavedSurveyChanges(localSurveyRef.current, [surveyRef.current, lastSavedSurveyRef.current]))
+        return;
 
       isAutoSavingRef.current = true;
 
@@ -355,6 +377,7 @@ export const SurveyMenuBar = ({
           // This keeps the UI stable while still tracking that changes have been saved.
           // The comparison uses refs, so this prevents unnecessary re-saves.
           surveyRef.current = { ...savedData };
+          lastSavedSurveyRef.current = structuredClone(savedData);
           isSuccessfullySavedRef.current = true;
           setLastAutoSaved(new Date());
         }
@@ -382,6 +405,7 @@ export const SurveyMenuBar = ({
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
+        lastSavedSurveyRef.current = structuredClone(updatedSurveyResponse.data);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         isSuccessfullySavedRef.current = true;
         router.refresh();
@@ -454,6 +478,7 @@ export const SurveyMenuBar = ({
         // doesn't linger in editor state and get echoed back on the next update.
         const { isSecondPublish: _isSecondPublish, ...updatedSurvey } = updatedSurveyResponse.data;
         setLocalSurvey(updatedSurvey);
+        lastSavedSurveyRef.current = structuredClone(updatedSurvey);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;

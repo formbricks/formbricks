@@ -859,6 +859,16 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
 const editorElementHeading = (page: Page, name: string): Locator =>
   page.getByRole("main").getByRole("heading", { name });
 
+/**
+ * The header row of the nth block card (1-based), which doubles as its collapse toggle.
+ *
+ * Addressed by position rather than by text: since ENG-742 the block name is an editable input,
+ * so the header no longer carries the name as text content and `hasText: /^Block N…/` matches
+ * nothing. Position is also the stabler key here — a creator-set title would break a name match.
+ */
+const blockCardHeader = (page: Page, blockNumber: number): Locator =>
+  page.getByTestId("block-card-header").nth(blockNumber - 1);
+
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   await createSurveyFromScratch(page);
 
@@ -1017,11 +1027,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-2-value-input").click();
   await page.locator("#action-2-value-input").fill("This ");
   // Close Block 1 settings before moving to Block 2
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 11 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 1).click();
 
   // Block 2 (Single Select Question)
   await editorElementHeading(page, params.singleSelectQuestion.question).click();
@@ -1055,11 +1061,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("is ");
   // Close Block 2 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 21 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 2).click();
 
   // Block 3 (Multi Select Question)
   await editorElementHeading(page, params.multiSelectQuestion.question).click();
@@ -1106,11 +1108,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("a ");
   // Close Block 3 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 31 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 3).click();
 
   // Block 4 (Picture Select Question)
   await editorElementHeading(page, params.pictureSelectQuestion.question).click();
@@ -1139,11 +1137,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("secret ");
   // Close Block 4 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 41 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 4).click();
 
   // Block 5 (Rating Question)
   await editorElementHeading(page, params.ratingQuestion.question).click();
@@ -1174,11 +1168,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("message ");
   // Close Block 5 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 51 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 5).click();
 
   // Block 6 (NPS Question)
   await editorElementHeading(page, params.npsQuestion.question).click();
@@ -1248,11 +1238,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("for ");
   // Close Block 6 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 61 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 6).click();
 
   // Block 7 (Ranking Question)
   await editorElementHeading(page, params.ranking.question).click();
@@ -1281,11 +1267,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("e2e ");
   // Close Block 7 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 71 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 7).click();
 
   // Block 8 (Matrix Question)
   await editorElementHeading(page, params.matrix.question).click();
@@ -1325,11 +1307,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-2-target").click();
   await page.getByRole("option", { name: params.ctaQuestion.question }).click();
   // Close Block 8 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 81 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 8).click();
 
   // Block 9 (CTA Question)
   await editorElementHeading(page, params.ctaQuestion.question).click();
@@ -1364,11 +1342,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
   // Close Block 9 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 91 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 9).click();
 
   // Block 10 (Consent Question)
   await editorElementHeading(page, params.consentQuestion.question).click();
@@ -1383,11 +1357,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("2");
   // Close Block 10 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 101 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 10).click();
 
   // Block 11 (File Upload Question)
   await editorElementHeading(page, params.fileUploadQuestion.question).click();
@@ -1402,11 +1372,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
   // Close Block 11 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 111 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 11).click();
 
   // Block 12 (Date Question)
   const today = new Date().toISOString().split("T")[0];
@@ -1450,11 +1416,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
   // Close Block 12 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 121 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 12).click();
 
   // Block 13 (Cal Question)
   await editorElementHeading(page, params.cal.question).click();
@@ -1473,11 +1435,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
   // Close Block 13 settings
-  await page
-    .locator("div")
-    .filter({ hasText: /^Block 131 question$/ })
-    .first()
-    .click();
+  await blockCardHeader(page, 13).click();
 
   // Block 14 (Address Question)
   await editorElementHeading(page, params.address.question).click();
