@@ -594,4 +594,87 @@ describe("v3 survey preparation", () => {
       ]);
     }
   });
+
+  test("a survey that already contains a forward recall stays patchable (ENG-3070 class)", () => {
+    // Regression: building the current document must not enforce the ordering rule. Judging the
+    // stored survey there made an unrelated { name } patch fail with the survey's own violations —
+    // exactly the bricking this rule was designed not to cause. Caught by the real-Postgres smoke.
+    const withForwardRecall = {
+      ...survey,
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: { default: "Hi #recall:later_q/fallback:x#", "de-DE": "Hallo" },
+              required: true,
+            },
+          ],
+        },
+        {
+          id: "clbk9999999999999999999999",
+          name: "Later Block",
+          elements: [
+            {
+              id: "later_q",
+              type: "openText",
+              headline: { default: "Later", "de-DE": "Spaeter" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+
+    const preparation = prepareV3SurveyPatchInput(withForwardRecall, { name: "Renamed" });
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual([]);
+    }
+  });
+
+  test("but a patch that introduces a new forward recall is rejected", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: {
+                "en-US": "Hi #recall:later_q/fallback:x#",
+                "de-DE": "Hallo #recall:later_q/fallback:x#",
+              },
+              required: true,
+            },
+          ],
+        },
+        {
+          id: "clbk9999999999999999999999",
+          name: "Later Block",
+          elements: [
+            {
+              id: "later_q",
+              type: "openText",
+              headline: { "en-US": "Later", "de-DE": "Spaeter" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: "misordered_reference" })])
+      );
+    }
+  });
 });
