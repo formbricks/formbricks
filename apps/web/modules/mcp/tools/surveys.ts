@@ -8,6 +8,7 @@ import {
   patchV3SurveyResponse,
   setV3SurveyBlockOrderResponse,
   validateV3SurveyFromRawInput,
+  withGeneratedInsertIds,
 } from "@/app/api/v3/surveys/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
@@ -265,7 +266,8 @@ export function registerSurveyTools(server: McpServer): void {
         "Edit a survey's blocks in place: update, insert or remove whole blocks without resending the others.",
         "Operations apply in order and atomically — either all of them land or none do.",
         "Call get_survey first and pass its `updatedAt` as `expectedUpdatedAt`; on a 409 re-read and retry.",
-        "An `update` replaces the whole block, and block content must carry every configured language.",
+        "An `update` replaces the whole block, so build it from a fresh read — anything you omit is dropped, and block content must carry every configured language.",
+        "An inserted block gets an id automatically; supply your own only if a later op in the same request needs to anchor after it.",
         "Removing a block orphans any answers already collected for it, and the API cannot undo that — on a survey that is not a draft, confirm with the user before removing.",
       ].join(" "),
       inputSchema: ZMcpEditSurveyBlocksInput,
@@ -283,9 +285,14 @@ export function registerSurveyTools(server: McpServer): void {
         { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
         async ({ authentication, requestId, auditLog }) => {
           const { surveyId, response_format: responseFormat, ...body } = input;
+          // Mint insert ids here rather than letting the operation do it alone, so `applied` can
+          // report the id of a block the caller did not name — otherwise an agent inserts a block
+          // and has no way to reference it without re-reading the survey. The helper is idempotent,
+          // so the operation running it again is a no-op.
+          const ops = withGeneratedInsertIds(body.ops);
           const response = await editV3SurveyBlocksResponse({
             surveyId,
-            body,
+            body: { ...body, ops },
             authentication,
             requestId,
             instance: MCP_API_ROUTE,
@@ -295,7 +302,7 @@ export function registerSurveyTools(server: McpServer): void {
           return responseFormat === "detailed"
             ? response
             : conciseSurveyResponse(response, {
-                applied: body.ops.map((op) => ({ op: op.op, id: op.op === "insert" ? op.block.id : op.id })),
+                applied: ops.map((op) => ({ op: op.op, id: op.op === "insert" ? op.block.id : op.id })),
               });
         }
       )
@@ -310,6 +317,7 @@ export function registerSurveyTools(server: McpServer): void {
         "Reorder a survey's blocks by listing every block id exactly once, in the order you want.",
         "Cheaper and safer than resending the blocks: a missing or duplicated id is rejected, which catches a dropped block.",
         "Call get_survey first and pass its `updatedAt` as `expectedUpdatedAt`; on a 409 re-read and retry.",
+        "To repeat a call safely, refresh `expectedUpdatedAt` from the previous response or omit it — reusing the old value is a stale precondition and returns 409, which is the precondition working, not the reorder failing.",
       ].join(" "),
       inputSchema: ZMcpSetSurveyBlockOrderInput,
       annotations: {

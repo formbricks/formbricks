@@ -5020,7 +5020,8 @@ components:
             block:
               allOf:
                 - $ref: '#/components/schemas/SurveyBlock'
-              description: New block. Must carry an `id` that does not already exist on the survey.
+              description: |
+                New block. `id` is optional and generated when omitted, matching survey creation. Supply one only when a later operation in the same request anchors after it; if supplied it must not already exist on the survey.
             position:
               $ref: '#/components/schemas/SurveyBlockInsertPosition'
         - type: object

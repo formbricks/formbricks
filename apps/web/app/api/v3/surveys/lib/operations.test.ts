@@ -1172,6 +1172,34 @@ describe("editV3SurveyBlocksResponse", () => {
     });
   });
 
+  test("generates an id for an inserted block that omits one, like create does", async () => {
+    // Every block id a caller has seen is server-generated, so omitting it on insert is the natural
+    // assumption — and create already mints one. Requiring it here was an inconsistency.
+    await call({ ops: [{ op: "insert", block: { name: "No id" }, position: { type: "end" } }] });
+
+    const [, input] = vi.mocked(patchV3Survey).mock.calls[0];
+    const blocks = (input as { blocks: { id: string; name?: string }[] }).blocks;
+    const inserted = blocks[blocks.length - 1];
+
+    expect(inserted.name).toBe("No id");
+    expect(inserted.id).toMatch(/^[0-9a-z]+$/);
+    expect(inserted.id.length).toBeGreaterThan(8);
+  });
+
+  test("keeps an explicit id so a later op can anchor after the new block", async () => {
+    await call({
+      ops: [
+        { op: "insert", block: { id: "blk_explicit", name: "A" }, position: { type: "start" } },
+        { op: "insert", block: { name: "B" }, position: { type: "after", blockId: "blk_explicit" } },
+      ],
+    });
+
+    const [, input] = vi.mocked(patchV3Survey).mock.calls[0];
+    const ids = (input as { blocks: { id: string }[] }).blocks.map((b) => b.id);
+    expect(ids[0]).toBe("blk_explicit");
+    expect(ids[1]).not.toBe("blk_explicit");
+  });
+
   test("forwards expectedUpdatedAt as a write precondition", async () => {
     await call({
       ops: [{ op: "remove", id: "blk_b" }],

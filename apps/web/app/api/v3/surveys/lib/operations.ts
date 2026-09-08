@@ -1,4 +1,5 @@
 import "server-only";
+import { createId } from "@paralleldrive/cuid2";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -50,6 +51,7 @@ import {
 import { V3SurveyReferenceValidationError } from "../reference-validation";
 import {
   type TV3CreateSurveyBody,
+  type TV3SurveyBlockOp,
   type TV3SurveyDocument,
   type TV3SurveyValidationRequestBody,
   ZV3CreateSurveyBody,
@@ -909,6 +911,22 @@ function isPlainObjectBody(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Mint ids for inserted blocks that omit one, matching `create_survey`, which generates block ids via
+ * `addGeneratedCreateIds`. Without this the two surfaces disagree — create invents ids for you, insert
+ * 422s — and since every block id a caller has seen is server-generated, omitting it is the natural
+ * assumption. An explicit id is still honoured: it is the only way for a later op in the same request
+ * to anchor `position.after` on a block this one inserts.
+ *
+ * Done here rather than in the Zod body so the schema stays a plain object: the MCP input schema
+ * extends it with `surveyId`, and wrapping it in a preprocess pipe breaks `.extend()`.
+ */
+export function withGeneratedInsertIds(ops: TV3SurveyBlockOp[]): TV3SurveyBlockOp[] {
+  return ops.map((op) =>
+    op.op === "insert" && op.block.id === undefined ? { ...op, block: { ...op.block, id: createId() } } : op
+  );
+}
+
 export async function editV3SurveyBlocksResponse({
   body,
   ...params
@@ -943,7 +961,7 @@ export async function editV3SurveyBlocksResponse({
         };
       }
 
-      const result = applySurveyBlockOperations(currentBlocks, ops);
+      const result = applySurveyBlockOperations(currentBlocks, withGeneratedInsertIds(ops));
       if (!result.ok) {
         return {
           ok: false,
