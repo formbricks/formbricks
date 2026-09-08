@@ -1,0 +1,155 @@
+{
+  "document": {
+    "name": "Produktfeedback",
+    "type": "link",
+    "status": "draft",
+    "metadata": {
+      "title": {
+        "en-US": "Produktfeedback",
+        "de-DE": "Produktfeedback"
+      }
+    },
+    "defaultLanguage": "en-US",
+    "languages": [
+      {
+        "code": "en-US",
+        "default": true,
+        "enabled": true
+      },
+      {
+        "code": "de-DE",
+        "default": false,
+        "enabled": true
+      }
+    ],
+    "welcomeCard": {
+      "enabled": false
+    },
+    "blocks": [
+      {
+        "id": "<cuid>",
+        "name": "Feedback",
+        "elements": [
+          {
+            "id": "Q1",
+            "type": "multipleChoiceSingle",
+            "headline": {
+              "en-US": "How satisfied are you?",
+              "de-DE": "Wie zufrieden sind Sie?"
+            },
+            "required": true,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "Very satisfied",
+                  "de-DE": "Sehr zufrieden"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "Satisfied",
+                  "de-DE": "Zufrieden"
+                }
+              },
+              {
+                "id": "choice_3",
+                "label": {
+                  "en-US": "Unsatisfied",
+                  "de-DE": "Unzufrieden"
+                }
+              }
+            ]
+          },
+          {
+            "id": "Q2",
+            "type": "openText",
+            "headline": {
+              "en-US": "Anything else?",
+              "de-DE": "Noch etwas?"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": true,
+            "charLimit": {
+              "enabled": false
+            }
+          },
+          {
+            "id": "Q3",
+            "type": "matrix",
+            "headline": {
+              "en-US": "Rate these statements",
+              "de-DE": "Bewerten Sie diese Aussagen"
+            },
+            "required": false,
+            "rows": [
+              {
+                "id": "row_1",
+                "label": {
+                  "en-US": "Easy to use",
+                  "de-DE": "Einfach zu bedienen"
+                }
+              },
+              {
+                "id": "row_2",
+                "label": {
+                  "en-US": "Good value",
+                  "de-DE": "Gutes Preis-Leistungs-Verhältnis"
+                }
+              }
+            ],
+            "columns": [
+              {
+                "id": "column_1",
+                "label": {
+                  "en-US": "Agree",
+                  "de-DE": "Stimme zu"
+                }
+              },
+              {
+                "id": "column_2",
+                "label": {
+                  "en-US": "Neutral",
+                  "de-DE": "Neutral"
+                }
+              },
+              {
+                "id": "column_3",
+                "label": {
+                  "en-US": "Disagree",
+                  "de-DE": "Stimme nicht zu"
+                }
+              }
+            ],
+            "shuffleOption": "none"
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→",
+          "de-DE": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←",
+          "de-DE": "←"
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "<cuid>",
+        "type": "endScreen",
+        "headline": {
+          "en-US": "Danke! / Thank you!",
+          "de-DE": "Danke! / Thank you!"
+        }
+      }
+    ],
+    "hiddenFields": {
+      "enabled": false
+    },
+    "variables": []
+  },
+  "issues": []
+}
