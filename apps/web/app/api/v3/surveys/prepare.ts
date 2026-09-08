@@ -20,6 +20,11 @@ type TV3SurveyPrepareSuccess<TDocument> = {
   document: TDocument;
   validation: Extract<TV3SurveyDocumentValidationResult, { valid: true }>;
   languageRequests: TV3SurveyLanguageRequest[];
+  /**
+   * ENG-3069: a round-tripped `updatedAt` doubles as an optimistic-concurrency precondition. It is
+   * surfaced rather than verified here — the compare-and-set in executeV3SurveyPatch is what enforces it.
+   */
+  precondition?: { expectedUpdatedAt: Date };
 };
 
 type TV3SurveyPrepareFailure = {
@@ -172,6 +177,210 @@ function getImmutableElementIdIssues(
   return issues;
 }
 
+
+/**
+ * Server-owned fields that GET emits and PATCH used to reject outright (ENG-3069).
+ *
+ * A caller doing the obvious thing — fetch the survey, change one field, send it back — got a 400
+ * naming eight fields it had not chosen to send, and had to learn a strip-list by trial and error.
+ * These are now accepted and verified: echoing the value GET returned is a no-op, and changing one
+ * is a 422 `read_only_field` rather than a silent ignore, so a genuine mistake still surfaces.
+ *
+ * They are split off the raw body *before* the patch schema runs. That matters for `defaultLanguage`:
+ * the document normalizer uses a body-supplied `defaultLanguage` to interpret every i18n map, so
+ * letting a mismatched one through would produce a confusing wall of locale errors before this
+ * check could report the real problem.
+ */
+const READ_ONLY_PATCH_KEYS = [
+  "id",
+  "workspaceId",
+  "type",
+  "createdAt",
+  "updatedAt",
+  "archivedAt",
+  "defaultLanguage",
+] as const;
+
+type TReadOnlySplit = {
+  issues: InvalidParam[];
+  rest: Record<string, unknown>;
+  precondition?: { expectedUpdatedAt: Date };
+};
+
+function readOnlyIssue(name: string, reason: string, submitted: unknown): InvalidParam {
+  return {
+    name,
+    reason,
+    code: "read_only_field",
+    // The submitted value goes in `identifier`, never interpolated into `reason`.
+    ...(typeof submitted === "string" ? { identifier: submitted } : {}),
+  };
+}
+
+function sameInstant(submitted: unknown, stored: Date | null): boolean {
+  if (stored === null) {
+    return submitted === null;
+  }
+  return typeof submitted === "string" && new Date(submitted).getTime() === stored.getTime();
+}
+
+function splitReadOnlyPatchFields(
+  survey: TInternalSurvey,
+  storedDocument: TV3SurveyDocument,
+  input: unknown
+): TReadOnlySplit {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    return { issues: [], rest: {} };
+  }
+
+  const body = { ...(input as Record<string, unknown>) };
+  const issues: InvalidParam[] = [];
+  let precondition: { expectedUpdatedAt: Date } | undefined;
+
+  for (const key of READ_ONLY_PATCH_KEYS) {
+    if (!(key in body)) continue;
+    const submitted = body[key];
+    delete body[key];
+
+    switch (key) {
+      case "id":
+        if (submitted !== survey.id) {
+          issues.push(
+            readOnlyIssue(
+              "id",
+              "Field 'id' is read-only and must match the survey being patched; omit it or echo the value returned by GET",
+              submitted
+            )
+          );
+        }
+        break;
+      case "workspaceId":
+        if (submitted !== survey.workspaceId) {
+          issues.push(
+            readOnlyIssue(
+              "workspaceId",
+              "Field 'workspaceId' is read-only; a survey cannot be moved to another workspace",
+              submitted
+            )
+          );
+        }
+        break;
+      case "type":
+        if (submitted !== survey.type) {
+          issues.push(
+            readOnlyIssue(
+              "type",
+              "Field 'type' is immutable after creation; create a new survey to change between link and app",
+              submitted
+            )
+          );
+        }
+        break;
+      case "createdAt":
+        if (!sameInstant(submitted, survey.createdAt)) {
+          issues.push(
+            readOnlyIssue(
+              "createdAt",
+              "Field 'createdAt' is server-owned and cannot be changed; omit it or echo the value returned by GET",
+              submitted
+            )
+          );
+        }
+        break;
+      case "archivedAt":
+        if (!sameInstant(submitted, survey.archivedAt ?? null)) {
+          issues.push(
+            readOnlyIssue(
+              "archivedAt",
+              "Field 'archivedAt' is server-owned; use the archive and restore endpoints to change it",
+              submitted
+            )
+          );
+        }
+        break;
+      case "defaultLanguage":
+        if (
+          typeof submitted !== "string" ||
+          submitted.toLowerCase() !== storedDocument.defaultLanguage.toLowerCase()
+        ) {
+          issues.push({
+            ...readOnlyIssue(
+              "defaultLanguage",
+              "Field 'defaultLanguage' cannot be changed through PATCH; the default language is the languages[] entry with default: true and is fixed for the survey",
+              submitted
+            ),
+            referenceType: "language",
+          });
+        }
+        break;
+      case "updatedAt":
+        // Not compared: this is the optimistic-concurrency precondition, enforced at the write.
+        if (typeof submitted === "string" && !Number.isNaN(new Date(submitted).getTime())) {
+          precondition = { expectedUpdatedAt: new Date(submitted) };
+        } else {
+          issues.push(
+            readOnlyIssue(
+              "updatedAt",
+              "Field 'updatedAt' must be the ISO 8601 date-time returned by GET; it acts as an optimistic-concurrency precondition",
+              submitted
+            )
+          );
+        }
+        break;
+    }
+  }
+
+  return { issues, rest: body, precondition };
+}
+
+/**
+ * `languages[].alias` is emitted by GET but belongs to the workspace language, not the survey, so the
+ * survey patch schema rejects it. Strip it so a round-tripped body validates; a changed value is a
+ * read-only violation like the rest.
+ */
+function splitLanguageAliases(
+  survey: TInternalSurvey,
+  body: Record<string, unknown>
+): { issues: InvalidParam[]; rest: Record<string, unknown> } {
+  const languages = body.languages;
+  if (!Array.isArray(languages)) {
+    return { issues: [], rest: body };
+  }
+
+  const storedAliasByCode = new Map(
+    getV3SurveyLanguages(survey, DEFAULT_V3_SURVEY_LANGUAGE).map((language) => [
+      language.code.toLowerCase(),
+      language.alias ?? null,
+    ])
+  );
+  const issues: InvalidParam[] = [];
+
+  const stripped = languages.map((entry, index) => {
+    if (typeof entry !== "object" || entry === null || !("alias" in entry)) {
+      return entry;
+    }
+
+    const { alias, ...rest } = entry as Record<string, unknown>;
+    const code = typeof rest.code === "string" ? rest.code.toLowerCase() : "";
+    const stored = storedAliasByCode.get(code) ?? null;
+    const submitted = alias === undefined || alias === "" ? null : alias;
+
+    if (submitted !== stored) {
+      issues.push(
+        readOnlyIssue(
+          `languages.${index}.alias`,
+          "Field 'alias' is read-only; language aliases are configured on the workspace language",
+          alias
+        )
+      );
+    }
+
+    return rest;
+  });
+
+  return { issues, rest: { ...body, languages: stripped } };
+}
+
 export function prepareV3SurveyCreate<TDocument extends TV3CreateSurveyBody>(
   document: TDocument
 ): TV3SurveyPrepareResult<TDocument> {
@@ -199,11 +408,18 @@ export function prepareV3SurveyPatchInput(
     return currentDocument;
   }
 
+  const readOnly = splitReadOnlyPatchFields(survey, currentDocument.document, input);
+  const aliases = splitLanguageAliases(survey, readOnly.rest);
+  const readOnlyIssues = [...readOnly.issues, ...aliases.issues];
+  if (readOnlyIssues.length > 0) {
+    return invalidPreparation(readOnlyIssues);
+  }
+
   const parsedPatch = createZV3PatchSurveyBodySchema(
     currentDocument.document.defaultLanguage,
     { allowedLanguageCodes },
     survey.type
-  ).safeParse(input);
+  ).safeParse(aliases.rest);
 
   if (!parsedPatch.success) {
     return invalidPreparation(formatV3ZodInvalidParams(parsedPatch.error, "data"));
@@ -215,5 +431,8 @@ export function prepareV3SurveyPatchInput(
     return invalidPreparation(immutableElementIdIssues);
   }
 
-  return validPreparation(patchedDocument);
+  const prepared = validPreparation(patchedDocument);
+  return prepared.ok && readOnly.precondition
+    ? { ...prepared, precondition: readOnly.precondition }
+    : prepared;
 }

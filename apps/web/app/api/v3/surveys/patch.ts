@@ -323,10 +323,21 @@ export async function patchV3Survey(
     throw new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
   }
 
+  // Two ways in: the block endpoints pass `expectedUpdatedAt` explicitly, while a PATCH caller
+  // round-tripping GET output gets it from the body's `updatedAt` via prepare. An explicit one wins.
+  const effectivePrecondition = precondition ?? preparation.precondition;
+
   // Cheap pre-flight so a stale caller gets an accurate 409 without a write attempt. The
   // compare-and-set below remains the actual guarantee — this only improves the error.
-  if (precondition && currentSurvey.updatedAt.getTime() !== precondition.expectedUpdatedAt.getTime()) {
-    throw new V3SurveyStaleError(precondition.expectedUpdatedAt, currentSurvey.updatedAt, "read");
+  if (
+    effectivePrecondition &&
+    currentSurvey.updatedAt.getTime() !== effectivePrecondition.expectedUpdatedAt.getTime()
+  ) {
+    throw new V3SurveyStaleError(
+      effectivePrecondition.expectedUpdatedAt,
+      currentSurvey.updatedAt,
+      "read"
+    );
   }
 
   await assertV3SurveyWritePermissions(
@@ -349,6 +360,6 @@ export async function patchV3Survey(
     document: preparation.document,
     languageRequests: preparation.languageRequests,
     requestId,
-    precondition,
+    precondition: effectivePrecondition,
   });
 }

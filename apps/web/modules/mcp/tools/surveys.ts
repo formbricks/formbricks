@@ -267,7 +267,7 @@ export function registerSurveyTools(server: McpServer): void {
         "Operations apply in order and atomically — either all of them land or none do.",
         "Call get_survey first and pass its `updatedAt` as `expectedUpdatedAt`; on a 409 re-read and retry.",
         "An `update` replaces the whole block, and block content must carry every configured language.",
-        "Removing a block on a survey with responses (`responseCount` > 0) orphans the answers already collected for it, and the API cannot undo that — check first and confirm with the user.",
+        "Removing a block orphans any answers already collected for it, and the API cannot undo that — on a survey that is not a draft, confirm with the user before removing.",
       ].join(" "),
       inputSchema: ZMcpEditSurveyBlocksInput,
       annotations: {
