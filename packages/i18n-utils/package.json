@@ -36,6 +36,7 @@
     "internationalization",
     "localization"
   ],
+  "sideEffects": false,
   "files": [
     "dist"
   ],
