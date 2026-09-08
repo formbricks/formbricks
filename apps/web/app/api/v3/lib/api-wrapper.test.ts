@@ -505,7 +505,7 @@ describe("withV3ApiWrapper", () => {
         method: "POST",
         body: base.body,
         headers: { "content-type": base.headers.get("content-type") ?? "", ...headers },
-        // @ts-expect-error duplex is required by undici for streamed bodies and not in the DOM typings
+        // Required by undici for streamed bodies.
         duplex: "half",
       });
     }

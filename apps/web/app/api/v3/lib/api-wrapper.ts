@@ -224,7 +224,8 @@ async function readMultipartBody(req: NextRequest, limitBytes: number): Promise<
   const formData = await new Request(req.url, {
     method: "POST",
     headers: { "content-type": req.headers.get("content-type") ?? "" },
-    body: bytes,
+    // A fresh copy: `BodyInit` wants a view over a plain ArrayBuffer, which the reader's chunks need not be.
+    body: new Uint8Array(bytes),
   }).formData();
 
   const fields: Record<string, string> = {};
