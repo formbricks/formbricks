@@ -2,9 +2,11 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
+  editV3SurveyBlocksResponse,
   getV3Survey,
   listV3Surveys,
   patchV3SurveyResponse,
+  setV3SurveyBlockOrderResponse,
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
@@ -15,15 +17,19 @@ import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateSurveyInput,
   type TMcpDeleteSurveyInput,
+  type TMcpEditSurveyBlocksInput,
   type TMcpGetSurveyInput,
   type TMcpListSurveysInput,
   type TMcpPatchSurveyInput,
+  type TMcpSetSurveyBlockOrderInput,
   type TMcpValidateSurveyInput,
   ZMcpCreateSurveyInput,
   ZMcpDeleteSurveyInput,
+  ZMcpEditSurveyBlocksInput,
   ZMcpGetSurveyInput,
   ZMcpListSurveysInput,
   ZMcpPatchSurveyInput,
+  ZMcpSetSurveyBlockOrderInput,
   ZMcpValidateSurveyInput,
 } from "./schemas";
 
@@ -58,6 +64,41 @@ export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSe
   });
 
   return searchParams;
+}
+
+
+/**
+ * Project a successful survey-resource response down to what an editing agent actually needs.
+ *
+ * The full resource is ~15k tokens on a large survey; returning it from every edit would refill the
+ * agent's context as fast as the whole-array patch it replaces. `updatedAt` is deliberately kept —
+ * it is the `expectedUpdatedAt` for the next call, so edits chain without another read. REST keeps
+ * the full resource (AIP-144); this projection is MCP-only, where context is the scarce resource.
+ */
+async function conciseSurveyResponse(
+  response: Response,
+  applied: Record<string, unknown>
+): Promise<Response> {
+  if (!response.ok) {
+    return response;
+  }
+
+  const body = (await response.clone().json()) as { data?: Record<string, unknown>; requestId?: string };
+  const data = body.data ?? {};
+  const blocks = data.blocks;
+
+  return Response.json(
+    {
+      data: {
+        id: data.id,
+        updatedAt: data.updatedAt,
+        blockCount: Array.isArray(blocks) ? blocks.length : undefined,
+        ...applied,
+      },
+      requestId: body.requestId,
+    },
+    { status: response.status, headers: response.headers }
+  );
 }
 
 export function registerSurveyTools(server: McpServer): void {
@@ -213,6 +254,94 @@ export function registerSurveyTools(server: McpServer): void {
             instance: MCP_API_ROUTE,
             auditLog,
           })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "edit_survey_blocks",
+    {
+      title: "Edit survey blocks",
+      description: [
+        "Edit a survey's blocks in place: update, insert or remove whole blocks without resending the others.",
+        "Operations apply in order and atomically — either all of them land or none do.",
+        "Call get_survey first and pass its `updatedAt` as `expectedUpdatedAt`; on a 409 re-read and retry.",
+        "An `update` replaces the whole block, and block content must carry every configured language.",
+        "Removing a block on a survey with responses (`responseCount` > 0) orphans the answers already collected for it, and the API cannot undo that — check first and confirm with the user.",
+      ].join(" "),
+      inputSchema: ZMcpEditSurveyBlocksInput,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    ["surveys:write"],
+    async (input: TMcpEditSurveyBlocksInput, ctx) =>
+      runMcpMutation(
+        ctx,
+        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+        async ({ authentication, requestId, auditLog }) => {
+          const { surveyId, response_format: responseFormat, ...body } = input;
+          const response = await editV3SurveyBlocksResponse({
+            surveyId,
+            body,
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          });
+
+          return responseFormat === "detailed"
+            ? response
+            : conciseSurveyResponse(response, {
+                applied: body.ops.map((op) => ({ op: op.op, id: op.op === "insert" ? op.block.id : op.id })),
+              });
+        }
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "set_survey_block_order",
+    {
+      title: "Set survey block order",
+      description: [
+        "Reorder a survey's blocks by listing every block id exactly once, in the order you want.",
+        "Cheaper and safer than resending the blocks: a missing or duplicated id is rejected, which catches a dropped block.",
+        "Call get_survey first and pass its `updatedAt` as `expectedUpdatedAt`; on a 409 re-read and retry.",
+      ].join(" "),
+      inputSchema: ZMcpSetSurveyBlockOrderInput,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        // Unlike patch_survey, the same `order` always yields the same survey, and an order that
+        // already matches performs no write at all — so a repeat does not even move `updatedAt`.
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    ["surveys:write"],
+    async (input: TMcpSetSurveyBlockOrderInput, ctx) =>
+      runMcpMutation(
+        ctx,
+        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+        async ({ authentication, requestId, auditLog }) => {
+          const { surveyId, response_format: responseFormat, ...body } = input;
+          const response = await setV3SurveyBlockOrderResponse({
+            surveyId,
+            body,
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          });
+
+          return responseFormat === "detailed"
+            ? response
+            : conciseSurveyResponse(response, { order: body.order });
+        }
       )
   );
 

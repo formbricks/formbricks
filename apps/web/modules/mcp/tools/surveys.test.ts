@@ -9,14 +9,17 @@ import {
   problemBadRequest,
   problemForbidden,
   successListResponse,
+  problemConflict,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
+  editV3SurveyBlocksResponse,
   getV3Survey,
   listV3Surveys,
   patchV3SurveyResponse,
+  setV3SurveyBlockOrderResponse,
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
@@ -33,6 +36,8 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   getV3Survey: vi.fn(),
   listV3Surveys: vi.fn(),
   patchV3SurveyResponse: vi.fn(),
+  editV3SurveyBlocksResponse: vi.fn(),
+  setV3SurveyBlockOrderResponse: vi.fn(),
   validateV3SurveyFromRawInput: vi.fn(),
 }));
 
@@ -161,7 +166,7 @@ describe("registerSurveyTools", () => {
   test("registers survey tools with planning annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(6);
+    expect(server.registerTool).toHaveBeenCalledTimes(8);
     expect(tools.get("list_surveys")?.config).toMatchObject({
       title: "List surveys",
       annotations: {
@@ -175,6 +180,24 @@ describe("registerSurveyTools", () => {
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        idempotentHint: true,
+      },
+    });
+    expect(tools.get("edit_survey_blocks")?.config).toMatchObject({
+      title: "Edit survey blocks",
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+      },
+    });
+    // Idempotent unlike every other survey write: the same order yields the same survey, and an
+    // order that already matches performs no write at all.
+    expect(tools.get("set_survey_block_order")?.config).toMatchObject({
+      title: "Set survey block order",
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
         idempotentHint: true,
       },
     });
@@ -691,5 +714,141 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     expect(outcome.result?.isError).toBeUndefined();
     expect(listV3Surveys).toHaveBeenCalled();
+  });
+
+  describe("block editing tools (ENG-3069)", () => {
+    const surveyId = "clxx1234567890123456789012";
+    const fullResource = {
+      id: surveyId,
+      name: "Survey",
+      updatedAt: "2026-04-21T10:00:00.000Z",
+      blocks: [{ id: "blk_a" }, { id: "blk_b" }],
+    };
+
+    test("edit_survey_blocks forwards the ops body and queues a successful audit log", async () => {
+      const { tools } = createToolServer();
+      const auditLog = { status: "failure" };
+      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+      vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
+        successResponse(fullResource, { requestId: "req_tool" })
+      );
+
+      const result = await tools.get("edit_survey_blocks")!.handler(
+        {
+          surveyId,
+          ops: [{ op: "remove", id: "blk_b" }],
+          expectedUpdatedAt: "2026-04-21T10:00:00.000Z",
+        },
+        { http: { authInfo } }
+      );
+
+      expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "survey", ABSOLUTE_MCP_AUDIT_URL);
+      expect(editV3SurveyBlocksResponse).toHaveBeenCalledWith({
+        surveyId,
+        body: { ops: [{ op: "remove", id: "blk_b" }], expectedUpdatedAt: "2026-04-21T10:00:00.000Z" },
+        authentication: apiKeyAuth,
+        requestId: "req_tool",
+        instance: "/api/mcp",
+        auditLog,
+      });
+      expect(auditLog).toMatchObject({ status: "success" });
+      expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+      expect(result.structuredContent).toEqual({
+        data: {
+          id: surveyId,
+          updatedAt: "2026-04-21T10:00:00.000Z",
+          blockCount: 2,
+          applied: [{ op: "remove", id: "blk_b" }],
+        },
+        requestId: "req_tool",
+      });
+    });
+
+    test("edit_survey_blocks returns the full resource when asked for detail", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
+        successResponse(fullResource, { requestId: "req_tool" })
+      );
+
+      const result = await tools.get("edit_survey_blocks")!.handler(
+        { surveyId, ops: [{ op: "remove", id: "blk_b" }], response_format: "detailed" },
+        { http: { authInfo } }
+      );
+
+      expect(result.structuredContent).toEqual({ data: fullResource, requestId: "req_tool" });
+    });
+
+    test("a 409 reaches the agent with both timestamps intact", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
+        problemConflict("req_conflict", "stale", "/api/mcp", {
+          details: {
+            expectedUpdatedAt: "2026-04-21T10:00:00.000Z",
+            currentUpdatedAt: "2026-04-21T11:30:00.000Z",
+          },
+        })
+      );
+
+      const result = await tools.get("edit_survey_blocks")!.handler(
+        { surveyId, ops: [{ op: "remove", id: "blk_b" }] },
+        { http: { authInfo } }
+      );
+
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent.error).toMatchObject({
+        status: 409,
+        details: {
+          expectedUpdatedAt: "2026-04-21T10:00:00.000Z",
+          currentUpdatedAt: "2026-04-21T11:30:00.000Z",
+        },
+      });
+    });
+
+    test("set_survey_block_order forwards the order and echoes it back concisely", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(setV3SurveyBlockOrderResponse).mockResolvedValue(
+        successResponse(fullResource, { requestId: "req_tool" })
+      );
+
+      const result = await tools.get("set_survey_block_order")!.handler(
+        { surveyId, order: ["blk_b", "blk_a"] },
+        { http: { authInfo } }
+      );
+
+      expect(setV3SurveyBlockOrderResponse).toHaveBeenCalledWith(
+        expect.objectContaining({ surveyId, body: { order: ["blk_b", "blk_a"] } })
+      );
+      expect(result.structuredContent).toEqual({
+        data: {
+          id: surveyId,
+          updatedAt: "2026-04-21T10:00:00.000Z",
+          blockCount: 2,
+          order: ["blk_b", "blk_a"],
+        },
+        requestId: "req_tool",
+      });
+    });
+
+    test.each(["edit_survey_blocks", "set_survey_block_order"])(
+      "%s is denied to a read-only OAuth token",
+      async (toolName) => {
+        const { tools } = createToolServer();
+        const input =
+          toolName === "edit_survey_blocks"
+            ? { surveyId, ops: [{ op: "remove", id: "blk_b" }] }
+            : { surveyId, order: ["blk_a"] };
+
+        const result = await tools
+          .get(toolName)!
+          .handler(input, { http: { authInfo: readOnlyOAuthAuthInfo } });
+
+        expect(result.isError).toBe(true);
+        expect(editV3SurveyBlocksResponse).not.toHaveBeenCalled();
+        expect(setV3SurveyBlockOrderResponse).not.toHaveBeenCalled();
+      }
+    );
   });
 });
