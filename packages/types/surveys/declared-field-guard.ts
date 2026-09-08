@@ -111,14 +111,114 @@ export const validateNewDeclaredFieldNames = ({
 
     // Delegated rather than reimplemented so this guard and the editor card can never drift apart:
     // `validateId`'s strict branch is the single definition of what a new declared name may be. The
-    // id lists are empty on purpose — a collision with an existing name is a *duplicate*, which the
-    // reconcile's `assertNoDuplicateStorageKeys` and the v3 reference validation already own, and
-    // reporting it here would turn a grandfathered name into an error.
+    // id lists are empty on purpose — passing the survey's names would report every grandfathered
+    // name as a duplicate. A name shared across the two namespaces is a different check, with its
+    // own grandfather rule: `validateNewDeclaredFieldClashes`.
     const error = validateId(name, [], [], [], [], { requireSafeIdentifier: true });
     if (error) errors.push(error);
   }
 
   return errors;
+};
+
+const isDeclared = <T>(carrier: T | null | undefined): carrier is T =>
+  carrier !== undefined && carrier !== null;
+
+/** Lower-cased name → the spelling the payload used, per namespace, for what a source declares. */
+const namesByNamespace = (
+  source: TDeclaredFieldSource
+): { variables: Map<string, string>; hiddenFields: Map<string, string> } => ({
+  variables: new Map(
+    isDeclared(source.variables)
+      ? source.variables.map((variable) => [variable.name.toLowerCase(), variable.name])
+      : []
+  ),
+  hiddenFields: new Map(
+    isDeclared(source.hiddenFields)
+      ? (source.hiddenFields.fieldIds ?? []).map((id) => [id.toLowerCase(), id])
+      : []
+  ),
+});
+
+/**
+ * Refuses a name that a variable and a hidden field would share after the write — unless the survey
+ * already holds that exact clash.
+ *
+ * Recall and logic address variables and hidden fields *by name*, so two fields under one name are
+ * ambiguous by construction. The editor refuses this in both directions and the v3 reference
+ * validation refuses it as `duplicate_identifier`; the v1 management API had no check at all (ENG-2933).
+ * Nothing further down catches it either: the reconcile's `assertNoDuplicateStorageKeys` compares
+ * storage keys, and a variable is stored under its `id` while a hidden field is stored under its
+ * name, so the two never collide there.
+ *
+ * Grandfathered like reserved names, and per-save for the same reasons ({@link validateNewDeclaredFieldNames}):
+ * surveys in production already hold `first_name` as both, and their read-modify-write PUT must keep
+ * working. A clash is refused only when the survey did not already hold it — so adding a variable
+ * `plan` beside an existing hidden field `plan` is refused, resending an existing pair is not, and
+ * dropping one side spends the reprieve. Case-insensitive, matching the editor and v3.
+ *
+ * A carrier the payload never mentions (`undefined`/`null`) is the survey's current one, exactly as
+ * the reconcile carries those rows over — so a payload that sends only `variables` is still checked
+ * against the hidden fields it leaves in place.
+ *
+ * The error names the side the write introduces (the hidden field, when the variable already
+ * existed; the variable otherwise), with the code the editor's hidden-fields card reports for the
+ * same clash.
+ */
+export const validateNewDeclaredFieldClashes = ({
+  existing,
+  incoming,
+}: {
+  existing: TDeclaredFieldSource;
+  incoming: TDeclaredFieldSource;
+}): TValidateIdError[] => {
+  const current = namesByNamespace(existing);
+  const next = namesByNamespace({
+    variables: isDeclared(incoming.variables) ? incoming.variables : existing.variables,
+    hiddenFields: isDeclared(incoming.hiddenFields) ? incoming.hiddenFields : existing.hiddenFields,
+  });
+
+  const errors: TValidateIdError[] = [];
+  for (const [lowered, variableName] of next.variables) {
+    const hiddenFieldId = next.hiddenFields.get(lowered);
+    if (hiddenFieldId === undefined) continue;
+    if (current.variables.has(lowered) && current.hiddenFields.has(lowered)) continue;
+
+    errors.push({
+      code: TValidateIdErrorCode.Duplicate,
+      field: current.variables.has(lowered) ? hiddenFieldId : variableName,
+    });
+  }
+
+  return errors;
+};
+
+/**
+ * Everything a write's declared field names must satisfy, for the write seams that hold a whole
+ * survey on both sides (`updateSurvey`, `createSurvey`): no new reserved name, and no new clash
+ * between a variable and a hidden field. One error per bad name — a name refused as reserved is not
+ * reported a second time as a clash.
+ *
+ * The v3 patch route calls {@link validateNewDeclaredFieldNames} on its own: its reference validation
+ * already refuses the clash as `duplicate_identifier`, so running this there would report it twice.
+ */
+export const validateNewDeclaredFields = ({
+  existing,
+  incoming,
+}: {
+  existing: TDeclaredFieldSource;
+  incoming: TDeclaredFieldSource;
+}): TValidateIdError[] => {
+  const reserved = validateNewDeclaredFieldNames({
+    existing: collectDeclaredFieldNames(existing),
+    incoming: collectDeclaredFieldNames(incoming),
+  });
+  const refused = new Set(reserved.map((error) => error.field.toLowerCase()));
+  const clashes = validateNewDeclaredFieldClashes({ existing, incoming }).filter(
+    (error) => !refused.has(error.field.toLowerCase())
+  );
+
+  return [...reserved, ...clashes];
 };
 
 /**
@@ -175,10 +275,11 @@ const DECLARED_FIELD_NAME_REASONS: Record<Exclude<TValidateIdErrorCode, "reserve
   [TValidateIdErrorCode.InvalidChars]: "it may contain only letters, numbers, underscores and hyphens",
   [TValidateIdErrorCode.NotSafeIdentifier]:
     "it must start with a lowercase letter and contain only lowercase letters, numbers and underscores",
-  // Unreachable from `validateNewDeclaredFieldNames`, which passes empty id lists so a collision is
-  // never reported here. Spelled out anyway: the map is exhaustive over the enum, so a caller that
-  // does pass id lists gets a true sentence instead of falling through to a wrong one.
-  [TValidateIdErrorCode.Duplicate]: "another field in this survey already uses that name",
+  // Reached from `validateNewDeclaredFieldClashes` (a variable and a hidden field under one name),
+  // never from `validateNewDeclaredFieldNames`, which passes empty id lists. Worded for that case
+  // without assuming it — on a create both sides are new, so "already uses" would be false there.
+  [TValidateIdErrorCode.Duplicate]:
+    "a second field in this survey would carry that name, and recall and logic address fields by name",
 };
 
 /** The client-facing sentence for one refused name: `Field name "x" cannot be used: <reason>.` */

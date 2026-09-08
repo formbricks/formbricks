@@ -1,14 +1,26 @@
 import { describe, expect, test } from "vitest";
 import {
+  type TDeclaredFieldSource,
   collectDeclaredFieldNames,
   describeDeclaredFieldNameError,
   describeDeclaredFieldNameErrors,
+  validateNewDeclaredFieldClashes,
   validateNewDeclaredFieldNames,
+  validateNewDeclaredFields,
 } from "./declared-field-guard";
 import { TValidateIdErrorCode } from "./validation";
 
 const refusedNames = (params: { existing: string[]; incoming: string[] }): string[] =>
   validateNewDeclaredFieldNames(params).map((error) => error.field);
+
+/** A survey's declared fields, spelled the way `TSurvey` carries them. */
+const declared = (fields: { variables?: string[]; hiddenFields?: string[] }): TDeclaredFieldSource => ({
+  variables: fields.variables?.map((name) => ({ id: `var_${name}`, name, type: "text", value: "" })),
+  hiddenFields: fields.hiddenFields === undefined ? undefined : { fieldIds: fields.hiddenFields },
+});
+
+const clashes = (params: { existing: TDeclaredFieldSource; incoming: TDeclaredFieldSource }): string[] =>
+  validateNewDeclaredFieldClashes(params).map((error) => error.field);
 
 describe("validateNewDeclaredFieldNames", () => {
   describe("grandfathering", () => {
@@ -241,5 +253,223 @@ describe("describeDeclaredFieldNameErrors", () => {
     expect(message).toContain('"country"');
     expect(message).toContain('"url"');
     expect(message).toContain("newly added names only");
+  });
+});
+
+// ENG-2933: `PUT /api/v1/management/surveys/{id}` accepted a variable named after one of the survey's
+// hidden fields. The editor and v3 both refuse it, and the reconcile cannot catch it (a variable is
+// stored under its id, a hidden field under its name), so the name guard is where it belongs.
+describe("validateNewDeclaredFieldClashes", () => {
+  describe("a new clash is refused", () => {
+    test("a variable may not take an existing hidden field's name", () => {
+      expect(
+        clashes({
+          existing: declared({ hiddenFields: ["plan"] }),
+          incoming: declared({ hiddenFields: ["plan"], variables: ["plan"] }),
+        })
+      ).toEqual(["plan"]);
+    });
+
+    test("a hidden field may not take an existing variable's name", () => {
+      expect(
+        clashes({
+          existing: declared({ variables: ["score"] }),
+          incoming: declared({ variables: ["score"], hiddenFields: ["score"] }),
+        })
+      ).toEqual(["score"]);
+    });
+
+    test("a create may not declare both sides under one name", () => {
+      expect(
+        clashes({
+          existing: {},
+          incoming: declared({ variables: ["plan"], hiddenFields: ["plan"] }),
+        })
+      ).toEqual(["plan"]);
+    });
+
+    test("matching is case-insensitive, as in the editor and v3", () => {
+      expect(
+        clashes({
+          existing: declared({ hiddenFields: ["Plan"] }),
+          incoming: declared({ hiddenFields: ["Plan"], variables: ["plan"] }),
+        })
+      ).toEqual(["plan"]);
+    });
+
+    test("reports the Duplicate code the editor's hidden-fields card reports for the same clash", () => {
+      expect(
+        validateNewDeclaredFieldClashes({
+          existing: declared({ hiddenFields: ["plan"] }),
+          incoming: declared({ hiddenFields: ["plan"], variables: ["plan"] }),
+        })
+      ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
+    });
+
+    test("the error names the side the write introduces", () => {
+      // The variable already existed, so the hidden field is the newcomer — and the message should
+      // echo the spelling the caller just sent, not the one already stored.
+      expect(
+        clashes({
+          existing: declared({ variables: ["plan"] }),
+          incoming: declared({ variables: ["plan"], hiddenFields: ["Plan"] }),
+        })
+      ).toEqual(["Plan"]);
+      expect(
+        clashes({
+          existing: declared({ hiddenFields: ["plan"] }),
+          incoming: declared({ hiddenFields: ["plan"], variables: ["PLAN"] }),
+        })
+      ).toEqual(["PLAN"]);
+    });
+  });
+
+  describe("grandfathering", () => {
+    // 46 production surveys hold this state (`first_name`, `brand`, `score`, ...). Their plain
+    // read-modify-write PUT resends both sides, and a blanket refusal would break every one of them.
+    const holdsClash = declared({ variables: ["first_name", "score"], hiddenFields: ["first_name", "plan"] });
+
+    test("a survey that already holds the clash may resend it", () => {
+      expect(clashes({ existing: holdsClash, incoming: holdsClash })).toEqual([]);
+    });
+
+    test("grandfathering survives a case change on either side", () => {
+      expect(
+        clashes({
+          existing: declared({ variables: ["First_Name"], hiddenFields: ["first_name"] }),
+          incoming: declared({ variables: ["first_name"], hiddenFields: ["FIRST_NAME"] }),
+        })
+      ).toEqual([]);
+    });
+
+    test("a grandfathered clash does not license a new one", () => {
+      expect(
+        clashes({
+          existing: holdsClash,
+          incoming: declared({
+            variables: ["first_name", "score", "plan"],
+            hiddenFields: ["first_name", "plan"],
+          }),
+        })
+      ).toEqual(["plan"]);
+    });
+
+    test("the reprieve is per pair: a name that is only a variable today is not grandfathered as a clash", () => {
+      // `score` is declared (as a variable), so the reserved-name guard would grandfather it — but
+      // no hidden field shares it yet, so adding one is a NEW clash.
+      expect(
+        clashes({
+          existing: holdsClash,
+          incoming: declared({
+            variables: ["first_name", "score"],
+            hiddenFields: ["first_name", "plan", "score"],
+          }),
+        })
+      ).toEqual(["score"]);
+    });
+
+    test("dropping one side spends the reprieve", () => {
+      // The save that drops the variable passes; after it the survey no longer holds the clash, so
+      // adding the variable back is refused like any new clash.
+      expect(
+        clashes({
+          existing: holdsClash,
+          incoming: declared({ variables: ["score"], hiddenFields: ["first_name", "plan"] }),
+        })
+      ).toEqual([]);
+      expect(
+        clashes({
+          existing: declared({ variables: ["score"], hiddenFields: ["first_name", "plan"] }),
+          incoming: declared({ variables: ["score", "first_name"], hiddenFields: ["first_name", "plan"] }),
+        })
+      ).toEqual(["first_name"]);
+    });
+  });
+
+  describe("what the write leaves in place", () => {
+    test("a carrier the payload never mentions is the survey's current one", () => {
+      // The reconcile carries an unmentioned carrier's rows over unchanged, so a payload that sends
+      // only `variables` still ends up beside the hidden fields it did not mention.
+      expect(
+        clashes({
+          existing: declared({ hiddenFields: ["plan"] }),
+          incoming: declared({ variables: ["plan"] }),
+        })
+      ).toEqual(["plan"]);
+      expect(
+        clashes({
+          existing: declared({ variables: ["plan"] }),
+          incoming: declared({ hiddenFields: ["plan"] }),
+        })
+      ).toEqual(["plan"]);
+    });
+
+    test("a null carrier is treated as unmentioned, not as empty", () => {
+      expect(
+        clashes({
+          existing: declared({ hiddenFields: ["plan"] }),
+          incoming: { variables: declared({ variables: ["plan"] }).variables, hiddenFields: null },
+        })
+      ).toEqual(["plan"]);
+    });
+
+    test("moving a name across namespaces in one write is not a clash", () => {
+      // Hidden field `plan` becomes variable `plan`: after the write only one field carries the name.
+      expect(
+        clashes({
+          existing: declared({ hiddenFields: ["plan"] }),
+          incoming: declared({ hiddenFields: [], variables: ["plan"] }),
+        })
+      ).toEqual([]);
+    });
+
+    test("distinct names never clash", () => {
+      expect(
+        clashes({
+          existing: {},
+          incoming: declared({ variables: ["score", "tier"], hiddenFields: ["plan", "user_region"] }),
+        })
+      ).toEqual([]);
+    });
+  });
+});
+
+describe("validateNewDeclaredFields", () => {
+  test("reports reserved names and clashes together", () => {
+    expect(
+      validateNewDeclaredFields({
+        existing: {},
+        incoming: declared({ variables: ["country", "plan"], hiddenFields: ["plan"] }),
+      })
+    ).toEqual([
+      { code: TValidateIdErrorCode.Reserved, field: "country" },
+      { code: TValidateIdErrorCode.Duplicate, field: "plan" },
+    ]);
+  });
+
+  test("a name refused as reserved is not reported a second time as a clash", () => {
+    const errors = validateNewDeclaredFields({
+      existing: {},
+      incoming: declared({ variables: ["country"], hiddenFields: ["country"] }),
+    });
+
+    expect(errors).toEqual([{ code: TValidateIdErrorCode.Reserved, field: "country" }]);
+  });
+
+  test("grandfathers a reserved name and a clash the survey already holds", () => {
+    const survey = declared({ variables: ["country", "first_name"], hiddenFields: ["first_name"] });
+
+    expect(validateNewDeclaredFields({ existing: survey, incoming: survey })).toEqual([]);
+  });
+
+  test("the clash sentence says what is wrong without claiming the other side came first", () => {
+    const [error] = validateNewDeclaredFields({
+      existing: {},
+      incoming: declared({ variables: ["plan"], hiddenFields: ["plan"] }),
+    });
+
+    expect(describeDeclaredFieldNameError(error)).toBe(
+      'Field name "plan" cannot be used: a second field in this survey would carry that name, and recall and logic address fields by name.'
+    );
   });
 });
