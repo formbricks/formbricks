@@ -205,7 +205,7 @@ describe("ZV3SurveyImportConvertBody", () => {
       }).success
     ).toBe(false);
     expect(
-      ZV3SurveyImportConvertBody.safeParse({ fields: { workspaceId: "nope" }, files: [file] }).success
+      ZV3SurveyImportConvertBody.safeParse({ fields: { workspaceId: "NOT-A-CUID!" }, files: [file] }).success
     ).toBe(false);
     expect(
       ZV3SurveyImportConvertBody.safeParse({
