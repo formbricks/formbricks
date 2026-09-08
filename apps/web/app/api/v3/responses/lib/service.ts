@@ -4,7 +4,6 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
 import { deleteDisplay } from "@/lib/display/service";
-import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
 
@@ -79,12 +78,39 @@ export async function getResponseWorkspaceId(responseId: string): Promise<string
 }
 
 /**
+ * The deleted row as recorded in the audit trail: the response's own scalars, no relations. Mirrors v1's
+ * `responseSelection` minus its `contact`/`tags` joins, which are not worth adding to a delete.
+ */
+const deletedResponseSelect = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  finished: true,
+  surveyId: true,
+  contactId: true,
+  endingId: true,
+  data: true,
+  variables: true,
+  ttc: true,
+  meta: true,
+  contactAttributes: true,
+  singleUseId: true,
+  language: true,
+  displayId: true,
+} satisfies Prisma.ResponseSelect;
+
+/**
  * Delete one response inside its workspace, and clean up everything that goes with it.
  *
- * The order is load-bearing, because two of the things needing cleanup **vanish with the row**: the file
- * URLs live only inside `response.data`, and `quotaLinks` go with `ON DELETE CASCADE`. Written the
- * obvious way — delete, then work out what to clean up — both are already gone. So the delete's own
- * `select` captures them, which is also how the legacy path gets them.
+ * The order is load-bearing, because what needs cleaning up **vanishes with the row**: the file URLs
+ * live only inside `response.data`. Written the obvious way — delete, then work out what to clean up —
+ * they are already gone. So the delete's own `select` captures them, which is also how the legacy path
+ * gets them.
+ *
+ * Returns the deleted row so the caller can record it as the audit event's `oldObject`. A delete that
+ * leaves no trace of *what* it destroyed is not a reviewable audit trail, and v1, v2 and
+ * `deleteV3FeedbackRecord` all record it. Field set matches v1's `responseSelection` scalars; the
+ * `contact` and `tags` joins it also carries are left out rather than adding joins to a delete.
  *
  * Storage deletion happens **after** the transaction commits. Inside it, a rollback would leave a live
  * response pointing at deleted objects; both existing delete paths order it this way for that reason.
@@ -93,59 +119,57 @@ export async function getResponseWorkspaceId(responseId: string): Promise<string
  * three existing delete implementations dispatches one. The Hub cascade is ENG-2855's, after the Hub
  * release; this just does not make it harder to add.
  */
+export type TDeletedResponse = Prisma.ResponseGetPayload<{ select: typeof deletedResponseSelect }>;
+
 export async function deleteScopedResponse(
   responseId: string,
   { workspaceId }: TWorkspaceScope
-): Promise<void> {
-  let fileUrls: string[] = [];
+): Promise<TDeletedResponse> {
+  let deleted: { row: TDeletedResponse; fileUrls: string[] };
 
   try {
-    await prisma.$transaction(async (tx) => {
+    deleted = await prisma.$transaction(async (tx) => {
       // Scoped `where`, never a bare id. A response outside the workspace matches nothing and Prisma
       // raises P2025, which becomes the same 403 as a pre-flight rejection — so one scoped statement
       // does the ownership check and the delete together, with no window between them and no second
       // query whose absence a caller could time.
-      const deleted = await tx.response.delete({
+      const deletedRow = await tx.response.delete({
         where: { id: responseId, survey: { workspaceId } },
-        select: {
-          displayId: true,
-          data: true,
-          survey: { select: { blocks: true } },
-          // Captured in the delete's own select: once the row is gone these are gone too, so a separate
-          // SELECT afterwards returns nothing. `screenedIn` only — a response screened out never counted
-          // against a quota, so there is nothing to give back.
-          quotaLinks: {
-            where: { status: "screenedIn" },
-            select: { quota: { select: { id: true } } },
-          },
-        },
+        // The survey join is for the file cleanup below, not for the audit record — it is dropped
+        // before the row is returned.
+        select: { ...deletedResponseSelect, survey: { select: { blocks: true } } },
       });
 
-      if (deleted.displayId) {
-        await deleteDisplay(deleted.displayId, tx);
+      if (deletedRow.displayId) {
+        await deleteDisplay(deletedRow.displayId, tx);
       }
 
-      // The cascade removes the *links*, which fixes the count. It does not touch `SurveyQuota.limit`,
-      // so without this a deleted response keeps consuming quota capacity forever. Both management APIs
-      // miss this today (v1 takes `deleteResponse`'s `decrementQuotas = false` default, v2 has no quota
-      // code at all); only the dashboard opts in.
-      const quotaIds = deleted.quotaLinks.map((link) => link.quota.id);
-      if (quotaIds.length > 0) {
-        await reduceQuotaLimits(quotaIds, tx);
-      }
+      // Deliberately no `reduceQuotaLimits` here. `ON DELETE CASCADE` drops the `ResponseQuotaLink`
+      // rows, and the only fullness predicate in the repo is `screenedInCount >= quota.limit`
+      // (`modules/ee/quotas/lib/utils.ts`) counting those same live rows — so the cascade *already*
+      // gives the capacity back. Decrementing `limit` on top of that cancels the slot the cascade freed
+      // and permanently shrinks a customer-configured setting that nothing restores; repeated deletes
+      // ratchet it down. `limit` is user-facing ("Limit" in the quota editor), and the dashboard's
+      // checkbox — "Decrement all limits of quotas including this response" — is an explicit opt-in to
+      // that separate intent, not delete housekeeping. So v3 takes v1's `decrementQuotas = false`
+      // default. Exposing it as an opt-in flag later is additive; making it unconditional now would be
+      // an irreversible default no caller can decline.
 
       // Read inside the transaction, deleted outside it.
-      fileUrls = collectResponseFileUrls(
-        deleted.data,
-        getSurveyFileUploadElementIds({ blocks: deleted.survey.blocks })
-      );
+      const { survey, ...row } = deletedRow;
+      return {
+        row,
+        fileUrls: collectResponseFileUrls(row.data, getSurveyFileUploadElementIds({ blocks: survey.blocks })),
+      };
     });
   } catch (error) {
     rethrowScopedPrismaError(error);
   }
 
+  const { row, fileUrls } = deleted;
+
   if (fileUrls.length === 0) {
-    return;
+    return row;
   }
 
   // Never `undefined` here — `workspaceId` came from the scope the caller already authorized against.
@@ -161,4 +185,6 @@ export async function deleteScopedResponse(
       "V3 response file cleanup failed"
     );
   }
+
+  return row;
 }

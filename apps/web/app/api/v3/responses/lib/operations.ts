@@ -50,11 +50,15 @@ export async function deleteV3Response({
       return access;
     }
 
-    await deleteScopedResponse(responseId, { workspaceId });
+    const deleted = await deleteScopedResponse(responseId, { workspaceId });
 
     if (auditLog) {
       auditLog.targetId = responseId;
       auditLog.organizationId = access.organizationId;
+      // The deleted content, kept only in the audit trail — the response itself is gone. v1, v2 and
+      // `deleteV3FeedbackRecord` all record it; a delete that does not say *what* it destroyed is not
+      // reviewable. `redactPII` runs over this before it is persisted.
+      auditLog.oldObject = deleted;
     }
 
     return noContentResponse({ requestId });
