@@ -264,7 +264,12 @@ get:
         minimum: 1
         maximum: 1000
         default: 100
-      description: Page size (max 1000).
+      description: >-
+        Page size. Out-of-range and non-numeric values are rejected — `-5` and `1001` answer
+        **400** — with one exception: `limit=0` is indistinguishable from omitting the parameter,
+        so it is accepted and the default of `100` applies. Send no `limit` rather than `0` if you
+        are computing it. The search operations behave differently again: they clamp instead of
+        rejecting.
     - in: query
       name: cursor
       schema:
