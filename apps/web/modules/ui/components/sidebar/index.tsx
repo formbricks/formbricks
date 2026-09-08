@@ -14,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/modules/ui/components/sheet";
+import { getSkeletonWidthPercent } from "@/modules/ui/components/sidebar/lib/skeleton-width";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useIsMobile } from "@/modules/ui/hooks/use-mobile";
@@ -592,13 +593,7 @@ const SidebarMenuSkeleton = React.forwardRef<
   // React guarantees the id is the same on the server pass and on hydration, so the row keeps a
   // stable width instead of mismatching between the two (ENG-2366).
   const id = React.useId();
-  const width = React.useMemo(() => {
-    let hash = 0;
-    for (let i = 0; i < id.length; i++) {
-      hash = (hash * 31 + id.charCodeAt(i)) | 0;
-    }
-    return `${(Math.abs(hash) % 41) + 50}%`;
-  }, [id]);
+  const width = `${getSkeletonWidthPercent(id)}%`;
 
   return (
     <div

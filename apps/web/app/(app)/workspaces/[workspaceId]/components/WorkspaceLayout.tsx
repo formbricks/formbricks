@@ -9,6 +9,7 @@ import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getTranslate } from "@/lingodotdev/server";
 import { TrialEndingWarningModal } from "@/modules/ee/billing/components/trial-ending-warning-modal";
 import { TrialResponseWarningModal } from "@/modules/ee/billing/components/trial-response-warning-modal";
+import { getTrialDaysRemaining } from "@/modules/ee/billing/lib/trial-countdown";
 import { getPendingDowngradeSchedule } from "@/modules/ee/license-check/lib/license";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
@@ -38,20 +39,6 @@ const getResponseWarningThreshold = (
     return "200";
   }
   return null;
-};
-
-const MS_PER_DAY = 86_400_000;
-
-// Whole days left in the trial, rounded up, or null if the stored trialEnd isn't a usable date.
-// Read the clock here, on the server, rather than in the client components that display the count:
-// `Date.now()` during a client render is impure, so the number would differ between the server pass
-// and hydration and then go stale as the tab sits open (ENG-2366).
-const getTrialDaysRemaining = (trialEnd: string | Date): number | null => {
-  const trialEndTime = new Date(trialEnd).getTime();
-  if (!Number.isFinite(trialEndTime)) {
-    return null;
-  }
-  return Math.ceil((trialEndTime - Date.now()) / MS_PER_DAY);
 };
 
 // Show the loss-aversion trial-ending modal once on each of the last 3 days of the trial.
