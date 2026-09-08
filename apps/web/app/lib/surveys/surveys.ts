@@ -281,32 +281,6 @@ export const generateElementAndFilterOptions = ({
     });
   }
 
-  // Reserved fields, catalog-driven (ENG-1848): the same per-survey list the response table shows
-  // (shadowed / anonymized / uncaptured entries gated out by getReservedFilterEntries), with the
-  // table's localized labels and operators per dataType — no longer whatever meta keys the stored
-  // responses happened to hold.
-  const reservedEntries = getReservedFilterEntries(survey);
-  if (reservedEntries.length > 0) {
-    elementOptions = [
-      ...elementOptions,
-      {
-        header: OptionsType.META,
-        option: reservedEntries.map((entry) => {
-          return { label: getReservedFieldLabel(entry.name, t), type: OptionsType.META, id: entry.name };
-        }),
-      },
-    ];
-    reservedEntries.forEach((entry) => {
-      elementFilterOptions.push({
-        type: "Meta",
-        filterOptions: getTypedFieldOperators(entry.dataType),
-        filterComboBoxOptions: reservedValues[entry.name] ?? [],
-        fieldDataType: entry.dataType,
-        id: entry.name,
-      });
-    });
-  }
-
   // Ingested embedded fields enumerate from the survey's rows, not from observed response values —
   // a declared field is filterable before its first response. Values live at data[storageKey].
   const ingestedFields = getIngestedEmbeddedFields(survey);
@@ -352,6 +326,33 @@ export const generateElementAndFilterOptions = ({
           field.dataType === "boolean" ? ["true", "false"] : (variableValues[link.storageKey] ?? []),
         fieldDataType: field.dataType,
         id: link.storageKey,
+      });
+    });
+  }
+
+  // Reserved fields, catalog-driven (ENG-1848), listed after the survey's own declared fields so
+  // Hidden Fields and Variables sit above Meta in the picker: the same per-survey list the response table shows
+  // (shadowed / anonymized / uncaptured entries gated out by getReservedFilterEntries), with the
+  // table's localized labels and operators per dataType — no longer whatever meta keys the stored
+  // responses happened to hold.
+  const reservedEntries = getReservedFilterEntries(survey);
+  if (reservedEntries.length > 0) {
+    elementOptions = [
+      ...elementOptions,
+      {
+        header: OptionsType.META,
+        option: reservedEntries.map((entry) => {
+          return { label: getReservedFieldLabel(entry.name, t), type: OptionsType.META, id: entry.name };
+        }),
+      },
+    ];
+    reservedEntries.forEach((entry) => {
+      elementFilterOptions.push({
+        type: "Meta",
+        filterOptions: getTypedFieldOperators(entry.dataType),
+        filterComboBoxOptions: reservedValues[entry.name] ?? [],
+        fieldDataType: entry.dataType,
+        id: entry.name,
       });
     });
   }

@@ -261,6 +261,27 @@ describe("surveys", () => {
       ]);
     });
 
+    test("lists Hidden Fields and Variables above Meta in the filter picker", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        blocks: [],
+        questions: [],
+        hiddenFields: { enabled: true, fieldIds: ["plan"] },
+        variables: [{ id: "var_score", name: "score", type: "number", value: 0 }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: "draft",
+      } as unknown as TSurvey;
+
+      const headers = genOptions(survey).elementOptions.map((opt) => opt.header);
+
+      expect(headers.indexOf(OptionsType.HIDDEN_FIELDS)).toBeGreaterThan(-1);
+      expect(headers.indexOf(OptionsType.VARIABLES)).toBeGreaterThan(-1);
+      expect(headers.indexOf(OptionsType.HIDDEN_FIELDS)).toBeLessThan(headers.indexOf(OptionsType.META));
+      expect(headers.indexOf(OptionsType.VARIABLES)).toBeLessThan(headers.indexOf(OptionsType.META));
+    });
+
     test("should include language options when survey has languages", () => {
       const survey = {
         id: "survey1",
