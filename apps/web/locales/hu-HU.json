@@ -3721,6 +3721,10 @@
       "error_deleting_survey": "Hiba történt a kérdőív törlése során",
       "error_restoring_survey": "A felmérés visszaállítása sikertelen, kérjük, próbálja újra",
       "error_updating_status": "Hiba történt a felmérés állapotának frissítése során",
+      "export_as_json": "Exportálás JSON formátumban",
+      "export_error": "A felmérés exportálása sikertelen volt",
+      "export_success": "A felmérés exportálva",
+      "exporting_survey": "A felmérés exportálása folyamatban...",
       "featured_templates": {
         "churn_description": "Tudja meg, miért mondják le az emberek az előfizetésüket.",
         "churn_title": "Lemorzsolódási felmérés",

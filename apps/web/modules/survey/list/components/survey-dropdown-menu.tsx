@@ -7,6 +7,7 @@ import {
   ArchiveRestoreIcon,
   ArrowRightLeftIcon,
   CopyIcon,
+  DownloadIcon,
   EyeIcon,
   LinkIcon,
   MoreVertical,
@@ -25,6 +26,7 @@ import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
+import { downloadSurveyExport } from "@/modules/survey/export/download";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
@@ -182,6 +184,17 @@ export const SurveyDropDownMenu = ({
     }
   };
 
+  const handleExportSurvey = async () => {
+    setIsDropDownOpen(false);
+    const toastId = toast.loading(t("workspace.surveys.exporting_survey"));
+    try {
+      await downloadSurveyExport(survey);
+      toast.success(t("workspace.surveys.export_success"), { id: toastId });
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("workspace.surveys.export_error")), { id: toastId });
+    }
+  };
+
   const handleEditforActiveSurvey = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDropDownOpen(false);
@@ -327,6 +340,17 @@ export const SurveyDropDownMenu = ({
                 }}>
                 <ArrowRightLeftIcon className="size-4" />
                 {t("workspace.surveys.copy_to")}
+              </DropdownMenuItem>
+            )}
+            {!isArchived && (
+              <DropdownMenuItem
+                data-testid="export-survey"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  void handleExportSurvey();
+                }}>
+                <DownloadIcon className="size-4" />
+                {t("workspace.surveys.export_as_json")}
               </DropdownMenuItem>
             )}
             {canPreviewOrCopyLink && (

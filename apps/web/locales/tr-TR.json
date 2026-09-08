@@ -3721,6 +3721,10 @@
       "error_deleting_survey": "Anket silinirken bir hata oluştu",
       "error_restoring_survey": "Anket geri yüklenemedi, tekrar dene",
       "error_updating_status": "Anket durumu güncellenirken bir hata oluştu",
+      "export_as_json": "JSON olarak dışa aktar",
+      "export_error": "Anket dışa aktarılamadı",
+      "export_success": "Anket dışa aktarıldı",
+      "exporting_survey": "Anket dışa aktarılıyor...",
       "featured_templates": {
         "churn_description": "İnsanların aboneliklerini neden iptal ettiğini öğren.",
         "churn_title": "Kayıp Anketi",

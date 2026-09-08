@@ -3721,6 +3721,10 @@
       "error_deleting_survey": "删除问卷时发生错误",
       "error_restoring_survey": "无法恢复问卷，请重试",
       "error_updating_status": "更新调查状态时出错",
+      "export_as_json": "导出为 JSON",
+      "export_error": "导出调查失败",
+      "export_success": "调查已导出",
+      "exporting_survey": "正在导出调查...",
       "featured_templates": {
         "churn_description": "了解用户取消订阅的原因。",
         "churn_title": "流失调查",

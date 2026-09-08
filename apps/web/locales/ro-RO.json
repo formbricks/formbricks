@@ -3721,6 +3721,10 @@
       "error_deleting_survey": "A apărut o eroare la ștergerea sondajului",
       "error_restoring_survey": "Nu s-a putut restaura sondajul, încearcă din nou",
       "error_updating_status": "A apărut o eroare la actualizarea statusului sondajului",
+      "export_as_json": "Exportă ca JSON",
+      "export_error": "Exportul sondajului a eșuat",
+      "export_success": "Sondaj exportat",
+      "exporting_survey": "Se exportă sondajul...",
       "featured_templates": {
         "churn_description": "Află de ce oamenii anulează abonamentele lor.",
         "churn_title": "Chestionar despre pierderea clienților",

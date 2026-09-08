@@ -3721,6 +3721,10 @@
       "error_deleting_survey": "Beim Löschen der Umfrage ist ein Fehler aufgetreten",
       "error_restoring_survey": "Umfrage konnte nicht wiederhergestellt werden, versuch es noch mal",
       "error_updating_status": "Beim Aktualisieren des Umfragestatus ist ein Fehler aufgetreten",
+      "export_as_json": "Als JSON exportieren",
+      "export_error": "Umfrage konnte nicht exportiert werden",
+      "export_success": "Umfrage exportiert",
+      "exporting_survey": "Umfrage wird exportiert...",
       "featured_templates": {
         "churn_description": "Finde heraus, warum Leute ihre Abos kündigen.",
         "churn_title": "Churn-Umfrage",

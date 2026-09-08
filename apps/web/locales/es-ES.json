@@ -3721,6 +3721,10 @@
       "error_deleting_survey": "Se produjo un error al eliminar la encuesta",
       "error_restoring_survey": "No se pudo restaurar la encuesta, inténtalo de nuevo",
       "error_updating_status": "Se produjo un error al actualizar el estado de la encuesta",
+      "export_as_json": "Exportar como JSON",
+      "export_error": "No se pudo exportar la encuesta",
+      "export_success": "Encuesta exportada",
+      "exporting_survey": "Exportando encuesta...",
       "featured_templates": {
         "churn_description": "Descubre por qué la gente cancela sus suscripciones.",
         "churn_title": "Encuesta de Cancelación",
