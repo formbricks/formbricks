@@ -109,6 +109,15 @@ export const GET = withV3ApiWrapper({
     });
 
     if (dryRun) {
+      // The wrapper stamps every request on this route as `exported`, which is reserved for data that
+      // actually leaves the product as files. A pre-flight reads counts and streams nothing, so it is
+      // recorded as a query instead of a phantom export.
+      if (auditLog) {
+        auditLog.action = "queried";
+        auditLog.organizationId = authResult.organizationId;
+        auditLog.targetId = survey.id;
+      }
+
       return successResponse(
         { fileCount, responseCount, exceedsMaxFiles, maxFiles: MAX_ATTACHMENT_FILES },
         { requestId }

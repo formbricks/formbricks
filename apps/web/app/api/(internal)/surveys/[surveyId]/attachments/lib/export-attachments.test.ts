@@ -197,6 +197,36 @@ describe("streamAttachmentsAsZip", () => {
     ]);
   });
 
+  test("keeps a collector rejection's own reason when truncation drops it too", async () => {
+    // The entry after the ceiling was already refused by the collector. Relabelling it
+    // `skipped_export_truncated` would tell the reader the export ran out of room, hiding that the file
+    // sits in another workspace and would never have been exported at any size.
+    mockedGetFileStream.mockResolvedValue({
+      ok: true,
+      data: {
+        body: streamOf("x").data.body,
+        contentType: "image/jpeg",
+        contentLength: MAX_ATTACHMENT_BYTES + 1,
+      },
+    } as never);
+
+    await readArchive(
+      streamAttachmentsAsZip({
+        entries: [
+          okEntry(),
+          okEntry({ responseId: "res-2", status: "skipped_foreign_workspace", storage: undefined }),
+        ],
+        survey,
+        now: NOW,
+      })
+    );
+
+    expect(manifestRows()).toEqual([
+      expect.objectContaining({ responseId: "res-1", status: "skipped_export_truncated" }),
+      expect.objectContaining({ responseId: "res-2", status: "skipped_foreign_workspace" }),
+    ]);
+  });
+
   test("cancels the storage body it refuses, instead of leaving the connection open", async () => {
     const cancel = vi.fn().mockResolvedValue(undefined);
     const body = { cancel } as unknown as ReadableStream<Uint8Array>;

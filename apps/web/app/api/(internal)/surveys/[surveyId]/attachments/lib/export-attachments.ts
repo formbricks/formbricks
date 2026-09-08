@@ -163,9 +163,13 @@ const streamArchive = async (
   }
 
   if (truncatedFrom !== null) {
-    // Everything from the refused entry onwards, so the manifest still lists what is missing.
+    // Everything from the refused entry onwards, so the manifest still lists what is missing. A row the
+    // collector already rejected keeps its own reason: it was never a candidate for the byte ceiling, and
+    // relabelling it would name the wrong cause.
     for (const dropped of entries.slice(truncatedFrom)) {
-      manifestRows.push({ ...dropped, status: "skipped_export_truncated" });
+      manifestRows.push(
+        dropped.status === "ok" ? { ...dropped, status: "skipped_export_truncated" } : dropped
+      );
     }
     archive.append(buildTruncationNote(appendedFiles), { name: TRUNCATION_NOTE_PATH });
   }
