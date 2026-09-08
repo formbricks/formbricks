@@ -1,5 +1,9 @@
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
-import type { TRelativeDateBound, TValidationRule } from "@formbricks/types/surveys/validation-rules";
+import {
+  MAX_RELATIVE_DATE_AMOUNT,
+  type TRelativeDateBound,
+  type TValidationRule,
+} from "@formbricks/types/surveys/validation-rules";
 
 /**
  * Format a Date as YYYY-MM-DD using its local calendar fields.
@@ -53,11 +57,18 @@ export const addWorkingDays = (date: Date, days: number): Date => {
   return result;
 };
 
+/** Whole days inside the schema's cap; anything else reads as 0. */
+const clampAmount = (amount: number): number =>
+  Number.isFinite(amount) ? Math.min(Math.max(0, Math.trunc(amount)), MAX_RELATIVE_DATE_AMOUNT) : 0;
+
 /**
  * Resolve a relative bound against a reference date, returning YYYY-MM-DD.
+ *
+ * ZRelativeDateBound caps the amount, but the editor's draft save stores blocks unparsed, so the
+ * cap is enforced again here - the one place the amount turns into loop iterations.
  */
 export const resolveRelativeDate = (bound: TRelativeDateBound, referenceDate: Date): string => {
-  const offset = (bound.direction === "before" ? -1 : 1) * bound.amount;
+  const offset = (bound.direction === "before" ? -1 : 1) * clampAmount(bound.amount);
   const resolved =
     bound.unit === "workingDays"
       ? addWorkingDays(referenceDate, offset)
@@ -76,16 +87,21 @@ export const shiftISODate = (isoDate: string, days: number): string => {
  * The same evaluator runs in the respondent's browser and on the server. A respondent at UTC+13
  * can submit their local "today" while the server clock still reads yesterday (or the reverse at
  * UTC-11), which would reject a date the picker itself offered. Proper timezone handling is out of
- * scope for this feature, so the server widens every relative window by one calendar day on each
- * side and the client stays strict.
+ * scope for this feature, so the server resolves every relative bound against a reference date
+ * moved one day in the forgiving direction, and the client stays strict.
  *
- * The widening follows the role of the bound, not its direction: a lower bound always moves
- * earlier and an upper bound always moves later, so a window that sits entirely in the future
+ * The day is added to the reference, not to the resolved bound: Friday plus one working day is
+ * Monday, so a respondent already on Friday sees a picker three calendar days past what a server
+ * still on Thursday computes, and shifting that result by one day would reject the Monday the
+ * picker offered.
+ *
+ * The direction follows the role of the bound, not its direction: a lower bound resolves against
+ * yesterday and an upper bound against tomorrow, so a window that sits entirely in the future
  * (between +2 and +5 days) widens rather than closing in on itself.
  */
-export const applyTimezoneGrace = (isoDate: string, role: "lower" | "upper"): string => {
-  if (typeof window !== "undefined") return isoDate;
-  return shiftISODate(isoDate, role === "lower" ? -1 : 1);
+export const applyTimezoneGrace = (referenceDate: Date, role: "lower" | "upper"): Date => {
+  if (typeof window !== "undefined") return referenceDate;
+  return addCalendarDays(referenceDate, role === "lower" ? -1 : 1);
 };
 
 /** Type guards for the fixed vs relative param shapes of the four date rules. */

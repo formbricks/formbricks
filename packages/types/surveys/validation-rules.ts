@@ -130,7 +130,8 @@ export type TRelativeDateDirection = z.infer<typeof ZRelativeDateDirection>;
 /**
  * Ten years. addWorkingDays steps one day at a time and these validators run on the server for
  * every response, so an unbounded amount from a typo or an API-created survey would block the
- * event loop. Exported so the editor's input caps at the same number the schema enforces.
+ * event loop. Exported so the editor's input caps at the same number the schema enforces, and so
+ * the resolver can clamp params saved by paths that skip this schema (draft saves).
  */
 export const MAX_RELATIVE_DATE_AMOUNT = 3650;
 

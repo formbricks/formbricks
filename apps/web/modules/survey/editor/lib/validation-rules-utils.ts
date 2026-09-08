@@ -154,53 +154,29 @@ export const createRelativeDateParams = (ruleType: TValidationRuleType): TValida
 
 type TTranslate = (key: string, options?: Record<string, string | number>) => string;
 
-/** "the submission day" | "3 calendar days before submission" */
+/** "the submission day" | "3 calendar days before submission" - one complete phrase per unit and direction. */
 const describeRelativeBound = (bound: TRelativeDateBound, t: TTranslate): string => {
   if (bound.amount === 0) return t("workspace.surveys.edit.validation.relative_bound_submission_day");
 
-  let days: string;
+  const count = bound.amount;
   if (bound.unit === "workingDays") {
-    days =
-      bound.amount === 1
-        ? t("workspace.surveys.edit.validation.relative_bound_one_working_day")
-        : t("workspace.surveys.edit.validation.relative_bound_working_days", { count: bound.amount });
-  } else {
-    days =
-      bound.amount === 1
-        ? t("workspace.surveys.edit.validation.relative_bound_one_calendar_day")
-        : t("workspace.surveys.edit.validation.relative_bound_calendar_days", { count: bound.amount });
+    return bound.direction === "before"
+      ? t("workspace.surveys.edit.validation.relative_bound_working_days_before", { count })
+      : t("workspace.surveys.edit.validation.relative_bound_working_days_after", { count });
   }
-
   return bound.direction === "before"
-    ? t("workspace.surveys.edit.validation.relative_bound_before_submission", { days })
-    : t("workspace.surveys.edit.validation.relative_bound_after_submission", { days });
-};
-
-const describeSingleRelativeBound = (
-  ruleType: "isLaterThan" | "isEarlierThan",
-  bound: TRelativeDateBound,
-  t: TTranslate
-): string => {
-  if (ruleType === "isLaterThan") {
-    return bound.amount === 0
-      ? t("workspace.surveys.edit.validation.relative_summary_later_than_submission_day")
-      : t("workspace.surveys.edit.validation.relative_summary_later_than", {
-          bound: describeRelativeBound(bound, t),
-        });
-  }
-  return bound.amount === 0
-    ? t("workspace.surveys.edit.validation.relative_summary_earlier_than_submission_day")
-    : t("workspace.surveys.edit.validation.relative_summary_earlier_than", {
-        bound: describeRelativeBound(bound, t),
-      });
+    ? t("workspace.surveys.edit.validation.relative_bound_calendar_days_before", { count })
+    : t("workspace.surveys.edit.validation.relative_bound_calendar_days_after", { count });
 };
 
 /**
  * One plain sentence saying which dates a relative rule accepts, so the author reads the rule the
  * way the respondent will meet it. Returns null for fixed-date params and non-date rules.
  *
- * The wording is inclusive on purpose: the relative validators compare with >= / <=, unlike the
- * strict fixed-date comparison, so "from 3 days before submission onwards" is exactly what passes.
+ * Each bound is a whole phrase carrying its own ICU plural, and every sentence places it after a
+ * colon ("Earliest accepted date: …") rather than inside a clause, so no locale has to agree case or
+ * word order with an inserted fragment. The wording is inclusive on purpose: the relative validators
+ * compare with >= / <=, unlike the strict fixed-date comparison.
  */
 export const describeRelativeDateRule = (
   ruleType: TValidationRuleType,
@@ -218,9 +194,16 @@ export const describeRelativeDateRule = (
   let sentence: string | null = null;
   const bounds: TRelativeDateBound[] = [];
 
-  if ((ruleType === "isLaterThan" || ruleType === "isEarlierThan") && relative) {
+  if (ruleType === "isLaterThan" && relative) {
     bounds.push(relative);
-    sentence = describeSingleRelativeBound(ruleType, relative, t);
+    sentence = t("workspace.surveys.edit.validation.relative_summary_later_than", {
+      bound: describeRelativeBound(relative, t),
+    });
+  } else if (ruleType === "isEarlierThan" && relative) {
+    bounds.push(relative);
+    sentence = t("workspace.surveys.edit.validation.relative_summary_earlier_than", {
+      bound: describeRelativeBound(relative, t),
+    });
   } else if (RANGE_DATE_RULE_TYPES.has(ruleType) && relativeStart && relativeEnd) {
     bounds.push(relativeStart, relativeEnd);
     const range = {

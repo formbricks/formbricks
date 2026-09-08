@@ -40,10 +40,19 @@ export const ValidationRuleRelativeDateInput = ({
   ];
 
   // Arithmetic signs, not words: "before"/"after" next to "later than"/"earlier than" made the row
-  // carry two direction words. The signs are the same in every language, so they are not translated.
-  const directionOptions: { value: TRelativeDateDirection; label: string }[] = [
-    { value: "before", label: "−" },
-    { value: "after", label: "+" },
+  // carry two direction words. The signs are the same in every language, so they are not translated;
+  // the visually hidden label is what a screen reader gets, since Radix names the option by its text.
+  const directionOptions: { value: TRelativeDateDirection; sign: string; label: string }[] = [
+    {
+      value: "before",
+      sign: "−",
+      label: t("workspace.surveys.edit.validation.relative_date_direction_before"),
+    },
+    {
+      value: "after",
+      sign: "+",
+      label: t("workspace.surveys.edit.validation.relative_date_direction_after"),
+    },
   ];
 
   return (
@@ -65,7 +74,8 @@ export const ValidationRuleRelativeDateInput = ({
         <SelectContent>
           {directionOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              <span aria-hidden="true">{option.sign}</span>
+              <span className="sr-only">{option.label}</span>
             </SelectItem>
           ))}
         </SelectContent>
@@ -79,6 +89,14 @@ export const ValidationRuleRelativeDateInput = ({
         // Clamped to the schema's own bound: without this the field happily takes an amount that
         // ZRelativeDateBound rejects, and the author only finds out when the survey fails to save.
         onChange={(e) => onChange({ ...bound, amount: clampRelativeAmount(e.target.value) })}
+        // The field starts at 0, so typing into it would otherwise read "03" until blur.
+        onFocus={(e) => e.target.select()}
+        // Whole non-negative days only: `e`, signs and `.` make the browser report "" and the field
+        // would snap back to 0, losing what was typed.
+        onKeyDown={(e) => {
+          if (e.ctrlKey || e.metaKey || e.altKey) return;
+          if (["e", "E", "+", "-", "."].includes(e.key)) e.preventDefault();
+        }}
         className="h-9 w-16 shrink-0 bg-white"
         aria-label={t("workspace.surveys.edit.validation.relative_date_amount")}
       />

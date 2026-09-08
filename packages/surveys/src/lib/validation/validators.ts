@@ -62,21 +62,20 @@ const resolveRelativeRange = (
   grace: TRangeGrace
 ): { startDate: string; endDate: string } => {
   const now = new Date();
-  const startDate = resolveRelativeDate(params.relativeStart, now);
-  const endDate = resolveRelativeDate(params.relativeEnd, now);
 
-  if (grace === "none") return { startDate, endDate };
-
-  if (grace === "accepts-outside") {
+  if (grace === "none") {
     return {
-      startDate: applyTimezoneGrace(startDate, "upper"),
-      endDate: applyTimezoneGrace(endDate, "lower"),
+      startDate: resolveRelativeDate(params.relativeStart, now),
+      endDate: resolveRelativeDate(params.relativeEnd, now),
     };
   }
 
+  const startRole = grace === "accepts-outside" ? "upper" : "lower";
+  const endRole = grace === "accepts-outside" ? "lower" : "upper";
+
   return {
-    startDate: applyTimezoneGrace(startDate, "lower"),
-    endDate: applyTimezoneGrace(endDate, "upper"),
+    startDate: resolveRelativeDate(params.relativeStart, applyTimezoneGrace(now, startRole)),
+    endDate: resolveRelativeDate(params.relativeEnd, applyTimezoneGrace(now, endRole)),
   };
 };
 
@@ -408,7 +407,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       // "3 days before" means that day itself is still an allowed answer. Fixed bounds keep their
       // original exclusive behaviour.
       if (hasRelativeBound(params)) {
-        const bound = applyTimezoneGrace(resolveRelativeDate(params.relative, new Date()), "lower");
+        const bound = resolveRelativeDate(params.relative, applyTimezoneGrace(new Date(), "lower"));
         return { valid: value >= bound };
       }
       const typedParams = params as TValidationRuleParamsIsLaterThanFixed;
@@ -432,7 +431,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
         return { valid: true };
       }
       if (hasRelativeBound(params)) {
-        const bound = applyTimezoneGrace(resolveRelativeDate(params.relative, new Date()), "upper");
+        const bound = resolveRelativeDate(params.relative, applyTimezoneGrace(new Date(), "upper"));
         return { valid: value <= bound };
       }
       const typedParams = params as TValidationRuleParamsIsEarlierThanFixed;

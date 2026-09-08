@@ -28,7 +28,7 @@ export const ValidationRuleTypeSelector = ({
   ruleLabels,
   needsValue,
   className,
-}: ValidationRuleTypeSelectorProps) => {
+}: Readonly<ValidationRuleTypeSelectorProps>) => {
   return (
     <Select value={value} onValueChange={(val) => onChange(val as TValidationRuleType)}>
       <SelectTrigger className={cn("bg-white", needsValue ? "min-w-[200px]" : "flex-1", className)}>

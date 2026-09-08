@@ -1,10 +1,15 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import type { TRelativeDateBound, TValidationRule } from "@formbricks/types/surveys/validation-rules";
+import {
+  MAX_RELATIVE_DATE_AMOUNT,
+  type TRelativeDateBound,
+  type TValidationRule,
+} from "@formbricks/types/surveys/validation-rules";
 import {
   addCalendarDays,
   addWorkingDays,
+  applyTimezoneGrace,
   getDateBoundsFromRules,
   resolveRelativeDate,
   shiftISODate,
@@ -99,6 +104,50 @@ describe("resolveRelativeDate", () => {
   test("honours the working-days unit", () => {
     expect(resolveRelativeDate(bound(3, "before", "workingDays"), monday)).toBe("2026-03-04");
     expect(resolveRelativeDate(bound(4, "after", "workingDays"), wednesday)).toBe("2026-03-10");
+  });
+});
+
+describe("resolveRelativeDate amount cap", () => {
+  test("clamps an amount the schema would reject, since draft saves store params unparsed", () => {
+    const capped = resolveRelativeDate(bound(MAX_RELATIVE_DATE_AMOUNT, "after", "workingDays"), monday);
+
+    expect(resolveRelativeDate(bound(1e9, "after", "workingDays"), monday)).toBe(capped);
+    expect(resolveRelativeDate(bound(MAX_RELATIVE_DATE_AMOUNT + 1, "after", "workingDays"), monday)).toBe(
+      capped
+    );
+  });
+
+  test("reads a negative, fractional or non-finite amount as the editor would", () => {
+    expect(resolveRelativeDate(bound(-3, "before"), monday)).toBe("2026-03-09");
+    expect(resolveRelativeDate(bound(2.9, "after"), monday)).toBe("2026-03-11");
+    expect(resolveRelativeDate(bound(Number.NaN, "after"), monday)).toBe("2026-03-09");
+    expect(resolveRelativeDate(bound(Number.POSITIVE_INFINITY, "after"), monday)).toBe("2026-03-09");
+  });
+});
+
+describe("applyTimezoneGrace", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test("leaves the reference date alone in the browser", () => {
+    vi.stubGlobal("window", {});
+    expect(applyTimezoneGrace(monday, "lower")).toEqual(monday);
+    expect(applyTimezoneGrace(monday, "upper")).toEqual(monday);
+  });
+
+  test("moves the reference date, not the resolved bound, so working-day offsets keep pace", () => {
+    vi.stubGlobal("window", undefined);
+    // Thursday 2026-03-05 on the server; a respondent one day ahead is on Friday, whose picker
+    // allows Friday + 1 working day = Monday 03-09. Resolving against the graced reference lands
+    // on that same Monday, where shifting the resolved Friday by one day would only reach Saturday.
+    const thursday = new Date(2026, 2, 5);
+    expect(resolveRelativeDate(bound(1, "after", "workingDays"), applyTimezoneGrace(thursday, "upper"))).toBe(
+      "2026-03-09"
+    );
+    expect(resolveRelativeDate(bound(1, "before", "workingDays"), applyTimezoneGrace(monday, "lower"))).toBe(
+      "2026-03-06"
+    );
   });
 });
 

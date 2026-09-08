@@ -585,6 +585,28 @@ describe("validators", () => {
     });
   });
 
+  describe("fixed date bounds are exclusive", () => {
+    // Relative bounds are inclusive; fixed ones keep their original strict comparison, and the
+    // picker mirrors that with a one-day shift in getDateBoundsFromRules.
+    const element = {} as TSurveyElement;
+    const range = { startDate: "2024-01-01", endDate: "2024-12-31" };
+
+    test("isLaterThan and isEarlierThan reject the bound day itself", () => {
+      expect(validators.isLaterThan.check("2024-01-01", { date: "2024-01-01" }, element).valid).toBe(false);
+      expect(validators.isEarlierThan.check("2024-01-01", { date: "2024-01-01" }, element).valid).toBe(false);
+    });
+
+    test("isBetween rejects both range ends", () => {
+      expect(validators.isBetween.check("2024-01-01", range, element).valid).toBe(false);
+      expect(validators.isBetween.check("2024-12-31", range, element).valid).toBe(false);
+    });
+
+    test("isNotBetween treats both range ends as inside the excluded window", () => {
+      expect(validators.isNotBetween.check("2024-01-01", range, element).valid).toBe(false);
+      expect(validators.isNotBetween.check("2024-12-31", range, element).valid).toBe(false);
+    });
+  });
+
   describe("minRanked", () => {
     const rankingElement: TSurveyElement = {
       id: "rank1",
@@ -1121,6 +1143,46 @@ describe("validators", () => {
         expect(validators.isBetween.check("2026-03-15", params, element).valid).toBe(true);
         expect(validators.isBetween.check("2026-03-09", params, element).valid).toBe(false);
         expect(validators.isBetween.check("2026-03-16", params, element).valid).toBe(false);
+      });
+
+      test("quotes the strict excluded window for isNotBetween, not the shrunken one", () => {
+        const params = {
+          relativeStart: relative(3, "before"),
+          relativeEnd: relative(4, "after"),
+        };
+
+        vi.stubGlobal("window", undefined);
+
+        validators.isNotBetween.getDefaultMessage(params, {} as TSurveyElement, mockT);
+        expect(mockTFn).toHaveBeenLastCalledWith("errors.is_not_between", {
+          startDate: "2026-03-06",
+          endDate: "2026-03-13",
+        });
+      });
+
+      test("keeps pace with a working-day upper bound the picker offered from one day ahead", () => {
+        // Server clock: Thursday 2026-03-05. A respondent at UTC+13 is already on Friday, whose
+        // picker allows up to Friday + 1 working day = Monday 03-09. Shifting the resolved Friday
+        // bound by one calendar day would only reach Saturday and reject that Monday.
+        vi.setSystemTime(new Date(2026, 2, 5, 12, 0, 0));
+        vi.stubGlobal("window", undefined);
+        const params = { relative: relative(1, "after", "workingDays") };
+        const element = {} as TSurveyElement;
+
+        expect(validators.isEarlierThan.check("2026-03-09", params, element).valid).toBe(true);
+        expect(validators.isEarlierThan.check("2026-03-10", params, element).valid).toBe(false);
+      });
+
+      test("keeps pace with a working-day lower bound the picker offered from one day behind", () => {
+        // Server clock: Tuesday 2026-03-10. A respondent at UTC-11 is still on Monday, whose picker
+        // allows from Monday - 1 working day = Friday 03-06.
+        vi.setSystemTime(new Date(2026, 2, 10, 12, 0, 0));
+        vi.stubGlobal("window", undefined);
+        const params = { relative: relative(1, "before", "workingDays") };
+        const element = {} as TSurveyElement;
+
+        expect(validators.isLaterThan.check("2026-03-06", params, element).valid).toBe(true);
+        expect(validators.isLaterThan.check("2026-03-05", params, element).valid).toBe(false);
       });
     });
   });

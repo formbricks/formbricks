@@ -522,30 +522,30 @@ describe("relative date params", () => {
   });
 
   test("getRuleValue returns undefined for relative params so they do not leak into the text input", () => {
-    const singleBound = {
+    const singleBound: TValidationRule = {
       id: "1",
       type: "isLaterThan",
       params: { relative: { amount: 3, unit: "calendarDays", direction: "before" } },
-    } as unknown as TValidationRule;
-    const range = {
+    };
+    const range: TValidationRule = {
       id: "2",
       type: "isBetween",
       params: {
         relativeStart: { amount: 3, unit: "workingDays", direction: "before" },
         relativeEnd: { amount: 4, unit: "workingDays", direction: "after" },
       },
-    } as unknown as TValidationRule;
+    };
 
     expect(getRuleValue(singleBound)).toBeUndefined();
     expect(getRuleValue(range)).toBeUndefined();
   });
 
   test("getRuleValue still reads fixed date params", () => {
-    const fixed = {
+    const fixed: TValidationRule = {
       id: "1",
       type: "isBetween",
       params: { startDate: "2026-03-01", endDate: "2026-03-10" },
-    } as unknown as TValidationRule;
+    };
 
     expect(getRuleValue(fixed)).toBe("2026-03-01,2026-03-10");
   });
@@ -588,27 +588,26 @@ describe("parseDateRangeRuleValue", () => {
 });
 
 describe("describeRelativeDateRule", () => {
-  // Mirrors the en-US strings closely enough to read the sentences; interpolates {name} placeholders.
+  // Mirrors the en-US strings closely enough to read the sentences (plural forms flattened);
+  // interpolates {name} placeholders and records which key each call used.
   const strings: Record<string, string> = {
-    relative_bound_after_submission: "{days} after submission",
-    relative_bound_before_submission: "{days} before submission",
-    relative_bound_calendar_days: "{count} calendar days",
-    relative_bound_one_calendar_day: "1 calendar day",
-    relative_bound_one_working_day: "1 working day",
+    relative_bound_calendar_days_after: "{count} calendar days after submission",
+    relative_bound_calendar_days_before: "{count} calendar days before submission",
     relative_bound_submission_day: "the submission day",
-    relative_bound_working_days: "{count} working days",
-    relative_summary_between: "Accepts dates from {start} to {end}, both included.",
-    relative_summary_earlier_than: "Accepts any date up to {bound}.",
-    relative_summary_earlier_than_submission_day: "Accepts the submission day and any earlier date.",
-    relative_summary_later_than: "Accepts any date from {bound} onwards.",
-    relative_summary_later_than_submission_day: "Accepts the submission day and any later date.",
-    relative_summary_not_between: "Rejects dates from {start} to {end}, both included.",
+    relative_bound_working_days_after: "{count} working days after submission",
+    relative_bound_working_days_before: "{count} working days before submission",
+    relative_summary_between: "Earliest accepted date: {start}. Latest accepted date: {end}.",
+    relative_summary_earlier_than: "Latest accepted date: {bound}.",
+    relative_summary_later_than: "Earliest accepted date: {bound}.",
+    relative_summary_not_between: "First rejected date: {start}. Last rejected date: {end}.",
     relative_summary_working_days_note: "Working days skip Saturdays and Sundays.",
   };
+  const calls: [string, Record<string, string | number> | undefined][] = [];
   const t = (key: string, options?: Record<string, string | number>) => {
     const short = key.replace("workspace.surveys.edit.validation.", "");
     const template = strings[short];
     if (!template) throw new Error(`missing key ${key}`);
+    calls.push([short, options]);
     return template.replaceAll(/\{(\w+)\}/g, (_, name: string) => String(options?.[name]));
   };
 
@@ -624,14 +623,28 @@ describe("describeRelativeDateRule", () => {
         { relative: { amount: 3, unit: "calendarDays", direction: "before" } },
         t
       )
-    ).toBe("Accepts any date from 3 calendar days before submission onwards.");
+    ).toBe("Earliest accepted date: 3 calendar days before submission.");
     expect(
       describeRelativeDateRule(
         "isEarlierThan",
-        { relative: { amount: 1, unit: "calendarDays", direction: "after" } },
+        { relative: { amount: 2, unit: "calendarDays", direction: "after" } },
         t
       )
-    ).toBe("Accepts any date up to 1 calendar day after submission.");
+    ).toBe("Latest accepted date: 2 calendar days after submission.");
+  });
+
+  test("hands the amount to one whole-phrase key as its ICU count, never as a nested fragment", () => {
+    calls.length = 0;
+    describeRelativeDateRule(
+      "isLaterThan",
+      { relative: { amount: 1, unit: "calendarDays", direction: "before" } },
+      t
+    );
+
+    expect(calls).toEqual([
+      ["relative_bound_calendar_days_before", { count: 1 }],
+      ["relative_summary_later_than", { bound: "1 calendar days before submission" }],
+    ]);
   });
 
   test("names the submission day itself when the amount is 0", () => {
@@ -641,14 +654,14 @@ describe("describeRelativeDateRule", () => {
         { relative: { amount: 0, unit: "workingDays", direction: "after" } },
         t
       )
-    ).toBe("Accepts the submission day and any later date.");
+    ).toBe("Earliest accepted date: the submission day.");
     expect(
       describeRelativeDateRule(
         "isEarlierThan",
         { relative: { amount: 0, unit: "calendarDays", direction: "before" } },
         t
       )
-    ).toBe("Accepts the submission day and any earlier date.");
+    ).toBe("Latest accepted date: the submission day.");
   });
 
   test("describes both bounds of a range and adds the working-day note only when it applies", () => {
@@ -662,7 +675,7 @@ describe("describeRelativeDateRule", () => {
         t
       )
     ).toBe(
-      "Accepts dates from the submission day to 10 working days after submission, both included. Working days skip Saturdays and Sundays."
+      "Earliest accepted date: the submission day. Latest accepted date: 10 working days after submission. Working days skip Saturdays and Sundays."
     );
     expect(
       describeRelativeDateRule(
@@ -673,7 +686,7 @@ describe("describeRelativeDateRule", () => {
         },
         t
       )
-    ).toBe("Rejects dates from 2 calendar days before submission to the submission day, both included.");
+    ).toBe("First rejected date: 2 calendar days before submission. Last rejected date: the submission day.");
   });
 });
 
