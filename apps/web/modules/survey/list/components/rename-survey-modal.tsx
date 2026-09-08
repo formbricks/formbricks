@@ -86,8 +86,17 @@ export const RenameSurveyModal = ({
     }
   };
 
+  // Hold the dialog open until the rename settles. Cancel is already disabled, but the close button,
+  // Escape and an outside click all reach setOpen directly — and closing mid-flight is the only way to
+  // get two renames in flight on one query key, where the first failure's rollback would restore a
+  // snapshot taken before the second and silently undo it.
+  const handleOpenChange = (next: boolean) => {
+    if (form.formState.isSubmitting) return;
+    setOpen(next);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         {/* DialogHeader pins its icon to the first line; center it on the title + description block. */}
         <DialogHeader className="[&>svg]:top-1/2 [&>svg]:-translate-y-1/2">
