@@ -244,13 +244,19 @@ describe("SSO recovery intent", () => {
 
     test("leaves the expiry alone once the absolute lifetime has elapsed", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
-      const before = { ...[...store.values()][0] };
+      const [key] = [...store.keys()];
+      // Age the stored TTL first. Asserted against a record still carrying its issued TTL, "unchanged"
+      // is indistinguishable from "re-set to the same full TTL", and the assertion cannot fail —
+      // dropping the absolute-lifetime guard left it green. A lowered TTL is a value only a real
+      // refresh would overwrite.
+      const agedTtlMs = 60 * 1000;
+      store.set(key, { ...store.get(key)!, ttlMs: agedTtlMs });
 
       await refreshSsoRecoveryIntent(stateId, storedIntent(Date.now() - MAX_LIFETIME_MS - 1));
 
-      // The record and its TTL, not the call order: an implementation that reaches Redis and then
-      // declines to extend is equally correct, and asserting "never asked for a client" would fail it.
-      expect([...store.values()][0]).toEqual(before);
+      // The TTL, not the call order: an implementation that reaches Redis and then declines to extend
+      // is equally correct, so asserting "never asked for a client" would fail a correct one.
+      expect(store.get(key)!.ttlMs).toBe(agedTtlMs);
     });
 
     test("leaves the stored record untouched, so a refresh cannot write back a stale copy", async () => {
