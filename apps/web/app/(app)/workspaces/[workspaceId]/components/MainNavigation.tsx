@@ -11,7 +11,6 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
-  RocketIcon,
   SettingsIcon,
   UserIcon,
   WorkflowIcon,
@@ -19,7 +18,6 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import posthog from "posthog-js";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -29,6 +27,7 @@ import {
   getOrganizationsForSwitcherAction,
   getWorkspacesForSwitcherAction,
 } from "@/app/(app)/workspaces/[workspaceId]/actions";
+import { MainNavigationNotices } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigationNotices";
 import { NavigationLink } from "@/app/(app)/workspaces/[workspaceId]/components/NavigationLink";
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
 import { isNewerVersion } from "@/app/(app)/workspaces/[workspaceId]/lib/utils";
@@ -36,8 +35,6 @@ import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
-import { TRIAL_BASE_RESPONSE_LIMIT, TrialBannerNew } from "@/modules/ee/billing/components/trial-banner-new";
 import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
@@ -94,6 +91,45 @@ const sectionLabelWithBeta = (label: React.ReactNode) => (
     />
   </span>
 );
+
+/**
+ * The text half of a sidebar switcher trigger: name, caption, an in-flight spinner and the chevron.
+ *
+ * Both switchers rendered this inline and identically, at the deepest nesting in the component —
+ * which is most of what pushed MainNavigation past Sonar's cognitive-complexity limit (ENG-3076).
+ * Deliberately not wrapping the `<button>` itself: that is a Radix `asChild` target, and moving it
+ * behind a component would mean forwarding props and refs by hand for no gain.
+ */
+const SwitcherTriggerLabel = ({
+  isCollapsed,
+  isTextVisible,
+  isPending,
+  name,
+  caption,
+}: Readonly<{
+  isCollapsed: boolean;
+  isTextVisible: boolean;
+  isPending: boolean;
+  name: string;
+  caption: string;
+}>) => {
+  // Collapsed, only the icon shows; `isTextVisible` is the 150ms delay that keeps the label from
+  // flashing while the sidebar animates.
+  if (isCollapsed || isTextVisible) {
+    return null;
+  }
+
+  return (
+    <>
+      <div className="grow overflow-hidden">
+        <p className="truncate text-sm font-bold text-slate-700">{name}</p>
+        <p className="text-sm text-slate-500">{caption}</p>
+      </div>
+      {isPending && <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />}
+      <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+    </>
+  );
+};
 
 export const MainNavigation = ({
   organization,
@@ -500,47 +536,17 @@ export const MainNavigation = ({
 
           <div>
             {!isSettingsMode && (
-              <>
-                {/* New Version Available */}
-                {!isCollapsed &&
-                  isOwnerOrManager &&
-                  latestVersion &&
-                  !isFormbricksCloud &&
-                  !isDevelopment && (
-                    <Link
-                      href="https://github.com/formbricks/formbricks/releases"
-                      target="_blank"
-                      className="m-2 flex items-center gap-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
-                      <p className="flex items-center justify-center gap-x-2 text-xs">
-                        <RocketIcon strokeWidth={1.5} className="mx-1 size-6 text-slate-900" />
-                        {t("common.new_version_available", { version: latestVersion })}
-                      </p>
-                    </Link>
-                  )}
-
-                {/* Trial Days Remaining */}
-                {!isCollapsed &&
-                  isOwnerOrManager &&
-                  isFormbricksCloud &&
-                  trialDaysRemaining !== null &&
-                  (newTrialBannerVariant === "test" ? (
-                    <TrialBannerNew
-                      trialDaysRemaining={trialDaysRemaining}
-                      planName={organization.billing.stripe?.plan ?? "pro"}
-                      responseCount={responseCount}
-                      responseLimit={organization.billing.limits.monthly.responses}
-                      baseResponseLimit={TRIAL_BASE_RESPONSE_LIMIT}
-                      billingHref={`/organizations/${organization.id}/settings/billing`}
-                    />
-                  ) : (
-                    <Link
-                      href={`/organizations/${organization.id}/settings/billing`}
-                      className="m-2 block"
-                      onClick={() => posthog.capture("main_nav_go_to_billing_clicked")}>
-                      <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
-                    </Link>
-                  ))}
-              </>
+              <MainNavigationNotices
+                isCollapsed={isCollapsed}
+                isOwnerOrManager={isOwnerOrManager}
+                isFormbricksCloud={isFormbricksCloud}
+                isDevelopment={isDevelopment}
+                latestVersion={latestVersion}
+                trialDaysRemaining={trialDaysRemaining}
+                newTrialBannerVariant={newTrialBannerVariant}
+                organization={organization}
+                responseCount={responseCount}
+              />
             )}
 
             <div className="flex flex-col">
@@ -558,18 +564,13 @@ export const MainNavigation = ({
                         <span className={switcherIconClasses}>
                           <FoldersIcon className="size-4" strokeWidth={1.5} />
                         </span>
-                        {!isCollapsed && !isTextVisible && (
-                          <>
-                            <div className="grow overflow-hidden">
-                              <p className="truncate text-sm font-bold text-slate-700">{workspace.name}</p>
-                              <p className="text-sm text-slate-500">{t("common.workspace")}</p>
-                            </div>
-                            {isPending && (
-                              <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />
-                            )}
-                            <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
-                          </>
-                        )}
+                        <SwitcherTriggerLabel
+                          isCollapsed={isCollapsed}
+                          isTextVisible={isTextVisible}
+                          isPending={isPending}
+                          name={workspace.name}
+                          caption={t("common.workspace")}
+                        />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
@@ -605,18 +606,13 @@ export const MainNavigation = ({
                         <span className={switcherIconClasses}>
                           <Building2Icon className="size-4" strokeWidth={1.5} />
                         </span>
-                        {!isCollapsed && !isTextVisible && (
-                          <>
-                            <div className="grow overflow-hidden">
-                              <p className="truncate text-sm font-bold text-slate-700">{organization.name}</p>
-                              <p className="text-sm text-slate-500">{t("common.organization")}</p>
-                            </div>
-                            {isPending && (
-                              <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />
-                            )}
-                            <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
-                          </>
-                        )}
+                        <SwitcherTriggerLabel
+                          isCollapsed={isCollapsed}
+                          isTextVisible={isTextVisible}
+                          isPending={isPending}
+                          name={organization.name}
+                          caption={t("common.organization")}
+                        />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
