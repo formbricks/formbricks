@@ -6,6 +6,83 @@
 const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
 
+/**
+ * Authentication scheme advertised on a 401. RFC 9110 §15.5.2 requires "a WWW-Authenticate header field
+ * containing at least one challenge **applicable to the target resource**" — the qualifier is the whole
+ * point, so quote it in full: an inapplicable challenge does not satisfy the requirement, it just makes
+ * a false statement about the endpoint.
+ *
+ * Bearer is applicable wherever this API accepts `Authorization: Bearer <fbk_…>`, which `api-key-auth.ts`
+ * does — so on the `apiKey` and `both` auth modes, and nowhere else. RFC 6750 §3 requires at least one
+ * auth-param, so the realm stays; a bare `Bearer` would be non-conformant.
+ *
+ * Deliberately NOT sent on `session` routes, and not by `problemUnauthorized` itself: cookies are not an
+ * HTTP authentication scheme (they appear nowhere in the IANA HTTP Authentication Scheme Registry), so a
+ * cookie-only endpoint has no applicable challenge and the MUST is unsatisfiable there. The repo's own
+ * OpenAPI already concedes this by modelling the session as `type: apiKey, in: cookie` rather than
+ * `type: http`. Omitting beats advertising a scheme the route will never honour.
+ *
+ * The MCP surface builds its own richer challenge (`resource_metadata` and `scope`, which its spec
+ * MUSTs and its SDK parses) in `withOAuthChallenge` — see `@/modules/mcp/auth`.
+ */
+export const BEARER_CHALLENGE = 'Bearer realm="formbricks"' as const;
+
+/** Attach the bearer challenge to a 401. Applied by the wrapper for the auth modes it is true of. */
+export function withBearerChallenge(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("WWW-Authenticate", BEARER_CHALLENGE);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+/**
+ * The `code` vocabulary of this API's problem responses: a stable, locale-independent discriminator that
+ * clients switch on instead of parsing `detail` (see `parseV3ApiError` in `@/modules/api/lib/v3-client`
+ * and `responseToMcpToolResult` in `@/modules/mcp/errors`).
+ *
+ * This list is the source of truth. `Problem.yml` in the OpenAPI spec publishes the same set, and
+ * `problem-codes.test.ts` fails if the two drift — the spec used to be hand-maintained, with nothing
+ * checking it against the emitters. Codes are additive: removing or renaming one is a breaking change
+ * for every client that branches on it.
+ *
+ * `invalid_workflow_state` and `workflow_not_executable` are emitted only by `@formbricks/workflows`,
+ * which mirrors this vocabulary rather than importing it (it is a leaf package, deliberately
+ * dependency-free) and also emits five of the codes above; its own `WORKFLOW_PROBLEM_CODES` is held to
+ * this set by a drift test on the same spec file. Named rather than counted: the array is kept sorted by
+ * `problem-codes.test.ts`, so any positional claim falsifies itself on the next insertion.
+ */
+export const V3_PROBLEM_CODES = [
+  "ai_features_not_enabled",
+  "ai_generated_payload_invalid",
+  "ai_instance_not_configured",
+  "ai_output_too_long",
+  "ai_smart_tools_disabled",
+  "bad_gateway",
+  "bad_request",
+  "conflict",
+  "forbidden",
+  "internal_server_error",
+  "invalid_workflow_state",
+  "not_authenticated",
+  "not_found",
+  "payload_too_large",
+  "service_unavailable",
+  "too_many_requests",
+  "unprocessable_content",
+  "workflow_not_executable",
+] as const;
+
+export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
+
+const V3_PROBLEM_CODE_SET = new Set<V3ProblemCode>(V3_PROBLEM_CODES);
+
+export function isV3ProblemCode(value: unknown): value is V3ProblemCode {
+  return typeof value === "string" && V3_PROBLEM_CODE_SET.has(value as V3ProblemCode);
+}
+
 export const INVALID_PARAM_CODES = [
   "dangling_reference",
   "duplicate_identifier",
@@ -48,7 +125,7 @@ export type InvalidParam = {
 };
 
 export type ProblemExtension = {
-  code?: string;
+  code?: V3ProblemCode;
   requestId: string;
   details?: Record<string, unknown>;
   invalid_params?: InvalidParam[];
@@ -70,7 +147,7 @@ function problemResponse(
   options?: {
     type?: string;
     instance?: string;
-    code?: string;
+    code?: V3ProblemCode;
     details?: Record<string, unknown>;
     invalid_params?: InvalidParam[];
     headers?: Record<string, string>;
@@ -143,24 +220,36 @@ export function problemForbidden(
   });
 }
 
+/**
+ * An AI capability the caller cannot use: 503 when this deployment has no AI configured at all, 403 when
+ * it is configured but not enabled for the organization.
+ *
+ * `title` is the HTTP reason phrase for the status, not a description of the cause. RFC 9457 §4.2.1
+ * requires that of a problem whose `type` is absent (and therefore `about:blank`), which is every v3
+ * problem. The cause is carried by `code`, which is what clients branch on anyway — see
+ * `getAiErrorMessage` in `@/modules/survey/components/template-list/lib/ai-error-messages`.
+ */
 export function problemAIUnavailable(
   requestId: string,
   detail: string,
-  code: string,
+  code: V3ProblemCode,
   instance?: string
 ): Response {
-  const status = code === "ai_instance_not_configured" ? 503 : 403;
+  const isNotConfigured = code === "ai_instance_not_configured";
 
-  return problemResponse(status, "AI Unavailable", detail, requestId, {
-    code,
-    instance,
-  });
+  return problemResponse(
+    isNotConfigured ? 503 : 403,
+    isNotConfigured ? "Service Unavailable" : "Forbidden",
+    detail,
+    requestId,
+    { code, instance }
+  );
 }
 
 export function problemUnprocessableContent(
   requestId: string,
   detail: string,
-  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: string }
+  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: V3ProblemCode }
 ): Response {
   return problemResponse(422, "Unprocessable Content", detail, requestId, {
     code: options?.code ?? "unprocessable_content",
@@ -223,13 +312,19 @@ export function problemInternalError(
   });
 }
 
-export function problemTooManyRequests(requestId: string, detail: string, retryAfter?: number): Response {
+export function problemTooManyRequests(
+  requestId: string,
+  detail: string,
+  retryAfter?: number,
+  instance?: string
+): Response {
   const headers: Record<string, string> = {};
   if (retryAfter !== undefined) {
     headers["Retry-After"] = String(retryAfter);
   }
   return problemResponse(429, "Too Many Requests", detail, requestId, {
     code: "too_many_requests",
+    instance,
     headers,
   });
 }

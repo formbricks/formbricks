@@ -13,6 +13,7 @@ import {
   problemUnprocessableContent,
   successListResponse,
   successResponse,
+  withBearerChallenge,
 } from "./response";
 
 describe("v3 problem responses", () => {
@@ -38,6 +39,27 @@ describe("v3 problem responses", () => {
     expect(body.code).toBe("not_authenticated");
   });
 
+  /**
+   * RFC 9110 §15.5.2 asks for a challenge "applicable to the target resource", so the challenge is not
+   * baked into the 401 builder: the same builder serves session-cookie routes, where no HTTP
+   * authentication scheme applies at all and Bearer would be a false statement. The wrapper attaches it
+   * for the auth modes that really do accept `Authorization: Bearer`.
+   */
+  test("problemUnauthorized does not assert a scheme on its own", async () => {
+    const res = problemUnauthorized("r1");
+    expect(res.headers.get("WWW-Authenticate")).toBeNull();
+  });
+
+  test("withBearerChallenge adds the RFC 6750 challenge without disturbing the body", async () => {
+    const res = withBearerChallenge(problemUnauthorized("r1", "API key required", "/api/v3/x"));
+    expect(res.headers.get("WWW-Authenticate")).toBe('Bearer realm="formbricks"');
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.detail).toBe("API key required");
+    expect(body.code).toBe("not_authenticated");
+    expect(body.instance).toBe("/api/v3/x");
+  });
+
   test("problemForbidden", async () => {
     const res = problemForbidden("r2", undefined, "/api/x");
     expect(res.status).toBe(403);
@@ -50,7 +72,9 @@ describe("v3 problem responses", () => {
     const res = problemAIUnavailable("r-ai", "AI is disabled", "ai_smart_tools_disabled", "/api/ai");
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.title).toBe("AI Unavailable");
+    // The reason phrase for the status, not a description of the cause: RFC 9457 §4.2.1 requires that
+    // of a problem with no `type`. The cause travels in `code`, which is what clients branch on.
+    expect(body.title).toBe("Forbidden");
     expect(body.code).toBe("ai_smart_tools_disabled");
     expect(body.instance).toBe("/api/ai");
   });
@@ -58,6 +82,7 @@ describe("v3 problem responses", () => {
   test("problemAIUnavailable returns 503 for instance configuration gaps", async () => {
     const res = problemAIUnavailable("r-ai", "AI is not configured", "ai_instance_not_configured");
     expect(res.status).toBe(503);
+    expect((await res.json()).title).toBe("Service Unavailable");
   });
 
   test("problemUnprocessableContent includes validation details", async () => {
@@ -107,6 +132,12 @@ describe("v3 problem responses", () => {
   test("problemTooManyRequests without Retry-After", async () => {
     const res = problemTooManyRequests("r6", "nope");
     expect(res.headers.get("Retry-After")).toBeNull();
+  });
+
+  test("problemTooManyRequests carries the instance when the caller knows the path", async () => {
+    const res = problemTooManyRequests("r7", "slow down", 30, "/api/v3/surveys");
+    const body = await res.json();
+    expect(body.instance).toBe("/api/v3/surveys");
   });
 });
 

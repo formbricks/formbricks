@@ -1,9 +1,7 @@
 import "server-only";
+import { hubErrorToProblemResponse } from "@/app/api/v3/lib/hub-errors";
 import {
   noContentResponse,
-  problemBadGateway,
-  problemNotFound,
-  problemServiceUnavailable,
   problemUnauthorized,
   successListResponse,
   successResponse,
@@ -21,7 +19,6 @@ import {
   renameTaxonomyNode,
 } from "@/modules/hub/service";
 import type { TaxonomyScopeInput, TaxonomyScopeType } from "@/modules/hub/types";
-import { type HubError, isHubNotConfigured } from "@/modules/hub/utils";
 import { getSessionUserId, requireUnifyDirectoryAccess, requireUnifyDirectoryMutationAccess } from "./access";
 
 type TBaseParams = {
@@ -56,58 +53,22 @@ function buildTaxonomyScope(
   };
 }
 
-type THubFailureOptions = {
-  requestId: string;
-  instance: string;
-  /** The 502 detail. Static text only — never the Hub's own message (see below). */
-  fallbackDetail: string;
-  /**
-   * When set, a Hub 404 maps to a 404 for this resource. Omit it on creates, where "not found" says
-   * nothing useful about the request.
-   */
-  notFound?: { resourceType: string; resourceId: string };
-};
-
 /**
- * Turns a failed Hub call into the right problem response.
+ * What a Hub 503 means for this surface.
  *
- * Not every Hub failure is a fault: a 404 is the benign "gone, or never existed" — a stale run id, a
- * node someone else just removed — and returning that as a 502 both misreads to the caller as a server
- * crash and counts a normal outcome towards the 5xx rate. NO_CONFIG means the integration is switched
- * off on this deployment, which is a 503. Everything else — 5xx, timeout, connection, or a null payload
- * with no error at all — is a genuine upstream failure and stays a 502.
- *
- * The 404 is not an existence oracle: every caller checks directory access first and scopes the Hub
- * call by `tenant_id`, so it only ever means "not in *your* directory".
- *
- * The Hub's own error text is never relayed. The SDK folds the entire RFC 9457 problem body into
- * `message`, so echoing it puts internal Hub URLs and problem codes into a customer-facing response.
- * The full error is already logged in `@/modules/hub/service`; correlate on `requestId`.
+ * Names no single subsystem on purpose: the Hub answers 503 for taxonomy from three unrelated causes
+ * (no taxonomy service wired up, no embedding model configured, or the run failing to start), and only
+ * some are reachable from this UI — a message naming just one would be wrong in the others. It points a
+ * self-hoster at both candidates instead of guessing between them.
  */
-function hubFailureResponse(error: HubError | null, options: THubFailureOptions): Response {
-  const { requestId, instance, fallbackDetail, notFound } = options;
-
-  if (error) {
-    if (error.status === 404 && notFound) {
-      return problemNotFound(requestId, notFound.resourceType, notFound.resourceId, instance);
-    }
-    if (isHubNotConfigured(error)) {
-      return problemServiceUnavailable(
-        requestId,
-        "The Hub integration is not configured on this deployment.",
-        instance
-      );
-    }
-  }
-
-  return problemBadGateway(requestId, fallbackDetail, instance);
-}
+const TAXONOMY_UNAVAILABLE_DETAIL =
+  "Topic analysis is not available: a part of the feedback service it depends on is not configured on this deployment. A self-hosting administrator can check the Hub's taxonomy and embedding configuration.";
 
 /**
  * `fields` and `state` return 200 with an `unavailable` flag on Hub error / NO_CONFIG (mirroring the
  * legacy actions) so a transient Hub blip never trips a false "not enough feedback"/"embedding" gate.
- * The other endpoints return a problem response (see `hubFailureResponse`) so React Query surfaces an
- * error state and the UI can retry.
+ * The other endpoints return a problem response (see `hubErrorToProblemResponse`) so React Query
+ * surfaces an error state and the UI can retry.
  *
  * The flag carries no message on purpose: the UI renders a localized alert off the boolean, so any
  * string sent from here would either go unused or ship untranslated.
@@ -202,10 +163,9 @@ export async function getV3TaxonomyRun(params: TBaseParams & { runId: string }):
 
   const result = await getTaxonomyRun(runId, directoryId);
   if (result.error || !result.data) {
-    return hubFailureResponse(result.error, {
-      requestId,
-      instance,
-      fallbackDetail: "Failed to load taxonomy run",
+    return hubErrorToProblemResponse(result.error, requestId, instance, {
+      badGatewayDetail: "Failed to load taxonomy run",
+      serviceUnavailableDetail: TAXONOMY_UNAVAILABLE_DETAIL,
       notFound: { resourceType: "Taxonomy run", resourceId: runId },
     });
   }
@@ -230,10 +190,9 @@ export async function getV3TaxonomyNodeRecordCounts(
 
   const result = await listTaxonomyNodeRecordCounts(runId, directoryId);
   if (result.error || !result.data) {
-    return hubFailureResponse(result.error, {
-      requestId,
-      instance,
-      fallbackDetail: "Failed to load record counts",
+    return hubErrorToProblemResponse(result.error, requestId, instance, {
+      badGatewayDetail: "Failed to load record counts",
+      serviceUnavailableDetail: TAXONOMY_UNAVAILABLE_DETAIL,
       notFound: { resourceType: "Taxonomy run", resourceId: runId },
     });
   }
@@ -283,10 +242,9 @@ export async function triggerV3TaxonomyRun(
   });
   if (result.error || !result.data) {
     // No `notFound` mapping: this creates a run, so a 404 says nothing useful about the request.
-    return hubFailureResponse(result.error, {
-      requestId,
-      instance,
-      fallbackDetail: "Failed to start taxonomy generation",
+    return hubErrorToProblemResponse(result.error, requestId, instance, {
+      badGatewayDetail: "Failed to start taxonomy generation",
+      serviceUnavailableDetail: TAXONOMY_UNAVAILABLE_DETAIL,
     });
   }
 
@@ -310,10 +268,9 @@ export async function getV3TaxonomyNodeRecords(
 
   const result = await listTaxonomyNodeRecords(nodeId, { tenant_id: directoryId, limit });
   if (result.error || !result.data) {
-    return hubFailureResponse(result.error, {
-      requestId,
-      instance,
-      fallbackDetail: "Failed to load feedback records",
+    return hubErrorToProblemResponse(result.error, requestId, instance, {
+      badGatewayDetail: "Failed to load feedback records",
+      serviceUnavailableDetail: TAXONOMY_UNAVAILABLE_DETAIL,
       notFound: { resourceType: "Taxonomy node", resourceId: nodeId },
     });
   }
@@ -344,10 +301,9 @@ export async function renameV3TaxonomyNode(
     label,
   });
   if (result.error || !result.data) {
-    return hubFailureResponse(result.error, {
-      requestId,
-      instance,
-      fallbackDetail: "Failed to rename taxonomy node",
+    return hubErrorToProblemResponse(result.error, requestId, instance, {
+      badGatewayDetail: "Failed to rename taxonomy node",
+      serviceUnavailableDetail: TAXONOMY_UNAVAILABLE_DETAIL,
       notFound: { resourceType: "Taxonomy node", resourceId: nodeId },
     });
   }
@@ -372,10 +328,9 @@ export async function removeV3TaxonomyNode(params: TBaseParams & { nodeId: strin
 
   const result = await removeTaxonomyNode(nodeId, { tenant_id: directoryId, actor_id: actorId });
   if (result.error || !result.data) {
-    return hubFailureResponse(result.error, {
-      requestId,
-      instance,
-      fallbackDetail: "Failed to remove taxonomy node",
+    return hubErrorToProblemResponse(result.error, requestId, instance, {
+      badGatewayDetail: "Failed to remove taxonomy node",
+      serviceUnavailableDetail: TAXONOMY_UNAVAILABLE_DETAIL,
       notFound: { resourceType: "Taxonomy node", resourceId: nodeId },
     });
   }

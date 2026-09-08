@@ -12,14 +12,15 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import { buildV3AuditLog, queueV3AuditLog } from "./audit";
+import { mapV3ThrownError } from "./errors";
 import {
   type InvalidParam,
   isInvalidParamCode,
   problemBadRequest,
-  problemInternalError,
   problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
+  withBearerChallenge,
 } from "./response";
 import type { TV3AuditLog, TV3Authentication } from "./types";
 
@@ -290,9 +291,14 @@ async function authenticateV3RequestOrRespond(
   const authentication = await authenticateV3Request(req, authMode);
 
   if (!authentication && authMode !== "none") {
+    const unauthorized = problemUnauthorized(requestId, getUnauthenticatedDetail(authMode), instance);
     return {
       authentication: null,
-      response: problemUnauthorized(requestId, getUnauthenticatedDetail(authMode), instance),
+      // RFC 9110 §15.5.2 wants a challenge *applicable to the target resource*. A "session" route accepts
+      // no HTTP authentication scheme at all — cookies are not one — so there is none to send, and
+      // advertising Bearer would tell a caller to try a credential this route never consults (see the
+      // `authMode === "session"` early return above). The other modes do accept `Authorization: Bearer`.
+      response: authMode === "session" ? unauthorized : withBearerChallenge(unauthorized),
     };
   }
 
@@ -322,7 +328,7 @@ async function applyV3RateLimitOrRespond(params: {
   try {
     await applyRateLimit(config, identifier);
   } catch (error) {
-    log.warn({ error, statusCode: 429 }, "V3 API rate limit exceeded");
+    log.warn({ err: error, statusCode: 429 }, "V3 API rate limit exceeded");
     return problemTooManyRequests(
       requestId,
       error instanceof Error ? error.message : "Rate limit exceeded",
@@ -421,8 +427,10 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         auditLog.eventId = requestId;
         await queueV3AuditLog(auditLog, requestId, log);
       }
-      log.error({ error, statusCode: 500 }, "V3 API unexpected error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
+      // Defence in depth. Operations map their own throws and return a problem response — they have to,
+      // because the MCP tools call them directly, without this wrapper. Anything reaching here escaped
+      // that, so it is mapped by the same rules rather than being flattened into a blanket 500.
+      return ensureRequestIdHeader(mapV3ThrownError(error, { log, requestId, instance }), requestId);
     }
   };
 };
