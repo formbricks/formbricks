@@ -8,6 +8,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -23,6 +24,21 @@ interface FollowUpItemProps {
   mailFrom: string;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
+  /**
+   * Whether a *new* follow-up may still be created. Duplicating mints one with a fresh id, so it
+   * sits behind the same gate as the create buttons: without it a Workflows-enabled deployment
+   * could keep minting follow-ups from any survey that already has one, and an organization whose
+   * entitlement has lapsed could add a row that `checkSurveyFollowUpsPermission` then rejects on
+   * every subsequent save of the survey — including edits unrelated to follow-ups.
+   */
+  canDuplicate: boolean;
+  /**
+   * Whether this follow-up is actually being sent. False once the organization's entitlement has
+   * lapsed: `sendFollowUpsForResponse` refuses to send, so the row is styled as inactive rather
+   * than left looking live. Muted rather than red — this is disabled, not broken, and the warning
+   * colour already means "this follow-up is misconfigured" on the issue badge below.
+   */
+  isSending: boolean;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   locale: TUserLocale;
 }
@@ -36,7 +52,9 @@ export const FollowUpItem = ({
   teamMemberDetails,
   setLocalSurvey,
   locale,
-}: FollowUpItemProps) => {
+  canDuplicate,
+  isSending,
+}: Readonly<FollowUpItemProps>) => {
   const { t } = useTranslation();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
   const [deleteFollowUpModalOpen, setDeleteFollowUpModalOpen] = useState(false);
@@ -121,14 +139,21 @@ export const FollowUpItem = ({
 
   return (
     <>
-      <div className="relative cursor-pointer rounded-lg border border-slate-300 bg-white p-4 hover:bg-slate-50">
+      <div
+        className={cn(
+          "relative cursor-pointer rounded-lg border border-slate-300 p-4",
+          // Muted, not red: sending is disabled but the row stays clickable, because the owner
+          // still has to be able to read, fix and later migrate it. Stops at slate-50 so the gray
+          // badges inside (themselves `bg-slate-100`) keep their edge against the card.
+          isSending ? "bg-white hover:bg-slate-50" : "bg-slate-50 hover:bg-slate-100"
+        )}>
         <button
           type="button"
           className="flex w-full flex-col items-start gap-y-2"
           onClick={() => {
             setEditFollowUpModalOpen(true);
           }}>
-          <h3 className="text-slate-900">{followUp.name}</h3>
+          <h3 className={isSending ? "text-slate-900" : "text-slate-500"}>{followUp.name}</h3>
           <div className="flex gap-x-2">
             <Badge
               size="normal"
@@ -145,6 +170,14 @@ export const FollowUpItem = ({
               type="gray"
               text={t("workspace.surveys.edit.follow_ups_item_send_email_tag")}
             />
+
+            {!isSending ? (
+              <Badge
+                size="normal"
+                type="gray"
+                text={t("workspace.surveys.edit.follow_ups_item_not_sending_tag")}
+              />
+            ) : null}
 
             {isEmailToInvalid || isEndingInvalid ? (
               <Badge
@@ -170,18 +203,20 @@ export const FollowUpItem = ({
             </Button>
           </TooltipRenderer>
 
-          <TooltipRenderer tooltipContent={t("common.duplicate")}>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={async (e) => {
-                e.stopPropagation();
-                duplicateFollowUp();
-              }}
-              aria-label={t("common.duplicate")}>
-              <CopyIcon className="size-4 text-slate-500" />
-            </Button>
-          </TooltipRenderer>
+          {canDuplicate && (
+            <TooltipRenderer tooltipContent={t("common.duplicate")}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  duplicateFollowUp();
+                }}
+                aria-label={t("common.duplicate")}>
+                <CopyIcon className="size-4 text-slate-500" />
+              </Button>
+            </TooltipRenderer>
+          )}
         </div>
       </div>
 

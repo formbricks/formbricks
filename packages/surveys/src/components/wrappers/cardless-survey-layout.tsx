@@ -1,11 +1,10 @@
 import { type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
+import { ScrollToBottomButton } from "@/components/buttons/scroll-to-bottom-button";
 import { ProgressBar } from "@/components/general/progress-bar";
-import { ChevronDownIcon } from "@/components/icons/chevron-down-icon";
 import { cn } from "@/lib/utils";
 
 interface CardlessSurveyLayoutProps {
@@ -32,7 +31,6 @@ export function CardlessSurveyLayout({
   showCardlessPreviewLogoSlot,
   linkSurveyCardMaxWidth,
 }: Readonly<CardlessSurveyLayoutProps>) {
-  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isScrollAtTop, setIsScrollAtTop] = useState(true);
   const [isScrollAtBottom, setIsScrollAtBottom] = useState(false);
@@ -120,7 +118,7 @@ export function CardlessSurveyLayout({
           <div
             className={cn(
               // Extra bottom padding keeps the last card clear of the floating scroll-to-bottom button.
-              "mx-auto flex w-full flex-col items-center px-4 pb-12 sm:px-6",
+              "mx-auto flex w-full flex-col items-center px-4 pb-14 sm:px-6",
               showCardlessPreviewLogoSlot ? "pt-6" : "pt-10 sm:pt-12"
             )}
             style={cardMaxWidthStyle}>
@@ -135,20 +133,7 @@ export function CardlessSurveyLayout({
                 style={{ background: `linear-gradient(to top, ${fadeColor}, transparent)` }}
               />
             )}
-            <button
-              type="button"
-              onClick={scrollToBottom}
-              style={{
-                transform: "translateX(-50%)",
-                ...(isSolidColorBackground ? { backgroundColor: fadeColor } : undefined),
-              }}
-              className={cn(
-                "hover:border-border focus:ring-brand absolute bottom-2 left-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-transparent shadow-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
-                !isSolidColorBackground && "bg-survey-bg/90 backdrop-blur-sm"
-              )}
-              aria-label={t("common.scroll_to_bottom")}>
-              <ChevronDownIcon className="text-heading h-5 w-5" />
-            </button>
+            <ScrollToBottomButton onClick={scrollToBottom} />
           </>
         )}
       </div>
