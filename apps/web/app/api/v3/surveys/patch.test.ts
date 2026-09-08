@@ -921,9 +921,9 @@ describe("patchV3Survey", () => {
     test("leaves P2025 as a database error when there is no precondition", async () => {
       rejectWithP2025();
 
-      await expect(
-        patchV3Survey(currentSurvey, { name: "x" }, "req_cas_6", "org_1")
-      ).rejects.toBeInstanceOf(DatabaseError);
+      await expect(patchV3Survey(currentSurvey, { name: "x" }, "req_cas_6", "org_1")).rejects.toBeInstanceOf(
+        DatabaseError
+      );
       expect(prisma.survey.findFirst).not.toHaveBeenCalled();
     });
 

@@ -25,12 +25,12 @@ import {
   createV3SurveyResponse,
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
+  editV3SurveyBlocksResponse,
   getV3Survey,
   listV3Surveys,
-  editV3SurveyBlocksResponse,
   patchV3SurveyResponse,
-  setV3SurveyBlockOrderResponse,
   restoreV3Survey,
+  setV3SurveyBlockOrderResponse,
   validateV3Survey,
   validateV3SurveyFromRawInput,
 } from "./operations";
@@ -741,9 +741,7 @@ describe("patchV3SurveyResponse", () => {
     const body = await response.json();
     expect(body.code).toBe("stored_survey_invalid");
     expect(body.detail).toMatch(/not evaluated/);
-    expect(body.invalid_params).toEqual([
-      expect.objectContaining({ name: "blocks.0.elements.0.headline" }),
-    ]);
+    expect(body.invalid_params).toEqual([expect.objectContaining({ name: "blocks.0.elements.0.headline" })]);
   });
 
   test("patches an authorized survey, serializes it, and enriches the audit log", async () => {
@@ -767,13 +765,7 @@ describe("patchV3SurveyResponse", () => {
       requestId,
       instance,
     });
-    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
-      survey,
-      patchBody,
-      requestId,
-      "org_1",
-      undefined
-    );
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, patchBody, requestId, "org_1", undefined);
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
       targetId: "survey_1",

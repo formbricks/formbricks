@@ -261,7 +261,10 @@ async function main(): Promise<void> {
       archiveSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_ARCHIVE } },
       editSurveyBlocksV3: {
         path: { surveyId: CONTRACT_IDS.SURVEY_BLOCKS_EDIT },
-        body: { blockId: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block`, id: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block` },
+        body: {
+          blockId: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block`,
+          id: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block`,
+        },
       },
       setSurveyBlockOrderV3: { path: { surveyId: CONTRACT_IDS.SURVEY_BLOCKS_ORDER } },
       restoreSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_RESTORE } },

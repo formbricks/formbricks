@@ -66,7 +66,6 @@ export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSe
   return searchParams;
 }
 
-
 /**
  * Project a successful survey-resource response down to what an editing agent actually needs.
  *

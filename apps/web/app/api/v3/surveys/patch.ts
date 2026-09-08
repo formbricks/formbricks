@@ -348,11 +348,7 @@ export async function patchV3Survey(
     effectivePrecondition &&
     currentSurvey.updatedAt.getTime() !== effectivePrecondition.expectedUpdatedAt.getTime()
   ) {
-    throw new V3SurveyStaleError(
-      effectivePrecondition.expectedUpdatedAt,
-      currentSurvey.updatedAt,
-      "read"
-    );
+    throw new V3SurveyStaleError(effectivePrecondition.expectedUpdatedAt, currentSurvey.updatedAt, "read");
   }
 
   await assertV3SurveyWritePermissions(

@@ -191,7 +191,6 @@ function getImmutableElementIdIssues(
   return issues;
 }
 
-
 /**
  * Server-owned fields that GET emits and PATCH used to reject outright (ENG-3069).
  *

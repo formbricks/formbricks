@@ -7,9 +7,9 @@ import {
   createdResponse,
   noContentResponse,
   problemBadRequest,
+  problemConflict,
   problemForbidden,
   successListResponse,
-  problemConflict,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import {
@@ -771,10 +771,12 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
         successResponse(fullResource, { requestId: "req_tool" })
       );
 
-      const result = await tools.get("edit_survey_blocks")!.handler(
-        { surveyId, ops: [{ op: "remove", id: "blk_b" }], response_format: "detailed" },
-        { http: { authInfo } }
-      );
+      const result = await tools
+        .get("edit_survey_blocks")!
+        .handler(
+          { surveyId, ops: [{ op: "remove", id: "blk_b" }], response_format: "detailed" },
+          { http: { authInfo } }
+        );
 
       expect(result.structuredContent).toEqual({ data: fullResource, requestId: "req_tool" });
     });
@@ -791,10 +793,9 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
         })
       );
 
-      const result = await tools.get("edit_survey_blocks")!.handler(
-        { surveyId, ops: [{ op: "remove", id: "blk_b" }] },
-        { http: { authInfo } }
-      );
+      const result = await tools
+        .get("edit_survey_blocks")!
+        .handler({ surveyId, ops: [{ op: "remove", id: "blk_b" }] }, { http: { authInfo } });
 
       expect(result.isError).toBe(true);
       expect(result.structuredContent.error).toMatchObject({
@@ -813,10 +814,9 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
         successResponse(fullResource, { requestId: "req_tool" })
       );
 
-      const result = await tools.get("set_survey_block_order")!.handler(
-        { surveyId, order: ["blk_b", "blk_a"] },
-        { http: { authInfo } }
-      );
+      const result = await tools
+        .get("set_survey_block_order")!
+        .handler({ surveyId, order: ["blk_b", "blk_a"] }, { http: { authInfo } });
 
       expect(setV3SurveyBlockOrderResponse).toHaveBeenCalledWith(
         expect.objectContaining({ surveyId, body: { order: ["blk_b", "blk_a"] } })
