@@ -38,7 +38,12 @@ export type TImportDraftSchema = ReturnType<typeof createImportDraftSchema>;
  * The import draft schema for one call: localized text arrays whose `languageCode` enum is exactly the
  * detected codes (D2), the doubled caps (D4) and the extended element list.
  */
-export function createImportDraftSchema(languageCodes: readonly string[]) {
+export function createImportDraftSchema(
+  languageCodes: readonly string[],
+  options: {
+    /** Merged drafts span several calls; the per-call block cap is multiplied by the chunk count. */ chunks?: number;
+  } = {}
+) {
   const codes = [...new Set(languageCodes)] as [string, ...string[]];
   if (codes.length === 0) {
     throw new Error("createImportDraftSchema needs at least one language code");
@@ -49,7 +54,7 @@ export function createImportDraftSchema(languageCodes: readonly string[]) {
     description: createLocalizedText(codes, GENERATED_DESCRIPTION_MAX_LENGTH),
     choice: createLocalizedText(codes, GENERATED_CHOICE_MAX_LENGTH),
     limits: {
-      maxBlocks: IMPORTED_SURVEY_MAX_BLOCKS,
+      maxBlocks: IMPORTED_SURVEY_MAX_BLOCKS * Math.max(1, options.chunks ?? 1),
       maxQuestionsPerBlock: IMPORTED_SURVEY_MAX_QUESTIONS_PER_BLOCK,
       maxChoices: IMPORTED_SURVEY_MAX_CHOICES,
     },

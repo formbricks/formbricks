@@ -210,6 +210,25 @@ async function main() {
     `# Employee pulse\r\n\r\n\r\n\r\nA short check-in, three questions.\r\n\r\n1. How was your week? (1-5)\r\n2. What blocked you?\r\n3. Which of these would help?\r\n   - Fewer meetings\r\n   - Clearer priorities\r\n   - More pairing\r\n`
   );
 
+  // --- Long Markdown questionnaires for the chunker ----------------------------------------------------
+
+  const OPTIONS = ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"];
+  const longSurvey = (questions: number, sectionSize: number | null) => {
+    const lines: string[] = ["# Long questionnaire", ""];
+    for (let index = 0; index < questions; index += 1) {
+      if (sectionSize && index % sectionSize === 0) {
+        lines.push(`## Section ${index / sectionSize + 1}`, "");
+      }
+      lines.push(`${index + 1}. Statement ${index + 1}: our product helps me with task number ${index + 1}.`);
+      for (const option of OPTIONS.slice(0, 3 + (index % 3))) lines.push(`   - ${option}`);
+      lines.push("");
+    }
+    lines.push("Thank you for taking part!", "");
+    return lines.join("\n");
+  };
+  writeFileSync(join(OUT, "survey-150-questions.md"), longSurvey(150, 15));
+  writeFileSync(join(OUT, "survey-60-questions.md"), longSurvey(60, null));
+
   // --- PDF ---------------------------------------------------------------------------------------------
 
   function pdfEscape(text: string): string {
