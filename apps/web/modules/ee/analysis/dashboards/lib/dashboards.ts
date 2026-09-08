@@ -1,10 +1,13 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import {
+  isPrismaKnownRequestError,
+  isUniqueConstraintError,
+  retryOnTransactionConflict,
+} from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { selectChart } from "@/modules/ee/analysis/charts/lib/charts";
 import {
@@ -53,26 +56,6 @@ const resolveWidgetPosition = (
     x: baseLayout.x,
     y: layouts.reduce((max, layout) => Math.max(max, layout.y + layout.h), 0),
   };
-};
-
-/**
- * Attempts for a `Serializable` transaction that reads a dashboard's widgets before writing one.
- * Two concurrent adds read the same state and one is aborted with `P2034`; retrying re-reads and
- * lands in the next slot instead of surfacing an error for a conflict the database expects.
- */
-const MAX_WIDGET_TRANSACTION_ATTEMPTS = 3;
-
-const runWithTransactionConflictRetry = async <T>(run: () => Promise<T>): Promise<T> => {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      return await run();
-    } catch (error) {
-      const isLastAttempt = attempt >= MAX_WIDGET_TRANSACTION_ATTEMPTS;
-      if (isLastAttempt || !isPrismaKnownRequestError(error, PrismaErrorType.TransactionConflict)) {
-        throw error;
-      }
-    }
-  }
 };
 
 const selectDashboard = {
@@ -402,7 +385,7 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
   try {
     // Retried rather than surfaced: `duplicateChartAndAddWidget` has already committed the chart
     // copy by the time this runs, so failing here would leave a chart on no dashboard.
-    return await runWithTransactionConflictRetry(() =>
+    return await retryOnTransactionConflict(() =>
       prisma.$transaction(
         async (tx) => {
           const [chart, dashboard] = await Promise.all([
