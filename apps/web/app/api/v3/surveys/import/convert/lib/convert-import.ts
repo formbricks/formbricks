@@ -2,6 +2,7 @@ import "server-only";
 import { createId } from "@paralleldrive/cuid2";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
+import { getRateLimitIdentifier } from "@/app/api/v3/lib/api-wrapper";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   problemBadRequest,
@@ -10,11 +11,16 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { mapV3SurveyGenerateError } from "@/app/api/v3/surveys/generate/error-mapping";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
+import { assertOrganizationAIConfigured } from "@/lib/ai/service";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { type TImportDetectionFailureCode, detectImportSource } from "@/modules/survey/import/detect";
 import { getImportLaneHandler } from "@/modules/survey/import/lanes";
 import { resolveImportCandidate } from "@/modules/survey/import/resolve";
-import type { TImportContext } from "@/modules/survey/import/types";
+import { IMPORT_LANE_BY_KIND, type TImportContext } from "@/modules/survey/import/types";
 import type { TV3SurveyImportConvertBody } from "../schemas";
 
 type TConvertImportParams = {
@@ -103,11 +109,36 @@ export async function convertImportFile({
       importRunId,
       languageHint: body.fields.language,
     };
+    const isAiLane = IMPORT_LANE_BY_KIND[detection.kind] === "ai";
+    const aiErrorContext = {
+      requestId,
+      instance,
+      workspaceId: authResult.workspaceId,
+      organizationId: authResult.organizationId,
+    };
+    const startedAt = Date.now();
 
-    const candidate = await lane(
-      { kind: detection.kind, fileName: file.fileName, content: { type: "bytes", bytes: file.bytes } },
-      ctx
-    );
+    let candidate;
+    try {
+      if (isAiLane) {
+        // Gate and shared AI budget come before the file is read: an org without AI never pays for
+        // extraction, and prompt-create and import spend from the same 10/min bucket.
+        await assertOrganizationAIConfigured(authResult.organizationId);
+        const identifier = getRateLimitIdentifier(authentication);
+        if (identifier) {
+          await applyRateLimit(rateLimitConfigs.api.v3SurveyGenerate, identifier);
+        }
+      }
+
+      candidate = await lane(
+        { kind: detection.kind, fileName: file.fileName, content: { type: "bytes", bytes: file.bytes } },
+        ctx
+      );
+    } catch (error) {
+      if (!isAiLane) throw error;
+      log.warn({ error, sourceKind: detection.kind }, "AI import lane failed");
+      return mapV3SurveyGenerateError(error, aiErrorContext);
+    }
 
     const resolved = await resolveImportCandidate(candidate, {
       workspaceId: authResult.workspaceId,
@@ -126,6 +157,22 @@ export async function convertImportFile({
       },
       "Import file converted"
     );
+
+    if (isAiLane && ctx.userId && resolved.document) {
+      capturePostHogEvent(
+        ctx.userId,
+        "ai_survey_imported",
+        {
+          source_kind: detection.kind,
+          chunk_count: resolved.report.source.chunks ?? 1,
+          question_count: resolved.report.summary.elements,
+          language_count: resolved.report.summary.languages.length,
+          chars: file.bytes.byteLength,
+          duration_ms: Date.now() - startedAt,
+        },
+        { organizationId: authResult.organizationId, workspaceId: authResult.workspaceId }
+      );
+    }
 
     return successResponse(
       {

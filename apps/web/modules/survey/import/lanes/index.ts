@@ -4,6 +4,7 @@ import {
   type TImportLaneHandler,
   type TImportSourceKind,
 } from "../types";
+import { documentLane } from "./document";
 import { formbricksLane } from "./formbricks";
 import { qsfLane } from "./qsf";
 
@@ -14,13 +15,14 @@ import { qsfLane } from "./qsf";
 const LANE_HANDLERS: Partial<Record<TImportLane, TImportLaneHandler>> = {
   lossless: formbricksLane,
   structured: qsfLane,
+  ai: documentLane,
 };
 
 export function getImportLaneHandler(kind: TImportSourceKind): TImportLaneHandler | null {
   return LANE_HANDLERS[IMPORT_LANE_BY_KIND[kind]] ?? null;
 }
 
-/** Test seam and future registration point for the structured and AI lanes. */
+/** Test seam: swap a lane handler for a stub. */
 export function registerImportLane(lane: TImportLane, handler: TImportLaneHandler): void {
   LANE_HANDLERS[lane] = handler;
 }
