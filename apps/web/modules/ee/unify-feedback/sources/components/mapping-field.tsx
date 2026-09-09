@@ -202,7 +202,9 @@ export const FormTargetField = ({
     hasMapping,
     isEnum,
     isTimestamp,
-    mapping?.staticValue,
+    // The whole `mapping`, not just `mapping?.staticValue`: a narrower dependency than the body
+    // actually reads lets the memo keep a value built from a stale mapping (ENG-2366).
+    mapping,
     otherUsageByColumn,
     sourceFields,
     t,

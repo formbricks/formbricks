@@ -314,6 +314,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           organizationId: decision.organizationId,
           assignToDefaultTeam: decision.assignToDefaultTeam,
           signupSource: decision.signupSource,
+          useDefaultOrganization: decision.useDefaultOrganization,
           attributionProperties: getSsoAttributionProperties(),
         });
 

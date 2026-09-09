@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 
@@ -41,12 +41,16 @@ export const useSwitcherData = (
 
   // Hold the latest loader/onError in refs so callers can pass inline closures (e.g. ones that close
   // over organizationId) without memoizing them and without churning `load`'s identity every render.
+  // The writes happen in an effect rather than during render: a ref written while rendering is
+  // mutation of state the renderer is allowed to retry or discard (ENG-2366). `load` only ever
+  // reads these from an async callback that runs after the dropdown opens, which is after the
+  // effect has committed the current values.
   const loaderRef = useRef(loader);
-  // eslint-disable-next-line react-hooks/refs -- migration ENG-2366
-  loaderRef.current = loader;
   const onErrorRef = useRef(onError);
-  // eslint-disable-next-line react-hooks/refs -- migration ENG-2366
-  onErrorRef.current = onError;
+  useEffect(() => {
+    loaderRef.current = loader;
+    onErrorRef.current = onError;
+  }, [loader, onError]);
 
   const load = useCallback(
     async (force = false) => {

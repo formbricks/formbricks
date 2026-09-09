@@ -12,6 +12,7 @@ import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import { authClient } from "@/modules/auth/lib/auth-client";
+import { getOAuthErrorVariant } from "@/modules/auth/lib/oauth-error";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
@@ -79,10 +80,39 @@ export const LoginForm = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
-  // Better Auth surfaces the collision as `account_not_linked`; NextAuth used `OAuthAccountNotLinked`.
-  // Accept both so the "not linked" alert survives the cutover.
-  const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked" || oauthError === "account_not_linked";
+  // Any SSO callback failure lands here as `?error=<code>`; classify it so the user is told what
+  // happened instead of meeting an untouched form (ENG-2089).
+  const oauthErrorVariant = getOAuthErrorVariant(oauthError);
   const { t } = useTranslation();
+
+  // The `t("…")` calls are written out per variant because `scan-translations` only recognizes literal
+  // keys; a key reached through a lookup table reads as unused and fails `pnpm i18n:validate`.
+  const oauthErrorAlert = useMemo(() => {
+    switch (oauthErrorVariant) {
+      case "account_not_linked":
+        return {
+          title: t("auth.login.oauth_account_not_linked_title"),
+          description: t("auth.login.oauth_account_not_linked_description"),
+        };
+      case "signup_not_allowed":
+        return {
+          title: t("auth.login.oauth_signup_not_allowed_title"),
+          description: t("auth.login.oauth_signup_not_allowed_description"),
+        };
+      case "misconfigured":
+        return {
+          title: t("auth.login.oauth_misconfigured_title"),
+          description: t("auth.login.oauth_misconfigured_description"),
+        };
+      case "generic":
+        return {
+          title: t("auth.login.oauth_generic_error_title"),
+          description: t("auth.login.oauth_generic_error_description"),
+        };
+      default:
+        return null;
+    }
+  }, [oauthErrorVariant, t]);
 
   const signupHref = useMemo(() => {
     const base = inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup";
@@ -167,7 +197,10 @@ export const LoginForm = ({
     }
   }, []);
 
-  const formLabel = useMemo(() => {
+  // Neither of these was memoized for a reason worth keeping: one picks a translated string, the
+  // other builds a single element. Both listed `form`, which react-hook-form mutates in place, so
+  // the memo could hold a value built against form state that has since moved on (ENG-2366).
+  const getFormLabel = () => {
     if (totpBackup) {
       return t("auth.login.enter_your_backup_code");
     }
@@ -177,9 +210,10 @@ export const LoginForm = ({
     }
 
     return t("auth.login.login_to_your_account");
-  }, [t, totpBackup, totpLogin]);
+  };
+  const formLabel = getFormLabel();
 
-  const TwoFactorComponent = useMemo(() => {
+  const renderTwoFactor = () => {
     if (totpBackup) {
       return <TwoFactorBackup form={form} />;
     }
@@ -189,7 +223,8 @@ export const LoginForm = ({
     }
 
     return null;
-  }, [form, totpBackup, totpLogin]);
+  };
+  const TwoFactorComponent = renderTwoFactor();
 
   return (
     <FormProvider {...form}>
@@ -203,11 +238,11 @@ export const LoginForm = ({
             </AlertDescription>
           </Alert>
         )}
-        {oauthAccountNotLinked && (
+        {oauthErrorAlert && (
           <Alert variant="error" className="mb-4 text-left" role="status">
-            <AlertTitle>{t("auth.login.oauth_account_not_linked_title")}</AlertTitle>
+            <AlertTitle>{oauthErrorAlert.title}</AlertTitle>
             <AlertDescription>
-              <p>{t("auth.login.oauth_account_not_linked_description")}</p>
+              <p>{oauthErrorAlert.description}</p>
             </AlertDescription>
           </Alert>
         )}
