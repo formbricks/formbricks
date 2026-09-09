@@ -1547,7 +1547,7 @@ paths:
                     meta:
                       limit: 20
                       totalCountRelation: null
-                      nextCursor: eyJ2IjoxLCJzb3J0QnkiOiItY3JlYXRlZEF0IiwiY3JlYXRlZEF0IjoiMjAyNi0wOC0yN1QwOToxNDowMy40MTdaIiwiaWQiOiJjbHJzOWYyYTQxYjdjOGQwZTZmNWE0YjNjMiIsImZwIjoiOGYxNGU0NWYifQ
+                      nextCursor: eyJ2ZXJzaW9uIjoxLCJraW5kIjoicmVzcG9uc2VzIiwic29ydEJ5IjoiLWNyZWF0ZWRBdCIsImZwIjoiZTNpT0pQNkN4V0p0TEZTOSIsInZhbHVlIjoiMjAyNi0wOC0yN1QwOToxNDowMy40MTdaIiwiaWQiOiJjbHJzMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMiJ9
                       totalCount: null
         '400':
           description: |
