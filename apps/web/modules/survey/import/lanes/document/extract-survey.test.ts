@@ -95,8 +95,8 @@ describe("extractSurveyDraft", () => {
     expect(call).toMatchObject({
       schemaName: "FormbricksSurveyImportDraft",
       temperature: 0.1,
-      maxOutputTokens: 8192,
-      timeout: 45_000,
+      maxOutputTokens: 16_384,
+      timeout: 90_000,
       aiTracing: { feature: "ai_survey_import" },
     });
     expect(call.prompt).toContain("Allowed language codes: en-US, de-DE");

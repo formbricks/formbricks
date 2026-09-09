@@ -19,10 +19,17 @@ import { generateOrganizationAIObject, streamOrganizationAIObject } from "@/lib/
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { importError, importInfo } from "../../report";
 import type { TImportIssue } from "../../types";
+import { abortAfter } from "./abort";
 import { type TImportPromptPart, buildImportSystemPrompt, buildImportUserPrompt } from "./prompt";
 
 /** Extraction is transcription, not creativity: the lowest temperature the providers accept reliably. */
 const IMPORT_EXTRACTION_TEMPERATURE = 0.1;
+/**
+ * A chunk of ~24 questions, every nullable field spelled out per language, plus the model's reasoning
+ * tokens: 8192 (Create with AI's budget) overflowed on the first chunk of the 150-question fixture.
+ */
+export const IMPORT_EXTRACTION_MAX_OUTPUT_TOKENS = 16_384;
+export const IMPORT_EXTRACTION_TIMEOUT_MS = 90_000;
 
 export type TImportDraftSchema = ReturnType<typeof createImportDraftSchema>;
 
@@ -75,6 +82,8 @@ export function buildImportDraftRequest(
     system: buildImportSystemPrompt(),
     prompt: buildImportUserPrompt(params),
     temperature: IMPORT_EXTRACTION_TEMPERATURE,
+    maxOutputTokens: IMPORT_EXTRACTION_MAX_OUTPUT_TOKENS,
+    timeout: IMPORT_EXTRACTION_TIMEOUT_MS,
   });
 }
 
@@ -187,7 +196,7 @@ export async function extractSurveyDraft(params: TExtractSurveyDraftParams): Pro
   const generation = await generateOrganizationAIObject({
     organizationId: params.organizationId,
     aiTracing: buildTracing(params),
-    abortSignal: params.signal,
+    abortSignal: abortAfter(IMPORT_EXTRACTION_TIMEOUT_MS, params.signal),
     ...buildImportDraftRequest(params, schema),
   });
 
@@ -207,7 +216,7 @@ export async function streamSurveyDraft(params: TExtractSurveyDraftParams): Prom
   const result = await streamOrganizationAIObject<z.infer<TImportDraftSchema["forAI"]>>({
     organizationId: params.organizationId,
     aiTracing: buildTracing(params),
-    abortSignal: params.signal,
+    abortSignal: abortAfter(IMPORT_EXTRACTION_TIMEOUT_MS, params.signal),
     ...buildImportDraftRequest(params, schema),
   });
 

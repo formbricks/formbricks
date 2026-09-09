@@ -5,6 +5,7 @@ import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { importWarning } from "../../report";
 import type { TImportDetectedLanguage, TImportIssue } from "../../types";
+import { abortAfter } from "./abort";
 import { buildLanguageDetectionSystemPrompt, buildLanguageDetectionUserPrompt } from "./prompt";
 
 /** Below this the detection call is skipped; the extraction call's own language codes decide (ENG-2999). */
@@ -219,7 +220,7 @@ export async function detectDocumentLanguages(
     temperature: 0,
     maxOutputTokens: LANGUAGE_DETECTION_MAX_OUTPUT_TOKENS,
     timeout: LANGUAGE_DETECTION_TIMEOUT_MS,
-    abortSignal: params.signal,
+    abortSignal: abortAfter(LANGUAGE_DETECTION_TIMEOUT_MS, params.signal),
   });
 
   const parsed = ZLanguageDetection.safeParse(generation.object);
