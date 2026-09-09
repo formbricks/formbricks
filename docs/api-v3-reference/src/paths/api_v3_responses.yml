@@ -175,7 +175,10 @@ get:
                       - "null"
                     description: >-
                       Opaque cursor for the next page. `null` when there are no more results — the
-                      only reliable end-of-collection signal.
+                      only reliable end-of-collection signal. Pass it back verbatim: the encoding is
+                      deliberately unspecified and may change without notice, so a client that
+                      decodes or constructs one is relying on something this contract does not
+                      promise.
                   totalCount:
                     type:
                       - integer
@@ -293,7 +296,7 @@ get:
                 meta:
                   limit: 20
                   totalCountRelation: null
-                  nextCursor: eyJjcmVhdGVkQXQiOiIyMDI2LTA4LTI3VDA5OjE0OjAzLjQxN1oifQ
+                  nextCursor: eyJ2IjoxLCJzb3J0QnkiOiItY3JlYXRlZEF0IiwiY3JlYXRlZEF0IjoiMjAyNi0wOC0yN1QwOToxNDowMy40MTdaIiwiaWQiOiJjbHJzOWYyYTQxYjdjOGQwZTZmNWE0YjNjMiIsImZwIjoiOGYxNGU0NWYifQ
                   totalCount: null
     "400":
       description: >
