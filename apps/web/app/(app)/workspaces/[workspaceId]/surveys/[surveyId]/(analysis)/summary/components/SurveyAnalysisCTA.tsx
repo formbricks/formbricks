@@ -165,20 +165,41 @@ export const SurveyAnalysisCTA = ({
   const handleGenerateExampleResponses = async () => {
     if (isGeneratingExamples) return;
     setIsGeneratingExamples(true);
-    // No loading toast: the status line below narrates the wait, and a toast on top of it would say
-    // the same thing twice while telling the user less.
+    // The status line rides in the loading toast, where the static "Generating..." text used to sit,
+    // rather than in the action row: inline it widened the row enough to squeeze the survey title onto
+    // two lines for the whole wait. `icon: null` drops the toast's own spinner, since the status line
+    // brings the animated AI mark.
+    const loadingToastId = toast.loading(
+      <AiStatusLine
+        isActive
+        messages={[
+          t("workspace.surveys.summary.ai_status_reading_survey"),
+          t("workspace.surveys.summary.ai_status_drafting_answers"),
+          t("workspace.surveys.summary.ai_status_saving_responses"),
+        ]}
+      />,
+      { icon: null }
+    );
+    // Reusing the id turns the loading toast into the result in place. `icon: undefined` is deliberate:
+    // an update merges over the loading toast, so without it the `icon: null` above would carry over
+    // and the result would render without its check or cross.
+    const resultToastOptions = { id: loadingToastId, icon: undefined };
     try {
       const result = await generateExampleResponsesAction({ surveyId: survey.id });
       if (result?.data) {
         toast.success(
           t("workspace.surveys.summary.example_responses_generated_successfully", {
             count: result.data.createdCount,
-          })
+          }),
+          resultToastOptions
         );
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"));
+        toast.error(
+          errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"),
+          resultToastOptions
+        );
       }
     } finally {
       setIsGeneratingExamples(false);
@@ -264,18 +285,6 @@ export const SurveyAnalysisCTA = ({
 
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
-      {/* Sits in the action row rather than over the summary: the answers land in the page behind it,
-        so covering that page to say it is being filled in would hide the thing being waited for. */}
-      <AiStatusLine
-        isActive={isGeneratingExamples}
-        messages={[
-          t("workspace.surveys.summary.ai_status_reading_survey"),
-          t("workspace.surveys.summary.ai_status_drafting_answers"),
-          t("workspace.surveys.summary.ai_status_saving_responses"),
-        ]}
-        className="mr-1 shrink-0"
-      />
-
       {!isReadOnly && (appSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
         <SurveyStatusDropdown />
       )}
