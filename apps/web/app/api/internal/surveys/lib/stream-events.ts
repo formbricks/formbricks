@@ -42,6 +42,8 @@ export type TSurveyStreamErrorEvent = {
   detail: string;
   invalid_params?: InvalidParam[];
   retryAfter?: number;
+  /** A support handle the UI prints under the message (the import run id); the server log carries the same value. */
+  reference?: string;
 };
 
 const encoder = new TextEncoder();

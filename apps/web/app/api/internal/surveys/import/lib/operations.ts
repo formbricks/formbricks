@@ -195,7 +195,7 @@ export async function streamImportConversion({
           log.info("Survey import stream aborted by the client");
         } else {
           log.error({ err: error, sourceKind: detection.kind }, "Survey import stream failed");
-          emit(toStreamErrorEvent(error));
+          emit({ ...toStreamErrorEvent(error), reference: importRunId });
         }
       } finally {
         detach();
