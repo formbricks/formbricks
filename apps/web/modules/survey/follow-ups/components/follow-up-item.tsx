@@ -113,8 +113,9 @@ export const FollowUpItem = ({
     return !matchedQuestion && !matchedHiddenField && !matchedEmail;
   }, [
     followUp.action.properties,
-    localSurvey.hiddenFields?.enabled,
-    localSurvey.hiddenFields?.fieldIds,
+    // The whole `hiddenFields`, not its two sub-properties: a narrower dependency than the body
+    // actually reads lets the memo keep a value built from stale hidden fields (ENG-2366).
+    localSurvey.hiddenFields,
     localSurvey.blocks,
     teamMemberDetails,
     userEmail,

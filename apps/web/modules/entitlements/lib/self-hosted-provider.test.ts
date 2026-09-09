@@ -115,6 +115,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
       source: "self_hosted_license",
       features: [],
       limits: { workspaces: 1, monthlyResponses: null, monthlyWorkflowRuns: null },
+      licenseActive: false,
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: null,

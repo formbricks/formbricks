@@ -243,7 +243,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     onChangeValue(val, undefined, true);
   };
 
-  const getDisplayValue = useMemo(() => {
+  // Renders the selected option(s) inside the trigger. Not memoized: it builds a handful of
+  // elements from an already-narrow option list, and the compiler would not memoize a JSX-returning
+  // value anyway, so the manual memo only made the two disagree (ENG-2366).
+  const renderDisplayValue = () => {
     if (Array.isArray(localValue)) {
       return localValue.map((v, i) => {
         const opt = validOptions?.find((o) => o.value === v);
@@ -290,7 +293,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         </span>
       </div>
     );
-  }, [localValue, validOptions, iconClassName]);
+  };
 
   const handleClear = () => {
     setInputType(null);
@@ -346,7 +349,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
               }
             )}>
             {inputType === "dropdown" ? (
-              <div className="min-w-0 flex-1 truncate px-2 text-sm">{getDisplayValue}</div>
+              <div className="min-w-0 flex-1 truncate px-2 text-sm">{renderDisplayValue()}</div>
             ) : (
               placeholder && (
                 <span className="min-w-0 flex-1 truncate px-2 text-sm text-slate-400">{placeholder}</span>

@@ -59,9 +59,16 @@ export function AddExistingChartsDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
+  // Latest already-on-the-dashboard ids, held in a ref so `loadCharts` can stay memoized on
+  // workspaceId alone instead of being rebuilt (and re-firing the fetch) whenever the parent hands
+  // down a new array instance. Written in an effect rather than during render, since a ref written
+  // while rendering is mutation the renderer may retry or discard (ENG-2366); both readers below
+  // run from a user action or after an await, i.e. after this has committed. Declared before the
+  // effect that calls `loadCharts` so the value is already current when it runs.
   const existingChartIdsRef = useRef(existingChartIds);
-  // eslint-disable-next-line react-hooks/refs -- migration ENG-2366
-  existingChartIdsRef.current = existingChartIds;
+  useEffect(() => {
+    existingChartIdsRef.current = existingChartIds;
+  }, [existingChartIds]);
 
   const loadCharts = useCallback(async () => {
     setIsLoading(true);

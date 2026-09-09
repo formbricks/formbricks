@@ -4,8 +4,6 @@ import { useTranslation } from "react-i18next";
 import { ALLOWED_FILE_EXTENSIONS, TAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
-import { formatLocalDay, parseStoredDay } from "@/lib/utils/datetime";
-import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import {
@@ -16,6 +14,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
+import { ValidationRuleDateValueInput } from "./validation-rule-date-value-input";
 
 interface ValidationRuleValueInputProps {
   rule: TValidationRule;
@@ -24,6 +23,7 @@ interface ValidationRuleValueInputProps {
   currentValue: number | string | undefined;
   onChange: (value: string) => void;
   onFileExtensionChange: (extensions: TAllowedFileExtension[]) => void;
+  onParamsChange: (params: TValidationRule["params"]) => void;
   element?: TSurveyElement;
 }
 
@@ -34,50 +34,25 @@ export const ValidationRuleValueInput = ({
   currentValue,
   onChange,
   onFileExtensionChange,
+  onParamsChange,
   element,
-}: ValidationRuleValueInputProps) => {
-  const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+}: Readonly<ValidationRuleValueInputProps>) => {
+  const { t } = useTranslation();
 
-  // Date rules store the day as `yyyy-MM-dd`, and the two range rules store the pair comma-joined.
-  const [startDay = "", endDay = ""] = (typeof currentValue === "string" ? currentValue : "").split(",");
-
-  if (ruleType === "isBetween" || ruleType === "isNotBetween") {
+  if (config.supportsRelative) {
     return (
-      <div className="flex w-full items-center gap-2">
-        <div className="flex-1">
-          <DatePicker
-            value={parseStoredDay(startDay)}
-            locale={locale}
-            placeholder={t("workspace.surveys.edit.validation.start_date")}
-            triggerClassName="h-9 w-full"
-            onChange={(date) => onChange(`${formatLocalDay(date)},${endDay}`)}
-          />
-        </div>
-        <span className="text-sm text-slate-500">{t("common.and")}</span>
-        <div className="flex-1">
-          <DatePicker
-            value={parseStoredDay(endDay)}
-            locale={locale}
-            placeholder={t("workspace.surveys.edit.validation.end_date")}
-            triggerClassName="h-9 w-full"
-            onChange={(date) => onChange(`${startDay},${formatLocalDay(date)}`)}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (ruleType === "isLaterThan" || ruleType === "isEarlierThan") {
-    return (
-      <DatePicker
-        value={parseStoredDay(startDay)}
-        locale={locale}
-        triggerClassName="h-9 w-[200px]"
-        onChange={(date) => onChange(formatLocalDay(date))}
+      <ValidationRuleDateValueInput
+        rule={rule}
+        ruleType={ruleType}
+        currentValue={currentValue}
+        onChange={onChange}
+        onParamsChange={onParamsChange}
       />
     );
   }
+
+  // Date rules return above; everything left is a plain text or number input.
+  const htmlInputType = config.valueType === "number" ? "number" : "text";
 
   // Option selector for single select validation rules
   if (config.valueType === "option") {
@@ -129,7 +104,7 @@ export const ValidationRuleValueInput = ({
   // Default text/number input
   return (
     <Input
-      type={config.valueType === "number" ? "number" : "text"}
+      type={htmlInputType}
       value={currentValue ?? ""}
       onChange={(e) => onChange(e.target.value)}
       // Browsers accept scientific notation in a number field, so `1e5` would silently store
