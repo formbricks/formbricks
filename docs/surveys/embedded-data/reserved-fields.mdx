@@ -122,7 +122,7 @@ That is deliberate: a recall token can end up interpolated into a redirect URL o
 
 ## Where Reserved Fields Show Up
 
-**On the response card**, `source`, `url`, `country`, `action`, `browser`, `os` and `deviceType` are always listed. The remaining auto-captured fields sit behind a disclosure so the card does not grow a dozen rows.
+**On the response card**, the **Metadata** popover in the card footer lists every auto-captured field the response carries: `source`, `url`, `country`, `action`, `browser`, `os` and `deviceType` first, then the remaining fields below a divider. It opens on click, so the card itself does not grow a dozen rows, and a response that captured none of them shows no popover at all.
 
 **In the response table**, the same seven are visible columns by default, and the other auto-captured fields are real columns that start hidden and can be switched on from the column settings. `responseId`, `surveyId`, `finished`, `language`, `durationSeconds`, `startedAt` and `finishedAt` are not listed as fields on either surface, because the card header and the table's own fixed columns already show them.
 
