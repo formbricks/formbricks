@@ -91,18 +91,20 @@ const ZGeneratedRatingRange = z.preprocess(
 /**
  * `[{ languageCode, text }]`, one entry per language, the enum built per call from the detected codes
  * so the model cannot invent a third language (D2). Never `V3_SURVEY_GENERATE_ALLOWED_LOCALES`.
+ *
+ * Deliberately no `.min(1)`: models answer "no text here" with `[]` (a later chunk has no survey name,
+ * a question has no subheader), and the SDK validates the whole object against this schema — a
+ * minimum would turn that into a failed chunk. The finalizer decides what an empty text means.
  */
 export function createLocalizedText(languageCodes: readonly [string, ...string[]], maxLength: number) {
-  return z
-    .array(
-      z
-        .object({
-          languageCode: z.enum(languageCodes),
-          text: z.string().trim().min(1).max(maxLength),
-        })
-        .strict()
-    )
-    .min(1);
+  return z.array(
+    z
+      .object({
+        languageCode: z.enum(languageCodes),
+        text: z.string().trim().min(1).max(maxLength),
+      })
+      .strict()
+  );
 }
 
 export type TGeneratedLocalizedText = { languageCode: string; text: string }[];
@@ -263,14 +265,14 @@ export function createGeneratedSurveyDraftSchema<
     .strict()
     .superRefine(validateGeneratedSurveyElement);
 
+  // Import: a chunk may legitimately hold no questions (a title page) and the finalizer drops empty
+  // blocks; the SDK would otherwise reject the object before our code sees it.
+  const minQuestionsPerBlock = isImport ? 0 : GENERATED_SURVEY_MIN_QUESTIONS_PER_BLOCK;
   const blockOf = <TElement extends z.ZodTypeAny>(element: TElement) =>
     z
       .object({
         name: text,
-        questions: z
-          .array(element)
-          .min(GENERATED_SURVEY_MIN_QUESTIONS_PER_BLOCK)
-          .max(limits.maxQuestionsPerBlock),
+        questions: z.array(element).min(minQuestionsPerBlock).max(limits.maxQuestionsPerBlock),
       })
       .strict();
 
@@ -312,7 +314,10 @@ export function createGeneratedSurveyDraftSchema<
   };
 
   const blocksOf = <TElement extends z.ZodTypeAny>(element: TElement) =>
-    z.array(blockOf(element)).min(GENERATED_SURVEY_MIN_BLOCKS).max(limits.maxBlocks);
+    z
+      .array(blockOf(element))
+      .min(isImport ? 0 : GENERATED_SURVEY_MIN_BLOCKS)
+      .max(limits.maxBlocks);
 
   return {
     /** Handed to the provider: string ranges, no `z.preprocess` (it does not survive JSON-Schema conversion). */
