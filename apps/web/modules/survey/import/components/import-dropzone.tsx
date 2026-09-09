@@ -67,9 +67,7 @@ export const ImportDropzone = ({
           </li>
         ))}
       </ul>
-      {isAIAvailable ? (
-        <p className="text-xs text-slate-500">{t("workspace.surveys.import.ai_formats_hint")}</p>
-      ) : (
+      {isAIAvailable ? null : (
         <AIUnavailableAlert
           title={t("workspace.surveys.import.ai_formats_title")}
           reason={aiUnavailableReason}

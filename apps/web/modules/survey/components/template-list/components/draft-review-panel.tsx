@@ -35,7 +35,7 @@ export const DraftReviewPanel = ({
   <>
     <div className="shrink-0">{source}</div>
     {facts ? <div className="shrink-0">{facts}</div> : null}
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-[18rem] flex-1 flex-col">
       <AiDraftPreview
         draft={draft}
         isGenerating={isGenerating}

@@ -1,6 +1,11 @@
 import type { TSurveyGenerationDraftSnapshot } from "@/app/api/internal/surveys/generate/lib/events";
 import type { TV3CreateSurveyBody } from "@/app/api/v3/surveys/schemas";
-import { EMPTY_AI_DRAFT, type TAiDraftState, mergeAiDraftSnapshot } from "./ai-draft-reducer";
+import {
+  EMPTY_AI_DRAFT,
+  type TAiDraftState,
+  mergeAiDraftSnapshot,
+  replaceAiDraftSnapshot,
+} from "./ai-draft-reducer";
 
 export type TAiCreateStatus = "idle" | "generating" | "review" | "creating";
 
@@ -14,6 +19,8 @@ export interface TAiCreateState {
   payload: TV3CreateSurveyBody | null;
   /** An error code, not a message, so the reducer stays free of `t`. */
   errorCode: string | null;
+  /** The server's support handle for the failed run, when the error event carried one. */
+  errorReference: string | null;
   /**
    * The source that produced what is on screen — the submitted prompt text, or the file name — not
    * the one in the input. Editing the prompt keeps the finished draft, so rendering the live text
@@ -42,10 +49,10 @@ export interface TAiCreateState {
 export type TAiCreateAction =
   | { type: "SUBMIT"; prompt: string; sourceKind?: TAiCreateSourceKind }
   /** `blockOffset` shifts the snapshot's block indices: chunked imports append blocks (D4). */
-  | { type: "SNAPSHOT"; snapshot: TSurveyGenerationDraftSnapshot; blockOffset?: number }
+  | { type: "SNAPSHOT"; snapshot: TSurveyGenerationDraftSnapshot; blockOffset?: number; replace?: boolean }
   | { type: "DONE"; payload: TV3CreateSurveyBody; report?: unknown }
   | { type: "STOP" }
-  | { type: "FAIL"; errorCode: string }
+  | { type: "FAIL"; errorCode: string; errorReference?: string }
   | { type: "CREATE_FAILED"; errorCode: string }
   | { type: "EDIT_PROMPT" }
   | { type: "BACK_TO_DRAFT" }
@@ -59,6 +66,7 @@ export const INITIAL_AI_CREATE_STATE: TAiCreateState = {
   draft: EMPTY_AI_DRAFT,
   payload: null,
   errorCode: null,
+  errorReference: null,
   sourceLabel: "",
   sourceKind: "prompt",
   report: null,
@@ -76,9 +84,13 @@ function isEmptyPayload(payload: TV3CreateSurveyBody): boolean {
 }
 
 /** Put a held-aside draft back on screen, or fall back to a clean slate when there is none. */
-function restorePrevious(state: TAiCreateState, errorCode: string | null = null): TAiCreateState {
+function restorePrevious(
+  state: TAiCreateState,
+  errorCode: string | null = null,
+  errorReference: string | null = null
+): TAiCreateState {
   if (!state.previous) {
-    return { ...INITIAL_AI_CREATE_STATE, errorCode };
+    return { ...INITIAL_AI_CREATE_STATE, errorCode, errorReference };
   }
 
   return {
@@ -86,6 +98,7 @@ function restorePrevious(state: TAiCreateState, errorCode: string | null = null)
     draft: state.previous.draft,
     payload: state.previous.payload,
     errorCode,
+    errorReference,
     sourceLabel: state.previous.sourceLabel,
     sourceKind: state.sourceKind,
     report: state.previous.report,
@@ -106,11 +119,14 @@ export const AI_NOTHING_GENERATED_CODE = "ai_nothing_generated";
 function applySnapshot(
   state: TAiCreateState,
   snapshot: TSurveyGenerationDraftSnapshot,
-  blockOffset = 0
+  blockOffset = 0,
+  replace = false
 ): TAiCreateState {
   if (state.status !== "generating") return state;
 
-  const draft = mergeAiDraftSnapshot(state.draft, snapshot, blockOffset);
+  const draft = replace
+    ? replaceAiDraftSnapshot(snapshot)
+    : mergeAiDraftSnapshot(state.draft, snapshot, blockOffset);
   return draft === state.draft ? state : { ...state, draft };
 }
 
@@ -132,7 +148,15 @@ function applyDone(
   }
 
   // The new draft supersedes whatever was held aside.
-  return { ...state, status: "review", payload, report, errorCode: null, previous: null };
+  return {
+    ...state,
+    status: "review",
+    payload,
+    report,
+    errorCode: null,
+    errorReference: null,
+    previous: null,
+  };
 }
 
 function applyStop(state: TAiCreateState): TAiCreateState {
@@ -144,19 +168,19 @@ function applyStop(state: TAiCreateState): TAiCreateState {
   return state.draft.questions.length > 0 ? { ...state, status: "review" } : { ...INITIAL_AI_CREATE_STATE };
 }
 
-function applyFail(state: TAiCreateState, errorCode: string): TAiCreateState {
+function applyFail(state: TAiCreateState, errorCode: string, errorReference?: string): TAiCreateState {
   // A failure belonging to an abandoned run must not tear down what the user went back to.
   if (state.status !== "generating") return state;
 
   // Discard the partial draft — a generation that died mid-write is not a trustworthy artifact — but
   // a failed regeneration still hands back the draft it was replacing.
-  return restorePrevious(state, errorCode);
+  return restorePrevious(state, errorCode, errorReference ?? null);
 }
 
 function applyEditPrompt(state: TAiCreateState): TAiCreateState {
   // Non-destructive: a finished draft is kept so the user can tweak the prompt, change their mind,
   // and go back to it. A half-written one is dropped — there is nothing to return to.
-  if (state.payload) return { ...state, status: "idle", errorCode: null };
+  if (state.payload) return { ...state, status: "idle", errorCode: null, errorReference: null };
   // Mid-regeneration: drop the half-written draft but keep the finished one behind it.
   if (state.previous) return { ...restorePrevious(state), status: "idle" };
 
@@ -175,6 +199,7 @@ function applyRegenerate(
     draft: EMPTY_AI_DRAFT,
     payload: null,
     errorCode: null,
+    errorReference: null,
     sourceLabel: prompt,
     sourceKind,
     report: null,
@@ -197,6 +222,7 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
         draft: EMPTY_AI_DRAFT,
         payload: null,
         errorCode: null,
+        errorReference: null,
         sourceLabel: action.prompt,
         sourceKind: action.sourceKind ?? "prompt",
         report: null,
@@ -204,7 +230,7 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
       };
 
     case "SNAPSHOT":
-      return applySnapshot(state, action.snapshot, action.blockOffset);
+      return applySnapshot(state, action.snapshot, action.blockOffset, action.replace);
 
     case "DONE":
       return applyDone(state, action.payload, action.report);
@@ -213,31 +239,31 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
       return applyStop(state);
 
     case "FAIL":
-      return applyFail(state, action.errorCode);
+      return applyFail(state, action.errorCode, action.errorReference);
 
     case "EDIT_PROMPT":
       return applyEditPrompt(state);
 
     case "BACK_TO_DRAFT":
-      return state.payload ? { ...state, status: "review", errorCode: null } : state;
+      return state.payload ? { ...state, status: "review", errorCode: null, errorReference: null } : state;
 
     case "REGENERATE":
       return applyRegenerate(state, action.prompt, action.sourceKind);
 
     case "CREATE":
       return state.status === "review" && state.payload
-        ? { ...state, status: "creating", errorCode: null }
+        ? { ...state, status: "creating", errorCode: null, errorReference: null }
         : state;
 
     case "CREATE_FAILED":
       // Unlike FAIL, this keeps the draft: the generation succeeded and the user already accepted
       // it, so a transient write failure should cost a retry, not ten seconds of regeneration.
-      return { ...state, status: "review", errorCode: action.errorCode };
+      return { ...state, status: "review", errorCode: action.errorCode, errorReference: null };
 
     case "CLEAR_ERROR":
       // Only the message goes. Dismissing an error is not a decision to throw away a kept draft —
       // and the example-prompt chips dismiss one on every click.
-      return state.errorCode === null ? state : { ...state, errorCode: null };
+      return state.errorCode === null ? state : { ...state, errorCode: null, errorReference: null };
 
     case "RESET":
       return INITIAL_AI_CREATE_STATE;

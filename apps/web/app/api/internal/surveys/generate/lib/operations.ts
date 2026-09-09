@@ -18,9 +18,8 @@ import {
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured, streamOrganizationAIObject } from "@/lib/ai/service";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { isClientAbort, toStreamErrorEvent } from "./error-events";
+import { SURVEY_STREAM_RESPONSE_HEADERS, isClientAbort, toStreamErrorEvent } from "../../lib/stream-events";
 import {
-  SURVEY_GENERATION_STREAM_CONTENT_TYPE,
   type TSurveyGenerationDraftSnapshot,
   type TSurveyGenerationStreamEvent,
   encodeStreamEvent,
@@ -181,15 +180,5 @@ export async function streamV3SurveyGeneration({
     },
   });
 
-  return new Response(stream, {
-    status: 200,
-    headers: {
-      "Content-Type": SURVEY_GENERATION_STREAM_CONTENT_TYPE,
-      // no-transform is the RFC 9111 signal that forbids an intermediary coalescing or re-encoding
-      // the body; X-Accel-Buffering is for self-hosters fronting Formbricks with nginx-ingress,
-      // where proxy_buffering is on by default and would hold the whole response.
-      "Cache-Control": "no-cache, no-store, no-transform",
-      "X-Accel-Buffering": "no",
-    },
-  });
+  return new Response(stream, { status: 200, headers: SURVEY_STREAM_RESPONSE_HEADERS });
 }

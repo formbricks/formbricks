@@ -81,7 +81,38 @@ post:
     "401":
       $ref: ../components/responses/V3Unauthorized.yml
     "403":
-      $ref: ../components/responses/V3Forbidden.yml
+      description: >-
+        Forbidden — no access to the workspace, or (documents only) AI smart tools are not available
+        to the organization. Formbricks exports and Qualtrics files never hit the AI gate.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            forbidden:
+              summary: No workspace access
+              value:
+                title: Forbidden
+                status: 403
+                detail: You are not authorized to access this resource
+                code: forbidden
+                requestId: req_123
+            aiDisabled:
+              summary: AI smart tools disabled
+              value:
+                title: AI Unavailable
+                status: 403
+                detail: AI smart tools are disabled for this organization.
+                code: ai_smart_tools_disabled
+                requestId: req_123
+            aiNotInPlan:
+              summary: AI features not enabled for the plan
+              value:
+                title: AI Unavailable
+                status: 403
+                detail: AI smart tools are not available for this organization.
+                code: ai_features_not_enabled
+                requestId: req_123
     "413":
       description: Payload Too Large — the request body exceeds 16 MB (15 MB file plus multipart framing).
       content:
@@ -99,15 +130,89 @@ post:
         Unprocessable Content — the uploaded file is not something Formbricks imports:
         `code: unsupported_source` for an unknown type, empty file or broken JSON,
         `code: legacy_office_format` for `.doc`/`.xls` (save as `.docx`/`.xlsx`). `invalid_params`
-        names the `file` part.
+        names the `file` part. For documents, `code: ai_generated_payload_invalid` when the model's
+        draft failed create validation and `code: ai_output_too_long` when it hit the output token limit.
       content:
         application/problem+json:
           schema:
             $ref: ../components/schemas/Problem.yml
+          examples:
+            unsupportedSource:
+              summary: Unsupported file
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: This file type is not supported.
+                code: unsupported_source
+                requestId: req_123
+                invalid_params:
+                  - name: file
+                    reason: This file type is not supported.
+            invalidGeneratedPayload:
+              summary: Invalid generated payload
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: "Generated survey payload is invalid: generatedSurvey.blocks: Too small"
+                code: ai_generated_payload_invalid
+                requestId: req_123
+                invalid_params:
+                  - name: generatedSurvey.blocks
+                    reason: Too small
+            aiOutputTooLong:
+              summary: Output token limit reached
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: The generated survey exceeded the AI output token limit.
+                code: ai_output_too_long
+                requestId: req_123
     "429":
-      $ref: ../components/responses/V3TooManyRequests.yml
+      description: >-
+        Too Many Requests — 30 conversions per minute per user or key; documents additionally spend
+        from the shared AI budget (10 per minute, shared with survey generation) and surface provider
+        quota exhaustion here. `Retry-After` says when to try again.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the next request is allowed
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
     "500":
       $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      description: The configured AI provider failed while reading a document
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            providerFailed:
+              summary: AI provider failed
+              value:
+                title: Bad Gateway
+                status: 502
+                detail: The AI provider could not generate a valid survey draft. Try again or add more detail.
+                code: bad_gateway
+                requestId: req_123
+    "503":
+      description: AI is not configured on this Formbricks instance (documents only)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            instanceNotConfigured:
+              summary: AI instance configuration missing
+              value:
+                title: AI Unavailable
+                status: 503
+                detail: AI is not configured for this Formbricks instance.
+                code: ai_instance_not_configured
+                requestId: req_123
   security:
     - sessionAuth: []
     - apiKeyAuth: []

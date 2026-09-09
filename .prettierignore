@@ -31,3 +31,7 @@ charts/**/templates/
 # otherwise every regeneration of the block turns format:check red on whichever
 # unrelated PR happens to carry it.
 AGENTS.md
+
+# Import test fixtures are byte-exact inputs (CRLF, BOM, deliberate blank lines); the extraction tests
+# assert on how they are normalized, so Prettier must not normalize them first.
+apps/web/modules/survey/import/**/__fixtures__/*.md

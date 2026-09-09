@@ -12,10 +12,10 @@ import { SourceChip } from "@/modules/survey/components/template-list/components
 import { getAiErrorMessage } from "@/modules/survey/components/template-list/lib/ai-error-messages";
 import { ImportDropzone } from "@/modules/survey/import/components/import-dropzone";
 import { ImportFacts } from "@/modules/survey/import/components/import-facts";
+import { ImportProgressLadder } from "@/modules/survey/import/components/import-progress-ladder";
 import { ImportReport } from "@/modules/survey/import/components/import-report";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
 import { formatFileSize } from "@/modules/survey/import/lib/import-file-checks";
-import { AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -37,6 +37,8 @@ export type TImportSurveyEntryPoint = "new_survey_menu" | "templates_card";
 type ImportSurveyDialogProps = {
   workspaceId: string;
   isAIAvailable: boolean;
+  /** The workspace default language, handed to the server as a detection tie-breaker. */
+  languageHint?: string;
   aiUnavailableReason?: TAIUnavailableReason;
   entryPoint: TImportSurveyEntryPoint;
   trigger?: ReactNode;
@@ -57,6 +59,7 @@ export const ImportSurveyDialog = ({
   workspaceId,
   isAIAvailable,
   aiUnavailableReason,
+  languageHint,
   entryPoint,
   trigger,
   open,
@@ -79,7 +82,7 @@ export const ImportSurveyDialog = ({
     });
   };
 
-  const importer = useImportSurvey({ workspaceId, isAIAvailable, onSuccess: handleSuccess });
+  const importer = useImportSurvey({ workspaceId, isAIAvailable, languageHint, onSuccess: handleSuccess });
   const isConverting = importer.status === "generating";
   const isReviewing = importer.status === "review" || importer.status === "creating";
 
@@ -120,8 +123,22 @@ export const ImportSurveyDialog = ({
     importer.handleStop();
   };
 
+  const handleRegenerate = () => {
+    capture("survey_import_regenerated");
+    importer.handleRegenerate();
+  };
+
   const fileCheckMessage = importer.fileCheck ? getAiErrorMessage(importer.fileCheck, t) : null;
   const errorMessage = importer.errorMessage ?? fileCheckMessage;
+  // The code and the run reference make a failure reportable; the file check is local and needs neither.
+  const errorReference = importer.errorCode
+    ? importer.errorReference
+      ? t("workspace.surveys.import.error_reference", {
+          code: importer.errorCode,
+          reference: importer.errorReference,
+        })
+      : t("workspace.surveys.import.error_code", { code: importer.errorCode })
+    : null;
 
   const sourceChip = importer.file ? (
     <SourceChip
@@ -155,6 +172,15 @@ export const ImportSurveyDialog = ({
             onClick={importer.pickAnotherFile}>
             {t("workspace.surveys.import.pick_another_file")}
           </Button>
+          {importer.canRegenerate ? (
+            <Button
+              type="button"
+              variant="ai-secondary"
+              disabled={importer.isCreatingSurvey}
+              onClick={handleRegenerate}>
+              {t("workspace.surveys.import.read_again")}
+            </Button>
+          ) : null}
           <Button
             type="button"
             loading={importer.isCreatingSurvey || isNavigating}
@@ -180,7 +206,7 @@ export const ImportSurveyDialog = ({
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent
         width={isReviewing ? "wide" : "default"}
-        className="overflow-hidden"
+        className="max-h-[calc(100dvh-2rem)] overflow-y-auto"
         disableCloseOnOutsideClick
         closeOnEscape>
         <DialogHeader>
@@ -193,12 +219,19 @@ export const ImportSurveyDialog = ({
           unconstrained
           className={cn(
             "-mx-1 -mt-1 flex flex-none flex-col gap-4 px-1 pt-1 pb-1",
-            isReviewing && "h-[32rem]"
+            // Never taller than the viewport. In review the list keeps its minimum height and the dialog
+            // grows with the report, which scrolls inside its own box rather than squeezing the questions out.
+            isReviewing ? "max-h-[calc(100dvh-8rem)]" : "max-h-[calc(100dvh-12rem)] overflow-y-auto"
           )}>
           {errorMessage ? (
             <Alert variant="error">
               <AlertTitle>{t("common.error")}</AlertTitle>
-              <AlertDescription>{errorMessage}</AlertDescription>
+              <AlertDescription>
+                {errorMessage}
+                {errorReference ? (
+                  <span className="mt-1 block font-mono text-xs opacity-70">{errorReference}</span>
+                ) : null}
+              </AlertDescription>
             </Alert>
           ) : null}
 
@@ -216,7 +249,9 @@ export const ImportSurveyDialog = ({
                 report={
                   isReviewing && reviewReport ? <ImportReport issues={reviewReport.issues} /> : undefined
                 }
-                status={<AiStatusLine isActive={isConverting} messages={importer.convertingMessages} />}
+                status={
+                  isConverting ? <ImportProgressLadder progress={importer.progress} isActive /> : undefined
+                }
                 scrollContainerRef={draftRef}
               />
               {isReviewing ? (

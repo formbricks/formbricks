@@ -19,9 +19,16 @@ import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prom
 /** What a draft source streams: the same events the generation stream emits, plus anything extra. */
 export type TDraftStreamEvent =
   | { type: "start"; requestId?: string }
-  | { type: "partial"; seq?: number; draft: TSurveyGenerationDraftSnapshot; blockOffset?: number }
+  | {
+      type: "partial";
+      seq?: number;
+      draft: TSurveyGenerationDraftSnapshot;
+      blockOffset?: number;
+      /** Replace the whole draft instead of merging (the resolved document at the end of an import). */
+      replace?: boolean;
+    }
   | { type: "done"; payload: TV3CreateSurveyBody; report?: unknown }
-  | { type: "error"; code: string; detail?: string }
+  | { type: "error"; code: string; detail?: string; reference?: string }
   | { type: string };
 
 export type TDraftStreamHandlers = {
@@ -74,9 +81,11 @@ export const useDraftCreation = <TInput>({
 
   // Snapshots land far faster than the screen can usefully change, so buffer the newest one and
   // dispatch at most once per frame.
-  const pendingSnapshotRef = useRef<{ snapshot: TSurveyGenerationDraftSnapshot; blockOffset: number } | null>(
-    null
-  );
+  const pendingSnapshotRef = useRef<{
+    snapshot: TSurveyGenerationDraftSnapshot;
+    blockOffset: number;
+    replace: boolean;
+  } | null>(null);
   const frameRef = useRef<number | null>(null);
 
   /**
@@ -98,13 +107,18 @@ export const useDraftCreation = <TInput>({
     pendingSnapshotRef.current = null;
 
     if (pending) {
-      dispatch({ type: "SNAPSHOT", snapshot: pending.snapshot, blockOffset: pending.blockOffset });
+      dispatch({
+        type: "SNAPSHOT",
+        snapshot: pending.snapshot,
+        blockOffset: pending.blockOffset,
+        replace: pending.replace,
+      });
     }
   }, []);
 
   const queueSnapshot = useCallback(
-    (snapshot: TSurveyGenerationDraftSnapshot, blockOffset = 0) => {
-      pendingSnapshotRef.current = { snapshot, blockOffset };
+    (snapshot: TSurveyGenerationDraftSnapshot, blockOffset = 0, replace = false) => {
+      pendingSnapshotRef.current = { snapshot, blockOffset, replace };
       frameRef.current ??= globalThis.requestAnimationFrame(flushSnapshot);
     },
     [flushSnapshot]
@@ -149,7 +163,7 @@ export const useDraftCreation = <TInput>({
             switch (event.type) {
               case "partial": {
                 const partial = event as Extract<TDraftStreamEvent, { type: "partial" }>;
-                queueSnapshot(partial.draft, partial.blockOffset ?? 0);
+                queueSnapshot(partial.draft, partial.blockOffset ?? 0, partial.replace ?? false);
                 break;
               }
               case "done": {
@@ -160,7 +174,7 @@ export const useDraftCreation = <TInput>({
               }
               case "error": {
                 const failure = event as Extract<TDraftStreamEvent, { type: "error" }>;
-                dispatch({ type: "FAIL", errorCode: failure.code });
+                dispatch({ type: "FAIL", errorCode: failure.code, errorReference: failure.reference });
                 break;
               }
               default:
@@ -249,6 +263,8 @@ export const useDraftCreation = <TInput>({
     sourceLabel: state.sourceLabel,
     canCreate,
     errorMessage,
+    errorCode: state.errorCode,
+    errorReference: state.errorReference,
     isNavigatingToEditor,
     isCreatingSurvey: state.status === "creating" || isNavigatingToEditor,
     submit,

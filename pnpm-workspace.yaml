@@ -412,3 +412,7 @@ patchedDependencies:
   # ENG-2559: a failed secondary-storage session read bypasses Better Auth's configured database
   # fallback. Remove this version-pinned patch once upstream handles Redis read failures here.
   "better-auth@1.7.0": patches/better-auth@1.7.0.patch
+  # mammoth pins @xmldom/xmldom ^0.8 and calls parseFromString(xml) without a MIME type; the security
+  # override above forces 0.9.12, where that argument is required. The patch passes "text/xml".
+  # Drop it once mammoth releases with the argument (github.com/mwilliamson/mammoth.js).
+  "mammoth@1.11.0": patches/mammoth@1.11.0.patch

@@ -49,6 +49,16 @@ export function getAiErrorMessage(code: string | undefined, t: TranslateFn): str
       return t("workspace.surveys.import.errors.lane_not_available");
     case "no_text_extracted":
       return t("workspace.surveys.import.errors.no_text_extracted");
+    case "archive_rejected":
+      return t("workspace.surveys.import.errors.archive_rejected");
+    case "document_encrypted":
+      return t("workspace.surveys.import.errors.document_encrypted");
+    case "document_unreadable":
+      return t("workspace.surveys.import.errors.document_unreadable");
+    case "extraction_timeout":
+      return t("workspace.surveys.import.errors.extraction_timeout");
+    case "nothing_extracted":
+      return t("workspace.surveys.import.errors.nothing_extracted");
     case "export_format_unsupported":
       return t("workspace.surveys.import.errors.export_format_unsupported");
     case "legacy_questions_unsupported":

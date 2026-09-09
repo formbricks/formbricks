@@ -92,6 +92,10 @@ export function translateImportIssueCode(
       return t("workspace.surveys.import.issues.archive_rejected", vars);
     case "document_encrypted":
       return t("workspace.surveys.import.issues.document_encrypted", vars);
+    case "document_unreadable":
+      return t("workspace.surveys.import.issues.document_unreadable", vars);
+    case "extraction_timeout":
+      return t("workspace.surveys.import.issues.extraction_timeout", vars);
     case "nothing_extracted":
       return t("workspace.surveys.import.issues.nothing_extracted", vars);
     case "chunked":

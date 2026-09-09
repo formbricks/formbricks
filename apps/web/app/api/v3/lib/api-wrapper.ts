@@ -134,7 +134,8 @@ function searchParamsToObject(searchParams: URLSearchParams): Record<string, str
   return query;
 }
 
-function getRateLimitIdentifier(authentication: TV3Authentication): string | null {
+/** The rate-limit bucket key for a request: the session user id, else the API key id. */
+export function getRateLimitIdentifier(authentication: TV3Authentication): string | null {
   if (!authentication) {
     return null;
   }

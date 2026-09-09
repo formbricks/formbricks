@@ -1,5 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 
@@ -175,10 +177,11 @@ test.describe("Survey import & export", () => {
       await page.getByTestId("import-survey-menu-item").click();
 
       await expect(page.getByRole("dialog")).toContainText("Import survey");
-      // Selecting a valid file is the submit: the dialog reads it, dry-runs it and lands in review.
+      // Selecting a valid file is the submit: the dialog streams the conversion and lands in review.
       const dryRun = page.waitForResponse(
         (response) =>
-          response.url().includes("/api/v3/surveys/import") && response.request().method() === "POST"
+          response.url().includes("/api/internal/surveys/import/stream") &&
+          response.request().method() === "POST"
       );
       await page.locator("#import-survey-file").setInputFiles({
         name: "round-trip.formbricks.json",
@@ -189,7 +192,7 @@ test.describe("Survey import & export", () => {
 
       const dialog = page.getByRole("dialog");
       await expect(dialog.getByText("3 questions", { exact: true })).toBeVisible({ timeout: 15000 });
-      await expect(dialog.getByText("EN · DE", { exact: true })).toBeVisible();
+      await expect(dialog.getByText("EN · DE", { exact: true }).first()).toBeVisible();
       // The settings note is an info line; nothing should have been changed on the way in.
       await expect(dialog.getByText(/warning/)).toHaveCount(0);
       await expect(dialog.getByLabel("Survey name")).toHaveValue(`${surveyName} (imported)`);
@@ -234,7 +237,8 @@ test.describe("Survey import & export", () => {
 
       const convert = page.waitForResponse(
         (response) =>
-          response.url().endsWith("/api/v3/surveys/import/convert") && response.request().method() === "POST"
+          response.url().includes("/api/internal/surveys/import/stream") &&
+          response.request().method() === "POST"
       );
       await page.locator("#import-survey-file").setInputFiles({
         name: "simple.qsf",

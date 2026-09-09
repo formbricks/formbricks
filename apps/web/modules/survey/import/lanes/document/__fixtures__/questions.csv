@@ -1,0 +1,6 @@
+﻿Question;Type;Options;Required
+How satisfied are you with the checkout?;rating;1-5;yes
+Which payment method did you use?;single choice;"Card; PayPal; Invoice";yes
+What nearly stopped you from buying?;open text;;no
+Would you recommend the shop to a friend?;nps;0-10;yes
+Which of these would you like to see?;multiple choice;"Gift wrap; Same-day delivery; Loyalty points";no
