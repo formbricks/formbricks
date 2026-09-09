@@ -134,7 +134,7 @@ export function finalizeImportDraft(
   // Models say "nothing here" with empty arrays: drop blocks without questions and questions without a
   // headline (each skipped question is reported) before the schema sees the object.
   const skipped: TImportIssue[] = [];
-  const cleaned = pruneEmptyDraftParts(raw, skipped);
+  const cleaned = repairDraftElements(pruneEmptyDraftParts(raw, skipped), skipped);
   const rawBlocks = (cleaned as { blocks?: unknown } | null)?.blocks;
   const rawIsEmpty = Array.isArray(rawBlocks) && rawBlocks.length === 0;
   if (rawIsEmpty) {
@@ -210,6 +210,62 @@ function pruneEmptyDraftParts(raw: unknown, issues: TImportIssue[]): unknown {
       return keep;
     });
     return questions.length > 0 ? [{ ...(block as object), questions }] : [];
+  });
+  return { ...(raw as object), blocks };
+}
+
+const CHOICE_TYPES = new Set(["multipleChoiceSingle", "multipleChoiceMulti", "ranking"]);
+
+function hasEntries(value: unknown, min: number): boolean {
+  return Array.isArray(value) && value.length >= min;
+}
+
+/**
+ * Repairs the cross-field rules the provider-facing schema no longer enforces, one report line each: a
+ * choice question without options (a picture choice the document only describes) and a matrix without
+ * rows or columns become free text; csat/ces/rating ranges outside their allowed values snap to the
+ * nearest legal one. The internal schema then validates the repaired object.
+ */
+function repairDraftElements(raw: unknown, issues: TImportIssue[]): unknown {
+  if (!raw || typeof raw !== "object" || !Array.isArray((raw as { blocks?: unknown }).blocks)) return raw;
+  let index = 0;
+  const approximate = (question: Record<string, unknown>, reason: string) => {
+    issues.push(
+      importInfo({
+        code: "type_approximated",
+        path: `questions.${index}`,
+        vars: { from: `${String(question.type)} (${reason})`, to: "openText" },
+      })
+    );
+    return { ...question, type: "openText", choices: null, rows: null, columns: null, longAnswer: true };
+  };
+  const blocks = ((raw as { blocks: unknown[] }).blocks ?? []).map((block) => {
+    if (!block || typeof block !== "object" || !Array.isArray((block as { questions?: unknown }).questions))
+      return block;
+    const questions = (block as { questions: unknown[] }).questions.map((entry) => {
+      const question = entry as Record<string, unknown>;
+      let repaired = question;
+      if (CHOICE_TYPES.has(String(question.type)) && !hasEntries(question.choices, 2)) {
+        repaired = approximate(question, "no options given");
+      } else if (
+        question.type === "matrix" &&
+        (!hasEntries(question.rows, 1) || !hasEntries(question.columns, 2))
+      ) {
+        repaired = approximate(question, "rows or columns missing");
+      } else if (question.type === "csat" && question.range !== "5" && question.range !== 5) {
+        repaired = { ...question, range: "5" };
+      } else if (question.type === "ces" && !["5", "7", 5, 7].includes(question.range as string | number)) {
+        repaired = { ...question, range: "5" };
+      } else if (
+        question.type === "rating" &&
+        !["5", "7", "10", 5, 7, 10].includes(question.range as string | number)
+      ) {
+        repaired = { ...question, range: "5" };
+      }
+      index += 1;
+      return repaired;
+    });
+    return { ...(block as object), questions };
   });
   return { ...(raw as object), blocks };
 }

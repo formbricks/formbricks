@@ -30,7 +30,8 @@ export function buildImportSystemPrompt(): string {
     'Mark a question required when the source marks it (an asterisk, "required", "mandatory", "Pflichtfeld").',
     "Introductory paragraphs before the first question become the welcomeCard; closing paragraphs after the last question become the ending.",
     "name is the document's own title when it has one; otherwise return an empty array. Never invent a title.",
-    "A dropdown or select list is a multipleChoiceSingle with dropdown set to true.",
+    'A dropdown or select list ("Single Select (dropdown)", "Dropdown") is a multipleChoiceSingle with dropdown set to true.',
+    'A matrix lists its rows and columns in the options cell ("Rows: … | Columns: …" or "Rows: … Columns: …"); put both into rows and columns.',
     "Every text field is an array with one entry per allowed language code from the user message, using only those codes. " +
       "If the document only has some languages for a text, return only the entries that exist; never invent a translation.",
     "Keep the block structure the document has: a heading, a numbered section, or a page break (a line with ---) starts a new block. " +

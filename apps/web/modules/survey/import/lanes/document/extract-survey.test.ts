@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { createGeneratedSurveyDraftSchema } from "@/app/api/v3/surveys/generate/schemas";
 import { buildV3SurveyCreatePayloadFromDraft } from "@/app/api/v3/surveys/generate/service";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import { generateOrganizationAIObject, streamOrganizationAIObject } from "@/lib/ai/service";
@@ -183,6 +184,59 @@ describe("extractSurveyDraft", () => {
         vars: { detail: "A question without any text was skipped." },
       }),
     ]);
+  });
+
+  test("cross-field rules are repaired with a note instead of failing the chunk", () => {
+    const schema = createImportDraftSchema(["en-US"]);
+    const raw = modelOutput("prompt-injection.json") as {
+      blocks: { name: unknown; questions: Record<string, unknown>[] }[];
+    };
+    const base = raw.blocks[0].questions[0];
+    const text = (value: string) => [{ languageCode: "en-US", text: value }];
+    const withBadRows = {
+      ...raw,
+      blocks: [
+        {
+          name: raw.blocks[0].name,
+          questions: [
+            {
+              ...base,
+              type: "multipleChoiceSingle",
+              headline: text("Which image do you prefer?"),
+              choices: null,
+            },
+            {
+              ...base,
+              type: "matrix",
+              headline: text("Rate each aspect."),
+              rows: [text("Staff"), text("Value")],
+              columns: null,
+            },
+            { ...base, type: "csat", headline: text("Satisfied?"), scale: "smiley", range: "7" },
+            {
+              ...base,
+              type: "ranking",
+              headline: text("Rank these."),
+              choices: [text("Price"), text("Quality")],
+            },
+          ],
+        },
+      ],
+    };
+
+    // The provider-facing import schema no longer rejects these shapes; Create with AI still does.
+    expect(schema.forAI.safeParse(withBadRows).success).toBe(true);
+    expect(createGeneratedSurveyDraftSchema().forAI.safeParse({ ...withBadRows, name: "x" }).success).toBe(
+      false
+    );
+
+    const result = finalizeImportDraft(withBadRows, schema, "en-US");
+    const questions = result.draft?.blocks[0].questions ?? [];
+    expect(questions.map((question) => question.type)).toEqual(["openText", "openText", "csat", "ranking"]);
+    expect(questions[2].range).toBe(5);
+    expect(
+      result.issues.filter((issue) => issue.code === "type_approximated").map((issue) => issue.path)
+    ).toEqual(["questions.0", "questions.1"]);
   });
 
   test("streamSurveyDraft shares the request and finalizes the completed object", async () => {
