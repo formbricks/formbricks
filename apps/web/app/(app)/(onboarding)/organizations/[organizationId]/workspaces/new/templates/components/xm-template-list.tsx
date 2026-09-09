@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TUserLocale } from "@formbricks/types/user";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { type TXMTemplateId, XM_TEMPLATE_IDS } from "@/app/lib/xm-template-ids";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -13,7 +12,8 @@ import { useCreateSurveyFromTemplate } from "@/modules/survey/components/templat
 
 interface XMTemplateListProps {
   workspaceId: string;
-  defaultLanguage: TUserLocale;
+  /** The language the created survey is authored in — see `resolveDefaultSurveyLanguage`. */
+  defaultLanguage: string;
 }
 
 export const XMTemplateList = ({ workspaceId, defaultLanguage }: Readonly<XMTemplateListProps>) => {

@@ -72,6 +72,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
     createdAt: new Date("2024-01-01"),
     updatedAt: new Date("2024-01-02"),
     contactId: "contact123",
+    ingestFlags: null,
     contact: mockResponse.contact,
     tags: mockResponse.tags,
   };
@@ -102,6 +103,8 @@ describe("updateResponseWithQuotaEvaluation", () => {
       variables: mockResponse.variables,
       language: mockResponse.language,
       responseFinished: mockResponse.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response: expect.objectContaining({ id: expect.any(String) }),
       tx: mockTx,
     });
 
@@ -125,6 +128,8 @@ describe("updateResponseWithQuotaEvaluation", () => {
       variables: mockResponse.variables,
       language: mockResponse.language,
       responseFinished: mockResponse.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response: expect.objectContaining({ id: expect.any(String) }),
       tx: mockTx,
     });
 
@@ -152,6 +157,8 @@ describe("updateResponseWithQuotaEvaluation", () => {
       variables: mockResponse.variables,
       language: mockResponse.language,
       responseFinished: mockResponse.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response: expect.objectContaining({ id: expect.any(String) }),
       tx: mockTx,
     });
 
@@ -187,6 +194,8 @@ describe("updateResponseWithQuotaEvaluation", () => {
       variables: responseWithNullLanguage.variables,
       language: "default",
       responseFinished: responseWithNullLanguage.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response: expect.objectContaining({ id: expect.any(String) }),
       tx: mockTx,
     });
 

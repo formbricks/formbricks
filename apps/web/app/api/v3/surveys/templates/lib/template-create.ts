@@ -3,12 +3,12 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { ZSurveyType } from "@formbricks/types/surveys/types";
 import type { TTemplate } from "@formbricks/types/templates";
-import { ZUserLocale } from "@formbricks/types/user";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemBadRequest, problemInternalError } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { CUSTOM_SURVEY_TEMPLATE_ID, getTemplateById } from "@/app/lib/templates";
 import { XM_TEMPLATE_IDS } from "@/app/lib/xm-template-ids";
+import { ZSurveyDefaultLanguageCode, resolveTemplateTextLocale } from "@/lib/i18n/default-survey-language";
 import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -21,7 +21,7 @@ export const ZV3TrustedTemplateCreateBody = z.object({
   templateId: z.string().trim().min(1),
   source: z.enum(["catalog", "custom", "xm"]),
   surveyType: ZSurveyType,
-  defaultLanguage: ZUserLocale,
+  defaultLanguage: ZSurveyDefaultLanguageCode,
 });
 
 type TTrustedTemplateCreateBody = z.infer<typeof ZV3TrustedTemplateCreateBody>;
@@ -35,7 +35,7 @@ type TResolvedTemplate = {
 async function resolveTrustedTemplate(body: TTrustedTemplateCreateBody): Promise<TResolvedTemplate | null> {
   const [workspace, t] = await Promise.all([
     getWorkspace(body.workspaceId),
-    getTranslate(body.defaultLanguage),
+    getTranslate(resolveTemplateTextLocale(body.defaultLanguage)),
   ]);
 
   if (!workspace) {

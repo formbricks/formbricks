@@ -5,6 +5,8 @@ import { ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
+  collectResponseFileUrls,
+  getSurveyFileUploadElementIds,
   isAllowedFileExtension,
   isValidImageFile,
   parseStorageFileUrl,
@@ -406,6 +408,75 @@ describe("storage utils", () => {
         ok: false,
         reason: "file_upload_element_not_found",
       });
+    });
+  });
+
+  describe("getSurveyFileUploadElementIds", () => {
+    test("should union the file-upload ids from blocks and questions", () => {
+      const blocks = [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            { id: "block-upload", type: "fileUpload" as const },
+            { id: "block-text", type: "openText" as const },
+          ],
+        },
+      ] as unknown as TSurveyBlock[];
+      const questions = [
+        { id: "question-upload", type: "fileUpload" as const },
+        { id: "question-text", type: "openText" as const },
+      ] as unknown as TSurveyQuestion[];
+
+      expect(getSurveyFileUploadElementIds({ blocks, questions })).toEqual(
+        new Set(["block-upload", "question-upload"])
+      );
+    });
+
+    test("should be empty for a survey with no file-upload element", () => {
+      expect(getSurveyFileUploadElementIds({ blocks: [], questions: [] }).size).toBe(0);
+      expect(getSurveyFileUploadElementIds({}).size).toBe(0);
+    });
+  });
+
+  describe("collectResponseFileUrls", () => {
+    const fileUploadElementIds = new Set(["upload"]);
+    const firstUrl = "https://example.com/storage/ws-1/private/one.png";
+    const secondUrl = "https://example.com/storage/ws-1/private/two.pdf";
+
+    test("should collect the URLs under file-upload keys and ignore every other answer", () => {
+      const data: TResponseData = {
+        upload: [firstUrl, secondUrl],
+        text: "not a file",
+        "not-an-upload-element": ["https://example.com/storage/ws-1/private/other.png"],
+      };
+
+      expect(collectResponseFileUrls(data, fileUploadElementIds)).toEqual([firstUrl, secondUrl]);
+    });
+
+    // The delete paths used to cast a matching answer straight to string[]. A non-array value therefore
+    // became a delete target instead of being skipped, so a plain string holding a valid same-workspace
+    // URL was deleted off malformed data.
+    test("should skip a non-array answer under a file-upload key", () => {
+      expect(collectResponseFileUrls({ upload: firstUrl }, fileUploadElementIds)).toEqual([]);
+      expect(collectResponseFileUrls({ upload: { url: firstUrl } }, fileUploadElementIds)).toEqual([]);
+      expect(collectResponseFileUrls({ upload: 42 }, fileUploadElementIds)).toEqual([]);
+    });
+
+    test("should drop non-string entries inside a file-upload array", () => {
+      expect(collectResponseFileUrls({ upload: [42, null, firstUrl] }, fileUploadElementIds)).toEqual([
+        firstUrl,
+      ]);
+    });
+
+    test("should collect nothing when the survey has no file-upload element", () => {
+      expect(collectResponseFileUrls({ upload: [firstUrl] }, new Set())).toEqual([]);
+    });
+
+    test("should collect nothing for data that is not a response object", () => {
+      for (const data of [null, undefined, "", "a string", 42, [firstUrl]]) {
+        expect(collectResponseFileUrls(data, fileUploadElementIds)).toEqual([]);
+      }
     });
   });
 

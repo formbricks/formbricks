@@ -64,7 +64,19 @@ describe("rateLimitConfigs", () => {
 
     test("should have all auth configurations", () => {
       const authConfigs = Object.keys(rateLimitConfigs.auth);
-      expect(authConfigs).toEqual(["login", "signup", "forgotPassword", "verifyEmail", "emailToken"]);
+      expect(authConfigs).toEqual([
+        "login",
+        "signup",
+        "forgotPassword",
+        "resetPassword",
+        "verifyEmail",
+        "emailToken",
+      ]);
+      expect(rateLimitConfigs.auth.resetPassword).toEqual({
+        interval: 3600,
+        allowedPerInterval: 5,
+        namespace: "auth:reset-password",
+      });
       // The values, not just the key: emailToken throttles an unauthenticated endpoint that also
       // reveals whether an address is registered, so a loosened quota is a security regression.
       expect(rateLimitConfigs.auth.emailToken).toEqual({
@@ -99,7 +111,6 @@ describe("rateLimitConfigs", () => {
         "licenseRecheck",
         "unsplash",
         "inviteMember",
-        "bulkInviteMembers",
         "generateExampleResponses",
         "integrationMutation",
         "feedbackSourceMutation",
@@ -118,6 +129,11 @@ describe("rateLimitConfigs", () => {
         allowedPerInterval: 30,
         namespace: "action:unsplash",
       });
+      expect(rateLimitConfigs.actions.inviteMember).toEqual({
+        interval: 3600 * 24,
+        allowedPerInterval: 50,
+        namespace: "action:invite-member",
+      });
       expect(rateLimitConfigs.actions.historicalResponseImport).toEqual({
         interval: 3600,
         allowedPerInterval: 10,
@@ -132,7 +148,7 @@ describe("rateLimitConfigs", () => {
 
     test("should have all storage configurations", () => {
       const storageConfigs = Object.keys(rateLimitConfigs.storage);
-      expect(storageConfigs).toEqual(["upload", "uploadPerWorkspace", "delete"]);
+      expect(storageConfigs).toEqual(["upload", "uploadPerWorkspace", "delete", "attachmentsExport"]);
     });
   });
 

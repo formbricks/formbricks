@@ -136,6 +136,7 @@ export namespace Prisma {
   export type SegmentUpdateInput = PrismaModelTypes.SegmentUpdateInput;
   export type StringFilter = PrismaModelTypes.StringFilter;
   export type SurveyCreateInput = PrismaModelTypes.SurveyCreateInput;
+  export type SurveyEmbeddedDataSelect = PrismaModelTypes.SurveyEmbeddedDataSelect;
   export type SurveyGetPayload<S extends boolean | null | undefined | PrismaModelTypes.SurveyDefaultArgs> =
     PrismaModelTypes.SurveyGetPayload<S>;
   export type SurveyLanguageCreateNestedManyWithoutSurveyInput =

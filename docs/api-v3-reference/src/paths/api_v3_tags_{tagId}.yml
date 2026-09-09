@@ -1,5 +1,9 @@
 patch:
   operationId: renameTagV3
+  # Session-only by design, so an API-key caller reading the published reference would only ever get a
+  # 401. Excluded from the generated docs pages until ENG-2533 decides between dropping the paths
+  # and opening them to API keys; the operation stays in the bundle for the contract tests.
+  x-excluded: true
   summary: Rename a tag
   description: |
     Renames a tag. The workspace is resolved from the tag itself, so the caller cannot choose which scope
@@ -60,6 +64,10 @@ patch:
     - sessionAuth: []
 delete:
   operationId: deleteTagV3
+  # Session-only by design, so an API-key caller reading the published reference would only ever get a
+  # 401. Excluded from the generated docs pages until ENG-2533 decides between dropping the paths
+  # and opening them to API keys; the operation stays in the bundle for the contract tests.
+  x-excluded: true
   summary: Delete a tag
   description: |
     Deletes a tag and removes it from every response carrying it. Same authorization as rename.

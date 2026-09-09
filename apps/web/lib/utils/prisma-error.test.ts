@@ -1,7 +1,12 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { Prisma, type PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "./prisma-error";
+import {
+  isPrismaKnownRequestError,
+  isTransactionConflictError,
+  isUniqueConstraintError,
+  retryOnTransactionConflict,
+} from "./prisma-error";
 
 const knownError = (code: string): PrismaClientKnownRequestError =>
   new Prisma.PrismaClientKnownRequestError("boom", { code, clientVersion: "test" });
@@ -67,5 +72,70 @@ describe("type narrowing", () => {
     // type position), their post-guard `error.message` accesses would narrow to `never` and fail
     // typecheck.
     expect(error).toBeInstanceOf(Error);
+  });
+});
+
+describe("isTransactionConflictError", () => {
+  test("is true for a P2034 transaction conflict", () => {
+    expect(isTransactionConflictError(knownError(PrismaErrorType.TransactionConflict))).toBe(true);
+  });
+
+  test("is true for a deadlock the driver adapter surfaces as a plain error", () => {
+    expect(isTransactionConflictError(new Error("deadlock detected"))).toBe(true);
+    expect(isTransactionConflictError(new Error("SQLSTATE 40P01"))).toBe(true);
+  });
+
+  test("is false for other errors", () => {
+    expect(isTransactionConflictError(uniqueViolation)).toBe(false);
+    expect(isTransactionConflictError(new Error("plain"))).toBe(false);
+    expect(isTransactionConflictError(null)).toBe(false);
+  });
+});
+
+describe("retryOnTransactionConflict", () => {
+  const conflict = knownError(PrismaErrorType.TransactionConflict);
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("returns the first successful result", async () => {
+    const operation = vi.fn().mockResolvedValue("ok");
+
+    await expect(retryOnTransactionConflict(operation)).resolves.toBe("ok");
+    expect(operation).toHaveBeenCalledTimes(1);
+  });
+
+  test("runs the operation again after a conflict, with a backoff in between", async () => {
+    vi.useFakeTimers();
+    const operation = vi.fn().mockRejectedValueOnce(conflict).mockResolvedValue("ok");
+
+    const result = retryOnTransactionConflict(operation);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(operation).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(25);
+    await expect(result).resolves.toBe("ok");
+    expect(operation).toHaveBeenCalledTimes(2);
+  });
+
+  test("gives up after maxAttempts and rethrows the last conflict", async () => {
+    vi.useFakeTimers();
+    const operation = vi.fn().mockRejectedValue(conflict);
+
+    const assertion = expect(retryOnTransactionConflict(operation, { maxAttempts: 3 })).rejects.toBe(
+      conflict
+    );
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(operation).toHaveBeenCalledTimes(3);
+  });
+
+  test("rethrows a non-conflict error at once", async () => {
+    const failure = new Error("plain");
+    const operation = vi.fn().mockRejectedValue(failure);
+
+    await expect(retryOnTransactionConflict(operation)).rejects.toBe(failure);
+    expect(operation).toHaveBeenCalledTimes(1);
   });
 });

@@ -36,6 +36,7 @@ vi.mock("@/lib/constants", () => ({
 
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),
+  groupIdentifyPostHog: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({

@@ -78,6 +78,11 @@ export interface TWorkspaceStateSurvey {
     enabled: boolean;
     fieldIds?: string[];
   };
+  // The survey's Embedded Data definitions, joined and inlined server-side (ENG-1837). The SDK never
+  // reads or reconstructs them — it stores the survey object as received and hands it to
+  // `renderSurvey` — so this is a structural declaration only, kept loose because the SDK has no
+  // stake in the shape.
+  embeddedFields?: TJsonObject[];
   delay: number;
   workspaceOverwrites: {
     clickOutsideClose?: boolean | null;

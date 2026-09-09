@@ -8,18 +8,12 @@ import {
   Loader2,
   MessageCircle,
   MessageSquareTextIcon,
-  PanelLeftCloseIcon,
-  PanelLeftOpenIcon,
   PlusIcon,
-  RocketIcon,
   SettingsIcon,
   UserIcon,
   WorkflowIcon,
 } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import posthog from "posthog-js";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -29,20 +23,18 @@ import {
   getOrganizationsForSwitcherAction,
   getWorkspacesForSwitcherAction,
 } from "@/app/(app)/workspaces/[workspaceId]/actions";
+import { MainNavigationHeader } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigationHeader";
+import { MainNavigationNotices } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigationNotices";
 import { NavigationLink } from "@/app/(app)/workspaces/[workspaceId]/components/NavigationLink";
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
-import { isNewerVersion } from "@/app/(app)/workspaces/[workspaceId]/lib/utils";
-import FBLogo from "@/images/formbricks-wordmark.svg";
+import { useLatestStableRelease } from "@/app/(app)/workspaces/[workspaceId]/lib/use-latest-stable-release";
 import { cn } from "@/lib/cn";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
-import { TRIAL_BASE_RESPONSE_LIMIT, TrialBannerNew } from "@/modules/ee/billing/components/trial-banner-new";
 import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { Badge } from "@/modules/ui/components/badge";
-import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -53,8 +45,6 @@ import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
 import { CreateWorkspaceModal } from "@/modules/workspaces/components/create-workspace-modal";
 import { WorkspaceLimitModal } from "@/modules/workspaces/components/workspace-limit-modal";
-import { getLatestStableFbReleaseAction } from "@/modules/workspaces/settings/(setup)/app-connection/actions";
-import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
   user: TUser;
@@ -70,6 +60,10 @@ interface NavigationProps {
   responseCount: number;
   newTrialBannerVariant: string | boolean;
   isFormbricksSurveysConfigured: boolean;
+  // Whole days left in the trial, or null when there is no trial to count down. Computed by the
+  // server layout: deriving it here would mean reading `Date.now()` during render, which diverges
+  // between the server pass and hydration and then goes stale as the tab sits open (ENG-2366).
+  trialDaysRemaining: number | null;
 }
 
 /**
@@ -91,6 +85,45 @@ const sectionLabelWithBeta = (label: React.ReactNode) => (
   </span>
 );
 
+/**
+ * The text half of a sidebar switcher trigger: name, caption, an in-flight spinner and the chevron.
+ *
+ * Both switchers rendered this inline and identically, at the deepest nesting in the component —
+ * which is most of what pushed MainNavigation past Sonar's cognitive-complexity limit (ENG-3076).
+ * Deliberately not wrapping the `<button>` itself: that is a Radix `asChild` target, and moving it
+ * behind a component would mean forwarding props and refs by hand for no gain.
+ */
+const SwitcherTriggerLabel = ({
+  isCollapsed,
+  isTextVisible,
+  isPending,
+  name,
+  caption,
+}: Readonly<{
+  isCollapsed: boolean;
+  isTextVisible: boolean;
+  isPending: boolean;
+  name: string;
+  caption: string;
+}>) => {
+  // Collapsed, only the icon shows; `isTextVisible` is the 150ms delay that keeps the label from
+  // flashing while the sidebar animates.
+  if (isCollapsed || isTextVisible) {
+    return null;
+  }
+
+  return (
+    <>
+      <div className="grow overflow-hidden">
+        <p className="truncate text-sm font-bold text-slate-700">{name}</p>
+        <p className="text-sm text-slate-500">{caption}</p>
+      </div>
+      {isPending && <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />}
+      <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+    </>
+  );
+};
+
 export const MainNavigation = ({
   organization,
   user,
@@ -105,13 +138,13 @@ export const MainNavigation = ({
   responseCount,
   newTrialBannerVariant,
   isFormbricksSurveysConfigured,
-}: NavigationProps) => {
+  trialDaysRemaining,
+}: Readonly<NavigationProps>) => {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTextVisible, setIsTextVisible] = useState(true);
-  const [latestVersion, setLatestVersion] = useState("");
 
   const [isPending, startTransition] = useTransition();
   const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
@@ -121,6 +154,7 @@ export const MainNavigation = ({
     : t("common.you_are_not_authorized_to_perform_this_action");
 
   const isOwnerOrManager = isManager || isOwner;
+  const latestVersion = useLatestStableRelease(isOwnerOrManager);
   const isSettingsMode = pathname?.includes("/settings");
 
   const toggleSidebar = () => {
@@ -252,36 +286,6 @@ export const MainNavigation = ({
       void loadOrganizations();
     }
   }, [isOrganizationDropdownOpen, loadOrganizations]);
-
-  useEffect(() => {
-    async function loadReleases() {
-      const res = await getLatestStableFbReleaseAction();
-      if (res?.data) {
-        const latestVersionTag = res.data;
-        const currentVersionTag = `v${packageJson.version}`;
-
-        if (isNewerVersion(currentVersionTag, latestVersionTag)) {
-          setLatestVersion(latestVersionTag);
-        }
-      }
-    }
-    if (isOwnerOrManager) loadReleases();
-  }, [isOwnerOrManager]);
-
-  const trialDaysRemaining = useMemo(() => {
-    if (!isFormbricksCloud || organization.billing?.stripe?.subscriptionStatus !== "trialing") return null;
-    const trialEnd = organization.billing.stripe.trialEnd;
-    if (!trialEnd) return null;
-    const ts = new Date(trialEnd).getTime();
-    if (!Number.isFinite(ts)) return null;
-    const msPerDay = 86_400_000;
-    // eslint-disable-next-line react-hooks/purity -- migration ENG-2366
-    return Math.ceil((ts - Date.now()) / msPerDay);
-  }, [
-    isFormbricksCloud,
-    organization.billing?.stripe?.subscriptionStatus,
-    organization.billing?.stripe?.trialEnd,
-  ]);
 
   const mainNavigationLink = isBilling
     ? getBillingFallbackPath(organization.id, isFormbricksCloud)
@@ -427,35 +431,12 @@ export const MainNavigation = ({
             <div>
               {/* Logo and Toggle */}
 
-              <div
-                className={cn(
-                  "flex items-center px-3 pb-4",
-                  isCollapsed ? "justify-center" : "justify-between"
-                )}>
-                {!isCollapsed && (
-                  <Link
-                    href={mainNavigationLink}
-                    className={cn(
-                      "flex items-center justify-center transition-opacity duration-100",
-                      isTextVisible ? "opacity-0" : "opacity-100"
-                    )}>
-                    <Image src={FBLogo} width={160} height={30} alt={t("workspace.formbricks_logo")} />
-                  </Link>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleSidebar}
-                  className={cn(
-                    "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:ring-0 focus:ring-transparent focus:outline-hidden"
-                  )}>
-                  {isCollapsed ? (
-                    <PanelLeftOpenIcon strokeWidth={1.5} />
-                  ) : (
-                    <PanelLeftCloseIcon strokeWidth={1.5} />
-                  )}
-                </Button>
-              </div>
+              <MainNavigationHeader
+                isCollapsed={isCollapsed}
+                isTextVisible={isTextVisible}
+                homeHref={mainNavigationLink}
+                onToggle={toggleSidebar}
+              />
 
               {/* Main Nav */}
               <ul className="space-y-2">
@@ -510,47 +491,17 @@ export const MainNavigation = ({
 
           <div>
             {!isSettingsMode && (
-              <>
-                {/* New Version Available */}
-                {!isCollapsed &&
-                  isOwnerOrManager &&
-                  latestVersion &&
-                  !isFormbricksCloud &&
-                  !isDevelopment && (
-                    <Link
-                      href="https://github.com/formbricks/formbricks/releases"
-                      target="_blank"
-                      className="m-2 flex items-center gap-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
-                      <p className="flex items-center justify-center gap-x-2 text-xs">
-                        <RocketIcon strokeWidth={1.5} className="mx-1 size-6 text-slate-900" />
-                        {t("common.new_version_available", { version: latestVersion })}
-                      </p>
-                    </Link>
-                  )}
-
-                {/* Trial Days Remaining */}
-                {!isCollapsed &&
-                  isOwnerOrManager &&
-                  isFormbricksCloud &&
-                  trialDaysRemaining !== null &&
-                  (newTrialBannerVariant === "test" ? (
-                    <TrialBannerNew
-                      trialDaysRemaining={trialDaysRemaining}
-                      planName={organization.billing.stripe?.plan ?? "pro"}
-                      responseCount={responseCount}
-                      responseLimit={organization.billing.limits.monthly.responses}
-                      baseResponseLimit={TRIAL_BASE_RESPONSE_LIMIT}
-                      billingHref={`/organizations/${organization.id}/settings/billing`}
-                    />
-                  ) : (
-                    <Link
-                      href={`/organizations/${organization.id}/settings/billing`}
-                      className="m-2 block"
-                      onClick={() => posthog.capture("main_nav_go_to_billing_clicked")}>
-                      <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
-                    </Link>
-                  ))}
-              </>
+              <MainNavigationNotices
+                isCollapsed={isCollapsed}
+                isOwnerOrManager={isOwnerOrManager}
+                isFormbricksCloud={isFormbricksCloud}
+                isDevelopment={isDevelopment}
+                latestVersion={latestVersion}
+                trialDaysRemaining={trialDaysRemaining}
+                newTrialBannerVariant={newTrialBannerVariant}
+                organization={organization}
+                responseCount={responseCount}
+              />
             )}
 
             <div className="flex flex-col">
@@ -568,18 +519,13 @@ export const MainNavigation = ({
                         <span className={switcherIconClasses}>
                           <FoldersIcon className="size-4" strokeWidth={1.5} />
                         </span>
-                        {!isCollapsed && !isTextVisible && (
-                          <>
-                            <div className="grow overflow-hidden">
-                              <p className="truncate text-sm font-bold text-slate-700">{workspace.name}</p>
-                              <p className="text-sm text-slate-500">{t("common.workspace")}</p>
-                            </div>
-                            {isPending && (
-                              <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />
-                            )}
-                            <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
-                          </>
-                        )}
+                        <SwitcherTriggerLabel
+                          isCollapsed={isCollapsed}
+                          isTextVisible={isTextVisible}
+                          isPending={isPending}
+                          name={workspace.name}
+                          caption={t("common.workspace")}
+                        />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
@@ -615,18 +561,13 @@ export const MainNavigation = ({
                         <span className={switcherIconClasses}>
                           <Building2Icon className="size-4" strokeWidth={1.5} />
                         </span>
-                        {!isCollapsed && !isTextVisible && (
-                          <>
-                            <div className="grow overflow-hidden">
-                              <p className="truncate text-sm font-bold text-slate-700">{organization.name}</p>
-                              <p className="text-sm text-slate-500">{t("common.organization")}</p>
-                            </div>
-                            {isPending && (
-                              <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />
-                            )}
-                            <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
-                          </>
-                        )}
+                        <SwitcherTriggerLabel
+                          isCollapsed={isCollapsed}
+                          isTextVisible={isTextVisible}
+                          isPending={isPending}
+                          name={organization.name}
+                          caption={t("common.organization")}
+                        />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">

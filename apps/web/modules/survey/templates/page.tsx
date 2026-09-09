@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { resolveDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
@@ -33,12 +34,17 @@ export const SurveyTemplatesPage = async (props: Readonly<SurveyTemplateProps>) 
 
   const publicDomain = getPublicDomain();
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
+  const defaultLanguage = resolveDefaultSurveyLanguage({
+    workspaceDefaultLanguage: workspace.config.defaultSurveyLanguage,
+    userLocale: locale,
+  });
 
   return (
     <TemplateContainerWithPreview
       workspace={workspace}
       publicDomain={publicDomain}
-      defaultLanguage={locale}
+      defaultLanguage={defaultLanguage}
+      language={locale}
     />
   );
 };

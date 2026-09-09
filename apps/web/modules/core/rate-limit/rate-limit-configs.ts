@@ -4,6 +4,8 @@ export const rateLimitConfigs = {
     login: { interval: 900, allowedPerInterval: 10, namespace: "auth:login" }, // 10 per 15 minutes
     signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup" }, // 30 per hour
     forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot" }, // 5 per hour
+    // Keep redemption independent so requesting an email cannot exhaust the budget to use its token.
+    resetPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:reset-password" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
     emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token" }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
   },
@@ -49,12 +51,7 @@ export const rateLimitConfigs = {
     }, // 10 per minute — prevents brute-force PIN guessing
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
     unsplash: { interval: 60, allowedPerInterval: 30, namespace: "action:unsplash" }, // 30 per minute per user — bounds one account exhausting the instance-wide UNSPLASH_ACCESS_KEY quota
-    inviteMember: { interval: 3600 * 24, allowedPerInterval: 20, namespace: "action:invite-member" }, // 20 per day  — bounds invite-spam abuse
-    bulkInviteMembers: {
-      interval: 3600 * 24,
-      allowedPerInterval: 5,
-      namespace: "action:bulk-invite-members",
-    }, // 5 bulk imports per day per org
+    inviteMember: { interval: 3600 * 24, allowedPerInterval: 50, namespace: "action:invite-member" }, // 50 recipients per day per org; trusted limits are resolved per organization
     generateExampleResponses: {
       interval: 60,
       allowedPerInterval: 1,
@@ -107,5 +104,14 @@ export const rateLimitConfigs = {
       namespace: "storage:upload:workspace",
     }, // 100 per minute per workspace
     delete: { interval: 60, allowedPerInterval: 5, namespace: "storage:delete" }, // 5 per minute
+    // One attachment export streams thousands of objects out of S3, so it is bounded far more tightly
+    // than a CSV download. Charged inside the route's handler, on the download path only, so the
+    // client's dryRun pre-flight does not spend a download's allowance — see the route for why that
+    // cannot go through the wrapper's customRateLimitConfig.
+    attachmentsExport: {
+      interval: 600,
+      allowedPerInterval: 3,
+      namespace: "storage:attachments-export",
+    }, // 3 downloads per 10 minutes
   },
 } as const;

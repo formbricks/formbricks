@@ -2,17 +2,18 @@
 
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import formbricks from "@formbricks/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   TSurvey,
   TSurveyEditorTabs,
+  TSurveyStatus,
   ZSurvey,
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
@@ -29,7 +30,7 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
-import { isSurveyValid } from "../lib/validation";
+import { isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
 interface SurveyMenuBarProps {
@@ -39,6 +40,7 @@ interface SurveyMenuBarProps {
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
+  setHasTriggerError: React.Dispatch<React.SetStateAction<boolean>>;
   workspace: Workspace;
   responseCount: number;
   finishedResponseCount: number;
@@ -56,6 +58,7 @@ export const SurveyMenuBar = ({
   activeId,
   setActiveId,
   setInvalidElements,
+  setHasTriggerError,
   workspace,
   responseCount,
   finishedResponseCount,
@@ -64,7 +67,7 @@ export const SurveyMenuBar = ({
   locale,
   setIsCautionDialogOpen,
   isStorageConfigured = true,
-}: SurveyMenuBarProps) => {
+}: Readonly<SurveyMenuBarProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const router = useRouter();
@@ -145,21 +148,22 @@ export const SurveyMenuBar = ({
     }
   };
 
-  const containsEmptyTriggers = useMemo(() => {
-    if (localSurvey.type === "link") return false;
+  /**
+   * A missing trigger used to disable Save / Save & Close / Publish outright, which left the user
+   * with a greyed-out button and no reason for it (ENG-2581). The buttons now stay clickable and the
+   * click reports the problem: the trigger-required toast, plus the Survey Trigger card marked
+   * invalid on the Settings tab, where it can be fixed. The rule itself is unchanged and still
+   * enforced server-side.
+   */
+  const blockOnMissingTrigger = (targetStatus: TSurveyStatus): boolean => {
+    if (!isMissingRequiredTrigger(localSurvey, targetStatus)) return false;
 
-    const noTriggers = !localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0];
+    toast.error(t("workspace.surveys.edit.please_set_a_survey_trigger"));
+    setHasTriggerError(true);
+    setActiveId("settings");
+    return true;
+  };
 
-    if (noTriggers) return true;
-
-    return false;
-  }, [localSurvey]);
-
-  const disableSave = useMemo(() => {
-    if (isSurveySaving) return true;
-
-    if (localSurvey.status !== "draft" && containsEmptyTriggers) return true;
-  }, [containsEmptyTriggers, isSurveySaving, localSurvey.status]);
   const isPublishScheduled = localSurvey.status === "draft" && localSurvey.publishOn !== null;
   const draftSaveLabel = isPublishScheduled ? t("common.save_without_scheduling") : t("common.save_as_draft");
   let draftPrimaryLabel = t("workspace.surveys.edit.publish");
@@ -424,6 +428,9 @@ export const SurveyMenuBar = ({
   };
 
   const handleSurveySave = async (): Promise<boolean> => {
+    // Ahead of the spinner: a click that cannot go through should report why, not appear to work.
+    if (blockOnMissingTrigger(localSurvey.status)) return false;
+
     setIsSurveySaving(true);
 
     const isSurveyValidatedWithZod = validateSurveyWithZod();
@@ -461,12 +468,6 @@ export const SurveyMenuBar = ({
           return ZSurveyEndScreenCard.parse(ending);
         }
       });
-
-      if (localSurvey.type !== "link" && !localSurvey.triggers?.length) {
-        toast.error(t("workspace.surveys.edit.please_set_a_survey_trigger"));
-        setIsSurveySaving(false);
-        return false;
-      }
 
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
@@ -522,6 +523,8 @@ export const SurveyMenuBar = ({
   };
 
   const handleSurveyPublish = async () => {
+    if (blockOnMissingTrigger("inProgress")) return;
+
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
 
@@ -580,6 +583,9 @@ export const SurveyMenuBar = ({
   };
 
   const handleSurveySchedule = async () => {
+    // Scheduling lands on "paused", which is live enough to need a trigger.
+    if (blockOnMissingTrigger("paused")) return;
+
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
 
@@ -683,7 +689,7 @@ export const SurveyMenuBar = ({
         {!isCxMode && (
           <Button
             data-save-button
-            disabled={disableSave}
+            disabled={isSurveySaving}
             variant="secondary"
             size="sm"
             loading={isSurveySaving}
@@ -694,7 +700,7 @@ export const SurveyMenuBar = ({
         )}
         {localSurvey.status !== "draft" && (
           <Button
-            disabled={disableSave}
+            disabled={isSurveySaving}
             className="mr-3"
             size="sm"
             loading={isSurveySaving}
@@ -717,7 +723,7 @@ export const SurveyMenuBar = ({
         {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
           <Button
             size="sm"
-            disabled={isSurveySaving || containsEmptyTriggers}
+            disabled={isSurveySaving}
             loading={isSurveyPublishing}
             onClick={isPublishScheduled ? handleSurveySchedule : handleSurveyPublish}>
             {draftPrimaryLabel}

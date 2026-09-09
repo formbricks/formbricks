@@ -1,6 +1,6 @@
 # GENERATED FILE — do not edit. Source of truth: docs/api-v3-reference/src/ (one file per path/schema).
 # Regenerate with `pnpm api:v3:bundle`; CI verifies freshness with `pnpm api:v3:check`.
-# V3 API — Surveys and Workflows extension (hand-maintained source; not produced by generate-api-specs).
+# V3 API — surveys, workflows, action classes, contact attribute keys, tags and feedback records (hand-maintained source; not produced by generate-api-specs).
 openapi: 3.1.1
 info:
   title: Formbricks API v3
@@ -32,6 +32,7 @@ info:
     `POST /api/v3/surveys/generate` returns a draft `POST /api/v3/surveys` payload plus validation metadata. It does not create a survey. It generates survey content for both `link` and `app` surveys; for `app` it seeds a default `distribution` (display once, no triggers, no targeting) that you finish configuring before publishing.
     Prompt text is sent to the configured AI provider for generation, but it is not stored by this endpoint, not logged by default, and not included in audit data.
 
+    **Feedback Records** `/api/v3/feedbackRecords` is served by the **API gateway** (Envoy on Formbricks Cloud, Traefik in the one-click Docker install), which authorizes each call against the dataset and forwards it to the feedback store — not by the application routes that serve the rest of v3. Three consequences: the payload is the store's own, so members and filters are **`snake_case`** (`tenant_id`, `value_text`) rather than v3's camelCase; the dataset is named **`tenant_id`** on the wire and is required on every collection operation (it is the feedback dataset id, which the MCP `list_feedback_datasets` tool reports as `dataset_id`); and errors come in two shapes — gateway refusals (**400**, **401**, **403**, **413**, **503**) are `text/plain`, while the store's own problems are `application/problem+json` with a stable `code`. These eight operations are the whole of the gateway-served surface; any other path it receives under the prefix answers **400**. Authenticate with **`x-api-key`**: the key needs a permission on a workspace the dataset is assigned to — `read` to list, get and search, `write` to create and update, `manage` to delete — and may update or delete only in a dataset assigned to exactly one workspace.
     **OpenAPI**
     This spec is **not** produced by `pnpm generate-api-specs` (that script only builds v2 → `docs/api-v2-reference/openapi.yml`). When the route contract changes, edit the files under `docs/api-v3-reference/src/`, then run `pnpm api:v3:bundle` to regenerate the committed single-file bundle. `pnpm api:v3:lint` lints the source tree; `pnpm api:v3:check` (CI) fails when the bundle is stale.
 
@@ -176,7 +177,7 @@ paths:
                       - limit
                       - nextCursor
                       - totalCount
-                      - hasArchived
+                      - workspaceSurveyCount
                     properties:
                       limit:
                         type: integer
@@ -191,11 +192,12 @@ paths:
                           - 'null'
                         minimum: 0
                         description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
-                      hasArchived:
+                      workspaceSurveyCount:
                         type:
-                          - boolean
+                          - integer
                           - 'null'
-                        description: '`true` when the workspace has at least one archived (soft-deleted) survey. Computed only on the first page (same gate as `totalCount`); `null` when `includeTotalCount=false`.'
+                        minimum: 0
+                        description: Total number of surveys in the workspace, archived (soft-deleted) ones included and independent of the current filters. `null` when `includeTotalCount=false` (the same gate as `totalCount`). Replaces the boolean `hasArchived` field of earlier releases.
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -2220,6 +2222,7 @@ paths:
   /api/v3/tags:
     get:
       operationId: listTagsV3
+      x-excluded: true
       summary: List tags
       description: |
         Returns a workspace's response tags, each with the number of responses currently carrying it.
@@ -2275,6 +2278,7 @@ paths:
   /api/v3/tags/{tagId}:
     patch:
       operationId: renameTagV3
+      x-excluded: true
       summary: Rename a tag
       description: |
         Renames a tag. The workspace is resolved from the tag itself, so the caller cannot choose which scope
@@ -2335,6 +2339,7 @@ paths:
         - sessionAuth: []
     delete:
       operationId: deleteTagV3
+      x-excluded: true
       summary: Delete a tag
       description: |
         Deletes a tag and removes it from every response carrying it. Same authorization as rename.
@@ -2381,6 +2386,7 @@ paths:
   /api/v3/tags/{tagId}/merge:
     post:
       operationId: mergeTagsV3
+      x-excluded: true
       summary: Merge a tag into another
       description: |
         Moves every response tagged `{tagId}` onto `newTagId`, then deletes `{tagId}`.
@@ -2444,6 +2450,788 @@ paths:
           $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
+  /api/v3/feedbackRecords:
+    get:
+      operationId: listFeedbackRecordsV3
+      summary: List feedback records
+      description: |
+        Lists the feedback records of one dataset, newest first, with optional filters and keyset
+        pagination. Served by the API gateway, which authorizes the call against `tenant_id` and
+        forwards it to the feedback store — see the introduction for how the two layers answer.
+
+        Requires an API key with **read** permission (or higher) on a workspace the dataset is assigned
+        to. The organization must hold the Unify Feedback entitlement.
+
+        Multi-value filters are OR-ed within a parameter and AND-ed across parameters. Repeat the
+        parameter to pass several values (`?field_type=text&field_type=rating`); comma-separated values
+        are **not** split. Filters on enrichment members (`sentiment`, `emotions`, `sentiment_score_*`)
+        never match records that have not been enriched — use `has_sentiment=false` / `has_emotions=false`
+        to find those.
+      tags:
+        - V3 Feedback Records
+      parameters:
+        - $ref: '#/components/parameters/FeedbackRecordsTenantIdQuery'
+        - in: query
+          name: submission_id
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              maxLength: 255
+          description: Records belonging to any of these logical submissions (e.g. response ids).
+        - in: query
+          name: source_type
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              maxLength: 255
+          description: Records from any of these source types, e.g. `survey`, `review`.
+        - in: query
+          name: source_id
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              maxLength: 255
+          description: Records from any of these sources (e.g. survey ids).
+        - in: query
+          name: source_name
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              maxLength: 255
+          description: 'Records whose source display name is any of these. Prefer `source_id` where records carry one: a name can be edited or translated, the id is stable.'
+        - in: query
+          name: field_id
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              maxLength: 255
+          description: Every answer to any of these questions.
+        - in: query
+          name: field_group_id
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              maxLength: 255
+          description: Records in any of these field groups (ranking / matrix questions).
+        - in: query
+          name: field_type
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 9
+            items:
+              $ref: '#/components/schemas/FeedbackRecordFieldType'
+          description: Records of any of these field types. An empty value is ignored, so `?field_type=` equals omitting the filter.
+        - in: query
+          name: value_id
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              maxLength: 255
+          description: Records whose selected option id is any of these (e.g. every pick of one survey choice).
+        - in: query
+          name: user_id
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              maxLength: 255
+          description: Everything any of these end users submitted.
+        - in: query
+          name: language
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              maxLength: 10
+          description: Records given in any of these languages (ISO codes).
+        - in: query
+          name: since
+          schema:
+            type: string
+            format: date-time
+          description: '`collected_at >= since` (ISO 8601, inclusive). Must be between 1970-01-01 and 2080-12-31.'
+        - in: query
+          name: until
+          schema:
+            type: string
+            format: date-time
+          description: '`collected_at <= until` (ISO 8601, inclusive).'
+        - in: query
+          name: created_since
+          schema:
+            type: string
+            format: date-time
+          description: '`created_at >= created_since` (ISO 8601, inclusive). `created_at` is when the record was stored; `collected_at` (see `since`) is when the feedback was given. They diverge on a historical re-import, so this is the filter for "what did this import bring in".'
+        - in: query
+          name: created_until
+          schema:
+            type: string
+            format: date-time
+          description: '`created_at <= created_until` (ISO 8601, inclusive).'
+        - in: query
+          name: value_number_min
+          schema:
+            type: number
+            format: double
+          description: '`value_number >= value_number_min` (inclusive), e.g. NPS promoters with `value_number_min=9`. Records without a numeric answer are excluded. A max below the min answers **400**.'
+        - in: query
+          name: value_number_max
+          schema:
+            type: number
+            format: double
+          description: '`value_number <= value_number_max` (inclusive). Paired with the min it selects a band: `9..10` promoters, `0..6` detractors.'
+        - in: query
+          name: value_date_min
+          schema:
+            type: string
+            format: date-time
+          description: '`value_date >= value_date_min` (inclusive) — bounds the answer to a date question, not when the feedback was collected.'
+        - in: query
+          name: value_date_max
+          schema:
+            type: string
+            format: date-time
+          description: '`value_date <= value_date_max` (inclusive).'
+        - in: query
+          name: sentiment
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 6
+            items:
+              $ref: '#/components/schemas/FeedbackRecordSentiment'
+          description: Records carrying any of these sentiment labels. An empty value is ignored.
+        - in: query
+          name: emotions
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 6
+            items:
+              $ref: '#/components/schemas/FeedbackRecordEmotion'
+          description: 'Records tagged with **any** of these emotions: a record tagged `{joy}` and one tagged `{joy, anger}` both match `?emotions=joy&emotions=anger`. There is no "all of them" form.'
+        - in: query
+          name: sentiment_score_min
+          schema:
+            type: number
+            format: double
+            minimum: -1
+            maximum: 1
+          description: '`sentiment_score >= sentiment_score_min` (inclusive). The score is continuous where the label is bucketed, so this is the filter for "the most negative feedback".'
+        - in: query
+          name: sentiment_score_max
+          schema:
+            type: number
+            format: double
+            minimum: -1
+            maximum: 1
+          description: '`sentiment_score <= sentiment_score_max` (inclusive).'
+        - in: query
+          name: has_sentiment
+          schema:
+            type: boolean
+          description: '`true` selects enriched records (a sentiment label is present), `false` the not-yet-enriched ones. Omit for no constraint.'
+        - in: query
+          name: has_emotions
+          schema:
+            type: boolean
+          description: '`true` selects records carrying emotion labels, `false` those without. Note `false` covers both "not yet classified" and "classified, no emotion detected".'
+        - in: query
+          name: has_translation
+          schema:
+            type: boolean
+          description: '`true` selects translated records, `false` untranslated ones. Omit for no constraint.'
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum:
+              - collected_at
+              - created_at
+            default: collected_at
+          description: 'Column to order by. Only columns that are non-null and immutable after insert are offered: a mutable sort key would let a row move across the cursor between pages and be skipped.'
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          description: Sort direction. Rows tied on the sort column are ordered by `id` ascending.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+          description: 'Page size. Out-of-range and non-numeric values are rejected — `-5` and `1001` answer **400** — with one exception: `limit=0` is indistinguishable from omitting the parameter, so it is accepted and the default of `100` applies. Send no `limit` rather than `0` if you are computing it. The search operations behave differently again: they clamp instead of rejecting.'
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: 'Opaque keyset cursor returned as `next_cursor` by the previous page. Omit on the first request. A cursor is a position within one specific ordering: presenting it with a different `sort` or `order` answers **400** — restart without a cursor instead.'
+      responses:
+        '200':
+          description: Feedback records retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackRecordList'
+              examples:
+                basic:
+                  summary: One page of two records
+                  value:
+                    data:
+                      - id: 018e1234-5678-7abc-8ef0-123456789abc
+                        tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                        collected_at: '2026-08-15T10:30:00Z'
+                        created_at: '2026-08-15T10:30:02Z'
+                        updated_at: '2026-08-15T10:30:02Z'
+                        source_type: survey
+                        source_id: cm2k7q9x00003v8h1a2b3c4d5
+                        source_name: Post-match survey
+                        submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+                        field_id: q1
+                        field_label: How satisfied were you with the stadium experience?
+                        field_type: rating
+                        value_number: 4
+                        user_id: fan-8813
+                        language: en
+                      - id: 018e1234-5678-7abc-8ef0-123456789abd
+                        tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                        collected_at: '2026-08-15T10:30:00Z'
+                        created_at: '2026-08-15T10:30:02Z'
+                        updated_at: '2026-08-15T10:31:40Z'
+                        source_type: survey
+                        source_id: cm2k7q9x00003v8h1a2b3c4d5
+                        source_name: Post-match survey
+                        submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+                        field_id: q2
+                        field_label: What could we improve?
+                        field_type: text
+                        value_text: Queues at the north gate were far too long.
+                        user_id: fan-8813
+                        language: en
+                        sentiment: negative
+                        sentiment_score: -0.62
+                        emotions:
+                          - anger
+                    limit: 100
+                    next_cursor: eyJ0IjoiMjAyNi0wOC0xNVQxMDozMDowMFoiLCJpIjoiMDE4ZTEyMzQtNTY3OC03YWJjLThlZjAtMTIzNDU2Nzg5YWJkIn0=
+        '400':
+          $ref: '#/components/responses/FeedbackRecordsBadRequest'
+        '401':
+          $ref: '#/components/responses/FeedbackRecordsUnauthorized'
+        '403':
+          $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '500':
+          $ref: '#/components/responses/FeedbackRecordsInternalServerError'
+        '503':
+          $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
+      security:
+        - apiKeyAuth: []
+    post:
+      operationId: createFeedbackRecordV3
+      summary: Create a feedback record
+      description: |
+        Stores one feedback record in the dataset named by `tenant_id` in the body. The gateway reads
+        `tenant_id` from the JSON body to authorize the call — a body that is not JSON, or has no
+        `tenant_id`, answers **400** before anything is stored.
+
+        Requires an API key with **write** permission (or higher) on a workspace the dataset is
+        assigned to. Creating is allowed on shared datasets (it is ordinary workspace work, like a CSV
+        import); only changing and deleting existing records is restricted to unshared ones.
+
+        Ingestion is idempotent per (`tenant_id`, `submission_id`, `field_id`): a second record with the
+        same triple answers **409** rather than creating a duplicate. Send exactly one `value_*` member,
+        matching `field_type`. A `text` record is enriched asynchronously — `sentiment`, `emotions` and
+        the translation members appear on the record once enrichment completes, and it becomes
+        searchable once embedded.
+      tags:
+        - V3 Feedback Records
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFeedbackRecordRequest'
+            examples:
+              rating:
+                summary: A rating answer
+                value:
+                  tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                  source_type: survey
+                  source_id: cm2k7q9x00003v8h1a2b3c4d5
+                  source_name: Post-match survey
+                  submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+                  field_id: q1
+                  field_label: How satisfied were you with the stadium experience?
+                  field_type: rating
+                  value_number: 4
+                  user_id: fan-8813
+                  language: en
+              text:
+                summary: A free-text answer (enriched and embedded)
+                value:
+                  tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                  source_type: call_notes
+                  source_id: crm-account-4471
+                  source_name: Quarterly review call
+                  submission_id: call-2026-08-15-4471
+                  field_id: verbatim
+                  field_label: Customer verbatim
+                  field_type: text
+                  value_text: The new reporting module saved us a full day each week.
+                  user_id: contact-9a1f
+                  language: en
+                  metadata:
+                    channel: call
+                    plan: enterprise
+              categorical:
+                summary: A choice answer with a stable option id
+                value:
+                  tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                  source_type: survey
+                  source_id: cm2k7q9x00003v8h1a2b3c4d5
+                  submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+                  field_id: q3
+                  field_label: Which stand were you in?
+                  field_type: categorical
+                  value_text: North stand
+                  value_id: opt_north
+                  user_id: fan-8813
+      responses:
+        '201':
+          description: Feedback record created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackRecord'
+              examples:
+                created:
+                  summary: The stored record
+                  value:
+                    id: 018e1234-5678-7abc-8ef0-123456789abc
+                    tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                    collected_at: '2026-08-15T10:30:00Z'
+                    created_at: '2026-08-15T10:30:02Z'
+                    updated_at: '2026-08-15T10:30:02Z'
+                    source_type: survey
+                    source_id: cm2k7q9x00003v8h1a2b3c4d5
+                    source_name: Post-match survey
+                    submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+                    field_id: q1
+                    field_label: How satisfied were you with the stadium experience?
+                    field_type: rating
+                    value_number: 4
+                    user_id: fan-8813
+                    language: en
+        '400':
+          $ref: '#/components/responses/FeedbackRecordsBadRequest'
+        '401':
+          $ref: '#/components/responses/FeedbackRecordsUnauthorized'
+        '403':
+          $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '409':
+          $ref: '#/components/responses/FeedbackRecordsConflict'
+        '413':
+          $ref: '#/components/responses/FeedbackRecordsPayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/FeedbackRecordsInternalServerError'
+        '503':
+          $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
+      security:
+        - apiKeyAuth: []
+    delete:
+      operationId: deleteFeedbackRecordsByUserV3
+      summary: Delete a user's feedback records
+      description: |
+        Permanently deletes every record in the dataset whose `user_id` matches — the erasure operation
+        for GDPR Article 17 requests. Derived embeddings are removed with the records. Idempotent:
+        repeating the call answers `deleted_count: 0`.
+
+        `tenant_id` is **required**: the gateway scopes erasure to one dataset. (The underlying store
+        can erase a user across every dataset when `tenant_id` is omitted; that form is not reachable
+        through this API.) Records written without a `user_id` cannot be reached this way — delete them
+        individually.
+
+        Deletion is unrecoverable, so it requires an API key with **manage** permission on a workspace
+        the dataset is assigned to, and the dataset must be assigned to **exactly one** workspace: on a
+        shared dataset no workspace permission can say whose records these are, so API-key mutations
+        are refused with **403**.
+      tags:
+        - V3 Feedback Records
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: The end-user identifier whose records to delete.
+        - $ref: '#/components/parameters/FeedbackRecordsTenantIdQuery'
+      responses:
+        '200':
+          description: Records deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteFeedbackRecordsByUserResult'
+              examples:
+                deleted:
+                  summary: A user with records
+                  value:
+                    deleted_count: 42
+                    message: Successfully deleted 42 feedback records
+                nothingLeft:
+                  summary: Repeated call
+                  value:
+                    deleted_count: 0
+                    message: Successfully deleted 0 feedback records
+        '400':
+          $ref: '#/components/responses/FeedbackRecordsBadRequest'
+        '401':
+          $ref: '#/components/responses/FeedbackRecordsUnauthorized'
+        '403':
+          $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '409':
+          $ref: '#/components/responses/FeedbackRecordsWriteConflict'
+        '500':
+          $ref: '#/components/responses/FeedbackRecordsInternalServerError'
+        '503':
+          $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
+      security:
+        - apiKeyAuth: []
+  /api/v3/feedbackRecords/search/semantic:
+    post:
+      operationId: searchFeedbackRecordsV3
+      summary: Search feedback records semantically
+      description: |
+        Embeds `query` and returns the ids of the records in the dataset whose text is closest to it,
+        with cosine similarity scores. Only records with a non-empty `value_text` are embedded, so only
+        those can match. The gateway reads `tenant_id` from the JSON body to authorize the call.
+        Requires an API key with **read** permission (or higher) on a workspace the dataset is
+        assigned to.
+
+        Results carry ids and the embedded text only — fetch a match with
+        `GET /api/v3/feedbackRecords/{id}` for the full record. Answers **503** on instances without
+        an embedding model configured.
+      tags:
+        - V3 Feedback Records
+      parameters:
+        - $ref: '#/components/parameters/SimilarityLimitQuery'
+        - $ref: '#/components/parameters/SimilarityCursorQuery'
+        - $ref: '#/components/parameters/MinScoreQuery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRecordSemanticSearchRequest'
+            example:
+              query: complaints about waiting times at the gates
+              tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+      responses:
+        '200':
+          description: Matches retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackRecordSimilarityResult'
+              examples:
+                matches:
+                  summary: Two matches above the threshold
+                  value:
+                    data:
+                      - feedback_record_id: 018e1234-5678-7abc-8ef0-123456789abd
+                        score: 0.71
+                        field_label: What could we improve?
+                        value_text: Queues at the north gate were far too long.
+                      - feedback_record_id: 018e1234-5678-7abc-8ef0-1234567890aa
+                        score: 0.64
+                        field_label: Anything else?
+                        value_text: Took 40 minutes to get in. Please open more turnstiles.
+                    limit: 10
+        '400':
+          $ref: '#/components/responses/FeedbackRecordsBadRequest'
+        '401':
+          $ref: '#/components/responses/FeedbackRecordsUnauthorized'
+        '403':
+          $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '413':
+          $ref: '#/components/responses/FeedbackRecordsPayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/FeedbackRecordsInternalServerError'
+        '503':
+          $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
+      security:
+        - apiKeyAuth: []
+  /api/v3/feedbackRecords/{id}:
+    get:
+      operationId: getFeedbackRecordV3
+      summary: Get a feedback record
+      description: |
+        Returns one feedback record by id. The gateway looks the record up to learn its dataset and
+        authorizes against that, so no `tenant_id` is sent. Requires an API key with **read**
+        permission (or higher) on a workspace the record's dataset is assigned to.
+
+        An unknown id, or one in a dataset you cannot read, answers **403** rather than 404, so ids
+        cannot be probed. The exception is the minute after a delete: the gateway still has the
+        record's dataset cached, authorizes the call, and the store answers **404**.
+      tags:
+        - V3 Feedback Records
+      parameters:
+        - $ref: '#/components/parameters/FeedbackRecordIdPath'
+      responses:
+        '200':
+          description: Feedback record retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackRecord'
+              examples:
+                enriched:
+                  summary: A text record after enrichment
+                  value:
+                    id: 018e1234-5678-7abc-8ef0-123456789abd
+                    tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                    collected_at: '2026-08-15T10:30:00Z'
+                    created_at: '2026-08-15T10:30:02Z'
+                    updated_at: '2026-08-15T10:31:40Z'
+                    source_type: survey
+                    source_id: cm2k7q9x00003v8h1a2b3c4d5
+                    source_name: Post-match survey
+                    submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+                    field_id: q2
+                    field_label: What could we improve?
+                    field_type: text
+                    value_text: Queues at the north gate were far too long.
+                    user_id: fan-8813
+                    language: en
+                    sentiment: negative
+                    sentiment_score: -0.62
+                    emotions:
+                      - anger
+                    value_text_translated: Die Warteschlangen am Nordtor waren viel zu lang.
+                    translation_lang_key: de
+        '400':
+          $ref: '#/components/responses/FeedbackRecordsBadRequest'
+        '401':
+          $ref: '#/components/responses/FeedbackRecordsUnauthorized'
+        '403':
+          $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '404':
+          $ref: '#/components/responses/FeedbackRecordsRecordNotFound'
+        '500':
+          $ref: '#/components/responses/FeedbackRecordsInternalServerError'
+        '503':
+          $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
+      security:
+        - apiKeyAuth: []
+    patch:
+      operationId: updateFeedbackRecordV3
+      summary: Update a feedback record
+      description: |
+        Changes the answer, `language`, `user_id` or `metadata` of one record. Only the members sent
+        are changed; provenance (`tenant_id`, `source_*`, `field_*`, `submission_id`, `collected_at`)
+        is immutable. Requires an API key with **write** permission (or higher) on a workspace the
+        record's dataset is assigned to, and the dataset must be assigned to **exactly one** workspace
+        — see the delete operation for why.
+
+        Two behaviours are silent and worth knowing: `metadata` is **replaced**, not merged; and
+        changing `value_text` clears the enrichment members (`sentiment`, `sentiment_score`,
+        `emotions`, `value_text_translated`, `translation_lang_key`) and queues re-enrichment and
+        re-embedding — the response shows them absent until that completes. Changing `language` clears
+        and re-queues the translation pair only.
+      tags:
+        - V3 Feedback Records
+      parameters:
+        - $ref: '#/components/parameters/FeedbackRecordIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFeedbackRecordRequest'
+            examples:
+              correctText:
+                summary: Correct a text answer
+                value:
+                  value_text: Queues at the north gate were far too long on match day.
+              replaceMetadata:
+                summary: Replace the metadata object
+                value:
+                  metadata:
+                    channel: survey
+                    stand: north
+                    priority: high
+      responses:
+        '200':
+          description: Feedback record updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackRecord'
+              examples:
+                updated:
+                  summary: After correcting the text — enrichment members are cleared pending re-enrichment
+                  value:
+                    id: 018e1234-5678-7abc-8ef0-123456789abd
+                    tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                    collected_at: '2026-08-15T10:30:00Z'
+                    created_at: '2026-08-15T10:30:02Z'
+                    updated_at: '2026-08-16T09:02:11Z'
+                    source_type: survey
+                    source_id: cm2k7q9x00003v8h1a2b3c4d5
+                    source_name: Post-match survey
+                    submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+                    field_id: q2
+                    field_label: What could we improve?
+                    field_type: text
+                    value_text: Queues at the north gate were far too long on match day.
+                    user_id: fan-8813
+                    language: en
+        '400':
+          $ref: '#/components/responses/FeedbackRecordsBadRequest'
+        '401':
+          $ref: '#/components/responses/FeedbackRecordsUnauthorized'
+        '403':
+          $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '404':
+          $ref: '#/components/responses/FeedbackRecordsRecordNotFound'
+        '409':
+          $ref: '#/components/responses/FeedbackRecordsWriteConflict'
+        '413':
+          $ref: '#/components/responses/FeedbackRecordsPayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/FeedbackRecordsInternalServerError'
+        '503':
+          $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
+      security:
+        - apiKeyAuth: []
+    delete:
+      operationId: deleteFeedbackRecordV3
+      summary: Delete a feedback record
+      description: |
+        Permanently deletes one record and its derived embedding. Unrecoverable, so it requires an API
+        key with **manage** permission on a workspace the record's dataset is assigned to, and the
+        dataset must be assigned to **exactly one** workspace: on a shared dataset no workspace
+        permission can say whose record this is, so API-key mutations are refused with **403**.
+      tags:
+        - V3 Feedback Records
+      parameters:
+        - $ref: '#/components/parameters/FeedbackRecordIdPath'
+      responses:
+        '204':
+          description: Feedback record deleted
+        '400':
+          $ref: '#/components/responses/FeedbackRecordsBadRequest'
+        '401':
+          $ref: '#/components/responses/FeedbackRecordsUnauthorized'
+        '403':
+          $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '404':
+          $ref: '#/components/responses/FeedbackRecordsRecordNotFound'
+        '409':
+          $ref: '#/components/responses/FeedbackRecordsWriteConflict'
+        '500':
+          $ref: '#/components/responses/FeedbackRecordsInternalServerError'
+        '503':
+          $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
+      security:
+        - apiKeyAuth: []
+  /api/v3/feedbackRecords/{id}/similar:
+    get:
+      operationId: getSimilarFeedbackRecordsV3
+      summary: Find similar feedback records
+      description: |
+        Returns the records in the same dataset whose embedded text is closest to the given record's,
+        with cosine similarity scores. The anchor record itself is excluded. The gateway looks the
+        record up to learn its dataset and authorizes against that. Requires an API key with **read**
+        permission (or higher) on a workspace the record's dataset is assigned to.
+
+        Answers **403** for an unknown or inaccessible id. Answers **404** when the record exists but has
+        no embedding — it has no text, or was created moments ago and is not embedded yet. Answers
+        **503** on instances without an embedding model configured.
+      tags:
+        - V3 Feedback Records
+      parameters:
+        - $ref: '#/components/parameters/FeedbackRecordIdPath'
+        - $ref: '#/components/parameters/SimilarityLimitQuery'
+        - $ref: '#/components/parameters/SimilarityCursorQuery'
+        - $ref: '#/components/parameters/MinScoreQuery'
+      responses:
+        '200':
+          description: Similar records retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackRecordSimilarityResult'
+              examples:
+                matches:
+                  summary: One neighbour above the threshold
+                  value:
+                    data:
+                      - feedback_record_id: 018e1234-5678-7abc-8ef0-1234567890aa
+                        score: 0.83
+                        field_label: Anything else?
+                        value_text: Took 40 minutes to get in. Please open more turnstiles.
+                    limit: 10
+        '400':
+          $ref: '#/components/responses/FeedbackRecordsBadRequest'
+        '401':
+          $ref: '#/components/responses/FeedbackRecordsUnauthorized'
+        '403':
+          $ref: '#/components/responses/FeedbackRecordsForbidden'
+        '404':
+          $ref: '#/components/responses/FeedbackRecordsNotFound'
+        '500':
+          $ref: '#/components/responses/FeedbackRecordsInternalServerError'
+        '503':
+          $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
+      security:
+        - apiKeyAuth: []
 components:
   securitySchemes:
     sessionAuth:
@@ -3698,9 +4486,11 @@ components:
     SurveyHiddenFields:
       type: object
       description: |
-        Hidden fields, sometimes called embedded data in other survey products. Field ids are stable
-        public identifiers and may be referenced by logic, recall, quotas, integrations, and response data.
-        Use only letters, numbers, underscores, and hyphens; avoid spaces and reserved ids.
+        Hidden fields, sometimes called embedded data in other survey products. Field ids are stable public identifiers and may be referenced by logic, recall, quotas, integrations, and response data.
+
+        **Naming rule for new field ids** — the same rule the survey editor applies (ENG-2539): a new id must start with a lowercase letter and then contain only lowercase letters, numbers and underscores (`^[a-z][a-z0-9_]*$`), and must not take a reserved name. Reserved are the link-survey system params and internal ids — `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport` (matched case-insensitively) — and the names of auto-captured system fields, which every survey can already read without declaring them: `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`.
+
+        **Ids a survey already declares are grandfathered**: they always load, and re-sending the survey unchanged never fails validation — only *adding* such a name as a new field is refused. Deleting a grandfathered field spends the reprieve: once it is gone from the saved survey, the name can no longer be re-added. Note this means re-creating a survey from an exported document can fail with a 400 when the export declares a name the rule refuses; rename the field in the payload before importing. The `pattern` below describes what stored surveys may hold (the pre-existing lenient charset), not what a new id may look like.
       required:
         - enabled
       properties:
@@ -3726,8 +4516,9 @@ components:
           description: Optional stable variable id. Generated when omitted.
         name:
           type: string
-          pattern: ^[a-z0-9_]+$
-          description: Unique variable name. Lowercase letters, numbers, and underscores only.
+          pattern: ^[a-z][a-z0-9_]*$
+          description: |
+            Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and underscores only — the same rule as new hidden-field ids (this schema is create-only, so no grandfathered name validates against it). Reserved names are refused: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`.
         type:
           type: string
           enum:
@@ -3749,8 +4540,9 @@ components:
           description: Optional stable variable id. Generated when omitted.
         name:
           type: string
-          pattern: ^[a-z0-9_]+$
-          description: Unique variable name. Lowercase letters, numbers, and underscores only.
+          pattern: ^[a-z][a-z0-9_]*$
+          description: |
+            Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and underscores only — the same rule as new hidden-field ids (this schema is create-only, so no grandfathered name validates against it). Reserved names are refused: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`.
         type:
           type: string
           enum:
@@ -5525,6 +6317,455 @@ components:
           type: integer
           minimum: 0
           description: Responses currently carrying this tag. `0` when the tag exists but has never been applied.
+    FeedbackRecordFieldType:
+      type: string
+      description: 'The type of a feedback field, which determines which `value_*` member carries the answer: `text` → `value_text` (the only enrichable type), `categorical` → `value_text` + `value_id`, `nps` / `csat` / `ces` / `rating` / `number` → `value_number`, `boolean` → `value_boolean`, `date` → `value_date`.'
+      enum:
+        - text
+        - categorical
+        - nps
+        - csat
+        - ces
+        - rating
+        - number
+        - boolean
+        - date
+    FeedbackRecordSentiment:
+      type: string
+      description: 'Sentiment polarity label inferred from `value_text` by the sentiment enrichment: five ordinal levels plus a distinct `mixed`. Server-generated and read-only.'
+      enum:
+        - very_negative
+        - negative
+        - neutral
+        - positive
+        - very_positive
+        - mixed
+    FeedbackRecordEmotion:
+      type: string
+      description: A single emotion label inferred from `value_text` by the emotion enrichment (the six Ekman basic emotions). Emotions are multi-label, so a record carries zero or more of these; "mixed" is not a label, it is two or more present at once. Server-generated and read-only.
+      enum:
+        - joy
+        - anger
+        - sadness
+        - fear
+        - surprise
+        - disgust
+    FeedbackRecord:
+      type: object
+      description: 'One piece of feedback in the normalized Feedback Record shape. Field names are `snake_case`: the payload is the Hub''s, passed through the API gateway unchanged. Optional members are **absent** (not `null`) when unset.'
+      additionalProperties: false
+      required:
+        - id
+        - collected_at
+        - created_at
+        - updated_at
+        - source_type
+        - field_id
+        - field_type
+        - submission_id
+        - tenant_id
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: UUIDv7 primary key.
+        tenant_id:
+          type: string
+          format: cuid2
+          description: The feedback dataset this record belongs to (the dataset id, as shown by the MCP `list_feedback_datasets` tool).
+        collected_at:
+          type: string
+          format: date-time
+          description: When the feedback was given.
+        created_at:
+          type: string
+          format: date-time
+          description: When the record was stored. Diverges from `collected_at` on a historical re-import.
+        updated_at:
+          type: string
+          format: date-time
+          description: When the record was last changed.
+        source_type:
+          type: string
+          description: Type of feedback source, e.g. `survey`, `review`, `feedback_form`.
+        source_id:
+          type: string
+          description: Reference to the survey / form / ticket the record came from.
+        source_name:
+          type: string
+          description: Human-readable name of the source.
+        submission_id:
+          type: string
+          description: Identifier of the logical submission this record belongs to (e.g. a response id). Records are unique per (`tenant_id`, `submission_id`, `field_id`).
+        field_id:
+          type: string
+          description: Identifier of the question / field.
+        field_label:
+          type: string
+          description: The question text.
+        field_group_id:
+          type: string
+          description: Stable identifier grouping related fields (ranking, matrix and grid questions).
+        field_group_label:
+          type: string
+          description: Human-readable question text for the group.
+        field_type:
+          $ref: '#/components/schemas/FeedbackRecordFieldType'
+        language:
+          type: string
+          description: ISO language code the feedback was given in.
+        user_id:
+          type: string
+          description: End-user identifier (e.g. an anonymous id or an email hash).
+        value_text:
+          type: string
+          description: Text answer.
+        value_id:
+          type: string
+          description: Stable id of the selected option in the source system (e.g. a survey choice id), stored alongside `value_text` so choice answers keep their identity across label edits and languages. Opaque. Absent for free-text and non-choice answers.
+        value_number:
+          type: number
+          format: double
+          description: Numeric answer (ratings, NPS scores, numbers).
+        value_boolean:
+          type: boolean
+          description: Yes / no answer.
+        value_date:
+          type: string
+          format: date-time
+          description: Date answer.
+        metadata:
+          type:
+            - object
+            - array
+            - string
+            - number
+            - boolean
+            - 'null'
+          items: {}
+          description: Arbitrary context stored with the record and returned with equivalent values (key order and number formatting are normalized). Omitted when the record has no metadata; a record explicitly stored with a JSON `null` returns `null`. An object is the supported shape and the only one the write operations accept; the wider union exists so records written before that convention still deserialize.
+        sentiment:
+          $ref: '#/components/schemas/FeedbackRecordSentiment'
+        sentiment_score:
+          type: number
+          format: double
+          minimum: -1
+          maximum: 1
+          description: Signed sentiment polarity from `-1.0` (very negative) to `1.0` (very positive). Read-only; absent until the record is enriched.
+        emotions:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/FeedbackRecordEmotion'
+          description: 'Emotions inferred from `value_text`; multi-label from a fixed set. Read-only, and **never an empty array** — the column is either absent or has at least one label. Absent covers two different states: not yet classified, and classified with no emotion detected. Do not read absence as "not enriched yet"; `has_emotions=false` selects both, and the enrichment-status endpoint is what distinguishes them.'
+        value_text_translated:
+          type: string
+          description: '`value_text` translated into the dataset''s configured target language. Read-only; absent until the record is enriched.'
+        translation_lang_key:
+          type: string
+          maxLength: 35
+          description: BCP-47 locale that `value_text_translated` was produced in. Read-only; absent until the record is enriched.
+    FeedbackRecordList:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - limit
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackRecord'
+        limit:
+          type: integer
+          description: The page size that was applied.
+        next_cursor:
+          type: string
+          description: Opaque keyset cursor for the next page. **Present only when there may be more results**; absent on the last page. Pass it back unchanged as `cursor`, with the same `sort` and `order`.
+    HubInvalidParam:
+      type: object
+      additionalProperties: false
+      description: A single invalid request parameter (RFC 9457 `invalid_params` extension member).
+      required:
+        - name
+        - reason
+      properties:
+        name:
+          type: string
+          description: Dotted path to the offending request field, e.g. `field_type` or `items[0].field_type`.
+        reason:
+          type: string
+          description: Human- and agent-readable explanation of why the value is invalid, naming allowed values or constraints so the request can be corrected without guessing.
+    HubProblem:
+      type: object
+      additionalProperties: false
+      description: RFC 9457 problem details (`application/problem+json`) as produced by the feedback store behind the API gateway. Branch on the stable `code` member rather than on `title` or `type`. Note the member names differ from the rest of v3 (`request_id`, not `requestId`) — the payload is passed through unchanged.
+      required:
+        - title
+        - status
+        - code
+        - request_id
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference identifying the problem type.
+        title:
+          type: string
+          description: Short, human-readable summary of the problem type; stable across occurrences.
+        status:
+          type: integer
+          description: HTTP status code.
+        code:
+          type: string
+          description: Stable, machine-readable error code. `service_unavailable` means a feature or dependency is temporarily unavailable and the request may be retried later; `tenant_write_conflict` means the write collided with an in-progress dataset purge and may be retried unchanged. Every other code is terminal until the request itself changes.
+          enum:
+            - validation
+            - bad_request
+            - unauthorized
+            - forbidden
+            - not_found
+            - conflict
+            - tenant_write_conflict
+            - method_not_allowed
+            - content_too_large
+            - service_unavailable
+            - internal_server_error
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence.
+        instance:
+          type: string
+          description: URI reference identifying this occurrence — the request path **as the feedback store saw it** (`/v1/feedback-records/...`), not the `/api/v3/feedbackRecords/...` path you called.
+        request_id:
+          type: string
+          description: Identifier for this request, also returned in the `X-Request-ID` response header; include it when reporting a problem.
+        details:
+          type: object
+          additionalProperties: true
+          description: Optional structured context, e.g. `resource_type` on a not-found problem.
+        invalid_params:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/HubInvalidParam'
+          description: Field-level validation failures. Present on `validation` problems.
+    CreateFeedbackRecordRequest:
+      type: object
+      description: A new feedback record. Exactly one `value_*` member should carry the answer, matching `field_type`. Strings must be valid UTF-8 without NULL bytes; violations answer **400**.
+      additionalProperties: false
+      required:
+        - tenant_id
+        - source_type
+        - field_id
+        - field_type
+        - submission_id
+      properties:
+        tenant_id:
+          type: string
+          format: cuid2
+          description: The feedback dataset to write into (the dataset id). The gateway authorizes the request against this dataset, so it must be one the API key's workspace is assigned to.
+        source_type:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Type of feedback source, e.g. `survey`, `review`, `feedback_form`.
+        source_id:
+          type:
+            - string
+            - 'null'
+          maxLength: 255
+          description: Reference to the survey / form / ticket the record came from.
+        source_name:
+          type:
+            - string
+            - 'null'
+          maxLength: 255
+          description: Human-readable name of the source.
+        submission_id:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 'Identifier of the logical submission this record belongs to. Groups multi-field submissions and makes ingestion idempotent: records are unique per (`tenant_id`, `submission_id`, `field_id`) and a duplicate answers **409**. If a record has no logical submission, reuse `field_id`.'
+        field_id:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Identifier of the question / field.
+        field_label:
+          type:
+            - string
+            - 'null'
+          maxLength: 2048
+          description: The question text.
+        field_group_id:
+          type: string
+          maxLength: 255
+          description: Stable identifier grouping related fields (ranking, matrix and grid questions).
+        field_group_label:
+          type:
+            - string
+            - 'null'
+          maxLength: 2048
+          description: Human-readable question text for the group.
+        field_type:
+          $ref: '#/components/schemas/FeedbackRecordFieldType'
+        language:
+          type: string
+          maxLength: 10
+          description: ISO language code the feedback was given in.
+        user_id:
+          type: string
+          maxLength: 255
+          description: 'End-user identifier (e.g. an anonymous id or an email hash). Set it on anything you may later have to erase: `DELETE /api/v3/feedbackRecords` matches on `user_id`.'
+        collected_at:
+          type: string
+          format: date-time
+          description: When the feedback was given. Defaults to now. Must be between 1970-01-01 and 2080-12-31.
+        value_text:
+          type:
+            - string
+            - 'null'
+          maxLength: 30000
+          description: Text answer. The only member that feeds sentiment, emotion, translation and embedding enrichment.
+        value_id:
+          type:
+            - string
+            - 'null'
+          maxLength: 255
+          description: Stable id of the selected option in the source system (e.g. a survey choice id or matrix column id), stored alongside `value_text`. Opaque, not validated. Omit for free-text, "other" and non-choice answers.
+        value_number:
+          type: number
+          format: double
+          minimum: -1000000000000000
+          maximum: 1000000000000000
+          description: Numeric answer (ratings, NPS scores, numbers). Must be between -1e15 and +1e15.
+        value_boolean:
+          type: boolean
+          description: Yes / no answer.
+        value_date:
+          type: string
+          format: date-time
+          description: Date answer. Must be between 1970-01-01 and 2080-12-31.
+        metadata:
+          type:
+            - object
+            - 'null'
+          additionalProperties: {}
+          description: 'Arbitrary context for this record, stored as JSON: the dimensions you want to slice a dashboard by, such as channel, device, country, campaign, plan or tags. Values may be strings, numbers, booleans, `null`, or nested objects and arrays. Use stable `snake_case` keys — a key is what a dashboard groups by. Numbers keep full precision in storage. Metadata is **not** sent to the enrichment providers, but it **is** included in the `feedback_record.created` / `feedback_record.updated` webhook payloads.'
+    DeleteFeedbackRecordsByUserResult:
+      type: object
+      additionalProperties: false
+      required:
+        - deleted_count
+        - message
+      properties:
+        deleted_count:
+          type: integer
+          minimum: 0
+          description: Number of records deleted. `0` when the user had no remaining records — the operation is idempotent.
+        message:
+          type: string
+          description: Human-readable status message.
+    FeedbackRecordSemanticSearchRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - query
+        - tenant_id
+      properties:
+        query:
+          type: string
+          minLength: 1
+          description: Natural-language search text. It is embedded and compared to record embeddings by cosine similarity.
+        tenant_id:
+          type: string
+          format: cuid2
+          description: The feedback dataset to search (the dataset id). Results never cross datasets.
+    FeedbackRecordSimilarityItem:
+      type: object
+      additionalProperties: false
+      required:
+        - feedback_record_id
+        - score
+        - field_label
+        - value_text
+      properties:
+        feedback_record_id:
+          type: string
+          format: uuid
+          description: The matching record. Fetch it with `GET /api/v3/feedbackRecords/{id}` for the full payload.
+        score:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Cosine similarity, `0` unrelated to `1` identical.
+        field_label:
+          type: string
+          description: The record's question text (part of what was embedded). Empty when the record has no label.
+        value_text:
+          type: string
+          description: The record's text answer (the text that was embedded). Empty when it has since been cleared — only records with a non-empty `value_text` are embedded in the first place.
+    FeedbackRecordSimilarityResult:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - limit
+      properties:
+        data:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/FeedbackRecordSimilarityItem'
+          description: Matches ordered by descending `score`.
+        limit:
+          type: integer
+          description: The page size that was applied.
+        next_cursor:
+          type: string
+          description: Opaque keyset cursor for the next page. Present only when a full page was returned and there may be more results. Pass it back unchanged as `cursor`.
+    UpdateFeedbackRecordRequest:
+      type: object
+      description: A partial update. Only the members sent are changed; an empty body is accepted and changes nothing. Provenance (`tenant_id`, `source_*`, `field_*`, `submission_id`, `collected_at`) is immutable.
+      additionalProperties: false
+      properties:
+        value_text:
+          type: string
+          maxLength: 30000
+          description: New text answer. Changing it clears the server-generated enrichment members (`sentiment`, `sentiment_score`, `emotions`, `value_text_translated`, `translation_lang_key`), queues re-enrichment and re-embedding, and the response reflects the cleared state.
+        value_id:
+          type: string
+          maxLength: 255
+          description: New stable option id for a choice answer. Opaque, not validated.
+        value_number:
+          type: number
+          format: double
+          minimum: -1000000000000000
+          maximum: 1000000000000000
+          description: New numeric answer. Must be between -1e15 and +1e15.
+        value_boolean:
+          type: boolean
+          description: New yes / no answer.
+        value_date:
+          type: string
+          format: date-time
+          description: New date answer. Must be between 1970-01-01 and 2080-12-31.
+        language:
+          type: string
+          maxLength: 10
+          description: New ISO language code. Changing it clears and re-queues the translation pair only.
+        user_id:
+          type: string
+          maxLength: 255
+          description: New end-user identifier.
+        metadata:
+          type:
+            - object
+            - 'null'
+          additionalProperties: {}
+          description: '**Replaces** the stored metadata wholesale — it is not merged, so send every key you want to keep. Same value rules and **400** rejections as on create.'
   responses:
     V3BadRequest:
       description: Bad Request — malformed JSON, invalid query/body/params, duplicate name, or unsupported field.
@@ -5655,6 +6896,91 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    FeedbackRecordsBadRequest:
+      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`, a request body that is not JSON, or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
+      content:
+        text/plain:
+          schema:
+            type: string
+          examples:
+            missingTenant:
+              summary: Gateway — tenant_id missing or malformed
+              value: Invalid or missing tenant_id
+            unsupportedRoute:
+              summary: Gateway — not a documented operation
+              value: Unsupported FeedbackRecords route
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/HubProblem'
+          examples:
+            invertedRange:
+              summary: Feedback store — a range filter supplied backwards
+              value:
+                type: https://hub.formbricks.com/problems/validation
+                title: Validation Failed
+                status: 400
+                code: validation
+                detail: One or more request parameters are invalid
+                request_id: 0190a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b
+                invalid_params:
+                  - name: sentiment_score_min
+                    reason: must be less than or equal to sentiment_score_max
+    FeedbackRecordsUnauthorized:
+      description: Unauthorized — no credentials, or an API key that does not exist or is revoked. Answered by the gateway as `text/plain`, before the request reaches the feedback store.
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Unauthorized
+    FeedbackRecordsForbidden:
+      description: 'Forbidden. Answered by the gateway as `text/plain` whenever the request cannot be authorized: the dataset does not exist, is archived, or is not assigned to a workspace the API key has the required permission on; the organization lacks the Unify Feedback entitlement; a mutation was attempted with an API key on a dataset shared by more than one workspace; or the record id does not exist. Existence is not leaked: an unknown dataset or record is refused here rather than with a 404. The single-record operations are the one exception, and only for a minute after a delete — see their `404`.'
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Forbidden
+    FeedbackRecordsInternalServerError:
+      description: 'Internal Server Error from the feedback store (`application/problem+json`, `code: internal_server_error`).'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/HubProblem'
+    FeedbackRecordsServiceUnavailable:
+      description: 'Service Unavailable. From the **gateway** (`text/plain`): the record''s dataset could not be resolved because the feedback store did not answer, the authorization service itself was unreachable, or the record''s stored `tenant_id` is not a dataset id this API can address. From the **feedback store** (`application/problem+json`, `code: service_unavailable`): the operation needs a capability that is not configured on this instance — semantic search and similar records require an embedding model.'
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Feedback record lookup failed
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/HubProblem'
+    FeedbackRecordsConflict:
+      description: 'Conflict (`application/problem+json`). Either a **duplicate** — a record with this `tenant_id`, `submission_id` and `field_id` already exists (`code: conflict`, terminal; update the existing record instead) — or the dataset is being **purged** while you write to it (`code: tenant_write_conflict`, transient; retry unchanged once the purge completes).'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/HubProblem'
+    FeedbackRecordsPayloadTooLarge:
+      description: Payload Too Large. The gateway buffers the request body in order to authorize it, and the proxy in front of it stops reading at 1 MiB — Envoy's `maxRequestBytes` on Formbricks Cloud, Traefik's `maxbodysize` in the Docker install. The refusal is therefore generated by that proxy rather than by the application, so neither its media type nor its body is part of this contract; branch on the status alone.
+    FeedbackRecordsWriteConflict:
+      description: 'Conflict (`application/problem+json`, `code: tenant_write_conflict`). The dataset is being **purged** while you write to it. Transient: retry the request unchanged once the purge completes. Only creates can conflict on a duplicate, so this operation never answers `code: conflict`.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/HubProblem'
+    FeedbackRecordsRecordNotFound:
+      description: 'Not Found from the feedback store (`application/problem+json`, `code: not_found`). The record was deleted after the gateway resolved its dataset: that lookup is cached for 60 seconds, so for up to a minute after a delete the call is still authorized and reaches the store, which no longer has the record. Once the cache entry expires the same id answers **403** instead. Treat both as "this record is not available to you".'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/HubProblem'
+    FeedbackRecordsNotFound:
+      description: 'Not Found from the feedback store (`application/problem+json`, `code: not_found`), for one of two reasons. Usually the record exists but has **no embedding** for the current model: it has no text, or was created moments ago and is not embedded yet. It can also mean the record itself is **gone** — deleted after the gateway authorized the call against its cached dataset (see the `id` parameter).'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/HubProblem'
   parameters:
     WorkspaceIdQuery:
       in: query
@@ -5695,3 +7021,40 @@ components:
         type: string
         format: cuid2
       description: Workflow identifier.
+    FeedbackRecordsTenantIdQuery:
+      in: query
+      name: tenant_id
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: 'The feedback dataset to operate on (the dataset id, as shown by the MCP `list_feedback_datasets` tool). **Required by the gateway on this operation**: a missing or malformed value answers **400** before the request reaches the feedback store, and a dataset the API key''s workspace is not assigned to answers **403**. The two `POST` operations take the same value in the request body instead, and the single-record operations derive it from the record.'
+    SimilarityLimitQuery:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        default: 10
+      description: 'Page size, at most 100. Unlike the `limit` on `GET /api/v3/feedbackRecords`, this one is never rejected: the search endpoints **clamp** instead of answering 400. A value above 100 is reduced to 100, and `0`, a negative number or a non-numeric value falls back to the default of 10. Read the `limit` in the response to see what was actually applied.'
+    SimilarityCursorQuery:
+      in: query
+      name: cursor
+      schema:
+        type: string
+      description: Opaque keyset cursor returned as `next_cursor` by the previous page. Omit on the first request. A malformed cursor answers **400**.
+    MinScoreQuery:
+      in: query
+      name: min_score
+      schema:
+        type: number
+        format: float
+        default: 0.7
+      description: 'Only matches with `score >= min_score` are returned. Like `limit`, this value is **clamped rather than rejected**: above `1` it becomes `1`, below `0` it becomes `0`, and a non-numeric value falls back to the default of `0.7`. That default is conservative — on the embedding model we measured, query→record similarities for genuinely relevant text often landed around `0.55–0.7` — so if a good query returns nothing, lower it (e.g. `0.5`) and filter on the returned `value_text`. Score distributions differ per model, so treat those numbers as an observation rather than a guarantee.'
+    FeedbackRecordIdPath:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Feedback record id (UUID). The dataset is resolved from the record itself, so the caller cannot choose which dataset it is authorized against. An id that is not a UUID answers **400**, and an id whose dataset the API key cannot reach answers **403** rather than 404, so ids cannot be probed. The gateway caches the record→dataset lookup for 60 seconds, so for up to a minute after a delete the id is still authorized and the store answers **404**; after that the same id answers **403**.

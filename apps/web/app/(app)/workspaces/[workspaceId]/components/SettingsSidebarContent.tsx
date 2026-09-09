@@ -6,6 +6,7 @@ import {
   BrushIcon,
   Building2Icon,
   ChevronDownIcon,
+  CodeXmlIcon,
   CreditCardIcon,
   FoldersIcon,
   GlobeIcon,
@@ -82,19 +83,21 @@ const SettingsNavLink = ({
   isCollapsed,
   isTextVisible,
   disabledMessage,
-}: {
+}: Readonly<{
   item: NavItem;
   isActive: boolean;
   isCollapsed: boolean;
   isTextVisible: boolean;
   disabledMessage?: string;
-}) => {
+}>) => {
   const activeClass = "bg-slate-50 border-r-4 border-brand-dark font-semibold text-slate-900";
   const inactiveClass =
     "hover:bg-slate-50 border-r-4 border-transparent hover:border-slate-300 transition-all duration-150 ease-in-out";
   const disabledClass = "cursor-not-allowed border-r-4 border-transparent text-slate-400";
 
   const isDisabled = item.disabled;
+  // Workspace requests update the active workspace cookie, so only fetch them on navigation.
+  const prefetch = item.href.startsWith("/workspaces/") ? false : null;
 
   const getStateClass = () => {
     if (isDisabled) return disabledClass;
@@ -110,7 +113,10 @@ const SettingsNavLink = ({
               {isDisabled ? (
                 <div className="flex items-center">{item.icon}</div>
               ) : (
-                <Link href={item.href} className="flex items-center text-slate-600 hover:text-slate-900">
+                <Link
+                  href={item.href}
+                  prefetch={prefetch}
+                  className="flex items-center text-slate-600 hover:text-slate-900">
                   {item.icon}
                 </Link>
               )}
@@ -155,7 +161,7 @@ const SettingsNavLink = ({
         isActive ? activeClass : inactiveClass,
         "text-slate-600 hover:text-slate-900"
       )}>
-      <Link href={item.href} className="flex items-center">
+      <Link href={item.href} prefetch={prefetch} className="flex items-center">
         {item.icon}
         <span
           className={cn("ml-2 transition-opacity duration-100", isTextVisible ? "opacity-0" : "opacity-100")}>
@@ -313,9 +319,9 @@ export const SettingsSidebarContent = ({
     },
     {
       id: "app-connection",
-      label: t("common.connect_your_app"),
+      label: t("common.web_and_mobile_sdk"),
       href: workspaceSettingsPath(workspaceId, "app-connection"),
-      icon: <UnplugIcon className={iconClassName} />,
+      icon: <CodeXmlIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
