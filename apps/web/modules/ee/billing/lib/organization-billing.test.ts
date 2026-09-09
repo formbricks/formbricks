@@ -7,6 +7,7 @@ import {
   ensureStripeCustomerForOrganization,
   findOrganizationIdByStripeCustomerId,
   getOrganizationBillingWithReadThroughSync,
+  getProTrialDays,
   previewImmediateUpgradeCharge,
   reconcileCloudStripeSubscriptionsForOrganization,
   setOrganizationPaymentAttemptError,
@@ -58,6 +59,7 @@ const mocks = vi.hoisted(() => ({
   loggerInfo: vi.fn(),
   loggerError: vi.fn(),
   capturePostHogEvent: vi.fn(),
+  getPostHogFeatureFlag: vi.fn(),
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -116,6 +118,10 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: mocks.capturePostHogEvent,
+}));
+
+vi.mock("@/lib/posthog/get-feature-flag", () => ({
+  getPostHogFeatureFlag: mocks.getPostHogFeatureFlag,
 }));
 
 vi.mock("./stripe-plan", async (importOriginal) => {
@@ -3239,6 +3245,27 @@ describe("organization-billing", () => {
 
       expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
       expect(mocks.cacheDel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getProTrialDays", () => {
+    test("returns the default trial length when the A/B test flag is not the test variant", async () => {
+      mocks.getPostHogFeatureFlag.mockResolvedValue(false);
+
+      const result = await getProTrialDays("org_1");
+
+      expect(mocks.getPostHogFeatureFlag).toHaveBeenCalledWith("org_1", "a-b_billing_shorten-trial-days", {
+        organizationId: "org_1",
+      });
+      expect(result).toBe(14);
+    });
+
+    test("returns the shortened trial length when the A/B test variant is active", async () => {
+      mocks.getPostHogFeatureFlag.mockResolvedValue("test");
+
+      const result = await getProTrialDays("org_1");
+
+      expect(result).toBe(7);
     });
   });
 

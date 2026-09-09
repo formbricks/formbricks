@@ -2530,7 +2530,7 @@ checksums:
     workspace/settings/billing/select_plan_feature_2: 5e11742e97a979312ca4bee52f61e87c
     workspace/settings/billing/select_plan_feature_3: 611b5246b7a6556e39b09d9411792ab3
     workspace/settings/billing/select_plan_feature_4: 765a4db9fdf1523dd53f3971e964c8dd
-    workspace/settings/billing/select_plan_header: 8c2e2e23f95b6cb342e8d54f67ed2a97
+    workspace/settings/billing/select_plan_header: 61aa21b78d9331ba586a1f226524f87d
     workspace/settings/billing/select_plan_skip: 75e5fcff10a00796dbca6ead0148c72c
     workspace/settings/billing/select_plan_subheader: 949f452eab5897af335a18ae0343086e
     workspace/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67

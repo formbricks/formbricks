@@ -2627,7 +2627,7 @@
         "select_plan_feature_2": "Acces MCP, conectează-te la orice client AI și ia decizii bazate pe date.",
         "select_plan_feature_3": "Toate integrările și webhook-uri personalizate",
         "select_plan_feature_4": "2.000 de răspunsuri pe lună",
-        "select_plan_header": "Obține Formbricks Pro gratuit!",
+        "select_plan_header": "{count, plural, one {Ești pe planul Pro pentru încă # zi} few {Ești pe planul Pro pentru încă # zile} other {Ești pe planul Pro pentru încă # de zile}}",
         "select_plan_skip": "Rămâi pe planul Hobby",
         "select_plan_subheader": "Perioadă de probă de 14 zile, fără a fi necesar card de credit",
         "status_trialing": "Trial",

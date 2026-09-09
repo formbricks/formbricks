@@ -2627,7 +2627,7 @@
         "select_plan_feature_2": "Acesso MCP, conecte-se a qualquer cliente de IA e tome decisões baseadas em dados.",
         "select_plan_feature_3": "Todas as integrações e webhooks personalizados",
         "select_plan_feature_4": "2.000 respostas por mês",
-        "select_plan_header": "Ganhe o Formbricks Pro grátis!",
+        "select_plan_header": "{count, plural, one {Você está no Pro pelos próximos # dia} other {Você está no Pro pelos próximos # dias}}",
         "select_plan_skip": "Continuar no plano Hobby",
         "select_plan_subheader": "14 dias de teste, sem necessidade de cartão de crédito",
         "status_trialing": "Trial",

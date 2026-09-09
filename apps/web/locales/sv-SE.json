@@ -2627,7 +2627,7 @@
         "select_plan_feature_2": "MCP-åtkomst, anslut till valfri AI-klient och fatta databakade beslut.",
         "select_plan_feature_3": "Alla integrationer och anpassade webhooks",
         "select_plan_feature_4": "2 000 svar per månad",
-        "select_plan_header": "Få Formbricks Pro gratis!",
+        "select_plan_header": "{count, plural, one {Du har Pro i # dag till} other {Du har Pro i # dagar till}}",
         "select_plan_skip": "Stanna på Hobby-planen",
         "select_plan_subheader": "14 dagars provperiod, inget kreditkort krävs",
         "status_trialing": "Testperiod",

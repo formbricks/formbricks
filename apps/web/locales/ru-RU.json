@@ -2627,7 +2627,7 @@
         "select_plan_feature_2": "Доступ к MCP, подключайтесь к любому ИИ-клиенту и принимайте решения на основе данных.",
         "select_plan_feature_3": "Все интеграции и пользовательские вебхуки",
         "select_plan_feature_4": "2 000 ответов в месяц",
-        "select_plan_header": "Ты на тарифе Pro следующие 14 дней",
+        "select_plan_header": "{count, plural, one {У вас Pro ещё # день} few {У вас Pro ещё # дня} many {У вас Pro ещё # дней} other {У вас Pro ещё # дней}}",
         "select_plan_skip": "Вернуться к тарифу «Hobby»",
         "select_plan_subheader": "Всё перечисленное ниже разблокировано бесплатно.",
         "status_trialing": "Пробный",

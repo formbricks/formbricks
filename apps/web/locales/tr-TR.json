@@ -2627,7 +2627,7 @@
         "select_plan_feature_2": "MCP erişimi, herhangi bir yapay zeka istemcisine bağlanın ve veriye dayalı kararlar alın.",
         "select_plan_feature_3": "Tüm entegrasyonlar ve özel webhook'lar",
         "select_plan_feature_4": "Ayda 2.000 yanıt",
-        "select_plan_header": "Formbricks Pro'yu ücretsiz edin!",
+        "select_plan_header": "{count, plural, one {Önümüzdeki # gün boyunca Pro kullanıyorsun} other {Önümüzdeki # gün boyunca Pro kullanıyorsun}}",
         "select_plan_skip": "Hobby planında kal",
         "select_plan_subheader": "14 günlük deneme, kredi kartı gerekmez",
         "status_trialing": "Deneme",
