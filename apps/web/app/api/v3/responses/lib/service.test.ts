@@ -114,9 +114,28 @@ describe("deleteScopedResponse", () => {
     const { select } = mockTxDelete.mock.calls[0][0];
     expect(select.data).toBe(true);
     // What the audit event records. Losing any of these silently thins the trail.
-    for (const field of ["id", "createdAt", "finished", "surveyId", "meta", "ttc", "variables", "language"]) {
+    for (const field of ["id", "createdAt", "finished", "surveyId", "ttc", "variables", "language"]) {
       expect(select[field]).toBe(true);
     }
+  });
+
+  /**
+   * The audit event records this row, and `redactPII` matches exact key names — so `meta.ipAddress`
+   * would reach the audit store in plaintext, and a workspace's own contact attributes would survive
+   * wherever their key is not one of the standard ones. Both are named by this resource's contract as
+   * never exposed in any view, and neither is read by anything here, so the select is the right place
+   * to stop them. `contactId` and `surveyId` keep the record reviewable.
+   */
+  test("does not select the two fields the contract never exposes", async () => {
+    runTransaction(deletedRow());
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    const { select } = mockTxDelete.mock.calls[0][0];
+    expect(select.meta).toBeUndefined();
+    expect(select.contactAttributes).toBeUndefined();
+    // Still identifiable for review, without carrying the respondent's identity.
+    expect(select.contactId).toBe(true);
   });
 
   /**
