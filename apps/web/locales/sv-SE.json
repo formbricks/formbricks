@@ -3835,7 +3835,6 @@
         "pick_another_file": "Välj en annan fil",
         "progress_detected_languages": "Upptäckta språk",
         "progress_extracting": "Extraherar frågor",
-        "progress_part": "del {index} av {total}",
         "progress_read_file": "Läs fil",
         "progress_validating": "Validerar",
         "read_again": "Läs igen",

@@ -3835,7 +3835,6 @@
         "pick_another_file": "Escolher outro ficheiro",
         "progress_detected_languages": "Idiomas detetados",
         "progress_extracting": "A extrair perguntas",
-        "progress_part": "parte {index} de {total}",
         "progress_read_file": "Ficheiro lido",
         "progress_validating": "A validar",
         "read_again": "Ler novamente",

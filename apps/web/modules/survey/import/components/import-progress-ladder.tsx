@@ -50,11 +50,8 @@ export const ImportProgressLadder = ({
         return progress.source ? getImportSourceLabel(progress.source.kind, t) : null;
       case "detecting_languages":
         return step.languageCodes.length > 0 ? formatLanguageCodes(step.languageCodes) : null;
-      case "extracting":
-        return step.chunk
-          ? t("workspace.surveys.import.progress_part", { index: step.chunk.index, total: step.chunk.total })
-          : null;
       default:
+        // Chunk indices stay in the report and analytics; the dialog never explains "parts".
         return null;
     }
   };

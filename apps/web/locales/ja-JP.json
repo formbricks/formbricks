@@ -3835,7 +3835,6 @@
         "pick_another_file": "別のファイルを選択",
         "progress_detected_languages": "検出された言語",
         "progress_extracting": "質問を抽出中",
-        "progress_part": "パート {index} / {total}",
         "progress_read_file": "ファイルを読み取り",
         "progress_validating": "検証中",
         "read_again": "再読み取り",

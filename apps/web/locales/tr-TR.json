@@ -3835,7 +3835,6 @@
         "pick_another_file": "Başka bir dosya seç",
         "progress_detected_languages": "Algılanan diller",
         "progress_extracting": "Sorular çıkarılıyor",
-        "progress_part": "{total} bölümün {index}. bölümü",
         "progress_read_file": "Dosya okundu",
         "progress_validating": "Doğrulanıyor",
         "read_again": "Tekrar oku",

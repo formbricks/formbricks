@@ -3835,7 +3835,6 @@
         "pick_another_file": "Alege alt fișier",
         "progress_detected_languages": "Limbi detectate",
         "progress_extracting": "Se extrag întrebările",
-        "progress_part": "partea {index} din {total}",
         "progress_read_file": "Citește fișierul",
         "progress_validating": "Se validează",
         "read_again": "Citește din nou",

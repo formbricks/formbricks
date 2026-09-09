@@ -3835,7 +3835,6 @@
         "pick_another_file": "选择其他文件",
         "progress_detected_languages": "检测到的语言",
         "progress_extracting": "正在提取问题",
-        "progress_part": "第 {index} 部分,共 {total} 部分",
         "progress_read_file": "读取文件",
         "progress_validating": "正在验证",
         "read_again": "重新读取",

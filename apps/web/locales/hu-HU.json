@@ -3835,7 +3835,6 @@
         "pick_another_file": "Másik fájl kiválasztása",
         "progress_detected_languages": "Észlelt nyelvek",
         "progress_extracting": "Kérdések kinyerése",
-        "progress_part": "{index}/{total} rész",
         "progress_read_file": "Fájl beolvasása",
         "progress_validating": "Érvényesítés",
         "read_again": "Újraolvasás",

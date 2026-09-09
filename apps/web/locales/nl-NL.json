@@ -3835,7 +3835,6 @@
         "pick_another_file": "Kies een ander bestand",
         "progress_detected_languages": "Gedetecteerde talen",
         "progress_extracting": "Vragen extraheren",
-        "progress_part": "deel {index} van {total}",
         "progress_read_file": "Bestand lezen",
         "progress_validating": "Valideren",
         "read_again": "Opnieuw lezen",

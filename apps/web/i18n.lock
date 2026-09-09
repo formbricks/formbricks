@@ -3700,7 +3700,6 @@ checksums:
     workspace/surveys/import/pick_another_file: ad913aa5b176c3dfdbc2e3bc936d3d7d
     workspace/surveys/import/progress_detected_languages: b4eb80d8cf24f64989c935d7b0416bcc
     workspace/surveys/import/progress_extracting: 8ce103383a8148b8c08c60f2c65312e0
-    workspace/surveys/import/progress_part: 524c1af236588525f9a0928fb6e47641
     workspace/surveys/import/progress_read_file: 30dd36fe79bdd2e7a69dfbb7d4c05a93
     workspace/surveys/import/progress_validating: 53e19393c8139790da4d3337f4b981ab
     workspace/surveys/import/read_again: a015ed6a9b13f4c73164d3540ff3a0ac

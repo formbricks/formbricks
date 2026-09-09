@@ -3835,7 +3835,6 @@
         "pick_another_file": "選擇其他檔案",
         "progress_detected_languages": "偵測到的語言",
         "progress_extracting": "正在擷取問題",
-        "progress_part": "第 {index} 部分,共 {total} 部分",
         "progress_read_file": "讀取檔案",
         "progress_validating": "正在驗證",
         "read_again": "重新讀取",

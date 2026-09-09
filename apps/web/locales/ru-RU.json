@@ -3835,7 +3835,6 @@
         "pick_another_file": "Выбрать другой файл",
         "progress_detected_languages": "Обнаруженные языки",
         "progress_extracting": "Извлечение вопросов",
-        "progress_part": "часть {index} из {total}",
         "progress_read_file": "Чтение файла",
         "progress_validating": "Проверка",
         "read_again": "Прочитать снова",
