@@ -11,9 +11,13 @@ export const GENERATED_SURVEY_MIN_QUESTIONS_PER_BLOCK = 1;
 export const GENERATED_SURVEY_MAX_QUESTIONS_PER_BLOCK = 4;
 export const GENERATED_SURVEY_MAX_CHOICES = 8;
 
-/** Import variant (D4): caps doubled, chunking handles anything longer. */
+/**
+ * Import variant (D4): chunking handles anything longer. A block may hold a whole chunk (24 questions):
+ * documents keep their own sections, and the model was refused live for putting a 15-question
+ * section into one block when the cap was 8. v3 has no per-block element limit.
+ */
 export const IMPORTED_SURVEY_MAX_BLOCKS = 16;
-export const IMPORTED_SURVEY_MAX_QUESTIONS_PER_BLOCK = 8;
+export const IMPORTED_SURVEY_MAX_QUESTIONS_PER_BLOCK = 24;
 export const IMPORTED_SURVEY_MAX_CHOICES = 8;
 
 export const IMPORT_ADDRESS_FIELDS = [
