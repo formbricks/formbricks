@@ -92,8 +92,12 @@ const deletedResponseSelect = {
   data: true,
   variables: true,
   ttc: true,
-  meta: true,
-  contactAttributes: true,
+  // Deliberately absent: `meta` and `contactAttributes`. Nothing reads either — they would reach only
+  // the audit log's `oldObject`, and `redactPII` (`lib/utils/logger-helpers.ts`) matches exact key
+  // names, so `meta.ipAddress` lands there in plaintext. Those two are precisely what this resource's
+  // contract names as never exposed in any view, and writing them to a store with its own retention,
+  // access model and export path is exposing them. `contactId` and `surveyId` keep the record
+  // reviewable without either. ENG-2873 covers the general shape of this problem.
   singleUseId: true,
   language: true,
   displayId: true,
