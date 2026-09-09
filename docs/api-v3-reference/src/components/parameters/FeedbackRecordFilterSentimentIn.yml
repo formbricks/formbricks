@@ -7,4 +7,6 @@ schema:
   maxItems: 6
   items:
     $ref: ../schemas/FeedbackRecordSentiment.yml
-description: Records carrying any of these sentiment labels. An empty value is ignored.
+description: >-
+  Records carrying any of these sentiment labels. Repeat the parameter for several values. An empty
+  value is rejected, as on every other filter.

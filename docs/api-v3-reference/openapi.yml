@@ -3613,7 +3613,7 @@ paths:
             minimum: 1
             maximum: 1000
             default: 100
-          description: 'Page size. Higher than the v3 default of 100 because this surface is built for bulk ingestion and export. Out-of-range and non-numeric values are rejected — `-5`, `1001` and `abc` all answer **400** — with one exception: `limit=0` is indistinguishable from omitting the parameter, so it is accepted and the default applies. Send no `limit` rather than `0` if you are computing it.'
+          description: 'Page size. The 1000 ceiling is higher than elsewhere in v3 because this surface is built for bulk ingestion and export. Out-of-range and non-numeric values are rejected: `0`, `-5`, `1001` and `abc` all answer **400**. Send no `limit` rather than `0` if you are computing it.'
         - $ref: '#/components/parameters/CursorQuery'
       responses:
         '200':
@@ -3844,7 +3844,7 @@ paths:
         permission (or higher) on a workspace the dataset is assigned to.
 
         Results carry ids and the embedded text only — fetch a match with
-        `GET /api/v3/feedback-records/{id}` for the full record. Answers **503** on instances without
+        `GET /api/v3/feedback-records/{feedbackRecordId}` for the full record. Answers **503** on instances without
         an embedding model configured.
       tags:
         - V3 Feedback Records
@@ -3901,7 +3901,7 @@ paths:
           $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
       security:
         - apiKeyAuth: []
-  /api/v3/feedback-records/{id}:
+  /api/v3/feedback-records/{feedbackRecordId}:
     get:
       operationId: getFeedbackRecordV3
       summary: Get a feedback record
@@ -4070,7 +4070,7 @@ paths:
           $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
       security:
         - apiKeyAuth: []
-  /api/v3/feedback-records/{id}/similar:
+  /api/v3/feedback-records/{feedbackRecordId}/similar:
     get:
       operationId: getSimilarFeedbackRecordsV3
       summary: Find similar feedback records
@@ -8351,7 +8351,7 @@ components:
           $ref: '#/components/schemas/FeedbackDatasetListMeta'
     FeedbackRecordFieldType:
       type: string
-      description: 'The type of a feedback field, which determines which `value_*` member carries the answer: `text` → `valueText` (the only enrichable type), `categorical` → `valueText` + `valueId`, `nps` / `csat` / `ces` / `rating` / `number` → `valueNumber`, `boolean` → `valueBoolean`, `date` → `valueDate`.'
+      description: 'The type of a feedback field, which determines which `value*` member carries the answer: `text` → `valueText` (the only enrichable type), `categorical` → `valueText` + `valueId`, `nps` / `csat` / `ces` / `rating` / `number` → `valueNumber`, `boolean` → `valueBoolean`, `date` → `valueDate`.'
       enum:
         - text
         - categorical
@@ -8602,7 +8602,7 @@ components:
         userId:
           type: string
           maxLength: 255
-          description: 'End-user identifier (e.g. an anonymous id or an email hash). Set it on anything you may later have to erase: it is the only handle that finds one person''s records again, via `filter[userId][in]` on `GET /api/v3/feedback-records`. There is no delete-by-user operation — erasure is a list followed by `DELETE /api/v3/feedback-records/{id}` per record.'
+          description: 'End-user identifier (e.g. an anonymous id or an email hash). Set it on anything you may later have to erase: it is the only handle that finds one person''s records again, via `filter[userId][in]` on `GET /api/v3/feedback-records`. There is no delete-by-user operation — erasure is a list followed by `DELETE /api/v3/feedback-records/{feedbackRecordId}` per record.'
         collectedAt:
           type: string
           format: date-time
@@ -8689,7 +8689,7 @@ components:
         feedbackRecordId:
           type: string
           format: uuid
-          description: The matching record. Fetch it with `GET /api/v3/feedback-records/{id}` for the full payload.
+          description: The matching record. Fetch it with `GET /api/v3/feedback-records/{feedbackRecordId}` for the full payload.
         score:
           type: number
           format: double
@@ -9131,7 +9131,7 @@ components:
         maxItems: 9
         items:
           $ref: '#/components/schemas/FeedbackRecordFieldType'
-      description: Records of any of these field types. An empty value is ignored, so `?filter[fieldType][in]=` equals omitting the filter.
+      description: 'Records of any of these field types. Repeat the parameter for several values. An empty value is **rejected** rather than ignored: a filter that silently disappears widens the result set instead of narrowing it, and the caller cannot tell it happened.'
     FeedbackRecordFilterValueIdIn:
       in: query
       name: filter[valueId][in]
@@ -9240,7 +9240,7 @@ components:
         maxItems: 6
         items:
           $ref: '#/components/schemas/FeedbackRecordSentiment'
-      description: Records carrying any of these sentiment labels. An empty value is ignored.
+      description: Records carrying any of these sentiment labels. Repeat the parameter for several values. An empty value is rejected, as on every other filter.
     FeedbackRecordFilterEmotionsIn:
       in: query
       name: filter[emotions][in]
@@ -9251,7 +9251,7 @@ components:
         maxItems: 6
         items:
           $ref: '#/components/schemas/FeedbackRecordEmotion'
-      description: Records carrying any of these emotion labels. An empty value is ignored.
+      description: Records carrying any of these emotion labels. A record matches when it carries **any** of them; there is no "carries all" form. Repeat the parameter for several values. An empty value is rejected, as on every other filter.
     FeedbackRecordFilterHasSentimentEq:
       in: query
       name: filter[hasSentiment][eq]
@@ -9297,7 +9297,7 @@ components:
       description: Only matches with `score >= minScore` are returned, from `0` (unrelated) to `1` (identical). Like `limit`, out-of-range and non-numeric values are **rejected with 400** rather than coerced. Raise it for stricter matches; lower it when a good query returns nothing. Score distributions differ per embedding model, so treat the default as a starting point rather than a guarantee — the applied value is echoed back as `meta.minScore`.
     FeedbackRecordIdPath:
       in: path
-      name: id
+      name: feedbackRecordId
       required: true
       schema:
         type: string

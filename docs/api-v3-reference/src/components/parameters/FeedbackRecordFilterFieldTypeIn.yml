@@ -8,5 +8,6 @@ schema:
   items:
     $ref: ../schemas/FeedbackRecordFieldType.yml
 description: >-
-  Records of any of these field types. An empty value is ignored, so
-  `?filter[fieldType][in]=` equals omitting the filter.
+  Records of any of these field types. Repeat the parameter for several values. An empty value is
+  **rejected** rather than ignored: a filter that silently disappears widens the result set instead
+  of narrowing it, and the caller cannot tell it happened.

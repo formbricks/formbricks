@@ -1,6 +1,6 @@
 type: string
 description: >-
-  The type of a feedback field, which determines which `value_*` member carries the answer:
+  The type of a feedback field, which determines which `value*` member carries the answer:
   `text` → `valueText` (the only enrichable type), `categorical` → `valueText` + `valueId`,
   `nps` / `csat` / `ces` / `rating` / `number` → `valueNumber`, `boolean` → `valueBoolean`,
   `date` → `valueDate`.
