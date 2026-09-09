@@ -1,0 +1,40 @@
+type: object
+description: >
+  Partially updates a response. Strict at the top level: unknown keys return **400** rather than
+  being ignored, and at least one patchable field must be present.
+
+
+  `data` and `variables` are **replaced wholesale**, not deep-merged — send the complete map you want
+  stored. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
+
+
+  Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`,
+  `displayId`, `singleUseId`, `contactAttributes`, and the create-only `ttc` and `meta` — timing and
+  submission context describe the original submission event, so they are set once and not revised. `contactId` is create-only deliberately —
+  re-attributing an existing response to a different person is a capability only v2 offers, and it is
+  not carried forward.
+minProperties: 1
+properties:
+  finished:
+    type: boolean
+  endingId:
+    type:
+      - string
+      - "null"
+  language:
+    type:
+      - string
+      - "null"
+  data:
+    $ref: ./ResponseDataMap.yml
+  variables:
+    $ref: ./ResponseVariablesMap.yml
+  tags:
+    type: array
+    description: >-
+      Complete set of tag ids for this response, replacing whatever is currently applied. Tags must
+      already exist in the same workspace — create them via `POST /api/v3/tags`.
+    items:
+      type: string
+      format: cuid2
+additionalProperties: false

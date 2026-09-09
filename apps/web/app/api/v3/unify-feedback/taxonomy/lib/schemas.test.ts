@@ -75,7 +75,17 @@ describe("ZNodeRecordsQuery", () => {
     expect(ZNodeRecordsQuery.parse({ workspaceId, directoryId, limit: "25" }).limit).toBe(25);
   });
 
+  // The literal pins the raised cap: 500 is rejected whether the maximum is 100 or 250, so the
+  // reject case alone cannot tell the two apart.
+  test("accepts the maximum limit", () => {
+    const result = ZNodeRecordsQuery.safeParse({ workspaceId, directoryId, limit: 250 });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.limit).toBe(250);
+  });
+
   test("rejects an out-of-range limit", () => {
+    expect(ZNodeRecordsQuery.safeParse({ workspaceId, directoryId, limit: 251 }).success).toBe(false);
     expect(ZNodeRecordsQuery.safeParse({ workspaceId, directoryId, limit: 500 }).success).toBe(false);
   });
 });

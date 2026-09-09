@@ -1,0 +1,114 @@
+type: object
+description: >
+  One piece of non-answer data carried by the response. Survey **variables**, **hidden fields** and
+  **auto-captured context** are one concept here rather than three parallel ones: they all have a
+  key, a provenance, a declared type and a label, and consumers treat them alike.
+
+
+  Auto-captured (`reserved`) entries are drawn from the Embedded Data field catalog, which declares a
+  privacy policy per field (`keep` / `drop` / `redactQuery`). Two of those act **before** this API
+  sees the response, and one is a rule this API adds:
+
+
+  - `drop` is an **ingest-time** policy, not a filter applied here: when the survey has "Anonymize
+    responses" enabled the field is never captured, so it is absent from the response for every
+    consumer. With anonymization off it is captured and appears here normally.
+
+  - `redactQuery` is applied on **every** read, anonymization or not — `url` and `pageReferrer` carry
+    their query string stripped.
+
+  - `ipAddress` is **never** projected by this API, in any view. That is a v3 rule rather than a
+    catalog behaviour: the catalog reads the field, and the dashboard shows it. Do not infer the same
+    suppression for the other `drop` fields.
+
+
+  Which catalog entries appear at all is a third axis, `display`, and this collection carries the ones
+  that are not `none`. The `none` set is the response's own identity and timing — `responseId`,
+  `surveyId`, `finished`, `language`, `durationSeconds`, `startedAt`, `finishedAt` — every one of
+  which is already a first-class field on the response. Without that filter they would each appear
+  twice in the same payload, once at the top level and once here.
+required:
+  - key
+  - kind
+  - type
+  - label
+  - value
+properties:
+  key:
+    type: string
+    description: >
+      Stable key. Unique within `embeddedData`.
+
+
+      Uniqueness is a guarantee this API makes rather than one the stored data provides: a survey may
+      declare a hidden field or variable whose name collides with a catalog field (`country`, `url`
+      and `language` are all declarable on surveys created before the reserved names were enforced).
+      Where that happens the **declared** entry wins and the `reserved` one is omitted, matching how
+      recall and logic already resolve the same name.
+
+
+      `reserved` keys are the catalog's own names, which are camelCase — `deviceType`, `utmSource`,
+      `pagePath` — not snake_case.
+
+
+      For `ingested` and `computed` entries the key is the survey link's **storage key**, which is the
+      same string that addresses the value in the writable maps this resource returns: `data` for a
+      hidden field, `variables` for a variable. It is deliberately **not** the Embedded Data library
+      name — that is a different, nullable field, and it is null for every survey-local field, which
+      is the common case. Note the consequence for variables: a variable's storage key is its **cuid**,
+      not its human name, so joining back to `variables` means using this key verbatim and reading the
+      name off `label`.
+  kind:
+    type: string
+    enum:
+      - ingested
+      - computed
+      - reserved
+    description: >
+      Provenance of the value:
+
+
+      - `ingested` — supplied by the caller or the embedding page (hidden fields).
+
+      - `computed` — derived during the submission by survey logic (variables).
+
+      - `reserved` — auto-captured context from the submission environment (for example `country`,
+        `deviceType`), drawn from the Embedded Data field catalog.
+  type:
+    type: string
+    enum:
+      - string
+      - number
+      - boolean
+      - date
+    description: >-
+      Declared type of `value`, so a consumer need not infer it. `computed` entries are only ever
+      `string` or `number`, because survey variables are typed that narrowly.
+  label:
+    type: string
+    description: Human-readable name for the key, in the resolved language where one exists.
+  value:
+    oneOf:
+      - type: string
+      - type: number
+      - type: boolean
+      - type: array
+        items:
+          type: string
+    description: >-
+      The value, matching `type`. `date` values are ISO-8601 strings.
+
+
+      An **array of string** is a legacy shape and appears only on responses stored before the ingest
+      contract tightened. A non-scalar under a declared field's key is now refused at ingest, because
+      response data shares one map with element answers: an array under a hidden field's storage key
+      means the key collided with an element id, and joining it into a string would invent a value the
+      respondent never gave for that field.
+
+
+      There is no `null` member: a declared key that resolves to nothing is **omitted** from the
+      collection rather than carried with a null. So `embeddedData[]` enumerates what the response
+      actually holds, not what the survey declares — a survey with twelve declared fields and two
+      filled in yields two entries. A field with a default value is never unset, since the default is
+      the fallback before the key is considered missing.
+additionalProperties: false

@@ -1,0 +1,89 @@
+type: object
+description: >
+  Creates a survey response. **This is a real submission**: it runs the full response pipeline —
+  webhooks, integrations, follow-ups, quota evaluation, and Hub ingestion once the response is
+  finished — and it counts against metered monthly responses, exactly as a v1/v2 management create
+  does today. It is not an import primitive; a dedicated import path is future work.
+
+
+  The workspace is resolved from `surveyId`, so unlike `POST /api/v3/surveys` there is no
+  `workspaceId` in the body — the caller cannot choose which scope it is authorized against.
+
+
+  Unsupported fields are rejected rather than ignored. Absent by design, each for its own reason:
+
+
+  - `createdAt` and `updatedAt` are **server-owned** — see `ResponseListItem.createdAt`. This is the
+    one capability v3 does not carry over from v2, and it is why bulk historical loading still
+    belongs on v2 until a dedicated import path exists.
+
+  - `userId` is not accepted: a contact `userId` is a non-unique **attribute**, not a column, so it
+    cannot safely identify who to attribute a response to. Link the contact explicitly with
+    `contactId`.
+
+  - `contactAttributes` is not accepted, and never was writable — v1/v2 snapshot it from the linked
+    contact. v3 does not expose the snapshot at all; `contact` covers the need.
+
+  - `meta.ipAddress`, and the derived `userAgent` / `country` / `device` family, are not accepted;
+    see `ResponseMetaInput` for what is.
+required:
+  - surveyId
+  - finished
+  - data
+properties:
+  surveyId:
+    type: string
+    format: cuid2
+    description: The survey to record the response against. Immutable after creation.
+  finished:
+    type: boolean
+    description: >-
+      Whether this response is complete. Creating with `finished: true` fires the finish side of the
+      pipeline immediately, including Hub ingestion.
+  data:
+    $ref: ./ResponseDataMap.yml
+  variables:
+    $ref: ./ResponseVariablesMap.yml
+  ttc:
+    $ref: ./ResponseTtcMap.yml
+  meta:
+    $ref: ./ResponseMetaInput.yml
+  tags:
+    type: array
+    uniqueItems: true
+    description: >-
+      Tag ids to apply, so a tagged response can be created in one call rather than a create
+      followed by a patch. Tags must already exist in the same workspace — create them via
+      `POST /api/v3/tags`. Applied in the same transaction as the response.
+    items:
+      type: string
+      format: cuid2
+  endingId:
+    type:
+      - string
+      - "null"
+    description: The ending card the respondent reached. Must exist in the survey definition.
+  language:
+    type:
+      - string
+      - "null"
+    description: >-
+      Survey language code to stamp on the response. Must be a language the survey has enabled.
+      Omit for single-language surveys.
+  contactId:
+    type: string
+    format: cuid2
+    description: >-
+      Contact to attribute the response to. **Create-only** — a response cannot later be re-linked to
+      a different contact. Must be a contact in the same workspace.
+  displayId:
+    type: string
+    description: >-
+      Display (survey impression) this response answers. Create-only. Each display can back at most
+      one response.
+  singleUseId:
+    type: string
+    description: >-
+      Single-use link id, for surveys configured with single-use links. Create-only, and unique per
+      survey.
+additionalProperties: false

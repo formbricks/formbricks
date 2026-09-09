@@ -57,7 +57,7 @@ export const ZNodeRecordsQuery = z
   .object({
     workspaceId,
     directoryId,
-    limit: z.coerce.number().int().min(1).max(100).default(100),
+    limit: z.coerce.number().int().min(1).max(250).default(100),
   })
   .strict();
 

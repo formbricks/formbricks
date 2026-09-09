@@ -15,7 +15,13 @@ properties:
   name:
     type: string
     pattern: ^[a-z0-9_]+$
-    description: Unique variable name. Lowercase letters, numbers, and underscores only.
+    description: >-
+      Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held
+      to more than that. It must match `^[a-z][a-z0-9_]*$` (so no leading digit or underscore), must
+      not take an Embedded Data reserved name (`country`, `browser`, `language`, …), and must not
+      collide case-insensitively with a hidden field id on the same survey. Names the survey already
+      declares are grandfathered, so re-sending an existing document never trips this. A new name
+      that breaks any of the three answers 400 `forbidden_identifier`.
   type:
     type: string
     enum:

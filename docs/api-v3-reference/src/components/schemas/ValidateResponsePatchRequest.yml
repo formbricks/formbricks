@@ -1,0 +1,22 @@
+type: object
+required:
+  - operation
+  - responseId
+  - data
+properties:
+  operation:
+    type: string
+    enum:
+      - patch
+  responseId:
+    type: string
+    format: cuid2
+  data:
+    description: >-
+      Intended patch payload. Invalid documents are allowed so the endpoint can return repairable
+      validation errors.
+    anyOf:
+      - $ref: ./PatchResponseRequest.yml
+      - type: object
+        additionalProperties: true
+additionalProperties: false

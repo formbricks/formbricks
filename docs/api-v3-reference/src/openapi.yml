@@ -12,6 +12,12 @@ info:
     **DELETE /api/v3/surveys/{surveyId}**.
 
 
+    **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST
+    /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET
+    /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH
+    /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
+
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST
     /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH
     /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**,
@@ -65,6 +71,33 @@ info:
     responses do not require total counts in Scope 1. There is no `offset` in
     this contract.
 
+    The page-size **maximum is 250** for responses, surveys, action classes and contact attribute
+    keys; only the *default* varies by resource (20 for surveys, 50 for the workspace reference
+    lists). **The workflows and workflow-run lists remain at 100** — their bound lives in the
+    `packages/workflows` contracts and moves with that package, so each documents the value it
+    actually enforces. A `limit` above an endpoint's maximum is rejected with **400** rather than
+    silently reduced, consistent with v3 rejecting unrecognized query parameters instead of ignoring
+    them. Callers should not infer the end of a collection from a page shorter than `limit`;
+    `meta.nextCursor` of `null` is the only end-of-collection signal. Note that array-valued *input*
+    bounds are a separate concern and stay at 100 — `filter[id][in]` and the batch-delete id list
+    are bounded by write and payload risk, not by page cost.
+
+
+    **Strictness**
+
+    A query parameter that an operation does not declare returns **400**, with the offending key
+    reported in `invalid_params[].name` — including on operations that declare no query parameters at
+    all. Unknown parameters are rejected rather than ignored on purpose: a silently-dropped filter
+    returns *more* data than the caller believes they asked for, and a typo in a filter name is
+    indistinguishable from no filter at all. The same applies to request bodies, where unsupported
+    fields are rejected instead of stripped.
+
+    Unrecognized **headers** are tolerated, as gateways and proxies legitimately add them; strictness
+    is about parameters and body fields, not transport metadata.
+
+    This is the rule for the surveys, responses, tags and workspace reference-list operations. The
+    workflows family does not enforce it today, so treat parameter strictness there as unspecified
+    rather than guaranteed.
 
     **Filtering**
 
@@ -79,6 +112,66 @@ info:
     `filter[status][in]=draft,inProgress`). Sorting remains a flat `sortBy`
     query parameter.
 
+
+    **Responses**
+
+    The response resource is **self-describing**. Answers come back as a typed `answers[]` array in
+    which each entry carries the element's id, label, type and value, rather than as a map keyed by
+    element id — so a consumer holding only a response can read it without fetching the survey and
+    joining. Hidden fields, survey variables and auto-captured context are one `embeddedData[]`
+    collection rather than three parallel concepts, each entry declaring a `kind` and a `type`. Data
+    whose element has since been deleted is reported in `unresolved[]` instead of being dropped
+    silently. Labels are resolved at read time against the current survey definition, and the
+    `resolution` object discloses that policy along with the survey's `updatedAt` so a consumer can
+    detect wording drift.
+
+    Writes take answers in the **stored map form** (`data`, `variables`) while reads return the typed
+    array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching
+    caller-supplied labels back onto option ids, so the write side keeps the stored shape. To stop
+    that costing round-trippability, the **detailed read returns `data` and `variables` unchanged** —
+    so a single-response read can be edited and sent back as `PATCH { "data": … }`, and the typed
+    `answers[]` array is an addition rather than a replacement. Those two are the resource's writable
+    state and carry no `readOnly`; the derived views (`answers[]`, `embeddedData[]`, `unresolved[]`,
+    `resolution`, the timestamps) are marked `readOnly` instead, per its meaning of
+    server-managed. The list view omits the stored maps, since a bulk reader is not editing.
+    `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what
+    a write would do, before committing to it.
+
+    `createdAt` and `updatedAt` are **server-owned** on this resource: they cannot be supplied on
+    create or changed by a patch. Response metering counts rows by `(surveyId, createdAt)`, and a
+    client-chosen `createdAt` also lets rows be inserted into the middle of another consumer's
+    already-paginated stream. Backdating stays available on v2 until a dedicated import path exists.
+    The respondent's IP address and the `contactAttributes` snapshot that v1/v2 expose are not part
+    of this resource in any view; that snapshot is copied from the contact at submission time and
+    never refreshed, so it is stale PII by construction.
+
+    Response filtering is allow-listed and index-backed: `filter[createdAt][gte|gt|lte|lt]`
+    (at most one lower and one upper bound — `gte` xor `gt`, `lte` xor `lt`),
+    `filter[finished][eq]`, `filter[language][in]` and `filter[id][in]`. `filter[finished][eq]` and
+    `filter[language][in]` require `surveyId` or `contactId` as well, because both are heap residuals
+    bounded only by an anchored index range. Per-answer, hidden-field, submission-metadata,
+    contact-attribute, quota and tag filters are **not** offered; each is a JSON path or an unindexed
+    join on the largest table in the product. The in-app dashboard does offer them, so this API is
+    knowingly behind the dashboard here — closing the gap requires index work and is tracked
+    separately rather than quietly omitted.
+
+    `GET /api/v3/responses/count` answers "how many match?" directly. The list endpoint's
+    `meta.totalCount` covers a caller that is already paging and is **opt-in** via
+    `includeTotalCount` (default `false`, unlike the survey list) because responses are the
+    highest-cardinality table in the product. Both response counts are **capped at 10 000** and
+    carry an exactness flag — `meta.totalCountRelation` on the list, `data.relation` on `/count` —
+    reading `eq` when the figure is exact and `gte` when the cap was reached and it is a lower bound.
+    An exact count over this table grows superlinearly with the data while a capped one stays flat,
+    so an uncapped total would be the only part of a response whose cost is unbounded. `/count`
+    accepts `precision=exact` for the cases that genuinely need a precise figure, documented as the
+    deliberate slow path. The survey list's `totalCount` stays exact and uncapped: surveys are
+    low-cardinality and that count has a covering index built for it.
+
+    Bulk deletion is `POST /api/v3/responses/batch-delete`, a custom method rather than a
+    collection-level `DELETE`, so a call that loses its filters cannot degrade into erasing
+    everything in scope. It scope-filters rather than rejecting: foreign and already-deleted ids are
+    ignored and the call reports how many rows it removed, which keeps it both leak-free and safe to
+    retry.
 
     **Security**
 
@@ -174,6 +267,10 @@ info:
     workflow-prisma-schema: packages/database/schema/workflows.prisma (feat/workflows-prisma-schema)
     openapi-generated: false
     spec-source: docs/api-v3-reference/src (regenerate bundle with `pnpm api:v3:bundle`)
+    responses-contract-ticket: ENG-2868
+    responses-rfc: v3 Responses API RFC sections 2b (resource) and 2c (endpoints)
+    responses-stored-shape: packages/types/responses.ts (ZResponse, ZResponseData, ZResponseInput)
+    responses-prisma-model: packages/database/schema/main.prisma (model Response)
     pagination-model: cursor
     cursor-pagination: supported
 servers:
@@ -194,6 +291,16 @@ paths:
     $ref: paths/api_v3_surveys_{surveyId}_archive.yml
   /api/v3/surveys/{surveyId}/restore:
     $ref: paths/api_v3_surveys_{surveyId}_restore.yml
+  /api/v3/responses:
+    $ref: paths/api_v3_responses.yml
+  /api/v3/responses/count:
+    $ref: paths/api_v3_responses_count.yml
+  /api/v3/responses/validate:
+    $ref: paths/api_v3_responses_validate.yml
+  /api/v3/responses/batch-delete:
+    $ref: paths/api_v3_responses_batch-delete.yml
+  /api/v3/responses/{responseId}:
+    $ref: paths/api_v3_responses_{responseId}.yml
   /api/v3/workflows:
     $ref: paths/api_v3_workflows.yml
   /api/v3/workflows/runs:

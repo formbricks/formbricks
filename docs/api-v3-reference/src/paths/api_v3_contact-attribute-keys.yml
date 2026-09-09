@@ -22,9 +22,9 @@ get:
       schema:
         type: integer
         minimum: 1
-        maximum: 100
+        maximum: 250
         default: 50
-      description: Page size (max 100).
+      description: Page size (max 250).
     - in: query
       name: cursor
       schema:

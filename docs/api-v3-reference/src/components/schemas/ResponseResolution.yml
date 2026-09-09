@@ -1,0 +1,38 @@
+type: object
+description: >
+  Receipt describing how `answers[]` and `embeddedData[]` labels were produced. It exists so a
+  consumer can tell whether the labels it is reading are the wording the respondent actually saw.
+required:
+  - labelPolicy
+  - labelsLanguage
+  - surveyUpdatedAt
+properties:
+  labelPolicy:
+    type: string
+    enum:
+      - currentSurveyDefinition
+    description: >
+      Where labels came from. Today the only value is `currentSurveyDefinition`: labels are resolved
+      at **read time** against the survey as it stands now. Nothing about the survey is snapshotted
+      when a response is written and there is no survey-version model, so a response collected under
+      an older headline reads back under today's wording — text the respondent may never have seen.
+      Typeform, SurveyMonkey, Qualtrics, Google Forms and Jotform all behave this way, so this is
+      the industry norm rather than a shortcut. Compare `surveyUpdatedAt` against the response's
+      `createdAt` to detect that the definition moved after collection. If a write-time label
+      snapshot ever ships, a second value `asAsked` is added here and consumers branch on it —
+      treat this as an open enum.
+  labelsLanguage:
+    type:
+      - string
+      - "null"
+    description: >-
+      The language the labels in this payload were resolved in. Follows the response's `language`
+      when it is set and the survey has that language enabled, otherwise the survey's default
+      language. `null` when the survey carries no translations.
+  surveyUpdatedAt:
+    type: string
+    format: date-time
+    description: >-
+      When the survey definition was last modified. Later than the response's `createdAt` means the
+      wording in `elementLabel` may have drifted from what was asked.
+additionalProperties: false
