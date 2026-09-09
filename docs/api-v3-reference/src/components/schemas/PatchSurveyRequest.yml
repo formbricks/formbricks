@@ -67,7 +67,10 @@ properties:
     format: date-time
     description: Read-only echo. Use `/archive` and `/restore` to change it.
   defaultLanguage:
-    $ref: ./LocaleCode.yml
+    type: string
+    description: >-
+      Read-only echo of the survey default language, in whatever shape `GET` returned — legacy
+      surveys carry language-only codes, so this is not constrained to `LocaleCode`.
   name:
     type: string
     minLength: 1

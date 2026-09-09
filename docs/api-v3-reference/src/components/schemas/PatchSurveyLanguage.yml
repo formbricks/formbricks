@@ -8,7 +8,13 @@ required:
   - code
 properties:
   code:
-    $ref: ./LocaleCode.yml
+    type: string
+    description: >-
+      Server-emitted survey language code/tag, echoed from `GET`. Deliberately not `LocaleCode`:
+      existing surveys carry language-only and script-only codes (`vi`, `gu`), and a read-only echo
+      has to accept whatever the read returned. New languages are still created through the strict
+      shape.
+    example: en-US
   default:
     type: boolean
     description: >-
