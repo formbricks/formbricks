@@ -11,7 +11,7 @@ import {
   listV3FeedbackRecords,
   searchV3FeedbackRecords,
   updateV3FeedbackRecord,
-} from "@/app/api/v3/feedbackRecords/lib/operations";
+} from "@/app/api/v3/feedback-records/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
