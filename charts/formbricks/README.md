@@ -66,6 +66,10 @@ Formbricks v6 enables AuthZed, `fully_consistent` authorization, and the bundled
 | -------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------- |
 | `authzed.operator.install` | `false`    | `true`     | Set `authzed.operator.install=false` before upgrading to avoid duplicate reconcilers. |
 
+Existing PVC-backed installations that change `postgresql.auth.username` or `postgresql.auth.database` must
+provision the target role and database and migrate existing Formbricks data before upgrading. See the detailed
+warning below.
+
 For a cluster where a compatible operator already watches the Formbricks namespace:
 
 ```yaml
