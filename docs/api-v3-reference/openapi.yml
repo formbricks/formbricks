@@ -2141,10 +2141,10 @@ paths:
                           type: string
                           label: Plan
                           value: enterprise
-                        - key: device_type
+                        - key: deviceType
                           kind: reserved
                           type: string
-                          label: Device type
+                          label: Device Type
                           value: desktop
                       unresolved: []
                       tags:
@@ -4450,9 +4450,10 @@ components:
             - element
             - variable
             - hiddenField
+            - reserved
         value:
           type: string
-          description: Element id, variable id, or hidden field id depending on `type`.
+          description: Element id, variable id, hidden field id, or — for `reserved` — the name of an Embedded Data field-catalog entry (`country`, `deviceType`, `utmSource`, …). Reserved names are checked for non-emptiness only, deliberately not against the catalog, so a survey authored against a newer catalog still parses on an older self-hosted deployment.
         meta:
           type: object
           additionalProperties:
@@ -5353,7 +5354,7 @@ components:
         name:
           type: string
           pattern: ^[a-z0-9_]+$
-          description: Unique variable name. Lowercase letters, numbers, and underscores only.
+          description: Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held to more than that. It must match `^[a-z][a-z0-9_]*$` (so no leading digit or underscore), must not take an Embedded Data reserved name (`country`, `browser`, `language`, …), and must not collide case-insensitively with a hidden field id on the same survey. Names the survey already declares are grandfathered, so re-sending an existing document never trips this. A new name that breaks any of the three answers 400 `forbidden_identifier`.
         type:
           type: string
           enum:
@@ -5379,7 +5380,7 @@ components:
         name:
           type: string
           pattern: ^[a-z0-9_]+$
-          description: Unique variable name. Lowercase letters, numbers, and underscores only.
+          description: Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held to more than that. It must match `^[a-z][a-z0-9_]*$` (so no leading digit or underscore), must not take an Embedded Data reserved name (`country`, `browser`, `language`, …), and must not collide case-insensitively with a hidden field id on the same survey. Names the survey already declares are grandfathered, so re-sending an existing document never trips this. A new name that breaks any of the three answers 400 `forbidden_identifier`.
         type:
           type: string
           enum:
@@ -6183,7 +6184,18 @@ components:
       description: |
         One piece of non-answer data carried by the response. Survey **variables**, **hidden fields** and **auto-captured context** are one concept here rather than three parallel ones: they all have a key, a provenance, a declared type and a label, and consumers treat them alike.
 
-        Auto-captured (`reserved`) entries are governed by the Embedded Data field catalog, which declares a privacy policy per field (`keep` / `drop` / `redactQuery`). That single classification governs both the list and the detailed view, so the two cannot drift. Fields the catalog drops never appear here at all — notably the respondent's IP address, which is not exposed by this API in any view.
+        Auto-captured (`reserved`) entries are drawn from the Embedded Data field catalog, which declares a privacy policy per field (`keep` / `drop` / `redactQuery`). Two of those act **before** this API sees the response, and one is a rule this API adds:
+
+        - `drop` is an **ingest-time** policy, not a filter applied here: when the survey has "Anonymize
+          responses" enabled the field is never captured, so it is absent from the response for every
+          consumer. With anonymization off it is captured and appears here normally.
+
+        - `redactQuery` is applied on **every** read, anonymization or not — `url` and `pageReferrer` carry
+          their query string stripped.
+
+        - `ipAddress` is **never** projected by this API, in any view. That is a v3 rule rather than a
+          catalog behaviour: the catalog reads the field, and the dashboard shows it. Do not infer the same
+          suppression for the other `drop` fields.
       required:
         - key
         - kind
@@ -6193,7 +6205,12 @@ components:
       properties:
         key:
           type: string
-          description: Stable key. Unique within `embeddedData`.
+          description: |
+            Stable key. Unique within `embeddedData`.
+
+            Uniqueness is a guarantee this API makes rather than one the stored data provides: a survey may declare a hidden field or variable whose name collides with a catalog field (`country`, `url` and `language` are all declarable on surveys created before the reserved names were enforced). Where that happens the **declared** entry wins and the `reserved` one is omitted, matching how recall and logic already resolve the same name.
+
+            `reserved` keys are the catalog's own names, which are camelCase — `deviceType`, `utmSource`, `pagePath` — not snake_case.
         kind:
           type: string
           enum:
@@ -6206,7 +6223,7 @@ components:
             - `ingested` — supplied by the caller or the embedding page (hidden fields).
             - `computed` — derived during the submission by survey logic (variables).
             - `reserved` — auto-captured context from the submission environment (for example `country`,
-              `device_type`), drawn from the Embedded Data field catalog.
+              `deviceType`), drawn from the Embedded Data field catalog.
         type:
           type: string
           enum:
@@ -6440,7 +6457,7 @@ components:
       description: |
         Submission context, on the narrow subset a caller can legitimately supply. A management-API create has no browser behind it, so unlike a client-side submission there is nothing for the server to auto-capture — if these are not sent they are simply absent, which is why the API accepts them at all rather than treating all context as server-derived.
 
-        Deliberately **not** accepted here: `ipAddress` (never stored or exposed by v3 in any view), and the derived `userAgent`, `country` and `device` family — those describe a real browser session and would be fiction on an API-created response. Reads surface what is stored as `reserved` entries in `embeddedData[]`, governed by the Embedded Data field catalog's privacy policy.
+        Deliberately **not** accepted here: `ipAddress` (server-derived when the survey captures it, and never projected by v3 on read), and the derived `userAgent`, `country` and `device` family — those describe a real browser session and would be fiction on an API-created response. Reads surface what is stored as `reserved` entries in `embeddedData[]`, governed by the Embedded Data field catalog's privacy policy.
       properties:
         source:
           type: string

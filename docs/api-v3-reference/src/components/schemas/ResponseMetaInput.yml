@@ -6,7 +6,7 @@ description: >
   all rather than treating all context as server-derived.
 
 
-  Deliberately **not** accepted here: `ipAddress` (never stored or exposed by v3 in any view),
+  Deliberately **not** accepted here: `ipAddress` (server-derived when the survey captures it, and never projected by v3 on read),
   and the derived `userAgent`, `country` and `device` family — those describe a real browser session
   and would be fiction on an API-created response. Reads surface what is stored as `reserved`
   entries in `embeddedData[]`, governed by the Embedded Data field catalog's privacy policy.

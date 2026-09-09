@@ -5,11 +5,21 @@ description: >
   key, a provenance, a declared type and a label, and consumers treat them alike.
 
 
-  Auto-captured (`reserved`) entries are governed by the Embedded Data field catalog, which declares
-  a privacy policy per field (`keep` / `drop` / `redactQuery`). That single classification governs
-  both the list and the detailed view, so the two cannot drift. Fields the catalog drops never
-  appear here at all — notably the respondent's IP address, which is not exposed by this API in any
-  view.
+  Auto-captured (`reserved`) entries are drawn from the Embedded Data field catalog, which declares a
+  privacy policy per field (`keep` / `drop` / `redactQuery`). Two of those act **before** this API
+  sees the response, and one is a rule this API adds:
+
+
+  - `drop` is an **ingest-time** policy, not a filter applied here: when the survey has "Anonymize
+    responses" enabled the field is never captured, so it is absent from the response for every
+    consumer. With anonymization off it is captured and appears here normally.
+
+  - `redactQuery` is applied on **every** read, anonymization or not — `url` and `pageReferrer` carry
+    their query string stripped.
+
+  - `ipAddress` is **never** projected by this API, in any view. That is a v3 rule rather than a
+    catalog behaviour: the catalog reads the field, and the dashboard shows it. Do not infer the same
+    suppression for the other `drop` fields.
 required:
   - key
   - kind
@@ -19,7 +29,19 @@ required:
 properties:
   key:
     type: string
-    description: Stable key. Unique within `embeddedData`.
+    description: >
+      Stable key. Unique within `embeddedData`.
+
+
+      Uniqueness is a guarantee this API makes rather than one the stored data provides: a survey may
+      declare a hidden field or variable whose name collides with a catalog field (`country`, `url`
+      and `language` are all declarable on surveys created before the reserved names were enforced).
+      Where that happens the **declared** entry wins and the `reserved` one is omitted, matching how
+      recall and logic already resolve the same name.
+
+
+      `reserved` keys are the catalog's own names, which are camelCase — `deviceType`, `utmSource`,
+      `pagePath` — not snake_case.
   kind:
     type: string
     enum:
@@ -35,7 +57,7 @@ properties:
       - `computed` — derived during the submission by survey logic (variables).
 
       - `reserved` — auto-captured context from the submission environment (for example `country`,
-        `device_type`), drawn from the Embedded Data field catalog.
+        `deviceType`), drawn from the Embedded Data field catalog.
   type:
     type: string
     enum:

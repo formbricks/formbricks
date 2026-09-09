@@ -155,10 +155,10 @@ get:
                       type: string
                       label: Plan
                       value: enterprise
-                    - key: device_type
+                    - key: deviceType
                       kind: reserved
                       type: string
-                      label: Device type
+                      label: Device Type
                       value: desktop
                   unresolved: []
                   tags:
