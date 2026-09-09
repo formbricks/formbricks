@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -75,7 +76,10 @@ describe("decodeKeysetCursor rejects", () => {
       id: "clrsaaaaaaaaaaaaaaaaaaaa",
     });
     expect(oversized.length).toBeGreaterThan(512);
-    rejects(oversized);
+    // Against an `expected` whose kind matches the padded one, so the kind check cannot fire and the
+    // length guard is the only reason left to reject. Compared against the default `EXPECTED` this
+    // test passes with `MAX_CURSOR_LENGTH` deleted, which is the tautology the comment above warns of.
+    rejects(oversized, { ...EXPECTED, kind: `responses.list${"x".repeat(600)}` });
   });
 
   test("garbage, and anything that is not the expected shape", () => {
@@ -232,16 +236,26 @@ describe("computeFilterFingerprint", () => {
   });
 
   /**
-   * The order has to be identical on every machine. `localeCompare` — what Sonar's S2871 suggests for
-   * the bare `.sort()` this replaced — is locale-sensitive, so under `de-DE` versus `en-US` the same
-   * filter set can canonicalize differently and a cursor minted on one replica 400s on another.
+   * The order has to be identical on every machine, so this pins *which* order, not merely that one
+   * exists. Comparing two permutations of the same input cannot do that — both sides go through the
+   * same comparator, so any deterministic one passes, `localeCompare` included. Instead the expected
+   * canonical form is built here and hashed independently.
+   *
+   * The inputs are chosen so the two orders actually differ: by code unit `"B"` (0x42) precedes
+   * `"a"` (0x61); `localeCompare` under most locales puts `"a"` first. Swap `byCodeUnit` for
+   * `localeCompare` in `keyset-cursor.ts` and both assertions go red.
    */
-  test("orders keys and array members by code unit, not by locale", () => {
-    const a = computeFilterFingerprint({ ["a\u0308"]: 1, ["z"]: 2 });
-    const b = computeFilterFingerprint({ ["z"]: 2, ["a\u0308"]: 1 });
+  test("canonicalizes in code-unit order, which is what makes a cursor portable across replicas", () => {
+    const NUL = String.fromCharCode(0);
+    const SOH = String.fromCharCode(1);
+    const digest = (canonical: string) =>
+      createHash("sha256").update(canonical, "utf8").digest("base64url").slice(0, 16);
 
-    expect(a).toBe(b);
-    expect(computeFilterFingerprint({ ids: ["B", "a"] })).toBe(computeFilterFingerprint({ ids: ["a", "B"] }));
+    // Array members: code unit gives "B,a"; localeCompare would give "a,B".
+    expect(computeFilterFingerprint({ ids: ["a", "B"] })).toBe(digest(`ids${NUL}B,a`));
+
+    // Keys: code unit puts "B" before "a"; localeCompare would reverse them.
+    expect(computeFilterFingerprint({ a: 2, B: 1 })).toBe(digest(`B${NUL}1${SOH}a${NUL}2`));
   });
 });
 

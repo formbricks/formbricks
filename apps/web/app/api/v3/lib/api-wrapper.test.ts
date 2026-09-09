@@ -745,10 +745,14 @@ describe("5xx reporting", () => {
       handler: async () => Response.json({ title: "Internal Server Error" }, { status: 500 }),
     });
 
-    await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
 
     expect(reported()).toHaveLength(1);
     expect(reported()[0]).toMatchObject({ status: 500, apiVersion: "v3" });
+    // Reporting must be a pure observation: the caller's body reaches them untouched. Without this
+    // the test passes even if the reporter consumed or replaced the response.
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ title: "Internal Server Error" });
   });
 
   /** The thrown path carries the original error, which is what gives Sentry a stack. */
@@ -793,8 +797,9 @@ describe("5xx reporting", () => {
       handler: async () => Response.json({ x: 1 }, { status: 503 }),
     });
 
-    await expect(
-      route(new NextRequest("http://localhost/api/v3/things"), {} as never)
-    ).resolves.toMatchObject({ status: 503 });
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({ x: 1 });
   });
 });

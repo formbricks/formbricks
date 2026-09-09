@@ -25,7 +25,7 @@ BEGIN
 
   IF invalid_indexes IS NOT NULL THEN
     RAISE EXCEPTION
-      'Interrupted concurrent build left these indexes INVALID: %. They are unusable, and IF NOT EXISTS will keep skipping them on every retry. Drop each one with DROP INDEX CONCURRENTLY "<name>"; then re-run the migrations.',
+      'Interrupted concurrent build left these indexes INVALID: %. They are unusable, and IF NOT EXISTS will keep skipping them on every retry. Recover in three steps: (1) DROP INDEX CONCURRENTLY "<name>"; for each one listed, (2) prisma migrate resolve --rolled-back 20260909120001_verify_response_keyset_indexes_valid, because this failure is recorded and every later deploy stops with P3009 until it is cleared, (3) re-run the migrations.',
       invalid_indexes;
   END IF;
 END $$;
