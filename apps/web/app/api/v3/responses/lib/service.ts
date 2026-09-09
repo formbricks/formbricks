@@ -204,3 +204,107 @@ export async function deleteScopedResponse(
 
   return row;
 }
+
+export type TBatchDeleteResult = {
+  /** Rows the database actually removed. Authoritative, and may be lower than the ids submitted. */
+  deleted: number;
+  /** The ids that were in scope when the batch was read, for the audit trail. */
+  deletedIds: string[];
+};
+
+/**
+ * Delete up to a batch of responses inside one workspace, in a single transaction.
+ *
+ * **It scope-filters instead of rejecting.** Every statement carries `survey: { workspaceId }`, so an
+ * id belonging to another workspace, or one already deleted, simply matches nothing. That is the
+ * contract's semantics and it is what makes the call idempotent: rejecting the batch on a foreign id
+ * would both leak that the id exists somewhere and break retries, because after a partial application
+ * an already-deleted id is indistinguishable from a foreign one.
+ *
+ * `deleteMany`'s own `count` is what gets reported, never the length of the earlier read. The two can
+ * disagree — a concurrent caller may remove a row in between — and only the write knows what it
+ * actually did. This is also why the batch needs no equivalent of the single delete's scalar-only
+ * `select` rule: `deleteMany` returns a count rather than a row, so there is no relation join for
+ * Prisma to compile into a read-then-delete.
+ *
+ * Responses are deleted before displays. Both orders are correct — `Response_displayId_fkey` is
+ * `ON DELETE SET NULL`, so removing a display first nulls the referencing rows rather than failing —
+ * but that null-out is a wasted write pass over rows about to be deleted anyway, and it touches the
+ * unique index on `displayId`. This order also matches the single delete. Files are collected before
+ * either and removed only after the transaction commits, for the same reason as the single delete.
+ */
+export async function deleteScopedResponses(
+  responseIds: string[],
+  { workspaceId }: TWorkspaceScope
+): Promise<TBatchDeleteResult> {
+  let outcome: TBatchDeleteResult & { fileUrls: string[] };
+
+  try {
+    outcome = await prisma.$transaction(async (tx) => {
+      // Scoped read first: the file URLs live inside `response.data` and the display ids on the rows,
+      // and both are gone once the rows are.
+      const rows = await tx.response.findMany({
+        where: { id: { in: responseIds }, survey: { workspaceId } },
+        select: { id: true, displayId: true, data: true, surveyId: true },
+      });
+
+      if (rows.length === 0) {
+        return { deleted: 0, deletedIds: [], fileUrls: [] };
+      }
+
+      // One read per distinct survey rather than per response: a batch may span several surveys in the
+      // workspace, and at 100 ids the per-row form would be 100 queries for a handful of answers.
+      const surveys = await tx.survey.findMany({
+        where: { id: { in: [...new Set(rows.map((row) => row.surveyId))] } },
+        select: { id: true, blocks: true, questions: true },
+      });
+      const uploadElementIds = new Map(
+        surveys.map((survey) => [
+          survey.id,
+          getSurveyFileUploadElementIds({ blocks: survey.blocks, questions: survey.questions }),
+        ])
+      );
+
+      const fileUrls = rows.flatMap((row) =>
+        collectResponseFileUrls(row.data, uploadElementIds.get(row.surveyId) ?? new Set<string>())
+      );
+
+      // Responses before displays — see the note above. Not a correctness constraint: the FK is
+      // SET NULL, so the reverse order also works, it just updates rows on their way out.
+      const { count } = await tx.response.deleteMany({
+        where: { id: { in: responseIds }, survey: { workspaceId } },
+      });
+
+      const displayIds = rows
+        .map((row) => row.displayId)
+        .filter((displayId): displayId is string => displayId !== null);
+
+      if (displayIds.length > 0) {
+        await tx.display.deleteMany({ where: { id: { in: displayIds } } });
+      }
+
+      return { deleted: count, deletedIds: rows.map((row) => row.id), fileUrls };
+    });
+  } catch (error) {
+    rethrowScopedPrismaError(error);
+  }
+
+  const { fileUrls, ...result } = outcome;
+
+  if (fileUrls.length === 0) {
+    return result;
+  }
+
+  try {
+    await deleteResponseFileUrls(fileUrls, workspaceId);
+  } catch (error) {
+    // The rows are already gone and the caller's request succeeded; orphaned objects are a
+    // storage-cleanup problem, not a reason to report a failed delete. Same call as the single delete.
+    logger.error(
+      { err: error, workspaceId, responseCount: result.deleted, fileCount: fileUrls.length },
+      "V3 batch response file cleanup failed"
+    );
+  }
+
+  return result;
+}
