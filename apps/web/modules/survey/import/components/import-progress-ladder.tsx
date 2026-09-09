@@ -10,7 +10,6 @@ import {
   formatLanguageCodes,
   getImportProgressSteps,
 } from "@/modules/survey/import/lib/import-progress";
-import { AiIcon } from "@/modules/ui/components/ai";
 
 type ImportProgressLadderProps = {
   progress: TImportProgressState;
@@ -30,7 +29,6 @@ export const ImportProgressLadder = ({
 }: Readonly<ImportProgressLadderProps>) => {
   const { t } = useTranslation();
   const steps = getImportProgressSteps(progress);
-  const isAiLane = progress.source?.lane === "ai";
 
   const labelFor = (step: TImportProgressStep): string => {
     switch (step.stage) {
@@ -65,15 +63,16 @@ export const ImportProgressLadder = ({
 
   return (
     <div className={cn("flex flex-col gap-2 text-sm", className)}>
+      {/* The ladder is the visual; the live region only announces the step that changed. */}
       {isActive ? (
-        <div className="flex items-center gap-2">
-          {isAiLane ? <AiIcon animated /> : null}
-          <span role="status" aria-live="polite" aria-atomic="true" className="text-slate-700">
-            {current ? labelFor(current) : t("workspace.surveys.import.status_reading")}
-          </span>
-        </div>
+        <span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+          {current ? labelFor(current) : t("workspace.surveys.import.status_reading")}
+        </span>
       ) : null}
-      <ol className="flex flex-col gap-1.5" aria-label={t("workspace.surveys.import.progress_label")}>
+      <ol
+        className="flex flex-col gap-1.5"
+        aria-label={t("workspace.surveys.import.progress_label")}
+        aria-busy={isActive || undefined}>
         {steps.map((step) => {
           const detail = detailFor(step);
           return (

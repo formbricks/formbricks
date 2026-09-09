@@ -95,6 +95,20 @@ export function mergeAiDraftSnapshot(
   return changed ? { name, questions } : previous;
 }
 
+/**
+ * Replace the draft with a snapshot instead of folding it in. The import dialog uses this for the
+ * resolved document at the end of a run: the resolver regroups blocks (rating-like questions get their
+ * own block, chunks are merged), so its keys no longer line up with the streamed partials and an
+ * append-only merge would keep stale rows next to the new ones.
+ */
+export function replaceAiDraftSnapshot(snapshot: TSurveyGenerationDraftSnapshot): TAiDraftState {
+  const questions = flattenSnapshotQuestions(snapshot, 0).sort((a, b) => comparePosition(a.key, b.key));
+  return {
+    ...(typeof snapshot.name === "string" && snapshot.name.length > 0 ? { name: snapshot.name } : {}),
+    questions,
+  };
+}
+
 /** `block:question` keys, compared numerically — "10:0" sorts after "9:0", which strings do not. */
 function comparePosition(a: string, b: string): number {
   const [aBlock = 0, aQuestion = 0] = a.split(":").map(Number);

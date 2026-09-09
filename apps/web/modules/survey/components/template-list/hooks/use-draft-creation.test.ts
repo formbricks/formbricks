@@ -117,6 +117,40 @@ describe("useDraftCreation", () => {
     expect(result.current.draft.questions.map((question) => question.headline)).toEqual(["One", "Two"]);
   });
 
+  test("a partial marked replace swaps the streamed rows for the resolved document", async () => {
+    const streamed = {
+      blocks: [
+        {
+          name: "A",
+          questions: [
+            { type: "openText", headline: "One" },
+            { type: "nps", headline: "Two" },
+          ],
+        },
+      ],
+    };
+    const resolved = {
+      blocks: [
+        { name: "A", questions: [{ type: "openText", headline: "One" }] },
+        { name: "Two", questions: [{ type: "nps", headline: "Two" }] },
+      ],
+    };
+    const stream = scripted([
+      { type: "partial", draft: streamed as never },
+      { type: "partial", draft: resolved as never, replace: true },
+      { type: "done", payload },
+    ]);
+    const { result } = renderDraftHook({ stream });
+
+    await act(async () => result.current.submit({ fileName: "doc.docx" }));
+
+    await waitFor(() => expect(result.current.status).toBe("review"));
+    expect(result.current.draft.questions.map((question) => [question.key, question.headline])).toEqual([
+      ["0:0", "One"],
+      ["1:0", "Two"],
+    ]);
+  });
+
   test("creating hands payload and report to the injected create and reports success", async () => {
     const report = { issues: [] };
     const stream = scripted([{ type: "done", payload, report }]);

@@ -81,7 +81,11 @@ export const useImportSurvey = ({
             setName(getImportedSurveyName(getDocumentName(event.document)));
             // The final snapshot is the resolved document, not the last model partial: ids, defaults and
             // filled translations only exist after the resolver ran.
-            handlers.onEvent({ type: "partial", draft: documentToDraftSnapshot(event.document) });
+            handlers.onEvent({
+              type: "partial",
+              draft: documentToDraftSnapshot(event.document),
+              replace: true,
+            });
             handlers.onEvent({
               type: "done",
               payload: event.document as unknown as TV3CreateSurveyBody,

@@ -1,6 +1,11 @@
 import type { TSurveyGenerationDraftSnapshot } from "@/app/api/internal/surveys/generate/lib/events";
 import type { TV3CreateSurveyBody } from "@/app/api/v3/surveys/schemas";
-import { EMPTY_AI_DRAFT, type TAiDraftState, mergeAiDraftSnapshot } from "./ai-draft-reducer";
+import {
+  EMPTY_AI_DRAFT,
+  type TAiDraftState,
+  mergeAiDraftSnapshot,
+  replaceAiDraftSnapshot,
+} from "./ai-draft-reducer";
 
 export type TAiCreateStatus = "idle" | "generating" | "review" | "creating";
 
@@ -42,7 +47,7 @@ export interface TAiCreateState {
 export type TAiCreateAction =
   | { type: "SUBMIT"; prompt: string; sourceKind?: TAiCreateSourceKind }
   /** `blockOffset` shifts the snapshot's block indices: chunked imports append blocks (D4). */
-  | { type: "SNAPSHOT"; snapshot: TSurveyGenerationDraftSnapshot; blockOffset?: number }
+  | { type: "SNAPSHOT"; snapshot: TSurveyGenerationDraftSnapshot; blockOffset?: number; replace?: boolean }
   | { type: "DONE"; payload: TV3CreateSurveyBody; report?: unknown }
   | { type: "STOP" }
   | { type: "FAIL"; errorCode: string }
@@ -106,11 +111,14 @@ export const AI_NOTHING_GENERATED_CODE = "ai_nothing_generated";
 function applySnapshot(
   state: TAiCreateState,
   snapshot: TSurveyGenerationDraftSnapshot,
-  blockOffset = 0
+  blockOffset = 0,
+  replace = false
 ): TAiCreateState {
   if (state.status !== "generating") return state;
 
-  const draft = mergeAiDraftSnapshot(state.draft, snapshot, blockOffset);
+  const draft = replace
+    ? replaceAiDraftSnapshot(snapshot)
+    : mergeAiDraftSnapshot(state.draft, snapshot, blockOffset);
   return draft === state.draft ? state : { ...state, draft };
 }
 
@@ -204,7 +212,7 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
       };
 
     case "SNAPSHOT":
-      return applySnapshot(state, action.snapshot, action.blockOffset);
+      return applySnapshot(state, action.snapshot, action.blockOffset, action.replace);
 
     case "DONE":
       return applyDone(state, action.payload, action.report);

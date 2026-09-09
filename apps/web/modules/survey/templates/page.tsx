@@ -4,6 +4,7 @@ import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-availability";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TemplateContainerWithPreview } from "./components/template-container";
@@ -32,13 +33,19 @@ export const SurveyTemplatesPage = async (props: Readonly<SurveyTemplateProps>) 
   }
 
   const publicDomain = getPublicDomain();
-  const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
+  // The import card on this page needs the same AI gate the survey list computes for its entry points.
+  const [locale, { isAIAvailable, aiUnavailableReason }] = await Promise.all([
+    getUserLocale(session.user.id).then((l) => l ?? DEFAULT_LOCALE),
+    getSurveyAIAvailability(workspace.organizationId, { isReadOnly }),
+  ]);
 
   return (
     <TemplateContainerWithPreview
       workspace={workspace}
       publicDomain={publicDomain}
       defaultLanguage={locale}
+      isAIAvailable={isAIAvailable}
+      aiUnavailableReason={aiUnavailableReason}
     />
   );
 };
