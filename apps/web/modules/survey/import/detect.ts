@@ -6,6 +6,7 @@ import {
   isImportAllowedExtension,
   isLegacyOfficeExtension,
 } from "./file-types";
+import { parseJsonBounded } from "./lib/json-depth";
 import type { TImportAllowedExtension, TImportSourceKind } from "./types";
 
 export { detectJsonSourceKind, getImportAcceptList, getImportFileExtension };
@@ -68,12 +69,12 @@ function detectTextKind(bytes: Buffer, extension: string | null): TTextDetection
     return { kind: null, invalidJson: false };
   }
 
-  try {
-    const parsed: unknown = JSON.parse(text);
-    return { kind: detectJsonSourceKind(parsed), invalidJson: false };
-  } catch {
+  // Depth-guarded: a pathologically nested file must read as "not a survey", not as a stack overflow.
+  const parsed = parseJsonBounded(text);
+  if (!parsed) {
     return { kind: null, invalidJson: extension === "json" || extension === "qsf" };
   }
+  return { kind: detectJsonSourceKind(parsed.value), invalidJson: false };
 }
 
 /**

@@ -7,6 +7,7 @@ import {
 } from "@/app/api/v3/surveys/export/schemas";
 import { formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { detectJsonSourceKind } from "../../detect";
+import { isJsonTooDeep, parseJsonBounded } from "../../lib/json-depth";
 import { importError, importInfo } from "../../report";
 import type {
   TImportCandidate,
@@ -42,15 +43,23 @@ function stripBom(text: string): string {
 
 function parseContent(input: TImportLaneInput): { value: unknown } | { error: TImportIssue } {
   const { content } = input;
+  const tooDeep = () =>
+    importError({
+      code: "invalid_document",
+      vars: { detail: "The file is nested too deeply to be a survey." },
+    });
+
   if (content.type === "json") {
-    return { value: content.value };
+    return isJsonTooDeep(content.value) ? { error: tooDeep() } : { value: content.value };
   }
 
-  const text = content.type === "text" ? content.text : content.bytes.toString("utf8");
+  const text = stripBom(content.type === "text" ? content.text : content.bytes.toString("utf8"));
+  if (isJsonTooDeep(text)) {
+    return { error: tooDeep() };
+  }
 
-  try {
-    return { value: JSON.parse(stripBom(text)) };
-  } catch {
+  const parsed = parseJsonBounded(text);
+  if (!parsed) {
     return {
       error: importError({
         code: "invalid_document",
@@ -58,6 +67,7 @@ function parseContent(input: TImportLaneInput): { value: unknown } | { error: TI
       }),
     };
   }
+  return { value: parsed.value };
 }
 
 /** Accept a `GET /api/v3/surveys/{id}` response body as well as the bare document. */
