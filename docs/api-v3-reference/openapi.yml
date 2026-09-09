@@ -1529,7 +1529,7 @@ paths:
                             type: string
                             label: Plan
                             value: enterprise
-                          - key: score
+                          - key: clvr1234567890123456789012
                             kind: computed
                             type: number
                             label: Score
@@ -1604,7 +1604,7 @@ paths:
                       - Podcast
                     plan: enterprise
                   variables:
-                    score: 12
+                    clvr1234567890123456789012: 12
               partialResponse:
                 summary: A partial response, still open
                 value:
@@ -6988,6 +6988,9 @@ components:
         - `ipAddress` is **never** projected by this API, in any view. That is a v3 rule rather than a
           catalog behaviour: the catalog reads the field, and the dashboard shows it. Do not infer the same
           suppression for the other `drop` fields.
+
+
+        Which catalog entries appear at all is a third axis, `display`, and this collection carries the ones that are not `none`. The `none` set is the response's own identity and timing — `responseId`, `surveyId`, `finished`, `language`, `durationSeconds`, `startedAt`, `finishedAt` — every one of which is already a first-class field on the response. Without that filter they would each appear twice in the same payload, once at the top level and once here.
       required:
         - key
         - kind
@@ -7003,6 +7006,8 @@ components:
             Uniqueness is a guarantee this API makes rather than one the stored data provides: a survey may declare a hidden field or variable whose name collides with a catalog field (`country`, `url` and `language` are all declarable on surveys created before the reserved names were enforced). Where that happens the **declared** entry wins and the `reserved` one is omitted, matching how recall and logic already resolve the same name.
 
             `reserved` keys are the catalog's own names, which are camelCase — `deviceType`, `utmSource`, `pagePath` — not snake_case.
+
+            For `ingested` and `computed` entries the key is the survey link's **storage key**, which is the same string that addresses the value in the writable maps this resource returns: `data` for a hidden field, `variables` for a variable. It is deliberately **not** the Embedded Data library name — that is a different, nullable field, and it is null for every survey-local field, which is the common case. Note the consequence for variables: a variable's storage key is its **cuid**, not its human name, so joining back to `variables` means using this key verbatim and reading the name off `label`.
         kind:
           type: string
           enum:
@@ -7035,8 +7040,12 @@ components:
             - type: array
               items:
                 type: string
-            - type: 'null'
-          description: The value, matching `type`. `date` values are ISO-8601 strings. An **array of string** occurs when a hidden field was ingested with multiple values — the stored map permits it, so the payload must be able to carry it rather than silently dropping the key. `null` when the key was declared for this survey but carries no value on this response.
+          description: |-
+            The value, matching `type`. `date` values are ISO-8601 strings.
+
+            An **array of string** is a legacy shape and appears only on responses stored before the ingest contract tightened. A non-scalar under a declared field's key is now refused at ingest, because response data shares one map with element answers: an array under a hidden field's storage key means the key collided with an element id, and joining it into a string would invent a value the respondent never gave for that field.
+
+            There is no `null` member: a declared key that resolves to nothing is **omitted** from the collection rather than carried with a null. So `embeddedData[]` enumerates what the response actually holds, not what the survey declares — a survey with twelve declared fields and two filled in yields two entries. A field with a default value is never unset, since the default is the fallback before the key is considered missing.
       additionalProperties: false
     ResponseUnresolvedEntry:
       type: object
@@ -7161,7 +7170,10 @@ components:
           readOnly: true
           type: number
           minimum: 0
-          description: Total seconds the respondent spent, summed from per-element timing. Replaces the synthetic `_total` bucket the stored representation keeps alongside real element ids. Absent when the submission carried no timing.
+          description: |-
+            Total seconds the respondent spent, summed from per-element timing and **excluding** the stored `_total` bucket, which the server maintains alongside real element ids and which would otherwise be double-counted. Absent when the submission carried no timing.
+
+            Summing rather than reading `_total` is deliberate: the stored bucket is only written when a response is finished, so reading it would leave every partial response without a duration even when it carries per-element timing. This is also why the value can differ from the reserved `durationSeconds` catalog entry, which does read the bucket and rounds to whole seconds — that entry is not projected into `embeddedData[]`, so the two never appear side by side.
         resolution:
           readOnly: true
           $ref: '#/components/schemas/ResponseResolution'
@@ -7241,7 +7253,9 @@ components:
       description: |
         Per-element time-to-complete, keyed by element id, in **milliseconds**. Accepted on create so that a caller replaying a real submission can carry its timing; reads report the same information as `durationSeconds` in seconds, on each answer and summed at the top level.
 
-        This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite number is therefore accepted, which is why no bounds are declared here. Do not send a `_total` key: the total is derived on read.
+        This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite number is therefore accepted, which is why no bounds are declared here.
+
+        **Do not send a `_total` key.** The server writes that bucket itself when the response is finished, by summing every value in this map — including a `_total` you supplied, which is then counted twice and permanently skews the stored total. `durationSeconds` on the read is computed from the real element entries and ignores the bucket entirely, so there is nothing to gain by sending one.
       additionalProperties:
         type: number
     ResponseMetaInput:
@@ -7249,7 +7263,11 @@ components:
       description: |
         Submission context, on the narrow subset a caller can legitimately supply. A management-API create has no browser behind it, so unlike a client-side submission there is nothing for the server to auto-capture — if these are not sent they are simply absent, which is why the API accepts them at all rather than treating all context as server-derived.
 
-        Deliberately **not** accepted here: `ipAddress` (server-derived when the survey captures it, and never projected by v3 on read), and the derived `userAgent`, `country` and `device` family — those describe a real browser session and would be fiction on an API-created response. Reads surface what is stored as `reserved` entries in `embeddedData[]`, governed by the Embedded Data field catalog's privacy policy.
+        Deliberately **not** accepted here, because the routes derive them from the request itself and a caller-supplied value would be fiction: `country`, `userAgent` (the browser/OS/device breakdown is nested under it, there is no top-level `device` key) and `ipAddress`. `ipAddress` is additionally never projected by v3 on read, in any view.
+
+        The stored `meta` is wider than this input. It also carries a block of browser-runtime context — `pagePath`, `pageReferrer`, the five `utm*` keys, the four screen/viewport dimensions, `timezone` and `locale` — which the SDK captures and which this endpoint does **not** currently accept, so sending one is a 400. That is a gap rather than a decision: an integration replaying a real submission can legitimately carry `utmSource` or `pagePath`, and those are live catalog entries that read back in `embeddedData[]`. Whether v3 create accepts them is open on the write ticket.
+
+        Reads surface what is stored as `reserved` entries in `embeddedData[]`.
       properties:
         source:
           type: string

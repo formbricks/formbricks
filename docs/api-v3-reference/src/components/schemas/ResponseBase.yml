@@ -83,9 +83,16 @@ properties:
     type: number
     minimum: 0
     description: >-
-      Total seconds the respondent spent, summed from per-element timing. Replaces the synthetic
-      `_total` bucket the stored representation keeps alongside real element ids. Absent when the
-      submission carried no timing.
+      Total seconds the respondent spent, summed from per-element timing and **excluding** the stored
+      `_total` bucket, which the server maintains alongside real element ids and which would otherwise
+      be double-counted. Absent when the submission carried no timing.
+
+
+      Summing rather than reading `_total` is deliberate: the stored bucket is only written when a
+      response is finished, so reading it would leave every partial response without a duration even
+      when it carries per-element timing. This is also why the value can differ from the reserved
+      `durationSeconds` catalog entry, which does read the bucket and rounds to whole seconds — that
+      entry is not projected into `embeddedData[]`, so the two never appear side by side.
   resolution:
     readOnly: true
     $ref: ./ResponseResolution.yml

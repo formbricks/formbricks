@@ -6,10 +6,21 @@ description: >
   all rather than treating all context as server-derived.
 
 
-  Deliberately **not** accepted here: `ipAddress` (server-derived when the survey captures it, and never projected by v3 on read),
-  and the derived `userAgent`, `country` and `device` family — those describe a real browser session
-  and would be fiction on an API-created response. Reads surface what is stored as `reserved`
-  entries in `embeddedData[]`, governed by the Embedded Data field catalog's privacy policy.
+  Deliberately **not** accepted here, because the routes derive them from the request itself and a
+  caller-supplied value would be fiction: `country`, `userAgent` (the browser/OS/device breakdown is
+  nested under it, there is no top-level `device` key) and `ipAddress`. `ipAddress` is additionally
+  never projected by v3 on read, in any view.
+
+
+  The stored `meta` is wider than this input. It also carries a block of browser-runtime context —
+  `pagePath`, `pageReferrer`, the five `utm*` keys, the four screen/viewport dimensions, `timezone`
+  and `locale` — which the SDK captures and which this endpoint does **not** currently accept, so
+  sending one is a 400. That is a gap rather than a decision: an integration replaying a real
+  submission can legitimately carry `utmSource` or `pagePath`, and those are live catalog entries
+  that read back in `embeddedData[]`. Whether v3 create accepts them is open on the write ticket.
+
+
+  Reads surface what is stored as `reserved` entries in `embeddedData[]`.
 properties:
   source:
     type: string

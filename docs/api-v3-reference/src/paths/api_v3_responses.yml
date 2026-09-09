@@ -276,7 +276,7 @@ get:
                         type: string
                         label: Plan
                         value: enterprise
-                      - key: score
+                      - key: clvr1234567890123456789012
                         kind: computed
                         type: number
                         label: Score
@@ -368,7 +368,7 @@ post:
                   - Podcast
                 plan: enterprise
               variables:
-                score: 12
+                clvr1234567890123456789012: 12
           partialResponse:
             summary: A partial response, still open
             value:

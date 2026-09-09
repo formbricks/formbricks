@@ -20,6 +20,13 @@ description: >
   - `ipAddress` is **never** projected by this API, in any view. That is a v3 rule rather than a
     catalog behaviour: the catalog reads the field, and the dashboard shows it. Do not infer the same
     suppression for the other `drop` fields.
+
+
+  Which catalog entries appear at all is a third axis, `display`, and this collection carries the ones
+  that are not `none`. The `none` set is the response's own identity and timing — `responseId`,
+  `surveyId`, `finished`, `language`, `durationSeconds`, `startedAt`, `finishedAt` — every one of
+  which is already a first-class field on the response. Without that filter they would each appear
+  twice in the same payload, once at the top level and once here.
 required:
   - key
   - kind
@@ -42,6 +49,15 @@ properties:
 
       `reserved` keys are the catalog's own names, which are camelCase — `deviceType`, `utmSource`,
       `pagePath` — not snake_case.
+
+
+      For `ingested` and `computed` entries the key is the survey link's **storage key**, which is the
+      same string that addresses the value in the writable maps this resource returns: `data` for a
+      hidden field, `variables` for a variable. It is deliberately **not** the Embedded Data library
+      name — that is a different, nullable field, and it is null for every survey-local field, which
+      is the common case. Note the consequence for variables: a variable's storage key is its **cuid**,
+      not its human name, so joining back to `variables` means using this key verbatim and reading the
+      name off `label`.
   kind:
     type: string
     enum:
@@ -79,10 +95,20 @@ properties:
       - type: array
         items:
           type: string
-      - type: "null"
     description: >-
-      The value, matching `type`. `date` values are ISO-8601 strings. An **array of string** occurs
-      when a hidden field was ingested with multiple values — the stored map permits it, so the
-      payload must be able to carry it rather than silently dropping the key. `null` when the key was
-      declared for this survey but carries no value on this response.
+      The value, matching `type`. `date` values are ISO-8601 strings.
+
+
+      An **array of string** is a legacy shape and appears only on responses stored before the ingest
+      contract tightened. A non-scalar under a declared field's key is now refused at ingest, because
+      response data shares one map with element answers: an array under a hidden field's storage key
+      means the key collided with an element id, and joining it into a string would invent a value the
+      respondent never gave for that field.
+
+
+      There is no `null` member: a declared key that resolves to nothing is **omitted** from the
+      collection rather than carried with a null. So `embeddedData[]` enumerates what the response
+      actually holds, not what the survey declares — a survey with twelve declared fields and two
+      filled in yields two entries. A field with a default value is never unset, since the default is
+      the fallback before the key is considered missing.
 additionalProperties: false
