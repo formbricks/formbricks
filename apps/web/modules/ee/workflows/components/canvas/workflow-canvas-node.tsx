@@ -14,7 +14,10 @@ import {
 } from "lucide-react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { WORKFLOW_ACTIONS } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
+import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
+import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import {
   type TWorkflowNodeData,
   type TWorkflowNodeIcon,
@@ -112,6 +115,7 @@ export const WorkflowCanvasNode = memo(
                 <DropdownMenuItem
                   onClick={(event) => {
                     event.stopPropagation();
+                    trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.nodeDeleted, { node_type: data.nodeType });
                     deleteNode(id);
                   }}>
                   <Trash2Icon className="size-4" />
@@ -147,6 +151,10 @@ export const WorkflowCanvasNode = memo(
                 <DropdownMenuItem
                   onClick={(event) => {
                     event.stopPropagation();
+                    trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.actionAdded, {
+                      action_type: WORKFLOW_ACTIONS.SEND_EMAIL,
+                      after_node_type: data.nodeType,
+                    });
                     appendSendEmail(id);
                   }}>
                   <span

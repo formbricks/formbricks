@@ -1,3 +1,4 @@
+import { mockCaptureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/__mocks__/run-failure";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { reconcileStuckRunningWorkflowRuns } from "./reconcile-stuck-running-runs";
 
@@ -26,6 +27,8 @@ const runRow = (id: string, updatedAt: Date) => ({
   workspaceId: `ws_${id}`,
   startedAt: new Date(updatedAt.getTime() - 60 * 1000),
   updatedAt,
+  triggerType: "response.completed",
+  attempt: 3,
 });
 
 const reconcile = () => reconcileStuckRunningWorkflowRuns({ now: NOW });
@@ -64,6 +67,17 @@ describe("reconcileStuckRunningWorkflowRuns", () => {
     });
     expect(warn).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ scanned: 1, recovered: 1, stepsSkipped: 2 });
+    // This reconciler is a writer of a terminal `failed`, so the run reaches `workflow_run_failed`
+    // as well as the snapshot's `runs_24h_failed`; without it the two disagree by exactly the
+    // infrastructure failures.
+    expect(mockCaptureWorkflowRunFailed).toHaveBeenCalledWith({
+      runId: "run1",
+      workflowId: "wf_run1",
+      workspaceId: "ws_run1",
+      triggerType: "response.completed",
+      errorKind: "abandoned_mid_execution",
+      attempt: 3,
+    });
   });
 
   test("leaves a run that lost the status-guard race untouched (owner finalized it concurrently)", async () => {
@@ -74,6 +88,8 @@ describe("reconcileStuckRunningWorkflowRuns", () => {
 
     expect(logUpdateMany).not.toHaveBeenCalled(); // never skip steps of a run we didn't claim
     expect(warn).not.toHaveBeenCalled();
+    // Losing the claim means another writer owns the verdict: it reports, this sweep must not.
+    expect(mockCaptureWorkflowRunFailed).not.toHaveBeenCalled();
     expect(result).toEqual({ scanned: 1, recovered: 0, stepsSkipped: 0 });
   });
 
