@@ -110,6 +110,18 @@ describe("convertImportFile", () => {
       "trigger_would_be_created"
     );
     expect(createActionClass).not.toHaveBeenCalled();
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "user_1",
+      "survey_import_converted",
+      expect.objectContaining({
+        source_kind: "formbricks-export",
+        lane: "lossless",
+        has_document: true,
+        error_count: 0,
+        import_warning_codes: expect.any(Array),
+      }),
+      expect.objectContaining({ workspaceId: FIXTURE_WORKSPACE_ID })
+    );
   });
 
   test("a raw v3 document renamed to .txt is still detected by content", async () => {
@@ -177,6 +189,12 @@ describe("convertImportFile", () => {
     expect(json.code).toBe(code);
     expect(json.detail).toContain(detail);
     expect(json.invalid_params[0].name).toBe("file");
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "user_1",
+      "survey_import_failed",
+      { source_kind: null, lane: null, code, status: 422 },
+      expect.objectContaining({ workspaceId: FIXTURE_WORKSPACE_ID })
+    );
   });
 
   test("converts a Qualtrics .qsf through the structured lane and reports its logic", async () => {
@@ -252,6 +270,12 @@ describe("convertImportFile", () => {
 
       expect(response.status).toBe(403);
       expect((await response.json()).code).toBe("ai_features_not_enabled");
+      expect(capturePostHogEvent).toHaveBeenCalledWith(
+        "user_1",
+        "survey_import_failed",
+        { source_kind: "docx", lane: "ai", code: "ai_features_not_enabled", status: 403 },
+        expect.anything()
+      );
       expect(documentLane).not.toHaveBeenCalled();
       expect(applyRateLimit).not.toHaveBeenCalledWith(
         expect.objectContaining({ namespace: "api:v3:surveys:generate" }),

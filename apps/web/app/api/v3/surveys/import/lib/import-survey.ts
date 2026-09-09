@@ -13,8 +13,12 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { createV3SurveyResponse, getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { formbricksLane } from "@/modules/survey/import/lanes/formbricks";
-import { countIssues } from "@/modules/survey/import/report";
+import {
+  buildImportCreatedProperties,
+  buildImportFailedProperties,
+} from "@/modules/survey/import/lib/import-analytics";
 import { type TResolveImportResult, resolveImportCandidate } from "@/modules/survey/import/resolve";
 import type { TImportCandidate, TImportReport } from "@/modules/survey/import/types";
 import type { TV3SurveyImportBody } from "../schemas";
@@ -33,18 +37,6 @@ export function reportErrorsToInvalidParams(report: TImportReport): InvalidParam
   return report.issues
     .filter((issue) => issue.severity === "error")
     .map((issue) => ({ name: issue.path ?? "document", reason: issue.message }));
-}
-
-/** The `survey_created` properties product reads import adoption from. */
-export function buildImportAnalyticsProperties(report: TImportReport) {
-  const counts = countIssues(report.issues);
-  return {
-    import_source: report.source.kind,
-    import_lane: report.source.lane,
-    import_ai_used: report.source.lane === "ai",
-    import_warning_count: counts.warning,
-    import_chunk_count: report.source.chunks ?? 0,
-  };
 }
 
 async function runLosslessImport(
@@ -145,6 +137,21 @@ export async function importV3Survey({
         { statusCode: 422, sourceKind: resolved.report.source.kind, invalidParamCount: invalidParams.length },
         "Survey import refused"
       );
+      const refusedBy = getSessionUserId(authentication);
+      if (refusedBy) {
+        capturePostHogEvent(
+          refusedBy,
+          "survey_import_failed",
+          buildImportFailedProperties({
+            sourceKind: resolved.report.source.kind,
+            lane: resolved.report.source.lane,
+            code:
+              resolved.report.issues.find((issue) => issue.severity === "error")?.code ?? "invalid_document",
+            status: 422,
+          }),
+          { organizationId: authResult.organizationId, workspaceId: authResult.workspaceId }
+        );
+      }
       return problemUnprocessableContent(requestId, "The survey could not be imported", {
         instance,
         invalid_params: invalidParams,
@@ -164,12 +171,19 @@ export async function importV3Survey({
       authResult,
       createdFrom: "import",
       createOptions: { skipExternalUrlPermissionCheck: true },
-      analyticsProperties: buildImportAnalyticsProperties(resolved.report),
+      analyticsProperties: buildImportCreatedProperties(resolved.report),
     });
 
     if (auditLog) {
       auditLog.status = createResponse.ok ? "success" : "failure";
       if (!createResponse.ok) auditLog.eventId = requestId;
+      // The audit row names the import run and its source so an operator can trace a survey back to its file.
+      if (auditLog?.newObject && typeof auditLog.newObject === "object") {
+        auditLog.newObject = {
+          ...(auditLog.newObject as Record<string, unknown>),
+          import: { importRunId, sourceKind: resolved.report.source.kind, lane: resolved.report.source.lane },
+        };
+      }
       await queueV3AuditLog(auditLog, requestId, log);
     }
 

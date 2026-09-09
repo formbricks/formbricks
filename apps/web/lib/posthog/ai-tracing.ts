@@ -11,6 +11,8 @@ export interface AITracingContext {
   traceId?: string;
   organizationId?: string;
   workspaceId?: string;
+  /** Extra trace properties (an import run id, a chunk index) next to `feature`. */
+  properties?: Record<string, string | number | boolean>;
 }
 
 const buildGroups = (context: AITracingContext): Record<string, string> | undefined => {
@@ -37,7 +39,7 @@ export function wrapAiModelWithTracing(
       posthogDistinctId: context.distinctId,
       posthogTraceId: context.traceId,
       posthogGroups: buildGroups(context),
-      posthogProperties: { feature: context.feature },
+      posthogProperties: { feature: context.feature, ...context.properties },
       posthogPrivacyMode: true,
     });
   } catch (error) {

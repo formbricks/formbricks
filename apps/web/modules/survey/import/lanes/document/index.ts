@@ -96,6 +96,7 @@ async function extractChunk(
     workspaceId: ctx.workspaceId,
     userId: ctx.userId,
     part: chunk.total > 1 ? { index: chunk.index, total: chunk.total } : undefined,
+    importRunId: ctx.importRunId,
     signal: ctx.signal,
   };
 
@@ -141,6 +142,7 @@ export const documentLane: TImportLaneHandler = async (input, ctx) => {
     workspaceId: ctx.workspaceId,
     userId: ctx.userId,
     languageHint: ctx.languageHint,
+    importRunId: ctx.importRunId,
     signal: ctx.signal,
   });
 

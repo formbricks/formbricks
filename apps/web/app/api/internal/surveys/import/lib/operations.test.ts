@@ -115,7 +115,14 @@ describe("streamImportConversion", () => {
       references: null,
     });
     expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
-    expect(mocks.capturePostHogEvent).not.toHaveBeenCalled();
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledTimes(1);
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+      "user1",
+      "survey_import_converted",
+      // The event reads the resolved report, which the mocked resolver labels markdown/ai.
+      expect.objectContaining({ source_kind: "markdown", lane: "ai", has_document: true, streamed: true }),
+      expect.objectContaining({ workspaceId })
+    );
   });
 
   test("an AI lane run streams progress per chunk and partials with their block offset", async () => {
@@ -182,6 +189,12 @@ describe("streamImportConversion", () => {
     expect(response.status).toBe(403);
     expect(response.headers.get("Content-Type")).toContain("application/problem+json");
     expect(lane).not.toHaveBeenCalled();
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+      "user1",
+      "survey_import_failed",
+      { source_kind: "markdown", lane: "ai", code: "ai_smart_tools_disabled", status: 403, streamed: true },
+      expect.objectContaining({ workspaceId })
+    );
   });
 
   test("a spent AI budget answers 429 with Retry-After before the stream", async () => {
@@ -255,5 +268,11 @@ describe("streamImportConversion", () => {
       retryAfter: 30,
       reference: expect.any(String),
     });
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+      "user1",
+      "survey_import_failed",
+      expect.objectContaining({ code: "ai_quota_exceeded", lane: "ai", streamed: true }),
+      expect.anything()
+    );
   });
 });

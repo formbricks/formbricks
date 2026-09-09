@@ -15,6 +15,7 @@ import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { ZV3SurveyImportBody } from "../schemas";
 import { importV3Survey } from "./import-survey";
 
+vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn(async () => ({})) }));
 vi.mock("server-only", () => ({}));
 
