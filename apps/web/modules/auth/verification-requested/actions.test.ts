@@ -55,6 +55,7 @@ const signupIntentMocks = vi.hoisted(() => ({
 const recoveryIntentMocks = vi.hoisted(() => ({
   readSsoRecoveryIntent: vi.fn(),
   refreshSsoRecoveryIntent: vi.fn(),
+  getSsoRecoveryPairedTtlSeconds: vi.fn(() => 60 * 15),
 }));
 
 vi.mock("@/modules/auth/lib/signup-intent", () => ({
@@ -67,6 +68,7 @@ vi.mock("@/modules/auth/lib/signup-intent", () => ({
 vi.mock("@/modules/ee/sso/lib/recovery-intent", () => ({
   readSsoRecoveryIntent: recoveryIntentMocks.readSsoRecoveryIntent,
   refreshSsoRecoveryIntent: recoveryIntentMocks.refreshSsoRecoveryIntent,
+  getSsoRecoveryPairedTtlSeconds: recoveryIntentMocks.getSsoRecoveryPairedTtlSeconds,
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -273,6 +275,7 @@ describe("resendVerificationEmailAction", () => {
         userId: mockVerifiedUser.id,
         createdAt: Date.now(),
       });
+      recoveryIntentMocks.getSsoRecoveryPairedTtlSeconds.mockReturnValue(777);
 
       const result = await resendVerificationEmailAction({
         ctx: mockCtx,
@@ -282,9 +285,11 @@ describe("resendVerificationEmailAction", () => {
         },
       } as any);
 
-      // The resend mints a fresh one-day link, so the intent it depends on has to be re-paired with it
-      // — deleting this call left the whole suite green.
-      expect(recoveryIntentMocks.refreshSsoRecoveryIntent).toHaveBeenCalledWith("test-state", {
+      // The link and the intent have to get ONE lifetime, or the survivor of the two ends recovery on
+      // its own: a longer-lived link signs the user in and then reports failure. `777` is not a TTL
+      // either call site could arrive at by itself, so it fails if either computes its own instead of
+      // taking the paired value. Deleting the refresh entirely also left the whole suite green once.
+      expect(recoveryIntentMocks.getSsoRecoveryPairedTtlSeconds).toHaveBeenCalledWith({
         callbackUrl: "http://localhost:3000",
         email: mockVerifiedUser.email,
         provider: "google",
@@ -292,12 +297,14 @@ describe("resendVerificationEmailAction", () => {
         userId: mockVerifiedUser.id,
         createdAt: expect.any(Number),
       });
+      expect(recoveryIntentMocks.refreshSsoRecoveryIntent).toHaveBeenCalledWith("test-state", 777);
       expect(sendVerificationEmail).toHaveBeenCalledWith({
         id: mockVerifiedUser.id,
         email: mockVerifiedUser.email,
         locale: "en-US",
         callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state",
         purpose: "sso_recovery",
+        linkTtlSeconds: 777,
       });
       expect(result).toEqual({ success: true });
     });

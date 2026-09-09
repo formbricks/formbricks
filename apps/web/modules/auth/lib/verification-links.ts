@@ -42,16 +42,34 @@ export const normalizeRoutePathname = (url: string): string | null => {
 };
 
 /**
- * Lifetime of the emailed verification / SSO-recovery magic link.
+ * Lifetime of the emailed SSO-recovery magic link AND of the recovery intent behind it (ENG-2783).
  *
- * Exported so the SSO recovery intent can be pinned to the SAME number (ENG-2783). The link and the
- * intent are two halves of one flow — the link mints the session, the intent says what to do with it —
- * so a shorter intent is a guaranteed failure for anyone who reads their mail later: they get signed in
- * by a link that is still valid and then land on "recovery failed". This is a leaf module both
- * `modules/email` and `modules/ee/sso` already import, which is what keeps that pairing in one place
- * without closing an import cycle.
+ * One clock for the whole flow, deliberately. The link mints the session and the intent says what to do
+ * with it, so the two are halves of one operation and a gap either way is a defect: a link that
+ * outlives its intent signs the user in and then lands them on "recovery failed" with recovery
+ * half-done, and an intent that outlives its link sits there authorising a password-and-second-factor
+ * strip long after the mail is dead. Both halves derive from this number, and
+ * `getSsoRecoveryPairedTtlSeconds` keeps them paired across a resend too.
+ *
+ * Fifteen minutes, not the day this started as. Completing recovery clears the credential password and
+ * deletes the `TwoFactor` row, which makes it the strongest capability we hand out over email — and the
+ * link is a stateless JWT, so it stays replayable for its whole life. The bars for a short-lived
+ * emailed credential all sit at or under an hour: NIST SP 800-63B-4 s3.1.3.2 makes an out-of-band
+ * authentication invalid unless completed "within 10 minutes" (SHALL), RFC 6749 s4.1.2 RECOMMENDS at
+ * most 10 minutes for an authorization code, RFC 9126 s2.2 puts a `request_uri` at "between 5 and 600
+ * seconds", and OWASP WSTG 4.9 says such a link "should rarely be more than an hour". Our own password
+ * reset — a strictly weaker capability, since it leaves 2FA armed — defaults to 30 minutes
+ * (`PASSWORD_RESET_TOKEN_LIFETIME_MINUTES`, hard-capped at 120). Fifteen leaves room for mail delivery
+ * while staying inside all of those, and unlike sign-up verification, recovery starts with the user at
+ * the keyboard mid-sign-in rather than being something they come back to later.
+ *
+ * Scope is narrower than the name: `sendVerificationEmail` is the only consumer, and its only callers
+ * are `startSsoRecovery` and the SSO-recovery branch of `resendVerificationEmailAction`. Sign-up
+ * verification is Better Auth's own flow on `EMAIL_VERIFICATION_TTL_SECONDS` (1 hour) and is untouched.
+ * No email copy quotes a duration, so shortening this needs no rewording — the template already offers
+ * the resend link for an expired one.
  */
-export const VERIFICATION_LINK_TTL_SECONDS = 60 * 60 * 24;
+export const VERIFICATION_LINK_TTL_SECONDS = 60 * 15;
 export const VERIFICATION_REQUEST_PURPOSES = ["email_verification", "sso_recovery"] as const;
 export type TVerificationRequestPurpose = (typeof VERIFICATION_REQUEST_PURPOSES)[number];
 const DEFAULT_VERIFICATION_REQUEST_PURPOSE: TVerificationRequestPurpose = "email_verification";

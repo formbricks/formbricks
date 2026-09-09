@@ -78,7 +78,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
 
   /**
    * The parameter changed from a JWT payload to an opaque reference. A stale `?intent=` link — one
-   * emailed before the deploy, valid for up to a day — must land on the ordinary failure page rather
+   * emailed before the deploy, still inside its window — must land on the ordinary failure page rather
    * than being treated as a state id.
    */
   test("does not accept the old intent parameter", async () => {
@@ -110,7 +110,8 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   });
 
   /**
-   * The emailed link is replayable for a day by design, so a second open — the other device, or a
+   * The emailed link is replayable for its whole window by design, so a second open — the other
+   * device, or a
    * refresh — is an ordinary act. It finds the intent already consumed, and that is not evidence of a
    * session that should not exist: tearing one down here signed the user in and then straight back out,
    * reporting that the linking had failed after it had already succeeded.

@@ -4,6 +4,7 @@ import { cache } from "@/lib/cache";
 import {
   consumeSsoRecoveryIntent,
   createSsoRecoveryIntent,
+  getSsoRecoveryPairedTtlSeconds,
   readSsoRecoveryIntent,
   refreshSsoRecoveryIntent,
 } from "./recovery-intent";
@@ -20,7 +21,7 @@ import {
  * derivation is what the module claims: `fb:sso_recovery:intent:<sha256(stateId)>`.
  */
 
-const LINK_TTL_SECONDS = 60 * 60 * 24;
+const LINK_TTL_SECONDS = 60 * 15;
 
 const intentInput = {
   userId: "cm5q1x2y30000abcdefghijkl",
@@ -60,11 +61,11 @@ describe("SSO recovery intent store (real Redis)", () => {
   test("a resend extends a TTL that has run down", async () => {
     const stateId = await createSsoRecoveryIntent(intentInput);
     const stored = (await readSsoRecoveryIntent(stateId))!;
-    // Stand in for hours having passed since the link was issued.
+    // Stand in for most of the window having passed since the link was issued.
     await (await redisClient()).expire(keyFor(stateId), 60);
     expect(await ttlOf(stateId)).toBeLessThanOrEqual(60);
 
-    await refreshSsoRecoveryIntent(stateId, stored);
+    await refreshSsoRecoveryIntent(stateId, getSsoRecoveryPairedTtlSeconds(stored));
 
     expect(await ttlOf(stateId)).toBeGreaterThan(LINK_TTL_SECONDS - 60);
     // EXPIRE moves the expiry only: the record itself must come back byte-identical.
@@ -79,7 +80,7 @@ describe("SSO recovery intent store (real Redis)", () => {
     await consumeSsoRecoveryIntent(stateId);
     expect(await ttlOf(stateId)).toBe(-2); // gone
 
-    await refreshSsoRecoveryIntent(stateId, stored);
+    await refreshSsoRecoveryIntent(stateId, getSsoRecoveryPairedTtlSeconds(stored));
 
     expect(await ttlOf(stateId)).toBe(-2); // still gone — EXPIRE did not recreate it
     await expect(readSsoRecoveryIntent(stateId)).resolves.toBeNull();

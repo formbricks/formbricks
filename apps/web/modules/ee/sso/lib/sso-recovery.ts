@@ -322,7 +322,7 @@ export class SsoRecoveryError extends Error {
    * means an intent WAS read and a guard turned it down.
    *
    * The route needs the difference because its failure response tears the caller's session down, and
-   * only one of the two is evidence that it should. The emailed link is replayable for a day by design
+   * only one of the two is evidence that it should. The emailed link is replayable for its window by design
    * (`better-auth-recovery-signin.ts`), so without this a second open would sign the user in and then
    * immediately sign them out claiming the link had failed — after it had in fact succeeded.
    */

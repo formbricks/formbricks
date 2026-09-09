@@ -155,17 +155,23 @@ export const sendVerificationEmail = async ({
   locale,
   callbackUrl,
   purpose = "email_verification",
+  linkTtlSeconds = VERIFICATION_LINK_TTL_SECONDS,
 }: {
   id: string;
   email: TUserEmail;
   locale: TUserLocale;
   callbackUrl?: string;
   purpose?: TVerificationRequestPurpose;
+  /**
+   * Overridden only by an SSO-recovery resend, which has to mint a link no longer-lived than the intent
+   * it points at — see `getSsoRecoveryPairedTtlSeconds`. Everything else gets the full window.
+   */
+  linkTtlSeconds?: number;
 }): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
     const token = createToken(id, {
-      expiresIn: VERIFICATION_LINK_TTL_SECONDS,
+      expiresIn: linkTtlSeconds,
       purpose,
     });
     const { verifyLink, verificationRequestLink } = buildVerificationLinks({

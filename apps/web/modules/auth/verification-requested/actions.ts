@@ -26,6 +26,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   type TSsoRecoveryIntent,
+  getSsoRecoveryPairedTtlSeconds,
   readSsoRecoveryIntent,
   refreshSsoRecoveryIntent,
 } from "@/modules/ee/sso/lib/recovery-intent";
@@ -101,6 +102,17 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
     }
     ctx.auditLoggingCtx.userId = user.id;
     if (ssoRecoveryResend) {
+      // ENG-2783: the resent link and the refreshed intent get ONE lifetime, computed once here.
+      //
+      // Both halves are needed to finish recovery, so whichever expires first ends the flow — and if
+      // the link is the survivor the user is signed in and then told recovery failed. A resend is
+      // where they can come apart: the intent's refresh is capped against its original `createdAt`
+      // (the caller is unauthenticated, so the window must not slide forever), while a freshly minted
+      // link would otherwise take the full TTL no matter how close that ceiling is. Deriving the
+      // number twice would also let a clock tick between the two, so it is derived once and passed to
+      // both.
+      const pairedTtlSeconds = getSsoRecoveryPairedTtlSeconds(ssoRecoveryResend.intent);
+
       // SSO recovery keeps the app-minted JWT and the recovery magic link (now routed to Better Auth's
       // /sso-recovery/sign-in endpoint via buildVerificationLinks).
       await sendVerificationEmail({
@@ -109,15 +121,11 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
         locale: user.locale,
         callbackUrl: validatedCallbackUrl,
         purpose,
+        linkTtlSeconds: pairedTtlSeconds,
       });
 
-      // ENG-2783: re-pair the intent with the link just minted. The resend mints a fresh one-day link
-      // while the intent keeps the clock it started with, so without this the new link outlives the
-      // record it depends on and the user is signed in only to be told recovery failed — the same
-      // pairing bug the sign-up intent cookie's resend refresh exists to avoid. Bounded against the
-      // intent's original createdAt inside the helper, so an unauthenticated caller cannot slide the
-      // window forever. Best-effort: the mail has gone out, so a failure here costs the pairing only.
-      await refreshSsoRecoveryIntent(ssoRecoveryResend.stateId, ssoRecoveryResend.intent);
+      // Best-effort: the mail has gone out, so a failure here costs the pairing, not the resend.
+      await refreshSsoRecoveryIntent(ssoRecoveryResend.stateId, pairedTtlSeconds);
     } else {
       // Email verification is Better Auth-native (ENG-1054 decommission): BA mints its own verification
       // token and sends the verify link through the emailVerification.sendVerificationEmail callback in

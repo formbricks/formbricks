@@ -4,6 +4,7 @@ import {
   type TSsoRecoveryIntent,
   consumeSsoRecoveryIntent,
   createSsoRecoveryIntent,
+  getSsoRecoveryPairedTtlSeconds,
   readSsoRecoveryIntent,
   refreshSsoRecoveryIntent,
 } from "./recovery-intent";
@@ -33,7 +34,7 @@ const mockCache = vi.mocked(cache);
  */
 const store = new Map<string, { value: unknown; ttlMs?: number }>();
 
-const LINK_TTL_MS = 60 * 60 * 24 * 1000;
+const LINK_TTL_MS = 60 * 15 * 1000;
 // One resend's worth of slack past the link TTL — see INTENT_MAX_LIFETIME_MS.
 const MAX_LIFETIME_MS = LINK_TTL_MS * 2;
 
@@ -194,18 +195,73 @@ describe("SSO recovery intent", () => {
     });
   });
 
+  /**
+   * The number a resend gives to BOTH halves of the flow.
+   *
+   * The link and the intent are needed together, so whichever expires first ends recovery — and if the
+   * link is the survivor the user is signed in and then told recovery failed. A resend is the one place
+   * they can come apart, because the intent's refresh is capped against `createdAt` while a freshly
+   * minted link would otherwise take a full TTL however close that ceiling is.
+   */
+  describe("paired ttl for a resend", () => {
+    const LINK_TTL_SECONDS = LINK_TTL_MS / 1000;
+    const intentAged = (ageMs: number): TSsoRecoveryIntent => ({
+      ...intentInput,
+      createdAt: Date.now() - ageMs,
+    });
+
+    test("gives a resend well inside the ceiling the full link TTL", () => {
+      expect(getSsoRecoveryPairedTtlSeconds(intentAged(0))).toBe(LINK_TTL_SECONDS);
+    });
+
+    test("returns nothing to send once the absolute lifetime has passed", () => {
+      expect(getSsoRecoveryPairedTtlSeconds(intentAged(MAX_LIFETIME_MS + 1))).toBe(0);
+    });
+
+    /**
+     * The invariant, swept rather than sampled at one age: whatever the record's age, the lifetime
+     * handed out can never reach past the ceiling. Asserted as an absolute instant — `createdAt + ttl`
+     * against `createdAt + MAX` cancels `createdAt` and would pass for any TTL under the ceiling,
+     * which is the shape that made an earlier assertion here unfalsifiable.
+     */
+    test.each([0, 1, 60, LINK_TTL_MS / 2, LINK_TTL_MS, LINK_TTL_MS + 1, MAX_LIFETIME_MS - 1000])(
+      "aged %ims, expires no later than the ceiling and never beyond one link TTL",
+      (ageMs) => {
+        const intent = intentAged(ageMs);
+        const now = Date.now();
+
+        const ttlSeconds = getSsoRecoveryPairedTtlSeconds(intent);
+
+        expect(now + ttlSeconds * 1000).toBeLessThanOrEqual(intent.createdAt + MAX_LIFETIME_MS);
+        expect(ttlSeconds).toBeLessThanOrEqual(LINK_TTL_SECONDS);
+      }
+    );
+
+    /**
+     * Past one link TTL of age the clamp has to actually bite, or the sweep above is satisfied by a
+     * function that always returns the full TTL.
+     */
+    test("clamps below a full link TTL once the ceiling is nearer than one", () => {
+      expect(getSsoRecoveryPairedTtlSeconds(intentAged(LINK_TTL_MS + 60_000))).toBeLessThan(LINK_TTL_SECONDS);
+    });
+  });
+
   describe("refresh", () => {
     const storedIntent = (createdAt: number): TSsoRecoveryIntent => ({ ...intentInput, createdAt });
+    // Refresh takes the TTL rather than the record, so drive it the way the resend action does: through
+    // `getSsoRecoveryPairedTtlSeconds`. Composing them here keeps these assertions on the behaviour a
+    // resend actually produces, instead of on a number no caller would pass.
+    const pairedTtl = (createdAt: number): number => getSsoRecoveryPairedTtlSeconds(storedIntent(createdAt));
 
     test("re-pairs a resent link with a full TTL while well inside the absolute lifetime", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
       const [key] = [...store.keys()];
-      // Age it first, as a link resent hours later would find it. Asserted against a record still
+      // Age it first, as a link resent later in the window would find it. Asserted against a record still
       // carrying its issued TTL, this cannot fail: a refresh that does nothing at all leaves the same
       // value, which is what made an earlier version of this test green against a no-op.
       store.set(key, { ...store.get(key)!, ttlMs: 60 * 1000 });
 
-      await refreshSsoRecoveryIntent(stateId, storedIntent(Date.now()));
+      await refreshSsoRecoveryIntent(stateId, pairedTtl(Date.now()));
 
       expect(store.get(key)!.ttlMs).toBe(LINK_TTL_MS);
     });
@@ -219,7 +275,7 @@ describe("SSO recovery intent", () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
       await consumeSsoRecoveryIntent(stateId);
 
-      await refreshSsoRecoveryIntent(stateId, storedIntent(Date.now()));
+      await refreshSsoRecoveryIntent(stateId, pairedTtl(Date.now()));
 
       expect(store.size).toBe(0);
       await expect(readSsoRecoveryIntent(stateId)).resolves.toBeNull();
@@ -229,7 +285,7 @@ describe("SSO recovery intent", () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
       mockCache.getRedisClient.mockResolvedValue(null);
 
-      await expect(refreshSsoRecoveryIntent(stateId, storedIntent(Date.now()))).resolves.toBeUndefined();
+      await expect(refreshSsoRecoveryIntent(stateId, pairedTtl(Date.now()))).resolves.toBeUndefined();
     });
 
     /**
@@ -239,11 +295,11 @@ describe("SSO recovery intent", () => {
     test("clamps the TTL so a refresh cannot push expiry past the absolute lifetime", async () => {
       const now = Date.now();
       const stateId = await createSsoRecoveryIntent(intentInput);
-      // Six and a half days in: half a link TTL of absolute lifetime left. The record keeps the full
+      // Deep enough in that only half a link TTL of absolute lifetime is left. The record keeps the full
       // TTL it was issued with, so a refresh that does nothing also fails the expiry assertion below.
       const createdAt = now - (MAX_LIFETIME_MS - LINK_TTL_MS / 2);
 
-      await refreshSsoRecoveryIntent(stateId, storedIntent(createdAt));
+      await refreshSsoRecoveryIntent(stateId, pairedTtl(createdAt));
 
       const { ttlMs } = [...store.values()][0];
       // The resulting EXPIRY, measured from now — not the TTL in isolation. `createdAt + ttlMs` versus
@@ -264,7 +320,7 @@ describe("SSO recovery intent", () => {
       const agedTtlMs = 60 * 1000;
       store.set(key, { ...store.get(key)!, ttlMs: agedTtlMs });
 
-      await refreshSsoRecoveryIntent(stateId, storedIntent(Date.now() - MAX_LIFETIME_MS - 1));
+      await refreshSsoRecoveryIntent(stateId, pairedTtl(Date.now() - MAX_LIFETIME_MS - 1));
 
       // The TTL, not the call order: an implementation that reaches Redis and then declines to extend
       // is equally correct, so asserting "never asked for a client" would fail a correct one.
@@ -278,7 +334,7 @@ describe("SSO recovery intent", () => {
       // one the issued value already satisfies.
       const staleCreatedAt = issuedCreatedAt - LINK_TTL_MS;
 
-      await refreshSsoRecoveryIntent(stateId, storedIntent(staleCreatedAt));
+      await refreshSsoRecoveryIntent(stateId, pairedTtl(staleCreatedAt));
 
       expect((await readSsoRecoveryIntent(stateId))?.createdAt).toBe(issuedCreatedAt);
     });

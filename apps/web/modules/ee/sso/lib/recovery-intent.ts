@@ -57,10 +57,12 @@ const INTENT_TTL_MS = VERIFICATION_LINK_TTL_SECONDS * 1000;
  * window would let anyone holding a state id keep a record alive forever. `createdAt` is written once
  * and never moved, so measuring from it caps the slide.
  *
- * Two link lifetimes rather than a round number of days: this record authorises clearing a password and
- * a second factor, so the ceiling is "one resend's worth of slack" — enough that a resent link is never
+ * Two link lifetimes rather than an absolute figure: this record authorises clearing a password and a
+ * second factor, so the ceiling is "one resend's worth of slack" — enough that a resent link is never
  * orphaned, and past that the user restarts recovery, which is one click. Deriving it also means it
- * cannot drift away from the link TTL it exists to cover.
+ * cannot drift away from the link TTL it exists to cover. At the current 15-minute link that is a
+ * 30-minute ceiling, which is exactly what `PASSWORD_RESET_TOKEN_LIFETIME_MINUTES` defaults to for the
+ * strictly weaker password-reset link.
  */
 const INTENT_MAX_LIFETIME_MS = INTENT_TTL_MS * 2;
 
@@ -197,30 +199,46 @@ export const consumeSsoRecoveryIntent = async (stateId: string): Promise<void> =
 /**
  * Re-pair the intent with a link that was just resent.
  *
- * A resend mints a fresh {@link VERIFICATION_LINK_TTL_SECONDS} link, so without this the new link
- * outlives the intent it depends on and the user is signed in only to be told recovery failed — the
- * same pairing bug the sign-up intent cookie's resend refresh exists to avoid.
+ * Takes the lifetime rather than deriving it, and that is the point: the caller mints the resent link
+ * with the same {@link getSsoRecoveryPairedTtlSeconds} value it passes here, so the two halves cannot
+ * come apart — not even by the second or two that computing the number twice would cost. Anything not
+ * strictly positive is a no-op, `NaN` included, so a miscomputed lifetime can never become an EXPIRE.
  *
  * Only the expiry moves — the stored record, `createdAt` included, is never rewritten. So every refresh
  * is measured against the original start and the window cannot slide past {@link INTENT_MAX_LIFETIME_MS},
  * which matters because the caller is unauthenticated. Best-effort, never throws: the mail has already
  * gone out, so a failure here costs the pairing, not the resend.
  */
-export const refreshSsoRecoveryIntent = async (
-  stateId: string,
-  intent: TSsoRecoveryIntent
-): Promise<void> => {
-  if (!STATE_ID_REGEX.test(stateId)) {
-    return;
+/**
+ * How long both halves of a resent recovery may live, in seconds — `0` once the intent is spent.
+ *
+ * The link and the intent have to expire together (see {@link VERIFICATION_LINK_TTL_SECONDS}), and a
+ * resend is where they can come apart: the refreshed intent is capped by
+ * {@link INTENT_MAX_LIFETIME_MS} while a freshly minted link would otherwise get a full TTL regardless.
+ * Near the ceiling that hands out a link which outlives the record it needs — the exact "signed in,
+ * then recovery failed" failure the shared constant exists to prevent. So the resend mints its token
+ * with this number too, and the invariant holds by construction rather than by both call sites
+ * happening to agree.
+ *
+ * `0` means the ceiling is reached: there is no honest window left to send, and the caller should make
+ * the user start recovery again instead of mailing a link that is already dead.
+ */
+export const getSsoRecoveryPairedTtlSeconds = (intent: TSsoRecoveryIntent): number => {
+  const remainingLifetimeMs = intent.createdAt + INTENT_MAX_LIFETIME_MS - Date.now();
+
+  if (remainingLifetimeMs <= 0) {
+    return 0;
   }
 
-  const remainingLifetimeMs = intent.createdAt + INTENT_MAX_LIFETIME_MS - Date.now();
-  if (remainingLifetimeMs <= 0) {
+  return Math.floor(Math.min(INTENT_TTL_MS, remainingLifetimeMs) / 1000);
+};
+
+export const refreshSsoRecoveryIntent = async (stateId: string, ttlSeconds: number): Promise<void> => {
+  if (!STATE_ID_REGEX.test(stateId) || !(ttlSeconds > 0)) {
     return;
   }
 
   const stateIdHash = hashStateId(stateId);
-  const ttlSeconds = Math.floor(Math.min(INTENT_TTL_MS, remainingLifetimeMs) / 1000);
 
   try {
     const redis = await cache.getRedisClient();
