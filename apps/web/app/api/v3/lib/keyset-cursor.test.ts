@@ -221,6 +221,28 @@ describe("computeFilterFingerprint", () => {
   test("refuses a non-scalar value rather than collapsing it", () => {
     expect(() => computeFilterFingerprint({ createdAt: { gte: "2026-01-01" } })).toThrow(TypeError);
   });
+
+  /**
+   * A deny-list on `typeof value === "object"` misses functions, and `String(fn)` renders the
+   * function's source text — a fingerprint over something that is not a filter value at all.
+   */
+  test("refuses a value that is not an object but is still not a scalar", () => {
+    expect(() => computeFilterFingerprint({ surveyId: () => "x" })).toThrow(TypeError);
+    expect(() => computeFilterFingerprint({ ids: ["a", null] })).toThrow(TypeError);
+  });
+
+  /**
+   * The order has to be identical on every machine. `localeCompare` — what Sonar's S2871 suggests for
+   * the bare `.sort()` this replaced — is locale-sensitive, so under `de-DE` versus `en-US` the same
+   * filter set can canonicalize differently and a cursor minted on one replica 400s on another.
+   */
+  test("orders keys and array members by code unit, not by locale", () => {
+    const a = computeFilterFingerprint({ ["a\u0308"]: 1, ["z"]: 2 });
+    const b = computeFilterFingerprint({ ["z"]: 2, ["a\u0308"]: 1 });
+
+    expect(a).toBe(b);
+    expect(computeFilterFingerprint({ ids: ["B", "a"] })).toBe(computeFilterFingerprint({ ids: ["a", "B"] }));
+  });
 });
 
 describe("buildKeysetPage", () => {
