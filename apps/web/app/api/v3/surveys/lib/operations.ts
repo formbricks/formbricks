@@ -735,6 +735,19 @@ type TV3SurveyDocumentMutationInput =
       logFields?: Record<string, unknown>;
     };
 
+/** The 422 for a `buildInput` rejection, carrying its code only when one was set. */
+function documentMutationRejection(
+  built: Extract<TV3SurveyDocumentMutationInput, { ok: false }>,
+  requestId: string,
+  instance: string
+): Response {
+  return problemUnprocessableContent(requestId, built.detail, {
+    instance,
+    invalid_params: built.invalidParams,
+    ...(built.code ? { code: built.code } : {}),
+  });
+}
+
 type TV3SurveyDocumentMutationParams = TPatchV3SurveyParams & {
   operation: "patch" | "blocks.edit" | "blocks.reorder";
   precondition?: TV3SurveyWritePrecondition;
@@ -836,11 +849,7 @@ async function runV3SurveyDocumentMutation({
         { statusCode: 422, workspaceId, invalidParamCount: built.invalidParams.length, ...built.logFields },
         "Survey document mutation rejected"
       );
-      return problemUnprocessableContent(requestId, built.detail, {
-        instance,
-        invalid_params: built.invalidParams,
-        ...(built.code ? { code: built.code } : {}),
-      });
+      return documentMutationRejection(built, requestId, instance);
     }
 
     if ("unchanged" in built) {
