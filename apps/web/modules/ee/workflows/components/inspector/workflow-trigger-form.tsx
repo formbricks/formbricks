@@ -10,12 +10,12 @@ import {
   WorkflowFieldError,
   WorkflowFieldLabel,
 } from "@/modules/ee/workflows/components/inspector/workflow-field";
-import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";
-import { reconcileEndingCardIds } from "@/modules/ee/workflows/lib/trigger-ending-cards";
 import {
   useWorkflowSurveyEndings,
   useWorkflowSurveyOptions,
-} from "@/modules/ee/workflows/list/hooks/use-trigger-survey-picker";
+} from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
+import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";
+import { reconcileEndingCardIds } from "@/modules/ee/workflows/lib/trigger-ending-cards";
 import {
   hasBoundTriggerSurveyAtom,
   prunedTriggerEndingCardIdsAtom,

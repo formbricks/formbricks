@@ -259,7 +259,7 @@ describe("License Core Logic", () => {
         const second = await getEnterpriseLicense();
 
         expect(second).toEqual(first);
-        expect(mockCache.get.mock.calls.length).toBe(cacheReadsAfterFirstCall);
+        expect(mockCache.get.mock.calls).toHaveLength(cacheReadsAfterFirstCall);
       } finally {
         envMock.NODE_ENV = "test";
       }
@@ -332,7 +332,7 @@ describe("License Core Logic", () => {
           active: false,
           features: {
             isMultiOrgEnabled: false,
-            workspaces: 3,
+            workspaces: 1,
             twoFactorAuth: false,
             sso: false,
             whitelabel: false,
@@ -356,7 +356,7 @@ describe("License Core Logic", () => {
         active: false,
         features: {
           isMultiOrgEnabled: false,
-          workspaces: 3,
+          workspaces: 1,
           twoFactorAuth: false,
           sso: false,
           whitelabel: false,
@@ -389,7 +389,7 @@ describe("License Core Logic", () => {
       const license = await getEnterpriseLicense();
       const expectedFeatures: TEnterpriseLicenseFeatures = {
         isMultiOrgEnabled: false,
-        workspaces: 3,
+        workspaces: 1,
         twoFactorAuth: false,
         sso: false,
         whitelabel: false,
@@ -489,7 +489,7 @@ describe("License Core Logic", () => {
         active: false,
         features: expect.objectContaining({
           isMultiOrgEnabled: false,
-          workspaces: 3,
+          workspaces: 1,
           removeBranding: false,
         }),
         lastChecked: expect.any(Date),
@@ -522,7 +522,7 @@ describe("License Core Logic", () => {
 
       expect(license).toEqual({
         active: false,
-        features: expect.objectContaining({ workspaces: 3 }),
+        features: expect.objectContaining({ workspaces: 1 }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
         fallbackLevel: "default" as const,
@@ -553,7 +553,7 @@ describe("License Core Logic", () => {
 
       expect(license).toEqual({
         active: false,
-        features: expect.objectContaining({ workspaces: 3 }),
+        features: expect.objectContaining({ workspaces: 1 }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
         fallbackLevel: "default" as const,
@@ -1304,7 +1304,7 @@ describe("License Core Logic", () => {
         active: false,
         features: expect.objectContaining({
           isMultiOrgEnabled: false,
-          workspaces: 3,
+          workspaces: 1,
         }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -1328,7 +1328,7 @@ describe("License Core Logic", () => {
         active: false,
         features: expect.objectContaining({
           isMultiOrgEnabled: false,
-          workspaces: 3,
+          workspaces: 1,
         }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -1485,5 +1485,52 @@ describe("License Core Logic", () => {
         })
       );
     });
+  });
+});
+
+describe("getPendingDowngradeSchedule", () => {
+  // The banner used to derive both of these itself, from `Date.now()` during render and from its
+  // own copy of the 3-day constant (ENG-2366). Pinning them here is what keeps the window tied to
+  // GRACE_PERIOD_MS instead of drifting back to a hand-written literal.
+  const lastChecked = new Date("2026-01-10T00:00:00.000Z");
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("schedules the downgrade exactly one grace period after the last successful check", async () => {
+    const { getPendingDowngradeSchedule, GRACE_PERIOD_MS } = await import("./license");
+
+    expect(getPendingDowngradeSchedule(lastChecked).scheduledDowngradeDate.getTime()).toBe(
+      lastChecked.getTime() + GRACE_PERIOD_MS
+    );
+  });
+
+  test("is within the grace period while the window is still open", async () => {
+    const { getPendingDowngradeSchedule, GRACE_PERIOD_MS } = await import("./license");
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(lastChecked.getTime() + GRACE_PERIOD_MS - 1));
+
+    expect(getPendingDowngradeSchedule(lastChecked).isWithinGracePeriod).toBe(true);
+  });
+
+  test("is outside the grace period once the window has elapsed", async () => {
+    const { getPendingDowngradeSchedule, GRACE_PERIOD_MS } = await import("./license");
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(lastChecked.getTime() + GRACE_PERIOD_MS));
+
+    expect(getPendingDowngradeSchedule(lastChecked).isWithinGracePeriod).toBe(false);
+  });
+
+  test("returns the same scheduled date no matter when it is called", async () => {
+    const { getPendingDowngradeSchedule, GRACE_PERIOD_MS } = await import("./license");
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2027-06-01T00:00:00.000Z"));
+
+    // Same input, same output whenever it runs — the property the banner lost by reading the clock
+    // during render, where the server pass and hydration could disagree.
+    expect(getPendingDowngradeSchedule(lastChecked).scheduledDowngradeDate.toISOString()).toBe(
+      new Date(lastChecked.getTime() + GRACE_PERIOD_MS).toISOString()
+    );
   });
 });

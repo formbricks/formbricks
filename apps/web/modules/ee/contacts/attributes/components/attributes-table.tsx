@@ -137,6 +137,7 @@ export const AttributesTable = ({
         console.error(err);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loads persisted column settings once per workspace; `table` is an unstable ref and would clobber user changes on every render
   }, [workspaceId]);
 
   // Hide select column when all attributes are system attributes

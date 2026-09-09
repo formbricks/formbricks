@@ -9,6 +9,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
+import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 
 interface LogicEditorProps {
@@ -49,7 +50,7 @@ export function LogicEditor({
       const currentBlock = blocks[i];
 
       options.push({
-        label: currentBlock.name,
+        label: getBlockDisplayName(currentBlock, i, t),
         value: currentBlock.id,
       });
     }

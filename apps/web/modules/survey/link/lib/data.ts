@@ -44,7 +44,6 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
 
         // Authentication & access
         isVerifyEmailEnabled: true,
-        isSingleResponsePerEmailEnabled: true,
         redirectUrl: true,
         pin: true,
         isBackButtonHidden: true,
@@ -186,32 +185,6 @@ export const getResponseBySingleUseId = reactCache((surveyId: string, singleUseI
     });
 
     return response;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-});
-
-/**
- * Check if email verification response exists
- * NO CACHING - response data changes frequently and needs to be fresh
- */
-export const isSurveyResponsePresent = reactCache((surveyId: string, email: string) => async () => {
-  try {
-    const response = await prisma.response.findFirst({
-      where: {
-        surveyId,
-        data: {
-          path: ["verifiedEmail"],
-          equals: email,
-        },
-      },
-      select: { id: true },
-    });
-
-    return !!response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

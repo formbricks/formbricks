@@ -3,19 +3,17 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";
 import { isInstanceAIConfigured } from "@/lib/ai/service";
+import { type TAuthorizationAction, assertCan } from "@/lib/authorization";
 import { deleteOrganization, getOrganization, updateOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getTranslate } from "@/lingodotdev/server";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   ZOrganizationAISettingsInput,
-  ZOrganizationDisplayTimeZoneInput,
   ZUpdateOrganizationAISettingsAction,
   ZUpdateOrganizationDisplayTimeZoneAction,
 } from "./schemas";
@@ -23,21 +21,15 @@ import {
 async function updateOrganizationAction<T extends z.ZodRawShape>({
   ctx,
   organizationId,
-  schema,
   data,
-  roles,
+  action,
 }: {
   ctx: AuthenticatedActionClientCtx;
   organizationId: string;
-  schema: z.ZodObject<T>;
   data: z.infer<z.ZodObject<T>>;
-  roles: TOrganizationRole[];
+  action: Extract<TAuthorizationAction, "organization.write" | "organization.manage">;
 }) {
-  await checkAuthorizationUpdated({
-    userId: ctx.user.id,
-    organizationId,
-    access: [{ type: "organization", schema, data, roles }],
-  });
+  await assertCan({ type: "user", id: ctx.user.id }, action, { type: "organization", id: organizationId });
   ctx.auditLoggingCtx.organizationId = organizationId;
   const oldObject = await getOrganization(organizationId);
   const result = await updateOrganization(organizationId, data);
@@ -67,9 +59,8 @@ export const updateOrganizationNameAction = authenticatedActionClient
         updateOrganizationAction({
           ctx,
           organizationId: parsedInput.organizationId,
-          schema: ZOrganizationUpdateInput.pick({ name: true }),
           data: parsedInput.data,
-          roles: ["owner"],
+          action: "organization.write",
         })
     )
   );
@@ -149,9 +140,8 @@ export const updateOrganizationAISettingsAction = authenticatedActionClient
         return updateOrganizationAction({
           ctx,
           organizationId: parsedInput.organizationId,
-          schema: ZOrganizationAISettingsInput,
           data: parsedInput.data,
-          roles: ["owner", "manager"],
+          action: "organization.manage",
         });
       }
     )
@@ -173,9 +163,8 @@ export const updateOrganizationDisplayTimeZoneAction = authenticatedActionClient
         updateOrganizationAction({
           ctx,
           organizationId: parsedInput.organizationId,
-          schema: ZOrganizationDisplayTimeZoneInput,
           data: parsedInput.data,
-          roles: ["owner", "manager"],
+          action: "organization.manage",
         })
     )
   );
@@ -194,15 +183,9 @@ export const deleteOrganizationAction = authenticatedActionClient
         throw new OperationNotAllowedError(t("workspace.settings.general.organization_deletion_disabled"));
       }
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner"],
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "organization.write", {
+        type: "organization",
+        id: parsedInput.organizationId,
       });
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
       const oldObject = await getOrganization(parsedInput.organizationId);

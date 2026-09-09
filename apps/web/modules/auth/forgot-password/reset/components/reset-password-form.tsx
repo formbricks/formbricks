@@ -29,8 +29,7 @@ const passwordInputProps = {
   autoComplete: "new-password",
   placeholder: "*******",
   required: true,
-  className:
-    "focus:border-brand-dark focus:ring-brand-dark mt-2 block w-full rounded-md border-slate-300 shadow-xs sm:text-sm",
+  className: "focus:border-brand-dark focus:ring-brand-dark mt-2 block w-full rounded-md shadow-xs",
 };
 
 export const ResetPasswordForm = () => {
@@ -104,7 +103,7 @@ export const ResetPasswordForm = () => {
         <Button
           type="submit"
           disabled={!form.formState.isValid}
-          className="w-full justify-center"
+          className="h-11 w-full justify-center sm:h-9"
           loading={form.formState.isSubmitting}>
           {t("auth.forgot-password.reset_password")}
         </Button>

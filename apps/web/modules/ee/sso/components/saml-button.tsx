@@ -53,12 +53,11 @@ export const SamlButton = ({ returnToUrl, lastUsed, source }: Readonly<SamlButto
       type="button"
       onClick={handleLogin}
       variant="secondary"
-      className="relative w-full justify-center"
+      className="h-11 w-full min-w-0 justify-center sm:h-9"
       loading={isLoading}>
-      {t("auth.continue_with_saml")}
-
+      <span className="truncate">{t("auth.continue_with_saml")}</span>
       <LockIcon />
-      {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
+      {lastUsed && <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilLineIcon, SparklesIcon, SquareLibraryIcon } from "lucide-react";
+import { PencilLineIcon, SquareLibraryIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import toast from "react-hot-toast";
@@ -8,10 +8,11 @@ import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
+import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
-import { getUnavailableMessageKey } from "@/modules/survey/components/template-list/lib/ai-create-utils";
+import { AiGlyph } from "@/modules/ui/components/ai";
 
 type TOnboardingSurveyPath = "scratch" | "template" | "ai";
 
@@ -60,13 +61,13 @@ export const CreateFirstSurvey = ({
     }
   };
 
-  const aiDisabledDescription = isAIAvailable ? undefined : t(getUnavailableMessageKey(aiUnavailableReason));
+  const aiDisabledDescription = isAIAvailable ? undefined : getAIUnavailableMessage(aiUnavailableReason, t);
 
   const options = [
     {
       title: t("workspace.surveys.ai_create.create_with_ai"),
       description: t("organizations.workspaces.new.survey.create_with_ai_description"),
-      icon: SparklesIcon,
+      icon: AiGlyph,
       disabled: !isAIAvailable,
       disabledDescription: aiDisabledDescription,
       onClick: () => {

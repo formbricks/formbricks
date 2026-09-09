@@ -20,6 +20,7 @@ import {
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
+  renderSsoRecoveryFactorsRemovedEmail,
   renderVerificationEmail,
 } from "../index";
 import { exampleData } from "./example-data";
@@ -58,6 +59,15 @@ const renderers: [string, () => Promise<string>][] = [
     () => renderNewEmailVerification({ ...exampleData.newEmailVerification, ...legal, t }),
   ],
   ["renderPasswordResetNotifyEmail", () => renderPasswordResetNotifyEmail({ ...legal, t })],
+  [
+    "renderSsoRecoveryFactorsRemovedEmail",
+    () =>
+      renderSsoRecoveryFactorsRemovedEmail({
+        ...exampleData.ssoRecoveryFactorsRemovedEmail,
+        ...legal,
+        t,
+      }),
+  ],
   ["renderInviteEmail", () => renderInviteEmail({ ...exampleData.inviteEmail, ...legal, t })],
   [
     "renderInviteAcceptedEmail",
@@ -170,6 +180,157 @@ describe("legal footer", () => {
     expect(withoutLegal).not.toContain(legal.imprintUrl);
     expect(withoutLegal).not.toContain(legal.privacyUrl);
     expect(withoutLegal).not.toContain(legal.imprintAddress);
+  });
+});
+
+describe("custom branding", () => {
+  test("response-finished notification falls back to the Formbricks logo when no organization logo is set", async () => {
+    const html = await renderResponseFinishedEmail({
+      ...exampleData.responseFinishedEmail,
+      elements: responseFinishedElements,
+      t,
+    });
+
+    expect(html).toContain('data-testid="default-logo-image"');
+    expect(html).not.toContain('data-testid="logo-image"');
+  });
+
+  test("response-finished notification renders the organization's custom logo when set", async () => {
+    const customLogoUrl = "https://example.com/custom-logo.png";
+    const html = await renderResponseFinishedEmail({
+      ...exampleData.responseFinishedEmail,
+      elements: responseFinishedElements,
+      logoUrl: customLogoUrl,
+      t,
+    });
+
+    expect(html).toContain('data-testid="logo-image"');
+    expect(html).toContain(customLogoUrl);
+    expect(html).not.toContain('data-testid="default-logo-image"');
+  });
+});
+
+describe("logo centering (ENG-2438)", () => {
+  // Outlook's Word rendering engine implements neither `margin: auto` nor `rem` units, so the
+  // logo's own `mx-auto` / `w-60` classes buy it nothing there: it lands left-aligned at its
+  // natural size. Centering has to come from the wrapping cell's `align` attribute, and the
+  // width from the image's `width` attribute, both of which Word does honor. These assert the
+  // rendered markup rather than the classes, because the classes were already "correct".
+  const logoCell = (html: string, testId: string): string => {
+    const cell = new RegExp(
+      `<td\\b[^>]*>(?:\\s*<a\\b[^>]*>)?\\s*<img\\b[^>]*data-testid="${testId}"[^>]*>`,
+      "u"
+    ).exec(html);
+    if (!cell) throw new Error(`no <td> directly wrapping [data-testid="${testId}"]`);
+    return cell[0];
+  };
+
+  test("the default logo sits in a center-aligned cell and carries a pixel width", async () => {
+    const html = await renderEmailCustomizationPreviewEmail({
+      ...exampleData.emailCustomizationPreviewEmail,
+      logoUrl: undefined,
+      ...legal,
+      t,
+    });
+    const cell = logoCell(html, "default-logo-image");
+
+    expect(cell).toContain('align="center"');
+    expect(cell).toContain('width="240"');
+    // The attribute mirrors `w-60`; if the class moves and the constant does not, Outlook
+    // silently goes back to rendering the logo at its natural size.
+    expect(cell).toContain("width:15rem");
+    // The modern-client centering path must survive alongside it.
+    expect(cell).toContain("margin-left:auto");
+  });
+
+  test("a custom logo sits in a center-aligned cell and carries a pixel width", async () => {
+    const html = await renderEmailCustomizationPreviewEmail({
+      ...exampleData.emailCustomizationPreviewEmail,
+      logoUrl: "https://example.com/custom-logo.png",
+      ...legal,
+      t,
+    });
+    const cell = logoCell(html, "logo-image");
+
+    expect(cell).toContain('align="center"');
+    expect(cell).toContain('width="320"');
+    expect(cell).toContain("width:20rem"); // mirrors `w-80`, see above
+    expect(cell).toContain("margin-left:auto");
+  });
+
+  test("the centered logo cell is part of the shared chrome, not one email", async () => {
+    const html = await renderInviteEmail({ ...exampleData.inviteEmail, ...legal, t });
+
+    expect(logoCell(html, "default-logo-image")).toContain('align="center"');
+  });
+});
+
+describe("follow-up email direction", () => {
+  test("marks the follow-up body and the response/variable/hidden-field text for automatic direction detection", async () => {
+    const html = await renderFollowUpEmail({
+      ...exampleData.followUpEmail,
+      body: "<p>شكرا لملاحظاتك! لقد استلمنا ردك وسنراجعه قريبا.</p>",
+      ...legal,
+      t,
+    });
+
+    // The follow-up body is per-survey authored content in any script, so it gets
+    // dir="auto" rather than a hard rtl/ltr — this is the element from the bug report.
+    expect(html).toMatch(/<div dir="auto">[\s\S]*?شكرا لملاحظاتك/);
+    // Response element labels, variable name/value and hidden-field id/value all carry
+    // their own dir="auto" too, since each can hold independently-directioned content.
+    expect(html.match(/dir="auto"/g)?.length).toBeGreaterThanOrEqual(6);
+  });
+
+  test("keeps an LTR-embedded run (a URL) intact inside RTL variable content", async () => {
+    const mixedValue = "شكرا على الرابط https://example.com/survey/123 وملاحظاتك";
+    const html = await renderFollowUpEmail({
+      ...exampleData.followUpEmail,
+      variables: [{ id: "var-1", name: "Link", type: "text", value: mixedValue }],
+      ...legal,
+      t,
+    });
+
+    // dir="auto" lets the mail client's bidi algorithm keep the LTR URL readable; the
+    // server must not reorder or otherwise mangle the raw text.
+    expect(html).toContain(mixedValue);
+  });
+
+  test("marks the open-text response value for automatic direction detection", async () => {
+    const html = await renderFollowUpEmail({
+      ...exampleData.followUpEmail,
+      responseData: [
+        {
+          element: "ما أكثر ما أعجبك؟",
+          response: "كانت خدمة العملاء ممتازة!",
+          type: TSurveyElementTypeEnum.OpenText,
+        },
+      ],
+      ...legal,
+      t,
+    });
+
+    // The value is rendered by renderEmailResponseValue rather than by the template, so a
+    // dir="auto" on the label alone would leave the answer under it resolved as LTR.
+    expect(html).toMatch(/<p[^>]*dir="auto"[^>]*>كانت خدمة العملاء ممتازة!<\/p>/);
+  });
+
+  test("lets the card alignment follow the direction of each element", async () => {
+    const html = await renderFollowUpEmail({ ...exampleData.followUpEmail, ...legal, t });
+
+    // dir="auto" only sets `direction`; an inherited `text-align:left` from the card would still
+    // pin RTL paragraphs to the left edge. The card uses `text-start`, which resolves per element.
+    // Asserting the declaration also proves the email Tailwind engine compiles the utility.
+    expect(html).toContain("text-align:start");
+    expect(html).not.toContain("text-align:left");
+  });
+
+  test("renders LTR follow-ups exactly as before", async () => {
+    const html = await renderFollowUpEmail({ ...exampleData.followUpEmail, ...legal, t });
+
+    expect(html).toContain(exampleData.followUpEmail.responseData[0].element);
+    expect(html).toContain(exampleData.followUpEmail.variables[0].value);
+    expect(html).toContain(exampleData.followUpEmail.hiddenFields[0].value);
   });
 });
 

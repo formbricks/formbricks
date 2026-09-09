@@ -2,8 +2,7 @@ import "server-only";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TWorkspace } from "@formbricks/types/workspace";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getAccessFlags } from "@/lib/membership/utils";
+import { can } from "@/lib/authorization";
 import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import { getUserWorkspaces, getWorkspaces } from "@/lib/workspace/service";
 import { getIsAISmartToolsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -17,10 +16,14 @@ export const selectOldestWorkspace = (workspaces: TWorkspace[]): TWorkspace | un
 };
 
 const assertCanManageOnboardingWorkspace = async (userId: string, organizationId: string): Promise<void> => {
-  const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
-  const { isOwner, isManager } = getAccessFlags(membership?.role);
+  // Owner-or-manager, expressed as the capability rather than the role pair: `organization.manage`
+  // is defined as exactly owner + manager. The message is kept, so the caller sees no change.
+  const canManage = await can({ type: "user", id: userId }, "organization.manage", {
+    type: "organization",
+    id: organizationId,
+  });
 
-  if (!isOwner && !isManager) {
+  if (!canManage) {
     throw new AuthorizationError("User is not authorized to create a workspace in this organization");
   }
 };

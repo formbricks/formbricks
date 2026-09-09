@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { InfoIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import {
@@ -14,9 +14,10 @@ import {
   TValidationRule,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
-import { getAvailableRuleTypes, getRuleValue } from "../lib/validation-rules-utils";
+import { describeRelativeDateRule, getAvailableRuleTypes, getRuleValue } from "../lib/validation-rules-utils";
 import { ValidationRuleFieldSelector } from "./validation-rule-field-selector";
 import { ValidationRuleInputTypeSelector } from "./validation-rule-input-type-selector";
 import { ValidationRuleTypeSelector } from "./validation-rule-type-selector";
@@ -37,6 +38,7 @@ interface ValidationRuleRowProps {
   onFieldChange: (ruleId: string, field: TAddressField | TContactInfoField | undefined) => void;
   onRuleTypeChange: (ruleId: string, newType: TValidationRuleType) => void;
   onRuleValueChange: (ruleId: string, value: string) => void;
+  onRuleParamsChange: (ruleId: string, params: TValidationRule["params"]) => void;
   onFileExtensionChange: (ruleId: string, extensions: TAllowedFileExtension[]) => void;
   onDelete: (ruleId: string) => void;
   onAdd: (insertAfterIndex: number) => void;
@@ -57,11 +59,12 @@ export const ValidationRuleRow = ({
   onFieldChange,
   onRuleTypeChange,
   onRuleValueChange,
+  onRuleParamsChange,
   onFileExtensionChange,
   onDelete,
   onAdd,
   canAddMore,
-}: ValidationRuleRowProps) => {
+}: Readonly<ValidationRuleRowProps>) => {
   const { t } = useTranslation();
   const ruleType = rule.type;
   const config = RULE_TYPE_CONFIG[ruleType];
@@ -87,8 +90,13 @@ export const ValidationRuleRow = ({
     onFileExtensionChange(rule.id, extensions);
   };
 
-  return (
-    <div className="flex w-full items-center gap-2">
+  // Date rules put up to nine controls on the value side. The operator select soaks up whatever width
+  // those controls leave and shrinks first when space is short; at its floor the row wraps, since the
+  // toggle's container is overflow-hidden and would otherwise clip the trailing buttons.
+  const isDateRule = Boolean(config.supportsRelative);
+
+  const row = (
+    <div className={cn("flex w-full gap-2", isDateRule ? "flex-wrap items-start" : "items-center")}>
       {/* Field Selector (for Address and Contact Info elements) */}
       {needsFieldSelector && (
         <ValidationRuleFieldSelector
@@ -115,17 +123,23 @@ export const ValidationRuleRow = ({
         availableTypes={availableTypesForSelect}
         ruleLabels={ruleLabels}
         needsValue={config.needsValue}
+        className={isDateRule ? "min-w-[140px] flex-[1_1_0%]" : undefined}
       />
 
       {/* Value Input (if needed) */}
       {config.needsValue && (
-        <div className="flex w-full items-center gap-2">
+        <div
+          className={cn(
+            "flex min-w-0 gap-2",
+            isDateRule ? "flex-[0_1_auto] items-start" : "w-full items-center"
+          )}>
           <ValidationRuleValueInput
             rule={rule}
             ruleType={ruleType}
             config={config}
             currentValue={currentValue}
             onChange={(value) => onRuleValueChange(rule.id, value)}
+            onParamsChange={(params) => onRuleParamsChange(rule.id, params)}
             onFileExtensionChange={handleFileExtensionChange}
             element={element}
           />
@@ -165,6 +179,21 @@ export const ValidationRuleRow = ({
           <PlusIcon className="size-4" />
         </Button>
       )}
+    </div>
+  );
+
+  // A relative date rule is an offset expression; the sentence under the row says what it accepts.
+  const relativeSummary = config.supportsRelative ? describeRelativeDateRule(ruleType, rule.params, t) : null;
+
+  if (!relativeSummary) return row;
+
+  return (
+    <div className="flex w-full flex-col gap-1.5">
+      {row}
+      <p className="flex items-start gap-1.5 px-0.5 text-xs text-slate-500">
+        <InfoIcon className="mt-0.5 size-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+        <span>{relativeSummary}</span>
+      </p>
     </div>
   );
 };

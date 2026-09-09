@@ -828,7 +828,7 @@ add_redis_service() {
     local redis_service_config="
   redis:
     restart: always
-    image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+    image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
     command: valkey-server --appendonly yes
     volumes:
       - redis:/data

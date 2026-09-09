@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TWidgetLayout, ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 
-export const CHART_TYPE_IDS = ["area", "bar", "line", "pie", "big_number"] as const;
+export const CHART_TYPE_IDS = ["area", "bar", "pie", "big_number"] as const;
 export const ZChartType = z.enum(CHART_TYPE_IDS);
 export type TChartType = z.infer<typeof ZChartType>;
 
@@ -93,6 +93,11 @@ export const ZAddWidgetInput = z.object({
   workspaceId: ZId,
   layout: ZWidgetLayout.optional(),
   respectY: z.boolean().optional(),
+  /**
+   * Where the widget goes when `respectY` is not set: "append" (the default) keeps the layout's `x`
+   * and drops the widget below every existing one, "nextOpenSlot" puts it in the first gap it fits.
+   */
+  placement: z.enum(["append", "nextOpenSlot"]).optional(),
 });
 export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
 

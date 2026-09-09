@@ -58,6 +58,8 @@ export const ZChartConfig = z.object({
   barOrientation: z.enum(["vertical", "horizontal"]).optional(),
   /** Pie charts only: the classic pie ("pie", default) or one bar split by share ("breakdown"). */
   pieDisplay: z.enum(["pie", "breakdown"]).optional(),
+  /** Area charts only: a solid band under the stroke ("filled", default) or a line with a soft fade ("line"). */
+  areaDisplay: z.enum(["filled", "line"]).optional(),
   colors: z.array(z.string()).optional(),
   xAxisLabel: z.string().optional(),
   yAxisLabel: z.string().optional(),

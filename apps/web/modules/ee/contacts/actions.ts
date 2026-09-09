@@ -4,17 +4,19 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributesInput } from "@formbricks/types/contact-attribute";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromContactId,
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromContactId,
 } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { createContactsFromCSV, deleteContact, getContact, getContacts } from "./lib/contacts";
 import { updateContactAttributes } from "./lib/update-contact-attributes";
 import {
@@ -35,26 +37,12 @@ export const getContactsAction = authenticatedActionClient
     const workspaceId = parsedInput.workspaceId;
     const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: workspaceId,
     });
 
-    const isContactsEnabled = await getIsContactsEnabled(organizationId);
-    if (!isContactsEnabled) {
-      throw new OperationNotAllowedError("Contacts are not enabled for this organization");
-    }
+    await ensureContactsEnabled(organizationId);
 
     return getContacts(workspaceId, parsedInput.offset, parsedInput.searchValue);
   });
@@ -68,21 +56,13 @@ export const deleteContactAction = authenticatedActionClient.inputSchema(ZContac
     const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
     const workspaceId = await getWorkspaceIdFromContactId(parsedInput.contactId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
+
+    await ensureContactsEnabled(organizationId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.contactId = parsedInput.contactId;
@@ -107,21 +87,13 @@ export const createContactsFromCSVAction = authenticatedActionClient
     withAuditLogging("createdFromCSV", "contact", async ({ ctx, parsedInput }) => {
       const workspaceId = parsedInput.workspaceId;
       const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            workspaceId,
-            minPermission: "readWrite",
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
+
+      await ensureContactsEnabled(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       const existingContactCount = await prisma.contact.count({
@@ -170,21 +142,13 @@ export const updateContactAttributesAction = authenticatedActionClient
       const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
       const workspaceId = await getWorkspaceIdFromContactId(parsedInput.contactId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
+
+      await ensureContactsEnabled(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.contactId = parsedInput.contactId;

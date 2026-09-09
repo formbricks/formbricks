@@ -358,16 +358,27 @@ reviews:
           table under the checkbox is the explanation and does not change the declaration.
 
           Treat a change as breaking if the diff does any of the following:
-          - Renames, removes, or retypes a field in an API request or response shape, or changes
-            an emitted value (for example `EN` becoming `en-US`).
-          - Removes or renames an endpoint or route, or changes a webhook payload.
+          - Renames, removes, or retypes a field in an API request or response shape, requires a
+            field that was optional, or changes an emitted value (for example `EN` becoming
+            `en-US`).
+          - Removes or renames an endpoint or route, changes a webhook payload, or changes the
+            HTTP status code returned for an existing request/response case.
           - Changes a default value, or removes or renames an environment variable or config key —
             including keys in `charts/formbricks/values.yaml` and `.env.example`. Adding one counts
             only when it is required, or has no default that keeps existing installs working.
           - Adds a database migration that needs manual action, drops or renames a column or
             table, or adds a NOT NULL column with no default and no backfill.
-          - Changes an exported signature of the public SDK surface in `packages/js-core` or
-            `packages/surveys`.
+          - Changes an exported signature of the public SDK surface in `packages/js-core`,
+            `packages/survey-ui`, or `packages/surveys`.
+
+          Nothing else is breaking. In particular, a purely additive change — a new optional request
+          or response field, a new endpoint or route, an env var whose default keeps existing installs
+          working — is not, and neither is any change to code no external consumer reaches: internal
+          functions, modules, types, and workspace-package exports other than the SDK surface above,
+          however they change. "Internal API" means internal to this repo, and it is outside this
+          check. A change that matches one of the bullets above is breaking regardless of how
+          confident the author is; genuine uncertainty about which bullet applies is what the
+          inconclusive case below is for.
 
           FAIL if the diff contains at least one of the above and the checkbox is unticked, or the
           section is empty or still holds the unedited template comment. Name the specific file and
@@ -410,12 +421,22 @@ reviews:
             "Open gaps".
           - A row names a behaviour with no verification method, or a method with no observed
             outcome.
-          - A `unit` or `e2e` row does not name the test or spec it rests on. A `manual` row has no
-            test to name and passes without one.
-          - A row claims `red on main` or `mutation` without a command or a mutated `file:line` a
-            reviewer could rerun.
+          - A `unit` or `e2e` row names no test or spec. The name may sit in the row or in the
+            `Rerun:` line above the table, which carries it once for every row — but a bare suite
+            command such as `pnpm test` names nothing, so those rows name their own. A `manual` row
+            has no test to name and passes without one.
+          - A row claims `red on main` and gives nothing to rerun: neither the `Rerun:` line nor a
+            command of its own where that differs.
+          - A row claims `mutation` and does not name the mutated `file:line` a reviewer would edit
+            to turn it red.
           - The diff changes rendered UI and the description attaches no screenshot or screencast.
           - The "Open gaps" subsection is absent. An explicit "none" passes.
+
+          Content inside a `<details>` fold counts as present. The template caps the description at
+          350 words outside folds and folds the overflow rather than dropping it — long media,
+          command logs, and Coverage rows past the sixth — while the Coverage table, Open gaps and
+          Breaking changes stay visible themselves. A collapsed fold is evidence, not a gap: do not
+          ask for a longer description, ask for the missing behaviour.
 
           PASS if every behaviour the diff changes is either covered by a row stating how it was
           verified and what was observed, or listed under "Open gaps" with a reason.

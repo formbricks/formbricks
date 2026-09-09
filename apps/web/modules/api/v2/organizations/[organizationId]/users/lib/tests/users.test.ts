@@ -1,7 +1,9 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type Team, type WorkspaceTeam } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { createUser, getUsers, updateUser } from "../users";
 
@@ -22,6 +24,14 @@ const mockUser = {
   teamUsers: [{ team: { name: "Test Team", id: "team123", workspaceTeams: [{ workspaceId: "proj789" }] } }],
 };
 
+type TExistingTeam = Pick<Team, "id" | "name"> & {
+  workspaceTeams: Pick<WorkspaceTeam, "workspaceId">[];
+};
+
+// getOrganizationOwnerCount (pulled in via the last-owner guard) request-caches its result with
+// React's cache(); mocked to identity so repeated calls across tests re-hit the prisma mock below.
+vi.mock("react", () => ({ cache: (fn: Function) => fn }));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     user: {
@@ -38,11 +48,25 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       delete: vi.fn(),
     },
+    membership: {
+      count: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
 
+vi.mock("@/lib/authzed/organization-membership", () => ({
+  reconcileOrganizationMembership: vi.fn(),
+}));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
+
 describe("Users Lib", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe("getUsers", () => {
     test("returns users with meta on success", async () => {
       const usersArray = [mockUser];
@@ -83,12 +107,21 @@ describe("Users Lib", () => {
 
   describe("createUser", () => {
     test("creates user and revalidates caches", async () => {
+      const existingTeams = [
+        { id: "team123", name: "Test Team", workspaceTeams: [] },
+      ] satisfies TExistingTeam[];
+
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(existingTeams as never);
       (prisma.user.create as any).mockResolvedValueOnce(mockUser);
       const result = await createUser(
-        { name: "Test User", email: "test@example.com", role: "member" },
+        { name: "Test User", email: "test@example.com", role: "member", teams: ["Test Team"] },
         "org456"
       );
       expect(prisma.user.create).toHaveBeenCalled();
+      expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org456", mockUser.id);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+        teamMemberships: [{ teamId: "team123", userId: mockUser.id }],
+      });
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.id).toBe(mockUser.id);
@@ -164,6 +197,10 @@ describe("Users Lib", () => {
       (prisma.$transaction as any).mockResolvedValueOnce([{ ...mockUser, name: "Updated User" }]);
       const result = await updateUser({ email: mockUser.email, name: "Updated User" }, "org456");
       expect(prisma.user.findFirst).toHaveBeenCalled();
+      expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org456", mockUser.id);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+        teamMemberships: [{ teamId: "team123", userId: mockUser.id }],
+      });
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.name).toBe("Updated User");
@@ -247,6 +284,65 @@ describe("Users Lib", () => {
       if (!result.ok) {
         expect(result.error.type).toBe("internal_server_error");
       }
+    });
+
+    test("blocks demoting the organization's last owner", async () => {
+      // The re-check runs inside the transaction, so the mock has to actually invoke the
+      // callback (against the same mocked client, standing in for `tx`) for the guard to run.
+      (prisma.$transaction as any).mockImplementationOnce((callback: any) => callback(prisma));
+      (prisma.user.findFirst as any).mockResolvedValueOnce({
+        ...mockUser,
+        memberships: [{ organizationId: "org456", role: "owner" }],
+      });
+      (prisma.membership.count as any).mockResolvedValueOnce(1);
+
+      const result = await updateUser({ email: mockUser.email, role: "member" }, "org456");
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe("conflict");
+      }
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    test("allows demoting an owner when the organization has another owner", async () => {
+      (prisma.$transaction as any).mockImplementationOnce((callback: any) => callback(prisma));
+      (prisma.user.findFirst as any).mockResolvedValueOnce({
+        ...mockUser,
+        memberships: [{ organizationId: "org456", role: "owner" }],
+        teamUsers: [],
+      });
+      (prisma.membership.count as any).mockResolvedValueOnce(2);
+      (prisma.team.findMany as any).mockResolvedValueOnce([]);
+      (prisma.user.update as any).mockResolvedValueOnce({
+        ...mockUser,
+        memberships: [{ organizationId: "org456", role: "member" }],
+      });
+
+      const result = await updateUser({ email: mockUser.email, role: "member" }, "org456");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.role).toBe("member");
+      }
+    });
+
+    test("allows demoting an already-inactive owner without checking the owner count", async () => {
+      (prisma.user.findFirst as any).mockResolvedValueOnce({
+        ...mockUser,
+        isActive: false,
+        memberships: [{ organizationId: "org456", role: "owner" }],
+        teamUsers: [],
+      });
+      (prisma.team.findMany as any).mockResolvedValueOnce([]);
+      (prisma.$transaction as any).mockResolvedValueOnce([
+        { ...mockUser, isActive: false, memberships: [{ organizationId: "org456", role: "member" }] },
+      ]);
+
+      const result = await updateUser({ email: mockUser.email, role: "member" }, "org456");
+
+      expect(result.ok).toBe(true);
+      expect(prisma.membership.count).not.toHaveBeenCalled();
     });
   });
 

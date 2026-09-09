@@ -142,6 +142,7 @@ export const ContactsTable = ({
     if (savedExpandedSettings !== null) {
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loads persisted column settings once per workspace; `table` and `data` change every render and would clobber user changes
   }, [workspaceId]);
 
   // Save settings to localStorage when they change

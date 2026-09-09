@@ -1,21 +1,6 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import {
-  differenceInDays,
-  endOfMonth,
-  endOfQuarter,
-  endOfYear,
-  format,
-  startOfDay,
-  startOfMonth,
-  startOfQuarter,
-  startOfYear,
-  subDays,
-  subMonths,
-  subQuarters,
-  subYears,
-} from "date-fns";
 import { TFunction } from "i18next";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -29,8 +14,15 @@ import {
 import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
 import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
+import {
+  type TDateRangePreset,
+  resolveDateRangeLabelPreset,
+  resolveDateRangePresetBounds,
+} from "@/lib/date-ranges";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
-import { Calendar } from "@/modules/ui/components/calendar";
+import { getSurveyFileUploadConfigs } from "@/modules/storage/survey-file-upload-elements";
+import { DateRangeCalendar } from "@/modules/ui/components/date-picker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,11 +31,6 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { PopoverTriggerButton, ResponseFilter } from "./ResponseFilter";
 
-enum DateSelected {
-  FROM = "common.from",
-  TO = "common.to",
-}
-
 enum FilterDownload {
   ALL = "common.all",
   FILTER = "common.filter",
@@ -51,93 +38,69 @@ enum FilterDownload {
 
 const getFilterDropDownLabels = (t: TFunction) => ({
   ALL_TIME: t("workspace.surveys.summary.all_time"),
-  LAST_7_DAYS: t("workspace.surveys.summary.last_7_days"),
-  LAST_30_DAYS: t("workspace.surveys.summary.last_30_days"),
-  THIS_MONTH: t("workspace.surveys.summary.this_month"),
-  LAST_MONTH: t("workspace.surveys.summary.last_month"),
-  LAST_6_MONTHS: t("workspace.surveys.summary.last_6_months"),
-  THIS_QUARTER: t("workspace.surveys.summary.this_quarter"),
-  LAST_QUARTER: t("workspace.surveys.summary.last_quarter"),
-  THIS_YEAR: t("workspace.surveys.summary.this_year"),
-  LAST_YEAR: t("workspace.surveys.summary.last_year"),
   CUSTOM_RANGE: t("workspace.surveys.summary.custom_range"),
 });
+
+// The relative ranges this filter offers, in dropdown order. Picking one tags `dateRange` with its
+// preset, so the trigger label survives a remount without reverse-matching the bounds — several
+// presets span byte-identical days on period-boundary dates (on the 30th of a 30-day month, "last 30
+// days" and "this month" cover the same days) and can't be told apart from `{ from, to }` alone. Order
+// still breaks that tie for a manually picked custom range that happens to match a preset's bounds.
+// What each preset means lives in `@/lib/date-ranges`, shared with the chart time dimension so the
+// Summary tab and a chart over the same field agree.
+//
+// Labels are `t()` calls rather than bare key strings on purpose: the translation-key scanner
+// (`packages/i18n-utils`) only counts keys it can see inside a literal `t("…")`, and reports the rest
+// as unused.
+const DATE_RANGE_PRESETS: readonly { preset: TDateRangePreset; getLabel: (t: TFunction) => string }[] = [
+  { preset: "last 7 days", getLabel: (t) => t("workspace.surveys.summary.last_7_days") },
+  { preset: "last 30 days", getLabel: (t) => t("workspace.surveys.summary.last_30_days") },
+  { preset: "this month", getLabel: (t) => t("workspace.surveys.summary.this_month") },
+  { preset: "last month", getLabel: (t) => t("workspace.surveys.summary.last_month") },
+  { preset: "this quarter", getLabel: (t) => t("workspace.surveys.summary.this_quarter") },
+  { preset: "last quarter", getLabel: (t) => t("workspace.surveys.summary.last_quarter") },
+  { preset: "last 6 months", getLabel: (t) => t("workspace.surveys.summary.last_6_months") },
+  { preset: "this year", getLabel: (t) => t("workspace.surveys.summary.this_year") },
+  { preset: "last year", getLabel: (t) => t("workspace.surveys.summary.last_year") },
+];
+
+const DATE_RANGE_PRESET_NAMES = DATE_RANGE_PRESETS.map(({ preset }) => preset);
+
+const DAY_MONTH_OPTIONS: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
 
 interface CustomFilterProps {
   survey: TSurvey;
 }
 
-const getDateRangeLabel = (from: Date, to: Date, t: TFunction) => {
-  const dateRanges = [
-    {
-      label: getFilterDropDownLabels(t).LAST_7_DAYS,
-      matches: () => differenceInDays(to, from) === 7,
-    },
-    {
-      label: getFilterDropDownLabels(t).LAST_30_DAYS,
-      matches: () => differenceInDays(to, from) === 30,
-    },
-    {
-      label: getFilterDropDownLabels(t).THIS_MONTH,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfMonth(new Date()), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(getTodayDate(), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).LAST_MONTH,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 1)), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfMonth(subMonths(getTodayDate(), 1)), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).LAST_6_MONTHS,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 6)), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfMonth(getTodayDate()), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).THIS_QUARTER,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfQuarter(new Date()), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfQuarter(getTodayDate()), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).LAST_QUARTER,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfQuarter(subQuarters(new Date(), 1)), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfQuarter(subQuarters(getTodayDate(), 1)), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).THIS_YEAR,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfYear(new Date()), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfYear(getTodayDate()), "yyyy-MM-dd"),
-    },
-    {
-      label: getFilterDropDownLabels(t).LAST_YEAR,
-      matches: () =>
-        format(from, "yyyy-MM-dd") === format(startOfYear(subYears(new Date(), 1)), "yyyy-MM-dd") &&
-        format(to, "yyyy-MM-dd") === format(endOfYear(subYears(getTodayDate(), 1)), "yyyy-MM-dd"),
-    },
-  ];
+const getCustomRangeLabel = (dateRange: DateRange, locale: string | undefined, t: TFunction): string => {
+  const from = dateRange?.from
+    ? formatDateForDisplay(dateRange.from, locale, DAY_MONTH_OPTIONS)
+    : t("workspace.surveys.summary.select_first_date");
+  const to = dateRange?.to
+    ? formatDateForDisplay(dateRange.to, locale, DAY_MONTH_OPTIONS)
+    : t("workspace.surveys.summary.select_last_date");
 
-  const matchedRange = dateRanges.find((range) => range.matches());
-  return matchedRange ? matchedRange.label : getFilterDropDownLabels(t).CUSTOM_RANGE;
+  return `${from} - ${to}`;
 };
 
-export const CustomFilter = ({ survey }: CustomFilterProps) => {
-  const { t } = useTranslation();
+const getDateRangeLabel = (dateRange: DateRange, t: TFunction) => {
+  const preset = resolveDateRangeLabelPreset(dateRange, DATE_RANGE_PRESET_NAMES);
+  const matched = DATE_RANGE_PRESETS.find((p) => p.preset === preset);
+  return matched ? matched.getLabel(t) : getFilterDropDownLabels(t).CUSTOM_RANGE;
+};
+
+export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
+  const { t, i18n } = useTranslation();
+  // `resolvedLanguage` is undefined until i18next finishes initialising, so fall back the way the
+  // rest of the app does rather than letting date formatting silently drop to en-US.
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
-    dateRange.from && dateRange.to
-      ? getDateRangeLabel(dateRange.from, dateRange.to, t)
-      : getFilterDropDownLabels(t).ALL_TIME
+    dateRange.from && dateRange.to ? getDateRangeLabel(dateRange, t) : getFilterDropDownLabels(t).ALL_TIME
   );
-  const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
   const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
-  const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const firstMountRef = useRef(true);
@@ -158,7 +121,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
-    [selectedFilter, dateRange]
+    [survey, selectedFilter, dateRange]
   );
 
   const datePickerRef = useRef<HTMLDivElement>(null);
@@ -177,66 +140,78 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     return keys;
   }, []);
 
-  const handleDateHoveredChange = (date: Date) => {
-    if (selectingDate === DateSelected.FROM) {
-      const startOfRange = new Date(date);
-      startOfRange.setHours(0, 0, 0, 0); // Set to the start of the selected day
-
-      // Check if the selected date is after the current 'to' date
-      if (startOfRange > dateRange?.to!) {
-        return;
-      } else {
-        setHoveredRange({ from: startOfRange, to: dateRange.to });
-      }
-    } else {
-      const endOfRange = new Date(date);
-      endOfRange.setHours(23, 59, 59, 999); // Set to the end of the selected day
-
-      // Check if the selected date is before the current 'from' date
-      if (endOfRange < dateRange?.from!) {
-        return;
-      } else {
-        setHoveredRange({ from: dateRange.from, to: endOfRange });
-      }
-    }
-  };
-
-  const handleDateChange = (date: Date) => {
-    if (selectingDate === DateSelected.FROM) {
-      const startOfRange = new Date(date);
-      startOfRange.setHours(0, 0, 0, 0); // Set to the start of the selected day
-
-      // Check if the selected date is after the current 'to' date
-      if (startOfRange > dateRange?.to!) {
-        const nextDay = new Date(startOfRange);
-        nextDay.setDate(nextDay.getDate() + 1);
-        nextDay.setHours(23, 59, 59, 999);
-        setDateRange({ from: startOfRange, to: nextDay });
-      } else {
-        setDateRange((prevData) => ({ from: startOfRange, to: prevData.to }));
-      }
-      setSelectingDate(DateSelected.TO);
-    } else {
-      const endOfRange = new Date(date);
-      endOfRange.setHours(23, 59, 59, 999); // Set to the end of the selected day
-
-      // Check if the selected date is before the current 'from' date
-      if (endOfRange < dateRange?.from!) {
-        const previousDay = new Date(endOfRange);
-        previousDay.setDate(previousDay.getDate() - 1);
-        previousDay.setHours(0, 0, 0, 0); // Set to the start of the selected day
-        setDateRange({ from: previousDay, to: endOfRange });
-      } else {
-        setDateRange((prevData) => ({ from: prevData?.from, to: endOfRange }));
-      }
-      setIsDatePickerOpen(false);
-      setSelectingDate(DateSelected.FROM);
-    }
-  };
-
   const handleDatePickerClose = () => {
     setIsDatePickerOpen(false);
-    setSelectingDate(DateSelected.FROM);
+  };
+
+  // The attachment items only make sense when the survey actually collects files. Hidden rather than
+  // disabled: a survey with no file-upload element has nothing to explain.
+  const hasFileUploadElements = useMemo(
+    () => getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).length > 0,
+    [survey.blocks, survey.questions]
+  );
+
+  /**
+   * Attachments are downloaded by navigating to the export route, never by fetch + blob: the archive can
+   * reach several GB and buffering it in the tab would kill it.
+   *
+   * That is also why this pre-flights. Once the route has flushed its 200 and headers it can no longer
+   * answer with an error, and a problem document rendered into the tab would replace this page. So ask
+   * for the counts first, toast anything the user needs to know, and only then navigate.
+   */
+  const handleDownloadAttachments = async (filter: FilterDownload) => {
+    const buildUrl = (extra?: Record<string, string>) => {
+      const params = new URLSearchParams(extra);
+      if (filter === FilterDownload.FILTER) {
+        params.set("filters", JSON.stringify(filters));
+      }
+      return `/api/surveys/${survey.id}/attachments?${params.toString()}`;
+    };
+
+    // Held from the click until either an error or the navigation, because both phases are slow enough
+    // to look like nothing happened: the pre-flight counts every matching file, and the download request
+    // then collects them again before the first byte reaches the browser.
+    const toastId = toast.loading(t("workspace.surveys.responses.preparing_attachments_download"));
+
+    try {
+      setIsDownloading(true);
+
+      const preflight = await fetch(buildUrl({ dryRun: "true" }));
+      if (!preflight.ok) {
+        toast.error(t("workspace.surveys.responses.error_downloading_attachments"), { id: toastId });
+        return;
+      }
+
+      const { data } = await preflight.json();
+
+      if (data.exceedsMaxFiles) {
+        toast.error(
+          t("workspace.surveys.responses.too_many_attachments_to_download", { maxFiles: data.maxFiles }),
+          { id: toastId }
+        );
+        return;
+      }
+
+      if (data.fileCount === 0) {
+        toast.error(t("workspace.surveys.responses.no_attachments_to_download"), { id: toastId });
+        return;
+      }
+
+      window.location.assign(buildUrl());
+
+      // A `Content-Disposition: attachment` navigation never unloads this page, so the toast survives to
+      // hand over to the browser's own download UI. It says "started" rather than "finished" on purpose:
+      // nothing here can observe the archive completing.
+      toast.success(
+        t("workspace.surveys.responses.attachments_download_started", { fileCount: data.fileCount }),
+        { id: toastId, duration: 8000 }
+      );
+    } catch (err) {
+      Sentry.captureException(err);
+      toast.error(t("workspace.surveys.responses.error_downloading_attachments"), { id: toastId });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleDownloadResponses = async (filter: FilterDownload, fileType: "csv" | "xlsx") => {
@@ -280,9 +255,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
           <DropdownMenuTrigger asChild>
             <PopoverTriggerButton isOpen={isFilterDropDownOpen}>
               {filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE
-                ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
-                    dateRange?.to ? format(dateRange.to, "dd LLL") : "Select last date"
-                  }`
+                ? getCustomRangeLabel(dateRange, locale, t)
                 : filterRange}
             </PopoverTriggerButton>
           </DropdownMenuTrigger>
@@ -294,86 +267,20 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               }}>
               <p className="text-slate-700">{getFilterDropDownLabels(t).ALL_TIME}</p>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_7_DAYS);
-                setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_7_DAYS}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_30_DAYS);
-                setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_30_DAYS}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).THIS_MONTH);
-                setDateRange({ from: startOfMonth(new Date()), to: getTodayDate() });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_MONTH}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_MONTH);
-                setDateRange({
-                  from: startOfMonth(subMonths(new Date(), 1)),
-                  to: endOfMonth(subMonths(getTodayDate(), 1)),
-                });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_MONTH}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).THIS_QUARTER);
-                setDateRange({ from: startOfQuarter(new Date()), to: endOfQuarter(getTodayDate()) });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_QUARTER}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_QUARTER);
-                setDateRange({
-                  from: startOfQuarter(subQuarters(new Date(), 1)),
-                  to: endOfQuarter(subQuarters(getTodayDate(), 1)),
-                });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_QUARTER}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_6_MONTHS);
-                setDateRange({
-                  from: startOfMonth(subMonths(new Date(), 6)),
-                  to: endOfMonth(getTodayDate()),
-                });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_6_MONTHS}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).THIS_YEAR);
-                setDateRange({ from: startOfYear(new Date()), to: endOfYear(getTodayDate()) });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_YEAR}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setFilterRange(getFilterDropDownLabels(t).LAST_YEAR);
-                setDateRange({
-                  from: startOfYear(subYears(new Date(), 1)),
-                  to: endOfYear(subYears(getTodayDate(), 1)),
-                });
-              }}>
-              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_YEAR}</p>
-            </DropdownMenuItem>
+            {DATE_RANGE_PRESETS.map(({ preset, getLabel }) => (
+              <DropdownMenuItem
+                key={preset}
+                onClick={() => {
+                  setFilterRange(getLabel(t));
+                  setDateRange({ ...resolveDateRangePresetBounds(preset), preset });
+                }}>
+                <p className="text-slate-700">{getLabel(t)}</p>
+              </DropdownMenuItem>
+            ))}
             <DropdownMenuItem
               onClick={() => {
                 setIsDatePickerOpen(true);
                 setFilterRange(getFilterDropDownLabels(t).CUSTOM_RANGE);
-                setSelectingDate(DateSelected.FROM);
               }}>
               <p className="text-sm text-slate-700 hover:ring-0">{getFilterDropDownLabels(t).CUSTOM_RANGE}</p>
             </DropdownMenuItem>
@@ -422,23 +329,36 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               }}>
               <p className="text-slate-700">{t("workspace.surveys.summary.filtered_responses_excel")}</p>
             </DropdownMenuItem>
+            {hasFileUploadElements && (
+              <>
+                <DropdownMenuItem
+                  data-testid="fb__custom-filter-download-all-attachments"
+                  onClick={async () => {
+                    await handleDownloadAttachments(FilterDownload.ALL);
+                  }}>
+                  <p className="text-slate-700">{t("workspace.surveys.summary.all_responses_attachments")}</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  data-testid="fb__custom-filter-download-filtered-attachments"
+                  onClick={async () => {
+                    await handleDownloadAttachments(FilterDownload.FILTER);
+                  }}>
+                  <p className="text-slate-700">
+                    {t("workspace.surveys.summary.filtered_responses_attachments")}
+                  </p>
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
       {isDatePickerOpen && (
         <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
-          <Calendar
-            autoFocus
-            mode="range"
-            defaultMonth={dateRange?.from}
-            selected={hoveredRange || dateRange}
-            numberOfMonths={2}
-            onDayClick={(date) => handleDateChange(date)}
-            onDayMouseEnter={handleDateHoveredChange}
-            onDayMouseLeave={() => setHoveredRange(null)}
-            classNames={{
-              day_today: "hover:bg-slate-200 bg-white",
-            }}
+          <DateRangeCalendar
+            value={dateRange}
+            locale={locale}
+            onChange={setDateRange}
+            onComplete={() => setIsDatePickerOpen(false)}
           />
         </div>
       )}

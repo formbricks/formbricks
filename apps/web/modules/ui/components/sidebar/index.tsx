@@ -14,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/modules/ui/components/sheet";
+import { getSkeletonWidthPercent } from "@/modules/ui/components/sidebar/lib/skeleton-width";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useIsMobile } from "@/modules/ui/hooks/use-mobile";
@@ -587,11 +588,12 @@ const SidebarMenuSkeleton = React.forwardRef<
     showIcon?: boolean;
   }
 >(({ className, showIcon = false, ...props }, ref) => {
-  // Random width between 50 to 90%.
-  const width = React.useMemo(() => {
-    // eslint-disable-next-line react-hooks/purity -- migration ENG-2366
-    return `${Math.floor(Math.random() * 40) + 50}%`;
-  }, []);
+  // Varied width between 50% and 90%, so a column of skeleton rows reads as text of differing
+  // lengths rather than as identical bars. Derived from `useId()` instead of `Math.random()`:
+  // React guarantees the id is the same on the server pass and on hydration, so the row keeps a
+  // stable width instead of mismatching between the two (ENG-2366).
+  const id = React.useId();
+  const width = `${getSkeletonWidthPercent(id)}%`;
 
   return (
     <div

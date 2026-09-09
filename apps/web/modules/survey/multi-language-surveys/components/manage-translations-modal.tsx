@@ -6,6 +6,8 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getAIUnavailableMessage, getAIUnavailableMessageForErrorCode } from "@/lib/ai/availability";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { translateSurveyFieldsAction } from "@/modules/ee/ai-translation/lib/actions";
@@ -44,7 +46,7 @@ interface ManageTranslationsModalProps {
   defaultLanguageName: string;
   workspaceId: string;
   isAIAvailable: boolean;
-  aiUnavailableReason?: string;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 export const ManageTranslationsModal = ({
@@ -109,6 +111,7 @@ export const ManageTranslationsModal = ({
       if (!aEmpty && bEmpty) return 1;
       return 0;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `isDraftEmpty` is intentionally excluded so rows don't re-sort on every keystroke; the order snapshots on strings/missingFirst changes
   }, [strings, missingFirst]);
 
   // Merge draft translations into localSurvey so that the recall dropdown
@@ -141,14 +144,17 @@ export const ManageTranslationsModal = ({
 
   const getAIErrorMessage = useCallback(
     (errorCode: string): string => {
-      const errorMessages: Record<string, string> = {
-        ai_features_not_enabled: t("workspace.surveys.edit.ai_features_not_enabled"),
-        ai_smart_tools_disabled: t("workspace.surveys.edit.ai_smart_tools_disabled"),
-        ai_instance_not_configured: t("workspace.surveys.edit.ai_instance_not_configured"),
-        ai_quota_exceeded: t("workspace.surveys.edit.ai_translation_quota_exceeded"),
-      };
+      const aiUnavailableMessage = getAIUnavailableMessageForErrorCode(errorCode, t);
+      if (aiUnavailableMessage) {
+        return aiUnavailableMessage;
+      }
+
+      if (errorCode === "ai_quota_exceeded") {
+        return t("workspace.surveys.edit.ai_translation_quota_exceeded");
+      }
+
       // Fall back to the generic failure message rather than leaking a raw error code to the user.
-      return errorMessages[errorCode] ?? t("workspace.surveys.edit.ai_translation_failed");
+      return t("workspace.surveys.edit.ai_translation_failed");
     },
     [t]
   );
@@ -219,7 +225,7 @@ export const ManageTranslationsModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent width="wide" className="max-h-[85dvh]">
+      <DialogContent width="wide" className="max-h-[85dvh]" disableCloseOnOutsideClick>
         <DialogHeader>
           <DialogTitle>{t("workspace.surveys.edit.manage_translations")}</DialogTitle>
           <div className="mt-2 flex items-center justify-between">
@@ -251,15 +257,7 @@ export const ManageTranslationsModal = ({
                     </div>
                   </TooltipTrigger>
                   {!isAIAvailable && !isTranslating && (
-                    <TooltipContent>
-                      {{
-                        not_enabled: t("workspace.surveys.edit.ai_translation_not_enabled"),
-                        instance_not_configured: t(
-                          "workspace.surveys.edit.ai_translation_instance_not_configured"
-                        ),
-                      }[aiUnavailableReason ?? ""] ??
-                        t("workspace.surveys.edit.ai_translation_not_available")}
-                    </TooltipContent>
+                    <TooltipContent>{getAIUnavailableMessage(aiUnavailableReason, t)}</TooltipContent>
                   )}
                   {isAIAvailable && emptyFields.length === 0 && !isTranslating && (
                     <TooltipContent>

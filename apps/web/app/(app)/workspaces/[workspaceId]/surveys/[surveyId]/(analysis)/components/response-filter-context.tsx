@@ -7,6 +7,7 @@ import {
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
 import { ElementFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ResponseFilter";
 import { getTodayDate } from "@/app/lib/surveys/surveys";
+import { type TDateRangePreset } from "@/lib/date-ranges";
 
 export interface FilterValue {
   elementType: Partial<ElementOption>;
@@ -31,6 +32,11 @@ interface SelectedFilterOptions {
 export interface DateRange {
   from: Date | undefined;
   to?: Date;
+  // Which preset produced this range, if any — set by the preset dropdown, cleared by the manual
+  // calendar picker. The label is read from here instead of reverse-matching the range, since several
+  // presets span byte-identical days on period-boundary dates (e.g. "this month" and "last 7 days" on
+  // the 7th of any month) and cannot be told apart by their bounds alone.
+  preset?: TDateRangePreset;
 }
 
 interface FilterDateContextProps {

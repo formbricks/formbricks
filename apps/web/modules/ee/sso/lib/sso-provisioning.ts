@@ -4,6 +4,9 @@ import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
@@ -64,7 +67,7 @@ const validateSsoInviteToken = async (email: string, callbackUrl: string): Promi
  * Better Auth SSO sign-up flow (introduced by the NextAuth→Better Auth migration, ENG-1054).
  *
  * MUST be called from `databaseHooks.user.create.before`, which Better Auth runs INSIDE the
- * user+account transaction: a `"reject"` there → return `false` → the row rolls back, so no orphan
+ * user+account transaction: a `"reject"` there → throw an APIError → the row rolls back, so no orphan
  * user is created (design doc §13; the post-commit `user.create.after` could not reject safely). The
  * `"provision"` decision (resolved org + flags) is carried to the after-hook, which performs the
  * membership writes.
@@ -171,9 +174,17 @@ export const provisionSsoUserMemberships = async ({
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !assigned; attempt++) {
       try {
         await prisma.$transaction(async (tx) => {
-          await createMembership(organizationId, userId, { role: "member", accepted: true }, tx);
+          await createMembership(
+            organizationId,
+            userId,
+            { role: "member", accepted: true },
+            { projection: "deferred", transaction: tx }
+          );
           if (assignToDefaultTeam) {
-            await createDefaultTeamMembership(userId, tx);
+            await createDefaultTeamMembership(userId, {
+              projection: "deferred",
+              transaction: tx,
+            });
           }
           const dbUser = await tx.user.findUnique({
             where: { id: userId },
@@ -194,6 +205,15 @@ export const provisionSsoUserMemberships = async ({
             tx
           );
         });
+        await reconcileOrganizationMembership(organizationId, userId);
+        if (assignToDefaultTeam && DEFAULT_TEAM_ID) {
+          const defaultTeamId = DEFAULT_TEAM_ID;
+          await runPostCommitProjection("sso_default_team_membership_create", () =>
+            reconcileTeamWorkspaceRelationships({
+              teamMemberships: [{ teamId: defaultTeamId, userId }],
+            })
+          );
+        }
         assigned = true;
       } catch (error) {
         // The user + account are already committed by Better Auth; never throw here (it would not

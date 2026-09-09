@@ -19,7 +19,7 @@ export const UNTRUSTED_CLIENT_IP = "untrusted-client-ip";
 
 const CLIENT_IP_WARNING_INTERVAL_MS = 10 * 60 * 1000;
 const VALID_DECIMAL_PORT = /^[1-9]\d{0,4}$/;
-const BRACKETED_ADDRESS = /^\[([^\[\]]+)\](?::([^:]+))?$/;
+const BRACKETED_ADDRESS = /^\[([^[\]]+)\](?::([^:]+))?$/;
 const IPV4_SOCKET = /^([^:]+):(\d+)$/;
 
 type ClientIpWarningReason = "disabled" | "invalid-selected-hop" | "missing-chain" | "short-chain";

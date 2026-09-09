@@ -1,8 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import type { Session, TAuthenticationApiKey } from "@formbricks/types/auth";
 import { responses } from "@/app/lib/api/response";
-import { hasUserWorkspaceAccessForAction } from "@/lib/workspace/auth";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { can } from "@/lib/authorization";
 import { checkAuth } from "./utils";
 
 // Create mock response objects
@@ -10,13 +9,7 @@ const mockBadRequestResponse = new Response("Bad Request", { status: 400 });
 const mockNotAuthenticatedResponse = new Response("Not authenticated", { status: 401 });
 const mockUnauthorizedResponse = new Response("Unauthorized", { status: 401 });
 
-vi.mock("@/lib/workspace/auth", () => ({
-  hasUserWorkspaceAccessForAction: vi.fn(),
-}));
-
-vi.mock("@/modules/organization/settings/api-keys/lib/utils", () => ({
-  hasPermission: vi.fn(),
-}));
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 
 vi.mock("@/app/lib/api/response", () => ({
   responses: {
@@ -60,15 +53,14 @@ describe("checkAuth", () => {
       },
     };
 
-    vi.mocked(hasPermission).mockReturnValue(false);
+    vi.mocked(can).mockResolvedValue(false);
 
     const result = await checkAuth(mockAuthentication, workspaceId);
 
-    expect(hasPermission).toHaveBeenCalledWith(
-      mockAuthentication.workspacePermissions,
-      "workspace-123",
-      "POST"
-    );
+    expect(can).toHaveBeenCalledWith({ type: "apiKey", id: "hashed-key" }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
+    });
     expect(responses.unauthorizedResponse).toHaveBeenCalled();
     expect(result).toBe(mockUnauthorizedResponse);
   });
@@ -90,15 +82,14 @@ describe("checkAuth", () => {
       },
     };
 
-    vi.mocked(hasPermission).mockReturnValue(true);
+    vi.mocked(can).mockResolvedValue(true);
 
     const result = await checkAuth(mockAuthentication, workspaceId);
 
-    expect(hasPermission).toHaveBeenCalledWith(
-      mockAuthentication.workspacePermissions,
-      "workspace-123",
-      "POST"
-    );
+    expect(can).toHaveBeenCalledWith({ type: "apiKey", id: "hashed-key" }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
+    });
     expect(result).toBeUndefined();
   });
 
@@ -110,11 +101,14 @@ describe("checkAuth", () => {
       expires: "2024-12-31T23:59:59.999Z",
     };
 
-    vi.mocked(hasUserWorkspaceAccessForAction).mockResolvedValue(false);
+    vi.mocked(can).mockResolvedValue(false);
 
     const result = await checkAuth(mockSession, workspaceId);
 
-    expect(hasUserWorkspaceAccessForAction).toHaveBeenCalledWith("user-123", workspaceId, "POST");
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user-123" }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
+    });
     expect(responses.unauthorizedResponse).toHaveBeenCalled();
     expect(result).toBe(mockUnauthorizedResponse);
   });
@@ -127,11 +121,14 @@ describe("checkAuth", () => {
       expires: "2024-12-31T23:59:59.999Z",
     };
 
-    vi.mocked(hasUserWorkspaceAccessForAction).mockResolvedValue(true);
+    vi.mocked(can).mockResolvedValue(true);
 
     const result = await checkAuth(mockSession, workspaceId);
 
-    expect(hasUserWorkspaceAccessForAction).toHaveBeenCalledWith("user-123", workspaceId, "POST");
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user-123" }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
+    });
     expect(result).toBeUndefined();
   });
 

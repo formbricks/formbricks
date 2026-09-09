@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 const mocks = vi.hoisted(() => ({
-  checkAuthorizationUpdated: vi.fn(),
+  assertCan: vi.fn(),
   getOrganizationIdFromWorkspaceId: vi.fn(),
   getSpreadsheetNameById: vi.fn(),
   getIntegrationByType: vi.fn(),
@@ -14,8 +14,8 @@ vi.mock("@/lib/utils/action-client", () => ({
   },
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: mocks.checkAuthorizationUpdated,
+vi.mock("@/lib/authorization", () => ({
+  assertCan: mocks.assertCan,
 }));
 
 vi.mock("@/lib/utils/helper", () => ({
@@ -57,7 +57,7 @@ const storedIntegration = {
 describe("getSpreadsheetNameByIdAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.checkAuthorizationUpdated.mockResolvedValue(undefined);
+    mocks.assertCan.mockResolvedValue(undefined);
     mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org1");
     mocks.getSpreadsheetNameById.mockResolvedValue("My Sheet");
     mocks.getIntegrationByType.mockResolvedValue(storedIntegration);

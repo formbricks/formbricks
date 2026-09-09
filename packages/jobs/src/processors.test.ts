@@ -276,9 +276,10 @@ describe("@formbricks/jobs processor registry", () => {
     );
   });
 
-  // One factory backs all three recurring fallbacks, so they are covered together — survey-archive-purge
-  // and workflow-run.reconcile previously had no test at all.
+  // One factory backs every recurring fallback, so they are covered together.
   test.each([
+    [JOB_NAMES.authzedProjectionDelivery, "AuthZed projection delivery"],
+    [JOB_NAMES.authzedReconciliationAudit, "AuthZed reconciliation audit"],
     [JOB_NAMES.surveyArchivePurge, "survey archive purge"],
     [JOB_NAMES.surveyScheduling, "survey scheduling"],
     [JOB_NAMES.workflowRunReconcile, "workflow run reconcile"],

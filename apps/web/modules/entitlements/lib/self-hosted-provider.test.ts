@@ -114,7 +114,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
       organizationId: "org1",
       source: "self_hosted_license",
       features: [],
-      limits: { workspaces: 3, monthlyResponses: null, monthlyWorkflowRuns: null },
+      limits: { workspaces: 1, monthlyResponses: null, monthlyWorkflowRuns: null },
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: null,
@@ -155,7 +155,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     expect(result.limits.workspaces).toBeNull();
   });
 
-  test("defaults workspaces to 3 when license is inactive", async () => {
+  test("defaults workspaces to the community limit when license is inactive", async () => {
     mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(
       expiredLicense({ workspaces: 10, contacts: true, spamProtection: true })
@@ -164,7 +164,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
 
     expect(result.features).toEqual([]);
-    expect(result.limits.workspaces).toBe(3);
+    expect(result.limits.workspaces).toBe(1);
   });
 
   test("maps whitelabel feature to hide-branding", async () => {

@@ -46,7 +46,6 @@ const createSurveySeed = async (
       isAutoProgressingEnabled: surveyFixture.isAutoProgressingEnabled,
       isCaptureIpEnabled: surveyFixture.isCaptureIpEnabled,
       isVerifyEmailEnabled: surveyFixture.isVerifyEmailEnabled,
-      isSingleResponsePerEmailEnabled: surveyFixture.isSingleResponsePerEmailEnabled,
       variables,
     },
   });

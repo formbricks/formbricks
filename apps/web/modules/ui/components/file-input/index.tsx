@@ -223,6 +223,7 @@ export const FileInput = ({
         onFileUpload([videoUrlTemp], "video");
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs only on tab (fileType) change to sync temp URLs; adding the url/temp deps would re-fire uploads and loop
   }, [fileType]);
 
   return (

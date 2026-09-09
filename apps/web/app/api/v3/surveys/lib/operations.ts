@@ -17,10 +17,15 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
-import { getSurveyCount, hasArchivedSurveys } from "@/modules/survey/list/lib/survey";
+import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
-import { type TV3SurveyCreateOptions, V3SurveyCreatePermissionError, createV3Survey } from "../create";
+import {
+  type TV3SurveyCreateOptions,
+  V3SurveyCreatePermissionError,
+  V3SurveyInputValidationError,
+  createV3Survey,
+} from "../create";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import { patchV3Survey } from "../patch";
 import {
@@ -177,18 +182,18 @@ export async function listV3Surveys({
       sortBy: parsed.sortBy,
       filterCriteria: parsed.filterCriteria,
     });
-    // totalCount and hasArchived are only computed on the first page (same gate),
-    // matching the client which reads them from pages[0].meta.
+    // Both counts are gated on includeTotalCount alone. The list client sends it only on the first
+    // page and reads them from pages[0].meta, but any caller can ask for them on a cursor request.
     const totalCountPromise = parsed.includeTotalCount
       ? getSurveyCount(workspaceId, parsed.filterCriteria)
       : Promise.resolve(null);
-    const hasArchivedPromise = parsed.includeTotalCount
-      ? hasArchivedSurveys(workspaceId)
+    const workspaceSurveyCountPromise = parsed.includeTotalCount
+      ? getWorkspaceSurveyCount(workspaceId)
       : Promise.resolve(null);
-    const [surveyPage, totalCount, hasArchived] = await Promise.all([
+    const [surveyPage, totalCount, workspaceSurveyCount] = await Promise.all([
       surveyPagePromise,
       totalCountPromise,
-      hasArchivedPromise,
+      workspaceSurveyCountPromise,
     ]);
 
     return successListResponse(
@@ -197,7 +202,7 @@ export async function listV3Surveys({
         limit: parsed.limit,
         nextCursor: surveyPage.nextCursor,
         totalCount,
-        hasArchived,
+        workspaceSurveyCount,
       },
       { requestId, cache: "private, no-store" }
     );
@@ -256,6 +261,19 @@ function mapV3SurveyCreateError(
     log.warn({ statusCode: 400, errorCode: err.name }, "Invalid survey input");
     return problemBadRequest(requestId, err.message, {
       invalid_params: [{ name: "body", reason: err.message }],
+      instance,
+    });
+  }
+  if (err instanceof V3SurveyInputValidationError) {
+    // The document passed `ZV3CreateSurveyBody` but failed the survey service's stricter write
+    // schema, caught by an explicit pre-write parse in `executeV3SurveyCreate`. Semantic, not
+    // malformed → 422, in line with the reference-validation branch above. Deliberately keyed on
+    // this typed error rather than on `ValidationError`: the latter is also thrown from work
+    // `createSurvey` does *after* its transaction commits, where a 4xx would wrongly tell the
+    // caller nothing was written. Those keep the 500 below.
+    log.warn({ statusCode: 422, invalidParams: err.invalidParams }, "Survey input validation failed");
+    return problemUnprocessableContent(requestId, "Survey document failed validation", {
+      invalid_params: err.invalidParams,
       instance,
     });
   }

@@ -59,6 +59,7 @@ import {
   areAllRequiredCsvFieldsMapped,
   getSelectableQuestionIds,
   isFeedbackSourceNameValid,
+  notifyImportResult,
   toggleQuestionId,
   validateEnumMappings,
 } from "../utils";
@@ -344,14 +345,19 @@ export const CreateFeedbackSourceModal = ({
       });
 
       if (importResult?.data) {
-        showFeedbackRecordsSuccessToast(
+        // Picks the toast by `failures` rather than by the action resolving. The success toast
+        // carries a link to the feedback records, so a green one on a run that wrote nothing does
+        // not just misreport — it invites the user to go and look for records that are not there.
+        const imported = notifyImportResult(
+          importResult.data,
           t("workspace.unify.historical_import_complete", {
             successes: importResult.data.successes,
             failures: importResult.data.failures,
             skipped: importResult.data.skipped,
-          })
+          }),
+          showFeedbackRecordsSuccessToast
         );
-        return "success";
+        return imported ? "success" : "error";
       }
 
       toast.error(getFormattedErrorMessage(importResult));
@@ -376,14 +382,17 @@ export const CreateFeedbackSourceModal = ({
       });
 
       if (importResult?.data) {
-        showFeedbackRecordsSuccessToast(
+        // Same shape as the historical import above: `failures` decides the toast.
+        const imported = notifyImportResult(
+          importResult.data,
           t("workspace.unify.csv_import_complete", {
             successes: importResult.data.successes,
             failures: importResult.data.failures,
             skipped: importResult.data.skipped,
-          })
+          }),
+          showFeedbackRecordsSuccessToast
         );
-        return "success";
+        return imported ? "success" : "error";
       }
 
       toast.error(

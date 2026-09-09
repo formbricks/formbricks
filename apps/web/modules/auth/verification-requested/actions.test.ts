@@ -36,8 +36,28 @@ vi.mock("@/modules/auth/lib/auth", () => ({
   auth: { api: { sendVerificationEmail: vi.fn() } },
 }));
 
+const cookieMocks = vi.hoisted(() => ({
+  get: vi.fn(),
+  set: vi.fn(),
+}));
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => Promise.resolve(cookieMocks)),
+}));
+
+// The intent-cookie refresh (ENG-2562): classify/mint are unit-tested in signup-intent.test.ts; here
+// only the action's decision — refresh iff the browser already proves this user — is under test.
+const signupIntentMocks = vi.hoisted(() => ({
+  classifySignupIntent: vi.fn(),
+  createSignupIntentToken: vi.fn(),
+}));
+
+vi.mock("@/modules/auth/lib/signup-intent", () => ({
+  SIGNUP_INTENT_COOKIE_NAME: "formbricks.signup_intent",
+  SIGNUP_INTENT_COOKIE_OPTIONS: { httpOnly: true, secure: false, path: "/", sameSite: "lax", maxAge: 3600 },
+  classifySignupIntent: signupIntentMocks.classifySignupIntent,
+  createSignupIntentToken: signupIntentMocks.createSignupIntentToken,
 }));
 
 vi.mock("@/lib/jwt", () => ({
@@ -93,6 +113,9 @@ describe("resendVerificationEmailAction", () => {
     vi.mocked(verifySsoRelinkIntent).mockImplementation(() => {
       throw new Error("invalid");
     });
+    cookieMocks.get.mockReturnValue(undefined);
+    signupIntentMocks.classifySignupIntent.mockReturnValue("absent");
+    signupIntentMocks.createSignupIntentToken.mockReturnValue("fresh-intent-token");
   });
 
   afterEach(() => {
@@ -314,6 +337,56 @@ describe("resendVerificationEmailAction", () => {
         headers: expect.any(Headers),
       });
       expect(result).toEqual({ success: true });
+    });
+
+    // ENG-2562: a resent link gets a fresh hour while the intent cookie's clock started at sign-up, so
+    // the action re-pairs the cookie with the new link — but only for a browser that already holds a
+    // valid cookie naming this user. Anything weaker would let an unauthenticated caller arm sign-up
+    // proof for an arbitrary account by asking for a resend.
+    describe("Sign-up intent cookie refresh (ENG-2562)", () => {
+      beforeEach(() => {
+        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
+        vi.mocked(getUserByEmail).mockResolvedValue(mockUser as never);
+        cookieMocks.get.mockReturnValue({ value: "existing-intent-cookie" });
+      });
+
+      test("re-issues the cookie when the browser already holds a valid one for this user", async () => {
+        signupIntentMocks.classifySignupIntent.mockReturnValue("valid");
+
+        await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as never);
+
+        expect(signupIntentMocks.classifySignupIntent).toHaveBeenCalledWith(
+          "existing-intent-cookie",
+          mockUser.id
+        );
+        expect(signupIntentMocks.createSignupIntentToken).toHaveBeenCalledWith(mockUser.id);
+        expect(cookieMocks.set).toHaveBeenCalledWith(
+          "formbricks.signup_intent",
+          "fresh-intent-token",
+          expect.objectContaining({ httpOnly: true, maxAge: 3600 })
+        );
+      });
+
+      test.each([["absent"], ["invalid"], ["other_user"]])(
+        "does not mint a cookie when the browser's proof classifies as %s",
+        async (classification) => {
+          signupIntentMocks.classifySignupIntent.mockReturnValue(classification as never);
+
+          await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as never);
+
+          expect(signupIntentMocks.createSignupIntentToken).not.toHaveBeenCalled();
+          expect(cookieMocks.set).not.toHaveBeenCalled();
+        }
+      );
+
+      test("does not touch the cookie when the user is already verified (no email sent)", async () => {
+        vi.mocked(getUserByEmail).mockResolvedValue(mockVerifiedUser as never);
+        signupIntentMocks.classifySignupIntent.mockReturnValue("valid");
+
+        await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as never);
+
+        expect(cookieMocks.set).not.toHaveBeenCalled();
+      });
     });
 
     test("should throw ResourceNotFoundError when user doesn't exist", async () => {

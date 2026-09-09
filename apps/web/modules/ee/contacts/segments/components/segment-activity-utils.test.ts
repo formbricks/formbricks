@@ -49,7 +49,6 @@ const createSurvey = (overrides: Partial<TSurvey>): TSurvey =>
     languages: [],
     showLanguageSwitch: false,
     isVerifyEmailEnabled: false,
-    isSingleResponsePerEmailEnabled: false,
     isBackButtonHidden: false,
     recaptcha: null,
     variables: [],

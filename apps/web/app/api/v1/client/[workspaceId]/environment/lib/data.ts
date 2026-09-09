@@ -9,6 +9,7 @@ import {
   TJsWorkspaceStateSurvey,
   TJsWorkspaceStateWorkspaceSetting,
 } from "@formbricks/types/js";
+import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { type TBaseFilters, buildSurveyInteractionRefreshMap } from "@formbricks/types/segment";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -283,7 +284,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
 
       return {
         ...transformed,
-        name: "[deprecated] survey name omitted from public API - will be removed soon",
+        name: PUBLIC_API_SURVEY_NAME_PLACEHOLDER,
         segment: sanitizedSegment,
         ...(interactionRefresh ? { interactionRefresh } : {}),
       };

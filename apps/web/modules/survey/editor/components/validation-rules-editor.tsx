@@ -18,11 +18,13 @@ import {
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { RULE_TYPE_CONFIG } from "../lib/validation-rules-config";
 import {
+  applyRuleDeletion,
   getAddressFields,
   getContactInfoFields,
   getDefaultRuleValue,
   getRuleLabels,
   parseRuleValue,
+  shouldResetInputTypeToText,
 } from "../lib/validation-rules-helpers";
 import { RULES_BY_INPUT_TYPE, createRuleParams, getAvailableRuleTypes } from "../lib/validation-rules-utils";
 import { ValidationLogicSelector } from "./validation-logic-selector";
@@ -94,16 +96,8 @@ export const ValidationRulesEditor = ({
 
   const handleDisable = () => {
     onUpdateValidation({ rules: [], logic: validationLogic });
-    // Reset inputType to "text" when disabling validation for OpenText elements.
-    // Without this, the HTML input keeps its type (e.g. "url"), which still enforces
-    // browser-native format validation even though the user toggled validation off.
-    if (
-      elementType === TSurveyElementTypeEnum.OpenText &&
-      onUpdateInputType &&
-      inputType !== undefined &&
-      inputType !== "text"
-    ) {
-      onUpdateInputType("text");
+    if (shouldResetInputTypeToText(elementType, 0, inputType)) {
+      onUpdateInputType?.("text");
     }
   };
 
@@ -146,8 +140,18 @@ export const ValidationRulesEditor = ({
   };
 
   const handleDeleteRule = (ruleId: string) => {
-    const updated = validationRules.filter((r) => r.id !== ruleId);
-    onUpdateValidation({ rules: updated, logic: validationLogic });
+    // Deleting the last rule leaves the section reading as "validation off" (isEnabled is derived
+    // from the rule count), so it has to reset inputType exactly like handleDisable does.
+    const { rules, resetInputTypeToText } = applyRuleDeletion(
+      validationRules,
+      ruleId,
+      elementType,
+      inputType
+    );
+    onUpdateValidation({ rules, logic: validationLogic });
+    if (resetInputTypeToText) {
+      onUpdateInputType?.("text");
+    }
   };
 
   const handleRuleTypeChange = (ruleId: string, newType: TValidationRuleType) => {
@@ -224,6 +228,16 @@ export const ValidationRulesEditor = ({
         ...rule,
         params: createRuleParams(ruleType, parsedValue),
       } as TValidationRule;
+    });
+    onUpdateValidation({ rules: updated, logic: validationLogic });
+  };
+
+  // Relative date bounds are objects, not a single string, so they bypass the shared
+  // value-to-params channel and set params directly.
+  const handleRuleParamsChange = (ruleId: string, params: TValidationRule["params"]) => {
+    const updated = validationRules.map((rule) => {
+      if (rule.id !== ruleId) return rule;
+      return { ...rule, params } as TValidationRule;
     });
     onUpdateValidation({ rules: updated, logic: validationLogic });
   };
@@ -341,6 +355,7 @@ export const ValidationRulesEditor = ({
             onFieldChange={handleFieldChange}
             onRuleTypeChange={handleRuleTypeChange}
             onRuleValueChange={handleRuleValueChange}
+            onRuleParamsChange={handleRuleParamsChange}
             onFileExtensionChange={handleFileExtensionChange}
             onDelete={handleDeleteRule}
             onAdd={handleAddRule}

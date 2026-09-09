@@ -1,0 +1,62 @@
+---
+title: "Contacts"
+description: "Contacts are the people you survey. Store what you already know about them, then use it to decide who sees a survey and to read responses in context."
+icon: "address-book"
+---
+
+A **contact** is one person in a workspace, with a set of attributes you supply. Contacts let you do two things you cannot do with anonymous responses: target a survey at a specific group, and see who said what.
+
+Contacts live under **Contacts** in the main navigation, which has three tabs — Contacts, Attributes and Segments.
+
+<Note>
+  Contacts are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).
+</Note>
+
+## Contacts
+
+The Contacts tab lists everyone in the workspace.
+
+![The Contacts tab, listing contacts with their default attributes](/images/platform/features/contacts/contacts-list.webp)
+
+Contacts arrive in three ways:
+
+- **From your app**, when the SDK identifies someone. See [User Identification](/surveys/website-app-surveys/user-identification) for `setUserId`, `setAttribute` and friends.
+- **From a CSV**, using **Upload CSV**. Useful for a list you already hold outside your product.
+- **From the API** — `POST /api/v2/management/contacts` for one, `PUT /api/v2/management/contacts/bulk` for many. Both need every attribute key to exist already. See the [API v2 reference](/api-v2-reference/introduction).
+
+Contacts are scoped to a **workspace**. A person known in one workspace is not automatically known in another.
+
+## Attributes
+
+An attribute is one field on a contact — a plan, a branch, a signup date. The Attributes tab lists every attribute key the workspace knows about.
+
+![The Attributes tab, listing every attribute key in the workspace](/images/platform/features/contacts/attribute-keys.webp)
+
+Two kinds:
+
+- **Default attributes** — `email`, `userId`, `firstName`, `lastName`. Formbricks creates these itself and they cannot be deleted, which is why they have no checkbox in the table.
+- **Custom attributes** — anything you send. Create them ahead of time with **Create attribute**, or let them appear the first time the SDK sends one.
+
+Each key carries a label, the key your code uses, and a data type.
+
+<Note>
+  A workspace can hold up to **150 attribute keys**. That is a limit on the number of distinct fields, not on how many contacts have them.
+</Note>
+
+## Segments
+
+A segment is a saved group of contacts, defined by a filter rather than a fixed list. Membership is evaluated when it is used, so a contact joins or leaves as their attributes change.
+
+![The Segments tab, showing a saved segment](/images/platform/features/contacts/segments.webp)
+
+Filters combine attributes, devices and previous survey interaction, and can be grouped with **and** / **or**. A segment built on "plan equals premium" always means today's premium customers, without anyone maintaining a list.
+
+Segments are what [attribute-based targeting](/surveys/website-app-surveys/attribute-based-targeting) uses to decide who sees an app survey.
+
+## What Contacts change about a response
+
+Once a response is linked to a contact, it stops being anonymous:
+
+- The response table shows who answered instead of "Anonymous".
+- You can filter and segment responses by any attribute the contact carries.
+- [Personal Links](/surveys/link-surveys/personal-links) can be generated per contact, so a link survey attributes its answers too.

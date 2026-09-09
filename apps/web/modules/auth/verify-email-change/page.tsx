@@ -10,11 +10,9 @@ export const VerifyEmailChangePage = async ({
   const { token } = await searchParams;
 
   return (
-    <div className="flex min-h-screen bg-gradient-radial from-slate-200 to-slate-50">
-      <FormWrapper>
-        <EmailChangeSignIn token={token} />
-        <BackToLoginButton />
-      </FormWrapper>
-    </div>
+    <FormWrapper>
+      <EmailChangeSignIn token={token} />
+      <BackToLoginButton />
+    </FormWrapper>
   );
 };

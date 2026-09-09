@@ -20,6 +20,7 @@ import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-edit
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
+import { shouldShowFollowUpsTab } from "@/modules/survey/follow-ups/lib/deprecation";
 import { LanguageView } from "@/modules/survey/multi-language-surveys/components/language-view";
 import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
@@ -47,6 +48,7 @@ interface SurveyEditorProps {
   mailFrom: string;
   workspaceLanguages: Language[];
   isSurveyFollowUpsAllowed: boolean;
+  isWorkflowsAllowed: boolean;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
   isStorageConfigured: boolean;
@@ -78,6 +80,7 @@ export const SurveyEditor = ({
   workspacePermission,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
+  isWorkflowsAllowed = false,
   userEmail,
   teamMemberDetails,
   isStorageConfigured,
@@ -85,7 +88,13 @@ export const SurveyEditor = ({
   isExternalUrlsAllowed,
   publicDomain,
   enterpriseLicenseRequestFormUrl,
-}: SurveyEditorProps) => {
+}: Readonly<SurveyEditorProps>) => {
+  const isFollowUpsTabVisible = shouldShowFollowUpsTab({
+    followUpCount: survey.followUps.length,
+    isSurveyFollowUpsAllowed,
+    isWorkflowsAllowed,
+  });
+
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
@@ -93,6 +102,16 @@ export const SurveyEditor = ({
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
+
+  // `isFollowUpsTabVisible` tracks the server `survey` prop, which a save refreshes
+  // (`survey-menu-bar` calls `router.refresh()`). Deleting the last follow-up therefore hides the
+  // tab while `activeView` — client state — still points at it, leaving an empty main pane with no
+  // tab selected. Fall back to the elements view so the deletion flow cannot dead-end.
+  useEffect(() => {
+    if (!isFollowUpsTabVisible && activeView === "followUps") {
+      setActiveView("elements");
+    }
+  }, [isFollowUpsTabVisible, activeView]);
   const surveyEditorRef = useRef(null);
   const [localWorkspace, setLocalWorkspace] = useState<Workspace>(workspace);
   const [localWorkspaceLanguages, setLocalWorkspaceLanguages] = useState<Language[]>(workspaceLanguages);
@@ -119,19 +138,15 @@ export const SurveyEditor = ({
 
   useDocumentVisibility(fetchLatestWorkspaceData);
 
+  // Recovery only: `localSurvey` is seeded from `survey` in its `useState` initializer, so this is a
+  // no-op unless something ever resets it to null (the `LoadingSkeleton` guard below is the state it
+  // recovers from). Written as an updater rather than reading `localSurvey`, because depending on it
+  // would re-run this on every keystroke in the editor to do nothing — and that shape becomes a real
+  // loop the moment someone edits the guard. The active element is not set here: the
+  // `[localSurvey?.type]` effect below already picks the first element whenever `localSurvey`
+  // appears.
   useEffect(() => {
-    if (survey) {
-      if (localSurvey) return;
-
-      const surveyClone = structuredClone(survey);
-      setLocalSurvey(surveyClone);
-
-      // Set first element from first block
-      const firstBlock = survey.blocks[0];
-      if (firstBlock) {
-        setActiveElementId(firstBlock.elements?.[0]?.id);
-      }
-    }
+    setLocalSurvey((current) => current ?? structuredClone(survey));
   }, [survey]);
 
   useEffect(() => {
@@ -158,6 +173,7 @@ export const SurveyEditor = ({
     if (firstBlock) {
       setActiveElementId(firstBlock.elements[0]?.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally resets active element only when the survey type changes, not on every block edit
   }, [localSurvey?.type]);
 
   useEffect(() => {
@@ -188,7 +204,6 @@ export const SurveyEditor = ({
         responseCount={responseCount}
         finishedResponseCount={finishedResponseCount}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         isCxMode={isCxMode}
         locale={locale}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
@@ -203,6 +218,7 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!workspace.styling.allowStyleOverwrite}
+            isFollowUpsTabVisible={isFollowUpsTabVisible}
             hasLanguageErrors={hasIncompleteTranslations}
           />
 
@@ -277,18 +293,18 @@ export const SurveyEditor = ({
             />
           )}
 
-          {activeView === "followUps" && (
+          {activeView === "followUps" && isFollowUpsTabVisible && (
             <FollowUpsView
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
-              isFormbricksCloud={isFormbricksCloud}
+              isWorkflowsAllowed={isWorkflowsAllowed}
+              workspaceId={workspace.id}
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}
-              enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
             />
           )}
         </main>

@@ -1,9 +1,12 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { assertCan, can } from "@/lib/authorization";
+import {
+  getFeedbackDirectoryAssignmentAuthorizationAction,
+  getWorkspaceAuthorizationAction,
+} from "@/lib/authorization/permission-action";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 export const checkWorkspaceAccess = async (
@@ -13,13 +16,9 @@ export const checkWorkspaceAccess = async (
 ) => {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      { type: "organization", roles: ["owner", "manager"] },
-      { type: "workspaceTeam", minPermission, workspaceId },
-    ],
+  await assertCan({ type: "user", id: userId }, getWorkspaceAuthorizationAction(minPermission), {
+    type: "workspace",
+    id: workspaceId,
   });
 
   return { organizationId, workspaceId };
@@ -34,57 +33,29 @@ type TFeedbackDirectoryAccessSource =
 
 type TCheckFeedbackDirectoryAccessInput = {
   feedbackDirectoryId: string;
-  organizationId: string;
   workspaceId: string;
   userId: string;
+  minPermission: TTeamPermission;
   source: TFeedbackDirectoryAccessSource;
 };
 
 export const checkFeedbackDirectoryAccess = async ({
   feedbackDirectoryId,
-  organizationId,
   workspaceId,
   userId,
+  minPermission,
   source,
 }: TCheckFeedbackDirectoryAccessInput): Promise<{ feedbackDirectoryId: string }> => {
-  try {
-    const directory = await getFeedbackDirectoryAuthContext(feedbackDirectoryId);
-    const isAccessible =
-      directory?.organizationId === organizationId &&
-      directory.workspaceIds.includes(workspaceId) &&
-      !directory.isArchived;
+  const allowed = await can(
+    { type: "user", id: userId },
+    getFeedbackDirectoryAssignmentAuthorizationAction(minPermission),
+    { type: "feedbackDirectoryAssignment", feedbackDirectoryId, workspaceId }
+  );
 
-    if (!isAccessible) {
-      logger.warn(
-        {
-          feedbackDirectoryId,
-          organizationId,
-          workspaceId,
-          userId,
-          source,
-        },
-        "Feedback directory access denied for Cube query"
-      );
-      throw new AuthorizationError("Feedback directory is not accessible from this workspace");
-    }
-
-    return { feedbackDirectoryId };
-  } catch (error) {
-    if (error instanceof AuthorizationError) {
-      throw error;
-    }
-
-    logger.error(
-      {
-        error,
-        feedbackDirectoryId,
-        organizationId,
-        workspaceId,
-        userId,
-        source,
-      },
-      "Failed to verify feedback directory access for Cube query"
-    );
-    throw error;
+  if (!allowed) {
+    logger.warn({ source }, "Feedback directory access denied for Cube query");
+    throw new AuthorizationError("Feedback directory is not accessible from this workspace");
   }
+
+  return { feedbackDirectoryId };
 };

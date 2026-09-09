@@ -694,22 +694,22 @@ describe("widget-file", () => {
     });
   });
 
-  test("preloadSurveysScript adds a preload link and deduplicates subsequent calls", () => {
+  test("prefetchSurveysScript adds a prefetch link and deduplicates subsequent calls", () => {
     const createElementSpy = vi.spyOn(document, "createElement");
     const appendChildSpy = vi.spyOn(document.head, "appendChild");
 
-    widget.preloadSurveysScript("https://fake.app");
+    widget.prefetchSurveysScript("https://fake.app");
 
     expect(createElementSpy).toHaveBeenCalledWith("link");
     expect(appendChildSpy).toHaveBeenCalledTimes(1);
 
     const linkEl = createElementSpy.mock.results[0].value as Record<string, string>;
-    expect(linkEl.rel).toBe("preload");
-    expect(linkEl.as).toBe("script");
+    expect(linkEl.rel).toBe("prefetch");
+    expect(linkEl.as).toBeUndefined();
     expect(linkEl.href).toBe("https://fake.app/js/surveys.umd.cjs");
 
     // Second call should be a no-op (deduplication)
-    widget.preloadSurveysScript("https://fake.app");
+    widget.prefetchSurveysScript("https://fake.app");
     expect(appendChildSpy).toHaveBeenCalledTimes(1);
   });
 

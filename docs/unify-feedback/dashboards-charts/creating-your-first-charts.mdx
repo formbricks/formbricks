@@ -1,0 +1,291 @@
+---
+title: "Creating your first charts"
+description: "Go from a survey template to a shareable NPS dashboard, and learn why Feedback Records - not survey responses - are what charts are built on."
+icon: "rocket"
+---
+
+Charts in Formbricks are not built on survey responses. They are built on **Feedback Records**, which is why a
+brand-new workspace shows an empty Analysis page even when your surveys already have hundreds of responses.
+
+This guide walks the whole path once: from the NPS template to a dashboard your team can read at a glance.
+
+## Responses and Feedback Records
+
+A **survey response** is one submission of one survey. It lives with that survey, keeps the exact shape of the
+questions you asked, and is the right thing to read when you want to see what a single person said.
+
+A **Feedback Record** is one answer to one question, rewritten into a shape that is the same for every source.
+Each record carries when it was collected, which source it came from, what kind of question it was
+(`nps`, `csat`, `rating`, `text`, ...) and the answer itself. One response becomes several records - one per
+answered question.
+
+<Frame>
+  <img
+    src="/images/unify-feedback/dashboards-charts/feedback-records.webp"
+    alt="Feedback Records table showing NPS, Text and CSAT records from two different surveys side by side"
+  />
+</Frame>
+
+That normalization is what makes records reportable:
+
+- **One shape across sources.** NPS from a survey, a CSV upload, or the API all become `nps` records, so a single
+  chart can cover all of them.
+- **Measures that know what a score means.** Because the record is typed, Formbricks can offer `NPS: Score`,
+  `CSAT: Score` or `NPS: Detractors` as ready-made measures instead of asking you to build the math yourself.
+- **Comparisons across surveys.** Two surveys pointed at the same dataset can sit on the same chart and the same
+  time axis.
+- **Enrichment.** Open text is scored for sentiment and emotion as it arrives, which gives you dimensions you never
+  asked a question about.
+
+Creating records never changes or deletes your responses. The response stays exactly where it was; a record is an
+additional, chart-friendly copy.
+
+## What you need before your first chart
+
+Three things have to exist, in this order. Skipping the first is the most common reason Analysis looks broken:
+
+<Frame>
+  <img
+    src="/images/unify-feedback/dashboards-charts/no-dataset-linked.webp"
+    alt="Analysis page showing the empty state: No feedback dataset linked"
+  />
+</Frame>
+
+<Steps>
+  <Step title="Create a Feedback Dataset and link it to your workspace">
+    Datasets live at the **organization** level. Go to **Settings → Organization → Datasets** and click
+    **Create dataset**. Give it a name that describes the body of feedback rather than a single survey - most teams
+    start with one dataset such as "Voice of Customer".
+
+    Under **Workspace access**, pick the workspaces that should be able to read it. A workspace can only be linked
+    to one dataset, so this choice decides where that workspace's charts get their data.
+
+    <Frame>
+      <img
+        src="/images/unify-feedback/dashboards-charts/create-dataset.webp"
+        alt="Create dataset dialog with a dataset name and the workspace access picker"
+      />
+    </Frame>
+
+    The dataset then shows up in the list with the number of workspaces that can reach it.
+
+    <Frame>
+      <img
+        src="/images/unify-feedback/dashboards-charts/feedback-datasets.webp"
+        alt="Feedback Datasets settings page listing the Voice of Customer dataset as active with one workspace"
+      />
+    </Frame>
+
+    Only Owners and Managers can create datasets. See [Feedback Datasets](/unify-feedback/feedback-datasets) for
+    archiving and access details.
+  </Step>
+
+  <Step title="Connect a Feedback Source">
+    A source is what turns incoming data into records. Go to **Analyze → Feedback Data → Feedback Sources** and click
+    **Add feedback source**.
+
+    <Frame>
+      <img
+        src="/images/unify-feedback/dashboards-charts/add-feedback-source.webp"
+        alt="Add feedback source dialog offering Formbricks surveys, CSV import, API ingestion and MCP server"
+      />
+    </Frame>
+
+    Pick **Formbricks surveys**, then **Select questions**, choose your survey and tick the questions you want to
+    report on. Formbricks detects each question's type for you, so an NPS question becomes an `nps` record without
+    any mapping work.
+
+    Leave **Import historical responses** on to backfill the responses you already collected. With it off, only
+    responses submitted from now on become records.
+  </Step>
+
+  <Step title="Build charts and group them on a dashboard">
+    Charts live under **Analyze → Analysis**. Every chart is scoped to the dataset your workspace is linked to.
+  </Step>
+</Steps>
+
+Once a source is live, the Feedback Sources page tells you which dataset it writes into. Several sources can feed the
+same dataset - that is the point.
+
+<Frame>
+  <img
+    src="/images/unify-feedback/dashboards-charts/feedback-sources.webp"
+    alt="Feedback Sources list with two survey connectors, both live-syncing into the Voice of Customer dataset"
+  />
+</Frame>
+
+## Use case 1: An NPS program you can read at a glance
+
+The most common starting point. Create a survey from the **NPS Survey** template (**Surveys → New Survey**, search
+for "NPS"), publish it, collect some responses, and connect it as a source using the steps above.
+
+Now open **Analyze → Analysis → Charts** and click **Create chart**. You can describe the chart in natural language
+or build it by hand; the three charts below are built by hand so you can see exactly which controls do what.
+
+<Frame>
+  <img
+    src="/images/unify-feedback/dashboards-charts/create-chart.webp"
+    alt="Create chart dialog with the AI prompt box and the five chart types"
+  />
+</Frame>
+
+<Note>
+  The AI builder needs **Smart functionality (AI)** enabled for your organization and a configured AI provider. See
+  [AI Features](/platform/features/ai-features).
+</Note>
+
+### Chart 1: Overall NPS
+
+Your headline number. One value, no dimensions.
+
+- **Chart type:** Big Number
+- **Measure:** `NPS: Score`
+
+<Frame>
+  <img
+    src="/images/unify-feedback/dashboards-charts/chart-overall-nps.webp"
+    alt="Big Number chart showing an overall NPS score of 25.83"
+  />
+</Frame>
+
+`NPS: Score` is the standard calculation - `((promoters − detractors) / NPS responses) × 100` - so the number is
+comparable to whatever your team quotes today.
+
+### Chart 2: NPS over time
+
+A single score tells you where you are. The trend tells you whether what you did last quarter worked.
+
+- **Chart type:** Line Chart
+- **Measure:** `NPS: Score`
+- **Add time-based grouping:** on
+  - **Field:** Collected At
+  - **Granularity:** Month
+  - **Date Range:** This year
+
+<Frame>
+  <img
+    src="/images/unify-feedback/dashboards-charts/chart-nps-over-time.webp"
+    alt="Line chart of NPS: Score by month, rising from below zero in January to the mid-fifties in August"
+  />
+</Frame>
+
+<Tip>
+  The default date range is **Last 30 days**, which is why a brand-new trend chart often shows a single point. Widen
+  it before you conclude the chart is broken.
+</Tip>
+
+### Chart 3: Promoters, passives and detractors
+
+The score hides the shape of your base. A ten-point NPS made of loud promoters and loud detractors is a different
+business problem from one made of shrugs.
+
+- **Chart type:** Bar Chart
+- **Measures:** `NPS: Promoters`, `NPS: Passives`, `NPS: Detractors`
+
+<Frame>
+  <img
+    src="/images/unify-feedback/dashboards-charts/chart-promoters.webp"
+    alt="Bar chart comparing 113 promoters, 76 passives and 51 detractors"
+  />
+</Frame>
+
+### Put them on a dashboard
+
+Go to **Analyze → Analysis → Dashboards**, click **Create dashboard**, then **Add charts** and pick the three charts
+you just built. Drag and resize the widgets into the layout you want; a dashboard-level **Date range** filter sits
+above the grid.
+
+<Frame>
+  <img
+    src="/images/unify-feedback/dashboards-charts/dashboard.webp"
+    alt="NPS Health dashboard combining the overall score, the trend, the promoter split and comment sentiment"
+  />
+</Frame>
+
+## Use case 2: Why the score moved
+
+The NPS template asks a follow-up question - "can you describe the reason(s) for your rating?" - and those answers
+land as `text` records. Enrichment scores each one for sentiment as it arrives, so you can chart the *reasons*
+without reading them all.
+
+- **Chart type:** Pie Chart
+- **Measure:** `Responses`
+- **Filter data:** `Question` equals your follow-up question
+- **Group data → Group By:** `Sentiment`
+
+<Frame>
+  <img
+    src="/images/unify-feedback/dashboards-charts/chart-sentiment.webp"
+    alt="Pie chart breaking 240 NPS comments down by sentiment"
+  />
+</Frame>
+
+The filter matters. Without it the chart also counts the NPS number records, which have no sentiment, and roughly
+half of your pie becomes a "Not enriched" slice.
+
+From here, open **Analyze → Feedback Data → Feedback Records**, filter to the negative comments and read the
+verbatims behind the slice. See [Enrichment](/unify-feedback/enrichment) for what else is scored.
+
+## Use case 3: One dashboard across surveys
+
+This is where records earn their keep. Add a second survey - a CSAT survey after checkout or a support
+interaction - and connect it as a **second source into the same dataset**. Both surveys now produce records on the
+same time axis, so they can share a chart.
+
+- **Chart type:** Line Chart
+- **Measures:** `NPS: Score`, `CSAT: Score`
+- **Add time-based grouping:** Collected At, Month, This year
+
+<Frame>
+  <img
+    src="/images/unify-feedback/dashboards-charts/chart-nps-vs-csat.webp"
+    alt="Line chart plotting NPS: Score and CSAT: Score by month on the same axis"
+  />
+</Frame>
+
+Both measures are percentages of a kind, so they read sensibly on one axis: `NPS: Score` runs from −100 to 100 and
+`CSAT: Score` is the share of responses rated 4 or 5 on the 1-5 scale. When relationship-level NPS and
+transactional CSAT diverge, that gap is usually the interesting part.
+
+## When a chart looks empty
+
+<AccordionGroup>
+<Accordion title="Analysis says 'No feedback dataset linked'">
+  The workspace has no dataset. Create one under **Settings → Organization → Datasets** and add this workspace under
+  **Workspace access**.
+</Accordion>
+
+<Accordion title="The dataset exists but there are no records">
+  No source is writing into it yet, or the source was created with **Import historical responses** switched off.
+  Check **Analyze → Feedback Data → Feedback Sources**, and confirm the banner under the table names the dataset you
+  expect.
+</Accordion>
+
+<Accordion title="The chart shows one point, or nothing at all">
+  Widen the **Date Range**. It defaults to **Last 30 days**, and a trend chart at **Month** granularity over 30 days
+  has almost nothing to draw.
+</Accordion>
+
+<Accordion title="A grouped chart has a large 'Not enriched' slice">
+  You are counting records that carry no value for that dimension - usually numeric records in a chart grouped by
+  sentiment. Add a **Filter data** condition on `Question` or field type to narrow the chart to the records the
+  dimension applies to.
+</Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Dashboards & Charts" icon="chart-line" href="/unify-feedback/dashboards-charts">
+    Chart types, the AI builder, and dashboard permissions.
+  </Card>
+  <Card title="Feedback Sources" icon="plug" href="/unify-feedback/feedback-sources">
+    CSV uploads, API ingestion, and field mapping.
+  </Card>
+  <Card title="Enrichment" icon="sparkles" href="/unify-feedback/enrichment">
+    Sentiment, emotions, and language consolidation.
+  </Card>
+  <Card title="Topics & Subtopics" icon="tags" href="/unify-feedback/topics-subtopics">
+    Cluster open text into themes.
+  </Card>
+</CardGroup>

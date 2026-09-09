@@ -23,6 +23,7 @@ export interface ResponseFinishedEmailProps extends TEmailTemplateLegalProps {
   readonly workspaceId: string;
   readonly organization: TOrganization;
   readonly elements: ProcessedResponseElement[]; // Pre-processed data, not a function
+  readonly logoUrl?: string;
   readonly t?: TFunction;
 }
 
@@ -45,11 +46,12 @@ export function ResponseFinishedEmail({
   workspaceId,
   organization,
   elements,
+  logoUrl,
   t = mockT,
   ...legalProps
 }: ResponseFinishedEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate t={t} {...legalProps}>
+    <EmailTemplate logoUrl={logoUrl} t={t} {...legalProps}>
       <Container>
         <Row>
           <Column>

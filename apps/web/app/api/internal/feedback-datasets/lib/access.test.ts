@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { can } from "@/lib/authorization";
 import { getOrganizationIdFromDirectoryId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { requireFeedbackDatasetMutationAccess } from "./access";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: vi.fn(),
+vi.mock("@/lib/authorization", () => ({
+  can: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
@@ -26,7 +26,7 @@ const args = [datasetId, "req_1", "/api/internal/feedback-datasets/x/purge"] as 
 beforeEach(() => {
   vi.mocked(getOrganizationIdFromDirectoryId).mockResolvedValue("org_1");
   vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
-  vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true as never);
+  vi.mocked(can).mockResolvedValue(true);
 });
 
 describe("requireFeedbackDatasetMutationAccess", () => {
@@ -44,15 +44,14 @@ describe("requireFeedbackDatasetMutationAccess", () => {
     await requireFeedbackDatasetMutationAccess(session, ...args);
 
     expect(getOrganizationIdFromDirectoryId).toHaveBeenCalledWith(datasetId);
-    expect(checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId: "org_other",
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
+      type: "organization",
+      id: "org_other",
     });
   });
 
   test("rejects a caller who is not an owner or manager", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("nope"));
+    vi.mocked(can).mockResolvedValue(false);
 
     const result = await requireFeedbackDatasetMutationAccess(session, ...args);
 
@@ -76,7 +75,7 @@ describe("requireFeedbackDatasetMutationAccess", () => {
     const missing = (await requireFeedbackDatasetMutationAccess(session, ...args)) as Response;
 
     vi.mocked(getOrganizationIdFromDirectoryId).mockResolvedValue("org_1");
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("nope"));
+    vi.mocked(can).mockResolvedValue(false);
     const forbidden = (await requireFeedbackDatasetMutationAccess(session, ...args)) as Response;
 
     expect(missing.status).toBe(403);
@@ -87,7 +86,7 @@ describe("requireFeedbackDatasetMutationAccess", () => {
   // The entitlement message names the org's plan, so a non-member must never reach it.
   test("checks the caller's role before revealing the organization's license state", async () => {
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(false);
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("nope"));
+    vi.mocked(can).mockResolvedValue(false);
 
     const result = (await requireFeedbackDatasetMutationAccess(session, ...args)) as Response;
 
@@ -110,7 +109,7 @@ describe("requireFeedbackDatasetMutationAccess", () => {
 
   // An unexpected failure must not read as "allowed".
   test("rethrows an unexpected authorization error", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new Error("db down"));
+    vi.mocked(can).mockRejectedValue(new Error("db down"));
 
     await expect(requireFeedbackDatasetMutationAccess(session, ...args)).rejects.toThrow("db down");
   });

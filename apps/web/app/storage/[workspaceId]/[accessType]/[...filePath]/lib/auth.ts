@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { authenticateRequest } from "@/app/api/v1/auth";
-import { hasUserWorkspaceAccessForAction } from "@/lib/workspace/auth";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getSession } from "@/modules/auth/lib/session";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const authorizePrivateDownload = async (
   request: NextRequest,
@@ -20,7 +20,11 @@ export const authorizePrivateDownload = async (
   const session = await getSession();
 
   if (session?.user) {
-    const isUserAuthorized = await hasUserWorkspaceAccessForAction(session.user.id, workspaceId, action);
+    const isUserAuthorized = await can(
+      { type: "user", id: session.user.id },
+      getWorkspaceAuthorizationActionForMethod(action),
+      { type: "workspace", id: workspaceId }
+    );
     if (!isUserAuthorized) {
       return err({
         unauthorized: true,
@@ -40,7 +44,12 @@ export const authorizePrivateDownload = async (
     });
   }
 
-  if (!hasPermission(auth.workspacePermissions, workspaceId, action)) {
+  if (
+    !(await can({ type: "apiKey", id: auth.apiKeyId }, getWorkspaceAuthorizationActionForMethod(action), {
+      type: "workspace",
+      id: workspaceId,
+    }))
+  ) {
     return err({
       unauthorized: true,
     });

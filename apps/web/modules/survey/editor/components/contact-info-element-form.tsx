@@ -78,6 +78,7 @@ export const ContactInfoElementForm = ({
       .every((field) => !field.required);
 
     updateElement(elementIdx, { required: !allFieldsAreOptional });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync-only effect; adding updateElement/elementIdx would loop as it writes back into the survey
   }, [element.firstName, element.lastName, element.email, element.phone, element.company]);
 
   const [parent] = useAutoAnimate();

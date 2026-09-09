@@ -211,13 +211,13 @@ export const ShareSurveyModal = ({
     user.locale,
     surveyUrl,
     isReadOnly,
-    survey.workspaceId,
     segments,
     isContactsEnabled,
     isFormbricksCloud,
     email,
     isStorageConfigured,
     workspaceCustomScripts,
+    enterpriseLicenseRequestFormUrl,
   ]);
 
   const getDefaultActiveId = useCallback(() => {

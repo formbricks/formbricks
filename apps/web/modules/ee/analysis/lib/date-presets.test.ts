@@ -1,6 +1,8 @@
+import { formatDate } from "date-fns";
 import { describe, expect, test } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
-import { expandPresetDateRanges } from "./date-presets";
+import { isSubDayDateRangePreset, resolveDateRangePresetBounds } from "@/lib/date-ranges";
+import { DASHBOARD_DATE_PRESETS, expandPresetDateRanges } from "./date-presets";
 
 const queryWithDateRange = (dateRange: string | [string, string]): TChartQuery => ({
   measures: ["FeedbackRecords.count"],
@@ -116,4 +118,17 @@ describe("expandPresetDateRanges", () => {
     expandPresetDateRanges(q, NOW);
     expect(JSON.stringify(q)).toBe(before);
   });
+
+  // A chart and the survey summary filter set to the same preset must cover the same days, which only
+  // holds while both read their ranges from `@/lib/date-ranges`. Redefine either side and this fails.
+  test.each(DASHBOARD_DATE_PRESETS.filter((preset) => !isSubDayDateRangePreset(preset)))(
+    "'%s' covers the same days as the summary filter",
+    (preset) => {
+      const { from, to } = resolveDateRangePresetBounds(preset, NOW);
+      expect(expandPresetDateRanges(queryWithDateRange(preset), NOW).timeDimensions?.[0].dateRange).toEqual([
+        formatDate(from, "yyyy-MM-dd"),
+        formatDate(to, "yyyy-MM-dd"),
+      ]);
+    }
+  );
 });

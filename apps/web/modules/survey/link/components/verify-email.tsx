@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, MailIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -16,8 +16,8 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { isSurveyResponsePresentAction, sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
-import { getWebAppLocale } from "@/modules/survey/link/lib/utils";
+import { sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
+import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -47,18 +47,9 @@ export const VerifyEmail = ({
   styling,
   locale,
 }: VerifyEmailProps) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const isLocaleReady = useAppLocale(locale);
 
-  // Set i18n language based on survey language
-  useEffect(() => {
-    const webAppLocale = getWebAppLocale(languageCode, survey);
-    if (i18n.language !== webAppLocale) {
-      i18n.changeLanguage(webAppLocale).catch(() => {
-        // If changeLanguage fails, fallback to default locale
-        i18n.changeLanguage("en-US");
-      });
-    }
-  }, [languageCode, survey, i18n]);
   const form = useForm<TVerifyEmailInput>({
     defaultValues: {
       email: "",
@@ -83,19 +74,6 @@ export const VerifyEmail = ({
 
   const submitEmail = async (emailInput: TVerifyEmailInput) => {
     const email = emailInput.email.toLowerCase();
-    if (localSurvey.isSingleResponsePerEmailEnabled) {
-      const actionResult = await isSurveyResponsePresentAction({
-        surveyId: localSurvey.id,
-        email,
-      });
-      if (actionResult?.data) {
-        form.setError("email", {
-          type: "custom",
-          message: t("s.response_already_received"),
-        });
-        return;
-      }
-    }
 
     const data = {
       surveyId: localSurvey.id,
@@ -104,6 +82,8 @@ export const VerifyEmail = ({
       suId: singleUseId ?? "",
       suToken: singleUseToken,
       locale,
+      // The language the respondent is reading the survey in, so the emailed link comes back to it.
+      surveyLanguageCode: languageCode,
     };
 
     const actionResult = await sendLinkSurveyEmailAction(data);
@@ -123,6 +103,10 @@ export const VerifyEmail = ({
     setShowPreviewQuestions(false);
     setEmailSent(false);
   };
+
+  // The gate is nothing but translated chrome, so it waits for its locale instead of asking for an
+  // email address in the browser's language and switching a frame later.
+  if (!isLocaleReady) return null;
 
   if (isErrorComponent) {
     return (

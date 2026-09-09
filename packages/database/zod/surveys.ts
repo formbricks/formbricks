@@ -138,7 +138,6 @@ const ZSurveyBase = z.object({
     })
     .describe("Single use configuration"),
   isVerifyEmailEnabled: z.boolean().describe("Whether email verification is enabled"),
-  isSingleResponsePerEmailEnabled: z.boolean().describe("Whether single response per email is enabled"),
   inlineTriggers: z.array(z.any()).nullable().describe("Inline triggers configuration"),
   isBackButtonHidden: z.boolean().describe("Whether the back button is hidden"),
   isAutoProgressingEnabled: z.boolean().describe("Whether auto-progress is enabled for eligible questions"),

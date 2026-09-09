@@ -13,6 +13,7 @@ import {
   getChartAction,
   updateChartAction,
 } from "@/modules/ee/analysis/charts/actions";
+import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { sanitizeChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
@@ -127,9 +128,12 @@ export function useChartDialog({
         setChartConfig(chart.config ?? {});
         setSelectedDirectoryId(chart.feedbackDirectoryId);
 
+        // Charts saved before a big number's query stopped carrying groups can still hold a
+        // granularity or a dimension; normalize on read so the value shown is the measure over the
+        // whole range, not a fold of per-group values.
         const queryResult = await executeQueryAction({
           workspaceId,
-          query: chart.query,
+          query: prepareQueryForChartType(chart.query, resolveChartType(chart.type)),
           feedbackDirectoryId: chart.feedbackDirectoryId,
         });
         if (cancelled) return;
@@ -275,7 +279,7 @@ export function useChartDialog({
         toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
       }
 
-      onOpenChange(false);
+      closeDialog();
       if (autoAddToDashboardId) {
         const dashboardPath = `/workspaces/${workspaceId}/dashboards/${autoAddToDashboardId}`;
         if (pathname !== dashboardPath) {
@@ -368,7 +372,7 @@ export function useChartDialog({
 
       toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
       setIsAddToDashboardDialogOpen(false);
-      onOpenChange(false);
+      closeDialog();
       startTransition(() => {
         router.refresh();
       });
@@ -385,19 +389,31 @@ export function useChartDialog({
     }
   };
 
+  /**
+   * Every close goes through here. A chart left behind after one close is not just stale data: the
+   * next open renders one frame carrying it, and anything that reads the state on that frame — the
+   * unsaved-changes baseline above all — sees the previous session's chart and concludes the fresh,
+   * untouched builder already has work in it.
+   */
+  const resetDialogState = () => {
+    setChartData(null);
+    setChartName("");
+    setSavedChartName("");
+    lastSuggestedNameRef.current = null;
+    setSelectedChartType(undefined);
+    setCurrentChartId(undefined);
+    setChartConfig({});
+    setChartLoadError(null);
+    setSelectedDirectoryId(directories?.[0]?.id ?? null);
+  };
+
+  const closeDialog = () => {
+    resetDialogState();
+    onOpenChange(false);
+  };
+
   const handleClose = () => {
-    if (!isSaving) {
-      setChartData(null);
-      setChartName("");
-      setSavedChartName("");
-      lastSuggestedNameRef.current = null;
-      setSelectedChartType(undefined);
-      setCurrentChartId(undefined);
-      setChartConfig({});
-      setChartLoadError(null);
-      setSelectedDirectoryId(directories?.[0]?.id ?? null);
-      onOpenChange(false);
-    }
+    if (!isSaving) closeDialog();
   };
 
   const handleChartTypeChange = (type: TChartType) => {

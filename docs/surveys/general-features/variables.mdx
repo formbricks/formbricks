@@ -14,17 +14,12 @@ There are two types of variables you can add to your survey:
 
 ## How to Add Variables
 
-1. Edit the survey you want to add variables to & switch to the Questions tab and scroll down to the bottom of the page. You will see a section called **Variables**.
+1. Open the survey in the editor, stay on the **Questions** tab and scroll to the bottom. You will find a **Variables** section.
+2. Give the variable a name, choose its type — text or number — and set a starting value. Add as many as you need.
 
-![Variables card](/images/surveys/general-features/variables/variables-card.webp)
+Each variable also gets an ID, listed under **Variable IDs**, which is what you use to recall it.
 
-
-1. Now click on it to add a new variable ID. You can add as many variables as you want. You can also choose the type of variable you want to add along with the default value.
-
-![add variables](/images/surveys/general-features/variables/input-variables.webp)
-
-
-![created variables](/images/surveys/general-features/variables/created-variables.webp)
+![Variables in the survey editor](/images/surveys/general-features/variables/editor.webp)
 
 ## Use cases
 
@@ -36,7 +31,7 @@ There are two types of variables you can add to your survey:
 
 Variables are different from hidden fields in the following ways:
 
-1. **Setting**: Hidden fields can be set through query parameters or `formbricks.init`, but the variables can only be set either during creation or dynamically by using logic actions.
+1. **Setting**: Hidden fields can be set through query parameters or `formbricks.setup`, but variables can only be set either during creation or dynamically by using logic actions.
 
 2. **Updating**: Hidden fields cannot be set again, but the value of variables can be updated while the user fills the survey.
 

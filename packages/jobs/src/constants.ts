@@ -4,10 +4,13 @@ export const JOBS_QUEUE_NAME = "background-jobs";
 export const JOBS_PREFIX = "{formbricks:jobs}";
 
 export const JOB_NAMES = {
+  authzedProjectionDelivery: "authzed-projection.deliver",
+  authzedReconciliationAudit: "authzed-reconciliation.audit",
   testLog: "system.test-log",
   responsePipeline: "response-pipeline.process",
   surveyScheduling: "survey-scheduling.reconcile",
   surveyArchivePurge: "survey-archive-purge.process",
+  usageTelemetry: "usage-telemetry.process",
   workflowRun: "workflow-run.process",
   workflowRunReconcile: "workflow-run.reconcile",
 } as const;

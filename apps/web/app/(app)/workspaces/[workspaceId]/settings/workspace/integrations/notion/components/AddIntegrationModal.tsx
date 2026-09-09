@@ -110,6 +110,17 @@ export const AddIntegrationModal = ({
         type: dbProperties[fieldKey].type,
       })) || []
     );
+    // The effect below re-seeds `selectedDatabase` with a fresh object literal whenever the
+    // `databases`/`surveys` server props change identity, which an RSC refresh does on unchanged
+    // content. Keying on the id keeps identical content from recomputing this list.
+    //
+    // The trade-off, stated so it is a choice rather than an oversight: if a refresh brings back
+    // *different* properties for the same database id — someone edited the Notion database's schema
+    // while this modal was open on it — the list here stays stale until the database is reselected.
+    // Fixing that by keying on the object trades a rare staleness for a recompute on every refresh;
+    // fixing it properly means not re-seeding with a fresh literal when the content is unchanged,
+    // which belongs in the effect rather than in this dep array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the database's identity, not the object's
   }, [selectedDatabase?.id]);
 
   const elementItems = useMemo(() => {
@@ -155,7 +166,10 @@ export const AddIntegrationModal = ({
     }));
 
     return [...mappedElements, ...variables, ...hiddenFields, ...Metadata, ...createdAt, ...personAttributes];
-  }, [selectedSurvey?.id, contactAttributeKeys]);
+    // Same as `dbItems` above: `selectedSurvey` is re-seeded from the `surveys` server prop, so its
+    // identity changes on a refresh that changed nothing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the survey's identity, not the object's
+  }, [contactAttributeKeys, elements, selectedSurvey?.id, t]);
 
   useEffect(() => {
     if (selectedIntegration) {

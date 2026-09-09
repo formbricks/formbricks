@@ -45,7 +45,7 @@ export const RichTextTranslationInput = ({
   }, [value]);
 
   return (
-    <div className={disabled ? "cursor-not-allowed rounded-md opacity-60" : "rounded-md"}>
+    <div className="rounded-md">
       <Editor
         key={`${path}-${editorKey}`}
         disableLists

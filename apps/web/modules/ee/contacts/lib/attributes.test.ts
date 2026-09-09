@@ -7,7 +7,7 @@ import {
   hasEmailAttribute,
   hasUserIdAttribute,
 } from "@/modules/ee/contacts/lib/contact-attributes";
-import { updateAttributes } from "./attributes";
+import { formatAttributeMessage, updateAttributes } from "./attributes";
 
 vi.mock("@/lib/constants", () => ({
   MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT: 2,
@@ -489,5 +489,83 @@ describe("updateAttributes", () => {
     const transactionCall = vi.mocked(prisma.$transaction).mock.calls[0][0];
     // Both name (coerced from boolean) and email should be upserted
     expect(transactionCall).toHaveLength(2);
+  });
+
+  describe("concurrent-identify deadlock protection (ENG-2252)", () => {
+    test("upserts existing attributes in attributeKeyId order regardless of payload key order", async () => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+      vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
+      vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+
+      // Payload in the exact reverse of attributeKeyId order — the ordering that deadlocks against a
+      // concurrent ascending payload when upserts lock rows in caller order.
+      const attributes = { customAttr: "c", email: "john@example.com", name: "John" };
+      const result = await updateAttributes(contactId, userId, workspaceId, attributes);
+
+      expect(result.success).toBe(true);
+      const upsertedKeyIds = vi
+        .mocked(prisma.contactAttribute.upsert)
+        .mock.calls.map(([args]) => args.where.contactId_attributeKeyId?.attributeKeyId);
+      expect(upsertedKeyIds).toEqual(["key-1", "key-2", "key-3"]);
+    });
+
+    test("retries the upsert transaction once when it deadlocks, and succeeds", async () => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+      vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
+      vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+      // The driver-adapter deadlock shape seen in Sentry (FORMBRICKS-19P).
+      vi.mocked(prisma.$transaction)
+        .mockRejectedValueOnce(new Error("deadlock detected"))
+        .mockResolvedValueOnce(undefined);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, {
+        name: "John",
+        email: "john@example.com",
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    });
+
+    test("creates new attribute keys in key order regardless of payload key order", async () => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue([]);
+      vi.mocked(getContactAttributes).mockResolvedValue({});
+      vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(undefined as never);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, { zeta: "1", alpha: "2" });
+
+      expect(result.success).toBe(true);
+      const createdKeys = vi
+        .mocked(prisma.contactAttributeKey.create)
+        .mock.calls.map(([args]) => args.data.key);
+      expect(createdKeys).toEqual(["alpha", "zeta"]);
+    });
+  });
+});
+
+describe("formatAttributeMessage", () => {
+  test("describes the duplicate email/userId checks as workspace-scoped", () => {
+    // The checks behind these two codes call hasEmailAttribute/hasUserIdAttribute with workspaceId,
+    // and the UI renders the same conditions via workspace.contacts.attributes_msg_* — so the
+    // English templates must not describe the scope as an environment.
+    expect(formatAttributeMessage({ code: "email_already_exists", params: {} })).toBe(
+      "The email already exists for this workspace and was not updated."
+    );
+    expect(formatAttributeMessage({ code: "userid_already_exists", params: {} })).toBe(
+      "The userId already exists for this workspace and was not updated."
+    );
+  });
+
+  test("interpolates every occurrence of a param", () => {
+    expect(
+      formatAttributeMessage({
+        code: "attribute_type_validation_error",
+        params: { error: "Not a number", key: "age", dataType: "number" },
+      })
+    ).toBe("Not a number (attribute 'age' has dataType: number)");
+  });
+
+  test("falls back to the raw code when no template exists", () => {
+    expect(formatAttributeMessage({ code: "some_unmapped_code", params: {} })).toBe("some_unmapped_code");
   });
 });

@@ -4,6 +4,8 @@ export const rateLimitConfigs = {
     login: { interval: 900, allowedPerInterval: 10, namespace: "auth:login" }, // 10 per 15 minutes
     signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup" }, // 30 per hour
     forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot" }, // 5 per hour
+    // Keep redemption independent so requesting an email cannot exhaust the budget to use its token.
+    resetPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:reset-password" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
     emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token" }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
   },
@@ -42,11 +44,6 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "action:send-link-survey-email",
     }, // 10 per hour
-    isSurveyResponsePresent: {
-      interval: 60,
-      allowedPerInterval: 10,
-      namespace: "action:survey-response-present",
-    }, // 10 per minute — prevents email-enumeration oracle
     validateSurveyPin: {
       interval: 60,
       allowedPerInterval: 10,
@@ -72,6 +69,36 @@ export const rateLimitConfigs = {
     }, // 30 per minute per user — one save or delete per UI interaction, so this bounds a readWrite
     // member churning integration rows (each write hits the provider config and the audit log) without
     // getting in the way of legitimate mapping edits
+    feedbackSourceMutation: {
+      interval: 60,
+      allowedPerInterval: 60,
+      namespace: "action:feedback-source-mutation",
+    }, // 60 per minute per user
+    historicalResponseImport: {
+      interval: 3600,
+      allowedPerInterval: 10,
+      namespace: "action:historical-response-import",
+    }, // 10 per hour per user — bounds repeated full-survey imports
+    chartCreation: {
+      interval: 60,
+      allowedPerInterval: 60,
+      namespace: "action:chart-creation",
+    }, // 60 per minute per user
+    feedbackDirectoryMutation: {
+      interval: 60,
+      allowedPerInterval: 60,
+      namespace: "action:feedback-directory-mutation",
+    }, // 60 per minute per user
+    feedbackRecordDeletion: {
+      interval: 60,
+      allowedPerInterval: 100,
+      namespace: "action:feedback-record-deletion",
+    }, // 100 per minute per user — supports deliberate bulk deletion while bounding abuse
+    stateMutation: {
+      interval: 60,
+      allowedPerInterval: 120,
+      namespace: "action:state-mutation",
+    }, // 120 per minute per organization/workspace — shared guard for authenticated settings writes
   },
 
   storage: {
@@ -82,5 +109,14 @@ export const rateLimitConfigs = {
       namespace: "storage:upload:workspace",
     }, // 100 per minute per workspace
     delete: { interval: 60, allowedPerInterval: 5, namespace: "storage:delete" }, // 5 per minute
+    // One attachment export streams thousands of objects out of S3, so it is bounded far more tightly
+    // than a CSV download. Charged inside the route's handler, on the download path only, so the
+    // client's dryRun pre-flight does not spend a download's allowance — see the route for why that
+    // cannot go through the wrapper's customRateLimitConfig.
+    attachmentsExport: {
+      interval: 600,
+      allowedPerInterval: 3,
+      namespace: "storage:attachments-export",
+    }, // 3 downloads per 10 minutes
   },
 } as const;

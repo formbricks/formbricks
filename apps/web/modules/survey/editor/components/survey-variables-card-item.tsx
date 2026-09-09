@@ -202,6 +202,7 @@ export const SurveyVariablesCardItem = ({
               name="type"
               render={({ field }) => (
                 <FormItem
+                  className="space-y-0"
                   onBlur={mode === "edit" ? () => form.handleSubmit(editSurveyVariable)() : undefined}>
                   <Select
                     {...field}

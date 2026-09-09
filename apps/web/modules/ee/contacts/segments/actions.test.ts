@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 
 const mocks = vi.hoisted(() => ({
-  checkAuthorizationUpdated: vi.fn(),
+  assertCan: vi.fn(),
   getOrganizationIdFromSegmentId: vi.fn(),
   getWorkspaceIdFromSegmentId: vi.fn(),
   getWorkspaceIdFromSurveyId: vi.fn(),
@@ -23,8 +23,8 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_eventName, _objectType, fn) => fn),
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: mocks.checkAuthorizationUpdated,
+vi.mock("@/lib/authorization", () => ({
+  assertCan: mocks.assertCan,
 }));
 
 vi.mock("@/lib/utils/helper", () => ({
@@ -69,7 +69,7 @@ const callUpdate = (data: Record<string, unknown>) =>
 describe("updateSegmentAction — ENG-1920 cross-workspace survey re-point", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.checkAuthorizationUpdated.mockResolvedValue(undefined);
+    mocks.assertCan.mockResolvedValue(undefined);
     mocks.getOrganizationIdFromSegmentId.mockResolvedValue("org1");
     mocks.getWorkspaceIdFromSegmentId.mockResolvedValue("ws-segment");
     mocks.getIsContactsEnabled.mockResolvedValue(true);

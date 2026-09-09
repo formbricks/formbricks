@@ -3,10 +3,10 @@ import { logger } from "@formbricks/logger";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
+import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
 import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -71,7 +71,7 @@ export default async function UnifyFeedbackRecordsPage(
   }
 
   const [frds, feedbackSources] = await Promise.all([
-    getFeedbackDirectoriesByWorkspaceId(params.workspaceId),
+    getAuthorizedWorkspaceFeedbackDirectories(session.user.id, params.workspaceId),
     getFeedbackSourcesWithMappings(params.workspaceId),
   ]);
 

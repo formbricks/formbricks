@@ -1,7 +1,8 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { deleteTeam, getTeam, updateTeam } from "../teams";
 
 vi.mock("@formbricks/database", () => ({
@@ -14,6 +15,10 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
+
 // Define a mock team
 const mockTeam = {
   id: "team123",
@@ -23,6 +28,10 @@ const mockTeam = {
 };
 
 describe("Teams Lib", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe("getTeam", () => {
     test("returns the team when found", async () => {
       (prisma.team.findUnique as any).mockResolvedValueOnce(mockTeam);
@@ -67,6 +76,7 @@ describe("Teams Lib", () => {
         include: { workspaceTeams: { select: { workspaceId: true } } },
       });
       expect(result.ok).toBe(true);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ teamIds: ["team123"] });
       if (result.ok) {
         expect(result.data).toEqual(mockTeam);
       }
@@ -113,6 +123,7 @@ describe("Teams Lib", () => {
         include: { workspaceTeams: { select: { workspaceId: true } } },
       });
       expect(result.ok).toBe(true);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ teamIds: ["team123"] });
       if (result.ok) {
         expect(result.data).toEqual(updatedTeam);
       }

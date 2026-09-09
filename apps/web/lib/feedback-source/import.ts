@@ -24,7 +24,12 @@ const processBatch = async (
 ): Promise<TImportResult> => {
   let successes = 0;
   let failures = 0;
-  const expectedRecords = responses.length * mappings.length;
+  // Only this survey's mappings count towards the expectation. `transformResponseToFeedbackRecords`
+  // filters on `m.surveyId === survey.id`, so counting every mapping the source holds would report
+  // the other surveys' mappings as `skipped` records that were never expected in the first place.
+  // No change while a source binds one survey; it keeps the number honest once one binds several.
+  const surveyMappings = mappings.filter((mapping) => mapping.surveyId === survey.id);
+  const expectedRecords = responses.length * surveyMappings.length;
 
   const allRecords = responses.flatMap((response) => {
     try {

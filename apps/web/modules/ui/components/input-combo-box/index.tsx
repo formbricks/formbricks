@@ -243,7 +243,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     onChangeValue(val, undefined, true);
   };
 
-  const getDisplayValue = useMemo(() => {
+  // Renders the selected option(s) inside the trigger. Not memoized: it builds a handful of
+  // elements from an already-narrow option list, and the compiler would not memoize a JSX-returning
+  // value anyway, so the manual memo only made the two disagree (ENG-2366).
+  const renderDisplayValue = () => {
     if (Array.isArray(localValue)) {
       return localValue.map((v, i) => {
         const opt = validOptions?.find((o) => o.value === v);
@@ -290,7 +293,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         </span>
       </div>
     );
-  }, [localValue, validOptions, iconClassName]);
+  };
 
   const handleClear = () => {
     setInputType(null);
@@ -303,9 +306,12 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     Array.isArray(localValue) ? localValue.includes(option.value as string) : localValue === option.value;
 
   return (
+    // The height lives on this wrapper rather than on the trigger below: the wrapper clips its children
+    // (overflow-hidden), so a fixed-height trigger inside a shorter wrapper (comboboxClasses="h-9") gets
+    // cropped and its centered content sits low next to same-height controls in a filter row.
     <div
       className={cn(
-        "group/icon flex max-w-[440px] min-w-0 overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
+        "group/icon flex h-10 max-w-[440px] min-w-0 overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
         disabled && "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60 hover:border-slate-200",
         comboboxClasses
       )}>
@@ -335,7 +341,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             aria-expanded={open}
             aria-disabled={disabled || undefined}
             className={cn(
-              "flex h-10 w-full min-w-0 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
+              "flex h-full w-full min-w-0 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
               {
                 "w-10 shrink-0 justify-center pr-0": withInput && inputType !== "dropdown",
                 "pointer-events-none": isClearing || disabled,
@@ -343,7 +349,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
               }
             )}>
             {inputType === "dropdown" ? (
-              <div className="min-w-0 flex-1 truncate px-2 text-sm">{getDisplayValue}</div>
+              <div className="min-w-0 flex-1 truncate px-2 text-sm">{renderDisplayValue()}</div>
             ) : (
               placeholder && (
                 <span className="min-w-0 flex-1 truncate px-2 text-sm text-slate-400">{placeholder}</span>

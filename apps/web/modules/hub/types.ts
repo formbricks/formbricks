@@ -42,6 +42,39 @@ export type SimilarRecordsResponse = FormbricksHub.FeedbackRecords.FeedbackRecor
 export type SimilarRecordsResultItem =
   FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarResponse.Data;
 
+// Tenant-scoped enrichment progress (ENG-1670). Counts are data-derived from the directory's feedback
+// records — how many qualify for an enrichment vs. how many carry it — not queue depth, so `done` never
+// exceeds `eligible` and "in progress" is the difference. `enabled: false` means the enrichment is
+// switched off for the tenant or not configured in the deployment, and its counts are zero.
+//
+// `failed`/`failed_terminal` (ENG-2375, hub PR formbricks/hub#125) split what used to be silently
+// folded into `eligible - done`: `failed` is a transient failure River will retry; `failed_terminal`
+// gave up for good (content filter, refusal, truncation) and will never complete on its own. Without
+// this, a permanently-failed record read as "still in progress" forever and the poll never stopped.
+// The published SDK predates the fields, so bridge them as optional reads until it ships them.
+// Note: `eligible - done - failed - failed_terminal` is not always 0 — a record whose enrichment was
+// enabled after it already existed was never enqueued at all, and neither done nor failed accounts for
+// it (ENG-2376 tracks auto-requeueing that residual; out of scope here).
+//
+// `failed` is intentionally not read by the aggregator: a transient failure is still going to be
+// retried by River, so it stays folded into `pending` the same way it always did — only
+// `failed_terminal` (which will never resolve on its own) is pulled out and shown separately.
+export type EnrichmentTypeStatus = FormbricksHub.TypeStatus & {
+  failed?: number;
+  failed_terminal?: number;
+};
+// The three per-enrichment keys are re-declared optional (the SDK types them as always-present)
+// because the aggregator treats an absent key as "disabled" rather than assuming the Hub always
+// answers with all three — matching the `status?.enabled` optional-chaining it already does.
+export type EnrichmentStatusResponse = Omit<
+  FormbricksHub.EnrichmentStatusRetrieveResponse,
+  "translation" | "sentiment" | "emotions"
+> & {
+  translation?: EnrichmentTypeStatus;
+  sentiment?: EnrichmentTypeStatus;
+  emotions?: EnrichmentTypeStatus;
+};
+
 export type TaxonomyScope = {
   tenant_id: string;
   source_type: string;

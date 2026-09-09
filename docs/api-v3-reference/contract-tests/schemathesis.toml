@@ -1,0 +1,24 @@
+# Schemathesis configuration for the v3 API contract tests (ENG-2191).
+#
+# The committed bundle one directory up (../openapi.yml) is the only contract input — there is no
+# second copy of the spec to keep in sync. Pass this file explicitly, since Schemathesis only
+# discovers `schemathesis.toml` in the working directory and its parents:
+#
+#   schemathesis --config-file docs/api-v3-reference/contract-tests/schemathesis.toml run ...
+#
+# See README.md in this directory for the full local invocation.
+
+# Overridden by --url in CI; this is the local dev-server default.
+base-url = "http://localhost:3000"
+
+# Generous enough for a cold Next.js route on the first hit, tight enough that a hung route fails the
+# job instead of sitting until the step timeout.
+request-timeout = 30
+
+[phases.examples]
+# Load-bearing. The examples phase only emits cases for operations that carry explicit `example` /
+# `examples` in the spec — three of the twenty-eight v3 operations today. The other twenty-five are
+# silently skipped, which reads as a green run that proves nothing. `fill-missing` generates the
+# absent parts so every documented operation gets a case, which is also what makes newly documented
+# endpoints covered with no per-endpoint registration.
+fill-missing = true

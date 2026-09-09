@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
@@ -21,6 +23,12 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
+vi.mock("@/lib/authzed/organization-membership", () => ({
+  reconcileOrganizationMembership: vi.fn(),
+}));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 vi.mock("@/lib/membership/service", () => ({ createMembership: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn(), identifyPostHogPerson: vi.fn() }));
@@ -284,8 +292,9 @@ describe("provisionSsoUserMemberships", () => {
       "org-1",
       "u1",
       { role: "member", accepted: true },
-      expect.anything()
+      expect.objectContaining({ projection: "deferred", transaction: expect.anything() })
     );
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org-1", "u1");
     expect(createDefaultTeamMembership).not.toHaveBeenCalled();
     expect(updateUser).toHaveBeenCalledWith(
       "u1",
@@ -306,6 +315,9 @@ describe("provisionSsoUserMemberships", () => {
   test("creates a default team membership when requested", async () => {
     await provisionSsoUserMemberships({ ...baseArgs, assignToDefaultTeam: true });
     expect(createDefaultTeamMembership).toHaveBeenCalledWith("u1", expect.anything());
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [{ teamId: "team-123", userId: "u1" }],
+    });
   });
 
   test("skips org writes when there is no organization but still syncs analytics", async () => {
@@ -324,6 +336,7 @@ describe("provisionSsoUserMemberships", () => {
     vi.mocked(createMembership).mockRejectedValue(new Error("db down"));
     await expect(provisionSsoUserMemberships(baseArgs)).resolves.toBeUndefined();
     expect(createMembership).toHaveBeenCalledTimes(2); // initial + one retry
+    expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledTimes(1);
     expect(createBrevoCustomer).toHaveBeenCalled();
     expect(capturePostHogEvent).toHaveBeenCalled();
@@ -335,6 +348,7 @@ describe("provisionSsoUserMemberships", () => {
       .mockResolvedValue(undefined as never);
     await provisionSsoUserMemberships(baseArgs);
     expect(createMembership).toHaveBeenCalledTimes(2);
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org-1", "u1");
     expect(logger.error).not.toHaveBeenCalled();
   });
 

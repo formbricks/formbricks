@@ -1,0 +1,639 @@
+---
+title: "AuthZed Operations"
+description: "Configure, monitor, back up, and repair the SpiceDB authorization dependency used by Formbricks."
+icon: "shield-halved"
+---
+
+Formbricks uses [AuthZed SpiceDB](https://authzed.com/docs/spicedb) to store a relationship graph for
+authorization. PostgreSQL remains the source of truth. Formbricks projects membership, team, workspace, and
+API-key changes into SpiceDB after their PostgreSQL transaction commits.
+
+<Note>
+  Formbricks v6 makes SpiceDB the sole authorization decision engine and has no runtime legacy fallback.
+  PostgreSQL remains the relationship source of truth, with durable outbox delivery into SpiceDB. Existing
+  installations must complete the release-matched preparation and read-only gate before upgrading; a healthy
+  connection alone is not sufficient.
+</Note>
+
+<Warning>
+  Treat SpiceDB as a private infrastructure dependency. Do not publish its gRPC port through an Ingress,
+  reverse proxy, load balancer, or public Docker port.
+</Warning>
+
+## Understand the dependency
+
+| Component                    | Responsibility                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------- |
+| Formbricks PostgreSQL        | Authoritative organizations, memberships, teams, workspaces, and API-key scopes |
+| SpiceDB PostgreSQL datastore | Persistent SpiceDB schema, relationships, and revisions                         |
+| SpiceDB                      | Evaluates the relationship graph                                                |
+| Formbricks projection layer  | Copies committed PostgreSQL authorization changes into SpiceDB                  |
+| AuthZed operator commands    | Check health and schema state, then audit or repair relationship drift          |
+
+Formbricks writes projection intent in the same PostgreSQL transaction as the source mutation. BullMQ wakes the
+delivery worker, but PostgreSQL is the durable queue. A failed delivery is retried idempotently and a stale or
+dead-lettered revocation makes protected operations fail closed. A six-hour audit repairs attributable missing
+or mismatched edges; operators must investigate state that cannot be repaired safely.
+
+The general Formbricks `/health` endpoint, application startup, and Kubernetes readiness and liveness probes
+do not depend on SpiceDB. This prevents a SpiceDB outage from restarting unrelated Formbricks workloads. It
+also means `/health` alone cannot prove that authorization data is healthy.
+
+There is no browser health or administration page. Use the release-matched operator commands below.
+
+## Configure AuthZed
+
+| Variable                    | Purpose                                                             | Default                                             |
+| --------------------------- | ------------------------------------------------------------------- | --------------------------------------------------- |
+| `AUTHZED_ENABLED`           | Enables the required AuthZed authorization engine                    | `true` in bundled Docker and Helm                    |
+| `AUTHZED_ENDPOINT`          | Bare gRPC `host:port` endpoint                                      | `spicedb:50051` in Docker                           |
+| `AUTHZED_TOKEN`             | SpiceDB preshared authentication token                              | No default                                          |
+| `AUTHZED_SYSTEM_KEY`        | Stable Formbricks authorization namespace identifier                | `formbricks`                                        |
+| `AUTHZED_INSECURE`          | Uses plaintext gRPC when enabled                                    | `true` for bundled Docker and chart-managed SpiceDB |
+| `AUTHZED_CONSISTENCY`       | Authorization read consistency                                      | `fully_consistent`                                  |
+| `AUTHZED_DATABASE_PASSWORD` | Password for Docker's dedicated `spicedb` PostgreSQL role           | No default                                          |
+| `SPICEDB_IMAGE_REF`         | Reviewed override used by both Docker migration and server services | `authzed/spicedb:v1.52.0`                           |
+
+`AUTHZED_ENABLED` and `AUTHZED_INSECURE` accept `true`, `false`, `1`, and `0`. The endpoint must contain an
+explicit port and no scheme, path, query, credentials, or whitespace. Examples include `spicedb:50051`,
+`grpc.authzed.com:443`, and `[::1]:50051`.
+
+Use `AUTHZED_INSECURE=false` for AuthZed Cloud or any endpoint outside a trusted private network. Plaintext
+gRPC transmits the preshared token without TLS protection. Changing AuthZed configuration requires restarting
+the Formbricks process.
+
+Generate independent credentials with:
+
+```bash
+openssl rand -hex 32 # AUTHZED_TOKEN
+openssl rand -hex 32 # AUTHZED_DATABASE_PASSWORD for bundled Docker
+```
+
+Store them in a mode-`0600` `.env`, Docker secret, Kubernetes Secret, or external secret manager. Never put
+the token in a `NEXT_PUBLIC_*` variable, command output, documentation, or source control.
+
+See [Environment Variables](/self-hosting/configuration/environment-variables#authzed--spicedb-authorization)
+for the complete validation contract.
+
+## Operate Docker and one-click installations
+
+The released Compose stack runs one SpiceDB instance using a dedicated `spicedb` database and login in the
+bundled PostgreSQL container. Startup is ordered as follows:
+
+```text
+postgres → authzed-db-bootstrap → spicedb-migrate → spicedb
+postgres → formbricks-migrate
+spicedb + formbricks-migrate → authzed-initialize
+```
+
+Database bootstrap and datastore migration are idempotent. Migration and serving always use the same
+`SPICEDB_IMAGE_REF`. SpiceDB is reachable only as `spicedb:50051` inside the Compose network.
+
+`authzed-initialize` is an idempotent, one-shot service that prepares fresh installations. Formbricks does not
+depend on it, so application startup and `/health` remain independent from SpiceDB. The `authzed-ops` profile is
+a short-lived operator container using the same release image and never starts during a normal Compose run.
+
+```bash
+docker compose --profile authzed-ops run --rm authzed-ops health
+docker compose --profile authzed-ops run --rm authzed-ops schema check
+docker compose --profile authzed-ops run --rm authzed-ops backfill
+docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+```
+
+Fresh one-click installations generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD`, prepare the graph, and
+run the read-only gate before reporting success. The update command preserves customized Compose files. An older
+installation must merge the released AuthZed services and environment manually, then explicitly acknowledge the
+v6 migration. The updater refuses to stop the existing application until `upgrade prepare` and `upgrade check`
+succeed.
+
+<Warning>
+  `docker compose down` preserves PostgreSQL data. `docker compose down -v` deletes the volume containing both
+  the Formbricks and SpiceDB databases. Do not use `-v` during an upgrade or incident response.
+</Warning>
+
+The bundled PostgreSQL service leaves `track_commit_timestamp=off`, so the SpiceDB Watch API is disabled. This
+does not affect schema operations, relationship projection, permission checks, or the repair workflow.
+
+## Operate Kubernetes and Helm installations
+
+The Formbricks chart supports two modes:
+
+- `authzed.mode=selfHosted` creates a `SpiceDBCluster` and points Formbricks at its private Kubernetes Service.
+- `authzed.mode=external` configures the Formbricks client for AuthZed Cloud or another external SpiceDB.
+
+For a chart-managed cluster:
+
+```yaml
+authzed:
+  mode: selfHosted
+  operator:
+    install: true
+```
+
+Install only one SpiceDB operator per Kubernetes cluster. If a platform operator already watches the
+Formbricks namespace, set `authzed.operator.install=false`. Apply the matching SpiceDB CRDs before upgrading
+the operator because Helm does not upgrade CRDs during a normal release upgrade.
+
+Production deployments should use a dedicated PostgreSQL database and role. Provide a Secret containing
+`datastore_uri` and `preshared_key`, then reference it through `authzed.datastore.existingSecret` and
+`authzed.auth.existingSecret`. Require `sslmode=require`, `verify-ca`, or `verify-full` for managed PostgreSQL.
+
+### Bootstrap the SpiceDB role and database
+
+A short-lived Job creates the dedicated `spicedb` role and database before SpiceDB starts. It creates each only
+when it is absent, so re-running it against an already initialised database is safe — but not inert: the role's
+password is reconciled to the chart's Secret on every run. Rotate that password outside Helm and the next
+upgrade will set it back, so update the Secret alongside it.
+
+By default it connects as the `postgres` superuser the bundled PostgreSQL subchart creates. **An existing
+PostgreSQL installed with `postgresql.auth.enablePostgresUser=false` has no such role**, and the upgrade fails
+until the Job is told which role to use instead:
+
+```yaml
+authzed:
+  bundledPostgresqlBootstrap:
+    adminUsername: fbadmin
+    adminDatabase: formbricks # maintenance database to attach to
+    adminPasswordSecretName: existing-pg-admin
+    adminPasswordKey: password
+```
+
+The role needs `CREATEROLE` and `CREATEDB`; it does not need to be a superuser. `adminPasswordSecretName` is
+required whenever `adminUsername` is overridden, and `adminPasswordKey` whenever that Secret is configured
+explicitly. **Both are checked while the chart renders**, so omitting one fails the render with the missing
+value named — no Job is created. Without those guards the first would silently fall back to the bundled admin
+password and the second would look up the subchart's key name inside your own Secret, and neither shows up
+until the Pod fails to start in the cluster.
+
+<Note>
+  `CREATEROLE` and `CREATEDB` are sufficient on their own only when the administrator also creates the
+  `spicedb` role — which is the normal case, including on re-runs. `CREATE DATABASE ... OWNER spicedb`
+  additionally requires the administrator to be able to `SET ROLE` to that owner, so the Job grants itself the
+  `spicedb` role before creating the database. From PostgreSQL 16 that grant is only possible for a role the
+  administrator holds `ADMIN OPTION` on, which it gets automatically by creating it.
+
+  The one case this cannot repair is a `spicedb` role that already exists and was created by *someone else*,
+  on PostgreSQL 16 or newer: the administrator then holds no `ADMIN OPTION` on it and the Job fails rather than
+  silently skipping work. Grant it explicitly — `GRANT spicedb TO fbadmin WITH ADMIN OPTION` as a superuser or
+  as the role's owner — or run the bootstrap as a superuser once. PostgreSQL 15 and older are unaffected:
+  `CREATEROLE` there carries authority over every non-superuser role.
+</Note>
+
+Rendering fails fast with the three available remedies named — configure an administrative role, enable
+`postgresql.auth.enablePostgresUser`, or set `authzed.bundledPostgresqlBootstrap.enabled=false` — rather than
+letting the Job fail inside the cluster. Disabling bootstrap remains the correct choice when the role and
+database are provisioned by hand or by a platform team; the SpiceDB `datastore_uri` must then already point at
+them.
+
+For an externally managed PostgreSQL server, use `authzed.externalPostgresqlBootstrap` instead, which takes a
+full administrator URL from a Secret and enforces TLS on it.
+
+For an external AuthZed endpoint:
+
+```yaml
+authzed:
+  mode: external
+  operator:
+    install: false
+  endpoint: grpc.authzed.com:443
+  insecure: false
+  auth:
+    existingSecret: formbricks-authzed
+```
+
+AuthZed and `fully_consistent` authorization are enabled by default. The operator runs SpiceDB datastore
+migrations. A fresh Helm installation runs a release-matched, aggregate-only initialization Job after the
+datastore and Formbricks migrations become available. Application startup and probes do not depend on this Job.
+Existing releases never run it as an upgrade hook; they must use the explicit upgrade commands below.
+
+The release notes print the exact deployment command. With the default release:
+
+```bash
+kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed health
+kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed schema check
+kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed backfill
+kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed upgrade check
+```
+
+Replace the namespace and deployment name if you override them. These commands execute inside the existing
+application pod and do not require exposing PostgreSQL or SpiceDB.
+
+## Upgrade an existing installation to v6
+
+Formbricks v6 has no legacy authorization fallback. Do not deploy it over an installation whose graph has not
+been proven complete. First upgrade to the bridge-compatible v5 release named in the v6 release notes, enable
+durable projection, and take coordinated Formbricks and SpiceDB backups.
+
+Run the release-matched v6 image as the operator container or executable while the bridge release still serves
+traffic:
+
+```bash
+formbricks-authzed upgrade prepare
+formbricks-authzed upgrade check
+```
+
+`prepare` verifies configuration and datastore readiness, applies an empty or already-matching canonical schema,
+drains the outbox, reconciles attributable relationships, and runs a final audit. If the remote schema is
+non-empty and differs, first run `schema check`, review the diff and backup, then pass its exact `remoteDigest`:
+
+```bash
+formbricks-authzed upgrade prepare \
+  --expected-current-digest sha256:<reviewed-remote-digest>
+```
+
+`check` is read-only. It exits `0` only when AuthZed is enabled with `fully_consistent`, authenticated health is
+good, the canonical schema matches, the outbox has no pending or dead-lettered work, no revocation has crossed a
+warning threshold, and a complete dry-run relationship audit is clean. Exit `2` means the release remains
+blocked; exit `1` means configuration or an operation failed. Output contains only aggregate counters and stable
+error codes.
+
+For one-click, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` only after those commands pass.
+For Helm, set `authzed.migrationAcknowledged=true` only in the v6 upgrade values. The chart refuses an upgrade
+without it and refuses `authzed.enabled=false` or consistency weaker than `fully_consistent`.
+
+## Activate or upgrade SpiceDB
+
+Use the following sequence for a new deployment, schema change, SpiceDB version change, or datastore restore.
+
+<Steps>
+  <Step title="Back up both datastores">
+    Create a PostgreSQL-consistent backup of the Formbricks database and the dedicated `spicedb` database.
+    Record the deployed Formbricks and SpiceDB versions, configuration, and schema digest.
+  </Step>
+  <Step title="Complete datastore migrations">
+    Deploy the reviewed SpiceDB version and wait for `spicedb datastore migrate head` to complete before the
+    new SpiceDB server starts. Never run migration and serving from different image references.
+  </Step>
+  <Step title="Check connectivity">
+
+    ```bash
+    formbricks-authzed health
+    ```
+
+    A healthy command exits `0`. Disabled or unhealthy results exit `1`.
+
+  </Step>
+  <Step title="Check and apply the schema">
+
+    ```bash
+    formbricks-authzed schema check
+    ```
+
+    A match exits `0`, drift exits `2`, and an operational failure exits `1`. Initialize an empty SpiceDB with:
+
+    ```bash
+    formbricks-authzed schema apply
+    ```
+
+    Replacing a non-empty schema requires the `remoteDigest` returned by the immediately preceding check:
+
+    ```bash
+    formbricks-authzed schema apply \
+      --expected-current-digest sha256:<remote-digest>
+    ```
+
+    Ensure no other schema writer runs between check and apply. SpiceDB does not provide an atomic schema
+    compare-and-swap operation.
+
+  </Step>
+  <Step title="Audit and reconcile relationships">
+
+    ```bash
+    formbricks-authzed backfill
+    formbricks-authzed backfill --apply
+    ```
+
+    Require a clean result before relying on SpiceDB authorization decisions.
+
+  </Step>
+  <Step title="Run the release gate">
+
+    ```bash
+    formbricks-authzed upgrade check
+    ```
+
+    Do not start a direct-authority release unless this exits `0`.
+
+  </Step>
+  <Step title="Restart and observe">
+    Restart Formbricks after environment changes. Recheck AuthZed health, schema status, projection metrics,
+    retry metrics, and SpiceDB logs.
+  </Step>
+</Steps>
+
+The Docker examples use the `docker compose --profile authzed-ops run --rm authzed-ops` prefix. Kubernetes
+examples use `kubectl exec ... --`. The command names and arguments after those prefixes are identical.
+
+### Roll back a v6 upgrade
+
+Keep the exact bridge-compatible v5 image, Compose or Helm values, application database backup, SpiceDB backup,
+and schema digest until v6 acceptance is complete. Rollback means restoring that bridge image and its matching
+configuration; do not disable AuthZed inside a v6 image. Verify outbox delivery and a clean audit before resuming
+mutations. If either datastore was restored, use coordinated restore points or rebuild SpiceDB from PostgreSQL.
+
+The moving `latest` tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable is
+published. Existing installations must select v6 explicitly during that window; this prevents an unattended
+image pull from bypassing the migration gate.
+
+## Back up and restore
+
+Back up the following together:
+
+- the authoritative Formbricks PostgreSQL database;
+- the dedicated `spicedb` PostgreSQL database;
+- AuthZed and datastore credentials in your secret manager;
+- the deployed Formbricks and SpiceDB image versions;
+- Compose or Helm configuration; and
+- the schema digest reported by `schema check`.
+
+For bundled Docker PostgreSQL:
+
+```bash
+umask 077
+docker compose exec -T postgres pg_dump -U postgres -d formbricks > formbricks.sql
+docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb.sql
+```
+
+Use your managed PostgreSQL provider's consistent snapshot mechanism for external databases. Define retention,
+restore testing, RPO, and RTO according to your operating requirements.
+
+There are two supported recovery approaches:
+
+1. Restore coordinated Formbricks and SpiceDB database backups from the same recovery point.
+2. Restore Formbricks PostgreSQL, initialize an empty compatible SpiceDB datastore, apply the release-matched
+   schema, and rebuild the relationship graph with a full applying backfill.
+
+After either restore, complete datastore migrations, check health, check the schema, and run a full
+relationship audit. Do not rely on SpiceDB-backed authorization until the audit is clean. An older SpiceDB backup
+can be repaired from PostgreSQL; a SpiceDB database restored without its matching Formbricks source must never
+be assumed current.
+
+AuthZed Cloud owns datastore backup and restore guarantees. You still need Formbricks PostgreSQL backups,
+recoverable client credentials, release configuration, schema verification, and the relationship repair
+procedure.
+
+## Inspect and drain durable delivery
+
+The v6 bridge writes projection intent in the same PostgreSQL transaction as an authorization source change.
+BullMQ wakes the delivery worker, but PostgreSQL remains the durable queue. Deletes, and updates that are not
+provably grants, are treated as revocations; direct authority fails closed when a revocation remains unresolved
+for 60 seconds or enters dead letter.
+
+```bash
+formbricks-authzed outbox status
+formbricks-authzed outbox drain
+formbricks-authzed outbox drain --max-batches=500
+formbricks-authzed outbox replay
+```
+
+`status` prints aggregate queue counts and ages only. It exits `0` when healthy, `2` at the 15-second warning or
+45-second critical thresholds (and for any dead letter), and `1` for an operational failure. `drain` processes
+revocations first and stops at the first batch that delivers nothing; a partially delivered batch is normal,
+because a failure is charged only to the events it is attributable to. `replay` resets unresolved dead letters
+so the normal idempotent reconcilers can retry them; investigate the cause before replaying. Dead-lettering
+requires ten solitary failures carrying a code an event can actually cause, so no SpiceDB outage — unreachable,
+rejected credential or internal error — produces one, and a dead letter always means PostgreSQL and SpiceDB
+genuinely disagree. The six-hour audit
+replays dead letters on its own after a clean run, which bounds a fail-closed denial at six hours.
+
+These results contain no source IDs, relationship strings, credentials, or raw errors. This is different from
+the detailed backfill report below, which intentionally contains operational identifiers.
+
+Every six hours Formbricks also runs a full applying audit without prune. It automatically repairs attributable
+missing and mismatched-permission relationships. It never deletes orphaned or unmanaged data and never repairs
+a mismatched parent automatically.
+
+## Audit and repair relationships
+
+The command prints one JSON result. It never prints credentials, database passwords, raw SDK errors, schema
+text, or raw relationship strings.
+
+It does print identifiers, deliberately: naming the affected records is what makes a drift report actionable.
+Most are Formbricks record IDs, but not all — `unmanaged` can surface object IDs belonging to no Formbricks
+record at all. Treat the result as sensitive operational data.
+
+- `orphans`, `mismatchedParents` and `mismatchedPermissions` name the records that disagree, carrying
+  organization, user, workspace, team, API-key, feedback-directory and feedback-directory-assignment IDs.
+  `mismatchedPermissions` adds the expected and observed relation names alongside the record it names.
+- `unmanaged` reports relationships outside the managed vocabulary as an object type, an object ID and a
+  relation name. Those object IDs are not limited to the kinds above — anything else sharing the SpiceDB
+  instance appears here.
+- `failures` carries an organization ID for each failed unit that has one, so even a failed run emits
+  identifiers. It is empty when the read that would have identified the organization is what failed.
+- `lastOrganizationId` is the resume cursor: the last organization the sweep reached, or `null` if it reached
+  none.
+
+The cursor is an intentional operational identifier, not an oversight. An interrupted sweep resumes with
+`--after-organization-id=<cuid>` taken straight from it, so an opaque token would have to be stored and mapped
+back somewhere to stay useful. It is also the one field that can name an organization with nothing wrong: every
+other identifier here comes from a record or relationship that drifted or failed, while the cursor is simply
+wherever the sweep stopped. Redact it on the same terms as the rest.
+
+<Warning>
+  Handle the result like a database export, not like a log line. Store it in the same place you keep other
+  sensitive operational output, restrict access to operators, and delete it once the drift it describes is
+  resolved — retain it no longer than your incident records. Do not paste it into shared chat, ticket
+  descriptions, or support bundles without redacting the identifier fields above.
+</Warning>
+
+Redirecting to a file keeps the result out of terminal scrollback and out of CI logs that capture stdout. Set
+`umask 077` and remove any earlier export first. The umask governs file *creation* only, so under a typical
+`umask 022` a new `backfill.json` lands world-readable — and redirecting over one that already exists truncates
+it while leaving its existing mode untouched:
+
+```bash
+umask 077
+rm -f backfill.json
+formbricks-authzed backfill > backfill.json
+```
+
+Redirection does not keep identifiers out of your shell history, which records the command rather than its
+output — and the resume invocation is the one to watch there, because the cursor is an argument:
+`--after-organization-id=<cuid>` is recorded verbatim. On a shared or session-recorded host, read the cursor
+from the saved result instead of retyping it.
+
+### Interpret exit codes
+
+| Exit code | Meaning                                                        |
+| --------- | -------------------------------------------------------------- |
+| `0`       | Every observed drift category is clean or was reconciled       |
+| `1`       | Invalid command, configuration failure, or operational failure |
+| `2`       | Drift remains and operator action is required                  |
+
+### Start with a dry run
+
+```bash
+formbricks-authzed backfill
+formbricks-authzed backfill --organization-id=<organization-id>
+formbricks-authzed backfill --workspace-id=<workspace-id>
+```
+
+An organization or workspace run limits the repair blast radius, but reports
+`orphanScope: "known_resources"`. Only a complete deployment sweep can find relationships for resources that
+no longer exist in PostgreSQL or parent edges pointing from another tenant's resource.
+
+### Reconcile PostgreSQL state
+
+```bash
+formbricks-authzed backfill --apply
+formbricks-authzed backfill --apply --organization-id=<organization-id>
+formbricks-authzed backfill --apply --workspace-id=<workspace-id>
+```
+
+Applying fixes missing and incorrect current-state relationships. It does not remove relationships with no
+remaining PostgreSQL source record.
+
+If a sweep is interrupted, resume after the reported `lastOrganizationId`. A `null` cursor means the run
+reached no organization, so there is nothing to resume after — rerun the sweep from the start instead:
+
+```bash
+formbricks-authzed backfill --apply --after-organization-id=<last-organization-id>
+```
+
+The cursor advances past every organization the sweep reached, and an organization-specific failure does not
+stop the sweep — so each failure carrying a non-empty `organizationId` sits behind the cursor, and a resume
+will not retry it. Rerun those explicitly, in addition to resuming from the cursor:
+
+```bash
+formbricks-authzed backfill --apply --organization-id=<failed-organization-id>
+```
+
+A failure with an **empty** `organizationId` is not one of those: the read that would have identified the
+organization is itself what failed, so there is nothing to target. Within a sweep those also set `truncated` —
+rerun the sweep rather than a single organization.
+
+### Prune orphans
+
+Pruning is the only mode that removes relationships observed only in SpiceDB. It requires every safeguard:
+
+```bash
+formbricks-authzed backfill --apply --prune --confirm-prune \
+  --scope=all \
+  --expected-endpoint=<configured-host:port>
+```
+
+Use `--organization-id` or `--workspace-id` instead of `--scope=all` when the known problem permits a narrower
+repair. A complete prune requires a SpiceDB datastore dedicated to one Formbricks deployment because object
+IDs are not currently namespaced by `AUTHZED_SYSTEM_KEY`.
+
+The default destructive cap is 500 orphaned resources. `--max-prune=<number>` may lower but never raise it. If
+the run observes more than the cap, it deletes nothing. Investigate a wrong endpoint, wrong database, partial
+restore, or shared SpiceDB before proceeding.
+
+### Interpret drift categories
+
+| Category            | Meaning and response                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `missing`           | PostgreSQL contains a source record without the expected SpiceDB relationship. An applying run repairs it.                                  |
+| `mismatchedPermissions` | An existing source record's projected role or grant relation differs from PostgreSQL. An applying run repairs it deterministically.     |
+| `orphaned`          | SpiceDB contains a managed relationship whose source record is gone. A confirmed prune removes it.                                          |
+| `invalid`           | PostgreSQL contains a cross-organization source row. Investigate and correct PostgreSQL manually.                                           |
+| `unmanaged`         | A relationship outside Formbricks' managed vocabulary exists. Investigate its writer; the tool never deletes it.                            |
+| `mismatchedParents` | A resource points to an organization PostgreSQL does not identify as its owner. Treat this as a possible cross-tenant privilege escalation. |
+| `failures`          | One or more units failed. Use the stable code and attempt count, correct the cause, and rerun.                                              |
+| `truncated`         | Observation did not produce a complete, exact result. Do not prune or declare the graph clean; rerun.                                       |
+
+<Warning>
+  Never automatically repair `mismatchedParents`. Confirm the authoritative owner and inspect the reported
+  relation direction before deleting an edge. A wrong parent edge can grant another tenant's owners and
+  managers access to the resource.
+</Warning>
+
+## Diagnose failures
+
+| Result or symptom                                                                        | Meaning                                               | Operator response                                                                           |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `authzed_disabled`                                                                       | The client is intentionally disabled                  | Confirm whether this deployment should project relationships, then configure and restart it |
+| `authzed_unauthenticated` or `authzed_permission_denied` during health/schema operations | Token rejected or lacks the required API capability   | Verify the secret reference and coordinated token configuration without printing the token  |
+| `authzed_timeout`                                                                        | An attempt exceeded its deadline                      | Check network latency, datastore saturation, and SpiceDB load                               |
+| `authzed_overloaded`                                                                     | SpiceDB reported resource exhaustion                  | Inspect datastore connections, dispatch, cache, CPU, and memory                             |
+| `authzed_unavailable`                                                                    | SpiceDB or its network path is unavailable            | Restore the service, verify health, then run a full relationship audit                      |
+| `authzed_internal`                                                                       | Unexpected client or runtime failure                  | Check sanitized Formbricks and SpiceDB logs and the deployed version                        |
+| Schema status `drifted`                                                                  | Connected schema differs from this Formbricks release | Back up first, review the diff counts and digest, then perform a guarded schema apply       |
+| Projection status `failed`                                                               | A fast-path or outbox reconciliation attempt failed   | Restore connectivity, inspect outbox status, and drain or replay durable delivery             |
+| `authzed_projection_stale`                                                               | A revocation exceeded 60 seconds or entered dead letter | Investigate immediately, restore delivery, replay, drain, and require a clean audit          |
+
+Formbricks AuthZed logs use `component="authzed"`, stable `errorCode` values, and bounded fields such as
+`operation`, `projection`, `status`, `retryable`, `attemptCount`, `grpcStatus`, and `durationMs`. They must not
+contain tokens, database credentials, schema text, raw SDK errors, relationship strings, or actor/resource IDs.
+
+## Monitor AuthZed
+
+Enable the existing Formbricks Prometheus or OTLP metrics exporter. The release-matched direct-authority
+signals are:
+
+| Metric                                               | What it measures                                                            |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| `formbricks_authzed_projection_total`                | Projected, failed, and disabled projection outcomes                         |
+| `formbricks_authzed_projection_duration_seconds`     | Request-path projection latency                                             |
+| `formbricks_authzed_request_failures_total`          | AuthZed requests that exhausted their retry budget                          |
+| `formbricks_authzed_request_retries_total`           | Retry attempts caused by transient failures                                 |
+| `formbricks_authzed_authorization_decisions_total`   | Authoritative allow, deny, and operational-error outcomes                    |
+| `formbricks_authzed_authorization_decision_duration_seconds` | End-to-end authoritative authorization latency                      |
+| `formbricks_authzed_authorization_checks_per_request` | Central authorization operations per authenticated request                  |
+| `formbricks_authzed_projection_outbox_delivery_total` | Durable outbox events delivered or failed                                   |
+| `formbricks_authzed_projection_outbox_delivery_duration_seconds` | Durable delivery batch latency                                    |
+| `formbricks_authzed_projection_revocation_delivery_duration_seconds` | Commit-to-SpiceDB revocation propagation time                     |
+| `formbricks_authzed_projection_outbox_status`        | Point-in-time pending, dead-letter, warning, and critical counts             |
+| `formbricks_authzed_projection_outbox_oldest_pending_age_seconds` | Age of the oldest pending event                                  |
+| `formbricks_authzed_reconciliation_audit_total`      | Scheduled audit outcomes                                                     |
+| `formbricks_authzed_reconciliation_drift_total`      | Attributable drift and failures observed by scheduled audits                 |
+| `formbricks_authzed_reconciliation_repair_total`     | Repaired and failed attributable relationship repair results                 |
+
+Starting PromQL checks:
+
+```promql
+# Projection failures introduce possible drift.
+sum(rate(formbricks_authzed_projection_total{status="failed"}[5m]))
+
+# Terminal unavailability errors.
+sum(rate(formbricks_authzed_request_failures_total{code="authzed_unavailable"}[5m]))
+
+# Projection latency p95.
+histogram_quantile(
+  0.95,
+  sum by (le) (rate(formbricks_authzed_projection_duration_seconds_bucket[5m]))
+)
+
+# Direct-authority operational-error rate. Product denials remain a separate outcome.
+sum(rate(formbricks_authzed_authorization_decisions_total{outcome="operational_error"}[5m]))
+/
+sum(rate(formbricks_authzed_authorization_decisions_total[5m]))
+
+# Direct-authority latency p95 by surface.
+histogram_quantile(
+  0.95,
+  sum by (le, surface) (rate(formbricks_authzed_authorization_decision_duration_seconds_bucket[5m]))
+)
+
+# Revocations that missed the warning or critical delivery thresholds.
+formbricks_authzed_projection_outbox_status{state=~"revocation_warning|revocation_critical"}
+
+# Dead letters and failed scheduled repairs both block cutover.
+formbricks_authzed_projection_outbox_status{state="dead_lettered"}
+or
+sum(rate(formbricks_authzed_reconciliation_repair_total{status="failed"}[5m]))
+```
+
+Starting gates are: operational-error rate at or below 0.1%, p95 below 250 ms, p99 below one second, no
+dead-letter revocations, no normal-operation 60-second freshness guard, and clean scheduled audits. Alert on
+revocation delivery at 15 seconds (warning) and 45 seconds (critical). The application on-call owns decision,
+delivery, and repair alerts; the infrastructure on-call owns SpiceDB/datastore availability and capacity, with
+joint escalation whenever either side cannot restore a clean graph.
+
+On the SpiceDB side, monitor pod restarts, failed datastore migrations, PostgreSQL connection saturation such
+as `pgxpool_empty_acquire`, dispatch load, cache behavior, and datastore latency. Divide the datastore
+connection budget across replicas and their read/write pools.
+
+## Use the incident checklist
+
+1. Confirm Formbricks `/health` independently.
+2. Run `formbricks-authzed health`.
+3. Check SpiceDB pods or containers and the last datastore migration.
+4. Check Formbricks projection failures, AuthZed terminal errors, retries, and latency.
+5. Restore SpiceDB or its datastore without changing authorization data manually.
+6. Run `schema check`.
+7. Run a full dry-run backfill.
+8. Apply repair and, only when justified, a guarded prune.
+9. Require a clean result before relying on SpiceDB authorization decisions.
+10. Preserve the sanitized command result, timeline, versions, and root cause for follow-up.
