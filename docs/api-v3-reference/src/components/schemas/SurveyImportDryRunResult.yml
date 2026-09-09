@@ -1,0 +1,24 @@
+type: object
+description: >
+  Result of a dry run: the resolved document in its public shape (send it back as `document`
+  together with `references` to create it), the report and the validation. `document` is `null`
+  when the report contains errors.
+required:
+  - document
+  - references
+  - report
+  - validation
+properties:
+  document:
+    oneOf:
+      - $ref: ./SurveyExportDocument.yml
+      - type: "null"
+  references:
+    oneOf:
+      - $ref: ./SurveyExportReferences.yml
+      - type: "null"
+  report:
+    $ref: ./SurveyImportReport.yml
+  validation:
+    $ref: ./SurveyImportValidation.yml
+additionalProperties: false

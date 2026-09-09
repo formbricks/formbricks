@@ -3,7 +3,12 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
-import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
+import {
+  DEFAULT_REQUEST_BODY_LIMIT_BYTES,
+  RequestBodyTooLargeError,
+  parseJsonBodyWithLimit,
+  readRequestBodyBytesWithLimit,
+} from "@/app/lib/api/request-body";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getSession } from "@/modules/auth/lib/session";
@@ -20,6 +25,7 @@ import {
   problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
+  problemUnsupportedMediaType,
 } from "./response";
 import type { TV3AuditLog, TV3Authentication } from "./types";
 
@@ -27,6 +33,23 @@ type TV3Schema = z.ZodTypeAny;
 type MaybePromise<T> = T | Promise<T>;
 
 export type TV3AuthMode = "none" | "session" | "apiKey" | "both";
+
+/** How the request body is read before `schemas.body` sees it. */
+export type TV3BodyMode = "json" | "multipart";
+
+export type TV3MultipartFile = {
+  /** The form field name the file was sent under. */
+  name: string;
+  fileName: string;
+  mimeType: string;
+  bytes: Buffer;
+};
+
+/** What a `body: "multipart"` route's body schema receives. */
+export type TV3MultipartBody = {
+  fields: Record<string, string>;
+  files: TV3MultipartFile[];
+};
 
 export type TV3Schemas = {
   body?: TV3Schema;
@@ -53,6 +76,10 @@ export type TV3HandlerParams<TParsedInput = Record<string, never>, TProps = unkn
 export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = unknown> = {
   auth?: TV3AuthMode;
   schemas?: S;
+  /** `json` (default) parses a JSON body; `multipart` reads `multipart/form-data` into fields + files. */
+  body?: TV3BodyMode;
+  /** Byte cap for the request body. Defaults to the 2 MB JSON limit. */
+  bodyLimitBytes?: number;
   rateLimit?: boolean;
   customRateLimitConfig?: TRateLimitConfig;
   action?: TAuditAction;
@@ -170,43 +197,122 @@ async function authenticateV3Request(req: NextRequest, authMode: TV3AuthMode): P
   return null;
 }
 
+function bodyParseFailure(requestId: string, instance: string, reason: string): TV3InputParseFailure {
+  const invalidParams = [{ name: "body", reason }];
+  return {
+    ok: false,
+    detail: "Invalid request body",
+    invalidParams,
+    response: problemBadRequest(requestId, "Invalid request body", {
+      instance,
+      invalid_params: invalidParams,
+    }),
+  };
+}
+
+function isMultipartRequest(req: NextRequest): boolean {
+  return (req.headers.get("content-type") ?? "").toLowerCase().startsWith("multipart/form-data");
+}
+
+/**
+ * Read a multipart body into plain fields and files. The bytes are counted while reading (the
+ * `Content-Length` header can be absent or wrong), then handed to the platform parser as a fresh
+ * request so the boundary handling stays the runtime's job.
+ */
+async function readMultipartBody(req: NextRequest, limitBytes: number): Promise<TV3MultipartBody> {
+  const bytes = await readRequestBodyBytesWithLimit(req, limitBytes);
+  const formData = await new Request(req.url, {
+    method: "POST",
+    headers: { "content-type": req.headers.get("content-type") ?? "" },
+    // A fresh copy: `BodyInit` wants a view over a plain ArrayBuffer, which the reader's chunks need not be.
+    body: new Uint8Array(bytes),
+  }).formData();
+
+  const fields: Record<string, string> = {};
+  const files: TV3MultipartFile[] = [];
+
+  for (const [name, value] of formData.entries()) {
+    if (typeof value === "string") {
+      fields[name] = value;
+      continue;
+    }
+
+    files.push({
+      name,
+      fileName: value.name,
+      mimeType: value.type,
+      bytes: Buffer.from(await value.arrayBuffer()),
+    });
+  }
+
+  return { fields, files };
+}
+
+async function readV3Body(
+  req: NextRequest,
+  mode: TV3BodyMode,
+  limitBytes: number,
+  requestId: string,
+  instance: string
+): Promise<{ ok: true; data: unknown } | TV3InputParseFailure> {
+  if (mode === "multipart" && !isMultipartRequest(req)) {
+    return {
+      ok: false,
+      detail: "Unsupported media type",
+      invalidParams: [],
+      response: problemUnsupportedMediaType(
+        requestId,
+        "This endpoint accepts multipart/form-data request bodies only",
+        instance
+      ),
+    };
+  }
+
+  try {
+    const data =
+      mode === "multipart"
+        ? await readMultipartBody(req, limitBytes)
+        : await parseJsonBodyWithLimit(req, limitBytes);
+    return { ok: true, data };
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return {
+        ok: false,
+        detail: error.message,
+        invalidParams: [],
+        response: problemPayloadTooLarge(requestId, error.message, instance),
+      };
+    }
+
+    return bodyParseFailure(
+      requestId,
+      instance,
+      mode === "multipart"
+        ? "Malformed multipart form data, please check your request body"
+        : "Malformed JSON input, please check your request body"
+    );
+  }
+}
+
 async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   req: NextRequest,
   props: TProps,
   schemas: S | undefined,
   requestId: string,
-  instance: string
+  instance: string,
+  bodyOptions: { mode: TV3BodyMode; limitBytes: number } = {
+    mode: "json",
+    limitBytes: DEFAULT_REQUEST_BODY_LIMIT_BYTES,
+  }
 ): Promise<{ ok: true; parsedInput: TV3ParsedInput<S> } | TV3InputParseFailure> {
   const parsedInput = {} as TV3ParsedInput<S>;
 
   if (schemas?.body) {
-    let bodyData: unknown;
-
-    try {
-      bodyData = await parseJsonBodyWithLimit(req);
-    } catch (error) {
-      if (error instanceof RequestBodyTooLargeError) {
-        return {
-          ok: false,
-          detail: error.message,
-          invalidParams: [],
-          response: problemPayloadTooLarge(requestId, error.message, instance),
-        };
-      }
-
-      const invalidParams = [
-        { name: "body", reason: "Malformed JSON input, please check your request body" },
-      ];
-      return {
-        ok: false,
-        detail: "Invalid request body",
-        invalidParams,
-        response: problemBadRequest(requestId, "Invalid request body", {
-          instance,
-          invalid_params: invalidParams,
-        }),
-      };
+    const bodyRead = await readV3Body(req, bodyOptions.mode, bodyOptions.limitBytes, requestId, instance);
+    if (!bodyRead.ok) {
+      return bodyRead;
     }
+    const bodyData: unknown = bodyRead.data;
 
     const bodyResult = schemas.body.safeParse(bodyData);
     if (!bodyResult.success) {
@@ -339,6 +445,8 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
   const {
     auth = "both",
     schemas,
+    body: bodyMode = "json",
+    bodyLimitBytes = DEFAULT_REQUEST_BODY_LIMIT_BYTES,
     rateLimit = true,
     customRateLimitConfig,
     handler,
@@ -377,7 +485,10 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return rateLimitResponse;
       }
 
-      const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
+      const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance, {
+        mode: bodyMode,
+        limitBytes: bodyLimitBytes,
+      });
       if (!parsedInputResult.ok) {
         log.warn(
           {

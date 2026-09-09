@@ -1,0 +1,43 @@
+type: object
+description: What was imported and through which lane.
+required:
+  - lane
+  - kind
+properties:
+  lane:
+    type: string
+    enum:
+      - lossless
+      - structured
+      - ai
+  kind:
+    type: string
+    enum:
+      - formbricks-export
+      - v3-document
+      - qsf
+      - docx
+      - pdf
+      - markdown
+      - text
+      - csv
+      - xlsx
+  fileName:
+    type: string
+  detectedLanguages:
+    type: array
+    items:
+      type: object
+      required:
+        - code
+        - confidence
+      properties:
+        code:
+          type: string
+        confidence:
+          type: number
+      additionalProperties: false
+  chunks:
+    type: integer
+    description: Number of model calls the AI lane made for this file.
+additionalProperties: false

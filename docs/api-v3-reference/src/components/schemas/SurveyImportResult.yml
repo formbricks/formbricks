@@ -1,0 +1,11 @@
+type: object
+description: The created survey and the report of what changed on the way in.
+required:
+  - survey
+  - report
+properties:
+  survey:
+    $ref: ./SurveyResource.yml
+  report:
+    $ref: ./SurveyImportReport.yml
+additionalProperties: false

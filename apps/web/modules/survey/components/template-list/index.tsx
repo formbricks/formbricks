@@ -13,6 +13,7 @@ import { CUSTOM_SURVEY_TEMPLATE_ID, templates } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { ImportSurveyTemplate } from "@/modules/survey/import/components/import-survey-template";
 import { CreateWithAITemplate } from "./components/create-with-ai-template";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
 import { Template } from "./components/template";
@@ -28,6 +29,8 @@ interface TemplateListProps {
   onTemplateClick?: (template: TTemplate) => void;
   noPreview?: boolean; // single click to create survey
   showAICreateCard?: boolean;
+  /** The "Import survey" card. On by the templates page and the empty state, off in onboarding (D8). */
+  showImportCard?: boolean;
   language?: TUserLocale;
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
@@ -42,6 +45,7 @@ export const TemplateList = ({
   onTemplateClick = () => {},
   noPreview,
   showAICreateCard = false,
+  showImportCard = false,
   language = defaultLanguage,
   isAIAvailable = false,
   aiUnavailableReason,
@@ -134,6 +138,13 @@ export const TemplateList = ({
           <CreateWithAITemplate
             workspaceId={workspaceId}
             language={language}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
+          />
+        )}
+        {showImportCard && (
+          <ImportSurveyTemplate
+            workspaceId={workspaceId}
             isAIAvailable={isAIAvailable}
             aiUnavailableReason={aiUnavailableReason}
           />

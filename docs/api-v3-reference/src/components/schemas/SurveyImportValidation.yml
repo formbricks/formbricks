@@ -1,0 +1,13 @@
+type: object
+description: Outcome of the v3 create validation on the resolved document.
+required:
+  - valid
+  - invalid_params
+properties:
+  valid:
+    type: boolean
+  invalid_params:
+    type: array
+    items:
+      $ref: ./InvalidParam.yml
+additionalProperties: false

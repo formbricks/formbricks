@@ -4,6 +4,9 @@ import { EMPTY_AI_DRAFT, type TAiDraftState, mergeAiDraftSnapshot } from "./ai-d
 
 export type TAiCreateStatus = "idle" | "generating" | "review" | "creating";
 
+/** What produced the draft on screen: a typed prompt (Create with AI) or a dropped file (Import). */
+export type TAiCreateSourceKind = "prompt" | "file";
+
 export interface TAiCreateState {
   status: TAiCreateStatus;
   draft: TAiDraftState;
@@ -12,28 +15,41 @@ export interface TAiCreateState {
   /** An error code, not a message, so the reducer stays free of `t`. */
   errorCode: string | null;
   /**
-   * The prompt that produced what is on screen — not the one in the textarea. Editing the prompt
-   * keeps the finished draft, so rendering the live text would label an old draft with words that
-   * had no part in it, right where the user checks it before saving.
+   * The source that produced what is on screen — the submitted prompt text, or the file name — not
+   * the one in the input. Editing the prompt keeps the finished draft, so rendering the live text
+   * would label an old draft with words that had no part in it, right where the user checks it
+   * before saving. Display only.
    */
-  submittedPrompt: string;
+  sourceLabel: string;
+  sourceKind: TAiCreateSourceKind;
+  /**
+   * Import lanes produce a report next to the payload; Create with AI has none. Set by `DONE`,
+   * cleared whenever a new run starts.
+   */
+  report: unknown | null;
   /**
    * The last finished draft, held aside while a regeneration runs. Regenerating is a gamble on a
    * better result: abandoning it, or having it fail, must not cost the one the user already had.
    */
-  previous: { draft: TAiDraftState; payload: TV3CreateSurveyBody; submittedPrompt: string } | null;
+  previous: {
+    draft: TAiDraftState;
+    payload: TV3CreateSurveyBody;
+    sourceLabel: string;
+    report: unknown | null;
+  } | null;
 }
 
 export type TAiCreateAction =
-  | { type: "SUBMIT"; prompt: string }
-  | { type: "SNAPSHOT"; snapshot: TSurveyGenerationDraftSnapshot }
-  | { type: "DONE"; payload: TV3CreateSurveyBody }
+  | { type: "SUBMIT"; prompt: string; sourceKind?: TAiCreateSourceKind }
+  /** `blockOffset` shifts the snapshot's block indices: chunked imports append blocks (D4). */
+  | { type: "SNAPSHOT"; snapshot: TSurveyGenerationDraftSnapshot; blockOffset?: number }
+  | { type: "DONE"; payload: TV3CreateSurveyBody; report?: unknown }
   | { type: "STOP" }
   | { type: "FAIL"; errorCode: string }
   | { type: "CREATE_FAILED"; errorCode: string }
   | { type: "EDIT_PROMPT" }
   | { type: "BACK_TO_DRAFT" }
-  | { type: "REGENERATE"; prompt: string }
+  | { type: "REGENERATE"; prompt: string; sourceKind?: TAiCreateSourceKind }
   | { type: "CREATE" }
   | { type: "CLEAR_ERROR" }
   | { type: "RESET" };
@@ -43,7 +59,9 @@ export const INITIAL_AI_CREATE_STATE: TAiCreateState = {
   draft: EMPTY_AI_DRAFT,
   payload: null,
   errorCode: null,
-  submittedPrompt: "",
+  sourceLabel: "",
+  sourceKind: "prompt",
+  report: null,
   previous: null,
 };
 
@@ -68,7 +86,9 @@ function restorePrevious(state: TAiCreateState, errorCode: string | null = null)
     draft: state.previous.draft,
     payload: state.previous.payload,
     errorCode,
-    submittedPrompt: state.previous.submittedPrompt,
+    sourceLabel: state.previous.sourceLabel,
+    sourceKind: state.sourceKind,
+    report: state.previous.report,
     previous: null,
   };
 }
@@ -83,14 +103,22 @@ export const AI_NOTHING_GENERATED_CODE = "ai_nothing_generated";
  * prompt each generation was *submitted* with, because that is what labels the draft on screen.
  */
 /** A chunk that lands after Stop must not resurrect the generating view. */
-function applySnapshot(state: TAiCreateState, snapshot: TSurveyGenerationDraftSnapshot): TAiCreateState {
+function applySnapshot(
+  state: TAiCreateState,
+  snapshot: TSurveyGenerationDraftSnapshot,
+  blockOffset = 0
+): TAiCreateState {
   if (state.status !== "generating") return state;
 
-  const draft = mergeAiDraftSnapshot(state.draft, snapshot);
+  const draft = mergeAiDraftSnapshot(state.draft, snapshot, blockOffset);
   return draft === state.draft ? state : { ...state, draft };
 }
 
-function applyDone(state: TAiCreateState, payload: TV3CreateSurveyBody): TAiCreateState {
+function applyDone(
+  state: TAiCreateState,
+  payload: TV3CreateSurveyBody,
+  report: unknown = null
+): TAiCreateState {
   // Same guard as SNAPSHOT, for the same reason: a terminal event from a run the user already
   // stopped would otherwise pair the restored draft with the abandoned run's payload — what you see
   // would no longer be what saving writes.
@@ -104,7 +132,7 @@ function applyDone(state: TAiCreateState, payload: TV3CreateSurveyBody): TAiCrea
   }
 
   // The new draft supersedes whatever was held aside.
-  return { ...state, status: "review", payload, errorCode: null, previous: null };
+  return { ...state, status: "review", payload, report, errorCode: null, previous: null };
 }
 
 function applyStop(state: TAiCreateState): TAiCreateState {
@@ -135,7 +163,11 @@ function applyEditPrompt(state: TAiCreateState): TAiCreateState {
   return { ...INITIAL_AI_CREATE_STATE };
 }
 
-function applyRegenerate(state: TAiCreateState, prompt: string): TAiCreateState {
+function applyRegenerate(
+  state: TAiCreateState,
+  prompt: string,
+  sourceKind: TAiCreateSourceKind = state.sourceKind
+): TAiCreateState {
   // Clear the visible list so the old one does not sit under the new stream, but hold it aside
   // rather than destroying it: Stop, or a failure, puts it straight back.
   return {
@@ -143,9 +175,11 @@ function applyRegenerate(state: TAiCreateState, prompt: string): TAiCreateState 
     draft: EMPTY_AI_DRAFT,
     payload: null,
     errorCode: null,
-    submittedPrompt: prompt,
+    sourceLabel: prompt,
+    sourceKind,
+    report: null,
     previous: state.payload
-      ? { draft: state.draft, payload: state.payload, submittedPrompt: state.submittedPrompt }
+      ? { draft: state.draft, payload: state.payload, sourceLabel: state.sourceLabel, report: state.report }
       : state.previous,
   };
 }
@@ -163,15 +197,17 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
         draft: EMPTY_AI_DRAFT,
         payload: null,
         errorCode: null,
-        submittedPrompt: action.prompt,
+        sourceLabel: action.prompt,
+        sourceKind: action.sourceKind ?? "prompt",
+        report: null,
         previous: null,
       };
 
     case "SNAPSHOT":
-      return applySnapshot(state, action.snapshot);
+      return applySnapshot(state, action.snapshot, action.blockOffset);
 
     case "DONE":
-      return applyDone(state, action.payload);
+      return applyDone(state, action.payload, action.report);
 
     case "STOP":
       return applyStop(state);
@@ -186,7 +222,7 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
       return state.payload ? { ...state, status: "review", errorCode: null } : state;
 
     case "REGENERATE":
-      return applyRegenerate(state, action.prompt);
+      return applyRegenerate(state, action.prompt, action.sourceKind);
 
     case "CREATE":
       return state.status === "review" && state.payload

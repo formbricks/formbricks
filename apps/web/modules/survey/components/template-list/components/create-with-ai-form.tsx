@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowLeftIcon, PencilIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
-import { AiDraftPreview } from "@/modules/survey/components/template-list/components/ai-draft-preview";
+import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
+import { SourceChip } from "@/modules/survey/components/template-list/components/source-chip";
 import { useCreateSurveyWithAI } from "@/modules/survey/components/template-list/hooks/use-create-survey-with-ai";
 import {
   AI_SURVEY_PROMPT_MAX_LENGTH,
@@ -15,7 +16,6 @@ import {
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 type CreateWithAIFormProps = {
   workspaceId: string;
@@ -196,37 +196,19 @@ export const CreateWithAIForm = ({
 
   const editPromptLabel = t("workspace.surveys.ai_create.edit_prompt");
 
-  /**
-   * The prompt, settled. It is the same content the textarea held, so it borrows that component's
-   * shape — same radius and text size — with a lighter border and a filled ground to say it is no
-   * longer the thing you are editing. The pencil lives inside that frame: pinned to the dialog edge
-   * instead, it read as an unrelated control floating in whitespace.
-   */
+  /*
+    The prompt this draft came from, not the one being typed. Edit prompt keeps the draft, so the live
+    text would label an old draft with words that had no part in producing it.
+  */
   const promptChip = (
-    <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 py-1 pr-1 pl-3">
-      <p id="ai-prompt-echo" className="min-w-0 flex-1 truncate text-sm text-slate-700">
-        <span className="sr-only">{t("workspace.surveys.ai_create.your_prompt")}: </span>
-        {/*
-          The prompt this draft came from, not the one being typed. Edit prompt keeps the draft, so
-          the live text would label an old draft with words that had no part in producing it.
-        */}
-        {submittedPrompt}
-      </p>
-      <TooltipRenderer tooltipContent={editPromptLabel}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7 shrink-0 text-slate-500 hover:text-slate-800"
-          disabled={isCreatingSurvey}
-          // Icon-only, so it needs its own name; describedby points at the prompt it acts on.
-          aria-label={editPromptLabel}
-          aria-describedby="ai-prompt-echo"
-          onClick={handleEditPrompt}>
-          <PencilIcon aria-hidden="true" />
-        </Button>
-      </TooltipRenderer>
-    </div>
+    <SourceChip
+      id="ai-prompt-echo"
+      label={submittedPrompt}
+      srLabel={t("workspace.surveys.ai_create.your_prompt")}
+      editLabel={editPromptLabel}
+      disabled={isCreatingSurvey}
+      onEdit={handleEditPrompt}
+    />
   );
 
   return (
@@ -239,18 +221,15 @@ export const CreateWithAIForm = ({
       )}
 
       {isGenerating || isReviewing ? (
-        <>
-          <div className="shrink-0">{promptChip}</div>
-          <div className="flex min-h-0 flex-1 flex-col">
-            <AiDraftPreview
-              draft={draft}
-              isGenerating={isGenerating}
-              className="flex-1"
-              scrollContainerRef={draftRef}
-            />
-          </div>
-          <AiStatusLine isActive={isGenerating} messages={generatingMessages} activeIndex={statusIndex} />
-        </>
+        <DraftReviewPanel
+          draft={draft}
+          isGenerating={isGenerating}
+          source={promptChip}
+          scrollContainerRef={draftRef}
+          status={
+            <AiStatusLine isActive={isGenerating} messages={generatingMessages} activeIndex={statusIndex} />
+          }
+        />
       ) : (
         <>
           <div className="space-y-2">

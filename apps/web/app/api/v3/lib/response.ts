@@ -101,12 +101,24 @@ function problemResponse(
 export function problemBadRequest(
   requestId: string,
   detail: string,
-  options?: { invalid_params?: InvalidParam[]; instance?: string }
+  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: string }
 ): Response {
   return problemResponse(400, "Bad Request", detail, requestId, {
-    code: "bad_request",
+    code: options?.code ?? "bad_request",
     instance: options?.instance,
     invalid_params: options?.invalid_params,
+  });
+}
+
+/** 415 for a request whose `Content-Type` the endpoint does not accept (e.g. JSON on a multipart-only route). */
+export function problemUnsupportedMediaType(
+  requestId: string,
+  detail: string = "Unsupported Media Type",
+  instance?: string
+): Response {
+  return problemResponse(415, "Unsupported Media Type", detail, requestId, {
+    code: "unsupported_media_type",
+    instance,
   });
 }
 
@@ -160,12 +172,18 @@ export function problemAIUnavailable(
 export function problemUnprocessableContent(
   requestId: string,
   detail: string,
-  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: string }
+  options?: {
+    invalid_params?: InvalidParam[];
+    instance?: string;
+    code?: string;
+    details?: Record<string, unknown>;
+  }
 ): Response {
   return problemResponse(422, "Unprocessable Content", detail, requestId, {
     code: options?.code ?? "unprocessable_content",
     instance: options?.instance,
     invalid_params: options?.invalid_params,
+    details: options?.details,
   });
 }
 

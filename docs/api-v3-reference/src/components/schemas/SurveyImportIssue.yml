@@ -1,0 +1,32 @@
+type: object
+description: One line of the import report. `code` is stable and machine-readable; `message` is English prose.
+required:
+  - severity
+  - code
+  - message
+properties:
+  severity:
+    type: string
+    enum:
+      - error
+      - warning
+      - info
+    description: "`error` stops the import; `warning` changed the document; `info` is worth knowing."
+  code:
+    type: string
+    description: >-
+      Stable issue code, e.g. `unknown_field_stripped`, `trigger_created`, `language_created`,
+      `external_url_removed`, `settings_not_exported`, `unknown_element`, `export_format_unsupported`.
+  path:
+    type: string
+    description: v3 document path the issue points at (`blocks.2.elements.0.headline`).
+  message:
+    type: string
+  sourceRef:
+    type: string
+    description: Where in the source file the issue comes from (a Qualtrics `QID`, a document heading).
+  vars:
+    type: object
+    description: Interpolation values for a translated rendering of `code`.
+    additionalProperties: true
+additionalProperties: false

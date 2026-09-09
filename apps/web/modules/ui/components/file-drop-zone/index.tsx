@@ -33,7 +33,9 @@ export const FileDropZone = ({
 }: Readonly<FileDropZoneProps>) => {
   const { t } = useTranslation();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
   const isBusy = isLoading || isProcessing;
+  const isInteractive = !isBusy && !disabled;
   const resolvedLoadingText = loadingText ?? t("common.loading");
 
   const handleFile = async (file: File | undefined) => {
@@ -50,15 +52,23 @@ export const FileDropZone = ({
     }
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isInteractive && !isDragActive) setIsDragActive(true);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    // Leaving a child fires dragleave too; only a move outside the zone ends the active state.
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isBusy || disabled) return;
+    setIsDragActive(false);
+    if (!isInteractive) return;
     void handleFile(e.dataTransfer.files[0]);
   };
 
@@ -70,20 +80,24 @@ export const FileDropZone = ({
   return (
     <div
       className={cn(
-        "rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6",
+        "group rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6",
+        "transition-[border-color,background-color,transform] duration-200 ease-out motion-reduce:transition-none",
+        isInteractive && "hover:border-slate-400 hover:bg-slate-100",
+        isDragActive && "scale-[1.01] border-slate-500 bg-slate-100 motion-reduce:transform-none",
         isBusy && "opacity-70",
         className
       )}
-      aria-busy={isBusy}>
+      aria-busy={isBusy}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}>
       {/* Drag-and-drop is an enhancement; the keyboard-accessible path is the associated file input below. */}
       <label
         htmlFor={id}
         className={cn(
           "flex flex-col items-center justify-center",
-          isBusy || disabled ? "cursor-not-allowed" : "cursor-pointer"
-        )}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}>
+          isInteractive ? "cursor-pointer" : "cursor-not-allowed"
+        )}>
         {isBusy ? (
           <>
             <LoadingSpinner className="h-8 w-8" />
@@ -91,7 +105,14 @@ export const FileDropZone = ({
           </>
         ) : (
           <>
-            <ArrowUpFromLineIcon className="size-8 text-slate-400" aria-hidden="true" />
+            <ArrowUpFromLineIcon
+              className={cn(
+                "size-8 text-slate-400 transition-[transform,color] duration-200 ease-out motion-reduce:transition-none",
+                isInteractive && "group-hover:-translate-y-0.5 group-hover:text-slate-500",
+                isDragActive && "-translate-y-1 text-slate-600"
+              )}
+              aria-hidden="true"
+            />
             <p className="mt-2 text-sm text-slate-600">
               <span className="font-semibold">{primaryText}</span>
               {secondaryText ? ` ${secondaryText}` : null}
