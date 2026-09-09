@@ -566,6 +566,57 @@ describe("sso-recovery", () => {
     expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
   });
 
+  /**
+   * Single use is hygiene here, not the thing that makes replay safe.
+   *
+   * If `consumeSsoRecoveryIntent` cannot delete — Redis unreachable at exactly that moment — the record
+   * survives to its TTL and a second completion runs. That is harmless by construction rather than by
+   * luck: `syncSsoIdentityForUser` upserts, and the first completion set `emailVerified`, so
+   * `reclaimUnverifiedLocalAuthIfNeeded` finds nothing to strip and the session sweep it guards never
+   * fires. This is the alternative to claiming an `in_progress` state before the transaction, which
+   * would need the same Redis that just failed the delete and would strand the user until TTL if the
+   * process died between claim and commit.
+   */
+  test("a replayed completion relinks idempotently, stripping and sweeping nothing", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: false,
+      isActive: true,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+    } as any);
+
+    // First completion: the account is unproven, so this is the one that strips and sweeps.
+    await completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" });
+    expect(txUserUpdate).toHaveBeenCalled();
+    expect(revokeUserSessionsExcept).toHaveBeenCalled();
+
+    // The delete failed, so the record is still there and the emailed link is spent again. The user
+    // row is now proven, exactly as the first completion left it.
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: true,
+      isActive: true,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+    } as any);
+    txUserUpdate.mockClear();
+    vi.mocked(revokeUserSessionsExcept).mockClear();
+    vi.mocked(syncSsoIdentityForUser).mockClear();
+
+    await expect(completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })).resolves.toBe(
+      "http://localhost:3000/environments/env_1"
+    );
+
+    expect(syncSsoIdentityForUser).toHaveBeenCalledOnce(); // an upsert, so no second identity
+    expect(txUserUpdate).not.toHaveBeenCalled(); // nothing left to strip
+    expect(revokeUserSessionsExcept).not.toHaveBeenCalled(); // and so no second session sweep
+  });
+
   test("does not clear local auth material for already verified users", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user_1",
