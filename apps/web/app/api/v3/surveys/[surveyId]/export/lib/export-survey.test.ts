@@ -113,7 +113,12 @@ describe("exportV3Survey", () => {
     expect(auditLog).toMatchObject({
       targetId: FIXTURE_APP_SURVEY.id,
       organizationId: "org_1",
-      newObject: { exportFormat: 1, workspaceId: FIXTURE_WORKSPACE_ID },
+      newObject: {
+        exportFormat: 1,
+        workspaceId: FIXTURE_WORKSPACE_ID,
+        surveyId: FIXTURE_APP_SURVEY.id,
+        surveyType: "app",
+      },
     });
     expect(capturePostHogEvent).toHaveBeenCalledWith(
       "user_1",

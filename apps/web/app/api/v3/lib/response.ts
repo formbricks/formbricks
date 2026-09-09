@@ -194,6 +194,19 @@ export function problemConflict(requestId: string, detail: string, instance?: st
   });
 }
 
+/** A 409 whose cause clears by itself (a concurrent run finishing): carries `Retry-After` and a specific code. */
+export function problemConflictWithRetry(
+  requestId: string,
+  detail: string,
+  options: { instance?: string; code: string; retryAfter: number }
+): Response {
+  return problemResponse(409, "Conflict", detail, requestId, {
+    code: options.code,
+    instance: options.instance,
+    headers: { "Retry-After": String(options.retryAfter) },
+  });
+}
+
 export function problemBadGateway(requestId: string, detail: string, instance?: string): Response {
   return problemResponse(502, "Bad Gateway", detail, requestId, {
     code: "bad_gateway",

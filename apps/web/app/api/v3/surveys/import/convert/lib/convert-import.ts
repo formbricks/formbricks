@@ -12,6 +12,10 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { mapV3SurveyGenerateError } from "@/app/api/v3/surveys/generate/error-mapping";
+import {
+  guardImportWorkspaceBudget,
+  problemImportInProgress,
+} from "@/app/api/v3/surveys/import/lib/import-guards";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -19,8 +23,19 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { type TImportDetectionFailureCode, detectImportSource } from "@/modules/survey/import/detect";
 import { getImportLaneHandler } from "@/modules/survey/import/lanes";
+import { ImportInProgressError, acquireAiImportSlot } from "@/modules/survey/import/lib/ai-inflight-guard";
+import {
+  buildImportConvertedProperties,
+  buildImportFailedProperties,
+  readProblemCode,
+} from "@/modules/survey/import/lib/import-analytics";
 import { resolveImportCandidate } from "@/modules/survey/import/resolve";
-import { IMPORT_LANE_BY_KIND, type TImportContext } from "@/modules/survey/import/types";
+import {
+  IMPORT_LANE_BY_KIND,
+  type TImportContext,
+  type TImportLane,
+  type TImportSourceKind,
+} from "@/modules/survey/import/types";
 import type { TV3SurveyImportConvertBody } from "../schemas";
 
 type TConvertImportParams = {
@@ -67,21 +82,43 @@ export async function assertAiImportAllowed(
   }
 }
 
+type TConvertTelemetry = { sourceKind: TImportSourceKind | null; lane: TImportLane | null };
+
 /**
  * `POST /api/v3/surveys/import/convert` — turn a file into a reviewed survey document without
  * persisting anything. Detect → lane → resolve (always dry run: creating is the import route's job).
  *
- * A file the allowlist rejects is a 422 (the request was well-formed; the file is not something we
- * take), a non-multipart request is a 415 (wrapper), a lane that has not shipped is a 400
- * `lane_not_available`. A file the lane cannot read still answers 200 with `document: null` and
- * the reasons in `report` — the dialog shows them; the 422 belongs to the persisting endpoint.
+ * A file the allowlist rejects is a 422, a non-multipart request a 415 (wrapper), a lane that has not
+ * shipped a 400 `lane_not_available`. A file the lane cannot read still answers 200 with
+ * `document: null` and the reasons in `report`. Every non-2xx answer is reported as
+ * `survey_import_failed` for session users (ENG-3008), here, in exactly one place.
  */
-export async function convertImportFile({
-  body,
-  authentication,
-  requestId,
-  instance,
-}: TConvertImportParams): Promise<Response> {
+export async function convertImportFile(params: TConvertImportParams): Promise<Response> {
+  const telemetry: TConvertTelemetry = { sourceKind: null, lane: null };
+  const response = await convertImportFileInner(params, telemetry);
+
+  const userId = getSessionUserId(params.authentication);
+  if (!response.ok && userId) {
+    capturePostHogEvent(
+      userId,
+      "survey_import_failed",
+      buildImportFailedProperties({
+        sourceKind: telemetry.sourceKind,
+        lane: telemetry.lane,
+        code: await readProblemCode(response),
+        status: response.status,
+      }),
+      { workspaceId: params.body.fields.workspaceId }
+    );
+  }
+
+  return response;
+}
+
+async function convertImportFileInner(
+  { body, authentication, requestId, instance }: TConvertImportParams,
+  telemetry: TConvertTelemetry
+): Promise<Response> {
   const importRunId = createId();
   const file = body.files[0];
   const extension = file.fileName.split(".").pop()?.toLowerCase() ?? null;
@@ -105,6 +142,12 @@ export async function convertImportFile({
       return authResult;
     }
 
+    const budget = await guardImportWorkspaceBudget(authResult.workspaceId, requestId);
+    if (budget) {
+      log.warn({ statusCode: 429 }, "Workspace import budget exhausted");
+      return budget;
+    }
+
     const detection = detectImportSource({
       fileName: file.fileName,
       mimeType: file.mimeType,
@@ -115,6 +158,8 @@ export async function convertImportFile({
       return problemForImportDetectionFailure(requestId, instance, detection.code);
     }
 
+    telemetry.sourceKind = detection.kind;
+    telemetry.lane = IMPORT_LANE_BY_KIND[detection.kind];
     const lane = getImportLaneHandler(detection.kind);
     if (!lane) {
       log.warn({ statusCode: 400, sourceKind: detection.kind }, "Import lane not available");
@@ -143,9 +188,13 @@ export async function convertImportFile({
     const startedAt = Date.now();
 
     let candidate;
+    let releaseSlot: (() => Promise<void>) | null = null;
     try {
       if (isAiLane) {
         await assertAiImportAllowed(authResult.organizationId, authentication);
+        releaseSlot = await acquireAiImportSlot(
+          getRateLimitIdentifier(authentication) ?? authResult.workspaceId
+        );
       }
 
       candidate = await lane(
@@ -154,8 +203,20 @@ export async function convertImportFile({
       );
     } catch (error) {
       if (!isAiLane) throw error;
-      log.warn({ error, sourceKind: detection.kind }, "AI import lane failed");
+      if (error instanceof ImportInProgressError) {
+        log.warn(
+          { statusCode: 409, sourceKind: detection.kind, lane: "ai" },
+          "AI import already in progress"
+        );
+        return problemImportInProgress(requestId, error, instance);
+      }
+      log.warn(
+        { err: error, statusCode: 502, sourceKind: detection.kind, lane: "ai" },
+        "AI import lane failed"
+      );
       return mapV3SurveyGenerateError(error, aiErrorContext);
+    } finally {
+      await releaseSlot?.();
     }
 
     const resolved = await resolveImportCandidate(candidate, {
@@ -175,6 +236,18 @@ export async function convertImportFile({
       },
       "Import file converted"
     );
+
+    if (ctx.userId) {
+      capturePostHogEvent(
+        ctx.userId,
+        "survey_import_converted",
+        buildImportConvertedProperties(resolved.report, {
+          durationMs: Date.now() - startedAt,
+          hasDocument: resolved.document !== null,
+        }),
+        { organizationId: authResult.organizationId, workspaceId: authResult.workspaceId }
+      );
+    }
 
     if (isAiLane && ctx.userId && resolved.document) {
       capturePostHogEvent(

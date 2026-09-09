@@ -10,10 +10,20 @@ import {
   problemForImportDetectionFailure,
 } from "@/app/api/v3/surveys/import/convert/lib/convert-import";
 import type { TV3SurveyImportConvertBody } from "@/app/api/v3/surveys/import/convert/schemas";
+import {
+  guardImportWorkspaceBudget,
+  problemImportInProgress,
+} from "@/app/api/v3/surveys/import/lib/import-guards";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { detectImportSource } from "@/modules/survey/import/detect";
 import { getImportLaneHandler } from "@/modules/survey/import/lanes";
+import { ImportInProgressError, acquireAiImportSlot } from "@/modules/survey/import/lib/ai-inflight-guard";
+import {
+  buildImportConvertedProperties,
+  buildImportFailedProperties,
+  readProblemCode,
+} from "@/modules/survey/import/lib/import-analytics";
 import { resolveImportCandidate } from "@/modules/survey/import/resolve";
 import {
   IMPORT_LANE_BY_KIND,
@@ -49,7 +59,31 @@ interface TStreamImportParams {
  * mid-conversion failures become in-band `error` events. Deterministic lanes emit start → progress
  * reading → progress validating → done with no partials.
  */
-export async function streamImportConversion({
+export async function streamImportConversion(params: TStreamImportParams): Promise<Response> {
+  const response = await streamImportConversionInner(params);
+  const userId = getSessionUserId(params.authentication);
+  // Pre-stream refusals (gate, budget, unsupported file) are problem responses; in-band errors are
+  // reported where they are emitted.
+  if (!response.ok && userId) {
+    const file = params.body.files[0];
+    const kind = detectImportSource({ fileName: file.fileName, mimeType: file.mimeType, bytes: file.bytes });
+    capturePostHogEvent(
+      userId,
+      "survey_import_failed",
+      buildImportFailedProperties({
+        sourceKind: kind.ok ? kind.kind : null,
+        lane: kind.ok ? IMPORT_LANE_BY_KIND[kind.kind] : null,
+        code: await readProblemCode(response),
+        status: response.status,
+        streamed: true,
+      }),
+      { workspaceId: params.body.fields.workspaceId }
+    );
+  }
+  return response;
+}
+
+async function streamImportConversionInner({
   req,
   authentication,
   body,
@@ -71,7 +105,10 @@ export async function streamImportConversion({
   const userId = getSessionUserId(authentication);
   const importRunId = createId();
   const file = body.files[0];
-  const log = logger.withContext({ requestId, importRunId, workspaceId, organizationId });
+  const budget = await guardImportWorkspaceBudget(workspaceId, requestId);
+  if (budget) {
+    return budget;
+  }
 
   const detection = detectImportSource({
     fileName: file.fileName,
@@ -81,6 +118,14 @@ export async function streamImportConversion({
   if (!detection.ok) {
     return problemForImportDetectionFailure(requestId, instance, detection.code);
   }
+  const log = logger.withContext({
+    requestId,
+    importRunId,
+    workspaceId,
+    organizationId,
+    sourceKind: detection.kind,
+    lane: IMPORT_LANE_BY_KIND[detection.kind],
+  });
 
   const lane = getImportLaneHandler(detection.kind);
   if (!lane) {
@@ -92,10 +137,15 @@ export async function streamImportConversion({
   }
 
   const isAiLane = IMPORT_LANE_BY_KIND[detection.kind] === "ai";
+  let releaseSlot: () => Promise<void> = async () => undefined;
   if (isAiLane) {
     try {
       await assertAiImportAllowed(organizationId, authentication);
+      releaseSlot = await acquireAiImportSlot(userId ?? workspaceId);
     } catch (error) {
+      if (error instanceof ImportInProgressError) {
+        return problemImportInProgress(requestId, error, instance);
+      }
       return mapV3SurveyGenerateError(error, { requestId, instance, workspaceId, organizationId });
     }
   }
@@ -174,6 +224,19 @@ export async function streamImportConversion({
           report: resolved.report,
         });
 
+        if (userId) {
+          capturePostHogEvent(
+            userId,
+            "survey_import_converted",
+            buildImportConvertedProperties(resolved.report, {
+              durationMs: Date.now() - startedAt,
+              hasDocument: resolved.document !== null,
+              streamed: true,
+            }),
+            { organizationId, workspaceId }
+          );
+        }
+
         if (isAiLane && userId && resolved.document) {
           capturePostHogEvent(
             userId,
@@ -194,11 +257,26 @@ export async function streamImportConversion({
         if (isClientAbort(error, abortController.signal)) {
           log.info("Survey import stream aborted by the client");
         } else {
-          log.error({ err: error, sourceKind: detection.kind }, "Survey import stream failed");
-          emit({ ...toStreamErrorEvent(error), reference: importRunId });
+          log.error({ err: error }, "Survey import stream failed");
+          const failure = { ...toStreamErrorEvent(error), reference: importRunId };
+          emit(failure);
+          if (userId) {
+            capturePostHogEvent(
+              userId,
+              "survey_import_failed",
+              buildImportFailedProperties({
+                sourceKind: detection.kind,
+                lane: source.lane,
+                code: failure.code,
+                streamed: true,
+              }),
+              { organizationId, workspaceId }
+            );
+          }
         }
       } finally {
         detach();
+        await releaseSlot();
         if (!closed) {
           closed = true;
           controller.close();
@@ -208,6 +286,7 @@ export async function streamImportConversion({
     cancel() {
       closed = true;
       abortController.abort();
+      void releaseSlot();
       log.info("Survey import stream cancelled by the client");
     },
   });

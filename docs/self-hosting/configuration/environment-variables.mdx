@@ -13,7 +13,7 @@ These variables are present inside your machine's docker-compose file. Restart t
   Formbricks v5 makes Hub part of the standard self-hosted runtime and changes how rate limiting is enforced.
 </Note>
 
-For the `AI_*` variables, see [AI Features](/self-hosting/advanced/enterprise-features/ai-features) — it walks through each provider and the credentials it needs. Set only the variables for the provider you use; unused provider variables can be omitted.
+For the `AI_*` variables, see [AI Features](/self-hosting/advanced/enterprise-features/ai-features) — it walks through each provider and the credentials it needs. Set only the variables for the provider you use; unused provider variables can be omitted. The document lane of survey import (Word, PDF, Markdown, CSV, Excel) needs a provider; Formbricks JSON and Qualtrics QSF imports do not. File import also needs your reverse proxy to accept 16 MB request bodies — see the note on that page.
 
 {/* prettier-ignore-start */}
 

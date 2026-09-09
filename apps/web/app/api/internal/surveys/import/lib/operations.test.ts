@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import { ZV3SurveyImportConvertBody } from "@/app/api/v3/surveys/import/convert/schemas";
+import { ImportInProgressError } from "@/modules/survey/import/lib/ai-inflight-guard";
 import type { TImportContext, TImportLaneHandler } from "@/modules/survey/import/types";
 import { streamImportConversion } from "./operations";
 
@@ -13,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   getImportLaneHandler: vi.fn(),
   resolveImportCandidate: vi.fn(),
   capturePostHogEvent: vi.fn(),
+  acquireAiImportSlot: vi.fn(),
+  releaseAiImportSlot: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -30,6 +33,10 @@ vi.mock("@/lib/ai/service", async (importOriginal) => ({
   assertOrganizationAIConfigured: mocks.assertOrganizationAIConfigured,
 }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
+vi.mock("@/modules/survey/import/lib/ai-inflight-guard", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/survey/import/lib/ai-inflight-guard")>()),
+  acquireAiImportSlot: mocks.acquireAiImportSlot,
+}));
 vi.mock("@/modules/survey/import/lanes", () => ({ getImportLaneHandler: mocks.getImportLaneHandler }));
 vi.mock("@/modules/survey/import/resolve", () => ({ resolveImportCandidate: mocks.resolveImportCandidate }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: mocks.capturePostHogEvent }));
@@ -76,6 +83,7 @@ describe("streamImportConversion", () => {
     mocks.assertOrganizationAIConfigured.mockResolvedValue({});
     mocks.applyRateLimit.mockResolvedValue({});
     mocks.resolveImportCandidate.mockResolvedValue(resolved);
+    mocks.acquireAiImportSlot.mockResolvedValue(mocks.releaseAiImportSlot);
   });
 
   test("a deterministic lane emits start, reading, validating and done — no partials", async () => {
@@ -107,7 +115,14 @@ describe("streamImportConversion", () => {
       references: null,
     });
     expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
-    expect(mocks.capturePostHogEvent).not.toHaveBeenCalled();
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledTimes(1);
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+      "user1",
+      "survey_import_converted",
+      // The event reads the resolved report, which the mocked resolver labels markdown/ai.
+      expect.objectContaining({ source_kind: "markdown", lane: "ai", has_document: true, streamed: true }),
+      expect.objectContaining({ workspaceId })
+    );
   });
 
   test("an AI lane run streams progress per chunk and partials with their block offset", async () => {
@@ -174,6 +189,12 @@ describe("streamImportConversion", () => {
     expect(response.status).toBe(403);
     expect(response.headers.get("Content-Type")).toContain("application/problem+json");
     expect(lane).not.toHaveBeenCalled();
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+      "user1",
+      "survey_import_failed",
+      { source_kind: "markdown", lane: "ai", code: "ai_smart_tools_disabled", status: 403, streamed: true },
+      expect.objectContaining({ workspaceId })
+    );
   });
 
   test("a spent AI budget answers 429 with Retry-After before the stream", async () => {
@@ -184,6 +205,24 @@ describe("streamImportConversion", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("17");
+  });
+
+  test("a third concurrent AI conversion is a 409 before the stream; the slot is released after the stream", async () => {
+    mocks.acquireAiImportSlot.mockRejectedValueOnce(new ImportInProgressError());
+    mocks.getImportLaneHandler.mockReturnValue(vi.fn());
+    const refused = await call(body("survey.md", readFileSync(join(FIXTURES, "survey.md"))));
+    expect(refused.status).toBe(409);
+    expect(refused.headers.get("Retry-After")).toBe("30");
+
+    mocks.getImportLaneHandler.mockReturnValue(
+      vi.fn(async (input) => ({
+        document: { name: "Doc" },
+        issues: [],
+        source: { lane: "ai" as const, kind: input.kind },
+      }))
+    );
+    await readEvents(await call(body("survey.md", readFileSync(join(FIXTURES, "survey.md")))));
+    expect(mocks.releaseAiImportSlot).toHaveBeenCalledTimes(1);
   });
 
   test("an unsupported file is a 422 problem, a kind without a lane a 400", async () => {
@@ -229,5 +268,11 @@ describe("streamImportConversion", () => {
       retryAfter: 30,
       reference: expect.any(String),
     });
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+      "user1",
+      "survey_import_failed",
+      expect.objectContaining({ code: "ai_quota_exceeded", lane: "ai", streamed: true }),
+      expect.anything()
+    );
   });
 });

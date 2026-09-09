@@ -14,6 +14,11 @@ import { ImportDropzone } from "@/modules/survey/import/components/import-dropzo
 import { ImportFacts } from "@/modules/survey/import/components/import-facts";
 import { ImportProgressLadder } from "@/modules/survey/import/components/import-progress-ladder";
 import { ImportReport } from "@/modules/survey/import/components/import-report";
+import {
+  IMPORT_KIND_BY_EXTENSION,
+  getImportFileExtension,
+  isImportAllowedExtension,
+} from "@/modules/survey/import/file-types";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
 import { formatFileSize } from "@/modules/survey/import/lib/import-file-checks";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -112,8 +117,10 @@ export const ImportSurveyDialog = ({
   };
 
   const handleFileSelect = (file: File) => {
+    const extension = getImportFileExtension(file.name);
     capture("survey_import_source_selected", {
-      extension: file.name.split(".").pop()?.toLowerCase() ?? null,
+      extension,
+      kind: extension && isImportAllowedExtension(extension) ? IMPORT_KIND_BY_EXTENSION[extension] : null,
     });
     importer.selectFile(file);
   };

@@ -189,6 +189,8 @@ export type TDetectDocumentLanguagesParams = {
   workspaceId: string;
   userId?: string | null;
   languageHint?: string;
+  /** Trace id shared by every model call of one import run. */
+  importRunId?: string;
   signal?: AbortSignal;
 };
 
@@ -210,6 +212,11 @@ export async function detectDocumentLanguages(
           distinctId: params.userId,
           feature: AI_TRACING_FEATURE.SurveyImport,
           workspaceId: params.workspaceId,
+          traceId: params.importRunId,
+          properties: {
+            step: "detect_languages",
+            ...(params.importRunId ? { importRunId: params.importRunId } : {}),
+          },
         }
       : undefined,
     schema: ZLanguageDetection,

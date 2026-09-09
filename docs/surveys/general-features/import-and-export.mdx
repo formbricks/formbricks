@@ -1,0 +1,126 @@
+---
+title: "Import & Export"
+description: "Move surveys between workspaces, organizations and instances as a Formbricks JSON file, or bring a questionnaire in from Qualtrics, Word, PDF, Markdown, CSV or Excel."
+icon: "arrow-right-arrow-left"
+---
+
+A survey can leave Formbricks as a `.formbricks.json` file and come back exactly as it was, in any workspace of any Formbricks instance. Other sources come in through the same dialog: a Qualtrics `.qsf` is converted deterministically, and a document — Word, PDF, Markdown, CSV or Excel — is read with AI. Whatever the source, you review the draft and its **Import report** before a survey is created.
+
+---
+
+## Export a survey as JSON
+
+<Steps>
+  <Step title="Open the survey menu">
+    In **Surveys**, open the **⋯** menu of a survey and choose **Export as JSON**. The download starts at once.
+  </Step>
+
+  <Step title="Keep the file as it is">
+    The file is named after the survey (`customer-onboarding.formbricks.json`). It is plain JSON you can read and version, but hand edits are validated on import — anything the create API would reject is reported, not silently dropped.
+  </Step>
+</Steps>
+
+### What the file contains
+
+Everything that defines what a respondent sees: questions and blocks, block logic and fallbacks, the welcome card and endings, all survey languages with their translations, hidden fields, variables, and the survey metadata. Triggers of an app survey travel as references to their action classes, so the importing workspace can match them by key or recreate them.
+
+### What the file leaves out
+
+| Not exported                                                                   | Why                                                                                                   |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Styling                                                                        | Styling moves to the workspace **Brand Kit**; the imported survey uses the target workspace's look. |
+| Follow-ups                                                                     | Follow-ups are being deprecated in favour of Workflows.                                             |
+| Survey settings: PIN, single-use links, reCAPTCHA, closed message, slug, schedule, custom scripts | Instance-bound or a minute to redo in the editor; the report lists what to check.  |
+| Quotas and targeting segments                                                  | They point at data the target workspace does not have.                                             |
+| Responses and the media files themselves                                       | Image and video URLs stay in the file as links; the files are not copied.                          |
+
+<Note>
+  The export is the `GET /api/v3/surveys/{id}` resource with the instance-bound fields removed. Anything you can send to `POST /api/v3/surveys` round-trips; the file carries an `exportFormat` number so a newer instance can read an older file.
+</Note>
+
+---
+
+## Import from a file
+
+<Steps>
+  <Step title="Open the import dialog">
+    In **Surveys**, open the **New survey** menu and choose **Import survey**, or use the **Import survey** card on the templates page.
+  </Step>
+
+  <Step title="Drop the file">
+    One survey per file, up to 15 MB. Formbricks detects the format from the content, so a Formbricks export saved as `.txt` still works.
+  </Step>
+
+  <Step title="Watch it convert">
+    A Formbricks or Qualtrics file converts in a second or two. A document shows a progress ladder — read file, detected languages, extracting questions, validating — and questions appear in the list while the model reads. **Stop** keeps what has come through.
+  </Step>
+
+  <Step title="Review and open in editor">
+    Check the facts row (questions, blocks, languages, source), read the report, rename the survey if you like, and click **Open in editor**. The survey is created as a draft; nothing is published.
+  </Step>
+</Steps>
+
+### Formats
+
+| Format                       | Lane        | What to expect                                                                                                       |
+| ---------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| Formbricks JSON (`.json`)    | Exact       | Everything in the file, unchanged. Triggers are matched to the workspace's action classes or recreated.              |
+| Qualtrics QSF (`.qsf`)       | Structured  | Questions, pages, translations, embedded data and piped text; logic is listed in the report. See [Migrate from Qualtrics](/surveys/general-features/migrate-from-qualtrics). |
+| Word (`.docx`)               | AI          | Numbered questions with their options, tables (also two-column bilingual layouts), page breaks as blocks.             |
+| PDF (`.pdf`)                 | AI          | Text PDFs only; scanned PDFs need OCR first.                                                                          |
+| Markdown, text (`.md`, `.txt`) | AI        | Headings, numbered questions, lists.                                                                                  |
+| CSV, Excel (`.csv`, `.xlsx`) | AI          | One question per row; a header like `Question | Type | Options | Required` is recognised.                            |
+
+The AI lane needs **AI smart tools** enabled for the organization (and, on self-hosted instances, an AI provider configured). Without it the document formats are shown muted and the dialog explains what to enable; JSON and QSF always work.
+
+### What makes a good source document
+
+- One question per line or paragraph, numbered (`1.`, `Q1`, `Question 1`).
+- Options as a list under the question; scale anchors written out (`1 = strongly disagree, 5 = strongly agree`).
+- Required questions marked with `*` or the word *required*.
+- Headings or page breaks where you want blocks; an introduction before the first question becomes the welcome card, a closing paragraph the ending.
+- For bilingual files, a two-column table with one language per column. Every language in the document becomes a survey language.
+
+The model transcribes; it does not invent. Wording is kept verbatim per language, and anything it could not map to a Formbricks question type is noted in the report with the original type name.
+
+---
+
+## The import report
+
+Every import ends with a report. Read it before you open the editor.
+
+| Severity    | Meaning                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------ |
+| **Error**   | Nothing was imported. The file could not be read, or the result would not be a valid survey. |
+| **Warning** | Something changed on the way in — check it in the editor.                                  |
+| **Note**    | Information only, nothing to do.                                                           |
+
+The codes you will see most often:
+
+- **Logic dropped** (QSF): a skip, display or branch rule is described in the report and not imported. Rebuild it with the editor's logic.
+- **Trigger created / would be created** (app surveys): an action class from the source did not exist in this workspace and was created with an `(imported)` suffix, or would be on a real import.
+- **Translation filled** (documents): the document had no text in one of its languages for a field; the default-language text was copied so the survey stays valid.
+- **Type approximated**: the source question type has no exact match; the closest Formbricks type was used and the original name is in the note.
+- **Field renamed**: a hidden field or variable name did not follow the naming rules (`lowercase_with_underscores`) or was reserved, and was renamed. Links that pass the field as a URL parameter must use the new name.
+- **Settings not exported** (Formbricks JSON): the reminder that styling and survey settings are not in the file.
+- **Language ambiguous** (documents): the model could not tell the languages apart; only the primary language was imported.
+
+<Tip>
+  Scripting a migration? `POST /api/v3/surveys/import/convert` returns the converted document and the report without creating anything; `POST /api/v3/surveys/import` creates the survey from a file or a reviewed document. Both are in the API reference.
+</Tip>
+
+---
+
+## Limits
+
+| Limit                                 | Value                                            |
+| ------------------------------------- | ------------------------------------------------ |
+| File size                             | 15 MB per file                                   |
+| Document text read by the model       | 400,000 characters; the rest is dropped with a warning |
+| Questions per document import         | 200; the rest is dropped with a warning          |
+| Time to read a Word or PDF file       | 10 seconds, then the file is reported as unreadable |
+| Concurrent document imports per user  | 2                                                |
+| Imports per workspace                 | 200 per hour                                     |
+| AI conversions per user               | 10 per minute, shared with Create with AI        |
+
+Long documents are read in parts; a 150-question Word file takes several model calls and a minute or two.

@@ -1,3 +1,4 @@
+import { IMPORT_MAX_QUESTIONS, IMPORT_MAX_TEXT_CHARS } from "../../limits";
 import { importWarning } from "../../report";
 import type { TImportIssue } from "../../types";
 
@@ -23,8 +24,8 @@ export type TChunkOptions = {
 };
 
 /** Beyond this the remainder is dropped with `text_truncated`: nobody imports a 200-question survey in one go. */
-export const CHUNK_MAX_TOTAL_QUESTIONS = 200;
-export const CHUNK_MAX_TOTAL_CHARS = 400_000;
+export const CHUNK_MAX_TOTAL_QUESTIONS = IMPORT_MAX_QUESTIONS;
+export const CHUNK_MAX_TOTAL_CHARS = IMPORT_MAX_TEXT_CHARS;
 
 // Sized for a 16k output budget with reasoning tokens counted against it: 40/16k overflowed live.
 const QUESTIONS_PER_CALL_BUDGET = 24;

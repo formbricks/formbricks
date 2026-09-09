@@ -37,8 +37,8 @@ export const AI_IMPORT_SOURCE_KINDS: readonly TImportSourceKind[] = IMPORT_SOURC
   (kind) => IMPORT_LANE_BY_KIND[kind] === "ai"
 );
 
-/** 15 MB per file (D3). The transport adds 1 MB of multipart slack on top. */
-export const IMPORT_MAX_FILE_BYTES = 15 * 1024 * 1024;
+// Re-exported so existing imports keep working; the number lives with the other limits.
+export { IMPORT_MAX_FILE_BYTES } from "./limits";
 
 /**
  * Import owns its own allowlist. `ZAllowedFileExtension` (packages/types/storage.ts) is the upload

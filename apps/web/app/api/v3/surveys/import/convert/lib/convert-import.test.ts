@@ -18,6 +18,7 @@ import {
 } from "@/modules/survey/export/__fixtures__/surveys";
 import { buildSurveyExportEnvelope } from "@/modules/survey/export/build-export-envelope";
 import { documentLane } from "@/modules/survey/import/lanes/document";
+import { ImportInProgressError, acquireAiImportSlot } from "@/modules/survey/import/lib/ai-inflight-guard";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { ZV3SurveyImportConvertBody } from "../schemas";
 import { convertImportFile } from "./convert-import";
@@ -43,6 +44,10 @@ vi.mock("@/lib/ai/service", async (importOriginal) => ({
 }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
+vi.mock("@/modules/survey/import/lib/ai-inflight-guard", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/survey/import/lib/ai-inflight-guard")>()),
+  acquireAiImportSlot: vi.fn(async () => async () => undefined),
+}));
 vi.mock("@/lib/constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/constants")>()),
   WEBAPP_URL: "https://app.formbricks.com",
@@ -105,6 +110,18 @@ describe("convertImportFile", () => {
       "trigger_would_be_created"
     );
     expect(createActionClass).not.toHaveBeenCalled();
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "user_1",
+      "survey_import_converted",
+      expect.objectContaining({
+        source_kind: "formbricks-export",
+        lane: "lossless",
+        has_document: true,
+        error_count: 0,
+        import_warning_codes: expect.any(Array),
+      }),
+      expect.objectContaining({ workspaceId: FIXTURE_WORKSPACE_ID })
+    );
   });
 
   test("a raw v3 document renamed to .txt is still detected by content", async () => {
@@ -172,6 +189,12 @@ describe("convertImportFile", () => {
     expect(json.code).toBe(code);
     expect(json.detail).toContain(detail);
     expect(json.invalid_params[0].name).toBe("file");
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "user_1",
+      "survey_import_failed",
+      { source_kind: null, lane: null, code, status: 422 },
+      expect.objectContaining({ workspaceId: FIXTURE_WORKSPACE_ID })
+    );
   });
 
   test("converts a Qualtrics .qsf through the structured lane and reports its logic", async () => {
@@ -247,8 +270,42 @@ describe("convertImportFile", () => {
 
       expect(response.status).toBe(403);
       expect((await response.json()).code).toBe("ai_features_not_enabled");
+      expect(capturePostHogEvent).toHaveBeenCalledWith(
+        "user_1",
+        "survey_import_failed",
+        { source_kind: "docx", lane: "ai", code: "ai_features_not_enabled", status: 403 },
+        expect.anything()
+      );
       expect(documentLane).not.toHaveBeenCalled();
-      expect(applyRateLimit).not.toHaveBeenCalled();
+      expect(applyRateLimit).not.toHaveBeenCalledWith(
+        expect.objectContaining({ namespace: "api:v3:surveys:generate" }),
+        expect.anything()
+      );
+    });
+
+    test("a third concurrent AI conversion answers 409 import_in_progress with Retry-After", async () => {
+      vi.mocked(acquireAiImportSlot).mockRejectedValueOnce(new ImportInProgressError());
+
+      const response = await convertImportFile({ body: docx(), authentication, requestId, instance });
+
+      expect(response.status).toBe(409);
+      expect((await response.json()).code).toBe("import_in_progress");
+      expect(response.headers.get("Retry-After")).toBe("30");
+      expect(documentLane).not.toHaveBeenCalled();
+    });
+
+    test("the workspace import budget answers 429 before anything else", async () => {
+      vi.mocked(applyRateLimit).mockImplementation(async (config) => {
+        if (config.namespace === "api:v3:surveys:import:workspace")
+          throw new TooManyRequestsError("budget", 900);
+        return {} as never;
+      });
+
+      const response = await convertImportFile({ body: docx(), authentication, requestId, instance });
+
+      expect(response.status).toBe(429);
+      expect(response.headers.get("Retry-After")).toBe("900");
+      expect(assertOrganizationAIConfigured).not.toHaveBeenCalled();
     });
 
     test("an entitled organization gets the AI lane's document, source and a PostHog event", async () => {
@@ -322,7 +379,11 @@ describe("convertImportFile", () => {
 
       expect(response.status).toBe(200);
       expect(assertOrganizationAIConfigured).not.toHaveBeenCalled();
-      expect(applyRateLimit).not.toHaveBeenCalled();
+      expect(applyRateLimit).toHaveBeenCalledTimes(1);
+      expect(applyRateLimit).toHaveBeenCalledWith(
+        expect.objectContaining({ namespace: "api:v3:surveys:import:workspace" }),
+        FIXTURE_WORKSPACE_ID
+      );
     });
   });
 
@@ -338,6 +399,57 @@ describe("convertImportFile", () => {
 
     expect(response.status).toBe(403);
     expect(prisma.language.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("convertImportFile logging", () => {
+  test("no log line carries file names, bytes or document text", async () => {
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
+    vi.mocked(prisma.language.findMany).mockResolvedValue([] as never);
+    vi.mocked(getActionClasses).mockResolvedValue([]);
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+    vi.mocked(applyRateLimit).mockResolvedValue({} as never);
+    vi.mocked(assertOrganizationAIConfigured).mockResolvedValue({} as never);
+    const { logger } = await import("@formbricks/logger");
+    const contextLogger = { warn: vi.fn(), error: vi.fn(), info: vi.fn() };
+    vi.mocked(logger.withContext).mockReturnValue(contextLogger as never);
+
+    await convertImportFile({
+      body: body("in-app.formbricks.json", envelopeBytes(FIXTURE_APP_SURVEY), "application/json"),
+      authentication,
+      requestId,
+      instance,
+    });
+    await convertImportFile({
+      body: body("broken.json", Buffer.from("{ nope")),
+      authentication,
+      requestId,
+      instance,
+    });
+    vi.mocked(documentLane).mockRejectedValueOnce(new Error("provider down"));
+    await convertImportFile({
+      body: body(
+        "questions.docx",
+        readFileSync(
+          join(process.cwd(), "modules/survey/import/lanes/document/__fixtures__/survey-numbered-lists.docx")
+        )
+      ),
+      authentication,
+      requestId,
+      instance,
+    });
+
+    const forbidden = new Set(["text", "bytes", "fileName", "document", "prompt", "content"]);
+    const logged = [
+      ...vi.mocked(logger.withContext).mock.calls.map((call) => call[0]),
+      ...[contextLogger.warn, contextLogger.error, contextLogger.info].flatMap((fn) =>
+        fn.mock.calls.map((call) => call[0])
+      ),
+    ].filter((arg) => typeof arg === "object" && arg !== null) as Record<string, unknown>[];
+    expect(logged.length).toBeGreaterThan(3);
+    for (const entry of logged) {
+      for (const key of Object.keys(entry)) expect(forbidden.has(key), `log key ${key}`).toBe(false);
+    }
   });
 });
 

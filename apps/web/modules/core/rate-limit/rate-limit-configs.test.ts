@@ -95,6 +95,7 @@ describe("rateLimitConfigs", () => {
         "mcpAuth",
         "v3SurveyGenerate",
         "v3SurveyImportConvert",
+        "v3SurveyImportPerWorkspace",
         "internalDatasetPurge",
         "client",
         "clientEnvironment",

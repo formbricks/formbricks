@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { type Result, err, ok } from "@formbricks/types/error-handlers";
+import { parseJsonBounded } from "../../lib/json-depth";
 import { importError, importInfo } from "../../report";
 import type { TImportIssue } from "../../types";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
@@ -302,12 +303,11 @@ function collectEmbeddedDataFields(nodes: TQsfFlowNode[], into: string[]): void 
 export function parseQsf(input: Buffer | string): Result<TQsfSurvey, TImportIssue[]> {
   const text = stripBom(typeof input === "string" ? input : input.toString("utf8"));
 
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch {
+  const parsed = parseJsonBounded(text);
+  if (!parsed) {
     return err([importError({ code: "invalid_document", vars: { detail: "The file is not valid JSON." } })]);
   }
+  const raw: unknown = parsed.value;
 
   const file = ZQsfFile.safeParse(raw);
   if (!file.success) {

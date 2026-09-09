@@ -26,6 +26,20 @@ Wiring up an LLM takes two steps:
   </Step>
 </Steps>
 
+## What needs a provider
+
+Every Smart Functionality feature calls the configured model: AI survey translation, AI chart creation, Create
+with AI, and the document lane of survey import (Word, PDF, Markdown, CSV, Excel). Survey import from a
+Formbricks JSON export or a Qualtrics QSF file works without any AI configuration, and no S3 or other object
+storage is needed for import — files are read in memory and never stored.
+
+<Warning>
+  File import accepts uploads of up to 15 MB (16 MB including multipart framing). A reverse proxy in front of
+  Formbricks must allow request bodies of that size: nginx defaults `client_max_body_size` to 1 MB and would
+  answer a bare 413 without the problem+json body the dialog expects. Set `client_max_body_size 16m;` (or the
+  equivalent on your proxy) for `/api/v3/surveys/import` and `/api/internal/surveys/import`.
+</Warning>
+
 ## Choosing a provider
 
 `AI_PROVIDER` accepts four values. Set only the variables for the provider you use — the rest can be omitted.

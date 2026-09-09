@@ -69,6 +69,8 @@ export async function exportV3Survey({
       auditLog.newObject = {
         exportFormat: envelope.formbricks.exportFormat,
         workspaceId: survey.workspaceId,
+        surveyId: survey.id,
+        surveyType: survey.type,
       };
     }
 

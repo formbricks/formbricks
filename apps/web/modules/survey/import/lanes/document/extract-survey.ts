@@ -71,6 +71,8 @@ export type TExtractSurveyDraftParams = {
   workspaceId: string;
   userId?: string | null;
   part?: TImportPromptPart;
+  /** Trace id shared by every model call of one import run; the part index becomes `chunkIndex`. */
+  importRunId?: string;
   signal?: AbortSignal;
 };
 
@@ -93,9 +95,21 @@ export function buildImportDraftRequest(
   });
 }
 
-function buildTracing(params: Pick<TExtractSurveyDraftParams, "userId" | "workspaceId">) {
+function buildTracing(
+  params: Pick<TExtractSurveyDraftParams, "userId" | "workspaceId" | "importRunId" | "part">
+) {
   return params.userId
-    ? { distinctId: params.userId, feature: AI_TRACING_FEATURE.SurveyImport, workspaceId: params.workspaceId }
+    ? {
+        distinctId: params.userId,
+        feature: AI_TRACING_FEATURE.SurveyImport,
+        workspaceId: params.workspaceId,
+        traceId: params.importRunId,
+        properties: {
+          step: "extract_survey",
+          chunkIndex: params.part?.index ?? 1,
+          ...(params.importRunId ? { importRunId: params.importRunId } : {}),
+        },
+      }
     : undefined;
 }
 
