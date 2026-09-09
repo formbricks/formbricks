@@ -20,8 +20,8 @@ const DETERMINISTIC_FORMATS = ["formbricks", "qsf"] as const;
 const AI_FORMATS = ["docx", "pdf", "markdown", "csv", "xlsx"] as const;
 
 /**
- * The dialog's first screen: a drop zone plus the format chips. AI formats carry the AI mark and
- * are muted when AI is unavailable; the AI-unavailable alert then replaces the fine print (D8, screen 6).
+ * The dialog's first screen: a drop zone plus the format chips, all in the same neutral style. AI formats
+ * carry the AI mark and are muted when AI is unavailable; the alert then replaces the fine print (D8, screen 6).
  */
 export const ImportDropzone = ({
   onFileSelect,
@@ -46,12 +46,7 @@ export const ImportDropzone = ({
         {DETERMINISTIC_FORMATS.map((format) => (
           <li
             key={format}
-            className={cn(
-              "rounded-md border px-2 py-0.5 text-xs",
-              format === "formbricks"
-                ? "border-green-600 bg-green-50 text-green-800"
-                : "border-slate-200 bg-slate-50 text-slate-600"
-            )}>
+            className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600">
             {getImportFormatLabel(format, t)}
           </li>
         ))}
