@@ -188,9 +188,7 @@ describe("useCreateSurveyWithAI", () => {
 
     await submitWithPrompt(result);
 
-    await waitFor(() =>
-      expect(result.current.errorMessage).toBe("workspace.surveys.ai_create.ai_not_enabled")
-    );
+    await waitFor(() => expect(result.current.errorMessage).toBe("common.ai_unavailable.not_enabled"));
     expect(result.current.prompt).toBe("  create an onboarding survey  ");
   });
 

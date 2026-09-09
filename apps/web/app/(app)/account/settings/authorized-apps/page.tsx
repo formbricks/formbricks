@@ -11,6 +11,7 @@ import {
   getOAuthScopeLabel,
 } from "@/modules/auth/lib/oauth-client-metadata";
 import { getSession } from "@/modules/auth/lib/session";
+import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
@@ -69,7 +70,17 @@ const Page = async () => {
       <PageHeader pageTitle={t("common.authorized_apps")} />
       <SettingsCard
         title={t("auth.oauth.authorized_apps_title")}
-        description={t("auth.oauth.authorized_apps_description")}>
+        description={t("auth.oauth.authorized_apps_description")}
+        cta={
+          <Button asChild variant="secondary" size="sm">
+            <a
+              href="https://formbricks.com/docs/platform/mcp/overview"
+              target="_blank"
+              rel="noopener noreferrer">
+              {t("auth.oauth.mcp_docs_link")}
+            </a>
+          </Button>
+        }>
         {apps.length === 0 ? (
           <p className="text-sm text-slate-600">{t("auth.oauth.no_authorized_apps")}</p>
         ) : (
