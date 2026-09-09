@@ -15,11 +15,7 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
-import {
-  applyRateLimit,
-  assertRateLimitAvailable,
-  recordRateLimitUsage,
-} from "@/modules/core/rate-limit/helpers";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -34,6 +30,7 @@ import {
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInvite } from "./lib/invite";
 import { type TBulkInviteResult, getInviteFailureReason } from "./lib/invite-failure";
+import { applyInviteRateLimit } from "./lib/invite-rate-limit";
 
 // Hard cap on a single bulk import to bound payload size and email fan-out.
 const BULK_INVITE_MAX_INVITEES = 500;
@@ -180,6 +177,7 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       id: parsedInput.organizationId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
+    await applyInviteRateLimit(parsedInput.organizationId);
 
     const invite = await getInvite(parsedInput.inviteId);
 
@@ -341,7 +339,7 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       await checkRoleManagementPermission(parsedInput.organizationId);
     }
 
-    await assertRateLimitAvailable(rateLimitConfigs.actions.inviteMember, parsedInput.organizationId);
+    await applyInviteRateLimit(parsedInput.organizationId);
 
     const inviteId = await inviteUser({
       organizationId: parsedInput.organizationId,
@@ -364,7 +362,6 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
     };
 
     if (inviteId) {
-      await recordRateLimitUsage(rateLimitConfigs.actions.inviteMember, parsedInput.organizationId);
       // Email delivery is best-effort: the invite is already persisted and can be shared via its
       // link, so a failing/misconfigured SMTP must not fail the whole action — otherwise the created
       // invite is stranded behind an "Invite already exists" error on the user's next attempt.
@@ -442,7 +439,7 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       await checkRoleManagementPermission(organizationId);
     }
 
-    await assertRateLimitAvailable(rateLimitConfigs.actions.bulkInviteMembers, organizationId);
+    await applyInviteRateLimit(organizationId, invitees.length);
 
     const results: TBulkInviteResult[] = [];
     const invitedEmails: string[] = [];
@@ -472,10 +469,6 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       } catch (error) {
         results.push({ email, success: false, failureReason: getInviteFailureReason(error) });
       }
-    }
-
-    if (invitedEmails.length > 0) {
-      await recordRateLimitUsage(rateLimitConfigs.actions.bulkInviteMembers, organizationId);
     }
 
     ctx.auditLoggingCtx.organizationId = organizationId;

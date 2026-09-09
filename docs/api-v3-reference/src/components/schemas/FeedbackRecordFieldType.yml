@@ -1,0 +1,16 @@
+type: string
+description: >-
+  The type of a feedback field, which determines which `value_*` member carries the answer:
+  `text` → `value_text` (the only enrichable type), `categorical` → `value_text` + `value_id`,
+  `nps` / `csat` / `ces` / `rating` / `number` → `value_number`, `boolean` → `value_boolean`,
+  `date` → `value_date`.
+enum:
+  - text
+  - categorical
+  - nps
+  - csat
+  - ces
+  - rating
+  - number
+  - boolean
+  - date

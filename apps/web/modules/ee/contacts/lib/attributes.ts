@@ -3,9 +3,9 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributesInput, ZContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { retryOnDeadlock } from "@/lib/utils/prisma-deadlock";
-import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   getReservedFutureDefaultAttributeKeyIssue,

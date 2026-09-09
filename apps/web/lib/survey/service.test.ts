@@ -21,6 +21,7 @@ import {
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
+import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import {
   getOrganizationByWorkspaceId,
@@ -72,9 +73,16 @@ vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
 
 beforeEach(() => {
   prisma.survey.count.mockResolvedValue(1);
-  // createSurvey now wraps its core writes in prisma.$transaction; run the callback with the same
-  // mocked client so per-test prisma.survey/segment mocks still apply inside the transaction.
+  // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
+  // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
+  // the transaction.
   vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
+  // Both paths also reconcile the Embedded Data tables (ENG-1978). Start every test with no existing
+  // links so that reconcile is a no-op; the behaviour itself is covered by its own unit and
+  // integration tests.
+  vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
+  vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
+  vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
 });
 
 describe("evaluateLogic with mockSurveyWithLogic", () => {
@@ -231,6 +239,22 @@ describe("Tests for getSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce(null);
       const survey = await getSurvey(mockId);
       expect(survey).toBeNull();
+    });
+
+    /**
+     * ENG-1845: `getSurvey` feeds all three server ingest boundaries, and the contract's allow-list
+     * is the joined rows and nothing else (ENG-2412). A select that loses the join therefore reads
+     * as a survey with no fields, and every ingested value is dropped rather than stored — so the
+     * join belongs in a test rather than only in a comment.
+     */
+    test("selects the Embedded Data join every ingest boundary resolves its allow-list from", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+
+      await getSurvey(mockId);
+
+      expect(prisma.survey.findUnique.mock.calls[0][0].select).toEqual(
+        expect.objectContaining({ embeddedDataLinks: selectSurveyEmbeddedDataLinks })
+      );
     });
   });
 
@@ -785,6 +809,98 @@ describe("Tests for updateSurvey", () => {
       });
     });
   });
+
+  /**
+   * ENG-1839. This is the create-time layer `ZSurveyHiddenFields` deliberately cannot be: the same
+   * schema parses surveys loaded from the database, so it has to stay lenient. Without a guard here,
+   * `PUT /api/v1/management/surveys/<id>` creates a hidden field that can never receive a value.
+   *
+   * The grandfather cases are the load-bearing ones: surveys in production already declare
+   * `country`, `url`, `source`, `browser`, and this ticket must not rename or break any of them.
+   */
+  describe("reserved names for newly declared fields", () => {
+    test("rejects a save that ADDS a hidden field named after a reserved field, and does not write", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        hiddenFields: { enabled: true, fieldIds: [] },
+      } as any);
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["country"] } },
+          true
+        )
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("GRANDFATHER: a save on a survey that ALREADY has `country` succeeds and keeps the field", async () => {
+      // Draft on both sides: `skipValidation` is restricted to draft-to-draft writes by the
+      // ENG-1939/ENG-2115 gate, which runs after this guard. The grandfathering under test is
+      // unaffected by the status.
+      const grandfathered = {
+        ...mockSurveyOutput,
+        status: "draft",
+        hiddenFields: { enabled: true, fieldIds: ["country"] },
+      };
+      prisma.survey.findUnique.mockResolvedValueOnce(grandfathered as any);
+      prisma.survey.update.mockResolvedValueOnce(grandfathered as any);
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, status: "draft", hiddenFields: { enabled: true, fieldIds: ["country"] } },
+          true
+        )
+      ).resolves.toBeDefined();
+
+      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0];
+      // Nothing is renamed or dropped: the field is written back exactly as it was.
+      expect(updateArg?.data).toMatchObject({ hiddenFields: { enabled: true, fieldIds: ["country"] } });
+    });
+
+    test("GRANDFATHER: a grandfathered survey may still not ADD a second reserved name", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        hiddenFields: { enabled: true, fieldIds: ["country"] },
+      } as any);
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["country", "browser"] } },
+          true
+        )
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("GRANDFATHER: a survey that already declares `country` as a VARIABLE keeps it", async () => {
+      const variable = { id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "country", type: "text" as const, value: "" };
+      const grandfathered = { ...mockSurveyOutput, status: "draft", variables: [variable] };
+      prisma.survey.findUnique.mockResolvedValueOnce(grandfathered as any);
+      prisma.survey.update.mockResolvedValueOnce(grandfathered as any);
+
+      await expect(
+        updateSurveyInternal({ ...updateSurveyInput, status: "draft", variables: [variable] }, true)
+      ).resolves.toBeDefined();
+    });
+
+    test("accepts adding an ordinary new hidden field name", async () => {
+      const draft = { ...mockSurveyOutput, status: "draft" };
+      prisma.survey.findUnique.mockResolvedValueOnce(draft as any);
+      prisma.survey.update.mockResolvedValueOnce(draft as any);
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, status: "draft", hiddenFields: { enabled: true, fieldIds: ["team_size"] } },
+          true
+        )
+      ).resolves.toBeDefined();
+
+      expect(prisma.survey.update).toHaveBeenCalled();
+    });
+  });
 });
 
 describe("Tests for getSurveyCount service", () => {
@@ -1081,6 +1197,13 @@ describe("Tests for createSurvey", () => {
 
   beforeEach(() => {
     vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses as TActionClass[]);
+    // `createSurvey` re-reads the survey after reconciling its Embedded Data rows (ENG-2412), so the
+    // mock has to answer that read too. Echoing whatever the test made `survey.create` resolve to
+    // keeps each test's own fixture the single source of truth for the created shape.
+    prisma.survey.findUniqueOrThrow.mockImplementation((async () => {
+      const created = prisma.survey.create.mock.results.at(-1)?.value;
+      return created instanceof Promise ? await created : created;
+    }) as never);
   });
 
   describe("Happy Path", () => {
@@ -1095,6 +1218,51 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+    });
+
+    test("returns the survey as it stands AFTER its Embedded Data rows are written", async () => {
+      // ENG-2412: `createSurvey` used to return the row it selected before the reconcile, whose
+      // `embeddedDataLinks` is necessarily empty — the links do not exist yet. That was survivable
+      // only while `getSurveyEmbeddedFields` fell back to the legacy columns; without the fallback it
+      // reports a survey that just persisted fields as having none. The read has to happen after.
+      //
+      // `findUniqueOrThrow` is given links here while `create` is not, so this fails if the return
+      // ever goes back to the pre-reconcile object.
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        embeddedDataLinks: [],
+      } as never);
+      prisma.survey.findUniqueOrThrow.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        embeddedDataLinks: [
+          {
+            storageKey: "utm_source",
+            embeddedData: {
+              name: "utm_source",
+              source: "ingested",
+              dataType: "string",
+              defaultValue: null,
+              locked: false,
+            },
+          },
+        ],
+      } as never);
+
+      const result = await createSurvey(mockWorkspaceId, mockCreateSurveyInput);
+
+      expect(result.embeddedFields).toEqual([
+        {
+          field: {
+            name: "utm_source",
+            source: "ingested",
+            dataType: "string",
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "utm_source" },
+        },
+      ]);
     });
 
     test("strips archivedAt from a create payload so a caller can't create a pre-archived survey", async () => {
@@ -1430,6 +1598,43 @@ describe("Tests for createSurvey", () => {
       prisma.survey.create.mockRejectedValueOnce(mockError);
 
       await expect(createSurvey(mockWorkspaceId, mockCreateSurveyInput)).rejects.toThrow(DatabaseError);
+    });
+
+    // ENG-1839. A create authors every name fresh, so there is nothing to grandfather.
+    test("rejects a hidden field named after a reserved field, before writing anything", async () => {
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          hiddenFields: { enabled: true, fieldIds: ["country"] },
+        })
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
+
+    test("rejects a variable named after a reserved field", async () => {
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          variables: [{ id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "browser", type: "text", value: "" }],
+        })
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
+
+    test("accepts an ordinary new hidden field name", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
+
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          hiddenFields: { enabled: true, fieldIds: ["team_size"] },
+        })
+      ).resolves.toBeDefined();
+
+      expect(prisma.survey.create).toHaveBeenCalled();
     });
   });
 });

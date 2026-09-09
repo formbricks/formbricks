@@ -100,6 +100,7 @@
         "IMPRINT_ADDRESS",
         "IMPRINT_URL",
         "INVITE_DISABLED",
+        "INVITE_RATE_LIMIT_PER_24_HOURS",
         "IS_FORMBRICKS_CLOUD",
         "LOG_LEVEL",
         "MAIL_FROM",

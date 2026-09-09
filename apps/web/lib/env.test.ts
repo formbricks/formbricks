@@ -61,6 +61,34 @@ describe("env", () => {
     expect(env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES).toBe(45);
   });
 
+  test("uses the default invite rate limit when env var is not set", async () => {
+    setTestEnv({
+      INVITE_RATE_LIMIT_PER_24_HOURS: undefined,
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.INVITE_RATE_LIMIT_PER_24_HOURS).toBe(50);
+  });
+
+  test("uses the configured invite rate limit", async () => {
+    setTestEnv({
+      INVITE_RATE_LIMIT_PER_24_HOURS: "250",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.INVITE_RATE_LIMIT_PER_24_HOURS).toBe(250);
+  });
+
+  test.each(["0", "1.5", "invalid"])("rejects invalid invite rate limit %s", async (limit) => {
+    setTestEnv({
+      INVITE_RATE_LIMIT_PER_24_HOURS: limit,
+    });
+
+    await expect(import("./env")).rejects.toThrow("INVITE_RATE_LIMIT_PER_24_HOURS");
+  });
+
   test("includes the failing field name and validation message in thrown errors", async () => {
     setTestEnv({
       ENCRYPTION_KEY: undefined,

@@ -58,6 +58,7 @@ const mocks = vi.hoisted(() => ({
   loggerInfo: vi.fn(),
   loggerError: vi.fn(),
   capturePostHogEvent: vi.fn(),
+  groupIdentifyPostHog: vi.fn(),
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -116,6 +117,7 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: mocks.capturePostHogEvent,
+  groupIdentifyPostHog: mocks.groupIdentifyPostHog,
 }));
 
 vi.mock("./stripe-plan", async (importOriginal) => {
@@ -2846,6 +2848,28 @@ describe("organization-billing", () => {
         expect.objectContaining({ organization_id: "org_1", plan: expectedPlan }),
         { organizationId: "org_1" }
       );
+    });
+
+    test("refreshes the PostHog organization group's plan facts on every sync", async () => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { plan: "pro", subscriptionStatus: "active", interval: "monthly", lastSyncedEventId: null },
+      });
+      mocks.subscriptionsList.mockResolvedValue({ data: [buildActiveSubscription("scale", "active")] });
+
+      await syncOrganizationBillingFromStripe("org_1", { id: "evt_1", created: 1739923300 });
+
+      expect(mocks.groupIdentifyPostHog).toHaveBeenCalledTimes(1);
+      // Exact object: every plan fact with its value and nothing else. The merge is additive, so the
+      // signup-time `name` and `email_domain` must never be sent from here.
+      expect(mocks.groupIdentifyPostHog).toHaveBeenCalledWith("organization", "org_1", {
+        plan: "scale",
+        billing_interval: "monthly",
+        subscription_status: "active",
+        has_payment_method: false,
+      });
     });
 
     test("does not reject the sync when the owner lookup fails after persistence", async () => {

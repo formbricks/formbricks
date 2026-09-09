@@ -78,6 +78,7 @@ export const mockResponse: ResponseMock = {
   variables: {},
   endingId: null,
   displayId: null,
+  ingestFlags: null,
 };
 
 const mockSurveyQuota: TSurveyQuota = {
@@ -150,6 +151,7 @@ export const mockResponses: ResponseMock[] = [
     tags: getMockTags(["tag1", "tag3"]),
     endingId: null,
     displayId: null,
+    ingestFlags: null,
   },
   {
     id: "clsk8db0r001kk8iujkn32q8g",
@@ -176,6 +178,7 @@ export const mockResponses: ResponseMock[] = [
     tags: getMockTags(["tag1", "tag2"]),
     endingId: null,
     displayId: null,
+    ingestFlags: null,
   },
   {
     id: "clsk7b15p001fk8iu04qpvo2f",
@@ -201,6 +204,7 @@ export const mockResponses: ResponseMock[] = [
     language: null,
     endingId: null,
     displayId: null,
+    ingestFlags: null,
   },
   {
     id: "clsk6bk1l0017k8iut9dp0uxt",
@@ -226,6 +230,7 @@ export const mockResponses: ResponseMock[] = [
     language: null,
     endingId: null,
     displayId: null,
+    ingestFlags: null,
   },
   {
     id: "clsk5tgkm000uk8iueqoficwc",
@@ -251,6 +256,7 @@ export const mockResponses: ResponseMock[] = [
     language: null,
     endingId: null,
     displayId: null,
+    ingestFlags: null,
   },
 ];
 
@@ -320,13 +326,13 @@ export const getFilteredMockResponses = (
           case "equals":
             return response.data?.[key] === value.value;
           case "greaterThan":
-            return Number(response.data?.[key]) > value.value;
+            return Number(response.data?.[key]) > Number(value.value);
           case "lessThan":
-            return Number(response.data?.[key]) < value.value;
+            return Number(response.data?.[key]) < Number(value.value);
           case "greaterEqual":
-            return Number(response.data?.[key]) >= value.value;
+            return Number(response.data?.[key]) >= Number(value.value);
           case "lessEqual":
-            return Number(response.data?.[key]) <= value.value;
+            return Number(response.data?.[key]) <= Number(value.value);
           case "includesAll":
             return value.value.every((val: string | number) =>
               (response.data?.[key] as string[])?.includes(String(val))

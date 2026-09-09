@@ -10,8 +10,14 @@ properties:
     description: Optional stable variable id. Generated when omitted.
   name:
     type: string
-    pattern: ^[a-z0-9_]+$
-    description: Unique variable name. Lowercase letters, numbers, and underscores only.
+    pattern: ^[a-z][a-z0-9_]*$
+    description: >
+      Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and
+      underscores only — the same rule as new hidden-field ids (this schema is create-only, so no
+      grandfathered name validates against it). Reserved names are refused: `userId`, `source`,
+      `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`,
+      `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the
+      auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`.
   type:
     type: string
     enum:

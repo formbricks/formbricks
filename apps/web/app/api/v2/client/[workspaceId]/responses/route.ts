@@ -1,11 +1,15 @@
 import { UAParser } from "ua-parser-js";
+import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
+import { pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
 import { checkSurveyValidity } from "@/app/api/v2/client/[workspaceId]/responses/lib/utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { applyIngestContractToResponseData } from "@/lib/response/ingest";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -139,17 +143,24 @@ const createResponseForRequest = async ({
   survey,
   responseInputData,
   country,
+  ingestFlags,
 }: {
   request: Request;
   survey: TResponseSurvey;
   responseInputData: TResponseInputV2;
   country: string | undefined;
+  ingestFlags: readonly TIngestFlag[];
 }): Promise<TResponseWithQuotaFull | Response> => {
   const userAgent = request.headers.get("user-agent") || undefined;
   const agent = new UAParser(userAgent);
 
   try {
     const meta: TResponseInputV2["meta"] = {
+      // The browser-runtime context the renderer snapshotted at display time (ENG-1841). This
+      // literal is a whitelist — anything not re-listed here never reaches the database — so the
+      // auto-captured keys have to be pulled in explicitly. Spread from the schema rather than
+      // retyped key by key, so the two cannot drift.
+      ...pickAutoCapturedResponseMeta(responseInputData?.meta),
       source: responseInputData?.meta?.source,
       url: responseInputData?.meta?.url,
       userAgent: {
@@ -161,14 +172,19 @@ const createResponseForRequest = async ({
       action: responseInputData?.meta?.action,
     };
 
-    if (survey.isCaptureIpEnabled) {
+    if (survey.isCaptureIpEnabled && !survey.isAnonymizeResponsesEnabled) {
       meta.ipAddress = await getClientIpFromHeaders();
     }
 
-    return await createResponseWithQuotaEvaluation({
-      ...responseInputData,
-      meta,
-    });
+    const metaToStore = applyAnonymizePolicy(meta, survey.isAnonymizeResponsesEnabled);
+
+    return await createResponseWithQuotaEvaluation(
+      {
+        ...responseInputData,
+        meta: metaToStore,
+      },
+      ingestFlags
+    );
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message, undefined, true);
@@ -230,6 +246,15 @@ export const POST = async (request: Request, context: Context): Promise<Response
       return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
     }
 
+    // The Embedded Data ingest contract (ENG-1845), re-run server-side because this endpoint is
+    // public and the renderer's filtering is never trusted. It has to precede
+    // `validateResponseSubmission` on both counts: `validateResponseData` should see the values that
+    // will be stored, and `checkSurveyValidity` stamps `verifiedEmail` from the verification token —
+    // a forbidden field name no survey declares, so the contract has to run before that write rather
+    // than after it.
+    const ingestResult = applyIngestContractToResponseData(survey, responseInputData.data);
+    responseInputData.data = ingestResult.data;
+
     const validationResponse = await validateResponseSubmission(workspaceId, responseInputData, survey);
     if (validationResponse) {
       return validationResponse;
@@ -240,6 +265,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
       survey,
       responseInputData,
       country,
+      ingestFlags: ingestResult.flags,
     });
     if (createdResponse instanceof Response) {
       return createdResponse;

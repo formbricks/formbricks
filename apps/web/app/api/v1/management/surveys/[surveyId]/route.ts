@@ -19,6 +19,7 @@ import {
   transformQuestionsToBlocks,
   validateSurveyInput,
   withDerivedQuestions,
+  withoutInternalSurveyProjections,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -77,7 +78,11 @@ export const GET = withV1ApiWrapper({
       return {
         response: responses.successResponse(
           await addLegacyEnvironmentId(
-            addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(result.survey)))
+            addLegacyProjectOverwrites(
+              resolveStorageUrlsInObject(
+                withoutInternalSurveyProjections(withDerivedQuestions(result.survey))
+              )
+            )
           )
         ),
       };
@@ -241,7 +246,11 @@ export const PUT = withV1ApiWrapper({
           // with it.
           response: responses.successResponse(
             await addLegacyEnvironmentIdBestEffort(
-              addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(updatedSurvey)))
+              addLegacyProjectOverwrites(
+                resolveStorageUrlsInObject(
+                  withoutInternalSurveyProjections(withDerivedQuestions(updatedSurvey))
+                )
+              )
             )
           ),
         };
