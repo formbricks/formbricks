@@ -25,6 +25,7 @@ import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
+import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
 import { sendEmail } from "@/modules/email";
 import {
   buildSurveyResponseEmailHtml,
@@ -55,6 +56,7 @@ const workflowRunSelect = {
   id: true,
   status: true,
   attempt: true,
+  triggerType: true,
   triggerPayload: true,
   workflowVersion: { select: { definition: true } },
   workflow: { select: { definition: true } },
@@ -577,8 +579,8 @@ const executeClaimedRun = async (
  */
 const handleRunError = async (
   error: unknown,
-  runId: string,
-  workspaceId: string,
+  run: { id: string; triggerType: string },
+  data: TWorkflowRunJobData,
   context: Parameters<JobHandler<TWorkflowRunJobData>>[1],
   logContext: ReturnType<typeof getWorkflowRunLogContext>
 ): Promise<void> => {
@@ -591,14 +593,36 @@ const handleRunError = async (
     if (isDatabasePoolExhaustionError(error)) {
       logger.warn({ ...logContext, err: error }, "Workflow run job hit database pool exhaustion; will retry");
     }
-    await recordRunFailure(runId, workspaceId, error, runData, false, logContext);
+    await recordRunFailure(run.id, data.workspaceId, error, runData, false, logContext);
     throw toError(error, "Workflow run job failed");
   }
 
   // Final attempt: commit a terminal `failed` and swallow. Pool exhaustion on the last attempt must be
   // recorded here rather than rethrown into the void, or the run would stay stuck `running` forever.
-  await recordRunFailure(runId, workspaceId, error, runData, true, logContext);
+  const recorded = await recordRunFailure(run.id, data.workspaceId, error, runData, true, logContext);
   logger.error({ ...logContext, err: error }, "Workflow run job failed after final attempt");
+  // Only the delivery whose terminal write landed reports the failure. A losing concurrent delivery
+  // (0 rows, or a persistence error) must neither duplicate the event nor report a failure over a run
+  // another delivery has already completed.
+  if (recorded) {
+    await captureWorkflowRunFailed({
+      runId: run.id,
+      workflowId: data.workflowId,
+      workspaceId: data.workspaceId,
+      triggerType: run.triggerType,
+      failedStepType: runData?.steps.findLast((step) => step.status === "failed")?.stepType ?? null,
+      errorKind: classifyRunError(error),
+      attempt: context.attempt,
+    });
+  }
+};
+
+/** Coarse, PII-free failure class for analytics; the message itself can name a recipient. */
+const classifyRunError = (error: unknown): string => {
+  if (error instanceof WorkflowRunNotExecutableError) return "not_executable";
+  if (error instanceof WorkflowStepFailedError) return "step_failed";
+  if (isDatabasePoolExhaustionError(error)) return "database_pool_exhausted";
+  return "unknown";
 };
 
 /**
@@ -648,7 +672,7 @@ export const processWorkflowRunJob: JobHandler<TWorkflowRunJobData> = async (dat
 
     await executeClaimedRun(run, data.workspaceId, triggerPayload, logContext);
   } catch (error) {
-    await handleRunError(error, run.id, data.workspaceId, context, logContext);
+    await handleRunError(error, run, data, context, logContext);
   }
 };
 
@@ -666,7 +690,7 @@ const recordRunFailure = async (
   runData: TWorkflowRunData | undefined,
   isFinalAttempt: boolean,
   logContext: ReturnType<typeof getWorkflowRunLogContext>
-): Promise<void> => {
+): Promise<boolean> => {
   const now = new Date();
   try {
     // Status-guarded: only touch a run that is still non-terminal. A 0-row result means another delivery
@@ -686,7 +710,10 @@ const recordRunFailure = async (
         "Workflow run already finalized by another delivery; skipping failure write"
       );
     }
+    // Whether this delivery's write landed: the caller reports the failure only when it did.
+    return updated.count > 0;
   } catch (persistError) {
     logger.error({ ...logContext, err: persistError }, "Failed to persist workflow run failure state");
+    return false;
   }
 };

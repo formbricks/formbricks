@@ -4,7 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { type JSX, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";

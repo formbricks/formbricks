@@ -64,6 +64,8 @@ export const persistExampleResponseDataset = async ({
 
         const response = await createResponseWithQuotaEvaluation(
           toExampleResponseInput(surveyId, workspaceId, item, display.id),
+          // No ingest flags: example responses are seeded, not ingested from a request.
+          undefined,
           tx
         );
 

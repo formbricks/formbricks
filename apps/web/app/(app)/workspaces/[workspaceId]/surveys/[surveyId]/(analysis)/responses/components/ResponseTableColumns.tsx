@@ -4,6 +4,10 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TFunction } from "i18next";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
+import {
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+} from "@formbricks/types/embedded-data-resolver";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -23,12 +27,12 @@ import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
 import {
-  COLUMNS_ICON_MAP,
-  METADATA_FIELDS,
+  RESERVED_COLUMN_ENTRIES,
   getAddressFieldLabel,
   getContactInfoFieldLabel,
-  getMetadataFieldLabel,
-  getMetadataValue,
+  getReservedColumnIcon,
+  getReservedColumnLabel,
+  reservedColumnId,
 } from "../lib/utils";
 
 const getElementColumnsData = (
@@ -232,32 +236,36 @@ const getElementColumnsData = (
   }
 };
 
-const getMetadataColumnsData = (t: TFunction): ColumnDef<TResponseTableData>[] => {
-  const metadataColumns: ColumnDef<TResponseTableData>[] = [];
+/**
+ * One column per reserved catalog entry a human would read as data (ENG-2540).
+ *
+ * Driven by `RESERVED_COLUMN_ENTRIES` rather than a local `METADATA_FIELDS` array, so a catalog
+ * addition — ENG-1858's session context, next — becomes a column with no change here. The values are
+ * precomputed onto the row (`reservedValues`), so a cell is a lookup rather than a switch that has to
+ * know where each field is stored.
+ */
+const getMetadataColumnsData = (t: TFunction): ColumnDef<TResponseTableData>[] =>
+  RESERVED_COLUMN_ENTRIES.map((entry) => {
+    const IconComponent = getReservedColumnIcon(entry.name);
+    const columnId = reservedColumnId(entry.name);
 
-  METADATA_FIELDS.forEach((label) => {
-    const IconComponent = COLUMNS_ICON_MAP[label as keyof typeof COLUMNS_ICON_MAP];
-
-    metadataColumns.push({
-      accessorKey: "METADATA_" + label,
+    return {
+      accessorKey: columnId,
       header: () => (
         <div className="flex items-center gap-x-2 overflow-hidden">
           <span className="size-4">{IconComponent && <IconComponent className="h-4 w-4" />}</span>
-          <span className="truncate">{getMetadataFieldLabel(label, t)}</span>
+          <span className="truncate">{getReservedColumnLabel(entry.name, t)}</span>
         </div>
       ),
       cell: ({ row }) => {
-        const value = getMetadataValue(row.original.meta, label);
+        const value = row.original.reservedValues[columnId];
         if (value) {
           return <div className="truncate text-slate-900">{value}</div>;
         }
         return null;
       },
-    });
+    };
   });
-
-  return metadataColumns;
-};
 
 export const generateResponseTableColumns = (
   survey: TSurvey,
@@ -371,45 +379,52 @@ export const generateResponseTableColumns = (
     },
   };
 
-  const variableColumns: ColumnDef<TResponseTableData>[] = survey.variables.map((variable) => {
-    return {
-      accessorKey: "VARIABLE_" + variable.id,
-      header: () => (
-        <div className="flex items-center gap-x-2 overflow-hidden">
-          <span className="size-4">{VARIABLES_ICON_MAP[variable.type]}</span>
-          <span className="truncate">{variable.name}</span>
-        </div>
-      ),
-      cell: ({ row }) => {
-        const variableResponse = row.original.variables[variable.id];
-        if (typeof variableResponse === "string" || typeof variableResponse === "number") {
-          return <div className="text-slate-900">{variableResponse}</div>;
-        }
-      },
-    };
-  });
+  // ENG-1837: both column groups are built from the survey's Embedded Data definitions. The accessor
+  // keys stay the storage keys — they address `row.original.variables` / `responseData`, which are
+  // written from the response, not the definitions.
+  const variableColumns: ColumnDef<TResponseTableData>[] = getComputedEmbeddedFields(survey).map(
+    ({ field, link }) => {
+      return {
+        accessorKey: "VARIABLE_" + link.storageKey,
+        header: () => (
+          <div className="flex items-center gap-x-2 overflow-hidden">
+            <span className="size-4">
+              {VARIABLES_ICON_MAP[field.dataType === "number" ? "number" : "text"]}
+            </span>
+            <span className="truncate">{field.name}</span>
+          </div>
+        ),
+        cell: ({ row }) => {
+          const variableResponse = row.original.variables[link.storageKey];
+          if (typeof variableResponse === "string" || typeof variableResponse === "number") {
+            return <div className="text-slate-900">{variableResponse}</div>;
+          }
+        },
+      };
+    }
+  );
 
-  const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = survey.hiddenFields.fieldIds
-    ? survey.hiddenFields.fieldIds.map((hiddenFieldId) => {
-        return {
-          accessorKey: "HIDDEN_FIELD_" + hiddenFieldId,
-          header: () => (
-            <div className="flex items-center gap-x-2 overflow-hidden">
-              <span className="size-4">
-                <EyeOffIcon className="size-4" />
-              </span>
-              <span className="truncate">{hiddenFieldId}</span>
-            </div>
-          ),
-          cell: ({ row }) => {
-            const hiddenFieldResponse = row.original.responseData[hiddenFieldId];
-            if (typeof hiddenFieldResponse === "string") {
-              return <div className="text-slate-900">{hiddenFieldResponse}</div>;
-            }
-          },
-        };
-      })
-    : [];
+  const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = getIngestedEmbeddedFields(survey).map(
+    ({ field, link }) => {
+      return {
+        accessorKey: "HIDDEN_FIELD_" + link.storageKey,
+        header: () => (
+          <div className="flex items-center gap-x-2 overflow-hidden">
+            <span className="size-4">
+              <EyeOffIcon className="size-4" />
+            </span>
+            <span className="truncate">{field.name}</span>
+          </div>
+        ),
+        cell: ({ row }) => {
+          const hiddenFieldResponse = row.original.responseData[link.storageKey];
+          if (typeof hiddenFieldResponse === "string") {
+            return <div className="text-slate-900">{hiddenFieldResponse}</div>;
+          }
+        },
+      };
+    }
+  );
 
   const metadataColumns = getMetadataColumnsData(t);
 

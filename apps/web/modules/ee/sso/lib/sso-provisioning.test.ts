@@ -11,6 +11,7 @@ import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { updateUser } from "@/modules/auth/lib/user";
 import { resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { ensureDefaultOrganization } from "@/modules/ee/sso/lib/default-organization";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
@@ -39,6 +40,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getAccessControlPermission: vi.fn(),
   getIsMultiOrgEnabled: vi.fn(),
 }));
+vi.mock("@/modules/ee/sso/lib/default-organization", () => ({ ensureDefaultOrganization: vi.fn() }));
 vi.mock("@/modules/ee/sso/lib/organization", () => ({ getFirstOrganization: vi.fn() }));
 vi.mock("@/modules/ee/sso/lib/team", () => ({
   getOrganizationByTeamId: vi.fn(),
@@ -48,6 +50,7 @@ vi.mock("@/modules/ee/sso/lib/team", () => ({
 const constantsOverrides = vi.hoisted(() => ({
   SKIP_INVITE_FOR_SSO: false as boolean,
   DEFAULT_TEAM_ID: "team-123" as string | undefined,
+  DEFAULT_ORGANIZATION_ID: undefined as string | undefined,
   IS_FORMBRICKS_CLOUD: false as boolean,
   SIGNUP_DOMAIN_CHECK_ON_INVITES: false as boolean,
 }));
@@ -60,6 +63,9 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     },
     get DEFAULT_TEAM_ID() {
       return constantsOverrides.DEFAULT_TEAM_ID;
+    },
+    get DEFAULT_ORGANIZATION_ID() {
+      return constantsOverrides.DEFAULT_ORGANIZATION_ID;
     },
     get IS_FORMBRICKS_CLOUD() {
       return constantsOverrides.IS_FORMBRICKS_CLOUD;
@@ -76,6 +82,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   constantsOverrides.SKIP_INVITE_FOR_SSO = false;
   constantsOverrides.DEFAULT_TEAM_ID = "team-123";
+  constantsOverrides.DEFAULT_ORGANIZATION_ID = undefined;
   constantsOverrides.IS_FORMBRICKS_CLOUD = false;
   constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
   // Defaults: established single-org instance, access allowed, orgs resolvable.
@@ -84,6 +91,7 @@ beforeEach(() => {
   vi.mocked(getAccessControlPermission).mockResolvedValue(true);
   vi.mocked(getFirstOrganization).mockResolvedValue(mockOrg);
   vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrg);
+  vi.mocked(ensureDefaultOrganization).mockResolvedValue({ organizationId: "default-org", role: "manager" });
   // clearAllMocks keeps implementations, so reset the one tests override with rejections.
   vi.mocked(createMembership).mockReset();
 });
@@ -107,6 +115,55 @@ describe("gateSsoProvisioning — bypass branches", () => {
       assignToDefaultTeam: false,
       signupSource: "direct",
     });
+  });
+});
+
+describe("gateSsoProvisioning — DEFAULT_ORGANIZATION_ID (ENG-2089)", () => {
+  test("provisions into the configured org without an invite, deferring creation to the write phase", async () => {
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
+    constantsOverrides.SKIP_INVITE_FOR_SSO = false;
+    expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" })).toEqual({
+      action: "provision",
+      organizationId: "default-org",
+      assignToDefaultTeam: false,
+      signupSource: "direct",
+      useDefaultOrganization: true,
+    });
+    // No invite was consulted, and no org was resolved from the database — that is the whole point of
+    // the env var, and what regressed: without it these gates rejected the sign-up.
+    expect(resolveInviteMatch).not.toHaveBeenCalled();
+    expect(getFirstOrganization).not.toHaveBeenCalled();
+  });
+
+  test("wins over multi-org, which would otherwise assign no org at all", async () => {
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" });
+    expect(decision).toMatchObject({ action: "provision", organizationId: "default-org" });
+  });
+
+  test("wins over a fresh instance, which would otherwise assign no org at all", async () => {
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" });
+    expect(decision).toMatchObject({ action: "provision", organizationId: "default-org" });
+  });
+
+  test("does not also join DEFAULT_TEAM_ID's team, which may belong to another org", async () => {
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
+    constantsOverrides.SKIP_INVITE_FOR_SSO = true;
+    constantsOverrides.DEFAULT_TEAM_ID = "team-123";
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" });
+    expect(decision).toMatchObject({ assignToDefaultTeam: false });
+  });
+
+  test("carries the invite signup source when the callback URL has a token", async () => {
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
+    const decision = await gateSsoProvisioning({
+      email: "a@b.com",
+      callbackUrl: "/auth/signup?token=abc",
+    });
+    expect(decision).toMatchObject({ signupSource: "invite" });
   });
 });
 
@@ -310,6 +367,74 @@ describe("provisionSsoUserMemberships", () => {
       invite_organization_id: "org-1",
     });
     expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  describe("useDefaultOrganization (ENG-2089)", () => {
+    const defaultOrgArgs = {
+      ...baseArgs,
+      name: "Ada",
+      organizationId: "default-org",
+      useDefaultOrganization: true,
+    } as Parameters<typeof provisionSsoUserMemberships>[0];
+
+    test("uses the role ensureDefaultOrganization resolved instead of the hardcoded member", async () => {
+      vi.mocked(ensureDefaultOrganization).mockResolvedValue({
+        organizationId: "default-org",
+        role: "manager",
+      });
+      await provisionSsoUserMemberships(defaultOrgArgs);
+      expect(ensureDefaultOrganization).toHaveBeenCalledWith("Ada");
+      expect(createMembership).toHaveBeenCalledWith(
+        "default-org",
+        "u1",
+        { role: "manager", accepted: true },
+        expect.anything()
+      );
+      expect(reconcileOrganizationMembership).toHaveBeenCalledWith("default-org", "u1");
+    });
+
+    test("makes the sign-up that created the org its owner", async () => {
+      vi.mocked(ensureDefaultOrganization).mockResolvedValue({
+        organizationId: "default-org",
+        role: "owner",
+      });
+      await provisionSsoUserMemberships(defaultOrgArgs);
+      expect(createMembership).toHaveBeenCalledWith(
+        "default-org",
+        "u1",
+        { role: "owner", accepted: true },
+        expect.anything()
+      );
+    });
+
+    test("falls back to the email local part when the IdP gave no name", async () => {
+      await provisionSsoUserMemberships({ ...defaultOrgArgs, name: null });
+      expect(ensureDefaultOrganization).toHaveBeenCalledWith("new");
+    });
+
+    test("skips the org writes but still syncs analytics when the org cannot be resolved", async () => {
+      vi.mocked(ensureDefaultOrganization).mockResolvedValue(null);
+      await provisionSsoUserMemberships(defaultOrgArgs);
+      expect(createMembership).not.toHaveBeenCalled();
+      expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
+      expect(createBrevoCustomer).toHaveBeenCalledWith({ id: "u1", email: "new@example.com" });
+      expect(capturePostHogEvent).toHaveBeenCalledWith(
+        "u1",
+        "user_signed_up",
+        expect.objectContaining({ invite_organization_id: null })
+      );
+    });
+
+    test("is not consulted on the ordinary path, which still assigns member", async () => {
+      await provisionSsoUserMemberships(baseArgs);
+      expect(ensureDefaultOrganization).not.toHaveBeenCalled();
+      expect(createMembership).toHaveBeenCalledWith(
+        "org-1",
+        "u1",
+        { role: "member", accepted: true },
+        expect.anything()
+      );
+    });
   });
 
   test("creates a default team membership when requested", async () => {

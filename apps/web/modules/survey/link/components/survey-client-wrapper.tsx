@@ -2,8 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -12,7 +12,12 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
+import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";
 import { buildSurveyDocumentTitle } from "@/modules/survey/link/lib/document-title";
+import {
+  getHiddenFieldsFromSearchParams,
+  warnOnMissingIngestRows,
+} from "@/modules/survey/link/lib/hidden-fields";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
 import { getUserIdFromSearchParams } from "@/modules/survey/link/lib/user-id";
 import { getSurveyLanguageTag, getWebAppLocale, isRTLLanguage } from "@/modules/survey/link/lib/utils";
@@ -67,7 +72,6 @@ export const SurveyClientWrapper = ({
   pinAuthToken,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
-  const { i18n } = useTranslation();
 
   // The survey's active language: starts at the server-provided code, then follows the
   // in-survey language switch (via onLanguageChange). The whole shell (i18n strings, logo
@@ -77,14 +81,7 @@ export const SurveyClientWrapper = ({
     setCurrentLanguageCode(languageCode);
   }, [languageCode]);
 
-  useEffect(() => {
-    const webAppLocale = getWebAppLocale(currentLanguageCode, survey);
-    if (i18n.language !== webAppLocale) {
-      i18n.changeLanguage(webAppLocale).catch(() => {
-        i18n.changeLanguage("en-US");
-      });
-    }
-  }, [currentLanguageCode, survey, i18n]);
+  useAppLocale(getWebAppLocale(currentLanguageCode, survey));
 
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
   const offlineSupport = searchParams.get("offlineSupport") === "true";
@@ -123,20 +120,30 @@ export const SurveyClientWrapper = ({
     }
   }, []);
 
-  // Serialized so the memo below is keyed on the field ids' contents rather than the array identity,
-  // which changes on every parent render (see ENG-2366).
-  const hiddenFieldIdsKey = JSON.stringify(survey.hiddenFields.fieldIds || []);
-
-  // Extract hidden fields from URL parameters
+  // Extract ingestible Embedded Data from URL parameters.
+  //
+  // The allow-list is the survey's linked `ingested` rows, not the legacy `hiddenFields.fieldIds`
+  // column (ENG-1843). `locked` fields are deliberately included: the renderer's ingest contract
+  // drops their incoming values and logs why, and filtering them out here would silence that
+  // diagnostic while duplicating a rule that already has one home.
+  //
+  // Keyed on the ids' contents, not the array identity, which changes on every parent render
+  // (ENG-2366).
+  const ingestedStorageKeys = getIngestedStorageKeys(survey);
   const hiddenFieldsRecord = useMemo(() => {
-    const fieldsRecord: Record<string, string> = {};
-    for (const field of survey.hiddenFields.fieldIds || []) {
-      const answer = searchParams.get(field);
-      if (answer) fieldsRecord[field] = answer;
-    }
-    return fieldsRecord;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on hiddenFieldIdsKey so the record recomputes on field-id content changes, not on every new array instance
-  }, [searchParams, hiddenFieldIdsKey]);
+    return getHiddenFieldsFromSearchParams(ingestedStorageKeys, searchParams);
+    // eslint-disable-next-line react-hooks/use-memo -- migration ENG-1677
+  }, [searchParams, JSON.stringify(ingestedStorageKeys)]);
+
+  // The diagnostic is a side effect, so it belongs in an effect rather than in the memo above: a memo
+  // body runs twice per mount under StrictMode, so this warning printed twice on every dev page load,
+  // and it would re-run on any `searchParams` change even though what it reports depends only on the
+  // survey. Keyed on content rather than array identity, like the memo above.
+  const legacyFieldIds = survey.hiddenFields.fieldIds ?? [];
+  useEffect(() => {
+    warnOnMissingIngestRows(ingestedStorageKeys, legacyFieldIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on content, not array identity
+  }, [JSON.stringify(ingestedStorageKeys), JSON.stringify(legacyFieldIds)]);
 
   // Include verified email in hidden fields if available
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {

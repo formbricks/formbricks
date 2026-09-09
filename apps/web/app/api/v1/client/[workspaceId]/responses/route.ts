@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
-import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { TResponseInput, ZResponseInput, pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateSingleUseResponseInput } from "@/app/api/client/[workspaceId]/responses/lib/single-use";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
@@ -10,6 +10,8 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { applyIngestContractToResponseData } from "@/lib/response/ingest";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -154,6 +156,14 @@ export const POST = withV1ApiWrapper({
       };
     }
 
+    // The Embedded Data ingest contract (ENG-1845), re-run server-side because this endpoint is
+    // public and the renderer's filtering is never trusted. Ahead of validation and quota evaluation
+    // so both see the values that will be stored, and ahead of the verified-email gate below, which
+    // has to be the last writer: `verifiedEmail` is a forbidden field name, so no survey declares it
+    // and the contract would drop it.
+    const ingestResult = applyIngestContractToResponseData(survey, responseInputData.data);
+    responseInputData.data = ingestResult.data;
+
     // Email verification, like the PIN above, has to be enforced here and not only in the renderer:
     // this endpoint is public, so a caller could otherwise submit with any `verifiedEmail` they like.
     // Shared with the v2 endpoint so the two versions cannot drift apart.
@@ -207,6 +217,11 @@ export const POST = withV1ApiWrapper({
     let response: TResponseWithQuotaFull;
     try {
       const meta: TResponseInput["meta"] = {
+        // The browser-runtime context the renderer snapshotted at display time (ENG-1841). This
+        // literal is a whitelist — anything not re-listed here never reaches the database — so the
+        // auto-captured keys have to be pulled in explicitly. Spread from the schema rather than
+        // retyped key by key, so the two cannot drift.
+        ...pickAutoCapturedResponseMeta(responseInputData?.meta),
         source: responseInputData?.meta?.source,
         url: responseInputData?.meta?.url,
         userAgent: {
@@ -220,15 +235,20 @@ export const POST = withV1ApiWrapper({
 
       // Capture IP address if the survey has IP capture enabled
       // Server-derived IP always overwrites any client-provided value
-      if (survey.isCaptureIpEnabled) {
+      if (survey.isCaptureIpEnabled && !survey.isAnonymizeResponsesEnabled) {
         const ipAddress = await getClientIpFromHeaders();
         meta.ipAddress = ipAddress;
       }
 
-      response = await createResponseWithQuotaEvaluation({
-        ...responseInputData,
-        meta,
-      });
+      const metaToStore = applyAnonymizePolicy(meta, survey.isAnonymizeResponsesEnabled);
+
+      response = await createResponseWithQuotaEvaluation(
+        {
+          ...responseInputData,
+          meta: metaToStore,
+        },
+        ingestResult.flags
+      );
     } catch (error) {
       return handleApiError(error, { cors: true });
     }

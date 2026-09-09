@@ -6,23 +6,22 @@ import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
-import { ZWorkflowStatus } from "@formbricks/workflows";
 import { FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { timeSince } from "@/lib/time";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
+import { FilterDropdown, type TFilterOption } from "@/modules/ui/components/filter-dropdown";
 import { SearchBar } from "@/modules/ui/components/search-bar";
-import {
-  type TWorkflowStatusFilterOption,
-  WorkflowFilterDropdown,
-} from "../components/workflow-filter-dropdown";
 import { WorkflowListActions } from "../components/workflow-list-actions";
 import { WorkflowSortDropdown } from "../components/workflow-sort-dropdown";
 import { WorkflowStatusPill } from "../components/workflow-status-pill";
 import { WorkflowsEmptyState } from "../components/workflows-empty-state";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
+import { useTrackWorkflowListFilters } from "../hooks/use-track-workflow-list-filters";
+import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
 import { useWorkflows } from "../hooks/use-workflows";
+import { resolveWorkflowListSurface } from "../lib/analytics";
 import { computeStatusIn, parseStoredWorkflowFilters } from "../lib/list-filters";
 import { WorkflowsListBodyLoading } from "../loading";
 
@@ -32,9 +31,9 @@ interface WorkflowsListPageProps {
   workflowsPerPage: number;
 }
 
-// Status filter options. Archived is set apart by a divider and unchecked by default, so archived
-// workflows stay hidden until the user explicitly opts in.
-const getStatusFilterOptions = (t: TFunction): TWorkflowStatusFilterOption[] => [
+// Archived is one more status, set apart by a divider because it is the only one excluded from the
+// default list. Same shape as the surveys status filter.
+const getStatusFilterOptions = (t: TFunction): TFilterOption<TWorkflowStatus>[] => [
   { label: t("common.draft"), value: "draft" },
   { label: t("common.enabled"), value: "enabled" },
   { label: t("common.disabled"), value: "disabled" },
@@ -85,6 +84,14 @@ export const WorkflowsListPage = ({
     );
   }, [searchValue, selectedStatuses, sortBy, isFilterInitialized]);
 
+  useTrackWorkflowListFilters({
+    isFilterInitialized,
+    searchValue,
+    debouncedSearchValue,
+    selectedStatuses,
+    sortBy,
+  });
+
   const toggleStatus = (value: TWorkflowStatus) => {
     setSelectedStatuses((prev) =>
       prev.includes(value) ? prev.filter((status) => status !== value) : [...prev, value]
@@ -117,29 +124,16 @@ export const WorkflowsListPage = ({
   const showInitialLoading = isLoading && workflows.length === 0;
   const hasActiveFilters = selectedStatuses.length > 0 || searchValue.length > 0;
 
-  const isListEmpty = !showInitialLoading && !isError && workflows.length === 0;
-
-  // Probe for ANY workflow including archived (the default query excludes archived) so an all-archived
-  // workspace isn't mistaken for an empty one — which would hide the toolbar and with it the archived filter.
-  const { workflows: anyWorkflows, isLoading: isProbingAnyWorkflows } = useWorkflows({
-    workspaceId,
-    limit: 1,
-    nameContains: "",
-    statusIn: [...ZWorkflowStatus.options],
-    enabled: isListEmpty,
-  });
-
-  // Mirror the surveys list: only a genuinely empty workspace hides the toolbar. If any workflow exists
-  // (even only archived ones), keep the toolbar so the filters stay reachable.
-  const isWorkspaceEmpty = isListEmpty && !isProbingAnyWorkflows && anyWorkflows.length === 0;
-
-  if (isWorkspaceEmpty) {
-    return (
-      <div className="space-y-6">
-        <WorkflowsEmptyState filtered={false} />
-      </div>
-    );
-  }
+  // Reported once per screen the user lands on; `null` while loading or erroring, neither of which
+  // is a visit. `hasActiveFilters` is what separates an empty workspace from an emptied filter.
+  useTrackWorkflowSurface(
+    resolveWorkflowListSurface({
+      showInitialLoading,
+      isError,
+      hasActiveFilters,
+      workflowCount: workflows.length,
+    })
+  );
 
   let listContent: React.ReactNode;
 
@@ -155,8 +149,8 @@ export const WorkflowsListPage = ({
       </div>
     );
   } else if (workflows.length === 0) {
-    // Workspace has workflows but the active filters match none (a truly empty workspace exits early).
-    listContent = <WorkflowsEmptyState filtered={true} />;
+    // The toolbar stays put either way, so the filter that emptied the list stays reachable.
+    listContent = <WorkflowsEmptyState filtered={hasActiveFilters} />;
   } else {
     listContent = (
       <div>
@@ -230,8 +224,9 @@ export const WorkflowsListPage = ({
             placeholder={t("workspace.workflows.search_by_workflow_name")}
             className="w-80 border-slate-700"
           />
-          <WorkflowFilterDropdown
+          <FilterDropdown
             title={t("common.status")}
+            className="workflowFilterDropdown"
             options={getStatusFilterOptions(t)}
             selectedOptions={selectedStatuses}
             onToggleOption={toggleStatus}

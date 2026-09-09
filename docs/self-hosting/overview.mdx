@@ -4,21 +4,84 @@ description: "Learn how to self-host Formbricks."
 icon: "server"
 ---
 
-### System Requirements
+## System requirements
 
-<Info>
-  **Minimum Setup**: 1 vCPU, 2 GB RAM, 8 GB SSD.
-</Info>
+Formbricks is not a single container. The v6 baseline runs eight long-running services — the app,
+Formbricks Hub (API and worker), Cube, PostgreSQL, Redis/Valkey, SpiceDB and its operator — so size the
+host for the whole stack rather than for the app alone.
+
+| Deployment                | CPU       | Memory    | Disk      |
+| ------------------------- | --------- | --------- | --------- |
+| Single server, evaluation | 2 vCPU    | 4 GB      | 20 GB SSD |
+| Single server, low load   | 4 vCPU    | 8 GB      | 50 GB SSD |
+| Kubernetes, production    | see below | see below | managed   |
+
+Chart defaults request 1.9 vCPU and 2.9 GiB across those services — see `charts/formbricks/values.yaml`,
+plus `charts/spicedb-operator/values.yaml` for the operator. On Kubernetes, add whatever your provider
+reserves per node on top, typically around 0.5 vCPU and 1 GB. The single-server rows are derived from those
+totals rather than load-tested.
 
 <Info>
   **HTTPS Required**: Ensure your server runs with a valid HTTPS certificate.
 </Info>
 
-#### **Self-Hosting Options**
+<Warning>
+  4 GB is a floor, not a comfortable target. It leaves no headroom for a large response import, a survey
+  bundle rebuild, or any of the optional AI services.
+</Warning>
+
+### Single server or Kubernetes
+
+The single-server rows cover the [Docker](/self-hosting/setup/docker) and
+[one-click](/self-hosting/setup/one-click) installs. Both run every service on one host, so a reboot or an
+upgrade means downtime — usually an acceptable trade at low load, and not on its own a reason to reach for
+Kubernetes. Choose [Kubernetes](/self-hosting/setup/kubernetes) when you need to survive a node failure or
+carry an uptime SLA.
+
+For Kubernetes, start at 3 nodes of at least 4 vCPU and 8 GB, autoscaling to 6, with PostgreSQL, Redis and
+object storage as managed services outside the cluster. Capacity is deliberately provider-neutral: a 2 vCPU
+node cannot hold the app's 1 vCPU request alongside the platform reserve, some providers exclude burstable
+instance families from system node pools, and a free control-plane tier carries no uptime SLA. Nothing is
+highly available out of the box — every replica count in the chart ships as `1`. Object storage must speak
+the S3 API, so a service without one, such as Azure Blob Storage, needs an
+[S3-compatible gateway](/self-hosting/configuration/file-uploads) in front of it. The
+[Kubernetes deployment guide](/self-hosting/setup/kubernetes) has the replica, autoscaling and
+managed-service settings.
+
+### AI services are much heavier
+
+Self-hosted AI is off by default and is a different order of magnitude: Hub embeddings alone request 4 vCPU
+and 8 Gi for the foreground runtime, and 8 vCPU for the worker pool. Prefer an external endpoint unless you
+need them constantly.
+
+<Note>
+  AI features are an Enterprise feature. Configure your
+  [Enterprise license](/self-hosting/advanced/license) before enabling them.
+</Note>
+
+### Sizing for a specific load
+
+**A burst of responses** is a queue question rather than a request-rate one. Each response enqueues several
+`response-pipeline.process` jobs — `responseCreated`, one `responseUpdated` per progress save, then
+`responseFinished` — so the count scales with how often answers are saved, and consumers default to one job
+in flight per app replica. Size Redis for the deepest backlog you expect: the chart pins
+`maxmemory-policy noeviction`, so a full Redis refuses writes rather than dropping jobs. See
+[job runner](/self-hosting/configuration/job-runner).
+
+**A large contact list** is storage rather than throughput. Contact attributes are one row per attribute per
+contact, so 50,000 contacts with 10 attributes each is 500,000 rows before a single response is stored.
+
+We publish no responses-per-second figure per replica: it is not load-tested, and a 40-question survey with
+file uploads is not the same write as a one-question NPS. Watch pod CPU and queue depth separately through
+your first campaign — they move independently.
+
+## **Self-hosting options**
 
 * [**One-Click Setup**](/self-hosting/setup/one-click)**:** Set up Formbricks on Ubuntu in minutes with our shell script.
 
 * [**Docker Setup**](/self-hosting/setup/docker)**:** Use our pre-built Docker image for an effortless start.
+
+* [**Kubernetes Deployment**](/self-hosting/setup/kubernetes)**:** Deploy the full stack with the official Helm chart.
 
 * [**Migration Guide**](/self-hosting/advanced/migration)**:** Upgrade your existing Formbricks instance smoothly.
 
@@ -28,7 +91,7 @@ icon: "server"
 
 * [**Licensing**](/self-hosting/advanced/license)**:**  Learn more about our AGPL Formbricks Core and its open-source license & Unlock advanced features tailored for larger teams and enterprises with the EE License.
 
-### **Hosting Options**
+## **Hosting options**
 
 * **Cloud Hosting:** Hassle-free managed deployment at [app.formbricks.com](https://app.formbricks.com).
 
@@ -36,7 +99,7 @@ icon: "server"
 
 * **Self-Hosting with EE License:** Unlock advanced features for large teams or enterprises.
 
-### **Licensing Options Comparison**:
+## **Licensing options comparison**
 
 For Self Hosting, our core product is free however certain advanced features are a part of our Enterprise License offering. Please refer this table to understand if you want the features that are a part of it and then we’ll reach out to you!
 

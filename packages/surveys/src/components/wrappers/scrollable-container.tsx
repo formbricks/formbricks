@@ -1,7 +1,7 @@
 import type { JSX, Ref } from "preact";
 import { forwardRef } from "preact/compat";
 import { useEffect, useImperativeHandle, useRef, useState } from "preact/hooks";
-import { ChevronDownIcon } from "@/components/icons/chevron-down-icon";
+import { ScrollToBottomButton } from "@/components/buttons/scroll-to-bottom-button";
 import { cn } from "@/lib/utils";
 
 interface ScrollableContainerProps {
@@ -94,14 +94,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
         {!disableInternalScroll && !isAtBottom && (
           <>
             <div className="from-survey-bg absolute right-4 bottom-0 left-4 h-4 bg-linear-to-t to-transparent" />
-            <button
-              type="button"
-              onClick={scrollToBottom}
-              style={{ transform: "translateX(-50%)" }}
-              className="bg-survey-bg hover:border-border focus:ring-brand absolute bottom-2 left-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-transparent shadow-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
-              aria-label="Scroll to bottom">
-              <ChevronDownIcon className="text-heading h-5 w-5" />
-            </button>
+            <ScrollToBottomButton onClick={scrollToBottom} />
           </>
         )}
       </div>

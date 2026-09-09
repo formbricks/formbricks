@@ -532,6 +532,21 @@ export const withDerivedQuestions = <
   };
 };
 
+/**
+ * Drops read-only projections the v1 survey contract does not describe.
+ *
+ * `embeddedFields` (ENG-1837) is joined onto every survey the management endpoints read, but v1 is a
+ * versioned public contract and how Embedded Data is serialised is ENG-1838's call — so it does not
+ * leak out ahead of that decision. Write paths are unaffected: the key is omitted from both create
+ * schemas and stripped again in `updateSurveyInternal`.
+ */
+export const withoutInternalSurveyProjections = <T extends { embeddedFields?: unknown }>(
+  survey: T
+): Omit<T, "embeddedFields"> => {
+  const { embeddedFields: _embeddedFields, ...rest } = survey;
+  return rest;
+};
+
 export const validateSurveyInput = (input: {
   questions?: TSurveyQuestion[];
   blocks?: TSurveyBlock[];

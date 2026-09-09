@@ -11,7 +11,11 @@ import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 
 interface PendingDowngradeBannerProps {
   organizationId: string;
-  lastChecked: Date;
+  // Both derived on the server from the license's `lastChecked` and the grace period, rather than
+  // from `Date.now()` here: reading the clock during render is impure, so the banner's copy would
+  // differ between the server pass and hydration (ENG-2366).
+  isWithinGracePeriod: boolean;
+  scheduledDowngradeDate: Date;
   active: boolean;
   isPendingDowngrade: boolean;
   locale: TUserLocale;
@@ -20,20 +24,15 @@ interface PendingDowngradeBannerProps {
 
 export const PendingDowngradeBanner = ({
   organizationId,
-  lastChecked,
+  isWithinGracePeriod,
+  scheduledDowngradeDate,
   active,
   isPendingDowngrade,
   locale,
   status,
 }: Readonly<PendingDowngradeBannerProps>) => {
-  const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
   const { t } = useTranslation();
-  const isLastCheckedWithin72Hours = lastChecked
-    ? // eslint-disable-next-line react-hooks/purity -- migration ENG-2366
-      Date.now() - lastChecked.getTime() < threeDaysInMillis
-    : false;
 
-  const scheduledDowngradeDate = new Date(lastChecked.getTime() + threeDaysInMillis);
   const formattedDate = formatDateForDisplay(scheduledDowngradeDate, locale, {
     year: "numeric",
     month: "long",
@@ -59,7 +58,7 @@ export const PendingDowngradeBanner = ({
       return `${unreachableMessage} ${t("common.you_are_downgraded_to_the_community_edition")}`;
     }
 
-    if (isLastCheckedWithin72Hours) {
+    if (isWithinGracePeriod) {
       const scheduledMessage = t("common.you_will_be_downgraded_to_the_community_edition_on_date", {
         date: formattedDate,
       });
