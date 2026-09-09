@@ -100,10 +100,11 @@ Helm cannot condition values passed to the PostgreSQL dependency on a sibling va
 baseline remains in effect. Override `authzed.cluster.resources` and `postgresql.primary.resources` to match the
 expected authorization traffic and the other workloads using the bundled database.
 
-The generated Formbricks and SpiceDB connection strings, the SpiceDB database bootstrap, and the installation
-notes follow the bundled PostgreSQL dependency's effective service name, service port, username, and database.
-This includes username, database, and service-port overrides supplied through the dependency's
-`global.postgresql` values.
+The generated Formbricks `DATABASE_URL` and installation notes follow the bundled PostgreSQL dependency's
+effective service name, service port, username, and database. This includes username, database, and
+service-port overrides supplied through the dependency's `global.postgresql` values. The SpiceDB datastore URI
+and database bootstrap follow the same service name and port while continuing to provision and use the dedicated
+`spicedb` role and database.
 
 > [!WARNING]
 > PostgreSQL initializes users and databases only when the data directory is empty. Before applying connection
