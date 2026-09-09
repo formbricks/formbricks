@@ -21,6 +21,7 @@ import { importError, importInfo, importWarning } from "../../report";
 import type { TImportIssue } from "../../types";
 import { abortAfter } from "./abort";
 import { type TImportPromptPart, buildImportSystemPrompt, buildImportUserPrompt } from "./prompt";
+import { applySourceHints } from "./source-hints";
 
 /** Extraction is transcription, not creativity: the lowest temperature the providers accept reliably. */
 const IMPORT_EXTRACTION_TEMPERATURE = 0.1;
@@ -129,12 +130,15 @@ function collectUsedLanguageCodes(draft: TGeneratedDraftLike, defaultLanguageCod
 export function finalizeImportDraft(
   raw: unknown,
   schema: TImportDraftSchema,
-  defaultLanguageCode: string
+  defaultLanguageCode: string,
+  /** The text the model read; deterministic hints (a "dropdown" type cell, "Rows: … | Columns: …") come from it. */
+  sourceText?: string
 ): TExtractedSurveyDraft {
   // Models say "nothing here" with empty arrays: drop blocks without questions and questions without a
   // headline (each skipped question is reported) before the schema sees the object.
   const skipped: TImportIssue[] = [];
-  const cleaned = repairDraftElements(pruneEmptyDraftParts(raw, skipped), skipped);
+  const pruned = pruneEmptyDraftParts(raw, skipped);
+  const cleaned = repairDraftElements(sourceText ? applySourceHints(pruned, sourceText) : pruned, skipped);
   const rawBlocks = (cleaned as { blocks?: unknown } | null)?.blocks;
   const rawIsEmpty = Array.isArray(rawBlocks) && rawBlocks.length === 0;
   if (rawIsEmpty) {
@@ -280,7 +284,7 @@ export async function extractSurveyDraft(params: TExtractSurveyDraftParams): Pro
     ...buildImportDraftRequest(params, schema),
   });
 
-  return finalizeImportDraft(generation.object, schema, params.defaultLanguageCode);
+  return finalizeImportDraft(generation.object, schema, params.defaultLanguageCode, params.text);
 }
 
 export type TStreamedSurveyDraft = {
@@ -304,7 +308,7 @@ export async function streamSurveyDraft(params: TExtractSurveyDraftParams): Prom
     schema,
     partialObjectStream: result.partialObjectStream,
     completion: result.completion.then((object) =>
-      finalizeImportDraft(object, schema, params.defaultLanguageCode)
+      finalizeImportDraft(object, schema, params.defaultLanguageCode, params.text)
     ),
   };
 }
