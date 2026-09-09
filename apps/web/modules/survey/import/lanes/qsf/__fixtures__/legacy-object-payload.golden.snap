@@ -44,7 +44,9 @@
                   "de-DE": "Schlecht"
                 }
               }
-            ]
+            ],
+            "shuffleOption": "none",
+            "displayType": "list"
           },
           {
             "id": "Q2",
@@ -73,7 +75,7 @@
         "id": "<cuid>",
         "type": "endScreen",
         "headline": {
-          "de-DE": "Thank you!"
+          "de-DE": "Thanks for your feedback"
         }
       }
     ],

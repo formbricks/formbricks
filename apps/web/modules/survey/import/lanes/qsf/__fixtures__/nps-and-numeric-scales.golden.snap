@@ -1,0 +1,191 @@
+{
+  "document": {
+    "name": "Sample Survey",
+    "type": "link",
+    "status": "draft",
+    "metadata": {
+      "title": {
+        "en-US": "Sample Survey"
+      }
+    },
+    "defaultLanguage": "en-US",
+    "languages": [
+      {
+        "code": "en-US",
+        "default": true,
+        "enabled": true
+      }
+    ],
+    "welcomeCard": {
+      "enabled": false
+    },
+    "blocks": [
+      {
+        "id": "<cuid>",
+        "name": "Sample Survey",
+        "elements": [
+          {
+            "id": "Q1",
+            "type": "multipleChoiceSingle",
+            "headline": {
+              "en-US": "Which option do you prefer?"
+            },
+            "required": true,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "Option A"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "Option B"
+                }
+              },
+              {
+                "id": "choice_3",
+                "label": {
+                  "en-US": "Option C"
+                }
+              }
+            ],
+            "shuffleOption": "none",
+            "displayType": "list"
+          },
+          {
+            "id": "Q2",
+            "type": "multipleChoiceSingle",
+            "headline": {
+              "en-US": "Pick a colour from the list."
+            },
+            "required": true,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "Red"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "Green"
+                }
+              },
+              {
+                "id": "choice_3",
+                "label": {
+                  "en-US": "Blue"
+                }
+              },
+              {
+                "id": "choice_4",
+                "label": {
+                  "en-US": "Other"
+                }
+              }
+            ],
+            "shuffleOption": "none",
+            "displayType": "dropdown"
+          },
+          {
+            "id": "Q3",
+            "type": "rating",
+            "headline": {
+              "en-US": "How satisfied are you overall?"
+            },
+            "required": true,
+            "scale": "number",
+            "range": 5,
+            "isColorCodingEnabled": false,
+            "lowerLabel": {
+              "en-US": "Very dissatisfied"
+            },
+            "upperLabel": {
+              "en-US": "Very satisfied"
+            }
+          },
+          {
+            "id": "Q4",
+            "type": "rating",
+            "headline": {
+              "en-US": "How easy was it to complete this task?"
+            },
+            "required": true,
+            "scale": "number",
+            "range": 5,
+            "isColorCodingEnabled": false,
+            "lowerLabel": {
+              "en-US": "Very difficult"
+            },
+            "upperLabel": {
+              "en-US": "Very easy"
+            }
+          },
+          {
+            "id": "Q5",
+            "type": "nps",
+            "headline": {
+              "en-US": "How likely are you to recommend us to a friend?"
+            },
+            "required": true,
+            "isColorCodingEnabled": false
+          },
+          {
+            "id": "Q6",
+            "type": "openText",
+            "headline": {
+              "en-US": "Any additional comments?"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": true,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "id": "<cuid>",
+        "type": "endScreen",
+        "headline": {
+          "en-US": "Thanks for your feedback"
+        }
+      }
+    ],
+    "hiddenFields": {
+      "enabled": false
+    },
+    "variables": []
+  },
+  "issues": [
+    {
+      "severity": "info",
+      "code": "type_approximated",
+      "message": "QID3 was imported as 'rating 5' because 'MC/SAHR with a 5-point numeric scale' has no exact equivalent.",
+      "sourceRef": "QID3",
+      "vars": {
+        "sourceRef": "QID3",
+        "from": "MC/SAHR with a 5-point numeric scale",
+        "to": "rating 5"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "type_approximated",
+      "message": "QID4 was imported as 'rating 5' because 'MC/SAHR with a 5-point numeric scale' has no exact equivalent.",
+      "sourceRef": "QID4",
+      "vars": {
+        "sourceRef": "QID4",
+        "from": "MC/SAHR with a 5-point numeric scale",
+        "to": "rating 5"
+      }
+    }
+  ],
+  "logicRulesReported": 0
+}

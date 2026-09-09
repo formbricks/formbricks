@@ -51,9 +51,11 @@
                 }
               }
             ],
+            "shuffleOption": "none",
             "otherOptionPlaceholder": {
               "en-US": "Please specify"
-            }
+            },
+            "displayType": "list"
           },
           {
             "id": "Q2",
@@ -117,7 +119,8 @@
                 }
               }
             ],
-            "shuffleOption": "all"
+            "shuffleOption": "all",
+            "displayType": "list"
           }
         ],
         "buttonLabel": {

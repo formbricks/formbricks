@@ -50,7 +50,47 @@ const GOLDEN = [
   "pages-and-blocks.qsf",
   "embedded-data.qsf",
   "legacy-object-payload.qsf",
+  "nps-and-numeric-scales.qsf",
 ];
+
+describe("nps-and-numeric-scales.qsf (a real export with a top-level NPS type)", () => {
+  test("maps the NPS question type, turns 1–5 numeric choice scales into ratings and keeps the dropdown", async () => {
+    const candidate = await qsfLane(
+      {
+        kind: "qsf",
+        fileName: "nps-and-numeric-scales.qsf",
+        content: { type: "bytes", bytes: read("nps-and-numeric-scales.qsf") },
+      },
+      ctx
+    );
+    const elements = (
+      (candidate.document as { blocks: { elements: Record<string, unknown>[] }[] }).blocks ?? []
+    ).flatMap((block) => block.elements);
+
+    expect(elements.map((element) => element.type)).toEqual([
+      "multipleChoiceSingle",
+      "multipleChoiceSingle",
+      "rating",
+      "rating",
+      "nps",
+      "openText",
+    ]);
+    expect(elements[1]).toMatchObject({ displayType: "dropdown" });
+    expect(elements[2]).toMatchObject({
+      scale: "number",
+      range: 5,
+      lowerLabel: { "en-US": "Very dissatisfied" },
+      upperLabel: { "en-US": "Very satisfied" },
+    });
+    expect(elements[3]).toMatchObject({
+      range: 5,
+      lowerLabel: { "en-US": "Very difficult" },
+      upperLabel: { "en-US": "Very easy" },
+    });
+    expect(candidate.issues.map((issue) => issue.code)).not.toContain("unsupported_question_type");
+    expect(candidate.issues.filter((issue) => issue.code === "type_approximated")).toHaveLength(2);
+  });
+});
 
 describe("qsfLane", () => {
   test.each(GOLDEN)("%s: the full lane output matches its golden", async (name) => {

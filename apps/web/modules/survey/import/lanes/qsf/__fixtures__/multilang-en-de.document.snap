@@ -60,7 +60,9 @@
                   "de-DE": "Unzufrieden"
                 }
               }
-            ]
+            ],
+            "shuffleOption": "none",
+            "displayType": "list"
           },
           {
             "id": "Q2",

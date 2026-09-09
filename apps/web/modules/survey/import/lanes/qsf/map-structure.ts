@@ -24,7 +24,8 @@ export type TQsfDocumentBuild = {
 
 type TPage = { blockId: string; description: string; pageIndex: number; pageCount: number; qids: string[] };
 
-const DEFAULT_ENDING_HEADLINE = "Thank you!";
+// Same fallback copy the AI lanes use, so the lanes agree on what an unnamed ending says.
+const DEFAULT_ENDING_HEADLINE = "Thanks for your feedback";
 
 function text(value: string, ctx: TQsfStructureContext): TQsfI18n {
   const map: TQsfI18n = { [ctx.defaultLanguageCode]: value };
@@ -207,22 +208,14 @@ export function buildQsfDocument(
     });
   }
 
-  if (
-    model.options.backButton === true ||
-    (model.options.progressBar && model.options.progressBar !== "None")
-  ) {
+  // Qualtrics' BackButton is not reported: the v3 create document carries no back-button field, and the
+  // editor's default (button shown) is the common case. The progress bar has no counterpart at all.
+  if (model.options.progressBar && model.options.progressBar !== "None") {
     issues.push(
       importInfo({
         code: "setting_not_imported",
         sourceRef: "Survey Options",
-        vars: {
-          setting: [
-            model.options.backButton === true ? "BackButton" : null,
-            model.options.progressBar && model.options.progressBar !== "None" ? "ProgressBarDisplay" : null,
-          ]
-            .filter(Boolean)
-            .join(", "),
-        },
+        vars: { setting: "ProgressBarDisplay" },
       })
     );
   }

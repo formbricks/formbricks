@@ -403,7 +403,7 @@
         "id": "<cuid>",
         "type": "redirectToUrl",
         "url": "https://example.com/thanks",
-        "label": "Thank you!"
+        "label": "Thanks for your feedback"
       }
     ],
     "hiddenFields": {

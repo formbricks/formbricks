@@ -180,10 +180,39 @@ class QuestionMapper {
     });
   }
 
+  mapNps(): TQsfMappedElement[] {
+    return [this.base(this.claimId(), "nps", { isColorCodingEnabled: false })];
+  }
+
+  /**
+   * A single-answer question whose choices are "1 – Very dissatisfied", "2", "3", "4", "5 – Very satisfied"
+   * is a rating scale written out as choices (Qualtrics has no rating type). Detected when every label
+   * starts with the next integer of a 3–10 step run; the end labels' words become the scale anchors.
+   */
+  numericScale(): { range: 3 | 4 | 5 | 6 | 7 | 10; lower: string; upper: string } | null {
+    const { choices } = this.question;
+    if (choices.length < 3 || choices.length > 10) return null;
+    const parsed = choices.map((choice) =>
+      /^\s*(\d{1,2})\s*(?:[-–—:.)]\s*)?(.*)$/.exec(stripHtml(choice.display))
+    );
+    if (parsed.some((match) => match === null)) return null;
+    const numbers = parsed.map((match) => Number(match![1]));
+    const start = numbers[0];
+    if (start !== 0 && start !== 1) return null;
+    if (numbers.some((n, index) => n !== start + index)) return null;
+    const range = choices.length;
+    if (![3, 4, 5, 6, 7, 10].includes(range)) return null;
+    return {
+      range: range as 3 | 4 | 5 | 6 | 7 | 10,
+      lower: parsed[0]![2].trim(),
+      upper: parsed[parsed.length - 1]![2].trim(),
+    };
+  }
+
   mapMultipleChoice(): TQsfMappedElement[] {
     const selector = this.question.selector ?? "";
     if (selector === "NPS") {
-      return [this.base(this.claimId(), "nps", { isColorCodingEnabled: false })];
+      return this.mapNps();
     }
 
     if (this.question.choices.length < 2) {
@@ -196,14 +225,32 @@ class QuestionMapper {
       this.approximated(`MC/${selector || "?"}`, "multipleChoiceSingle");
     }
 
+    const scale = isMulti ? null : this.numericScale();
+    if (scale) {
+      this.approximated(
+        `MC/${selector || "?"} with a ${scale.range}-point numeric scale`,
+        `rating ${scale.range}`
+      );
+      return [
+        this.base(this.claimId(), "rating", {
+          scale: "number",
+          range: scale.range,
+          isColorCodingEnabled: false,
+          ...(scale.lower ? { lowerLabel: this.i18n(scale.lower, () => scale.lower) } : {}),
+          ...(scale.upper ? { upperLabel: this.i18n(scale.upper, () => scale.upper) } : {}),
+        }),
+      ];
+    }
+
     const choices = this.choices(this.question.choices, "choices", "choice");
     const hasOther = choices.some((choice) => choice.id === "other");
     return [
       this.base(this.claimId(), isMulti ? "multipleChoiceMulti" : "multipleChoiceSingle", {
         choices,
+        shuffleOption: "none",
         ...this.shuffleOption(),
         ...(hasOther ? { otherOptionPlaceholder: this.i18n("Please specify", () => "Please specify") } : {}),
-        ...(selector === "DL" ? { displayType: "dropdown" } : {}),
+        displayType: selector === "DL" ? "dropdown" : "list",
       }),
     ];
   }
@@ -326,6 +373,9 @@ class QuestionMapper {
     switch (type) {
       case "MC":
         return this.mapMultipleChoice();
+      // Newer exports carry NPS as its own question type; older ones as MC with the NPS selector.
+      case "NPS":
+        return this.mapNps();
       case "TE":
         return this.mapTextEntry();
       case "Matrix":

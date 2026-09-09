@@ -86,7 +86,7 @@ describe("buildQsfDocument", () => {
     ]);
     expect(blocks[0].buttonLabel).toEqual({ "en-US": "Continue" });
     expect(result.issues.find((issue) => issue.code === "setting_not_imported")?.vars).toMatchObject({
-      setting: "BackButton, ProgressBarDisplay",
+      setting: "ProgressBarDisplay",
     });
   });
 
@@ -133,7 +133,12 @@ describe("buildQsfDocument", () => {
       headline: { "en-US": "Welcome to the advanced section. Item" },
     });
     expect(result.document?.endings).toEqual([
-      { id: result.endingId, type: "redirectToUrl", url: "https://example.com/thanks", label: "Thank you!" },
+      {
+        id: result.endingId,
+        type: "redirectToUrl",
+        url: "https://example.com/thanks",
+        label: "Thanks for your feedback",
+      },
     ]);
     expect(result.issues).toContainEqual(
       expect.objectContaining({ code: "welcome_card_from_descriptive_text", sourceRef: "QID6" })

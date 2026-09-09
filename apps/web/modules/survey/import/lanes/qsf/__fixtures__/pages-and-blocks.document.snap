@@ -126,7 +126,7 @@
         "id": "<cuid>",
         "type": "endScreen",
         "headline": {
-          "en-US": "Thank you!"
+          "en-US": "Thanks for your feedback"
         }
       }
     ],
@@ -158,11 +158,11 @@
     {
       "severity": "info",
       "code": "setting_not_imported",
-      "message": "The setting 'BackButton, ProgressBarDisplay' is not imported. Set it up in the editor.",
+      "message": "The setting 'ProgressBarDisplay' is not imported. Set it up in the editor.",
       "sourceRef": "Survey Options",
       "vars": {
         "sourceRef": "Survey Options",
-        "setting": "BackButton, ProgressBarDisplay"
+        "setting": "ProgressBarDisplay"
       }
     }
   ]
