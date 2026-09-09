@@ -3808,6 +3808,7 @@
           "schedule_cleared": "A közzétételi és lezárási ütemezés törölve lett. A felmérés piszkozatként jött létre.",
           "setting_not_imported": "A(z) '{setting}' beállítás nem került importálásra. Kérem, állítsa be a szerkesztőben.",
           "settings_not_exported": "A stílus, a követő műveletek és a felmérés beállításai nem részei az exportnak. Kérem, állítsa be őket a szerkesztőben.",
+          "single_page_split": "A Qualtrics felmérés nem tartalmaz oldaltöréseket, ezért mindegyik {count} kérdés a saját blokkjába került elhelyezésre.",
           "slug_not_imported": "A felmérés hivatkozási slug példányonként egyedi, ezért nem került importálásra.",
           "status_reset": "A felmérés piszkozatként jött létre, függetlenül a fájlban szereplő állapotától.",
           "targeting_not_imported": "A célzás (szegmensszűrők) nem került importálásra. Kérem, állítsa be a szerkesztőben.",

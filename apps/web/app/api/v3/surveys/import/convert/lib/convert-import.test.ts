@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
@@ -150,6 +152,33 @@ describe("convertImportFile", () => {
     expect(json.code).toBe(code);
     expect(json.detail).toContain(detail);
     expect(json.invalid_params[0].name).toBe("file");
+  });
+
+  test("converts a Qualtrics .qsf through the structured lane and reports its logic", async () => {
+    // vitest runs with apps/web as cwd; the QSF fixtures live next to their lane.
+    const qsf = readFileSync(
+      join(process.cwd(), "modules/survey/import/lanes/qsf/__fixtures__/logic-skip-display-branch.qsf")
+    );
+
+    const response = await convertImportFile({
+      body: body("survey.qsf", qsf),
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data.source).toMatchObject({ lane: "structured", kind: "qsf" });
+    expect(json.data.validation.valid, JSON.stringify(json.data.validation)).toBe(true);
+    expect(json.data.document).toMatchObject({ type: "link", status: "draft", name: "Logic showcase" });
+    expect(json.data.report.summary).toMatchObject({ logicRules: 0, logicRulesReported: 6, hiddenFields: 1 });
+    expect(
+      json.data.report.issues.filter((issue: { code: string }) => issue.code === "logic_dropped")
+    ).toHaveLength(7);
+    expect(json.data.report.issues.map((issue: { code: string }) => issue.code)).not.toContain(
+      "settings_not_exported"
+    );
   });
 
   test("answers 400 lane_not_available for a kind whose lane has not shipped", async () => {

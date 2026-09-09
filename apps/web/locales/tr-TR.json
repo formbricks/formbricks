@@ -3808,6 +3808,7 @@
           "schedule_cleared": "Yayınlama ve kapanış programı temizlendi. Anket taslak olarak oluşturuldu.",
           "setting_not_imported": "'{setting}' ayarı içe aktarılmadı. Düzenleyicide ayarlayın.",
           "settings_not_exported": "Stil, takip ve anket ayarları dışa aktarmanın parçası değil. Bunları düzenleyicide ayarlayın.",
+          "single_page_split": "Qualtrics anketi sayfa sonları içermediğinden, {count} sorunun her biri kendi bloğuna yerleştirildi.",
           "slug_not_imported": "Anket bağlantı slug'ı her örnek için benzersizdir ve içe aktarılmadı.",
           "status_reset": "Anket, dosyadaki durumuna bakılmaksızın taslak olarak oluşturuldu.",
           "targeting_not_imported": "Hedefleme (segment filtreleri) içe aktarılmadı. Düzenleyicide ayarlayın.",

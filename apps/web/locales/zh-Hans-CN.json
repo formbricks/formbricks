@@ -3808,6 +3808,7 @@
           "schedule_cleared": "发布时间表和关闭时间表已被清除。问卷以草稿形式创建。",
           "setting_not_imported": "设置“{setting}”未被导入。请在编辑器中手动设置。",
           "settings_not_exported": "样式、回访和问卷设置未包含在导出内容中。请在编辑器中手动设置。",
+          "single_page_split": "Qualtrics 调查问卷没有分页符，因此其 {count} 个问题已分别放入各自的区块中。",
           "slug_not_imported": "每个实例的问卷链接 slug 都是唯一的，未被导入。",
           "status_reset": "无论文件中的状态如何，问卷都以草稿状态创建。",
           "targeting_not_imported": "目标筛选（细分过滤器）未被导入。请在编辑器中配置。",

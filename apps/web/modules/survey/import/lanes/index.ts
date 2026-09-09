@@ -5,6 +5,7 @@ import {
   type TImportSourceKind,
 } from "../types";
 import { formbricksLane } from "./formbricks";
+import { qsfLane } from "./qsf";
 
 /**
  * Lane registry. A kind without a handler is a lane that has not shipped yet; the convert route
@@ -12,6 +13,7 @@ import { formbricksLane } from "./formbricks";
  */
 const LANE_HANDLERS: Partial<Record<TImportLane, TImportLaneHandler>> = {
   lossless: formbricksLane,
+  structured: qsfLane,
 };
 
 export function getImportLaneHandler(kind: TImportSourceKind): TImportLaneHandler | null {

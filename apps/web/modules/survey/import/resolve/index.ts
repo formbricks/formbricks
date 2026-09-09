@@ -126,7 +126,7 @@ export async function resolveImportCandidate(
   }
 
   const preparation = prepareV3SurveyCreateInput({ ...document, workspaceId: ctx.workspaceId });
-  report.summary = summarizeDocument(document);
+  report.summary = { ...summarizeDocument(document), logicRulesReported: candidate.logicRulesReported ?? 0 };
 
   if (!preparation.ok) {
     report.issues.push(...preparation.validation.invalidParams.map(invalidParamToIssue));

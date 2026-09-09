@@ -1,0 +1,148 @@
+{
+  "document": {
+    "name": "Embedded data",
+    "type": "link",
+    "status": "draft",
+    "metadata": {
+      "title": {
+        "en-US": "Embedded data"
+      }
+    },
+    "defaultLanguage": "en-US",
+    "languages": [
+      {
+        "code": "en-US",
+        "default": true,
+        "enabled": true
+      }
+    ],
+    "welcomeCard": {
+      "enabled": false
+    },
+    "blocks": [
+      {
+        "id": "<cuid>",
+        "name": "Block 1",
+        "elements": [
+          {
+            "id": "Q1",
+            "type": "openText",
+            "headline": {
+              "en-US": "Hello ${e://Field/firstName}, how was your visit to ${e://Field/Store-Name}?"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": true,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 2",
+        "elements": [
+          {
+            "id": "Q2",
+            "type": "openText",
+            "headline": {
+              "en-US": "You said: ${q://QID1/ChoiceTextEntryValue}. Anything to add? ${loc://something}"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": false,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "<cuid>",
+        "type": "endScreen",
+        "headline": {
+          "en-US": "Thanks for your feedback"
+        }
+      }
+    ],
+    "hiddenFields": {
+      "enabled": true,
+      "fieldIds": [
+        "firstname",
+        "store_name",
+        "userid_imported",
+        "plan_tier"
+      ]
+    },
+    "variables": []
+  },
+  "issues": [
+    {
+      "severity": "info",
+      "code": "single_page_split",
+      "message": "The Qualtrics survey has no page breaks, so each of its 2 questions was placed in its own block.",
+      "vars": {
+        "count": 2
+      }
+    },
+    {
+      "severity": "info",
+      "code": "field_renamed",
+      "message": "The field 'firstName' was renamed to 'firstname' to follow the naming rules.",
+      "sourceRef": "Embedded Data",
+      "vars": {
+        "sourceRef": "Embedded Data",
+        "from": "firstName",
+        "to": "firstname"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "field_renamed",
+      "message": "The field 'Store-Name' was renamed to 'store_name' to follow the naming rules.",
+      "sourceRef": "Embedded Data",
+      "vars": {
+        "sourceRef": "Embedded Data",
+        "from": "Store-Name",
+        "to": "store_name"
+      }
+    },
+    {
+      "severity": "warning",
+      "code": "embedded_data_name_refused",
+      "message": "The hidden field 'userId' uses a reserved name and was renamed to 'userid_imported'.",
+      "sourceRef": "Embedded Data",
+      "vars": {
+        "sourceRef": "Embedded Data",
+        "name": "userId",
+        "renamed": "userid_imported"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "field_renamed",
+      "message": "The field 'plan tier' was renamed to 'plan_tier' to follow the naming rules.",
+      "sourceRef": "Embedded Data",
+      "vars": {
+        "sourceRef": "Embedded Data",
+        "from": "plan tier",
+        "to": "plan_tier"
+      }
+    }
+  ]
+}

@@ -3808,6 +3808,7 @@
           "schedule_cleared": "O agendamento de publicação e encerramento foi limpo. A pesquisa foi criada como rascunho.",
           "setting_not_imported": "A configuração '{setting}' não foi importada. Configure-a no editor.",
           "settings_not_exported": "Estilização, follow-ups e configurações da pesquisa não fazem parte da exportação. Configure-os no editor.",
+          "single_page_split": "A pesquisa do Qualtrics não tem quebras de página, então cada uma das suas {count} perguntas foi colocada em seu próprio bloco.",
           "slug_not_imported": "O slug do link da pesquisa é único por instância e não foi importado.",
           "status_reset": "A pesquisa foi criada como rascunho, independentemente do seu status no arquivo.",
           "targeting_not_imported": "Segmentação (filtros de segmento) não foi importada. Configure-a no editor.",

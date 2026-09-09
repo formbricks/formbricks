@@ -76,6 +76,7 @@ export const IMPORT_ISSUE_CODES = [
   "pipe_stripped",
   "randomizer_flattened",
   "block_not_in_flow",
+  "single_page_split",
   "welcome_card_from_descriptive_text",
   // Languages
   "language_created",
@@ -165,6 +166,8 @@ export type TImportCandidate = {
   references?: TSurveyExportReferences;
   issues: TImportIssue[];
   source: TImportReportSource;
+  /** Source logic rules that were described in the report instead of imported (QSF, D5). */
+  logicRulesReported?: number;
 };
 
 export type TImportSourceContent =

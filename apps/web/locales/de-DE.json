@@ -3808,6 +3808,7 @@
           "schedule_cleared": "Der Veröffentlichungs- und Schließungszeitplan wurde gelöscht. Die Umfrage wird als Entwurf erstellt.",
           "setting_not_imported": "Die Einstellung '{setting}' wird nicht importiert. Richte sie im Editor ein.",
           "settings_not_exported": "Styling, Follow-ups und Umfrageeinstellungen sind nicht Teil des Exports. Richte sie im Editor ein.",
+          "single_page_split": "Die Qualtrics-Umfrage hat keine Seitenumbrüche, daher wurde jede ihrer {count} Fragen in einen eigenen Block platziert.",
           "slug_not_imported": "Der Umfragelink-Slug ist pro Instanz einzigartig und wurde nicht importiert.",
           "status_reset": "Die Umfrage wird als Entwurf erstellt, unabhängig von ihrem Status in der Datei.",
           "targeting_not_imported": "Targeting (Segmentfilter) wird nicht importiert. Richte es im Editor ein.",

@@ -3808,6 +3808,7 @@
           "schedule_cleared": "Het publicatie- en sluitschema is gewist. De enquête is aangemaakt als concept.",
           "setting_not_imported": "De instelling '{setting}' wordt niet geïmporteerd. Stel deze in via de editor.",
           "settings_not_exported": "Styling, opvolgingen en enquête-instellingen maken geen deel uit van de export. Stel ze in via de editor.",
+          "single_page_split": "De Qualtrics-enquête heeft geen pagina-einden, dus elk van de {count} vragen is in een eigen blok geplaatst.",
           "slug_not_imported": "De enquête-link slug is uniek per instantie en is niet geïmporteerd.",
           "status_reset": "De enquête is aangemaakt als concept, ongeacht de status in het bestand.",
           "targeting_not_imported": "Targeting (segmentfilters) wordt niet geïmporteerd. Stel dit in via de editor.",

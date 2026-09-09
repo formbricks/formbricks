@@ -1,0 +1,128 @@
+{
+  "document": {
+    "name": "Legacy export",
+    "type": "link",
+    "status": "draft",
+    "metadata": {
+      "title": {
+        "de-DE": "Legacy export"
+      }
+    },
+    "defaultLanguage": "de-DE",
+    "languages": [
+      {
+        "code": "de-DE",
+        "default": true,
+        "enabled": true
+      }
+    ],
+    "welcomeCard": {
+      "enabled": false
+    },
+    "blocks": [
+      {
+        "id": "<cuid>",
+        "name": "Block 1",
+        "elements": [
+          {
+            "id": "Q1",
+            "type": "multipleChoiceSingle",
+            "headline": {
+              "de-DE": "Wie geht es Ihnen?"
+            },
+            "required": false,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "de-DE": "Gut"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "de-DE": "Schlecht"
+                }
+              }
+            ],
+            "shuffleOption": "none",
+            "displayType": "list"
+          }
+        ],
+        "buttonLabel": {
+          "de-DE": "→"
+        },
+        "backButtonLabel": {
+          "de-DE": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 2",
+        "elements": [
+          {
+            "id": "Q2",
+            "type": "openText",
+            "headline": {
+              "de-DE": "Kommentar"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": true,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ],
+        "buttonLabel": {
+          "de-DE": "→"
+        },
+        "backButtonLabel": {
+          "de-DE": "←"
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "<cuid>",
+        "type": "endScreen",
+        "headline": {
+          "de-DE": "Thanks for your feedback"
+        }
+      }
+    ],
+    "hiddenFields": {
+      "enabled": false
+    },
+    "variables": []
+  },
+  "issues": [
+    {
+      "severity": "info",
+      "code": "unknown_element",
+      "message": "Flow element 'WebService' is not known and was skipped.",
+      "sourceRef": "Survey Flow",
+      "vars": {
+        "sourceRef": "Survey Flow",
+        "type": "WebService"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "unknown_element",
+      "message": "Survey element 'XYZ' is not known and was skipped.",
+      "vars": {
+        "type": "XYZ"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "single_page_split",
+      "message": "The Qualtrics survey has no page breaks, so each of its 2 questions was placed in its own block.",
+      "vars": {
+        "count": 2
+      }
+    }
+  ],
+  "logicRulesReported": 0
+}

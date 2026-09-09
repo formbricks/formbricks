@@ -1,0 +1,297 @@
+{
+  "document": {
+    "name": "Logic showcase",
+    "type": "link",
+    "status": "draft",
+    "metadata": {
+      "title": {
+        "en-US": "Logic showcase"
+      }
+    },
+    "defaultLanguage": "en-US",
+    "languages": [
+      {
+        "code": "en-US",
+        "default": true,
+        "enabled": true
+      }
+    ],
+    "welcomeCard": {
+      "enabled": false
+    },
+    "blocks": [
+      {
+        "id": "<cuid>",
+        "name": "Usage · Page 1",
+        "elements": [
+          {
+            "id": "Q1",
+            "type": "multipleChoiceSingle",
+            "headline": {
+              "en-US": "Do you use our product?"
+            },
+            "required": true,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "Yes"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "No"
+                }
+              }
+            ],
+            "shuffleOption": "none",
+            "displayType": "list"
+          },
+          {
+            "id": "Q2",
+            "type": "multipleChoiceSingle",
+            "headline": {
+              "en-US": "How often?"
+            },
+            "required": false,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "Daily"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "Weekly"
+                }
+              },
+              {
+                "id": "choice_3",
+                "label": {
+                  "en-US": "Rarely"
+                }
+              }
+            ],
+            "shuffleOption": "none",
+            "displayType": "list"
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Usage · Page 2",
+        "elements": [
+          {
+            "id": "Q3",
+            "type": "multipleChoiceSingle",
+            "headline": {
+              "en-US": "Which region are you in?"
+            },
+            "required": false,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "EU"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "US"
+                }
+              },
+              {
+                "id": "choice_3",
+                "label": {
+                  "en-US": "Other"
+                }
+              }
+            ],
+            "shuffleOption": "none",
+            "displayType": "dropdown"
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Compliance",
+        "elements": [
+          {
+            "id": "Q4",
+            "type": "multipleChoiceSingle",
+            "headline": {
+              "en-US": "EU: are you GDPR compliant?"
+            },
+            "required": false,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "Yes"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "No"
+                }
+              }
+            ],
+            "shuffleOption": "none",
+            "displayType": "list"
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Wrap up",
+        "elements": [
+          {
+            "id": "Q5",
+            "type": "openText",
+            "headline": {
+              "en-US": "Any final comments?"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": true,
+            "charLimit": {
+              "enabled": false
+            }
+          },
+          {
+            "id": "Q6",
+            "type": "openText",
+            "headline": {
+              "en-US": "Unreadable logic"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": false,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "<cuid>",
+        "type": "endScreen",
+        "headline": {
+          "en-US": "Thanks for your feedback"
+        }
+      }
+    ],
+    "hiddenFields": {
+      "enabled": true,
+      "fieldIds": [
+        "region"
+      ]
+    },
+    "variables": []
+  },
+  "issues": [
+    {
+      "severity": "info",
+      "code": "logic_dropped",
+      "message": "6 logic rules were not imported. Rebuild them in the editor; each one is listed below.",
+      "sourceRef": "Logic",
+      "vars": {
+        "sourceRef": "Logic",
+        "detail": "6 logic rules were not imported. Rebuild them in the editor; each one is listed below.",
+        "count": 6
+      }
+    },
+    {
+      "severity": "info",
+      "code": "logic_dropped",
+      "message": "Q1: if 'Do you use our product?' = 'No', skip to the end of the survey",
+      "sourceRef": "QID1",
+      "vars": {
+        "sourceRef": "QID1",
+        "detail": "Q1: if 'Do you use our product?' = 'No', skip to the end of the survey"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "logic_dropped",
+      "message": "Q2 shown only if Q1 'Do you use our product?' = 'Yes'",
+      "sourceRef": "QID2",
+      "vars": {
+        "sourceRef": "QID2",
+        "detail": "Q2 shown only if Q1 'Do you use our product?' = 'Yes'"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "logic_dropped",
+      "message": "Q3: if 'Which region are you in?' = 'Other', skip to Q5 'Any final comments?'",
+      "sourceRef": "QID3",
+      "vars": {
+        "sourceRef": "QID3",
+        "detail": "Q3: if 'Which region are you in?' = 'Other', skip to Q5 'Any final comments?'"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "logic_dropped",
+      "message": "Q4 shown only if region = 'DE'",
+      "sourceRef": "QID4",
+      "vars": {
+        "sourceRef": "QID4",
+        "detail": "Q4 shown only if region = 'DE'"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "logic_dropped",
+      "message": "Q6: display logic (could not be read) — check in Qualtrics",
+      "sourceRef": "QID6",
+      "vars": {
+        "sourceRef": "QID6",
+        "detail": "Q6: display logic (could not be read) — check in Qualtrics"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "logic_dropped",
+      "message": "Branch after 'Usage': if Q3 'Which region are you in?' = 'EU' show 'Compliance'",
+      "sourceRef": "EU branch",
+      "vars": {
+        "sourceRef": "EU branch",
+        "detail": "Branch after 'Usage': if Q3 'Which region are you in?' = 'EU' show 'Compliance'"
+      }
+    }
+  ],
+  "logicRulesReported": 6
+}

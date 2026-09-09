@@ -1,0 +1,711 @@
+{
+  "name": "Advanced types",
+  "surveyId": "SV_fixture000000000",
+  "defaultLanguageCode": "en-US",
+  "languageCodes": [],
+  "unknownLanguageCodes": [],
+  "questions": {
+    "QID1": {
+      "qid": "QID1",
+      "exportTag": "Q1",
+      "type": "Matrix",
+      "selector": "Likert",
+      "subSelector": "SingleAnswer",
+      "text": "Rate our service",
+      "description": "Rate our service",
+      "choices": [
+        {
+          "id": "1",
+          "display": "Speed",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "Friendliness",
+          "textEntry": false
+        }
+      ],
+      "answers": [
+        {
+          "id": "1",
+          "display": "Poor",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "OK",
+          "textEntry": false
+        },
+        {
+          "id": "3",
+          "display": "Great",
+          "textEntry": false
+        }
+      ],
+      "validation": {
+        "forceResponse": "ON",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID2": {
+      "qid": "QID2",
+      "exportTag": "Q2",
+      "type": "Matrix",
+      "selector": "Likert",
+      "subSelector": "MultipleAnswer",
+      "text": "Pick all that apply per row",
+      "description": "Pick all that apply per row",
+      "choices": [
+        {
+          "id": "1",
+          "display": "Row",
+          "textEntry": false
+        }
+      ],
+      "answers": [
+        {
+          "id": "1",
+          "display": "A",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "B",
+          "textEntry": false
+        }
+      ],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID3": {
+      "qid": "QID3",
+      "exportTag": "Q3",
+      "type": "Slider",
+      "selector": "HSLIDER",
+      "subSelector": null,
+      "text": "How much do you agree?",
+      "description": "How much do you agree?",
+      "choices": [
+        {
+          "id": "1",
+          "display": "The product is fast",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "The product is stable",
+          "textEntry": false
+        }
+      ],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": 0,
+        "sliderMax": 10,
+        "gridLines": 10,
+        "numDecimals": 0,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText",
+          "CSSliderMin": 0,
+          "CSSliderMax": 10,
+          "GridLines": 10,
+          "NumDecimals": "0"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID4": {
+      "qid": "QID4",
+      "exportTag": "Q4",
+      "type": "Slider",
+      "selector": "STAR",
+      "subSelector": null,
+      "text": "Star rating",
+      "description": "Star rating",
+      "choices": [
+        {
+          "id": "1",
+          "display": "Overall",
+          "textEntry": false
+        }
+      ],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": 0,
+        "sliderMax": 5,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText",
+          "CSSliderMin": 0,
+          "CSSliderMax": 5,
+          "NumStars": 5
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID5": {
+      "qid": "QID5",
+      "exportTag": "Q5",
+      "type": "RO",
+      "selector": "DND",
+      "subSelector": null,
+      "text": "Rank these priorities",
+      "description": "Rank these priorities",
+      "choices": [
+        {
+          "id": "1",
+          "display": "Speed",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "Price",
+          "textEntry": false
+        },
+        {
+          "id": "3",
+          "display": "Support",
+          "textEntry": false
+        },
+        {
+          "id": "4",
+          "display": "Design",
+          "textEntry": false
+        }
+      ],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID6": {
+      "qid": "QID6",
+      "exportTag": "Q6",
+      "type": "DB",
+      "selector": "TB",
+      "subSelector": null,
+      "text": "<p>Welcome to the <em>advanced</em> section.</p><ul><li>Item</li></ul>",
+      "description": "Welcome to the advanced section.Item",
+      "choices": [],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID7": {
+      "qid": "QID7",
+      "exportTag": "Q7",
+      "type": "FileUpload",
+      "selector": "FileUpload",
+      "subSelector": null,
+      "text": "Upload a screenshot",
+      "description": "Upload a screenshot",
+      "choices": [],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID8": {
+      "qid": "QID8",
+      "exportTag": "Q8",
+      "type": "TE",
+      "selector": "FORM",
+      "subSelector": null,
+      "text": "Contact details",
+      "description": "Contact details",
+      "choices": [
+        {
+          "id": "1",
+          "display": "First name",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "Last name",
+          "textEntry": false
+        },
+        {
+          "id": "3",
+          "display": "Company",
+          "textEntry": false
+        }
+      ],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID9": {
+      "qid": "QID9",
+      "exportTag": "Q9",
+      "type": "Timing",
+      "selector": "PageTimer",
+      "subSelector": null,
+      "text": "Timing",
+      "description": "Timing",
+      "choices": [],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID10": {
+      "qid": "QID10",
+      "exportTag": "Q10",
+      "type": "CS",
+      "selector": "HSLIDER",
+      "subSelector": null,
+      "text": "Allocate 100 points",
+      "description": "Allocate 100 points",
+      "choices": [
+        {
+          "id": "1",
+          "display": "A",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "B",
+          "textEntry": false
+        }
+      ],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID11": {
+      "qid": "QID11",
+      "exportTag": "Q11",
+      "type": "SBS",
+      "selector": "SBSMatrix",
+      "subSelector": null,
+      "text": "Side by side",
+      "description": "Side by side",
+      "choices": [],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    },
+    "QID12": {
+      "qid": "QID12",
+      "exportTag": "Q12",
+      "type": "RO",
+      "selector": "DND",
+      "subSelector": null,
+      "text": "Twenty-six options",
+      "description": "Twenty-six options",
+      "choices": [
+        {
+          "id": "1",
+          "display": "Option 1",
+          "textEntry": false
+        },
+        {
+          "id": "2",
+          "display": "Option 2",
+          "textEntry": false
+        },
+        {
+          "id": "3",
+          "display": "Option 3",
+          "textEntry": false
+        },
+        {
+          "id": "4",
+          "display": "Option 4",
+          "textEntry": false
+        },
+        {
+          "id": "5",
+          "display": "Option 5",
+          "textEntry": false
+        },
+        {
+          "id": "6",
+          "display": "Option 6",
+          "textEntry": false
+        },
+        {
+          "id": "7",
+          "display": "Option 7",
+          "textEntry": false
+        },
+        {
+          "id": "8",
+          "display": "Option 8",
+          "textEntry": false
+        },
+        {
+          "id": "9",
+          "display": "Option 9",
+          "textEntry": false
+        },
+        {
+          "id": "10",
+          "display": "Option 10",
+          "textEntry": false
+        },
+        {
+          "id": "11",
+          "display": "Option 11",
+          "textEntry": false
+        },
+        {
+          "id": "12",
+          "display": "Option 12",
+          "textEntry": false
+        },
+        {
+          "id": "13",
+          "display": "Option 13",
+          "textEntry": false
+        },
+        {
+          "id": "14",
+          "display": "Option 14",
+          "textEntry": false
+        },
+        {
+          "id": "15",
+          "display": "Option 15",
+          "textEntry": false
+        },
+        {
+          "id": "16",
+          "display": "Option 16",
+          "textEntry": false
+        },
+        {
+          "id": "17",
+          "display": "Option 17",
+          "textEntry": false
+        },
+        {
+          "id": "18",
+          "display": "Option 18",
+          "textEntry": false
+        },
+        {
+          "id": "19",
+          "display": "Option 19",
+          "textEntry": false
+        },
+        {
+          "id": "20",
+          "display": "Option 20",
+          "textEntry": false
+        },
+        {
+          "id": "21",
+          "display": "Option 21",
+          "textEntry": false
+        },
+        {
+          "id": "22",
+          "display": "Option 22",
+          "textEntry": false
+        },
+        {
+          "id": "23",
+          "display": "Option 23",
+          "textEntry": false
+        },
+        {
+          "id": "24",
+          "display": "Option 24",
+          "textEntry": false
+        },
+        {
+          "id": "25",
+          "display": "Option 25",
+          "textEntry": false
+        },
+        {
+          "id": "26",
+          "display": "Option 26",
+          "textEntry": false
+        }
+      ],
+      "answers": [],
+      "validation": {
+        "forceResponse": "OFF",
+        "contentType": null,
+        "minChars": null,
+        "maxChars": null
+      },
+      "configuration": {
+        "sliderMin": null,
+        "sliderMax": null,
+        "gridLines": null,
+        "numDecimals": null,
+        "descriptionOption": "UseText",
+        "raw": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      },
+      "displayLogic": null,
+      "skipLogic": null,
+      "randomization": null,
+      "translations": {}
+    }
+  },
+  "blocks": [
+    {
+      "id": "BL_1",
+      "description": "Advanced",
+      "type": "Default",
+      "elements": [
+        {
+          "kind": "question",
+          "qid": "QID6"
+        },
+        {
+          "kind": "question",
+          "qid": "QID1"
+        },
+        {
+          "kind": "question",
+          "qid": "QID2"
+        },
+        {
+          "kind": "pageBreak"
+        },
+        {
+          "kind": "question",
+          "qid": "QID3"
+        },
+        {
+          "kind": "question",
+          "qid": "QID4"
+        },
+        {
+          "kind": "question",
+          "qid": "QID5"
+        },
+        {
+          "kind": "pageBreak"
+        },
+        {
+          "kind": "question",
+          "qid": "QID7"
+        },
+        {
+          "kind": "question",
+          "qid": "QID8"
+        },
+        {
+          "kind": "question",
+          "qid": "QID9"
+        },
+        {
+          "kind": "question",
+          "qid": "QID10"
+        },
+        {
+          "kind": "question",
+          "qid": "QID11"
+        },
+        {
+          "kind": "question",
+          "qid": "QID12"
+        }
+      ]
+    }
+  ],
+  "flow": [
+    {
+      "type": "Block",
+      "id": "BL_1"
+    },
+    {
+      "type": "EndSurvey"
+    }
+  ],
+  "options": {
+    "backButton": false,
+    "progressBar": "None",
+    "eosMessage": null,
+    "eosRedirectUrl": "https://example.com/thanks",
+    "nextButtonLabel": "→",
+    "previousButtonLabel": "←",
+    "partialData": "+1 week"
+  },
+  "embeddedDataFields": [],
+  "issues": []
+}

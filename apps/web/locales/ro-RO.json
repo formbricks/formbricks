@@ -3808,6 +3808,7 @@
           "schedule_cleared": "Programarea de publicare și închidere a fost ștearsă. Sondajul este creat ca schiță.",
           "setting_not_imported": "Setarea '{setting}' nu este importată. Configurează-o în editor.",
           "settings_not_exported": "Stilizarea, follow-up-urile și setările sondajului nu fac parte din export. Configurează-le în editor.",
+          "single_page_split": "Chestionarul Qualtrics nu are întreruperi de pagină, astfel încât fiecare dintre cele {count} întrebări a fost plasată în propriul său bloc.",
           "slug_not_imported": "Slug-ul de link al sondajului este unic per instanță și nu a fost importat.",
           "status_reset": "Sondajul este creat ca schiță indiferent de statusul său din fișier.",
           "targeting_not_imported": "Targetarea (filtrele de segment) nu este importată. Configurează-o în editor.",

@@ -1,0 +1,206 @@
+{
+  "document": {
+    "name": "Customer feedback",
+    "type": "link",
+    "status": "draft",
+    "metadata": {
+      "title": {
+        "en-US": "Customer feedback"
+      }
+    },
+    "defaultLanguage": "en-US",
+    "languages": [
+      {
+        "code": "en-US",
+        "default": true,
+        "enabled": true
+      }
+    ],
+    "welcomeCard": {
+      "enabled": false
+    },
+    "blocks": [
+      {
+        "id": "<cuid>",
+        "name": "Block 1",
+        "elements": [
+          {
+            "id": "Q1",
+            "type": "multipleChoiceSingle",
+            "headline": {
+              "en-US": "How did you hear about us?"
+            },
+            "required": true,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "Search engine"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "A friend"
+                }
+              },
+              {
+                "id": "other",
+                "label": {
+                  "en-US": "Other"
+                }
+              }
+            ],
+            "shuffleOption": "none",
+            "otherOptionPlaceholder": {
+              "en-US": "Please specify"
+            },
+            "displayType": "list"
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 2",
+        "elements": [
+          {
+            "id": "Q2",
+            "type": "nps",
+            "headline": {
+              "en-US": "How likely are you to recommend us to a friend?"
+            },
+            "required": true,
+            "isColorCodingEnabled": false
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 3",
+        "elements": [
+          {
+            "id": "Q3",
+            "type": "openText",
+            "headline": {
+              "en-US": "What should we improve?"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": true,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 4",
+        "elements": [
+          {
+            "id": "Q4",
+            "type": "openText",
+            "headline": {
+              "en-US": "Your email"
+            },
+            "required": false,
+            "inputType": "email",
+            "longAnswer": false,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 5",
+        "elements": [
+          {
+            "id": "Q5",
+            "type": "multipleChoiceMulti",
+            "headline": {
+              "en-US": "Which features do you use?"
+            },
+            "required": false,
+            "choices": [
+              {
+                "id": "choice_1",
+                "label": {
+                  "en-US": "Surveys"
+                }
+              },
+              {
+                "id": "choice_2",
+                "label": {
+                  "en-US": "Contacts"
+                }
+              },
+              {
+                "id": "choice_3",
+                "label": {
+                  "en-US": "Integrations"
+                }
+              }
+            ],
+            "shuffleOption": "all",
+            "displayType": "list"
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "<cuid>",
+        "type": "endScreen",
+        "headline": {
+          "en-US": "Thank you for your feedback!"
+        }
+      }
+    ],
+    "hiddenFields": {
+      "enabled": false
+    },
+    "variables": []
+  },
+  "issues": [
+    {
+      "severity": "info",
+      "code": "single_page_split",
+      "message": "The Qualtrics survey has no page breaks, so each of its 5 questions was placed in its own block.",
+      "vars": {
+        "count": 5
+      }
+    }
+  ]
+}

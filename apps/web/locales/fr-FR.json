@@ -3808,6 +3808,7 @@
           "schedule_cleared": "Le calendrier de publication et de clôture a été effacé. Le sondage est créé en tant que brouillon.",
           "setting_not_imported": "Le paramètre '{setting}' n'est pas importé. Configure-le dans l'éditeur.",
           "settings_not_exported": "Le style, les relances et les paramètres du sondage ne font pas partie de l'export. Configure-les dans l'éditeur.",
+          "single_page_split": "Le sondage Qualtrics ne comporte aucun saut de page, donc chacune de ses {count} questions a été placée dans son propre bloc.",
           "slug_not_imported": "Le slug du lien du sondage est unique par instance et n'a pas été importé.",
           "status_reset": "Le sondage est créé en tant que brouillon quel que soit son statut dans le fichier.",
           "targeting_not_imported": "Le ciblage (filtres de segment) n'est pas importé. Configure-le dans l'éditeur.",

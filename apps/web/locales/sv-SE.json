@@ -3808,6 +3808,7 @@
           "schedule_cleared": "Publicerings- och stängningsschemat rensades. Enkäten skapas som utkast.",
           "setting_not_imported": "Inställningen '{setting}' importeras inte. Konfigurera den i redigeraren.",
           "settings_not_exported": "Styling, uppföljningar och enkätinställningar ingår inte i exporten. Konfigurera dem i redigeraren.",
+          "single_page_split": "Qualtrics-undersökningen har inga sidbrytningar, så var och en av dess {count} frågor placerades i sitt eget block.",
           "slug_not_imported": "Enkätlänkens slug är unik per instans och importerades inte.",
           "status_reset": "Enkäten skapas som utkast oavsett dess status i filen.",
           "targeting_not_imported": "Målgruppsanpassning (segmentfilter) importeras inte. Konfigurera det i redigeraren.",

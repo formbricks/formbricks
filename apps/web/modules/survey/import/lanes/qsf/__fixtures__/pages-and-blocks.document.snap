@@ -1,0 +1,169 @@
+{
+  "document": {
+    "name": "Pages and blocks",
+    "type": "link",
+    "status": "draft",
+    "metadata": {
+      "title": {
+        "en-US": "Pages and blocks"
+      }
+    },
+    "defaultLanguage": "en-US",
+    "languages": [
+      {
+        "code": "en-US",
+        "default": true,
+        "enabled": true
+      }
+    ],
+    "welcomeCard": {
+      "enabled": false
+    },
+    "blocks": [
+      {
+        "id": "<cuid>",
+        "name": "Block B",
+        "elements": [
+          {
+            "id": "Q3",
+            "type": "openText",
+            "headline": {
+              "en-US": "Second block question"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": false,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "Continue"
+        },
+        "backButtonLabel": {
+          "en-US": "Back"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block A · Page 1",
+        "elements": [
+          {
+            "id": "Q1",
+            "type": "openText",
+            "headline": {
+              "en-US": "Page one question"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": false,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "Continue"
+        },
+        "backButtonLabel": {
+          "en-US": "Back"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block A · Page 2",
+        "elements": [
+          {
+            "id": "Q2",
+            "type": "openText",
+            "headline": {
+              "en-US": "Page two question"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": false,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "Continue"
+        },
+        "backButtonLabel": {
+          "en-US": "Back"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Not in flow",
+        "elements": [
+          {
+            "id": "Q5",
+            "type": "openText",
+            "headline": {
+              "en-US": "Orphan block question"
+            },
+            "required": false,
+            "inputType": "text",
+            "longAnswer": false,
+            "charLimit": {
+              "enabled": false
+            }
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "Continue"
+        },
+        "backButtonLabel": {
+          "en-US": "Back"
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "<cuid>",
+        "type": "endScreen",
+        "headline": {
+          "en-US": "Thanks for your feedback"
+        }
+      }
+    ],
+    "hiddenFields": {
+      "enabled": false
+    },
+    "variables": []
+  },
+  "issues": [
+    {
+      "severity": "warning",
+      "code": "randomizer_flattened",
+      "message": "Randomized blocks were imported in file order. Randomization is not imported.",
+      "sourceRef": "Survey Flow",
+      "vars": {
+        "sourceRef": "Survey Flow"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "block_not_in_flow",
+      "message": "Block 'Not in flow' is not part of the survey flow and was appended at the end.",
+      "sourceRef": "BL_orphan",
+      "vars": {
+        "sourceRef": "BL_orphan",
+        "block": "Not in flow"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "setting_not_imported",
+      "message": "The setting 'ProgressBarDisplay' is not imported. Set it up in the editor.",
+      "sourceRef": "Survey Options",
+      "vars": {
+        "sourceRef": "Survey Options",
+        "setting": "ProgressBarDisplay"
+      }
+    }
+  ]
+}

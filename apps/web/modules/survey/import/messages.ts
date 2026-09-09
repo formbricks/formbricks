@@ -32,6 +32,8 @@ const MESSAGES: Record<TImportIssueCode, (vars?: TVars) => string> = {
   randomizer_flattened: () => "Randomized blocks were imported in file order. Randomization is not imported.",
   block_not_in_flow: (v) =>
     `Block '${str(v, "block")}' is not part of the survey flow and was appended at the end.`,
+  single_page_split: (v) =>
+    `The Qualtrics survey has no page breaks, so each of its ${str(v, "count")} questions was placed in its own block.`,
   welcome_card_from_descriptive_text: () => "The first text page became the welcome card.",
   language_created: (v) =>
     `Language '${str(v, "code")}' does not exist in this workspace yet and will be created.`,

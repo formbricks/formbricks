@@ -3808,6 +3808,7 @@
           "schedule_cleared": "La programación de publicación y cierre se borró. La encuesta se creó como borrador.",
           "setting_not_imported": "La configuración '{setting}' no se importa. Configúrala en el editor.",
           "settings_not_exported": "El estilo, los seguimientos y la configuración de la encuesta no forman parte de la exportación. Configúralos en el editor.",
+          "single_page_split": "La encuesta de Qualtrics no tiene saltos de página, por lo que cada una de sus {count} preguntas se colocó en su propio bloque.",
           "slug_not_imported": "El slug del enlace de la encuesta es único por instancia y no se importó.",
           "status_reset": "La encuesta se creó como borrador independientemente de su estado en el archivo.",
           "targeting_not_imported": "La segmentación (filtros de segmento) no se importa. Configúrala en el editor.",
