@@ -66,7 +66,9 @@ properties:
     maxLength: 255
     description: >-
       End-user identifier (e.g. an anonymous id or an email hash). Set it on anything you may later
-      have to erase: `DELETE /api/v3/feedbackRecords` matches on `userId`.
+      have to erase: it is the only handle that finds one person's records again, via
+      `filter[userId][in]` on `GET /api/v3/feedback-records`. There is no delete-by-user operation —
+      erasure is a list followed by `DELETE /api/v3/feedback-records/{id}` per record.
   collectedAt:
     type: string
     format: date-time

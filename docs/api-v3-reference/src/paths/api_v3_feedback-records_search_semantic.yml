@@ -8,7 +8,7 @@ post:
     permission (or higher) on a workspace the dataset is assigned to.
 
     Results carry ids and the embedded text only — fetch a match with
-    `GET /api/v3/feedbackRecords/{id}` for the full record. Answers **503** on instances without
+    `GET /api/v3/feedback-records/{id}` for the full record. Answers **503** on instances without
     an embedding model configured.
   tags:
     - V3 Feedback Records
@@ -48,6 +48,9 @@ post:
                 meta:
                   limit: 10
                   nextCursor: null
+                  minScore: 0.5
+                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                  datasetName: Customer feedback
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":

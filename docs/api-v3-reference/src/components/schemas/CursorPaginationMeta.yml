@@ -6,22 +6,10 @@ properties:
   limit:
     type: integer
     minimum: 1
-    description: >-
-      The page size that was applied. Deliberately unbounded here: this is an echo of what the
-      server did, and bounding an output echo turns a resource with a larger page cap into a 500
-      rather than a 400 (see the v3 Responses RFC §2f). The request-side `limit` carries the real
-      per-resource bound.
+    maximum: 100
   nextCursor:
     type:
       - string
       - "null"
     description: Opaque cursor for the next page. `null` when there are no more results.
-  totalCount:
-    type:
-      - integer
-      - "null"
-    minimum: 0
-    description: >-
-      Total matching rows, independent of the current page. `null` when the resource does not
-      compute it or the caller did not ask for it.
 additionalProperties: false
