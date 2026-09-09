@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+required:
+  - nextCursor
+  - totalCount
+properties:
+  nextCursor:
+    type:
+      - string
+      - "null"
+    description: >-
+      Always `null`. Datasets are not paginated — a workspace reaches at most one active dataset —
+      but the member is present so the envelope matches every other v3 list.
+  totalCount:
+    type: integer
+    minimum: 0
+    description: Number of datasets returned.

@@ -9,4 +9,4 @@ properties:
     items:
       $ref: ./FeedbackRecord.yml
   meta:
-    $ref: ./CursorPaginationMeta.yml
+    $ref: ./FeedbackRecordListMeta.yml

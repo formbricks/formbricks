@@ -115,6 +115,8 @@ get:
                 meta:
                   limit: 100
                   nextCursor: eyJjb2xsZWN0ZWRBdCI6IjIwMjYtMDgtMTVUMTA6Mjk6MTFaIn0
+                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                  datasetName: Customer feedback
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":

@@ -11,4 +11,4 @@ properties:
       $ref: ./FeedbackRecordSimilarityItem.yml
     description: Matches ordered by descending `score`.
   meta:
-    $ref: ./CursorPaginationMeta.yml
+    $ref: ./FeedbackRecordSimilarityMeta.yml

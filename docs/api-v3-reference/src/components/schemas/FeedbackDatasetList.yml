@@ -9,4 +9,4 @@ properties:
     items:
       $ref: ./FeedbackDataset.yml
   meta:
-    $ref: ./CursorPaginationMeta.yml
+    $ref: ./FeedbackDatasetListMeta.yml

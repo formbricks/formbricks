@@ -27,7 +27,6 @@ get:
                   - id: ph7zv3w2u1x5k9d8m4q6c0bn
                     name: Customer feedback
                 meta:
-                  limit: 100
                   nextCursor: null
                   totalCount: 1
     "400":
