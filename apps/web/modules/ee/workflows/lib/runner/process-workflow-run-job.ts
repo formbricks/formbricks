@@ -21,12 +21,11 @@ import {
 } from "@formbricks/workflows";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { capturePostHogEvent } from "@/lib/posthog";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
-import { WORKFLOW_RUN_FAILED_EVENT } from "@/modules/ee/workflows/lib/analytics-events";
+import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
 import { sendEmail } from "@/modules/email";
 import {
   buildSurveyResponseEmailHtml,
@@ -605,7 +604,17 @@ const handleRunError = async (
   // Only the delivery whose terminal write landed reports the failure. A losing concurrent delivery
   // (0 rows, or a persistence error) must neither duplicate the event nor report a failure over a run
   // another delivery has already completed.
-  if (recorded) await captureWorkflowRunFailed(error, run, data, context.attempt, runData);
+  if (recorded) {
+    await captureWorkflowRunFailed({
+      runId: run.id,
+      workflowId: data.workflowId,
+      workspaceId: data.workspaceId,
+      triggerType: run.triggerType,
+      failedStepType: runData?.steps.findLast((step) => step.status === "failed")?.stepType ?? null,
+      errorKind: classifyRunError(error),
+      attempt: context.attempt,
+    });
+  }
 };
 
 /** Coarse, PII-free failure class for analytics; the message itself can name a recipient. */
@@ -614,45 +623,6 @@ const classifyRunError = (error: unknown): string => {
   if (error instanceof WorkflowStepFailedError) return "step_failed";
   if (isDatabasePoolExhaustionError(error)) return "database_pool_exhausted";
   return "unknown";
-};
-
-/**
- * Product analytics (ENG-2851): one `workflow_run_failed` per run that ends `failed`, emitted from
- * the final attempt only so retries never inflate the failure rate. Successful runs are not emitted
- * per run; the daily usage snapshot aggregates them. Never throws: the run is already recorded as
- * failed and this sits on the swallow path, so a telemetry problem must not become a job error.
- */
-const captureWorkflowRunFailed = async (
-  error: unknown,
-  run: { id: string; triggerType: string },
-  data: TWorkflowRunJobData,
-  attempt: number,
-  runData: TWorkflowRunData | undefined
-): Promise<void> => {
-  try {
-    const organization = await getOrganizationByWorkspaceId(data.workspaceId);
-    const failedStep = runData?.steps.findLast((step) => step.status === "failed");
-    capturePostHogEvent(
-      organization?.id ?? data.workspaceId,
-      WORKFLOW_RUN_FAILED_EVENT,
-      {
-        workflow_id: data.workflowId,
-        workspace_id: data.workspaceId,
-        organization_id: organization?.id ?? null,
-        run_id: run.id,
-        trigger_type: run.triggerType,
-        failed_step_type: failedStep?.stepType ?? null,
-        error_kind: classifyRunError(error),
-        attempt,
-      },
-      { organizationId: organization?.id, workspaceId: data.workspaceId }
-    );
-  } catch (analyticsError) {
-    logger.warn(
-      { workflowRunId: run.id, err: analyticsError },
-      "Failed to capture workflow run failure analytics"
-    );
-  }
 };
 
 /**

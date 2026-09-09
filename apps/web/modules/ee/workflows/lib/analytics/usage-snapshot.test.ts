@@ -2,14 +2,12 @@ import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
-import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { collectOrganizationWorkflowUsage, emitWorkflowUsageSnapshots } from "./usage-snapshot";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/constants", () => ({ IS_FORMBRICKS_CLOUD: true }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn(), groupIdentifyPostHog: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/license", () => ({ getEnterpriseLicense: vi.fn() }));
-vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsWorkflowsEnabled: vi.fn() }));
 
 const now = new Date("2026-09-03T02:45:00.000Z");
 
@@ -77,8 +75,11 @@ beforeEach(() => {
     { id: "wfC", workspaceId: "ws1", status: "draft", definition: { trigger, nodes: [] } },
     { id: "wfD", workspaceId: "ws2", status: "disabled", definition: { trigger: null, nodes: [] } },
   ] as never);
-  vi.mocked(getIsWorkflowsEnabled).mockResolvedValue(true);
-  vi.mocked(getEnterpriseLicense).mockResolvedValue({ active: false, status: "no-license" } as never);
+  vi.mocked(getEnterpriseLicense).mockResolvedValue({
+    active: true,
+    status: "active",
+    features: { workflows: true },
+  } as never);
 });
 
 describe("collectOrganizationWorkflowUsage", () => {
@@ -103,20 +104,50 @@ describe("collectOrganizationWorkflowUsage", () => {
       billingInterval: "monthly",
       subscriptionStatus: "active",
       monthlyWorkflowRunsLimit: 1000,
+      hasWorkflowsEntitlement: true,
     });
   });
 
-  test("scopes the run window to the last 24 hours and to real runs", async () => {
+  test("windows runs on when they settled, not when they were created", async () => {
     await collectOrganizationWorkflowUsage(now);
 
-    expect(prisma.workflowRun.groupBy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          isDryRun: false,
-          createdAt: { gte: new Date("2026-09-02T02:45:00.000Z") },
-        }),
-      })
-    );
+    // `status` is mutable: a run created inside a `createdAt` window that fails after this read
+    // would count in the total and never in the failures. Every terminal write sets `finishedAt`.
+    const where = vi.mocked(prisma.workflowRun.groupBy).mock.calls[0][0].where;
+    expect(where).toEqual({
+      workspaceId: { in: ["ws1", "ws2", "ws3"] },
+      isDryRun: false,
+      finishedAt: { gte: new Date("2026-09-02T02:45:00.000Z") },
+    });
+    expect(where).not.toHaveProperty("createdAt");
+  });
+
+  test("derives the workflows entitlement from the billing snapshot it already loaded", async () => {
+    // The entitlement never comes from the entitlements stack here: on cloud that resolves through
+    // the read-through billing cache, which would run a Stripe sync per organization at 02:45.
+    const withoutFeature = {
+      createdAt: organizationA.createdAt,
+      billing: { ...billing, stripe: { ...stripe, features: ["dashboards"] } },
+    };
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([
+      { id: "ws1", organizationId: "orgA", organization: withoutFeature },
+    ] as never);
+
+    const [usage] = await collectOrganizationWorkflowUsage(now);
+
+    expect(usage.context.hasWorkflowsEntitlement).toBe(false);
+  });
+
+  test("honours the license guard over the Stripe feature", async () => {
+    vi.mocked(getEnterpriseLicense).mockResolvedValue({
+      active: true,
+      status: "active",
+      features: { workflows: false },
+    } as never);
+
+    const [usage] = await collectOrganizationWorkflowUsage(now);
+
+    expect(usage.context.hasWorkflowsEntitlement).toBe(false);
   });
 
   test("pages through definitions instead of loading them all at once", async () => {
@@ -152,7 +183,6 @@ describe("emitWorkflowUsageSnapshots", () => {
     const summary = await emitWorkflowUsageSnapshots(now);
 
     expect(summary).toEqual({ organizations: 1, workspaces: 2, events: 4 });
-    expect(getIsWorkflowsEnabled).toHaveBeenCalledWith("orgA");
 
     expect(capturePostHogEvent).toHaveBeenCalledWith(
       "orgA",
@@ -196,7 +226,7 @@ describe("emitWorkflowUsageSnapshots", () => {
       billing_interval: "monthly",
       subscription_status: "active",
       deployment: "cloud",
-      license_status: null,
+      license_status: "active",
       has_workflows_entitlement: true,
       monthly_workflow_runs_limit: 1000,
       workflows_total: 5,
@@ -216,6 +246,35 @@ describe("emitWorkflowUsageSnapshots", () => {
       expect(properties).not.toHaveProperty("name");
       expect(properties).not.toHaveProperty("email_domain");
     }
+  });
+
+  test("omits plan facts it could not resolve instead of nulling the group", async () => {
+    // `$group_set` overwrites: sending `plan: null` would erase what the billing sync wrote, and the
+    // sync is the fresher writer of exactly these keys.
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([
+      {
+        id: "ws1",
+        organizationId: "orgA",
+        organization: { createdAt: organizationA.createdAt, billing: { limits: null, stripe: null } },
+      },
+    ] as never);
+
+    await emitWorkflowUsageSnapshots(now);
+
+    const [, , properties] = vi
+      .mocked(groupIdentifyPostHog)
+      .mock.calls.find(([groupType]) => groupType === "organization")!;
+    expect(properties).not.toHaveProperty("plan");
+    expect(properties).not.toHaveProperty("billing_interval");
+    expect(properties).not.toHaveProperty("subscription_status");
+    expect(properties).not.toHaveProperty("monthly_workflow_runs_limit");
+    // What the pass does know still lands.
+    expect(properties).toMatchObject({
+      deployment: "cloud",
+      license_status: "active",
+      has_workflows_entitlement: false,
+      workflows_total: 4,
+    });
   });
 
   test("an organization that only archived its workflows is not reported at all", async () => {

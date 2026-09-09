@@ -287,7 +287,11 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
         (SELECT COUNT(*) FROM "Workflow" WHERE status <> 'archived') as "workflowCount",
         (SELECT COUNT(*) FROM "Workflow" WHERE status = 'enabled') as "enabledWorkflowCount",
         (SELECT COUNT(*) FROM "WorkflowRun" WHERE "isDryRun" = false AND "created_at" > ${new Date(lastSent || 0)}) as "workflowRunCountSinceLastUpdate",
-        (SELECT COUNT(*) FROM "WorkflowRun" WHERE "isDryRun" = false AND status = 'failed' AND "created_at" > ${new Date(lastSent || 0)}) as "workflowRunFailedCountSinceLastUpdate"
+        -- Failures are windowed on "finishedAt", not "created_at": status is mutable, so a run
+        -- created inside this window that only fails after this read would count in the volume and
+        -- never in the failures — one-way loss. Every terminal write sets "finishedAt", so each
+        -- failure is counted once, in the window it settled in.
+        (SELECT COUNT(*) FROM "WorkflowRun" WHERE "isDryRun" = false AND status = 'failed' AND "finishedAt" > ${new Date(lastSent || 0)}) as "workflowRunFailedCountSinceLastUpdate"
     `,
     // Keep these as separate queries since they need DISTINCT which is harder to optimize
     prisma.integration.findMany({ select: { type: true }, distinct: ["type"] }),

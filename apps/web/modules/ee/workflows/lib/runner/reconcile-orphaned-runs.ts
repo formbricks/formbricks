@@ -1,5 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
 import { type DispatchWorkflowRun } from "./dispatch";
 import { markWorkflowRunDispatched } from "./mark-dispatched";
 import {
@@ -84,7 +85,16 @@ export const reconcileOrphanedWorkflowRuns = async ({
     },
     orderBy: { createdAt: "asc" },
     take: WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
-    select: { id: true, workflowId: true, workspaceId: true, createdAt: true, dispatchedAt: true },
+    select: {
+      id: true,
+      workflowId: true,
+      workspaceId: true,
+      createdAt: true,
+      dispatchedAt: true,
+      // Only for the failure analytics below; the re-dispatch itself needs neither.
+      triggerType: true,
+      attempt: true,
+    },
   });
 
   let redispatched = 0;
@@ -118,6 +128,16 @@ export const reconcileOrphanedWorkflowRuns = async ({
             { ...runLogContext, createdAt: orphan.createdAt },
             "Orphaned workflow run exceeded reconcile age ceiling; marked failed"
           );
+          // Reported like the runner's own terminal failure (ENG-2851): a lost dispatch reaches the
+          // snapshot's `runs_24h_failed`, so it has to reach `workflow_run_failed` too.
+          await captureWorkflowRunFailed({
+            runId: orphan.id,
+            workflowId: orphan.workflowId,
+            workspaceId: orphan.workspaceId,
+            triggerType: orphan.triggerType,
+            errorKind: "never_dispatched",
+            attempt: orphan.attempt,
+          });
         }
         continue;
       }

@@ -4,8 +4,8 @@ import { ZOrganizationBillingPlanLimits, ZOrganizationStripeBilling } from "@for
 import { type TWorkflowStatus, ZWorkflowStatus, summarizeWorkflowDefinition } from "@formbricks/workflows";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
+import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
-import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { WORKFLOW_NODE_TYPE_SNAPSHOT_EVENT, WORKFLOW_USAGE_SNAPSHOT_EVENT } from "../analytics-events";
 
 const RUN_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -28,7 +28,10 @@ interface OrganizationContext {
   billingInterval: string | null;
   subscriptionStatus: string | null;
   monthlyWorkflowRunsLimit: number | null;
+  hasWorkflowsEntitlement: boolean;
 }
+
+type LicenseFacts = Awaited<ReturnType<typeof getEnterpriseLicense>>;
 
 export interface OrganizationWorkflowUsage {
   organizationId: string;
@@ -38,6 +41,7 @@ export interface OrganizationWorkflowUsage {
   workspaces: Map<string, StatusCounts>;
   /** Keyed by concrete node type (`response.completed`, `send_email`, `if_else`). */
   nodeTypes: Map<string, NodeTypeUsage>;
+  /** Runs that reached a terminal status inside the window, so `completed + failed <= total`. */
   runs24h: { total: number; completed: number; failed: number };
 }
 
@@ -46,18 +50,37 @@ const emptyStatusCounts = (): StatusCounts => ({ draft: 0, enabled: 0, disabled:
 const liveWorkflowCount = (counts: StatusCounts): number => counts.draft + counts.enabled + counts.disabled;
 
 /**
+ * Whether the organization may use Workflows, read off the billing snapshot this pass already holds.
+ * Deliberately not `getIsWorkflowsEnabled`: on cloud that resolves through the read-through billing
+ * cache, whose snapshot is stale after five minutes, so a nightly job would run a Stripe sync and an
+ * `OrganizationBilling` write per organization, serially, and its group identify would race this
+ * one. Mirrors the `workflows` case of `hasOrganizationEntitlementWithLicenseGuard`
+ * (`modules/entitlements/lib/checks.ts`): the Stripe product feature must be attached and the
+ * license must grant the feature. The trial restriction there does not reach `workflows`, which is
+ * not a trial-restricted key. Analytics only; access control still goes through the entitlements
+ * stack, so a rule change there needs mirroring here.
+ */
+const toWorkflowsEntitlement = (stripeFeatures: string[], license: LicenseFacts): boolean => {
+  if (!IS_FORMBRICKS_CLOUD) return license.active && !!license.features?.workflows;
+  if (!stripeFeatures.includes(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.WORKFLOWS)) return false;
+  if (license.status === "no-license") return true;
+  if (license.status !== "active") return false;
+  return !!license.features?.workflows;
+};
+
+/**
  * Plan facts for the organization group. Cloud reads the Stripe snapshot; self-hosted has no plan,
  * so the license tier stands in and the `plan` breakdown still separates both worlds in one tile.
  */
 const toOrganizationContext = (
   organization: { createdAt: Date; billing: { limits: unknown; stripe: unknown } | null },
-  licenseActive: boolean
+  license: LicenseFacts
 ): OrganizationContext => {
   const stripe = ZOrganizationStripeBilling.safeParse(organization.billing?.stripe);
   const limits = ZOrganizationBillingPlanLimits.safeParse(organization.billing?.limits);
   const cloudPlan = stripe.success ? (stripe.data.plan ?? null) : null;
   let plan: string | null = cloudPlan;
-  if (!IS_FORMBRICKS_CLOUD) plan = licenseActive ? "self_hosted_enterprise" : "self_hosted_community";
+  if (!IS_FORMBRICKS_CLOUD) plan = license.active ? "self_hosted_enterprise" : "self_hosted_community";
 
   return {
     createdAt: organization.createdAt,
@@ -65,6 +88,10 @@ const toOrganizationContext = (
     billingInterval: stripe.success ? (stripe.data.interval ?? null) : null,
     subscriptionStatus: stripe.success ? (stripe.data.subscriptionStatus ?? null) : null,
     monthlyWorkflowRunsLimit: limits.success ? (limits.data.monthly.workflowRuns ?? null) : null,
+    hasWorkflowsEntitlement: toWorkflowsEntitlement(
+      stripe.success ? (stripe.data.features ?? []) : [],
+      license
+    ),
   };
 };
 
@@ -95,7 +122,7 @@ const fetchDefinitionPage = (cursor?: string) =>
  * Organizations keyed by id, created lazily from the workspace a row belongs to. A row whose
  * workspace the read did not return (deleted in between) resolves to `null` and is skipped.
  */
-const createUsageIndex = (workspaces: WorkspaceRow[], licenseActive: boolean) => {
+const createUsageIndex = (workspaces: WorkspaceRow[], license: LicenseFacts) => {
   const workspaceById = new Map(workspaces.map((workspace) => [workspace.id, workspace]));
   const byOrganization = new Map<string, OrganizationWorkflowUsage>();
   const forWorkspace = (workspaceId: string): OrganizationWorkflowUsage | null => {
@@ -105,7 +132,7 @@ const createUsageIndex = (workspaces: WorkspaceRow[], licenseActive: boolean) =>
     if (!usage) {
       usage = {
         organizationId: workspace.organizationId,
-        context: toOrganizationContext(workspace.organization, licenseActive),
+        context: toOrganizationContext(workspace.organization, license),
         statusCounts: emptyStatusCounts(),
         workspaces: new Map(),
         nodeTypes: new Map(),
@@ -147,6 +174,20 @@ const addDefinition = (usage: OrganizationWorkflowUsage, workflow: WorkflowDefin
     usage.nodeTypes.set(type, entry);
   }
 };
+
+/**
+ * Drops the keys this pass could not resolve. `$group_set` overwrites, so sending `plan: null` for
+ * an organization whose `billing.stripe` failed to parse would erase what the billing sync wrote:
+ * a null here means "unknown", never "empty".
+ */
+const resolvedOnly = (
+  properties: Record<string, string | number | boolean | null | undefined>
+): Record<string, string | number | boolean> =>
+  Object.fromEntries(
+    Object.entries(properties).filter(
+      (entry): entry is [string, string | number | boolean] => entry[1] !== null && entry[1] !== undefined
+    )
+  );
 
 const applyRows = <T extends { workspaceId: string }>(
   rows: T[],
@@ -195,15 +236,20 @@ export const collectOrganizationWorkflowUsage = async (now: Date): Promise<Organ
       where: {
         workspaceId: { in: workspaceIds },
         isDryRun: false,
-        createdAt: { gte: new Date(now.getTime() - RUN_WINDOW_MS) },
+        // Settled in the window, not created in it. `status` is mutable, so a run created inside a
+        // `createdAt` window that only fails after this read would land in the total and never in
+        // the failures — a one-way loss that biases the failure rate low. Every terminal write sets
+        // `finishedAt` (runner and both reconcilers), so windowing on it counts each run once, in
+        // the window it settled in.
+        finishedAt: { gte: new Date(now.getTime() - RUN_WINDOW_MS) },
       },
       _count: { _all: true },
     }),
-    IS_FORMBRICKS_CLOUD ? Promise.resolve(null) : getEnterpriseLicense(),
+    getEnterpriseLicense(),
     fetchDefinitionPage(),
   ]);
 
-  const usages = createUsageIndex(workspaces, license?.active ?? false);
+  const usages = createUsageIndex(workspaces, license);
   applyRows(statusRows, usages.forWorkspace, addStatusRow);
   applyRows(runRows, usages.forWorkspace, addRunRow);
   await forEachDefinition(firstPage, (workflow) => {
@@ -229,14 +275,16 @@ export interface WorkflowUsageSnapshotSummary {
  */
 export const emitWorkflowUsageSnapshots = async (now: Date): Promise<WorkflowUsageSnapshotSummary> => {
   const usages = await collectOrganizationWorkflowUsage(now);
-  const licenseStatus = IS_FORMBRICKS_CLOUD ? null : (await getEnterpriseLicense()).status;
+  // Reported on both deployments: on cloud the license guards the Stripe entitlement, so its status
+  // is part of why `has_workflows_entitlement` reads the way it does.
+  const { status: licenseStatus } = await getEnterpriseLicense();
   const deployment = IS_FORMBRICKS_CLOUD ? "cloud" : "self_hosted";
   let events = 0;
   let workspaces = 0;
 
   for (const usage of usages) {
     const { organizationId, context, statusCounts, runs24h } = usage;
-    const hasWorkflowsEntitlement = await getIsWorkflowsEnabled(organizationId);
+    const hasWorkflowsEntitlement = context.hasWorkflowsEntitlement;
     const groups = { organizationId };
     const workflowsTotal =
       statusCounts.draft + statusCounts.enabled + statusCounts.disabled + statusCounts.archived;
@@ -279,18 +327,22 @@ export const emitWorkflowUsageSnapshots = async (now: Date): Promise<WorkflowUsa
       events += 1;
     }
 
-    groupIdentifyPostHog("organization", organizationId, {
-      plan: context.plan,
-      billing_interval: context.billingInterval,
-      subscription_status: context.subscriptionStatus,
-      deployment,
-      license_status: licenseStatus,
-      has_workflows_entitlement: hasWorkflowsEntitlement,
-      monthly_workflow_runs_limit: context.monthlyWorkflowRunsLimit,
-      workflows_total: workflowsTotal,
-      workflows_enabled: statusCounts.enabled,
-      organization_created_at: context.createdAt.toISOString(),
-    });
+    groupIdentifyPostHog(
+      "organization",
+      organizationId,
+      resolvedOnly({
+        plan: context.plan,
+        billing_interval: context.billingInterval,
+        subscription_status: context.subscriptionStatus,
+        deployment,
+        license_status: licenseStatus,
+        has_workflows_entitlement: hasWorkflowsEntitlement,
+        monthly_workflow_runs_limit: context.monthlyWorkflowRunsLimit,
+        workflows_total: workflowsTotal,
+        workflows_enabled: statusCounts.enabled,
+        organization_created_at: context.createdAt.toISOString(),
+      })
+    );
 
     for (const [workspaceId, counts] of usage.workspaces) {
       groupIdentifyPostHog("workspace", workspaceId, {

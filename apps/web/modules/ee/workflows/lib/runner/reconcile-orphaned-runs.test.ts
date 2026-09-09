@@ -1,3 +1,4 @@
+import { mockCaptureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/__mocks__/run-failure";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { reconcileOrphanedWorkflowRuns } from "./reconcile-orphaned-runs";
 
@@ -31,6 +32,8 @@ const runRow = (id: string, createdAt: Date, dispatchedAt: Date | null = null) =
   workspaceId: `ws_${id}`,
   createdAt,
   dispatchedAt,
+  triggerType: "response.completed",
+  attempt: 0,
 });
 
 const reconcile = () => reconcileOrphanedWorkflowRuns({ dispatch, now: NOW });
@@ -101,6 +104,11 @@ describe("reconcileOrphanedWorkflowRuns", () => {
       data: expect.objectContaining({ status: "failed", finishedAt: NOW, lastErrorAt: NOW }),
     });
     expect(result).toEqual({ scanned: 1, redispatched: 0, agedOutFailed: 1, neverDispatched: 0 });
+    // A lost dispatch is a terminal failure like any other: it reaches the snapshot's
+    // `runs_24h_failed`, so it has to reach `workflow_run_failed` too.
+    expect(mockCaptureWorkflowRunFailed).toHaveBeenCalledWith(
+      expect.objectContaining({ runId: "stuck", errorKind: "never_dispatched" })
+    );
   });
 
   test("does not count an aged-out run that lost the status-guard race", async () => {
@@ -110,6 +118,7 @@ describe("reconcileOrphanedWorkflowRuns", () => {
     const result = await reconcile();
 
     expect(result).toEqual({ scanned: 1, redispatched: 0, agedOutFailed: 0, neverDispatched: 0 });
+    expect(mockCaptureWorkflowRunFailed).not.toHaveBeenCalled();
   });
 
   test("isolates a per-run dispatch failure and continues the sweep", async () => {
