@@ -1,5 +1,6 @@
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID, LIVE_REGION_ID } from "@/lib/common/constants";
+import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import { executeRecaptcha, loadRecaptchaScript } from "@/lib/common/recaptcha";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
@@ -7,15 +8,23 @@ import {
   filterSurveys,
   getLanguageCode,
   getStyling,
-  handleHiddenFields,
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
+import { buildDisplayHiddenFields } from "@/lib/survey/embedded-data";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type TUserState, type TWorkspaceStateSurvey } from "@/types/config";
 import { type TTrackProperties } from "@/types/survey";
 
 let isSurveyRunning = false;
+
+// The surveys currently on screen, so each "formbricks_survey_closed" can name its own. A set
+// rather than a single id because a second survey can render over a live one: a fired TimeoutStack
+// entry is never pruned, so a later `checkPageUrl` releases `isSurveyRunning` while the first
+// survey is still up, and the renderer appends a second container instead of replacing the first.
+// Ids are added when the widget actually renders — after the delay, after every skip check — so a
+// survey that was never shown never reports a close.
+const openSurveyIds = new Set<string>();
 
 export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
@@ -70,12 +79,11 @@ export const triggerSurvey = async (
     }
   }
 
-  const hiddenFieldsObject: TTrackProperties["hiddenFields"] = handleHiddenFields(
-    survey.hiddenFields,
-    properties?.hiddenFields
-  );
-
-  await renderWidget(survey, action, hiddenFieldsObject);
+  // Passed straight through, unfiltered: the Embedded Data ingest contract lives in the renderer now
+  // (ENG-1845/2472), so the SDK is a dumb pipe and the four mobile SDKs inherit the same rules
+  // without each shipping a copy. The renderer drops unknown and locked keys, coerces the rest, and
+  // logs what it refused — and the server re-runs all of it on ingest.
+  await renderWidget(survey, action, properties?.hiddenFields);
 };
 
 export const renderWidget = async (
@@ -161,6 +169,16 @@ export const renderWidget = async (
   }
 
   const timeoutId = setTimeout(() => {
+    openSurveyIds.add(survey.id);
+
+    // Render-gated, paired with "formbricks_survey_closed" off the same set so a host counting opens
+    // against closes cannot drift. Deliberately not gated on the display POST: the renderer only
+    // logs a failed one and leaves the survey on screen, so waiting for persistence would report a
+    // close for a survey that never reported an open — and a slow POST against a quick dismissal
+    // would deliver the two out of order. What was persisted is the dashboard's Displays count; this
+    // event is what the respondent saw.
+    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: survey.id });
+
     formbricksSurveys.renderSurvey({
       appUrl: config.get().appUrl,
       workspaceId: config.get().workspaceId,
@@ -173,7 +191,11 @@ export const renderWidget = async (
       languageCode,
       placement,
       styling: getStyling(settings, survey),
-      hiddenFieldsRecord: hiddenFieldsObject,
+      // The ambient Embedded Data bag (ENG-1844) under the per-trigger `track({ hiddenFields })`
+      // values — explicit beats ambient, case-insensitively (see `buildDisplayHiddenFields`).
+      // Built here, inside the delay timeout at the moment the survey actually shows, from a
+      // detached copy: a later `setEmbeddedData` affects the next response, never this one.
+      hiddenFieldsRecord: buildDisplayHiddenFields(hiddenFieldsObject),
       recaptchaSiteKey,
       isSpamProtectionEnabled,
       getRecaptchaToken,
@@ -207,7 +229,7 @@ export const renderWidget = async (
         // trigger evaluates. The display is already persisted (fires after createDisplay).
         refreshSegmentsAfterInteraction(previousConfig.user.data.userId, survey, "onDisplay");
       },
-      onResponseCreated: () => {
+      onResponseCreated: (responseId?: string) => {
         const responses = config.get().user.data.responses;
         const newPersonState: TUserState = {
           ...config.get().user,
@@ -230,16 +252,37 @@ export const renderWidget = async (
         // once, on the first answer (not on subsequent question submits — see survey.tsx), so this is
         // a single refresh covering "started". The "completed X" case is handled in onFinished below.
         refreshSegmentsAfterInteraction(config.get().user.data.userId, survey, "onResponse");
+
+        // finished: false — completion gets its own emit in onFinished below. `responseId` comes
+        // from the renderer's server-ack seam (ENG-1846 widened the callback), so it is real, not
+        // client-minted — it is what lets the host link a session replay to this response. Emitted
+        // last for the same reason as in onDisplayCreated: this callback runs inside the response
+        // queue's try block, and a host-page throw here would mark a persisted response as failed.
+        emitFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, {
+          surveyId: survey.id,
+          responseId,
+          finished: false,
+        });
       },
-      onFinished: () => {
+      onFinished: (responseId?: string) => {
         // Survey completion flips "have completed X" (and clears "have not completed X") segments.
         // onFinished only fires after the finished response has been sent to the backend (it is gated
         // on isResponseSendingFinished), so the server recompute sees finished=true — no race. Without
         // this, a multi-question survey would only refresh at onResponseCreated (finished=false), so
         // "completed X → show Y" targeting would never fire until the person-state TTL expired.
         refreshSegmentsAfterInteraction(config.get().user.data.userId, survey, "onFinished");
+
+        emitFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, {
+          surveyId: survey.id,
+          responseId,
+          finished: true,
+        });
       },
-      onClose: closeSurvey,
+      // Bound here, not passed as `closeSurvey`: the renderer calls onClose with no arguments, and
+      // this closure is the only place that still knows which survey the container belongs to.
+      onClose: () => {
+        closeSurvey(survey.id);
+      },
       getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
     });
   }, survey.delay * 1000);
@@ -249,7 +292,7 @@ export const renderWidget = async (
   }
 };
 
-export const closeSurvey = (): void => {
+export const closeSurvey = (surveyId?: string): void => {
   const config = Config.getInstance();
 
   // remove the survey modal container from DOM
@@ -266,6 +309,15 @@ export const closeSurvey = (): void => {
   });
 
   setIsSurveyRunning(false);
+
+  // Last, so host handlers observe settled state. `surveyId` is the renderer's own onClose id; the
+  // argument-less callers (tearDown on logout / error) close whatever is on screen. The delete both
+  // drops the survey and answers "was it still open?", which is what keeps this exactly once per
+  // rendered survey.
+  for (const closedSurveyId of surveyId === undefined ? [...openSurveyIds] : [surveyId]) {
+    if (!openSurveyIds.delete(closedSurveyId)) continue;
+    emitFormbricksEvent(FORMBRICKS_EVENTS.surveyClosed, { surveyId: closedSurveyId });
+  }
 };
 
 export const addWidgetContainer = (): void => {

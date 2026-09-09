@@ -79,9 +79,27 @@ const ZDynamicHiddenField = z.object({
   value: z.string().min(1, "Conditional Logic: Hidden field id cannot be empty"),
 });
 
-export const ZDynamicLogicFieldValue = z.union([ZDynamicElement, ZDynamicVariable, ZDynamicHiddenField], {
-  error: "Conditional Logic: Invalid dynamic field value",
+/**
+ * A reserved field operand (ENG-1840): auto-captured metadata a survey references without declaring
+ * it, addressed by its `RESERVED_FIELD_CATALOG` entry name rather than by a stored id.
+ *
+ * The name is validated as non-empty only, deliberately NOT against the catalog: the catalog grows
+ * (ENG-1841 adds the SDK-captured entries), and a survey saved against a newer catalog must still
+ * parse on an older deployment instead of failing validation for the whole survey. An operand naming
+ * an entry that does not exist resolves as unset, which is the same outcome as a stale variable or
+ * hidden-field operand already has today.
+ */
+const ZDynamicReservedField = z.object({
+  type: z.literal("reserved"),
+  value: z.string().min(1, "Conditional Logic: Reserved field name cannot be empty"),
 });
+
+export const ZDynamicLogicFieldValue = z.union(
+  [ZDynamicElement, ZDynamicVariable, ZDynamicHiddenField, ZDynamicReservedField],
+  {
+    error: "Conditional Logic: Invalid dynamic field value",
+  }
+);
 
 export type TDynamicLogicFieldValue = z.infer<typeof ZDynamicLogicFieldValue>;
 
@@ -94,7 +112,7 @@ const ZDynamicQuestion = z.object({
 });
 
 export const ZDynamicLogicFieldValueDeprecated = z.union(
-  [ZDynamicQuestion, ZDynamicElement, ZDynamicVariable, ZDynamicHiddenField],
+  [ZDynamicQuestion, ZDynamicElement, ZDynamicVariable, ZDynamicHiddenField, ZDynamicReservedField],
   {
     error: "Conditional Logic: Invalid dynamic field value",
   }

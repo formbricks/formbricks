@@ -24,6 +24,9 @@ export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   displayLimit: true,
   displayOption: true,
   hiddenFields: true,
+  // The inlined Embedded Data definitions (ENG-1837). Picked so the join survives this parse and
+  // reaches the renderer's logic/recall engines, which resolve definitions through it.
+  embeddedFields: true,
   triggers: true,
   displayPercentage: true,
   delay: true,

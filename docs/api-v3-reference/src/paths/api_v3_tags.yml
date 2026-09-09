@@ -1,5 +1,9 @@
 get:
   operationId: listTagsV3
+  # Session-only by design, so an API-key caller reading the published reference would only ever get a
+  # 401. Excluded from the generated docs pages until ENG-2533 decides between dropping the paths
+  # and opening them to API keys; the operation stays in the bundle for the contract tests.
+  x-excluded: true
   summary: List tags
   description: |
     Returns a workspace's response tags, each with the number of responses currently carrying it.

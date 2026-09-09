@@ -8,7 +8,7 @@ get:
     newest first). Workflows are workspace-scoped and exposed through the same
     v3
 
-    session-or-`x-api-key` authorization model as surveys.
+    session-or-API-key authorization model as surveys.
 
 
     List items are intentionally slim: they include the derived `triggerType`

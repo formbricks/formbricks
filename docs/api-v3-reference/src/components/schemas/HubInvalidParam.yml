@@ -1,0 +1,15 @@
+type: object
+additionalProperties: false
+description: A single invalid request parameter (RFC 9457 `invalid_params` extension member).
+required:
+  - name
+  - reason
+properties:
+  name:
+    type: string
+    description: Dotted path to the offending request field, e.g. `field_type` or `items[0].field_type`.
+  reason:
+    type: string
+    description: >-
+      Human- and agent-readable explanation of why the value is invalid, naming allowed values or
+      constraints so the request can be corrected without guessing.

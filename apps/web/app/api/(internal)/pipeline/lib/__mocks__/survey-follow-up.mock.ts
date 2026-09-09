@@ -170,6 +170,7 @@ export const mockSurvey: TSurvey = {
   metadata: {},
   blocks: [],
   isCaptureIpEnabled: false,
+  isAnonymizeResponsesEnabled: false,
   isAutoProgressingEnabled: false,
   publishOn: null,
   closeOn: null,

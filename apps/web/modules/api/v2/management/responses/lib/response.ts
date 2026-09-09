@@ -197,6 +197,8 @@ export const createResponseWithQuotaEvaluation = async (
       variables: responseInput.variables,
       language: canonicalLanguage || "default",
       responseFinished: response.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response,
       tx,
     });
 

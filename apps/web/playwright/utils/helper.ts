@@ -303,19 +303,19 @@ export const signUpAndLogin = async (
   await page.getByPlaceholder("*******").fill(password);
   await page.getByRole("button", { name: "Continue with Email" }).click();
   await page.getByText("Login").click();
-  await page.getByRole("button", { name: "Login with Email" }).click();
+  await page.getByRole("button", { name: "Log in with Email" }).click();
   await page.getByPlaceholder("work@email.com").fill(email);
   await page.getByPlaceholder("*******").click();
   await page.getByPlaceholder("*******").fill(password);
-  await page.getByRole("button", { name: "Login with Email" }).click();
+  await page.getByRole("button", { name: "Log in with Email" }).click();
 };
 
 export const login = async (page: Page, email: string, password: string): Promise<void> => {
   await page.goto("/auth/login");
 
-  await expect(page.getByRole("button", { name: "Login with Email" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Log in with Email" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Login with Email" }).click();
+  await page.getByRole("button", { name: "Log in with Email" }).click();
 
   await expect(page.getByPlaceholder("work@email.com")).toBeVisible();
 
@@ -325,7 +325,7 @@ export const login = async (page: Page, email: string, password: string): Promis
 
   await page.getByPlaceholder("*******").click();
   await page.getByPlaceholder("*******").fill(password);
-  await page.getByRole("button", { name: "Login with Email" }).click();
+  await page.getByRole("button", { name: "Log in with Email" }).click();
 };
 
 export const apiLogin = async (page: Page, email: string, password: string) => {
@@ -416,11 +416,11 @@ export const signupUsingInviteToken = async (page: Page, name: string, email: st
   await page.waitForTimeout(500);
   await page.getByText("Continue with Email").click();
   await page.getByText("Login").click();
-  await page.getByRole("button", { name: "Login with Email" }).click();
+  await page.getByRole("button", { name: "Log in with Email" }).click();
   await page.getByPlaceholder("work@email.com").fill(email);
   await page.getByPlaceholder("*******").click();
   await page.getByPlaceholder("*******").fill(password);
-  await page.getByRole("button", { name: "Login with Email" }).click();
+  await page.getByRole("button", { name: "Log in with Email" }).click();
 };
 
 /**
@@ -848,6 +848,30 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
 };
 
 /**
+ * Picks a condition's left operand, filtering the list before clicking it.
+ *
+ * This is the one combobox in the logic editor that also offers the reserved Embedded Data fields
+ * (ENG-1840) on top of every question, variable and hidden field, and that list overflows the 400px
+ * `CommandList`. A bare `getByRole("option").click()` then fails with "element is outside of the
+ * viewport" however long Playwright scrolls and retries — the click never lands and the test dies on
+ * its own timeout rather than on an assertion.
+ *
+ * Typing first is also what an author does with a list this long: the search box is `autoFocus`ed when
+ * the popover opens, and cmdk matches items on their label (`keywords`), so the wanted row ends up at
+ * the top. Only the left-operand picker needs this; the operator and action pickers are short and
+ * carry no reserved entries.
+ */
+const selectConditionLeftOperand = async (page: Page, conditionId: string, label: string) => {
+  await page.locator(`#${conditionId}`).first().click();
+
+  const search = page.getByPlaceholder("Search", { exact: true });
+  await expect(search).toBeVisible();
+  await search.fill(label);
+
+  await page.getByRole("option", { name: label }).first().click();
+};
+
+/**
  * A question's collapsed card heading inside the survey editor's element list.
  *
  * Scoped to the editor `<main>` on purpose. The editor renders a LIVE PREVIEW of the survey into
@@ -998,8 +1022,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await editorElementHeading(page, params.openTextQuestion.question).click();
   await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
-  await page.locator("#condition-0-0-conditionValue").first().click();
-  await page.getByRole("option", { name: params.openTextQuestion.question }).click();
+  await selectConditionLeftOperand(page, "condition-0-0-conditionValue", params.openTextQuestion.question);
   await page.locator("#condition-0-0-conditionOperator").first().click();
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
@@ -1033,8 +1056,11 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await editorElementHeading(page, params.singleSelectQuestion.question).click();
   await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
-  await page.locator("#condition-0-0-conditionValue").first().click();
-  await page.getByRole("option", { name: params.singleSelectQuestion.question }).click();
+  await selectConditionLeftOperand(
+    page,
+    "condition-0-0-conditionValue",
+    params.singleSelectQuestion.question
+  );
   await page.locator("#condition-0-0-conditionOperator").first().click();
   await page.getByRole("option", { name: "Equals one of" }).click();
   await page.locator("#condition-0-0-conditionMatchValue").first().click();
@@ -1067,8 +1093,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await editorElementHeading(page, params.multiSelectQuestion.question).click();
   await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
-  await page.locator("#condition-0-0-conditionValue").click();
-  await page.getByRole("option", { name: params.multiSelectQuestion.question }).click();
+  await selectConditionLeftOperand(page, "condition-0-0-conditionValue", params.multiSelectQuestion.question);
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "Includes all of" }).click();
   await page.locator("#condition-0-0-conditionMatchValue").click();
@@ -1079,8 +1104,11 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.waitForSelector('[data-testid="dropdown-menu-content"]', { state: "hidden", timeout: 3000 });
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
-  await page.locator("#condition-0-1-conditionValue").click();
-  await page.getByRole("option", { name: params.singleSelectQuestion.question }).click();
+  await selectConditionLeftOperand(
+    page,
+    "condition-0-1-conditionValue",
+    params.singleSelectQuestion.question
+  );
   await page.locator("#condition-0-1-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
@@ -1114,8 +1142,11 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await editorElementHeading(page, params.pictureSelectQuestion.question).click();
   await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
-  await page.locator("#condition-0-0-conditionValue").click();
-  await page.getByRole("option", { name: params.pictureSelectQuestion.question }).click();
+  await selectConditionLeftOperand(
+    page,
+    "condition-0-0-conditionValue",
+    params.pictureSelectQuestion.question
+  );
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
