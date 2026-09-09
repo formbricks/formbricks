@@ -457,6 +457,7 @@
     "refresh": "Actualizar",
     "remove": "Eliminar",
     "remove_from_team": "Eliminar del equipo",
+    "rename": "Renombrar",
     "reorder_and_hide_columns": "Reordenar y ocultar columnas",
     "replace": "Reemplazar",
     "report_survey": "Reportar encuesta",
@@ -3750,6 +3751,7 @@
       },
       "error_archiving_survey": "No se pudo archivar la encuesta, inténtalo de nuevo",
       "error_deleting_survey": "Se produjo un error al eliminar la encuesta",
+      "error_renaming_survey": "Error al renombrar la encuesta",
       "error_restoring_survey": "No se pudo restaurar la encuesta, inténtalo de nuevo",
       "error_updating_status": "Se produjo un error al actualizar el estado de la encuesta",
       "featured_templates": {
@@ -3774,6 +3776,9 @@
       "preview_survey_in_a_new_tab": "Vista previa de la encuesta en una nueva pestaña",
       "read_only_user_not_allowed_to_create_survey_warning": "Como usuario de solo lectura no se te permite crear encuestas. Por favor, pide a un usuario con acceso de escritura que cree una encuesta o a un administrador que mejore tu rol.",
       "relevance": "Relevancia",
+      "rename_survey": "Renombrar encuesta",
+      "rename_survey_description": "Dale un nuevo nombre a esta encuesta.",
+      "rename_survey_placeholder": "Nombre de la encuesta",
       "responses": {
         "address_line_1": "Línea de dirección 1",
         "address_line_2": "Línea de dirección 2",
@@ -4074,6 +4079,8 @@
       "survey_archived_successfully": "Encuesta archivada",
       "survey_deleted_successfully": "¡Encuesta eliminada correctamente!",
       "survey_duplicated_successfully": "Encuesta duplicada correctamente.",
+      "survey_name_required": "Por favor, introduce un nombre para la encuesta.",
+      "survey_renamed_successfully": "Encuesta renombrada correctamente",
       "survey_restored_successfully": "Encuesta restaurada",
       "templates": {
         "all_channels": "Todos los canales",

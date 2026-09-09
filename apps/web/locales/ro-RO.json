@@ -457,6 +457,7 @@
     "refresh": "Reîmprospătează",
     "remove": "Șterge",
     "remove_from_team": "Elimină din echipă",
+    "rename": "Redenumește",
     "reorder_and_hide_columns": "Reordonați și ascundeți coloanele",
     "replace": "Înlocuiește",
     "report_survey": "Raportează chestionarul",
@@ -3750,6 +3751,7 @@
       },
       "error_archiving_survey": "Nu s-a putut arhiva sondajul, încearcă din nou",
       "error_deleting_survey": "A apărut o eroare la ștergerea sondajului",
+      "error_renaming_survey": "Eroare la redenumirea sondajului",
       "error_restoring_survey": "Nu s-a putut restaura sondajul, încearcă din nou",
       "error_updating_status": "A apărut o eroare la actualizarea statusului sondajului",
       "featured_templates": {
@@ -3774,6 +3776,9 @@
       "preview_survey_in_a_new_tab": "Previzualizare chestionar în alt tab",
       "read_only_user_not_allowed_to_create_survey_warning": "\"Ca utilizator cu acces doar pentru citire, nu aveți voie să creați sondaje. Vă rugăm să solicitați unui utilizator cu acces de editare să creeze un sondaj sau unui manager să vă upgradeze rolul.\"",
       "relevance": "Relevanță",
+      "rename_survey": "Redenumește sondajul",
+      "rename_survey_description": "Oferă un nume nou acestui sondaj.",
+      "rename_survey_placeholder": "Numele sondajului",
       "responses": {
         "address_line_1": "Adresă Linie 1",
         "address_line_2": "Adresă Linie 2",
@@ -4074,6 +4079,8 @@
       "survey_archived_successfully": "Sondaj arhivat",
       "survey_deleted_successfully": "\"Sondaj șters cu succes!\"",
       "survey_duplicated_successfully": "\"Sondaj duplicat cu succes!\"",
+      "survey_name_required": "Te rugăm să introduci un nume pentru sondaj.",
+      "survey_renamed_successfully": "Sondaj redenumit cu succes",
       "survey_restored_successfully": "Sondaj restaurat",
       "templates": {
         "all_channels": "Toate canalele",

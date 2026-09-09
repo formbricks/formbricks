@@ -457,6 +457,7 @@
     "refresh": "Vernieuwen",
     "remove": "Verwijderen",
     "remove_from_team": "Verwijderen uit team",
+    "rename": "Hernoemen",
     "reorder_and_hide_columns": "Kolommen opnieuw rangschikken en verbergen",
     "replace": "Vervangen",
     "report_survey": "Enquête melden",
@@ -3750,6 +3751,7 @@
       },
       "error_archiving_survey": "Kan enquête niet archiveren, probeer het opnieuw",
       "error_deleting_survey": "Er is een fout opgetreden bij het verwijderen van de enquête",
+      "error_renaming_survey": "Fout bij hernoemen van enquête",
       "error_restoring_survey": "Kan enquête niet herstellen, probeer het opnieuw",
       "error_updating_status": "Er is een fout opgetreden bij het bijwerken van de enquêtestatus",
       "featured_templates": {
@@ -3774,6 +3776,9 @@
       "preview_survey_in_a_new_tab": "Bekijk een voorbeeld van de enquête op een nieuw tabblad",
       "read_only_user_not_allowed_to_create_survey_warning": "Als Read-Only-gebruiker mag u geen enquêtes maken. Vraag een gebruiker met schrijftoegang om een ​​enquête te maken of vraag een manager om uw rol te upgraden.",
       "relevance": "Relevantie",
+      "rename_survey": "Enquête hernoemen",
+      "rename_survey_description": "Geef deze enquête een nieuwe naam.",
+      "rename_survey_placeholder": "Naam van enquête",
       "responses": {
         "address_line_1": "Adresregel 1",
         "address_line_2": "Adresregel 2",
@@ -4074,6 +4079,8 @@
       "survey_archived_successfully": "Enquête gearchiveerd",
       "survey_deleted_successfully": "Enquête succesvol verwijderd!",
       "survey_duplicated_successfully": "Enquête is succesvol gedupliceerd.",
+      "survey_name_required": "Voer een naam voor de enquête in.",
+      "survey_renamed_successfully": "Enquête succesvol hernoemd",
       "survey_restored_successfully": "Enquête hersteld",
       "templates": {
         "all_channels": "Alle kanalen",

@@ -17,6 +17,7 @@ import { CreateWithAIDialog } from "@/modules/survey/components/template-list/co
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { useArchiveSurvey } from "@/modules/survey/list/hooks/use-archive-survey";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
+import { useRenameSurvey } from "@/modules/survey/list/hooks/use-rename-survey";
 import { useRestoreSurvey } from "@/modules/survey/list/hooks/use-restore-survey";
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
 import { useUpdateSurveyStatus } from "@/modules/survey/list/hooks/use-update-survey-status";
@@ -217,6 +218,7 @@ export const SurveysList = ({
   const updateSurveyStatusMutation = useUpdateSurveyStatus({ queryKey });
   const archiveSurveyMutation = useArchiveSurvey({ queryKey });
   const restoreSurveyMutation = useRestoreSurvey({ queryKey });
+  const renameSurveyMutation = useRenameSurvey({ queryKey });
 
   const showInitialLoading = !isFilterInitialized || (isLoading && surveys.length === 0);
   // Only a workspace without a single survey gets the onboarding empty states. Every other empty
@@ -239,6 +241,10 @@ export const SurveysList = ({
 
   const handleRestoreSurvey = async (surveyId: string) => {
     await restoreSurveyMutation.mutateAsync({ surveyId });
+  };
+
+  const handleRenameSurvey = async (surveyId: string, name: string) => {
+    await renameSurveyMutation.mutateAsync({ surveyId, name });
   };
 
   const createSurveyButton = (
@@ -336,6 +342,7 @@ export const SurveysList = ({
               updateSurveyStatus={handleUpdateSurveyStatus}
               archiveSurvey={handleArchiveSurvey}
               restoreSurvey={handleRestoreSurvey}
+              renameSurvey={handleRenameSurvey}
               publicDomain={publicDomain}
               locale={locale}
             />

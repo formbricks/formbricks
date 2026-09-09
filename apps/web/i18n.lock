@@ -426,6 +426,7 @@ checksums:
     common/refresh: c0aec3f31be4c984bae9a482572d2857
     common/remove: dba2fe5fe9f83f8078c687f28cba4b52
     common/remove_from_team: 69bcc7a1001c3017f9de578ee22cffd6
+    common/rename: 6f9413e4606e8d83a010685008fb2931
     common/reorder_and_hide_columns: a5e3d7c0c7ef879211d05a37be1c5069
     common/replace: 98b2268975b1a737b2e4ad837df96703
     common/report_survey: 147dd05db52e35f5d1f837460fb720f5
@@ -3624,6 +3625,7 @@ checksums:
     workspace/surveys/edit/zip: 228fedb7d75304d2a3fcd9f1d1aaccee
     workspace/surveys/error_archiving_survey: c73e729832407531134213ce2aa69a4d
     workspace/surveys/error_deleting_survey: 5a113f1cc0a430b54b21dd1fd4e65e00
+    workspace/surveys/error_renaming_survey: 87084d08efc4121d5d6d83e3bb74ca4f
     workspace/surveys/error_restoring_survey: a070c5b584187d4f1308943d6b378bea
     workspace/surveys/error_updating_status: f163ee51d64903a0c994d39008bf7fe4
     workspace/surveys/featured_templates/churn_description: 095b315526140f3633b3da354b766ed4
@@ -3644,6 +3646,9 @@ checksums:
     workspace/surveys/preview_survey_in_a_new_tab: 0d9b3b93c233543d25ccb49263d7024d
     workspace/surveys/read_only_user_not_allowed_to_create_survey_warning: d6c53a50c939c547f081b53d489958bb
     workspace/surveys/relevance: 9a5655d1d14efdd35052a8ed09bed127
+    workspace/surveys/rename_survey: 442ed6f0b7fa47eb9b3c10d5648bef1b
+    workspace/surveys/rename_survey_description: 2462513dddf89743ca60581c3ae153a1
+    workspace/surveys/rename_survey_placeholder: 22ccf86a882d68184d3acfccf7608f4d
     workspace/surveys/responses/address_line_1: 44788358e7a7c25b0b79bc3090ed15f5
     workspace/surveys/responses/address_line_2: fc4b5a87de46ac4a28a6616f47a34135
     workspace/surveys/responses/an_error_occurred_adding_the_tag: f211ea1ceb8a93b415d88a8deed874ef
@@ -3918,6 +3923,8 @@ checksums:
     workspace/surveys/survey_archived_successfully: de6e34f200a13cf43a7ca684f57d5fec
     workspace/surveys/survey_deleted_successfully: a6b654cc914b344a4475fd2fd4a98cc5
     workspace/surveys/survey_duplicated_successfully: 91e244f1e7a33640bb4817166a01ff46
+    workspace/surveys/survey_name_required: b72531f00e0896ae2c82d39b4e79b70c
+    workspace/surveys/survey_renamed_successfully: 395c4f0a28fa3b7190f396ff50fd7f68
     workspace/surveys/survey_restored_successfully: 2033ab806864f98fabb5d4ed3c945626
     workspace/surveys/templates/all_channels: 6be67a82fc7326dc2304b23ab3348b87
     workspace/surveys/templates/all_industries: c7354412fe34585526ff2232aadace41

@@ -457,6 +457,7 @@
     "refresh": "Atualizar",
     "remove": "Remover",
     "remove_from_team": "Remover da equipa",
+    "rename": "Renomear",
     "reorder_and_hide_columns": "Reordenar e ocultar colunas",
     "replace": "Substituir",
     "report_survey": "Relatório de Inquérito",
@@ -3750,6 +3751,7 @@
       },
       "error_archiving_survey": "Não foi possível arquivar o inquérito, tenta novamente",
       "error_deleting_survey": "Ocorreu um erro ao eliminar o inquérito",
+      "error_renaming_survey": "Erro ao renomear inquérito",
       "error_restoring_survey": "Não foi possível restaurar o inquérito, tenta novamente",
       "error_updating_status": "Ocorreu um erro ao atualizar o estado do inquérito",
       "featured_templates": {
@@ -3774,6 +3776,9 @@
       "preview_survey_in_a_new_tab": "Pré-visualizar inquérito num novo separador",
       "read_only_user_not_allowed_to_create_survey_warning": "Como utilizador de leitura apenas, não tem permissão para criar questionários. Por favor, peça a um utilizador com acesso de escrita para criar um questionário ou a um gestor para atualizar o seu papel.",
       "relevance": "Relevância",
+      "rename_survey": "Renomear inquérito",
+      "rename_survey_description": "Dá um novo nome a este inquérito.",
+      "rename_survey_placeholder": "Nome do inquérito",
       "responses": {
         "address_line_1": "Endereço Linha 1",
         "address_line_2": "Endereço Linha 2",
@@ -4074,6 +4079,8 @@
       "survey_archived_successfully": "Inquérito arquivado",
       "survey_deleted_successfully": "Inquérito eliminado com sucesso!",
       "survey_duplicated_successfully": "Inquérito duplicado com sucesso.",
+      "survey_name_required": "Por favor, introduz um nome para o inquérito.",
+      "survey_renamed_successfully": "Inquérito renomeado com sucesso",
       "survey_restored_successfully": "Inquérito restaurado",
       "templates": {
         "all_channels": "Todos os canais",

@@ -457,6 +457,7 @@
     "refresh": "Frissítés",
     "remove": "Eltávolítás",
     "remove_from_team": "Eltávolítás a csapatból",
+    "rename": "Átnevezés",
     "reorder_and_hide_columns": "Oszlopok átrendezése és elrejtése",
     "replace": "Csere",
     "report_survey": "Kérdőív jelentése",
@@ -3750,6 +3751,7 @@
       },
       "error_archiving_survey": "A felmérés archiválása sikertelen, kérjük, próbálja újra",
       "error_deleting_survey": "Hiba történt a kérdőív törlése során",
+      "error_renaming_survey": "Hiba történt a felmérés átnevezése során",
       "error_restoring_survey": "A felmérés visszaállítása sikertelen, kérjük, próbálja újra",
       "error_updating_status": "Hiba történt a felmérés állapotának frissítése során",
       "featured_templates": {
@@ -3774,6 +3776,9 @@
       "preview_survey_in_a_new_tab": "Kérdőív előnézete új lapon",
       "read_only_user_not_allowed_to_create_survey_warning": "Csak olvasási jogosultságú felhasználóként nem hozhat létre kérdőíveket. Kérjen meg egy írási jogosultsággal rendelkező felhasználót, hogy hozzon létre egy kérdőívet, vagy egy vezetőt, hogy frissítse az Ön szerepét.",
       "relevance": "Fontosság",
+      "rename_survey": "Felmérés átnevezése",
+      "rename_survey_description": "Adjon új nevet ennek a felmérésnek.",
+      "rename_survey_placeholder": "Felmérés neve",
       "responses": {
         "address_line_1": "Cím 1. sora",
         "address_line_2": "Cím 2. sora",
@@ -4074,6 +4079,8 @@
       "survey_archived_successfully": "Felmérés archiválva",
       "survey_deleted_successfully": "A kérdőív sikeresen törölve",
       "survey_duplicated_successfully": "A kérdőív sikeresen megkettőzve",
+      "survey_name_required": "Kérem, adja meg a felmérés nevét.",
+      "survey_renamed_successfully": "A felmérés sikeresen átnevezésre került",
       "survey_restored_successfully": "Felmérés visszaállítva",
       "templates": {
         "all_channels": "Összes csatorna",

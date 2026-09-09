@@ -457,6 +457,7 @@
     "refresh": "Yenile",
     "remove": "Kaldır",
     "remove_from_team": "Takımdan çıkar",
+    "rename": "Yeniden Adlandır",
     "reorder_and_hide_columns": "Sütunları yeniden sırala ve gizle",
     "replace": "Değiştir",
     "report_survey": "Anketi Raporla",
@@ -3750,6 +3751,7 @@
       },
       "error_archiving_survey": "Anket arşivlenemedi, tekrar dene",
       "error_deleting_survey": "Anket silinirken bir hata oluştu",
+      "error_renaming_survey": "Anket yeniden adlandırılırken hata oluştu",
       "error_restoring_survey": "Anket geri yüklenemedi, tekrar dene",
       "error_updating_status": "Anket durumu güncellenirken bir hata oluştu",
       "featured_templates": {
@@ -3774,6 +3776,9 @@
       "preview_survey_in_a_new_tab": "Anketi yeni sekmede önizle",
       "read_only_user_not_allowed_to_create_survey_warning": "Salt Okunur kullanıcı olarak anket oluşturma yetkiniz bulunmamaktadır. Lütfen yazma yetkisi olan bir kullanıcıdan anket oluşturmasını isteyin veya yöneticinizden rolünüzü yükseltmesini talep edin.",
       "relevance": "İlgililik",
+      "rename_survey": "Anketi yeniden adlandır",
+      "rename_survey_description": "Bu ankete yeni bir ad ver.",
+      "rename_survey_placeholder": "Anket adı",
       "responses": {
         "address_line_1": "Adres Satırı 1",
         "address_line_2": "Adres Satırı 2",
@@ -4074,6 +4079,8 @@
       "survey_archived_successfully": "Anket arşivlendi",
       "survey_deleted_successfully": "Anket başarıyla silindi",
       "survey_duplicated_successfully": "Anket başarıyla kopyalandı",
+      "survey_name_required": "Lütfen bir anket adı gir.",
+      "survey_renamed_successfully": "Anket başarıyla yeniden adlandırıldı",
       "survey_restored_successfully": "Anket geri yüklendi",
       "templates": {
         "all_channels": "Tüm kanallar",

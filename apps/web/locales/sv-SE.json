@@ -457,6 +457,7 @@
     "refresh": "Uppdatera",
     "remove": "Ta bort",
     "remove_from_team": "Ta bort från teamet",
+    "rename": "Byt namn",
     "reorder_and_hide_columns": "Ordna om och dölj kolumner",
     "replace": "Ersätt",
     "report_survey": "Rapportera enkät",
@@ -3750,6 +3751,7 @@
       },
       "error_archiving_survey": "Kunde inte arkivera undersökningen, försök igen",
       "error_deleting_survey": "Ett fel uppstod vid borttagning av enkät",
+      "error_renaming_survey": "Fel vid namnbyte av enkät",
       "error_restoring_survey": "Kunde inte återställa undersökningen, försök igen",
       "error_updating_status": "Ett fel uppstod när undersökningens status uppdaterades",
       "featured_templates": {
@@ -3774,6 +3776,9 @@
       "preview_survey_in_a_new_tab": "Förhandsgranska enkät i en ny flik",
       "read_only_user_not_allowed_to_create_survey_warning": "Som skrivskyddad användare har du inte behörighet att skapa enkäter. Be en användare med skrivåtkomst att skapa en enkät eller en administratör att uppgradera din roll.",
       "relevance": "Relevans",
+      "rename_survey": "Byt namn på enkät",
+      "rename_survey_description": "Ge denna enkät ett nytt namn.",
+      "rename_survey_placeholder": "Enkätnamn",
       "responses": {
         "address_line_1": "Adressrad 1",
         "address_line_2": "Adressrad 2",
@@ -4074,6 +4079,8 @@
       "survey_archived_successfully": "Undersökningen arkiverad",
       "survey_deleted_successfully": "Enkät borttagen!",
       "survey_duplicated_successfully": "Enkät duplicerad.",
+      "survey_name_required": "Vänligen ange ett enkätnamn.",
+      "survey_renamed_successfully": "Enkäten har bytt namn",
       "survey_restored_successfully": "Undersökningen återställd",
       "templates": {
         "all_channels": "Alla kanaler",

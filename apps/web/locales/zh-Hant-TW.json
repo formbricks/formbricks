@@ -457,6 +457,7 @@
     "refresh": "重新整理",
     "remove": "移除",
     "remove_from_team": "從團隊中移除",
+    "rename": "重新命名",
     "reorder_and_hide_columns": "重新排序和隱藏欄位",
     "replace": "取代",
     "report_survey": "報告問卷",
@@ -3750,6 +3751,7 @@
       },
       "error_archiving_survey": "無法封存問卷,請再試一次",
       "error_deleting_survey": "刪除問卷時發生錯誤",
+      "error_renaming_survey": "重新命名問卷時發生錯誤",
       "error_restoring_survey": "無法還原問卷,請再試一次",
       "error_updating_status": "更新問卷狀態時發生錯誤",
       "featured_templates": {
@@ -3774,6 +3776,9 @@
       "preview_survey_in_a_new_tab": "在新分頁中預覽問卷",
       "read_only_user_not_allowed_to_create_survey_warning": "身為唯讀使用者，您不得建立問卷。請要求具有寫入權限的使用者建立問卷或管理員升級您的角色。",
       "relevance": "相關性",
+      "rename_survey": "重新命名問卷",
+      "rename_survey_description": "為此問卷指定新名稱。",
+      "rename_survey_placeholder": "問卷名稱",
       "responses": {
         "address_line_1": "地址 1",
         "address_line_2": "地址 2",
@@ -4074,6 +4079,8 @@
       "survey_archived_successfully": "問卷已封存",
       "survey_deleted_successfully": "問卷已成功刪除！",
       "survey_duplicated_successfully": "問卷已成功複製。",
+      "survey_name_required": "請輸入問卷名稱。",
+      "survey_renamed_successfully": "問卷重新命名成功",
       "survey_restored_successfully": "問卷已還原",
       "templates": {
         "all_channels": "所有管道",

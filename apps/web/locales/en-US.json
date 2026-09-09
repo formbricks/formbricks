@@ -457,6 +457,7 @@
     "refresh": "Refresh",
     "remove": "Remove",
     "remove_from_team": "Remove from team",
+    "rename": "Rename",
     "reorder_and_hide_columns": "Reorder and hide columns",
     "replace": "Replace",
     "report_survey": "Report Survey",
@@ -3750,6 +3751,7 @@
       },
       "error_archiving_survey": "Couldn't archive survey, try again",
       "error_deleting_survey": "An error occurred while deleting survey",
+      "error_renaming_survey": "Error renaming survey",
       "error_restoring_survey": "Couldn't restore survey, try again",
       "error_updating_status": "An error occurred while updating survey status",
       "featured_templates": {
@@ -3774,6 +3776,9 @@
       "preview_survey_in_a_new_tab": "Preview survey in a new tab",
       "read_only_user_not_allowed_to_create_survey_warning": "As a Read-Only user you are not allowed to create surveys. Please ask a user with write access to create a survey or a manager to upgrade your role.",
       "relevance": "Relevance",
+      "rename_survey": "Rename survey",
+      "rename_survey_description": "Give this survey a new name.",
+      "rename_survey_placeholder": "Survey name",
       "responses": {
         "address_line_1": "Address Line 1",
         "address_line_2": "Address Line 2",
@@ -4074,6 +4079,8 @@
       "survey_archived_successfully": "Survey archived",
       "survey_deleted_successfully": "Survey deleted successfully",
       "survey_duplicated_successfully": "Survey duplicated successfully",
+      "survey_name_required": "Please enter a survey name.",
+      "survey_renamed_successfully": "Survey renamed successfully",
       "survey_restored_successfully": "Survey restored",
       "templates": {
         "all_channels": "All channels",
