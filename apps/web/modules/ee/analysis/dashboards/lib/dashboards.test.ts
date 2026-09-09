@@ -736,6 +736,129 @@ describe("Dashboard Service", () => {
       });
     });
 
+    test("nextOpenSlot places the widget in the first gap it fits", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.aggregate.mockResolvedValue({ _max: { order: 1 } });
+      mockTxWidget.findMany.mockResolvedValue([
+        { layout: { x: 0, y: 0, w: 4, h: 3 } },
+        { layout: { x: 8, y: 0, w: 4, h: 3 } },
+      ]);
+      mockTxWidget.create.mockResolvedValue(mockWidget);
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await addChartToDashboard({
+        dashboardId: mockDashboardId,
+        chartId: mockChartId,
+        workspaceId: mockWorkspaceId,
+        layout: mockLayout,
+        placement: "nextOpenSlot",
+      });
+
+      expect(mockTxWidget.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ layout: { x: 4, y: 0, w: 4, h: 3 } }),
+      });
+    });
+
+    test("nextOpenSlot drops the widget below a full row", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.aggregate.mockResolvedValue({ _max: { order: 0 } });
+      mockTxWidget.findMany.mockResolvedValue([{ layout: { x: 0, y: 0, w: 12, h: 3 } }]);
+      mockTxWidget.create.mockResolvedValue(mockWidget);
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await addChartToDashboard({
+        dashboardId: mockDashboardId,
+        chartId: mockChartId,
+        workspaceId: mockWorkspaceId,
+        layout: mockLayout,
+        placement: "nextOpenSlot",
+      });
+
+      expect(mockTxWidget.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ layout: { x: 0, y: 3, w: 4, h: 3 } }),
+      });
+    });
+
+    test("nextOpenSlot appends instead of filling a gap when a stored layout is unreadable", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.aggregate.mockResolvedValue({ _max: { order: 1 } });
+      // The gap at x=4 cannot be trusted: the unreadable row may be sitting in it.
+      mockTxWidget.findMany.mockResolvedValue([
+        { layout: { x: 0, y: 0, w: 4, h: 3 } },
+        { layout: "not-a-layout" },
+      ]);
+      mockTxWidget.create.mockResolvedValue(mockWidget);
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await addChartToDashboard({
+        dashboardId: mockDashboardId,
+        chartId: mockChartId,
+        workspaceId: mockWorkspaceId,
+        layout: mockLayout,
+        placement: "nextOpenSlot",
+      });
+
+      expect(mockTxWidget.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ layout: { x: 0, y: 3, w: 4, h: 3 } }),
+      });
+    });
+
+    test("retries the transaction when the database reports a conflict", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.aggregate.mockResolvedValue({ _max: { order: null } });
+      mockTxWidget.findMany.mockResolvedValue([]);
+      mockTxWidget.create.mockResolvedValue(mockWidget);
+
+      const conflict = new Prisma.PrismaClientKnownRequestError("write conflict", {
+        code: "P2034",
+        clientVersion: "5.0.0",
+      });
+      let attempts = 0;
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) => {
+        attempts++;
+        if (attempts === 1) return Promise.reject(conflict);
+        return cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget });
+      });
+      const { addChartToDashboard } = await import("./dashboards");
+
+      const result = await addChartToDashboard({
+        dashboardId: mockDashboardId,
+        chartId: mockChartId,
+        workspaceId: mockWorkspaceId,
+        layout: mockLayout,
+      });
+
+      expect(result).toEqual(mockWidget);
+      expect(attempts).toBe(2);
+    });
+
+    test("gives up on a conflict that keeps repeating", async () => {
+      const conflict = new Prisma.PrismaClientKnownRequestError("write conflict", {
+        code: "P2034",
+        clientVersion: "5.0.0",
+      });
+      let attempts = 0;
+      vi.mocked(prisma.$transaction).mockImplementation(() => {
+        attempts++;
+        return Promise.reject(conflict);
+      });
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await expect(
+        addChartToDashboard({
+          dashboardId: mockDashboardId,
+          chartId: mockChartId,
+          workspaceId: mockWorkspaceId,
+          layout: mockLayout,
+        })
+      ).rejects.toMatchObject({ name: "DatabaseError" });
+      expect(attempts).toBe(3);
+    });
+
     test("throws ResourceNotFoundError when chart does not exist", async () => {
       mockTxChart.findFirst.mockResolvedValue(null);
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);

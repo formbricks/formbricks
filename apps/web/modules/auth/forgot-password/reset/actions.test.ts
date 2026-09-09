@@ -8,6 +8,8 @@ import {
   PASSWORD_COMPROMISED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { auth } from "@/modules/auth/lib/auth";
+import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { resetPasswordAction } from "./actions";
 
 const constantsState = vi.hoisted(() => ({
@@ -18,6 +20,10 @@ const constantsState = vi.hoisted(() => ({
 // auth.ts (onPasswordReset + revokeSessionsOnPasswordReset), not this action (ENG-1054).
 vi.mock("@/modules/auth/lib/auth", () => ({
   auth: { api: { resetPassword: vi.fn() } },
+}));
+
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyIPRateLimit: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -64,6 +70,26 @@ describe("resetPasswordAction", () => {
     });
   });
 
+  test("applies the reset-password IP limit before calling Better Auth", async () => {
+    vi.mocked(auth.api.resetPassword).mockResolvedValue({ status: true } as never);
+
+    await resetPasswordAction({ parsedInput } as never);
+
+    expect(applyIPRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.resetPassword);
+    expect(applyIPRateLimit).toHaveBeenCalledBefore(vi.mocked(auth.api.resetPassword));
+  });
+
+  test("short-circuits before Better Auth when the IP limit is exceeded", async () => {
+    vi.mocked(applyIPRateLimit).mockRejectedValue(
+      new Error("Maximum number of requests reached. Please try again later.")
+    );
+
+    await expect(resetPasswordAction({ parsedInput } as never)).rejects.toThrow(
+      "Maximum number of requests reached. Please try again later."
+    );
+    expect(auth.api.resetPassword).not.toHaveBeenCalled();
+  });
+
   test("maps a Better Auth APIError (invalid/expired/used token) to the invalid-reset-token error", async () => {
     vi.mocked(auth.api.resetPassword).mockRejectedValue(
       new APIError("BAD_REQUEST", { message: "invalid token", code: "INVALID_TOKEN" })
@@ -101,6 +127,7 @@ describe("resetPasswordAction", () => {
     constantsState.passwordResetDisabled = true;
 
     await expect(resetPasswordAction({ parsedInput } as any)).rejects.toThrow(OperationNotAllowedError);
+    expect(applyIPRateLimit).not.toHaveBeenCalled();
     expect(auth.api.resetPassword).not.toHaveBeenCalled();
   });
 });

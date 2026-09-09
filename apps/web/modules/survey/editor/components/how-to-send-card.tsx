@@ -181,7 +181,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
                             onClick={() =>
                               window.open(`${workspaceBasePath}/settings/workspace/app-connection`, "_blank")
                             }>
-                            {t("common.connect_formbricks")}
+                            {t("common.set_up_formbricks_sdk")}
                           </AlertButton>
                         </Alert>
                       )}

@@ -3,7 +3,7 @@
 import { LanguagesIcon, LucideIcon, MonitorIcon, SmartphoneIcon, Tag } from "lucide-react";
 import { Fragment, ReactNode, useId } from "react";
 import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import {
   RESERVED_FIELD_CATALOG,
   listDisplayableReservedFields,

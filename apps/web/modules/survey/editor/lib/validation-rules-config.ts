@@ -101,29 +101,26 @@ export const RULE_TYPE_CONFIG: Record<
     valueType: "number",
     valuePlaceholder: "100",
   },
+  // The four date rules render a calendar picker, which labels itself, so they carry no placeholder.
   isLaterThan: {
     labelKey: "is_later_than",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "YYYY-MM-DD",
   },
   isEarlierThan: {
     labelKey: "is_earlier_than",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "YYYY-MM-DD",
   },
   isBetween: {
     labelKey: "is_between",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "YYYY-MM-DD,YYYY-MM-DD",
   },
   isNotBetween: {
     labelKey: "is_not_between",
     needsValue: true,
     valueType: "text",
-    valuePlaceholder: "YYYY-MM-DD,YYYY-MM-DD",
   },
   minRanked: {
     labelKey: "minimum_options_ranked",
