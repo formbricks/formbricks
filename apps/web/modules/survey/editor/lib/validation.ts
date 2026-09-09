@@ -331,11 +331,14 @@ export const isSurveyValid = (
 
 export const getValidateIdErrorMessage = (
   error: TValidateIdError,
-  type: "hiddenField" | "question",
+  type: "hiddenField" | "question" | "variable",
   t: TFunction
 ): string => {
-  const localizedType =
-    type === "hiddenField" ? t("common.hidden_field") : t("workspace.surveys.edit.question");
+  const localizedType = {
+    hiddenField: () => t("common.hidden_field"),
+    question: () => t("workspace.surveys.edit.question"),
+    variable: () => t("common.variable"),
+  }[type]();
 
   switch (error.code) {
     case TValidateIdErrorCode.Empty:
@@ -348,6 +351,8 @@ export const getValidateIdErrorMessage = (
       return t("workspace.surveys.edit.validate_id_no_spaces", { type: localizedType });
     case TValidateIdErrorCode.InvalidChars:
       return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+    case TValidateIdErrorCode.NotSafeIdentifier:
+      return t("workspace.surveys.edit.validate_id_not_safe_identifier", { type: localizedType });
     default:
       return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
   }

@@ -38,6 +38,7 @@ import {
 } from "@/modules/ui/components/data-table";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { reconcileColumnOrder, seedReservedColumnVisibility } from "../lib/column-state";
 
 const SkeletonCell = () => (
   <Skeleton className="w-full">
@@ -166,21 +167,26 @@ export const ResponseTable = ({
 
   const defaultColumnOrder = useMemo(() => table.getAllLeafColumns().map((d) => d.id), [table]);
 
-  // Modified useEffect
   useEffect(() => {
     const savedColumnOrder = localStorage.getItem(`${survey.id}-columnOrder`);
     const savedColumnVisibility = localStorage.getItem(`${survey.id}-columnVisibility`);
     const savedExpandedSettings = localStorage.getItem(`${survey.id}-rowExpand`);
 
-    if (savedColumnOrder && JSON.parse(savedColumnOrder).length > 0) {
-      setColumnOrder(JSON.parse(savedColumnOrder));
-    } else {
-      setColumnOrder(defaultColumnOrder);
-    }
+    // Reconciled rather than adopted wholesale (ENG-2540): the settings modal iterates THIS array, so
+    // a column id the saved order has never seen used to get no toggle and no drag handle at all.
+    const parsedOrder = savedColumnOrder ? (JSON.parse(savedColumnOrder) as string[]) : [];
+    setColumnOrder(
+      parsedOrder.length > 0 ? reconcileColumnOrder(parsedOrder, defaultColumnOrder) : defaultColumnOrder
+    );
 
-    if (savedColumnVisibility) {
-      setColumnVisibility(JSON.parse(savedColumnVisibility));
-    }
+    // Seeded whether or not anything was saved: a reserved column absent from `columnVisibility` is
+    // visible in TanStack, so the `secondary` ones need an explicit `false` to start hidden.
+    setColumnVisibility(
+      seedReservedColumnVisibility(
+        savedColumnVisibility ? (JSON.parse(savedColumnVisibility) as VisibilityState) : {}
+      )
+    );
+
     if (savedExpandedSettings !== null) {
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }

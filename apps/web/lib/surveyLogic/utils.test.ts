@@ -1,4 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
+import {
+  type TEmbeddedValueResponse,
+  deriveLegacyEmbeddedData,
+} from "@formbricks/types/embedded-data-resolver";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -7,6 +11,7 @@ import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/log
 import { TSurveyLogicAction } from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
+  buildServerEmbeddedValues,
   createGroupFromResource,
   deleteEmptyGroups,
   duplicateCondition,
@@ -93,6 +98,11 @@ describe("surveyLogic", () => {
         value: 0,
       },
     ],
+    // The rows are the only thing `getSurveyEmbeddedFields` reads since ENG-2412, so a fixture that
+    // declares a variable has to carry the matching row — that is what a real survey read returns.
+    embeddedFields: deriveLegacyEmbeddedData({
+      variables: [{ id: "v", name: "num", type: "number", value: 0 }],
+    }),
     displayOption: "displayOnce",
     recontactDays: null,
     displayLimit: null,
@@ -109,6 +119,12 @@ describe("surveyLogic", () => {
     segment: null,
     recaptcha: null,
   };
+
+  /** Overridden by several cases below; the rows have to match, since they are what is read. */
+  const TWO_VARIABLES = [
+    { id: "numVar", name: "numberVar", type: "number" as const, value: 5 },
+    { id: "textVar", name: "textVar", type: "text" as const, value: "hello" },
+  ];
 
   const simpleGroup = (): TConditionGroup => ({
     id: "g1",
@@ -878,10 +894,8 @@ describe("surveyLogic", () => {
         },
       ],
       questions: [],
-      variables: [
-        { id: "numVar", name: "numberVar", type: "number", value: 5 },
-        { id: "textVar", name: "textVar", type: "text", value: "hello" },
-      ],
+      variables: TWO_VARIABLES,
+      embeddedFields: deriveLegacyEmbeddedData({ variables: TWO_VARIABLES }),
     };
 
     const data: TResponseData = {
@@ -1076,10 +1090,8 @@ describe("surveyLogic", () => {
         },
       ],
       questions: [],
-      variables: [
-        { id: "numVar", name: "numberVar", type: "number", value: 5 },
-        { id: "textVar", name: "textVar", type: "text", value: "hello" },
-      ],
+      variables: TWO_VARIABLES,
+      embeddedFields: deriveLegacyEmbeddedData({ variables: TWO_VARIABLES }),
     };
 
     const vars: TResponseVariables = {
@@ -1173,10 +1185,8 @@ describe("surveyLogic", () => {
   test("performCalculation handles different variable types and operations", () => {
     const surveyWithVars: TJsWorkspaceStateSurvey = {
       ...mockSurvey,
-      variables: [
-        { id: "numVar", name: "numberVar", type: "number", value: 5 },
-        { id: "textVar", name: "textVar", type: "text", value: "hello" },
-      ],
+      variables: TWO_VARIABLES,
+      embeddedFields: deriveLegacyEmbeddedData({ variables: TWO_VARIABLES }),
     };
 
     const data: TResponseData = {
@@ -1424,5 +1434,453 @@ describe("surveyLogic", () => {
         "en"
       )
     ).toBe(false);
+  });
+});
+
+/**
+ * The server-side twin of `packages/surveys/src/lib/logic.ts`, exercised by quotas, the summary and
+ * follow-up conditions — i.e. against ALREADY-STORED responses. ENG-1837 repointed the definition
+ * lookup onto the EmbeddedData tables and deliberately left every value expression alone; these
+ * tests pin both, and each one flips if a call site is later "simplified" onto `resolveEmbeddedValue`.
+ */
+describe("computed fields resolve through the inlined EmbeddedData rows", () => {
+  const STORAGE_KEY = "cm9gptbhg0000192zceq9ayzz";
+
+  const buildSurvey = (
+    variables: TJsWorkspaceStateSurvey["variables"],
+    embeddedFields?: TJsWorkspaceStateSurvey["embeddedFields"]
+  ): TJsWorkspaceStateSurvey =>
+    ({
+      id: "cm9gptbhg0000192zceq9ayuc",
+      name: "Survey",
+      type: "link",
+      status: "inProgress",
+      welcomeCard: { enabled: false },
+      questions: [],
+      blocks: [{ id: "block1", name: "Block 1", elements: [] }],
+      endings: [],
+      variables,
+      embeddedFields,
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+      languages: [],
+      triggers: [],
+      styling: null,
+      segment: null,
+      recaptcha: null,
+      autoClose: null,
+      delay: 0,
+      displayLimit: null,
+      displayOption: "displayOnce",
+      displayPercentage: null,
+      recontactDays: null,
+      showLanguageSwitch: null,
+      isBackButtonHidden: false,
+      isAutoProgressingEnabled: false,
+      workspaceOverwrites: null,
+    }) as unknown as TJsWorkspaceStateSurvey;
+
+  const computedRow = (dataType: "number" | "string", defaultValue: number | string) => [
+    {
+      field: { name: "score", source: "computed" as const, dataType, defaultValue, locked: false },
+      link: { storageKey: STORAGE_KEY },
+    },
+  ];
+
+  const equalsStatic = (value: number | string): TConditionGroup => ({
+    id: "group1",
+    connector: "and",
+    conditions: [
+      {
+        id: "condition1",
+        operator: "equals",
+        leftOperand: { type: "variable", value: STORAGE_KEY },
+        rightOperand: { type: "static", value },
+      },
+    ],
+  });
+
+  test("the row's dataType wins over the legacy column's", () => {
+    const legacyTextVariable = [
+      { id: STORAGE_KEY, name: "score", type: "text" as const, value: "" },
+    ] as TJsWorkspaceStateSurvey["variables"];
+
+    expect(
+      evaluateLogic(
+        buildSurvey(legacyTextVariable, computedRow("number", 0)),
+        {},
+        { [STORAGE_KEY]: "42" },
+        equalsStatic(42),
+        "default"
+      )
+    ).toBe(true);
+
+    expect(
+      evaluateLogic(buildSurvey(legacyTextVariable), {}, { [STORAGE_KEY]: "42" }, equalsStatic(42), "default")
+    ).toBe(false);
+  });
+
+  test("an empty row list means the survey has no computed fields, whatever the legacy column says", () => {
+    // ENG-2412 removed the fallback: the rows are the whole answer, so a condition naming a field the
+    // rows do not carry no longer resolves off `survey.variables`. Deleting a survey's rows now makes
+    // its fields disappear rather than reappear.
+    const legacyNumberVariable = [
+      { id: STORAGE_KEY, name: "score", type: "number" as const, value: 0 },
+    ] as TJsWorkspaceStateSurvey["variables"];
+
+    expect(
+      evaluateLogic(
+        buildSurvey(legacyNumberVariable, []),
+        {},
+        { [STORAGE_KEY]: "42" },
+        equalsStatic(42),
+        "default"
+      )
+    ).toBe(false);
+  });
+
+  test("delta (a): a non-numeric stored value is still 0, not the declared default", () => {
+    expect(
+      evaluateLogic(
+        buildSurvey([], computedRow("number", 5)),
+        {},
+        { [STORAGE_KEY]: "abc" },
+        equalsStatic(0),
+        "default"
+      )
+    ).toBe(true);
+  });
+
+  test('delta (a): a string field holding 0 is still "", not "0"', () => {
+    expect(
+      evaluateLogic(
+        buildSurvey([], computedRow("string", "fallback")),
+        {},
+        { [STORAGE_KEY]: 0 },
+        equalsStatic(""),
+        "default"
+      )
+    ).toBe(true);
+  });
+
+  test('delta (d): a response missing the key evaluates as 0 / "", not the declared default', () => {
+    expect(evaluateLogic(buildSurvey([], computedRow("number", 5)), {}, {}, equalsStatic(0), "default")).toBe(
+      true
+    );
+    expect(
+      evaluateLogic(buildSurvey([], computedRow("string", "gold")), {}, {}, equalsStatic(""), "default")
+    ).toBe(true);
+  });
+
+  test("a number field compared against a hidden field still coerces the right operand", () => {
+    // The engines' twin in packages/surveys pins this too; it is the branch the guard below sits in
+    // front of, so both directions are asserted in both engines.
+    const condition: TConditionGroup = {
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator: "equals",
+          leftOperand: { type: "variable", value: STORAGE_KEY },
+          rightOperand: { type: "hiddenField", value: "plan" },
+        },
+      ],
+    };
+
+    expect(
+      evaluateLogic(
+        buildSurvey([], computedRow("number", 0)),
+        { plan: "42" },
+        { [STORAGE_KEY]: 42 },
+        condition,
+        "default"
+      )
+    ).toBe(true);
+  });
+
+  /**
+   * A condition can outlive the field it names: the variable is renamed or deleted, the logic rule
+   * keeps the old storage key. The `dataType` read that drives the number coercion runs BEFORE the
+   * operator switch, so an unguarded `undefined` throws there — and `evaluateSingleCondition`'s
+   * try/catch turns that into a silent `false` rather than a visible crash, which on this side of the
+   * fence quietly changes a quota's or a summary's answer. These assert the evaluated RESULT, not the
+   * absence of a throw, precisely because the catch would hide one.
+   */
+  describe("a condition naming a field the survey no longer declares", () => {
+    const staleOperand = (operator: TSingleCondition["operator"]): TConditionGroup => ({
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator,
+          leftOperand: { type: "variable", value: "storage_key_of_a_deleted_variable" },
+          rightOperand: { type: "hiddenField", value: "plan" },
+        },
+      ],
+    });
+
+    test("evaluates on its own merits instead of collapsing to false", () => {
+      expect(
+        evaluateLogic(
+          buildSurvey([], computedRow("number", 0)),
+          { plan: "42" },
+          {},
+          staleOperand("isNotSet"),
+          "default"
+        )
+      ).toBe(true);
+    });
+
+    test("does not coerce the right operand, since the left operand's type is unknown", () => {
+      expect(
+        evaluateLogic(
+          buildSurvey([], computedRow("number", 0)),
+          { plan: "42" },
+          {},
+          staleOperand("isSet"),
+          "default"
+        )
+      ).toBe(false);
+    });
+  });
+
+  test('performCalculation seeds from 0 / "" and skips an undeclared field', () => {
+    const calculate = (
+      survey: TJsWorkspaceStateSurvey,
+      action: TSurveyBlockLogicAction,
+      data: TResponseData,
+      calculations: TResponseVariables
+    ) => performActions(survey, [action], data, calculations).calculations;
+
+    expect(
+      calculate(
+        buildSurvey([], computedRow("number", 5)),
+        {
+          id: "a1",
+          objective: "calculate",
+          variableId: STORAGE_KEY,
+          operator: "add",
+          value: { type: "static", value: 3 },
+        },
+        {},
+        {}
+      )
+    ).toEqual({ [STORAGE_KEY]: 3 });
+
+    expect(
+      calculate(
+        buildSurvey([], computedRow("number", 5)),
+        {
+          id: "a1",
+          objective: "calculate",
+          variableId: "unknown_key",
+          operator: "add",
+          value: { type: "static", value: 3 },
+        },
+        {},
+        {}
+      )
+    ).toEqual({});
+  });
+});
+
+describe("reserved field operands, server engine (ENG-1840)", () => {
+  const survey = {
+    id: "survey1",
+    name: "Survey 1",
+    questions: [],
+    blocks: [{ id: "block1", name: "Block 1", elements: [] }],
+    variables: [],
+    embeddedFields: [],
+    hiddenFields: { enabled: true, fieldIds: [] },
+    type: "link",
+    status: "inProgress",
+    languages: [],
+    endings: [],
+    welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
+  } as unknown as TJsWorkspaceStateSurvey;
+
+  const reservedGroup = (
+    name: string,
+    operator: TSingleCondition["operator"],
+    rightOperand?: TSingleCondition["rightOperand"]
+  ): TConditionGroup => ({
+    id: "group1",
+    connector: "and",
+    conditions: [
+      { id: "condition1", operator, leftOperand: { type: "reserved", value: name }, rightOperand },
+    ],
+  });
+
+  const response = {
+    id: "response1",
+    surveyId: "survey1",
+    createdAt: new Date("2026-01-01T10:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T10:02:30.000Z"),
+    finished: true,
+    language: "de",
+    data: {},
+    variables: {},
+    ttc: { _total: 150000 },
+    meta: { country: "DE", url: "https://app.test/s/abc", source: "link" },
+  } as unknown as TEmbeddedValueResponse;
+
+  test("the full catalog resolves server-side, including server-only fields", () => {
+    const values = buildServerEmbeddedValues(response, survey);
+
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("country", "equals", { type: "static", value: "DE" }),
+        "en",
+        values
+      )
+    ).toBe(true);
+    // durationSeconds converts ttc milliseconds to seconds — 150000ms is 150s, so "> 60" holds.
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("durationSeconds", "isGreaterThan", { type: "static", value: 60 }),
+        "en",
+        values
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("durationSeconds", "isLessThan", { type: "static", value: 60 }),
+        "en",
+        values
+      )
+    ).toBe(false);
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("finished", "equals", { type: "static", value: "true" }),
+        "en",
+        values
+      )
+    ).toBe(true);
+  });
+
+  test("a declared field of the same name still wins server-side", () => {
+    const values = buildServerEmbeddedValues({ ...response, data: { country: "Declared answer" } }, survey);
+
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("country", "equals", { type: "static", value: "Declared answer" }),
+        "en",
+        values
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("country", "equals", { type: "static", value: "DE" }),
+        "en",
+        values
+      )
+    ).toBe(false);
+  });
+
+  test("an unknown reserved name and a missing map both read as unset", () => {
+    const values = buildServerEmbeddedValues(response, survey);
+
+    expect(evaluateLogic(survey, {}, {}, reservedGroup("notACatalogEntry", "isSet"), "en", values)).toBe(
+      false
+    );
+    // Callers with no response in hand (quota screening) pass nothing and get unset, not a throw.
+    expect(evaluateLogic(survey, {}, {}, reservedGroup("country", "isSet"), "en")).toBe(false);
+  });
+
+  test("THE GRANDFATHER RULE, ENG-2538: a DECLARED but EMPTY field still owns its name", () => {
+    // Red before ENG-2538. `mergeReservedValues`' spread only demotes the reserved value behind a key
+    // that *exists*, so a survey declaring an optional `url` resolved the page address for every
+    // response where the respondent left it blank — the normal case for a hidden field. The survey
+    // parameter is what lets `dropShadowedReservedEntries` remove the entry instead.
+    const declaringSurvey = {
+      ...survey,
+      hiddenFields: { enabled: true, fieldIds: ["url"] },
+      embeddedFields: [
+        { field: { name: "url", source: "ingested", dataType: "string" }, link: { storageKey: "url" } },
+      ],
+    } as unknown as TJsWorkspaceStateSurvey;
+
+    const values = buildServerEmbeddedValues(response, declaringSurvey);
+
+    // Not merely outranked — absent. A consumer that falls back on a missing key (recall renders the
+    // author's fallback text) must see nothing here, not the reserved value.
+    expect(values).not.toHaveProperty("url");
+    expect(evaluateLogic(survey, {}, {}, reservedGroup("url", "isSet"), "en", values)).toBe(false);
+    // Everything the survey does NOT declare keeps resolving.
+    expect(values.country).toBe("DE");
+    expect(values.source).toBe("link");
+  });
+
+  test("an ELEMENT id shadows a reserved name too, before the question is answered", () => {
+    const declaringSurvey = {
+      ...survey,
+      blocks: [{ id: "block1", name: "Block 1", elements: [{ id: "url", type: "openText" }] }],
+    } as unknown as TJsWorkspaceStateSurvey;
+
+    expect(buildServerEmbeddedValues(response, declaringSurvey)).not.toHaveProperty("url");
+  });
+
+  test("a NUMBER reserved entry reaches logic already typed, so no coercion is needed", () => {
+    // The invariant that makes the `reserved` coercion arm defensive rather than load-bearing: the
+    // catalog read seam runs `coerceToEmbeddedDataType`, so a number-dataType entry is a JS number
+    // here, never a numeric string. If this goes red the seam stopped coercing and that arm became
+    // load-bearing, which is the only reason it is worth pinning separately.
+    expect(typeof buildServerEmbeddedValues(response, survey).durationSeconds).toBe("number");
+  });
+
+  test("the coercion arm converts a reserved value that arrives as a string anyway", () => {
+    // `mergeReservedValues` overlays `response.data` on the projection unconditionally, so a reserved
+    // key that is also a response key carries that raw string past the seam above. The map is passed
+    // directly because no authoring flow produces that overlap today — the reserved-name guard
+    // refuses declaring one — so this pins the arm's behaviour rather than reproducing a bug.
+    const numberVariableSurvey = {
+      ...survey,
+      variables: [{ id: "var_duration", name: "duration", type: "number", value: 150 }],
+      embeddedFields: [
+        {
+          field: { name: "duration", source: "computed", dataType: "number" },
+          link: { storageKey: "var_duration" },
+        },
+      ],
+    } as unknown as TJsWorkspaceStateSurvey;
+
+    const group: TConditionGroup = {
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator: "equals",
+          leftOperand: { type: "variable", value: "var_duration" },
+          rightOperand: { type: "reserved", value: "durationSeconds" },
+        },
+      ],
+    };
+
+    expect(
+      evaluateLogic(numberVariableSurvey, {}, { var_duration: 150 }, group, "en", {
+        durationSeconds: "150",
+      })
+    ).toBe(true);
   });
 });
