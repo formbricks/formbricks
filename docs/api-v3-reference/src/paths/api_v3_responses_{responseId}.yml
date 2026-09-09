@@ -337,9 +337,14 @@ delete:
     response, and an unknown or inaccessible `responseId` answers **403**.
 
 
-    Deletion cascades: any files uploaded with the response are removed from storage, and the
-    corresponding record is deleted from the Hub. No `responseDeleted` webhook is emitted — no such
-    trigger exists.
+    Deletion cascades to any files uploaded with the response, which are removed from storage after
+    the row is committed. No `responseDeleted` webhook is emitted — no such trigger exists.
+
+
+    **The Hub copy is not removed.** A submission forwarded to the Hub stays there and stays
+    searchable through the feedback-record endpoints after this returns 204. That cascade is ENG-2855
+    and lands after the Hub release; until then, an erasure workflow has to delete the feedback record
+    itself. Stated because a caller cannot cheaply verify deletion semantics on a destructive endpoint.
   tags:
     - V3 Responses
   parameters:

@@ -1935,7 +1935,7 @@ paths:
 
         **It scope-filters rather than rejecting.** Ids belonging to another workspace, and ids that no longer exist, are ignored; the ids in the caller's own workspace are deleted and `deleted` reports how many that was. Rejecting the whole call on a foreign id would do two bad things at once: leak that the id exists somewhere, and break retries — after a partially-applied call, an already-deleted id is indistinguishable from a foreign one. Scope-filtering is idempotent and leaks nothing, so a client can safely retry the same batch.
 
-        Because `deleted` can therefore be lower than the number of ids sent — or zero — do not treat a shortfall as an error. Deletion cascades to uploaded files and to the Hub, exactly as the single-response delete does.
+        Because `deleted` can therefore be lower than the number of ids sent — or zero — do not treat a shortfall as an error. Deletion cascades to uploaded files exactly as the single-response delete does — and, exactly as it does, leaves the Hub copy in place. See that operation for why.
 
         **`workspaceId` is the scope, and it is required.** Unlike the single-response delete — which resolves the workspace *from* the response so a caller cannot pair someone else's id with a scope it happens to hold — a batch has no single response to resolve from, and scope-filtering is only meaningful against a known workspace. Supplying it is safe here because the same value is both what `manage` is checked against and what the delete is filtered by: the two cannot diverge, so a foreign id matches nothing rather than being deleted under a scope the caller does hold.
       tags:
@@ -2311,7 +2311,9 @@ paths:
       description: |
         Permanently deletes a response. Requires `manage` access; the workspace is resolved from the response, and an unknown or inaccessible `responseId` answers **403**.
 
-        Deletion cascades: any files uploaded with the response are removed from storage, and the corresponding record is deleted from the Hub. No `responseDeleted` webhook is emitted — no such trigger exists.
+        Deletion cascades to any files uploaded with the response, which are removed from storage after the row is committed. No `responseDeleted` webhook is emitted — no such trigger exists.
+
+        **The Hub copy is not removed.** A submission forwarded to the Hub stays there and stays searchable through the feedback-record endpoints after this returns 204. That cascade is ENG-2855 and lands after the Hub release; until then, an erasure workflow has to delete the feedback record itself. Stated because a caller cannot cheaply verify deletion semantics on a destructive endpoint.
       tags:
         - V3 Responses
       parameters:
@@ -6146,7 +6148,12 @@ components:
         name:
           type: string
           pattern: ^[a-z0-9_]+$
-          description: Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held to more than that. It must match `^[a-z][a-z0-9_]*$` (so no leading digit or underscore), must not take an Embedded Data reserved name (`country`, `browser`, `language`, …), and must not collide case-insensitively with a hidden field id on the same survey. Names the survey already declares are grandfathered, so re-sending an existing document never trips this. A new name that breaks any of the three answers 400 `forbidden_identifier`.
+          description: |
+            Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held to more than that, and the extra rules split into two groups that behave differently.
+
+            **400 `forbidden_identifier`, grandfathered.** A new name must match `^[a-z][a-z0-9_]*$` (no leading digit or underscore) and must not take a reserved name — the link-survey system params and internal ids (`userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`) or an auto-captured system field name (`country`, `browser`, `deviceType`, …; `SurveyHiddenFields` carries the full list, and the two sets are the same there). Names the survey already declares are grandfathered against these, so re-sending an existing document never trips them.
+
+            **400 `duplicate_identifier`, not grandfathered.** A variable name that collides case-insensitively with a hidden field id on the same survey. This is checked by reference validation over the whole merged document rather than against the incoming names, so a survey that already holds such a clash is refused on **every** patch — including one that touches neither collection — until one side is renamed.
         type:
           type: string
           enum:
@@ -6172,7 +6179,12 @@ components:
         name:
           type: string
           pattern: ^[a-z0-9_]+$
-          description: Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held to more than that. It must match `^[a-z][a-z0-9_]*$` (so no leading digit or underscore), must not take an Embedded Data reserved name (`country`, `browser`, `language`, …), and must not collide case-insensitively with a hidden field id on the same survey. Names the survey already declares are grandfathered, so re-sending an existing document never trips this. A new name that breaks any of the three answers 400 `forbidden_identifier`.
+          description: |
+            Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held to more than that, and the extra rules split into two groups that behave differently.
+
+            **400 `forbidden_identifier`, grandfathered.** A new name must match `^[a-z][a-z0-9_]*$` (no leading digit or underscore) and must not take a reserved name — the link-survey system params and internal ids (`userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`) or an auto-captured system field name (`country`, `browser`, `deviceType`, …; `SurveyHiddenFields` carries the full list, and the two sets are the same there). Names the survey already declares are grandfathered against these, so re-sending an existing document never trips them.
+
+            **400 `duplicate_identifier`, not grandfathered.** A variable name that collides case-insensitively with a hidden field id on the same survey. This is checked by reference validation over the whole merged document rather than against the incoming names, so a survey that already holds such a clash is refused on **every** patch — including one that touches neither collection — until one side is renamed.
         type:
           type: string
           enum:
@@ -6613,7 +6625,9 @@ components:
           minimum: 0
           maximum: 86400
           description: |
-            Seconds the respondent spent on this element. Converted from the stored per-element time-to-complete, which is recorded in milliseconds. This telemetry is reported by the client and is therefore not trustworthy input: it is clamped to at most 24 hours per element at the write boundary, so treat it as an indication rather than a measurement. Absent when the submission carried no timing for this element.
+            Seconds the respondent spent on this element. Converted from the stored per-element time-to-complete, which is recorded in milliseconds. This telemetry is reported by the client and is therefore not trustworthy input: treat it as an indication rather than a measurement. Absent when the submission carried no timing for this element.
+
+            The bounds hold on **every** row, including ones collected before the write-side clamp shipped. The stored representation is deliberately unbounded so that historical data still parses, and a row written then can hold a negative value or a tab left open for days; those are clamped into range on read rather than returned as-is, because a schema a real row violates is worse than a slightly blunted outlier. So `86400` means "at least 24 hours", not exactly.
     ResponseAnswerText:
       allOf:
         - $ref: '#/components/schemas/ResponseAnswerBase'
@@ -7003,7 +7017,9 @@ components:
           description: |
             Stable key. Unique within `embeddedData`.
 
-            Uniqueness is a guarantee this API makes rather than one the stored data provides: a survey may declare a hidden field or variable whose name collides with a catalog field (`country`, `url` and `language` are all declarable on surveys created before the reserved names were enforced). Where that happens the **declared** entry wins and the `reserved` one is omitted, matching how recall and logic already resolve the same name.
+            Uniqueness is a guarantee this API makes rather than one the stored data provides: a survey created before the reserved names were enforced may declare a **hidden field** whose id collides with a catalog field (`country` and `url` are both declarable that way). Where that happens the declared entry wins and the `reserved` one is omitted, matching how recall and logic already resolve the same name.
+
+            A **variable** can never collide, whatever it is called: its key is its cuid, not its name, so a variable named `country` and the reserved `country` occupy different keys and both appear. The variable's name is on `label`.
 
             `reserved` keys are the catalog's own names, which are camelCase — `deviceType`, `utmSource`, `pagePath` — not snake_case.
 
