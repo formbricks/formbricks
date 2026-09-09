@@ -166,7 +166,7 @@ export const ImportSurveyDialog = ({
           {importer.canRegenerate ? (
             <Button
               type="button"
-              variant="secondary"
+              variant="ai-secondary"
               disabled={importer.isCreatingSurvey}
               onClick={handleRegenerate}>
               {t("workspace.surveys.import.read_again")}

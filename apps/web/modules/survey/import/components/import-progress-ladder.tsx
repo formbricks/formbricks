@@ -1,8 +1,6 @@
 "use client";
 
-import { CheckIcon, Loader2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/cn";
 import { getImportSourceLabel } from "@/modules/survey/import/lib/import-i18n";
 import {
   type TImportProgressState,
@@ -10,6 +8,7 @@ import {
   formatLanguageCodes,
   getImportProgressSteps,
 } from "@/modules/survey/import/lib/import-progress";
+import { AiStatusLine } from "@/modules/ui/components/ai";
 
 type ImportProgressLadderProps = {
   progress: TImportProgressState;
@@ -18,9 +17,9 @@ type ImportProgressLadderProps = {
 };
 
 /**
- * Four steps — read file, detected languages, extracting questions, validating — driven by the
- * stream's `progress` events. The current step spins (still for `prefers-reduced-motion`); a done
- * step keeps its detail so the user can read back what happened.
+ * The import's waiting state is the kit's `AiStatusLine`: the phrase is the stage the server reported
+ * (`activeIndex`, never a timer) with its detail folded in, and the elapsed time runs for the AI lane.
+ * Deterministic lanes finish in two events and read the same way without the timer.
  */
 export const ImportProgressLadder = ({
   progress,
@@ -29,9 +28,10 @@ export const ImportProgressLadder = ({
 }: Readonly<ImportProgressLadderProps>) => {
   const { t } = useTranslation();
   const steps = getImportProgressSteps(progress);
+  const isAiLane = progress.source?.lane === "ai";
 
-  const labelFor = (step: TImportProgressStep): string => {
-    switch (step.stage) {
+  const labelFor = (stage: TImportProgressStep["stage"]): string => {
+    switch (stage) {
       case "reading":
         return t("workspace.surveys.import.progress_read_file");
       case "detecting_languages":
@@ -59,45 +59,20 @@ export const ImportProgressLadder = ({
     }
   };
 
-  const current = steps.find((step) => step.status === "current");
+  // One phrase per stage, with the detail the server sent folded in ("Extracting questions · part 2 of 5").
+  const messages = steps.map((step) => {
+    const detail = detailFor(step);
+    return detail ? `${labelFor(step.stage)} · ${detail}` : labelFor(step.stage);
+  });
+  const currentIndex = steps.findIndex((step) => step.status === "current");
 
   return (
-    <div className={cn("flex flex-col gap-2 text-sm", className)}>
-      {/* The ladder is the visual; the live region only announces the step that changed. */}
-      {isActive ? (
-        <span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-          {current ? labelFor(current) : t("workspace.surveys.import.status_reading")}
-        </span>
-      ) : null}
-      <ol
-        className="flex flex-col gap-1.5"
-        aria-label={t("workspace.surveys.import.progress_label")}
-        aria-busy={isActive || undefined}>
-        {steps.map((step) => {
-          const detail = detailFor(step);
-          return (
-            <li
-              key={step.stage}
-              className={cn(
-                "flex items-center gap-2",
-                step.status === "pending" && "text-slate-400",
-                step.status === "current" && "text-slate-900",
-                step.status === "done" && "text-slate-600"
-              )}
-              aria-current={step.status === "current" ? "step" : undefined}>
-              <span className="flex size-4 shrink-0 items-center justify-center" aria-hidden="true">
-                {step.status === "done" ? <CheckIcon className="size-4 text-green-600" /> : null}
-                {step.status === "current" ? (
-                  <Loader2Icon className="size-4 motion-safe:animate-spin" />
-                ) : null}
-                {step.status === "pending" ? <span className="size-1.5 rounded-full bg-slate-300" /> : null}
-              </span>
-              <span>{labelFor(step)}</span>
-              {detail ? <span className="text-xs text-slate-500">{detail}</span> : null}
-            </li>
-          );
-        })}
-      </ol>
-    </div>
+    <AiStatusLine
+      isActive={isActive}
+      messages={messages}
+      activeIndex={currentIndex >= 0 ? currentIndex : 0}
+      showTimer={isAiLane}
+      className={className}
+    />
   );
 };
