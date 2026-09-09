@@ -13,7 +13,7 @@ import {
   listV3FeedbackRecords,
   searchV3FeedbackRecords,
   updateV3FeedbackRecord,
-} from "@/app/api/v3/feedbackRecords/lib/operations";
+} from "@/app/api/v3/feedback-records/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
   noContentResponse,
@@ -32,7 +32,7 @@ import { ZMcpUpdateFeedbackRecordInput } from "./schemas";
 // with z.url() and drops the whole event otherwise.
 const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mcp$/);
 
-vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
+vi.mock("@/app/api/v3/feedback-records/lib/operations", () => ({
   countV3FeedbackRecords: vi.fn(),
   createV3FeedbackRecord: vi.fn(),
   createV3FeedbackRecords: vi.fn(),
