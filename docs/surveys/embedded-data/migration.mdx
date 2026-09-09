@@ -52,7 +52,7 @@ The full rule and the refused list are on the [Hidden Fields](/surveys/general-f
 
 Hidden field values passed in a survey link are visible to anyone who sees or shares that link, gets it forwarded, or reads it out of a browser history, a referrer header or a proxy log. **Do not pass email addresses, tokens, account numbers or any other personal identifier that way.**
 
-The editor shows this warning next to the Hidden Fields card, and it is worth taking literally rather than treating as boilerplate:
+This is worth taking literally rather than treating as boilerplate:
 
 - Pass an opaque reference you can resolve on your own side, not the identifier itself.
 - For app surveys, prefer [`setEmbeddedData()`](/surveys/embedded-data/set-embedded-data), which never puts the value in a URL.
