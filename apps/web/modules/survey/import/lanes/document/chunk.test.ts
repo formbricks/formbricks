@@ -15,16 +15,17 @@ const questionNumbers = (text: string) =>
   [...text.matchAll(/^(\d+)\. Statement/gm)].map((match) => Number(match[1]));
 
 describe("chunkDocumentText", () => {
-  test("150 questions with sections: 4–5 chunks for one language, 8–10 for two, no question split", () => {
+  test("150 questions with sections: about a chunk per section for one language, more for two, no question split", () => {
     const text = fixture("survey-150-questions.md");
 
+    // 24 questions per call for one language; the ten 15-question sections are preferred cut points.
     const single = chunkDocumentText(text, { languageCount: 1 }).chunks;
-    expect(single.length).toBeGreaterThanOrEqual(4);
-    expect(single.length).toBeLessThanOrEqual(5);
+    expect(single.length).toBeGreaterThanOrEqual(7);
+    expect(single.length).toBeLessThanOrEqual(10);
 
     const bilingual = chunkDocumentText(text, { languageCount: 2 }).chunks;
-    expect(bilingual.length).toBeGreaterThanOrEqual(8);
-    expect(bilingual.length).toBeLessThanOrEqual(10);
+    expect(bilingual.length).toBeGreaterThanOrEqual(single.length);
+    expect(bilingual.length).toBeLessThanOrEqual(20);
 
     for (const chunks of [single, bilingual]) {
       const numbers = chunks.flatMap((chunk) => questionNumbers(chunk.text));
@@ -40,12 +41,12 @@ describe("chunkDocumentText", () => {
     }
   });
 
-  test("60 questions without headings in one language: two chunks", () => {
+  test("60 questions without headings in one language: three chunks of at most 24", () => {
     const { chunks, issues } = chunkDocumentText(fixture("survey-60-questions.md"), { languageCount: 1 });
-    expect(chunks).toHaveLength(2);
+    expect(chunks).toHaveLength(3);
     expect(issues).toEqual([]);
-    expect(questionNumbers(chunks[0].text).at(-1)).toBe(40);
-    expect(questionNumbers(chunks[1].text)).toEqual(Array.from({ length: 20 }, (_, index) => 41 + index));
+    expect(questionNumbers(chunks[0].text).at(-1)).toBe(24);
+    expect(questionNumbers(chunks[2].text)).toEqual(Array.from({ length: 12 }, (_, index) => 49 + index));
   });
 
   test("the total cap drops the remainder with text_truncated", () => {
@@ -77,9 +78,9 @@ describe("chunkDocumentText", () => {
   test("question start patterns and default limits", () => {
     expect(["1. x", "12) y", "Q3 z", "Question 4", "Frage 7:", "[ ] Ja"].every(isQuestionStart)).toBe(true);
     expect(["- option", "   3. indented", "plain text"].some(isQuestionStart)).toBe(false);
-    expect(defaultChunkLimits(1)).toEqual({ targetQuestions: 40, maxChars: 16_000 });
-    expect(defaultChunkLimits(2)).toEqual({ targetQuestions: 20, maxChars: 8_000 });
-    expect(defaultChunkLimits(9)).toEqual({ targetQuestions: 8, maxChars: 1_777 });
+    expect(defaultChunkLimits(1)).toEqual({ targetQuestions: 24, maxChars: 10_000 });
+    expect(defaultChunkLimits(2)).toEqual({ targetQuestions: 12, maxChars: 5_000 });
+    expect(defaultChunkLimits(9)).toEqual({ targetQuestions: 8, maxChars: 1_111 });
     expect(chunkDocumentText("", { languageCount: 1 }).chunks).toEqual([]);
   });
 });

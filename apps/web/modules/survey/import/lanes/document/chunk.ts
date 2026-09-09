@@ -26,8 +26,9 @@ export type TChunkOptions = {
 export const CHUNK_MAX_TOTAL_QUESTIONS = 200;
 export const CHUNK_MAX_TOTAL_CHARS = 400_000;
 
-const QUESTIONS_PER_CALL_BUDGET = 40;
-const CHARS_PER_CALL_BUDGET = 16_000;
+// Sized for a 16k output budget with reasoning tokens counted against it: 40/16k overflowed live.
+const QUESTIONS_PER_CALL_BUDGET = 24;
+const CHARS_PER_CALL_BUDGET = 10_000;
 
 export function defaultChunkLimits(languageCount: number): { targetQuestions: number; maxChars: number } {
   const languages = Math.max(1, languageCount);
