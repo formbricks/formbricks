@@ -722,7 +722,18 @@ type TV3SurveyDocumentMutationInput =
       remapInvalidParam?: (param: InvalidParam) => InvalidParam;
     }
   | { ok: true; unchanged: true; logFields?: Record<string, unknown> }
-  | { ok: false; detail: string; invalidParams: InvalidParam[]; logFields?: Record<string, unknown> };
+  | {
+      ok: false;
+      detail: string;
+      invalidParams: InvalidParam[];
+      /**
+       * Defaults to `unprocessable_content`. Set it when the rejection is a statement about the
+       * *stored* survey rather than the request, so a client can tell "repair your survey" from
+       * "fix your ops" — the same distinction the legacy guard makes.
+       */
+      code?: "stored_survey_invalid";
+      logFields?: Record<string, unknown>;
+    };
 
 type TV3SurveyDocumentMutationParams = TPatchV3SurveyParams & {
   operation: "patch" | "blocks.edit" | "blocks.reorder";
@@ -828,6 +839,7 @@ async function runV3SurveyDocumentMutation({
       return problemUnprocessableContent(requestId, built.detail, {
         instance,
         invalid_params: built.invalidParams,
+        ...(built.code ? { code: built.code } : {}),
       });
     }
 
@@ -957,6 +969,7 @@ export async function editV3SurveyBlocksResponse({
       if (!currentBlocks) {
         return {
           ok: false,
+          code: "stored_survey_invalid",
           detail: "This survey's blocks cannot be edited through the v3 API",
           invalidParams: [
             {
@@ -1011,6 +1024,7 @@ export async function setV3SurveyBlockOrderResponse({
       if (!currentBlocks) {
         return {
           ok: false,
+          code: "stored_survey_invalid",
           detail: "This survey's blocks cannot be reordered through the v3 API",
           invalidParams: [{ name: "order", reason: "The stored survey does not expose a v3 block list." }],
         };

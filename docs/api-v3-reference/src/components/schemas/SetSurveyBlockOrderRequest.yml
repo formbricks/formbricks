@@ -6,12 +6,13 @@ properties:
   order:
     type: array
     minItems: 1
-    uniqueItems: true
     items:
       type: string
       maxLength: 128
     description: >
-      Every current block id, exactly once, in the desired order. A missing or unknown id is a
+      Every current block id, exactly once, in the desired order. A missing, unknown or repeated id
+      is a **422** — repeats are reported as `duplicate_identifier` rather than rejected by the
+      schema, so the response names the offending entry. A missing or unknown id is likewise a
       **422** — which is what makes this safer than resending the blocks, since a dropped block
       cannot pass unnoticed.
   expectedUpdatedAt:

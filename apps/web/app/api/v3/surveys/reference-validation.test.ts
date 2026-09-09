@@ -541,10 +541,48 @@ describe("ordering rules (ENG-3069)", () => {
 
     expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(broken), refInput(broken))).toEqual([]);
 
-    const reordered = withHeadline(0, "Hi #recall:second_q/fallback:x#");
-    reordered.blocks.reverse();
-    // After the reverse the recall points backwards, so the pre-existing violation is simply gone.
-    expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(broken), refInput(reordered))).toEqual([]);
+    // Three blocks, because the violation has to *survive* the reorder for this to prove anything.
+    // Recall sits in block 0 and points at block 2; swapping blocks 1 and 2 keeps it pointing
+    // forwards while moving the target from `blocks.2` to `blocks.1`. A two-block reverse would make
+    // the recall point backwards instead, leaving zero violations and an empty delta no matter how
+    // the keys are built — which would pass even if index-based keys came back.
+    const threeBlocks = () =>
+      twoBlockSurvey({
+        blocks: [
+          {
+            id: "clbk1111111111111111111111",
+            name: "First",
+            elements: [
+              {
+                id: "first_q",
+                type: "openText",
+                headline: { "en-US": "Hi #recall:third_q/fallback:x#" },
+                required: false,
+              },
+            ],
+          },
+          {
+            id: "clbk2222222222222222222222",
+            name: "Second",
+            elements: [{ id: "second_q", type: "openText", headline: { "en-US": "Two" }, required: false }],
+          },
+          {
+            id: "clbk3333333333333333333333",
+            name: "Third",
+            elements: [{ id: "third_q", type: "openText", headline: { "en-US": "Three" }, required: false }],
+          },
+        ],
+      });
+
+    const baseline = threeBlocks();
+    const shifted = threeBlocks();
+    [shifted.blocks[1], shifted.blocks[2]] = [shifted.blocks[2], shifted.blocks[1]];
+
+    // The same violation exists on both sides, at different indices.
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(baseline))).toHaveLength(1);
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(shifted))).toHaveLength(1);
+    // Empty only because the violation key carries no array index.
+    expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(baseline), refInput(shifted))).toEqual([]);
 
     const newlyBroken = withHeadline(0, "Hi #recall:second_q/fallback:x#");
     expect(

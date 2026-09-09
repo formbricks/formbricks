@@ -266,7 +266,14 @@ async function main(): Promise<void> {
           id: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block`,
         },
       },
-      setSurveyBlockOrderV3: { path: { surveyId: CONTRACT_IDS.SURVEY_BLOCKS_ORDER } },
+      // The order must be a permutation of the seeded survey's own block ids, so it cannot be
+      // generated — without this the operation only ever exercises its documented 422.
+      setSurveyBlockOrderV3: {
+        path: { surveyId: CONTRACT_IDS.SURVEY_BLOCKS_ORDER },
+        body: {
+          order: [`${CONTRACT_IDS.SURVEY_BLOCKS_ORDER}block`, `${CONTRACT_IDS.SURVEY_BLOCKS_ORDER}block2`],
+        },
+      },
       restoreSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_RESTORE } },
       patchWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_PATCH } },
       deleteWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_DELETE } },

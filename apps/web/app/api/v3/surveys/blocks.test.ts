@@ -312,3 +312,33 @@ describe("remapBlockInvalidParamPath", () => {
     expect(remapBlockInvalidParamPath(param, origins)).toEqual({ ...param, name: "ops.3.block.id" });
   });
 });
+
+describe("reorderSurveyBlocks diagnostics bound", () => {
+  // The 2 MB request bound does not bound the response: one diagnostic per bad id turns a body of
+  // junk ids into a reply several times its size. Report a usable prefix, then a count.
+  test("caps the reported problems and says how many were left out", () => {
+    const current = [{ id: "blk_a" }, { id: "blk_b" }] as never;
+    const order = Array.from({ length: 200 }, (_, index) => `missing_${index}`);
+
+    const result = reorderSurveyBlocks(current, order);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.invalidParams).toHaveLength(51);
+    expect(result.invalidParams.at(-1)).toEqual({
+      name: "order",
+      reason: expect.stringContaining("further problems with this order were not reported"),
+    });
+  });
+
+  test("reports every problem when they fit under the cap", () => {
+    const current = [{ id: "blk_a" }, { id: "blk_b" }] as never;
+
+    const result = reorderSurveyBlocks(current, ["blk_a", "nope"]);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    // blk_b missing + `nope` unknown, and nothing about a cap.
+    expect(result.invalidParams).toHaveLength(2);
+  });
+});
