@@ -100,6 +100,17 @@ Helm cannot condition values passed to the PostgreSQL dependency on a sibling va
 baseline remains in effect. Override `authzed.cluster.resources` and `postgresql.primary.resources` to match the
 expected authorization traffic and the other workloads using the bundled database.
 
+The generated Formbricks and SpiceDB connection strings, the SpiceDB database bootstrap, and the installation
+notes follow the bundled PostgreSQL dependency's effective service name, service port, username, and database.
+This includes username, database, and service-port overrides supplied through the dependency's
+`global.postgresql` values.
+
+> [!WARNING]
+> PostgreSQL initializes users and databases only when the data directory is empty. Before applying connection
+> overrides to an existing PVC-backed installation, create the target user and database and migrate the
+> existing Formbricks data. Otherwise, the corrected consumers will point at credentials or data that do not yet
+> exist.
+
 Install only one operator per Kubernetes cluster. When a platform-managed operator already watches the Formbricks
 namespace, keep `authzed.operator.install=false`; the Formbricks release still owns its `SpiceDBCluster`.
 Kubernetes does not upgrade CRDs during a normal Helm upgrade. When changing the bundled operator version, apply

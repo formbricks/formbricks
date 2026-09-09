@@ -13,15 +13,12 @@ trap 'rm -rf "${temp_dir}"' EXIT
 # install. Evaluate the real notes through `tpl` in a minimal ConfigMap chart so this contract remains
 # clusterless and release-accurate across supported Helm versions.
 notes_chart="${temp_dir}/notes-chart"
-mkdir -p "${notes_chart}/templates"
+mkdir -p "${notes_chart}/charts" "${notes_chart}/templates"
+cp "${CHART_DIR}/Chart.yaml" "${notes_chart}/Chart.yaml"
+cp "${CHART_DIR}"/charts/*.tgz "${notes_chart}/charts/"
 cp "${CHART_DIR}/values.yaml" "${notes_chart}/values.yaml"
 cp "${CHART_DIR}/templates/_helpers.tpl" "${notes_chart}/templates/_helpers.tpl"
 cp "${CHART_DIR}/templates/NOTES.txt" "${notes_chart}/notes.txt"
-printf '%s\n' \
-  'apiVersion: v2' \
-  'name: formbricks-notes-contract' \
-  'version: 0.0.0' \
-  'appVersion: 0.0.0' >"${notes_chart}/Chart.yaml"
 printf '%s\n' \
   'apiVersion: v1' \
   'kind: ConfigMap' \
@@ -60,6 +57,27 @@ if grep --fixed-strings "AuthZed / SpiceDB Operations:" <<<"${disabled_notes}" >
   printf '%s\n' "AuthZed operations notes must be hidden when AuthZed is disabled." >&2
   exit 1
 fi
+
+postgresql_override_notes="$(render_notes postgresql-overrides \
+  --set postgresql.fullnameOverride=audit-postgresql \
+  --set postgresql.primary.service.ports.postgresql=5544 \
+  --set postgresql.auth.username=audit_user \
+  --set postgresql.auth.database=audit_db)"
+for expected in \
+  'jsonpath="{.data.POSTGRES_USER_PASSWORD}"' \
+  '**Host**: `audit-postgresql`' \
+  '**Port**: `5544`' \
+  '**Database**: `audit_db`' \
+  '**Username**: `audit_user`'; do
+  if ! grep --fixed-strings "${expected}" <<<"${postgresql_override_notes}" >/dev/null; then
+    printf '%s\n' "PostgreSQL installation notes must contain: ${expected}" >&2
+    exit 1
+  fi
+done
+
+postgres_user_notes="$(render_notes postgresql-postgres-user \
+  --set postgresql.auth.username=postgres)"
+grep --fixed-strings 'jsonpath="{.data.POSTGRES_ADMIN_PASSWORD}"' <<<"${postgres_user_notes}" >/dev/null
 
 external_notes="$(render_notes authzed-external \
   --set authzed.enabled=true \
