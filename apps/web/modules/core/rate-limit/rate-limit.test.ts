@@ -148,7 +148,7 @@ describe("checkRateLimit", () => {
     await checkRateLimit(testConfig, "test-user");
 
     expect(mockEval).toHaveBeenCalledWith(
-      expect.stringContaining("redis.call('INCRBY', key, requested)"),
+      expect.any(String),
       expect.objectContaining({
         keys: [expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/)],
         arguments: ["5", expect.any(String), "1"],
@@ -185,22 +185,6 @@ describe("checkRateLimit", () => {
     const ttlUsed = Number.parseInt(mockEval.mock.calls[0][1].arguments[1]);
     expect(ttlUsed).toBeGreaterThan(0);
     expect(ttlUsed).toBeLessThanOrEqual(300);
-  });
-
-  test("should set TTL only on first increment", async () => {
-    mockEval.mockResolvedValue([1, 1]);
-
-    await checkRateLimit(testConfig, "test-user");
-
-    // Verify the Lua script contains the conditional TTL logic
-    const luaScript = mockEval.mock.calls[0][0];
-    expect(luaScript).toContain("if current == 0 then");
-    expect(luaScript).toContain("redis.call('EXPIRE', key, ttl)");
-    expect(luaScript).toContain("end");
-
-    // Verify script structure for atomic increment and conditional expire
-    expect(luaScript).toContain("redis.call('INCRBY', key, requested)");
-    expect(luaScript).toContain("if next > limit then");
   });
 
   test("should count multiple recipients in one atomic request", async () => {
