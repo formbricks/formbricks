@@ -69,9 +69,10 @@ export const GET = async (request: Request) => {
 
     // An intent that simply is not there is the ordinary case — this recovery already completed, or it
     // expired — and it is not evidence of a session that should not exist. Tearing one down here would
-    // punish a second open of a link that is replayable for its whole window by design: the sign-in endpoint
-    // establishes the session, then this route would revoke it and report that the linking failed,
-    // after it had already succeeded on the first open. So leave the session alone and just redirect.
+    // punish a second open of a link that is replayable for its whole window by design: the sign-in
+    // endpoint establishes the session, then this route would revoke it and report that the linking
+    // failed, after it had already succeeded on the first open. So leave the session alone and
+    // just redirect.
     if (recoveryError?.failure === "intent_missing") {
       return NextResponse.redirect(getSsoRecoveryFailureRedirectUrl());
     }

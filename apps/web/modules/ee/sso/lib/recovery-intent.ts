@@ -197,19 +197,6 @@ export const consumeSsoRecoveryIntent = async (stateId: string): Promise<void> =
 };
 
 /**
- * Re-pair the intent with a link that was just resent.
- *
- * Takes the lifetime rather than deriving it, and that is the point: the caller mints the resent link
- * with the same {@link getSsoRecoveryPairedTtlSeconds} value it passes here, so the two halves cannot
- * come apart — not even by the second or two that computing the number twice would cost. Anything not
- * strictly positive is a no-op, `NaN` included, so a miscomputed lifetime can never become an EXPIRE.
- *
- * Only the expiry moves — the stored record, `createdAt` included, is never rewritten. So every refresh
- * is measured against the original start and the window cannot slide past {@link INTENT_MAX_LIFETIME_MS},
- * which matters because the caller is unauthenticated. Best-effort, never throws: the mail has already
- * gone out, so a failure here costs the pairing, not the resend.
- */
-/**
  * How long both halves of a resent recovery may live, in seconds — `0` once the intent is spent.
  *
  * The link and the intent have to expire together (see {@link VERIFICATION_LINK_TTL_SECONDS}), and a
@@ -233,6 +220,19 @@ export const getSsoRecoveryPairedTtlSeconds = (intent: TSsoRecoveryIntent): numb
   return Math.floor(Math.min(INTENT_TTL_MS, remainingLifetimeMs) / 1000);
 };
 
+/**
+ * Re-pair the intent with a link that was just resent.
+ *
+ * Takes the lifetime rather than deriving it, and that is the point: the caller mints the resent link
+ * with the same {@link getSsoRecoveryPairedTtlSeconds} value it passes here, so the two halves cannot
+ * come apart — not even by the second or two that computing the number twice would cost. Anything not
+ * strictly positive is a no-op, `NaN` included, so a miscomputed lifetime can never become an EXPIRE.
+ *
+ * Only the expiry moves — the stored record, `createdAt` included, is never rewritten. So every refresh
+ * is measured against the original start and the window cannot slide past {@link INTENT_MAX_LIFETIME_MS},
+ * which matters because the caller is unauthenticated. Best-effort, never throws: the mail has already
+ * gone out, so a failure here costs the pairing, not the resend.
+ */
 export const refreshSsoRecoveryIntent = async (stateId: string, ttlSeconds: number): Promise<void> => {
   if (!STATE_ID_REGEX.test(stateId) || !(ttlSeconds > 0)) {
     return;
