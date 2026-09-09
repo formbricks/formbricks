@@ -234,6 +234,8 @@ export function createGeneratedSurveyDraftSchema<
       .optional(),
     /** Choice questions: the source offered "Other (please specify)"; becomes the `other` choice, not a label. */
     allowOther: z.boolean().nullable().optional(),
+    /** Single choice shown as a dropdown / select list in the source. */
+    dropdown: z.boolean().nullable().optional(),
     /** The wording of that "Other" option when the source has one. */
     otherLabel: choice.nullable().optional(),
     /** The source's original type name when it was approximated, or anything worth reporting. */
@@ -375,6 +377,7 @@ export type TGeneratedDraftElementLike = {
   fields?: string[] | null;
   allowOther?: boolean | null;
   otherLabel?: TGeneratedDraftText | null;
+  dropdown?: boolean | null;
   notes?: string[] | null;
 };
 

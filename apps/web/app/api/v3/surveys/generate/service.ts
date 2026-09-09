@@ -237,7 +237,8 @@ function buildChoiceElement(
     type: element.type as "multipleChoiceSingle" | "multipleChoiceMulti",
     choices,
     shuffleOption: "none" as const,
-    displayType: "list" as const,
+    displayType:
+      element.dropdown && element.type === "multipleChoiceSingle" ? ("dropdown" as const) : ("list" as const),
   };
 }
 
