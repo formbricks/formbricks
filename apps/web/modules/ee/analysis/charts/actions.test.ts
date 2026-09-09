@@ -404,7 +404,7 @@ describe("chart Cube actions", () => {
         query: {
           measures: ["FeedbackRecords.count"],
           dimensions: ["FeedbackRecords.valueText"],
-          // User filtered by "Question" (fieldLabel), not by fieldId.
+          // User filtered by "Field Label" (fieldLabel), not by fieldId.
           filters: [
             { member: "FeedbackRecords.fieldLabel", operator: "equals", values: ["Favourite colour?"] },
           ],

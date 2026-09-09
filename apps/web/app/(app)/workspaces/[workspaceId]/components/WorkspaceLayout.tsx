@@ -6,9 +6,11 @@ import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD, IS_FORMBRICKS_SURVEYS_CONFIGURED }
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
+import { getTrialDaysRemaining } from "@/lib/trial-countdown";
 import { getTranslate } from "@/lingodotdev/server";
 import { TrialEndingWarningModal } from "@/modules/ee/billing/components/trial-ending-warning-modal";
 import { TrialResponseWarningModal } from "@/modules/ee/billing/components/trial-response-warning-modal";
+import { getPendingDowngradeSchedule } from "@/modules/ee/license-check/lib/license";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
@@ -41,13 +43,13 @@ const getResponseWarningThreshold = (
 
 // Show the loss-aversion trial-ending modal once on each of the last 3 days of the trial.
 const getTrialEndingDaysRemaining = (trialEnd: string | Date, cookieStore: TCookieStore): number | null => {
-  const MS_PER_DAY = 86_400_000;
-  const trialEndTime = new Date(trialEnd).getTime();
-  if (!Number.isFinite(trialEndTime)) {
-    return null;
-  }
-  const daysRemaining = Math.ceil((trialEndTime - Date.now()) / MS_PER_DAY);
-  if (daysRemaining >= 1 && daysRemaining <= 3 && !cookieStore.get(`trial_ending_shown_${daysRemaining}`)) {
+  const daysRemaining = getTrialDaysRemaining(trialEnd);
+  if (
+    daysRemaining !== null &&
+    daysRemaining >= 1 &&
+    daysRemaining <= 3 &&
+    !cookieStore.get(`trial_ending_shown_${daysRemaining}`)
+  ) {
     return daysRemaining;
   }
   return null;
@@ -110,6 +112,10 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
       ? getTrialEndingDaysRemaining(trialEnd, cookieStore)
       : null;
 
+  // Countdown for the sidebar's TrialAlert. `isTrialing` already carries the same cloud +
+  // "trialing" subscription guard the sidebar used to apply itself.
+  const trialDaysRemaining = isTrialing && trialEnd ? getTrialDaysRemaining(trialEnd) : null;
+
   const billingHref = `/workspaces/${workspace.id}/settings/organization/billing`;
 
   return (
@@ -121,7 +127,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
 
       <PendingDowngradeBanner
         organizationId={organization.id}
-        lastChecked={lastChecked}
+        {...getPendingDowngradeSchedule(lastChecked)}
         isPendingDowngrade={isPendingDowngrade ?? false}
         active={active}
         locale={user.locale}
@@ -155,6 +161,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           responseCount={responseCount}
           newTrialBannerVariant={newTrialBannerVariant}
           isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
+          trialDaysRemaining={trialDaysRemaining}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar

@@ -14,6 +14,11 @@ export const surveyKeys = {
   list: (input: TSurveyListKeyInput) => [...surveyKeys.lists(), input] as const,
 };
 
+export const surveyMutationKeys = {
+  /** Shared by archive, restore and delete so the list can see a removal that is still in flight. */
+  removal: () => [...surveyKeys.all, "removal"] as const,
+};
+
 export function flattenSurveyPages(data?: InfiniteData<TSurveyListPage>): TSurveyListItem[] {
   return data?.pages.flatMap((page) => page.data) ?? [];
 }

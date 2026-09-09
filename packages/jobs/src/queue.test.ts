@@ -346,6 +346,7 @@ describe("@formbricks/jobs queue helpers", () => {
     ["surveyScheduling", "survey-scheduling.reconcile:global:daily-survey-scheduling"],
     ["usageTelemetry", "usage-telemetry.process:global:daily-usage-telemetry"],
     ["workflowRunReconcile", "workflow-run.reconcile:global:workflow-run-reconcile"],
+    ["workflowsUsageSnapshot", "workflows-usage.snapshot:global:daily-workflows-usage-snapshot"],
   ] as const)("keeps the %s scheduler id stable", async (key, expectedSchedulerId) => {
     mockQueueUpsertJobScheduler.mockResolvedValue({
       id: "job-id-parity",

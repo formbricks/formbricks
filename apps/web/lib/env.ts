@@ -315,6 +315,11 @@ const parsedEnv = createEnv({
     // DEBUG is a common ambient env var in CI/tooling, so we accept arbitrary strings here
     // and only treat "1" as enabling Formbricks-specific debug behavior downstream.
     DEBUG: z.string().optional(),
+    // cuid2 rather than a bare string so a typo'd or foreign id (a uuid, an uppercase value) fails
+    // at boot instead of silently provisioning SSO users into no organization at all. Permissive
+    // enough for the cuid v1 ids that `Organization.id @default(cuid())` has always produced.
+    AUTH_DEFAULT_ORGANIZATION_ID: z.cuid2().optional(),
+    AUTH_DEFAULT_ORGANIZATION_ROLE: z.enum(["owner", "manager", "member", "billing"]).optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
     AUTHZED_CONSISTENCY: ZAuthzedConsistency,
@@ -515,6 +520,8 @@ const parsedEnv = createEnv({
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
     DEBUG: process.env.DEBUG,
     DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
+    AUTH_DEFAULT_ORGANIZATION_ID: process.env.AUTH_SSO_DEFAULT_ORGANIZATION_ID,
+    AUTH_DEFAULT_ORGANIZATION_ROLE: process.env.AUTH_SSO_DEFAULT_ORGANIZATION_ROLE,
     AUTH_DEFAULT_TEAM_ID: process.env.AUTH_SSO_DEFAULT_TEAM_ID,
     AUTH_SKIP_INVITE_FOR_SSO: process.env.AUTH_SKIP_INVITE_FOR_SSO,
     AUTHZED_CONSISTENCY: process.env.AUTHZED_CONSISTENCY,
