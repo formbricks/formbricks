@@ -40,11 +40,16 @@ properties:
       Stable key. Unique within `embeddedData`.
 
 
-      Uniqueness is a guarantee this API makes rather than one the stored data provides: a survey may
-      declare a hidden field or variable whose name collides with a catalog field (`country`, `url`
-      and `language` are all declarable on surveys created before the reserved names were enforced).
-      Where that happens the **declared** entry wins and the `reserved` one is omitted, matching how
-      recall and logic already resolve the same name.
+      Uniqueness is a guarantee this API makes rather than one the stored data provides: a survey
+      created before the reserved names were enforced may declare a **hidden field** whose id
+      collides with a catalog field (`country` and `url` are both declarable that way). Where that
+      happens the declared entry wins and the `reserved` one is omitted, matching how recall and
+      logic already resolve the same name.
+
+
+      A **variable** can never collide, whatever it is called: its key is its cuid, not its name, so
+      a variable named `country` and the reserved `country` occupy different keys and both appear.
+      The variable's name is on `label`.
 
 
       `reserved` keys are the catalog's own names, which are camelCase — `deviceType`, `utmSource`,

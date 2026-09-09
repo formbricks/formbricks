@@ -53,6 +53,12 @@ properties:
     description: >
       Seconds the respondent spent on this element. Converted from the stored per-element
       time-to-complete, which is recorded in milliseconds. This telemetry is reported by the client
-      and is therefore not trustworthy input: it is clamped to at most 24 hours per element at the
-      write boundary, so treat it as an indication rather than a measurement. Absent when the
-      submission carried no timing for this element.
+      and is therefore not trustworthy input: treat it as an indication rather than a measurement.
+      Absent when the submission carried no timing for this element.
+
+
+      The bounds hold on **every** row, including ones collected before the write-side clamp shipped.
+      The stored representation is deliberately unbounded so that historical data still parses, and a
+      row written then can hold a negative value or a tab left open for days; those are clamped into
+      range on read rather than returned as-is, because a schema a real row violates is worse than a
+      slightly blunted outlier. So `86400` means "at least 24 hours", not exactly.
