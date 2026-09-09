@@ -17,6 +17,8 @@ get:
     - V3 Feedback Records
   parameters:
     - $ref: ../components/parameters/FeedbackRecordIdPath.yml
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
     - $ref: ../components/parameters/SimilarityLimitQuery.yml
     - $ref: ../components/parameters/SimilarityCursorQuery.yml
     - $ref: ../components/parameters/MinScoreQuery.yml
@@ -50,6 +52,8 @@ get:
       $ref: ../components/responses/V3Forbidden.yml
     "409":
       $ref: ../components/responses/FeedbackRecordsEmbeddingPending.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
     "500":
       $ref: ../components/responses/V3InternalServerError.yml
     "503":

@@ -35,6 +35,8 @@ get:
       $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
     "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
