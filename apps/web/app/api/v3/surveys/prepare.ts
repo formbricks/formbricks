@@ -96,10 +96,21 @@ function getV3SurveyPatchAllowedLanguageCodes(survey: TInternalSurvey): string[]
   );
 }
 
-function buildDocumentFromSurvey(
+/**
+ * Parse the stored survey into a v3 document — and deliberately stop there (ENG-3070).
+ *
+ * The stored document is never judged on its own. Running the semantic pass here and returning early
+ * is what made a broken survey unpatchable: a request that *replaced* the offending field still died
+ * on the stored copy of it, so "send corrected values" was impossible. Only the merged document is
+ * validated, once, by the caller below.
+ *
+ * Shape failures still surface here, because there is no merged document to speak of if the stored
+ * one will not parse — and those carry `storedSurvey` so they are reported as a state error.
+ */
+function parseStoredV3SurveyDocument(
   survey: TInternalSurvey,
   allowedLanguageCodes = getV3SurveyPatchAllowedLanguageCodes(survey)
-): TV3SurveyPrepareResult<TV3SurveyDocument> {
+): { ok: true; document: TV3SurveyDocument } | TV3SurveyPrepareFailure {
   if (Array.isArray(survey.questions) && survey.questions.length > 0) {
     return invalidPreparation(
       [
@@ -141,8 +152,23 @@ function buildDocumentFromSurvey(
     return invalidPreparation(formatV3ZodInvalidParams(documentResult.error, "survey"), "storedSurvey");
   }
 
-  // `skip`: the stored document's ordering is not this request's fault. See TV3SurveyPrecedencePolicy.
-  return validPreparation(documentResult.data, { mode: "skip" });
+  return { ok: true, document: documentResult.data };
+}
+
+/**
+ * Whose fault is a merged-document failure?
+ *
+ * `storedSurvey` only when *every* reported path sits under a top-level field the caller did not
+ * send — otherwise the request touched it and owns the result. One provided key among the failures
+ * is enough to make it the caller's, since a partial repair still leaves the request responsible.
+ */
+function deriveFailureOrigin(
+  invalidParams: InvalidParam[],
+  providedTopLevelKeys: ReadonlySet<string>
+): "request" | "storedSurvey" {
+  return invalidParams.every((param) => !providedTopLevelKeys.has(param.name.split(".")[0]))
+    ? "storedSurvey"
+    : "request";
 }
 
 function mergeV3SurveyPatch(document: TV3SurveyDocument, patch: TV3PatchSurveyBody): TV3SurveyDocument {
@@ -440,7 +466,7 @@ export function prepareV3SurveyPatchInput(
   input: unknown
 ): TV3SurveyPrepareResult<TV3SurveyDocument> {
   const allowedLanguageCodes = getV3SurveyPatchAllowedLanguageCodes(survey);
-  const currentDocument = buildDocumentFromSurvey(survey, allowedLanguageCodes);
+  const currentDocument = parseStoredV3SurveyDocument(survey, allowedLanguageCodes);
 
   if (!currentDocument.ok) {
     return currentDocument;
@@ -469,11 +495,25 @@ export function prepareV3SurveyPatchInput(
     return invalidPreparation(immutableElementIdIssues);
   }
 
-  const prepared = validPreparation(patchedDocument, {
+  // `introduced`: only ordering violations this request newly creates are rejected. Enforcing the
+  // whole rule here would brick every survey that already contains one — the ENG-3070 failure again.
+  const validation = validateV3SurveyDocument(patchedDocument, {
     mode: "introduced",
     baseline: currentDocument.document,
   });
-  return prepared.ok && readOnly.precondition
-    ? { ...prepared, precondition: readOnly.precondition }
-    : prepared;
+
+  if (!validation.valid) {
+    return invalidPreparation(
+      validation.invalidParams,
+      deriveFailureOrigin(validation.invalidParams, new Set(Object.keys(aliases.rest)))
+    );
+  }
+
+  return {
+    ok: true,
+    document: patchedDocument,
+    validation,
+    languageRequests: deriveV3SurveyLanguageRequests(patchedDocument),
+    ...(readOnly.precondition ? { precondition: readOnly.precondition } : {}),
+  };
 }

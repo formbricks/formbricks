@@ -709,3 +709,59 @@ describe("v3 survey preparation", () => {
     expect(preparation.ok).toBe(true);
   });
 });
+
+describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", () => {
+  // ENG-3070. The stored survey parses fine but fails the semantic pass: `de-DE` is configured and
+  // the headline has no German. Both halves of the ticket are asserted here — the failure must be
+  // attributed to the stored survey, and a patch that repairs the offending field must be accepted.
+  const storedInvalidSurvey = {
+    ...survey,
+    blocks: [
+      {
+        id: "clbk1234567890123456789012",
+        name: "Main Block",
+        elements: [
+          {
+            id: "satisfaction",
+            type: "openText",
+            headline: { "en-US": "What should we improve?" },
+            required: true,
+          },
+        ],
+      },
+    ],
+  } as unknown as TSurvey;
+
+  test("attributes the failure to the stored survey, not the request", () => {
+    const result = prepareV3SurveyPatchInput(storedInvalidSurvey, { name: "Renamed" });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    // Without this the caller is told its `{ name }` patch is malformed, and the reported path is
+    // `blocks.0.…` — an array it never sent.
+    expect(result.origin).toBe("storedSurvey");
+  });
+
+  test("accepts a patch that repairs the offending field", () => {
+    const result = prepareV3SurveyPatchInput(storedInvalidSurvey, {
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: { "en-US": "What should we improve?", "de-DE": "Was sollen wir verbessern?" },
+              required: true,
+            },
+          ],
+        },
+      ],
+    });
+
+    // The whole point of the restructure: sending corrected values has to actually work. Judging the
+    // stored document on its own makes this impossible, because the patch is never reached.
+    expect(result.ok).toBe(true);
+  });
+});

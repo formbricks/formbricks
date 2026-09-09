@@ -61,6 +61,30 @@ export function readPublicBlocks(resource: { blocks: unknown }): TV3PublicBlock[
   return resource.blocks.every(isPublicBlock) ? [...(resource.blocks as TV3PublicBlock[])] : null;
 }
 
+/**
+ * Cap on reported reorder diagnostics.
+ *
+ * `reorderSurveyBlocks` emits one entry per unknown or repeated id, so a body full of junk ids turns
+ * into a response several times its own size — the 2 MB request bound does not bound the response.
+ * Report enough to act on, then say how many were left out. ENG-1652's policy, applied to an output.
+ */
+const V3_BLOCK_ORDER_MAX_DIAGNOSTICS = 50;
+
+function boundOrderDiagnostics(invalidParams: InvalidParam[]): InvalidParam[] {
+  if (invalidParams.length <= V3_BLOCK_ORDER_MAX_DIAGNOSTICS) {
+    return invalidParams;
+  }
+
+  const omitted = invalidParams.length - V3_BLOCK_ORDER_MAX_DIAGNOSTICS;
+  return [
+    ...invalidParams.slice(0, V3_BLOCK_ORDER_MAX_DIAGNOSTICS),
+    {
+      name: "order",
+      reason: `${omitted} further problems with this order were not reported; fix the ones above and retry`,
+    },
+  ];
+}
+
 function blockIdOf(block: Record<string, unknown>): string | null {
   const id = block.id;
   return typeof id === "string" && id.length > 0 ? id : null;
@@ -313,7 +337,7 @@ export function reorderSurveyBlocks(
   }
 
   if (invalidParams.length > 0) {
-    return { ok: false, invalidParams };
+    return { ok: false, invalidParams: boundOrderDiagnostics(invalidParams) };
   }
 
   const unchanged = currentBlocks.every((block, index) => block.id === order[index]);

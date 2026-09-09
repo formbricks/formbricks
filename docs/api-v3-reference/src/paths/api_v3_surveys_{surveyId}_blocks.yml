@@ -120,13 +120,15 @@ patch:
       description: >
         The request is well-formed but could not be applied. `invalid_params[].name` points at the
         operation that failed — `ops.<i>.…` — including for problems found while validating the
-        resulting document, so a path always names something the caller sent. Blocks the request did
-        not touch keep their `blocks.<i>` path, because a problem there is in the stored survey.
+        resulting document. The one exception is a block the request did not touch: those keep their
+        `blocks.<i>` path, because the problem is in the stored survey rather than in any operation.
+        A `stored_survey_invalid` response reports stored-survey paths throughout for the same reason.
 
 
         Common codes: `dangling_reference` (an id that is not on the survey),
         `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an
-        inserted block with no id), `immutable_identifier` (`block.id` contradicting the op's `id`),
+        inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server
+        generates one), `immutable_identifier` (`block.id` contradicting the op's `id`),
         and `stored_survey_invalid` when the stored survey itself fails the document contract.
       content:
         application/problem+json:

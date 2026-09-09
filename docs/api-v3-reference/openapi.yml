@@ -972,8 +972,9 @@ paths:
         name renames are allowed but may be destructive for downstream exports or integrations.
         Element id changes are rejected once the survey and element are no longer drafts.
 
-        Optimistic concurrency (`ETag`, `If-Match`, or revision tokens) is future work; until then,
-        overlapping writes are last-write-wins.
+        Server-owned fields that `GET` returns (`id`, `workspaceId`, `type`, `createdAt`, `archivedAt`, `defaultLanguage`, `languages[].alias`) are accepted and verified, so the output of a `GET` can be sent straight back. Echoing the value you were given is a no-op; changing one is a **422** `read_only_field`.
+
+        A round-tripped `updatedAt` acts as an optimistic-concurrency precondition: the write is applied only if the survey has not changed since your read, and is otherwise rejected with **409**. Omit it and overlapping writes remain last-write-wins. Header-based preconditions (`ETag` / `If-Match`) are still future work.
       tags:
         - V3 Surveys
       parameters:
@@ -1041,7 +1042,7 @@ paths:
                     $ref: '#/components/schemas/SurveyResource'
         '400':
           description: |
-            Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown, unsupported, or immutable fields (`type` cannot be changed after creation, and `distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `type`, or `distribution`/`targeting` on a link survey); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
+            Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown or unsupported fields (`distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `distribution`/`targeting` on a link survey; a changed server-owned field such as `type` is **422** `read_only_field`, not this); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
           content:
             application/problem+json:
               schema:
@@ -1054,11 +1055,30 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict — a round-tripped `updatedAt` did not match the stored survey, so it changed since your read. Nothing was written. `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`, so a client can re-read and retry without guessing.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: Survey was modified since it was last read; updatedAt is now 2026-04-21T11:30:00.000Z. Re-read the survey and retry.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  expectedUpdatedAt: '2026-04-21T10:00:00.000Z'
+                  currentUpdatedAt: '2026-04-21T11:30:00.000Z'
         '422':
           description: |-
             Unprocessable Content — the request cannot be processed against stored state. Two cases:
             1. The target survey is archived (soft-deleted) and therefore read-only; restore it before editing. The `invalid_params` entry reports `name: archivedAt` with the reason `This survey is archived. Restore it before editing.`
             2. The patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
+
+            3. A server-owned field was echoed back with a different value — `code: read_only_field`, with the submitted value in `identifier`. Sending the value `GET` returned is always a no-op.
+
+            4. The *stored* survey no longer satisfies the v3 document contract — `code: stored_survey_invalid`. The reported paths are into the survey, not into the request, so a patch that includes corrected values for those fields is the way out.
           content:
             application/problem+json:
               schema:
@@ -1245,9 +1265,9 @@ paths:
                   currentUpdatedAt: '2026-04-21T11:30:00.000Z'
         '422':
           description: |
-            The request is well-formed but could not be applied. `invalid_params[].name` points at the operation that failed — `ops.<i>.…` — including for problems found while validating the resulting document, so a path always names something the caller sent. Blocks the request did not touch keep their `blocks.<i>` path, because a problem there is in the stored survey.
+            The request is well-formed but could not be applied. `invalid_params[].name` points at the operation that failed — `ops.<i>.…` — including for problems found while validating the resulting document. The one exception is a block the request did not touch: those keep their `blocks.<i>` path, because the problem is in the stored survey rather than in any operation. A `stored_survey_invalid` response reports stored-survey paths throughout for the same reason.
 
-            Common codes: `dangling_reference` (an id that is not on the survey), `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an inserted block with no id), `immutable_identifier` (`block.id` contradicting the op's `id`), and `stored_survey_invalid` when the stored survey itself fails the document contract.
+            Common codes: `dangling_reference` (an id that is not on the survey), `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server generates one), `immutable_identifier` (`block.id` contradicting the op's `id`), and `stored_survey_invalid` when the stored survey itself fails the document contract.
           content:
             application/problem+json:
               schema:
@@ -4946,6 +4966,28 @@ components:
           items:
             $ref: '#/components/schemas/SurveyValidationLanguage'
       additionalProperties: false
+    SurveyBlockUpdateOperation:
+      type: object
+      additionalProperties: false
+      description: Replace one existing block, addressed by id.
+      required:
+        - op
+        - id
+        - block
+      properties:
+        op:
+          type: string
+          enum:
+            - update
+        id:
+          type: string
+          maxLength: 128
+          description: Block to replace.
+        block:
+          allOf:
+            - $ref: '#/components/schemas/CreateSurveyBlock'
+          description: |
+            Replaces the target block entirely — the same whole-subtree rule PATCH uses. `block.id` is optional and taken from `id` when omitted; if present it must equal `id`.
     SurveyBlockInsertPosition:
       oneOf:
         - type: object
@@ -4984,63 +5026,54 @@ components:
               description: |
                 Block to insert after. May be a block inserted by an earlier operation in the same request, since operations are applied in order.
       description: Where an inserted block goes. Anchored to a block id, never to a positional index.
+    SurveyBlockInsertOperation:
+      type: object
+      additionalProperties: false
+      description: Add a new block at an anchored position.
+      required:
+        - op
+        - block
+        - position
+      properties:
+        op:
+          type: string
+          enum:
+            - insert
+        block:
+          allOf:
+            - $ref: '#/components/schemas/CreateSurveyBlock'
+          description: |
+            New block. `id` is optional and generated when omitted, matching survey creation. Supply one only when a later operation in the same request anchors after it; if supplied it must not already exist on the survey.
+        position:
+          $ref: '#/components/schemas/SurveyBlockInsertPosition'
+    SurveyBlockRemoveOperation:
+      type: object
+      additionalProperties: false
+      description: Delete one existing block, addressed by id.
+      required:
+        - op
+        - id
+      properties:
+        op:
+          type: string
+          enum:
+            - remove
+        id:
+          type: string
+          maxLength: 128
+          description: |
+            Block to delete, along with every element in it. Answers already collected for those elements are orphaned and the API cannot undo that.
     SurveyBlockOperation:
       oneOf:
-        - type: object
-          additionalProperties: false
-          required:
-            - op
-            - id
-            - block
-          properties:
-            op:
-              type: string
-              enum:
-                - update
-            id:
-              type: string
-              maxLength: 128
-              description: Block to replace.
-            block:
-              allOf:
-                - $ref: '#/components/schemas/CreateSurveyBlock'
-              description: |
-                Replaces the target block entirely — the same whole-subtree rule PATCH uses. `block.id` is optional and taken from `id` when omitted; if present it must equal `id`.
-        - type: object
-          additionalProperties: false
-          required:
-            - op
-            - block
-            - position
-          properties:
-            op:
-              type: string
-              enum:
-                - insert
-            block:
-              allOf:
-                - $ref: '#/components/schemas/CreateSurveyBlock'
-              description: |
-                New block. `id` is optional and generated when omitted, matching survey creation. Supply one only when a later operation in the same request anchors after it; if supplied it must not already exist on the survey.
-            position:
-              $ref: '#/components/schemas/SurveyBlockInsertPosition'
-        - type: object
-          additionalProperties: false
-          required:
-            - op
-            - id
-          properties:
-            op:
-              type: string
-              enum:
-                - remove
-            id:
-              type: string
-              maxLength: 128
-              description: |
-                Block to delete, along with every element in it. Answers already collected for those elements are orphaned and the API cannot undo that.
+        - $ref: '#/components/schemas/SurveyBlockUpdateOperation'
+        - $ref: '#/components/schemas/SurveyBlockInsertOperation'
+        - $ref: '#/components/schemas/SurveyBlockRemoveOperation'
       discriminator:
         propertyName: op
+        mapping:
+          update: '#/components/schemas/SurveyBlockUpdateOperation'
+          insert: '#/components/schemas/SurveyBlockInsertOperation'
+          remove: '#/components/schemas/SurveyBlockRemoveOperation'
       description: A single block operation.
     EditSurveyBlocksRequest:
       type: object
@@ -5070,12 +5103,11 @@ components:
         order:
           type: array
           minItems: 1
-          uniqueItems: true
           items:
             type: string
             maxLength: 128
           description: |
-            Every current block id, exactly once, in the desired order. A missing or unknown id is a **422** — which is what makes this safer than resending the blocks, since a dropped block cannot pass unnoticed.
+            Every current block id, exactly once, in the desired order. A missing, unknown or repeated id is a **422** — repeats are reported as `duplicate_identifier` rather than rejected by the schema, so the response names the offending entry. A missing or unknown id is likewise a **422** — which is what makes this safer than resending the blocks, since a dropped block cannot pass unnoticed.
         expectedUpdatedAt:
           type: string
           format: date-time

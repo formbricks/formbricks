@@ -1,61 +1,14 @@
 oneOf:
-  - type: object
-    additionalProperties: false
-    required:
-      - op
-      - id
-      - block
-    properties:
-      op:
-        type: string
-        enum:
-          - update
-      id:
-        type: string
-        maxLength: 128
-        description: Block to replace.
-      block:
-        allOf:
-          - $ref: CreateSurveyBlock.yml
-        description: >
-          Replaces the target block entirely — the same whole-subtree rule PATCH uses. `block.id` is
-          optional and taken from `id` when omitted; if present it must equal `id`.
-  - type: object
-    additionalProperties: false
-    required:
-      - op
-      - block
-      - position
-    properties:
-      op:
-        type: string
-        enum:
-          - insert
-      block:
-        allOf:
-          - $ref: CreateSurveyBlock.yml
-        description: >
-          New block. `id` is optional and generated when omitted, matching survey creation. Supply
-          one only when a later operation in the same request anchors after it; if supplied it must
-          not already exist on the survey.
-      position:
-        $ref: SurveyBlockInsertPosition.yml
-  - type: object
-    additionalProperties: false
-    required:
-      - op
-      - id
-    properties:
-      op:
-        type: string
-        enum:
-          - remove
-      id:
-        type: string
-        maxLength: 128
-        description: >
-          Block to delete, along with every element in it. Answers already collected for those
-          elements are orphaned and the API cannot undo that.
+  - $ref: SurveyBlockUpdateOperation.yml
+  - $ref: SurveyBlockInsertOperation.yml
+  - $ref: SurveyBlockRemoveOperation.yml
+# Named branches with an explicit mapping: OpenAPI 3.1 does not resolve a discriminator against
+# inline schemas, so with anonymous `oneOf` members the discriminator is inert and a generated
+# client cannot tell the variants apart.
 discriminator:
   propertyName: op
+  mapping:
+    update: ./SurveyBlockUpdateOperation.yml
+    insert: ./SurveyBlockInsertOperation.yml
+    remove: ./SurveyBlockRemoveOperation.yml
 description: A single block operation.

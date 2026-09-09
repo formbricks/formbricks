@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+description: Delete one existing block, addressed by id.
+required:
+  - op
+  - id
+properties:
+  op:
+    type: string
+    enum:
+      - remove
+  id:
+    type: string
+    maxLength: 128
+    description: >
+      Block to delete, along with every element in it. Answers already collected for those
+      elements are orphaned and the API cannot undo that.
