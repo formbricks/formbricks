@@ -1,0 +1,16 @@
+description: >-
+  Payload Too Large — the request body exceeds this endpoint's cap. Reduce the body and
+  retry; the limit is not negotiable per request.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

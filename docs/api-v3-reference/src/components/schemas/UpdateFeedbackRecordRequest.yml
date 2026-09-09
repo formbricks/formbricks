@@ -1,31 +1,31 @@
 type: object
 description: >-
   A partial update. Only the members sent are changed; an empty body is accepted and changes
-  nothing. Provenance (`tenant_id`, `source_*`, `field_*`, `submission_id`, `collected_at`) is
+  nothing. Provenance (`datasetId`, `source_*`, `field_*`, `submissionId`, `collectedAt`) is
   immutable.
 additionalProperties: false
 properties:
-  value_text:
+  valueText:
     type: string
     maxLength: 30000
     description: >-
       New text answer. Changing it clears the server-generated enrichment members (`sentiment`,
-      `sentiment_score`, `emotions`, `value_text_translated`, `translation_lang_key`), queues
+      `sentimentScore`, `emotions`, `valueTextTranslated`, `translationLangKey`), queues
       re-enrichment and re-embedding, and the response reflects the cleared state.
-  value_id:
+  valueId:
     type: string
     maxLength: 255
     description: New stable option id for a choice answer. Opaque, not validated.
-  value_number:
+  valueNumber:
     type: number
     format: double
     minimum: -1000000000000000
     maximum: 1000000000000000
     description: New numeric answer. Must be between -1e15 and +1e15.
-  value_boolean:
+  valueBoolean:
     type: boolean
     description: New yes / no answer.
-  value_date:
+  valueDate:
     type: string
     format: date-time
     description: New date answer. Must be between 1970-01-01 and 2080-12-31.
@@ -33,7 +33,7 @@ properties:
     type: string
     maxLength: 10
     description: New ISO language code. Changing it clears and re-queues the translation pair only.
-  user_id:
+  userId:
     type: string
     maxLength: 255
     description: New end-user identifier.

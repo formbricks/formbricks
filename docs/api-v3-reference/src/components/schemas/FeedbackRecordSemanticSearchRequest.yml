@@ -2,13 +2,13 @@ type: object
 additionalProperties: false
 required:
   - query
-  - tenant_id
+  - datasetId
 properties:
   query:
     type: string
     minLength: 1
     description: Natural-language search text. It is embedded and compared to record embeddings by cosine similarity.
-  tenant_id:
+  datasetId:
     type: string
     format: cuid2
     description: The feedback dataset to search (the dataset id). Results never cross datasets.

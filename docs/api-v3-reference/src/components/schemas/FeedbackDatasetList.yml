@@ -6,9 +6,7 @@ required:
 properties:
   data:
     type: array
-    maxItems: 100
     items:
-      $ref: ./FeedbackRecordSimilarityItem.yml
-    description: Matches ordered by descending `score`.
+      $ref: ./FeedbackDataset.yml
   meta:
     $ref: ./CursorPaginationMeta.yml

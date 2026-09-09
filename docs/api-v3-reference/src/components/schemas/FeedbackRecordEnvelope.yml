@@ -1,0 +1,7 @@
+type: object
+additionalProperties: false
+required:
+  - data
+properties:
+  data:
+    $ref: ./FeedbackRecord.yml

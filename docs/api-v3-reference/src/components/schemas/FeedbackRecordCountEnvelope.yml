@@ -1,0 +1,15 @@
+type: object
+additionalProperties: false
+required:
+  - data
+properties:
+  data:
+    type: object
+    additionalProperties: false
+    required:
+      - count
+    properties:
+      count:
+        type: integer
+        minimum: 0
+        description: Records matching the filters, across every page.
