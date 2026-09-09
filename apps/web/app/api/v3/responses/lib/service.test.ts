@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { deleteScopedResponse, getResponseWorkspaceId } from "./service";
+import { deleteScopedResponse, deleteScopedResponses, getResponseWorkspaceId } from "./service";
 
 vi.mock("server-only", () => ({}));
 
 const {
   mockTxDelete,
+  mockTxFindMany,
+  mockTxDeleteMany,
+  mockTxSurveyMany,
+  mockTxDisplayDeleteMany,
   mockTxSurvey,
   mockFindFirst,
   mockTransaction,
@@ -14,6 +18,10 @@ const {
   mockDeleteFiles,
 } = vi.hoisted(() => ({
   mockTxDelete: vi.fn(),
+  mockTxFindMany: vi.fn(),
+  mockTxDeleteMany: vi.fn(),
+  mockTxSurveyMany: vi.fn(),
+  mockTxDisplayDeleteMany: vi.fn(),
   mockTxSurvey: vi.fn(),
   mockFindFirst: vi.fn(),
   mockTransaction: vi.fn(),
@@ -257,5 +265,166 @@ describe("getResponseWorkspaceId", () => {
     mockFindFirst.mockResolvedValue(null);
 
     await expect(getResponseWorkspaceId(RESPONSE_ID)).resolves.toBeNull();
+  });
+});
+
+/**
+ * The batch path's own unit tests. Its behaviour against real SQL — scope-filtering, the authoritative
+ * count, the FK-safe ordering — is proven in `service.integration.test.ts`, which is the only place it
+ * can be. These cover the parts that are ours rather than Postgres's: what goes into each statement,
+ * how the survey reads are grouped, and what comes back.
+ */
+describe("deleteScopedResponses", () => {
+  const BATCH_IDS = ["clrsaaaaaaaaaaaaaaaaaaaa", "clrsbbbbbbbbbbbbbbbbbbbb"];
+
+  /** A tx exposing the four statements the batch issues. */
+  const runBatch = (
+    rows: Record<string, unknown>[],
+    { count = rows.length, surveys = [{ id: "svy_1", blocks: [], questions: [] }] } = {}
+  ) => {
+    mockTxFindMany.mockResolvedValue(rows);
+    mockTxDeleteMany.mockResolvedValue({ count });
+    mockTxSurveyMany.mockResolvedValue(surveys);
+    mockTxDisplayDeleteMany.mockResolvedValue({ count: 0 });
+    mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
+      fn({
+        response: { findMany: mockTxFindMany, deleteMany: mockTxDeleteMany },
+        survey: { findMany: mockTxSurveyMany },
+        display: { deleteMany: mockTxDisplayDeleteMany },
+      })
+    );
+  };
+
+  const row = (over: Record<string, unknown> = {}) => ({
+    id: BATCH_IDS[0],
+    displayId: null,
+    data: {},
+    surveyId: "svy_1",
+    ...over,
+  });
+
+  beforeEach(() => vi.clearAllMocks());
+
+  /**
+   * The security core. Both statements must carry the scope: the read alone would let the delete take
+   * ids the caller cannot see, and the delete alone would report a count for rows it never read.
+   */
+  test("scopes both the read and the delete by workspace", async () => {
+    runBatch([row()]);
+
+    await deleteScopedResponses(BATCH_IDS, SCOPE);
+
+    expect(mockTxFindMany.mock.calls[0][0].where).toStrictEqual({
+      id: { in: BATCH_IDS },
+      survey: { workspaceId: "ws_1" },
+    });
+    expect(mockTxDeleteMany.mock.calls[0][0].where).toStrictEqual({
+      id: { in: BATCH_IDS },
+      survey: { workspaceId: "ws_1" },
+    });
+  });
+
+  /**
+   * `deleteMany` knows what it removed; the earlier read does not. A concurrent caller can take a row
+   * in between, and reporting the read's length would then overstate the deletion.
+   */
+  test("reports the delete's own count, not the number of rows read", async () => {
+    runBatch([row({ id: BATCH_IDS[0] }), row({ id: BATCH_IDS[1] })], { count: 1 });
+
+    await expect(deleteScopedResponses(BATCH_IDS, SCOPE)).resolves.toMatchObject({ deleted: 1 });
+  });
+
+  test("short-circuits without deleting when nothing is in scope", async () => {
+    runBatch([]);
+
+    await expect(deleteScopedResponses(BATCH_IDS, SCOPE)).resolves.toStrictEqual({
+      deleted: 0,
+      deletedIds: [],
+    });
+    expect(mockTxDeleteMany).not.toHaveBeenCalled();
+    expect(mockDeleteFiles).not.toHaveBeenCalled();
+  });
+
+  /**
+   * One read per distinct survey, not per response. At the 100-id cap the per-row form would be 100
+   * queries to collect a handful of file-upload element ids.
+   */
+  test("reads each distinct survey once, however many responses reference it", async () => {
+    runBatch([row({ surveyId: "svy_1" }), row({ surveyId: "svy_1" }), row({ surveyId: "svy_2" })], {
+      surveys: [
+        { id: "svy_1", blocks: [], questions: [] },
+        { id: "svy_2", blocks: [], questions: [] },
+      ],
+    });
+
+    await deleteScopedResponses(BATCH_IDS, SCOPE);
+
+    expect(mockTxSurveyMany).toHaveBeenCalledTimes(1);
+    expect(mockTxSurveyMany.mock.calls[0][0].where).toStrictEqual({ id: { in: ["svy_1", "svy_2"] } });
+  });
+
+  test("removes the linked displays, and skips the statement when there are none", async () => {
+    runBatch([row({ displayId: "cldp_1" }), row({ displayId: null })]);
+
+    await deleteScopedResponses(BATCH_IDS, SCOPE);
+
+    expect(mockTxDisplayDeleteMany).toHaveBeenCalledWith({ where: { id: { in: ["cldp_1"] } } });
+
+    vi.clearAllMocks();
+    runBatch([row({ displayId: null })]);
+    await deleteScopedResponses(BATCH_IDS, SCOPE);
+    expect(mockTxDisplayDeleteMany).not.toHaveBeenCalled();
+  });
+
+  test("collects file urls across the batch and deletes them after the transaction", async () => {
+    const order: string[] = [];
+    mockTxFindMany.mockResolvedValue([
+      row({ data: { screenshots: ["https://s/a.png"] } }),
+      row({ data: { screenshots: ["https://s/b.png"] } }),
+    ]);
+    mockTxDeleteMany.mockResolvedValue({ count: 2 });
+    mockTxSurveyMany.mockResolvedValue([{ id: "svy_1", blocks: [], questions: [] }]);
+    mockTxDisplayDeleteMany.mockResolvedValue({ count: 0 });
+    mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+      const out = await fn({
+        response: { findMany: mockTxFindMany, deleteMany: mockTxDeleteMany },
+        survey: { findMany: mockTxSurveyMany },
+        display: { deleteMany: mockTxDisplayDeleteMany },
+      });
+      order.push("commit");
+      return out;
+    });
+    mockDeleteFiles.mockImplementation(async () => void order.push("files"));
+
+    await deleteScopedResponses(BATCH_IDS, SCOPE);
+
+    expect(order).toStrictEqual(["commit", "files"]);
+    expect(mockDeleteFiles).toHaveBeenCalledWith(["https://s/a.png", "https://s/b.png"], "ws_1");
+  });
+
+  test("still succeeds when storage cleanup fails", async () => {
+    runBatch([row({ data: { screenshots: ["https://s/a.png"] } })]);
+    mockDeleteFiles.mockRejectedValue(new Error("storage down"));
+
+    await expect(deleteScopedResponses(BATCH_IDS, SCOPE)).resolves.toMatchObject({ deleted: 1 });
+  });
+
+  /**
+   * The catch must rethrow, not absorb. Swallowing here would surface as `deleted: 0` — a 200 telling
+   * the caller nothing matched, when in fact the transaction failed and rows may still be there.
+   */
+  test("propagates a failed transaction instead of reporting nothing deleted", async () => {
+    mockTransaction.mockRejectedValue(new Error("connection reset"));
+
+    await expect(deleteScopedResponses(BATCH_IDS, SCOPE)).rejects.toThrow("connection reset");
+  });
+
+  /** Same decision as the single delete, and a batch would multiply the damage by up to 100. */
+  test("never shrinks a configured quota limit", async () => {
+    runBatch([row()]);
+
+    await deleteScopedResponses(BATCH_IDS, SCOPE);
+
+    expect(mockReduceQuotas).not.toHaveBeenCalled();
   });
 });
