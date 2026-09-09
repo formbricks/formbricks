@@ -61,6 +61,7 @@ export function mergeDrafts(drafts: TGeneratedDraftLike[]): TGeneratedDraftLike 
     language: first.language,
     ...(first.defaultLanguage ? { defaultLanguage: first.defaultLanguage } : {}),
     name: (named ?? first).name,
+    // `name` may still be empty here; the lane fills it from the file name before building the payload.
     description: (named ?? first).description ?? null,
     welcomeCard: first.welcomeCard ?? null,
     ending: last.ending ?? null,
@@ -210,14 +211,16 @@ export const documentLane: TImportLaneHandler = async (input, ctx) => {
     defaultLanguageCode,
     ...[...usedLanguageCodes].filter((code) => code !== defaultLanguageCode),
   ];
-  const built = buildV3SurveyCreatePayloadFromDraft(
-    { workspaceId: ctx.workspaceId, type: "link" },
-    mergeDrafts(drafts),
-    {
-      schema: createImportDraftSchema(codes, { chunks: drafts.length }).internal,
-      languages: { defaultLanguage: defaultLanguageCode, codes },
-    }
-  );
+  const merged = mergeDrafts(drafts);
+  if (typeof merged.name !== "string" && merged.name.length === 0) {
+    const fallback =
+      (input.fileName ?? "Imported survey").replace(/\.[a-z0-9]+$/i, "").trim() || "Imported survey";
+    merged.name = [{ languageCode: defaultLanguageCode, text: fallback }];
+  }
+  const built = buildV3SurveyCreatePayloadFromDraft({ workspaceId: ctx.workspaceId, type: "link" }, merged, {
+    schema: createImportDraftSchema(codes, { chunks: drafts.length }).internal,
+    languages: { defaultLanguage: defaultLanguageCode, codes },
+  });
   for (const fill of built.translationFills) {
     issues.push(
       importWarning({
