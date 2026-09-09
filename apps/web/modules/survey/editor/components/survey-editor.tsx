@@ -100,6 +100,9 @@ export const SurveyEditor = ({
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
+  // Set when a save or publish is blocked by a missing trigger, so the Survey Trigger card can say
+  // so (ENG-2581). The card itself stops showing the error once the survey has a trigger.
+  const [hasTriggerError, setHasTriggerError] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
 
@@ -200,6 +203,7 @@ export const SurveyEditor = ({
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidElements={setInvalidElements}
+        setHasTriggerError={setHasTriggerError}
         workspace={localWorkspace}
         responseCount={responseCount}
         finishedResponseCount={finishedResponseCount}
@@ -290,6 +294,7 @@ export const SurveyEditor = ({
               locale={locale}
               appSetupCompleted={localWorkspace.appSetupCompleted}
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
+              hasTriggerError={hasTriggerError}
             />
           )}
 
