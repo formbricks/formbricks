@@ -22,8 +22,18 @@ post:
     Because `deleted` can therefore be lower than the number of ids sent — or zero — do not treat a
     shortfall as an error. Deletion cascades to uploaded files and to the Hub, exactly as the
     single-response delete does.
+
+
+    **`workspaceId` is the scope, and it is required.** Unlike the single-response delete — which
+    resolves the workspace *from* the response so a caller cannot pair someone else's id with a scope
+    it happens to hold — a batch has no single response to resolve from, and scope-filtering is only
+    meaningful against a known workspace. Supplying it is safe here because the same value is both
+    what `manage` is checked against and what the delete is filtered by: the two cannot diverge, so a
+    foreign id matches nothing rather than being deleted under a scope the caller does hold.
   tags:
     - V3 Responses
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
   requestBody:
     required: true
     content:
