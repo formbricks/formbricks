@@ -1,23 +1,25 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { problemForbidden } from "@/app/api/v3/lib/response";
-import { deleteV3Response } from "./operations";
+import { batchDeleteV3Responses, deleteV3Response } from "./operations";
 
 vi.mock("server-only", () => ({}));
 
-const { mockRequireAccess, mockGetWorkspaceId, mockDelete } = vi.hoisted(() => ({
+const { mockRequireAccess, mockGetWorkspaceId, mockDelete, mockBatchDelete } = vi.hoisted(() => ({
   mockRequireAccess: vi.fn(),
   mockGetWorkspaceId: vi.fn(),
   mockDelete: vi.fn(),
+  mockBatchDelete: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mockRequireAccess }));
 vi.mock("./service", () => ({
   getResponseWorkspaceId: mockGetWorkspaceId,
   deleteScopedResponse: mockDelete,
+  deleteScopedResponses: mockBatchDelete,
 }));
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: () => ({ warn: vi.fn(), error: vi.fn() }) },
+  logger: { withContext: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }) },
 }));
 
 const params = {
@@ -151,5 +153,102 @@ describe("deleteV3Response", () => {
     await deleteV3Response({ ...params, auditLog });
 
     expect(auditLog).not.toHaveProperty("oldObject");
+  });
+});
+
+describe("batchDeleteV3Responses", () => {
+  const batchParams = {
+    workspaceId: "clsww11111111111111111111",
+    ids: ["clrsaaaaaaaaaaaaaaaaaaaa", "clrsbbbbbbbbbbbbbbbbbbbb"],
+    authentication: { apiKeyId: "key_1", workspacePermissions: [] } as never,
+    requestId: "req_1",
+    instance: "/api/v3/responses/batch-delete",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireAccess.mockResolvedValue({ organizationId: "org_1", workspaceId: batchParams.workspaceId });
+    mockBatchDelete.mockResolvedValue({ deleted: 2, deletedIds: batchParams.ids });
+  });
+
+  /**
+   * `manage`, not `write` — the same permission the single delete takes, and the reason a read-write
+   * key cannot erase a hundred responses in one call.
+   */
+  test("requires manage on the supplied workspace", async () => {
+    await batchDeleteV3Responses(batchParams);
+
+    expect(mockRequireAccess).toHaveBeenCalledWith(
+      batchParams.authentication,
+      batchParams.workspaceId,
+      "manage",
+      batchParams.requestId,
+      batchParams.instance
+    );
+  });
+
+  /**
+   * The scope is authorized and then handed to the service unchanged. If these two could differ, a
+   * caller could pass a workspace it holds and ids it does not — which is the cross-tenant delete the
+   * single-response path avoids by deriving the scope instead.
+   */
+  test("filters by exactly the workspace it authorized against", async () => {
+    await batchDeleteV3Responses(batchParams);
+
+    expect(mockBatchDelete).toHaveBeenCalledWith(batchParams.ids, { workspaceId: batchParams.workspaceId });
+  });
+
+  test("refuses without touching the data when access is denied", async () => {
+    mockRequireAccess.mockResolvedValue(problemForbidden("req_1", undefined, batchParams.instance));
+
+    const response = await batchDeleteV3Responses(batchParams);
+
+    expect(response.status).toBe(403);
+    expect(mockBatchDelete).not.toHaveBeenCalled();
+  });
+
+  test("returns the count the service reported", async () => {
+    const { status, body } = await wire(await batchDeleteV3Responses(batchParams));
+
+    expect(status).toBe(200);
+    expect(body).toStrictEqual({ data: { deleted: 2 } });
+  });
+
+  /**
+   * A shortfall is the documented outcome of scope-filtering, not a failure: ids already gone or
+   * belonging to another workspace are simply not counted. Zero is a 200 like any other.
+   */
+  test("reports a shortfall as success, including zero", async () => {
+    mockBatchDelete.mockResolvedValue({ deleted: 0, deletedIds: [] });
+
+    const { status, body } = await wire(await batchDeleteV3Responses(batchParams));
+
+    expect(status).toBe(200);
+    expect(body).toStrictEqual({ data: { deleted: 0 } });
+  });
+
+  test("records the ids it destroyed on the audit log, with both counts", async () => {
+    const auditLog = {} as never;
+
+    await batchDeleteV3Responses({ ...batchParams, auditLog });
+
+    expect(auditLog).toMatchObject({
+      organizationId: "org_1",
+      oldObject: {
+        workspaceId: batchParams.workspaceId,
+        requested: 2,
+        deleted: 2,
+        responseIds: batchParams.ids,
+      },
+    });
+  });
+
+  test("returns a problem response rather than throwing, since MCP calls this without a wrapper", async () => {
+    mockBatchDelete.mockRejectedValue(new Error("something unexpected"));
+
+    const response = await batchDeleteV3Responses(batchParams);
+
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(await response.json())).not.toContain("something unexpected");
   });
 });

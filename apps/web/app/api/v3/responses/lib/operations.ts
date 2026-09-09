@@ -2,9 +2,9 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import { noContentResponse, problemForbidden } from "@/app/api/v3/lib/response";
+import { noContentResponse, problemForbidden, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { deleteScopedResponse, getResponseWorkspaceId } from "./service";
+import { deleteScopedResponse, deleteScopedResponses, getResponseWorkspaceId } from "./service";
 
 type TDeleteParams = {
   responseId: string;
@@ -71,6 +71,68 @@ export async function deleteV3Response({
       requestId,
       instance: instance ?? "",
       operation: "responses.delete",
+    });
+  }
+}
+
+type TBatchDeleteParams = {
+  workspaceId: string;
+  ids: string[];
+  authentication: TV3Authentication;
+  requestId: string;
+  instance?: string;
+  auditLog?: TV3AuditLog;
+};
+
+/**
+ * `POST /api/v3/responses/batch-delete` → 200 `{ data: { deleted } }`.
+ *
+ * Unlike the single delete, the scope is supplied rather than derived — a batch has no one response to
+ * resolve it from, and scope-filtering is only meaningful against a known workspace. That is safe here
+ * because the value authorized against and the value filtered by are the same `workspaceId`: they
+ * cannot diverge, so a foreign id matches nothing instead of being deleted under a scope the caller
+ * does hold. Deriving it from the ids instead would mean authorizing every distinct workspace the batch
+ * touches, which contradicts the contract's promise to ignore out-of-scope ids rather than refuse them.
+ *
+ * A shortfall is not an error: `deleted` is allowed to be lower than `ids.length`, or zero.
+ */
+export async function batchDeleteV3Responses({
+  workspaceId,
+  ids,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TBatchDeleteParams): Promise<Response> {
+  const log = logger.withContext({ requestId, workspaceId });
+
+  try {
+    const access = await requireV3WorkspaceAccess(authentication, workspaceId, "manage", requestId, instance);
+
+    if (access instanceof Response) {
+      return access;
+    }
+
+    const { deleted, deletedIds } = await deleteScopedResponses(ids, { workspaceId });
+
+    if (auditLog) {
+      auditLog.organizationId = access.organizationId;
+      // Identity only, deliberately. The single delete records the whole row because there is exactly
+      // one; a batch of up to 100 would put an unbounded blob in a log line, and the ids are what makes
+      // the action reviewable. `requested` is kept alongside `deleted` so a shortfall is legible after
+      // the fact rather than looking like a partial failure.
+      auditLog.oldObject = { workspaceId, requested: ids.length, deleted, responseIds: deletedIds };
+    }
+
+    log.info({ requested: ids.length, deleted }, "V3 responses batch deleted");
+
+    return successResponse({ deleted }, { requestId });
+  } catch (error) {
+    return mapV3ThrownError(error, {
+      log,
+      requestId,
+      instance: instance ?? "",
+      operation: "responses.batchDelete",
     });
   }
 }
