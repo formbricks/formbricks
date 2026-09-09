@@ -38,6 +38,13 @@ function toBuffer(input: TImportLaneInput): Buffer {
   return Buffer.from(JSON.stringify(content.value), "utf8");
 }
 
+/** The first Markdown heading of the extracted text, if any — a DOCX title, a PDF's first line, a `# Title`. */
+export function documentTitle(text: string): string | null {
+  const match = /^#{1,3}\s+(.+?)\s*$/m.exec(text);
+  const title = match?.[1]?.replace(/[#*_`]+/g, "").trim();
+  return title && title.length > 0 ? title.slice(0, 200) : null;
+}
+
 function throwIfAborted(signal: AbortSignal | undefined): void {
   if (signal?.aborted) {
     throw signal.reason instanceof Error
@@ -152,7 +159,9 @@ export const documentLane: TImportLaneHandler = async (input, ctx) => {
     defaultLanguageCode = hint;
   }
 
-  const chunked = chunkDocumentText(extracted.text, { languageCount: languageCodes.length });
+  // Size chunks by the languages the document is expected to carry, not by the size of the allowed enum:
+  // a short document without detection is one language, not the whole locale list.
+  const chunked = chunkDocumentText(extracted.text, { languageCount: detection ? languageCodes.length : 1 });
   issues.push(...chunked.issues);
   if (chunked.chunks.length === 0) {
     return { document: null, issues: [...issues, importError({ code: "nothing_extracted" })], source };
@@ -213,8 +222,14 @@ export const documentLane: TImportLaneHandler = async (input, ctx) => {
   ];
   const merged = mergeDrafts(drafts);
   if (typeof merged.name !== "string" && merged.name.length === 0) {
+    // The document's own title first, then the file name; the model is told never to invent one.
     const fallback =
-      (input.fileName ?? "Imported survey").replace(/\.[a-z0-9]+$/i, "").trim() || "Imported survey";
+      documentTitle(extracted.text) ??
+      ((input.fileName ?? "Imported survey")
+        .replace(/\.[a-z0-9]+$/i, "")
+        .replace(/[_-]+/g, " ")
+        .trim() ||
+        "Imported survey");
     merged.name = [{ languageCode: defaultLanguageCode, text: fallback }];
   }
   const built = buildV3SurveyCreatePayloadFromDraft({ workspaceId: ctx.workspaceId, type: "link" }, merged, {
