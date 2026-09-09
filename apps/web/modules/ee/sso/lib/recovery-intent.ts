@@ -225,8 +225,11 @@ export const getSsoRecoveryPairedTtlSeconds = (intent: TSsoRecoveryIntent): numb
  *
  * Takes the lifetime rather than deriving it, and that is the point: the caller mints the resent link
  * with the same {@link getSsoRecoveryPairedTtlSeconds} value it passes here, so the two halves cannot
- * come apart — not even by the second or two that computing the number twice would cost. Anything not
- * strictly positive is a no-op, `NaN` included, so a miscomputed lifetime can never become an EXPIRE.
+ * come apart — not even by the second or two that computing the number twice would cost.
+ *
+ * `Number.isFinite` before the comparison, not just `<= 0`: a miscomputed lifetime arrives as `NaN`,
+ * which fails EVERY comparison, so `NaN <= 0` is false and an unguarded version would hand `NaN`
+ * straight to EXPIRE. `Infinity` is rejected on the same line for the same reason.
  *
  * Only the expiry moves — the stored record, `createdAt` included, is never rewritten. So every refresh
  * is measured against the original start and the window cannot slide past {@link INTENT_MAX_LIFETIME_MS},
@@ -234,7 +237,7 @@ export const getSsoRecoveryPairedTtlSeconds = (intent: TSsoRecoveryIntent): numb
  * gone out, so a failure here costs the pairing, not the resend.
  */
 export const refreshSsoRecoveryIntent = async (stateId: string, ttlSeconds: number): Promise<void> => {
-  if (!STATE_ID_REGEX.test(stateId) || !(ttlSeconds > 0)) {
+  if (!STATE_ID_REGEX.test(stateId) || !Number.isFinite(ttlSeconds) || ttlSeconds <= 0) {
     return;
   }
 

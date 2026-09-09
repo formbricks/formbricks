@@ -327,6 +327,26 @@ describe("SSO recovery intent", () => {
       expect(store.get(key)!.ttlMs).toBe(agedTtlMs);
     });
 
+    /**
+     * A lifetime that is not a real number must never reach EXPIRE. `NaN` is the one that matters: it
+     * fails every comparison, so a guard written as `ttlSeconds <= 0` lets it straight through — which
+     * is what Sonar's S1940 suggestion would have reintroduced here.
+     */
+    test.each([
+      ["NaN", Number.NaN],
+      ["Infinity", Number.POSITIVE_INFINITY],
+      ["a negative TTL", -1],
+    ])("ignores %s rather than passing it to EXPIRE", async (_label, ttlSeconds) => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      const [key] = [...store.keys()];
+      const agedTtlMs = 60 * 1000;
+      store.set(key, { ...store.get(key)!, ttlMs: agedTtlMs });
+
+      await refreshSsoRecoveryIntent(stateId, ttlSeconds);
+
+      expect(store.get(key)!.ttlMs).toBe(agedTtlMs);
+    });
+
     test("leaves the stored record untouched, so a refresh cannot write back a stale copy", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
       const issuedCreatedAt = (await readSsoRecoveryIntent(stateId))!.createdAt;
