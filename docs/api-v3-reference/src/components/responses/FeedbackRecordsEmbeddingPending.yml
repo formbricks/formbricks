@@ -1,0 +1,15 @@
+description: >-
+  Conflict — the record exists and is yours, but has no embedding, so similar records cannot be
+  found. Reported as a conflict rather than a not-found because the record *is* there. Two causes,
+  and only one is worth retrying: a record created moments ago is still being embedded in the
+  background, while a record with no text (or whose text an update cleared) has no embedding at all
+  and retrying will not help. The `detail` says which.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

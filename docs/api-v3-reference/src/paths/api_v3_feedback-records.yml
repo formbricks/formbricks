@@ -17,228 +17,31 @@ get:
     - $ref: ../components/parameters/WorkspaceIdQuery.yml
     - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
 
-    # --- identity and provenance filters -------------------------------------------------------
-    - in: query
-      name: filter[submissionId][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 100
-        items:
-          type: string
-          maxLength: 255
-      description: Records belonging to any of these logical submissions (e.g. response ids).
-    - in: query
-      name: filter[sourceType][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 20
-        items:
-          type: string
-          maxLength: 255
-      description: Records from any of these source types, e.g. `survey`, `review`.
-    - in: query
-      name: filter[sourceId][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 100
-        items:
-          type: string
-          maxLength: 255
-      description: Records from any of these specific sources.
-    - in: query
-      name: filter[sourceName][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 20
-        items:
-          type: string
-          maxLength: 255
-      description: Records from any of these source names.
-    - in: query
-      name: filter[fieldId][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 100
-        items:
-          type: string
-          maxLength: 255
-      description: Records for any of these question / field ids.
-    - in: query
-      name: filter[fieldGroupId][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 100
-        items:
-          type: string
-          maxLength: 255
-      description: Records in any of these field groups (ranking, matrix and grid questions).
-    - in: query
-      name: filter[fieldType][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 9
-        items:
-          $ref: ../components/schemas/FeedbackRecordFieldType.yml
-      description: >-
-        Records of any of these field types. An empty value is ignored, so
-        `?filter[fieldType][in]=` equals omitting the filter.
-    - in: query
-      name: filter[valueId][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 100
-        items:
-          type: string
-          maxLength: 255
-      description: Records whose answer carries any of these source-system option ids.
-    - in: query
-      name: filter[userId][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 100
-        items:
-          type: string
-          maxLength: 255
-      description: Records attributed to any of these end users.
-    - in: query
-      name: filter[language][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 20
-        items:
-          type: string
-          maxLength: 35
-      description: Records given in any of these languages.
-
-    # --- range filters -------------------------------------------------------------------------
-    - in: query
-      name: filter[collectedAt][gte]
-      schema:
-        type: string
-        format: date-time
-      description: Records collected at or after this instant. Bounded to 1970-2080.
-    - in: query
-      name: filter[collectedAt][lte]
-      schema:
-        type: string
-        format: date-time
-      description: Records collected at or before this instant. Bounded to 1970-2080.
-    - in: query
-      name: filter[createdAt][gte]
-      schema:
-        type: string
-        format: date-time
-      description: Records stored at or after this instant. Bounded to 1970-2080.
-    - in: query
-      name: filter[createdAt][lte]
-      schema:
-        type: string
-        format: date-time
-      description: Records stored at or before this instant. Bounded to 1970-2080.
-    - in: query
-      name: filter[valueNumber][gte]
-      schema:
-        type: number
-        format: double
-      description: Records whose numeric answer is at least this value.
-    - in: query
-      name: filter[valueNumber][lte]
-      schema:
-        type: number
-        format: double
-      description: Records whose numeric answer is at most this value.
-    - in: query
-      name: filter[valueDate][gte]
-      schema:
-        type: string
-        format: date-time
-      description: Records whose date answer is at or after this instant.
-    - in: query
-      name: filter[valueDate][lte]
-      schema:
-        type: string
-        format: date-time
-      description: Records whose date answer is at or before this instant.
-    - in: query
-      name: filter[sentimentScore][gte]
-      schema:
-        type: number
-        format: double
-        minimum: -1
-        maximum: 1
-      description: Records whose sentiment score is at least this value.
-    - in: query
-      name: filter[sentimentScore][lte]
-      schema:
-        type: number
-        format: double
-        minimum: -1
-        maximum: 1
-      description: >-
-        Records whose sentiment score is at most this value. An inverted range (a `gte` above the
-        `lte`) answers **400**.
-
-    # --- enrichment filters --------------------------------------------------------------------
-    - in: query
-      name: filter[sentiment][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 6
-        items:
-          $ref: ../components/schemas/FeedbackRecordSentiment.yml
-      description: Records carrying any of these sentiment labels. An empty value is ignored.
-    - in: query
-      name: filter[emotions][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 6
-        items:
-          $ref: ../components/schemas/FeedbackRecordEmotion.yml
-      description: Records carrying any of these emotion labels. An empty value is ignored.
-    - in: query
-      name: filter[hasSentiment][eq]
-      schema:
-        type: boolean
-      description: >-
-        `true` selects records carrying a sentiment label, `false` those without. A presence filter
-        on a member rather than a member of the record itself.
-    - in: query
-      name: filter[hasEmotions][eq]
-      schema:
-        type: boolean
-      description: >-
-        `true` selects records carrying emotion labels, `false` those without. Note `false` covers
-        both "not yet classified" and "classified, no emotion detected".
-    - in: query
-      name: filter[hasTranslation][eq]
-      schema:
-        type: boolean
-      description: "`true` selects records carrying a translation, `false` those without."
-
+    - $ref: ../components/parameters/FeedbackRecordFilterSubmissionIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSourceTypeIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSourceIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSourceNameIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterFieldIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterFieldGroupIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterLanguageIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterFieldTypeIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterUserIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCollectedAtGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCollectedAtLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCreatedAtGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCreatedAtLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueNumberGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueNumberLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueDateGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueDateLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSentimentScoreGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSentimentScoreLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSentimentIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterEmotionsIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterHasSentimentEq.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterHasEmotionsEq.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterHasTranslationEq.yml
     # --- ordering and pagination ---------------------------------------------------------------
     - in: query
       name: sortBy

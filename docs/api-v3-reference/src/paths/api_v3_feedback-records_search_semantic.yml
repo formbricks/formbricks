@@ -4,9 +4,8 @@ post:
   description: |
     Embeds `query` and returns the ids of the records in the dataset whose text is closest to it,
     with cosine similarity scores. Only records with a non-empty `valueText` are embedded, so only
-    those can match. The gateway reads `datasetId` from the JSON body to authorize the call.
-    Requires an API key with **read** permission (or higher) on a workspace the dataset is
-    assigned to.
+    those can match. `datasetId` is read from the JSON body. Requires an API key with **read**
+    permission (or higher) on a workspace the dataset is assigned to.
 
     Results carry ids and the embedded text only — fetch a match with
     `GET /api/v3/feedbackRecords/{id}` for the full record. Answers **503** on instances without

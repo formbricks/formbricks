@@ -1,0 +1,12 @@
+in: query
+name: filter[fieldType][in]
+style: form
+explode: true
+schema:
+  type: array
+  maxItems: 9
+  items:
+    $ref: ../schemas/FeedbackRecordFieldType.yml
+description: >-
+  Records of any of these field types. An empty value is ignored, so
+  `?filter[fieldType][in]=` equals omitting the filter.

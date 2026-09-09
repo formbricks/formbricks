@@ -12,36 +12,31 @@ get:
   parameters:
     - $ref: ../components/parameters/WorkspaceIdQuery.yml
     - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
-    - in: query
-      name: filter[fieldType][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 9
-        items:
-          $ref: ../components/schemas/FeedbackRecordFieldType.yml
-      description: Records of any of these field types.
-    - in: query
-      name: filter[sentiment][in]
-      style: form
-      explode: true
-      schema:
-        type: array
-        maxItems: 6
-        items:
-          $ref: ../components/schemas/FeedbackRecordSentiment.yml
-      description: Records carrying any of these sentiment labels.
-    - in: query
-      name: filter[hasSentiment][eq]
-      schema:
-        type: boolean
-      description: Presence filter on the sentiment label.
-    - in: query
-      name: filter[hasEmotions][eq]
-      schema:
-        type: boolean
-      description: Presence filter on the emotion labels.
+    - $ref: ../components/parameters/FeedbackRecordFilterSubmissionIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSourceTypeIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSourceIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSourceNameIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterFieldIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterFieldGroupIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterLanguageIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterFieldTypeIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterUserIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCollectedAtGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCollectedAtLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCreatedAtGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCreatedAtLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueNumberGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueNumberLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueDateGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueDateLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSentimentScoreGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSentimentScoreLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSentimentIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterEmotionsIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterHasSentimentEq.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterHasEmotionsEq.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterHasTranslationEq.yml
   responses:
     "200":
       description: Count retrieved

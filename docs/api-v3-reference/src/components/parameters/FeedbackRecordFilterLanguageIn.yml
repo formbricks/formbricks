@@ -1,0 +1,11 @@
+in: query
+name: filter[language][in]
+style: form
+explode: true
+schema:
+  type: array
+  maxItems: 100
+  items:
+    type: string
+    maxLength: 10
+description: Records given in any of these languages.
