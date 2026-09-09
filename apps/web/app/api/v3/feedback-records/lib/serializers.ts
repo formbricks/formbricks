@@ -130,3 +130,87 @@ export const serializeV3FeedbackDataset = (dataset: { id: string; name: string }
   id: dataset.id,
   name: dataset.name,
 });
+
+/**
+ * `snake_case` → `camelCase`, at the type level and at runtime, so the two cannot disagree.
+ *
+ * The v3 DTOs below are *derived* from the Hub-shaped ones above rather than written out a second time.
+ * That is deliberate: a field added to the allowlist reaches both surfaces at once, where a hand-written
+ * second map would let it silently go missing from this one. The allowlist stays the only thing deciding
+ * what may be emitted (S9 / OWASP API3) — this transform re-spells, it never widens.
+ */
+type SnakeToCamel<S extends string> = S extends `${infer Head}_${infer Tail}`
+  ? `${Head}${Capitalize<SnakeToCamel<Tail>>}`
+  : S;
+
+type CamelKeyed<T> = { [K in keyof T as SnakeToCamel<K & string>]: T[K] };
+
+const toCamelCase = (value: string): string =>
+  value.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+
+/**
+ * Enum members whose *values* are ours to spell, so they are re-cased alongside the key: v3 requires
+ * camelCase enum values, and the Hub answers `very_negative`.
+ *
+ * Only these. Every other string is caller-supplied data that must come back byte-for-byte — a
+ * `sourceType` of `feedback_form` and a `userId` of `user_1` are values we were given, not vocabulary we
+ * define, and re-casing them would corrupt them. `fieldType` and `emotions` are ours too but are
+ * single-word in every member, so they need no entry to be correct today.
+ */
+const V3_RECASED_ENUM_FIELDS = new Set<keyof TV3FeedbackRecord>(["sentiment"]);
+
+/** The feedback record as v3 spells it: camelCase members, camelCase enum values. */
+export type TV3FeedbackRecordV3 = CamelKeyed<TV3FeedbackRecord>;
+
+export const serializeV3FeedbackRecordV3 = (record: FeedbackRecordData): TV3FeedbackRecordV3 => {
+  const hubShaped = serializeV3FeedbackRecord(record) as Record<string, unknown>;
+  const dto: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(hubShaped)) {
+    const recaseValue =
+      V3_RECASED_ENUM_FIELDS.has(key as keyof TV3FeedbackRecord) && typeof value === "string";
+    dto[toCamelCase(key)] = recaseValue ? toCamelCase(value) : value;
+  }
+
+  return dto as TV3FeedbackRecordV3;
+};
+
+/** One scored match as v3 spells it. Carries no enum, so keys are the only difference. */
+export type TV3FeedbackRecordMatchV3 = CamelKeyed<TV3FeedbackRecordMatch>;
+
+export const serializeV3FeedbackRecordMatchV3 = (
+  match: FeedbackRecordMatchSource
+): TV3FeedbackRecordMatchV3 => {
+  const hubShaped = serializeV3FeedbackRecordMatch(match) as Record<string, unknown>;
+  const dto: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(hubShaped)) {
+    dto[toCamelCase(key)] = value;
+  }
+
+  return dto as TV3FeedbackRecordMatchV3;
+};
+
+/**
+ * Which spelling an operation emits. The operations serve two surfaces with different contracts — the
+ * REST routes under `/api/v3/feedback-records` (v3 spelling) and the MCP tools (Hub spelling, so a tool
+ * result reads like the Hub docs it was written against) — so the output shape is an explicit input
+ * rather than something each caller re-maps afterwards.
+ *
+ * `HUB_SHAPED_SERIALIZERS` is the default everywhere, which is what keeps the MCP surface unchanged by
+ * this move; only the REST routes pass `V3_SERIALIZERS`.
+ */
+export type TV3FeedbackRecordSerializers = {
+  record: (record: FeedbackRecordData) => TV3FeedbackRecord | TV3FeedbackRecordV3;
+  match: (match: FeedbackRecordMatchSource) => TV3FeedbackRecordMatch | TV3FeedbackRecordMatchV3;
+};
+
+export const HUB_SHAPED_SERIALIZERS: TV3FeedbackRecordSerializers = {
+  record: serializeV3FeedbackRecord,
+  match: serializeV3FeedbackRecordMatch,
+};
+
+export const V3_SERIALIZERS: TV3FeedbackRecordSerializers = {
+  record: serializeV3FeedbackRecordV3,
+  match: serializeV3FeedbackRecordMatchV3,
+};

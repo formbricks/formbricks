@@ -65,10 +65,10 @@ import {
   conflictingUpdateValueFields,
 } from "./schemas";
 import {
-  type TV3FeedbackRecord,
+  HUB_SHAPED_SERIALIZERS,
+  type TV3FeedbackRecordSerializers,
   serializeV3FeedbackDataset,
   serializeV3FeedbackRecord,
-  serializeV3FeedbackRecordMatch,
 } from "./serializers";
 
 /**
@@ -287,10 +287,11 @@ const similarityMatchesResponse = (
   },
   resolution: TResolvedFeedbackTenant,
   minScore: number | undefined,
-  requestId: string
+  requestId: string,
+  serializers: TV3FeedbackRecordSerializers
 ): Response =>
   successListResponse(
-    page.data.map(serializeV3FeedbackRecordMatch),
+    page.data.map(serializers.match),
     {
       limit: page.limit,
       nextCursor: page.next_cursor ?? null,
@@ -302,12 +303,28 @@ const similarityMatchesResponse = (
     { requestId, cache: CACHE }
   );
 
-type TListV3FeedbackDatasetsParams = {
+/**
+ * What every operation here needs: who is asking, which workspace, and the request identity that ties a
+ * response, a log line and an audit entry together.
+ *
+ * `serializers` is how one operation serves two contracts. It defaults to the Hub-shaped spelling, so the
+ * MCP tools — which call these operations directly, with no route in between — are unaffected by the REST
+ * surface moving into the app; the routes under `/api/v3/feedback-records` pass `V3_SERIALIZERS`.
+ */
+type TV3FeedbackRecordOperationBase = {
   workspaceId: string;
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
+  serializers?: TV3FeedbackRecordSerializers;
 };
+
+/** The nine record operations additionally accept an explicit dataset within that workspace. */
+type TV3FeedbackRecordScopedBase = TV3FeedbackRecordOperationBase & {
+  datasetId?: string;
+};
+
+type TListV3FeedbackDatasetsParams = TV3FeedbackRecordOperationBase;
 
 /** List the active feedback datasets assigned to a workspace (discovery for the other tools). */
 export async function listV3FeedbackDatasets({
@@ -343,13 +360,7 @@ export async function listV3FeedbackDatasets({
 }
 
 /** Workspace/dataset selection plus the shared filter set — the common input of list and count. */
-type TFeedbackRecordQueryParams = TV3FeedbackRecordFilters & {
-  workspaceId: string;
-  datasetId?: string;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
-};
+type TFeedbackRecordQueryParams = TV3FeedbackRecordFilters & TV3FeedbackRecordScopedBase;
 
 type TListV3FeedbackRecordsParams = TFeedbackRecordQueryParams & {
   limit?: number;
@@ -369,6 +380,7 @@ export async function listV3FeedbackRecords({
   authentication,
   requestId,
   instance,
+  serializers = HUB_SHAPED_SERIALIZERS,
   ...filters
 }: TListV3FeedbackRecordsParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
@@ -422,7 +434,7 @@ export async function listV3FeedbackRecords({
     }
 
     return successListResponse(
-      result.data.data.map(serializeV3FeedbackRecord),
+      result.data.data.map(serializers.record),
       {
         limit: result.data.limit,
         nextCursor: result.data.next_cursor ?? null,
@@ -452,6 +464,9 @@ export async function countV3FeedbackRecords({
   authentication,
   requestId,
   instance,
+  // Consumed only to keep it out of `filters` below, which feeds a `.strict()` schema: counting emits
+  // no record, so there is nothing here to spell either way.
+  serializers: _serializers = HUB_SHAPED_SERIALIZERS,
   ...filters
 }: TFeedbackRecordQueryParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
@@ -500,13 +515,8 @@ export async function countV3FeedbackRecords({
   }
 }
 
-type TGetV3FeedbackRecordParams = {
-  workspaceId: string;
+type TGetV3FeedbackRecordParams = TV3FeedbackRecordScopedBase & {
   feedbackRecordId: string;
-  datasetId?: string;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
 };
 
 /**
@@ -521,6 +531,7 @@ export async function getV3FeedbackRecord({
   authentication,
   requestId,
   instance,
+  serializers = HUB_SHAPED_SERIALIZERS,
 }: TGetV3FeedbackRecordParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
   try {
@@ -548,19 +559,14 @@ export async function getV3FeedbackRecord({
       return owned.response;
     }
 
-    return successResponse(serializeV3FeedbackRecord(owned.record), { requestId, cache: CACHE });
+    return successResponse(serializers.record(owned.record), { requestId, cache: CACHE });
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance);
   }
 }
 
-type TCreateV3FeedbackRecordParams = {
-  workspaceId: string;
-  datasetId?: string;
+type TCreateV3FeedbackRecordParams = TV3FeedbackRecordScopedBase & {
   body: unknown;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
   auditLog?: TV3AuditLog;
 };
 
@@ -577,6 +583,7 @@ export async function createV3FeedbackRecord({
   requestId,
   instance,
   auditLog,
+  serializers = HUB_SHAPED_SERIALIZERS,
 }: TCreateV3FeedbackRecordParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
   try {
@@ -611,26 +618,22 @@ export async function createV3FeedbackRecord({
       return hubErrorToProblemResponse(result.error, requestId, instance);
     }
 
-    const serialized = serializeV3FeedbackRecord(result.data);
+    // The audit log stays Hub-shaped whichever surface called. An entry whose member names depend on the
+    // caller cannot be diffed against its own `oldObject`, nor against entries written by another surface.
     if (auditLog) {
       auditLog.organizationId = resolution.organizationId;
       auditLog.targetId = result.data.id;
-      auditLog.newObject = serialized;
+      auditLog.newObject = serializeV3FeedbackRecord(result.data);
     }
 
-    return successResponse(serialized, { requestId, status: 201, cache: CACHE });
+    return successResponse(serializers.record(result.data), { requestId, status: 201, cache: CACHE });
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance);
   }
 }
 
-type TCreateV3FeedbackRecordsParams = {
-  workspaceId: string;
-  datasetId?: string;
+type TCreateV3FeedbackRecordsParams = TV3FeedbackRecordScopedBase & {
   body: unknown;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
   /**
    * One audit log per input record, **indexed by record position** — pass a sparse array rather than a
    * compacted one, or entries will be attributed to the wrong records. Entries for records that were
@@ -666,6 +669,7 @@ export async function createV3FeedbackRecords({
   requestId,
   instance,
   auditLogs,
+  serializers = HUB_SHAPED_SERIALIZERS,
 }: TCreateV3FeedbackRecordsParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
   try {
@@ -696,17 +700,16 @@ export async function createV3FeedbackRecords({
       records.map((record) => buildHubCreateParams(record, resolution.tenantId))
     );
 
-    const created: TV3FeedbackRecord[] = [];
+    const created: ReturnType<TV3FeedbackRecordSerializers["record"]>[] = [];
     const failures: { index: number; detail: string }[] = [];
     results.forEach((result, index) => {
       if (result.data) {
-        const serialized = serializeV3FeedbackRecord(result.data);
-        created.push(serialized);
+        created.push(serializers.record(result.data));
         const auditLog = auditLogs?.[index];
         if (auditLog) {
           auditLog.organizationId = resolution.organizationId;
           auditLog.targetId = result.data.id;
-          auditLog.newObject = serialized;
+          auditLog.newObject = serializeV3FeedbackRecord(result.data);
         }
         return;
       }
@@ -749,14 +752,9 @@ export async function createV3FeedbackRecords({
   }
 }
 
-type TUpdateV3FeedbackRecordParams = {
-  workspaceId: string;
+type TUpdateV3FeedbackRecordParams = TV3FeedbackRecordScopedBase & {
   feedbackRecordId: string;
-  datasetId?: string;
   body: unknown;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
   auditLog?: TV3AuditLog;
 };
 
@@ -789,6 +787,7 @@ export async function updateV3FeedbackRecord({
   requestId,
   instance,
   auditLog,
+  serializers = HUB_SHAPED_SERIALIZERS,
 }: TUpdateV3FeedbackRecordParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
   try {
@@ -873,28 +872,24 @@ export async function updateV3FeedbackRecord({
       return hubErrorToProblemResponse(result.error, requestId, instance);
     }
 
-    const serialized = serializeV3FeedbackRecord(result.data);
+    // The audit log stays Hub-shaped whichever surface called. An entry whose member names depend on the
+    // caller cannot be diffed against its own `oldObject`, nor against entries written by another surface.
     if (auditLog) {
       auditLog.organizationId = resolution.organizationId;
       auditLog.targetId = feedbackRecordId;
       // Both sides: an edit is only reviewable if the previous value is recorded too.
       auditLog.oldObject = serializeV3FeedbackRecord(owned.record);
-      auditLog.newObject = serialized;
+      auditLog.newObject = serializeV3FeedbackRecord(result.data);
     }
 
-    return successResponse(serialized, { requestId, cache: CACHE });
+    return successResponse(serializers.record(result.data), { requestId, cache: CACHE });
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance);
   }
 }
 
-type TDeleteV3FeedbackRecordParams = {
-  workspaceId: string;
+type TDeleteV3FeedbackRecordParams = TV3FeedbackRecordScopedBase & {
   feedbackRecordId: string;
-  datasetId?: string;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
   auditLog?: TV3AuditLog;
 };
 
@@ -986,16 +981,11 @@ export async function deleteV3FeedbackRecord({
   }
 }
 
-type TSearchV3FeedbackRecordsParams = {
-  workspaceId: string;
-  datasetId?: string;
+type TSearchV3FeedbackRecordsParams = TV3FeedbackRecordScopedBase & {
   query: string;
   limit?: number;
   cursor?: string;
   minScore?: number;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
 };
 
 /**
@@ -1015,6 +1005,7 @@ export async function searchV3FeedbackRecords({
   authentication,
   requestId,
   instance,
+  serializers = HUB_SHAPED_SERIALIZERS,
 }: TSearchV3FeedbackRecordsParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
   try {
@@ -1063,22 +1054,17 @@ export async function searchV3FeedbackRecords({
       });
     }
 
-    return similarityMatchesResponse(result.data, resolution, filters.data.minScore, requestId);
+    return similarityMatchesResponse(result.data, resolution, filters.data.minScore, requestId, serializers);
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance);
   }
 }
 
-type TFindSimilarV3FeedbackRecordsParams = {
-  workspaceId: string;
+type TFindSimilarV3FeedbackRecordsParams = TV3FeedbackRecordScopedBase & {
   feedbackRecordId: string;
-  datasetId?: string;
   limit?: number;
   cursor?: string;
   minScore?: number;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
 };
 
 /**
@@ -1101,6 +1087,7 @@ export async function findSimilarV3FeedbackRecords({
   authentication,
   requestId,
   instance,
+  serializers = HUB_SHAPED_SERIALIZERS,
 }: TFindSimilarV3FeedbackRecordsParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
   try {
@@ -1162,7 +1149,7 @@ export async function findSimilarV3FeedbackRecords({
       });
     }
 
-    return similarityMatchesResponse(result.data, resolution, filters.data.minScore, requestId);
+    return similarityMatchesResponse(result.data, resolution, filters.data.minScore, requestId, serializers);
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance);
   }
