@@ -765,3 +765,19 @@ describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", 
     expect(result.ok).toBe(true);
   });
 });
+
+describe("prepareV3SurveyPatchInput failure attribution for language patches", () => {
+  // A `languages` patch reaches every translatable map in the document, so adding a locale reports
+  // `missing_translation` under `blocks` — a key the caller never sent. Attributing that to the
+  // stored survey would tell the caller to repair a survey that was fine until this request.
+  test("blames the request when a language-only patch adds an untranslated locale", () => {
+    const result = prepareV3SurveyPatchInput(survey, {
+      languages: [{ code: "en-US", default: true }, { code: "de-DE" }, { code: "fr-FR" }],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.validation.invalidParams.some((param) => param.name.startsWith("blocks."))).toBe(true);
+    expect(result.origin).toBe("request");
+  });
+});

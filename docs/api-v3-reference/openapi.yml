@@ -4823,14 +4823,35 @@ components:
             - type: object
               additionalProperties: true
       additionalProperties: false
+    PatchSurveyLanguage:
+      type: object
+      description: 'Language entry accepted by `PATCH /api/v3/surveys/{surveyId}`. Identical to the create shape plus `alias`, which `GET` returns so a round-tripped body carries it. `alias` belongs to the workspace language rather than the survey, so it is verified rather than applied: echoing the value `GET` returned is a no-op, and a different one is rejected with `read_only_field`.'
+      required:
+        - code
+      properties:
+        code:
+          $ref: '#/components/schemas/LocaleCode'
+        default:
+          type: boolean
+          description: Optional marker for readability; only the `defaultLanguage` entry may set this to true.
+        enabled:
+          type: boolean
+          default: true
+          description: Whether this language is enabled for respondent-facing delivery.
+        alias:
+          type:
+            - string
+            - 'null'
+          description: Workspace-level alias for the language. Read-only; echo the value `GET` returned.
+      additionalProperties: false
     PatchSurveyRequest:
       type: object
       minProperties: 1
       description: |
         Patch payload shape. Top-level fields are partial; any provided nested object or array
-        fully replaces that subtree. Omitted top-level fields are preserved. Immutable/system fields
-        such as `id`, `workspaceId`, `type`, `defaultLanguage`, timestamps, `questions`, analytics, styling,
-        and scripts are rejected. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
+        fully replaces that subtree. Omitted top-level fields are preserved.
+
+        The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`, `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey fetched with `GET` can be sent straight back. Echoing the value you were given is a no-op; changing one is a **422** `read_only_field`. A round-tripped `updatedAt` additionally acts as an optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`, analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
 
         `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, and `variables`
         replace their full top-level value when provided. Missing ids in replaced arrays are deletions.
@@ -4840,6 +4861,34 @@ components:
         Use `/api/v3/surveys/validate` with `operation: patch` before committing automated or agentic
         changes.
       properties:
+        id:
+          type: string
+          description: Read-only echo. Must match the survey being patched.
+        workspaceId:
+          type: string
+          description: Read-only echo. A survey cannot be moved between workspaces.
+        type:
+          type: string
+          enum:
+            - link
+            - app
+          description: Read-only echo. Immutable after creation.
+        createdAt:
+          type: string
+          format: date-time
+          description: Read-only echo of the creation timestamp.
+        updatedAt:
+          type: string
+          format: date-time
+          description: 'Read-only echo, and an optimistic-concurrency precondition: the write is applied only if the survey has not changed since the read this value came from, and is otherwise a **409**.'
+        archivedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Read-only echo. Use `/archive` and `/restore` to change it.
+        defaultLanguage:
+          $ref: '#/components/schemas/LocaleCode'
         name:
           type: string
           minLength: 1
@@ -4856,7 +4905,7 @@ components:
         languages:
           type: array
           items:
-            $ref: '#/components/schemas/CreateSurveyLanguage'
+            $ref: '#/components/schemas/PatchSurveyLanguage'
           description: |
             Replaces the survey language configuration. The default language cannot be changed through
             PATCH; any `default: true` entry must match the existing default language. Languages referenced

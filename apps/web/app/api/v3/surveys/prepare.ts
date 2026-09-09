@@ -156,19 +156,40 @@ function parseStoredV3SurveyDocument(
 }
 
 /**
+ * Codes from the language validator, which walks the whole document rather than one subtree.
+ *
+ * Patching `languages` reaches every translatable map: adding a locale makes each field that lacks
+ * it `missing_translation`, reported under `blocks`/`endings`/`metadata` — keys the caller never
+ * sent. Those failures are the request's doing even though the paths say otherwise, so a submitted
+ * `languages` owns them.
+ */
+const LANGUAGE_VALIDATION_CODES: ReadonlySet<string> = new Set(["missing_translation", "unsupported_locale"]);
+
+function isCallerOwnedFailure(param: InvalidParam, providedTopLevelKeys: ReadonlySet<string>): boolean {
+  if (providedTopLevelKeys.has(param.name.split(".")[0])) {
+    return true;
+  }
+
+  return (
+    providedTopLevelKeys.has("languages") &&
+    param.code !== undefined &&
+    LANGUAGE_VALIDATION_CODES.has(param.code)
+  );
+}
+
+/**
  * Whose fault is a merged-document failure?
  *
- * `storedSurvey` only when *every* reported path sits under a top-level field the caller did not
- * send — otherwise the request touched it and owns the result. One provided key among the failures
- * is enough to make it the caller's, since a partial repair still leaves the request responsible.
+ * `storedSurvey` only when no reported issue belongs to the request. One that does is enough to make
+ * the whole response the caller's, since a partial repair still leaves them responsible.
  */
 function deriveFailureOrigin(
   invalidParams: InvalidParam[],
   providedTopLevelKeys: ReadonlySet<string>
 ): "request" | "storedSurvey" {
-  return invalidParams.every((param) => !providedTopLevelKeys.has(param.name.split(".")[0]))
-    ? "storedSurvey"
-    : "request";
+  return invalidParams.some((param) => isCallerOwnedFailure(param, providedTopLevelKeys))
+    ? "request"
+    : "storedSurvey";
 }
 
 function mergeV3SurveyPatch(document: TV3SurveyDocument, patch: TV3PatchSurveyBody): TV3SurveyDocument {
