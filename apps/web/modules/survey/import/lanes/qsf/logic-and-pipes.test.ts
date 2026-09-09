@@ -131,15 +131,16 @@ describe("applyPipedTextToDocument", () => {
       hiddenFieldIds,
     });
 
+    // The fixture has no page breaks, so every question sits in its own block.
     const blocks = document.blocks as { elements: { headline: Record<string, string> }[] }[];
     expect(blocks[0].elements[0].headline["en-US"]).toBe(
       "Hello #recall:firstname/fallback:#, how was your visit to #recall:store_name/fallback:#?"
     );
-    expect(blocks[0].elements[1].headline["en-US"]).toBe("You said: #recall:Q1/fallback:#. Anything to add?");
+    expect(blocks[1].elements[0].headline["en-US"]).toBe("You said: #recall:Q1/fallback:#. Anything to add?");
     expect(issues).toEqual([
       expect.objectContaining({
         code: "pipe_stripped",
-        path: "blocks.0.elements.1.headline",
+        path: "blocks.1.elements.0.headline",
         vars: { token: "${loc://something}" },
       }),
     ]);

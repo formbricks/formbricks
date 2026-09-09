@@ -22,7 +22,7 @@
     "blocks": [
       {
         "id": "<cuid>",
-        "name": "Sample Survey",
+        "name": "Block 1",
         "elements": [
           {
             "id": "Q1",
@@ -53,7 +53,13 @@
             ],
             "shuffleOption": "none",
             "displayType": "list"
-          },
+          }
+        ]
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 2",
+        "elements": [
           {
             "id": "Q2",
             "type": "multipleChoiceSingle",
@@ -89,7 +95,13 @@
             ],
             "shuffleOption": "none",
             "displayType": "dropdown"
-          },
+          }
+        ]
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 3",
+        "elements": [
           {
             "id": "Q3",
             "type": "rating",
@@ -106,7 +118,13 @@
             "upperLabel": {
               "en-US": "Very satisfied"
             }
-          },
+          }
+        ]
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 4",
+        "elements": [
           {
             "id": "Q4",
             "type": "rating",
@@ -123,7 +141,13 @@
             "upperLabel": {
               "en-US": "Very easy"
             }
-          },
+          }
+        ]
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 5",
+        "elements": [
           {
             "id": "Q5",
             "type": "nps",
@@ -132,7 +156,13 @@
             },
             "required": true,
             "isColorCodingEnabled": false
-          },
+          }
+        ]
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 6",
+        "elements": [
           {
             "id": "Q6",
             "type": "openText",
@@ -184,6 +214,14 @@
         "sourceRef": "QID4",
         "from": "MC/SAHR with a 5-point numeric scale",
         "to": "rating 5"
+      }
+    },
+    {
+      "severity": "info",
+      "code": "single_page_split",
+      "message": "The Qualtrics survey has no page breaks, so each of its 6 questions was placed in its own block.",
+      "vars": {
+        "count": 6
       }
     }
   ],

@@ -3808,6 +3808,7 @@
           "schedule_cleared": "發布與關閉排程已清除。問卷已建立為草稿。",
           "setting_not_imported": "設定「{setting}」未匯入。請在編輯器中進行設定。",
           "settings_not_exported": "樣式、後續動作及問卷設定不包含在匯出內容中。請在編輯器中進行設定。",
+          "single_page_split": "Qualtrics 問卷中沒有分頁符號,因此其 {count} 個問題已各自放置在獨立的區塊中。",
           "slug_not_imported": "問卷連結代稱在每個實例中都是唯一的,因此未匯入。",
           "status_reset": "無論檔案中的狀態為何,問卷都會建立為草稿。",
           "targeting_not_imported": "目標設定(區隔篩選器)未匯入。請在編輯器中進行設定。",

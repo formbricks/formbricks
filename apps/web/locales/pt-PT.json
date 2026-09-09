@@ -3808,6 +3808,7 @@
           "schedule_cleared": "O calendário de publicação e fecho foi limpo. O inquérito foi criado como rascunho.",
           "setting_not_imported": "A definição '{setting}' não é importada. Configura-a no editor.",
           "settings_not_exported": "O estilo, os follow-ups e as definições do inquérito não fazem parte da exportação. Configura-os no editor.",
+          "single_page_split": "O inquérito Qualtrics não tem quebras de página, portanto cada uma das suas {count} perguntas foi colocada no seu próprio bloco.",
           "slug_not_imported": "O slug da ligação do inquérito é único por instância e não foi importado.",
           "status_reset": "O inquérito foi criado como rascunho independentemente do seu estado no ficheiro.",
           "targeting_not_imported": "A segmentação (filtros de segmento) não é importada. Configura-a no editor.",

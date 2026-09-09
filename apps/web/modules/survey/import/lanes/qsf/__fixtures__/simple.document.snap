@@ -22,7 +22,7 @@
     "blocks": [
       {
         "id": "<cuid>",
-        "name": "Default Question Block",
+        "name": "Block 1",
         "elements": [
           {
             "id": "Q1",
@@ -56,7 +56,19 @@
               "en-US": "Please specify"
             },
             "displayType": "list"
-          },
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 2",
+        "elements": [
           {
             "id": "Q2",
             "type": "nps",
@@ -65,7 +77,19 @@
             },
             "required": true,
             "isColorCodingEnabled": false
-          },
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 3",
+        "elements": [
           {
             "id": "Q3",
             "type": "openText",
@@ -78,7 +102,19 @@
             "charLimit": {
               "enabled": false
             }
-          },
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 4",
+        "elements": [
           {
             "id": "Q4",
             "type": "openText",
@@ -91,7 +127,19 @@
             "charLimit": {
               "enabled": false
             }
-          },
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 5",
+        "elements": [
           {
             "id": "Q5",
             "type": "multipleChoiceMulti",
@@ -145,5 +193,14 @@
     },
     "variables": []
   },
-  "issues": []
+  "issues": [
+    {
+      "severity": "info",
+      "code": "single_page_split",
+      "message": "The Qualtrics survey has no page breaks, so each of its 5 questions was placed in its own block.",
+      "vars": {
+        "count": 5
+      }
+    }
+  ]
 }

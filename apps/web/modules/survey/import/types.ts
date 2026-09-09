@@ -76,6 +76,7 @@ export const IMPORT_ISSUE_CODES = [
   "pipe_stripped",
   "randomizer_flattened",
   "block_not_in_flow",
+  "single_page_split",
   "welcome_card_from_descriptive_text",
   // Languages
   "language_created",

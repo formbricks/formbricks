@@ -40,6 +40,8 @@ export function translateImportIssueCode(
       return t("workspace.surveys.import.issues.randomizer_flattened", vars);
     case "block_not_in_flow":
       return t("workspace.surveys.import.issues.block_not_in_flow", vars);
+    case "single_page_split":
+      return t("workspace.surveys.import.issues.single_page_split", vars);
     case "welcome_card_from_descriptive_text":
       return t("workspace.surveys.import.issues.welcome_card_from_descriptive_text", vars);
     case "language_created":

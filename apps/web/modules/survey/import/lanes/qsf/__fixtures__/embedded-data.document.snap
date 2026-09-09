@@ -22,7 +22,7 @@
     "blocks": [
       {
         "id": "<cuid>",
-        "name": "Default Question Block",
+        "name": "Block 1",
         "elements": [
           {
             "id": "Q1",
@@ -36,7 +36,19 @@
             "charLimit": {
               "enabled": false
             }
-          },
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 2",
+        "elements": [
           {
             "id": "Q2",
             "type": "openText",
@@ -80,6 +92,14 @@
     "variables": []
   },
   "issues": [
+    {
+      "severity": "info",
+      "code": "single_page_split",
+      "message": "The Qualtrics survey has no page breaks, so each of its 2 questions was placed in its own block.",
+      "vars": {
+        "count": 2
+      }
+    },
     {
       "severity": "info",
       "code": "field_renamed",

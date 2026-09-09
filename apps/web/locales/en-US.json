@@ -3808,6 +3808,7 @@
           "schedule_cleared": "The publish and close schedule was cleared. The survey is created as a draft.",
           "setting_not_imported": "The setting '{setting}' is not imported. Set it up in the editor.",
           "settings_not_exported": "Styling, follow-ups and survey settings are not part of the export. Set them up in the editor.",
+          "single_page_split": "The Qualtrics survey has no page breaks, so each of its {count} questions was placed in its own block.",
           "slug_not_imported": "The survey link slug is unique per instance and was not imported.",
           "status_reset": "The survey is created as a draft regardless of its status in the file.",
           "targeting_not_imported": "Targeting (segment filters) is not imported. Set it up in the editor.",

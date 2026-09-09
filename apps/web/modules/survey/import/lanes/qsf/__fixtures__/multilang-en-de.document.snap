@@ -28,7 +28,7 @@
     "blocks": [
       {
         "id": "<cuid>",
-        "name": "Feedback",
+        "name": "Block 1",
         "elements": [
           {
             "id": "Q1",
@@ -63,7 +63,21 @@
             ],
             "shuffleOption": "none",
             "displayType": "list"
-          },
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→",
+          "de-DE": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←",
+          "de-DE": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 2",
+        "elements": [
           {
             "id": "Q2",
             "type": "openText",
@@ -77,7 +91,21 @@
             "charLimit": {
               "enabled": false
             }
-          },
+          }
+        ],
+        "buttonLabel": {
+          "en-US": "→",
+          "de-DE": "→"
+        },
+        "backButtonLabel": {
+          "en-US": "←",
+          "de-DE": "←"
+        }
+      },
+      {
+        "id": "<cuid>",
+        "name": "Block 3",
+        "elements": [
           {
             "id": "Q3",
             "type": "matrix",
@@ -153,5 +181,14 @@
     },
     "variables": []
   },
-  "issues": []
+  "issues": [
+    {
+      "severity": "info",
+      "code": "single_page_split",
+      "message": "The Qualtrics survey has no page breaks, so each of its 3 questions was placed in its own block.",
+      "vars": {
+        "count": 3
+      }
+    }
+  ]
 }

@@ -72,6 +72,24 @@ function collectFlowBlockIds(nodes: TQsfFlowNode[], into: string[], issues: TImp
   }
 }
 
+/**
+ * A QSF with no page break anywhere puts every question on one page. Qualtrics does render it as one long
+ * page, but a Formbricks survey of one block per question is what authors of such a file expect, and the
+ * editor can merge blocks far more easily than it can split one; so split, and say so in the report.
+ */
+function splitSinglePage(pages: TPage[], issues: TImportIssue[]): TPage[] {
+  if (pages.length !== 1 || pages[0].qids.length < 2) return pages;
+  const [page] = pages;
+  issues.push(importInfo({ code: "single_page_split", vars: { count: page.qids.length } }));
+  return page.qids.map((qid, index) => ({
+    blockId: page.blockId,
+    description: "",
+    pageIndex: index + 1,
+    pageCount: 1,
+    qids: [qid],
+  }));
+}
+
 function blockName(page: TPage, position: number): string {
   const base = page.description.trim() || `Block ${position}`;
   return page.pageCount > 1 ? `${base} · Page ${page.pageIndex}` : base;
@@ -126,7 +144,8 @@ function buildHiddenFields(model: TQsfSurvey, issues: TImportIssue[]): Record<st
 }
 
 /**
- * Assemble mapped questions into a v3 survey document: one Formbricks block per Qualtrics page (D5),
+ * Assemble mapped questions into a v3 survey document: one Formbricks block per Qualtrics page (D5; a
+ * survey without any page break is split one question per block),
  * in flow order, with a single ending, the welcome card from a leading descriptive text, button labels
  * from the survey options, every language declared, and embedded data as hidden fields.
  */
@@ -159,7 +178,7 @@ export function buildQsfDocument(
     );
   }
 
-  const pages = orderedBlocks.flatMap(pagesOf);
+  const pages = splitSinglePage(orderedBlocks.flatMap(pagesOf), issues);
   const blocks: Record<string, unknown>[] = [];
   let welcomeCard: Record<string, unknown> = { enabled: false };
   let isFirstElement = true;
