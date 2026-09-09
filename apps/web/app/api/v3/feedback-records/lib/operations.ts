@@ -502,13 +502,15 @@ export async function countV3FeedbackRecords({
     }
 
     return successResponse(
+      { count: result.data.count },
       {
-        count: result.data.count,
-        // Named for the same reason as on list: a zero count must say which dataset produced it.
-        dataset_id: resolution.tenantId,
-        dataset_name: resolution.datasetName,
-      },
-      { requestId, cache: CACHE }
+        requestId,
+        cache: CACHE,
+        // Which dataset produced the count belongs in `meta`, not in `data`: `data` is the resource
+        // asked for, `meta` is what is true about the request that produced it. Same reason as on
+        // list, where a zero count must still say which dataset it counted.
+        meta: { datasetId: resolution.tenantId, datasetName: resolution.datasetName },
+      }
     );
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance);

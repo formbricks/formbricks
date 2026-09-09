@@ -64,7 +64,7 @@ get:
         type: integer
         minimum: 1
         maximum: 1000
-        default: 100
+        default: 50
       description: >-
         Page size. The 1000 ceiling is higher than elsewhere in v3 because this surface is built for
         bulk ingestion and export. Out-of-range and non-numeric values are rejected: `0`, `-5`,
