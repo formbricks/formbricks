@@ -3,7 +3,7 @@ get:
   summary: Get a response
   description: >
     Returns one response in the detailed view — everything the list view carries, plus `contact`,
-    `displayId` and `singleUseId`.
+    `displayId`, `singleUseId`, and the stored maps `data` and `variables`.
 
 
     The workspace is resolved from the response itself, so the caller cannot choose which scope it is
@@ -11,11 +11,13 @@ get:
     `responseId` answers **403**, not **404**, so response ids cannot be probed for existence.
 
 
-    **Round-tripping.** Reads return the typed `answers[]` array while writes take the stored map
-    (`data`, `variables`) — the shapes differ, but no information is lost between them. Together,
-    `answers[]`, `embeddedData[]` and `unresolved[]` carry every stored key and value **verbatim**,
-    so a client can rebuild the write-shaped payload from a read and `PATCH` it back without
-    refetching the survey. Two rules make that guarantee hold, and both are contractual:
+    **Round-tripping.** This read returns `data` and `variables` in the stored, write-shaped form,
+    so the simplest correction is to take `data`, change one entry and `PATCH` it back. `answers[]`
+    is the typed view of the same information, offered alongside. Independently of that, a client
+    working from a *list* row — which omits the maps — can still rebuild the write-shaped payload:
+    `answers[]`, `embeddedData[]` and `unresolved[]` together carry every stored key and value
+    **verbatim**, with no need to refetch the survey. Two rules make that guarantee hold, and both
+    are contractual:
 
 
     `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls` and composite slot values are always
@@ -128,7 +130,7 @@ get:
                         - optionId: opt_speed
                           optionLabel: Geschwindigkeit
                           rawValue: Geschwindigkeit
-                          match: exact
+                          match: label
                           rank: 1
                         - optionId: opt_price
                           optionLabel: Preis
@@ -146,7 +148,7 @@ get:
                           columnId: col_good
                           columnLabel: Gut
                           rawValue: Gut
-                          match: exact
+                          match: label
                   embeddedData:
                     - key: plan
                       kind: ingested

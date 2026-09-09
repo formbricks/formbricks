@@ -22,10 +22,13 @@ description: >
     **localized column label** as the value. Not by row and column id.
 
 
-  Writes take this map; reads return the typed `answers[]` array instead. The array is a lossless
-  superset — every stored key and value comes back verbatim in `rawValue`, `rawKey`, `valueText`,
-  `valueDate`, `fileUrls` or a composite slot — so a client can rebuild this map from a read without
-  refetching the survey. See the round-trip note on `GET /api/v3/responses/{responseId}`.
+  Writes take this map, and the detailed read returns it unchanged as `data` on `ResponseResource` —
+  so the simplest correction is to read, edit one entry and `PATCH` it straight back. The list view
+  omits it deliberately. The typed `answers[]` array is offered **alongside** rather than instead,
+  and is a lossless superset — every stored key and value comes back verbatim in `rawValue`,
+  `rawKey`, `valueText`, `valueDate`, `fileUrls` or a composite slot — so even a client holding only
+  a list row can rebuild this map without refetching the survey. See the round-trip note on
+  `GET /api/v3/responses/{responseId}`.
 additionalProperties:
   oneOf:
     - type: string

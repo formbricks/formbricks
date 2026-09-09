@@ -145,7 +145,8 @@ info:
     of this resource in any view; that snapshot is copied from the contact at submission time and
     never refreshed, so it is stale PII by construction.
 
-    Response filtering is allow-listed and index-backed: `filter[createdAt][gte|lte]`,
+    Response filtering is allow-listed and index-backed: `filter[createdAt][gte|gt|lte|lt]`
+    (at most one lower and one upper bound — `gte` xor `gt`, `lte` xor `lt`),
     `filter[finished][eq]`, `filter[language][in]` and `filter[id][in]`. `filter[finished][eq]` and
     `filter[language][in]` require `surveyId` or `contactId` as well, because both are heap residuals
     bounded only by an anchored index range. Per-answer, hidden-field, submission-metadata,

@@ -251,7 +251,7 @@ get:
                           - optionId: ch_2f8a
                             optionLabel: Ein Freund
                             rawValue: Ein Freund
-                            match: exact
+                            match: label
                           - optionId: other
                             optionLabel: Andere
                             rawValue: Podcast
@@ -436,9 +436,11 @@ post:
       description: >
         Bad Request — the body failed schema validation: invalid JSON, a missing required field, a
         value of the wrong type, or an unsupported field. Sending a server-owned or create-forbidden
-        field (`createdAt`, `updatedAt`, `contactAttributes`, `meta`, `userId`) is rejected here with
-        `code: unsupported_field` rather than being silently dropped. Failures that need stored state
-        to detect return **422** instead.
+        field (`createdAt`, `updatedAt`, `contactAttributes`, `userId`, or a `meta` member outside
+        the accepted `source` / `url` / `action` — notably `meta.ipAddress` and the derived
+        `userAgent` / `country` / `device` family) is rejected here with `code: unsupported_field`
+        rather than being silently dropped. Failures that need stored state to detect return
+        **422** instead.
       content:
         application/problem+json:
           schema:

@@ -36,7 +36,9 @@ allOf:
           - number
           - smiley
           - star
-        description: How the scale was presented. Present for `rating` elements.
+        description: >-
+          How the scale was presented. Carried by the element types that configure one — `rating`,
+          `csat` and `ces` — and absent for `nps`, which has no scale presentation.
 unevaluatedProperties: false
 description: >-
   Numeric-scale answer. Covers `nps` (0–10), `rating` (configurable range and presentation), `csat`

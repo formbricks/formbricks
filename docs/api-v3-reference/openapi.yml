@@ -36,7 +36,7 @@ info:
     The response resource is **self-describing**. Answers come back as a typed `answers[]` array in which each entry carries the element's id, label, type and value, rather than as a map keyed by element id — so a consumer holding only a response can read it without fetching the survey and joining. Hidden fields, survey variables and auto-captured context are one `embeddedData[]` collection rather than three parallel concepts, each entry declaring a `kind` and a `type`. Data whose element has since been deleted is reported in `unresolved[]` instead of being dropped silently. Labels are resolved at read time against the current survey definition, and the `resolution` object discloses that policy along with the survey's `updatedAt` so a consumer can detect wording drift.
     Writes take answers in the **stored map form** (`data`, `variables`) while reads return the typed array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching caller-supplied labels back onto option ids, so the write side keeps the stored shape. To stop that costing round-trippability, the **detailed read returns `data` and `variables` unchanged** — so a single-response read can be edited and sent back as `PATCH { "data": … }`, and the typed `answers[]` array is an addition rather than a replacement. Those two are the resource's writable state and carry no `readOnly`; the derived views (`answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the timestamps) are marked `readOnly` instead, per its meaning of server-managed. The list view omits the stored maps, since a bulk reader is not editing. `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what a write would do, before committing to it.
     `createdAt` and `updatedAt` are **server-owned** on this resource: they cannot be supplied on create or changed by a patch. Response metering counts rows by `(surveyId, createdAt)`, and a client-chosen `createdAt` also lets rows be inserted into the middle of another consumer's already-paginated stream. Backdating stays available on v2 until a dedicated import path exists. The respondent's IP address and the `contactAttributes` snapshot that v1/v2 expose are not part of this resource in any view; that snapshot is copied from the contact at submission time and never refreshed, so it is stale PII by construction.
-    Response filtering is allow-listed and index-backed: `filter[createdAt][gte|lte]`, `filter[finished][eq]`, `filter[language][in]` and `filter[id][in]`. `filter[finished][eq]` and `filter[language][in]` require `surveyId` or `contactId` as well, because both are heap residuals bounded only by an anchored index range. Per-answer, hidden-field, submission-metadata, contact-attribute, quota and tag filters are **not** offered; each is a JSON path or an unindexed join on the largest table in the product. The in-app dashboard does offer them, so this API is knowingly behind the dashboard here — closing the gap requires index work and is tracked separately rather than quietly omitted.
+    Response filtering is allow-listed and index-backed: `filter[createdAt][gte|gt|lte|lt]` (at most one lower and one upper bound — `gte` xor `gt`, `lte` xor `lt`), `filter[finished][eq]`, `filter[language][in]` and `filter[id][in]`. `filter[finished][eq]` and `filter[language][in]` require `surveyId` or `contactId` as well, because both are heap residuals bounded only by an anchored index range. Per-answer, hidden-field, submission-metadata, contact-attribute, quota and tag filters are **not** offered; each is a JSON path or an unindexed join on the largest table in the product. The in-app dashboard does offer them, so this API is knowingly behind the dashboard here — closing the gap requires index work and is tracked separately rather than quietly omitted.
     `GET /api/v3/responses/count` answers "how many match?" directly. The list endpoint's `meta.totalCount` covers a caller that is already paging and is **opt-in** via `includeTotalCount` (default `false`, unlike the survey list) because responses are the highest-cardinality table in the product. Both response counts are **capped at 10 000** and carry an exactness flag — `meta.totalCountRelation` on the list, `data.relation` on `/count` — reading `eq` when the figure is exact and `gte` when the cap was reached and it is a lower bound. An exact count over this table grows superlinearly with the data while a capped one stays flat, so an uncapped total would be the only part of a response whose cost is unbounded. `/count` accepts `precision=exact` for the cases that genuinely need a precise figure, documented as the deliberate slow path. The survey list's `totalCount` stays exact and uncapped: surveys are low-cardinality and that count has a covering index built for it.
     Bulk deletion is `POST /api/v3/responses/batch-delete`, a custom method rather than a collection-level `DELETE`, so a call that loses its filters cannot degrade into erasing everything in scope. It scope-filters rather than rejecting: foreign and already-deleted ids are ignored and the call reports how many rows it removed, which keeps it both leak-free and safe to retry.
     **Security**
@@ -1505,7 +1505,7 @@ paths:
                               - optionId: ch_2f8a
                                 optionLabel: Ein Freund
                                 rawValue: Ein Freund
-                                match: exact
+                                match: label
                               - optionId: other
                                 optionLabel: Andere
                                 rawValue: Podcast
@@ -1667,7 +1667,7 @@ paths:
                     $ref: '#/components/schemas/ResponseResource'
         '400':
           description: |
-            Bad Request — the body failed schema validation: invalid JSON, a missing required field, a value of the wrong type, or an unsupported field. Sending a server-owned or create-forbidden field (`createdAt`, `updatedAt`, `contactAttributes`, `meta`, `userId`) is rejected here with `code: unsupported_field` rather than being silently dropped. Failures that need stored state to detect return **422** instead.
+            Bad Request — the body failed schema validation: invalid JSON, a missing required field, a value of the wrong type, or an unsupported field. Sending a server-owned or create-forbidden field (`createdAt`, `updatedAt`, `contactAttributes`, `userId`, or a `meta` member outside the accepted `source` / `url` / `action` — notably `meta.ipAddress` and the derived `userAgent` / `country` / `device` family) is rejected here with `code: unsupported_field` rather than being silently dropped. Failures that need stored state to detect return **422** instead.
           content:
             application/problem+json:
               schema:
@@ -1734,6 +1734,17 @@ paths:
           style: form
           explode: true
           description: Survey language codes to include. Requires `surveyId` or `contactId`.
+        - in: query
+          name: filter[id][in]
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              format: cuid2
+          style: form
+          explode: true
+          description: Count a specific set of responses by id, at most 100 per call. Ids outside the requested scope are simply not counted rather than erroring, so this cannot be used to probe whether an id exists elsewhere.
         - in: query
           name: precision
           schema:
@@ -1990,11 +2001,11 @@ paths:
       operationId: getResponseV3
       summary: Get a response
       description: |
-        Returns one response in the detailed view — everything the list view carries, plus `contact`, `displayId` and `singleUseId`.
+        Returns one response in the detailed view — everything the list view carries, plus `contact`, `displayId`, `singleUseId`, and the stored maps `data` and `variables`.
 
         The workspace is resolved from the response itself, so the caller cannot choose which scope it is authorized against and no `workspaceId` parameter is accepted. An unknown or inaccessible `responseId` answers **403**, not **404**, so response ids cannot be probed for existence.
 
-        **Round-tripping.** Reads return the typed `answers[]` array while writes take the stored map (`data`, `variables`) — the shapes differ, but no information is lost between them. Together, `answers[]`, `embeddedData[]` and `unresolved[]` carry every stored key and value **verbatim**, so a client can rebuild the write-shaped payload from a read and `PATCH` it back without refetching the survey. Two rules make that guarantee hold, and both are contractual:
+        **Round-tripping.** This read returns `data` and `variables` in the stored, write-shaped form, so the simplest correction is to take `data`, change one entry and `PATCH` it back. `answers[]` is the typed view of the same information, offered alongside. Independently of that, a client working from a *list* row — which omits the maps — can still rebuild the write-shaped payload: `answers[]`, `embeddedData[]` and `unresolved[]` together carry every stored key and value **verbatim**, with no need to refetch the survey. Two rules make that guarantee hold, and both are contractual:
 
         `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one.
       tags:
@@ -2101,7 +2112,7 @@ paths:
                             - optionId: opt_speed
                               optionLabel: Geschwindigkeit
                               rawValue: Geschwindigkeit
-                              match: exact
+                              match: label
                               rank: 1
                             - optionId: opt_price
                               optionLabel: Preis
@@ -2119,7 +2130,7 @@ paths:
                               columnId: col_good
                               columnLabel: Gut
                               rawValue: Gut
-                              match: exact
+                              match: label
                       embeddedData:
                         - key: plan
                           kind: ingested
@@ -5867,7 +5878,7 @@ components:
                 - number
                 - smiley
                 - star
-              description: How the scale was presented. Present for `rating` elements.
+              description: How the scale was presented. Carried by the element types that configure one — `rating`, `csat` and `ces` — and absent for `nps`, which has no scale presentation.
       unevaluatedProperties: false
       description: Numeric-scale answer. Covers `nps` (0–10), `rating` (configurable range and presentation), `csat` and `ces`.
     ResponseAnswerBoolean:
@@ -6394,7 +6405,7 @@ components:
           **localized column label** as the value. Not by row and column id.
 
 
-        Writes take this map; reads return the typed `answers[]` array instead. The array is a lossless superset — every stored key and value comes back verbatim in `rawValue`, `rawKey`, `valueText`, `valueDate`, `fileUrls` or a composite slot — so a client can rebuild this map from a read without refetching the survey. See the round-trip note on `GET /api/v3/responses/{responseId}`.
+        Writes take this map, and the detailed read returns it unchanged as `data` on `ResponseResource` — so the simplest correction is to read, edit one entry and `PATCH` it straight back. The list view omits it deliberately. The typed `answers[]` array is offered **alongside** rather than instead, and is a lossless superset — every stored key and value comes back verbatim in `rawValue`, `rawKey`, `valueText`, `valueDate`, `fileUrls` or a composite slot — so even a client holding only a list row can rebuild this map without refetching the survey. See the round-trip note on `GET /api/v3/responses/{responseId}`.
       additionalProperties:
         oneOf:
           - type: string
@@ -6417,11 +6428,9 @@ components:
       description: |
         Per-element time-to-complete, keyed by element id, in **milliseconds**. Accepted on create so that a caller replaying a real submission can carry its timing; reads report the same information as `durationSeconds` in seconds, on each answer and summed at the top level.
 
-        This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Do not send a `_total` key: the total is derived on read.
+        This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite number is therefore accepted, which is why no bounds are declared here. Do not send a `_total` key: the total is derived on read.
       additionalProperties:
         type: number
-        minimum: 0
-        maximum: 86400000
     ResponseMetaInput:
       type: object
       description: |
@@ -7768,7 +7777,7 @@ components:
       schema:
         type: string
         format: date-time
-      description: Only records created strictly after this instant (**exclusive**). Pair with `filter[createdAt][lt]` to express a half-open `[start, end)` window without redefining the inclusive bounds. Mutually exclusive with `filter[createdAt][gte]` — sending both is a **400**.
+      description: Only records created strictly after this instant (**exclusive**). Paired with `filter[createdAt][lt]` this is a fully open `(start, end)` window. For a half-open `[start, end)` window — the one whose consecutive pages tile without dropping a record that sits exactly on a boundary instant — use `filter[createdAt][gte]` with `filter[createdAt][lt]`. Mutually exclusive with `filter[createdAt][gte]` — sending both is a **400**.
     CreatedAtLteQuery:
       in: query
       name: filter[createdAt][lte]

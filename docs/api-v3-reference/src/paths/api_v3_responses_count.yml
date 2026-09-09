@@ -52,6 +52,20 @@ get:
       description: >-
         Survey language codes to include. Requires `surveyId` or `contactId`.
     - in: query
+      name: filter[id][in]
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          format: cuid2
+      style: form
+      explode: true
+      description: >-
+        Count a specific set of responses by id, at most 100 per call. Ids outside the requested
+        scope are simply not counted rather than erroring, so this cannot be used to probe whether
+        an id exists elsewhere.
+    - in: query
       name: precision
       schema:
         type: string

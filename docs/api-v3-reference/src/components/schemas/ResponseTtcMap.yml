@@ -7,8 +7,7 @@ description: >
 
   This is client-reported telemetry, not a measurement the server can vouch for, so each value is
   clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value
-  should never cost you the response. Do not send a `_total` key: the total is derived on read.
+  should never cost you the response. Any finite number is therefore accepted, which is why no
+  bounds are declared here. Do not send a `_total` key: the total is derived on read.
 additionalProperties:
   type: number
-  minimum: 0
-  maximum: 86400000
