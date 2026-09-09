@@ -130,6 +130,23 @@ describe("workspace settings authorization", () => {
       expect(mocks.updateWorkspace).not.toHaveBeenCalled();
     });
 
+    test("merges onto the stored config instead of replacing it", async () => {
+      // The caller sends only the key it is changing. `config` is a JSON column that Prisma replaces
+      // wholesale, so anything the action does not carry over is silently dropped - and carrying it
+      // over from the *client's* snapshot would revert whatever another surface wrote in the meantime.
+      mocks.getWorkspace.mockResolvedValue({
+        id: workspaceId,
+        languages: [{ code: "de-DE" }],
+        config: { channel: "link", industry: "saas", defaultSurveyLanguage: null },
+      });
+
+      await updateDefaultSurveyLanguage("de-DE");
+
+      expect(mocks.updateWorkspace).toHaveBeenCalledWith(workspaceId, {
+        config: { channel: "link", industry: "saas", defaultSurveyLanguage: "de-DE" },
+      });
+    });
+
     test("accepts clearing the setting", async () => {
       mocks.getWorkspace.mockResolvedValue({ id: workspaceId, languages: [] });
 

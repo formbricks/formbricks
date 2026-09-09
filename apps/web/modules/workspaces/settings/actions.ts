@@ -78,7 +78,15 @@ export const updateWorkspaceAction = authenticatedActionClient.inputSchema(ZUpda
       );
     }
 
-    const result = await updateWorkspace(parsedInput.workspaceId, parsedInput.data);
+    // `config` is a JSON column, which Prisma replaces wholesale rather than merging. Merging the
+    // caller's keys onto what is stored *now* means a partial write only touches the keys it names: a
+    // settings page that has been open a while can no longer revert a key some other surface has
+    // written since it rendered. Callers send the fields they are changing, not a whole config.
+    const data = parsedInput.data.config
+      ? { ...parsedInput.data, config: { ...oldObject?.config, ...parsedInput.data.config } }
+      : parsedInput.data;
+
+    const result = await updateWorkspace(parsedInput.workspaceId, data);
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 

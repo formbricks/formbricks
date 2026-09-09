@@ -255,10 +255,9 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     if (defaultLanguage !== storedDefaultLanguage) {
       const defaultLanguageResult = await updateWorkspaceAction({
         workspaceId: workspace.id,
-        data: {
-          // `config` is a JSON column replaced wholesale, so its other keys have to be carried over.
-          config: { ...workspace.config, defaultSurveyLanguage: defaultLanguage || null },
-        },
+        // Only the key being changed: the action merges it onto the stored config, so a stale
+        // `channel`/`industry` from this page's render can never overwrite a newer value.
+        data: { config: { defaultSurveyLanguage: defaultLanguage || null } },
       });
 
       if (!defaultLanguageResult?.data) {
