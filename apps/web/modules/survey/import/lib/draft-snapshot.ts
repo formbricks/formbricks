@@ -1,15 +1,21 @@
 import type { TSurveyGenerationDraftSnapshot } from "@/app/api/internal/surveys/generate/lib/events";
+import { stripHtml } from "@/modules/survey/import/lanes/qsf/strip-html";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Public locale map → the localized array the review list understands (default language first). */
+/**
+ * Public locale map → the localized array the review list understands (default language first).
+ * Headlines from the editor are rich text (`<p class="fb-editor-paragraph">…`); the list shows the words.
+ */
 function toLocalizedText(value: unknown, defaultLanguage: string): unknown {
-  if (typeof value === "string") return value;
+  if (typeof value === "string") return stripHtml(value);
   if (!isRecord(value)) return undefined;
 
-  const entries = Object.entries(value).filter(([, text]) => typeof text === "string") as [string, string][];
+  const entries = Object.entries(value)
+    .filter(([, text]) => typeof text === "string")
+    .map(([code, text]) => [code, stripHtml(text as string)] as [string, string]);
   if (entries.length === 0) return undefined;
 
   entries.sort(([left], [right]) => {

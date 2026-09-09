@@ -47,4 +47,31 @@ describe("documentToDraftSnapshot", () => {
     const snapshot = documentToDraftSnapshot({ blocks: ["nope", { elements: [1] }] });
     expect((snapshot.blocks as unknown[]).length).toBe(2);
   });
+
+  test("strips editor HTML from headlines so the list shows the words", () => {
+    const snapshot = documentToDraftSnapshot({
+      name: "Rich",
+      defaultLanguage: "en-US",
+      blocks: [
+        {
+          name: "B",
+          elements: [
+            {
+              type: "openText",
+              headline: {
+                "en-US":
+                  '<p class="fb-editor-paragraph"><span style="">What would you like to know?</span></p>',
+                "de-DE": "<p>Was möchtest du wissen &amp; mehr?</p>",
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(snapshot.blocks?.[0]?.questions?.[0]?.headline).toEqual([
+      { languageCode: "en-US", text: "What would you like to know?" },
+      { languageCode: "de-DE", text: "Was möchtest du wissen & mehr?" },
+    ]);
+  });
 });
