@@ -39,6 +39,34 @@ const DETECTION_FAILURE_REASONS: Record<TImportDetectionFailureCode, string> = {
   invalid_json: "The file is not valid JSON.",
 };
 
+/** The 422 for a file the allowlist rejects; shared with the internal import stream. */
+export function problemForImportDetectionFailure(
+  requestId: string,
+  instance: string,
+  code: TImportDetectionFailureCode
+): Response {
+  return problemUnprocessableContent(requestId, DETECTION_FAILURE_REASONS[code], {
+    instance,
+    code: code === "legacy_office_format" ? "legacy_office_format" : "unsupported_source",
+    invalid_params: [{ name: "file", reason: DETECTION_FAILURE_REASONS[code] }],
+  });
+}
+
+/**
+ * AI-lane guards, in order: entitlement, then the shared 10/min AI budget. Both run before the file
+ * is read so an org without AI never pays for extraction; shared with the internal import stream.
+ */
+export async function assertAiImportAllowed(
+  organizationId: string,
+  authentication: TV3Authentication
+): Promise<void> {
+  await assertOrganizationAIConfigured(organizationId);
+  const identifier = getRateLimitIdentifier(authentication);
+  if (identifier) {
+    await applyRateLimit(rateLimitConfigs.api.v3SurveyGenerate, identifier);
+  }
+}
+
 /**
  * `POST /api/v3/surveys/import/convert` — turn a file into a reviewed survey document without
  * persisting anything. Detect → lane → resolve (always dry run: creating is the import route's job).
@@ -84,11 +112,7 @@ export async function convertImportFile({
     });
     if (!detection.ok) {
       log.warn({ statusCode: 422, detectionCode: detection.code }, "Import file rejected");
-      return problemUnprocessableContent(requestId, DETECTION_FAILURE_REASONS[detection.code], {
-        instance,
-        code: detection.code === "legacy_office_format" ? "legacy_office_format" : "unsupported_source",
-        invalid_params: [{ name: "file", reason: DETECTION_FAILURE_REASONS[detection.code] }],
-      });
+      return problemForImportDetectionFailure(requestId, instance, detection.code);
     }
 
     const lane = getImportLaneHandler(detection.kind);
@@ -121,13 +145,7 @@ export async function convertImportFile({
     let candidate;
     try {
       if (isAiLane) {
-        // Gate and shared AI budget come before the file is read: an org without AI never pays for
-        // extraction, and prompt-create and import spend from the same 10/min bucket.
-        await assertOrganizationAIConfigured(authResult.organizationId);
-        const identifier = getRateLimitIdentifier(authentication);
-        if (identifier) {
-          await applyRateLimit(rateLimitConfigs.api.v3SurveyGenerate, identifier);
-        }
+        await assertAiImportAllowed(authResult.organizationId, authentication);
       }
 
       candidate = await lane(
