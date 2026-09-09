@@ -185,9 +185,20 @@ model Response {
   workflowRuns      WorkflowRun[]
 
   @@unique([surveyId, singleUseId])
-  @@index([createdAt])
-  @@index([surveyId, createdAt]) // to determine monthly response count
-  @@index([contactId, createdAt]) // to determine monthly identified users (persons)
+  // `id` is the keyset tie-breaker for `GET /api/v3/responses`. It has to be in the index for the
+  // row-constructor page predicate `(created_at, id) < ($1, $2)` to land in the Index Cond; without it
+  // the planner filters and rescans the range on every page.
+  //
+  // The three narrow indexes below each remain alongside their wider replacement, deliberately and
+  // temporarily. Measured: the planner picks the wide one when both are present, so keeping them costs
+  // write amplification rather than a slow plan. They are dropped in a follow-up once production
+  // confirms that choice — a drop is the half that cannot be undone by reverting a migration.
+  @@index([createdAt]) // superseded by ([createdAt, id]); pending removal
+  @@index([createdAt, id])
+  @@index([surveyId, createdAt]) // superseded; also the monthly response count
+  @@index([surveyId, createdAt, id])
+  @@index([contactId, createdAt]) // superseded; also the monthly identified users (persons)
+  @@index([contactId, createdAt, id])
   @@index([surveyId, finished]) // survey list's (surveyId, finished) count aggregation — keeps it an index-only scan
 }
 
