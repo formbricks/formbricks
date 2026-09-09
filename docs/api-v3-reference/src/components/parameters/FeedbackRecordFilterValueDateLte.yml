@@ -1,0 +1,6 @@
+in: query
+name: filter[valueDate][lte]
+schema:
+  type: string
+  format: date-time
+description: Records whose date answer is at or before this instant.

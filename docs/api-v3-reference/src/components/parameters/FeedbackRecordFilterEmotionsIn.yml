@@ -1,0 +1,10 @@
+in: query
+name: filter[emotions][in]
+style: form
+explode: true
+schema:
+  type: array
+  maxItems: 6
+  items:
+    $ref: ../schemas/FeedbackRecordEmotion.yml
+description: Records carrying any of these emotion labels. An empty value is ignored.

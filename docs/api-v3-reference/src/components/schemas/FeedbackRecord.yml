@@ -118,8 +118,7 @@ properties:
       Emotions inferred from `valueText`; multi-label from a fixed set. Read-only, and **never an
       empty array** — the member is either absent or has at least one label. Absent covers two
       different states: not yet classified, and classified with no emotion detected. Do not read
-      absence as "not enriched yet"; `filter[hasEmotions][eq]=false` selects both, and the
-      enrichment-status endpoint is what distinguishes them.
+      absence as "not enriched yet" — `filter[hasEmotions][eq]=false` selects both states.
   valueTextTranslated:
     type: string
     description: >-

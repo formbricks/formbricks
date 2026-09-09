@@ -3,9 +3,12 @@ get:
   summary: Find similar feedback records
   description: |
     Returns the records in the same dataset whose embedded text is closest to the given record's,
-    with cosine similarity scores. The anchor record itself is excluded. The gateway looks the
-    record up to learn its dataset and authorizes against that. Requires an API key with **read**
-    permission (or higher) on a workspace the record's dataset is assigned to.
+    with cosine similarity scores. The anchor record itself is excluded. The dataset is read from the
+    anchor record. Requires an API key with **read** permission (or higher) on a workspace the
+    record's dataset is assigned to.
+
+    A record with no embedding yet answers **409**, not 404 — it exists, it simply has nothing to
+    compare. Records without text are never embedded.
 
     Answers **403** for an unknown or inaccessible id. Answers **404** when the record exists but has
     no embedding — it has no text, or was created moments ago and is not embedded yet. Answers
@@ -42,8 +45,8 @@ get:
       $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
-    "404":
-      $ref: ../components/responses/FeedbackRecordsNotFound.yml
+    "409":
+      $ref: ../components/responses/FeedbackRecordsEmbeddingPending.yml
     "500":
       $ref: ../components/responses/V3InternalServerError.yml
     "503":

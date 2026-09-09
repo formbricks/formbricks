@@ -1,0 +1,10 @@
+in: query
+name: filter[sentimentScore][lte]
+schema:
+  type: number
+  format: double
+  minimum: -1
+  maximum: 1
+description: >-
+  Records whose sentiment score is at most this value. An inverted range (a `gte` above the `lte`)
+  answers **400**.
