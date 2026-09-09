@@ -17,7 +17,7 @@ import {
 import { createSurveyDraftGenerationRequest } from "@/app/api/v3/surveys/generate/service";
 import { generateOrganizationAIObject, streamOrganizationAIObject } from "@/lib/ai/service";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
-import { importError, importInfo } from "../../report";
+import { importError, importInfo, importWarning } from "../../report";
 import type { TImportIssue } from "../../types";
 import { abortAfter } from "./abort";
 import { type TImportPromptPart, buildImportSystemPrompt, buildImportUserPrompt } from "./prompt";
@@ -131,15 +131,12 @@ export function finalizeImportDraft(
   schema: TImportDraftSchema,
   defaultLanguageCode: string
 ): TExtractedSurveyDraft {
-  // An empty draft fails the schema's minimums, so the "nothing there" case is recognised before parsing.
-  const rawBlocks = (raw as { blocks?: unknown } | null)?.blocks;
-  const rawIsEmpty =
-    Array.isArray(rawBlocks) &&
-    rawBlocks.every(
-      (block) =>
-        !Array.isArray((block as { questions?: unknown })?.questions) ||
-        (block as { questions: unknown[] }).questions.length === 0
-    );
+  // Models say "nothing here" with empty arrays: drop blocks without questions and questions without a
+  // headline (each skipped question is reported) before the schema sees the object.
+  const skipped: TImportIssue[] = [];
+  const cleaned = pruneEmptyDraftParts(raw, skipped);
+  const rawBlocks = (cleaned as { blocks?: unknown } | null)?.blocks;
+  const rawIsEmpty = Array.isArray(rawBlocks) && rawBlocks.length === 0;
   if (rawIsEmpty) {
     return {
       draft: null,
@@ -149,7 +146,7 @@ export function finalizeImportDraft(
     };
   }
 
-  const parsed = schema.internal.safeParse(raw);
+  const parsed = schema.internal.safeParse(cleaned);
   if (!parsed.success) {
     return {
       draft: null,
@@ -167,7 +164,7 @@ export function finalizeImportDraft(
   }
 
   const draft = parsed.data as TGeneratedDraftLike;
-  const issues: TImportIssue[] = [];
+  const issues: TImportIssue[] = [...skipped];
   const noteIssue = (detail: string, path?: string) =>
     importInfo({ code: "model_note", vars: { detail }, ...(path ? { path } : {}) });
   for (const note of draft.notes ?? []) issues.push(noteIssue(note));
@@ -188,6 +185,33 @@ export function finalizeImportDraft(
     defaultLanguageCode: resolvedDefault,
     issues,
   };
+}
+
+function hasText(value: unknown): boolean {
+  if (typeof value === "string") return value.trim().length > 0;
+  return (
+    Array.isArray(value) && value.some((entry) => typeof (entry as { text?: unknown })?.text === "string")
+  );
+}
+
+/** Removes questions without a headline and blocks without questions; every dropped question is one warning. */
+function pruneEmptyDraftParts(raw: unknown, issues: TImportIssue[]): unknown {
+  if (!raw || typeof raw !== "object" || !Array.isArray((raw as { blocks?: unknown }).blocks)) return raw;
+  const blocks = ((raw as { blocks: unknown[] }).blocks ?? []).flatMap((block) => {
+    if (!block || typeof block !== "object" || !Array.isArray((block as { questions?: unknown }).questions))
+      return [];
+    const questions = (block as { questions: unknown[] }).questions.filter((question) => {
+      const keep = hasText((question as { headline?: unknown })?.headline);
+      if (!keep) {
+        issues.push(
+          importWarning({ code: "model_note", vars: { detail: "A question without any text was skipped." } })
+        );
+      }
+      return keep;
+    });
+    return questions.length > 0 ? [{ ...(block as object), questions }] : [];
+  });
+  return { ...(raw as object), blocks };
 }
 
 /** One blocking extraction call. The caller decides chunking and passes `part` for anything but a whole document. */

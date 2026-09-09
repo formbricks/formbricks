@@ -153,6 +153,38 @@ describe("extractSurveyDraft", () => {
     });
   });
 
+  test("empty arrays from the model are pruned, not fatal: text-less questions and empty blocks go, an empty name survives", () => {
+    const schema = createImportDraftSchema(["en-US"]);
+    const raw = modelOutput("prompt-injection.json") as {
+      name: unknown;
+      blocks: { name: unknown; questions: Record<string, unknown>[] }[];
+    };
+    const withGaps = {
+      ...raw,
+      name: [],
+      blocks: [
+        {
+          name: raw.blocks[0].name,
+          questions: [...raw.blocks[0].questions, { ...raw.blocks[0].questions[0], headline: [] }],
+        },
+        { name: [], questions: [] },
+      ],
+    };
+
+    expect(schema.forAI.safeParse(withGaps).success).toBe(true);
+    const result = finalizeImportDraft(withGaps, schema, "en-US");
+
+    expect(result.draft?.blocks).toHaveLength(1);
+    expect(result.draft?.blocks[0].questions).toHaveLength(3);
+    expect(result.draft?.name).toEqual([]);
+    expect(result.issues.filter((issue) => issue.severity === "warning")).toEqual([
+      expect.objectContaining({
+        code: "model_note",
+        vars: { detail: "A question without any text was skipped." },
+      }),
+    ]);
+  });
+
   test("streamSurveyDraft shares the request and finalizes the completed object", async () => {
     const partials = (async function* () {
       yield { name: [{ languageCode: "en-US", text: "Team" }] };
