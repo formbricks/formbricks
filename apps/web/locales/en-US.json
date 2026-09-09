@@ -2334,7 +2334,7 @@
       "default_survey_language": "Default survey language",
       "default_survey_language_description": "New surveys are created in this language. Existing surveys keep the language they were written in.",
       "default_survey_language_placeholder": "Select a language",
-      "default_survey_language_unsupported": "No survey translations available yet",
+      "default_survey_language_unsupported": "Not supported yet",
       "delete_language_confirmation": "Are you sure you want to delete this language? This action cannot be undone.",
       "duplicate_language_or_language_id": "Duplicate language or language ID",
       "edit_languages": "Edit languages",
