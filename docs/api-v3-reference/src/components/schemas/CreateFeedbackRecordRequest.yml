@@ -4,18 +4,11 @@ description: >-
   `fieldType`. Strings must be valid UTF-8 without NULL bytes; violations answer **400**.
 additionalProperties: false
 required:
-  - datasetId
   - sourceType
   - fieldId
   - fieldType
   - submissionId
 properties:
-  datasetId:
-    type: string
-    format: cuid2
-    description: >-
-      The feedback dataset to write into. It must be one the API key's workspace is assigned to;
-      any other answers **403**. List them with `GET /api/v3/feedback-datasets`.
   sourceType:
     type: string
     minLength: 1

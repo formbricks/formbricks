@@ -2,13 +2,12 @@ type: object
 additionalProperties: false
 required:
   - query
-  - datasetId
 properties:
   query:
     type: string
     minLength: 1
-    description: Natural-language search text. It is embedded and compared to record embeddings by cosine similarity.
-  datasetId:
-    type: string
-    format: cuid2
-    description: The feedback dataset to search (the dataset id). Results never cross datasets.
+    maxLength: 2000
+    description: >-
+      Natural-language search text. It is embedded and compared to record embeddings by cosine
+      similarity. Every search embeds its query, so this is a cost and a rate-limit input as well as
+      a string.

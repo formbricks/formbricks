@@ -3547,6 +3547,8 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
           $ref: '#/components/responses/V3InternalServerError'
       security:
@@ -3666,6 +3668,8 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
           $ref: '#/components/responses/V3InternalServerError'
         '503':
@@ -3686,6 +3690,7 @@ paths:
         - V3 Feedback Records
       parameters:
         - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/FeedbackDatasetIdQuery'
       requestBody:
         required: true
         content:
@@ -3696,7 +3701,6 @@ paths:
               rating:
                 summary: A rating answer
                 value:
-                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
                   sourceType: survey
                   sourceId: cm2k7q9x00003v8h1a2b3c4d5
                   submissionId: cm2k7qa1z0007v8h1e6f7g8h9
@@ -3706,7 +3710,6 @@ paths:
               freeText:
                 summary: A free-text answer (enriched and embedded)
                 value:
-                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
                   sourceType: review
                   sourceName: App Store
                   submissionId: appstore-review-88213
@@ -3719,7 +3722,6 @@ paths:
               choice:
                 summary: A choice answer with a stable option id
                 value:
-                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
                   sourceType: survey
                   submissionId: cm2k7qa1z0007v8h1e6f7g8h9
                   fieldId: q3
@@ -3762,6 +3764,10 @@ paths:
           $ref: '#/components/responses/V3Conflict'
         '413':
           $ref: '#/components/responses/V3PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
           $ref: '#/components/responses/V3InternalServerError'
         '503':
@@ -3827,6 +3833,8 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
           $ref: '#/components/responses/V3InternalServerError'
         '503':
@@ -3840,7 +3848,7 @@ paths:
       description: |
         Embeds `query` and returns the ids of the records in the dataset whose text is closest to it,
         with cosine similarity scores. Only records with a non-empty `valueText` are embedded, so only
-        those can match. `datasetId` is read from the JSON body. Requires an API key with **read**
+        those can match. `datasetId` is a query parameter, as on list and count. Requires an API key with **read**
         permission (or higher) on a workspace the dataset is assigned to.
 
         Results carry ids and the embedded text only — fetch a match with
@@ -3849,6 +3857,8 @@ paths:
       tags:
         - V3 Feedback Records
       parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/FeedbackDatasetIdQuery'
         - $ref: '#/components/parameters/SimilarityLimitQuery'
         - $ref: '#/components/parameters/SimilarityCursorQuery'
         - $ref: '#/components/parameters/MinScoreQuery'
@@ -3860,7 +3870,6 @@ paths:
               $ref: '#/components/schemas/FeedbackRecordSemanticSearchRequest'
             example:
               query: complaints about waiting times at the gates
-              datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
       responses:
         '200':
           description: Matches retrieved
@@ -3895,6 +3904,8 @@ paths:
           $ref: '#/components/responses/V3Forbidden'
         '413':
           $ref: '#/components/responses/V3PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
           $ref: '#/components/responses/V3InternalServerError'
         '503':
@@ -3916,6 +3927,8 @@ paths:
         - V3 Feedback Records
       parameters:
         - $ref: '#/components/parameters/FeedbackRecordIdPath'
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/FeedbackDatasetIdQuery'
       responses:
         '200':
           description: Feedback record retrieved
@@ -3955,6 +3968,8 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
           $ref: '#/components/responses/V3InternalServerError'
         '503':
@@ -3980,6 +3995,8 @@ paths:
         - V3 Feedback Records
       parameters:
         - $ref: '#/components/parameters/FeedbackRecordIdPath'
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/FeedbackDatasetIdQuery'
       requestBody:
         required: true
         content:
@@ -4035,6 +4052,10 @@ paths:
           $ref: '#/components/responses/V3Conflict'
         '413':
           $ref: '#/components/responses/V3PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
           $ref: '#/components/responses/V3InternalServerError'
         '503':
@@ -4053,6 +4074,8 @@ paths:
         - V3 Feedback Records
       parameters:
         - $ref: '#/components/parameters/FeedbackRecordIdPath'
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/FeedbackDatasetIdQuery'
       responses:
         '204':
           description: Feedback record deleted
@@ -4064,6 +4087,8 @@ paths:
           $ref: '#/components/responses/V3Forbidden'
         '409':
           $ref: '#/components/responses/V3Conflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
           $ref: '#/components/responses/V3InternalServerError'
         '503':
@@ -4090,6 +4115,8 @@ paths:
         - V3 Feedback Records
       parameters:
         - $ref: '#/components/parameters/FeedbackRecordIdPath'
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/FeedbackDatasetIdQuery'
         - $ref: '#/components/parameters/SimilarityLimitQuery'
         - $ref: '#/components/parameters/SimilarityCursorQuery'
         - $ref: '#/components/parameters/MinScoreQuery'
@@ -4123,6 +4150,8 @@ paths:
           $ref: '#/components/responses/V3Forbidden'
         '409':
           $ref: '#/components/responses/FeedbackRecordsEmbeddingPending'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
           $ref: '#/components/responses/V3InternalServerError'
         '503':
@@ -8540,16 +8569,11 @@ components:
       description: A new feedback record. Exactly one `value_*` member should carry the answer, matching `fieldType`. Strings must be valid UTF-8 without NULL bytes; violations answer **400**.
       additionalProperties: false
       required:
-        - datasetId
         - sourceType
         - fieldId
         - fieldType
         - submissionId
       properties:
-        datasetId:
-          type: string
-          format: cuid2
-          description: The feedback dataset to write into. It must be one the API key's workspace is assigned to; any other answers **403**. List them with `GET /api/v3/feedback-datasets`.
         sourceType:
           type: string
           minLength: 1
@@ -8667,16 +8691,12 @@ components:
       additionalProperties: false
       required:
         - query
-        - datasetId
       properties:
         query:
           type: string
           minLength: 1
-          description: Natural-language search text. It is embedded and compared to record embeddings by cosine similarity.
-        datasetId:
-          type: string
-          format: cuid2
-          description: The feedback dataset to search (the dataset id). Results never cross datasets.
+          maxLength: 2000
+          description: Natural-language search text. It is embedded and compared to record embeddings by cosine similarity. Every search embeds its query, so this is a cost and a rate-limit input as well as a string.
     FeedbackRecordSimilarityItem:
       type: object
       additionalProperties: false
@@ -8929,7 +8949,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3PayloadTooLarge:
-      description: Payload Too Large — the request body exceeds this endpoint's cap. Reduce the body and retry; the limit is not negotiable per request.
+      description: Payload Too Large — the request body exceeds the 2 MiB cap every v3 write shares. Split the request and retry; the limit is not negotiable per request. Unlike most refusals in front of an API this is written by the application itself, so it is `problem+json` like every other error here rather than a proxy's plain-text local reply.
       headers:
         X-Request-Id:
           schema:

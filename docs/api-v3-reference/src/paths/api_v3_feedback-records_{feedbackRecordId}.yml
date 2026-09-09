@@ -12,6 +12,8 @@ get:
     - V3 Feedback Records
   parameters:
     - $ref: ../components/parameters/FeedbackRecordIdPath.yml
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
   responses:
     "200":
       description: Feedback record retrieved
@@ -51,6 +53,8 @@ get:
       $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
     "500":
       $ref: ../components/responses/V3InternalServerError.yml
     "503":
@@ -76,6 +80,8 @@ patch:
     - V3 Feedback Records
   parameters:
     - $ref: ../components/parameters/FeedbackRecordIdPath.yml
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
   requestBody:
     required: true
     content:
@@ -129,8 +135,12 @@ patch:
       $ref: ../components/responses/V3Forbidden.yml
     "409":
       $ref: ../components/responses/V3Conflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
     "413":
       $ref: ../components/responses/V3PayloadTooLarge.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
     "500":
       $ref: ../components/responses/V3InternalServerError.yml
     "503":
@@ -149,6 +159,8 @@ delete:
     - V3 Feedback Records
   parameters:
     - $ref: ../components/parameters/FeedbackRecordIdPath.yml
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
   responses:
     "204":
       description: Feedback record deleted
@@ -160,6 +172,8 @@ delete:
       $ref: ../components/responses/V3Forbidden.yml
     "409":
       $ref: ../components/responses/V3Conflict.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
     "500":
       $ref: ../components/responses/V3InternalServerError.yml
     "503":

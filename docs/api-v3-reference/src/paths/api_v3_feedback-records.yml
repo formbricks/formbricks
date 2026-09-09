@@ -122,6 +122,8 @@ get:
       $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
     "500":
       $ref: ../components/responses/V3InternalServerError.yml
     "503":
@@ -143,6 +145,7 @@ post:
     - V3 Feedback Records
   parameters:
     - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
   requestBody:
     required: true
     content:
@@ -153,7 +156,6 @@ post:
           rating:
             summary: A rating answer
             value:
-              datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
               sourceType: survey
               sourceId: cm2k7q9x00003v8h1a2b3c4d5
               submissionId: cm2k7qa1z0007v8h1e6f7g8h9
@@ -163,7 +165,6 @@ post:
           freeText:
             summary: A free-text answer (enriched and embedded)
             value:
-              datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
               sourceType: review
               sourceName: App Store
               submissionId: appstore-review-88213
@@ -176,7 +177,6 @@ post:
           choice:
             summary: A choice answer with a stable option id
             value:
-              datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
               sourceType: survey
               submissionId: cm2k7qa1z0007v8h1e6f7g8h9
               fieldId: q3
@@ -217,8 +217,12 @@ post:
       $ref: ../components/responses/V3Forbidden.yml
     "409":
       $ref: ../components/responses/V3Conflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
     "413":
       $ref: ../components/responses/V3PayloadTooLarge.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
     "500":
       $ref: ../components/responses/V3InternalServerError.yml
     "503":
