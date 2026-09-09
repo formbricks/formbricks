@@ -223,6 +223,11 @@ describe("streamImportConversion", () => {
 
     const events = await readEvents(await call(body("survey.md", readFileSync(join(FIXTURES, "survey.md")))));
 
-    expect(events.at(-1)).toMatchObject({ type: "error", code: "ai_quota_exceeded", retryAfter: 30 });
+    expect(events.at(-1)).toMatchObject({
+      type: "error",
+      code: "ai_quota_exceeded",
+      retryAfter: 30,
+      reference: expect.any(String),
+    });
   });
 });
