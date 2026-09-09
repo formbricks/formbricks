@@ -931,6 +931,43 @@ describe("sso-recovery", () => {
     ).rejects.toMatchObject({ callbackUrl: "http://localhost:3000/environments/env_1" });
   });
 
+  /**
+   * The last guard between an unsigned Redis record and an open redirect.
+   *
+   * `readSsoRecoveryIntent` type-checks the stored `callbackUrl`, but it cannot vouch for the origin —
+   * the record carries no signature, unlike the JWT it replaced. So completion re-validates before
+   * handing the value back, and this is the test that keeps that line alive: a mutation sweep showed
+   * the whole return could be reduced to `intent.callbackUrl` with the entire suite still green.
+   */
+  test.each([
+    ["an off-origin absolute URL", "https://evil.example/steal"],
+    ["a scheme-relative pathname (ENG-1636)", "http://localhost:3000//evil.example"],
+    ["a non-http scheme", "javascript:alert(1)"],
+    ["credentials in the authority", "http://user:pass@localhost:3000/x"],
+  ])("falls back to the app origin rather than redirecting to %s", async (_label, callbackUrl) => {
+    mocks.readSsoRecoveryIntent.mockResolvedValue({
+      userId: "user_1",
+      email: "john.doe@example.com",
+      provider: "google",
+      providerAccountId: "provider-account-1",
+      callbackUrl,
+      createdAt: Date.now(),
+    });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: true,
+      isActive: true,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+    } as any);
+
+    await expect(completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })).resolves.toBe(
+      "http://localhost:3000"
+    );
+  });
+
   test("preserves only safe callback URLs in the failure redirect", () => {
     expect(getSsoRecoveryFailureRedirectUrl("http://localhost:3000/invite?token=invite-token")).toBe(
       "http://localhost:3000/auth/login?error=OAuthAccountNotLinked&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Finvite%3Ftoken%3Dinvite-token"
