@@ -30,8 +30,9 @@ describe("import prompts", () => {
 
     expect(prompt).toContain("Allowed language codes: en-US, de-DE");
     expect(prompt).toContain("Default language code: en-US");
-    expect(prompt).toContain("This part continues the same questionnaire.");
-    expect(prompt.endsWith("Document (part 2 of 3):\n1. How was it?")).toBe(true);
+    expect(prompt).toContain("This text continues a questionnaire");
+    expect(prompt).not.toMatch(/part \d+ of \d+/);
+    expect(prompt.endsWith("Document:\n1. How was it?")).toBe(true);
 
     const whole = buildImportUserPrompt({
       text: "x",

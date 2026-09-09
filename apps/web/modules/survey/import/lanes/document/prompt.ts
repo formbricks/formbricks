@@ -29,6 +29,8 @@ export function buildImportSystemPrompt(): string {
       "and put its wording into otherLabel.",
     'Mark a question required when the source marks it (an asterisk, "required", "mandatory", "Pflichtfeld").',
     "Introductory paragraphs before the first question become the welcomeCard; closing paragraphs after the last question become the ending.",
+    "name is the document's own title when it has one; otherwise return an empty array. Never invent a title.",
+    "A dropdown or select list is a multipleChoiceSingle with dropdown set to true.",
     "Every text field is an array with one entry per allowed language code from the user message, using only those codes. " +
       "If the document only has some languages for a text, return only the entries that exist; never invent a translation.",
     "Keep the block structure the document has: a heading, a numbered section, or a page break (a line with ---) starts a new block. " +
@@ -49,17 +51,17 @@ export function buildImportUserPrompt(params: {
   defaultLanguageCode: string;
   part?: TImportPromptPart;
 }): string {
-  const heading = params.part ? `Document (part ${params.part.index} of ${params.part.total}):` : "Document:";
-
+  // No "part i of n" in the prompt: models turned it into survey names ("Questionnaire Part 2").
   return [
     `Allowed language codes: ${params.languageCodes.join(", ")}`,
     `Default language code: ${params.defaultLanguageCode}`,
     params.part && params.part.index > 1
-      ? "This part continues the same questionnaire. Extract only the questions in this part; do not repeat earlier ones. " +
-        "Skip the welcomeCard unless this part has its own introduction."
+      ? "This text continues a questionnaire whose earlier questions were already extracted. Extract only the questions in this text; " +
+        "do not repeat earlier ones, do not add a welcomeCard unless this text has its own introduction, and leave name empty unless " +
+        "this text carries the questionnaire's title."
       : "",
     "",
-    heading,
+    "Document:",
     params.text,
   ]
     .filter((line) => line !== "")

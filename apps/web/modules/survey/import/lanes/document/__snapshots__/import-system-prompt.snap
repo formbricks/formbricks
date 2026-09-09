@@ -9,6 +9,8 @@ Scale anchors such as "1 = strongly disagree … 5 = strongly agree" belong in l
 A choice like "Other (please specify)" or "Sonstiges" is not a choice text: leave it out of choices, set allowOther to true and put its wording into otherLabel.
 Mark a question required when the source marks it (an asterisk, "required", "mandatory", "Pflichtfeld").
 Introductory paragraphs before the first question become the welcomeCard; closing paragraphs after the last question become the ending.
+name is the document's own title when it has one; otherwise return an empty array. Never invent a title.
+A dropdown or select list is a multipleChoiceSingle with dropdown set to true.
 Every text field is an array with one entry per allowed language code from the user message, using only those codes. If the document only has some languages for a text, return only the entries that exist; never invent a translation.
 Keep the block structure the document has: a heading, a numbered section, or a page break (a line with ---) starts a new block. Without such markers, group 3 to 4 related questions per block. Use at most 16 blocks with at most 24 questions each.
 Rating-like questions (rating, csat, ces, nps, matrix, ranking) may share a block with other questions here; the importer splits them later.
