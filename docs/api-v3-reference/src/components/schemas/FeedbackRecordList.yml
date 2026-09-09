@@ -2,17 +2,11 @@ type: object
 additionalProperties: false
 required:
   - data
-  - limit
+  - meta
 properties:
   data:
     type: array
     items:
       $ref: ./FeedbackRecord.yml
-  limit:
-    type: integer
-    description: The page size that was applied.
-  next_cursor:
-    type: string
-    description: >-
-      Opaque keyset cursor for the next page. **Present only when there may be more results**;
-      absent on the last page. Pass it back unchanged as `cursor`, with the same `sort` and `order`.
+  meta:
+    $ref: ./CursorPaginationMeta.yml

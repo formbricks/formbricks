@@ -1,0 +1,175 @@
+get:
+  operationId: getFeedbackRecordV3
+  summary: Get a feedback record
+  description: |
+    Returns one feedback record by id. The gateway looks the record up to learn its dataset and
+    authorizes against that, so no `datasetId` is sent. Requires an API key with **read**
+    permission (or higher) on a workspace the record's dataset is assigned to.
+
+    An unknown id, or one in a dataset you cannot read, answers **403** rather than 404, so ids
+    cannot be probed. The exception is the minute after a delete: the gateway still has the
+    record's dataset cached, authorizes the call, and the store answers **404**.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - $ref: ../components/parameters/FeedbackRecordIdPath.yml
+  responses:
+    "200":
+      description: Feedback record retrieved
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FeedbackRecordEnvelope.yml
+          examples:
+            enriched:
+              summary: A text record after enrichment
+              value:
+                data:
+                  id: 018e1234-5678-7abc-8ef0-123456789abd
+                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                  collectedAt: 2026-08-15T10:30:00Z
+                  createdAt: 2026-08-15T10:30:02Z
+                  updatedAt: 2026-08-15T10:31:40Z
+                  sourceType: survey
+                  sourceId: cm2k7q9x00003v8h1a2b3c4d5
+                  sourceName: Post-match survey
+                  submissionId: cm2k7qa1z0007v8h1e6f7g8h9
+                  fieldId: q2
+                  fieldLabel: What could we improve?
+                  fieldType: text
+                  valueText: Queues at the north gate were far too long.
+                  userId: fan-8813
+                  language: en
+                  sentiment: negative
+                  sentimentScore: -0.62
+                  emotions:
+                    - anger
+                  valueTextTranslated: Die Warteschlangen am Nordtor waren viel zu lang.
+                  translationLangKey: de
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "404":
+      $ref: ../components/responses/FeedbackRecordsNotFound.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []
+patch:
+  operationId: updateFeedbackRecordV3
+  summary: Update a feedback record
+  description: |
+    Changes the answer, `language`, `userId` or `metadata` of one record. Only the members sent
+    are changed; provenance (`datasetId`, `source_*`, `field_*`, `submissionId`, `collectedAt`)
+    is immutable. Requires an API key with **write** permission (or higher) on a workspace the
+    record's dataset is assigned to, and the dataset must be assigned to **exactly one** workspace
+    — see the delete operation for why.
+
+    Two behaviours are silent and worth knowing: `metadata` is **replaced**, not merged; and
+    changing `valueText` clears the enrichment members (`sentiment`, `sentimentScore`,
+    `emotions`, `valueTextTranslated`, `translationLangKey`) and queues re-enrichment and
+    re-embedding — the response shows them absent until that completes. Changing `language` clears
+    and re-queues the translation pair only.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - $ref: ../components/parameters/FeedbackRecordIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/UpdateFeedbackRecordRequest.yml
+        examples:
+          correctText:
+            summary: Correct a text answer
+            value:
+              valueText: Queues at the north gate were far too long on match day.
+          replaceMetadata:
+            summary: Replace the metadata object
+            value:
+              metadata:
+                channel: survey
+                stand: north
+                priority: high
+  responses:
+    "200":
+      description: Feedback record updated
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FeedbackRecordEnvelope.yml
+          examples:
+            updated:
+              summary: After correcting the text — enrichment members are cleared pending re-enrichment
+              value:
+                data:
+                  id: 018e1234-5678-7abc-8ef0-123456789abd
+                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                  collectedAt: 2026-08-15T10:30:00Z
+                  createdAt: 2026-08-15T10:30:02Z
+                  updatedAt: 2026-08-16T09:02:11Z
+                  sourceType: survey
+                  sourceId: cm2k7q9x00003v8h1a2b3c4d5
+                  sourceName: Post-match survey
+                  submissionId: cm2k7qa1z0007v8h1e6f7g8h9
+                  fieldId: q2
+                  fieldLabel: What could we improve?
+                  fieldType: text
+                  valueText: Queues at the north gate were far too long on match day.
+                  userId: fan-8813
+                  language: en
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "404":
+      $ref: ../components/responses/FeedbackRecordsNotFound.yml
+    "409":
+      $ref: ../components/responses/V3Conflict.yml
+    "413":
+      $ref: ../components/responses/V3PayloadTooLarge.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []
+delete:
+  operationId: deleteFeedbackRecordV3
+  summary: Delete a feedback record
+  description: |
+    Permanently deletes one record and its derived embedding. Unrecoverable, so it requires an API
+    key with **manage** permission on a workspace the record's dataset is assigned to, and the
+    dataset must be assigned to **exactly one** workspace: on a shared dataset no workspace
+    permission can say whose record this is, so API-key mutations are refused with **403**.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - $ref: ../components/parameters/FeedbackRecordIdPath.yml
+  responses:
+    "204":
+      description: Feedback record deleted
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "404":
+      $ref: ../components/responses/FeedbackRecordsNotFound.yml
+    "409":
+      $ref: ../components/responses/V3Conflict.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []

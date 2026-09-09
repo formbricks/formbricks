@@ -1,0 +1,69 @@
+get:
+  operationId: countFeedbackRecordsV3
+  summary: Count feedback records
+  description: |
+    Counts the feedback records matching the same filters `GET /api/v3/feedback-records` accepts, so
+    a count can never describe a different set than the list. Requires an API key with **read**
+    permission (or higher) on the workspace.
+
+    Ordering and pagination do not apply, so `sortBy`, `limit` and `cursor` are not accepted.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
+    - in: query
+      name: filter[fieldType][in]
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 9
+        items:
+          $ref: ../components/schemas/FeedbackRecordFieldType.yml
+      description: Records of any of these field types.
+    - in: query
+      name: filter[sentiment][in]
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 6
+        items:
+          $ref: ../components/schemas/FeedbackRecordSentiment.yml
+      description: Records carrying any of these sentiment labels.
+    - in: query
+      name: filter[hasSentiment][eq]
+      schema:
+        type: boolean
+      description: Presence filter on the sentiment label.
+    - in: query
+      name: filter[hasEmotions][eq]
+      schema:
+        type: boolean
+      description: Presence filter on the emotion labels.
+  responses:
+    "200":
+      description: Count retrieved
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FeedbackRecordCountEnvelope.yml
+          examples:
+            counted:
+              summary: Matching records
+              value:
+                data:
+                  count: 1284
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []

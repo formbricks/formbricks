@@ -1,0 +1,15 @@
+type: object
+additionalProperties: false
+required:
+  - id
+  - name
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: >-
+      The dataset id. This is the value `datasetId` takes on a feedback record and on the record
+      operations' filters.
+  name:
+    type: string
+    description: Human-readable dataset name, as shown in the app.

@@ -29,21 +29,23 @@ get:
               summary: One neighbour above the threshold
               value:
                 data:
-                  - feedback_record_id: 018e1234-5678-7abc-8ef0-1234567890aa
+                  - feedbackRecordId: 018e1234-5678-7abc-8ef0-1234567890aa
                     score: 0.83
-                    field_label: Anything else?
-                    value_text: Took 40 minutes to get in. Please open more turnstiles.
-                limit: 10
+                    fieldLabel: Anything else?
+                    valueText: Took 40 minutes to get in. Please open more turnstiles.
+                meta:
+                  limit: 10
+                  nextCursor: null
     "400":
-      $ref: ../components/responses/FeedbackRecordsBadRequest.yml
+      $ref: ../components/responses/V3BadRequest.yml
     "401":
-      $ref: ../components/responses/FeedbackRecordsUnauthorized.yml
+      $ref: ../components/responses/V3Unauthorized.yml
     "403":
-      $ref: ../components/responses/FeedbackRecordsForbidden.yml
+      $ref: ../components/responses/V3Forbidden.yml
     "404":
       $ref: ../components/responses/FeedbackRecordsNotFound.yml
     "500":
-      $ref: ../components/responses/FeedbackRecordsInternalServerError.yml
+      $ref: ../components/responses/V3InternalServerError.yml
     "503":
       $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
   security:

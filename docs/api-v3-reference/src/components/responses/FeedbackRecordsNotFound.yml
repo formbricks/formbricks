@@ -1,10 +1,14 @@
 description: >-
-  Not Found from the feedback store (`application/problem+json`, `code: not_found`), for one of two
-  reasons. Usually the record exists but has **no embedding** for the current model: it has no text,
-  or was created moments ago and is not embedded yet. It can also mean the record itself is **gone**
-  — deleted after the gateway authorized the call against its cached dataset (see the `id`
-  parameter).
+  Not Found. On `/{id}/similar` the record exists but has no embedding yet — it has no text, or was
+  created moments ago. On the single-record operations it means the record is gone: the dataset
+  lookup is cached briefly, so for a short window after a delete the call is still authorized and
+  the store no longer has the record. Treat both as "not available to you".
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
 content:
   application/problem+json:
     schema:
-      $ref: ../schemas/HubProblem.yml
+      $ref: ../schemas/Problem.yml
