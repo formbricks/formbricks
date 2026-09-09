@@ -228,3 +228,15 @@ components:
       description: >
         Management API key; must include **workspaceId** as an allowed workspace
         with read, write, or manage permission.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >
+        The same management API key, presented as `Authorization: Bearer <key>`
+        instead of `x-api-key`. Equivalent in every way — same key, same
+        workspace permissions — and offered because it is what most HTTP clients
+        and SDK generators reach for by default.
+
+        A **401** from any operation that accepts it carries
+        `WWW-Authenticate: Bearer realm="formbricks"`. Session-only operations
+        accept neither this nor `x-api-key`.

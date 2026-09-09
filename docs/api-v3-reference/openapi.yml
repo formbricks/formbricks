@@ -210,6 +210,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
     post:
       operationId: createSurveyV3
       summary: Create a survey
@@ -461,6 +462,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/surveys/generate:
     post:
       operationId: generateSurveyV3
@@ -679,6 +681,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/surveys/validate:
     post:
       operationId: validateSurveyV3
@@ -791,6 +794,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/surveys/{surveyId}:
     get:
       operationId: getSurveyV3
@@ -954,6 +958,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
     patch:
       operationId: patchSurveyV3
       summary: Update a survey
@@ -1097,6 +1102,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
     delete:
       operationId: deleteSurveyV3
       summary: Delete a survey
@@ -1136,6 +1142,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/surveys/{surveyId}/archive:
     post:
       operationId: archiveSurveyV3
@@ -1216,6 +1223,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/surveys/{surveyId}/restore:
     post:
       operationId: restoreSurveyV3
@@ -1296,6 +1304,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows:
     get:
       operationId: listWorkflowsV3
@@ -1383,6 +1392,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
     post:
       operationId: createWorkflowV3
       summary: Create a workflow
@@ -1487,6 +1497,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows/runs:
     get:
       operationId: listWorkflowRunsV3
@@ -1574,6 +1585,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows/runs/{runId}:
     get:
       operationId: getWorkflowRunV3
@@ -1627,6 +1639,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows/{workflowId}:
     get:
       operationId: getWorkflowV3
@@ -1672,6 +1685,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
     patch:
       operationId: patchWorkflowV3
       summary: Update a workflow
@@ -1732,6 +1746,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
     delete:
       operationId: deleteWorkflowV3
       summary: Delete a workflow
@@ -1769,6 +1784,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows/{workflowId}/duplicate:
     post:
       operationId: duplicateWorkflowV3
@@ -1828,6 +1844,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows/{workflowId}/enable:
     post:
       operationId: enableWorkflowV3
@@ -1870,6 +1887,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows/{workflowId}/disable:
     post:
       operationId: disableWorkflowV3
@@ -1900,6 +1918,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows/{workflowId}/archive:
     post:
       operationId: archiveWorkflowV3
@@ -1933,6 +1952,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows/{workflowId}/unarchive:
     post:
       operationId: unarchiveWorkflowV3
@@ -1965,6 +1985,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows/{workflowId}/test:
     post:
       operationId: testWorkflowV3
@@ -2045,6 +2066,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/action-classes:
     get:
       operationId: listActionClassesV3
@@ -2134,6 +2156,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/contact-attribute-keys:
     get:
       operationId: listContactAttributeKeysV3
@@ -2218,6 +2241,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/tags:
     get:
       operationId: listTagsV3
@@ -2460,6 +2484,12 @@ components:
       name: x-api-key
       description: |
         Management API key; must include **workspaceId** as an allowed workspace with read, write, or manage permission.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        The same management API key, presented as `Authorization: Bearer <key>` instead of `x-api-key`. Equivalent in every way — same key, same workspace permissions — and offered because it is what most HTTP clients and SDK generators reach for by default.
+        A **401** from any operation that accepts it carries `WWW-Authenticate: Bearer realm="formbricks"`. Session-only operations accept neither this nor `x-api-key`.
   schemas:
     SurveyListItem:
       type: object

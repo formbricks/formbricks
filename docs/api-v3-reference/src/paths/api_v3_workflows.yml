@@ -102,6 +102,7 @@ get:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 post:
   operationId: createWorkflowV3
   summary: Create a workflow
@@ -222,3 +223,4 @@ post:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

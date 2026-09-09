@@ -183,6 +183,7 @@ get:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 patch:
   operationId: patchSurveyV3
   summary: Update a survey
@@ -375,6 +376,7 @@ patch:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 delete:
   operationId: deleteSurveyV3
   summary: Delete a survey
@@ -414,3 +416,4 @@ delete:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

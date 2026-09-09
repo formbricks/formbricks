@@ -168,6 +168,7 @@ get:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 post:
   operationId: createSurveyV3
   summary: Create a survey
@@ -476,3 +477,4 @@ post:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
