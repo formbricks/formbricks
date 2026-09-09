@@ -4654,7 +4654,6 @@ components:
           enum:
             - link
             - app
-            - website
             - web
         status:
           type: string
@@ -4830,7 +4829,9 @@ components:
         - code
       properties:
         code:
-          $ref: '#/components/schemas/LocaleCode'
+          type: string
+          description: 'Server-emitted survey language code/tag, echoed from `GET`. Deliberately not `LocaleCode`: existing surveys carry language-only and script-only codes (`vi`, `gu`), and a read-only echo has to accept whatever the read returned. New languages are still created through the strict shape.'
+          example: en-US
         default:
           type: boolean
           description: Optional marker for readability; only the `defaultLanguage` entry may set this to true.
@@ -4888,7 +4889,8 @@ components:
           format: date-time
           description: Read-only echo. Use `/archive` and `/restore` to change it.
         defaultLanguage:
-          $ref: '#/components/schemas/LocaleCode'
+          type: string
+          description: Read-only echo of the survey default language, in whatever shape `GET` returned — legacy surveys carry language-only codes, so this is not constrained to `LocaleCode`.
         name:
           type: string
           minLength: 1
