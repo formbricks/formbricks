@@ -384,10 +384,14 @@ export const SurveyMenuBar = ({
         }
       } catch (e) {
         // A stale bundle's action id is rejected by the new deployment: hand it to the reload
-        // prompt instead of failing this tick silently, which would then repeat every 10s.
-        if (!reportStaleServerActionError(e)) {
-          console.error(e);
+        // prompt rather than failing this tick silently, and stop the interval -- nothing this
+        // bundle sends is accepted until the tab reloads, so retrying every 10s only burns
+        // requests behind a prompt that is already up.
+        if (reportStaleServerActionError(e)) {
+          clearInterval(intervalId);
+          return;
         }
+        console.error(e);
       } finally {
         isAutoSavingRef.current = false;
       }
