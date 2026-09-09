@@ -3754,6 +3754,8 @@
         "dropzone_primary": "Datei hier ablegen oder klicken, um zu durchsuchen",
         "dropzone_secondary": "Formbricks JSON, Qualtrics QSF oder ein Dokument",
         "entry": "Umfrage importieren",
+        "error_code": "Fehlercode {code}",
+        "error_reference": "Fehlercode {code} · Referenz {reference}",
         "errors": {
           "ai_unavailable_for_file": "Dieser Dateityp wird mit KI gelesen, die in dieser Organisation nicht verfügbar ist. Importiere stattdessen ein Formbricks JSON oder eine Qualtrics QSF.",
           "archive_rejected": "Diese Datei konnte nicht sicher geöffnet werden und wurde abgelehnt.",

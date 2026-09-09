@@ -3754,6 +3754,8 @@
         "dropzone_primary": "Trage un fișier aici sau dă click ca să răsfoiești",
         "dropzone_secondary": "Formbricks JSON, Qualtrics QSF sau un document",
         "entry": "Importă chestionar",
+        "error_code": "Cod de eroare {code}",
+        "error_reference": "Cod de eroare {code} · Referință {reference}",
         "errors": {
           "ai_unavailable_for_file": "Acest tip de fișier este citit cu AI, care nu este disponibil în această organizație. Importă în schimb un Formbricks JSON sau un Qualtrics QSF.",
           "archive_rejected": "Acest fișier nu a putut fi deschis în siguranță și a fost respins.",

@@ -3623,6 +3623,8 @@ checksums:
     workspace/surveys/import/dropzone_primary: 4d49386181659703bee203209642993f
     workspace/surveys/import/dropzone_secondary: a133e9943cf8346d64fe75173d68fcde
     workspace/surveys/import/entry: 5418ac88c503972c1b745f7681a6bacc
+    workspace/surveys/import/error_code: 18b370363ffa48b482fbd891156157b4
+    workspace/surveys/import/error_reference: 8f223183a9e5ccc3139aa38b73db6e00
     workspace/surveys/import/errors/ai_unavailable_for_file: 6fee007f5493ca6c567baed97babb770
     workspace/surveys/import/errors/archive_rejected: 35cff77d68d0bda11580d382392c800d
     workspace/surveys/import/errors/document_encrypted: ec758ee6162b24ba56b93a1df3b56cb6

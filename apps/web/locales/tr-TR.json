@@ -3754,6 +3754,8 @@
         "dropzone_primary": "Buraya bir dosya sürükle veya göz atmak için tıkla",
         "dropzone_secondary": "Formbricks JSON, Qualtrics QSF veya bir belge",
         "entry": "Anket içe aktar",
+        "error_code": "Hata kodu {code}",
+        "error_reference": "Hata kodu {code} · Referans {reference}",
         "errors": {
           "ai_unavailable_for_file": "Bu dosya türü yapay zeka ile okunuyor ama bu kuruluşta AI mevcut değil. Bunun yerine Formbricks JSON veya Qualtrics QSF içe aktar.",
           "archive_rejected": "Bu dosya güvenli bir şekilde açılamadı ve reddedildi.",

@@ -3754,6 +3754,8 @@
         "dropzone_primary": "Solte um arquivo aqui ou clique para procurar",
         "dropzone_secondary": "Formbricks JSON, Qualtrics QSF ou um documento",
         "entry": "Importar pesquisa",
+        "error_code": "Código de erro {code}",
+        "error_reference": "Código de erro {code} · Referência {reference}",
         "errors": {
           "ai_unavailable_for_file": "Este tipo de arquivo é lido com IA, que não está disponível nesta organização. Importe um Formbricks JSON ou um Qualtrics QSF.",
           "archive_rejected": "Este arquivo não pôde ser aberto com segurança e foi rejeitado.",

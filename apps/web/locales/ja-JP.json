@@ -3754,6 +3754,8 @@
         "dropzone_primary": "ここにファイルをドロップするか、クリックして参照",
         "dropzone_secondary": "Formbricks JSON、Qualtrics QSF、または文書",
         "entry": "アンケートをインポート",
+        "error_code": "エラーコード {code}",
+        "error_reference": "エラーコード {code} · 参照番号 {reference}",
         "errors": {
           "ai_unavailable_for_file": "このファイル形式はAIで読み取られますが、この組織ではAIが利用できません。代わりにFormbricks JSONまたはQualtrics QSFをインポートしてください。",
           "archive_rejected": "このファイルは安全に開くことができなかったため、拒否されました。",

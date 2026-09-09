@@ -3754,6 +3754,8 @@
         "dropzone_primary": "將檔案拖曳到此處或點擊瀏覽",
         "dropzone_secondary": "Formbricks JSON、Qualtrics QSF 或文件",
         "entry": "匯入問卷",
+        "error_code": "錯誤代碼 {code}",
+        "error_reference": "錯誤代碼 {code} · 參考編號 {reference}",
         "errors": {
           "ai_unavailable_for_file": "此檔案類型需要透過 AI 讀取,但此組織無法使用 AI。請改為匯入 Formbricks JSON 或 Qualtrics QSF。",
           "archive_rejected": "無法安全開啟此檔案,已遭拒絕。",

@@ -3754,6 +3754,8 @@
         "dropzone_primary": "Släpp en fil här eller klicka för att bläddra",
         "dropzone_secondary": "Formbricks JSON, Qualtrics QSF eller ett dokument",
         "entry": "Importera enkät",
+        "error_code": "Felkod {code}",
+        "error_reference": "Felkod {code} · Referens {reference}",
         "errors": {
           "ai_unavailable_for_file": "Den här filtypen läses med AI, som inte är tillgänglig i den här organisationen. Importera en Formbricks JSON eller en Qualtrics QSF istället.",
           "archive_rejected": "Den här filen kunde inte öppnas säkert och avvisades.",

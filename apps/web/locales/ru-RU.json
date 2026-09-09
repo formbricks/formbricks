@@ -3754,6 +3754,8 @@
         "dropzone_primary": "Перетащи файл сюда или нажми для выбора",
         "dropzone_secondary": "Formbricks JSON, Qualtrics QSF или документ",
         "entry": "Импортировать опрос",
+        "error_code": "Код ошибки {code}",
+        "error_reference": "Код ошибки {code} · Ссылка {reference}",
         "errors": {
           "ai_unavailable_for_file": "Этот тип файла обрабатывается с помощью ИИ, который недоступен в этой организации. Импортируй вместо этого Formbricks JSON или Qualtrics QSF.",
           "archive_rejected": "Этот файл не удалось безопасно открыть, и он был отклонён.",

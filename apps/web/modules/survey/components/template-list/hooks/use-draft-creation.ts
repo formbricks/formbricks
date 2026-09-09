@@ -28,7 +28,7 @@ export type TDraftStreamEvent =
       replace?: boolean;
     }
   | { type: "done"; payload: TV3CreateSurveyBody; report?: unknown }
-  | { type: "error"; code: string; detail?: string }
+  | { type: "error"; code: string; detail?: string; reference?: string }
   | { type: string };
 
 export type TDraftStreamHandlers = {
@@ -174,7 +174,7 @@ export const useDraftCreation = <TInput>({
               }
               case "error": {
                 const failure = event as Extract<TDraftStreamEvent, { type: "error" }>;
-                dispatch({ type: "FAIL", errorCode: failure.code });
+                dispatch({ type: "FAIL", errorCode: failure.code, errorReference: failure.reference });
                 break;
               }
               default:
@@ -263,6 +263,8 @@ export const useDraftCreation = <TInput>({
     sourceLabel: state.sourceLabel,
     canCreate,
     errorMessage,
+    errorCode: state.errorCode,
+    errorReference: state.errorReference,
     isNavigatingToEditor,
     isCreatingSurvey: state.status === "creating" || isNavigatingToEditor,
     submit,

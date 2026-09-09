@@ -3754,6 +3754,8 @@
         "dropzone_primary": "拖放文件到此处或点击浏览",
         "dropzone_secondary": "Formbricks JSON、Qualtrics QSF 或其他文档",
         "entry": "导入问卷",
+        "error_code": "错误代码 {code}",
+        "error_reference": "错误代码 {code} · 参考 {reference}",
         "errors": {
           "ai_unavailable_for_file": "此文件类型需要通过 AI 读取,但当前组织无法使用此功能。请改为导入 Formbricks JSON 或 Qualtrics QSF。",
           "archive_rejected": "无法安全打开此文件,已被拒绝。",

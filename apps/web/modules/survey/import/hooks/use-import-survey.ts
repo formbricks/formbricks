@@ -156,6 +156,8 @@ export const useImportSurvey = ({
     fatalReport,
     sourceLabel: draft.sourceLabel,
     errorMessage: draft.errorMessage,
+    errorCode: draft.errorCode,
+    errorReference: draft.errorReference,
     progress,
     isCreatingSurvey: draft.isCreatingSurvey,
     isNavigatingToEditor: draft.isNavigatingToEditor,

@@ -130,6 +130,15 @@ export const ImportSurveyDialog = ({
 
   const fileCheckMessage = importer.fileCheck ? getAiErrorMessage(importer.fileCheck, t) : null;
   const errorMessage = importer.errorMessage ?? fileCheckMessage;
+  // The code and the run reference make a failure reportable; the file check is local and needs neither.
+  const errorReference = importer.errorCode
+    ? importer.errorReference
+      ? t("workspace.surveys.import.error_reference", {
+          code: importer.errorCode,
+          reference: importer.errorReference,
+        })
+      : t("workspace.surveys.import.error_code", { code: importer.errorCode })
+    : null;
 
   const sourceChip = importer.file ? (
     <SourceChip
@@ -210,14 +219,19 @@ export const ImportSurveyDialog = ({
           unconstrained
           className={cn(
             "-mx-1 -mt-1 flex flex-none flex-col gap-4 px-1 pt-1 pb-1",
-            // Never taller than the viewport: the review panel scrolls inside its own list, everything
-            // else scrolls here.
-            isReviewing ? "h-[min(32rem,calc(100dvh-21rem))]" : "max-h-[calc(100dvh-12rem)] overflow-y-auto"
+            // Never taller than the viewport. In review the list keeps its minimum height and the dialog
+            // grows with the report, which scrolls inside its own box rather than squeezing the questions out.
+            isReviewing ? "max-h-[calc(100dvh-8rem)]" : "max-h-[calc(100dvh-12rem)] overflow-y-auto"
           )}>
           {errorMessage ? (
             <Alert variant="error">
               <AlertTitle>{t("common.error")}</AlertTitle>
-              <AlertDescription>{errorMessage}</AlertDescription>
+              <AlertDescription>
+                {errorMessage}
+                {errorReference ? (
+                  <span className="mt-1 block font-mono text-xs opacity-70">{errorReference}</span>
+                ) : null}
+              </AlertDescription>
             </Alert>
           ) : null}
 

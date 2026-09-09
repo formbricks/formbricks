@@ -3754,6 +3754,8 @@
         "dropzone_primary": "Húzzon ide egy fájlt, vagy kattintson a tallózáshoz",
         "dropzone_secondary": "Formbricks JSON, Qualtrics QSF vagy egy dokumentum",
         "entry": "Felmérés importálása",
+        "error_code": "Hibakód: {code}",
+        "error_reference": "Hibakód: {code} · Hivatkozás: {reference}",
         "errors": {
           "ai_unavailable_for_file": "Ez a fájltípus mesterséges intelligenciával kerül beolvasásra, amely nem érhető el ebben a szervezetben. Importáljon helyette egy Formbricks JSON vagy egy Qualtrics QSF fájlt.",
           "archive_rejected": "Ez a fájl nem nyitható meg biztonságosan, ezért elutasításra került.",

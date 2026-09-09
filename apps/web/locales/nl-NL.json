@@ -3754,6 +3754,8 @@
         "dropzone_primary": "Sleep een bestand hierheen of klik om te bladeren",
         "dropzone_secondary": "Formbricks JSON, Qualtrics QSF of een document",
         "entry": "Enquête importeren",
+        "error_code": "Foutcode {code}",
+        "error_reference": "Foutcode {code} · Referentie {reference}",
         "errors": {
           "ai_unavailable_for_file": "Dit bestandstype wordt uitgelezen met AI, wat niet beschikbaar is in deze organisatie. Importeer in plaats daarvan een Formbricks JSON of een Qualtrics QSF.",
           "archive_rejected": "Dit bestand kon niet veilig worden geopend en is afgewezen.",
