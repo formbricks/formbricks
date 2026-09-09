@@ -2334,7 +2334,7 @@
       "default_survey_language": "Standard-Umfragesprache",
       "default_survey_language_description": "Neue Umfragen werden in dieser Sprache erstellt. Bestehende Umfragen behalten die Sprache, in der sie verfasst wurden.",
       "default_survey_language_placeholder": "Wähle eine Sprache",
-      "default_survey_language_unsupported": "Noch keine Umfrageübersetzungen verfügbar",
+      "default_survey_language_unsupported": "Noch nicht unterstützt",
       "delete_language_confirmation": "Bist du sicher, dass du diese Sprache löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
       "duplicate_language_or_language_id": "Doppelte Sprache oder Sprach-ID",
       "edit_languages": "Sprachen bearbeiten",

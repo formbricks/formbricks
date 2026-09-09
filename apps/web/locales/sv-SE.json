@@ -2334,7 +2334,7 @@
       "default_survey_language": "Standardspråk för enkäter",
       "default_survey_language_description": "Nya enkäter skapas på detta språk. Befintliga enkäter behåller det språk de skrevs på.",
       "default_survey_language_placeholder": "Välj ett språk",
-      "default_survey_language_unsupported": "Inga enkätöversättningar tillgängliga ännu",
+      "default_survey_language_unsupported": "Stöds inte ännu",
       "delete_language_confirmation": "Är du säker på att du vill ta bort detta språk? Denna åtgärd kan inte ångras.",
       "duplicate_language_or_language_id": "Duplicerat språk eller språk-ID",
       "edit_languages": "Redigera språk",

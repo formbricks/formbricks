@@ -2334,7 +2334,7 @@
       "default_survey_language": "デフォルトのアンケート言語",
       "default_survey_language_description": "新しいアンケートはこの言語で作成されます。既存のアンケートは作成時の言語が保持されます。",
       "default_survey_language_placeholder": "言語を選択",
-      "default_survey_language_unsupported": "アンケートの翻訳はまだ利用できません",
+      "default_survey_language_unsupported": "まだサポートされていません",
       "delete_language_confirmation": "この言語を削除してもよろしいですか？このアクションは元に戻せません。",
       "duplicate_language_or_language_id": "重複する言語または言語ID",
       "edit_languages": "言語を編集",

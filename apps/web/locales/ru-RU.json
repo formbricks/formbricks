@@ -2334,7 +2334,7 @@
       "default_survey_language": "Язык опроса по умолчанию",
       "default_survey_language_description": "Новые опросы создаются на этом языке. Существующие опросы сохраняют язык, на котором они были написаны.",
       "default_survey_language_placeholder": "Выбери язык",
-      "default_survey_language_unsupported": "Переводы опроса пока недоступны",
+      "default_survey_language_unsupported": "Пока не поддерживается",
       "delete_language_confirmation": "Вы уверены, что хотите удалить этот язык? Это действие нельзя будет отменить.",
       "duplicate_language_or_language_id": "Дублирующийся язык или идентификатор языка",
       "edit_languages": "Редактировать языки",

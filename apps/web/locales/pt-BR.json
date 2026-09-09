@@ -2334,7 +2334,7 @@
       "default_survey_language": "Idioma padrão da pesquisa",
       "default_survey_language_description": "Novas pesquisas são criadas neste idioma. Pesquisas existentes mantêm o idioma em que foram escritas.",
       "default_survey_language_placeholder": "Selecione um idioma",
-      "default_survey_language_unsupported": "Ainda não há traduções de pesquisa disponíveis",
+      "default_survey_language_unsupported": "Ainda não suportado",
       "delete_language_confirmation": "Tem certeza de que deseja excluir este idioma? Essa ação não pode ser desfeita.",
       "duplicate_language_or_language_id": "Idioma ou ID de idioma duplicado",
       "edit_languages": "Editar idiomas",

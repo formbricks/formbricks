@@ -2334,7 +2334,7 @@
       "default_survey_language": "Alapértelmezett felmérési nyelv",
       "default_survey_language_description": "Az új felmérések ebben a nyelvben kerülnek létrehozásra. A meglévő felmérések megtartják azt a nyelvet, amelyen megírták őket.",
       "default_survey_language_placeholder": "Kérem, válasszon nyelvet",
-      "default_survey_language_unsupported": "Még nincsenek elérhető felmérésfordítások",
+      "default_survey_language_unsupported": "Még nem támogatott",
       "delete_language_confirmation": "Biztosan törölni szeretné ezt a nyelvet? Ezt a műveletet nem lehet visszavonni.",
       "duplicate_language_or_language_id": "Kettőzött nyelv vagy nyelvazonosító",
       "edit_languages": "Nyelvek szerkesztése",

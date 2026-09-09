@@ -2334,7 +2334,7 @@
       "default_survey_language": "Varsayılan anket dili",
       "default_survey_language_description": "Yeni anketler bu dilde oluşturulur. Mevcut anketler yazıldıkları dilde kalır.",
       "default_survey_language_placeholder": "Bir dil seçin",
-      "default_survey_language_unsupported": "Henüz anket çevirisi mevcut değil",
+      "default_survey_language_unsupported": "Henüz desteklenmiyor",
       "delete_language_confirmation": "Bu dili silmek istediğinden emin misin? Bu işlem geri alınamaz.",
       "duplicate_language_or_language_id": "Tekrarlanan dil veya dil kimliği",
       "edit_languages": "Dilleri düzenle",

@@ -2334,7 +2334,7 @@
       "default_survey_language": "Langue par défaut des enquêtes",
       "default_survey_language_description": "Les nouvelles enquêtes sont créées dans cette langue. Les enquêtes existantes conservent la langue dans laquelle elles ont été rédigées.",
       "default_survey_language_placeholder": "Sélectionne une langue",
-      "default_survey_language_unsupported": "Aucune traduction de sondage disponible pour le moment",
+      "default_survey_language_unsupported": "Pas encore pris en charge",
       "delete_language_confirmation": "Êtes-vous sûr de vouloir supprimer cette langue ? Cette action ne peut pas être annulée.",
       "duplicate_language_or_language_id": "Langue ou identifiant de langue en double",
       "edit_languages": "Modifier les langues",
