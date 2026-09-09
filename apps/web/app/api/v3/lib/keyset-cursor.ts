@@ -136,22 +136,38 @@ const renderFilterValue = (value: unknown): string => {
     return value.toISOString();
   }
 
-  if (typeof value === "object") {
-    throw new TypeError("computeFilterFingerprint: filter values must be scalars, Dates, or arrays of those");
+  // An allow-list, not a deny-list. `typeof value === "object"` alone lets a function through to
+  // `String()`, which renders its source text — a value that is not a filter, rendered as if it were.
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
   }
 
-  return String(value);
+  throw new TypeError("computeFilterFingerprint: filter values must be scalars, Dates, or arrays of those");
+};
+
+/**
+ * Code-unit ordering, stated rather than defaulted.
+ *
+ * `Array.prototype.sort()` already does this, but Sonar (S2871) asks for an explicit comparator and the
+ * obvious answer it suggests — `localeCompare` — would be a real bug: it is locale-sensitive, so the
+ * same filter set would fingerprint differently on two machines with different locales, and a cursor
+ * minted on one replica would 400 on another. A fingerprint needs a total order that is identical
+ * everywhere, which is exactly what comparing code units gives.
+ */
+const byCodeUnit = (a: string, b: string): number => {
+  if (a < b) return -1;
+  return a > b ? 1 : 0;
 };
 
 export const computeFilterFingerprint = (filters: Record<string, unknown>): string => {
   const canonical = Object.keys(filters)
     .filter((key) => filters[key] !== undefined && filters[key] !== null)
-    .sort()
+    .sort(byCodeUnit)
     .map((key) => {
       const value = filters[key];
       // Sorted, so `[in]` members supplied in a different order are the same filter.
       const rendered = Array.isArray(value)
-        ? [...value].map(renderFilterValue).sort().join(",")
+        ? [...value].map(renderFilterValue).sort(byCodeUnit).join(",")
         : renderFilterValue(value);
       // Written as escapes, not literal bytes: a raw NUL in the source makes git treat the whole
       // file as binary, so the module disappears from every diff. NUL and SOH are the separators
