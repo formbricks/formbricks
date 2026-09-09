@@ -4,6 +4,8 @@ export const rateLimitConfigs = {
     login: { interval: 900, allowedPerInterval: 10, namespace: "auth:login" }, // 10 per 15 minutes
     signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup" }, // 30 per hour
     forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot" }, // 5 per hour
+    // Keep redemption independent so requesting an email cannot exhaust the budget to use its token.
+    resetPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:reset-password" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
     emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token" }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
   },
@@ -107,5 +109,14 @@ export const rateLimitConfigs = {
       namespace: "storage:upload:workspace",
     }, // 100 per minute per workspace
     delete: { interval: 60, allowedPerInterval: 5, namespace: "storage:delete" }, // 5 per minute
+    // One attachment export streams thousands of objects out of S3, so it is bounded far more tightly
+    // than a CSV download. Charged inside the route's handler, on the download path only, so the
+    // client's dryRun pre-flight does not spend a download's allowance — see the route for why that
+    // cannot go through the wrapper's customRateLimitConfig.
+    attachmentsExport: {
+      interval: 600,
+      allowedPerInterval: 3,
+      namespace: "storage:attachments-export",
+    }, // 3 downloads per 10 minutes
   },
 } as const;

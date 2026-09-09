@@ -85,48 +85,33 @@ describe("summarizeValidationProblems", () => {
 
 describe("resolveWorkflowListSurface", () => {
   const settled = {
-    isWorkspaceEmpty: false,
     showInitialLoading: false,
     isError: false,
-    isListEmpty: false,
-    isProbingAnyWorkflows: false,
+    hasActiveFilters: false,
     workflowCount: 3,
   };
 
-  test("an empty workspace is list_empty, whatever else is still in flight", async () => {
-    const { resolveWorkflowListSurface } = await import("./analytics");
-
-    expect(
-      resolveWorkflowListSurface({
-        ...settled,
-        isWorkspaceEmpty: true,
-        showInitialLoading: true,
-        workflowCount: 0,
-      })
-    ).toBe("list_empty");
-  });
-
-  test("loading, an error and the archived probe are not visits", async () => {
+  test("loading is not a visit, and neither is an error that replaced the list", async () => {
     const { resolveWorkflowListSurface } = await import("./analytics");
 
     expect(resolveWorkflowListSurface({ ...settled, showInitialLoading: true, workflowCount: 0 })).toBeNull();
     expect(resolveWorkflowListSurface({ ...settled, isError: true, workflowCount: 0 })).toBeNull();
-    expect(
-      resolveWorkflowListSurface({
-        ...settled,
-        isListEmpty: true,
-        isProbingAnyWorkflows: true,
-        workflowCount: 0,
-      })
-    ).toBeNull();
+    // An error with rows still on screen is the list, the way the page still renders them.
+    expect(resolveWorkflowListSurface({ ...settled, isError: true })).toBe("list");
   });
 
-  test("a list filtered down to nothing is list_empty_filtered, anything with rows is list", async () => {
+  test("an empty list is filtered or not, depending on the filters", async () => {
     const { resolveWorkflowListSurface } = await import("./analytics");
 
-    expect(resolveWorkflowListSurface({ ...settled, isListEmpty: true, workflowCount: 0 })).toBe(
+    expect(resolveWorkflowListSurface({ ...settled, workflowCount: 0 })).toBe("list_empty");
+    expect(resolveWorkflowListSurface({ ...settled, workflowCount: 0, hasActiveFilters: true })).toBe(
       "list_empty_filtered"
     );
+  });
+
+  test("anything with rows is the list", async () => {
+    const { resolveWorkflowListSurface } = await import("./analytics");
+
     expect(resolveWorkflowListSurface(settled)).toBe("list");
   });
 });

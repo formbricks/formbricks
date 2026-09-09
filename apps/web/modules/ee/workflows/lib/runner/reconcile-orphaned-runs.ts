@@ -113,11 +113,16 @@ export const reconcileOrphanedWorkflowRuns = async ({
       if (orphan.createdAt < maxAgeThreshold) {
         // Past the ceiling: never re-dispatch forever. Tenant- and status-guarded so a concurrent
         // claim (queued → running) wins and we never touch a foreign workspace's row.
+        // A row past the ceiling may have been dispatched and never picked up, or never dispatched
+        // at all: two different losses, so they are not reported as one.
+        const wasDispatched = orphan.dispatchedAt !== null;
         const failed = await prisma.workflowRun.updateMany({
           where: { id: orphan.id, workspaceId: orphan.workspaceId, status: "queued" },
           data: {
             status: "failed",
-            error: "Workflow run was never dispatched and exceeded the reconcile age ceiling",
+            error: wasDispatched
+              ? "Workflow run was dispatched but never executed and exceeded the reconcile age ceiling"
+              : "Workflow run was never dispatched and exceeded the reconcile age ceiling",
             lastErrorAt: now,
             finishedAt: now,
           },
@@ -135,7 +140,7 @@ export const reconcileOrphanedWorkflowRuns = async ({
             workflowId: orphan.workflowId,
             workspaceId: orphan.workspaceId,
             triggerType: orphan.triggerType,
-            errorKind: "never_dispatched",
+            errorKind: wasDispatched ? "dispatched_never_executed" : "never_dispatched",
             attempt: orphan.attempt,
           });
         }

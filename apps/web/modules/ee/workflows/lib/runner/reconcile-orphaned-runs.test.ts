@@ -111,6 +111,23 @@ describe("reconcileOrphanedWorkflowRuns", () => {
     );
   });
 
+  test("separates a run that was dispatched and never executed from one never dispatched", async () => {
+    findMany.mockResolvedValue([runRow("lost", ancient, new Date(ancient.getTime() + 1000))]);
+
+    await reconcile();
+
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          error: "Workflow run was dispatched but never executed and exceeded the reconcile age ceiling",
+        }),
+      })
+    );
+    expect(mockCaptureWorkflowRunFailed).toHaveBeenCalledWith(
+      expect.objectContaining({ errorKind: "dispatched_never_executed" })
+    );
+  });
+
   test("does not count an aged-out run that lost the status-guard race", async () => {
     findMany.mockResolvedValue([runRow("stuck", ancient)]);
     updateMany.mockResolvedValue({ count: 0 }); // concurrently claimed queued → running

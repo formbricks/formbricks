@@ -40,21 +40,21 @@ export const summarizeValidationProblems = (
 });
 
 export interface WorkflowListSurfaceState {
-  isWorkspaceEmpty: boolean;
   showInitialLoading: boolean;
   isError: boolean;
-  isListEmpty: boolean;
-  isProbingAnyWorkflows: boolean;
+  /** A status filter or a search term is set, so an empty list is an emptied filter. */
+  hasActiveFilters: boolean;
   workflowCount: number;
 }
 
 /**
- * Which of the three list states the user is actually looking at; `null` while loading or probing,
- * and on an error, none of which count as a visit.
+ * Which of the three list states the user is actually looking at, mirroring how the page picks its
+ * body: `null` while the skeleton or the error state stands in for the list, neither of which is a
+ * visit. An error with rows still on screen is a visit to the list.
  */
 export const resolveWorkflowListSurface = (state: WorkflowListSurfaceState): TWorkflowSurface | null => {
-  if (state.isWorkspaceEmpty) return "list_empty";
-  if (state.showInitialLoading || state.isError) return null;
-  if (state.isListEmpty && state.isProbingAnyWorkflows) return null;
-  return state.workflowCount === 0 ? "list_empty_filtered" : "list";
+  if (state.showInitialLoading) return null;
+  if (state.workflowCount > 0) return "list";
+  if (state.isError) return null;
+  return state.hasActiveFilters ? "list_empty_filtered" : "list_empty";
 };
