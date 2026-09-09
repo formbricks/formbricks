@@ -94,6 +94,8 @@ vi.mock("./account-linking", () => ({
 }));
 
 describe("sso-recovery", () => {
+  let transactionCommitted = false;
+  let consumedAfterCommit: boolean | null = null;
   const txUserUpdate = vi.fn();
   const txUserUpdateMany = vi.fn();
   // Both legacy writes go through `user.updateMany`, so the stub answers on the FILTER rather than on
@@ -142,10 +144,21 @@ describe("sso-recovery", () => {
     txOauthRefreshUpdateMany.mockResolvedValue({ count: 2 });
     txOauthConsentDeleteMany.mockResolvedValue({ count: 1 });
     vi.mocked(revokeUserSessionsExcept).mockResolvedValue(2);
+    // The mock carries a commit step. Without one, `consumeSsoRecoveryIntent` moved INSIDE the
+    // transaction was indistinguishable from after it — and inside is wrong, because Redis is not part
+    // of the transaction, so a rollback would leave the intent spent with nothing linked.
+    transactionCommitted = false;
+    consumedAfterCommit = null;
     vi.mocked(prisma.$transaction).mockImplementation(
-      async (callback: (txClient: Prisma.TransactionClient) => Promise<unknown>) =>
-        await callback(tx as unknown as Prisma.TransactionClient)
+      async (callback: (txClient: Prisma.TransactionClient) => Promise<unknown>) => {
+        const result = await callback(tx as unknown as Prisma.TransactionClient);
+        transactionCommitted = true;
+        return result;
+      }
     );
+    mocks.consumeSsoRecoveryIntent.mockImplementation(async () => {
+      consumedAfterCommit = transactionCommitted;
+    });
     vi.mocked(buildVerificationRequestedPath).mockReturnValue(
       "/auth/verification-requested?token=email-token&purpose=sso_recovery"
     );
@@ -532,6 +545,9 @@ describe("sso-recovery", () => {
     await completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" });
 
     expect(mocks.consumeSsoRecoveryIntent).toHaveBeenCalledWith("test-state");
+    // After the COMMIT, not merely somewhere in the function: Redis is outside the transaction, so
+    // consuming inside it would spend the intent even on a rollback.
+    expect(consumedAfterCommit).toBe(true);
   });
 
   /**

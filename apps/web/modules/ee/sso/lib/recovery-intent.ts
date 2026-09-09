@@ -56,8 +56,13 @@ const INTENT_TTL_MS = VERIFICATION_LINK_TTL_SECONDS * 1000;
  * sign-up intent cookie). But `resendVerificationEmailAction` is unauthenticated, so a plain sliding
  * window would let anyone holding a state id keep a record alive forever. `createdAt` is written once
  * and never moved, so measuring from it caps the slide.
+ *
+ * Two link lifetimes rather than a round number of days: this record authorises clearing a password and
+ * a second factor, so the ceiling is "one resend's worth of slack" — enough that a resent link is never
+ * orphaned, and past that the user restarts recovery, which is one click. Deriving it also means it
+ * cannot drift away from the link TTL it exists to cover.
  */
-const INTENT_MAX_LIFETIME_MS = 60 * 60 * 24 * 7 * 1000;
+const INTENT_MAX_LIFETIME_MS = INTENT_TTL_MS * 2;
 
 const ZStoredSsoRecoveryIntent = z.object({
   userId: z.string().min(1),

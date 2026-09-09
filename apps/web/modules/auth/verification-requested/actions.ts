@@ -19,6 +19,7 @@ import { getUserByEmail } from "@/modules/auth/lib/user";
 import {
   SSO_RECOVERY_COMPLETION_PATH,
   TVerificationRequestPurpose,
+  normalizeRoutePathname,
 } from "@/modules/auth/lib/verification-links";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -59,7 +60,10 @@ const resolveSsoRecoveryResend = async ({
   }
 
   const parsedCallbackUrl = new URL(validatedCallbackUrl);
-  if (parsedCallbackUrl.pathname !== SSO_RECOVERY_COMPLETION_PATH) {
+  // Through the shared normaliser, not a bare `!==` on `pathname`: Next resolves `…/complete/` and
+  // `/api//auth/…/complete` to the completion route, and a stricter comparison here would make the
+  // resend silently no-op while this action still reported success.
+  if (normalizeRoutePathname(validatedCallbackUrl) !== SSO_RECOVERY_COMPLETION_PATH) {
     return null;
   }
 

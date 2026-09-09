@@ -88,6 +88,12 @@ describe("isSsoRecoveryInternalCallbackUrl", () => {
     ["the recovery sign-in path", `${WEBAPP_URL}${SSO_RECOVERY_SIGN_IN_PATH}?token=abc`],
     ["a single trailing slash", `${WEBAPP_URL}${SSO_RECOVERY_COMPLETION_PATH}/`],
     ["many trailing slashes", `${WEBAPP_URL}${SSO_RECOVERY_COMPLETION_PATH}/////`],
+    // Next's `normalizeRepeatedSlashes` collapses interior repeats and backslashes before routing, so
+    // each of these reaches the completion route; a check that missed them left a way back into the loop.
+    ["an interior repeated slash", `${WEBAPP_URL}/api//auth/sso/recovery/complete`],
+    ["several interior repeats", `${WEBAPP_URL}/api///auth//sso/recovery///complete`],
+    ["a backslash separator", `${WEBAPP_URL}/api\\auth/sso/recovery/complete`],
+    ["repeats and a trailing slash together", `${WEBAPP_URL}/api//auth/sso/recovery/complete//`],
     ["a dot segment that normalises back", `${WEBAPP_URL}/api/auth/sso/recovery/../recovery/complete`],
     ["a root-relative form", `${SSO_RECOVERY_COMPLETION_PATH}?state=abc`],
   ])("recognises %s", (_label, callbackUrl) => {

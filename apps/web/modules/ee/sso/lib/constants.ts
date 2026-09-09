@@ -1,6 +1,7 @@
 import {
   SSO_RECOVERY_COMPLETION_PATH,
   SSO_RECOVERY_SIGN_IN_PATH,
+  normalizeRoutePathname,
 } from "@/modules/auth/lib/verification-links";
 
 export const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
@@ -21,28 +22,15 @@ export const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
  *
  * Deliberately NOT folded into `getValidatedCallbackUrl`: `buildVerificationLinks` puts the completion
  * URL on the emailed link *through* that helper, so rejecting the path there would break the mail.
+ *
+ * Compared through `normalizeRoutePathname` so this agrees with the router rather than with a subset of
+ * it — a check stricter than Next's own resolution leaves exactly the shapes it misses as a way back
+ * into the loop.
  */
 export const isSsoRecoveryInternalCallbackUrl = (callbackUrl: string): boolean => {
-  try {
-    // Next normalises trailing slashes away before routing, so compare the same way it does —
-    // otherwise `…/complete/` slips past this check and still reaches the route.
-    //
-    // Walked by index rather than stripped with `/\/+$/`: that pattern backtracks super-linearly on a
-    // path of many slashes (Sonar S8786), and this pathname comes from a caller-supplied URL. Slicing
-    // in a loop would allocate per slash; finding the end first is one pass and one allocation.
-    const { pathname } = new URL(callbackUrl, "http://localhost");
-    let end = pathname.length;
-    while (end > 0 && pathname.charAt(end - 1) === "/") {
-      end -= 1;
-    }
-    const normalizedPathname = pathname.slice(0, end);
+  const pathname = normalizeRoutePathname(callbackUrl);
 
-    return (
-      normalizedPathname === SSO_RECOVERY_COMPLETION_PATH || normalizedPathname === SSO_RECOVERY_SIGN_IN_PATH
-    );
-  } catch {
-    return false;
-  }
+  return pathname === SSO_RECOVERY_COMPLETION_PATH || pathname === SSO_RECOVERY_SIGN_IN_PATH;
 };
 
 /**

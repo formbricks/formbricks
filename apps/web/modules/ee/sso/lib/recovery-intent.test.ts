@@ -34,7 +34,8 @@ const mockCache = vi.mocked(cache);
 const store = new Map<string, { value: unknown; ttlMs?: number }>();
 
 const LINK_TTL_MS = 60 * 60 * 24 * 1000;
-const MAX_LIFETIME_MS = 60 * 60 * 24 * 7 * 1000;
+// One resend's worth of slack past the link TTL — see INTENT_MAX_LIFETIME_MS.
+const MAX_LIFETIME_MS = LINK_TTL_MS * 2;
 
 const intentInput = {
   userId: "cm5q1x2y30000abcdefghijkl",

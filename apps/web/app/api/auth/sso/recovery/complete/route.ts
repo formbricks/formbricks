@@ -65,12 +65,20 @@ export const GET = async (request: Request) => {
 
     return NextResponse.redirect(callbackUrl);
   } catch (error) {
-    // The failure redirect wants the callback the user was originally headed for. It used to be
-    // recovered by decoding the intent a second time; now it rides on the error, so there is nothing
-    // to re-read and no second Redis round trip. Absent when the intent could not be read at all.
-    return await buildFailedRecoveryResponse(
-      request,
-      error instanceof SsoRecoveryError ? error.callbackUrl : undefined
-    );
+    const recoveryError = error instanceof SsoRecoveryError ? error : null;
+
+    // An intent that simply is not there is the ordinary case — this recovery already completed, or it
+    // expired — and it is not evidence of a session that should not exist. Tearing one down here would
+    // punish a second open of a link that is replayable for a day by design: the sign-in endpoint
+    // establishes the session, then this route would revoke it and report that the linking failed,
+    // after it had already succeeded on the first open. So leave the session alone and just redirect.
+    if (recoveryError?.failure === "intent_missing") {
+      return NextResponse.redirect(getSsoRecoveryFailureRedirectUrl());
+    }
+
+    // Everything else — a guard that read an intent and turned it down, or an unexpected throw — keeps
+    // the ENG-2557 teardown. The failure redirect wants the callback the user was originally headed
+    // for, which rides on the error rather than costing a second Redis read.
+    return await buildFailedRecoveryResponse(request, recoveryError?.callbackUrl);
   }
 };

@@ -282,6 +282,16 @@ describe("resendVerificationEmailAction", () => {
         },
       } as any);
 
+      // The resend mints a fresh one-day link, so the intent it depends on has to be re-paired with it
+      // — deleting this call left the whole suite green.
+      expect(recoveryIntentMocks.refreshSsoRecoveryIntent).toHaveBeenCalledWith("test-state", {
+        callbackUrl: "http://localhost:3000",
+        email: mockVerifiedUser.email,
+        provider: "google",
+        providerAccountId: "provider_123",
+        userId: mockVerifiedUser.id,
+        createdAt: expect.any(Number),
+      });
       expect(sendVerificationEmail).toHaveBeenCalledWith({
         id: mockVerifiedUser.id,
         email: mockVerifiedUser.email,
@@ -290,6 +300,43 @@ describe("resendVerificationEmailAction", () => {
         purpose: "sso_recovery",
       });
       expect(result).toEqual({ success: true });
+    });
+
+    /**
+     * Next resolves `…/complete/` and `/api//auth/…/complete` to the completion route, so a stricter
+     * comparison here made the resend no-op while this action still answered `{ success: true }` and
+     * the UI toasted success.
+     */
+    test.each([
+      ["a trailing slash", "http://localhost:3000/api/auth/sso/recovery/complete/?state=test-state"],
+      ["an interior repeat", "http://localhost:3000/api//auth/sso/recovery/complete?state=test-state"],
+    ])("treats a recovery callback with %s as recovery", async (_label, callbackUrl) => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+      vi.mocked(getUserByEmail).mockResolvedValue({
+        ...mockVerifiedUser,
+        emailVerified: true,
+        locale: "en-US",
+        identityProvider: "email",
+        isActive: true,
+      } as never);
+      recoveryIntentMocks.readSsoRecoveryIntent.mockResolvedValue({
+        callbackUrl: "http://localhost:3000",
+        email: mockVerifiedUser.email,
+        provider: "google",
+        providerAccountId: "provider_123",
+        userId: mockVerifiedUser.id,
+        createdAt: Date.now(),
+      });
+
+      await resendVerificationEmailAction({
+        ctx: mockCtx,
+        parsedInput: { ...validInput, callbackUrl },
+      } as any);
+
+      expect(sendVerificationEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ purpose: "sso_recovery" })
+      );
+      expect(recoveryIntentMocks.refreshSsoRecoveryIntent).toHaveBeenCalled();
     });
 
     test("should not treat a client-supplied recovery callback as recovery without a valid intent", async () => {

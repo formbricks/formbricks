@@ -90,7 +90,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
 
   test("carries the intent's own callback into the failure redirect", async () => {
     vi.mocked(completeSsoRecovery).mockRejectedValue(
-      new SsoRecoveryError(`${WEBAPP_URL}/environments/env_1`)
+      new SsoRecoveryError("rejected", `${WEBAPP_URL}/environments/env_1`)
     );
 
     const response = await GET(request(`${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`));
@@ -101,12 +101,33 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   });
 
   test("omits the callback when the intent could not be read at all", async () => {
-    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError());
+    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("intent_missing"));
 
     const response = await GET(request(`${WEBAPP_URL}/api/auth/sso/recovery/complete?state=unknown`));
 
     expect(location(response)).toContain("error=OAuthAccountNotLinked");
     expect(location(response)).not.toContain("callbackUrl=");
+  });
+
+  /**
+   * The emailed link is replayable for a day by design, so a second open — the other device, or a
+   * refresh — is an ordinary act. It finds the intent already consumed, and that is not evidence of a
+   * session that should not exist: tearing one down here signed the user in and then straight back out,
+   * reporting that the linking had failed after it had already succeeded.
+   */
+  test("leaves the session alone when the intent is simply gone", async () => {
+    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("intent_missing"));
+
+    const response = await GET(
+      request(
+        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
+        "formbricks.session_token=token-abc.signature"
+      )
+    );
+
+    expect(revokeSessionByToken).not.toHaveBeenCalled();
+    expect(response.headers.getSetCookie().join("\n")).not.toContain("session_token=;");
+    expect(location(response)).toContain("error=OAuthAccountNotLinked");
   });
 
   test("still redirects safely when the failure is not one of ours", async () => {
@@ -118,8 +139,8 @@ describe("GET /api/auth/sso/recovery/complete", () => {
     expect(location(response)).not.toContain("callbackUrl=");
   });
 
-  test("clears the session cookies and revokes the session it was given on failure", async () => {
-    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError());
+  test("clears the session cookies and revokes the session it was given on a rejected recovery", async () => {
+    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("rejected"));
 
     const response = await GET(
       request(

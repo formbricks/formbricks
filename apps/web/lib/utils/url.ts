@@ -59,10 +59,6 @@ export const getValidatedCallbackUrl = (
     return null;
   }
 
-  if (url.length > MAX_CALLBACK_URL_LENGTH) {
-    return null;
-  }
-
   try {
     const parsedWebAppUrl = new URL(WEBAPP_URL);
     const isAbsoluteUrl = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url);
@@ -97,7 +93,14 @@ export const getValidatedCallbackUrl = (
       return null;
     }
 
-    return parsedUrl.toString();
+    const validatedCallbackUrl = parsedUrl.toString();
+
+    // Measured on what we RETURN, not on what came in. `toString()` percent-encodes, up to ninefold
+    // for a 3-byte character, so an input under the cap can leave it: 258 characters ending in 227 CJK
+    // characters comes back as 2074. Checking the input instead made the function reject its own
+    // output, so a callback accepted here failed the re-validation in `completeSsoRecovery` and the
+    // user landed on the app root rather than where they were going.
+    return validatedCallbackUrl.length > MAX_CALLBACK_URL_LENGTH ? null : validatedCallbackUrl;
   } catch {
     return null;
   }

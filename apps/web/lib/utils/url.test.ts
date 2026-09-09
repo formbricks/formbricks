@@ -133,6 +133,34 @@ describe("getValidatedCallbackUrl", () => {
     expect(getValidatedCallbackUrl(atCap, WEBAPP_URL)).toBe(atCap);
   });
 
+  /**
+   * `toString()` percent-encodes, up to ninefold for a 3-byte character, so a check on the input let
+   * through callbacks whose returned form was over the cap. Those then failed the re-validation in
+   * `completeSsoRecovery` and dropped the user on the app root instead of their destination — a
+   * legitimate long callback failing exactly like a malicious one, which is what hid it.
+   */
+  test("rejects a callback whose encoded form exceeds the cap, though its input does not", () => {
+    const input = `https://webapp.example.com/x?search=${"字".repeat(227)}`;
+
+    expect(input.length).toBeLessThan(MAX_CALLBACK_URL_LENGTH);
+    expect(encodeURI(input).length).toBeGreaterThan(MAX_CALLBACK_URL_LENGTH);
+    expect(getValidatedCallbackUrl(input, WEBAPP_URL)).toBeNull();
+  });
+
+  test.each([
+    ["a plain path", "https://webapp.example.com/dashboard"],
+    ["a query string", "https://webapp.example.com/x?a=1&b=2"],
+    ["multi-byte characters", `https://webapp.example.com/x?search=${"字".repeat(50)}`],
+    ["a root-relative path", "/invite?token=abc"],
+  ])("accepts its own output for %s, so a stored callback re-validates", (_label, input) => {
+    const once = getValidatedCallbackUrl(input, WEBAPP_URL);
+
+    expect(once).not.toBeNull();
+    // The property that matters: anything this function hands back, it will take back. Without it a
+    // value can be validated on the way in and rejected on the way out.
+    expect(getValidatedCallbackUrl(once, WEBAPP_URL)).toBe(once);
+  });
+
   test("leaves room for the widest callback the app actually mints", () => {
     // An invite link, `/invite?token=<jwt>`, is the longest legitimate callback in the app at roughly
     // 640 characters with a long address. If that ever approaches the cap, this fails before users do.

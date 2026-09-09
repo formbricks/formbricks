@@ -317,11 +317,22 @@ const createSsoRecoveryCompletionUrl = (stateId: string): string => {
  * The message stays `OAUTH_ACCOUNT_NOT_LINKED_ERROR`, unchanged from the plain `Error` this replaces.
  */
 export class SsoRecoveryError extends Error {
+  /**
+   * `intent_missing` means there was nothing to act on — already completed, or expired. `rejected`
+   * means an intent WAS read and a guard turned it down.
+   *
+   * The route needs the difference because its failure response tears the caller's session down, and
+   * only one of the two is evidence that it should. The emailed link is replayable for a day by design
+   * (`better-auth-recovery-signin.ts`), so without this a second open would sign the user in and then
+   * immediately sign them out claiming the link had failed — after it had in fact succeeded.
+   */
+  readonly failure: "intent_missing" | "rejected";
   readonly callbackUrl?: string;
 
-  constructor(callbackUrl?: string) {
+  constructor(failure: "intent_missing" | "rejected", callbackUrl?: string) {
     super(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
     this.name = "SsoRecoveryError";
+    this.failure = failure;
     this.callbackUrl = callbackUrl;
   }
 }
@@ -461,7 +472,7 @@ export const completeSsoRecovery = async ({
       provider: "unknown",
       failureReason: "invalid_or_expired_intent",
     });
-    throw new SsoRecoveryError();
+    throw new SsoRecoveryError("intent_missing");
   }
 
   const provider = normalizeSsoProvider(intent.provider);
@@ -482,7 +493,7 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "invalid_provider",
     });
-    throw new SsoRecoveryError();
+    throw new SsoRecoveryError("rejected");
   }
 
   if (!sessionUserId) {
@@ -502,7 +513,7 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "missing_session",
     });
-    throw new SsoRecoveryError();
+    throw new SsoRecoveryError("rejected");
   }
 
   if (sessionUserId !== intent.userId) {
@@ -523,7 +534,7 @@ export const completeSsoRecovery = async ({
       callbackUrl: intent.callbackUrl,
       failureReason: "session_user_mismatch",
     });
-    throw new SsoRecoveryError();
+    throw new SsoRecoveryError("rejected");
   }
 
   const user = await prisma.user.findUnique({
@@ -552,7 +563,7 @@ export const completeSsoRecovery = async ({
     });
     // Past the session check, so this caller IS the intent's user — handing back their own callback
     // discloses nothing they did not already supply.
-    throw new SsoRecoveryError(intent.callbackUrl);
+    throw new SsoRecoveryError("rejected", intent.callbackUrl);
   }
 
   const reclaimed = await prisma.$transaction(async (tx) => {

@@ -19,6 +19,29 @@ export const SSO_RECOVERY_COMPLETION_PATH = "/api/auth/sso/recovery/complete";
 export const SSO_RECOVERY_SIGN_IN_PATH = "/api/auth/sso-recovery/sign-in";
 
 /**
+ * A URL's pathname, normalised the way Next resolves one before routing.
+ *
+ * Two callers compare an incoming callback against the paths above, and any comparison that does less
+ * than the router does leaves a gap: `normalizeRepeatedSlashes` in `next/dist/shared/lib/utils.js`
+ * collapses interior repeats AND backslashes, and with neither trailing-slash option set in
+ * `next.config.mjs` a trailing one is dropped too. So `/api//auth/sso/recovery/complete` and
+ * `…/complete/` both reach the completion route while a stricter `===` says they are something else.
+ *
+ * Split rather than matched with `/\/+$/`: that pattern backtracks super-linearly on a path of many
+ * slashes (Sonar S8786), and this pathname comes from a caller-supplied URL.
+ */
+export const normalizeRoutePathname = (url: string): string | null => {
+  try {
+    const { pathname } = new URL(url, RELATIVE_URL_BASE);
+    const segments = pathname.replaceAll("\\", "/").split("/").filter(Boolean);
+
+    return segments.length === 0 ? "/" : `/${segments.join("/")}`;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Lifetime of the emailed verification / SSO-recovery magic link.
  *
  * Exported so the SSO recovery intent can be pinned to the SAME number (ENG-2783). The link and the
