@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
-import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
+import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 import {
   getReservedFutureDefaultAttributeKeyIssue,

@@ -65,6 +65,51 @@ icon: "tags"
 </Steps>
 
 
+## Formbricks Events in the Data Layer
+
+The SDK pushes its own lifecycle events to `window.dataLayer`, so you can trigger GTM tags off what Formbricks actually did rather than guessing at timing.
+
+| Event                           | Fires when                                                                | Payload                              |
+| ------------------------------- | ------------------------------------------------------------------------- | ------------------------------------ |
+| `formbricks_setup_successful`   | `setup()` finished — the SDK is ready                                     | `{ workspaceId }`                    |
+| `formbricks_action_tracked`     | An action was tracked (code or no-code)                                   | `{ action }`                         |
+| `formbricks_survey_shown`       | A survey became visible (once per appearance)                             | `{ surveyId }`                       |
+| `formbricks_response_submitted` | The first answer is stored (`finished: false`) and again when it completes | `{ surveyId, responseId?, finished }` |
+| `formbricks_survey_closed`      | The survey was dismissed or finished (once per appearance)                | `{ surveyId }`                       |
+
+`formbricks_survey_shown` reports what the respondent saw, so every appearance is paired with a `formbricks_survey_closed`. The Displays number in your Formbricks dashboard counts what reached the server instead, so it can be lower if the network dropped — worth knowing before you reconcile a GTM-side count against the dashboard.
+
+The push happens through the standard `window.dataLayer = window.dataLayer || []` idiom, so it survives load order: events emitted before GTM loads are still in the array when GTM drains it.
+
+<Steps>
+  <Step title="Create a Custom Event trigger">
+    1. Triggers → New → Trigger Type: **Custom Event**
+    2. Event name: the event you want, e.g. `formbricks_setup_successful`
+    3. Save and publish
+  </Step>
+
+  <Step title="Read the payload with a Data Layer Variable">
+    The payload is nested under a `formbricks` key rather than spread flat, so it cannot collide with your
+    own data layer keys — `action` in particular is one of the most common keys in an ecommerce data layer.
+
+    1. Variables → New User-defined Variable
+    2. Variable Type: **Data Layer Variable**
+    3. Data Layer Variable Name: `formbricks.surveyId` (or `formbricks.responseId`, `formbricks.finished`,
+       `formbricks.action`, `formbricks.workspaceId`)
+    4. Save and publish
+  </Step>
+</Steps>
+
+<Note>
+  Every push carries the full set of keys, with `null` for the ones that event does not set. That is
+  deliberate: GTM merges pushes recursively, so a partial push would let survey A's `responseId` still resolve
+  under survey B's `formbricks_survey_shown`. Check for `null` rather than assuming a key is absent — and note
+  that `responseId` is optional on `formbricks_response_submitted` itself, so it reads `null` there too
+  whenever the stored id is not available. A tag that needs the id has to tolerate that.
+</Note>
+
+For the JavaScript equivalent of these events, see [Lifecycle Events](/surveys/website-app-surveys/lifecycle-events).
+
 ## User Identification
 
 Identify users to enable targeting and attributes. Learn more about [user identification](/surveys/website-app-surveys/user-identification).
@@ -92,38 +137,34 @@ Identify users to enable targeting and attributes. Learn more about [user identi
 ```html
 <script>
 (function() {
-    var check = setInterval(function() {
-        if (window.formbricks && window.formbricks.setUserId) {
-            clearInterval(check);
-            var userId = {{User ID}};
-            if (userId) {
-                window.formbricks.setUserId(userId);
-                var attrs = {};
-                if ({{User Email}}) attrs.email = {{User Email}};
-                if ({{User Plan}}) attrs.plan = {{User Plan}};
-                if (Object.keys(attrs).length) {
-                    window.formbricks.setAttributes(attrs);
-                }
-            }
-        }
-    }, 100);
-    setTimeout(function() { clearInterval(check); }, 10000);
+    if (!window.formbricks) return;
+    var userId = {{User ID}};
+    if (!userId) return;
+    window.formbricks.setUserId(userId);
+    var attrs = {};
+    if ({{User Email}}) attrs.email = {{User Email}};
+    if ({{User Plan}}) attrs.plan = {{User Plan}};
+    if (Object.keys(attrs).length) {
+        window.formbricks.setAttributes(attrs);
+    }
 })();
 </script>
 ```
 
   </Step>
 
-  <Step title="Set trigger and push data">
-    1. Create a custom event trigger in GTM
-    2. Trigger Type: Custom Event
-    3. Event name: `user-login` (or your preferred event name)
-    4. Attach this trigger to your "Formbricks - User" tag
-    5. Save and publish
+  <Step title="Set triggers and push data">
+    Attach **two** Custom Event triggers to the "Formbricks - User" tag, so it runs whichever of the two
+    things happens last:
+
+    1. `user-login` — your own event, for a user who signs in after Formbricks is already running.
+    2. `formbricks_setup_successful` — the SDK's readiness event, for a user who was already signed in when
+       the page loaded. GTM's data layer is a merged model, so `{{User ID}}` still resolves to what your
+       earlier `user-login` push set.
 
     ![User Login Trigger](/images/surveys/website-app-surveys/google-tag-manager/user-login-trigger.webp)
 
-    6. In your code, push data with the same event name:
+    3. In your code, push data with the same event name:
 
 ```javascript
 window.dataLayer = window.dataLayer || [];
@@ -137,6 +178,18 @@ window.dataLayer.push({
 
   </Step>
 </Steps>
+
+<Note>
+  Both guards in the tag are cheap and both matter: `window.formbricks` may not exist yet on the `user-login`
+  path, and `{{User ID}}` may not be set yet on the `formbricks_setup_successful` path. Whichever fires
+  second does the work.
+</Note>
+
+<Tip>
+  Earlier versions of this guide polled for `window.formbricks` every 100 ms. Use the
+  `formbricks_setup_successful` trigger instead: it is exactly the signal the polling was approximating, it
+  fires once, and it cannot time out on a slow connection.
+</Tip>
 
 ## Track Custom Events
 
@@ -196,6 +249,59 @@ window.dataLayer.push({
   </Step>
 </Steps>
 
+## Set Embedded Data
+
+`setEmbeddedData()` attaches context to the surveys displayed after it, without tying it to a trigger. A value stays in the bag for the rest of the page load, so it reaches every survey shown from then on until you remove the key. It is the GTM-native way to get a page type, a plan or a campaign onto a response. Read the [full reference](/surveys/embedded-data/set-embedded-data) for the semantics; this is the tag manager wiring.
+
+<Steps>
+  <Step title="Declare the fields on the survey">
+    In the Formbricks editor, add a **Hidden Field** for every key you intend to push. A key no survey
+    declares is dropped and logged, never stored.
+  </Step>
+
+  <Step title="Create Data Layer Variables for your values">
+    One per key, e.g. a Data Layer Variable reading `pageType`, and another reading `plan`.
+  </Step>
+
+  <Step title="Create the tag">
+    New Custom HTML tag named "Formbricks - Embedded Data":
+
+```html
+<script>
+if (window.formbricks) {
+    window.formbricks.setEmbeddedData({
+        pageType: {{Page Type}},
+        plan: {{User Plan}}
+    });
+}
+</script>
+```
+
+  </Step>
+
+  <Step title="Trigger it">
+    Attach **two** triggers: **All Pages**, and a Custom Event trigger on `formbricks_setup_successful`.
+
+    Both are needed. The SDK script loads asynchronously, so on an ordinary page load the All Pages trigger
+    can run before `window.formbricks` exists — the tag returns having set nothing. The readiness trigger
+    covers that, and All Pages covers the pushes that happen once the SDK is already running. The tag is
+    safe to fire more than once: each call merges into the bag rather than replacing it.
+  </Step>
+</Steps>
+
+<Note>
+  Passing every key unconditionally is the intended idiom here. A variable that resolves to `undefined` on
+  the current page is **skipped**, so it cannot clear the value another page set. Push `null` when you
+  actually want to remove a key.
+</Note>
+
+<Warning>
+  On a single-page app, one page load spans many routes and nothing re-pushes for you, so a `pageType` set on
+  the pricing page is still in the bag when a survey opens somewhere else. Fire the tag on your app's own
+  route-change event as well, and push `null` for keys the new route has no value for. See
+  [Clearing](/surveys/embedded-data/set-embedded-data#clearing) for removing one key or the whole bag.
+</Warning>
+
 ## Troubleshooting
 
 **Surveys not showing?**
@@ -207,12 +313,17 @@ window.dataLayer.push({
 **User ID not working?**
 - Verify Data Layer push syntax
 - Check GTM variables are reading correct values
-- Ensure user tag fires after initialization
+- Make sure the tag is also triggered by `formbricks_setup_successful`, so it runs whichever of "user logged in" and "SDK ready" happens last
 
 **Events not tracking?**
 - Confirm `window.formbricks` exists before calling track
 - Match event names exactly with Formbricks action names
-- Check timing - Formbricks must be initialized first
+- Check timing - Formbricks must be initialized first. Trigger on `formbricks_setup_successful` rather than polling for the global
+
+**Embedded Data not on the response?**
+- Confirm the survey declares a **Hidden Field** with exactly that name
+- Add `?formbricksDebug=true` to the URL: every `setEmbeddedData` call prints the keys it set and what the bag now holds
+- Remember the bag is snapshotted when the survey is displayed, so a value pushed after that lands on the next response
 
 ## Need Help?
 
@@ -220,4 +331,6 @@ window.dataLayer.push({
 - [Framework Guides](/surveys/website-app-surveys/framework-guides)
 - [Actions](/surveys/website-app-surveys/actions)
 - [User Identification](/surveys/website-app-surveys/user-identification)
+- [Embedded Data](/surveys/embedded-data/overview)
+- [setEmbeddedData](/surveys/embedded-data/set-embedded-data)
 

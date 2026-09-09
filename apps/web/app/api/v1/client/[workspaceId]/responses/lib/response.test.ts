@@ -232,6 +232,8 @@ describe("createResponseWithQuotaEvaluation", () => {
       variables: mockResponseInput.variables,
       language: undefined, // null language is normalized to undefined for quota evaluation
       responseFinished: mockResponseInput.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response: expect.objectContaining({ id: responseId }),
       tx: mockTx,
     });
 
@@ -286,6 +288,8 @@ describe("createResponseWithQuotaEvaluation", () => {
       variables: mockResponseInput.variables,
       language: undefined, // null language is normalized to undefined for quota evaluation
       responseFinished: mockResponseInput.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response: expect.objectContaining({ id: responseId }),
       tx: mockTx,
     });
 
@@ -366,6 +370,8 @@ describe("createResponseWithQuotaEvaluation", () => {
 
     const result = await createResponseWithQuotaEvaluation(
       mockResponseInput,
+      // No ingest flags on this path; the transaction is the fourth argument.
+      undefined,
       callerTx as unknown as Prisma.TransactionClient
     );
 

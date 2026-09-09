@@ -10,6 +10,9 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
     "clean": "rimraf node_modules .turbo"
   },
   "dependencies": {
@@ -19,6 +22,8 @@
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
-    "typescript": "catalog:"
+    "@vitest/coverage-v8": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

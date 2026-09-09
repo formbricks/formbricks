@@ -173,6 +173,13 @@ model Response {
   ttc               Json                @default("{}")
   /// [ResponseMeta]
   meta              Json                @default("{}")
+  /// Why a value in `data` will not read back as its declared Embedded Data type — a failed coercion
+  /// or a truncated oversize value (ENG-1845). Server-computed on every ingest and never accepted
+  /// from the client. Null means no ingest boundary has written it, which is not the same claim as
+  /// an empty list: without this column a wrong-typed value is indistinguishable from an absent one,
+  /// and surfacing that in the UI (v2) would have nothing to read.
+  /// [ResponseIngestFlags]
+  ingestFlags       Json?               @map(name: "ingest_flags")
   tags              TagsOnResponses[]
   quotaLinks        ResponseQuotaLink[]
   /// [ResponseContactAttributes]
@@ -409,20 +416,27 @@ model Survey {
   /// [SurveySingleUse]
   singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
 
-  isVerifyEmailEnabled     Boolean                           @default(false)
-  isBackButtonHidden       Boolean                           @default(false)
-  isAutoProgressingEnabled Boolean                           @default(false)
-  isCaptureIpEnabled       Boolean                           @default(false)
-  pin                      String?
-  displayPercentage        Decimal?
-  languages                SurveyLanguage[]
-  showLanguageSwitch       Boolean?
-  followUps                SurveyFollowUp[]
+  isVerifyEmailEnabled        Boolean                           @default(false)
+  isBackButtonHidden          Boolean                           @default(false)
+  isAutoProgressingEnabled    Boolean                           @default(false)
+  isCaptureIpEnabled          Boolean                           @default(false)
+  // Survey-level "Anonymize responses". A column of its own rather than a reading of
+  // `isCaptureIpEnabled`: that flag also defaults to false, so deriving anonymize from
+  // `!isCaptureIpEnabled` would switch every survey that exists to anonymized and silently stop
+  // capturing country and userAgent.
+  isAnonymizeResponsesEnabled Boolean                           @default(false) @map("is_anonymize_responses_enabled")
+  pin                         String?
+  displayPercentage           Decimal?
+  languages                   SurveyLanguage[]
+  embeddedData                EmbeddedData[]
+  embeddedDataLinks           SurveyEmbeddedData[]
+  showLanguageSwitch          Boolean?
+  followUps                   SurveyFollowUp[]
   /// [SurveyRecaptcha]
-  recaptcha                Json?                             @default("{\"enabled\": false, \"threshold\":0.1}")
+  recaptcha                   Json?                             @default("{\"enabled\": false, \"threshold\":0.1}")
   /// [SurveyLinkMetadata]
-  metadata                 Json                              @default("{}")
-  feedbackSourceMappings   FeedbackSourceFormbricksMapping[]
+  metadata                    Json                              @default("{}")
+  feedbackSourceMappings      FeedbackSourceFormbricksMapping[]
 
   slug String? @unique
 
@@ -628,6 +642,7 @@ model Workspace {
   clickOutsideClose           Boolean                      @default(true)
   overlay                     SurveyOverlay                @default(none)
   languages                   Language[]
+  embeddedData                EmbeddedData[]
   /// [Logo]
   logo                        Json?
   workspaceTeams              WorkspaceTeam[]
@@ -1278,6 +1293,108 @@ model SurveyLanguage {
 
   @@id([languageId, surveyId])
   @@index([surveyId])
+}
+
+/// Where an Embedded Data field's value comes from.
+/// `computed` is set by survey logic, `ingested` arrives from a URL param or the SDK, and
+/// `reserved` is auto-captured system metadata. Reserved fields are never stored as rows —
+/// they are a static catalog in code — but the value exists so every layer shares one type.
+enum EmbeddedDataSource {
+  computed
+  ingested
+  reserved
+}
+
+/// The declared type of an Embedded Data field's value.
+enum EmbeddedDataType {
+  string
+  number
+  boolean
+  date
+}
+
+/// Defines one Embedded Data field: the extra context stored on a response that isn't an
+/// answer to a question (brand, plan, page type, a computed score, ...).
+///
+/// A field is either **local** — used by a single survey, which is how existing variables and
+/// hidden fields are migrated — or **shared**, meaning it is part of the workspace library and can
+/// be linked by many surveys. There is no stored flag for that: `surveyId` is the owner and `key`
+/// is the library name, so a local field has `surveyId` set and `key` null, and a shared field the
+/// other way round. Deriving it rather than storing a boolean removes a column that could drift
+/// out of step with the two fields it stands for.
+///
+/// @property key - Library name, unique per workspace and immutable. Null for local fields
+/// @property name - Human-readable display label
+/// @property source - Where the value comes from (computed | ingested). `reserved` is part of the
+/// shared enum but never stored as a row: those fields are a static catalog in code
+/// @property dataType - Declared value type, used for coercion at ingest
+/// @property defaultValue - Initial value (computed) or fallback when nothing arrives (ingested)
+/// @property locked - Ingested only: ignore external writes and use the default instead
+/// @property survey - The owning survey for a local field; cascades so nothing is orphaned
+model EmbeddedData {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now()) @map(name: "created_at")
+  updatedAt   DateTime @updatedAt @map(name: "updated_at")
+  key         String?
+  name        String
+  description String?
+
+  source       EmbeddedDataSource
+  dataType     EmbeddedDataType   @default(string)
+  /// [EmbeddedDataDefaultValue]
+  defaultValue Json?
+  locked       Boolean            @default(false)
+
+  // Composite for the same reason SurveyEmbeddedData's are: on its own, `surveyId` would let a
+  // local field name a survey from a different workspace. `surveyId` is nullable and Postgres
+  // skips a multi-column foreign key when any of its columns is NULL, so shared fields (no owning
+  // survey) are unaffected.
+  survey      Survey?              @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  surveyId    String?
+  workspace   Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  surveyLinks SurveyEmbeddedData[]
+
+  // Only shared fields carry a key, and Postgres treats NULLs as distinct, so any number of
+  // local fields can coexist in a workspace while the library itself stays de-duplicated.
+  @@unique([workspaceId, key])
+  // Target for SurveyEmbeddedData's composite foreign key, which is what stops a survey linking
+  // a field definition from another workspace.
+  @@unique([id, workspaceId])
+  @@index([surveyId])
+}
+
+/// Links a survey to an Embedded Data field and records the key that field's value is stored
+/// under inside that survey.
+///
+/// `workspaceId` is part of both foreign keys on purpose: `surveyId` and `embeddedDataId` alone are
+/// independent, so nothing would stop a survey in one workspace linking a field defined in another.
+/// Referencing `(id, workspaceId)` on both sides makes a cross-workspace pair unrepresentable, and
+/// puts the workspace scope every query needs on the row instead of behind a join through Survey.
+///
+/// @property storageKey - The key the value lives under: a cuid for computed fields, the field
+/// name for ingested ones. Migrated fields keep their original key, which is what lets existing
+/// recall tokens, logic conditions and stored responses keep resolving untouched.
+///
+/// @property order - Position within this survey's field list, dense from 0. Lives on the link
+/// rather than on `EmbeddedData` because a shared definition sits at a different position in each
+/// survey that links it. Deliberately has no default: every writer knows the position it is writing,
+/// so a missing one should be a type error rather than a row that silently sorts to the front.
+model SurveyEmbeddedData {
+  id             String @id @default(cuid())
+  workspaceId    String
+  surveyId       String
+  embeddedDataId String
+  storageKey     String
+  order          Int
+
+  survey       Survey       @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  embeddedData EmbeddedData @relation(fields: [embeddedDataId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([surveyId, embeddedDataId])
+  @@unique([surveyId, storageKey])
+  @@index([embeddedDataId])
+  @@index([surveyId, order])
 }
 
 /// Represents a team within an organization.

@@ -99,8 +99,13 @@ export const peekRateLimit = async (
  */
 export const checkRateLimit = async (
   config: TRateLimitConfig,
-  identifier: string
+  identifier: string,
+  requested = 1
 ): Promise<Result<TRateLimitResponse, string>> => {
+  if (!Number.isInteger(requested) || requested < 1) {
+    throw new Error("Rate limit usage must be a positive integer");
+  }
+
   // Skip rate limiting if disabled
   if (RATE_LIMITING_DISABLED) {
     logger.debug(`Rate limiting disabled`);
@@ -121,28 +126,34 @@ export const checkRateLimit = async (
 
     const { key, windowEnd, ttlSeconds } = getRateLimitWindow(config, identifier);
 
-    // Lua script for atomic increment and conditional expire
-    // This prevents race conditions between INCR and EXPIRE operations
+    // Lua script for atomic weighted increment and conditional expire.
+    // Refusing before INCRBY prevents an oversized request from consuming the remaining budget.
     const luaScript = `
       local key = KEYS[1]
       local limit = tonumber(ARGV[1])
       local ttl = tonumber(ARGV[2])
-      
-      -- Atomically increment and get current count
-      local current = redis.call('INCR', key)
-      
-      -- Set TTL only if this is the first increment (avoids extending windows)
-      if current == 1 then
+      local requested = tonumber(ARGV[3])
+
+      local current = tonumber(redis.call('GET', key) or '0')
+      local next = current + requested
+
+      if next > limit then
+        return {next, 0}
+      end
+
+      local updated = redis.call('INCRBY', key, requested)
+
+      -- Set TTL only when creating the counter (avoids extending windows)
+      if current == 0 then
         redis.call('EXPIRE', key, ttl)
       end
-      
-      -- Return current count and whether it's within limit
-      return {current, current <= limit and 1 or 0}
+
+      return {updated, 1}
     `;
 
     const result = (await redis.eval(luaScript, {
       keys: [key],
-      arguments: [config.allowedPerInterval.toString(), ttlSeconds.toString()],
+      arguments: [config.allowedPerInterval.toString(), ttlSeconds.toString(), requested.toString()],
     })) as [number, number];
     const [currentCount, isAllowed] = result;
 
@@ -154,6 +165,7 @@ export const checkRateLimit = async (
         limit: config.allowedPerInterval,
         window: config.interval,
         key,
+        requested,
         allowed: isAllowed === 1,
         windowEnd,
       },
@@ -174,6 +186,7 @@ export const checkRateLimit = async (
         window: config.interval,
         key,
         namespace: config.namespace,
+        requested,
       };
 
       logger.error(violationContext, `Rate limit exceeded`);

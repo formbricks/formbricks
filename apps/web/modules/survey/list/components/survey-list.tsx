@@ -17,6 +17,7 @@ import { CreateWithAIDialog } from "@/modules/survey/components/template-list/co
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { useArchiveSurvey } from "@/modules/survey/list/hooks/use-archive-survey";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
+import { useRenameSurvey } from "@/modules/survey/list/hooks/use-rename-survey";
 import { useRestoreSurvey } from "@/modules/survey/list/hooks/use-restore-survey";
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
 import { useUpdateSurveyStatus } from "@/modules/survey/list/hooks/use-update-survey-status";
@@ -47,6 +48,8 @@ interface SurveysListProps {
   surveysPerPage: number;
   currentWorkspaceChannel: TWorkspaceConfigChannel;
   locale: TUserLocale;
+  /** The language new surveys are authored in — see `resolveDefaultSurveyLanguage`. */
+  defaultSurveyLanguage: string;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
   showFeaturedTemplates?: boolean;
@@ -55,11 +58,18 @@ interface SurveysListProps {
 type NewSurveyMenuProps = {
   workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
   language: TUserLocale;
+  defaultSurveyLanguage: string;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 };
 
-const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason }: NewSurveyMenuProps) => {
+const NewSurveyMenu = ({
+  workspace,
+  language,
+  defaultSurveyLanguage,
+  isAIAvailable,
+  aiUnavailableReason,
+}: Readonly<NewSurveyMenuProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
@@ -85,7 +95,7 @@ const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason
         templateId: CUSTOM_SURVEY_TEMPLATE_ID,
         source: "custom",
         surveyType,
-        defaultLanguage: language,
+        defaultLanguage: defaultSurveyLanguage,
       });
 
       router.push(`${workspaceBasePath}/surveys/${survey.id}/edit`);
@@ -142,6 +152,7 @@ export const SurveysList = ({
   surveysPerPage,
   currentWorkspaceChannel,
   locale,
+  defaultSurveyLanguage,
   isAIAvailable,
   aiUnavailableReason,
   showFeaturedTemplates = false,
@@ -207,6 +218,7 @@ export const SurveysList = ({
   const updateSurveyStatusMutation = useUpdateSurveyStatus({ queryKey });
   const archiveSurveyMutation = useArchiveSurvey({ queryKey });
   const restoreSurveyMutation = useRestoreSurvey({ queryKey });
+  const renameSurveyMutation = useRenameSurvey({ queryKey });
 
   const showInitialLoading = !isFilterInitialized || (isLoading && surveys.length === 0);
   // Only a workspace without a single survey gets the onboarding empty states. Every other empty
@@ -231,10 +243,15 @@ export const SurveysList = ({
     await restoreSurveyMutation.mutateAsync({ surveyId });
   };
 
+  const handleRenameSurvey = async (surveyId: string, name: string) => {
+    await renameSurveyMutation.mutateAsync({ surveyId, name });
+  };
+
   const createSurveyButton = (
     <NewSurveyMenu
       workspace={workspace}
       language={locale}
+      defaultSurveyLanguage={defaultSurveyLanguage}
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
     />
@@ -266,7 +283,7 @@ export const SurveysList = ({
         workspace={workspace}
         isTemplatePage={false}
         publicDomain={publicDomain}
-        defaultLanguage={locale}
+        defaultLanguage={defaultSurveyLanguage}
         language={locale}
         isAIAvailable={isAIAvailable}
         aiUnavailableReason={aiUnavailableReason}
@@ -325,6 +342,7 @@ export const SurveysList = ({
               updateSurveyStatus={handleUpdateSurveyStatus}
               archiveSurvey={handleArchiveSurvey}
               restoreSurvey={handleRestoreSurvey}
+              renameSurvey={handleRenameSurvey}
               publicDomain={publicDomain}
               locale={locale}
             />

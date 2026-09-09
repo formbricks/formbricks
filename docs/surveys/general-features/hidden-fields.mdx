@@ -4,12 +4,35 @@ description: "Add data to a submission without asking the user to type it in. Th
 icon: "eye-slash"
 ---
 
+<Note>
+  Hidden fields are the **ingested** half of [Embedded Data](/surveys/embedded-data/overview) — the values
+  that arrive from outside the survey. Nothing renames and nothing changes for surveys you already run; see
+  [Hidden Fields & Variables](/surveys/embedded-data/migration) for what is new around them.
+</Note>
+
 ## How to Add Hidden Fields
 
 1. Open the survey in the editor, stay on the **Questions** tab and scroll to the bottom. You will find a **Hidden fields** section.
 2. Type a field ID and choose **Add hidden field ID**. Add as many as you need.
 
 ![Hidden fields in the survey editor](/images/surveys/general-features/hidden-fields/editor.webp)
+
+## Naming
+
+Field ids follow one rule everywhere — the editor and the management API refuse the same names (ENG-2539):
+
+- A **new** field id must start with a lowercase letter and then contain only lowercase letters, numbers and underscores: `^[a-z][a-z0-9_]*$`. So `page_type`, not `pageType` or `Page Type`.
+- **Reserved names are refused in any casing.** These are the link-survey system params and internal ids: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`. A field named exactly like one of them is never filled from a survey URL, whatever the casing of the parameter: that parameter belongs to the survey link. An older survey that declares a case variant such as `Source` keeps being filled by that exact spelling (`?Source=`), never by the reserved one (`?source=`); the mismatch logs a browser console warning naming the spelling that fills the field.
+- **Auto-captured field names are refused too**: every survey can already read those by name without declaring them, and a second field under the same name would be ambiguous in recall and logic. The full list: `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`.
+- **A hidden field and a variable may not share a name**, in any casing, for the same reason: recall and logic address both by name. Adding a variable `plan` to a survey with a hidden field `plan` (or the reverse) is refused.
+
+<Note>
+  Ids a survey **already declares keep working**: they load, collect values and can be re-saved unchanged —
+  only adding such a name as a *new* field is refused. The same goes for a hidden field and a variable that
+  already share a name. Deleting a grandfathered field spends the reprieve: once it is gone from the saved
+  survey, the name can no longer be re-added. One consequence: re-creating a survey from an exported document
+  fails with a 400 when the export declares a refused name. Rename that field in the payload before importing.
+</Note>
 
 ## Set Hidden Field via URL
 
@@ -27,14 +50,21 @@ https://formbricks.com/s/clin34bjy?screen=landing_page&job=Founder
 
 ## Set Hidden Fields via SDK
 
-<Note>
-  We are reworking how to add Hidden Fields via SDK moving away from binding them to Actions over to Context. Until then, we will **continue to support the current approach for the JS SDK**. However, we don't support Hidden Fields for the Android and iOS SDKs.
-</Note>
+Attach the values once and every survey displayed afterwards picks them up, until you remove the key or the page reloads:
 
 ```js
-formbricks.track("action_name", {hiddenFields: {myField: "value"}})
+formbricks.setEmbeddedData({ my_field: "value" });
 ```
 
+This works in the JavaScript SDK and in the React Native, iOS, Android and Flutter SDKs. See
+[`setEmbeddedData`](/surveys/embedded-data/set-embedded-data) for merge and clearing semantics, and
+[Mobile SDKs](/surveys/embedded-data/mobile-sdks) for the mobile call syntax.
+
+The older per-trigger form still works, and an explicit value there still wins over an ambient one:
+
+```js
+formbricks.track("action_name", { hiddenFields: { my_field: "value" } });
+```
 
 ## View Hidden Fields in Responses
 

@@ -194,6 +194,31 @@ export async function updateSurveyStatus(
   return responseBody.data;
 }
 
+type TV3RenameSurveyResponse = {
+  data: {
+    id: string;
+    name: string;
+  };
+};
+
+export async function renameSurvey(surveyId: string, name: string): Promise<{ id: string; name: string }> {
+  const response = await fetch(`/api/v3/surveys/${surveyId}`, {
+    method: "PATCH",
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const responseBody = (await response.json()) as TV3RenameSurveyResponse;
+  return responseBody.data;
+}
+
 export async function deleteSurvey(surveyId: string): Promise<void> {
   const response = await fetch(`/api/v3/surveys/${surveyId}`, {
     method: "DELETE",

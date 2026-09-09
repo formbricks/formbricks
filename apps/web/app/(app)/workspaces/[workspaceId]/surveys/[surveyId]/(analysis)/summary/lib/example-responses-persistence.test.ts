@@ -132,9 +132,11 @@ describe("persistExampleResponseDataset", () => {
       expect(prisma.tagsOnResponses.create).not.toHaveBeenCalled();
       expect(prisma.response.update).not.toHaveBeenCalled();
 
-      // The response write shares the same transaction, so a rollback takes it with the rest.
+      // The response write shares the same transaction, so a rollback takes it with the rest. The
+      // transaction is the third argument — ingest flags sit in front of it, and are absent here.
       for (const call of createResponseWithQuotaEvaluation.mock.calls) {
-        expect(call[1]).toBe(tx);
+        expect(call[1]).toBeUndefined();
+        expect(call[2]).toBe(tx);
       }
     });
   });
