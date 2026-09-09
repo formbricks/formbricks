@@ -219,7 +219,7 @@ export const ZV3FeedbackRecordListFilters = ZV3FeedbackRecordFilters.extend({
     .min(1)
     .max(1000)
     .optional()
-    .describe("Maximum number of records to return (1–1000). Defaults to 50."),
+    .describe("Maximum number of records to return (1–1000). Defaults to 100."),
   cursor: z
     .string()
     .min(1)

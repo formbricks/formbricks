@@ -1,5 +1,5 @@
 in: path
-name: id
+name: feedbackRecordId
 required: true
 schema:
   type: string

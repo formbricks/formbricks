@@ -347,10 +347,10 @@ paths:
     $ref: paths/api_v3_feedback-records_count.yml
   /api/v3/feedback-records/search/semantic:
     $ref: paths/api_v3_feedback-records_search_semantic.yml
-  /api/v3/feedback-records/{id}:
-    $ref: paths/api_v3_feedback-records_{id}.yml
-  /api/v3/feedback-records/{id}/similar:
-    $ref: paths/api_v3_feedback-records_{id}_similar.yml
+  /api/v3/feedback-records/{feedbackRecordId}:
+    $ref: paths/api_v3_feedback-records_{feedbackRecordId}.yml
+  /api/v3/feedback-records/{feedbackRecordId}/similar:
+    $ref: paths/api_v3_feedback-records_{feedbackRecordId}_similar.yml
 components:
   securitySchemes:
     sessionAuth:

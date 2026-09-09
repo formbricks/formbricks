@@ -9,7 +9,7 @@ properties:
   feedbackRecordId:
     type: string
     format: uuid
-    description: The matching record. Fetch it with `GET /api/v3/feedback-records/{id}` for the full payload.
+    description: The matching record. Fetch it with `GET /api/v3/feedback-records/{feedbackRecordId}` for the full payload.
   score:
     type: number
     format: double

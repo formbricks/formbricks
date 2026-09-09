@@ -66,10 +66,9 @@ get:
         maximum: 1000
         default: 100
       description: >-
-        Page size. Higher than the v3 default of 100 because this surface is built for bulk
-        ingestion and export. Out-of-range and non-numeric values are rejected — `-5`, `1001` and
-        `abc` all answer **400** — with one exception: `limit=0` is indistinguishable from omitting
-        the parameter, so it is accepted and the default applies. Send no `limit` rather than `0` if
+        Page size. The 1000 ceiling is higher than elsewhere in v3 because this surface is built for
+        bulk ingestion and export. Out-of-range and non-numeric values are rejected: `0`, `-5`,
+        `1001` and `abc` all answer **400**. Send no `limit` rather than `0` if
         you are computing it.
     - $ref: ../components/parameters/CursorQuery.yml
   responses:
