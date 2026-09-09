@@ -16,7 +16,8 @@ export const GENERATED_SURVEY_MAX_CHOICES = 8;
  * documents keep their own sections, and the model was refused live for putting a 15-question
  * section into one block when the cap was 8. v3 has no per-block element limit.
  */
-export const IMPORTED_SURVEY_MAX_BLOCKS = 16;
+// One block per question is a legitimate layout (a "Block #" column), so the cap equals a chunk's questions.
+export const IMPORTED_SURVEY_MAX_BLOCKS = 24;
 export const IMPORTED_SURVEY_MAX_QUESTIONS_PER_BLOCK = 24;
 export const IMPORTED_SURVEY_MAX_CHOICES = 8;
 

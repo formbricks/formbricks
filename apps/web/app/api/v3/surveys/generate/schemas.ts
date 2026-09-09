@@ -256,10 +256,16 @@ export function createGeneratedSurveyDraftSchema<
     ...((isImport ? importElementFields : {}) as typeof importElementFields),
   };
 
-  const elementForAI = z
+  // Import: the provider-facing schema stays structural. The cross-field rules (choices for choice
+  // questions, rows and columns for a matrix, csat/ces ranges) are repaired by the import finalizer with a
+  // report line each, because the SDK rejects the whole chunk on the first violation — a picture-choice
+  // row without labels used to take 16 other questions down with it. The internal schema keeps the rules.
+  const elementForAIShape = z
     .object({ ...elementShape, range: ZGeneratedRatingRangeForAI.nullable() })
-    .strict()
-    .superRefine(validateGeneratedSurveyElement);
+    .strict();
+  const elementForAI = isImport
+    ? elementForAIShape
+    : elementForAIShape.superRefine(validateGeneratedSurveyElement);
   const elementInternal = z
     .object({ ...elementShape, range: ZGeneratedRatingRange.nullable() })
     .strict()
