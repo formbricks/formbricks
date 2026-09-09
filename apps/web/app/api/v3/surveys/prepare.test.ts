@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { prepareV3SurveyCreate, prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "./prepare";
 import { ZV3CreateSurveyBody } from "./schemas";
+import { serializeV3SurveyResource } from "./serializers";
 
 vi.mock("server-only", () => ({}));
 
@@ -336,26 +337,44 @@ describe("v3 survey preparation", () => {
     }
   });
 
-  test("rejects patch input with immutable fields as validation results", () => {
+  test("rejects a changed server-owned field with read_only_field (ENG-3069)", () => {
+    // Echoing the value GET returned is a no-op; changing one is the error. workspaceId here matches
+    // the survey, so only defaultLanguage is reported.
     const preparation = prepareV3SurveyPatchInput(survey, {
+      name: "Renamed",
       workspaceId,
       defaultLanguage: "de-DE",
     });
 
     expect(preparation.ok).toBe(false);
     if (!preparation.ok) {
-      expect(preparation.validation.invalidParams).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            name: "workspaceId",
-            code: "unsupported_field",
-          }),
-          expect.objectContaining({
-            name: "defaultLanguage",
-            code: "unsupported_field",
-          }),
-        ])
-      );
+      expect(preparation.validation.invalidParams).toEqual([
+        expect.objectContaining({
+          name: "defaultLanguage",
+          code: "read_only_field",
+          identifier: "de-DE",
+          referenceType: "language",
+        }),
+      ]);
+    }
+  });
+
+  test("rejects a changed id, type, createdAt or archivedAt", () => {
+    const cases: [string, Record<string, unknown>][] = [
+      ["id", { id: "clsvzzzzzzzzzzzzzzzzzzzzzz" }],
+      ["type", { type: "app" }],
+      ["createdAt", { createdAt: "2020-01-01T00:00:00.000Z" }],
+      ["archivedAt", { archivedAt: "2020-01-01T00:00:00.000Z" }],
+    ];
+
+    for (const [field, patch] of cases) {
+      const preparation = prepareV3SurveyPatchInput(survey, { name: "Renamed", ...patch });
+      expect(preparation.ok, field).toBe(false);
+      if (!preparation.ok) {
+        expect(preparation.validation.invalidParams).toEqual([
+          expect.objectContaining({ name: field, code: "read_only_field" }),
+        ]);
+      }
     }
   });
 
@@ -538,5 +557,227 @@ describe("v3 survey preparation", () => {
         ])
       );
     }
+  });
+
+  test("accepts its own GET output unchanged — the round trip (ENG-3069)", () => {
+    // The regression this whole change exists for: fetch a survey, send it straight back, and the
+    // eight server-owned fields GET emits used to produce a 400 naming fields the caller never chose.
+    const resource = serializeV3SurveyResource(survey);
+
+    const preparation = prepareV3SurveyPatchInput(survey, JSON.parse(JSON.stringify(resource)));
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual([]);
+    }
+  });
+
+  test("surfaces a round-tripped updatedAt as the write precondition, without comparing it", () => {
+    const stale = "2020-01-01T00:00:00.000Z";
+
+    const preparation = prepareV3SurveyPatchInput(survey, { name: "Renamed", updatedAt: stale });
+
+    expect(preparation.ok).toBe(true);
+    if (preparation.ok) {
+      // Not an error here: staleness is enforced by the compare-and-set at the write.
+      expect(preparation.precondition).toEqual({ expectedUpdatedAt: new Date(stale) });
+    }
+  });
+
+  test("rejects an updatedAt that is not a date-time", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, { name: "Renamed", updatedAt: "yesterday" });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual([
+        expect.objectContaining({ name: "updatedAt", code: "read_only_field" }),
+      ]);
+    }
+  });
+
+  test("a survey that already contains a forward recall stays patchable (ENG-3070 class)", () => {
+    // Regression: building the current document must not enforce the ordering rule. Judging the
+    // stored survey there made an unrelated { name } patch fail with the survey's own violations —
+    // exactly the bricking this rule was designed not to cause. Caught by the real-Postgres smoke.
+    const withForwardRecall = {
+      ...survey,
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: { default: "Hi #recall:later_q/fallback:x#", "de-DE": "Hallo" },
+              required: true,
+            },
+          ],
+        },
+        {
+          id: "clbk9999999999999999999999",
+          name: "Later Block",
+          elements: [
+            {
+              id: "later_q",
+              type: "openText",
+              headline: { default: "Later", "de-DE": "Spaeter" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+
+    const preparation = prepareV3SurveyPatchInput(withForwardRecall, { name: "Renamed" });
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual([]);
+    }
+  });
+
+  test("but a patch that introduces a new forward recall is rejected", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: {
+                "en-US": "Hi #recall:later_q/fallback:x#",
+                "de-DE": "Hallo #recall:later_q/fallback:x#",
+              },
+              required: true,
+            },
+          ],
+        },
+        {
+          id: "clbk9999999999999999999999",
+          name: "Later Block",
+          elements: [
+            {
+              id: "later_q",
+              type: "openText",
+              headline: { "en-US": "Later", "de-DE": "Spaeter" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: "misordered_reference" })])
+      );
+    }
+  });
+
+  test("create does not reject a forward recall — deliberately not a breaking change here", () => {
+    // Turning the ordering rule on for create would reject payloads that succeed today. That needs a
+    // version bump and a release note, which is its own change. Guards the decision so a future edit
+    // to the default policy cannot make create breaking by accident.
+    const preparation = prepareV3SurveyCreateInput({
+      workspaceId,
+      name: "Forward recall on create",
+      blocks: [
+        {
+          id: "clbk1111111111111111111111",
+          name: "A",
+          elements: [
+            {
+              id: "q1",
+              type: "openText",
+              headline: { "en-US": "Hi #recall:q2/fallback:x#" },
+              required: false,
+            },
+          ],
+        },
+        {
+          id: "clbk2222222222222222222222",
+          name: "B",
+          elements: [{ id: "q2", type: "openText", headline: { "en-US": "Two" }, required: false }],
+        },
+      ],
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
+});
+
+describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", () => {
+  // ENG-3070. The stored survey parses fine but fails the semantic pass: `de-DE` is configured and
+  // the headline has no German. Both halves of the ticket are asserted here — the failure must be
+  // attributed to the stored survey, and a patch that repairs the offending field must be accepted.
+  const storedInvalidSurvey = {
+    ...survey,
+    blocks: [
+      {
+        id: "clbk1234567890123456789012",
+        name: "Main Block",
+        elements: [
+          {
+            id: "satisfaction",
+            type: "openText",
+            headline: { "en-US": "What should we improve?" },
+            required: true,
+          },
+        ],
+      },
+    ],
+  } as unknown as TSurvey;
+
+  test("attributes the failure to the stored survey, not the request", () => {
+    const result = prepareV3SurveyPatchInput(storedInvalidSurvey, { name: "Renamed" });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    // Without this the caller is told its `{ name }` patch is malformed, and the reported path is
+    // `blocks.0.…` — an array it never sent.
+    expect(result.origin).toBe("storedSurvey");
+  });
+
+  test("accepts a patch that repairs the offending field", () => {
+    const result = prepareV3SurveyPatchInput(storedInvalidSurvey, {
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: { "en-US": "What should we improve?", "de-DE": "Was sollen wir verbessern?" },
+              required: true,
+            },
+          ],
+        },
+      ],
+    });
+
+    // The whole point of the restructure: sending corrected values has to actually work. Judging the
+    // stored document on its own makes this impossible, because the patch is never reached.
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe("prepareV3SurveyPatchInput failure attribution for language patches", () => {
+  // A `languages` patch reaches every translatable map in the document, so adding a locale reports
+  // `missing_translation` under `blocks` — a key the caller never sent. Attributing that to the
+  // stored survey would tell the caller to repair a survey that was fine until this request.
+  test("blames the request when a language-only patch adds an untranslated locale", () => {
+    const result = prepareV3SurveyPatchInput(survey, {
+      languages: [{ code: "en-US", default: true }, { code: "de-DE" }, { code: "fr-FR" }],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.validation.invalidParams.some((param) => param.name.startsWith("blocks."))).toBe(true);
+    expect(result.origin).toBe("request");
   });
 });

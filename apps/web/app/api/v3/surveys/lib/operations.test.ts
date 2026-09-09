@@ -9,7 +9,7 @@ import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "../create";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
-import { patchV3Survey } from "../patch";
+import { V3SurveyStaleError, V3SurveyStoredDocumentError, patchV3Survey } from "../patch";
 import { prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "../prepare";
 import { V3SurveyReferenceValidationError } from "../reference-validation";
 import { ZV3CreateSurveyBody } from "../schemas";
@@ -25,10 +25,12 @@ import {
   createV3SurveyResponse,
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
+  editV3SurveyBlocksResponse,
   getV3Survey,
   listV3Surveys,
   patchV3SurveyResponse,
   restoreV3Survey,
+  setV3SurveyBlockOrderResponse,
   validateV3Survey,
   validateV3SurveyFromRawInput,
 } from "./operations";
@@ -36,6 +38,7 @@ import {
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({
+      info: vi.fn(),
       warn: vi.fn(),
       error: vi.fn(),
     })),
@@ -89,9 +92,40 @@ vi.mock("../parse-v3-surveys-list-query", () => ({
   parseV3SurveysListQuery: vi.fn(),
 }));
 
-vi.mock("../patch", () => ({
-  patchV3Survey: vi.fn(),
-}));
+vi.mock("../patch", () => {
+  // Real class, not a vi.fn: operations.ts branches on `instanceof` to map the 409.
+  class V3SurveyStaleError extends Error {
+    constructor(
+      readonly expectedUpdatedAt: Date,
+      readonly currentUpdatedAt: Date,
+      readonly detectedAt: "read" | "write"
+    ) {
+      super("Survey was modified since it was last read");
+      this.name = "V3SurveyStaleError";
+    }
+  }
+
+  return {
+    patchV3Survey: vi.fn(),
+    V3SurveyStoredDocumentError: class V3SurveyStoredDocumentError extends Error {
+      constructor(readonly invalidParams: unknown[]) {
+        super("Stored survey does not satisfy the v3 survey document contract");
+        this.name = "V3SurveyStoredDocumentError";
+      }
+    },
+    V3SurveyStaleError,
+    // Real behaviour, not a stub: the no-write path depends on this to reject a stale caller, so a
+    // no-op mock here would let that regression back in without failing a test.
+    assertV3SurveyPrecondition: (
+      currentSurvey: { updatedAt: Date },
+      precondition?: { expectedUpdatedAt: Date }
+    ): void => {
+      if (precondition && currentSurvey.updatedAt.getTime() !== precondition.expectedUpdatedAt.getTime()) {
+        throw new V3SurveyStaleError(precondition.expectedUpdatedAt, currentSurvey.updatedAt, "read");
+      }
+    },
+  };
+});
 
 vi.mock("../prepare", () => ({
   prepareV3SurveyCreateInput: vi.fn(),
@@ -123,7 +157,11 @@ const survey = {
   name: "Customer Survey",
   status: "draft",
   type: "link",
-  questions: [{ id: "question_1" }],
+  // Every stored survey carries one, and the precondition check reads it on both the write and the
+  // no-write path, so a fixture without it hides a 409 behind a TypeError.
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  // A v3-editable survey has no legacy questions; serializeV3SurveyResource rejects one that does.
+  questions: [],
 };
 const serializedSurvey = {
   id: "survey_1",
@@ -379,7 +417,10 @@ describe("createV3SurveyResponse", () => {
         survey_type: "link",
         organization_id: "org_1",
         workspace_id: workspaceId,
-        question_count: 1,
+        // 0, not 1: a v3 survey has blocks, never legacy questions. The old fixture carried a
+        // legacy shape, which is why this used to read 1. See review-followups.md — the
+        // question_count property itself is always 0 for v3 creates.
+        question_count: 0,
         created_from: "template",
       },
       { organizationId: "org_1", workspaceId }
@@ -700,6 +741,30 @@ describe("patchV3SurveyResponse", () => {
     });
   });
 
+  test("reports a stored survey that fails the v3 contract as a state error, not a client error", async () => {
+    // ENG-3070: the caller sent { name }, so invalid_params naming blocks.* is about the stored
+    // survey. A distinct code says so rather than looking like a malformed request.
+    vi.mocked(patchV3Survey).mockRejectedValue(
+      new V3SurveyStoredDocumentError([
+        { name: "blocks.0.elements.0.headline", reason: "missing translation" },
+      ])
+    );
+
+    const response = await patchV3SurveyResponse({
+      surveyId: "survey_1",
+      body: { name: "Renamed" },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.code).toBe("stored_survey_invalid");
+    expect(body.detail).toMatch(/not evaluated/);
+    expect(body.invalid_params).toEqual([expect.objectContaining({ name: "blocks.0.elements.0.headline" })]);
+  });
+
   test("patches an authorized survey, serializes it, and enriches the audit log", async () => {
     const auditLog = {} as any;
     const patchBody = { name: "Updated Survey" };
@@ -721,7 +786,7 @@ describe("patchV3SurveyResponse", () => {
       requestId,
       instance,
     });
-    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, patchBody, requestId, "org_1");
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, patchBody, requestId, "org_1", undefined);
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
       targetId: "survey_1",
@@ -1073,5 +1138,282 @@ describe("validateV3Survey", () => {
     } as any);
 
     expect(response.status).toBe(500);
+  });
+});
+
+describe("editV3SurveyBlocksResponse", () => {
+  const blockA = { id: "blk_a", name: "A", elements: [] };
+  const blockB = { id: "blk_b", name: "B", elements: [] };
+  const serializedWithBlocks = { id: "survey_1", name: "Customer Survey", blocks: [blockA, blockB] };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as any);
+    vi.mocked(serializeV3SurveyResource).mockImplementation((input) =>
+      (input as any).name === "Updated Survey"
+        ? (serializedUpdatedSurvey as any)
+        : (serializedWithBlocks as any)
+    );
+  });
+
+  const call = (body: unknown, auditLog?: any): Promise<Response> =>
+    editV3SurveyBlocksResponse({
+      surveyId: "survey_1",
+      body,
+      authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
+
+  test("splices the ops into the stored blocks and writes the whole array once", async () => {
+    const auditLog = {} as any;
+    const replacement = { id: "blk_a", name: "A renamed", elements: [] };
+
+    const response = await call({ ops: [{ op: "update", id: "blk_a", block: replacement }] }, auditLog);
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
+      survey,
+      { blocks: [replacement, blockB] },
+      requestId,
+      "org_1",
+      undefined
+    );
+    expect(auditLog).toMatchObject({
+      organizationId: "org_1",
+      targetId: "survey_1",
+      oldObject: serializedWithBlocks,
+      newObject: serializedUpdatedSurvey,
+    });
+  });
+
+  test("generates an id for an inserted block that omits one, like create does", async () => {
+    // Every block id a caller has seen is server-generated, so omitting it on insert is the natural
+    // assumption — and create already mints one. Requiring it here was an inconsistency.
+    await call({ ops: [{ op: "insert", block: { name: "No id" }, position: { type: "end" } }] });
+
+    const [, input] = vi.mocked(patchV3Survey).mock.calls[0];
+    const blocks = (input as { blocks: { id: string; name?: string }[] }).blocks;
+    const inserted = blocks[blocks.length - 1];
+
+    expect(inserted.name).toBe("No id");
+    expect(inserted.id).toMatch(/^[0-9a-z]+$/);
+    expect(inserted.id.length).toBeGreaterThan(8);
+  });
+
+  test("keeps an explicit id so a later op can anchor after the new block", async () => {
+    await call({
+      ops: [
+        { op: "insert", block: { id: "blk_explicit", name: "A" }, position: { type: "start" } },
+        { op: "insert", block: { name: "B" }, position: { type: "after", blockId: "blk_explicit" } },
+      ],
+    });
+
+    const [, input] = vi.mocked(patchV3Survey).mock.calls[0];
+    const ids = (input as { blocks: { id: string }[] }).blocks.map((b) => b.id);
+    expect(ids[0]).toBe("blk_explicit");
+    expect(ids[1]).not.toBe("blk_explicit");
+  });
+
+  test("forwards expectedUpdatedAt as a write precondition", async () => {
+    await call({
+      ops: [{ op: "remove", id: "blk_b" }],
+      expectedUpdatedAt: "2026-04-21T10:00:00.000Z",
+    });
+
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, { blocks: [blockA] }, requestId, "org_1", {
+      expectedUpdatedAt: new Date("2026-04-21T10:00:00.000Z"),
+    });
+  });
+
+  test("returns 400 for a malformed envelope without touching the survey", async () => {
+    const response = await call({ ops: [] });
+
+    expect(response.status).toBe(400);
+    expect(vi.mocked(getAuthorizedV3Survey)).not.toHaveBeenCalled();
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("returns 422 for an op that cannot apply, and does not write", async () => {
+    const response = await call({ ops: [{ op: "remove", id: "blk_zz" }] });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.invalid_params).toEqual([
+      expect.objectContaining({ name: "ops.0.id", code: "dangling_reference" }),
+    ]);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("reports a legacy question-based survey as a state error, not a 400", async () => {
+    // Without the guard the serializer throws and this answers 400, blaming the caller for a
+    // property of the stored survey — and contradicting the documented 422.
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey: { ...survey, questions: [{ id: "legacy" }] },
+      authResult,
+      response: null,
+    } as any);
+
+    const response = await call({ ops: [{ op: "remove", id: "blk_a" }] });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.code).toBe("stored_survey_invalid");
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("passes an authorization response straight through", async () => {
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey: null,
+      authResult: null,
+      response: new Response(null, { status: 403 }),
+    } as any);
+
+    const response = await call({ ops: [{ op: "remove", id: "blk_a" }] });
+
+    expect(response.status).toBe(403);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("refuses an archived survey", async () => {
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey: { ...survey, archivedAt: new Date() },
+      authResult,
+      response: null,
+    } as any);
+
+    const response = await call({ ops: [{ op: "remove", id: "blk_a" }] });
+
+    expect(response.status).toBe(422);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("remaps a downstream blocks.<i> path onto the op that produced it", async () => {
+    // Otherwise the caller gets "blocks.1.elements.0.headline" for an array it never sent.
+    vi.mocked(patchV3Survey).mockRejectedValue(
+      new V3SurveyReferenceValidationError([
+        { name: "blocks.1.elements.0.headline", reason: "bad", code: "missing_translation" },
+        { name: "blocks.0.logic.0", reason: "untouched block keeps its path" },
+      ])
+    );
+
+    const response = await call({
+      ops: [{ op: "insert", block: { id: "blk_new" }, position: { type: "after", blockId: "blk_a" } }],
+    });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.invalid_params).toEqual([
+      expect.objectContaining({ name: "ops.0.block.elements.0.headline" }),
+      expect.objectContaining({ name: "blocks.0.logic.0" }),
+    ]);
+  });
+
+  test("maps a stale precondition to 409 with both timestamps", async () => {
+    vi.mocked(patchV3Survey).mockRejectedValue(
+      new V3SurveyStaleError(
+        new Date("2026-04-21T10:00:00.000Z"),
+        new Date("2026-04-21T11:30:00.000Z"),
+        "write"
+      )
+    );
+
+    const response = await call({
+      ops: [{ op: "remove", id: "blk_b" }],
+      expectedUpdatedAt: "2026-04-21T10:00:00.000Z",
+    });
+
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.code).toBe("conflict");
+    expect(body.details).toEqual({
+      expectedUpdatedAt: "2026-04-21T10:00:00.000Z",
+      currentUpdatedAt: "2026-04-21T11:30:00.000Z",
+    });
+  });
+});
+
+describe("setV3SurveyBlockOrderResponse", () => {
+  const blockA = { id: "blk_a", name: "A", elements: [] };
+  const blockB = { id: "blk_b", name: "B", elements: [] };
+  const serializedWithBlocks = { id: "survey_1", name: "Customer Survey", blocks: [blockA, blockB] };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as any);
+    vi.mocked(serializeV3SurveyResource).mockImplementation((input) =>
+      (input as any).name === "Updated Survey"
+        ? (serializedUpdatedSurvey as any)
+        : (serializedWithBlocks as any)
+    );
+  });
+
+  const call = (body: unknown, auditLog?: any): Promise<Response> =>
+    setV3SurveyBlockOrderResponse({
+      surveyId: "survey_1",
+      body,
+      authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
+
+  test("applies a permutation", async () => {
+    const response = await call({ order: ["blk_b", "blk_a"] });
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
+      survey,
+      { blocks: [blockB, blockA] },
+      requestId,
+      "org_1",
+      undefined
+    );
+  });
+
+  test("skips the write when the order already matches, so updatedAt does not move", async () => {
+    // A no-op write would bump updatedAt and invalidate every other caller's precondition, which
+    // would make this endpoint's advertised idempotence false.
+    const auditLog = {} as any;
+
+    const response = await call({ order: ["blk_a", "blk_b"] }, auditLog);
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+    expect(auditLog).toMatchObject({ oldObject: serializedWithBlocks, newObject: serializedWithBlocks });
+  });
+
+  test("rejects a stale precondition even when the order would not change anything", async () => {
+    // RFC 9110 evaluates the precondition before the method. Short-circuiting the no-op write first
+    // would answer a caller whose view is out of date with 200, which reads as confirmation that
+    // nothing moved — the precise false reassurance the precondition exists to prevent.
+    const response = await call({
+      order: ["blk_a", "blk_b"],
+      expectedUpdatedAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    expect(response.status).toBe(409);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("rejects an order that is not a permutation", async () => {
+    const response = await call({ order: ["blk_a"] });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.invalid_params).toEqual([
+      expect.objectContaining({ name: "order", code: "missing_required_field", missingId: "blk_b" }),
+    ]);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("returns 400 when the body is malformed", async () => {
+    const response = await call({ order: "not-an-array" });
+
+    expect(response.status).toBe(400);
+    expect(vi.mocked(getAuthorizedV3Survey)).not.toHaveBeenCalled();
   });
 });

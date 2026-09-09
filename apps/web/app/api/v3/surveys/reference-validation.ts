@@ -427,3 +427,259 @@ export function assertValidV3SurveyReferences(input: TReferenceValidationInput):
     throw new V3SurveyReferenceValidationError(result.invalidParams);
   }
 }
+
+/**
+ * Ordering rules (ENG-3069).
+ *
+ * The existing checks above verify that a reference *resolves*; none of them cares where the target
+ * sits in the flow. That gap only mattered while reordering meant hand-rewriting the whole `blocks`
+ * array — rare enough that nobody hit it. A one-call reorder makes it routine, so a survey that
+ * recalls an answer the respondent has not given yet becomes easy to create, and it passes every
+ * other server check.
+ *
+ * Three rules, each mirroring what the editor or the shared refinement already enforces:
+ *
+ *  - a recall of an element must point strictly backwards in flat element order
+ *    (`recall-item-select.tsx` filters the picker the same way);
+ *  - a logic condition's element left operand must not sit in a later block, same block allowed
+ *    (mirrors `validateBlockConditions` in `packages/types/surveys/types.ts`);
+ *  - a `requireAnswer` target must sit in a *later* block (mirrors `validateBlockActions`).
+ *
+ * `jumpToBlock` and `logicFallback` deliberately have no ordering rule — jumping backwards is a
+ * legitimate survey design, and only cycles are policed.
+ *
+ * Violations carry a stable key so the patch path can report only the ones a request *introduces*.
+ * The key never contains an array index: a reorder shifts every index, and diffing on those would
+ * report the whole survey as newly broken.
+ */
+type TPrecedenceViolation = { key: string; issue: InvalidParam };
+
+type TElementPosition = { blockIndex: number; flatIndex: number; path: string };
+
+function buildElementPositions(blocks: TSurveyBlocks): Map<string, TElementPosition> {
+  const positions = new Map<string, TElementPosition>();
+  let flatIndex = 0;
+
+  blocks.forEach((block, blockIndex) => {
+    block.elements.forEach((element, elementIndex) => {
+      // First occurrence wins; duplicates are already reported as duplicate_identifier.
+      if (!positions.has(element.id)) {
+        positions.set(element.id, {
+          blockIndex,
+          flatIndex,
+          path: `blocks.${blockIndex}.elements.${elementIndex}`,
+        });
+      }
+      flatIndex += 1;
+    });
+  });
+
+  return positions;
+}
+
+function misorderedIssue(
+  name: string,
+  reason: string,
+  identifier: string,
+  referenceType: TInvalidParamReferenceType
+): InvalidParam {
+  return { name, reason, code: "misordered_reference", identifier, referenceType };
+}
+
+/** Report every `#recall:` token in one string that points at or after `position`. */
+function addRecallViolationsInText(
+  text: string,
+  path: string,
+  position: number,
+  scopeKey: string,
+  positions: Map<string, TElementPosition>,
+  violations: TPrecedenceViolation[]
+): void {
+  for (const match of text.matchAll(/#recall:([A-Za-z0-9_-]+)/g)) {
+    const recallId = match[1];
+    const target = positions.get(recallId);
+    // Unknown ids, variables and hidden fields are not position-checked: the first is a dangling
+    // reference (reported elsewhere) and the other two are available from the start.
+    if (!target || target.flatIndex < position) {
+      continue;
+    }
+
+    violations.push({
+      key: `recall|${scopeKey}|${recallId}`,
+      issue: misorderedIssue(
+        path,
+        position < 0
+          ? `Recall reference '${recallId}' cannot be used here because no element has been answered yet; only hidden fields and variables can be recalled before the first block`
+          : `Recall reference '${recallId}' points at an element that appears later in the survey (${target.path}); a recall can only use elements shown before it`,
+        recallId,
+        "recall"
+      ),
+    });
+  }
+}
+
+/** Walk any nested value for `#recall:` tokens, reporting those that point at or after `position`. */
+function addRecallPrecedenceViolations(
+  value: unknown,
+  path: string,
+  position: number,
+  scopeKey: string,
+  positions: Map<string, TElementPosition>,
+  violations: TPrecedenceViolation[]
+): void {
+  if (typeof value === "string") {
+    addRecallViolationsInText(value, path, position, scopeKey, positions, violations);
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) =>
+      addRecallPrecedenceViolations(entry, `${path}.${index}`, position, scopeKey, positions, violations)
+    );
+    return;
+  }
+
+  if (!isPlainObject(value)) {
+    return;
+  }
+
+  for (const [key, entry] of Object.entries(value)) {
+    // Logic runs at block submit, by which point the block's own answers exist — walking it here
+    // would flag a same-block recall that is actually fine.
+    if (key === "logic") continue;
+    addRecallPrecedenceViolations(
+      entry,
+      path ? `${path}.${key}` : key,
+      position,
+      scopeKey,
+      positions,
+      violations
+    );
+  }
+}
+
+function forEachSingleCondition(
+  group: TConditionGroup,
+  path: string,
+  visit: (condition: { leftOperand: TDynamicLogicFieldValue }, conditionPath: string) => void
+): void {
+  group.conditions.forEach((condition, index) => {
+    const conditionPath = `${path}.conditions.${index}`;
+    if ("conditions" in condition) {
+      forEachSingleCondition(condition, conditionPath, visit);
+      return;
+    }
+    visit(condition, conditionPath);
+  });
+}
+
+function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPrecedenceViolation[] {
+  const positions = buildElementPositions(input.blocks);
+  const violations: TPrecedenceViolation[] = [];
+
+  // Before the first element: an element recall here can never resolve to an answer.
+  addRecallPrecedenceViolations(input.welcomeCard, "welcomeCard", -1, "welcomeCard", positions, violations);
+  if (isPlainObject(input.metadata)) {
+    for (const key of ["title", "description"] as const) {
+      addRecallPrecedenceViolations(
+        input.metadata[key],
+        `metadata.${key}`,
+        -1,
+        `metadata.${key}`,
+        positions,
+        violations
+      );
+    }
+  }
+
+  input.blocks.forEach((block, blockIndex) => {
+    const firstElementFlatIndex = positions.get(block.elements[0]?.id ?? "")?.flatIndex ?? 0;
+
+    // Block-level labels render with the block, so they may only recall earlier blocks' answers.
+    for (const key of ["name", "buttonLabel", "backButtonLabel"] as const) {
+      addRecallPrecedenceViolations(
+        block[key],
+        `blocks.${blockIndex}.${key}`,
+        firstElementFlatIndex,
+        `block:${block.id}`,
+        positions,
+        violations
+      );
+    }
+
+    block.elements.forEach((element, elementIndex) => {
+      const position = positions.get(element.id);
+      addRecallPrecedenceViolations(
+        element,
+        `blocks.${blockIndex}.elements.${elementIndex}`,
+        position?.flatIndex ?? 0,
+        `element:${element.id}`,
+        positions,
+        violations
+      );
+    });
+
+    block.logic?.forEach((logic, logicIndex) => {
+      const logicPath = `blocks.${blockIndex}.logic.${logicIndex}`;
+
+      forEachSingleCondition(logic.conditions, logicPath, (condition, conditionPath) => {
+        if (condition.leftOperand.type !== "element") return;
+        const target = positions.get(condition.leftOperand.value);
+        if (!target || target.blockIndex <= blockIndex) return;
+
+        violations.push({
+          key: `condition|${block.id}|${condition.leftOperand.value}`,
+          issue: misorderedIssue(
+            `${conditionPath}.leftOperand.value`,
+            `Condition references element '${condition.leftOperand.value}' in a later block (blocks.${target.blockIndex}); logic in blocks.${blockIndex} can only evaluate elements from the same or an earlier block`,
+            condition.leftOperand.value,
+            "element"
+          ),
+        });
+      });
+
+      logic.actions.forEach((action, actionIndex) => {
+        if (action.objective !== "requireAnswer") return;
+        const target = positions.get(action.target);
+        if (!target || target.blockIndex > blockIndex) return;
+
+        violations.push({
+          key: `requireAnswer|${block.id}|${action.target}`,
+          issue: misorderedIssue(
+            `${logicPath}.actions.${actionIndex}.target`,
+            target.blockIndex === blockIndex
+              ? `requireAnswer target '${action.target}' is in the same block (blocks.${blockIndex}); requireAnswer must target an element in a later block`
+              : `requireAnswer target '${action.target}' is in an earlier block (blocks.${target.blockIndex}); requireAnswer must target an element in a later block`,
+            action.target,
+            "element"
+          ),
+        });
+      });
+    });
+  });
+
+  return violations;
+}
+
+/** Every ordering violation in the document. Used on create, where there is no baseline to spare. */
+export function getV3SurveyPrecedenceInvalidParams(input: TReferenceValidationInput): InvalidParam[] {
+  return getV3SurveyPrecedenceViolations(input).map((violation) => violation.issue);
+}
+
+/**
+ * Only the ordering violations this change *introduces*.
+ *
+ * Enforcing the full set on a patch would brick every survey that already contains one — including a
+ * patch that never touches the offending block. That is the ENG-3070 failure class, and it is the
+ * reason this rule is a delta rather than an absolute.
+ */
+export function getV3SurveyIntroducedPrecedenceInvalidParams(
+  baseline: TReferenceValidationInput,
+  input: TReferenceValidationInput
+): InvalidParam[] {
+  const existing = new Set(getV3SurveyPrecedenceViolations(baseline).map((violation) => violation.key));
+
+  return getV3SurveyPrecedenceViolations(input)
+    .filter((violation) => !existing.has(violation.key))
+    .map((violation) => violation.issue);
+}

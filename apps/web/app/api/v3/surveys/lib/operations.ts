@@ -1,12 +1,16 @@
 import "server-only";
+import { createId } from "@paralleldrive/cuid2";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
+  type InvalidParam,
   createdResponse,
   noContentResponse,
   problemBadRequest,
+  problemConflict,
   problemForbidden,
   problemInternalError,
   problemUnprocessableContent,
@@ -21,13 +25,25 @@ import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/l
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import {
+  applySurveyBlockOperations,
+  readPublicBlocks,
+  remapBlockInvalidParamPath,
+  reorderSurveyBlocks,
+} from "../blocks";
+import {
   type TV3SurveyCreateOptions,
   V3SurveyCreatePermissionError,
   V3SurveyInputValidationError,
   createV3Survey,
 } from "../create";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
-import { patchV3Survey } from "../patch";
+import {
+  type TV3SurveyWritePrecondition,
+  V3SurveyStaleError,
+  V3SurveyStoredDocumentError,
+  assertV3SurveyPrecondition,
+  patchV3Survey,
+} from "../patch";
 import {
   type TV3SurveyPrepareResult,
   prepareV3SurveyCreateInput,
@@ -36,9 +52,12 @@ import {
 import { V3SurveyReferenceValidationError } from "../reference-validation";
 import {
   type TV3CreateSurveyBody,
+  type TV3SurveyBlockOp,
   type TV3SurveyDocument,
   type TV3SurveyValidationRequestBody,
   ZV3CreateSurveyBody,
+  ZV3EditSurveyBlocksBody,
+  ZV3SetSurveyBlockOrderBody,
   ZV3SurveyValidationRequestBody,
   formatV3ZodInvalidParams,
 } from "../schemas";
@@ -623,6 +642,49 @@ function mapV3SurveyPatchError(
     return problemForbidden(requestId, err.message, instance);
   }
 
+  if (err instanceof V3SurveyStoredDocumentError) {
+    log.warn(
+      { statusCode: 422, workspaceId, invalidParamCount: err.invalidParams.length },
+      "Stored survey does not satisfy the v3 document contract"
+    );
+    return problemUnprocessableContent(
+      requestId,
+      "The stored survey does not satisfy the v3 survey document contract, so this request was not evaluated. The reported paths are into the stored survey, not your request; repair them in the editor.",
+      {
+        code: "stored_survey_invalid",
+        invalid_params: err.invalidParams,
+        instance,
+      }
+    );
+  }
+
+  if (err instanceof V3SurveyStaleError) {
+    const currentUpdatedAt = err.currentUpdatedAt.toISOString();
+    log.warn(
+      {
+        statusCode: 409,
+        workspaceId,
+        expectedUpdatedAt: err.expectedUpdatedAt.toISOString(),
+        currentUpdatedAt,
+        // "read" means the pre-flight caught it; "write" means the compare-and-set did, i.e. a real
+        // race inside the request. Worth being able to tell apart in production.
+        staleDetectedAt: err.detectedAt,
+      },
+      "Survey precondition failed"
+    );
+    return problemConflict(
+      requestId,
+      `Survey was modified since it was last read; updatedAt is now ${currentUpdatedAt}. Re-read the survey and retry.`,
+      instance,
+      {
+        details: {
+          expectedUpdatedAt: err.expectedUpdatedAt.toISOString(),
+          currentUpdatedAt,
+        },
+      }
+    );
+  }
+
   if (err instanceof ResourceNotFoundError) {
     log.warn({ errorCode: err.name, workspaceId, statusCode: 403 }, "Survey not found or not accessible");
     return problemForbidden(requestId, "You are not authorized to access this resource", instance);
@@ -645,16 +707,77 @@ function mapV3SurveyPatchError(
   return problemInternalError(requestId, "An unexpected error occurred.", instance);
 }
 
-export async function patchV3SurveyResponse({
+/**
+ * What a document mutation wants written, decided against the authorized survey (ENG-3069).
+ *
+ * `unchanged` exists so an idempotent no-op — reordering blocks into the order they are already in —
+ * can skip the write entirely. Otherwise it would bump `updatedAt` and spuriously invalidate every
+ * other caller's precondition, which would make the reorder endpoint's idempotence a lie.
+ */
+type TV3SurveyDocumentMutationInput =
+  | {
+      ok: true;
+      input: unknown;
+      logFields?: Record<string, unknown>;
+      remapInvalidParam?: (param: InvalidParam) => InvalidParam;
+    }
+  | { ok: true; unchanged: true; logFields?: Record<string, unknown> }
+  | {
+      ok: false;
+      detail: string;
+      invalidParams: InvalidParam[];
+      /**
+       * Defaults to `unprocessable_content`. Set it when the rejection is a statement about the
+       * *stored* survey rather than the request, so a client can tell "repair your survey" from
+       * "fix your ops" — the same distinction the legacy guard makes.
+       */
+      code?: "stored_survey_invalid";
+      logFields?: Record<string, unknown>;
+    };
+
+/** The 422 for a `buildInput` rejection, carrying its code only when one was set. */
+function documentMutationRejection(
+  built: Extract<TV3SurveyDocumentMutationInput, { ok: false }>,
+  requestId: string,
+  instance: string
+): Response {
+  return problemUnprocessableContent(requestId, built.detail, {
+    instance,
+    invalid_params: built.invalidParams,
+    ...(built.code ? { code: built.code } : {}),
+  });
+}
+
+type TV3SurveyDocumentMutationParams = TPatchV3SurveyParams & {
+  operation: "patch" | "blocks.edit" | "blocks.reorder";
+  precondition?: TV3SurveyWritePrecondition;
+  buildInput: (ctx: {
+    survey: TInternalSurvey;
+    getResource: () => ReturnType<typeof serializeV3SurveyResource>;
+  }) => TV3SurveyDocumentMutationInput;
+};
+
+/**
+ * The one write path for every v3 survey-document mutation: PATCH, block edits and block reorder.
+ *
+ * They differ only in how they turn the stored survey into a patch payload, which is what
+ * `buildInput` supplies. Everything security-relevant — authorization, the archived and legacy
+ * guards, entitlement checks inside patchV3Survey, audit enrichment, error mapping — happens here
+ * once, so a new operation cannot accidentally ship without it.
+ */
+async function runV3SurveyDocumentMutation({
   surveyId,
-  body,
   authentication,
   requestId,
   instance,
   auditLog,
-}: TPatchV3SurveyParams): Promise<Response> {
-  const log = logger.withContext({ requestId, surveyId });
+  operation,
+  precondition,
+  buildInput,
+}: TV3SurveyDocumentMutationParams): Promise<Response> {
+  const log = logger.withContext({ requestId, surveyId, operation });
   let workspaceId: string | undefined;
+  let remapInvalidParam: ((param: InvalidParam) => InvalidParam) | undefined;
 
   try {
     const { survey, authResult, response } = await getAuthorizedV3Survey({
@@ -677,7 +800,7 @@ export async function patchV3SurveyResponse({
     // archivedAt is already loaded on `survey` (selectSurvey includes it), so no extra query — and reading
     // it from the same fetch the auth check used avoids a restore-between-reads TOCTOU.
     if (survey.archivedAt) {
-      log.warn({ statusCode: 422 }, "Attempted to patch an archived survey");
+      log.warn({ statusCode: 422, workspaceId }, "Attempted to patch an archived survey");
       return problemUnprocessableContent(requestId, "Survey is archived", {
         instance,
         invalid_params: [
@@ -689,23 +812,254 @@ export async function patchV3SurveyResponse({
       });
     }
 
-    const updatedSurvey = await patchV3Survey(survey, body, requestId, authResult.organizationId);
+    // Legacy question-based surveys have no v3 block list. Without this the block endpoints would
+    // reach the serializer, throw V3SurveyUnsupportedShapeError and answer 400 — attributing a
+    // property of the stored survey to the caller's request, and contradicting the 422
+    // `stored_survey_invalid` the contract documents. PATCH already reports it that way via prepare.
+    if (Array.isArray(survey.questions) && survey.questions.length > 0) {
+      log.warn({ statusCode: 422, workspaceId }, "Legacy question-based survey is not v3-editable");
+      return problemUnprocessableContent(
+        requestId,
+        "The stored survey does not satisfy the v3 survey document contract, so this request was not evaluated. Legacy question-based surveys are not supported by the v3 survey management API.",
+        {
+          code: "stored_survey_invalid",
+          instance,
+          invalid_params: [
+            {
+              name: "survey",
+              reason: "Legacy question-based surveys are not supported by the v3 survey management API",
+            },
+          ],
+        }
+      );
+    }
+
+    // Serialized lazily: PATCH must not pay for it, and a legacy question-based survey would throw
+    // out of the serializer as a 400 here instead of the 422 the prepare step already gives it.
+    let cachedResource: ReturnType<typeof serializeV3SurveyResource> | undefined;
+    const getResource = (): ReturnType<typeof serializeV3SurveyResource> => {
+      cachedResource ??= serializeV3SurveyResource(survey);
+      return cachedResource;
+    };
+
+    const built = buildInput({ survey, getResource });
+
+    if (!built.ok) {
+      log.warn(
+        { statusCode: 422, workspaceId, invalidParamCount: built.invalidParams.length, ...built.logFields },
+        "Survey document mutation rejected"
+      );
+      return documentMutationRejection(built, requestId, instance);
+    }
+
+    if ("unchanged" in built) {
+      // This branch never reaches patchV3Survey, which is where every other write evaluates the
+      // precondition — so evaluate it here. Otherwise a reorder into the order the survey already
+      // holds answers a stale caller with 200, which reads as "your view is current" when it is not.
+      assertV3SurveyPrecondition(survey, precondition);
+
+      const resource = getResource();
+      if (auditLog) {
+        auditLog.targetId = survey.id;
+        auditLog.organizationId = authResult.organizationId;
+        auditLog.oldObject = resource;
+        auditLog.newObject = resource;
+      }
+      log.info(
+        { statusCode: 200, workspaceId, wrote: false, ...built.logFields },
+        "Survey document unchanged"
+      );
+      return successResponse(resource, { requestId, cache: "private, no-store" });
+    }
+
+    remapInvalidParam = built.remapInvalidParam;
+    const oldResource = getResource();
+
+    const updatedSurvey = await patchV3Survey(
+      survey,
+      built.input,
+      requestId,
+      authResult.organizationId,
+      precondition
+    );
     const resource = serializeV3SurveyResource(updatedSurvey);
 
     if (auditLog) {
       auditLog.targetId = updatedSurvey.id;
       auditLog.organizationId = authResult.organizationId;
-      auditLog.oldObject = serializeV3SurveyResource(survey);
+      auditLog.oldObject = oldResource;
       auditLog.newObject = resource;
     }
+
+    log.info(
+      {
+        statusCode: 200,
+        workspaceId,
+        wrote: true,
+        precondition: precondition ? "matched" : "none",
+        ...built.logFields,
+      },
+      "Survey document updated"
+    );
 
     return successResponse(resource, {
       requestId,
       cache: "private, no-store",
     });
   } catch (error) {
+    // A block op produced this document, so `blocks.<i>` paths name an array the caller never sent.
+    // Rewrite the ones that belong to an op before the error leaves the building.
+    if (remapInvalidParam && error instanceof V3SurveyReferenceValidationError) {
+      return mapV3SurveyPatchError(
+        new V3SurveyReferenceValidationError(error.invalidParams.map(remapInvalidParam)),
+        { log, requestId, instance, workspaceId }
+      );
+    }
     return mapV3SurveyPatchError(error, { log, requestId, instance, workspaceId });
   }
+}
+
+export async function patchV3SurveyResponse({ body, ...params }: TPatchV3SurveyParams): Promise<Response> {
+  return runV3SurveyDocumentMutation({
+    ...params,
+    body,
+    operation: "patch",
+    buildInput: () => ({
+      ok: true,
+      input: body,
+      logFields: {
+        patchedFields: isPlainObjectBody(body) ? Object.keys(body) : undefined,
+      },
+    }),
+  });
+}
+
+function isPlainObjectBody(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Mint ids for inserted blocks that omit one, matching `create_survey`, which generates block ids via
+ * `addGeneratedCreateIds`. Without this the two surfaces disagree — create invents ids for you, insert
+ * 422s — and since every block id a caller has seen is server-generated, omitting it is the natural
+ * assumption. An explicit id is still honoured: it is the only way for a later op in the same request
+ * to anchor `position.after` on a block this one inserts.
+ *
+ * Done here rather than in the Zod body so the schema stays a plain object: the MCP input schema
+ * extends it with `surveyId`, and wrapping it in a preprocess pipe breaks `.extend()`.
+ */
+export function withGeneratedInsertIds(ops: TV3SurveyBlockOp[]): TV3SurveyBlockOp[] {
+  return ops.map((op) =>
+    op.op === "insert" && op.block.id === undefined ? { ...op, block: { ...op.block, id: createId() } } : op
+  );
+}
+
+export async function editV3SurveyBlocksResponse({
+  body,
+  ...params
+}: TPatchV3SurveyParams): Promise<Response> {
+  const parsed = ZV3EditSurveyBlocksBody.safeParse(body);
+  if (!parsed.success) {
+    return problemBadRequest(params.requestId, "Invalid request body", {
+      instance: params.instance,
+      invalid_params: formatV3ZodInvalidParams(parsed.error, "body"),
+    });
+  }
+
+  const { ops, expectedUpdatedAt } = parsed.data;
+
+  return runV3SurveyDocumentMutation({
+    ...params,
+    body,
+    operation: "blocks.edit",
+    ...(expectedUpdatedAt ? { precondition: { expectedUpdatedAt: new Date(expectedUpdatedAt) } } : {}),
+    buildInput: ({ getResource }) => {
+      const currentBlocks = readPublicBlocks(getResource());
+      if (!currentBlocks) {
+        return {
+          ok: false,
+          code: "stored_survey_invalid",
+          detail: "This survey's blocks cannot be edited through the v3 API",
+          invalidParams: [
+            {
+              name: "blocks",
+              reason: "The stored survey does not expose a v3 block list.",
+            },
+          ],
+        };
+      }
+
+      const result = applySurveyBlockOperations(currentBlocks, withGeneratedInsertIds(ops));
+      if (!result.ok) {
+        return {
+          ok: false,
+          detail: "Block operations could not be applied",
+          invalidParams: result.invalidParams,
+          logFields: { ...result.summary, failedOpIndex: result.failedOpIndex },
+        };
+      }
+
+      return {
+        ok: true,
+        input: { blocks: result.blocks },
+        logFields: { ...result.summary, blockCount: result.blocks.length },
+        remapInvalidParam: (param) => remapBlockInvalidParamPath(param, result.originOpIndexByBlockIndex),
+      };
+    },
+  });
+}
+
+export async function setV3SurveyBlockOrderResponse({
+  body,
+  ...params
+}: TPatchV3SurveyParams): Promise<Response> {
+  const parsed = ZV3SetSurveyBlockOrderBody.safeParse(body);
+  if (!parsed.success) {
+    return problemBadRequest(params.requestId, "Invalid request body", {
+      instance: params.instance,
+      invalid_params: formatV3ZodInvalidParams(parsed.error, "body"),
+    });
+  }
+
+  const { order, expectedUpdatedAt } = parsed.data;
+
+  return runV3SurveyDocumentMutation({
+    ...params,
+    body,
+    operation: "blocks.reorder",
+    ...(expectedUpdatedAt ? { precondition: { expectedUpdatedAt: new Date(expectedUpdatedAt) } } : {}),
+    buildInput: ({ getResource }) => {
+      const currentBlocks = readPublicBlocks(getResource());
+      if (!currentBlocks) {
+        return {
+          ok: false,
+          code: "stored_survey_invalid",
+          detail: "This survey's blocks cannot be reordered through the v3 API",
+          invalidParams: [{ name: "order", reason: "The stored survey does not expose a v3 block list." }],
+        };
+      }
+
+      const result = reorderSurveyBlocks(currentBlocks, order);
+      if (!result.ok) {
+        return {
+          ok: false,
+          detail: "Block order must list every block exactly once",
+          invalidParams: result.invalidParams,
+          logFields: { blockCount: currentBlocks.length },
+        };
+      }
+
+      if (result.unchanged) {
+        return { ok: true, unchanged: true, logFields: { blockCount: result.blocks.length } };
+      }
+
+      return {
+        ok: true,
+        input: { blocks: result.blocks },
+        logFields: { blockCount: result.blocks.length },
+      };
+    },
+  });
 }
 
 /**

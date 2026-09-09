@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { validateV3SurveyReferences } from "./reference-validation";
+import {
+  getV3SurveyIntroducedPrecedenceInvalidParams,
+  getV3SurveyPrecedenceInvalidParams,
+  validateV3SurveyReferences,
+} from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 
 const validSurvey = ZV3CreateSurveyBody.parse({
@@ -371,5 +375,218 @@ describe("validateV3SurveyReferences", () => {
     });
 
     expect(result).toEqual({ ok: true, invalidParams: [] });
+  });
+});
+
+describe("ordering rules (ENG-3069)", () => {
+  const twoBlockSurvey = (overrides: Record<string, unknown> = {}) =>
+    ZV3CreateSurveyBody.parse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Ordered",
+      hiddenFields: { enabled: true, fieldIds: ["account_id"] },
+      variables: [],
+      endings: [{ id: "clend12345678901234567890", type: "endScreen", headline: { "en-US": "Thanks" } }],
+      blocks: [
+        {
+          id: "clbk1111111111111111111111",
+          name: "First",
+          elements: [{ id: "first_q", type: "openText", headline: { "en-US": "One" }, required: false }],
+        },
+        {
+          id: "clbk2222222222222222222222",
+          name: "Second",
+          elements: [{ id: "second_q", type: "openText", headline: { "en-US": "Two" }, required: false }],
+        },
+      ],
+      ...overrides,
+    });
+
+  const refInput = (survey: ReturnType<typeof twoBlockSurvey>) => ({
+    blocks: survey.blocks,
+    endings: survey.endings,
+    hiddenFields: survey.hiddenFields,
+    metadata: survey.metadata,
+    variables: survey.variables,
+    welcomeCard: survey.welcomeCard,
+  });
+
+  const withHeadline = (blockIndex: number, headline: string) => {
+    const survey = twoBlockSurvey();
+    survey.blocks[blockIndex].elements[0].headline = { "en-US": headline } as never;
+    return survey;
+  };
+
+  test("flags a recall of an element in a later block", () => {
+    const params = getV3SurveyPrecedenceInvalidParams(
+      refInput(withHeadline(0, "Hi #recall:second_q/fallback:friend#"))
+    );
+
+    expect(params).toEqual([
+      expect.objectContaining({
+        name: "blocks.0.elements.0.headline.en-US",
+        code: "misordered_reference",
+        identifier: "second_q",
+        referenceType: "recall",
+      }),
+    ]);
+  });
+
+  test("allows a recall of an earlier element, and never flags hidden fields", () => {
+    expect(
+      getV3SurveyPrecedenceInvalidParams(refInput(withHeadline(1, "Hi #recall:first_q/fallback:x#")))
+    ).toEqual([]);
+    expect(
+      getV3SurveyPrecedenceInvalidParams(refInput(withHeadline(0, "Hi #recall:account_id/fallback:x#")))
+    ).toEqual([]);
+  });
+
+  test("flags an element recall in the welcome card, where no answer exists yet", () => {
+    const survey = twoBlockSurvey({
+      welcomeCard: { enabled: true, headline: { "en-US": "Hi #recall:first_q/fallback:x#" } },
+    });
+
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))[0]).toMatchObject({
+      // The create schema normalizes the locale-keyed map to the internal default key.
+      name: "welcomeCard.headline.default",
+      code: "misordered_reference",
+    });
+  });
+
+  test("never flags a recall in an ending, which comes after everything", () => {
+    const survey = twoBlockSurvey();
+    (survey.endings[0] as Record<string, unknown>).headline = {
+      "en-US": "Bye #recall:second_q/fallback:x#",
+    };
+
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))).toEqual([]);
+  });
+
+  test("flags a condition whose element operand is in a later block, but not the same block", () => {
+    const later = twoBlockSurvey();
+    later.blocks[0].logic = [
+      {
+        id: "cllogic11111111111111111",
+        conditions: {
+          id: "clcond11111111111111111",
+          connector: "and",
+          conditions: [
+            {
+              id: "clcond22222222222222222",
+              leftOperand: { type: "element", value: "second_q" },
+              operator: "isSubmitted",
+            },
+          ],
+        },
+        actions: [],
+      },
+    ] as never;
+
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(later))[0]).toMatchObject({
+      code: "misordered_reference",
+      identifier: "second_q",
+      referenceType: "element",
+    });
+
+    const sameBlock = twoBlockSurvey();
+    sameBlock.blocks[0].logic = [
+      {
+        id: "cllogic11111111111111111",
+        conditions: {
+          id: "clcond11111111111111111",
+          connector: "and",
+          conditions: [
+            {
+              id: "clcond22222222222222222",
+              leftOperand: { type: "element", value: "first_q" },
+              operator: "isSubmitted",
+            },
+          ],
+        },
+        actions: [],
+      },
+    ] as never;
+
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(sameBlock))).toEqual([]);
+  });
+
+  test("keeps jumping backwards legal", () => {
+    const survey = twoBlockSurvey();
+    survey.blocks[1].logic = [
+      {
+        id: "cllogic11111111111111111",
+        conditions: {
+          id: "clcond11111111111111111",
+          connector: "and",
+          conditions: [
+            {
+              id: "clcond22222222222222222",
+              leftOperand: { type: "element", value: "second_q" },
+              operator: "isSubmitted",
+            },
+          ],
+        },
+        actions: [
+          { id: "clact111111111111111111", objective: "jumpToBlock", target: "clbk1111111111111111111111" },
+        ],
+      },
+    ] as never;
+
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))).toEqual([]);
+  });
+
+  test("reports only what a change introduces, and survives a reorder shifting indices", () => {
+    // The whole reason this is a delta: a survey that already recalls forwards must stay patchable,
+    // including by a patch that never touches the offending block.
+    const broken = withHeadline(0, "Hi #recall:second_q/fallback:x#");
+
+    expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(broken), refInput(broken))).toEqual([]);
+
+    // Three blocks, because the violation has to *survive* the reorder for this to prove anything.
+    // Recall sits in block 0 and points at block 2; swapping blocks 1 and 2 keeps it pointing
+    // forwards while moving the target from `blocks.2` to `blocks.1`. A two-block reverse would make
+    // the recall point backwards instead, leaving zero violations and an empty delta no matter how
+    // the keys are built — which would pass even if index-based keys came back.
+    const threeBlocks = () =>
+      twoBlockSurvey({
+        blocks: [
+          {
+            id: "clbk1111111111111111111111",
+            name: "First",
+            elements: [
+              {
+                id: "first_q",
+                type: "openText",
+                headline: { "en-US": "Hi #recall:third_q/fallback:x#" },
+                required: false,
+              },
+            ],
+          },
+          {
+            id: "clbk2222222222222222222222",
+            name: "Second",
+            elements: [{ id: "second_q", type: "openText", headline: { "en-US": "Two" }, required: false }],
+          },
+          {
+            id: "clbk3333333333333333333333",
+            name: "Third",
+            elements: [{ id: "third_q", type: "openText", headline: { "en-US": "Three" }, required: false }],
+          },
+        ],
+      });
+
+    const baseline = threeBlocks();
+    const shifted = threeBlocks();
+    [shifted.blocks[1], shifted.blocks[2]] = [shifted.blocks[2], shifted.blocks[1]];
+
+    // The same violation exists on both sides, at different indices.
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(baseline))).toHaveLength(1);
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(shifted))).toHaveLength(1);
+    // Empty only because the violation key carries no array index.
+    expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(baseline), refInput(shifted))).toEqual([]);
+
+    const newlyBroken = withHeadline(0, "Hi #recall:second_q/fallback:x#");
+    expect(
+      getV3SurveyIntroducedPrecedenceInvalidParams(refInput(twoBlockSurvey()), refInput(newlyBroken))
+    ).toEqual([expect.objectContaining({ code: "misordered_reference", identifier: "second_q" })]);
   });
 });

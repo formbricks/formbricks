@@ -2,10 +2,13 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
+  editV3SurveyBlocksResponse,
   getV3Survey,
   listV3Surveys,
   patchV3SurveyResponse,
+  setV3SurveyBlockOrderResponse,
   validateV3SurveyFromRawInput,
+  withGeneratedInsertIds,
 } from "@/app/api/v3/surveys/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
@@ -15,15 +18,19 @@ import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateSurveyInput,
   type TMcpDeleteSurveyInput,
+  type TMcpEditSurveyBlocksInput,
   type TMcpGetSurveyInput,
   type TMcpListSurveysInput,
   type TMcpPatchSurveyInput,
+  type TMcpSetSurveyBlockOrderInput,
   type TMcpValidateSurveyInput,
   ZMcpCreateSurveyInput,
   ZMcpDeleteSurveyInput,
+  ZMcpEditSurveyBlocksInput,
   ZMcpGetSurveyInput,
   ZMcpListSurveysInput,
   ZMcpPatchSurveyInput,
+  ZMcpSetSurveyBlockOrderInput,
   ZMcpValidateSurveyInput,
 } from "./schemas";
 
@@ -58,6 +65,40 @@ export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSe
   });
 
   return searchParams;
+}
+
+/**
+ * Project a successful survey-resource response down to what an editing agent actually needs.
+ *
+ * The full resource is ~15k tokens on a large survey; returning it from every edit would refill the
+ * agent's context as fast as the whole-array patch it replaces. `updatedAt` is deliberately kept —
+ * it is the `expectedUpdatedAt` for the next call, so edits chain without another read. REST keeps
+ * the full resource (AIP-144); this projection is MCP-only, where context is the scarce resource.
+ */
+async function conciseSurveyResponse(
+  response: Response,
+  applied: Record<string, unknown>
+): Promise<Response> {
+  if (!response.ok) {
+    return response;
+  }
+
+  const body = (await response.clone().json()) as { data?: Record<string, unknown>; requestId?: string };
+  const data = body.data ?? {};
+  const blocks = data.blocks;
+
+  return Response.json(
+    {
+      data: {
+        id: data.id,
+        updatedAt: data.updatedAt,
+        blockCount: Array.isArray(blocks) ? blocks.length : undefined,
+        ...applied,
+      },
+      requestId: body.requestId,
+    },
+    { status: response.status, headers: response.headers }
+  );
 }
 
 export function registerSurveyTools(server: McpServer): void {
@@ -188,8 +229,10 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Patch survey",
       description: [
-        "Update a Formbricks survey using the v3 Surveys API patch contract.",
-        "Provided top-level arrays and objects replace that whole subtree.",
+        "Update survey-level fields — name, status, languages, endings, welcomeCard, variables, hiddenFields — using the v3 Surveys API patch contract.",
+        "For block changes prefer edit_survey_blocks (update, insert, remove) or set_survey_block_order (reorder): they address blocks by id, cost a fraction of the tokens, and cannot drop a block by omission.",
+        "Provided top-level arrays and objects replace that whole subtree, so a partial `blocks` array deletes every block it leaves out.",
+        "The full get_survey output can be sent back unchanged; `updatedAt` is then an optimistic-concurrency precondition and a mismatch returns 409.",
       ].join(" "),
       inputSchema: ZMcpPatchSurveyInput,
       annotations: {
@@ -213,6 +256,103 @@ export function registerSurveyTools(server: McpServer): void {
             instance: MCP_API_ROUTE,
             auditLog,
           })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "edit_survey_blocks",
+    {
+      title: "Edit survey blocks",
+      description: [
+        "Preferred tool for changing a survey's questions: update, insert or remove whole blocks by id without resending the others.",
+        "Use it for any wording, add or delete change — patch_survey would resend every block to alter one.",
+        "Operations apply in order and atomically — either all of them land or none do.",
+        "Call get_survey first and pass its `updatedAt` as `expectedUpdatedAt`; on a 409 re-read and retry.",
+        "An `update` replaces the whole block, so build it from a fresh read — anything you omit is dropped, and block content must carry every configured language.",
+        "An inserted block gets an id automatically; supply your own only if a later op in the same request needs to anchor after it.",
+        "Removing a block orphans any answers already collected for it, and the API cannot undo that — on a survey that is not a draft, confirm with the user before removing.",
+      ].join(" "),
+      inputSchema: ZMcpEditSurveyBlocksInput,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    ["surveys:write"],
+    async (input: TMcpEditSurveyBlocksInput, ctx) =>
+      runMcpMutation(
+        ctx,
+        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+        async ({ authentication, requestId, auditLog }) => {
+          const { surveyId, response_format: responseFormat, ...body } = input;
+          // Mint insert ids here rather than letting the operation do it alone, so `applied` can
+          // report the id of a block the caller did not name — otherwise an agent inserts a block
+          // and has no way to reference it without re-reading the survey. The helper is idempotent,
+          // so the operation running it again is a no-op.
+          const ops = withGeneratedInsertIds(body.ops);
+          const response = await editV3SurveyBlocksResponse({
+            surveyId,
+            body: { ...body, ops },
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          });
+
+          return responseFormat === "detailed"
+            ? response
+            : conciseSurveyResponse(response, {
+                applied: ops.map((op) => ({ op: op.op, id: op.op === "insert" ? op.block.id : op.id })),
+              });
+        }
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "set_survey_block_order",
+    {
+      title: "Set survey block order",
+      description: [
+        "Preferred tool for reordering a survey's questions — moving, swapping or promoting a block to first or last.",
+        "List every block id exactly once, in the order you want.",
+        "Cheaper and safer than resending the blocks through patch_survey: a missing or duplicated id is rejected, which catches a dropped block.",
+        "Call get_survey first and pass its `updatedAt` as `expectedUpdatedAt`; on a 409 re-read and retry.",
+        "To repeat a call safely, refresh `expectedUpdatedAt` from the previous response or omit it — reusing the old value is a stale precondition and returns 409, which is the precondition working, not the reorder failing.",
+      ].join(" "),
+      inputSchema: ZMcpSetSurveyBlockOrderInput,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        // Unlike patch_survey, the same `order` always yields the same survey, and an order that
+        // already matches performs no write at all — so a repeat does not even move `updatedAt`.
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    ["surveys:write"],
+    async (input: TMcpSetSurveyBlockOrderInput, ctx) =>
+      runMcpMutation(
+        ctx,
+        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+        async ({ authentication, requestId, auditLog }) => {
+          const { surveyId, response_format: responseFormat, ...body } = input;
+          const response = await setV3SurveyBlockOrderResponse({
+            surveyId,
+            body,
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          });
+
+          return responseFormat === "detailed"
+            ? response
+            : conciseSurveyResponse(response, { order: body.order });
+        }
       )
   );
 

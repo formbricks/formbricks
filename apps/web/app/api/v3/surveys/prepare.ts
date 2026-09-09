@@ -13,36 +13,57 @@ import {
   createZV3SurveyDocumentBaseSchema,
   formatV3ZodInvalidParams,
 } from "./schemas";
-import { type TV3SurveyDocumentValidationResult, validateV3SurveyDocument } from "./validation";
+import {
+  type TV3SurveyDocumentValidationResult,
+  type TV3SurveyPrecedencePolicy,
+  validateV3SurveyDocument,
+} from "./validation";
 
 type TV3SurveyPrepareSuccess<TDocument> = {
   ok: true;
   document: TDocument;
   validation: Extract<TV3SurveyDocumentValidationResult, { valid: true }>;
   languageRequests: TV3SurveyLanguageRequest[];
+  /**
+   * ENG-3069: a round-tripped `updatedAt` doubles as an optimistic-concurrency precondition. It is
+   * surfaced rather than verified here — the compare-and-set in executeV3SurveyPatch is what enforces it.
+   */
+  precondition?: { expectedUpdatedAt: Date };
 };
 
 type TV3SurveyPrepareFailure = {
   ok: false;
   validation: Extract<TV3SurveyDocumentValidationResult, { valid: false }>;
+  /**
+   * ENG-3070: whether the request or the *stored* survey is at fault. A stored survey that no longer
+   * satisfies the v3 document contract fails every patch, including one that never touches the
+   * offending field — and reporting that as `invalid_params` on paths the caller never sent reads as
+   * a client error when it is a state error.
+   */
+  origin?: "request" | "storedSurvey";
 };
 
 export type TV3SurveyPrepareResult<TDocument> = TV3SurveyPrepareSuccess<TDocument> | TV3SurveyPrepareFailure;
 
-function invalidPreparation(invalidParams: InvalidParam[]): TV3SurveyPrepareFailure {
+function invalidPreparation(
+  invalidParams: InvalidParam[],
+  origin: "request" | "storedSurvey" = "request"
+): TV3SurveyPrepareFailure {
   return {
     ok: false,
     validation: {
       valid: false,
       invalidParams,
     },
+    origin,
   };
 }
 
 function validPreparation<TDocument extends TV3SurveyDocument>(
-  document: TDocument
+  document: TDocument,
+  precedence?: TV3SurveyPrecedencePolicy
 ): TV3SurveyPrepareResult<TDocument> {
-  const validation = validateV3SurveyDocument(document);
+  const validation = validateV3SurveyDocument(document, precedence);
 
   if (!validation.valid) {
     return invalidPreparation(validation.invalidParams);
@@ -75,17 +96,31 @@ function getV3SurveyPatchAllowedLanguageCodes(survey: TInternalSurvey): string[]
   );
 }
 
-function buildDocumentFromSurvey(
+/**
+ * Parse the stored survey into a v3 document — and deliberately stop there (ENG-3070).
+ *
+ * The stored document is never judged on its own. Running the semantic pass here and returning early
+ * is what made a broken survey unpatchable: a request that *replaced* the offending field still died
+ * on the stored copy of it, so "send corrected values" was impossible. Only the merged document is
+ * validated, once, by the caller below.
+ *
+ * Shape failures still surface here, because there is no merged document to speak of if the stored
+ * one will not parse — and those carry `storedSurvey` so they are reported as a state error.
+ */
+function parseStoredV3SurveyDocument(
   survey: TInternalSurvey,
   allowedLanguageCodes = getV3SurveyPatchAllowedLanguageCodes(survey)
-): TV3SurveyPrepareResult<TV3SurveyDocument> {
+): { ok: true; document: TV3SurveyDocument } | TV3SurveyPrepareFailure {
   if (Array.isArray(survey.questions) && survey.questions.length > 0) {
-    return invalidPreparation([
-      {
-        name: "survey",
-        reason: "Legacy question-based surveys are not supported by the v3 survey management API",
-      },
-    ]);
+    return invalidPreparation(
+      [
+        {
+          name: "survey",
+          reason: "Legacy question-based surveys are not supported by the v3 survey management API",
+        },
+      ],
+      "storedSurvey"
+    );
   }
 
   const defaultLanguage = getV3SurveyDefaultLanguage(survey, DEFAULT_V3_SURVEY_LANGUAGE);
@@ -114,10 +149,47 @@ function buildDocumentFromSurvey(
   });
 
   if (!documentResult.success) {
-    return invalidPreparation(formatV3ZodInvalidParams(documentResult.error, "survey"));
+    return invalidPreparation(formatV3ZodInvalidParams(documentResult.error, "survey"), "storedSurvey");
   }
 
-  return validPreparation(documentResult.data);
+  return { ok: true, document: documentResult.data };
+}
+
+/**
+ * Codes from the language validator, which walks the whole document rather than one subtree.
+ *
+ * Patching `languages` reaches every translatable map: adding a locale makes each field that lacks
+ * it `missing_translation`, reported under `blocks`/`endings`/`metadata` — keys the caller never
+ * sent. Those failures are the request's doing even though the paths say otherwise, so a submitted
+ * `languages` owns them.
+ */
+const LANGUAGE_VALIDATION_CODES: ReadonlySet<string> = new Set(["missing_translation", "unsupported_locale"]);
+
+function isCallerOwnedFailure(param: InvalidParam, providedTopLevelKeys: ReadonlySet<string>): boolean {
+  if (providedTopLevelKeys.has(param.name.split(".")[0])) {
+    return true;
+  }
+
+  return (
+    providedTopLevelKeys.has("languages") &&
+    param.code !== undefined &&
+    LANGUAGE_VALIDATION_CODES.has(param.code)
+  );
+}
+
+/**
+ * Whose fault is a merged-document failure?
+ *
+ * `storedSurvey` only when no reported issue belongs to the request. One that does is enough to make
+ * the whole response the caller's, since a partial repair still leaves them responsible.
+ */
+function deriveFailureOrigin(
+  invalidParams: InvalidParam[],
+  providedTopLevelKeys: ReadonlySet<string>
+): "request" | "storedSurvey" {
+  return invalidParams.some((param) => isCallerOwnedFailure(param, providedTopLevelKeys))
+    ? "request"
+    : "storedSurvey";
 }
 
 function mergeV3SurveyPatch(document: TV3SurveyDocument, patch: TV3PatchSurveyBody): TV3SurveyDocument {
@@ -172,10 +244,232 @@ function getImmutableElementIdIssues(
   return issues;
 }
 
+/**
+ * Server-owned fields that GET emits and PATCH used to reject outright (ENG-3069).
+ *
+ * A caller doing the obvious thing — fetch the survey, change one field, send it back — got a 400
+ * naming eight fields it had not chosen to send, and had to learn a strip-list by trial and error.
+ * These are now accepted and verified: echoing the value GET returned is a no-op, and changing one
+ * is a 422 `read_only_field` rather than a silent ignore, so a genuine mistake still surfaces.
+ *
+ * They are split off the raw body *before* the patch schema runs. That matters for `defaultLanguage`:
+ * the document normalizer uses a body-supplied `defaultLanguage` to interpret every i18n map, so
+ * letting a mismatched one through would produce a confusing wall of locale errors before this
+ * check could report the real problem.
+ */
+const READ_ONLY_PATCH_KEYS = [
+  "id",
+  "workspaceId",
+  "type",
+  "createdAt",
+  "updatedAt",
+  "archivedAt",
+  "defaultLanguage",
+] as const;
+
+type TReadOnlySplit = {
+  issues: InvalidParam[];
+  rest: Record<string, unknown>;
+  precondition?: { expectedUpdatedAt: Date };
+};
+
+function readOnlyIssue(name: string, reason: string, submitted: unknown): InvalidParam {
+  return {
+    name,
+    reason,
+    code: "read_only_field",
+    // The submitted value goes in `identifier`, never interpolated into `reason`.
+    ...(typeof submitted === "string" ? { identifier: submitted } : {}),
+  };
+}
+
+function sameInstant(submitted: unknown, stored: Date | null): boolean {
+  if (stored === null) {
+    return submitted === null;
+  }
+  return typeof submitted === "string" && new Date(submitted).getTime() === stored.getTime();
+}
+
+type TReadOnlyPatchKey = (typeof READ_ONLY_PATCH_KEYS)[number];
+
+type TReadOnlyCheckContext = {
+  survey: TInternalSurvey;
+  storedDocument: TV3SurveyDocument;
+};
+
+/** Verify one echoed server-owned field: `null` when it matches, otherwise the issue to report. */
+type TReadOnlyFieldCheck = (submitted: unknown, ctx: TReadOnlyCheckContext) => InvalidParam | null;
+
+/**
+ * `updatedAt` is absent on purpose — it is the one key that produces a precondition rather than a
+ * comparison, so it is handled separately in the loop below.
+ */
+const READ_ONLY_FIELD_CHECKS: Record<Exclude<TReadOnlyPatchKey, "updatedAt">, TReadOnlyFieldCheck> = {
+  id: (submitted, { survey }) =>
+    submitted === survey.id
+      ? null
+      : readOnlyIssue(
+          "id",
+          "Field 'id' is read-only and must match the survey being patched; omit it or echo the value returned by GET",
+          submitted
+        ),
+  workspaceId: (submitted, { survey }) =>
+    submitted === survey.workspaceId
+      ? null
+      : readOnlyIssue(
+          "workspaceId",
+          "Field 'workspaceId' is read-only; a survey cannot be moved to another workspace",
+          submitted
+        ),
+  type: (submitted, { survey }) =>
+    submitted === survey.type
+      ? null
+      : readOnlyIssue(
+          "type",
+          "Field 'type' is immutable after creation; create a new survey to change between link and app",
+          submitted
+        ),
+  createdAt: (submitted, { survey }) =>
+    sameInstant(submitted, survey.createdAt)
+      ? null
+      : readOnlyIssue(
+          "createdAt",
+          "Field 'createdAt' is server-owned and cannot be changed; omit it or echo the value returned by GET",
+          submitted
+        ),
+  archivedAt: (submitted, { survey }) =>
+    sameInstant(submitted, survey.archivedAt ?? null)
+      ? null
+      : readOnlyIssue(
+          "archivedAt",
+          "Field 'archivedAt' is server-owned; use the archive and restore endpoints to change it",
+          submitted
+        ),
+  defaultLanguage: (submitted, { storedDocument }) =>
+    typeof submitted === "string" && submitted.toLowerCase() === storedDocument.defaultLanguage.toLowerCase()
+      ? null
+      : {
+          ...readOnlyIssue(
+            "defaultLanguage",
+            "Field 'defaultLanguage' cannot be changed through PATCH; the default language is the languages[] entry with default: true and is fixed for the survey",
+            submitted
+          ),
+          referenceType: "language",
+        },
+};
+
+/** The precondition, or `null` when the value is not a usable ISO 8601 instant. */
+function parseExpectedUpdatedAt(submitted: unknown): { expectedUpdatedAt: Date } | null {
+  if (typeof submitted !== "string") {
+    return null;
+  }
+  const parsed = new Date(submitted);
+  return Number.isNaN(parsed.getTime()) ? null : { expectedUpdatedAt: parsed };
+}
+
+function splitReadOnlyPatchFields(
+  survey: TInternalSurvey,
+  storedDocument: TV3SurveyDocument,
+  input: unknown
+): TReadOnlySplit {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    return { issues: [], rest: {} };
+  }
+
+  const body = { ...(input as Record<string, unknown>) };
+  const issues: InvalidParam[] = [];
+  const ctx: TReadOnlyCheckContext = { survey, storedDocument };
+  let precondition: { expectedUpdatedAt: Date } | undefined;
+
+  for (const key of READ_ONLY_PATCH_KEYS) {
+    if (!(key in body)) continue;
+    const submitted = body[key];
+    delete body[key];
+
+    if (key === "updatedAt") {
+      // Not compared: this is the optimistic-concurrency precondition, enforced at the write.
+      const parsed = parseExpectedUpdatedAt(submitted);
+      if (parsed) {
+        precondition = parsed;
+      } else {
+        issues.push(
+          readOnlyIssue(
+            "updatedAt",
+            "Field 'updatedAt' must be the ISO 8601 date-time returned by GET; it acts as an optimistic-concurrency precondition",
+            submitted
+          )
+        );
+      }
+      continue;
+    }
+
+    const issue = READ_ONLY_FIELD_CHECKS[key](submitted, ctx);
+    if (issue) {
+      issues.push(issue);
+    }
+  }
+
+  return { issues, rest: body, precondition };
+}
+
+/**
+ * `languages[].alias` is emitted by GET but belongs to the workspace language, not the survey, so the
+ * survey patch schema rejects it. Strip it so a round-tripped body validates; a changed value is a
+ * read-only violation like the rest.
+ */
+function splitLanguageAliases(
+  survey: TInternalSurvey,
+  body: Record<string, unknown>
+): { issues: InvalidParam[]; rest: Record<string, unknown> } {
+  const languages = body.languages;
+  if (!Array.isArray(languages)) {
+    return { issues: [], rest: body };
+  }
+
+  const storedAliasByCode = new Map(
+    getV3SurveyLanguages(survey, DEFAULT_V3_SURVEY_LANGUAGE).map((language) => [
+      language.code.toLowerCase(),
+      language.alias ?? null,
+    ])
+  );
+  const issues: InvalidParam[] = [];
+
+  const stripped = languages.map((entry, index) => {
+    if (typeof entry !== "object" || entry === null || !("alias" in entry)) {
+      return entry;
+    }
+
+    const { alias, ...rest } = entry as Record<string, unknown>;
+    const code = typeof rest.code === "string" ? rest.code.toLowerCase() : "";
+    const stored = storedAliasByCode.get(code) ?? null;
+    const submitted = alias === undefined || alias === "" ? null : alias;
+
+    if (submitted !== stored) {
+      issues.push(
+        readOnlyIssue(
+          `languages.${index}.alias`,
+          "Field 'alias' is read-only; language aliases are configured on the workspace language",
+          alias
+        )
+      );
+    }
+
+    return rest;
+  });
+
+  return { issues, rest: { ...body, languages: stripped } };
+}
+
 export function prepareV3SurveyCreate<TDocument extends TV3CreateSurveyBody>(
   document: TDocument
 ): TV3SurveyPrepareResult<TDocument> {
-  return validPreparation(document);
+  // `skip`, not `enforce`, and deliberately so. Turning the ordering rule on here would reject create
+  // payloads that succeeded yesterday — a breaking change to a public endpoint, which by the ENG-1652
+  // convention needs an info.version bump, a release note and the breaking-change label. That rollout
+  // does not belong in a PR about block editing. Note the logic-condition and requireAnswer rules are
+  // already enforced on create by surveyRefinement (ZSurveyCreateInput), so the only rule missing here
+  // is recall precedence, and a survey created with one stays exactly as patchable as it is today.
+  return validPreparation(document, { mode: "skip" });
 }
 
 export function prepareV3SurveyCreateInput(input: unknown): TV3SurveyPrepareResult<TV3CreateSurveyBody> {
@@ -193,17 +487,24 @@ export function prepareV3SurveyPatchInput(
   input: unknown
 ): TV3SurveyPrepareResult<TV3SurveyDocument> {
   const allowedLanguageCodes = getV3SurveyPatchAllowedLanguageCodes(survey);
-  const currentDocument = buildDocumentFromSurvey(survey, allowedLanguageCodes);
+  const currentDocument = parseStoredV3SurveyDocument(survey, allowedLanguageCodes);
 
   if (!currentDocument.ok) {
     return currentDocument;
+  }
+
+  const readOnly = splitReadOnlyPatchFields(survey, currentDocument.document, input);
+  const aliases = splitLanguageAliases(survey, readOnly.rest);
+  const readOnlyIssues = [...readOnly.issues, ...aliases.issues];
+  if (readOnlyIssues.length > 0) {
+    return invalidPreparation(readOnlyIssues);
   }
 
   const parsedPatch = createZV3PatchSurveyBodySchema(
     currentDocument.document.defaultLanguage,
     { allowedLanguageCodes },
     survey.type
-  ).safeParse(input);
+  ).safeParse(aliases.rest);
 
   if (!parsedPatch.success) {
     return invalidPreparation(formatV3ZodInvalidParams(parsedPatch.error, "data"));
@@ -215,5 +516,25 @@ export function prepareV3SurveyPatchInput(
     return invalidPreparation(immutableElementIdIssues);
   }
 
-  return validPreparation(patchedDocument);
+  // `introduced`: only ordering violations this request newly creates are rejected. Enforcing the
+  // whole rule here would brick every survey that already contains one — the ENG-3070 failure again.
+  const validation = validateV3SurveyDocument(patchedDocument, {
+    mode: "introduced",
+    baseline: currentDocument.document,
+  });
+
+  if (!validation.valid) {
+    return invalidPreparation(
+      validation.invalidParams,
+      deriveFailureOrigin(validation.invalidParams, new Set(Object.keys(aliases.rest)))
+    );
+  }
+
+  return {
+    ok: true,
+    document: patchedDocument,
+    validation,
+    languageRequests: deriveV3SurveyLanguageRequests(patchedDocument),
+    ...(readOnly.precondition ? { precondition: readOnly.precondition } : {}),
+  };
 }

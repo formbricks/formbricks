@@ -39,6 +39,7 @@ properties:
       - payload_too_large
       - service_unavailable
       - too_many_requests
+      - stored_survey_invalid
       - unprocessable_content
       - workflow_not_executable
   requestId:

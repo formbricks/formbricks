@@ -1,0 +1,174 @@
+patch:
+  operationId: editSurveyBlocksV3
+  summary: Edit survey blocks
+  description: >
+    Edits a survey's blocks in place — update, insert or remove whole blocks without resending the
+    ones you are not changing. Operations apply in order against a single snapshot and are applied
+    atomically: either all of them land or none do.
+
+
+    Blocks are addressed by id, never by position, so a concurrent edit cannot silently redirect an
+    operation onto a different block. An `update` replaces the target block entirely, the same
+    whole-subtree rule `PATCH /api/v3/surveys/{surveyId}` uses, and the replacement must carry every
+    language the survey has configured.
+
+
+    Pass `expectedUpdatedAt` (the `updatedAt` from your last read) to make the write conditional; see
+    the **409** response. Session cookie or x-api-key.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/EditSurveyBlocksRequest.yml
+        examples:
+          updateOneBlock:
+            summary: Replace a single block
+            value:
+              ops:
+                - op: update
+                  id: k1p9wq2m4x7c3v8b5n6t0j2r
+                  block:
+                    id: k1p9wq2m4x7c3v8b5n6t0j2r
+                    name: Satisfaction
+                    elements:
+                      - id: satisfaction
+                        type: openText
+                        headline:
+                          en-US: How satisfied were you?
+                        required: true
+                        inputType: text
+              expectedUpdatedAt: 2026-04-21T10:00:00.000Z
+          insertAndRemove:
+            summary: Add a block after another and drop a third
+            value:
+              ops:
+                - op: insert
+                  position:
+                    type: after
+                    blockId: k1p9wq2m4x7c3v8b5n6t0j2r
+                  block:
+                    id: b4h8s2d6f0g3j5k7l9z1x3c5
+                    name: Follow-up
+                    elements:
+                      - id: followup
+                        type: openText
+                        headline:
+                          en-US: Anything else?
+                        required: false
+                        inputType: text
+                - op: remove
+                  id: n7m4q8w2e6r0t3y5u1i9o2p4
+  responses:
+    "200":
+      description: Blocks updated; returns the full survey resource.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      description: >
+        The survey changed since the `expectedUpdatedAt` you supplied. Nothing was written. The
+        problem's `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`, so a client
+        can re-read and retry without guessing.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          example:
+            title: Conflict
+            status: 409
+            detail: >-
+              Survey was modified since it was last read; updatedAt is now
+              2026-04-21T11:30:00.000Z. Re-read the survey and retry.
+            code: conflict
+            requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+            details:
+              expectedUpdatedAt: 2026-04-21T10:00:00.000Z
+              currentUpdatedAt: 2026-04-21T11:30:00.000Z
+    "422":
+      description: >
+        The request is well-formed but could not be applied. `invalid_params[].name` points at the
+        operation that failed — `ops.<i>.…` — including for problems found while validating the
+        resulting document. The one exception is a block the request did not touch: those keep their
+        `blocks.<i>` path, because the problem is in the stored survey rather than in any operation.
+        A `stored_survey_invalid` response reports stored-survey paths throughout for the same reason.
+
+
+        Common codes: `dangling_reference` (an id that is not on the survey),
+        `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an
+        inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server
+        generates one), `immutable_identifier` (`block.id` contradicting the op's `id`),
+        and `stored_survey_invalid` when the stored survey itself fails the document contract.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            unknownBlock:
+              summary: An operation names a block that is not on the survey
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: Block operations could not be applied
+                code: unprocessable_content
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                invalid_params:
+                  - name: ops.1.id
+                    reason: Block 'n7m4q8w2e6r0t3y5u1i9o2p4' does not exist on this survey
+                    code: dangling_reference
+                    identifier: n7m4q8w2e6r0t3y5u1i9o2p4
+                    referenceType: block
+                    missingId: n7m4q8w2e6r0t3y5u1i9o2p4
+            storedSurveyInvalid:
+              summary: The stored survey fails the document contract
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: >-
+                  The stored survey does not satisfy the v3 survey document contract, so this
+                  request was not evaluated. The reported paths are into the stored survey, not your
+                  request; repair them in the editor.
+                code: stored_survey_invalid
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                invalid_params:
+                  - name: blocks.0.elements.0.headline
+                    reason: Translatable field is missing configured language 'de-DE'
+                    code: missing_translation
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

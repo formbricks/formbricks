@@ -275,6 +275,8 @@ describe("POST /api/mcp", () => {
       "create_survey",
       "validate_survey",
       "patch_survey",
+      "edit_survey_blocks",
+      "set_survey_block_order",
       "delete_survey",
       "list_workflows",
       "get_workflow",

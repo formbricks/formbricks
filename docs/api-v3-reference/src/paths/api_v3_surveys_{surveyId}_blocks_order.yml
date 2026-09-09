@@ -1,0 +1,117 @@
+put:
+  operationId: setSurveyBlockOrderV3
+  summary: Set survey block order
+  description: >
+    Replaces the order of a survey's blocks. The body lists every current block id exactly once, in
+    the order you want; block content is untouched.
+
+
+    Idempotent: the same `order` always yields the same survey, and an order that already matches
+    performs no write at all, so `updatedAt` does not move and other callers' preconditions stay
+    valid. A stale `expectedUpdatedAt` is still rejected with **409** on that path — the precondition
+    is evaluated before the method, so a no-op outcome never reports success to a stale caller. Because the list must be a permutation, a dropped or duplicated block is rejected rather
+    than silently applied — the failure mode that resending the whole `blocks` array cannot catch.
+
+
+    Pass `expectedUpdatedAt` (the `updatedAt` from your last read) to make the write conditional; see
+    the **409** response. Session cookie or x-api-key.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/SetSurveyBlockOrderRequest.yml
+        examples:
+          reorder:
+            summary: Move the third block to the front
+            value:
+              order:
+                - b4h8s2d6f0g3j5k7l9z1x3c5
+                - k1p9wq2m4x7c3v8b5n6t0j2r
+                - n7m4q8w2e6r0t3y5u1i9o2p4
+              expectedUpdatedAt: 2026-04-21T10:00:00.000Z
+  responses:
+    "200":
+      description: Order applied (or already matching); returns the full survey resource.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      description: >
+        The survey changed since the `expectedUpdatedAt` you supplied. Nothing was written; `details`
+        carries `expectedUpdatedAt` and the live `currentUpdatedAt`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          example:
+            title: Conflict
+            status: 409
+            detail: >-
+              Survey was modified since it was last read; updatedAt is now
+              2026-04-21T11:30:00.000Z. Re-read the survey and retry.
+            code: conflict
+            requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+            details:
+              expectedUpdatedAt: 2026-04-21T10:00:00.000Z
+              currentUpdatedAt: 2026-04-21T11:30:00.000Z
+    "422":
+      description: >
+        The order is not a permutation of the survey's blocks. Unknown ids
+        (`dangling_reference`), repeated ids (`duplicate_identifier`) and omitted blocks
+        (`missing_required_field`, reported at `order`) are returned together.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          example:
+            title: Unprocessable Content
+            status: 422
+            detail: Block order must list every block exactly once
+            code: unprocessable_content
+            requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+            invalid_params:
+              - name: order
+                reason: Block 'n7m4q8w2e6r0t3y5u1i9o2p4' is missing from the order; list every block exactly once
+                code: missing_required_field
+                identifier: n7m4q8w2e6r0t3y5u1i9o2p4
+                referenceType: block
+                missingId: n7m4q8w2e6r0t3y5u1i9o2p4
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

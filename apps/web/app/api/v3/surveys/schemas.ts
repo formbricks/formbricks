@@ -1292,6 +1292,79 @@ export function createZV3PatchSurveyBodySchema(
 
 export const ZV3PatchSurveyBody = createZV3PatchSurveyBodySchema();
 
+/**
+ * Block-level edit and reorder bodies (ENG-3069), shared by the REST routes and the MCP tools so
+ * both surfaces reject the same payloads with the same messages.
+ *
+ * Two deliberate shape choices:
+ *
+ * - A tagged op list, not `{update:[], insert:[], remove:[]}` buckets. Ops apply in order against a
+ *   working copy, so an `insert … after` may name a block an earlier op inserted; buckets cannot
+ *   express that ordering. Slack, Linear and the Artifact DB all use this shape.
+ * - References to *existing* blocks are plain non-empty strings, not `z.cuid2()`. A reference is
+ *   resolved against the survey's stored ids and a miss is a semantic 422 `dangling_reference`;
+ *   rejecting it at the schema as a 400 format error would tell the caller the wrong thing. Only
+ *   *new* block ids need to be cuid2, and `ZSurveyBlockId` enforces that downstream.
+ */
+export const V3_SURVEY_BLOCK_OPS_MAX = 100;
+
+// Bounded per the ENG-1652 policy: a reference is echoed back in `invalid_params[].reason` when it
+// does not resolve, so an unbounded id would let a caller inflate the error body. cuid2 is 24-32
+// chars; 128 is generous for any legitimate id.
+const ZV3BlockRef = z.string().trim().min(1).max(128);
+
+const ZV3SurveyBlockPayload = z
+  .record(z.string(), z.unknown())
+  .describe("Full block in the v3 survey document shape. Replaces the target block entirely.");
+
+export const ZV3SurveyBlockInsertPosition = z.discriminatedUnion("type", [
+  z.strictObject({ type: z.literal("start").describe("Insert before every existing block.") }),
+  z.strictObject({ type: z.literal("end").describe("Insert after every existing block.") }),
+  z.strictObject({
+    type: z.literal("after").describe("Insert directly after an existing block."),
+    blockId: ZV3BlockRef.describe(
+      "Block to insert after. May be a block inserted by an earlier op in the same request."
+    ),
+  }),
+]);
+
+export const ZV3SurveyBlockOp = z.discriminatedUnion("op", [
+  z.strictObject({
+    op: z.literal("update").describe("Replace an existing block."),
+    id: ZV3BlockRef.describe("Block to replace."),
+    block: ZV3SurveyBlockPayload,
+  }),
+  z.strictObject({
+    op: z.literal("insert").describe("Add a new block."),
+    block: ZV3SurveyBlockPayload,
+    position: ZV3SurveyBlockInsertPosition.describe("Where the new block goes."),
+  }),
+  z.strictObject({
+    op: z.literal("remove").describe("Delete an existing block and every element in it."),
+    id: ZV3BlockRef.describe("Block to delete."),
+  }),
+]);
+
+export const ZV3ExpectedUpdatedAt = z.iso
+  .datetime({ offset: true })
+  .describe(
+    "Optimistic-concurrency precondition: the survey's `updatedAt` from your last read. The write is rejected with 409 if the survey changed since."
+  );
+
+export const ZV3EditSurveyBlocksBody = z.strictObject({
+  ops: z
+    .array(ZV3SurveyBlockOp)
+    .min(1)
+    .max(V3_SURVEY_BLOCK_OPS_MAX)
+    .describe("Operations applied in order, atomically — all of them or none."),
+  expectedUpdatedAt: ZV3ExpectedUpdatedAt.optional(),
+});
+
+export const ZV3SetSurveyBlockOrderBody = z.strictObject({
+  order: z.array(ZV3BlockRef).min(1).describe("Every current block id, exactly once, in the desired order."),
+  expectedUpdatedAt: ZV3ExpectedUpdatedAt.optional(),
+});
+
 export const ZV3SurveyValidationRequestBody = z.discriminatedUnion("operation", [
   z
     .object({
@@ -1350,6 +1423,10 @@ export function formatV3ZodInvalidParams(error: z.ZodError, fallbackName: string
   });
 }
 
+export type TV3SurveyBlockOp = z.infer<typeof ZV3SurveyBlockOp>;
+export type TV3SurveyBlockInsertPosition = z.infer<typeof ZV3SurveyBlockInsertPosition>;
+export type TV3EditSurveyBlocksBody = z.infer<typeof ZV3EditSurveyBlocksBody>;
+export type TV3SetSurveyBlockOrderBody = z.infer<typeof ZV3SetSurveyBlockOrderBody>;
 export type TV3SurveyDocument = z.infer<typeof ZV3SurveyDocumentBase>;
 export type TV3CreateSurveyBody = z.infer<typeof ZV3CreateSurveyBody>;
 export type TV3PatchSurveyBody = z.infer<typeof ZV3PatchSurveyBody>;
