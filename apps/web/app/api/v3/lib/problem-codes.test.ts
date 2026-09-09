@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, test } from "vitest";
-import { INVALID_PARAM_CODES, V3_PROBLEM_CODES } from "./response";
+import { INTERNAL_PROBLEM_CODES, INVALID_PARAM_CODES, V3_PROBLEM_CODES } from "./response";
 
 /**
  * Drift guard between the problem vocabularies the v3 code emits and the ones its OpenAPI contract
@@ -36,6 +36,25 @@ describe("v3 problem code vocabulary", () => {
   test("the registry is sorted and free of duplicates, so additions stay reviewable", () => {
     expect([...V3_PROBLEM_CODES]).toEqual([...V3_PROBLEM_CODES].sort());
     expect(new Set(V3_PROBLEM_CODES).size).toBe(V3_PROBLEM_CODES.length);
+  });
+
+  /**
+   * The other direction of the same guard. Routes under `app/api/(internal)` reuse these helpers but
+   * publish no contract, so their codes must stay out of `Problem.yml` — putting one there would
+   * promise every public client a discriminator no public operation returns. The equality test above
+   * already fails if an internal code is added to `V3_PROBLEM_CODES`; this says why, and catches the
+   * subtler case of someone adding it to the spec alone.
+   */
+  test("internal-only codes are a separate vocabulary and stay out of the published contract", async () => {
+    const specCodes = await loadSpecEnum("components/schemas/Problem.yml");
+
+    for (const code of INTERNAL_PROBLEM_CODES) {
+      expect(V3_PROBLEM_CODES).not.toContain(code);
+      expect(specCodes).not.toContain(code);
+    }
+
+    expect([...INTERNAL_PROBLEM_CODES]).toEqual([...INTERNAL_PROBLEM_CODES].sort());
+    expect(new Set(INTERNAL_PROBLEM_CODES).size).toBe(INTERNAL_PROBLEM_CODES.length);
   });
 
   test("every invalid_param code this app emits is published in InvalidParam.yml", async () => {

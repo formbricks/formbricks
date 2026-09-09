@@ -77,6 +77,26 @@ export const V3_PROBLEM_CODES = [
 
 export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
 
+/**
+ * Codes emitted only by routes under `app/api/(internal)`, which reuse these RFC 9457 helpers but are
+ * session-only and carry no published contract.
+ *
+ * Kept apart from `V3_PROBLEM_CODES` rather than folded into it, because that list is held to
+ * `Problem.yml` by exact equality in both directions: adding an internal code there would publish, to
+ * every public client, a discriminator no public operation can ever return — which is the same defect
+ * as an undocumented code, pointing the other way. `problem-codes.test.ts` asserts the two sets stay
+ * disjoint and that none of these reaches the spec.
+ */
+export const INTERNAL_PROBLEM_CODES = ["attachment_export_empty", "attachment_export_too_large"] as const;
+
+export type InternalProblemCode = (typeof INTERNAL_PROBLEM_CODES)[number];
+
+/**
+ * What the shared helpers accept. A public v3 route should only ever pass a `V3ProblemCode`; the union
+ * exists so an internal route can reuse the same helpers without widening the field back to `string`.
+ */
+export type ProblemCode = V3ProblemCode | InternalProblemCode;
+
 const V3_PROBLEM_CODE_SET = new Set<V3ProblemCode>(V3_PROBLEM_CODES);
 
 export function isV3ProblemCode(value: unknown): value is V3ProblemCode {
@@ -125,7 +145,7 @@ export type InvalidParam = {
 };
 
 export type ProblemExtension = {
-  code?: V3ProblemCode;
+  code?: ProblemCode;
   requestId: string;
   details?: Record<string, unknown>;
   invalid_params?: InvalidParam[];
@@ -147,7 +167,7 @@ function problemResponse(
   options?: {
     type?: string;
     instance?: string;
-    code?: V3ProblemCode;
+    code?: ProblemCode;
     details?: Record<string, unknown>;
     invalid_params?: InvalidParam[];
     headers?: Record<string, string>;
@@ -249,7 +269,7 @@ export function problemAIUnavailable(
 export function problemUnprocessableContent(
   requestId: string,
   detail: string,
-  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: V3ProblemCode }
+  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: ProblemCode }
 ): Response {
   return problemResponse(422, "Unprocessable Content", detail, requestId, {
     code: options?.code ?? "unprocessable_content",
