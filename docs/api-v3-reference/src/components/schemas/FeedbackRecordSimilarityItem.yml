@@ -1,0 +1,26 @@
+type: object
+additionalProperties: false
+required:
+  - feedback_record_id
+  - score
+  - field_label
+  - value_text
+properties:
+  feedback_record_id:
+    type: string
+    format: uuid
+    description: The matching record. Fetch it with `GET /api/v3/feedbackRecords/{id}` for the full payload.
+  score:
+    type: number
+    format: double
+    minimum: 0
+    maximum: 1
+    description: Cosine similarity, `0` unrelated to `1` identical.
+  field_label:
+    type: string
+    description: The record's question text (part of what was embedded). Empty when the record has no label.
+  value_text:
+    type: string
+    description: >-
+      The record's text answer (the text that was embedded). Empty when it has since been cleared —
+      only records with a non-empty `value_text` are embedded in the first place.
