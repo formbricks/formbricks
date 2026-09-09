@@ -149,8 +149,9 @@ describe("billing actions", () => {
   });
 
   test("startProTrialAction uses ensured customer when org snapshot has no stripe customer id", async () => {
+    const auditLoggingCtx: { organizationId?: string; newObject?: Record<string, unknown> } = {};
     const result = await startProTrialAction({
-      ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
+      ctx: { user: { id: "user_1" }, auditLoggingCtx },
       parsedInput: { organizationId: "org_1" },
     } as any);
 
@@ -162,6 +163,8 @@ describe("billing actions", () => {
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
     expect(mocks.addOptimisticBillingFeature).toHaveBeenCalledWith("org_1", "ai-smart-tools");
+    expect(auditLoggingCtx.organizationId).toBe("org_1");
+    expect(auditLoggingCtx.newObject).toEqual({ plan: "pro", trialDurationDays: 14 });
     expect(result).toEqual({ success: true });
   });
 

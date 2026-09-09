@@ -279,6 +279,8 @@ export const startProTrialAction = authenticatedActionClient.inputSchema(ZStartS
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
 
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+
     const trialDays = await getProTrialDays(parsedInput.organizationId);
 
     await createProTrialSubscription(parsedInput.organizationId, customerId, trialDays);
@@ -312,7 +314,6 @@ export const startProTrialAction = authenticatedActionClient.inputSchema(ZStartS
       { organizationId: parsedInput.organizationId }
     );
 
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.newObject = { plan: "pro", trialDurationDays: trialDays };
 
     return { success: true };
