@@ -9,8 +9,7 @@ get:
 
     An empty `data` array means the workspace has no action classes yet. Triggers are optional, so
     you can still create an app survey with `distribution.triggers: []` (or omit `distribution`
-    entirely) and attach triggers later via `PATCH` once an action class exists. Session cookie or
-    x-api-key.
+    entirely) and attach triggers later via `PATCH` once an action class exists. Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Action Classes
   parameters:

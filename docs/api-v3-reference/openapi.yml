@@ -68,7 +68,7 @@ paths:
       operationId: getSurveysV3
       summary: List surveys
       description: |
-        Returns surveys for the workspace. Session cookie or x-api-key.
+        Returns surveys for the workspace. Session cookie, `x-api-key`, or a Bearer token.
       tags:
         - V3 Surveys
       parameters:
@@ -1106,7 +1106,7 @@ paths:
     delete:
       operationId: deleteSurveyV3
       summary: Delete a survey
-      description: Deletes a survey by id. Session cookie or x-api-key.
+      description: Deletes a survey by id. Session cookie, `x-api-key`, or a Bearer token.
       tags:
         - V3 Surveys
       parameters:
@@ -1148,7 +1148,7 @@ paths:
       operationId: archiveSurveyV3
       summary: Archive a survey
       description: |
-        Archives (soft-deletes) a survey by id. Archived surveys are hidden from the default list, stop collecting responses, and become read-only until restored — a subsequent `PATCH` returns **422**. Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than the full survey resource. Session cookie or x-api-key.
+        Archives (soft-deletes) a survey by id. Archived surveys are hidden from the default list, stop collecting responses, and become read-only until restored — a subsequent `PATCH` returns **422**. Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than the full survey resource. Session cookie, `x-api-key`, or a Bearer token.
       tags:
         - V3 Surveys
       parameters:
@@ -1229,7 +1229,7 @@ paths:
       operationId: restoreSurveyV3
       summary: Restore a survey
       description: |
-        Restores a previously archived (soft-deleted) survey by id, clearing its archive marker so it reappears in the default list and becomes editable again. Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than the full survey resource. Session cookie or x-api-key.
+        Restores a previously archived (soft-deleted) survey by id, clearing its archive marker so it reappears in the default list and becomes editable again. Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than the full survey resource. Session cookie, `x-api-key`, or a Bearer token.
       tags:
         - V3 Surveys
       parameters:
@@ -1312,7 +1312,7 @@ paths:
       description: |
         Returns workflow list items for a workspace, sorted by `sortBy` (default `updatedAt`,
         newest first). Workflows are workspace-scoped and exposed through the same v3
-        session-or-`x-api-key` authorization model as surveys.
+        session-or-API-key authorization model as surveys.
 
         List items are intentionally slim: they include the derived `triggerType` and `surveyId`
         plus a `lastRun` summary, but not the full `definition`. Use
@@ -2079,8 +2079,7 @@ paths:
 
         An empty `data` array means the workspace has no action classes yet. Triggers are optional, so
         you can still create an app survey with `distribution.triggers: []` (or omit `distribution`
-        entirely) and attach triggers later via `PATCH` once an action class exists. Session cookie or
-        x-api-key.
+        entirely) and attach triggers later via `PATCH` once an action class exists. Session cookie, `x-api-key`, or a Bearer token.
       tags:
         - V3 Action Classes
       parameters:
@@ -2164,7 +2163,7 @@ paths:
       description: |
         Returns the contact attribute keys for a workspace. Use the returned `key` values as
         `targeting.filters[].root.contactAttributeKey` when targeting app surveys; `dataType` hints which
-        operators apply. Session cookie or x-api-key. (Applying targeting filters requires the Contacts
+        operators apply. Session cookie, `x-api-key`, or a Bearer token. (Applying targeting filters requires the Contacts
         entitlement; this discovery endpoint does not.)
       tags:
         - V3 Contact Attribute Keys

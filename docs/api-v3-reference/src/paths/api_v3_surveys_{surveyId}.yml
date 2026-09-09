@@ -380,7 +380,7 @@ patch:
 delete:
   operationId: deleteSurveyV3
   summary: Delete a survey
-  description: Deletes a survey by id. Session cookie or x-api-key.
+  description: Deletes a survey by id. Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Surveys
   parameters:

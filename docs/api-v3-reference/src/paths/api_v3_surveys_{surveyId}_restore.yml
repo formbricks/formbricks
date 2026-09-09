@@ -5,7 +5,7 @@ post:
     Restores a previously archived (soft-deleted) survey by id, clearing its archive marker so it
     reappears in the default list and becomes editable again. Works on any survey, including legacy
     question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than
-    the full survey resource. Session cookie or x-api-key.
+    the full survey resource. Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Surveys
   parameters:
