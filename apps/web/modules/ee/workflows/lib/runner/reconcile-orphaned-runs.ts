@@ -9,6 +9,61 @@ import {
   WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
 } from "./reconcile-constants";
 
+interface AgedOutOrphan {
+  id: string;
+  workflowId: string;
+  workspaceId: string;
+  createdAt: Date;
+  dispatchedAt: Date | null;
+  triggerType: string;
+  attempt: number;
+}
+
+/**
+ * Commits the terminal failure for a run past the reconcile age ceiling and reports it. Returns
+ * whether this sweep owns that verdict: a 0-row result means a concurrent claim (queued → running)
+ * won, and then the run is neither counted nor reported here.
+ *
+ * The two losses are named apart: a run with `dispatchedAt` set was handed off and never executed,
+ * one without was never handed off at all.
+ */
+const failAgedOutOrphan = async (
+  orphan: AgedOutOrphan,
+  now: Date,
+  runLogContext: Record<string, unknown>
+): Promise<boolean> => {
+  const wasDispatched = orphan.dispatchedAt !== null;
+  // Tenant- and status-guarded so a concurrent claim wins and no foreign workspace's row is touched.
+  const failed = await prisma.workflowRun.updateMany({
+    where: { id: orphan.id, workspaceId: orphan.workspaceId, status: "queued" },
+    data: {
+      status: "failed",
+      error: wasDispatched
+        ? "Workflow run was dispatched but never executed and exceeded the reconcile age ceiling"
+        : "Workflow run was never dispatched and exceeded the reconcile age ceiling",
+      lastErrorAt: now,
+      finishedAt: now,
+    },
+  });
+  if (failed.count === 0) return false;
+
+  logger.warn(
+    { ...runLogContext, createdAt: orphan.createdAt },
+    "Orphaned workflow run exceeded reconcile age ceiling; marked failed"
+  );
+  // Reported like the runner's own terminal failure (ENG-2851): a lost dispatch reaches the
+  // snapshot's `runs_24h_failed`, so it has to reach `workflow_run_failed` too.
+  await captureWorkflowRunFailed({
+    runId: orphan.id,
+    workflowId: orphan.workflowId,
+    workspaceId: orphan.workspaceId,
+    triggerType: orphan.triggerType,
+    errorKind: wasDispatched ? "dispatched_never_executed" : "never_dispatched",
+    attempt: orphan.attempt,
+  });
+  return true;
+};
+
 interface ReconcileOrphanedWorkflowRunsInput {
   /** Injected so the reconciler stays backend-neutral and unit-testable (same port the producer uses). */
   dispatch: DispatchWorkflowRun;
@@ -111,39 +166,8 @@ export const reconcileOrphanedWorkflowRuns = async ({
 
     try {
       if (orphan.createdAt < maxAgeThreshold) {
-        // Past the ceiling: never re-dispatch forever. Tenant- and status-guarded so a concurrent
-        // claim (queued → running) wins and we never touch a foreign workspace's row.
-        // A row past the ceiling may have been dispatched and never picked up, or never dispatched
-        // at all: two different losses, so they are not reported as one.
-        const wasDispatched = orphan.dispatchedAt !== null;
-        const failed = await prisma.workflowRun.updateMany({
-          where: { id: orphan.id, workspaceId: orphan.workspaceId, status: "queued" },
-          data: {
-            status: "failed",
-            error: wasDispatched
-              ? "Workflow run was dispatched but never executed and exceeded the reconcile age ceiling"
-              : "Workflow run was never dispatched and exceeded the reconcile age ceiling",
-            lastErrorAt: now,
-            finishedAt: now,
-          },
-        });
-        if (failed.count > 0) {
-          agedOutFailed += 1;
-          logger.warn(
-            { ...runLogContext, createdAt: orphan.createdAt },
-            "Orphaned workflow run exceeded reconcile age ceiling; marked failed"
-          );
-          // Reported like the runner's own terminal failure (ENG-2851): a lost dispatch reaches the
-          // snapshot's `runs_24h_failed`, so it has to reach `workflow_run_failed` too.
-          await captureWorkflowRunFailed({
-            runId: orphan.id,
-            workflowId: orphan.workflowId,
-            workspaceId: orphan.workspaceId,
-            triggerType: orphan.triggerType,
-            errorKind: wasDispatched ? "dispatched_never_executed" : "never_dispatched",
-            attempt: orphan.attempt,
-          });
-        }
+        // Past the ceiling: never re-dispatch forever.
+        if (await failAgedOutOrphan(orphan, now, runLogContext)) agedOutFailed += 1;
         continue;
       }
 
