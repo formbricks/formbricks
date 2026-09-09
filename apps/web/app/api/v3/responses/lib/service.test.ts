@@ -209,8 +209,9 @@ describe("deleteScopedResponse", () => {
 
     await deleteScopedResponse(RESPONSE_ID, SCOPE);
 
-    // Passing a falsy workspace makes `deleteResponseFileUrls` delete nothing and only log, so calling
-    // it with an empty list would look like success while doing nothing. Better not to call it.
+    // Not a correctness requirement — with a real workspace id an empty list is a harmless no-op — so
+    // this pins the intent rather than a hazard: a response with no uploads must not reach storage at
+    // all, which keeps the S3 client off the common path.
     expect(mockDeleteFiles).not.toHaveBeenCalled();
   });
 

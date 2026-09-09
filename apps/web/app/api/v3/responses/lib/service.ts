@@ -184,22 +184,22 @@ export async function deleteScopedResponse(
 
   const { row, fileUrls } = deleted;
 
-  if (fileUrls.length === 0) {
-    return row;
-  }
-
-  // Never `undefined` here — `workspaceId` came from the scope the caller already authorized against.
-  // Worth stating because passing a falsy second argument makes `deleteResponseFileUrls` delete nothing
-  // and only emit a `logger.error`, so the cleanup would fail silently.
-  try {
-    await deleteResponseFileUrls(fileUrls, workspaceId);
-  } catch (error) {
-    // The row is already gone and the caller's request succeeded; orphaned objects are a storage-cleanup
-    // problem, not a reason to report a failed delete. Logged loudly so it is not invisible.
-    logger.error(
-      { err: error, responseId, workspaceId, fileCount: fileUrls.length },
-      "V3 response file cleanup failed"
-    );
+  // Skipped rather than called with an empty list: nothing to do, and it keeps the storage call out of
+  // the common path. `workspaceId` is never `undefined` here — it came from the scope the caller was
+  // already authorized against — which matters because a falsy second argument makes
+  // `deleteResponseFileUrls` delete nothing and only emit a `logger.error`, failing silently.
+  if (fileUrls.length > 0) {
+    try {
+      await deleteResponseFileUrls(fileUrls, workspaceId);
+    } catch (error) {
+      // The row is already gone and the caller's request succeeded; orphaned objects are a
+      // storage-cleanup problem, not a reason to report a failed delete. Logged loudly so it is not
+      // invisible.
+      logger.error(
+        { err: error, responseId, workspaceId, fileCount: fileUrls.length },
+        "V3 response file cleanup failed"
+      );
+    }
   }
 
   return row;
@@ -291,19 +291,17 @@ export async function deleteScopedResponses(
 
   const { fileUrls, ...result } = outcome;
 
-  if (fileUrls.length === 0) {
-    return result;
-  }
-
-  try {
-    await deleteResponseFileUrls(fileUrls, workspaceId);
-  } catch (error) {
-    // The rows are already gone and the caller's request succeeded; orphaned objects are a
-    // storage-cleanup problem, not a reason to report a failed delete. Same call as the single delete.
-    logger.error(
-      { err: error, workspaceId, responseCount: result.deleted, fileCount: fileUrls.length },
-      "V3 batch response file cleanup failed"
-    );
+  if (fileUrls.length > 0) {
+    try {
+      await deleteResponseFileUrls(fileUrls, workspaceId);
+    } catch (error) {
+      // The rows are already gone and the caller's request succeeded; orphaned objects are a
+      // storage-cleanup problem, not a reason to report a failed delete. Same call as the single delete.
+      logger.error(
+        { err: error, workspaceId, responseCount: result.deleted, fileCount: fileUrls.length },
+        "V3 batch response file cleanup failed"
+      );
+    }
   }
 
   return result;
