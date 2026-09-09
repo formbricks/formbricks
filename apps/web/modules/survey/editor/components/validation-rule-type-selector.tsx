@@ -18,6 +18,7 @@ interface ValidationRuleTypeSelectorProps {
   availableTypes: TValidationRuleType[];
   ruleLabels: Record<string, string>;
   needsValue: boolean;
+  className?: string;
 }
 
 export const ValidationRuleTypeSelector = ({
@@ -26,10 +27,11 @@ export const ValidationRuleTypeSelector = ({
   availableTypes,
   ruleLabels,
   needsValue,
-}: ValidationRuleTypeSelectorProps) => {
+  className,
+}: Readonly<ValidationRuleTypeSelectorProps>) => {
   return (
     <Select value={value} onValueChange={(val) => onChange(val as TValidationRuleType)}>
-      <SelectTrigger className={cn("bg-white", needsValue ? "min-w-[200px]" : "flex-1")}>
+      <SelectTrigger className={cn("bg-white", needsValue ? "min-w-[200px]" : "flex-1", className)}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

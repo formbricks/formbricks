@@ -345,6 +345,20 @@ describe("ssoDatabaseHooks.user.create.after", () => {
     expect(identifyPostHogPerson).toHaveBeenCalledWith("u1", { email: "a@b.com", name: undefined });
   });
 
+  test("forwards useDefaultOrganization so the write phase find-or-creates the org (ENG-2089)", async () => {
+    await runWithSsoRequestContext(async () => {
+      setSsoProvisioningDecision({
+        ...provisionDecision,
+        organizationId: "default-org",
+        useDefaultOrganization: true,
+      });
+      await after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never);
+    });
+    expect(provisionSsoUserMemberships).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: "default-org", useDefaultOrganization: true })
+    );
+  });
+
   test("does nothing when no decision is stashed (e.g. non-SSO sign-up)", async () => {
     await runWithSsoRequestContext(() =>
       after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never)

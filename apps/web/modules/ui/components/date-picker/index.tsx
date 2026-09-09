@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarIcon, XIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { type Matcher } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -206,10 +206,13 @@ export const DateRangePicker = ({
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState<TDateRangeValue>({ from: value?.from, to: value?.to });
 
-  const label = useMemo(() => {
-    if (!value?.from || !value.to) return undefined;
-    return `${formatDateForDisplay(value.from, locale, DISPLAY_OPTIONS)} – ${formatDateForDisplay(value.to, locale, DISPLAY_OPTIONS)}`;
-  }, [value?.from, value?.to, locale]);
+  // Not memoized: the parent hands down a fresh `value` object on most renders, so a memo keyed on
+  // it would recompute anyway — and keying it on `value?.from`/`value?.to` instead (as it used to)
+  // is a narrower dependency than the body reads, which is how a memo goes stale (ENG-2366).
+  const label =
+    value?.from && value.to
+      ? `${formatDateForDisplay(value.from, locale, DISPLAY_OPTIONS)} – ${formatDateForDisplay(value.to, locale, DISPLAY_OPTIONS)}`
+      : undefined;
 
   return (
     <Popover

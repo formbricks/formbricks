@@ -5,7 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { surveyKeys } from "@/modules/survey/list/lib/query";
 import type { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
+import { useDeleteSurvey } from "./use-delete-survey";
+import { useRestoreSurvey } from "./use-restore-survey";
 import { useSurveys } from "./use-surveys";
 
 function createWrapper(queryClient: QueryClient) {
@@ -244,5 +247,72 @@ describe("useSurveys", () => {
     );
 
     await waitFor(() => expect(result.current.surveys[0]?.name).toBe("Survey 2"));
+  });
+
+  // ENG-2583: archive, restore and delete all run through `useSurveyRemovalMutation`, so the list
+  // suppresses the row for whichever of them is in flight. Archive's own file drives the full
+  // reappear-mid-flight scenario; this covers the other two inheriting it.
+  test.each([
+    ["delete", useDeleteSurvey],
+    ["restore", useRestoreSurvey],
+  ] as const)("leaves out a survey whose %s is still running", async (_action, useRemoval) => {
+    const fetchMock = vi.mocked(global.fetch);
+    fetchMock.mockImplementation((input) =>
+      String(input).includes("/api/v3/surveys?")
+        ? Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: [
+                  {
+                    id: "survey_1",
+                    name: "Survey 1",
+                    workspaceId: "env_1",
+                    type: "link",
+                    status: "inProgress",
+                    createdAt: "2026-04-15T10:00:00.000Z",
+                    updatedAt: "2026-04-15T10:00:00.000Z",
+                    responseCount: 0,
+                    completedResponseCount: 0,
+                    creator: { name: "Alice" },
+                    singleUse: null,
+                  },
+                ],
+                meta: { limit: 20, nextCursor: null, totalCount: 1, workspaceSurveyCount: 3 },
+              }),
+              { status: 200, headers: { "Content-Type": "application/json" } }
+            )
+          )
+        : new Promise<Response>(() => {
+            // The removal request never settles, so the whole assertion runs inside its window.
+          })
+    );
+
+    const queryClient = new QueryClient({
+      defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
+    });
+
+    const { result } = renderHook(
+      () => {
+        const list = useSurveys({
+          workspaceId: "env_1",
+          limit: 20,
+          filters: { name: "", status: [], type: [], sortBy: "relevance" },
+        });
+        const removal = useRemoval({ queryKey: list.queryKey });
+
+        return { list, removal };
+      },
+      { wrapper: createWrapper(queryClient) }
+    );
+
+    await waitFor(() => expect(result.current.list.surveys).toHaveLength(1));
+
+    result.current.removal.mutate({ surveyId: "survey_1" });
+
+    await waitFor(() => expect(result.current.removal.isPending).toBe(true));
+    await queryClient.refetchQueries({ queryKey: surveyKeys.lists() });
+    await waitFor(() => expect(result.current.list.data?.pages[0]?.meta.totalCount).toBe(1));
+
+    expect(result.current.list.surveys).toHaveLength(0);
   });
 });
