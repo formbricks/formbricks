@@ -198,8 +198,8 @@ model Response {
   //
   // The three narrow indexes below each remain alongside their wider replacement, deliberately and
   // temporarily. Measured: the planner picks the wide one when both are present, so keeping them costs
-  // write amplification rather than a slow plan. They are dropped in a follow-up once production
-  // confirms that choice — a drop is the half that cannot be undone by reverting a migration.
+  // write amplification rather than a slow plan. ENG-3120 drops them once production confirms that
+  // choice — a drop is the half that cannot be undone by reverting a migration.
   @@index([createdAt]) // superseded by ([createdAt, id]); pending removal
   @@index([createdAt, id])
   @@index([surveyId, createdAt]) // superseded; also the monthly response count
