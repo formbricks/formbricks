@@ -169,7 +169,7 @@ const ZV3ResponseAnswerMatrix = z
           rowId: z.string().nullable().optional(),
           rowLabel: z.string(),
           columnId: z.string().nullable().optional(),
-          columnLabel: z.string().nullable().optional(),
+          columnLabel: z.string().nullable(),
           rawValue: z.string(),
           match: ZV3ResponseValueMatch,
         })
@@ -236,8 +236,15 @@ export type TV3ResponseEmbeddedDatum = z.infer<typeof ZV3ResponseEmbeddedDatum>;
 export const ZV3ResponseUnresolvedEntry = z
   .object({
     key: z.string(),
-    /** Whatever was stored, returned rather than dropped — the point is that it is not discarded. */
-    rawValue: z.unknown(),
+    /**
+     * Whatever was stored, returned rather than dropped — the point is that it is not discarded.
+     *
+     * The four shapes are the ones `Response.data` can hold: a scalar, a number, the string array a
+     * multi-select or ranking stores, and the label-keyed record a matrix stores. Not `z.unknown()`:
+     * that accepts `undefined`, which would make the field optional here while the contract requires
+     * it, and it would express none of the four.
+     */
+    rawValue: z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string(), z.string())]),
     reason: z.enum([
       "elementNotInSurvey",
       "hiddenFieldNotInSurvey",

@@ -21,12 +21,18 @@ import {
  *
  * The spec is hand-authored YAML and the serializer is hand-written TypeScript; nothing else compares
  * them. That seam is where this resource's defects have come from — five wrong storage shapes in the
- * first contract draft, six more where the spec disagreed with the shipped Embedded Data model. Each
- * was found by a human reading both sides, which does not scale and did not catch them before review.
+ * first contract draft, six more where the spec disagreed with the shipped Embedded Data model.
  *
- * Assertions are exact set equality in **both** directions on purpose. A field in the code and not
- * the spec is an undocumented promise; a field in the spec and not the code is a promise the API does
- * not keep. Neither is a warning.
+ * The comparison is **structural and recursive**: it resolves `$ref`, flattens `allOf`, and then at
+ * every level checks the property-name sets *and* which properties are required, descending through
+ * nested objects and array items. An earlier version compared only top-level names, and that hole is
+ * not hypothetical — it let `ResponseAnswerMatrix`'s `columnLabel` sit optional in Zod while the
+ * contract required it, so a client generated from the spec would type the field as always present
+ * while the serializer was free to omit it.
+ *
+ * Both directions, at every level. A field in the code and not the spec is an undocumented promise; a
+ * field in the spec and not the code is a promise the API does not keep; and optional-in-code where
+ * the spec says required is a field clients are told to expect and may not get.
  *
  * Mirrors `app/api/v3/lib/problem-codes.test.ts` and `packages/workflows/src/contracts/spec-drift.test.ts`.
  */
@@ -34,13 +40,15 @@ import {
 const SPEC_SRC_URL = new URL("../../../../../../../docs/api-v3-reference/src/", import.meta.url);
 
 type SpecSchema = {
-  type?: string;
+  type?: string | string[];
   enum?: string[];
   required?: string[];
   properties?: Record<string, SpecSchema>;
   allOf?: SpecSchema[];
   oneOf?: SpecSchema[];
+  anyOf?: SpecSchema[];
   items?: SpecSchema;
+  $ref?: string;
   discriminator?: { propertyName: string; mapping: Record<string, string> };
 };
 
@@ -52,25 +60,101 @@ const loadSchema = async (name: string): Promise<SpecSchema> => {
   return parse(raw) as SpecSchema;
 };
 
-/**
- * Property names a spec schema declares, following `allOf` composition one level down.
- *
- * The answer variants are all `allOf: [ResponseAnswerBase, {…}]`, so reading `.properties` alone
- * would silently compare a variant's own fields against base-plus-variant and pass while the base
- * drifted.
- */
-const specProperties = (schema: SpecSchema, base?: SpecSchema): Set<string> => {
-  const names = new Set<string>();
-  for (const part of [...(base ? [base] : []), ...(schema.allOf ?? []), schema]) {
-    for (const key of Object.keys(part.properties ?? {})) names.add(key);
+const refName = (ref: string): string => ref.replace(/^\.\//, "").replace(/\.yml$/, "");
+
+/** Follow `$ref` and flatten `allOf`, so the spec's composition is invisible to the comparison. */
+const effective = async (node: SpecSchema): Promise<SpecSchema> => {
+  if (node.$ref) return effective(await loadSchema(refName(node.$ref)));
+  if (!node.allOf) return node;
+
+  const parts = await Promise.all(node.allOf.map(effective));
+  const merged: SpecSchema = { type: "object", properties: {}, required: [] };
+  for (const part of [...parts, node]) {
+    Object.assign(merged.properties as object, part.properties ?? {});
+    merged.required = [...(merged.required ?? []), ...(part.required ?? [])];
   }
-  return names;
+  return merged;
 };
 
-/** Keys a Zod object declares, including optional ones. */
-const zodKeys = (schema: z.ZodObject): Set<string> => new Set(Object.keys(schema.shape));
+type ZodAny = z.ZodType & { shape?: Record<string, z.ZodType> };
+
+/** Peel `optional` / `nullable` / `default` wrappers to reach the underlying type. */
+const unwrap = (schema: z.ZodType): ZodAny => {
+  let current: unknown = schema;
+  for (let i = 0; i < 8; i += 1) {
+    const def = (current as { _zod?: { def?: { type?: string; innerType?: unknown } } })._zod?.def;
+    if (def && (def.type === "optional" || def.type === "nullable" || def.type === "default")) {
+      current = def.innerType;
+      continue;
+    }
+    break;
+  }
+  return current as ZodAny;
+};
+
+const zodKind = (schema: z.ZodType): string | undefined =>
+  (schema as { _zod?: { def?: { type?: string } } })._zod?.def?.type;
+
+const arrayElement = (schema: ZodAny): ZodAny | undefined =>
+  (schema as unknown as { _zod?: { def?: { element?: unknown } } })._zod?.def?.element as ZodAny | undefined;
+
+/** A Zod field is optional exactly when it accepts `undefined`. */
+const acceptsUndefined = (schema: z.ZodType): boolean => schema.safeParse(undefined).success;
 
 const sorted = (values: Iterable<string>): string[] => [...values].sort();
+
+/**
+ * Compare one spec node against one Zod object, recursively.
+ *
+ * Collects differences rather than asserting, so one failure reports every divergence at once instead
+ * of stopping at the first — which matters when a schema is edited on one side only.
+ */
+const diffObject = async (specNode: SpecSchema, zodNode: ZodAny, path: string): Promise<string[]> => {
+  const spec = await effective(specNode);
+  const shape = zodNode.shape;
+  if (!shape) return [`${path}: expected a Zod object to compare against`];
+
+  const diffs: string[] = [];
+  const specProps = Object.keys(spec.properties ?? {});
+  const zodProps = Object.keys(shape);
+
+  const onlySpec = specProps.filter((key) => !zodProps.includes(key));
+  const onlyZod = zodProps.filter((key) => !specProps.includes(key));
+  if (onlySpec.length) diffs.push(`${path}: in spec, missing from code: ${sorted(onlySpec).join(", ")}`);
+  if (onlyZod.length) diffs.push(`${path}: in code, missing from spec: ${sorted(onlyZod).join(", ")}`);
+
+  const required = new Set(spec.required ?? []);
+  for (const key of specProps.filter((k) => zodProps.includes(k))) {
+    const field = shape[key];
+    const specOptional = !required.has(key);
+    const zodOptional = acceptsUndefined(field);
+    if (specOptional !== zodOptional) {
+      diffs.push(
+        `${path}.${key}: spec says ${specOptional ? "optional" : "required"}, code says ${
+          zodOptional ? "optional" : "required"
+        }`
+      );
+    }
+
+    // Descend only where both sides are shaped the same way. A spec map against a Zod record has no
+    // property names to line up, so there is nothing below it to check.
+    const specChild = await effective((spec.properties as Record<string, SpecSchema>)[key]);
+    const inner = unwrap(field);
+    const kind = zodKind(inner);
+
+    if (kind === "object" && specChild.properties) {
+      diffs.push(...(await diffObject(specChild, inner, `${path}.${key}`)));
+    } else if (kind === "array" && specChild.items) {
+      const element = arrayElement(inner);
+      const specItem = await effective(specChild.items);
+      if (element && zodKind(element) === "object" && specItem.properties) {
+        diffs.push(...(await diffObject(specItem, element, `${path}.${key}[]`)));
+      }
+    }
+  }
+
+  return diffs;
+};
 
 describe("v3 response contract", () => {
   test("ResponseAnswerBase.elementType lists exactly the element types the survey model defines", async () => {
@@ -85,7 +169,6 @@ describe("v3 response contract", () => {
 
     // Every element type is routed. A type absent here serializes to no shape at all.
     expect(sorted(Object.keys(mapping))).toEqual(sorted(V3_ELEMENT_TYPES));
-
     // The nine variant files are the nine members of the Zod union.
     expect(new Set(Object.values(mapping)).size).toBe(ZV3ResponseAnswer.options.length);
   });
@@ -100,14 +183,14 @@ describe("v3 response contract", () => {
     ["ResponseAnswerBooking", "cal"],
     ["ResponseAnswerMatrix", "matrix"],
     ["ResponseAnswerComposite", "address"],
-  ])("%s carries exactly the fields the serializer emits", async (schemaName, elementType) => {
-    const [schema, base] = await Promise.all([loadSchema(schemaName), loadSchema("ResponseAnswerBase")]);
+  ])("%s matches the serializer, field for field and nested", async (schemaName, elementType) => {
+    const schema = await loadSchema(schemaName);
     const variant = ZV3ResponseAnswer.options.find(
       (option) => (option.shape.elementType as z.ZodType).safeParse(elementType).success
     );
 
     expect(variant, `no Zod variant accepts elementType "${elementType}"`).toBeDefined();
-    expect(sorted(zodKeys(variant as z.ZodObject))).toEqual(sorted(specProperties(schema, base)));
+    expect(await diffObject(schema, variant as unknown as ZodAny, schemaName)).toEqual([]);
   });
 
   test.each([
@@ -117,24 +200,17 @@ describe("v3 response contract", () => {
     ["ResponseResolution", ZV3ResponseResolution],
     ["ResponseTag", ZV3ResponseTag],
     ["ResponseContact", ZV3ResponseContact],
-  ])("%s carries exactly the fields the serializer emits", async (schemaName, zodSchema) => {
-    const schema = await loadSchema(schemaName);
-
-    expect(sorted(zodKeys(zodSchema))).toEqual(sorted(specProperties(schema)));
-  });
-
-  test.each([
     ["ResponseListItem", ZV3ResponseListItem],
     ["ResponseResource", ZV3ResponseResource],
-  ])("%s carries exactly the fields the serializer emits", async (schemaName, zodSchema) => {
-    const [schema, base] = await Promise.all([loadSchema(schemaName), loadSchema("ResponseBase")]);
+  ])("%s matches the serializer, field for field and nested", async (schemaName, zodSchema) => {
+    const schema = await loadSchema(schemaName);
 
-    expect(sorted(zodKeys(zodSchema))).toEqual(sorted(specProperties(schema, base)));
+    expect(await diffObject(schema, zodSchema as unknown as ZodAny, schemaName)).toEqual([]);
   });
 
   test("the two views differ by exactly the five fields the detail read adds", async () => {
-    const list = zodKeys(ZV3ResponseListItem);
-    const detail = zodKeys(ZV3ResponseResource);
+    const list = new Set(Object.keys(ZV3ResponseListItem.shape));
+    const detail = new Set(Object.keys(ZV3ResponseResource.shape));
     const added = [...detail].filter((key) => !list.has(key));
 
     expect(sorted(added)).toEqual(["contact", "data", "displayId", "singleUseId", "variables"]);
