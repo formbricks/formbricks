@@ -29,8 +29,23 @@ curl "https://app.formbricks.com/api/v3/surveys?workspaceId=<workspaceId>" \
   -H "x-api-key: $FORMBRICKS_API_KEY"
 ```
 
-Self-hosted instances substitute their own origin. Operations also accept a signed-in browser session, which is
-how the Formbricks app itself calls them; the operation pages document the API-key contract.
+Send credentialed requests over **HTTPS only** — an API key in `x-api-key` crosses the wire in cleartext
+otherwise. Operations also accept a signed-in browser session, which is how the Formbricks app itself calls
+them; the operation pages document the API-key contract.
+
+### Self-hosted instances
+
+Substitute your own origin, and note that Feedback Records is the one part of v3 that needs the API gateway
+routed to it, because it is served by the gateway rather than the application:
+
+- **Kubernetes / Helm** — off by default. Set `envoy.enabled: true` and
+  `envoy.formbricks.routes.feedbackRecords: true`. Enabling the route also installs its authorization policy,
+  so the two cannot drift apart.
+- **One-click Docker** — the installer writes the Traefik routes for you, so it works out of the box.
+- **Formbricks Cloud** — already enabled.
+
+The quickest way to tell whether an instance has it: an unauthenticated `GET /api/v3/feedbackRecords` answers
+`401` when the route is live, and `404` when it is not routed and the request falls through to the application.
 
 ## Feedback Records
 
