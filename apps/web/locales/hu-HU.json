@@ -3742,7 +3742,6 @@
         "partial_responses": "Részleges válaszok"
       },
       "import": {
-        "ai_formats_hint": "Az AI ikonnal megjelölt dokumentumokat mesterséges intelligencia olvassa be. A Formbricks JSON és a Qualtrics QSF formátumok pontosan úgy kerülnek importálásra, ahogyan vannak.",
         "ai_formats_title": "AI-alapú felmérésimportálás",
         "card_description": "Importáljon egy Formbricks exportot, egy Qualtrics QSF fájlt vagy egy dokumentumot.",
         "card_title": "Felmérés importálása",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "Másik fájl kiválasztása",
         "progress_detected_languages": "Észlelt nyelvek",
         "progress_extracting": "Kérdések kinyerése",
-        "progress_label": "Importálás folyamata",
         "progress_part": "{index}/{total} rész",
         "progress_read_file": "Fájl beolvasása",
         "progress_validating": "Érvényesítés",
@@ -3855,7 +3853,6 @@
         "source_text": "Szöveg",
         "source_v3-document": "Formbricks dokumentum",
         "source_xlsx": "Excel",
-        "status_reading": "A fájl olvasása folyamatban…",
         "survey_name": "Felmérés neve",
         "title": "Felmérés importálása",
         "your_file": "Az Ön fájlja"

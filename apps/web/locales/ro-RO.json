@@ -3742,7 +3742,6 @@
         "partial_responses": "Răspunsuri parțiale"
       },
       "import": {
-        "ai_formats_hint": "Documentele marcate cu pictograma AI sunt citite cu AI. Formbricks JSON și Qualtrics QSF sunt importate exact așa cum sunt.",
         "ai_formats_title": "Import chestionar cu AI",
         "card_description": "Importă un export Formbricks, un QSF Qualtrics sau un document.",
         "card_title": "Importă chestionar",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "Alege alt fișier",
         "progress_detected_languages": "Limbi detectate",
         "progress_extracting": "Se extrag întrebările",
-        "progress_label": "Progres import",
         "progress_part": "partea {index} din {total}",
         "progress_read_file": "Citește fișierul",
         "progress_validating": "Se validează",
@@ -3855,7 +3853,6 @@
         "source_text": "Text",
         "source_v3-document": "Document Formbricks",
         "source_xlsx": "Excel",
-        "status_reading": "Se citește fișierul…",
         "survey_name": "Numele sondajului",
         "title": "Importă sondaj",
         "your_file": "Fișierul tău"

@@ -3742,7 +3742,6 @@
         "partial_responses": "Teilweise Antworten"
       },
       "import": {
-        "ai_formats_hint": "Dokumente mit dem KI-Symbol werden mit KI gelesen. Formbricks JSON und Qualtrics QSF werden genau so importiert, wie sie sind.",
         "ai_formats_title": "KI-Umfrageimport",
         "card_description": "Importiere einen Formbricks-Export, eine Qualtrics QSF oder ein Dokument.",
         "card_title": "Umfrage importieren",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "Eine andere Datei wählen",
         "progress_detected_languages": "Erkannte Sprachen",
         "progress_extracting": "Extrahiere Fragen",
-        "progress_label": "Import-Fortschritt",
         "progress_part": "Teil {index} von {total}",
         "progress_read_file": "Datei lesen",
         "progress_validating": "Validiere",
@@ -3855,7 +3853,6 @@
         "source_text": "Text",
         "source_v3-document": "Formbricks-Dokument",
         "source_xlsx": "Excel",
-        "status_reading": "Datei wird gelesen…",
         "survey_name": "Umfragename",
         "title": "Umfrage importieren",
         "your_file": "Deine Datei"

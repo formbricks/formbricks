@@ -3611,7 +3611,6 @@ checksums:
     workspace/surveys/filter/complete_and_partial_responses: 3c272e4b148421da0027c35562b969db
     workspace/surveys/filter/complete_responses: cd495765bf63f5bfdb341eadc4f60ac7
     workspace/surveys/filter/partial_responses: cc88893d0defaf64f46f17a1cb8c886d
-    workspace/surveys/import/ai_formats_hint: 37d2f0bea5fc2bbba8e3efe792966a38
     workspace/surveys/import/ai_formats_title: 8f4daad8576e08683395c401dbc8675e
     workspace/surveys/import/card_description: 2135bef79e32ed725c057e6c2d597c97
     workspace/surveys/import/card_title: 5418ac88c503972c1b745f7681a6bacc
@@ -3701,7 +3700,6 @@ checksums:
     workspace/surveys/import/pick_another_file: ad913aa5b176c3dfdbc2e3bc936d3d7d
     workspace/surveys/import/progress_detected_languages: b4eb80d8cf24f64989c935d7b0416bcc
     workspace/surveys/import/progress_extracting: 8ce103383a8148b8c08c60f2c65312e0
-    workspace/surveys/import/progress_label: ad7a120f8a20563607e4f49caec63bbc
     workspace/surveys/import/progress_part: 524c1af236588525f9a0928fb6e47641
     workspace/surveys/import/progress_read_file: 30dd36fe79bdd2e7a69dfbb7d4c05a93
     workspace/surveys/import/progress_validating: 53e19393c8139790da4d3337f4b981ab
@@ -3720,7 +3718,6 @@ checksums:
     workspace/surveys/import/source_text: 4ddccc1974775ed7357f9beaf9361cec
     workspace/surveys/import/source_v3-document: d6a05338cd97f4cdb5eccc595abf5a75
     workspace/surveys/import/source_xlsx: f08d3674043b02341104d40642758b43
-    workspace/surveys/import/status_reading: c13b2be8a4d036e17d445281c5b242ac
     workspace/surveys/import/survey_name: 22ccf86a882d68184d3acfccf7608f4d
     workspace/surveys/import/title: 5418ac88c503972c1b745f7681a6bacc
     workspace/surveys/import/your_file: 37a16818e10901a5ccf7ab7a77b0a3fb

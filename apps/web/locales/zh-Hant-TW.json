@@ -3742,7 +3742,6 @@
         "partial_responses": "部分回應"
       },
       "import": {
-        "ai_formats_hint": "標有 AI 圖示的文件會透過 AI 讀取。Formbricks JSON 和 Qualtrics QSF 則會完全按照原樣匯入。",
         "ai_formats_title": "AI 問卷匯入",
         "card_description": "匯入 Formbricks 匯出檔、Qualtrics QSF 或文件。",
         "card_title": "匯入問卷",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "選擇其他檔案",
         "progress_detected_languages": "偵測到的語言",
         "progress_extracting": "正在擷取問題",
-        "progress_label": "匯入進度",
         "progress_part": "第 {index} 部分,共 {total} 部分",
         "progress_read_file": "讀取檔案",
         "progress_validating": "正在驗證",
@@ -3855,7 +3853,6 @@
         "source_text": "文字",
         "source_v3-document": "Formbricks 文件",
         "source_xlsx": "Excel",
-        "status_reading": "正在讀取檔案…",
         "survey_name": "問卷名稱",
         "title": "匯入問卷",
         "your_file": "你的檔案"

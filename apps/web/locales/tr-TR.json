@@ -3742,7 +3742,6 @@
         "partial_responses": "Yarım yanıtlar"
       },
       "import": {
-        "ai_formats_hint": "AI simgesiyle işaretlenmiş belgeler yapay zeka ile okunur. Formbricks JSON ve Qualtrics QSF olduğu gibi içe aktarılır.",
         "ai_formats_title": "Yapay zeka ile anket içe aktarma",
         "card_description": "Formbricks dışa aktarması, Qualtrics QSF veya bir belge yükle.",
         "card_title": "Anket içe aktar",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "Başka bir dosya seç",
         "progress_detected_languages": "Algılanan diller",
         "progress_extracting": "Sorular çıkarılıyor",
-        "progress_label": "İçe aktarma ilerlemesi",
         "progress_part": "{total} bölümün {index}. bölümü",
         "progress_read_file": "Dosya okundu",
         "progress_validating": "Doğrulanıyor",
@@ -3855,7 +3853,6 @@
         "source_text": "Metin",
         "source_v3-document": "Formbricks belgesi",
         "source_xlsx": "Excel",
-        "status_reading": "Dosya okunuyor…",
         "survey_name": "Anket adı",
         "title": "Anket içe aktar",
         "your_file": "Dosyanız"

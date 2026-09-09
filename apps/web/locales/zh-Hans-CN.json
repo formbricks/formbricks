@@ -3742,7 +3742,6 @@
         "partial_responses": "部分 反馈"
       },
       "import": {
-        "ai_formats_hint": "带有 AI 图标的文档通过 AI 读取。Formbricks JSON 和 Qualtrics QSF 则按原样导入。",
         "ai_formats_title": "AI 问卷导入",
         "card_description": "导入 Formbricks 导出文件、Qualtrics QSF 或其他文档。",
         "card_title": "导入问卷",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "选择其他文件",
         "progress_detected_languages": "检测到的语言",
         "progress_extracting": "正在提取问题",
-        "progress_label": "导入进度",
         "progress_part": "第 {index} 部分,共 {total} 部分",
         "progress_read_file": "读取文件",
         "progress_validating": "正在验证",
@@ -3855,7 +3853,6 @@
         "source_text": "文本",
         "source_v3-document": "Formbricks 文档",
         "source_xlsx": "Excel",
-        "status_reading": "正在读取文件…",
         "survey_name": "问卷名称",
         "title": "导入问卷",
         "your_file": "你的文件"

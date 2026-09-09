@@ -3742,7 +3742,6 @@
         "partial_responses": "Частичные ответы"
       },
       "import": {
-        "ai_formats_hint": "Документы, отмеченные значком AI, обрабатываются с помощью ИИ. Formbricks JSON и Qualtrics QSF импортируются в исходном виде.",
         "ai_formats_title": "Импорт опроса с помощью ИИ",
         "card_description": "Импортируй экспорт Formbricks, Qualtrics QSF или документ.",
         "card_title": "Импортировать опрос",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "Выбрать другой файл",
         "progress_detected_languages": "Обнаруженные языки",
         "progress_extracting": "Извлечение вопросов",
-        "progress_label": "Ход импорта",
         "progress_part": "часть {index} из {total}",
         "progress_read_file": "Чтение файла",
         "progress_validating": "Проверка",
@@ -3855,7 +3853,6 @@
         "source_text": "Текст",
         "source_v3-document": "Документ Formbricks",
         "source_xlsx": "Excel",
-        "status_reading": "Чтение файла…",
         "survey_name": "Название опроса",
         "title": "Импорт опроса",
         "your_file": "Ваш файл"

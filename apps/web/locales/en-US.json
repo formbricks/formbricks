@@ -3742,7 +3742,6 @@
         "partial_responses": "Partial responses"
       },
       "import": {
-        "ai_formats_hint": "Documents marked with the AI icon are read with AI. Formbricks JSON and Qualtrics QSF are imported exactly as they are.",
         "ai_formats_title": "AI survey import",
         "card_description": "Bring in a Formbricks export, a Qualtrics QSF or a document.",
         "card_title": "Import survey",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "Pick another file",
         "progress_detected_languages": "Detected languages",
         "progress_extracting": "Extracting questions",
-        "progress_label": "Import progress",
         "progress_part": "part {index} of {total}",
         "progress_read_file": "Read file",
         "progress_validating": "Validating",
@@ -3855,7 +3853,6 @@
         "source_text": "Text",
         "source_v3-document": "Formbricks document",
         "source_xlsx": "Excel",
-        "status_reading": "Reading the file…",
         "survey_name": "Survey name",
         "title": "Import survey",
         "your_file": "Your file"

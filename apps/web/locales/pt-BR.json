@@ -3742,7 +3742,6 @@
         "partial_responses": "Respostas parciais"
       },
       "import": {
-        "ai_formats_hint": "Documentos marcados com o ícone de IA são lidos com IA. Formbricks JSON e Qualtrics QSF são importados exatamente como estão.",
         "ai_formats_title": "Importação de pesquisa com IA",
         "card_description": "Traga uma exportação do Formbricks, um QSF do Qualtrics ou um documento.",
         "card_title": "Importar pesquisa",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "Escolher outro arquivo",
         "progress_detected_languages": "Idiomas detectados",
         "progress_extracting": "Extraindo perguntas",
-        "progress_label": "Progresso da importação",
         "progress_part": "parte {index} de {total}",
         "progress_read_file": "Ler arquivo",
         "progress_validating": "Validando",
@@ -3855,7 +3853,6 @@
         "source_text": "Texto",
         "source_v3-document": "Documento Formbricks",
         "source_xlsx": "Excel",
-        "status_reading": "Lendo o arquivo…",
         "survey_name": "Nome da pesquisa",
         "title": "Importar pesquisa",
         "your_file": "Seu arquivo"

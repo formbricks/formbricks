@@ -3742,7 +3742,6 @@
         "partial_responses": "Gedeeltelijke reacties"
       },
       "import": {
-        "ai_formats_hint": "Documenten met het AI-icoon worden uitgelezen met AI. Formbricks JSON en Qualtrics QSF worden exact zo geïmporteerd als ze zijn.",
         "ai_formats_title": "AI-enquête-import",
         "card_description": "Importeer een Formbricks-export, een Qualtrics QSF of een document.",
         "card_title": "Enquête importeren",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "Kies een ander bestand",
         "progress_detected_languages": "Gedetecteerde talen",
         "progress_extracting": "Vragen extraheren",
-        "progress_label": "Importvoortgang",
         "progress_part": "deel {index} van {total}",
         "progress_read_file": "Bestand lezen",
         "progress_validating": "Valideren",
@@ -3855,7 +3853,6 @@
         "source_text": "Tekst",
         "source_v3-document": "Formbricks-document",
         "source_xlsx": "Excel",
-        "status_reading": "Bestand wordt gelezen…",
         "survey_name": "Enquêtenaam",
         "title": "Enquête importeren",
         "your_file": "Jouw bestand"

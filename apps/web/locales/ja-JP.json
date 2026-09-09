@@ -3742,7 +3742,6 @@
         "partial_responses": "部分的な回答"
       },
       "import": {
-        "ai_formats_hint": "AIアイコンが付いた文書はAIで読み取られます。Formbricks JSONとQualtrics QSFはそのままインポートされます。",
         "ai_formats_title": "AIアンケートインポート",
         "card_description": "Formbricksエクスポート、Qualtrics QSF、または文書を取り込みます。",
         "card_title": "アンケートをインポート",
@@ -3836,7 +3835,6 @@
         "pick_another_file": "別のファイルを選択",
         "progress_detected_languages": "検出された言語",
         "progress_extracting": "質問を抽出中",
-        "progress_label": "インポート進行状況",
         "progress_part": "パート {index} / {total}",
         "progress_read_file": "ファイルを読み取り",
         "progress_validating": "検証中",
@@ -3855,7 +3853,6 @@
         "source_text": "テキスト",
         "source_v3-document": "Formbricksドキュメント",
         "source_xlsx": "Excel",
-        "status_reading": "ファイルを読み込んでいます…",
         "survey_name": "アンケート名",
         "title": "アンケートをインポート",
         "your_file": "ファイル"
