@@ -12,6 +12,7 @@ import type { TImportCandidate, TImportIssue, TImportReport } from "../types";
 import type { TActionClassResolutionDeps } from "./action-classes";
 import { resolveImportActionClasses } from "./action-classes";
 import { applyDocumentHygiene } from "./document";
+import { normalizeImportedFieldNames } from "./embedded-data";
 import { hasImportExternalUrls, stripImportExternalUrls } from "./entitlements";
 import { resolveImportLanguages } from "./languages";
 import { resolveImportMedia } from "./media";
@@ -67,8 +68,8 @@ function invalidParamToIssue(param: InvalidParam): TImportIssue {
 /**
  * Turn a lane's candidate into a document the target workspace can hold, and say what changed.
  *
- * Steps run in a fixed order — hygiene, languages, action classes, targeting, external URLs, media,
- * validation — and each one only appends to the issue list. Resolving an already-resolved document
+ * Steps run in a fixed order — hygiene, field names, languages, action classes, targeting, external URLs,
+ * media, validation — and each one only appends to the issue list. Resolving an already-resolved document
  * adds no issues: ids that exist are kept, nothing left to strip, nothing left to warn about.
  */
 export async function resolveImportCandidate(
@@ -99,6 +100,8 @@ export async function resolveImportCandidate(
     report.summary = summarizeDocument(document);
     return { document: null, createBody: null, report, validation: { valid: false, invalid_params: [] } };
   }
+
+  report.issues.push(...normalizeImportedFieldNames(document));
 
   const languages = resolveImportLanguages(document, await deps.listWorkspaceLanguageCodes(ctx.workspaceId));
   report.issues.push(...languages.issues);
