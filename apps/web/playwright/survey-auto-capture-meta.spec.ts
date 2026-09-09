@@ -240,49 +240,40 @@ test.describe("Auto-captured browser context on responses @slow", () => {
     // response" button is `group-hover:flex`, so it needs a hover dance this does not.
     await page.getByRole("cell", { name: "Anonymous" }).click();
 
-    await test.step("the classic fields render exactly as before", async () => {
-      // The seven the card has always shown, now looped from the catalog instead of written out as
-      // seven JSX branches. Asserted on the tooltip container rather than per row: each row renders as
-      // `{label}: {value}` across separate text nodes, so a `/^Browser:/` text locator does not match
-      // one of them.
-      const deviceInfo = page.getByRole("button", { name: "Device info" }).first();
-      await expect(deviceInfo).toBeVisible({ timeout: 60000 });
-      await deviceInfo.hover();
+    await test.step("every auto-captured field sits in the Metadata popover", async () => {
+      // One click-to-open popover (a dialog, not a hover tooltip) carries both the seven classic
+      // fields and the ENG-1841 ones — there is no longer a "More context" fold in the card body.
+      // Asserted on the definition list rather than per row: each row is a `<dt>`/`<dd>` pair.
+      const metadata = page.getByRole("button", { name: "Metadata" }).first();
+      await expect(metadata).toBeVisible({ timeout: 60000 });
+      await metadata.click();
 
-      const tooltip = page.getByRole("tooltip").filter({ hasText: "Device info" }).first();
-      await expect(tooltip).toBeVisible();
-      await expect(tooltip).toContainText("Browser:");
-      await expect(tooltip).toContainText("OS:");
-      await expect(tooltip).toContainText("Device:");
+      const popover = page.getByRole("dialog", { name: "Metadata" });
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole("term").filter({ hasText: /^Browser$/ })).toBeVisible();
+      await expect(popover.getByRole("term").filter({ hasText: /^OS$/ })).toBeVisible();
+      await expect(popover.getByRole("term").filter({ hasText: /^Device$/ })).toBeVisible();
       // `URL` proves the gating fix: the whole block used to be behind `hasUserAgent`, so with
       // "Anonymize responses" on — which drops `meta.userAgent` — url, action and source vanished too.
-      await expect(tooltip).toContainText("URL:");
-    });
+      await expect(popover.getByRole("term").filter({ hasText: /^URL$/ })).toBeVisible();
 
-    await test.step("the auto-captured fields sit behind a collapsed disclosure", async () => {
-      const disclosure = page.getByTestId("auto-captured-fields").first();
-      await expect(disclosure).toBeVisible();
-
-      // Collapsed by default — thirteen extra rows on every card is the failure mode the ticket
-      // names, so the values must NOT be on screen until asked for.
-      await expect(disclosure.getByText("Page Path", { exact: true })).toBeHidden();
-
-      await disclosure.getByRole("button", { name: /More context/ }).click();
-
-      // Labels derived by `formatFieldNameToTitleCase`, so a catalog addition needs no new key.
-      await expect(disclosure.getByText("Page Path", { exact: true })).toBeVisible();
-      await expect(disclosure.getByText("UTM Source", { exact: true })).toBeVisible();
-      await expect(disclosure.getByText("Timezone", { exact: true })).toBeVisible();
-      await expect(disclosure.getByText("Viewport Width", { exact: true })).toBeVisible();
+      // Labels derived by `getReservedFieldLabel`, so a catalog addition needs no new key.
+      await expect(popover.getByText("Page Path", { exact: true })).toBeVisible();
+      await expect(popover.getByText("UTM Source", { exact: true })).toBeVisible();
+      await expect(popover.getByText("Timezone", { exact: true })).toBeVisible();
+      await expect(popover.getByText("Viewport Width", { exact: true })).toBeVisible();
       // The values, not just the labels — and read back off the stored response rather than
       // hard-coded, so the display is checked against what capture actually wrote.
-      await expect(disclosure.getByText("newsletter", { exact: true })).toBeVisible();
-      await expect(disclosure.getByText(`/s/${ownSurveyId}`, { exact: true })).toBeVisible();
+      await expect(popover.getByText("newsletter", { exact: true })).toBeVisible();
+      await expect(popover.getByText(`/s/${ownSurveyId}`, { exact: true })).toBeVisible();
       expect(storedMeta.pagePath).toBe(`/s/${ownSurveyId}`);
-      await expect(disclosure.getByText(String(storedMeta.timezone), { exact: true })).toBeVisible();
+      await expect(popover.getByText(String(storedMeta.timezone), { exact: true })).toBeVisible();
       await expect(
-        disclosure.getByText(String(storedMeta.viewportWidth), { exact: true }).first()
+        popover.getByText(String(storedMeta.viewportWidth), { exact: true }).first()
       ).toBeVisible();
+
+      await page.keyboard.press("Escape");
+      await expect(popover).toBeHidden();
     });
   });
 });
