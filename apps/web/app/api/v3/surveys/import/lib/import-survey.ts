@@ -18,6 +18,7 @@ import { countIssues } from "@/modules/survey/import/report";
 import { type TResolveImportResult, resolveImportCandidate } from "@/modules/survey/import/resolve";
 import type { TImportCandidate, TImportReport } from "@/modules/survey/import/types";
 import type { TV3SurveyImportBody } from "../schemas";
+import { guardImportWorkspaceBudget } from "./import-guards";
 
 type TImportV3SurveyParams = {
   req: Request;
@@ -107,6 +108,12 @@ export async function importV3Survey({
     );
     if (authResult instanceof Response) {
       return authResult;
+    }
+
+    const budget = await guardImportWorkspaceBudget(authResult.workspaceId, requestId);
+    if (budget) {
+      log.warn({ statusCode: 429 }, "Workspace import budget exhausted");
+      return budget;
     }
 
     const resolved = await runLosslessImport(body, {

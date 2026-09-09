@@ -32,6 +32,7 @@ properties:
       - bad_request
       - conflict
       - forbidden
+      - import_in_progress
       - internal_server_error
       - invalid_workflow_state
       - lane_not_available

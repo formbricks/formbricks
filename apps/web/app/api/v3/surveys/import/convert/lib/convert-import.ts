@@ -12,6 +12,10 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { mapV3SurveyGenerateError } from "@/app/api/v3/surveys/generate/error-mapping";
+import {
+  guardImportWorkspaceBudget,
+  problemImportInProgress,
+} from "@/app/api/v3/surveys/import/lib/import-guards";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -19,6 +23,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { type TImportDetectionFailureCode, detectImportSource } from "@/modules/survey/import/detect";
 import { getImportLaneHandler } from "@/modules/survey/import/lanes";
+import { ImportInProgressError, acquireAiImportSlot } from "@/modules/survey/import/lib/ai-inflight-guard";
 import { resolveImportCandidate } from "@/modules/survey/import/resolve";
 import { IMPORT_LANE_BY_KIND, type TImportContext } from "@/modules/survey/import/types";
 import type { TV3SurveyImportConvertBody } from "../schemas";
@@ -105,6 +110,12 @@ export async function convertImportFile({
       return authResult;
     }
 
+    const budget = await guardImportWorkspaceBudget(authResult.workspaceId, requestId);
+    if (budget) {
+      log.warn({ statusCode: 429 }, "Workspace import budget exhausted");
+      return budget;
+    }
+
     const detection = detectImportSource({
       fileName: file.fileName,
       mimeType: file.mimeType,
@@ -143,9 +154,13 @@ export async function convertImportFile({
     const startedAt = Date.now();
 
     let candidate;
+    let releaseSlot: (() => Promise<void>) | null = null;
     try {
       if (isAiLane) {
         await assertAiImportAllowed(authResult.organizationId, authentication);
+        releaseSlot = await acquireAiImportSlot(
+          getRateLimitIdentifier(authentication) ?? authResult.workspaceId
+        );
       }
 
       candidate = await lane(
@@ -154,8 +169,20 @@ export async function convertImportFile({
       );
     } catch (error) {
       if (!isAiLane) throw error;
-      log.warn({ error, sourceKind: detection.kind }, "AI import lane failed");
+      if (error instanceof ImportInProgressError) {
+        log.warn(
+          { statusCode: 409, sourceKind: detection.kind, lane: "ai" },
+          "AI import already in progress"
+        );
+        return problemImportInProgress(requestId, error, instance);
+      }
+      log.warn(
+        { err: error, statusCode: 502, sourceKind: detection.kind, lane: "ai" },
+        "AI import lane failed"
+      );
       return mapV3SurveyGenerateError(error, aiErrorContext);
+    } finally {
+      await releaseSlot?.();
     }
 
     const resolved = await resolveImportCandidate(candidate, {

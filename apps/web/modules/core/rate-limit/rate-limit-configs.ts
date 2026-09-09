@@ -26,6 +26,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 30,
       namespace: "api:v3:surveys:import:convert",
     }, // 30 per minute per user or key — deterministic file conversions; the AI lane additionally spends from v3SurveyGenerate
+    v3SurveyImportPerWorkspace: {
+      interval: 3600,
+      allowedPerInterval: 200,
+      namespace: "api:v3:surveys:import:workspace",
+    }, // 200 per hour per workspace across convert, stream and import — one workspace cannot soak the instance's import capacity
     internalDatasetPurge: {
       interval: 3600,
       allowedPerInterval: 5,
