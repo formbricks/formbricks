@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon, Wand2 } from "lucide-react";
+import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -19,9 +19,11 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { AiGlyph, AiStatusLine } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { IconBar } from "@/modules/ui/components/iconbar";
+import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 import { generateExampleResponsesAction, resetSurveyAction } from "../actions";
 
 interface SurveyAnalysisCTAProps {
@@ -74,6 +76,10 @@ export const SurveyAnalysisCTA = ({
   const { refreshAnalysisData } = useResponseFilter();
 
   const appSetupCompleted = survey.type === "app" && workspace.appSetupCompleted;
+
+  // The generation runs inside a server action that dies with the tab, so a reload mid-run throws
+  // away answers the user is waiting on and cannot cheaply ask for again.
+  useBeforeUnloadPrompt(() => isGeneratingExamples);
 
   useEffect(() => {
     setModalState((prev) => ({
@@ -159,22 +165,20 @@ export const SurveyAnalysisCTA = ({
   const handleGenerateExampleResponses = async () => {
     if (isGeneratingExamples) return;
     setIsGeneratingExamples(true);
-    const loadingToastId = toast.loading(t("workspace.surveys.summary.generating_example_responses"));
+    // No loading toast: the status line below narrates the wait, and a toast on top of it would say
+    // the same thing twice while telling the user less.
     try {
       const result = await generateExampleResponsesAction({ surveyId: survey.id });
       if (result?.data) {
         toast.success(
           t("workspace.surveys.summary.example_responses_generated_successfully", {
             count: result.data.createdCount,
-          }),
-          { id: loadingToastId }
+          })
         );
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"), {
-          id: loadingToastId,
-        });
+        toast.error(errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"));
       }
     } finally {
       setIsGeneratingExamples(false);
@@ -230,7 +234,10 @@ export const SurveyAnalysisCTA = ({
       isVisible: survey.type === "link" && !survey.archivedAt,
     },
     {
-      icon: Wand2,
+      icon: AiGlyph,
+      // The one AI action in a bar of neutral tools, so it carries the kit's colour rather than
+      // sitting in the toolbar as another grey icon.
+      iconClassName: "text-ai-dark",
       tooltip: exampleResponsesTooltip,
       onClick: handleGenerateExampleResponses,
       disabled: isGeneratingExamples || aiUnavailableReason !== null || responseCount > 0,
@@ -257,6 +264,18 @@ export const SurveyAnalysisCTA = ({
 
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
+      {/* Sits in the action row rather than over the summary: the answers land in the page behind it,
+        so covering that page to say it is being filled in would hide the thing being waited for. */}
+      <AiStatusLine
+        isActive={isGeneratingExamples}
+        messages={[
+          t("workspace.surveys.summary.ai_status_reading_survey"),
+          t("workspace.surveys.summary.ai_status_drafting_answers"),
+          t("workspace.surveys.summary.ai_status_saving_responses"),
+        ]}
+        className="mr-1 shrink-0"
+      />
+
       {!isReadOnly && (appSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
         <SurveyStatusDropdown />
       )}
