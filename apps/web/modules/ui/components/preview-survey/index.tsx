@@ -86,10 +86,24 @@ export const PreviewSurvey = ({
   // switch inside the preview must not retarget what the author is typing into.
   const [activeLanguageCode, setActiveLanguageCode] = useState(languageCode);
 
-  // The chrome's own language dropdown still wins — it moves the prop, and the survey re-renders on it.
+  // Covers the prop changes the chrome does NOT make: the editor resets its editing language to
+  // "default" when the selected one stops being enabled (`survey-editor.tsx`). The chrome's own
+  // clicks are handled by `handleChromeLanguageChange` below rather than here.
   useEffect(() => {
     setActiveLanguageCode(languageCode);
   }, [languageCode]);
+
+  // Sets BOTH, because picking the language the prop already holds is a same-value setState: React
+  // bails and the effect above never re-runs. That is exactly the "put it back after an in-survey
+  // switch" click — both switches spell the default language `"default"` — so keying the reset on the
+  // prop alone left the question pane on the editing language and the preview on the other one.
+  const handleChromeLanguageChange = useCallback(
+    (code: string) => {
+      setLanguageCode?.(code);
+      setActiveLanguageCode(code);
+    },
+    [setLanguageCode]
+  );
 
   // Both modal previews are rendered behind a `previewMode === …` gate, so switching between the phone
   // and browser frames unmounts one and mounts the other — and a fresh RenderSurvey seeds its language
@@ -284,7 +298,7 @@ export const PreviewSurvey = ({
                   <LanguageSelector
                     languages={enabledLanguages}
                     languageCode={languageCode}
-                    setLanguageCode={setLanguageCode}
+                    setLanguageCode={handleChromeLanguageChange}
                     locale={locale}
                   />
                 )}
@@ -407,7 +421,7 @@ export const PreviewSurvey = ({
                       <LanguageSelector
                         languages={enabledLanguages}
                         languageCode={languageCode}
-                        setLanguageCode={setLanguageCode}
+                        setLanguageCode={handleChromeLanguageChange}
                         locale={locale}
                       />
                     )}
