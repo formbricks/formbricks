@@ -95,6 +95,9 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   const [defaultLanguage, setDefaultLanguage] = useState(
     normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? ""
   );
+  // Rows the user removed in this edit. Held until save so every change in the form commits together
+  // rather than a removal landing on its own while the default language beside it is still unsaved.
+  const [deletedLanguageIds, setDeletedLanguageIds] = useState<string[]>([]);
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
     text: "",
@@ -154,13 +157,12 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   };
 
   const handleDeleteLanguage = async (languageId: string) => {
-    // The workspace default survey language must keep pointing at a language the workspace has, so the
-    // row it names cannot be removed until a different default is picked (ENG-2816).
+    // The default survey language must keep pointing at a language the workspace has, so the row it names
+    // cannot be removed. Compared against the picker's current value rather than the saved one: both are
+    // fields of this form, so "pick a different default, then remove this language" resolves inside one
+    // edit instead of failing against a saved value the message never mentions (ENG-2816).
     const languageToDelete = languages.find((workspaceLanguage) => workspaceLanguage.id === languageId);
-    if (
-      languageToDelete &&
-      isWorkspaceDefaultSurveyLanguage(languageToDelete.code, workspace.config.defaultSurveyLanguage)
-    ) {
+    if (languageToDelete && isWorkspaceDefaultSurveyLanguage(languageToDelete.code, defaultLanguage)) {
       setConfirmationModal({
         isOpen: true,
         languageId,
@@ -205,27 +207,23 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     }
   };
 
-  const performLanguageDeletion = async (languageId: string) => {
-    try {
-      const result = await deleteLanguageAction({ languageId, workspaceId: workspace.id });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
-        return;
-      }
-      setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
-      toast.success(t("workspace.languages.language_deleted_successfully"));
-      // Close the modal after deletion
-      setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
-      setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
-    }
+  /**
+   * Takes the row out of the form and remembers it for the save, rather than deleting it there and then.
+   * Writing the removal immediately split one edit across two commit points: the default language beside
+   * it is only written on save, so the server still saw the old default and refused the very removal the
+   * confirmation had just asked the user to enable (ENG-2816). Staging it also puts the row back on
+   * cancel, which is what the surrounding edit/save/cancel form already promises for every other field.
+   */
+  const stageLanguageRemoval = (languageId: string) => {
+    setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
+    setDeletedLanguageIds((prev) => (prev.includes(languageId) ? prev : [...prev, languageId]));
+    setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
   };
 
   const handleCancelChanges = async () => {
     setLanguages(workspace.languages);
     setDefaultLanguage(normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? "");
+    setDeletedLanguageIds([]);
     setIsEditing(false);
   };
 
@@ -269,7 +267,30 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
       }
     }
 
-    toast.success(t("workspace.languages.languages_updated_successfully"));
+    // Deletions go last. The server checks a delete against the *stored* default, so removing the language
+    // that used to be the default is only legal once the new default written above has landed.
+    if (deletedLanguageIds.length > 0) {
+      const deletionResults = await Promise.all(
+        deletedLanguageIds.map((languageId) =>
+          deleteLanguageAction({ languageId, workspaceId: workspace.id })
+        )
+      );
+      const failedDeletion = deletionResults.find((result) => result?.serverError);
+      if (failedDeletion) {
+        toast.error(getFormattedErrorMessage(failedDeletion));
+        // Re-read from the server: the rows that survived have to come back rather than stay hidden.
+        setDeletedLanguageIds([]);
+        router.refresh();
+        return;
+      }
+    }
+
+    toast.success(
+      deletedLanguageIds.length > 0
+        ? t("workspace.languages.language_deleted_successfully")
+        : t("workspace.languages.languages_updated_successfully")
+    );
+    setDeletedLanguageIds([]);
     router.refresh();
     setIsEditing(false);
   };
@@ -355,7 +376,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
       <ConfirmationModal
         buttonText={t("workspace.languages.remove_language")}
         isButtonDisabled={confirmationModal.isButtonDisabled}
-        onConfirm={() => performLanguageDeletion(confirmationModal.languageId)}
+        onConfirm={() => stageLanguageRemoval(confirmationModal.languageId)}
         open={confirmationModal.isOpen}
         setOpen={() => {
           setConfirmationModal((prev) => ({ ...prev, isOpen: !prev.isOpen }));
