@@ -197,7 +197,7 @@ export const ImportSurveyDialog = ({
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent
         width={isReviewing ? "wide" : "default"}
-        className="overflow-hidden"
+        className="max-h-[calc(100dvh-2rem)] overflow-y-auto"
         disableCloseOnOutsideClick
         closeOnEscape>
         <DialogHeader>
@@ -210,7 +210,9 @@ export const ImportSurveyDialog = ({
           unconstrained
           className={cn(
             "-mx-1 -mt-1 flex flex-none flex-col gap-4 px-1 pt-1 pb-1",
-            isReviewing && "h-[32rem]"
+            // Never taller than the viewport: the review panel scrolls inside its own list, everything
+            // else scrolls here.
+            isReviewing ? "h-[min(32rem,calc(100dvh-21rem))]" : "max-h-[calc(100dvh-12rem)] overflow-y-auto"
           )}>
           {errorMessage ? (
             <Alert variant="error">
