@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+required:
+  - datasetId
+  - datasetName
+properties:
+  datasetId:
+    type: string
+    format: cuid2
+    description: >-
+      The dataset the count was taken in. Echoed for the same reason as on list: `count: 0` is
+      otherwise ambiguous — "nothing here matches" reads identically to "I don't know what was
+      counted" — and a caller that let `workspaceId` resolve the dataset would need a second
+      request to learn which one answered.
+  datasetName:
+    type: string
+    description: Human-readable name of that dataset.

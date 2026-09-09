@@ -2,7 +2,10 @@ type: object
 additionalProperties: false
 required:
   - data
+  - meta
 properties:
+  meta:
+    $ref: ./FeedbackRecordCountMeta.yml
   data:
     type: object
     additionalProperties: false

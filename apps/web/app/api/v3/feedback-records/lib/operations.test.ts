@@ -1006,8 +1006,10 @@ describe("countV3FeedbackRecords", () => {
     const response = await countV3FeedbackRecords(base);
 
     expect(response.status).toBe(200);
+    // `data` is the resource asked for; which dataset produced it is `meta`, as on list.
     expect(await response.json()).toEqual({
-      data: { count: 42, dataset_id: directoryId, dataset_name: "Support" },
+      data: { count: 42 },
+      meta: { datasetId: directoryId, datasetName: "Support" },
     });
     expect(countFeedbackRecords).toHaveBeenCalledWith({ tenant_id: directoryId });
   });

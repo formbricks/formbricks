@@ -3614,7 +3614,7 @@ paths:
             type: integer
             minimum: 1
             maximum: 1000
-            default: 100
+            default: 50
           description: 'Page size. The 1000 ceiling is higher than elsewhere in v3 because this surface is built for bulk ingestion and export. Out-of-range and non-numeric values are rejected: `0`, `-5`, `1001` and `abc` all answer **400**. Send no `limit` rather than `0` if you are computing it.'
         - $ref: '#/components/parameters/CursorQuery'
       responses:
@@ -3827,6 +3827,9 @@ paths:
                   value:
                     data:
                       count: 1284
+                    meta:
+                      datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                      datasetName: Customer feedback
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -8670,12 +8673,29 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/FeedbackRecord'
+    FeedbackRecordCountMeta:
+      type: object
+      additionalProperties: false
+      required:
+        - datasetId
+        - datasetName
+      properties:
+        datasetId:
+          type: string
+          format: cuid2
+          description: 'The dataset the count was taken in. Echoed for the same reason as on list: `count: 0` is otherwise ambiguous — "nothing here matches" reads identically to "I don''t know what was counted" — and a caller that let `workspaceId` resolve the dataset would need a second request to learn which one answered.'
+        datasetName:
+          type: string
+          description: Human-readable name of that dataset.
     FeedbackRecordCountEnvelope:
       type: object
       additionalProperties: false
       required:
         - data
+        - meta
       properties:
+        meta:
+          $ref: '#/components/schemas/FeedbackRecordCountMeta'
         data:
           type: object
           additionalProperties: false
