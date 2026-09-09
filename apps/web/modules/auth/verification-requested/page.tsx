@@ -1,3 +1,9 @@
+/* eslint-disable react-hooks/error-boundaries -- VerificationRequestedPage is an async Server Component, where
+   try/catch genuinely is the boundary: the awaits that can throw run inside the try, on the server,
+   during this function. The rule's premise (a throw comes from a *child's* render, after this
+   function has returned its element tree, so only an error boundary can catch it) holds for client
+   components and does not apply here. Scoped to the file because ESLint cannot tell a server
+   component from a client one (ENG-2366). */
 import Link from "next/link";
 import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";

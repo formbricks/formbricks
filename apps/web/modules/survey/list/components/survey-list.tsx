@@ -1,7 +1,7 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon, SparklesIcon } from "lucide-react";
+import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -10,9 +10,9 @@ import type { TSurveyStatus, TSurveyType } from "@formbricks/types/surveys/types
 import type { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { useArchiveSurvey } from "@/modules/survey/list/hooks/use-archive-survey";
@@ -21,13 +21,10 @@ import { useRestoreSurvey } from "@/modules/survey/list/hooks/use-restore-survey
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
 import { useUpdateSurveyStatus } from "@/modules/survey/list/hooks/use-update-survey-status";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
-import {
-  hasActiveSurveyFilters,
-  normalizeSurveyFilters,
-  parseStoredSurveyFilters,
-} from "@/modules/survey/list/lib/utils";
+import { normalizeSurveyFilters, parseStoredSurveyFilters } from "@/modules/survey/list/lib/utils";
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
+import { AiIcon } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -116,9 +113,7 @@ const NewSurveyMenu = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuItem
-            icon={<SparklesIcon className="size-4" />}
-            onSelect={() => setIsAIDialogOpen(true)}>
+          <DropdownMenuItem icon={<AiIcon />} onSelect={() => setIsAIDialogOpen(true)}>
             {t("workspace.surveys.ai_create.create_with_ai")}
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -205,14 +200,12 @@ export const SurveysList = ({
     fetchNextPage,
     hasNextPage,
     isError,
-    isFetching,
     isFetchingNextPage,
     isLoading,
     queryKey,
     refetch,
     surveys,
-    totalCount,
-    hasArchived,
+    workspaceSurveyCount,
   } = useSurveys({
     workspaceId: workspace.id,
     limit: surveysPerPage,
@@ -225,27 +218,12 @@ export const SurveysList = ({
   const archiveSurveyMutation = useArchiveSurvey({ queryKey });
   const restoreSurveyMutation = useRestoreSurvey({ queryKey });
 
-  // When the workspace no longer has archived surveys (last one restored/purged), drop a stale
-  // "archived" selection persisted in localStorage so the (now-hidden) filter can't strand the view.
-  // Guard on !isFetching so a fresh selection isn't wiped while hasArchived is still catching up
-  // during a refetch (e.g. right after archiving the last active survey).
-  useEffect(() => {
-    if (!isFetching && !hasArchived && surveyFilters.status.includes("archived")) {
-      setSurveyFilters((prev) => ({
-        ...prev,
-        status: prev.status.filter((value) => value !== "archived"),
-      }));
-    }
-  }, [hasArchived, isFetching, surveyFilters.status]);
-
-  const hasAppliedFilters = hasActiveSurveyFilters(normalizedFilters);
   const showInitialLoading = !isFilterInitialized || (isLoading && surveys.length === 0);
-  // Never show the "create your first survey" empty states when archived surveys exist — the user
-  // must still be able to reach the Archived filter.
-  const showTemplateEmptyState =
-    !isError && totalCount === 0 && !hasAppliedFilters && !hasArchived && !isReadOnly;
-  const showReadOnlyEmptyState =
-    !isError && totalCount === 0 && !hasAppliedFilters && !hasArchived && isReadOnly;
+  // Only a workspace without a single survey gets the onboarding empty states. Every other empty
+  // list keeps the toolbar, so the filter that emptied it stays reachable.
+  const isWorkspaceEmpty = !isError && workspaceSurveyCount === 0;
+  const showTemplateEmptyState = isWorkspaceEmpty && !isReadOnly;
+  const showReadOnlyEmptyState = isWorkspaceEmpty && isReadOnly;
 
   const handleDeleteSurvey = async (surveyId: string) => {
     await deleteSurveyMutation.mutateAsync({ surveyId });
@@ -395,7 +373,6 @@ export const SurveysList = ({
           surveyFilters={normalizedFilters}
           setSurveyFilters={setSurveyFilters}
           currentWorkspaceChannel={currentWorkspaceChannel}
-          hasArchived={hasArchived}
         />
         {surveyContent}
       </div>

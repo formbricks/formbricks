@@ -73,8 +73,6 @@ describe("resolveSurveyRuntimeBundle", () => {
   test("returns null for a language the runtime ships nothing for", () => {
     // Not the terminal English fallback: these would render English buttons around translated
     // questions, which is the case the default-language picker has to keep out (ENG-2325).
-    expect(resolveSurveyRuntimeBundle("km-KH")).toBeNull();
-    expect(resolveSurveyRuntimeBundle("ne-NP")).toBeNull();
     expect(resolveSurveyRuntimeBundle("fa-IR")).toBeNull();
     expect(resolveSurveyRuntimeBundle("aa-ET")).toBeNull();
   });
@@ -97,10 +95,12 @@ describe("isSurveyRuntimeLanguage", () => {
     expect(isSurveyRuntimeLanguage("de-DE")).toBe(true);
     expect(isSurveyRuntimeLanguage("de-AT")).toBe(true);
     expect(isSurveyRuntimeLanguage("pt-PT")).toBe(true);
+    expect(isSurveyRuntimeLanguage("km-KH")).toBe(true);
+    expect(isSurveyRuntimeLanguage("ne-NP")).toBe(true);
   });
 
   test("is false for a language with no strings at all", () => {
-    expect(isSurveyRuntimeLanguage("km-KH")).toBe(false);
+    expect(isSurveyRuntimeLanguage("fa-IR")).toBe(false);
     expect(isSurveyRuntimeLanguage(null)).toBe(false);
   });
 });

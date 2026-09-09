@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isSurveyRuntimeLanguage } from "@formbricks/i18n-utils/src/survey-runtime-languages";
+import { isSurveyRuntimeLanguage } from "@formbricks/i18n-utils/survey-runtime-languages";
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 
 /**

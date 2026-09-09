@@ -5,7 +5,7 @@ import {
   DEFAULT_SURVEY_LANGUAGE_CODE,
   SURVEY_RUNTIME_LANGUAGE_CODES,
   resolveSurveyLanguageDefaultTag,
-} from "@formbricks/i18n-utils/src/survey-runtime-languages";
+} from "@formbricks/i18n-utils/survey-runtime-languages";
 import arEGTranslations from "../../locales/ar-EG.json";
 import daDKTranslations from "../../locales/da-DK.json";
 import deDETranslations from "../../locales/de-DE.json";
@@ -18,6 +18,8 @@ import huHUTranslations from "../../locales/hu-HU.json";
 import idIDTranslations from "../../locales/id-ID.json";
 import itITTranslations from "../../locales/it-IT.json";
 import jaJPTranslations from "../../locales/ja-JP.json";
+import kmKHTranslations from "../../locales/km-KH.json";
+import neNPTranslations from "../../locales/ne-NP.json";
 import nlNLTranslations from "../../locales/nl-NL.json";
 import ptBRTranslations from "../../locales/pt-BR.json";
 import roROTranslations from "../../locales/ro-RO.json";
@@ -66,6 +68,8 @@ i18n
       "id-ID": { translation: idIDTranslations },
       "it-IT": { translation: itITTranslations },
       "ja-JP": { translation: jaJPTranslations },
+      "km-KH": { translation: kmKHTranslations },
+      "ne-NP": { translation: neNPTranslations },
       "nl-NL": { translation: nlNLTranslations },
       "pt-BR": { translation: ptBRTranslations },
       "ro-RO": { translation: roROTranslations },

@@ -64,6 +64,9 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   buttonLink: ZEndingCardUrl.optional(),
   imageUrl: ZStorageUrl.optional(),
   videoUrl: ZStorageUrl.optional(),
+  // Absent means "show it": the checkmark predates this field, so every survey written before it has to
+  // keep rendering the icon.
+  hideDefaultIcon: z.boolean().optional(),
 });
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
@@ -4403,13 +4406,6 @@ export const ZSurveyFilters = z.object({
 });
 
 export type TSurveyFilters = z.infer<typeof ZSurveyFilters>;
-
-export const ZFilterOption = z.object({
-  label: z.string(),
-  value: z.string(),
-});
-
-export type TFilterOption = z.infer<typeof ZFilterOption>;
 
 export const ZSortOption = z.object({
   label: z.string(),

@@ -9,6 +9,7 @@ import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { type TAlertRow, getAlertRows } from "../lib/alert-rows";
 import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
 
@@ -18,9 +19,6 @@ interface EditAlertsProps {
   autoDisableNotificationType: string;
   autoDisableNotificationElementId: string;
 }
-
-/** A survey to alert on, carrying the workspace it belongs to for the row's sub-line. */
-type TAlertRow = { surveyId: string; surveyName: string; workspaceName: string };
 
 /**
  * Defined at module level rather than inside the component: an inline `cell` that returns JSX reads as a
@@ -39,15 +37,22 @@ const getAlertColumns = ({
 }>): TSettingsTableColumn<TAlertRow>[] => [
   {
     id: "survey",
-    header: t("common.surveys"),
-    headerClassName: "w-[70%]",
+    header: t("common.survey"),
+    headerClassName: "w-[45%]",
+    cellClassName: "font-medium text-slate-900",
     skeletonWidth: "w-48",
-    cell: (row) => (
-      <>
-        <div className="font-medium text-slate-900">{row.surveyName}</div>
-        <div className="text-xs text-slate-400">{row.workspaceName}</div>
-      </>
-    ),
+    cell: (row) => row.surveyName,
+  },
+  {
+    // A column of its own rather than a sub-line under the survey name: the surveys of an organization
+    // are listed together here, so the same name can appear once per workspace, and an unlabelled second
+    // line left the reader to guess what it named.
+    id: "workspace",
+    header: t("common.workspace"),
+    headerClassName: "w-[30%]",
+    cellClassName: "text-slate-500",
+    skeletonWidth: "w-32",
+    cell: (row) => row.workspaceName,
   },
   {
     id: "alert",
@@ -64,7 +69,7 @@ const getAlertColumns = ({
         </Tooltip>
       </TooltipProvider>
     ),
-    headerClassName: "w-[30%]",
+    headerClassName: "w-[25%]",
     align: "center",
     skeletonWidth: "w-10",
     cell: (row) => (
@@ -103,15 +108,9 @@ export const EditAlerts = ({
   return (
     <>
       {memberships.map((membership) => {
-        // One row list per organization: the surveys were nested one level deeper, under workspaces, and
-        // the workspace only contributes a sub-line to each row.
-        const rows: TAlertRow[] = membership.organization.workspaces.flatMap((workspace) =>
-          workspace.surveys.map((survey) => ({
-            surveyId: survey.id,
-            surveyName: survey.name,
-            workspaceName: workspace.name,
-          }))
-        );
+        // One row list per organization: the surveys are nested one level deeper, under workspaces, and
+        // each row names the workspace it came from.
+        const rows: TAlertRow[] = getAlertRows(membership.organization.workspaces);
 
         return (
           <div key={membership.organization.id}>

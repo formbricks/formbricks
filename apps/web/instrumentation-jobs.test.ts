@@ -5,6 +5,8 @@ const mockRemoveSurveyScheduling = vi.fn();
 const mockUpsertSurveyScheduling = vi.fn();
 const mockRemoveSurveyArchivePurge = vi.fn();
 const mockUpsertSurveyArchivePurge = vi.fn();
+const mockRemoveUsageTelemetry = vi.fn();
+const mockUpsertUsageTelemetry = vi.fn();
 const mockRemoveWorkflowRunReconcile = vi.fn();
 const mockUpsertWorkflowRunReconcile = vi.fn();
 const mockUpsertAuthzedProjectionDelivery = vi.fn();
@@ -17,6 +19,7 @@ const mockGetJobsWorkerBootstrapConfig = vi.fn();
 const mockProcessResponsePipelineJob = vi.fn();
 const mockProcessSurveySchedulingJob = vi.fn();
 const mockProcessSurveyArchivePurgeJob = vi.fn();
+const mockProcessUsageTelemetryJob = vi.fn();
 const mockProcessWorkflowRunJob = vi.fn();
 const mockProcessWorkflowRunReconcileJob = vi.fn();
 const mockProcessAuthzedProjectionDeliveryJob = vi.fn();
@@ -61,6 +64,13 @@ vi.mock("@formbricks/jobs", () => ({
       scope: "global",
       upsert: mockUpsertSurveyScheduling,
     },
+    usageTelemetry: {
+      name: "usage-telemetry.process",
+      remove: mockRemoveUsageTelemetry,
+      scheduleId: "daily-usage-telemetry",
+      scope: "global",
+      upsert: mockUpsertUsageTelemetry,
+    },
     workflowRunReconcile: {
       name: "workflow-run.reconcile",
       remove: mockRemoveWorkflowRunReconcile,
@@ -98,6 +108,10 @@ vi.mock("@/modules/survey/archive/lib/process-survey-archive-purge-job", () => (
   processSurveyArchivePurgeJob: mockProcessSurveyArchivePurgeJob,
 }));
 
+vi.mock("@/lib/telemetry/process-usage-telemetry-job", () => ({
+  processUsageTelemetryJob: mockProcessUsageTelemetryJob,
+}));
+
 vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-job", () => ({
   processWorkflowRunJob: mockProcessWorkflowRunJob,
 }));
@@ -124,6 +138,12 @@ describe("instrumentation-jobs", () => {
     mockUpsertSurveyArchivePurge.mockResolvedValue({
       id: "archive-purge-schedule-1",
       name: "survey-archive-purge.process",
+      queueName: "background-jobs",
+    });
+    mockRemoveUsageTelemetry.mockResolvedValue(true);
+    mockUpsertUsageTelemetry.mockResolvedValue({
+      id: "usage-telemetry-schedule-1",
+      name: "usage-telemetry.process",
       queueName: "background-jobs",
     });
     mockRemoveWorkflowRunReconcile.mockResolvedValue(true);
@@ -207,6 +227,7 @@ describe("instrumentation-jobs", () => {
         "survey-archive-purge.process": expect.any(Function),
         "workflow-run.process": expect.any(Function),
         "test-log.process": mockExistingOverride,
+        "usage-telemetry.process": expect.any(Function),
         "workflow-run.reconcile": expect.any(Function),
       },
       redisUrl: "redis://localhost:6379",
@@ -282,6 +303,28 @@ describe("instrumentation-jobs", () => {
         attempt: 1,
         jobId: "job_456",
         jobName: "survey-scheduling.reconcile",
+        maxAttempts: 3,
+        queueName: "background-jobs",
+      }
+    );
+
+    const usageTelemetryOverride = overrides?.["usage-telemetry.process"];
+    await usageTelemetryOverride?.(
+      { scope: "global" },
+      {
+        attempt: 1,
+        jobId: "job_101",
+        jobName: "usage-telemetry.process",
+        maxAttempts: 3,
+        queueName: "background-jobs",
+      }
+    );
+    expect(mockProcessUsageTelemetryJob).toHaveBeenCalledWith(
+      { scope: "global" },
+      {
+        attempt: 1,
+        jobId: "job_101",
+        jobName: "usage-telemetry.process",
         maxAttempts: 3,
         queueName: "background-jobs",
       }
@@ -433,6 +476,8 @@ describe("instrumentation-jobs", () => {
         await import("@/modules/survey/scheduling/lib/constants");
       const { SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN, SURVEY_ARCHIVE_PURGE_TIME_ZONE } =
         await import("@/modules/survey/archive/lib/constants");
+      const { USAGE_TELEMETRY_DAILY_CRON_PATTERN, USAGE_TELEMETRY_TIME_ZONE } =
+        await import("@/lib/telemetry/constants");
       const { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } =
         await import("@/modules/ee/workflows/lib/runner/reconcile-constants");
 
@@ -468,6 +513,15 @@ describe("instrumentation-jobs", () => {
       // NEXT_PUBLIC_ var that ENG-1665 renamed away, pinning it to the Europe/Berlin fallback
       // regardless of configuration (ENG-2244).
       expect(SURVEY_ARCHIVE_PURGE_TIME_ZONE).toBe(SURVEY_SCHEDULING_TIME_ZONE);
+      expect(mockUpsertUsageTelemetry).toHaveBeenCalledTimes(1);
+      // `immediately` is the point of this schedule, not an incidental option: without it an instance
+      // that has just been identified sends no usage update until the next daily slot (ENG-2107).
+      expect(mockUpsertUsageTelemetry).toHaveBeenCalledWith({
+        cronPattern: USAGE_TELEMETRY_DAILY_CRON_PATTERN,
+        immediately: true,
+        kind: "cron",
+        timeZone: USAGE_TELEMETRY_TIME_ZONE,
+      });
       expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledTimes(1);
       expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledWith({
         everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
@@ -477,6 +531,7 @@ describe("instrumentation-jobs", () => {
       // scheduler with no delayed job (bullmq#3063).
       expect(mockRemoveSurveyScheduling).not.toHaveBeenCalled();
       expect(mockRemoveSurveyArchivePurge).not.toHaveBeenCalled();
+      expect(mockRemoveUsageTelemetry).not.toHaveBeenCalled();
       expect(mockRemoveWorkflowRunReconcile).not.toHaveBeenCalled();
     }
   );

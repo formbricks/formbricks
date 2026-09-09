@@ -1,3 +1,4 @@
+import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { redisSecondaryStorage } from "./secondary-storage";
 
@@ -49,10 +50,29 @@ describe("redisSecondaryStorage", () => {
     expect(mockClient.del).toHaveBeenCalledWith("k");
   });
 
-  test("getAndDelete uses GETDEL for atomic single-use consumption", async () => {
-    mockClient.getDel.mockResolvedValue("once");
-    expect(await redisSecondaryStorage.getAndDelete("k")).toBe("once");
-    expect(mockClient.getDel).toHaveBeenCalledWith("k");
+  test("getAndDelete uses GETDEL when supported and otherwise remembers the atomic Lua fallback", async () => {
+    const connectionError = new Error("Socket closed unexpectedly");
+    mockClient.getDel
+      .mockResolvedValueOnce("native")
+      .mockRejectedValueOnce(connectionError)
+      .mockRejectedValueOnce(
+        new Error("ERR unknown command `GETDEL`, with args beginning with: `verification:key`")
+      );
+    mockClient.eval.mockResolvedValueOnce("once").mockResolvedValueOnce(null);
+
+    expect(await redisSecondaryStorage.getAndDelete("native-key")).toBe("native");
+    await expect(redisSecondaryStorage.getAndDelete("closed-key")).rejects.toBe(connectionError);
+    expect(await redisSecondaryStorage.getAndDelete("verification:key")).toBe("once");
+    expect(await redisSecondaryStorage.getAndDelete("verification:key")).toBeNull();
+
+    expect(mockClient.getDel).toHaveBeenCalledTimes(3);
+    expect(mockClient.getDel).toHaveBeenNthCalledWith(1, "native-key");
+    expect(mockClient.getDel).toHaveBeenNthCalledWith(2, "closed-key");
+    expect(mockClient.getDel).toHaveBeenNthCalledWith(3, "verification:key");
+    expect(mockClient.eval).toHaveBeenCalledTimes(2);
+    const [, options] = mockClient.eval.mock.calls[0];
+    expect(options).toEqual({ keys: ["verification:key"], arguments: [] });
+    expect(mockClient.eval.mock.calls[1][1]).toEqual({ keys: ["verification:key"], arguments: [] });
   });
 
   test("increment runs a single atomic INCR+EXPIRE Lua eval and returns the count", async () => {
@@ -70,5 +90,30 @@ describe("redisSecondaryStorage", () => {
   test("increment coerces the Lua reply to a number", async () => {
     mockClient.eval.mockResolvedValue("5");
     expect(await redisSecondaryStorage.increment("k", 90)).toBe(5);
+  });
+
+  test("creates the client with a heartbeat", async () => {
+    vi.resetModules();
+    const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+    mockClient.get.mockResolvedValue("value");
+
+    expect(await freshStorage.get("k")).toBe("value");
+    expect(createClient).toHaveBeenCalledWith({
+      url: "redis://localhost:6379",
+      socket: { connectTimeout: 3000 },
+      pingInterval: 300_000,
+    });
+  });
+
+  test("retries the lazy connection after a failed connect", async () => {
+    vi.resetModules();
+    const connectionError = new Error("Connection failed");
+    mockClient.connect.mockRejectedValueOnce(connectionError).mockResolvedValueOnce(undefined);
+    mockClient.get.mockResolvedValue("value");
+    const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+
+    await expect(freshStorage.get("k")).rejects.toBe(connectionError);
+    await expect(freshStorage.get("k")).resolves.toBe("value");
+    expect(mockClient.connect).toHaveBeenCalledTimes(2);
   });
 });

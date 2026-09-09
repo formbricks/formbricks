@@ -28,6 +28,7 @@ const bilingualLanguages = [
 const mockSurvey = {
   id: "survey-1",
   name: "Product Feedback",
+  type: "link",
   blocks: [
     {
       elements: [
@@ -48,6 +49,17 @@ const mockSurvey = {
 
 const mockTenantId = "cmp2f6428000504la7iyh87h1";
 
+// Populated the way the public response endpoint populates it: source/url/action come from the
+// client, userAgent/country/ipAddress are derived server-side.
+const mockMeta = {
+  source: "link",
+  url: "https://app.example.com/s/survey-1?token=secret",
+  userAgent: { browser: "Chrome", os: "macOS", device: "desktop" },
+  country: "PT",
+  action: "Clicked pricing CTA",
+  ipAddress: "203.0.113.7",
+};
+
 const mockResponse = {
   id: "resp-1",
   createdAt: NOW,
@@ -61,6 +73,9 @@ const mockResponse = {
   },
   language: "en",
   contact: { userId: "user-42" },
+  finished: true,
+  ttc: { "el-text": 4_000, _total: 45_500 },
+  meta: mockMeta,
 } as unknown as TResponse;
 
 const createMapping = (
@@ -1062,6 +1077,160 @@ describe("transformResponseToFeedbackRecords", () => {
         value_text: "Good",
         value_id: "col-1",
       });
+    });
+  });
+
+  describe("response metadata (ENG-1554)", () => {
+    // One survey covering all four record-building paths, so the merge invariant below is asserted
+    // against every one of them rather than only the generic case.
+    const everyPathSurvey = {
+      id: "survey-1",
+      name: "Every Path",
+      type: "app",
+      blocks: [
+        {
+          elements: [
+            { id: "el-text", type: "openText", headline: { default: "How can we improve?" } },
+            {
+              id: "el-matrix",
+              type: "matrix",
+              headline: { default: "Rate each feature" },
+              rows: [{ id: "row-1", label: { default: "Speed" } }],
+              columns: [{ id: "col-1", label: { default: "Good" } }],
+            },
+            {
+              id: "el-ranking",
+              type: "ranking",
+              headline: { default: "Rank these" },
+              choices: [
+                { id: "ch-1", label: { default: "Reports" } },
+                { id: "ch-2", label: { default: "Alerts" } },
+              ],
+            },
+            { id: "el-multi", type: "multipleChoiceMulti", headline: { default: "Select features" } },
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+
+    const everyPathResponse = {
+      id: "resp-every-path",
+      createdAt: NOW,
+      data: {
+        "el-text": "Great product!",
+        "el-matrix": { Speed: "Good" },
+        "el-ranking": ["Alerts", "Reports"],
+        "el-multi": ["feat-a", "feat-b"],
+      },
+      language: "default",
+      contact: { userId: "user-42" },
+      finished: true,
+      ttc: { _total: 45_500 },
+      meta: mockMeta,
+    } as unknown as TResponse;
+
+    const everyPathMappings = [
+      createMapping({ elementId: "el-text", hubFieldType: "text" }),
+      createMapping({ elementId: "el-matrix", hubFieldType: "categorical" }),
+      createMapping({ elementId: "el-ranking", hubFieldType: "categorical" }),
+      createMapping({ elementId: "el-multi", hubFieldType: "categorical" }),
+    ];
+
+    const sharedContext = {
+      source: "link",
+      url: "https://app.example.com/s/survey-1",
+      browser: "Chrome",
+      os: "macOS",
+      device: "desktop",
+      country: "PT",
+      action: "Clicked pricing CTA",
+      finished: true,
+      duration_seconds: 46,
+      survey_type: "app",
+    };
+
+    test("publishes the response context on a single-value record", () => {
+      const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
+
+      const result = transformResponseToFeedbackRecords(
+        everyPathResponse,
+        everyPathSurvey,
+        mappings,
+        mockTenantId
+      );
+
+      expect(result).toHaveLength(1);
+      // The generic path published no metadata at all before ENG-1554.
+      expect(result[0].metadata).toEqual(sharedContext);
+    });
+
+    test("keeps question_type alongside the response context on every expanded record", () => {
+      const result = transformResponseToFeedbackRecords(
+        everyPathResponse,
+        everyPathSurvey,
+        everyPathMappings,
+        mockTenantId
+      );
+
+      // Each composite path sets `metadata` after spreading baseFields, so a missing merge silently
+      // drops the response context from exactly these records.
+      expect(result.length).toBeGreaterThan(4);
+      for (const record of result) {
+        expect(record.metadata).toMatchObject(sharedContext);
+      }
+
+      const byField = (id: string) => result.find((record) => record.field_id?.startsWith(id))?.metadata;
+      expect(byField("el-matrix")).toMatchObject({ question_type: "matrix" });
+      expect(byField("el-ranking")).toMatchObject({ question_type: "ranking", total_items: 2 });
+      expect(byField("el-multi")).toMatchObject({ question_type: "multipleChoiceMulti" });
+      expect(byField("el-text")).not.toHaveProperty("question_type");
+    });
+
+    test("never publishes the respondent's IP address on any record", () => {
+      const result = transformResponseToFeedbackRecords(
+        everyPathResponse,
+        everyPathSurvey,
+        everyPathMappings,
+        mockTenantId
+      );
+
+      for (const record of result) {
+        expect(Object.keys(record.metadata ?? {})).not.toContain("ipAddress");
+        expect(Object.values(record.metadata ?? {})).not.toContain(mockMeta.ipAddress);
+      }
+    });
+
+    test("strips the query string from the published url", () => {
+      const result = transformResponseToFeedbackRecords(
+        everyPathResponse,
+        everyPathSurvey,
+        everyPathMappings,
+        mockTenantId
+      );
+
+      // The survey url carries recovery tokens and prefilled answers in its query.
+      for (const record of result) {
+        expect(record.metadata?.url).toBe("https://app.example.com/s/survey-1");
+      }
+    });
+
+    test("omits metadata entirely when the response carries no context", () => {
+      // Hub stores metadata nullable and compares it byte-wise, so sending {} would count as a
+      // change and fire a pointless feedback_record.updated webhook.
+      const bareResponse = {
+        id: "resp-bare",
+        createdAt: NOW,
+        data: { "el-text": "Great product!" },
+        language: "default",
+        meta: {},
+      } as unknown as TResponse;
+      const bareSurvey = { ...everyPathSurvey, type: undefined } as unknown as TSurvey;
+      const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
+
+      const result = transformResponseToFeedbackRecords(bareResponse, bareSurvey, mappings, mockTenantId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).not.toHaveProperty("metadata");
     });
   });
 });

@@ -28,7 +28,7 @@ describe("ZWorkspaceUpdateActionInput", () => {
 
   test("rejects a language the survey runtime ships no strings for", () => {
     // Only in the 215-entry workspace-language catalog, with no survey bundle behind them.
-    for (const defaultSurveyLanguage of ["km-KH", "ne-NP", "aa-ET", "nonsense"]) {
+    for (const defaultSurveyLanguage of ["fa-IR", "aa-ET", "nonsense"]) {
       const result = ZWorkspaceUpdateActionInput.safeParse({ config: { defaultSurveyLanguage } });
       expect(result.success, defaultSurveyLanguage).toBe(false);
       expect(result.error?.issues[0].path).toEqual(["config", "defaultSurveyLanguage"]);

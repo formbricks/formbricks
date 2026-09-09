@@ -56,10 +56,10 @@ describe("resolveDefaultSurveyLanguage", () => {
   test("falls back to the creator's locale when the setting names a language with no strings", () => {
     // Persisted directly into the config JSON, or left behind by a wider picker: the survey runtime
     // ships nothing for these, so they must not reach a survey.
-    expect(resolveDefaultSurveyLanguage({ workspaceDefaultLanguage: "km-KH", userLocale: "fr-FR" })).toBe(
+    expect(resolveDefaultSurveyLanguage({ workspaceDefaultLanguage: "fa-IR", userLocale: "fr-FR" })).toBe(
       "fr-FR"
     );
-    expect(resolveDefaultSurveyLanguage({ workspaceDefaultLanguage: "ne-NP", userLocale: "fr-FR" })).toBe(
+    expect(resolveDefaultSurveyLanguage({ workspaceDefaultLanguage: "aa-ET", userLocale: "fr-FR" })).toBe(
       "fr-FR"
     );
     expect(resolveDefaultSurveyLanguage({ workspaceDefaultLanguage: "nonsense", userLocale: "fr-FR" })).toBe(
@@ -116,6 +116,6 @@ describe("isWorkspaceDefaultSurveyLanguage", () => {
 
   test("a language with no runtime strings is still matched, so its row stays protected", () => {
     // The read path ignores such a default, but if one is stored the row it names must not vanish.
-    expect(isWorkspaceDefaultSurveyLanguage("km-KH", "km-KH")).toBe(true);
+    expect(isWorkspaceDefaultSurveyLanguage("fa-IR", "fa-IR")).toBe(true);
   });
 });

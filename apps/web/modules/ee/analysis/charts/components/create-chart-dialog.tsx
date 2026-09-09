@@ -2,8 +2,7 @@
 
 import { CreateChartView } from "@/modules/ee/analysis/charts/components/create-chart-view";
 import { ChartsQueryClientProvider } from "@/modules/ee/analysis/charts/components/query-client-provider";
-import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
-import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
+import type { AnalyticsResponse, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 export interface CreateChartDialogProps {
   open: boolean;
@@ -12,10 +11,10 @@ export interface CreateChartDialogProps {
   chartId?: string;
   autoAddToDashboardId?: string;
   initialChart?: TChartWithCreator;
+  /** A chart the AI dialog just produced, opened here for review and naming. */
+  generatedChart?: AnalyticsResponse | null;
   onSuccess?: () => void;
   directories: { id: string; name: string }[];
-  isAIAvailable?: boolean;
-  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 export function CreateChartDialog({
@@ -25,10 +24,9 @@ export function CreateChartDialog({
   chartId,
   autoAddToDashboardId,
   initialChart,
+  generatedChart,
   onSuccess,
   directories,
-  isAIAvailable,
-  aiUnavailableReason,
 }: Readonly<CreateChartDialogProps>) {
   return (
     <ChartsQueryClientProvider>
@@ -38,11 +36,10 @@ export function CreateChartDialog({
         workspaceId={workspaceId}
         chartId={chartId}
         initialChart={initialChart}
+        generatedChart={generatedChart}
         autoAddToDashboardId={autoAddToDashboardId}
         onSuccess={onSuccess}
         directories={directories}
-        isAIAvailable={isAIAvailable}
-        aiUnavailableReason={aiUnavailableReason}
       />
     </ChartsQueryClientProvider>
   );

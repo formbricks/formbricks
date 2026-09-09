@@ -7,10 +7,12 @@ import {
   getAISmartToolsUnavailableReason,
   getOrganizationAIConfig,
   isInstanceAIConfigured,
+  streamOrganizationAIObject,
 } from "./service";
 
 const mocks = vi.hoisted(() => ({
   generateObject: vi.fn(),
+  streamObject: vi.fn(),
   generateText: vi.fn(),
   isAiConfigured: vi.fn(),
   classifyAIProviderError: vi.fn(),
@@ -32,6 +34,7 @@ vi.mock("@formbricks/ai", () => ({
     }
   },
   generateObject: mocks.generateObject,
+  streamObject: mocks.streamObject,
   generateText: mocks.generateText,
   isAiConfigured: mocks.isAiConfigured,
   classifyAIProviderError: mocks.classifyAIProviderError,
@@ -323,6 +326,68 @@ describe("AI organization service", () => {
         prompt: "Generate a survey",
       } as any)
     ).rejects.toBe(serverError);
+  });
+
+  describe("streamOrganizationAIObject", () => {
+    // Cast rather than `any`: `@formbricks/ai` is mocked here, so the schema is never read — but the
+    // input type still requires one.
+    const streamInput = () =>
+      ({ organizationId: "org_1", prompt: "Generate", schema: { type: "object" } }) as unknown as Parameters<
+        typeof streamOrganizationAIObject
+      >[0];
+
+    const streamResult = (completion: Promise<unknown>) => {
+      // The service hands this promise back untouched; keep it handled so a rejection asserted on
+      // later does not surface as an unhandled rejection first.
+      completion.catch(() => undefined);
+      return { partialObjectStream: {}, completion };
+    };
+
+    test("a cancelled generation is not an error: no error log, and the rejection is untouched", async () => {
+      // Stop and tab-close both land here. Logging them at error level pages someone for a user
+      // doing exactly what the button offers.
+      const abortError = new Error("The operation was aborted");
+      abortError.name = "AbortError";
+      mocks.streamObject.mockReturnValueOnce(streamResult(Promise.reject(abortError)));
+
+      const result = await streamOrganizationAIObject(streamInput());
+
+      await expect(result.completion).rejects.toBe(abortError);
+      expect(mocks.loggerError).not.toHaveBeenCalled();
+      expect(mocks.classifyAIProviderError).not.toHaveBeenCalled();
+    });
+
+    test("an abort wrapped as a cause is recognised too", async () => {
+      const abortError = new Error("The operation was aborted");
+      abortError.name = "AbortError";
+      const wrapped = new Error("stream failed", { cause: abortError });
+      mocks.streamObject.mockReturnValueOnce(streamResult(Promise.reject(wrapped)));
+
+      const result = await streamOrganizationAIObject(streamInput());
+
+      await expect(result.completion).rejects.toBe(wrapped);
+      expect(mocks.loggerError).not.toHaveBeenCalled();
+    });
+
+    test("a real provider failure still logs and maps a 429", async () => {
+      const quotaError = new Error("Resource exhausted");
+      mocks.classifyAIProviderError.mockReturnValueOnce({
+        statusCode: 429,
+        isQuotaExhausted: true,
+        isRetryable: true,
+        retryAfterSeconds: 30,
+      });
+      mocks.streamObject.mockReturnValueOnce(streamResult(Promise.reject(quotaError)));
+
+      const result = await streamOrganizationAIObject(streamInput());
+
+      await expect(result.completion).rejects.toMatchObject({
+        name: "TooManyRequestsError",
+        message: "ai_quota_exceeded",
+        retryAfter: 30,
+      });
+      expect(mocks.loggerError).toHaveBeenCalled();
+    });
   });
 
   describe("getAISmartToolsUnavailableReason", () => {

@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import {
   DEFAULT_SURVEY_LANGUAGE_CODE,
   isSurveyRuntimeLanguage,
-} from "@formbricks/i18n-utils/src/survey-runtime-languages";
+} from "@formbricks/i18n-utils/survey-runtime-languages";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import type { TWorkspaceConfig } from "@formbricks/types/workspace";
 
