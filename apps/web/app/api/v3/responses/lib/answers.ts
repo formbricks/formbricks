@@ -77,6 +77,9 @@ export const buildAnswerPlan = (
 
 const MAX_DURATION_SECONDS = MAX_RESPONSE_TTC / 1000;
 
+/** The whole-response bucket the server keeps in `ttc` alongside real element ids. */
+const TTC_TOTAL_BUCKET = "_total";
+
 /**
  * Milliseconds to seconds, clamped into the range the contract publishes.
  *
@@ -94,6 +97,42 @@ const toDurationSeconds = (milliseconds: unknown): number | undefined => {
   }
 
   return Math.round(Math.min(Math.max(milliseconds, 0), MAX_RESPONSE_TTC)) / 1000;
+};
+
+/**
+ * The response's total duration: every per-element measurement, summed.
+ *
+ * `_total` is excluded because it is a bucket the server maintains alongside real element ids, so
+ * including it would double-count the whole response. Summing rather than reading it is deliberate
+ * — the bucket is only written when a response finishes, so reading it would leave every partial
+ * response without a duration even when it carries per-element timing.
+ *
+ * Each term goes through the same clamp the per-answer value does, so the total is the sum of the
+ * durations actually published and a single negative legacy entry cannot pull it below its parts.
+ * The total itself is not capped: `MAX_RESPONSE_TTC` is a per-element bound, and the contract
+ * publishes a minimum of 0 with no maximum here.
+ *
+ * `undefined` when nothing usable was recorded, which the contract spells as the field being absent.
+ */
+export const sumV3DurationSeconds = (ttc: TResponseTtc | undefined): number | undefined => {
+  if (!ttc) return undefined;
+
+  let total = 0;
+  let counted = false;
+
+  for (const [key, milliseconds] of Object.entries(ttc)) {
+    if (key === TTC_TOTAL_BUCKET) continue;
+
+    const seconds = toDurationSeconds(milliseconds);
+    if (seconds === undefined) continue;
+
+    total += seconds;
+    counted = true;
+  }
+
+  // Re-rounded: summing values already divided by 1000 reintroduces binary-fraction drift, so a
+  // page of ordinary responses would otherwise carry totals like `12.600000000000001`.
+  return counted ? Math.round(total * 1000) / 1000 : undefined;
 };
 
 const isStringArray = (value: unknown): value is string[] =>

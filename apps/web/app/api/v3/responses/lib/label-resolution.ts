@@ -1,5 +1,4 @@
 import type { TI18nString } from "@formbricks/types/i18n";
-import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
 
 /**
  * Resolving survey labels in the language a response was collected in.
@@ -30,6 +29,19 @@ import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
 const isI18nObject = (value: unknown): value is TI18nString =>
   typeof value === "object" && value !== null && "default" in value;
 
+/**
+ * The two fields this module reads off a survey language.
+ *
+ * Structural rather than `TSurveyLanguage`, because the v3 read select projects only the code —
+ * pulling the whole Prisma `Language` model (ids, timestamps, workspace) into a page query to
+ * satisfy a type would be a real cost for no gain. A full `TSurveyLanguage` still satisfies it, so
+ * the display surfaces pass their own rows unchanged.
+ */
+export interface TV3SurveyLanguageRef {
+  default: boolean;
+  language: { code: string };
+}
+
 /** What a response's language resolves to, for lookups and for disclosure. */
 export interface TV3LabelContext {
   /** The key to index i18n maps with — `"default"` for the survey's default language. */
@@ -56,7 +68,7 @@ export interface TV3LabelContext {
  * with the display surfaces, which resolve the same labels without checking it.
  */
 export const resolveV3LabelContext = (
-  languages: readonly TSurveyLanguage[],
+  languages: readonly TV3SurveyLanguageRef[],
   responseLanguage: string | null
 ): TV3LabelContext => {
   const defaultCode = languages.find((entry) => entry.default)?.language.code ?? null;

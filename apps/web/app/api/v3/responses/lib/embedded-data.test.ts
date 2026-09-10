@@ -30,11 +30,8 @@ const response = (over: Partial<TEmbeddedValueResponse> = {}): TEmbeddedValueRes
     ...over,
   }) as unknown as TEmbeddedValueResponse;
 
-const project = (
-  fields: TLinkedEmbeddedField[],
-  res: TEmbeddedValueResponse,
-  elementIds: string[] = []
-) => serializeEmbeddedData(buildEmbeddedDataPlan(fields, elementIds), res).embeddedData;
+const project = (fields: TLinkedEmbeddedField[], res: TEmbeddedValueResponse, elementIds: string[] = []) =>
+  serializeEmbeddedData(buildEmbeddedDataPlan(fields, elementIds), res).embeddedData;
 
 const unresolvedOf = (fields: TLinkedEmbeddedField[], res: TEmbeddedValueResponse) =>
   serializeEmbeddedData(buildEmbeddedDataPlan(fields), res).unresolved;
@@ -150,11 +147,9 @@ describe("an element id claims the address", () => {
 
   /** Case-sensitive, matching the ingest contract: `Plan` addresses a slot no element claims. */
   test("a hidden field differing only by case is still projected", () => {
-    const entries = project(
-      [declared("Plan", "ingested", "string")],
-      response({ data: { Plan: "gold" } }),
-      ["plan"]
-    );
+    const entries = project([declared("Plan", "ingested", "string")], response({ data: { Plan: "gold" } }), [
+      "plan",
+    ]);
 
     expect(byKey(entries, "Plan")[0]).toMatchObject({ kind: "ingested", value: "gold" });
   });
