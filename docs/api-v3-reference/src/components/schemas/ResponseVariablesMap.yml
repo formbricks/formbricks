@@ -1,8 +1,0 @@
-type: object
-description: >-
-  Survey variable values in their stored form, keyed by variable id. Variables are typed as string or
-  number only.
-additionalProperties:
-  oneOf:
-    - type: string
-    - type: number
