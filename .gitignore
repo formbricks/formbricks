@@ -81,12 +81,13 @@ authzed/*.perf.jsonl
 # next-agents-md
 .next-docs/
 
-# robots (installed agent assets - machine-local, do not commit)
-# .claude is machine-local except committed symlinks into .agents/skills
-.claude/*
-!.claude/skills/
-.claude/skills/*
-!.claude/skills/nextjs-docs
+# Claude Code config under .claude is team-shared and belongs in the repo:
+# settings.json, repo-specific skills, subagents and commands. Company-wide
+# skills are distributed from formbricks/skills, not installed into .claude, so
+# there is nothing machine-local left to ignore here except personal overrides.
+.claude/settings.local.json
+
+# robots design context (machine-local install, not committed)
 .agents/formbricks-context
 
 # v3 API contract tests: generated fixture id map, Schemathesis' local replay cache, and the
