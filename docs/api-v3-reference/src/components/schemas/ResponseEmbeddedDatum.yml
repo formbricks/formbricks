@@ -22,6 +22,12 @@ description: >
     suppression for the other `drop` fields.
 
 
+  Where a survey's own field and a catalog entry share a name, both appear — the declared one as
+  `ingested` or `computed`, the auto-captured one as `reserved` — and `kind` is what tells them
+  apart. Neither shadows the other, because each is a real value the response carries and dropping
+  one would hide data the author can see elsewhere.
+
+
   Which catalog entries appear at all is a third axis, `display`, and this collection carries the ones
   that are not `none`. The `none` set is the response's own identity and timing — `responseId`,
   `surveyId`, `finished`, `language`, `durationSeconds`, `startedAt`, `finishedAt` — every one of
@@ -37,32 +43,21 @@ properties:
   key:
     type: string
     description: >
-      Stable key. Unique within `embeddedData`.
+      The field's **name** — what an author calls it, and the key `embeddedData` on a write accepts.
 
 
-      Uniqueness is a guarantee this API makes rather than one the stored data provides: a survey
-      created before the reserved names were enforced may declare a **hidden field** whose id
-      collides with a catalog field (`country` and `url` are both declarable that way). Where that
-      happens the declared entry wins and the `reserved` one is omitted, matching how recall and
-      logic already resolve the same name.
+      Not the storage key. A hidden field happens to be stored under its name and a variable under
+      its cuid, and that split is a property of the storage layout rather than of the field; exposing
+      it would publish an internal id and make the writable and readable views of one field disagree
+      on how to address it.
 
 
-      A **variable** can never collide, whatever it is called: its key is its cuid, not its name, so
-      a variable named `country` and the reserved `country` occupy different keys and both appear.
-      The variable's name is on `label`.
-
-
-      `reserved` keys are the catalog's own names, which are camelCase — `deviceType`, `utmSource`,
-      `pagePath` — not snake_case.
-
-
-      For `ingested` and `computed` entries the key is the survey link's **storage key**, which is the
-      same string that addresses the value in the writable maps this resource returns: `data` for a
-      hidden field, `variables` for a variable. It is deliberately **not** the Embedded Data library
-      name — that is a different, nullable field, and it is null for every survey-local field, which
-      is the common case. Note the consequence for variables: a variable's storage key is its **cuid**,
-      not its human name, so joining back to `variables` means using this key verbatim and reading the
-      name off `label`.
+      **Unique per `kind`, not across the collection.** A survey created before the reserved names
+      were enforced can declare a hidden field called `country`, and the auto-captured `country`
+      still exists — so the same name can appear once as `ingested` and once as `reserved`. That set
+      is finite and no longer growing: a new declaration may no longer take a reserved name, or the
+      name of a variable or hidden field the survey already has. Key on `(key, kind)` rather than
+      `key` alone, or read the pair you care about.
   kind:
     type: string
     enum:

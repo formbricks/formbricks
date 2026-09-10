@@ -42,8 +42,8 @@ properties:
       pipeline immediately, including Hub ingestion.
   data:
     $ref: ./ResponseDataMap.yml
-  variables:
-    $ref: ./ResponseVariablesMap.yml
+  embeddedData:
+    $ref: ./ResponseEmbeddedDataInput.yml
   ttc:
     $ref: ./ResponseTtcMap.yml
   meta:

@@ -1538,7 +1538,7 @@ paths:
                             type: string
                             label: Plan
                             value: enterprise
-                          - key: clvr1234567890123456789012
+                          - key: score
                             kind: computed
                             type: number
                             label: Score
@@ -1612,8 +1612,6 @@ paths:
                       - ch_2f8a
                       - Podcast
                     plan: enterprise
-                  variables:
-                    clvr1234567890123456789012: 12
               partialResponse:
                 summary: A partial response, still open
                 value:
@@ -2016,11 +2014,11 @@ paths:
       operationId: getResponseV3
       summary: Get a response
       description: |
-        Returns one response in the detailed view — everything the list view carries, plus `contact`, `displayId`, `singleUseId`, and the stored maps `data` and `variables`.
+        Returns one response in the detailed view — everything the list view carries, plus `contact`, `displayId`, `singleUseId`, and the stored answer map `data`.
 
         The workspace is resolved from the response itself, so the caller cannot choose which scope it is authorized against and no `workspaceId` parameter is accepted. An unknown or inaccessible `responseId` answers **403**, not **404**, so response ids cannot be probed for existence.
 
-        **Round-tripping.** This read returns `data` and `variables` in the stored, write-shaped form, so the simplest correction is to take `data`, change one entry and `PATCH` it back. `answers[]` is the typed view of the same information, offered alongside. Independently of that, a client working from a *list* row — which omits the maps — can still rebuild the write-shaped payload: `answers[]`, `embeddedData[]` and `unresolved[]` together carry every stored key and value **verbatim**, with no need to refetch the survey. Two rules make that guarantee hold, and both are contractual:
+        **Round-tripping.** This read returns `data` in the stored, write-shaped form, so the simplest correction is to take it, change one entry and `PATCH` it back. Embedded Data round-trips through `embeddedData[]` instead: the `key` you read is the `key` a write accepts. `answers[]` is the typed view of the same information, offered alongside. Independently of that, a client working from a *list* row — which omits the maps — can still rebuild the write-shaped payload: `answers[]`, `embeddedData[]` and `unresolved[]` together carry every stored key and value **verbatim**, with no need to refetch the survey. Two rules make that guarantee hold, and both are contractual:
 
         `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one.
       tags:
@@ -2184,7 +2182,6 @@ paths:
                         nps_matrix:
                           Support: Gut
                         plan: enterprise
-                      variables: {}
                 anonymous:
                   summary: An anonymous, unfinished response
                   value:
@@ -2217,7 +2214,6 @@ paths:
                       singleUseId: null
                       data:
                         cta_intro: clicked
-                      variables: {}
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -2237,7 +2233,7 @@ paths:
       description: |
         Partially updates a response. Requires read-write access; the workspace is resolved from the response. An unknown or inaccessible `responseId` answers **403**.
 
-        `PATCH` is the only update verb — there is no `PUT`. Within it, `data` and `variables` are replaced wholesale rather than deep-merged, so send the complete map. Unknown top-level keys are rejected with **400** rather than ignored.
+        `PATCH` is the only update verb — there is no `PUT`. Within it, `data` is replaced wholesale rather than deep-merged, so send the complete answer map; `embeddedData` merges by field name. Unknown top-level keys are rejected with **400** rather than ignored.
 
         Setting `finished` to `true` fires the finish side of the response pipeline, including Hub ingestion. Updates otherwise emit `responseUpdated`.
       tags:
@@ -7048,6 +7044,8 @@ components:
           suppression for the other `drop` fields.
 
 
+        Where a survey's own field and a catalog entry share a name, both appear — the declared one as `ingested` or `computed`, the auto-captured one as `reserved` — and `kind` is what tells them apart. Neither shadows the other, because each is a real value the response carries and dropping one would hide data the author can see elsewhere.
+
         Which catalog entries appear at all is a third axis, `display`, and this collection carries the ones that are not `none`. The `none` set is the response's own identity and timing — `responseId`, `surveyId`, `finished`, `language`, `durationSeconds`, `startedAt`, `finishedAt` — every one of which is already a first-class field on the response. Without that filter they would each appear twice in the same payload, once at the top level and once here.
       required:
         - key
@@ -7059,15 +7057,11 @@ components:
         key:
           type: string
           description: |
-            Stable key. Unique within `embeddedData`.
+            The field's **name** — what an author calls it, and the key `embeddedData` on a write accepts.
 
-            Uniqueness is a guarantee this API makes rather than one the stored data provides: a survey created before the reserved names were enforced may declare a **hidden field** whose id collides with a catalog field (`country` and `url` are both declarable that way). Where that happens the declared entry wins and the `reserved` one is omitted, matching how recall and logic already resolve the same name.
+            Not the storage key. A hidden field happens to be stored under its name and a variable under its cuid, and that split is a property of the storage layout rather than of the field; exposing it would publish an internal id and make the writable and readable views of one field disagree on how to address it.
 
-            A **variable** can never collide, whatever it is called: its key is its cuid, not its name, so a variable named `country` and the reserved `country` occupy different keys and both appear. The variable's name is on `label`.
-
-            `reserved` keys are the catalog's own names, which are camelCase — `deviceType`, `utmSource`, `pagePath` — not snake_case.
-
-            For `ingested` and `computed` entries the key is the survey link's **storage key**, which is the same string that addresses the value in the writable maps this resource returns: `data` for a hidden field, `variables` for a variable. It is deliberately **not** the Embedded Data library name — that is a different, nullable field, and it is null for every survey-local field, which is the common case. Note the consequence for variables: a variable's storage key is its **cuid**, not its human name, so joining back to `variables` means using this key verbatim and reading the name off `label`.
+            **Unique per `kind`, not across the collection.** A survey created before the reserved names were enforced can declare a hidden field called `country`, and the auto-captured `country` still exists — so the same name can appear once as `ingested` and once as `reserved`. That set is finite and no longer growing: a new declaration may no longer take a reserved name, or the name of a variable or hidden field the survey already has. Key on `(key, kind)` rather than `key` alone, or read the pair you care about.
         kind:
           type: string
           enum:
@@ -7271,26 +7265,13 @@ components:
     ResponseDataMap:
       type: object
       description: |
-        Answers in their **stored** form: a map keyed by element id (and hidden-field key). The value shape depends on the element type, and it is not uniform — these are the four shapes that actually occur:
+        Answers as stored, **keyed by element id**.
 
-        - **`string`** — `openText` (always a string, even when `inputType` is `number`), `date`
-          (`YYYY-MM-DD`), and the single-token answers `consent` (`accepted`), `cta` (`clicked`) and `cal`
-          (`booked`). A single-choice answer is also a bare string.
+        Hidden-field values do not live here. They are stored in the same underlying map, but that is a storage detail rather than part of this contract: a hidden field is an Embedded Data field, and Embedded Data is addressed by name through `embeddedData`. A hidden field's name appearing as a key here is a 400 naming the key and pointing at `embeddedData`, not a silent write to the wrong namespace.
 
-        - **`number`** — the numeric scales `nps`, `rating`, `csat` and `ces`.
-        - **`array of string`** — three different things: choice **labels** in the respondent's language
-          for `multipleChoiceMulti` and `ranking` (rank order); choice **ids** for `pictureSelection`;
-          private-storage URLs for `fileUpload`; and, for `address` and `contactInfo`, a **positional,
-          fixed-length list of sub-field values** — `address` is 6 slots
-          (`addressLine1`, `addressLine2`, `city`, `state`, `zip`, `country`) and `contactInfo` is 5
-          (`firstName`, `lastName`, `email`, `phone`, `company`), with blanks carried as `""` so the slots
-          stay aligned.
+        Keeping the two apart is what lets the storage layout change underneath — the legacy columns go away eventually — without this contract either following it or breaking a round-trip it promised.
 
-        - **`object`** — `matrix` only, and it is keyed by the **localized row label** with the
-          **localized column label** as the value. Not by row and column id.
-
-
-        Writes take this map, and the detailed read returns it unchanged as `data` on `ResponseResource` — so the simplest correction is to read, edit one entry and `PATCH` it straight back. The list view omits it deliberately. The typed `answers[]` array is offered **alongside** rather than instead, and is a lossless superset — every stored key and value comes back verbatim in `rawValue`, `rawKey`, `valueText`, `valueDate`, `fileUrls` or a composite slot — so even a client holding only a list row can rebuild this map without refetching the survey. See the round-trip note on `GET /api/v3/responses/{responseId}`.
+        The value shapes are the stored ones, and they differ by element type. `ResponseAnswer` documents each; `answers[]` on the read is the resolved view of this same map.
       additionalProperties:
         oneOf:
           - type: string
@@ -7301,13 +7282,35 @@ components:
           - type: object
             additionalProperties:
               type: string
-    ResponseVariablesMap:
+    ResponseEmbeddedDataInput:
       type: object
-      description: Survey variable values in their stored form, keyed by variable id. Variables are typed as string or number only.
+      description: |
+        Embedded Data values to write, **keyed by field name**.
+
+        This is the write counterpart of `embeddedData[]` on the read, and it is keyed the way an author names a field rather than the way storage addresses it. A hidden field is stored under its name but a variable is stored under its cuid, and that split is an implementation detail of the storage layout — the server resolves a name to its storage key through the survey's Embedded Data links, so a caller never sees a cuid and never has to know which kind it is writing.
+
+        **Which kinds are writable:**
+
+        - `ingested` (hidden fields) — accepted, through the same ingest contract the SDK uses: the name
+          must be declared on the survey, the value is coerced to the field's declared `type`, a `locked`
+          field ignores the write, and the whole payload is bounded. A name the survey does not declare is
+          a 400 rather than a silent drop.
+
+        - `computed` (variables) — accepted, because a management caller correcting a response needs to,
+          and v1 and v2 both allow it today.
+
+        - `reserved` — refused. Auto-captured context describes the submission environment, and a
+          caller-supplied value would be fiction. The three exceptions are `source`, `url` and `action`,
+          which `ResponseMetaInput` accepts for exactly the replay case.
+
+
+        Values follow their field's declared type. A field the payload omits is left as it is; this is a merge over named fields, not a replacement of the collection.
       additionalProperties:
         oneOf:
           - type: string
           - type: number
+          - type: boolean
+          - type: 'null'
     ResponseTtcMap:
       type: object
       description: |
@@ -7378,8 +7381,8 @@ components:
           description: 'Whether this response is complete. Creating with `finished: true` fires the finish side of the pipeline immediately, including Hub ingestion.'
         data:
           $ref: '#/components/schemas/ResponseDataMap'
-        variables:
-          $ref: '#/components/schemas/ResponseVariablesMap'
+        embeddedData:
+          $ref: '#/components/schemas/ResponseEmbeddedDataInput'
         ttc:
           $ref: '#/components/schemas/ResponseTtcMap'
         meta:
@@ -7438,7 +7441,6 @@ components:
             - displayId
             - singleUseId
             - data
-            - variables
           properties:
             data:
               allOf:
@@ -7449,10 +7451,6 @@ components:
                 `answers[]` remains the field to read — it is typed, labelled and ordered, and it separates answers from hidden fields. This is the same data in the shape the write side speaks, offered alongside rather than instead.
 
                 Present on the detailed view only. The list view omits it deliberately: on a page of 250 it would carry every answer twice, and a bulk reader is not editing.
-            variables:
-              allOf:
-                - $ref: '#/components/schemas/ResponseVariablesMap'
-              description: Survey variable values in their stored form, as the write side accepts them. Same rationale as `data`; read `embeddedData[]` for the typed, labelled view.
             contact:
               anyOf:
                 - $ref: '#/components/schemas/ResponseContact'
@@ -7472,9 +7470,9 @@ components:
       description: |
         A survey response in the detailed view, as returned by `GET /api/v3/responses/{responseId}` and by the write endpoints. Everything in `ResponseListItem`, plus the identity and provenance fields the list view omits.
 
-        It also carries `data` and `variables` — the resource's **writable state**, returned unchanged, so a client can read a response, edit an answer and send it straight back. That is the property v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is "burdensome for clients, particularly when the JSON data is complex or deeply nested".
+        It also carries `data` — the answers as stored, returned unchanged, so a client can read a response, edit an answer and send it straight back. Embedded Data is not echoed in stored form: `embeddedData[]` is already both the readable and the writable view of it, addressed by name, so a second raw map would only republish the storage layout. That is the property v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is "burdensome for clients, particularly when the JSON data is complex or deeply nested".
 
-        Note which fields carry `readOnly` here and which do not, because it is the opposite of what an "echo" framing would suggest. `readOnly` means a value is managed exclusively by the server, so it marks the **derived** views — `answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the denormalized `surveyName` and `workspaceId`, the timestamps, `durationSeconds` and `id`. `data` and `variables` are *not* read-only: they are exactly what the write endpoints accept, and leaving them unmarked is what makes this representation round-trippable rather than merely informative.
+        Note which fields carry `readOnly` here and which do not, because it is the opposite of what an "echo" framing would suggest. `readOnly` means a value is managed exclusively by the server, so it marks the **derived** views — `answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the denormalized `surveyName` and `workspaceId`, the timestamps, `durationSeconds` and `id`. `data` is *not* read-only: it is exactly what the write endpoints accept, and leaving it unmarked is what makes this representation round-trippable rather than merely informative.
 
         To correct one answer, read this resource, take `data`, change the entry you want and `PATCH` `{ "data": … }`. Send only the fields you are changing — `PATCH` rejects unknown and non-patchable keys, so passing the whole representation back verbatim is not the intended flow; passing `data` back is.
 
@@ -7501,7 +7499,7 @@ components:
       description: |
         Partially updates a response. Strict at the top level: unknown keys return **400** rather than being ignored, and at least one patchable field must be present.
 
-        `data` and `variables` are **replaced wholesale**, not deep-merged — send the complete map you want stored. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
+        `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
 
         Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`, `displayId`, `singleUseId`, `contactAttributes`, and the create-only `ttc` and `meta` — timing and submission context describe the original submission event, so they are set once and not revised. `contactId` is create-only deliberately — re-attributing an existing response to a different person is a capability only v2 offers, and it is not carried forward.
       minProperties: 1
@@ -7518,8 +7516,8 @@ components:
             - 'null'
         data:
           $ref: '#/components/schemas/ResponseDataMap'
-        variables:
-          $ref: '#/components/schemas/ResponseVariablesMap'
+        embeddedData:
+          $ref: '#/components/schemas/ResponseEmbeddedDataInput'
         tags:
           type: array
           description: Complete set of tag ids for this response, replacing whatever is currently applied. Tags must already exist in the same workspace — create them via `POST /api/v3/tags`.

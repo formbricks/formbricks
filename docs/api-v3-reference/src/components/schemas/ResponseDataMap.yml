@@ -1,34 +1,21 @@
 type: object
 description: >
-  Answers in their **stored** form: a map keyed by element id (and hidden-field key). The value shape
-  depends on the element type, and it is not uniform — these are the four shapes that actually occur:
+  Answers as stored, **keyed by element id**.
 
 
-  - **`string`** — `openText` (always a string, even when `inputType` is `number`), `date`
-    (`YYYY-MM-DD`), and the single-token answers `consent` (`accepted`), `cta` (`clicked`) and `cal`
-    (`booked`). A single-choice answer is also a bare string.
-
-  - **`number`** — the numeric scales `nps`, `rating`, `csat` and `ces`.
-
-  - **`array of string`** — three different things: choice **labels** in the respondent's language
-    for `multipleChoiceMulti` and `ranking` (rank order); choice **ids** for `pictureSelection`;
-    private-storage URLs for `fileUpload`; and, for `address` and `contactInfo`, a **positional,
-    fixed-length list of sub-field values** — `address` is 6 slots
-    (`addressLine1`, `addressLine2`, `city`, `state`, `zip`, `country`) and `contactInfo` is 5
-    (`firstName`, `lastName`, `email`, `phone`, `company`), with blanks carried as `""` so the slots
-    stay aligned.
-
-  - **`object`** — `matrix` only, and it is keyed by the **localized row label** with the
-    **localized column label** as the value. Not by row and column id.
+  Hidden-field values do not live here. They are stored in the same underlying map, but that is a
+  storage detail rather than part of this contract: a hidden field is an Embedded Data field, and
+  Embedded Data is addressed by name through `embeddedData`. A hidden field's name appearing as a key
+  here is a 400 naming the key and pointing at `embeddedData`, not a silent write to the wrong
+  namespace.
 
 
-  Writes take this map, and the detailed read returns it unchanged as `data` on `ResponseResource` —
-  so the simplest correction is to read, edit one entry and `PATCH` it straight back. The list view
-  omits it deliberately. The typed `answers[]` array is offered **alongside** rather than instead,
-  and is a lossless superset — every stored key and value comes back verbatim in `rawValue`,
-  `rawKey`, `valueText`, `valueDate`, `fileUrls` or a composite slot — so even a client holding only
-  a list row can rebuild this map without refetching the survey. See the round-trip note on
-  `GET /api/v3/responses/{responseId}`.
+  Keeping the two apart is what lets the storage layout change underneath — the legacy columns go
+  away eventually — without this contract either following it or breaking a round-trip it promised.
+
+
+  The value shapes are the stored ones, and they differ by element type. `ResponseAnswer` documents
+  each; `answers[]` on the read is the resolved view of this same map.
 additionalProperties:
   oneOf:
     - type: string

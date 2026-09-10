@@ -6,7 +6,6 @@ allOf:
       - displayId
       - singleUseId
       - data
-      - variables
     properties:
       data:
         allOf:
@@ -26,12 +25,6 @@ allOf:
 
           Present on the detailed view only. The list view omits it deliberately: on a page of 250
           it would carry every answer twice, and a bulk reader is not editing.
-      variables:
-        allOf:
-          - $ref: ./ResponseVariablesMap.yml
-        description: >-
-          Survey variable values in their stored form, as the write side accepts them. Same rationale
-          as `data`; read `embeddedData[]` for the typed, labelled view.
       contact:
         anyOf:
           - $ref: ./ResponseContact.yml
@@ -59,8 +52,10 @@ description: >
   list view omits.
 
 
-  It also carries `data` and `variables` — the resource's **writable state**, returned unchanged, so
-  a client can read a response, edit an answer and send it straight back. That is the property v1/v2
+  It also carries `data` — the answers as stored, returned unchanged, so a client can read a
+  response, edit an answer and send it straight back. Embedded Data is not echoed in stored form:
+  `embeddedData[]` is already both the readable and the writable view of it, addressed by name, so a
+  second raw map would only republish the storage layout. That is the property v1/v2
   had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating
   `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is
   "burdensome for clients, particularly when the JSON data is complex or deeply nested".
@@ -70,9 +65,8 @@ description: >
   "echo" framing would suggest. `readOnly` means a value is managed exclusively by the server, so it
   marks the **derived** views — `answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the
   denormalized `surveyName` and `workspaceId`, the timestamps, `durationSeconds` and `id`.
-  `data` and `variables` are *not* read-only: they are exactly what the write endpoints accept, and
-  leaving them unmarked is what makes this representation round-trippable rather than merely
-  informative.
+  `data` is *not* read-only: it is exactly what the write endpoints accept, and leaving it unmarked
+  is what makes this representation round-trippable rather than merely informative.
 
 
   To correct one answer, read this resource, take `data`, change the entry you want and `PATCH`

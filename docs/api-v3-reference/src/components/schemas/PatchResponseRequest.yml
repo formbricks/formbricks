@@ -4,8 +4,9 @@ description: >
   being ignored, and at least one patchable field must be present.
 
 
-  `data` and `variables` are **replaced wholesale**, not deep-merged — send the complete map you want
-  stored. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
+  `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored.
+  `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the
+  payload omits keeps its value rather than being cleared. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
 
 
   Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`,
@@ -27,8 +28,8 @@ properties:
       - "null"
   data:
     $ref: ./ResponseDataMap.yml
-  variables:
-    $ref: ./ResponseVariablesMap.yml
+  embeddedData:
+    $ref: ./ResponseEmbeddedDataInput.yml
   tags:
     type: array
     description: >-

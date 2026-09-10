@@ -3,7 +3,7 @@ get:
   summary: Get a response
   description: >
     Returns one response in the detailed view — everything the list view carries, plus `contact`,
-    `displayId`, `singleUseId`, and the stored maps `data` and `variables`.
+    `displayId`, `singleUseId`, and the stored answer map `data`.
 
 
     The workspace is resolved from the response itself, so the caller cannot choose which scope it is
@@ -11,8 +11,9 @@ get:
     `responseId` answers **403**, not **404**, so response ids cannot be probed for existence.
 
 
-    **Round-tripping.** This read returns `data` and `variables` in the stored, write-shaped form,
-    so the simplest correction is to take `data`, change one entry and `PATCH` it back. `answers[]`
+    **Round-tripping.** This read returns `data` in the stored, write-shaped form, so the simplest
+    correction is to take it, change one entry and `PATCH` it back. Embedded Data round-trips
+    through `embeddedData[]` instead: the `key` you read is the `key` a write accepts. `answers[]`
     is the typed view of the same information, offered alongside. Independently of that, a client
     working from a *list* row — which omits the maps — can still rebuild the write-shaped payload:
     `answers[]`, `embeddedData[]` and `unresolved[]` together carry every stored key and value
@@ -187,7 +188,6 @@ get:
                     nps_matrix:
                       Support: Gut
                     plan: enterprise
-                  variables: {}
             anonymous:
               summary: An anonymous, unfinished response
               value:
@@ -220,7 +220,6 @@ get:
                   singleUseId: null
                   data:
                     cta_intro: clicked
-                  variables: {}
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":
@@ -242,8 +241,8 @@ patch:
     response. An unknown or inaccessible `responseId` answers **403**.
 
 
-    `PATCH` is the only update verb — there is no `PUT`. Within it, `data` and `variables` are
-    replaced wholesale rather than deep-merged, so send the complete map. Unknown top-level keys are
+    `PATCH` is the only update verb — there is no `PUT`. Within it, `data` is replaced wholesale
+    rather than deep-merged, so send the complete answer map; `embeddedData` merges by field name. Unknown top-level keys are
     rejected with **400** rather than ignored.
 
 
