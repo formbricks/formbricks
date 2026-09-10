@@ -155,7 +155,12 @@ const seed = async () => {
     },
   });
 
-  return { workspaceId: workspace.id, surveyId: survey.id, responseId: response.id };
+  return {
+    workspaceId: workspace.id,
+    surveyId: survey.id,
+    responseId: response.id,
+    variableStorageKey: scoreVariable.id,
+  };
 };
 
 const readAndSerialize = async (responseId: string) => {
@@ -260,7 +265,9 @@ describe("the v3 read path against real Postgres", () => {
 
     expect(byKey.plan).toMatchObject({ kind: "ingested", value: "enterprise" });
     expect(byKey.score).toMatchObject({ kind: "computed" });
-    expect(listItem.embeddedData.some((entry) => entry.key.startsWith("c"))).toBe(false);
+    // The variable's own cuid, which is what storage keys it by — publishing it would leak an
+    // internal id and make the read and write disagree on how to address one field.
+    expect(listItem.embeddedData.map((entry) => entry.key)).not.toContain(seeded.variableStorageKey);
   });
 
   test("labels resolve in the language the response was collected in", async () => {
@@ -291,15 +298,19 @@ describe("the v3 read path against real Postgres", () => {
     expect(listItem.durationSeconds).toBe(4);
   });
 
-  /** The detail view returns the stored map verbatim, because it is what PATCH accepts. */
-  test("the detail view returns the stored data map unchanged", async () => {
+  /**
+   * The detail view carries the answers as stored — values unreshaped, because the map is what
+   * PATCH accepts — but only the keys that are answers. `plan` is a declared hidden field, which
+   * PATCH refuses with a 422, so echoing it would hand back bytes the write side rejects. `q1` is
+   * kept even though a field declares that name too, because an element claims the address.
+   */
+  test("the detail view carries answer values unreshaped, and withholds declared keys", async () => {
     const { resource } = await readAndSerialize(seeded.responseId);
 
     expect(resource.data).toEqual({
       q1: "the respondent's own answer",
       q2: "Pro",
       q3: ["Ackerstr. 1", "", "Berlin", "", "10115", "Deutschland"],
-      plan: "enterprise",
     });
   });
 });
