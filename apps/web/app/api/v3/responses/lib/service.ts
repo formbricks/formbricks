@@ -2,8 +2,10 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
 import { deleteDisplay } from "@/lib/display/service";
+import { inlineSurveyEmbeddedFields, selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
 
@@ -309,4 +311,104 @@ export async function deleteScopedResponses(
   }
 
   return result;
+}
+
+/**
+ * What a v3 read needs off a `Response` row.
+ *
+ * Narrower than v1's `responseSelection` in two ways that matter.
+ *
+ * `contactAttributes` is absent. The contract says the snapshot is never exposed in either view, and
+ * nothing in the read path consumes it — `contact.userId` is the only identity the payload carries.
+ *
+ * The contact's attributes are **scoped to the one key** rather than pulled wholesale. v1 selects
+ * every attribute for every response and then finds `userId` in JavaScript
+ * (`lib/response/service.ts:69-76`, `:92-99`), which moves a workspace's entire contact PII through
+ * the query for one string, on every row of every page.
+ *
+ * `meta` **is** selected here, unlike on the delete path: the reserved half of `embeddedData[]` reads
+ * from it. It is an input to the projection, never echoed — the projection drops `ipAddress` and
+ * everything the catalog marks `display: "none"`.
+ */
+export const v3ResponseReadSelect = {
+  id: true,
+  surveyId: true,
+  createdAt: true,
+  updatedAt: true,
+  finished: true,
+  endingId: true,
+  language: true,
+  data: true,
+  variables: true,
+  ttc: true,
+  meta: true,
+  displayId: true,
+  singleUseId: true,
+  contact: {
+    select: {
+      id: true,
+      attributes: {
+        where: { attributeKey: { key: "userId" } },
+        select: { value: true },
+      },
+    },
+  },
+  tags: { select: { tag: { select: { id: true, name: true } } } },
+} satisfies Prisma.ResponseSelect;
+
+export type TV3ResponseRow = Prisma.ResponseGetPayload<{ select: typeof v3ResponseReadSelect }>;
+
+/**
+ * What a v3 read needs off the `Survey` the response belongs to.
+ *
+ * `blocks` and `questions` are both selected because the file-upload and element lookups read
+ * `blocks` while `questions` only says whether a legacy survey exists to warn about. `languages`
+ * carries what resolves the response's label language. `embeddedDataLinks` uses the shared constant
+ * so the ordering rule stays decided in one place — see its own comment.
+ */
+export const v3ResponseSurveySelect = {
+  id: true,
+  name: true,
+  workspaceId: true,
+  updatedAt: true,
+  blocks: true,
+  questions: true,
+  languages: {
+    select: { default: true, enabled: true, language: { select: { code: true } } },
+  },
+  embeddedDataLinks: selectSurveyEmbeddedDataLinks,
+} satisfies Prisma.SurveySelect;
+
+export type TV3ResponseSurveyRow = Prisma.SurveyGetPayload<{ select: typeof v3ResponseSurveySelect }> & {
+  embeddedFields: TLinkedEmbeddedField[] | undefined;
+};
+
+/**
+ * Load every survey a page of responses refers to, in one query.
+ *
+ * A page is up to 250 responses and may span every survey in the workspace, so this is the difference
+ * between one query and 250. `getSurvey` is not an option even though it looks like one: it is
+ * `reactCache`-wrapped, which dedupes the *same* id within a request and does nothing for distinct
+ * ones, and it runs `selectSurvey` with five relations the serializer never reads.
+ *
+ * Returns a map so the caller indexes by `surveyId` without a second pass. Ids with no surviving
+ * survey are simply absent — a response whose survey was deleted cannot be serialized against a
+ * definition, and the caller decides what that means rather than this function inventing an answer.
+ */
+export async function getV3ResponseSurveys(
+  surveyIds: readonly string[]
+): Promise<Map<string, TV3ResponseSurveyRow>> {
+  const unique = [...new Set(surveyIds)];
+  if (unique.length === 0) {
+    return new Map();
+  }
+
+  const surveys = await prisma.survey.findMany({
+    where: { id: { in: unique } },
+    select: v3ResponseSurveySelect,
+  });
+
+  return new Map(
+    surveys.map((survey) => [survey.id, { ...survey, embeddedFields: inlineSurveyEmbeddedFields(survey) }])
+  );
 }

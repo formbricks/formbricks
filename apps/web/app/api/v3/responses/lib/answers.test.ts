@@ -1,6 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import type { TSurveyBlock, TSurveyElement } from "@formbricks/types/surveys/blocks";
+import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { buildAnswerPlan, serializeAnswers } from "./answers";
+import type { TV3ResponseAnswer } from "./resources";
 
 vi.mock("server-only", () => ({}));
 
@@ -24,6 +26,30 @@ const answer = (elements: TSurveyElement[], data: Record<string, unknown>, ttc?:
   const { answers, unresolved } = only(elements, data, ttc);
   expect(unresolved, `unexpected unresolved: ${JSON.stringify(unresolved)}`).toEqual([]);
   return answers[0];
+};
+
+/**
+ * Narrow the answer union to the variant carrying a given value field.
+ *
+ * `answers[0]` is the nine-member union, so `.selections` / `.fields` / `.rows` are not reachable on
+ * it. `Extract<…, { elementType: "x" }>` does not work here: the grouped variants declare
+ * `elementType` as a four-literal enum, so extracting on one literal yields `never` and every access
+ * below it silently types as `never` while still compiling. The `in` operator narrows on the field
+ * that actually distinguishes them.
+ */
+const withSelections = (answer: TV3ResponseAnswer) => {
+  if (!("selections" in answer)) throw new Error(`expected a choice answer, got ${answer.elementType}`);
+  return answer;
+};
+
+const withFields = (answer: TV3ResponseAnswer) => {
+  if (!("fields" in answer)) throw new Error(`expected a composite answer, got ${answer.elementType}`);
+  return answer;
+};
+
+const withRows = (answer: TV3ResponseAnswer) => {
+  if (!("rows" in answer)) throw new Error(`expected a matrix answer, got ${answer.elementType}`);
+  return answer;
 };
 
 describe("serializeAnswers — one branch per element type", () => {
@@ -121,7 +147,7 @@ describe("composite answers keep every slot", () => {
    * blank shifts every later value onto the wrong field and makes the stored array unreconstructable.
    */
   test("address emits all six slots in storage order, blanks included", () => {
-    const result = answer([address], { q1: ["Rua A", "", "Lisboa", "", "1000-001", "PT"] });
+    const result = withFields(answer([address], { q1: ["Rua A", "", "Lisboa", "", "1000-001", "PT"] }));
 
     expect(result.fields.map((f: { fieldId: string }) => f.fieldId)).toEqual([
       "addressLine1",
@@ -137,13 +163,13 @@ describe("composite answers keep every slot", () => {
   });
 
   test("the sub-field label comes from the element's placeholder", () => {
-    const result = answer([address], { q1: ["Rua A", "", "", "", "", ""] });
+    const result = withFields(answer([address], { q1: ["Rua A", "", "", "", "", ""] }));
 
     expect(result.fields[0]).toMatchObject({ fieldId: "addressLine1", fieldLabel: "Street" });
   });
 
   test("a short stored array still yields every slot, padded", () => {
-    const result = answer([address], { q1: ["Rua A"] });
+    const result = withFields(answer([address], { q1: ["Rua A"] }));
 
     expect(result.fields).toHaveLength(6);
     expect(result.fields[3]).toMatchObject({ fieldId: "state", valueText: "" });
@@ -161,7 +187,7 @@ describe("composite answers keep every slot", () => {
     });
 
     expect(
-      answer([el], { q1: ["Ada", "L", "a@b.c", "", ""] }).fields.map((f: { fieldId: string }) => f.fieldId)
+      withFields(answer([el], { q1: ["Ada", "L", "a@b.c", "", ""] })).fields.map((f) => f.fieldId)
     ).toEqual(["firstName", "lastName", "email", "phone", "company"]);
   });
 });
@@ -179,7 +205,7 @@ describe("choice resolution follows id → label → other → unmatched", () =>
   });
 
   test("a stored label resolves to its option", () => {
-    expect(answer([withOther], { q1: "Green" }).selections[0]).toMatchObject({
+    expect(withSelections(answer([withOther], { q1: "Green" })).selections[0]).toMatchObject({
       optionId: "c2",
       optionLabel: "Green",
       match: "label",
@@ -187,7 +213,7 @@ describe("choice resolution follows id → label → other → unmatched", () =>
   });
 
   test("a stored id resolves exactly, and takes precedence over label matching", () => {
-    expect(answer([withOther], { q1: "c1" }).selections[0]).toMatchObject({
+    expect(withSelections(answer([withOther], { q1: "c1" })).selections[0]).toMatchObject({
       optionId: "c1",
       optionLabel: "Blue",
       match: "exact",
@@ -195,7 +221,7 @@ describe("choice resolution follows id → label → other → unmatched", () =>
   });
 
   test("a write-in on an element that offers Other reports `other`", () => {
-    expect(answer([withOther], { q1: "Teal" }).selections[0]).toMatchObject({
+    expect(withSelections(answer([withOther], { q1: "Teal" })).selections[0]).toMatchObject({
       optionId: null,
       optionLabel: null,
       rawValue: "Teal",
@@ -208,7 +234,7 @@ describe("choice resolution follows id → label → other → unmatched", () =>
    * byte-identical as stored, so an element with no Other input must never claim one.
    */
   test("an unresolvable value on an element with no Other reports `unmatched`, not `other`", () => {
-    expect(answer([withoutOther], { q1: "Teal" }).selections[0]).toMatchObject({
+    expect(withSelections(answer([withoutOther], { q1: "Teal" })).selections[0]).toMatchObject({
       rawValue: "Teal",
       match: "unmatched",
       optionId: null,
@@ -216,7 +242,7 @@ describe("choice resolution follows id → label → other → unmatched", () =>
   });
 
   test("the value survives even when nothing resolves", () => {
-    expect(answer([withoutOther], { q1: "Teal" }).selections[0].rawValue).toBe("Teal");
+    expect(withSelections(answer([withoutOther], { q1: "Teal" })).selections[0].rawValue).toBe("Teal");
   });
 
   test("multipleChoiceMulti resolves each entry independently", () => {
@@ -225,7 +251,7 @@ describe("choice resolution follows id → label → other → unmatched", () =>
       type: "multipleChoiceMulti",
       choices: [choice("c1", "Blue"), choice("other", "Other")],
     });
-    const selections = answer([el], { q1: ["Blue", "Chartreuse"] }).selections;
+    const selections = withSelections(answer([el], { q1: ["Blue", "Chartreuse"] })).selections;
 
     expect(selections.map((s: { match: string }) => s.match)).toEqual(["label", "other"]);
   });
@@ -241,7 +267,7 @@ describe("choice resolution follows id → label → other → unmatched", () =>
       ],
     });
 
-    expect(answer([el], { q1: ["p2"] }).selections[0]).toMatchObject({
+    expect(withSelections(answer([el], { q1: ["p2"] })).selections[0]).toMatchObject({
       optionId: "p2",
       optionLabel: null,
       match: "exact",
@@ -254,9 +280,9 @@ describe("choice resolution follows id → label → other → unmatched", () =>
       type: "ranking",
       choices: [choice("c1", "Speed"), choice("c2", "Price"), choice("c3", "Support")],
     });
-    const selections = answer([el], { q1: ["Support", "Speed", "Price"] }).selections;
+    const selections = withSelections(answer([el], { q1: ["Support", "Speed", "Price"] })).selections;
 
-    expect(selections.map((s: { rank: number; optionId: string }) => [s.rank, s.optionId])).toEqual([
+    expect(selections.map((s) => [s.rank, s.optionId])).toEqual([
       [1, "c3"],
       [2, "c1"],
       [3, "c2"],
@@ -264,7 +290,7 @@ describe("choice resolution follows id → label → other → unmatched", () =>
   });
 
   test("no rank is emitted for non-ranking selections", () => {
-    expect(answer([withOther], { q1: "Blue" }).selections[0]).not.toHaveProperty("rank");
+    expect(withSelections(answer([withOther], { q1: "Blue" })).selections[0]).not.toHaveProperty("rank");
   });
 });
 
@@ -277,7 +303,7 @@ describe("matrix is keyed by localized labels, never ids", () => {
   });
 
   test("resolves both sides and keeps the stored key verbatim", () => {
-    const rows = answer([el], { q1: { Speed: "Good" } }).rows;
+    const rows = withRows(answer([el], { q1: { Speed: "Good" } })).rows;
 
     expect(rows[0]).toMatchObject({
       rawKey: "Speed",
@@ -291,7 +317,7 @@ describe("matrix is keyed by localized labels, never ids", () => {
   });
 
   test("a row that no longer resolves falls back to the stored key and nulls the ids", () => {
-    const rows = answer([el], { q1: { Reliability: "Excellent" } }).rows;
+    const rows = withRows(answer([el], { q1: { Reliability: "Excellent" } })).rows;
 
     expect(rows[0]).toMatchObject({
       rawKey: "Reliability",
@@ -401,7 +427,6 @@ describe("labels resolve in the response's language", () => {
       choices: [{ id: "c1", label: i18n("Blue", { de: "Blau" }) }],
     });
     const { answers } = serializeAnswers(planFor([el], "de"), { q1: "Blau" } as never, undefined);
-
-    expect(answers[0].selections[0]).toMatchObject({ optionId: "c1", match: "label" });
+    expect(withSelections(answers[0]).selections[0]).toMatchObject({ optionId: "c1", match: "label" });
   });
 });
