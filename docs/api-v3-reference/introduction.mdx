@@ -35,83 +35,91 @@ them; the operation pages document the API-key contract.
 
 ### Self-hosted instances
 
-Substitute your own origin, and note that Feedback Records is the one part of v3 that needs the API gateway
-routed to it, because it is served by the gateway rather than the application:
+Substitute your own origin. Every v3 operation is served by the Formbricks application, so there is nothing
+to route or enable — earlier releases needed the API gateway for Feedback Records, and no longer do.
 
-- **Kubernetes / Helm** — off by default. Set `envoy.enabled: true` and
-  `envoy.formbricks.routes.feedbackRecords: true`. Enabling the route also installs its authorization policy,
-  so the two cannot drift apart.
-- **One-click Docker** — the installer writes the Traefik routes for you, so it works out of the box.
-- **Formbricks Cloud** — already enabled.
+Feedback Records additionally need the feedback store reachable, since that is where the records live:
 
-The quickest way to tell whether an instance has it: an unauthenticated `GET /api/v3/feedbackRecords` answers
-`401` when the route is live, and `404` when it is not routed and the request falls through to the application.
+- **One-click Docker** — configured by the installer.
+- **Kubernetes / Helm** — the chart deploys the store by default (`hub.enabled`); to use one you already run,
+  disable it and point `HUB_API_URL` and `HUB_API_KEY` at yours.
+- **Formbricks Cloud** — ready to use.
+
+The organization also has to hold the Unify Feedback entitlement; without it every feedback operation answers
+`403`.
 
 ## Feedback Records
 
-A [Feedback Record](/unify-feedback/feedback-records) is one piece of feedback in a normalized shape, stored in a
-[Feedback Dataset](/unify-feedback/feedback-datasets). The eight operations under `/api/v3/feedbackRecords` let
-you list, filter, search, create, correct and delete them.
+A [Feedback Record](/unify-feedback/feedback-records) is one piece of feedback in a normalized shape, stored in
+a [Feedback Dataset](/unify-feedback/feedback-datasets). Nine operations under `/api/v3/feedback-records` and
+`/api/v3/feedback-datasets` let you list, filter, count, search, create, correct and delete them.
 
-They are served by the **API gateway** rather than by the application routes that serve the rest of v3: the
-gateway authenticates you, checks that the API key may act on the dataset, then forwards the call to the
-feedback store. Three things follow from that, and they trip people up.
+They follow the same conventions as the rest of v3 — camelCase members and enum values, `{data}` and
+`{data, meta}` envelopes, `filter[member][op]` filters, RFC 9457 problem responses — so most of what used to
+be worth explaining here no longer is. What is left is the part that is specific to feedback.
 
-### `tenant_id` is your dataset id
+### Finding a dataset id
 
-The wire name for the dataset is **`tenant_id`**. It is required on every collection operation — as a query
-parameter on `GET` and `DELETE /api/v3/feedbackRecords`, in the JSON body on `POST /api/v3/feedbackRecords` and
-`POST /api/v3/feedbackRecords/search/semantic`. Single-record operations (`/{id}`, `/{id}/similar`) do not take
-it: the gateway resolves the dataset from the record.
+Every operation is scoped by `workspaceId`. `datasetId` is optional: a workspace reaches at most one active
+dataset, so `workspaceId` alone normally resolves it, and you only need to name a dataset when a workspace
+reaches more than one.
 
-The dataset id is not shown in the app today. Get it from the MCP server's `list_feedback_datasets` tool, which
-reports it as `dataset_id`, or ask your Formbricks contact.
+`GET /api/v3/feedback-datasets?workspaceId=<workspaceId>` lists the ids. The dataset id is not shown anywhere
+in the app, so this is the way to find it.
 
-### Field names are `snake_case`
+### Ids cannot be probed
 
-The payload is the feedback store's own, passed through unchanged, so members and filters are `snake_case`
-(`value_text`, `submission_id`, `created_since`) where the rest of v3 is camelCase. Filters on a value read off a
-response use the same name as the response.
+A dataset or record you have no permission for answers **403**, not 404 — and identically to one that does not
+exist, so a refusal never tells you whether an id is real. There is no `404` anywhere on this surface. A record
+deleted while you were editing it answers `403` too, for the same reason.
 
-### Errors come in two shapes
+### Semantic search needs an embedding model
 
-| Layer | Statuses | Body |
-| ---------------- | --------------------------------------------- | ------------------------------------------------------------ |
-| Gateway refusals | `400`, `401`, `403`, `503` | `text/plain` — a constant message such as `Forbidden` |
-| Proxy refusal | `413` | `text/plain`, but the body is not contractual — see below |
-| Feedback store | `400`, `404`, `409`, `500`, `503` | `application/problem+json` with a stable `code` to branch on |
+`POST /api/v3/feedback-records/search/semantic` and `GET /api/v3/feedback-records/{feedbackRecordId}/similar`
+compare embeddings, which are computed asynchronously after a record is stored. Two answers are specific to
+them:
 
-An unknown dataset or record id is a `403` rather than a `404`, so ids cannot be probed, and any path under
-`/api/v3/feedbackRecords` that is not one of the eight answers `400`. The `404`s that do exist all come from the
-store: on `/{id}/similar` for a record that has no embedding yet, and on the single-record operations for a
-record deleted in the last minute — the gateway caches the record's dataset for 60 seconds, so during that
-window the call is still authorized and reaches a store that no longer has the record.
-
-The `413` is the one refusal the application does not write itself: the proxy in front of it stops reading the
-body at 1 MiB and answers on its own, so branch on that status rather than on its body.
+- **409** — the record exists but has no embedding yet. Retry: embedding is queued, so how long it takes
+  depends on how much is queued ahead of it.
+- **503** — the instance has no embedding model configured at all, so neither operation can ever work. On
+  self-hosted, that is `EMBEDDING_PROVIDER` and `EMBEDDING_MODEL` on the feedback store.
 
 ### Permissions
 
-| Operation | API key permission on a workspace the dataset is assigned to |
-| ------------------------------------------------- | ----------------------------------------------------------- |
-| List, get, semantic search, similar records | `read` |
+| Operations | API key permission on a workspace the dataset is assigned to |
+| ------------------------------------------------------- | ----------- |
+| List, count, get, list datasets, semantic search, similar | `read` |
 | Create, update | `write` |
-| Delete one record, delete a user's records | `manage` |
+| Delete | `manage` |
 
 An API key may **update or delete** only in a dataset assigned to exactly one workspace. On a shared dataset no
 workspace permission can say whose records they are, so those calls answer `403`; reading and creating stay
-allowed. The organization must hold the Unify Feedback entitlement.
+allowed.
 
 ### Example
 
 ```bash
-# The 20 most recent negative text answers in a dataset
-curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&field_type=text&sentiment=negative&sentiment=very_negative&limit=20" \
-  -H "x-api-key: $FORMBRICKS_API_KEY"
+# The 20 most recent negative text answers in a workspace's dataset
+curl -G "https://app.formbricks.com/api/v3/feedback-records" \
+  -H "x-api-key: $FORMBRICKS_API_KEY" \
+  --data-urlencode "workspaceId=<workspaceId>" \
+  --data-urlencode "filter[fieldType][in]=text" \
+  --data-urlencode "filter[sentiment][in]=negative" \
+  --data-urlencode "filter[sentiment][in]=veryNegative" \
+  --data-urlencode "limit=20"
 ```
 
-Pagination is keyset: pass the response's `next_cursor` back as `cursor` with the same `sort` and `order`. It is
-absent on the last page.
+Repeat a filter to OR its values, as `filter[sentiment][in]` does above. Pagination is keyset: pass
+`meta.nextCursor` back as `cursor`, keeping `sortBy` identical for the whole traversal. It is `null` on the last
+page.
+
+### The feedback store's own path
+
+`/v1/feedback-records` also answers on your Formbricks origin. It is the feedback store's own path, kept working
+for callers pointing the [Hub TypeScript SDK](https://github.com/formbricks/hub-typescript) at a Formbricks
+instance, and it forwards requests unchanged — so it speaks the store's `snake_case` contract, not this one.
+
+It is a compatibility path and will not gain new operations. Use `/api/v3/feedback-records`.
 
 ## Feedback
 
