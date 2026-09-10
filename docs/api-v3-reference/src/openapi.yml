@@ -140,9 +140,9 @@ info:
 
     Of those two, only `data` carries no `readOnly`, because it is the same map on the way in and on
     the way out. Embedded Data is writable through the **request's own** `embeddedData` map, not
-    through the response field of that name — so the derived views (`answers[]`,
-    `embeddedData[]`, `unresolved[]`, `resolution`, the timestamps) are all marked `readOnly`, per
-    its meaning of server-managed.
+    through the response field of that name — so `embeddedData[]`, like every other derived view on
+    the resource, is marked `readOnly`, per its meaning of server-managed. `ResponseResource` lists
+    them all.
     The list view omits `data`, since a bulk reader is not editing.
     `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what
     a write would do, before committing to it.

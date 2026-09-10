@@ -61,12 +61,18 @@ description: >
   "burdensome for clients, particularly when the JSON data is complex or deeply nested".
 
 
-  They are not the *same* view, and both differences are deliberate. A write accepts `ingested` and
+  They are not the *same* view, and the differences are deliberate. A write accepts `ingested` and
   `computed` fields only: a `reserved` entry describes the submission environment, and being able to
-  read one back is not a licence to author it. And an unset field is **omitted** from the read while
+  read one back is not a licence to author it. An unset field is **omitted** from the read while
   `null` on a write **clears** one, because a merge-shaped map has no other way to spell deletion.
-  Within those two kinds every value the read emits is accepted verbatim on a write — a `date` reads
-  and writes as the same ISO-8601 string — so a read-edit-write round trip of them loses nothing.
+  And a name the read returns twice under different `kind`s cannot be written at all — see
+  `ResponseEmbeddedDataInput`, which refuses an ambiguous name rather than guessing.
+
+
+  Values themselves round-trip: within those two kinds every value the read emits is accepted
+  verbatim on a write, and a `date` reads and writes as the same ISO-8601 string. So a
+  read-edit-write cycle loses nothing except on the finite set of legacy surveys carrying one name
+  as both a variable and a hidden field, where the write refuses the name outright.
 
 
   Note which fields carry `readOnly` here and which do not, because it is the opposite of what an
