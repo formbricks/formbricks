@@ -65,10 +65,12 @@ curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
 </Info>
 
 <Info>
-  The v5 one-click Traefik setup also exposes Hub-backed FeedbackRecords through Formbricks at
-  `/api/v3/feedbackRecords` and `/v1/feedback-records`. Traefik calls the internal Formbricks gateway auth
-  endpoint first, then forwards allowed requests to Hub with the generated `HUB_API_KEY`. Browser callers should
-  request short-lived gateway tokens from `/api/v3/gateway/token` with `{ "service": "feedbackRecords" }`.
+  Feedback Records are served by Formbricks itself at `/api/v3/feedback-records`, using the generated
+  `HUB_API_KEY` to reach Hub internally. Traefik forwards the path like any other and needs no gateway
+  auth, rewrite or credential injection for it. Hub's own path, `/v1/feedback-records`, also still answers
+  on the Formbricks origin for callers pointing the Hub SDK at this instance. Earlier releases routed both
+  through Traefik directly to Hub and had browser callers fetch short-lived gateway tokens; neither the
+  routing nor the token endpoint exists any more.
 </Info>
 
 ### Script Prompts

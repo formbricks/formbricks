@@ -30,6 +30,34 @@ for Docker and Kubernetes commands, guarded schema replacement, backups, repair,
 The moving `latest` image tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable
 publication. Existing installations opt into v6 explicitly during that migration window.
 
+### Feedback Records No Longer Need the API Gateway
+
+The Feedback Records API used to be served by the API gateway — Envoy on Kubernetes, Traefik on the
+one-click install — which authenticated the call and forwarded it to Hub. It is now served by the
+Formbricks application itself, like every other `/api/v3` operation. Hub stays internal and its API key
+never leaves the application.
+
+What this means for an existing installation:
+
+- **`envoy.formbricks.routes.feedbackRecords` is gone.** Helm ignores an unknown value, so an existing
+  `values.yaml` still setting it will install cleanly — remove it when convenient. The chart no longer
+  creates the routes, the authorization policy or the credential-injection filter.
+- **A custom ingress or reverse proxy that routes these paths to the gateway must stop.** If
+  `/api/v3/feedbackRecords` or `/v1/feedback-records` is pinned to the Envoy or Traefik service, requests
+  will reach a proxy with no route for them and answer `404`. Remove those path rules so both fall through
+  to the Formbricks application. The one-click installer handles this for you.
+- **The path is `/api/v3/feedback-records`**, kebab-case like every other v3 resource. The old
+  `/api/v3/feedbackRecords` is not served. Hub's own `/v1/feedback-records` still answers, unchanged, for
+  callers pointing the Hub TypeScript SDK at a Formbricks instance — it speaks Hub's `snake_case` contract
+  and will not gain new operations, so integrations should move to `/api/v3/feedback-records`.
+- **`/api/v3/gateway/token` and `/api/v3/feedbackRecords/token` are removed.** They minted short-lived
+  tokens for browser callers to present to the gateway. With no gateway there is nothing to present them
+  to; an API key or a signed-in session authenticates these operations.
+
+The API itself changed shape at the same time — camelCase members and enum values, `filter[member][op]`
+filters, `{data, meta}` envelopes and RFC 9457 problem responses — so a client written against the gateway
+surface needs updating rather than repointing. The reference documents the current contract.
+
 ### Changes in Environment Variables
 
 <Note>
