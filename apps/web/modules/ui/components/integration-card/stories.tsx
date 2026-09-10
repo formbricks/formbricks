@@ -104,6 +104,22 @@ export const Disconnected: Story = {
   },
 };
 
+export const Disabled: Story = {
+  args: {
+    label: "Card Label",
+    description: "This is the description of the card.",
+    connectText: "Connect",
+    connectHref: "#",
+    connectNewTab: false,
+    docsText: "Docs",
+    docsHref: "#",
+    docsNewTab: false,
+    connected: false,
+    statusText: "Disconnected",
+    disabled: true,
+  },
+};
+
 export const WithIcon: Story = {
   args: {
     label: "Card Label",

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/modules/ui/components/button";
+import { Button, type ButtonProps } from "@/modules/ui/components/button";
 
 interface CardProps {
   connectText?: string;
@@ -15,10 +15,47 @@ interface CardProps {
   icon?: React.ReactNode;
   connected?: boolean;
   statusText?: string;
+  /**
+   * Gates the connect/manage action only. The docs link stays live: it points at public
+   * documentation, so reading it is not a permission a read-only member can lack.
+   */
   disabled?: boolean;
 }
 
 export type { CardProps };
+
+interface CardActionProps {
+  href: string;
+  text?: string;
+  newTab?: boolean;
+  disabled?: boolean;
+  variant?: ButtonProps["variant"];
+}
+
+/**
+ * A disabled button cannot hold a link: `disabled` only suppresses clicks queued on the button
+ * itself, so a nested `<a href>` stays clickable and still navigates. The button read as greyed out
+ * while a read-only member was sent to the integration page anyway. So render no link at all when
+ * disabled — there is then nothing left to click.
+ *
+ * The enabled branch keeps the link nested inside the button rather than collapsing the two with
+ * `asChild`. That looks like the tidier shape, but the button's hover styles are `enabled:hover:*`
+ * variants, which compile to the `:enabled` pseudo-class — and `:enabled` only ever matches form
+ * controls, never an `<a>`. Hoisting the Link into the button's place would therefore drop the
+ * hover state on every enabled card.
+ */
+const CardAction = ({ href, text, newTab, disabled, variant }: Readonly<CardActionProps>) =>
+  disabled ? (
+    <Button disabled size="sm" variant={variant}>
+      {text}
+    </Button>
+  ) : (
+    <Button size="sm" variant={variant}>
+      <Link href={href} target={newTab ? "_blank" : "_self"}>
+        {text}
+      </Link>
+    </Button>
+  );
 
 export const Card: React.FC<CardProps> = ({
   connectText,
@@ -56,19 +93,9 @@ export const Card: React.FC<CardProps> = ({
     <p className="text-xs text-slate-500">{description}</p>
     <div className="mt-4 flex gap-x-2">
       {connectHref && (
-        <Button disabled={disabled} size="sm">
-          <Link href={connectHref} target={connectNewTab ? "_blank" : "_self"}>
-            {connectText}
-          </Link>
-        </Button>
+        <CardAction href={connectHref} text={connectText} newTab={connectNewTab} disabled={disabled} />
       )}
-      {docsHref && (
-        <Button disabled={disabled} size="sm" variant="secondary">
-          <Link href={docsHref} target={docsNewTab ? "_blank" : "_self"}>
-            {docsText}
-          </Link>
-        </Button>
-      )}
+      {docsHref && <CardAction href={docsHref} text={docsText} newTab={docsNewTab} variant="secondary" />}
     </div>
   </div>
 );
