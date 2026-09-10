@@ -37,6 +37,34 @@ on:
         required: false
         type: boolean
         default: false
+      deployment_tag:
+        description: "Additional mutable environment tag for a manual environment deployment"
+        required: false
+        type: string
+        default: ""
+    secrets:
+      AWS_ECR_PUSH_ROLE_ARN:
+        required: true
+      DEPOT_PROJECT_TOKEN:
+        required: true
+      DUMMY_DATABASE_URL:
+        required: false
+      DUMMY_ENCRYPTION_KEY:
+        required: false
+      DUMMY_REDIS_URL:
+        required: false
+      DUMMY_HUB_API_URL:
+        required: false
+      DUMMY_HUB_API_KEY:
+        required: false
+      DUMMY_CUBEJS_API_URL:
+        required: false
+      DUMMY_CUBEJS_API_SECRET:
+        required: false
+      SENTRY_AUTH_TOKEN:
+        required: false
+      POSTHOG_KEY:
+        required: false
     outputs:
       IMAGE_TAG:
         description: "Normalized image tag used for the build"
@@ -48,6 +76,11 @@ on:
 permissions:
   contents: read
   id-token: write
+
+# Serialize writers of each mutable environment tag across releases and manual deployments.
+concurrency:
+  group: ecr-${{ inputs.deployment_tag || (inputs.IS_PRERELEASE && 'staging') || (inputs.deploy_staging && 'staging') || (inputs.deploy_production && 'production') || (inputs.MAKE_LATEST && 'production') || github.run_id }}
+  cancel-in-progress: false
 
 env:
   ECR_REGION: ${{ vars.ECR_REGION }}
@@ -84,6 +117,7 @@ jobs:
           version: ${{ inputs.version_override || inputs.image_tag }}
           deploy_production: ${{ inputs.deploy_production }}
           deploy_staging: ${{ inputs.deploy_staging }}
+          deployment_tag: ${{ inputs.deployment_tag }}
           is_prerelease: ${{ inputs.IS_PRERELEASE }}
           make_latest: ${{ inputs.MAKE_LATEST }}
         env:
