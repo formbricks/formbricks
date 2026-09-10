@@ -4,7 +4,6 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { constantTimeEqual, symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
-import { TGatewayAuthService, getGatewayAuthServiceTokenPurpose } from "@/modules/gateway-auth/lib/service";
 
 // Helper function to decrypt with fallback to plain text
 const decryptWithFallback = (encryptedText: string, key: string): string => {
@@ -195,38 +194,6 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
     id: decryptedId,
     email: decryptedEmail,
   };
-};
-
-export const verifyGatewayServiceToken = (
-  token: string,
-  service: TGatewayAuthService
-): {
-  userId: string;
-} => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
-
-  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
-    purpose?: string;
-    sub?: string;
-  };
-
-  if (payload.purpose !== getGatewayAuthServiceTokenPurpose(service) || !payload.sub) {
-    throw new Error("Invalid feedback records gateway token");
-  }
-
-  return {
-    userId: payload.sub,
-  };
-};
-
-export const verifyFeedbackRecordsGatewayToken = (
-  token: string
-): {
-  userId: string;
-} => {
-  return verifyGatewayServiceToken(token, "feedbackRecords");
 };
 
 export const createEmailChangeToken = async (userId: string, email: string): Promise<string> => {

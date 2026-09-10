@@ -7,8 +7,6 @@ import { RequestBodyTooLargeError, readRequestBodyWithLimit } from "@/app/lib/ap
 import { can } from "@/lib/authorization";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { getFeedbackDirectoryAuthorizationAction } from "@/lib/authorization/permission-action";
-import { verifyFeedbackRecordsGatewayToken } from "@/lib/jwt";
-import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
@@ -172,10 +170,6 @@ const parseJsonBody = async (
   }
 };
 
-const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | null => {
-  return getBearerTokenFromHeaders(headers);
-};
-
 const resolveTenantId = async (
   request: NextRequest,
   route: TParsedGatewayRoute,
@@ -289,10 +283,6 @@ const authorizeFeedbackRecordsGatewayRequest = async (
 
 export const feedbackRecordsGatewayAuthorizer: TGatewayRequestAuthorizer = {
   matches: (originalRequest) => normalizeFeedbackRecordsPath(originalRequest.url.pathname) !== null,
-  gatewayToken: {
-    getTokenFromHeaders: getFeedbackRecordsGatewayJwtFromHeaders,
-    verifyToken: verifyFeedbackRecordsGatewayToken,
-  },
   authorize: async ({ request, originalRequest, principal, requestId }) =>
     withAuthorizationSurface("feedback_gateway", async () => {
       const route = parseFeedbackRecordsGatewayRoute(originalRequest.method, originalRequest.url.pathname);

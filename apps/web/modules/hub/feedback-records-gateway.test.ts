@@ -51,7 +51,7 @@ const workspaceB = "clwb1234567890123456789012";
 const recordId = "0197f5c8-9d3a-7b2e-8f41-2c6ad0e4b915";
 const organizationId = "org_1";
 
-const userPrincipal: TGatewayAuthenticatedPrincipal = { type: "user", userId: "user-1", source: "session" };
+const userPrincipal: TGatewayAuthenticatedPrincipal = { type: "user", userId: "user-1" };
 
 const apiKey = (overrides: Partial<TAuthenticationApiKey>): TGatewayAuthenticatedPrincipal => ({
   type: "apiKey",

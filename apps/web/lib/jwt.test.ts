@@ -11,7 +11,6 @@ import {
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
   verifyEmailChangeToken,
-  verifyFeedbackRecordsGatewayToken,
   verifyInviteToken,
   verifySsoRelinkIntent,
   verifyToken,
@@ -158,29 +157,6 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         testNextAuthSecret: true,
         testEncryptionKey: false,
       });
-    });
-  });
-
-  // Nothing mints these any more (ENG-3117 removed the gateway and its token routes); what is
-  // left verifies a token built by hand, which is what the surviving authorizer still accepts.
-  describe("feedback records gateway tokens", () => {
-    test("rejects feedback records gateway tokens with the wrong purpose", () => {
-      const token = jwt.sign({ purpose: "wrong_purpose" }, TEST_NEXTAUTH_SECRET, {
-        subject: mockUser.id,
-      });
-
-      expect(() => verifyFeedbackRecordsGatewayToken(token)).toThrow(
-        "Invalid feedback records gateway token"
-      );
-    });
-
-    test("rejects expired feedback records gateway tokens", () => {
-      const expiredToken = jwt.sign({ purpose: "feedback_records_gateway" }, TEST_NEXTAUTH_SECRET, {
-        subject: mockUser.id,
-        expiresIn: -1,
-      });
-
-      expect(() => verifyFeedbackRecordsGatewayToken(expiredToken)).toThrow();
     });
   });
 
