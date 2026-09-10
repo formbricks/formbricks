@@ -41,7 +41,29 @@ export interface TV3AnswerPlan {
    * relabel a respondent's answer as caller-supplied context.
    */
   ingestedStorageKeys: ReadonlySet<string>;
+  /**
+   * Per element, its choices indexed by id and by localized label — built once per (survey,
+   * language) rather than rescanned per answer.
+   *
+   * Resolution is a hot path in a way the per-element work above is not: a 250-row page resolves
+   * every choice answer on every row, and scanning the choice list localizes each label again each
+   * time. Both factors are caller-controlled and neither is bounded by ingest, so the scan is
+   * quadratic in exactly the inputs an author picks.
+   */
+  choiceIndexByElement: ReadonlyMap<string, TV3ChoiceIndex>;
   lookupKey: string;
+}
+
+/** One element's choices, indexed the two ways resolution looks them up. */
+export interface TV3ChoiceIndex {
+  byId: ReadonlyMap<string, TV3IndexedChoice>;
+  byLabel: ReadonlyMap<string, TV3IndexedChoice>;
+  other: TV3IndexedChoice | undefined;
+}
+
+interface TV3IndexedChoice {
+  id: string;
+  label: string;
 }
 
 export const buildAnswerPlan = (
@@ -72,8 +94,47 @@ export const buildAnswerPlan = (
     elementById: new Map(elements.map((element) => [element.id, element])),
     labelById: new Map(readable.question.map(({ key, label }) => [key, label])),
     ingestedStorageKeys: new Set([...ingestedStorageKeys].filter((key) => !elementIds.has(key))),
+    choiceIndexByElement: new Map(
+      elements.map((element) => [element.id, indexChoices(element, lookupKey)] as const)
+    ),
     lookupKey,
   };
+};
+
+/**
+ * Index one element's choices by id and by localized label.
+ *
+ * The reserved `other` id is left out of both maps for the same reason the resolution below never
+ * matches it — the renderer stores `""` for a blank write-in, so a literal "other" is a label — but
+ * the choice itself is kept in `other` so a write-in can still name it.
+ *
+ * Later duplicates do not overwrite earlier ones, so resolution keeps the first matching choice
+ * exactly as a linear scan did. Two choices really can share a localized label on a partially
+ * translated survey, where both fall back to `default`.
+ */
+const indexChoices = (element: TSurveyElement, lookupKey: string): TV3ChoiceIndex => {
+  const byId = new Map<string, TV3IndexedChoice>();
+  const byLabel = new Map<string, TV3IndexedChoice>();
+  let other: TV3IndexedChoice | undefined;
+
+  const choices =
+    "choices" in element && Array.isArray(element.choices)
+      ? (element.choices as { id: string; label?: unknown }[])
+      : [];
+
+  for (const choice of choices) {
+    const indexed = { id: choice.id, label: localizeSurveyString(choice.label as never, lookupKey) };
+
+    if (choice.id === OTHER_CHOICE_ID) {
+      other ??= indexed;
+      continue;
+    }
+
+    if (!byId.has(choice.id)) byId.set(choice.id, indexed);
+    if (choice.label !== undefined && !byLabel.has(indexed.label)) byLabel.set(indexed.label, indexed);
+  }
+
+  return { byId, byLabel, other };
 };
 
 const MAX_DURATION_SECONDS = MAX_RESPONSE_TTC / 1000;
@@ -160,7 +221,7 @@ const isStringRecord = (value: unknown): value is Record<string, string> =>
  * own option too. Reserving it made a respondent who picked it come back as an Other write-in — or
  * as `unmatched` on an element offering no Other — which no other surface agrees with.
  */
-const RESERVED_CHOICE_IDS = new Set(["other"]);
+const OTHER_CHOICE_ID = "other";
 
 /**
  * The element's Other choice, if it offers one.
@@ -169,11 +230,6 @@ const RESERVED_CHOICE_IDS = new Set(["other"]);
  * `otherOptionPlaceholder !== undefined`: deleting the Other choice in the editor removes the choice
  * without clearing the placeholder, so that predicate stays true forever once set.
  */
-const findOtherChoice = (element: TSurveyElement): { id: string; label?: unknown } | undefined =>
-  "choices" in element && Array.isArray(element.choices)
-    ? (element.choices as { id: string; label?: unknown }[]).find((choice) => choice.id === "other")
-    : undefined;
-
 /**
  * Resolve one stored choice value against the current definition.
  *
@@ -192,48 +248,31 @@ const findOtherChoice = (element: TSurveyElement): { id: string; label?: unknown
  * then the honest answer for an element with no Other input, where a write-in is impossible and an
  * unresolvable value can only be a renamed or deleted option.
  */
-const resolveSelection = (
-  raw: string,
-  element: TSurveyElement,
-  lookupKey: string,
-  rank?: number
-): TV3ResponseSelection => {
-  const choices =
-    "choices" in element && Array.isArray(element.choices)
-      ? (element.choices as { id: string; label?: unknown }[])
-      : [];
-
-  for (const choice of choices) {
-    if (RESERVED_CHOICE_IDS.has(choice.id)) continue;
-    if (choice.id === raw) {
-      const label = localizeSurveyString(choice.label as never, lookupKey);
-      // `pictureSelection` choices carry no label at all, so `null` is the only honest answer there.
-      return {
-        optionId: choice.id,
-        optionLabel: label || null,
-        rawValue: raw,
-        match: "exact",
-        ...rankOf(rank),
-      };
-    }
+const resolveSelection = (raw: string, index: TV3ChoiceIndex, rank?: number): TV3ResponseSelection => {
+  const byId = index.byId.get(raw);
+  if (byId) {
+    // `pictureSelection` choices carry no label at all, so `null` is the only honest answer there.
+    return {
+      optionId: byId.id,
+      optionLabel: byId.label || null,
+      rawValue: raw,
+      match: "exact",
+      ...rankOf(rank),
+    };
   }
 
-  for (const choice of choices) {
-    if (RESERVED_CHOICE_IDS.has(choice.id)) continue;
-    if (choice.label === undefined) continue;
-    if (localizeSurveyString(choice.label as never, lookupKey) === raw) {
-      return { optionId: choice.id, optionLabel: raw, rawValue: raw, match: "label", ...rankOf(rank) };
-    }
+  const byLabel = index.byLabel.get(raw);
+  if (byLabel) {
+    return { optionId: byLabel.id, optionLabel: raw, rawValue: raw, match: "label", ...rankOf(rank) };
   }
 
-  const other = findOtherChoice(element);
-  if (other) {
+  if (index.other) {
     // The Other option is a real option with a real id, so a write-in names it. Returning nulls here
     // would emit the exact payload the contract reserves for "nothing resolved" while claiming the
     // opposite in `match`.
     return {
-      optionId: other.id,
-      optionLabel: localizeSurveyString(other.label as never, lookupKey) || null,
+      optionId: index.other.id,
+      optionLabel: index.other.label || null,
       rawValue: raw,
       match: "other",
       ...rankOf(rank),
@@ -242,6 +281,9 @@ const resolveSelection = (
 
   return { optionId: null, optionLabel: null, rawValue: raw, match: "unmatched", ...rankOf(rank) };
 };
+
+/** For an element the plan has no entry for, which resolution treats as offering no choices. */
+const EMPTY_CHOICE_INDEX: TV3ChoiceIndex = { byId: new Map(), byLabel: new Map(), other: undefined };
 
 const rankOf = (rank?: number): { rank?: number } => (rank === undefined ? {} : { rank });
 
@@ -262,7 +304,8 @@ const serializeOne = (
   element: TSurveyElement,
   raw: unknown,
   base: { position: number; elementId: string; elementLabel: string; durationSeconds?: number },
-  lookupKey: string
+  lookupKey: string,
+  choiceIndex: TV3ChoiceIndex
 ): Serialized => {
   const mismatch = { reason: "valueShapeMismatch" as const };
 
@@ -407,7 +450,7 @@ const serializeOne = (
         answer: {
           ...base,
           elementType: "multipleChoiceSingle",
-          selections: [resolveSelection(raw, element, lookupKey)],
+          selections: [resolveSelection(raw, choiceIndex)],
         },
       };
     }
@@ -421,7 +464,7 @@ const serializeOne = (
         answer: {
           ...base,
           elementType: element.type,
-          selections: raw.map((entry) => resolveSelection(entry, element, lookupKey)),
+          selections: raw.map((entry) => resolveSelection(entry, choiceIndex)),
         },
       };
     }
@@ -433,7 +476,7 @@ const serializeOne = (
         answer: {
           ...base,
           elementType: "ranking",
-          selections: raw.map((entry, index) => resolveSelection(entry, element, lookupKey, index + 1)),
+          selections: raw.map((entry, position) => resolveSelection(entry, choiceIndex, position + 1)),
         },
       };
     }
@@ -517,7 +560,8 @@ export const serializeAnswers = (
         elementLabel: plan.labelById.get(key) ?? key,
         ...withDuration(ttc?.[key]),
       },
-      plan.lookupKey
+      plan.lookupKey,
+      plan.choiceIndexByElement.get(key) ?? EMPTY_CHOICE_INDEX
     );
 
     if ("reason" in result) {
