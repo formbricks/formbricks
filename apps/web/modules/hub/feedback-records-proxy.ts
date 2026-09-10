@@ -1,7 +1,7 @@
 import "server-only";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { HUB_API_KEY, HUB_API_URL, IS_PRODUCTION } from "@/lib/constants";
+import { HUB_API_KEY, HUB_API_URL } from "@/lib/constants";
 import { authorizeGatewayRequest } from "@/modules/gateway-auth/lib/request";
 import { feedbackRecordsGatewayAuthorizer } from "@/modules/hub/feedback-records-gateway";
 import { getFeedbackRecordsHubPathname } from "@/modules/hub/feedback-records-routing";
@@ -59,11 +59,26 @@ const buildHubRequest = (request: NextRequest, hubUrl: URL): Request => {
 
 const buildAllowResponse = (): Response => new Response(null, { status: 200 });
 
+/**
+ * Forwards a feedback-record request to the store, having authorized it against Formbricks first.
+ *
+ * This used to refuse in production (`IS_PRODUCTION` → 404) because the gateway served these paths
+ * there and a second data path would have been a liability. ENG-3117 retires those gateway routes, so
+ * this is now the only way `/v1/feedback-records` is served, in every environment. The route exists
+ * to keep the feedback store's own path shape working for callers pointing `hub-typescript` at a
+ * Formbricks origin; everything else moved to `/api/v3/feedback-records`, which the app serves
+ * natively and which is what new integrations should use.
+ *
+ * Deliberately still a passthrough. Translating between the two contracts here — the store's
+ * `tenant_id` and snake_case against v3's `workspaceId`/`datasetId` and camelCase — would mean
+ * writing the inverse of the v3 serializers plus a response direction that does not exist, to arrive
+ * at bytes the store already returns.
+ *
+ * Not rate-limited, unlike the v3 routes. That is the behaviour this path has always had, and adding
+ * a limit to a live path is a change of its own: the v3 wrapper's 100/minute is the number to settle
+ * first, on an API advertised for bulk review imports (ENG-3117 S10).
+ */
 export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise<Response> => {
-  if (IS_PRODUCTION) {
-    return new Response(null, { status: 404 });
-  }
-
   const originalUrl = new URL(request.url);
   const requestId = request.headers.get("x-request-id") ?? "unknown";
   const hubUrl = buildHubRequestUrl(originalUrl);

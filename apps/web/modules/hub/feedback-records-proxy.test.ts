@@ -271,17 +271,36 @@ describe("proxyFeedbackRecordsRequest", () => {
     expect(serializeIncludingErrors(mockLoggerError.mock.calls)).not.toContain("secret-url");
   });
 
-  test("is unavailable in production", async () => {
+  /**
+   * The inverse of what this asserted before ENG-3117. The proxy refused in production while the
+   * gateway served these paths there; now it is the only thing serving `/v1/feedback-records`, so
+   * refusing would take the compatibility path down in the one environment that has callers.
+   */
+  test("serves production, now that no gateway routes these paths", async () => {
     runtime.isProduction = true;
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1")
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
     );
 
-    expect(response.status).toBe(404);
-    expect(mockAuthorizeGatewayRequest).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(mockAuthorizeGatewayRequest).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  test("still authorizes before forwarding in production", async () => {
+    runtime.isProduction = true;
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    mockAuthorizeGatewayRequest.mockResolvedValueOnce(new Response("Forbidden", { status: 403 }));
+
+    const response = await proxyFeedbackRecordsRequest(
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
+    );
+
+    expect(response.status).toBe(403);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

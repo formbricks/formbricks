@@ -251,13 +251,19 @@ The one-click installer does not prompt for taxonomy settings. One-click users c
 
 In development, Hub is exposed locally on port **8080** and Cube on **4000** (with the Cube playground on **4001**). In production Docker Compose, both stay internal to the compose network at `http://hub:8080` and `http://cube:4000`.
 
-The one-click Traefik installer exposes Hub-backed FeedbackRecords on the Formbricks origin at
-`/api/v3/feedbackRecords` and `/v1/feedback-records`. Traefik uses Formbricks gateway auth, rewrites the v3
-path to Hub's `/v1/feedback-records`, injects `Authorization: Bearer ${HUB_API_KEY}` for Hub, and strips client
-API key/cookie headers before the Hub hop.
+Feedback Records are served by the **Formbricks app**, not by Traefik. `/api/v3/feedback-records`
+(and `/api/v3/feedback-datasets`) are ordinary application routes; Traefik forwards them like any other
+path, and the app authorizes the caller, talks to Hub itself, and answers in the v3 contract. Hub stays
+internal to the compose network at `http://hub:8080` and takes no Traefik labels.
 
-The local development server exposes the same routes at `http://localhost:3000`. With `HUB_API_URL` and
-`HUB_API_KEY` configured as shown in `.env.example`, the Next.js app applies the same Formbricks gateway
-authorization, rewrites `/api/v3/feedbackRecords` to Hub's `/v1/feedback-records`, replaces client credentials
-with the Hub API key, and proxies the request to the Hub service running on port **8080**. This app-level proxy
-is development-only; production deployments continue to use Traefik or Envoy for FeedbackRecords routing.
+Hub's own path, `/v1/feedback-records`, also still answers on the Formbricks origin, for callers pointing
+the `hub-typescript` SDK at a Formbricks instance rather than at Hub. It is served by the same app, which
+applies Formbricks authorization, replaces the client's credentials with `Authorization: Bearer
+${HUB_API_KEY}`, and forwards the request unchanged — so it keeps Hub's own `snake_case` request and
+response shapes. New integrations should use `/api/v3/feedback-records` instead: it is the documented,
+contract-tested surface, and this compatibility path will not gain new operations.
+
+Both need `HUB_API_URL` and `HUB_API_KEY` set as shown in `.env.example`. Earlier releases routed these
+paths through Traefik (one-click) or Envoy (Helm) directly to Hub, with the app only providing a
+development proxy; that routing is gone, and with it the `envoy.formbricks.routes.feedbackRecords`
+Helm flag.
