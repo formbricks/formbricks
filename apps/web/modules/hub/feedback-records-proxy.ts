@@ -43,6 +43,18 @@ const buildHubRequestUrl = (requestUrl: URL): URL | null => {
   return hubUrl;
 };
 
+/**
+ * A second readable view of the request, for the authorizer to consume the body from.
+ */
+const authorizationRequest = (request: NextRequest): NextRequest =>
+  new NextRequest(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: request.clone().body,
+    // Required by undici whenever a streaming body is supplied.
+    duplex: "half",
+  } as ConstructorParameters<typeof NextRequest>[1]);
+
 const buildHubRequest = (request: NextRequest, hubUrl: URL): Request => {
   const hubRequest = new Request(hubUrl, request);
   const connectionHeaders = (request.headers.get("connection") ?? "")
@@ -92,7 +104,15 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
   }
 
   const authorization = await authorizeGatewayRequest({
-    request: new NextRequest(request.clone()),
+    // Built from the URL and an init rather than by wrapping `request.clone()`. Wrapping a cloned
+    // NextRequest throws `Cannot read private member #state from an object whose class did not declare
+    // it` on Node >24: the clone's class does not declare undici's private field that the constructor
+    // reaches for. It only reproduces through the running server, because the NextRequest the server
+    // runtime passes a route handler is not the one importable in a test.
+    //
+    // The clone itself is load-bearing and stays: the authorizer reads the body to find `tenant_id`,
+    // and the original has to survive unread so it can be forwarded to the store.
+    request: authorizationRequest(request),
     originalRequest: {
       method: request.method.toUpperCase(),
       url: originalUrl,
