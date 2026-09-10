@@ -1,8 +1,15 @@
 import "server-only";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { HUB_API_KEY, HUB_API_URL } from "@/lib/constants";
-import { authorizeGatewayRequest } from "@/modules/gateway-auth/lib/request";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import {
+  authorizeGatewayRequest,
+  buildGatewayStatusResponse,
+  getGatewayRateLimitIdentifier,
+} from "@/modules/gateway-auth/lib/request";
 import { feedbackRecordsGatewayAuthorizer } from "@/modules/hub/feedback-records-gateway";
 import { getFeedbackRecordsHubPathname } from "@/modules/hub/feedback-records-routing";
 import { getHubErrorHint } from "@/modules/hub/utils";
@@ -57,8 +64,6 @@ const buildHubRequest = (request: NextRequest, hubUrl: URL): Request => {
   return hubRequest;
 };
 
-const buildAllowResponse = (): Response => new Response(null, { status: 200 });
-
 /**
  * Forwards a feedback-record request to the store, having authorized it against Formbricks first.
  *
@@ -74,9 +79,9 @@ const buildAllowResponse = (): Response => new Response(null, { status: 200 });
  * writing the inverse of the v3 serializers plus a response direction that does not exist, to arrive
  * at bytes the store already returns.
  *
- * Not rate-limited, unlike the v3 routes. That is the behaviour this path has always had, and adding
- * a limit to a live path is a change of its own: the v3 wrapper's 100/minute is the number to settle
- * first, on an API advertised for bulk review imports (ENG-3117 S10).
+ * Rate-limited on `rateLimitConfigs.api.v3` — the same config, namespace and identifier every v3
+ * route gets from the shared wrapper. This path cannot use the wrapper itself (it forwards a request
+ * rather than handling one), so it applies the shared config directly instead of defining its own.
  */
 export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise<Response> => {
   const originalUrl = new URL(request.url);
@@ -86,7 +91,7 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
     return new Response("Unsupported FeedbackRecords proxy route", { status: 400 });
   }
 
-  const authorizationResponse = await authorizeGatewayRequest({
+  const authorization = await authorizeGatewayRequest({
     request: new NextRequest(request.clone()),
     originalRequest: {
       method: request.method.toUpperCase(),
@@ -94,12 +99,29 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
     },
     authorizers: [feedbackRecordsGatewayAuthorizer],
     requestId,
-    buildAllowResponse,
     unsupportedRouteMessage: "Unsupported FeedbackRecords proxy route",
   });
 
-  if (!authorizationResponse.ok) {
-    return authorizationResponse;
+  if (authorization.status === "deny") {
+    return authorization.response;
+  }
+
+  // Derived outside the try: only the limiter's own refusal should become a 429. Wrapping this too
+  // would report an unexpected failure here as "too many requests", which is the wrong thing to tell
+  // a caller and hides the bug.
+  const rateLimitIdentifier = getGatewayRateLimitIdentifier(authorization.principal);
+
+  try {
+    await applyRateLimit(rateLimitConfigs.api.v3, rateLimitIdentifier);
+  } catch (error) {
+    // `text/plain`, like the 401 and 403 on this path: a caller here is talking to the feedback
+    // store's contract, and a lone problem+json refusal among plain-text ones is the surprise.
+    const response = buildGatewayStatusResponse(429, "Too Many Requests");
+    if (error instanceof TooManyRequestsError && error.retryAfter) {
+      response.headers.set("Retry-After", String(error.retryAfter));
+    }
+    logger.warn({ requestId, statusCode: 429 }, "Feedback records proxy rate limit exceeded");
+    return response;
   }
 
   try {
