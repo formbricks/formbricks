@@ -198,7 +198,12 @@ const readScope = (searchParams: URLSearchParams) => {
   };
 };
 
-type TParsedScope = z.infer<typeof ZCountQuery>;
+/**
+ * The shared scope fields, inferred on their own rather than off either endpoint's schema — both
+ * parse supersets of it, and typing this off the count schema made the list's parsed data
+ * unassignable because it carries no `precision`.
+ */
+type TParsedScope = z.infer<z.ZodObject<typeof ZScope>>;
 
 const toFilter = (parsed: TParsedScope): TV3ResponsesFilter => ({
   workspaceId: parsed.workspaceId,

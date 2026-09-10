@@ -4,10 +4,12 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
+import { type TKeysetCursor, keysetOrderBy, keysetPagePredicate } from "@/app/api/v3/lib/keyset-cursor";
 import { deleteDisplay } from "@/lib/display/service";
 import { inlineSurveyEmbeddedFields, selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
+import type { TV3ResponsesFilter } from "./parse-v3-responses-list-query";
 
 /**
  * The one service the v3 response operations go through.
@@ -411,4 +413,177 @@ export async function getV3ResponseSurveys(
   return new Map(
     surveys.map((survey) => [survey.id, { ...survey, embeddedFields: inlineSurveyEmbeddedFields(survey) }])
   );
+}
+
+/**
+ * The most rows a capped count will walk before answering "at least this many".
+ *
+ * Shared by the list's `meta.totalCount` and by `/count`, so the two can never disagree about where
+ * exactness stops. At the cap the value is exactly this number and means "at least" — a scope with
+ * precisely this many matches reports `gte`, which is the contract's reading.
+ */
+export const V3_RESPONSE_COUNT_CAP = 10_000;
+
+/**
+ * Identifiers, built from literals only.
+ *
+ * `Prisma.raw` interpolates without escaping, so these must never be derived from caller input. Every
+ * caller-supplied value below is a bound parameter instead.
+ *
+ * Functions rather than module constants because the unit suite mocks `@formbricks/database/prisma`,
+ * and a `Prisma.raw` call at module scope crashes at import time under that mock — taking the whole
+ * file's tests with it. `keyset-cursor.ts` keeps its own `Prisma.raw` calls inside functions for the
+ * same reason.
+ */
+const sortColumn = (): Prisma.Sql => Prisma.raw('r."created_at"');
+const idColumn = (): Prisma.Sql => Prisma.raw('r."id"');
+
+/**
+ * The scope and the allow-listed filters, as SQL fragments.
+ *
+ * The workspace clause is present on **every** query and is never optional. `Response` has no
+ * `workspaceId` column, so scope is only reachable through the survey — and a caller authorized for
+ * one workspace can still name another workspace's `surveyId`, so filtering on `surveyId` alone
+ * would serve that survey's responses. Pairing the two is what makes the scope real rather than
+ * assumed, and it also means an out-of-scope `surveyId` yields an empty page rather than an error
+ * that would confirm the survey exists.
+ */
+const scopeAndFilters = (filter: TV3ResponsesFilter): Prisma.Sql[] => {
+  const clauses: Prisma.Sql[] = [
+    Prisma.sql`EXISTS (SELECT 1 FROM "Survey" s WHERE s."id" = r."surveyId" AND s."workspaceId" = ${filter.workspaceId})`,
+  ];
+
+  if (filter.surveyId) clauses.push(Prisma.sql`r."surveyId" = ${filter.surveyId}`);
+  if (filter.contactId) clauses.push(Prisma.sql`r."contactId" = ${filter.contactId}`);
+  if (filter.createdAtGte) clauses.push(Prisma.sql`r."created_at" >= ${filter.createdAtGte}`);
+  if (filter.createdAtGt) clauses.push(Prisma.sql`r."created_at" > ${filter.createdAtGt}`);
+  if (filter.createdAtLte) clauses.push(Prisma.sql`r."created_at" <= ${filter.createdAtLte}`);
+  if (filter.createdAtLt) clauses.push(Prisma.sql`r."created_at" < ${filter.createdAtLt}`);
+  if (filter.finished !== undefined) clauses.push(Prisma.sql`r."finished" = ${filter.finished}`);
+
+  if (filter.languages?.length) {
+    clauses.push(Prisma.sql`r."language" IN (${Prisma.join(filter.languages)})`);
+  }
+
+  if (filter.ids?.length) {
+    clauses.push(Prisma.sql`r."id" IN (${Prisma.join(filter.ids)})`);
+  }
+
+  return clauses;
+};
+
+/** One ordered page of ids, straight off the keyset index. */
+export interface TV3ResponseKeysetRow {
+  id: string;
+  createdAt: Date;
+}
+
+/**
+ * Phase one of the list read: the ordered ids for a page.
+ *
+ * Raw SQL because the page condition has to be a row-constructor comparison — `(created_at, id) < (…)`
+ * — which is the only form PostgreSQL puts inside the Index Cond, and which no Prisma `where` can
+ * express. `keyset-cursor.ts` measured the alternatives: the `OR` expansion discards 4000 rows to
+ * return 20, the row constructor discards none.
+ *
+ * It selects ids rather than rows because the payload needs `v3ResponseReadSelect`'s relations, and a
+ * `select` and a `Prisma.Sql` cannot be combined in one query. Two queries against an indexed id set
+ * is the cheaper half of that trade; the alternative is giving up the index.
+ *
+ * Fetches `limit + 1` so end-of-collection is decided by whether another row exists rather than by a
+ * short page, which the contract makes the only valid signal.
+ */
+export async function listV3ResponseKeysetPage({
+  filter,
+  sortBy,
+  limit,
+  cursor,
+}: {
+  filter: TV3ResponsesFilter;
+  sortBy: "-createdAt" | "createdAt";
+  limit: number;
+  cursor: Pick<TKeysetCursor, "value" | "id"> | null;
+}): Promise<TV3ResponseKeysetRow[]> {
+  const direction = sortBy === "-createdAt" ? "desc" : "asc";
+  const clauses = scopeAndFilters(filter);
+
+  if (cursor) {
+    clauses.push(keysetPagePredicate({ sortColumn: sortColumn(), idColumn: idColumn(), direction, cursor }));
+  }
+
+  const rows = await prisma.$queryRaw<{ id: string; created_at: Date }[]>`
+    SELECT r."id", r."created_at"
+    FROM "Response" r
+    WHERE ${Prisma.join(clauses, " AND ")}
+    ${keysetOrderBy({ sortColumn: sortColumn(), idColumn: idColumn(), direction })}
+    LIMIT ${limit + 1}
+  `;
+
+  return rows.map((row) => ({ id: row.id, createdAt: row.created_at }));
+}
+
+/**
+ * Phase two: the full rows for an already-ordered, already-scoped set of ids.
+ *
+ * Re-ordered in memory to the ids' order, because `IN` does not preserve it and the page's order is
+ * the whole point. No scope clause is repeated here: these ids came out of a scoped query, and
+ * re-deriving the scope would be a second chance to get it wrong rather than a second guard.
+ */
+export async function hydrateV3Responses(ids: readonly string[]): Promise<TV3ResponseRow[]> {
+  if (ids.length === 0) return [];
+
+  const rows = await prisma.response.findMany({
+    where: { id: { in: [...ids] } },
+    select: v3ResponseReadSelect,
+  });
+  const byId = new Map(rows.map((row) => [row.id, row]));
+
+  return ids.map((id) => byId.get(id)).filter((row): row is TV3ResponseRow => row !== undefined);
+}
+
+/**
+ * How many responses match, and whether that number is exact.
+ *
+ * The capped path stops counting at {@link V3_RESPONSE_COUNT_CAP} rows, so an unbounded scope costs a
+ * bounded amount of work. `exact` is the documented slow path a caller opts into, and it always
+ * reports `eq`.
+ */
+export async function countV3Responses({
+  filter,
+  precision,
+}: {
+  filter: TV3ResponsesFilter;
+  precision: "capped" | "exact";
+}): Promise<{ count: number; relation: "eq" | "gte" }> {
+  const where = Prisma.join(scopeAndFilters(filter), " AND ");
+
+  if (precision === "exact") {
+    const [row] = await prisma.$queryRaw<{ count: bigint }[]>`
+      SELECT count(*)::bigint AS count FROM "Response" r WHERE ${where}
+    `;
+
+    return { count: Number(row?.count ?? 0), relation: "eq" };
+  }
+
+  // Counted over a bounded subquery rather than with a plain `count(*)`: the LIMIT lets PostgreSQL
+  // stop walking the index once the cap is reached, which is the entire point of capping.
+  const [row] = await prisma.$queryRaw<{ count: bigint }[]>`
+    SELECT count(*)::bigint AS count
+    FROM (SELECT 1 FROM "Response" r WHERE ${where} LIMIT ${V3_RESPONSE_COUNT_CAP}) AS capped
+  `;
+
+  const count = Number(row?.count ?? 0);
+
+  return { count, relation: count >= V3_RESPONSE_COUNT_CAP ? "gte" : "eq" };
+}
+
+/** One response, scoped. Returns `null` for both "does not exist" and "not in this workspace". */
+export async function getScopedV3Response(
+  responseId: string,
+  { workspaceId }: { workspaceId: string }
+): Promise<TV3ResponseRow | null> {
+  return prisma.response.findFirst({
+    where: { id: responseId, survey: { workspaceId } },
+    select: v3ResponseReadSelect,
+  });
 }
