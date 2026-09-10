@@ -51,29 +51,51 @@ vi.mock("@/lib/recall", () => ({
 }));
 
 vi.mock("@/components/general/block-conditional", () => ({
-  BlockConditional: ({ block, onSubmit }: any) => (
-    <button
-      data-testid={`submit-${block.id}`}
-      onClick={() =>
-        onSubmit(
-          { [block.elements[0].id]: `${block.id}-answer` },
-          {
-            [block.elements[0].id]: 123,
-          }
-        )
-      }>
-      Submit {block.id}
-    </button>
+  BlockConditional: ({ block, onSubmit, onBack }: any) => (
+    <>
+      <button
+        data-testid={`submit-${block.id}`}
+        onClick={() =>
+          onSubmit(
+            { [block.elements[0].id]: `${block.id}-answer` },
+            {
+              [block.elements[0].id]: 123,
+            }
+          )
+        }>
+        Submit {block.id}
+      </button>
+      <button data-testid={`back-${block.id}`} onClick={() => onBack()}>
+        Back {block.id}
+      </button>
+    </>
   ),
 }));
 
-vi.mock("@/components/wrappers/stacked-cards-container", () => ({
-  StackedCardsContainer: ({ currentBlockId, getCardContent, survey }: any) => {
-    const blockIndex =
-      currentBlockId === "start" ? -1 : survey.blocks.findIndex((block: any) => block.id === currentBlockId);
-    return <div data-testid="survey-root">{getCardContent(blockIndex, 0)}</div>;
-  },
-}));
+vi.mock("@/components/wrappers/stacked-cards-container", () => {
+  // Mirrors the real container's index math: a `currentBlockId` that is not a block — an ending id,
+  // the "end" sentinel, or a block deleted since progress was saved — maps past the end of the
+  // array, and the card the respondent came from stays mounted behind the current one. That
+  // peeking card keeps its submit and back controls live, which is how a navigation is reachable
+  // from a position that no longer resolves to a block.
+  const resolveBlockIndex = (survey: any, currentBlockId: string): number => {
+    if (currentBlockId === "start") return -1;
+    const blockIndex = survey.blocks.findIndex((block: any) => block.id === currentBlockId);
+    return blockIndex === -1 ? survey.blocks.length : blockIndex;
+  };
+
+  return {
+    StackedCardsContainer: ({ currentBlockId, getCardContent, survey }: any) => {
+      const blockIndex = resolveBlockIndex(survey, currentBlockId);
+      return (
+        <div data-testid="survey-root">
+          {getCardContent(blockIndex, 0)}
+          {blockIndex > 0 ? getCardContent(blockIndex - 1, 1) : null}
+        </div>
+      );
+    },
+  };
+});
 
 vi.mock("@/components/wrappers/auto-close-wrapper", () => ({
   AutoCloseWrapper: ({ children }: any) => <>{children}</>,
@@ -367,6 +389,54 @@ describe("Survey offline restore", () => {
     });
 
     expect(apiClientMocks.getResponseIdByDisplayId).not.toHaveBeenCalled();
+  });
+
+  test("queues the answer instead of throwing when submitted from the ending card", async () => {
+    offlineStorageMocks.getSurveyProgress.mockResolvedValue(makeProgress());
+
+    renderSurvey();
+
+    // Finish the survey, which moves the pointer onto the ending card while the last block's card
+    // stays mounted behind it.
+    fireEvent.click(await screen.findByTestId("submit-block-2"));
+
+    await waitFor(() => {
+      expect(apiClientMocks.createResponse).toHaveBeenCalled();
+    });
+
+    expect(await screen.findByTestId("ending-card")).toBeTruthy();
+
+    // Submitting again from that still-live card used to throw "Block not found" as an unhandled
+    // rejection, dropping the answer entirely (ENG-2818).
+    fireEvent.click(await screen.findByTestId("submit-block-2"));
+
+    await waitFor(() => {
+      expect(apiClientMocks.updateResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          responseId: "response-created",
+          finished: true,
+          endingId: "ending-1",
+        })
+      );
+    });
+
+    expect(screen.queryByTestId("ending-card")).toBeTruthy();
+  });
+
+  test("back from the first block with no history is a no-op instead of throwing", async () => {
+    offlineStorageMocks.getSurveyProgress.mockResolvedValue(
+      makeProgress({ blockId: "block-1", history: [] })
+    );
+
+    renderSurvey();
+
+    fireEvent.click(await screen.findByTestId("back-block-1"));
+
+    // Still on the first block, and nothing was submitted — the previous behaviour threw
+    // "Block not found" while reading blocks[-1] (ENG-2818).
+    expect(await screen.findByTestId("submit-block-1")).toBeTruthy();
+    expect(apiClientMocks.createResponse).not.toHaveBeenCalled();
+    expect(apiClientMocks.updateResponse).not.toHaveBeenCalled();
   });
 
   test("clears stale finished progress instead of restoring the ending card", async () => {
