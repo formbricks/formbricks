@@ -1332,7 +1332,7 @@ paths:
 
         Be aware that **combining** a `filter[createdAt]` bound with `filter[finished][eq]` is the one case no single index covers: the ordered scan uses `(surveyId, createdAt)` and `finished` stays a heap residual, so a page whose matches are sparse reads far more rows than it returns. Prefer narrowing by `surveyId` and a tight `createdAt` window, and treat that combination as the slow path until a covering index exists.
 
-        **What this endpoint deliberately does not filter on:** individual answers, hidden-field values, submission metadata (`source`, `url`, `country`, `browser`, `os`, `device`), contact attributes, quotas, and tags. Each is a JSON path or an unindexed join on the largest table in the database, where the honest outcome is a timeout rather than a slow query. The in-app dashboard does offer these, so this endpoint is knowingly behind it; closing the gap needs index work and is tracked separately rather than quietly omitted.
+        **What this endpoint deliberately does not filter on:** individual answers, hidden-field values, submission metadata (`source`, `url`, `country`, `browser`, `os`, `deviceType`), contact attributes, quotas, and tags. Each is a JSON path or an unindexed join on the largest table in the database, where the honest outcome is a timeout rather than a slow query. The in-app dashboard does offer these, so this endpoint is knowingly behind it; closing the gap needs index work and is tracked separately rather than quietly omitted.
       tags:
         - V3 Responses
       parameters:
@@ -1477,7 +1477,7 @@ paths:
                         finished: true
                         endingId: cmpthankyou00000000000000
                         language: de
-                        durationSeconds: 218.4
+                        durationSeconds: 107.9
                         resolution:
                           labelPolicy: currentSurveyDefinition
                           labelsLanguage: de
@@ -1590,7 +1590,7 @@ paths:
               $ref: '#/components/schemas/CreateResponseRequest'
             examples:
               finishedResponse:
-                summary: A complete response with answers, hidden fields and a variable
+                summary: A complete response with answers and Embedded Data
                 value:
                   surveyId: clsv1234567890123456789012
                   finished: true
@@ -1600,8 +1600,9 @@ paths:
                     nps_score: 9
                     what_could_be_better: Die Suche ist zu langsam.
                     channels:
-                      - ch_2f8a
+                      - Ein Freund
                       - Podcast
+                  embeddedData:
                     plan: enterprise
               partialResponse:
                 summary: A partial response, still open
@@ -2051,7 +2052,7 @@ paths:
                       finished: true
                       endingId: cmpthankyou00000000000000
                       language: de
-                      durationSeconds: 218.4
+                      durationSeconds: 8.2
                       resolution:
                         labelPolicy: currentSurveyDefinition
                         labelsLanguage: de
@@ -2106,7 +2107,7 @@ paths:
                           elementType: fileUpload
                           elementLabel: Screenshots
                           fileUrls:
-                            - https://app.formbricks.com/storage/clws1234567890123456789012/private/shot.png
+                            - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshot/shot.png
                           fileCount: 1
                         - position: 5
                           elementId: priorities
@@ -2166,7 +2167,7 @@ paths:
                           - '10115'
                           - Deutschland
                         screenshots:
-                          - https://app.formbricks.com/storage/clws1234567890123456789012/private/shot.png
+                          - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshot/shot.png
                         priorities:
                           - Geschwindigkeit
                           - Preis
@@ -2365,7 +2366,7 @@ paths:
             minimum: 1
             maximum: 100
             default: 20
-          description: Page size (max 100). The workflows endpoints have not yet moved to the v3-wide maximum of 250 — their bound lives in the shared `packages/workflows` contracts, which are owned alongside the workflows feature rather than by this spec. Documented at the value actually enforced rather than at the platform norm; tracked separately.
+          description: 'Page size (max 100). v3 has three list maxima rather than one norm: 250 on responses, surveys and the reference lists, 1000 on `feedbackRecords`, and 100 here. The workflows bound lives in the shared `packages/workflows` contracts, owned alongside the feature rather than by this spec, which is why it did not move with the others. Documented at the value actually enforced; tracked separately.'
         - $ref: '#/components/parameters/CursorQuery'
         - in: query
           name: filter[name][contains]
@@ -4403,18 +4404,16 @@ components:
             - duplicate_locale
             - forbidden_identifier
             - immutable_identifier
-            - invalid_graph
             - invalid_locale
             - invalid_reference
             - missing_required_field
             - missing_translation
-            - rule_violation
             - unsupported_field
             - unsupported_locale
           description: |
-            Machine-readable validation category, when available. `invalid_graph` covers workflow
-            graph-structure violations such as a duplicated trigger edge, an unreachable node, or a
-            cycle. `rule_violation` covers a submitted answer that breaks one of the survey's own validation rules (see `SurveyValidationRule`) — a value below a `minLength`, outside a rating range, or with fewer selections than `minSelections`. It is used by response validation and response writes.
+            Machine-readable validation category, when available.
+
+            This is the shared error shape every v3 operation returns, so it lists what the API can emit today and nothing more — `INVALID_PARAM_CODES` in `app/api/v3/lib/response.ts` is the registry, and a code absent from it is dropped before the response is built. Categories for operations that do not exist yet are added with the code that emits them, not ahead of it.
         identifier:
           type: string
           description: Identifier involved in the validation failure, when available. For language errors, this can be the normalized language code.
@@ -4429,16 +4428,7 @@ components:
             - variable
             - variableName
             - recall
-            - node
-            - edge
-            - survey
-            - endingCard
-            - response
-            - contact
-            - display
-            - tag
-            - quota
-          description: Identifier namespace involved in the validation failure. `node`, `edge`, `survey`, and `endingCard` are used by workflow validation. `response`, `contact`, `display`, `tag`, and `quota` are used by response validation and response writes.
+          description: 'Identifier namespace involved in the validation failure. Same rule as `code`: these are the namespaces the API emits today, and more arrive with the operations that emit them.'
         missingId:
           type: string
           description: Referenced id that does not exist in the submitted survey document.
@@ -6809,7 +6799,12 @@ components:
                 - fileUpload
             fileUrls:
               type: array
-              description: URLs of the uploaded files. These point at private storage and are not publicly fetchable; access follows the same authorization as the response itself. Deleting the response deletes the underlying files.
+              description: |
+                The uploaded files, **as stored** — workspace-relative paths, not absolute URLs, and neither resolved nor signed.
+
+                A deliberate choice between two things this field could be. Storage writes a relative path and the app's own read paths rewrite it to an absolute URL for display; v3 returns the stored bytes instead, because `answers[]` promises verbatim values a client can write straight back, and an absolute URL is neither what is stored nor what a write accepts. Fetching a file is a separate concern with its own ticket (ENG-513, signed short-lived URLs behind a dedicated endpoint); this field identifies the file, it does not serve it.
+
+                Not publicly fetchable in any case: access follows the same authorization as the response, and deleting the response deletes the underlying files.
               items:
                 type: string
             fileCount:
@@ -7047,13 +7042,10 @@ components:
             - type: string
             - type: number
             - type: boolean
-            - type: array
-              items:
-                type: string
           description: |-
             The value, matching `type`. `date` values are ISO-8601 strings.
 
-            An **array of string** is a legacy shape and appears only on responses stored before the ingest contract tightened. A non-scalar under a declared field's key is now refused at ingest, because response data shares one map with element answers: an array under a hidden field's storage key means the key collided with an element id, and joining it into a string would invent a value the respondent never gave for that field.
+            Always a scalar. A legacy row can hold an array or an object under a declared field's key — the ingest contract refuses those now, but older rows have them — and such a value resolves to nothing rather than being coerced, so the entry is omitted here and reported in `unresolved[]` with the bytes intact. Nothing is silently dropped, and no `type` would describe an array anyway.
 
             There is no `null` member: a declared key that resolves to nothing is **omitted** from the collection rather than carried with a null. So `embeddedData[]` enumerates what the response actually holds, not what the survey declares — a survey with twelve declared fields and two filled in yields two entries. A field with a default value is never unset, since the default is the fallback before the key is considered missing.
       additionalProperties: false
@@ -7093,7 +7085,8 @@ components:
             - `elementNotInSurvey` — no element with this id exists in the current definition.
             - `hiddenFieldNotInSurvey` — the key is not among the survey's declared hidden fields.
             - `variableNotInSurvey` — no variable with this id exists in the current definition.
-            - `valueShapeMismatch` — the element exists, but the stored value's shape cannot be read as an
+            - `valueShapeMismatch` — the key resolves to a current element **or a declared Embedded Data
+              field**, but the stored value's shape cannot be read as an
               answer of that element's type (for example a string where the element expects a selection
               list). Signals element-type churn rather than deletion.
       additionalProperties: false
@@ -7261,6 +7254,10 @@ components:
 
 
         Values follow their field's declared type. A field the payload omits is left as it is; this is a merge over named fields, not a replacement of the collection.
+
+        **An ambiguous name is refused.** The read says `key` is unique per `kind` rather than across the collection, because a survey predating the reserved-name guard can hold a variable and a hidden field under one name. This map has no `kind`, so on such a survey a name cannot say which field it means — and guessing would write the caller's value into the wrong one. A name that matches more than one declared field is a 400 naming it; rename one side on the survey to clear it. The set is finite, frozen and tracked, and nothing new can enter it.
+
+        Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
       additionalProperties:
         oneOf:
           - type: string
@@ -7455,7 +7452,9 @@ components:
       description: |
         Partially updates a response. Strict at the top level: unknown keys return **400** rather than being ignored, and at least one patchable field must be present.
 
-        `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
+        `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
+
+        **Note for the implementation, because the obvious shortcut is wrong.** The one shipped update service merges `data` (`apps/web/lib/response/service.ts`, `// merge data object`), and merges `ttc` with it. Reusing it would ship merge semantics under a replace contract, silently — an unimplemented route has no test to catch the difference. v3 replaces on purpose: a merge makes it impossible to delete an answer, which a correction flow needs. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
 
         Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`, `displayId`, `singleUseId`, `contactAttributes`, and the create-only `ttc` and `meta` — timing and submission context describe the original submission event, so they are set once and not revised. `contactId` is create-only deliberately — re-attributing an existing response to a different person is a capability only v2 offers, and it is not carried forward.
       minProperties: 1
@@ -7602,7 +7601,7 @@ components:
     BatchDeleteResponsesRequest:
       type: object
       description: |
-        Ids to delete. A POST custom method rather than a `DELETE` on the collection: a collection-level `DELETE` that loses its filters degrades into erasing every response in scope, and a distinct path cannot be reached by accident. AIP-165 blesses this shape and v3 already uses POST-based batch operations elsewhere.
+        Ids to delete. A POST custom method rather than a `DELETE` on the collection: a collection-level `DELETE` that loses its filters degrades into erasing every response in scope, and a distinct path cannot be reached by accident — which is exactly the shape `feedbackRecords` ships today, a collection `DELETE` whose filters are the only thing standing between a caller and the whole dataset. AIP-165 blesses the custom-method form.
       required:
         - ids
       properties:

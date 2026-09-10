@@ -66,7 +66,7 @@ get:
                   finished: true
                   endingId: cmpthankyou00000000000000
                   language: de
-                  durationSeconds: 218.4
+                  durationSeconds: 8.2
                   resolution:
                     labelPolicy: currentSurveyDefinition
                     labelsLanguage: de
@@ -121,7 +121,7 @@ get:
                       elementType: fileUpload
                       elementLabel: Screenshots
                       fileUrls:
-                        - https://app.formbricks.com/storage/clws1234567890123456789012/private/shot.png
+                        - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshot/shot.png
                       fileCount: 1
                     - position: 5
                       elementId: priorities
@@ -181,7 +181,7 @@ get:
                       - "10115"
                       - Deutschland
                     screenshots:
-                      - https://app.formbricks.com/storage/clws1234567890123456789012/private/shot.png
+                      - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshot/shot.png
                     priorities:
                       - Geschwindigkeit
                       - Preis
