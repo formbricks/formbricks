@@ -38,6 +38,16 @@ describe("resolveV3LabelContext", () => {
     expect(resolveV3LabelContext(LANGUAGES, null)).toEqual({ lookupKey: "default", labelsLanguage: "en" });
   });
 
+  /**
+   * `enabled` is a current authoring setting, not a property of the response. Following it would
+   * re-language every historical response the day an author switches a translation off.
+   */
+  test("a language disabled after collection is still the response's language", () => {
+    const languages = [language("en", true), language("de", false, false)];
+
+    expect(resolveV3LabelContext(languages, "de")).toEqual({ lookupKey: "de", labelsLanguage: "de" });
+  });
+
   /** `labelsLanguage` is nullable precisely for the single-language survey that declares nothing. */
   test("a survey with no declared languages reports null rather than inventing a code", () => {
     expect(resolveV3LabelContext([], null)).toEqual({ lookupKey: "default", labelsLanguage: null });

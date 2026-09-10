@@ -27,8 +27,16 @@ properties:
       - "null"
     description: >-
       The language the labels in this payload were resolved in. Follows the response's `language`
-      when it is set and the survey has that language enabled, otherwise the survey's default
-      language. `null` when the survey carries no translations.
+      whenever the survey still declares it, and the survey's default language otherwise.
+
+
+      Deliberately **not** gated on whether that language is still enabled. `enabled` is a current
+      authoring setting, not a property of the response: honouring it would silently re-language
+      every historical response the day an author switches a translation off, and it would disagree
+      with the display surfaces, which resolve the same labels without consulting it.
+
+
+      `null` when the survey declares no default language.
   surveyUpdatedAt:
     type: string
     format: date-time

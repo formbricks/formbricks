@@ -220,12 +220,45 @@ describe("choice resolution follows id → label → other → unmatched", () =>
     });
   });
 
-  test("a write-in on an element that offers Other reports `other`", () => {
+  /**
+   * The Other option is a real option with a real id, so a write-in names it. Returning nulls would
+   * emit the exact payload the contract reserves for "nothing resolved" while `match` claims the
+   * opposite — and a client branching on `optionId === null` would file every write-in as
+   * unresolvable.
+   */
+  test("a write-in names the Other option rather than nulling it", () => {
     expect(withSelections(answer([withOther], { q1: "Teal" })).selections[0]).toMatchObject({
-      optionId: null,
-      optionLabel: null,
+      optionId: "other",
+      optionLabel: "Other",
       rawValue: "Teal",
       match: "other",
+    });
+  });
+
+  /** The renderer stores `""` for Other-selected-but-blank; it is a selection, not a missing value. */
+  test("a blank Other selection still names the Other option", () => {
+    expect(withSelections(answer([withOther], { q1: "" })).selections[0]).toMatchObject({
+      optionId: "other",
+      rawValue: "",
+      match: "other",
+    });
+  });
+
+  /**
+   * `"other"` is a behaviour id, not a value the renderer ever stores — it stores `""` for that.
+   * So a stored `"other"` is a label reading "other", and matching it by id names the wrong choice.
+   */
+  test("a stored value equal to a reserved choice id is not matched by id", () => {
+    const el = element({
+      id: "q1",
+      type: "multipleChoiceSingle",
+      choices: [choice("c1", "Blue"), { id: "other", label: i18n("Other") }],
+    });
+
+    expect(withSelections(answer([el], { q1: "other" })).selections[0]).toMatchObject({
+      optionId: "other",
+      match: "other",
+      rawValue: "other",
     });
   });
 
@@ -253,7 +286,10 @@ describe("choice resolution follows id → label → other → unmatched", () =>
     });
     const selections = withSelections(answer([el], { q1: ["Blue", "Chartreuse"] })).selections;
 
-    expect(selections.map((s: { match: string }) => s.match)).toEqual(["label", "other"]);
+    expect(selections.map((s) => [s.match, s.optionId])).toEqual([
+      ["label", "c1"],
+      ["other", "other"],
+    ]);
   });
 
   /** `ZSurveyPictureChoice` is `{id, imageUrl}` — no label to resolve, so ids match exactly. */

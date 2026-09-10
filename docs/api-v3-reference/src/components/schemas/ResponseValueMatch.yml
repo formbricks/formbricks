@@ -14,9 +14,12 @@ description: >
   - `label` — the stored value matched an option's **label text** (ids are stable, labels are
     editable and language-dependent, so a label match is weaker evidence).
 
-  - `other` — the value arrived through the element's **Other** free-text input. Only reported when
-    the element actually has that input enabled and the value was submitted through it.
+  - `other` — no option resolves **and** the element offers an Other free-text input. Read it as
+    "this element accepts write-ins and this is not one of its current options", not as proof the
+    respondent typed it: nothing in storage marks a write-in, so a genuine one and an option renamed
+    since collection are byte-identical. Every surface that reads these values concludes the same
+    thing from the same bytes — the survey renderer decides it by this exact elimination — so the
+    alternative is not more certainty, only a different guess.
 
-  - `unmatched` — no option resolves. The raw value is still returned; it is **not** silently
-    reclassified as `other`, because a *renamed* option is also unmatched text and filing it as a
-    write-in would misattribute the answer.
+  - `unmatched` — no option resolves and the element has **no** Other input, which makes a write-in
+    impossible: the value is a renamed or deleted option. Returned verbatim rather than dropped.

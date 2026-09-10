@@ -309,7 +309,11 @@ export const ZV3ResponseResource = z
     contact: ZV3ResponseContact.nullable(),
     displayId: z.string().nullable(),
     singleUseId: z.string().nullable(),
-    data: z.record(z.string(), z.unknown()),
+    /** The same four shapes `unresolved[].rawValue` carries — this is the map it is drawn from. */
+    data: z.record(
+      z.string(),
+      z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string(), z.string())])
+    ),
     variables: z.record(z.string(), z.union([z.string(), z.number()])),
   })
   .strict();

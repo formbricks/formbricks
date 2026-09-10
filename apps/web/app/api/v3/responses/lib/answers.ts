@@ -8,7 +8,6 @@ import {
   type TV3ResponseAnswer,
   type TV3ResponseSelection,
   type TV3ResponseUnresolvedEntry,
-  type TV3ResponseValueMatch,
   V3_ADDRESS_FIELD_IDS,
   V3_CONTACT_INFO_FIELD_IDS,
 } from "./resources";
@@ -87,26 +86,44 @@ const isStringRecord = (value: unknown): value is Record<string, string> =>
   Object.values(value).every((entry) => typeof entry === "string");
 
 /**
- * Whether this element offers an "Other" write-in at all.
+ * Ids that name a behaviour rather than an option, and so are never matched as stored values.
  *
- * The renderer's own test. Deliberately **not** `otherOptionPlaceholder !== undefined`: deleting the
- * Other choice in the editor removes the choice without clearing the placeholder, so that predicate
- * stays true forever once set and would misfile every unmatched value as a write-in.
+ * The renderer excludes both when it decides what a stored value selected
+ * (`multiple-choice-single-element.tsx:82`, `:118`), and it stores `""` — not `"other"` — for an
+ * Other selection left blank. So a literal `"other"` arriving as a value is a label that happens to
+ * read "other", not a selection of the Other option; matching it by id would name the wrong choice.
  */
-const hasOtherChoice = (element: TSurveyElement): boolean =>
-  "choices" in element &&
-  Array.isArray(element.choices) &&
-  element.choices.some((choice: { id: string }) => choice.id === "other");
+const RESERVED_CHOICE_IDS = new Set(["other", "none"]);
+
+/**
+ * The element's Other choice, if it offers one.
+ *
+ * The renderer's own test (`multiple-choice-single-element.tsx:63-64`). Deliberately **not**
+ * `otherOptionPlaceholder !== undefined`: deleting the Other choice in the editor removes the choice
+ * without clearing the placeholder, so that predicate stays true forever once set.
+ */
+const findOtherChoice = (element: TSurveyElement): { id: string; label?: unknown } | undefined =>
+  "choices" in element && Array.isArray(element.choices)
+    ? (element.choices as { id: string; label?: unknown }[]).find((choice) => choice.id === "other")
+    : undefined;
 
 /**
  * Resolve one stored choice value against the current definition.
  *
- * Order is load-bearing and matches the contract: an option **id**, then an option **label**, then
- * `other`, then `unmatched`. The `other` step is last-but-one because a renamed option and a genuine
- * write-in are byte-identical as stored — so an element with no Other input can never report `other`,
- * and one with an Other input reports it only when nothing else resolved.
+ * Precedence is the contract's and is fixed: option **id**, then option **label**, then `other`,
+ * then `unmatched`.
  *
- * `unmatched` keeps `rawValue` and nulls the ids rather than guessing. The value is never discarded.
+ * **On `other`, and why it is a judgement rather than a fact.** Nothing in storage marks a write-in.
+ * The renderer decides "this was Other" by the same elimination this does — see
+ * `multiple-choice-single-element.tsx:87-89`, "Otherwise, it's a custom value => other" — and then
+ * stores the bare string the respondent typed. So a write-in and an option renamed since collection
+ * are byte-identical, and no reader can separate them.
+ *
+ * Given that, `other` is reported when nothing resolves **and** the element offers an Other input.
+ * That is what the renderer, the summary and the Hub transform all already conclude from the same
+ * bytes, so a different answer here would make v3 the one surface that disagrees. `unmatched` is
+ * then the honest answer for an element with no Other input, where a write-in is impossible and an
+ * unresolvable value can only be a renamed or deleted option.
  */
 const resolveSelection = (
   raw: string,
@@ -114,11 +131,16 @@ const resolveSelection = (
   lookupKey: string,
   rank?: number
 ): TV3ResponseSelection => {
-  const choices = "choices" in element && Array.isArray(element.choices) ? element.choices : [];
+  const choices =
+    "choices" in element && Array.isArray(element.choices)
+      ? (element.choices as { id: string; label?: unknown }[])
+      : [];
 
   for (const choice of choices) {
+    if (RESERVED_CHOICE_IDS.has(choice.id)) continue;
     if (choice.id === raw) {
-      const label = "label" in choice ? localizeSurveyString(choice.label, lookupKey) : "";
+      const label = localizeSurveyString(choice.label as never, lookupKey);
+      // `pictureSelection` choices carry no label at all, so `null` is the only honest answer there.
       return {
         optionId: choice.id,
         optionLabel: label || null,
@@ -130,14 +152,28 @@ const resolveSelection = (
   }
 
   for (const choice of choices) {
-    if (!("label" in choice)) continue;
-    if (localizeSurveyString(choice.label, lookupKey) === raw) {
+    if (RESERVED_CHOICE_IDS.has(choice.id)) continue;
+    if (choice.label === undefined) continue;
+    if (localizeSurveyString(choice.label as never, lookupKey) === raw) {
       return { optionId: choice.id, optionLabel: raw, rawValue: raw, match: "label", ...rankOf(rank) };
     }
   }
 
-  const match: TV3ResponseValueMatch = hasOtherChoice(element) ? "other" : "unmatched";
-  return { optionId: null, optionLabel: null, rawValue: raw, match, ...rankOf(rank) };
+  const other = findOtherChoice(element);
+  if (other) {
+    // The Other option is a real option with a real id, so a write-in names it. Returning nulls here
+    // would emit the exact payload the contract reserves for "nothing resolved" while claiming the
+    // opposite in `match`.
+    return {
+      optionId: other.id,
+      optionLabel: localizeSurveyString(other.label as never, lookupKey) || null,
+      rawValue: raw,
+      match: "other",
+      ...rankOf(rank),
+    };
+  }
+
+  return { optionId: null, optionLabel: null, rawValue: raw, match: "unmatched", ...rankOf(rank) };
 };
 
 const rankOf = (rank?: number): { rank?: number } => (rank === undefined ? {} : { rank });
@@ -234,6 +270,10 @@ const serializeOne = (
       // unreconstructable. Slots the author has switched off are stored as `""` too.
       if (!isStringArray(raw)) return mismatch;
       const ids = compositeFields(element);
+      // A longer array than the type has slots cannot be represented as `fields` without losing the
+      // overflow, and silently dropping part of a stored value is the one thing this module does not
+      // do. Reported as a shape mismatch instead, which carries the whole array through untouched.
+      if (raw.length > ids.length) return mismatch;
       return {
         answer: {
           ...base,

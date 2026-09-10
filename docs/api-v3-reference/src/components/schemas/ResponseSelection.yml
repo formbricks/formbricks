@@ -23,7 +23,8 @@ properties:
       - string
       - "null"
     description: >-
-      Option label in the resolved language. `null` when `match` is `unmatched`.
+      Option label in the resolved language. `null` when `match` is `unmatched`, and also for
+      `pictureSelection`, whose options are images and carry no label to resolve.
   rawValue:
     type: string
     description: >-

@@ -49,6 +49,11 @@ export interface TV3LabelContext {
  * for some time but historical rows predate that, and a survey may declare `pt-BR` against a stored
  * `pt-br`. An unrecognised or absent language falls back to the survey's default rather than failing:
  * a response collected before a language was removed still has to serialize.
+ *
+ * `enabled` is deliberately not consulted. It says whether an author still offers the language for
+ * new submissions, which is not a fact about a response already collected — gating on it would
+ * re-language every historical response the day a translation is switched off, and would disagree
+ * with the display surfaces, which resolve the same labels without checking it.
  */
 export const resolveV3LabelContext = (
   languages: readonly TSurveyLanguage[],
