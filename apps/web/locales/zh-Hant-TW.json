@@ -2728,7 +2728,7 @@
         "select_plan_feature_2": "MCP 存取權限,連接任何 AI 客戶端並做出數據支援的決策。",
         "select_plan_feature_3": "所有整合功能和自訂 webhook",
         "select_plan_feature_4": "每月 2,000 份回應",
-        "select_plan_header": "免費取得 Formbricks Pro！",
+        "select_plan_header": "{count, plural, other {您還有 # 天的專業版使用期限}}",
         "select_plan_skip": "保持使用 Hobby 方案",
         "select_plan_subheader": "14 天試用，無需信用卡",
         "status_trialing": "試用版",

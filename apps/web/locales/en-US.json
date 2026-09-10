@@ -2728,7 +2728,7 @@
         "select_plan_feature_2": "MCP access, connect to any AI client and make data backed decisions.",
         "select_plan_feature_3": "All integrations and custom webhooks",
         "select_plan_feature_4": "2,000 responses a month",
-        "select_plan_header": "You're on Pro for the next 14 days",
+        "select_plan_header": "{count, plural, one {You're on Pro for the next # day} other {You're on Pro for the next # days}}",
         "select_plan_skip": "Return to 'Hobby' plan",
         "select_plan_subheader": "Everything below is unlocked, for free.",
         "status_trialing": "Trial",

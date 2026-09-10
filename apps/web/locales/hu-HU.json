@@ -2728,7 +2728,7 @@
         "select_plan_feature_2": "MCP hozzáférés, kapcsolódjon bármely mesterséges intelligencia klienshez és hozzon adatokon alapuló döntéseket.",
         "select_plan_feature_3": "Valamennyi integráció és egyéni webhook",
         "select_plan_feature_4": "Havi 2 000 válasz",
-        "select_plan_header": "Szerezze meg a Formbricks Pro csomagot ingyen!",
+        "select_plan_header": "{count, plural, one {Ön a következő # napig Pro előfizetéssel rendelkezik} other {Ön a következő # napig Pro előfizetéssel rendelkezik}}",
         "select_plan_skip": "Maradás a Hobby csomagnál",
         "select_plan_subheader": "14 napos próbaidőszak, nincs szükség hitelkártyára",
         "status_trialing": "Próbaidőszak",
