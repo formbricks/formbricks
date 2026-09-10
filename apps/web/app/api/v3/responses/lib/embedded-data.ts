@@ -7,7 +7,7 @@ import {
   resolveEmbeddedValue,
 } from "@formbricks/types/embedded-data-resolver";
 import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
-import type { TV3ResponseEmbeddedDatum } from "./resources";
+import type { TV3ResponseEmbeddedDatum, TV3ResponseUnresolvedEntry } from "./resources";
 
 /**
  * The `embeddedData[]` projection: hidden fields, variables and auto-captured context as one
@@ -72,8 +72,9 @@ const typeOf = (value: string | number | boolean): TV3ResponseEmbeddedDatum["typ
 export const serializeEmbeddedData = (
   plan: TV3EmbeddedDataPlan,
   response: TEmbeddedValueResponse
-): TV3ResponseEmbeddedDatum[] => {
+): { embeddedData: TV3ResponseEmbeddedDatum[]; unresolved: TV3ResponseUnresolvedEntry[] } => {
   const entries: TV3ResponseEmbeddedDatum[] = [];
+  const unresolved: TV3ResponseUnresolvedEntry[] = [];
 
   for (const { field, link } of plan.declared) {
     // `reserved` cannot appear among a survey's own declarations, and the resolver returns
@@ -81,7 +82,21 @@ export const serializeEmbeddedData = (
     if (field.source === "reserved") continue;
 
     const value = resolveEmbeddedValue({ field, link }, response);
-    if (value === undefined) continue;
+    if (value === undefined) {
+      // A legacy row can hold an array or an object under a declared field's key. The resolver
+      // coerces nothing and returns `undefined`, and `data` no longer carries these keys on the
+      // wire — so without this the bytes would be visible nowhere at all, which is silent loss on
+      // exactly the old rows the name-keyed restructure was meant to protect.
+      const stored = storedValueFor(field.source, link.storageKey, response);
+      if (stored !== undefined && stored !== null && typeof stored === "object") {
+        unresolved.push({
+          key: field.name,
+          rawValue: stored as TV3ResponseUnresolvedEntry["rawValue"],
+          reason: "valueShapeMismatch",
+        });
+      }
+      continue;
+    }
 
     entries.push({
       // The field's name, which is also the key a write accepts. Deliberately not `link.storageKey`:
@@ -111,5 +126,17 @@ export const serializeEmbeddedData = (
     });
   }
 
-  return entries;
+  return { embeddedData: entries, unresolved };
 };
+
+/**
+ * The raw stored value behind a declared field, for reporting one the resolver could not read.
+ *
+ * A `locked` field deliberately ignores what the response holds, so it is left alone here too —
+ * reporting a value the field would never have used would be noise, not disclosure.
+ */
+const storedValueFor = (
+  source: "ingested" | "computed",
+  storageKey: string,
+  response: TEmbeddedValueResponse
+): unknown => (source === "computed" ? response.variables[storageKey] : response.data[storageKey]);

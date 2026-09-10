@@ -31,7 +31,10 @@ const response = (over: Partial<TEmbeddedValueResponse> = {}): TEmbeddedValueRes
   }) as unknown as TEmbeddedValueResponse;
 
 const project = (fields: TLinkedEmbeddedField[], res: TEmbeddedValueResponse) =>
-  serializeEmbeddedData(buildEmbeddedDataPlan(fields), res);
+  serializeEmbeddedData(buildEmbeddedDataPlan(fields), res).embeddedData;
+
+const unresolvedOf = (fields: TLinkedEmbeddedField[], res: TEmbeddedValueResponse) =>
+  serializeEmbeddedData(buildEmbeddedDataPlan(fields), res).unresolved;
 
 const byKey = (entries: ReturnType<typeof project>, key: string) => entries.filter((e) => e.key === key);
 
@@ -156,5 +159,36 @@ describe("value fidelity", () => {
     const entries = project([], response({ meta: { pagePath: "/pricing?plan=gold" } as never }));
 
     expect(byKey(entries, "pagePath")[0]?.value).toBe("/pricing?plan=gold");
+  });
+});
+
+describe("a value the resolver cannot read is reported, not dropped", () => {
+  /**
+   * A legacy row can hold an array or object under a declared field's key. The resolver coerces
+   * nothing and returns `undefined`, and `data` no longer carries these keys on the wire — so
+   * without this the bytes would appear nowhere at all.
+   */
+  test.each([
+    ["an array", ["a", "b"]],
+    ["an object", { nested: "value" }],
+  ])("%s under a declared hidden field surfaces in unresolved", (_label, stored) => {
+    const fields = [declared("plan", "ingested", "string")];
+    const res = response({ data: { plan: stored } as never });
+
+    expect(byKey(project(fields, res), "plan")).toEqual([]);
+    expect(unresolvedOf(fields, res)).toEqual([
+      { key: "plan", rawValue: stored, reason: "valueShapeMismatch" },
+    ]);
+  });
+
+  test("a field that is simply absent is not reported as a mismatch", () => {
+    expect(unresolvedOf([declared("plan", "ingested", "string")], response())).toEqual([]);
+  });
+
+  /** A locked field ignores the response by design, so its stored value is not a mismatch. */
+  test("a locked field is left alone", () => {
+    const fields = [declared("plan", "ingested", "string", { locked: true, defaultValue: "free" })];
+
+    expect(unresolvedOf(fields, response({ data: { plan: ["ignored"] } as never }))).toEqual([]);
   });
 });
