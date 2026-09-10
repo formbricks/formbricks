@@ -29,10 +29,25 @@ export interface TV3AnswerPlan {
   elementById: Map<string, TSurveyElement>;
   /** Headlines, already localized, HTML-stripped and recall-flattened. */
   labelById: Map<string, string>;
+  /**
+   * Storage keys of the survey's declared ingested fields — hidden fields, which are stored under
+   * their name in the same map as answers. `answers[]` must skip them: they are not answers, and
+   * `embeddedData[]` already reports them.
+   *
+   * A key that is also an element id is **not** in this set, however it was declared. The ingest
+   * contract drops such a field (`element_id_collision`) because a question answer owns that
+   * address, so the value stored there is an answer and belongs in `answers[]`. Skipping it would
+   * relabel a respondent's answer as caller-supplied context.
+   */
+  ingestedStorageKeys: ReadonlySet<string>;
   lookupKey: string;
 }
 
-export const buildAnswerPlan = (blocks: TSurveyBlock[], lookupKey: string): TV3AnswerPlan => {
+export const buildAnswerPlan = (
+  blocks: TSurveyBlock[],
+  lookupKey: string,
+  ingestedStorageKeys: Iterable<string> = []
+): TV3AnswerPlan => {
   const elements = blocks.flatMap((block) => block.elements);
 
   // Reused rather than reimplemented: `toElementLabel` localizes with the `default` fallback, strips
@@ -47,10 +62,15 @@ export const buildAnswerPlan = (blocks: TSurveyBlock[], lookupKey: string): TV3A
     languageCode: lookupKey,
   });
 
+  // Exact, case-sensitive, matching `embedded-data-ingest.ts` — it is the same string that keys
+  // `response.data`, and a field differing only by case addresses a different slot entirely.
+  const elementIds = new Set(elements.map((element) => element.id));
+
   return {
     positionById: new Map(elements.map((element, index) => [element.id, index + 1])),
     elementById: new Map(elements.map((element) => [element.id, element])),
     labelById: new Map(readable.question.map(({ key, label }) => [key, label])),
+    ingestedStorageKeys: new Set([...ingestedStorageKeys].filter((key) => !elementIds.has(key))),
     lookupKey,
   };
 };
@@ -385,10 +405,15 @@ export const serializeAnswers = (
   const unresolved: TV3ResponseUnresolvedEntry[] = [];
 
   for (const [key, raw] of Object.entries(data)) {
+    // A hidden field's value lives in this same map, under the field's name. It is not an answer
+    // and it is not a deleted element — `embeddedData[]` reports it — so skipping it here is what
+    // keeps it from being published twice, the second time as a deletion that never happened.
+    // `buildAnswerPlan` has already removed any key an element claims, so a collision falls
+    // through to the answer path below rather than being skipped.
+    if (plan.ingestedStorageKeys.has(key)) continue;
+
     const element = plan.elementById.get(key);
     if (!element) {
-      // Either a deleted element or a declared hidden field; the two are indistinguishable here,
-      // because both live in this one map and nothing records which wrote the key.
       unresolved.push({
         key,
         rawValue: raw as TV3ResponseUnresolvedEntry["rawValue"],

@@ -30,8 +30,11 @@ const response = (over: Partial<TEmbeddedValueResponse> = {}): TEmbeddedValueRes
     ...over,
   }) as unknown as TEmbeddedValueResponse;
 
-const project = (fields: TLinkedEmbeddedField[], res: TEmbeddedValueResponse) =>
-  serializeEmbeddedData(buildEmbeddedDataPlan(fields), res).embeddedData;
+const project = (
+  fields: TLinkedEmbeddedField[],
+  res: TEmbeddedValueResponse,
+  elementIds: string[] = []
+) => serializeEmbeddedData(buildEmbeddedDataPlan(fields, elementIds), res).embeddedData;
 
 const unresolvedOf = (fields: TLinkedEmbeddedField[], res: TEmbeddedValueResponse) =>
   serializeEmbeddedData(buildEmbeddedDataPlan(fields), res).unresolved;
@@ -125,6 +128,49 @@ describe("a declared name colliding with a catalog name", () => {
     expect(both.map((e) => e.kind).sort()).toEqual(["ingested", "reserved"]);
     expect(both.find((e) => e.kind === "ingested")?.value).toBe("declared value");
     expect(both.find((e) => e.kind === "reserved")?.value).toBe("PT");
+  });
+});
+
+describe("an element id claims the address", () => {
+  /**
+   * Ingest drops a declared ingested field whose storage key is an element id
+   * (`element_id_collision`), so the value stored there is the respondent's answer. Projecting it
+   * would republish an answer as caller-supplied context — and `PATCH embeddedData: { plan: null }`
+   * would then read as clearing a field while actually deleting the answer.
+   */
+  test("a hidden field named after an element is not projected", () => {
+    const entries = project(
+      [declared("plan", "ingested", "string")],
+      response({ data: { plan: "the respondent's answer" } }),
+      ["plan"]
+    );
+
+    expect(byKey(entries, "plan")).toEqual([]);
+  });
+
+  /** Case-sensitive, matching the ingest contract: `Plan` addresses a slot no element claims. */
+  test("a hidden field differing only by case is still projected", () => {
+    const entries = project(
+      [declared("Plan", "ingested", "string")],
+      response({ data: { Plan: "gold" } }),
+      ["plan"]
+    );
+
+    expect(byKey(entries, "Plan")[0]).toMatchObject({ kind: "ingested", value: "gold" });
+  });
+
+  /**
+   * Only `ingested` fields are dropped by the contract. A variable's value lives in
+   * `response.variables` under its cuid, so it shares no slot with an answer.
+   */
+  test("a variable whose name matches an element is still projected", () => {
+    const entries = project(
+      [declared("score", "computed", "number")],
+      response({ variables: { clvr000000000000000000001: 7 } as never }),
+      ["score"]
+    );
+
+    expect(byKey(entries, "score")[0]).toMatchObject({ kind: "computed", value: 7 });
   });
 });
 

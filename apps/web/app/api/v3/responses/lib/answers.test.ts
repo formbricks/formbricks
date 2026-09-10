@@ -380,6 +380,65 @@ describe("unreadable values become unresolved rather than throwing or guessing",
     expect(unresolved).toEqual([{ key: "q1", rawValue: raw, reason: "valueShapeMismatch" }]);
   });
 
+  /**
+   * A hidden field's value shares this map with answers, keyed by the field's name. Before the plan
+   * knew the survey's declared fields it looked exactly like a deleted element, so every hidden
+   * field on every response was published twice — once in `embeddedData[]` and once here as a
+   * deletion that never happened.
+   */
+  test("a declared hidden field is neither an answer nor an unresolved deletion", () => {
+    const plan = buildAnswerPlan(
+      [{ id: "blk", name: "Block", elements: [element({ id: "q1", type: "openText" })] } as never],
+      "default",
+      ["plan"]
+    );
+    const { answers, unresolved } = serializeAnswers(
+      plan,
+      { q1: "answered", plan: "enterprise" } as never,
+      undefined
+    );
+
+    expect(answers.map((a) => a.elementId)).toEqual(["q1"]);
+    expect(unresolved).toEqual([]);
+  });
+
+  /**
+   * The collision the ingest contract already settles: a question answer owns the address, so the
+   * declared field is dropped at ingest (`element_id_collision`) and the value stored under that
+   * key is the respondent's answer. Skipping it as a hidden field would relabel a real answer as
+   * caller-supplied context, and hide it from the one collection it belongs in.
+   */
+  test("a declared field whose name is an element id does not suppress that element's answer", () => {
+    const plan = buildAnswerPlan(
+      [{ id: "blk", name: "Block", elements: [element({ id: "plan", type: "openText" })] } as never],
+      "default",
+      ["plan"]
+    );
+    const { answers, unresolved } = serializeAnswers(plan, { plan: "answered" } as never, undefined);
+
+    expect(answers).toHaveLength(1);
+    expect(answers[0]).toMatchObject({ elementId: "plan", valueText: "answered" });
+    expect(unresolved).toEqual([]);
+    expect(plan.ingestedStorageKeys.has("plan")).toBe(false);
+  });
+
+  /** Case-sensitive, like the ingest contract: `Plan` and `plan` are different storage slots. */
+  test("a declared field differing only by case is still skipped as a hidden field", () => {
+    const plan = buildAnswerPlan(
+      [{ id: "blk", name: "Block", elements: [element({ id: "plan", type: "openText" })] } as never],
+      "default",
+      ["Plan"]
+    );
+    const { answers, unresolved } = serializeAnswers(
+      plan,
+      { plan: "answered", Plan: "hidden" } as never,
+      undefined
+    );
+
+    expect(answers.map((a) => a.elementId)).toEqual(["plan"]);
+    expect(unresolved).toEqual([]);
+  });
+
   test("a key with no element in the current definition is reported, not dropped", () => {
     const { answers, unresolved } = only([element({ id: "q1", type: "openText" })], {
       q1: "kept",

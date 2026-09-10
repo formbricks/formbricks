@@ -48,13 +48,35 @@ export interface TV3EmbeddedDataPlan {
  * that silently picks a winner. `kind` is what tells them apart, and the collection's key is
  * therefore unique per kind rather than across the whole array. The set of such surveys is finite
  * and no longer growing (ENG-3121).
+ *
+ * **An element id is the one thing that does shadow, because ingest already decided it.** A
+ * declared *ingested* field whose storage key is also an element id can never hold a value: the
+ * ingest contract drops it with `element_id_collision` (`packages/types/embedded-data-ingest.ts`)
+ * on the grounds that a question answer owns that address and an answer is never rewritten, and
+ * the renderer filters the same key before a submission can carry it. So the value stored under
+ * that key is the respondent's answer. Projecting it here would republish an answer as
+ * caller-supplied context — and a `PATCH` clearing that "field" would delete the answer.
+ *
+ * Only `ingested` fields are excluded, matching the contract's own order: a variable's value lives
+ * in `response.variables`, keyed by its cuid, so it shares no slot with an answer and is dropped by
+ * nothing. Matching is exact and case-sensitive for the same reason it is there — the storage key
+ * is the literal `response.data` key, and a field differing only by case addresses another slot.
  */
-export const buildEmbeddedDataPlan = (declared: readonly TLinkedEmbeddedField[]): TV3EmbeddedDataPlan => ({
-  declared,
-  reserved: RESERVED_FIELD_CATALOG.filter(
-    (entry) => isProjectable(entry) && !NEVER_PROJECTED.has(entry.name)
-  ),
-});
+export const buildEmbeddedDataPlan = (
+  declared: readonly TLinkedEmbeddedField[],
+  elementIds: Iterable<string> = []
+): TV3EmbeddedDataPlan => {
+  const claimedByElement = new Set(elementIds);
+
+  return {
+    declared: declared.filter(
+      ({ field, link }) => field.source !== "ingested" || !claimedByElement.has(link.storageKey)
+    ),
+    reserved: RESERVED_FIELD_CATALOG.filter(
+      (entry) => isProjectable(entry) && !NEVER_PROJECTED.has(entry.name)
+    ),
+  };
+};
 
 const KIND_BY_SOURCE = { ingested: "ingested", computed: "computed" } as const;
 
