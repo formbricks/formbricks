@@ -227,8 +227,15 @@ export const ZV3ResponseEmbeddedDatum = z
     kind: z.enum(["ingested", "computed", "reserved"]),
     type: z.enum(["string", "number", "boolean", "date"]),
     label: z.string(),
-    /** No `null` member: a key that resolves to nothing is omitted from the collection entirely. */
-    value: z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]),
+    /**
+     * Always a scalar, and never `null`.
+     *
+     * A key that resolves to nothing is omitted from the collection entirely, and a legacy
+     * non-scalar resolves to nothing — the resolver coerces none of them — so it is reported in
+     * `unresolved[]` with its bytes rather than carried here under a `type` that could not
+     * describe it.
+     */
+    value: z.union([z.string(), z.number(), z.boolean()]),
   })
   .strict();
 export type TV3ResponseEmbeddedDatum = z.infer<typeof ZV3ResponseEmbeddedDatum>;
