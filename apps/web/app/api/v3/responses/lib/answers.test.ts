@@ -107,10 +107,13 @@ describe("serializeAnswers — one branch per element type", () => {
     expect(answer([el], { q1: raw })).toMatchObject({ valueBoolean: expected, rawValue: raw });
   });
 
-  test("cal reports the booking and the raw token", () => {
+  test.each([
+    ["booked", true],
+    ["skipped", false],
+  ])("cal %s reports booked=%s and the raw token", (raw, expected) => {
     const el = element({ id: "q1", type: "cal", calUserName: "someone" });
 
-    expect(answer([el], { q1: "booked" })).toMatchObject({ booked: true, rawValue: "booked" });
+    expect(answer([el], { q1: raw })).toMatchObject({ booked: expected, rawValue: raw });
   });
 
   /** Older clients wrote the element's display format; reformatting without knowing which moves the date. */
@@ -202,6 +205,54 @@ describe("choice resolution follows id → label → other → unmatched", () =>
     id: "q1",
     type: "multipleChoiceSingle",
     choices: [choice("c1", "Blue"), choice("c2", "Green")],
+  });
+
+  /**
+   * "None of the above" is an author-written, translatable option, and the renderer stores its
+   * label like any other. Reserving its id made a respondent who chose it come back as an Other
+   * write-in — filed under Other by any consumer grouping on `optionId`, exactly as the contract
+   * tells them to.
+   */
+  test("a none-of-the-above selection resolves to the none option, not to Other", () => {
+    const withNone = element({
+      id: "q1",
+      type: "multipleChoiceSingle",
+      choices: [choice("c1", "Blue"), choice("none", "None of the above"), choice("other", "Other")],
+    });
+
+    expect(withSelections(answer([withNone], { q1: "None of the above" })).selections[0]).toMatchObject({
+      optionId: "none",
+      optionLabel: "None of the above",
+      match: "label",
+    });
+  });
+
+  /** Without an Other choice the old behaviour was worse still: `unmatched`, naming nothing. */
+  test("a none selection resolves even when the element offers no Other choice", () => {
+    const noneNoOther = element({
+      id: "q1",
+      type: "multipleChoiceSingle",
+      choices: [choice("c1", "Blue"), choice("none", "Keine Angabe")],
+    });
+
+    expect(withSelections(answer([noneNoOther], { q1: "Keine Angabe" })).selections[0]).toMatchObject({
+      optionId: "none",
+      match: "label",
+    });
+  });
+
+  /** `other` stays reserved: a blank write-in stores `""`, so a literal "other" is a label. */
+  test("a stored `other` is still treated as a write-in label, not as the Other option id", () => {
+    const withOtherChoice = element({
+      id: "q1",
+      type: "multipleChoiceSingle",
+      choices: [choice("c1", "Blue"), choice("other", "Other")],
+    });
+
+    expect(withSelections(answer([withOtherChoice], { q1: "other" })).selections[0]).toMatchObject({
+      match: "other",
+      rawValue: "other",
+    });
   });
 
   test("a stored label resolves to its option", () => {
@@ -338,6 +389,17 @@ describe("matrix is keyed by localized labels, never ids", () => {
     columns: [choice("col1", "Good"), choice("col2", "Bad")],
   });
 
+  /**
+   * The contract: "One entry per row the respondent answered. Rows left blank are omitted rather
+   * than returned." A blank row was coming back as an `unmatched` entry — a row that was never
+   * answered, reported as one whose column could not be resolved.
+   */
+  test("a row left blank is omitted rather than returned as unmatched", () => {
+    const rows = withRows(answer([el], { q1: { Speed: "Good", Price: "" } })).rows;
+
+    expect(rows.map((row) => row.rowId)).toEqual(["r1"]);
+  });
+
   test("resolves both sides and keeps the stored key verbatim", () => {
     const rows = withRows(answer([el], { q1: { Speed: "Good" } })).rows;
 
@@ -437,6 +499,57 @@ describe("unreadable values become unresolved rather than throwing or guessing",
 
     expect(answers.map((a) => a.elementId)).toEqual(["plan"]);
     expect(unresolved).toEqual([]);
+  });
+
+  /**
+   * `verifiedEmail` is the respondent's verified address, stamped into the answer map by the email
+   * gate rather than sent by anyone. `unresolved[]` publishes `rawValue` verbatim, so reporting it
+   * would put a real address in both views of every gated response.
+   */
+  test("a runtime-stamped system key is dropped rather than reported with its value", () => {
+    const { answers, unresolved } = only([element({ id: "q1", type: "openText" })], {
+      q1: "kept",
+      verifiedEmail: "respondent@example.test",
+    });
+
+    expect(answers.map((a) => a.elementId)).toEqual(["q1"]);
+    expect(unresolved).toEqual([]);
+  });
+
+  /**
+   * The suppression is keyed on the element lookup failing first. A legacy survey can hold an
+   * element whose id is one of those names, and its answer is a real answer.
+   */
+  test("an element whose id is a system key still serializes its answer", () => {
+    const { answers, unresolved } = only([element({ id: "start", type: "openText" })], {
+      start: "the answer",
+    });
+
+    expect(answers[0]).toMatchObject({ elementId: "start", valueText: "the answer" });
+    expect(unresolved).toEqual([]);
+  });
+
+  /** `rawValue` is a four-shape union with no null member, so a JSON null cannot be reported. */
+  test("a JSON null is skipped rather than emitted as an unreportable rawValue", () => {
+    const { answers, unresolved } = only([element({ id: "q1", type: "openText" })], {
+      q1: "kept",
+      legacy_null: null,
+    });
+
+    expect(answers.map((a) => a.elementId)).toEqual(["q1"]);
+    expect(unresolved).toEqual([]);
+  });
+
+  /**
+   * The composite guard the module calls its own "never silently drop bytes" promise: an array
+   * longer than the slot list cannot be mapped positionally without discarding the tail.
+   */
+  test("a composite array longer than its slot list is reported whole, not truncated", () => {
+    const raw = ["a", "b", "c", "d", "e", "f", "g"];
+    const { answers, unresolved } = only([element({ id: "q1", type: "address" })], { q1: raw });
+
+    expect(answers).toEqual([]);
+    expect(unresolved).toEqual([{ key: "q1", rawValue: raw, reason: "valueShapeMismatch" }]);
   });
 
   test("a key with no element in the current definition is reported, not dropped", () => {

@@ -1,3 +1,4 @@
+import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
   RESERVED_FIELD_CATALOG,
   type TEmbeddedValueResponse,
@@ -36,6 +37,11 @@ export interface TV3EmbeddedDataPlan {
   declared: readonly TLinkedEmbeddedField[];
   /** Catalog entries this survey may project. */
   reserved: readonly TReservedFieldCatalogEntry[];
+  /**
+   * Storage keys of the survey's *current* variables — the cuids `response.variables` is keyed by.
+   * A stored key outside this set belongs to a variable the survey no longer declares.
+   */
+  claimedVariableKeys: ReadonlySet<string>;
 }
 
 /**
@@ -75,13 +81,25 @@ export const buildEmbeddedDataPlan = (
     reserved: RESERVED_FIELD_CATALOG.filter(
       (entry) => isProjectable(entry) && !NEVER_PROJECTED.has(entry.name)
     ),
+    claimedVariableKeys: new Set(
+      declared.filter(({ field }) => field.source === "computed").map(({ link }) => link.storageKey)
+    ),
   };
 };
 
 const KIND_BY_SOURCE = { ingested: "ingested", computed: "computed" } as const;
 
-const typeOf = (value: string | number | boolean): TV3ResponseEmbeddedDatum["type"] =>
-  typeof value === "number" ? "number" : typeof value === "boolean" ? "boolean" : "string";
+/**
+ * The entry's declared type, taken from the declaration rather than inferred from the value.
+ *
+ * Inferring it from the resolved JavaScript value cannot express `date`: the resolver coerces a
+ * date field to an ISO-8601 **string**, so `typeof` reports `"string"` and the contract's fourth
+ * type value could never be emitted — a consumer switching on `type` would parse every date as
+ * text. The declaration is authoritative and always present: `dataType` sits on
+ * `TLinkedEmbeddedField.field` for a declared field and on the catalog entry for a reserved one,
+ * and the resolver guarantees the value it returns already matches it.
+ */
+const declaredType = (dataType: TEmbeddedDataType): TV3ResponseEmbeddedDatum["type"] => dataType;
 
 /**
  * Project one response's embedded data.
@@ -126,7 +144,7 @@ export const serializeEmbeddedData = (
       // `variables` map it used to join back to has left the contract.
       key: field.name,
       kind: KIND_BY_SOURCE[field.source],
-      type: typeOf(value),
+      type: declaredType(field.dataType),
       label: field.name,
       value,
     });
@@ -139,12 +157,28 @@ export const serializeEmbeddedData = (
     entries.push({
       key: entry.name,
       kind: "reserved",
-      type: typeOf(value),
+      type: declaredType(entry.dataType),
       label: formatFieldNameToTitleCase(entry.name),
       // `redactQuery` is applied by the shipped projection, not by `resolveEmbeddedValue` — so a
       // caller of the resolver alone gets the raw `url`, single-use token and all. Applied here for
       // that reason; it is total and idempotent, so a doubly-redacted value is unchanged.
       value: entry.privacy === "redactQuery" && typeof value === "string" ? redactUrlQuery(value) : value,
+    });
+  }
+
+  // A variable deleted from the survey takes its declaration with it — `reconcile` hard-deletes the
+  // link row — but nothing prunes `response.variables`, so the value stays. Nothing above visits it:
+  // the loops walk the survey's *current* declarations. And unlike an orphaned `data` key, which
+  // `serializeAnswers` reports and the detail view's map still carries, a variable map is published
+  // nowhere in this contract — so without this the bytes would appear in no view at all, while v2
+  // still returns them. `variableNotInSurvey` is the reason the contract publishes for exactly this.
+  for (const [storageKey, rawValue] of Object.entries(response.variables ?? {})) {
+    if (plan.claimedVariableKeys.has(storageKey)) continue;
+
+    unresolved.push({
+      key: storageKey,
+      rawValue: rawValue as TV3ResponseUnresolvedEntry["rawValue"],
+      reason: "variableNotInSurvey",
     });
   }
 
@@ -154,8 +188,10 @@ export const serializeEmbeddedData = (
 /**
  * The raw stored value behind a declared field, for reporting one the resolver could not read.
  *
- * A `locked` field deliberately ignores what the response holds, so it is left alone here too —
- * reporting a value the field would never have used would be noise, not disclosure.
+ * `locked` is deliberately NOT consulted. It says the field ignores external writes, not that the
+ * bytes under its key stop existing — and since the detail view's `data` no longer carries declared
+ * keys at all, this collection is now the only place such a value can surface. Suppressing it here
+ * would be silent loss, which is the one thing `unresolved[]` exists to prevent.
  */
 const storedValueFor = (
   source: "ingested" | "computed",

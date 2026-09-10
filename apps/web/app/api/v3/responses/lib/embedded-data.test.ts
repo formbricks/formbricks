@@ -169,6 +169,56 @@ describe("an element id claims the address", () => {
   });
 });
 
+describe("the emitted type is the declared one", () => {
+  /**
+   * The resolver coerces a date field to an ISO-8601 string, so inferring the type from the runtime
+   * value reported `string` and the contract's fourth type value could never be emitted at all — a
+   * consumer switching on `type` would parse every date as text.
+   */
+  test("a date-typed field is published as `date`, not `string`", () => {
+    const entries = project(
+      [declared("signed_on", "ingested", "date")],
+      response({ data: { signed_on: "2026-09-01" } as never })
+    );
+
+    expect(byKey(entries, "signed_on")[0]).toMatchObject({ type: "date", value: "2026-09-01" });
+  });
+
+  test("a boolean-typed field keeps its declared type", () => {
+    const entries = project(
+      [declared("opted_in", "ingested", "boolean")],
+      response({ data: { opted_in: true } as never })
+    );
+
+    expect(byKey(entries, "opted_in")[0]).toMatchObject({ type: "boolean", value: true });
+  });
+});
+
+describe("a variable the survey no longer declares", () => {
+  /**
+   * Deleting a variable removes its link row but nothing prunes `response.variables`, and no
+   * variables map is published in this contract — so without a report the bytes appear in no view
+   * at all, while v2 still returns them.
+   */
+  test("its stored value is reported rather than dropped", () => {
+    const fields = [declared("score", "computed", "number")];
+    const res = response({
+      variables: { clvr000000000000000000001: 7, clvr000000000000000000009: "orphan" } as never,
+    });
+
+    expect(unresolvedOf(fields, res)).toEqual([
+      { key: "clvr000000000000000000009", rawValue: "orphan", reason: "variableNotInSurvey" },
+    ]);
+  });
+
+  test("a declared variable is not reported as orphaned", () => {
+    const fields = [declared("score", "computed", "number")];
+    const res = response({ variables: { clvr000000000000000000001: 7 } as never });
+
+    expect(unresolvedOf(fields, res)).toEqual([]);
+  });
+});
+
 describe("value fidelity", () => {
   /**
    * `projectReservedValues` returns `Record<string, string | number>` — it stringifies booleans —
@@ -226,10 +276,27 @@ describe("a value the resolver cannot read is reported, not dropped", () => {
     expect(unresolvedOf([declared("plan", "ingested", "string")], response())).toEqual([]);
   });
 
-  /** A locked field ignores the response by design, so its stored value is not a mismatch. */
-  test("a locked field is left alone", () => {
+  /**
+   * A locked field with a default never reaches the reporting path at all: the resolver falls back
+   * to the default, so the entry resolves and there is nothing to report. Kept to pin that.
+   */
+  test("a locked field with a default resolves to it, reporting nothing", () => {
     const fields = [declared("plan", "ingested", "string", { locked: true, defaultValue: "free" })];
 
     expect(unresolvedOf(fields, response({ data: { plan: ["ignored"] } as never }))).toEqual([]);
+  });
+
+  /**
+   * Without a default the field resolves to nothing, and the stored bytes are reported — the lock
+   * says the field ignores external writes, not that the bytes stop existing. Since the detail
+   * view's `data` no longer carries declared keys, this collection is the only place they surface.
+   */
+  test("a locked field with no default still reports the bytes stored under its key", () => {
+    const stored = ["ignored"];
+    const fields = [declared("plan", "ingested", "string", { locked: true, defaultValue: null })];
+
+    expect(unresolvedOf(fields, response({ data: { plan: stored } as never }))).toEqual([
+      { key: "plan", rawValue: stored, reason: "valueShapeMismatch" },
+    ]);
   });
 });

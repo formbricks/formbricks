@@ -361,8 +361,9 @@ export type TV3ResponseRow = Prisma.ResponseGetPayload<{ select: typeof v3Respon
 /**
  * What a v3 read needs off the `Survey` the response belongs to.
  *
- * `blocks` and `questions` are both selected because the file-upload and element lookups read
- * `blocks` while `questions` only says whether a legacy survey exists to warn about. `languages`
+ * `blocks` carries the file-upload and element lookups. The legacy `questions` blob is deliberately
+ * not selected: nothing on this path reads it, and hauling it across the wire for every survey on a
+ * 250-row page costs real bytes. `languages`
  * carries what resolves the response's label language. `embeddedDataLinks` uses the shared constant
  * so the ordering rule stays decided in one place — see its own comment.
  */
@@ -372,7 +373,6 @@ export const v3ResponseSurveySelect = {
   workspaceId: true,
   updatedAt: true,
   blocks: true,
-  questions: true,
   languages: {
     select: { default: true, enabled: true, language: { select: { code: true } } },
   },

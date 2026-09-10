@@ -151,7 +151,7 @@ describe("durationSeconds", () => {
 });
 
 describe("the detailed view", () => {
-  test("adds the four fields the list omits, and returns `data` as stored", () => {
+  test("adds the four fields the list omits, and returns answer values unreshaped", () => {
     const stored = { q1: "good", legacy: ["a", "b"] };
     const resource = createV3ResponseSerializer().toResource(
       row({ data: stored as never, displayId: "cldp1", singleUseId: "su1" }),
@@ -189,6 +189,56 @@ describe("the detailed view", () => {
     const { contact, displayId, singleUseId, data, ...rest } = serializer.toResource(r, survey());
 
     expect(rest).toEqual(serializer.toListItem(r, survey()));
+  });
+});
+
+describe("what the detail view's data map may carry", () => {
+  /**
+   * `data` is what PATCH accepts, and PATCH refuses a hidden field's name with a 422. Echoing the
+   * stored map handed a caller bytes the write side rejects, so a read-edit-write round trip of the
+   * value this endpoint had just returned would fail.
+   */
+  test("a declared hidden field's value is withheld", () => {
+    const s = survey({ embeddedFields: [declaredField("plan", "ingested")] });
+    const resource = createV3ResponseSerializer().toResource(
+      row({ data: { q1: "good", plan: "enterprise" } as never }),
+      s
+    );
+
+    expect(resource.data).toEqual({ q1: "good" });
+  });
+
+  /** The email gate stamps this into the answer map; it is the respondent's verified address. */
+  test("verifiedEmail is withheld", () => {
+    const resource = createV3ResponseSerializer().toResource(
+      row({ data: { q1: "good", verifiedEmail: "respondent@example.test" } as never }),
+      survey()
+    );
+
+    expect(resource.data).toEqual({ q1: "good" });
+    expect(JSON.stringify(resource)).not.toContain("respondent@example.test");
+  });
+
+  /**
+   * An unknown key is still the caller's data — a renamed or deleted element's value — and
+   * `unresolved[]` reports it alongside, so withholding it here would be the loss this whole
+   * collection exists to prevent.
+   */
+  test("an unknown legacy key is kept", () => {
+    const resource = createV3ResponseSerializer().toResource(
+      row({ data: { q1: "good", deleted_element: "still mine" } as never }),
+      survey()
+    );
+
+    expect(resource.data).toEqual({ q1: "good", deleted_element: "still mine" });
+  });
+
+  /** On a collision the answer owns the key, so it is an answer and belongs in the map. */
+  test("a key an element claims is kept even when a field declares the same name", () => {
+    const s = survey({ embeddedFields: [declaredField("q1", "ingested")] });
+    const resource = createV3ResponseSerializer().toResource(row({ data: { q1: "the answer" } as never }), s);
+
+    expect(resource.data).toEqual({ q1: "the answer" });
   });
 });
 

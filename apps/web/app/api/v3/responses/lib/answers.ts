@@ -3,6 +3,7 @@ import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { MAX_RESPONSE_TTC } from "@formbricks/types/responses";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { LINK_SURVEY_SYSTEM_PARAM_KEYS } from "@formbricks/types/surveys/validation";
 import { localizeSurveyString } from "./label-resolution";
 import {
   type TV3ResponseAnswer,
@@ -145,14 +146,21 @@ const isStringRecord = (value: unknown): value is Record<string, string> =>
   Object.values(value).every((entry) => typeof entry === "string");
 
 /**
- * Ids that name a behaviour rather than an option, and so are never matched as stored values.
+ * The one id that names a behaviour rather than an option, and so is never matched as a value.
  *
- * The renderer excludes both when it decides what a stored value selected
- * (`multiple-choice-single-element.tsx:82`, `:118`), and it stores `""` — not `"other"` — for an
- * Other selection left blank. So a literal `"other"` arriving as a value is a label that happens to
- * read "other", not a selection of the Other option; matching it by id would name the wrong choice.
+ * The renderer stores `""` — not `"other"` — for an Other selection left blank, so a literal
+ * `"other"` arriving as a value is a label that happens to read "other", not a selection of the
+ * Other option; matching it by id would name the wrong choice. The fall-through below handles a
+ * real write-in.
+ *
+ * `none` is deliberately NOT here. A "None of the above" choice is author-written and translatable,
+ * and the renderer stores its **label** like any other option: `multiple-choice-single-element.tsx`
+ * re-adds it to `allOptions` after filtering it out of `options`, and its own Other test excludes
+ * only `other`, so a stored none label matches a real choice there. The summary counts it as its
+ * own option too. Reserving it made a respondent who picked it come back as an Other write-in — or
+ * as `unmatched` on an element offering no Other — which no other surface agrees with.
  */
-const RESERVED_CHOICE_IDS = new Set(["other", "none"]);
+const RESERVED_CHOICE_IDS = new Set(["other"]);
 
 /**
  * The element's Other choice, if it offers one.
@@ -366,21 +374,29 @@ const serializeOne = (
         answer: {
           ...base,
           elementType: "matrix",
-          rows: Object.entries(raw).map(([rawKey, rawValue]) => {
-            const row = element.rows.find((entry) => localizeSurveyString(entry.label, lookupKey) === rawKey);
-            const column = element.columns.find(
-              (entry) => localizeSurveyString(entry.label, lookupKey) === rawValue
-            );
-            return {
-              rawKey,
-              rowId: row?.id ?? null,
-              rowLabel: row ? localizeSurveyString(row.label, lookupKey) : rawKey,
-              columnId: column?.id ?? null,
-              columnLabel: column ? localizeSurveyString(column.label, lookupKey) : null,
-              rawValue,
-              match: column ? ("label" as const) : ("unmatched" as const),
-            };
-          }),
+          // A blank value is a row the respondent left alone. The contract says so directly —
+          // "One entry per row the respondent answered. Rows left blank are omitted rather than
+          // returned" — and both display readers already skip them, so publishing them as
+          // `unmatched` invented rows that were never answered and mislabelled the reason.
+          rows: Object.entries(raw)
+            .filter(([, rawValue]) => rawValue !== "")
+            .map(([rawKey, rawValue]) => {
+              const row = element.rows.find(
+                (entry) => localizeSurveyString(entry.label, lookupKey) === rawKey
+              );
+              const column = element.columns.find(
+                (entry) => localizeSurveyString(entry.label, lookupKey) === rawValue
+              );
+              return {
+                rawKey,
+                rowId: row?.id ?? null,
+                rowLabel: row ? localizeSurveyString(row.label, lookupKey) : rawKey,
+                columnId: column?.id ?? null,
+                columnLabel: column ? localizeSurveyString(column.label, lookupKey) : null,
+                rawValue,
+                match: column ? ("label" as const) : ("unmatched" as const),
+              };
+            }),
         },
       };
     }
@@ -435,6 +451,24 @@ const serializeOne = (
  * caller's to interpret, so they land in `unresolved[]` rather than being dropped — that collection
  * is the whole reason a renamed or deleted element does not silently lose data.
  */
+/**
+ * Whether a stored `data` key may appear in the detail view's `data` map.
+ *
+ * The map is what `PATCH` accepts, and the contract narrows that to element answers: a declared
+ * hidden field's name is refused there with a 422, and a runtime-stamped system key was never a
+ * caller's to send. Echoing either would publish a value the write side rejects, so a read-edit-write
+ * round trip would fail on bytes this endpoint had just handed out.
+ *
+ * Unknown keys are kept: a renamed or deleted element's value is still the caller's data, and
+ * `unresolved[]` reports it alongside.
+ */
+export const isPublishableDataKey = (plan: TV3AnswerPlan, key: string): boolean => {
+  if (plan.ingestedStorageKeys.has(key)) return false;
+  if (plan.elementById.has(key)) return true;
+
+  return !LINK_SURVEY_SYSTEM_PARAM_KEYS.has(key);
+};
+
 export const serializeAnswers = (
   plan: TV3AnswerPlan,
   data: TResponseData,
@@ -451,8 +485,21 @@ export const serializeAnswers = (
     // through to the answer path below rather than being skipped.
     if (plan.ingestedStorageKeys.has(key)) continue;
 
+    // A JSON null is not a value the contract can carry: `rawValue` is a four-shape union with no
+    // null member, so reporting one would emit a payload the published schema rejects. It is also
+    // nothing a caller can act on — there are no bytes to recover.
+    if (raw === null) continue;
+
     const element = plan.elementById.get(key);
     if (!element) {
+      // Keys the runtime stamps into the answer map itself, checked only AFTER the element lookup:
+      // `verifiedEmail` is the respondent's verified address, written by the email gate, and
+      // `unresolved[]` publishes `rawValue` verbatim — so reporting it here would put a real email
+      // in both views of every gated response. The element lookup comes first deliberately: these
+      // are names a survey may not newly declare, but a legacy survey can hold an element called
+      // `start` or `source`, and suppressing a real answer would be the same loss in a new place.
+      if (LINK_SURVEY_SYSTEM_PARAM_KEYS.has(key)) continue;
+
       unresolved.push({
         key,
         rawValue: raw as TV3ResponseUnresolvedEntry["rawValue"],

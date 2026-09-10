@@ -1,7 +1,7 @@
 import type { TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { buildAnswerPlan, serializeAnswers, sumV3DurationSeconds } from "./answers";
+import { buildAnswerPlan, isPublishableDataKey, serializeAnswers, sumV3DurationSeconds } from "./answers";
 import { buildEmbeddedDataPlan, serializeEmbeddedData } from "./embedded-data";
 import { resolveV3LabelContext } from "./label-resolution";
 import type {
@@ -127,8 +127,9 @@ export const createV3ResponseSerializer = (): TV3ResponseSerializer => {
     const embeddedResult = serializeEmbeddedData(embeddedPlanFor(survey), asEmbeddedValueResponse(row));
 
     // Answers first, then Embedded Data — the order the two collections appear in the payload, so a
-    // caller reading `unresolved[]` top to bottom walks the response the same way twice. Neither
-    // module can report the same key, since each skips what the other owns.
+    // caller reading `unresolved[]` top to bottom walks the response the same way twice. The two
+    // can report the same key: a declared field name that is also an orphaned `data` key reaches
+    // both walks, and `reason` is what separates the entries. Do not assume `key` is unique here.
     const unresolved: TV3ResponseUnresolvedEntry[] = [
       ...answerResult.unresolved,
       ...embeddedResult.unresolved,
@@ -164,17 +165,29 @@ export const createV3ResponseSerializer = (): TV3ResponseSerializer => {
   /**
    * The detailed view: the list item plus the four fields a single-row read adds.
    *
-   * `data` is returned exactly as stored, because it is what `PATCH` accepts — a client corrects an
-   * answer by editing this map and sending it back. The typed `answers[]` alongside it is an
-   * addition, not a replacement, so nothing here reshapes the map on the way out.
+   * `data` carries the answers as stored — values unreshaped, so a client corrects an answer by
+   * editing this map and sending it back, and the typed `answers[]` alongside is an addition rather
+   * than a replacement.
+   *
+   * It is projected rather than echoed, though, because the stored map is not only answers: a
+   * hidden field lives under its name in the same map, and the email gate stamps `verifiedEmail`
+   * into it. `PATCH` refuses both — the first with a 422 naming the key — so echoing them would
+   * hand a caller bytes the write side rejects and publish a verified address besides. Values are
+   * still untouched; only keys that were never answers are withheld.
    */
-  const toResource = (row: TV3ResponseRow, survey: TV3ResponseSurveyRow): TV3ResponseResource => ({
-    ...toListItem(row, survey),
-    contact: toContact(row.contact),
-    displayId: row.displayId,
-    singleUseId: row.singleUseId,
-    data: (row.data ?? {}) as TV3ResponseResource["data"],
-  });
+  const toResource = (row: TV3ResponseRow, survey: TV3ResponseSurveyRow): TV3ResponseResource => {
+    const { lookupKey } = resolveV3LabelContext(survey.languages, row.language);
+    const plan = answerPlanFor(survey, lookupKey);
+    const stored = (row.data ?? {}) as TV3ResponseResource["data"];
+
+    return {
+      ...toListItem(row, survey),
+      contact: toContact(row.contact),
+      displayId: row.displayId,
+      singleUseId: row.singleUseId,
+      data: Object.fromEntries(Object.entries(stored).filter(([key]) => isPublishableDataKey(plan, key))),
+    };
+  };
 
   return { toListItem, toResource };
 };
