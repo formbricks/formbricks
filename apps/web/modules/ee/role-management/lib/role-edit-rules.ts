@@ -24,8 +24,9 @@ export const isRoleEditDisabled = ({
 }: Readonly<TRoleEditContext>): boolean =>
   isUserManagementDisabledFromUi ||
   memberId === userId ||
-  // The last-owner rule belongs to memberships, not invites. `memberAccepted` is `undefined` on invite
-  // rows — the same signal `handleMemberRoleUpdate` uses to route to `updateInviteAction` — and
-  // re-roling a pending owner invite touches no membership, so that action carries no such guard.
-  (Boolean(memberAccepted) && memberRole === "owner" && !doesOrgHaveMoreThanOneOwner) ||
+  // The last-owner rule belongs to memberships, not invites: re-roling a pending owner invite touches
+  // no membership, so `updateInviteAction` carries no such guard. `undefined` is the only invite
+  // marker — an unaccepted membership row is still a membership, and the server counts it, so testing
+  // for `undefined` rather than falsiness keeps this in step with `hasMoreThanOneActiveOwner`.
+  (memberAccepted !== undefined && memberRole === "owner" && !doesOrgHaveMoreThanOneOwner) ||
   (currentUserRole === "manager" && memberRole === "owner");

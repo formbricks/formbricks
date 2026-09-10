@@ -43,6 +43,16 @@ describe("isRoleEditDisabled", () => {
     ).toBe(false);
   });
 
+  // The counterpart: `undefined` is the invite marker, `false` is not. An unaccepted membership row is
+  // still a membership, and the server's owner count does not filter on `accepted` either.
+  test("treats an unaccepted membership row as a membership, not an invite", () => {
+    expect(
+      isRoleEditDisabled(
+        context({ memberRole: "owner", memberAccepted: false, doesOrgHaveMoreThanOneOwner: false })
+      )
+    ).toBe(true);
+  });
+
   test("disables your own row", () => {
     expect(isRoleEditDisabled(context({ memberId: "current-user" }))).toBe(true);
   });
