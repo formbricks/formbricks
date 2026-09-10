@@ -1,0 +1,17 @@
+type: object
+description: >
+  Portable survey export (`.formbricks.json`). Three top-level keys, nothing else: import rejects
+  unknown keys with their path. The same file imports into any workspace, organization or instance
+  through `POST /api/v3/surveys/import`.
+required:
+  - formbricks
+  - survey
+  - references
+properties:
+  formbricks:
+    $ref: ./SurveyExportMetadata.yml
+  survey:
+    $ref: ./SurveyExportDocument.yml
+  references:
+    $ref: ./SurveyExportReferences.yml
+additionalProperties: false

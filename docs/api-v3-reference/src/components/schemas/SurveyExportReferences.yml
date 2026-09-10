@@ -1,0 +1,10 @@
+type: object
+description: Workspace-scoped definitions the document refers to by id. Empty for link surveys.
+required:
+  - actionClasses
+properties:
+  actionClasses:
+    type: array
+    items:
+      $ref: ./SurveyExportActionClass.yml
+additionalProperties: false

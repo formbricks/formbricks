@@ -3757,6 +3757,10 @@
       "error_renaming_survey": "Error renaming survey",
       "error_restoring_survey": "Couldn't restore survey, try again",
       "error_updating_status": "An error occurred while updating survey status",
+      "export_as_json": "Export as JSON",
+      "export_error": "Failed to export survey",
+      "export_success": "Survey exported",
+      "exporting_survey": "Exporting survey...",
       "featured_templates": {
         "churn_description": "Find out why people cancel their subscriptions.",
         "churn_title": "Churn Survey",

@@ -3757,6 +3757,10 @@
       "error_renaming_survey": "Erreur lors du renommage de l'enquête",
       "error_restoring_survey": "Impossible de restaurer le sondage, réessaye",
       "error_updating_status": "Une erreur s'est produite lors de la mise à jour du statut de l'enquête",
+      "export_as_json": "Exporter en JSON",
+      "export_error": "Échec de l'export du sondage",
+      "export_success": "Sondage exporté",
+      "exporting_survey": "Export du sondage en cours...",
       "featured_templates": {
         "churn_description": "Découvrez pourquoi les utilisateurs annulent leur abonnement.",
         "churn_title": "Enquête de désabonnement",

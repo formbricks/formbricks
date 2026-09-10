@@ -3757,6 +3757,10 @@
       "error_renaming_survey": "Erro ao renomear pesquisa",
       "error_restoring_survey": "Não foi possível restaurar a pesquisa, tente novamente",
       "error_updating_status": "Ocorreu um erro ao atualizar o status da pesquisa",
+      "export_as_json": "Exportar como JSON",
+      "export_error": "Falha ao exportar pesquisa",
+      "export_success": "Pesquisa exportada",
+      "exporting_survey": "Exportando pesquisa...",
       "featured_templates": {
         "churn_description": "Descubra por que as pessoas cancelam suas assinaturas.",
         "churn_title": "Pesquisa de Churn",

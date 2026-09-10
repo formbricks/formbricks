@@ -1,0 +1,38 @@
+type: object
+description: Export metadata. `exportFormat` is bumped only for incompatible changes; an instance refuses files newer than it understands.
+required:
+  - exportFormat
+  - exportedAt
+  - appVersion
+  - source
+properties:
+  exportFormat:
+    type: integer
+    enum:
+      - 1
+    description: Envelope format version. Currently always `1`.
+  exportedAt:
+    type: string
+    format: date-time
+  appVersion:
+    type: string
+    description: Formbricks version that produced the file (`0.0.0` on development builds).
+  source:
+    type: object
+    required:
+      - url
+      - workspaceId
+      - surveyId
+    properties:
+      url:
+        type: string
+        format: uri
+        description: Public URL of the exporting instance.
+      workspaceId:
+        type: string
+        format: cuid2
+      surveyId:
+        type: string
+        format: cuid2
+    additionalProperties: false
+additionalProperties: false

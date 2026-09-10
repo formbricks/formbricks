@@ -3757,6 +3757,10 @@
       "error_renaming_survey": "Fel vid namnbyte av enkät",
       "error_restoring_survey": "Kunde inte återställa undersökningen, försök igen",
       "error_updating_status": "Ett fel uppstod när undersökningens status uppdaterades",
+      "export_as_json": "Exportera som JSON",
+      "export_error": "Det gick inte att exportera undersökningen",
+      "export_success": "Undersökningen exporterad",
+      "exporting_survey": "Exporterar undersökning...",
       "featured_templates": {
         "churn_description": "Ta reda på varför människor avslutar sina prenumerationer.",
         "churn_title": "Churn-undersökning",

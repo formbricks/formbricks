@@ -3757,6 +3757,10 @@
       "error_renaming_survey": "Ошибка при переименовании опроса",
       "error_restoring_survey": "Не удалось восстановить опрос, попробуй ещё раз",
       "error_updating_status": "Произошла ошибка при обновлении статуса опроса",
+      "export_as_json": "Экспортировать как JSON",
+      "export_error": "Не удалось экспортировать опрос",
+      "export_success": "Опрос экспортирован",
+      "exporting_survey": "Экспортируем опрос...",
       "featured_templates": {
         "churn_description": "Узнайте, почему люди отменяют свои подписки.",
         "churn_title": "Опрос об оттоке",

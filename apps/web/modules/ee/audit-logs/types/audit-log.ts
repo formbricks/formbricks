@@ -45,6 +45,7 @@ export const ZAuditAction = z.enum([
   "verificationEmailSent",
   "createdFromCSV",
   "copiedToOtherWorkspace",
+  "exported",
   "addedToResponse",
   "removedFromResponse",
   "createdUpdated",

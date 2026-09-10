@@ -2,6 +2,7 @@ import type { TSurveyStatus } from "@formbricks/types/surveys/types";
 import type { TV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schemas";
 import type { TV3CreateSurveyBody, TV3SurveyValidationRequestBody } from "@/app/api/v3/surveys/schemas";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
+import type { TSurveyExportEnvelopeFile } from "@/modules/survey/export/build-export-envelope";
 import { normalizeSurveyFilters } from "@/modules/survey/list/lib/utils";
 import { TSurveyListItem, TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 
@@ -336,5 +337,19 @@ export async function createV3Survey(
   }
 
   const responseBody = (await response.json()) as TV3CreateSurveyResponse;
+  return responseBody.data;
+}
+
+export async function exportSurvey(surveyId: string): Promise<TSurveyExportEnvelopeFile> {
+  const response = await fetch(`/api/v3/surveys/${encodeURIComponent(surveyId)}/export`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const responseBody = (await response.json()) as { data: TSurveyExportEnvelopeFile };
   return responseBody.data;
 }

@@ -3757,6 +3757,10 @@
       "error_renaming_survey": "アンケートの名前変更エラー",
       "error_restoring_survey": "アンケートを復元できませんでした。もう一度お試しください",
       "error_updating_status": "アンケートのステータス更新中にエラーが発生しました",
+      "export_as_json": "JSONとしてエクスポート",
+      "export_error": "アンケートのエクスポートに失敗しました",
+      "export_success": "アンケートをエクスポートしました",
+      "exporting_survey": "アンケートをエクスポート中...",
       "featured_templates": {
         "churn_description": "サブスクリプションをキャンセルする理由を把握できます。",
         "churn_title": "解約調査",

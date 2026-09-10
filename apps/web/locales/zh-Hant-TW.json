@@ -3757,6 +3757,10 @@
       "error_renaming_survey": "重新命名問卷時發生錯誤",
       "error_restoring_survey": "無法還原問卷,請再試一次",
       "error_updating_status": "更新問卷狀態時發生錯誤",
+      "export_as_json": "匯出為 JSON",
+      "export_error": "問卷匯出失敗",
+      "export_success": "問卷已匯出",
+      "exporting_survey": "正在匯出問卷...",
       "featured_templates": {
         "churn_description": "了解用戶取消訂閱的原因。",
         "churn_title": "流失調查",

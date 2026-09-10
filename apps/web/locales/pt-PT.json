@@ -3757,6 +3757,10 @@
       "error_renaming_survey": "Erro ao renomear inquérito",
       "error_restoring_survey": "Não foi possível restaurar o inquérito, tenta novamente",
       "error_updating_status": "Ocorreu um erro ao atualizar o estado do inquérito",
+      "export_as_json": "Exportar como JSON",
+      "export_error": "Falha ao exportar inquérito",
+      "export_success": "Inquérito exportado",
+      "exporting_survey": "A exportar inquérito...",
       "featured_templates": {
         "churn_description": "Descobre porque é que as pessoas cancelam as suas subscrições.",
         "churn_title": "Inquérito de Cancelamento",
