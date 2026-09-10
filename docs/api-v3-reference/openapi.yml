@@ -8575,7 +8575,6 @@ components:
         - sourceType
         - fieldId
         - fieldType
-        - submissionId
       properties:
         sourceType:
           type: string
@@ -8598,7 +8597,9 @@ components:
           type: string
           minLength: 1
           maxLength: 255
-          description: 'Identifier of the logical submission this record belongs to. Groups multi-field submissions and makes ingestion idempotent: records are unique per (`datasetId`, `submissionId`, `fieldId`) and a duplicate answers **409**. If a record has no logical submission, reuse `fieldId`.'
+          description: |-
+            Identifier of the logical submission this record belongs to. Groups multi-field submissions and makes ingestion idempotent: records are unique per (`datasetId`, `submissionId`, `fieldId`) and a duplicate answers **409**.
+            Optional, but supply it for anything you may re-send. Omitted, a UUID is generated, so the record is unique by construction and re-sending the same payload stores a second copy rather than answering 409. If a record has no logical submission, reuse `fieldId`.
         fieldId:
           type: string
           minLength: 1
@@ -8791,6 +8792,7 @@ components:
       type: object
       description: A partial update. Only the members sent are changed; an empty body is accepted and changes nothing. Provenance (`datasetId`, `source_*`, `field_*`, `submissionId`, `collectedAt`) is immutable.
       additionalProperties: false
+      minProperties: 1
       properties:
         valueText:
           type: string

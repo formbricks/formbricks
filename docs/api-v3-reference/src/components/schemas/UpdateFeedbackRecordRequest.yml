@@ -4,6 +4,9 @@ description: >-
   nothing. Provenance (`datasetId`, `source_*`, `field_*`, `submissionId`, `collectedAt`) is
   immutable.
 additionalProperties: false
+# At least one field: an empty patch is a caller mistake, not a no-op worth a round trip, and the
+# operation refuses it with a 422.
+minProperties: 1
 properties:
   valueText:
     type: string

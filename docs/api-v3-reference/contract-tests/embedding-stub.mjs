@@ -24,6 +24,11 @@
  * words score low. Fine here, where the subject under test is the contract, not the model.
  *
  * Usage: `node embedding-stub.mjs [port]` (default 8079). Prints its URL once listening.
+ *
+ * Binds `0.0.0.0` rather than loopback because the store runs in a container and has to reach it: on
+ * a bridge network — what `docker-compose.dev.yml` gives you locally — `host.docker.internal` resolves
+ * to the host's LAN address, not `127.0.0.1`. A CI runner is ephemeral and a developer machine is
+ * not, so run it only while you need it: it authenticates nothing and answers anyone who asks.
  */
 import { createServer } from "node:http";
 
