@@ -21,6 +21,7 @@ import {
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
+import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { hasUnsavedSurveyChanges } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
@@ -386,6 +387,14 @@ export const SurveyMenuBar = ({
           setLastAutoSaved(new Date());
         }
       } catch (e) {
+        // A stale bundle's action id is rejected by the new deployment: hand it to the reload
+        // prompt rather than failing this tick silently, and stop the interval -- nothing this
+        // bundle sends is accepted until the tab reloads, so retrying every 10s only burns
+        // requests behind a prompt that is already up.
+        if (reportStaleServerActionError(e)) {
+          clearInterval(intervalId);
+          return;
+        }
         console.error(e);
       } finally {
         isAutoSavingRef.current = false;
@@ -420,8 +429,13 @@ export const SurveyMenuBar = ({
       }
       return true;
     } catch (e) {
-      console.error(e);
       setIsSurveySaving(false);
+      // The reload prompt already explains a stale-deployment failure, so don't also claim the
+      // save itself went wrong.
+      if (reportStaleServerActionError(e)) {
+        return false;
+      }
+      console.error(e);
       toast.error(t("workspace.surveys.edit.error_saving_changes"));
       return false;
     }
@@ -492,8 +506,11 @@ export const SurveyMenuBar = ({
 
       return true;
     } catch (e) {
-      console.error(e);
       setIsSurveySaving(false);
+      if (reportStaleServerActionError(e)) {
+        return false;
+      }
+      console.error(e);
       toast.error(t("workspace.surveys.edit.error_saving_changes"));
       return false;
     }
@@ -575,10 +592,13 @@ export const SurveyMenuBar = ({
       isSuccessfullySavedRef.current = true;
       router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
-      console.error(error);
-      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
+      if (reportStaleServerActionError(error)) {
+        return;
+      }
+      console.error(error);
+      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
     }
   };
 
@@ -627,10 +647,13 @@ export const SurveyMenuBar = ({
       isSuccessfullySavedRef.current = true;
       router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?scheduled=true`);
     } catch (error) {
-      console.error(error);
-      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
+      if (reportStaleServerActionError(error)) {
+        return;
+      }
+      console.error(error);
+      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
     }
   };
 

@@ -3,6 +3,7 @@ import {
   SENTRY_CLIENT_RUNTIME_CONFIG_KEY,
   type TSentryClientRuntimeConfig,
 } from "@/lib/sentry/client-runtime-config";
+import { isStaleServerActionError } from "@/lib/utils/stale-server-action";
 
 let hasInitialized = false;
 
@@ -48,6 +49,14 @@ const initSentry = (config: TSentryClientRuntimeConfig) => {
 
       // @ts-expect-error -- `digest` is attached by Next.js, not part of the Error type
       if (error?.digest === "NEXT_NOT_FOUND") {
+        return null;
+      }
+
+      // A tab that outlived its deployment invokes server action ids the new server no longer
+      // knows. Every deploy re-inflicts this on every open tab, so it is the highest-volume error
+      // in the project; `StaleDeploymentPrompt` now turns it into a reload prompt, which makes it
+      // handled and expected rather than something to spend the error budget on.
+      if (isStaleServerActionError(error)) {
         return null;
       }
 
