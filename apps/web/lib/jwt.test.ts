@@ -5,8 +5,6 @@ import * as crypto from "@/lib/crypto";
 import {
   createEmailChangeToken,
   createEmailToken,
-  createFeedbackRecordsGatewayToken,
-  createGatewayServiceToken,
   createInviteToken,
   createSsoRelinkIntent,
   createToken,
@@ -14,7 +12,6 @@ import {
   getEmailFromEmailToken,
   verifyEmailChangeToken,
   verifyFeedbackRecordsGatewayToken,
-  verifyGatewayServiceToken,
   verifyInviteToken,
   verifySsoRelinkIntent,
   verifyToken,
@@ -164,23 +161,9 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
   });
 
+  // Nothing mints these any more (ENG-3117 removed the gateway and its token routes); what is
+  // left verifies a token built by hand, which is what the surviving authorizer still accepts.
   describe("feedback records gateway tokens", () => {
-    test("creates and verifies a generic gateway token for feedbackRecords", () => {
-      const { token, expiresAt } = createGatewayServiceToken(mockUser.id, "feedbackRecords");
-
-      expect(token).toBeDefined();
-      expect(new Date(expiresAt).toString()).not.toBe("Invalid Date");
-      expect(verifyGatewayServiceToken(token, "feedbackRecords")).toEqual({ userId: mockUser.id });
-    });
-
-    test("creates and verifies a feedback records gateway token", () => {
-      const { token, expiresAt } = createFeedbackRecordsGatewayToken(mockUser.id);
-
-      expect(token).toBeDefined();
-      expect(new Date(expiresAt).toString()).not.toBe("Invalid Date");
-      expect(verifyFeedbackRecordsGatewayToken(token)).toEqual({ userId: mockUser.id });
-    });
-
     test("rejects feedback records gateway tokens with the wrong purpose", () => {
       const token = jwt.sign({ purpose: "wrong_purpose" }, TEST_NEXTAUTH_SECRET, {
         subject: mockUser.id,

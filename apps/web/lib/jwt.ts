@@ -6,8 +6,6 @@ import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { constantTimeEqual, symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { TGatewayAuthService, getGatewayAuthServiceTokenPurpose } from "@/modules/gateway-auth/lib/service";
 
-const FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS = 60 * 10;
-
 // Helper function to decrypt with fallback to plain text
 const decryptWithFallback = (encryptedText: string, key: string): string => {
   try {
@@ -77,43 +75,6 @@ export const createToken = (userId: string, options: TVerificationTokenOptions =
   const { purpose = DEFAULT_VERIFICATION_TOKEN_PURPOSE, ...jwtOptions } = options;
 
   return jwt.sign({ id: encryptedUserId, purpose }, NEXTAUTH_SECRET, jwtOptions);
-};
-
-export const createGatewayServiceToken = (
-  userId: string,
-  service: TGatewayAuthService
-): {
-  token: string;
-  expiresAt: string;
-} => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
-
-  const token = jwt.sign({ purpose: getGatewayAuthServiceTokenPurpose(service) }, NEXTAUTH_SECRET, {
-    algorithm: "HS256",
-    expiresIn: FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS,
-    subject: userId,
-  });
-
-  const decodedToken = jwt.decode(token);
-  if (!decodedToken || typeof decodedToken !== "object" || typeof decodedToken.exp !== "number") {
-    throw new Error("Failed to create feedback records gateway token");
-  }
-
-  return {
-    token,
-    expiresAt: new Date(decodedToken.exp * 1000).toISOString(),
-  };
-};
-
-export const createFeedbackRecordsGatewayToken = (
-  userId: string
-): {
-  token: string;
-  expiresAt: string;
-} => {
-  return createGatewayServiceToken(userId, "feedbackRecords");
 };
 
 export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): string => {
