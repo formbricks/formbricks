@@ -22,6 +22,7 @@ import {
   TSurveyEndScreenCard,
   TSurveyLanguage,
   TSurveyRedirectUrlCard,
+  TSurveyStatus,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import {
@@ -258,6 +259,19 @@ export const isEndingCardValid = (
   }
 };
 
+/**
+ * Whether saving `survey` at `targetStatus` would leave an app survey live with nothing that can
+ * ever display it. `ZSurveyType` is `"link" | "app"`, so this is the client-side twin of the
+ * server's `isAppSurveyMissingTriggersToPublish` — that module is `server-only`, hence the
+ * duplication rather than an import.
+ *
+ * `targetStatus` is the status the survey is heading for, not the one it has: publishing a draft
+ * ("inProgress") and scheduling one ("paused") both need a trigger, while saving it as a draft does
+ * not. Falsy entries are dropped because the editor's trigger array can hold holes.
+ */
+export const isMissingRequiredTrigger = (survey: TSurvey, targetStatus: TSurveyStatus): boolean =>
+  survey.type !== "link" && targetStatus !== "draft" && (survey.triggers ?? []).filter(Boolean).length === 0;
+
 export const isSurveyValid = (
   survey: TSurvey,
   selectedLanguageCode: string,
@@ -317,11 +331,14 @@ export const isSurveyValid = (
 
 export const getValidateIdErrorMessage = (
   error: TValidateIdError,
-  type: "hiddenField" | "question",
+  type: "hiddenField" | "question" | "variable",
   t: TFunction
 ): string => {
-  const localizedType =
-    type === "hiddenField" ? t("common.hidden_field") : t("workspace.surveys.edit.question");
+  const localizedType = {
+    hiddenField: () => t("common.hidden_field"),
+    question: () => t("workspace.surveys.edit.question"),
+    variable: () => t("common.variable"),
+  }[type]();
 
   switch (error.code) {
     case TValidateIdErrorCode.Empty:
@@ -334,6 +351,8 @@ export const getValidateIdErrorMessage = (
       return t("workspace.surveys.edit.validate_id_no_spaces", { type: localizedType });
     case TValidateIdErrorCode.InvalidChars:
       return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+    case TValidateIdErrorCode.NotSafeIdentifier:
+      return t("workspace.surveys.edit.validate_id_not_safe_identifier", { type: localizedType });
     default:
       return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
   }

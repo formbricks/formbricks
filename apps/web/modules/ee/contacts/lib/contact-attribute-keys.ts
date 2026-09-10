@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
+import { formatSnakeCaseToTitleCase } from "@formbricks/types/safe-identifier";
 import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,

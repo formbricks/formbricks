@@ -2,7 +2,7 @@
 
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TResponseData } from "@formbricks/types/responses";
+import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
@@ -16,7 +16,15 @@ interface ElementSkipProps {
   status: string;
   elements: TSurveyElement[];
   isFirstElementAnswered?: boolean;
-  responseData: TResponseData;
+  /**
+   * Recall's lookup map, not the raw `response.data` this used to take (ENG-2538). Named for what it
+   * is because it is more than the response: the parent merges the survey's readable reserved-field
+   * values under the answers, so a headline recalling `country` or `url` resolves here instead of
+   * falling back. Used for nothing else in this component.
+   */
+  recallValues: TResponseData;
+  /** Recall resolves variables ahead of `recallValues`, and they are not in it — see `parseRecallInfo`. */
+  variables: TResponseVariables;
   locale: TUserLocale;
 }
 
@@ -25,9 +33,10 @@ export const ElementSkip = ({
   status,
   elements,
   isFirstElementAnswered,
-  responseData,
+  recallValues,
+  variables,
   locale,
-}: ElementSkipProps) => {
+}: Readonly<ElementSkipProps>) => {
   const { t } = useTranslation();
   const dateFormats = getSurveyDateFormatMap(elements);
   return (
@@ -86,8 +95,8 @@ export const ElementSkip = ({
                             },
                             "default"
                           ),
-                          responseData,
-                          undefined,
+                          recallValues,
+                          variables,
                           false,
                           locale,
                           dateFormats
@@ -129,8 +138,8 @@ export const ElementSkip = ({
                               },
                               "default"
                             ),
-                            responseData,
-                            undefined,
+                            recallValues,
+                            variables,
                             false,
                             locale,
                             dateFormats

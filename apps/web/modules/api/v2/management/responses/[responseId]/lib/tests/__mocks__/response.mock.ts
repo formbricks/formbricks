@@ -12,6 +12,7 @@ export const responseInput: Omit<Response, "id"> = {
   finished: true,
   contactAttributes: {},
   contactId: "olwablfltg9eszoh0nz83w02",
+  ingestFlags: null,
   endingId: "i4k59a2m6fk70vwpn2d9b7a7",
   variables: [],
   ttc: {},
@@ -25,8 +26,9 @@ export const response: Response = {
   ...responseInput,
 };
 
-export const survey: Pick<Survey, "questions" | "blocks" | "workspaceId"> = {
+export const survey: Pick<Survey, "questions" | "blocks" | "workspaceId" | "isAnonymizeResponsesEnabled"> = {
   workspaceId: "ws_mock_workspace_id",
+  isAnonymizeResponsesEnabled: false,
   questions: [
     {
       id: "ggaw04zw7gx7uxodk5da7if8",

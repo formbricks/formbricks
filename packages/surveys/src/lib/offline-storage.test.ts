@@ -206,6 +206,35 @@ describe("offline-storage (IndexedDB)", () => {
       expect(result?.history).toEqual(["start"]);
     });
 
+    test("round-trips the frozen browser context so a resumed response keeps its display meta", async () => {
+      // The offline counterpart of the freeze AC: a reload rebuilds the in-memory snapshot from the
+      // page it lands on, so without persisting it the second write to the SAME response would report
+      // a different url/referrer/viewport than the first.
+      const webSurveyMeta = {
+        url: "https://app.test/s/abc?suToken=tok",
+        pagePath: "/s/abc",
+        pageReferrer: "https://news.test/",
+        viewportWidth: 390,
+        viewportHeight: 844,
+        timezone: "Europe/Berlin",
+      };
+
+      await saveSurveyProgress({ surveyId: "survey-1", ...makeProgress({ webSurveyMeta }) });
+
+      const result = await getSurveyProgress("survey-1");
+      expect(result?.webSurveyMeta).toEqual(webSurveyMeta);
+    });
+
+    test("an entry written before the context was persisted still restores", async () => {
+      // Back-compat for entries already in a respondent's IndexedDB: the field is optional, and its
+      // absence means "measure afresh", which is what those sessions did before.
+      await saveSurveyProgress({ surveyId: "survey-1", ...makeProgress() });
+
+      const result = await getSurveyProgress("survey-1");
+      expect(result).toBeDefined();
+      expect(result?.webSurveyMeta).toBeUndefined();
+    });
+
     test("saveSurveyProgress overwrites previous entry for same surveyId", async () => {
       await saveSurveyProgress({ surveyId: "survey-1", ...makeProgress({ blockId: "block-1" }) });
       await saveSurveyProgress({ surveyId: "survey-1", ...makeProgress({ blockId: "block-2" }) });

@@ -171,7 +171,7 @@ const selectControl = async (control: Locator): Promise<void> => {
  * input `name`); ranking is a set of "Add … to ranking" buttons. File upload is an
  * optional card we intentionally skip answering but still advance past.
  */
-const answerCurrentCard = async (page: Page, card: Locator): Promise<void> => {
+const answerCurrentCard = async (card: Locator): Promise<void> => {
   // Text-like inputs (open text, "other" fields). Skip file inputs.
   const textInputs = card.locator(
     'input:not([type="hidden"]):not([type="file"]):not([type="radio"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]), textarea'
@@ -441,7 +441,7 @@ const walkAndScan = async (
       await scan(page, variant, cardId === "questionCard--1" ? "welcome-card" : cardId, failSink);
     }
 
-    await answerCurrentCard(page, card);
+    await answerCurrentCard(card);
 
     const advance = advanceButton(card).first();
     await expect(
@@ -560,6 +560,13 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
   // test would add no isolation, only time.
   let seeded: SeededAccessibilitySurveys | undefined;
 
+  // beforeEach fills the cache before any test body runs; reading through this accessor
+  // keeps that guarantee in the type system instead of narrowing at all 13 call sites.
+  const surveys = (): SeededAccessibilitySurveys => {
+    if (!seeded) throw new Error("accessibility surveys were not seeded");
+    return seeded;
+  };
+
   test.beforeEach(async ({ page, users, baseURL }) => {
     await mockStorageUploads(page);
     seeded ??= await seedAccessibilitySurveys(users, baseURL ?? "http://localhost:3000");
@@ -568,13 +575,13 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
   test("desktop: full walk has no WCAG AA violations", async ({ page }) => {
     test.setTimeout(180_000);
     const violations: ViolationRow[] = [];
-    await walkAndScan(page, "desktop", seeded.surveyUrl, violations);
+    await walkAndScan(page, "desktop", surveys().surveyUrl, violations);
     reportAndAssert("desktop", violations);
   });
 
   test("desktop: empty-submit validation state has no WCAG AA violations", async ({ page }) => {
     test.setTimeout(120_000);
-    const firstCardId = await openFirstQuestionCard(page, seeded.surveyUrl);
+    const firstCardId = await openFirstQuestionCard(page, surveys().surveyUrl);
     const firstCard = page.locator(`[id="${firstCardId}"]`);
 
     // Submit the (required) first card empty to surface validation error states.
@@ -594,10 +601,10 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
 
   test("desktop: back-navigation state has no WCAG AA violations", async ({ page }) => {
     test.setTimeout(120_000);
-    const firstCardId = await openFirstQuestionCard(page, seeded.surveyUrl);
+    const firstCardId = await openFirstQuestionCard(page, surveys().surveyUrl);
     const firstCard = page.locator(`[id="${firstCardId}"]`);
 
-    await answerCurrentCard(page, firstCard);
+    await answerCurrentCard(firstCard);
     await advanceButton(firstCard).first().click({ timeout: ACTION_TIMEOUT });
 
     // Wait until the active card changes (we moved forward), then go Back.
@@ -654,7 +661,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     let cardId = "";
 
     await test.step("selected day cell", async () => {
-      cardId = await openFirstQuestionCard(page, seeded.answeredStatesSurveyUrl);
+      cardId = await openFirstQuestionCard(page, surveys().answeredStatesSurveyUrl);
       const card = page.locator(`[id="${cardId}"]`);
       await expect(
         card.getByRole("heading", { level: 2, name: DATE_HEADLINE }),
@@ -668,7 +675,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
         "the answered-states survey should expose its name as the page's one h1"
       ).toHaveText(A11Y_ANSWERED_STATES_SURVEY_NAME);
 
-      await answerCurrentCard(page, card);
+      await answerCurrentCard(card);
       // Asserted through `aria-selected` rather than the styling hook: it is what a screen reader
       // consumes, and it is the state whose brand-on-brand contrast this scan exists to measure.
       await expect(
@@ -762,7 +769,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     test.setTimeout(180_000);
     await page.setViewportSize(MOBILE_VIEWPORT);
     const violations: ViolationRow[] = [];
-    await walkAndScan(page, "mobile", seeded.surveyUrl, violations);
+    await walkAndScan(page, "mobile", surveys().surveyUrl, violations);
     reportAndAssert("mobile", violations);
   });
 
@@ -770,7 +777,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     test.setTimeout(180_000);
     await page.setViewportSize(TABLET_VIEWPORT);
     const violations: ViolationRow[] = [];
-    await walkAndScan(page, "tablet", seeded.surveyUrl, violations);
+    await walkAndScan(page, "tablet", surveys().surveyUrl, violations);
     reportAndAssert("tablet", violations);
   });
 
@@ -778,7 +785,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     test.setTimeout(180_000);
     await page.emulateMedia({ forcedColors: "active" });
     const violations: ViolationRow[] = [];
-    await walkAndScan(page, "forced-colors", seeded.surveyUrl, violations);
+    await walkAndScan(page, "forced-colors", surveys().surveyUrl, violations);
     reportAndAssert("forced-colors", violations);
   });
 
@@ -786,7 +793,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     test.setTimeout(180_000);
     await page.emulateMedia({ reducedMotion: "reduce" });
     const violations: ViolationRow[] = [];
-    await walkAndScan(page, "reduced-motion", seeded.surveyUrl, violations);
+    await walkAndScan(page, "reduced-motion", surveys().surveyUrl, violations);
     reportAndAssert("reduced-motion", violations);
   });
 
@@ -796,7 +803,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     test("dark mode: full walk has no WCAG AA violations", async ({ page }) => {
       test.setTimeout(180_000);
       const violations: ViolationRow[] = [];
-      await walkAndScan(page, "dark", seeded.surveyUrl, violations);
+      await walkAndScan(page, "dark", surveys().surveyUrl, violations);
       reportAndAssert("dark", violations);
     });
   });
@@ -812,7 +819,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     test.setTimeout(120_000);
     const widget = page.locator("#fbjs");
 
-    await page.goto(seeded.surveyUrl, { waitUntil: "domcontentloaded" });
+    await page.goto(surveys().surveyUrl, { waitUntil: "domcontentloaded" });
     await expect(activeCard(page).first(), "welcome card should render").toBeVisible({
       timeout: CARD_TIMEOUT,
     });
@@ -830,7 +837,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
       "welcome card headline should be an h2, not a styled div"
     ).toBeVisible();
 
-    const firstCardId = await openFirstQuestionCard(page, seeded.surveyUrl);
+    const firstCardId = await openFirstQuestionCard(page, surveys().surveyUrl);
     const firstCard = page.locator(`[id="${firstCardId}"]`);
 
     // Still exactly one h1 on a question card: the heading lives on the container, so the stacked
@@ -847,7 +854,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
 
     // Advance to the single-select card: its radiogroup is named through aria-labelledby pointing at
     // the headline id, which now sits on an element nested inside the h2.
-    await answerCurrentCard(page, firstCard);
+    await answerCurrentCard(firstCard);
     await advanceButton(firstCard).first().click({ timeout: ACTION_TIMEOUT });
     await waitForCardTransition(page, firstCardId);
 
@@ -862,12 +869,12 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     test.setTimeout(180_000);
     // Confirm the survey actually renders right-to-left before scanning, so this
     // variant genuinely exercises RTL rather than silently falling back to LTR.
-    await page.goto(seeded.rtlSurveyUrl, { waitUntil: "domcontentloaded" });
+    await page.goto(surveys().rtlSurveyUrl, { waitUntil: "domcontentloaded" });
     await expect(page.locator('[dir="rtl"]').first(), "survey should render RTL for ?lang=ar").toBeVisible({
       timeout: CARD_TIMEOUT,
     });
     const violations: ViolationRow[] = [];
-    await walkAndScan(page, "rtl-arabic", seeded.rtlSurveyUrl, violations);
+    await walkAndScan(page, "rtl-arabic", surveys().rtlSurveyUrl, violations);
     reportAndAssert("rtl-arabic", violations);
   });
 });

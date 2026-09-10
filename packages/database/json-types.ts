@@ -2,6 +2,8 @@
 import { type TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 import type { TChartConfig, TChartQuery, TWidgetLayout } from "@formbricks/types/analysis";
 import type { TOrganizationAccess } from "@formbricks/types/api-key";
+import { type TEmbeddedDataDefaultValue } from "@formbricks/types/embedded-data";
+import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { type TIntegrationConfig } from "@formbricks/types/integration";
 import {
   type TOrganizationBilling,
@@ -52,6 +54,7 @@ declare global {
     export type IntegrationConfig = TIntegrationConfig;
     export type WorkspaceConfig = TWorkspaceConfig;
     export type ResponseData = TResponseData;
+    export type ResponseIngestFlags = TIngestFlag[];
     export type ResponseVariables = TResponseVariables;
     export type ResponseTtc = TResponseTtc;
     export type ResponseMeta = TResponseMeta;
@@ -83,6 +86,7 @@ declare global {
     export type OrganizationAccess = TOrganizationAccess;
     export type SurveyMetadata = TSurveyMetadata;
     export type SurveyQuotaLogic = TSurveyQuotaLogic;
+    export type EmbeddedDataDefaultValue = TEmbeddedDataDefaultValue;
     export type ChartQuery = TChartQuery;
     export type ChartConfig = TChartConfig;
     export type WidgetLayout = TWidgetLayout;

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -489,6 +490,8 @@ describe("getQuestionSummary", () => {
     ],
     questions: [],
     hiddenFields: { enabled: true, fieldIds: ["hidden1"] },
+    // The rows are what the accessors read since ENG-2412; a real survey read carries both.
+    embeddedFields: deriveLegacyEmbeddedData({ hiddenFields: { enabled: true, fieldIds: ["hidden1"] } }),
   };
   const responses = [
     {
@@ -1182,6 +1185,7 @@ describe("getResponsesForSummary", () => {
       contactId: null,
       personAttributes: {},
       singleUseId: null,
+      ingestFlags: null,
       isFinished: true,
       displayId: "display-1",
       endingId: null,
@@ -1225,6 +1229,7 @@ describe("getResponsesForSummary", () => {
       contactId: "contact-1",
       personAttributes: {},
       singleUseId: null,
+      ingestFlags: null,
       isFinished: true,
       displayId: "display-1",
       endingId: null,
@@ -1263,6 +1268,7 @@ describe("getResponsesForSummary", () => {
       contactId: "contact-1",
       personAttributes: {},
       singleUseId: null,
+      ingestFlags: null,
       isFinished: true,
       displayId: "display-1",
       endingId: null,
@@ -1383,6 +1389,7 @@ describe("getResponsesForSummary", () => {
         contactId: null,
         personAttributes: {},
         singleUseId: null,
+        ingestFlags: null,
         isFinished: true,
         displayId: "display-1",
         endingId: null,
@@ -1435,6 +1442,7 @@ describe("getResponsesForSummary", () => {
       contactId: null,
       personAttributes: {},
       singleUseId: null,
+      ingestFlags: null,
       isFinished: true,
       displayId: "display-1",
       endingId: null,
