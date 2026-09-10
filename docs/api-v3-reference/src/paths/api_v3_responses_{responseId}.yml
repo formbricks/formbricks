@@ -187,7 +187,6 @@ get:
                       - Preis
                     nps_matrix:
                       Support: Gut
-                    plan: enterprise
             anonymous:
               summary: An anonymous, unfinished response
               value:

@@ -5,9 +5,15 @@ description: >
 
   Hidden-field values do not live here. They are stored in the same underlying map, but that is a
   storage detail rather than part of this contract: a hidden field is an Embedded Data field, and
-  Embedded Data is addressed by name through `embeddedData`. A hidden field's name appearing as a key
-  here is a 400 naming the key and pointing at `embeddedData`, not a silent write to the wrong
-  namespace.
+  Embedded Data is addressed by name through `embeddedData`.
+
+
+  A hidden field's name appearing as a key here is rejected rather than silently written to the
+  wrong namespace — with **422**, not 400, because knowing that a key names a hidden field means
+  loading the survey, and these operations route every failure that needs stored state to 422. The
+  problem carries `invalid_params[]` with `name` set to the offending key, `code:
+  unsupported_field` and `referenceType: hiddenField`, so a client can point at it without parsing
+  prose.
 
 
   Keeping the two apart is what lets the storage layout change underneath — the legacy columns go

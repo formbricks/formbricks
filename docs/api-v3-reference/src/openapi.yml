@@ -125,15 +125,22 @@ info:
     `resolution` object discloses that policy along with the survey's `updatedAt` so a consumer can
     detect wording drift.
 
-    Writes take answers in the **stored map form** (`data`, `variables`) while reads return the typed
-    array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching
+    Writes take answers in the **stored map form** (`data`) while reads return the typed array.
+    Resolving ids into labelled answers is unambiguous; the reverse would mean matching
     caller-supplied labels back onto option ids, so the write side keeps the stored shape. To stop
-    that costing round-trippability, the **detailed read returns `data` and `variables` unchanged** —
-    so a single-response read can be edited and sent back as `PATCH { "data": … }`, and the typed
-    `answers[]` array is an addition rather than a replacement. Those two are the resource's writable
-    state and carry no `readOnly`; the derived views (`answers[]`, `embeddedData[]`, `unresolved[]`,
-    `resolution`, the timestamps) are marked `readOnly` instead, per its meaning of
-    server-managed. The list view omits the stored maps, since a bulk reader is not editing.
+    that costing round-trippability, the **detailed read returns `data` unchanged** — so a
+    single-response read can be edited and sent back as `PATCH { "data": … }`, and the typed
+    `answers[]` array is an addition rather than a replacement.
+
+    Embedded Data is the exception, and it is symmetric rather than round-tripped: hidden fields and
+    variables are read and written through `embeddedData`, addressed by **name** in both directions.
+    No raw map of them is echoed, because a name is already what a write accepts — publishing the
+    storage keys underneath (a variable's is its cuid) would expose a layout the caller has no use
+    for. `data` therefore carries element answers only.
+
+    `data` and `embeddedData` carry no `readOnly`; the derived views (`answers[]`, `unresolved[]`,
+    `resolution`, the timestamps) are marked `readOnly` instead, per its meaning of server-managed.
+    The list view omits `data`, since a bulk reader is not editing.
     `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what
     a write would do, before committing to it.
 
