@@ -16,6 +16,18 @@ description: >
   prose.
 
 
+  That applies to a key that is **also** an element id, and it costs nothing, because there is no
+  second value to write. Answers and hidden fields share one slot in storage and ingest merges the
+  field over the answer (`packages/surveys/src/lib/response-queue.ts`), so on such a survey the
+  stored byte is the field's. `embeddedData` addresses it, `answers[]` omits it, and the read
+  reports it once as `ingested`. The two names denote one value because storage only ever held one.
+
+
+  New surveys cannot reach that state — the editor and `POST`/`PATCH /api/v3/surveys` both refuse
+  an element id colliding with a declared field name — but `PUT /api/v1/management/surveys/{id}`
+  still accepts it, so unlike the reserved-name collision this set is not yet closed.
+
+
   Keeping the two apart is what lets the storage layout change underneath — the legacy columns go
   away eventually — without this contract either following it or breaking a round-trip it promised.
 

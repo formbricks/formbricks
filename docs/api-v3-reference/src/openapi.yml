@@ -138,8 +138,11 @@ info:
     storage keys underneath (a variable's is its cuid) would expose a layout the caller has no use
     for. `data` therefore carries element answers only.
 
-    `data` and `embeddedData` carry no `readOnly`; the derived views (`answers[]`, `unresolved[]`,
-    `resolution`, the timestamps) are marked `readOnly` instead, per its meaning of server-managed.
+    `data` is the only response field carrying no `readOnly`, because it is the same map on the way
+    in and on the way out. Embedded Data is writable through the **request's own** `embeddedData`
+    map, not through the response field of that name — so the derived views (`answers[]`,
+    `embeddedData[]`, `unresolved[]`, `resolution`, the timestamps) are all marked `readOnly`, per
+    its meaning of server-managed.
     The list view omits `data`, since a bulk reader is not editing.
     `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what
     a write would do, before committing to it.
