@@ -28,6 +28,18 @@ description: >
 
   Values follow their field's declared type. A field the payload omits is left as it is; this is a
   merge over named fields, not a replacement of the collection.
+
+
+  **An ambiguous name is refused.** The read says `key` is unique per `kind` rather than across the
+  collection, because a survey predating the reserved-name guard can hold a variable and a hidden
+  field under one name. This map has no `kind`, so on such a survey a name cannot say which field it
+  means — and guessing would write the caller's value into the wrong one. A name that matches more
+  than one declared field is a 400 naming it; rename one side on the survey to clear it. The set is
+  finite, frozen and tracked, and nothing new can enter it.
+
+
+  Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a
+  name that matches both a declared field and a catalog entry resolves to the declared one.
 additionalProperties:
   oneOf:
     - type: string

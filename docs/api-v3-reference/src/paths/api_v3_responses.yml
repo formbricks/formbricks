@@ -38,7 +38,7 @@ get:
 
 
     **What this endpoint deliberately does not filter on:** individual answers, hidden-field values,
-    submission metadata (`source`, `url`, `country`, `browser`, `os`, `device`), contact attributes,
+    submission metadata (`source`, `url`, `country`, `browser`, `os`, `deviceType`), contact attributes,
     quotas, and tags. Each is a JSON path or an unindexed join on the largest table in the database,
     where the honest outcome is a timeout rather than a slow query. The in-app dashboard does offer
     these, so this endpoint is knowingly behind it; closing the gap needs index work and is tracked
@@ -224,7 +224,7 @@ get:
                     finished: true
                     endingId: cmpthankyou00000000000000
                     language: de
-                    durationSeconds: 218.4
+                    durationSeconds: 107.9
                     resolution:
                       labelPolicy: currentSurveyDefinition
                       labelsLanguage: de
@@ -354,7 +354,7 @@ post:
           $ref: ../components/schemas/CreateResponseRequest.yml
         examples:
           finishedResponse:
-            summary: A complete response with answers, hidden fields and a variable
+            summary: A complete response with answers and Embedded Data
             value:
               surveyId: clsv1234567890123456789012
               finished: true
@@ -364,8 +364,9 @@ post:
                 nps_score: 9
                 what_could_be_better: Die Suche ist zu langsam.
                 channels:
-                  - ch_2f8a
+                  - Ein Freund
                   - Podcast
+              embeddedData:
                 plan: enterprise
           partialResponse:
             summary: A partial response, still open

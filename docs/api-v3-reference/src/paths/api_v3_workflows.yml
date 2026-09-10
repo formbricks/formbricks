@@ -34,10 +34,11 @@ get:
         maximum: 100
         default: 20
       description: >-
-        Page size (max 100). The workflows endpoints have not yet moved to the v3-wide maximum of
-        250 — their bound lives in the shared `packages/workflows` contracts, which are owned
-        alongside the workflows feature rather than by this spec. Documented at the value actually
-        enforced rather than at the platform norm; tracked separately.
+        Page size (max 100). v3 has three list maxima rather than one norm: 250 on responses,
+        surveys and the reference lists, 1000 on `feedbackRecords`, and 100 here. The workflows
+        bound lives in the shared `packages/workflows` contracts, owned alongside the feature rather
+        than by this spec, which is why it did not move with the others. Documented at the value
+        actually enforced; tracked separately.
     - $ref: ../components/parameters/CursorQuery.yml
     - in: query
       name: filter[name][contains]
