@@ -385,12 +385,12 @@ describe("v3 response contract", () => {
     expect(await diffObject(schema, zodSchema as unknown as ZodAny, schemaName)).toEqual([]);
   });
 
-  test("the two views differ by exactly the five fields the detail read adds", async () => {
+  test("the two views differ by exactly the four fields the detail read adds", async () => {
     const list = new Set(Object.keys(ZV3ResponseListItem.shape));
     const detail = new Set(Object.keys(ZV3ResponseResource.shape));
     const added = [...detail].filter((key) => !list.has(key));
 
-    expect(sorted(added)).toEqual(["contact", "data", "displayId", "singleUseId", "variables"]);
+    expect(sorted(added)).toEqual(["contact", "data", "displayId", "singleUseId"]);
     // Nothing is dropped going the other way — the list view is a strict subset.
     expect([...list].filter((key) => !detail.has(key))).toEqual([]);
   });

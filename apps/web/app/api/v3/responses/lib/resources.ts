@@ -219,9 +219,9 @@ export type TV3ResponseAnswer = z.infer<typeof ZV3ResponseAnswer>;
 export const ZV3ResponseEmbeddedDatum = z
   .object({
     /**
-     * The link's storage key — the same string that addresses the value in `data` (ingested) or
-     * `variables` (computed), or the catalog entry name (reserved). For a variable that is its cuid,
-     * never its human name, which rides on `label`.
+     * The field's **name**, which is also the key a write accepts — not the storage key. Unique per
+     * `kind` rather than across the collection: a survey predating the reserved-name guard can
+     * declare a hidden field called `country` while the auto-captured `country` also exists.
      */
     key: z.string(),
     kind: z.enum(["ingested", "computed", "reserved"]),
@@ -299,8 +299,9 @@ export type TV3ResponseListItem = z.infer<typeof ZV3ResponseListItem>;
 /**
  * The detailed view: the list item plus the five fields a single-row read adds.
  *
- * `data` and `variables` are **not** `readOnly` — they are exactly what the write endpoints accept,
- * so a client round-tripping a response needs them writable. Only the server-managed fields carry
+ * `data` is **not** `readOnly` — it is exactly what the write endpoints accept, so a client
+ * round-tripping a response needs it writable. Embedded Data round-trips through `embeddedData[]`
+ * instead, addressed by name, so no second raw map is echoed. Only server-managed fields are
  * `readOnly`.
  */
 export const ZV3ResponseResource = z
@@ -314,7 +315,6 @@ export const ZV3ResponseResource = z
       z.string(),
       z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string(), z.string())])
     ),
-    variables: z.record(z.string(), z.union([z.string(), z.number()])),
   })
   .strict();
 export type TV3ResponseResource = z.infer<typeof ZV3ResponseResource>;
