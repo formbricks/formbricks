@@ -150,7 +150,7 @@ export function FeedbackSourceRowDropdown({
                       );
                     }}>
                     <EyeIcon className="mr-2 size-4" />
-                    {`${t("common.view")} ${t("common.survey")}`}
+                    {t("workspace.unify.view_survey")}
                   </button>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
