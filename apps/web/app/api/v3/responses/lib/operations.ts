@@ -2,9 +2,32 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import { noContentResponse, problemForbidden, successResponse } from "@/app/api/v3/lib/response";
+import { buildKeysetPage } from "@/app/api/v3/lib/keyset-cursor";
+import {
+  noContentResponse,
+  problemBadRequest,
+  problemForbidden,
+  successListResponse,
+  successResponse,
+} from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { deleteScopedResponse, deleteScopedResponses, getResponseWorkspaceId } from "./service";
+import {
+  RESPONSES_CURSOR_KIND,
+  type TV3InvalidParam,
+  parseV3ResponsesCountQuery,
+  parseV3ResponsesListQuery,
+} from "./parse-v3-responses-list-query";
+import { createV3ResponseSerializer } from "./serializers";
+import {
+  countV3Responses,
+  deleteScopedResponse,
+  deleteScopedResponses,
+  getResponseWorkspaceId,
+  getScopedV3Response,
+  getV3ResponseSurveys,
+  hydrateV3Responses,
+  listV3ResponseKeysetPage,
+} from "./service";
 
 type TDeleteParams = {
   responseId: string;
@@ -133,6 +156,227 @@ export async function batchDeleteV3Responses({
       requestId,
       instance: instance ?? "",
       operation: "responses.batchDelete",
+    });
+  }
+}
+
+type TReadParams = {
+  authentication: TV3Authentication;
+  requestId: string;
+  instance?: string;
+};
+
+/**
+ * Turn a parse failure into the 400 the contract promises.
+ *
+ * The parser reports every offending key at once, so a caller fixing a query sees all of it rather
+ * than one problem per round trip.
+ */
+const badQuery = (invalidParams: TV3InvalidParam[], requestId: string, instance?: string): Response =>
+  problemBadRequest(requestId, "The query parameters are invalid.", {
+    invalid_params: invalidParams,
+    instance,
+  });
+
+/**
+ * `GET /api/v3/responses` → 200 `{ data, meta }`.
+ *
+ * Authorization comes before the cursor is even looked at: the scope is the caller's `workspaceId`,
+ * checked against `read`, and everything below runs inside it. That ordering is what lets the cursor
+ * carry no authority of its own — it is a position, re-authorized on every request.
+ *
+ * `meta` always carries all four keys. `totalCount` and `totalCountRelation` are `null` rather than
+ * absent when the caller did not ask for a total, because the contract marks them required — a caller
+ * can branch on the value without first checking the key exists.
+ */
+export async function listV3Responses({
+  searchParams,
+  authentication,
+  requestId,
+  instance,
+}: TReadParams & { searchParams: URLSearchParams }): Promise<Response> {
+  const log = logger.withContext({ requestId });
+
+  try {
+    const parsed = parseV3ResponsesListQuery(searchParams);
+    if (!parsed.ok) {
+      return badQuery(parsed.invalid_params, requestId, instance);
+    }
+
+    const access = await requireV3WorkspaceAccess(
+      authentication,
+      parsed.filter.workspaceId,
+      "read",
+      requestId,
+      instance
+    );
+
+    if (access instanceof Response) {
+      return access;
+    }
+
+    const keysetRows = await listV3ResponseKeysetPage({
+      filter: parsed.filter,
+      sortBy: parsed.sortBy,
+      limit: parsed.limit,
+      cursor: parsed.cursor,
+    });
+
+    const { page, nextCursor } = buildKeysetPage({
+      rows: keysetRows,
+      limit: parsed.limit,
+      kind: RESPONSES_CURSOR_KIND,
+      sortBy: parsed.sortBy,
+      fp: parsed.fingerprint,
+      sortValue: (row) => row.createdAt,
+    });
+
+    // The total is a second query, so it only runs when asked for — and in parallel with the
+    // hydration rather than after it, since neither needs the other's result.
+    const [rows, total] = await Promise.all([
+      hydrateV3Responses(page.map((row) => row.id)),
+      parsed.includeTotalCount
+        ? countV3Responses({ filter: parsed.filter, precision: "capped" })
+        : Promise.resolve(null),
+    ]);
+
+    const surveys = await getV3ResponseSurveys(rows.map((row) => row.surveyId));
+    const serializer = createV3ResponseSerializer();
+
+    // A response whose survey vanished between the two queries cannot be serialized against a
+    // definition. Dropping it keeps the page valid rather than failing the whole read for one row;
+    // it is logged because it should not happen outside a concurrent delete.
+    const data = rows.flatMap((row) => {
+      const survey = surveys.get(row.surveyId);
+      if (!survey) {
+        log.warn({ responseId: row.id, surveyId: row.surveyId }, "v3 list: survey missing for response");
+        return [];
+      }
+
+      return [serializer.toListItem(row, survey)];
+    });
+
+    return successListResponse(
+      data,
+      {
+        limit: parsed.limit,
+        nextCursor,
+        totalCount: total?.count ?? null,
+        totalCountRelation: total?.relation ?? null,
+      },
+      { requestId, cache: "private, no-store" }
+    );
+  } catch (error) {
+    return mapV3ThrownError(error, {
+      log,
+      requestId,
+      instance: instance ?? "",
+      operation: "responses.list",
+    });
+  }
+}
+
+/**
+ * `GET /api/v3/responses/count` → 200 `{ data: { count, relation } }`.
+ *
+ * Exists so "how many match this filter" never requires fetching a page. `precision=exact` is the
+ * documented slow path; the default stops counting at the cap and says so through `relation`.
+ */
+export async function countV3ResponsesOperation({
+  searchParams,
+  authentication,
+  requestId,
+  instance,
+}: TReadParams & { searchParams: URLSearchParams }): Promise<Response> {
+  const log = logger.withContext({ requestId });
+
+  try {
+    const parsed = parseV3ResponsesCountQuery(searchParams);
+    if (!parsed.ok) {
+      return badQuery(parsed.invalid_params, requestId, instance);
+    }
+
+    const access = await requireV3WorkspaceAccess(
+      authentication,
+      parsed.filter.workspaceId,
+      "read",
+      requestId,
+      instance
+    );
+
+    if (access instanceof Response) {
+      return access;
+    }
+
+    const { count, relation } = await countV3Responses({
+      filter: parsed.filter,
+      precision: parsed.precision,
+    });
+
+    return successResponse({ count, relation }, { requestId, cache: "private, no-store" });
+  } catch (error) {
+    return mapV3ThrownError(error, {
+      log,
+      requestId,
+      instance: instance ?? "",
+      operation: "responses.count",
+    });
+  }
+}
+
+/**
+ * `GET /api/v3/responses/{responseId}` → 200 `{ data }`.
+ *
+ * The workspace is resolved from the response rather than supplied, so a caller cannot pair someone
+ * else's response id with a workspace it happens to have access to. A response that does not exist
+ * and one in another workspace answer with the same 403 and the same default detail — 404 would make
+ * the id space probeable.
+ */
+export async function getV3Response({
+  responseId,
+  authentication,
+  requestId,
+  instance,
+}: TReadParams & { responseId: string }): Promise<Response> {
+  const log = logger.withContext({ requestId, responseId });
+
+  try {
+    const workspaceId = await getResponseWorkspaceId(responseId);
+
+    if (!workspaceId) {
+      return problemForbidden(requestId, undefined, instance);
+    }
+
+    const access = await requireV3WorkspaceAccess(authentication, workspaceId, "read", requestId, instance);
+
+    if (access instanceof Response) {
+      return access;
+    }
+
+    const row = await getScopedV3Response(responseId, { workspaceId });
+
+    // Deleted between the scope lookup and the read. The same 403 as above, so the race is
+    // indistinguishable from a response that was never the caller's.
+    if (!row) {
+      return problemForbidden(requestId, undefined, instance);
+    }
+
+    const surveys = await getV3ResponseSurveys([row.surveyId]);
+    const survey = surveys.get(row.surveyId);
+
+    if (!survey) {
+      return problemForbidden(requestId, undefined, instance);
+    }
+
+    const resource = createV3ResponseSerializer().toResource(row, survey);
+
+    return successResponse(resource, { requestId, cache: "private, no-store" });
+  } catch (error) {
+    return mapV3ThrownError(error, {
+      log,
+      requestId,
+      instance: instance ?? "",
+      operation: "responses.get",
     });
   }
 }
