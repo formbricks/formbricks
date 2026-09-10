@@ -80,29 +80,40 @@ export const authenticateGatewayRequest = async (
   };
 };
 
+/**
+ * The outcome of authorizing a request, rather than a response meaning "allowed".
+ *
+ * This used to answer a bare `Response` — a 200 with an empty body — because Envoy's ext_authz reads
+ * an allow that way, and the caller supplied the body to send. That gateway is gone (ENG-3117) and
+ * the single remaining caller forwards the request itself, so it needs the principal it was allowed
+ * as: without it there is nothing to rate-limit against but the credential, which would mean
+ * authenticating twice.
+ */
+export type TGatewayAuthorizationOutcome =
+  | { status: "allow"; principal: TGatewayAuthenticatedPrincipal }
+  | { status: "deny"; response: Response };
+
 export const authorizeGatewayRequest = async ({
   request,
   originalRequest,
   authorizers,
   requestId,
-  buildAllowResponse,
   unsupportedRouteMessage,
 }: {
   request: NextRequest;
   originalRequest: TGatewayOriginalRequest;
   authorizers: TGatewayRequestAuthorizer[];
   requestId: string;
-  buildAllowResponse: () => Response;
   unsupportedRouteMessage: string;
-}): Promise<Response> => {
+}): Promise<TGatewayAuthorizationOutcome> => {
   const authorizer = authorizers.find((candidate) => candidate.matches(originalRequest));
   if (!authorizer) {
-    return buildGatewayStatusResponse(400, unsupportedRouteMessage);
+    return { status: "deny", response: buildGatewayStatusResponse(400, unsupportedRouteMessage) };
   }
 
   const authenticationResult = await authenticateGatewayRequest(request);
   if (authenticationResult.status === "missing" || authenticationResult.status === "invalid") {
-    return buildGatewayStatusResponse(401, "Unauthorized");
+    return { status: "deny", response: buildGatewayStatusResponse(401, "Unauthorized") };
   }
 
   const authorizationDecision = await authorizer.authorize({
@@ -112,5 +123,14 @@ export const authorizeGatewayRequest = async ({
     requestId,
   });
 
-  return authorizationDecision.status === "allow" ? buildAllowResponse() : authorizationDecision.response;
+  return authorizationDecision.status === "allow"
+    ? { status: "allow", principal: authenticationResult.principal }
+    : { status: "deny", response: authorizationDecision.response };
 };
+
+/**
+ * What the rate limit is counted against — the same choice the v3 wrapper makes: the API key, or the
+ * user behind a session.
+ */
+export const getGatewayRateLimitIdentifier = (principal: TGatewayAuthenticatedPrincipal): string =>
+  principal.type === "apiKey" ? principal.authentication.apiKeyId : principal.userId;
