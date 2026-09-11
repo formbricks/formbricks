@@ -269,20 +269,22 @@ receipt. Return `retryOnUpgrade` to `false` after a successful recovery.
 ## Upgrade an existing installation to v6
 
 Formbricks v6 has no legacy authorization fallback. Do not deploy it over an installation whose graph has not
-been proven complete. Use the signed upgrade assistant distributed with the v6 release. It verifies signatures
-and image digests, detects the existing deployment shape, and produces a reviewable plan before making changes.
+been proven complete. Use the signed upgrade assistant distributed with the v6 release. Verify the bundle's
+Sigstore signature first; the assistant then rechecks signed asset names and digests, detects the existing
+deployment shape, and produces a reviewable plan before making changes.
 
 Begin with the [signed v6 upgrade assistant](/self-hosting/advanced/v6-upgrade-assistant). Its read-only
 preflight detects the installation and current version, verifies that the release manifest contains immutable
 bridge and target image digests, and reports missing prerequisites without changing the deployment.
 
-For Helm, operators use two deliberately separate charts after the assistant's read-only preflight:
+For Helm, the assistant uses two deliberately separate charts after its read-only preflight:
 
 - The permanent Formbricks chart receives the private SpiceDB runtime and the immutable v5 bridge image.
 - The temporary `formbricks-upgrade` chart owns preparation, audit, fencing, activation, finalization, and rollback
   coordination. Uninstall it after finalization; no temporary cutover Job remains in the permanent release.
 
-The Docker executor automates the equivalent sequence. Helm operators advance the temporary chart explicitly:
+The signed assistant advances both charts and records the original revision, values, replica count, HPA state,
+signed asset identities, and database receipt in a local mode-`0600` journal. Its automated sequence is:
 
 1. Deploy the bridge with `authzed.activation.upgradeGate.enabled=false`. PostgreSQL remains authoritative for
    decisions while the durable projection is populated. This is the only documented Helm upgrade without the
@@ -294,7 +296,14 @@ The Docker executor automates the equivalent sequence. Helm operators advance th
 4. Upgrade the permanent release to the digest-pinned v6 candidate with `migration.mode=external` and the
    pre-upgrade receipt gate enabled. The candidate image validates the database receipt before replacing Pods;
    the exact bridge image already applied the release's shared expand migrations.
-5. Finalize the receipt, uninstall the temporary chart, and retain the exact bridge image for the rollback window.
+5. Verify the candidate image, authorization runtime, and container-local application health before finalizing.
+6. Restore the intended replica/HPA state and migration policy, verify the rollout, uninstall the temporary chart,
+   and retain the exact bridge image for the rollback window.
+
+Run `execute --install-type helm` with the two checksum-verified local chart archives. If the process is
+interrupted, rerun the identical signed inputs with `resume`. The assistant consults the database activation state
+as well as its journal, so a running v6 bridge or candidate is never mistaken for a completed upgrade. See the
+[v6 Upgrade Assistant](/self-hosting/advanced/v6-upgrade-assistant) for complete commands.
 
 The candidate gate runs `formbricks-authzed activation runtime-check`. It reads PostgreSQL only and fails when the
 receipt, schema, authorization contract, or client configuration is incompatible. There is no boolean
@@ -307,10 +316,11 @@ as hooks in the permanent chart.
   traffic. Do not let a candidate migration Job race the authority switch.
 </Warning>
 
-Argo CD renders Helm templates with install semantics rather than setting `.Release.IsUpgrade`. Existing Argo
-applications must set `authzed.activation.installBootstrap.enabled=false` for the bridge rollout. The temporary
-coordinator establishes the receipt, and the application startup check remains the final fail-closed guard even
-though Argo does not execute Helm's pre-upgrade lifecycle.
+Argo CD renders Helm templates with install semantics rather than setting `.Release.IsUpgrade`. Pause Argo CD or
+Flux reconciliation before execution and pass `--gitops-paused` only after confirming the pause. The assistant
+sets `authzed.activation.installBootstrap.enabled=false` for the bridge rollout; the temporary coordinator
+establishes the receipt, and the application startup check remains the final fail-closed gate. Resume GitOps only
+after the assistant restores the intended permanent release and removes the temporary coordinator.
 
 ## Activate or upgrade SpiceDB
 

@@ -62,6 +62,7 @@ cli:
 job:
   ttlSecondsAfterFinished: 600
   activeDeadlineSeconds:
+    status: 300
     prepare: 21600
     audit: 21600
     # Allows an interrupted activation to wait out its 15-minute database fence and still retain the

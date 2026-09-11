@@ -163,9 +163,10 @@
             "audit": { "$ref": "#/definitions/deadline" },
             "prepare": { "$ref": "#/definitions/deadline" },
             "rollbackBegin": { "$ref": "#/definitions/deadline" },
-            "rollbackComplete": { "$ref": "#/definitions/deadline" }
+            "rollbackComplete": { "$ref": "#/definitions/deadline" },
+            "status": { "$ref": "#/definitions/deadline" }
           },
-          "required": ["prepare", "audit", "activate", "rollbackBegin", "rollbackComplete"],
+          "required": ["status", "prepare", "audit", "activate", "rollbackBegin", "rollbackComplete"],
           "type": "object"
         },
         "resources": {
@@ -206,7 +207,7 @@
     },
     "nodeSelector": { "type": "object" },
     "phase": {
-      "enum": ["prepare", "audit", "activate", "rollback-begin", "rollback-complete"],
+      "enum": ["status", "prepare", "audit", "activate", "rollback-begin", "rollback-complete"],
       "type": "string"
     },
     "protocolVersion": {

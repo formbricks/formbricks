@@ -93,7 +93,10 @@ spec:
           command:
             - {{ .Values.cli.executable | quote }}
           args:
-            {{- if eq .Values.phase "prepare" }}
+            {{- if eq .Values.phase "status" }}
+            - activation
+            - status
+            {{- else if eq .Values.phase "prepare" }}
             - activation
             - prepare
             - --bridge-image-digest

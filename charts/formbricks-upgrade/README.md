@@ -6,12 +6,18 @@ storage, or cluster-scoped resources. Uninstall it after a successful cutover or
 `charts/formbricks` release remains free of temporary coordination objects.
 
 Every Job in this chart runs the immutable, legacy-authoritative bridge image. The v6 candidate digest is bound
-into the preparation receipt and plan, but this chart never runs the candidate image. Candidate migrations,
-deployment, runtime verification, and finalization are explicit external steps.
+into the preparation receipt and plan, but this chart never runs the candidate image. The signed release assistant
+orchestrates the permanent chart and this coordinator together; candidate deployment, runtime verification, and
+finalization occur through that assistant rather than inside this temporary chart.
 
 ## Before installing
 
-Use the signed release assistant output to populate `upgrade-values.yaml` and verify:
+The supported default is the checksum-verified `formbricks-upgrade-assistant execute --install-type helm` flow
+documented in the [v6 upgrade guide](../../docs/self-hosting/advanced/v6-upgrade-assistant.mdx). It consumes the
+release-matched `formbricks-<version>.tgz` and `formbricks-upgrade-<version>.tgz`, snapshots the current release,
+and generates phase values internally. If interrupted, use `resume` with the same signed inputs and journal.
+
+Before execution, verify:
 
 - bridge and candidate references are immutable image and embedded-manifest digests;
 - the bridge is serving legacy authorization while delivering the durable projection outbox;
@@ -21,9 +27,12 @@ Use the signed release assistant output to populate `upgrade-values.yaml` and ve
 Do not start if a candidate migration is destructive or makes the bridge unable to read the database. Contract
 migrations belong after the documented rollback-retention window; initial v6 has no contract-migration phase.
 
-Each v6 release publishes this temporary chart both as a checksum-signed release asset and in the Formbricks
-OCI chart registry. Use the chart version matching the target Formbricks release; do not run a chart copied
-from another branch or release. Install the generation-specific temporary release from OCI:
+Each v6 release publishes this temporary chart as a checksum-signed release asset. Use the version matching the
+target Formbricks release; do not run a chart copied from another branch or release. The assistant uses the local
+archive so the chart identity is bound to its signed journal.
+
+The remaining commands are a support-only manual recovery interface. Do not substitute them for the assistant's
+normal path. A support-directed manual run may install the generation-specific temporary release from OCI:
 
 ```sh
 helm upgrade --install formbricks-v6-upgrade-1 \
@@ -34,8 +43,8 @@ helm upgrade --install formbricks-v6-upgrade-1 \
   --wait --wait-for-jobs --timeout 30m
 ```
 
-For an air-gapped installation, download `formbricks-upgrade-<version>.tgz` with the other release-assistant
-assets, verify it through the same signed checksum file, and replace the OCI reference with the local archive.
+For an air-gapped installation, use the two local chart archives already verified through the release checksum
+file. The assistant requires those archives and does not contact the OCI chart registry.
 
 Keep `generation` fixed for one attempt. Advance `phase` only after the current Job succeeds and the runbook
 gate passes. Increment `execution` before rerunning a phase so Kubernetes receives a new immutable Job. Never
@@ -43,7 +52,10 @@ change either image, either manifest digest, the protocol version, or the initia
 that attempt: they form an immutable plan. Never use `--atomic`: Helm cannot safely reverse the database-backed
 authority transition.
 
-## Forward cutover
+The signed assistant removes its temporary `migration.mode=external` override after finalization. A support-led
+manual cutover must likewise restore the operator's reviewed migration policy before the next ordinary upgrade.
+
+## Support-only manual forward cutover
 
 1. Run `prepare` and copy the returned receipt into `activation.receipt`.
 2. Run `audit` and require a clean full-deployment dry run.
@@ -96,7 +108,7 @@ window, keep traffic quiesced and follow rollback; do not resume writes or impro
 `execution` after an interrupted activate Job is safe: the new Job waits for an abandoned active fence, and the
 repository treats the exact already-activated receipt as success if the previous response was lost.
 
-## Rollback
+## Support-only manual rollback
 
 Rollback remains available only while the exact recorded bridge image is compatible with the database.
 

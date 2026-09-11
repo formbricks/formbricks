@@ -7,7 +7,7 @@ icon: "list-check"
 Formbricks v6 uses SpiceDB for authorization decisions. Existing data must first be projected from Formbricks
 PostgreSQL while a release-matched bridge keeps the v5 authorization behavior authoritative. The signed
 upgrade assistant provides a read-only preflight for Docker Compose and Helm, and an automated receipt-backed
-cutover for installations using bundled Docker PostgreSQL.
+cutover for Docker Compose, one-click, and Helm installations.
 
 <Warning>
   Back up the Formbricks PostgreSQL database and the installation directory before executing the upgrade. Do
@@ -20,7 +20,7 @@ Download these assets from the same [Formbricks v6 release](https://github.com/f
 
 - `formbricks.sh`, `formbricks-upgrade-assistant`, `formbricks-upgrade-manifest.json`
 - `formbricks-authzed-overlay.yml`, `authzed-postgres-bootstrap.sh`
-- `formbricks-upgrade-<version>.tgz` for Helm
+- `formbricks-<version>.tgz`, `formbricks-upgrade-<version>.tgz` for Helm
 - `formbricks-upgrade-checksums.txt`, `formbricks-upgrade-checksums.sigstore.json`
 
 Do not mix releases. Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/), then verify
@@ -78,8 +78,66 @@ For Helm, select the release explicitly when the current context contains more t
   --namespace formbricks
 ```
 
-Helm execution remains an explicit temporary-chart procedure. The assistant's `execute` command does not
-mutate Kubernetes resources.
+Preflight never creates a journal or changes Kubernetes resources. For a GitOps-managed release, pause
+reconciliation before execution; preflight reports the detected controller without changing it.
+
+## Execute a Helm upgrade
+
+Use the two verified local chart archives from the same signed release bundle. Do not use an OCI chart or a chart
+from another release for this cutover:
+
+```bash
+./formbricks-upgrade-assistant execute \
+  --manifest ./formbricks-upgrade-manifest.json \
+  --checksums ./formbricks-upgrade-checksums.txt \
+  --chart ./formbricks-6.0.0.tgz \
+  --upgrade-chart ./formbricks-upgrade-6.0.0.tgz \
+  --install-type helm \
+  --helm-release formbricks \
+  --namespace formbricks \
+  --state-file ./.formbricks-v6-helm-upgrade.json \
+  --backup-confirmed \
+  --yes
+```
+
+Add `--gitops-paused` only after you have paused an Argo CD or Flux controller detected by the assistant. Use
+`--helm-values ./values-v6.yaml` when the permanent v6 release needs reviewed value changes in addition to the
+existing release values. The assistant stores those values in its mode-`0600` journal; it never modifies the
+source file or prints Secret values.
+
+Execution automatically:
+
+1. Records the original Helm revision, values, replica count, HPA state, and signed asset identities.
+2. Deploys the exact bridge digest with release migrations, private SpiceDB, and legacy authorization authority.
+3. Installs the temporary coordinator, prepares and audits the graph, and quiesces the application through Helm.
+4. Activates the receipt, deploys one exact candidate Pod, and verifies its image, runtime contract, and `/health`.
+5. Finalizes, restores the intended replica/HPA and migration policy, verifies the rollout, and uninstalls the
+   temporary chart.
+
+`migration.mode=external` is a temporary cutover fence, not the permanent v6 setting. After finalization, the
+assistant removes that phase override so the reviewed operator value—or the chart's normal migration Job
+default—governs later upgrades.
+
+If the shell, Helm, or Kubernetes client is interrupted, rerun the exact signed inputs with `resume` instead of
+starting a new execution:
+
+```bash
+./formbricks-upgrade-assistant resume \
+  --manifest ./formbricks-upgrade-manifest.json \
+  --checksums ./formbricks-upgrade-checksums.txt \
+  --chart ./formbricks-6.0.0.tgz \
+  --upgrade-chart ./formbricks-upgrade-6.0.0.tgz \
+  --install-type helm \
+  --helm-release formbricks \
+  --namespace formbricks \
+  --state-file ./.formbricks-v6-helm-upgrade.json \
+  --backup-confirmed \
+  --yes
+```
+
+Resume validates the journal against the signed manifest and chart checksums, then consults the database-backed
+activation state. A running v6 bridge or candidate is not treated as completion by itself. Do not delete or edit
+the journal, and do not use `helm rollback` on the Formbricks release during the cutover.
 
 ## Execute a Docker or one-click upgrade
 
@@ -126,20 +184,23 @@ For a later v6 release, set `FORMBRICKS_IMAGE_REF` in `.env` to that release's r
 and run the normal `./formbricks.sh update`. The updater runs migrations through the overlaid application
 service even when the preserved v5 Compose file has no `formbricks-migrate` service.
 
-SpiceDB remains private on the Compose network. The executor stores sanitized progress in
+SpiceDB remains private on the Compose network. The executor verifies both the authorization runtime contract and
+the container-local `/health` endpoint before finalization. It stores sanitized progress in
 `.formbricks-v6-upgrade-state.json` and detailed local command output in `formbricks-v6-upgrade.log`; both use
 mode `0600`. It never emits credentials in its JSON result.
 
 ## Failure and rollback behavior
 
-Before activation, a failure leaves or restores the bridge. After activation, a failed candidate start,
-runtime check, or finalization fences writes, restores the exact signed bridge, switches database authority
-back to legacy, and returns `candidate_failed_rolled_back`.
+Before activation, a failure leaves or restores the bridge. After activation, a failed candidate start, runtime
+check, application health check, or finalization fences writes, restores the exact signed bridge, switches
+database authority back to legacy, and returns a sanitized rollback result. Helm recovery never blindly rolls
+back the application release: it selects only the journal-recorded original revision before activation or an
+exact, quiesced bridge revision after activation.
 
-If the host or shell stops during the cutover, rerun the same signed command. A recorded post-activation run
-is conservatively rolled back before another attempt. Do not delete the state file, overlay, bridge image, or
-either database. `activation_state_requires_manual_recovery` means the local receipt cannot be matched safely;
-keep Formbricks quiesced and contact support with the sanitized state and log files.
+If the host or shell stops during the cutover, use `resume` with the same signed inputs. Do not delete the state
+file, overlay, bridge image, chart archives, or either database. A manual-recovery result means the journal and
+database authority cannot be matched safely; keep Formbricks quiesced and contact support with the sanitized state
+and log files.
 
 ## Results
 
@@ -148,7 +209,6 @@ and `64` for invalid arguments. Execute exits `0` only for `status: "upgraded"`.
 execution exits non-zero. Raw command errors, tokens, database URLs, relationship identifiers, and filesystem
 paths are not written to standard output.
 
-External PostgreSQL and Helm upgrades require the explicit operator runbook because the assistant cannot
-derive or install their database credentials safely. Continue with
-[AuthZed Operations](/self-hosting/advanced/authzed-operations) for the Helm temporary chart, backups,
-validation, and recovery procedures.
+Continue with [AuthZed Operations](/self-hosting/advanced/authzed-operations) for database Secret alignment,
+backups, validation, and recovery details. The temporary chart's README documents a support-only manual procedure;
+the signed assistant is the supported default path.

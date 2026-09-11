@@ -191,24 +191,54 @@ exit 1
 const createFakeUpgradeDocker = (
   directory: string,
   renderedConfig: Record<string, unknown>,
-  options: Readonly<{ failFinalize?: boolean; authority?: "legacy" | "spicedb"; transition?: string }> = {}
+  options: Readonly<{
+    failFinalize?: boolean;
+    failHealth?: boolean;
+    interruptBridge?: boolean;
+    interruptPrepare?: boolean;
+    authority?: "legacy" | "spicedb";
+    transition?: string;
+  }> = {}
 ): Readonly<{ binDirectory: string; commandLog: string }> => {
   const binDirectory = join(directory, "bin");
   const configPath = join(directory, "rendered-compose.json");
   const commandLog = join(directory, "upgrade-docker-commands.log");
+  const interruptMarker = join(directory, "upgrade-interrupt.marker");
   mkdirSync(binDirectory);
   writeFileSync(configPath, JSON.stringify(renderedConfig));
   writeFileSync(commandLog, "");
   writeExecutable(
     join(binDirectory, "docker"),
     `#!/bin/sh
+INTERRUPT_MARKER=${JSON.stringify(interruptMarker)}
 printf '%s\\n' "$*" >> "$COMMAND_LOG"
 case "$*" in
   "compose version") exit 0 ;;
   *" config --format json") cat "$DOCKER_CONFIG_JSON" ;;
   *" config") exit 0 ;;
-  *" activation prepare "*) printf '%s\\n' '{"status":"prepared","receipt":"00000000-0000-4000-8000-000000000001"}' ;;
-  *" activation status") printf '%s\\n' '{"status":"ready","authority":"${options.authority ?? "legacy"}","transition":"${options.transition ?? "idle"}"}' ;;
+  *" up -d --no-deps --force-recreate formbricks")
+    if [ "${options.interruptBridge === true ? "true" : "false"}" = true ] && [ ! -e "$INTERRUPT_MARKER" ]; then
+      touch "$INTERRUPT_MARKER"
+      kill -9 "$PPID"
+      exit 137
+    fi
+    ;;
+  *" activation prepare "*)
+    if [ "${options.interruptPrepare === true ? "true" : "false"}" = true ] && [ ! -e "$INTERRUPT_MARKER" ]; then
+      touch "$INTERRUPT_MARKER"
+      assistant_pid=$(ps -o ppid= -p "$PPID" | tr -d ' ')
+      kill -9 "$assistant_pid"
+      exit 137
+    fi
+    printf '%s\\n' '{"status":"prepared","receipt":"00000000-0000-4000-8000-000000000001"}'
+    ;;
+  *" activation status")
+    if [ "${options.interruptPrepare === true ? "true" : "false"}" = true ] && [ -e "$INTERRUPT_MARKER" ]; then
+      printf '%s\\n' '{"status":"ready","authority":"legacy","transition":"prepared"}'
+    else
+      printf '%s\\n' '{"status":"ready","authority":"${options.authority ?? "legacy"}","transition":"${options.transition ?? "idle"}"}'
+    fi
+    ;;
   *" activation runtime-check")
     if grep -Fqx "FORMBRICKS_IMAGE_REF=$TARGET_IMAGE" "$UPGRADE_ENV_FILE"; then
       printf '%s\\n' '{"status":"ready","authority":"spicedb"}'
@@ -216,6 +246,7 @@ case "$*" in
       printf '%s\\n' '{"status":"ready","authority":"legacy"}'
     fi
     ;;
+  *"http://127.0.0.1:"*"/health"*) ${options.failHealth ? "exit 1" : "exit 0"} ;;
   *" activation finalize "*) ${options.failFinalize ? "exit 1" : "printf '%s\\n' '{\"status\":\"finalized\"}'"} ;;
   *" activation rollback-begin "*) printf '%s\\n' '{"status":"rollback_started"}' ;;
   *" activation rollback-complete "*) printf '%s\\n' '{"status":"rolled_back"}' ;;
@@ -228,7 +259,14 @@ esac
 
 const createUpgradeFixture = (
   directory: string,
-  options: Readonly<{ failFinalize?: boolean; authority?: "legacy" | "spicedb"; transition?: string }> = {}
+  options: Readonly<{
+    failFinalize?: boolean;
+    failHealth?: boolean;
+    interruptBridge?: boolean;
+    interruptPrepare?: boolean;
+    authority?: "legacy" | "spicedb";
+    transition?: string;
+  }> = {}
 ): Readonly<{
   binDirectory: string;
   commandLog: string;
@@ -701,10 +739,195 @@ describe("Formbricks v6 upgrade assistant", () => {
     expect(commands.lastIndexOf(" activation runtime-check")).toBeLessThan(
       commands.indexOf("activation finalize")
     );
+    expect(commands.indexOf("http://127.0.0.1:")).toBeLessThan(commands.indexOf("activation finalize"));
     expect(processResult.stdout + processResult.stderr).not.toContain("existing-password");
     expect(readFileSync(join(composeDirectory, "formbricks-v6-upgrade.log"), "utf8")).not.toContain(
       "existing-password"
     );
+  });
+
+  test("persists the signed upgrade state before the first bridge start and resumes on a v6 runtime", () => {
+    const directory = createTempDirectory();
+    const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory, {
+      interruptBridge: true,
+    });
+    const environment = {
+      ...process.env,
+      PATH: `${binDirectory}:${process.env.PATH}`,
+      COMMAND_LOG: commandLog,
+      DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+      TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+      UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+      FORMBRICKS_UPGRADE_POLL_INTERVAL_SECONDS: "0",
+    };
+
+    const interrupted = spawnSync(
+      assistantPath,
+      ["execute", "--manifest", manifestPath, "--path", composeDirectory, "--yes"],
+      { encoding: "utf8", env: environment }
+    );
+
+    expect(interrupted.signal === "SIGKILL" || interrupted.status === 137).toBe(true);
+    const statePath = join(composeDirectory, ".formbricks-v6-upgrade-state.json");
+    expect(statSync(statePath).mode & 0o777).toBe(0o600);
+    expect(JSON.parse(readFileSync(statePath, "utf8"))).toMatchObject({
+      state: "initialized",
+      bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
+      targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+    });
+
+    const resumed = spawnSync(
+      assistantPath,
+      [
+        "resume",
+        "--manifest",
+        manifestPath,
+        "--path",
+        composeDirectory,
+        "--current-version",
+        "6.0.0",
+        "--yes",
+      ],
+      { encoding: "utf8", env: environment }
+    );
+
+    expect(resumed.status, `${resumed.stdout}\n${resumed.stderr}`).toBe(0);
+    expect(JSON.parse(resumed.stdout)).toMatchObject({ status: "upgraded" });
+    expect(JSON.parse(readFileSync(statePath, "utf8"))).toMatchObject({ state: "finalized" });
+  });
+
+  test("recovers a prepare receipt whose response was lost before the journal write", () => {
+    const directory = createTempDirectory();
+    const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory, {
+      interruptPrepare: true,
+    });
+    const environment = {
+      ...process.env,
+      PATH: `${binDirectory}:${process.env.PATH}`,
+      COMMAND_LOG: commandLog,
+      DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+      TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+      UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+      FORMBRICKS_UPGRADE_POLL_INTERVAL_SECONDS: "0",
+    };
+    const interrupted = spawnSync(
+      assistantPath,
+      ["execute", "--manifest", manifestPath, "--path", composeDirectory, "--yes"],
+      { encoding: "utf8", env: environment }
+    );
+
+    expect(interrupted.signal === "SIGKILL" || interrupted.status === 137).toBe(true);
+    const statePath = join(composeDirectory, ".formbricks-v6-upgrade-state.json");
+    expect(JSON.parse(readFileSync(statePath, "utf8"))).toMatchObject({
+      state: "bridge_ready",
+      receipt: null,
+    });
+
+    const resumed = spawnSync(
+      assistantPath,
+      [
+        "resume",
+        "--manifest",
+        manifestPath,
+        "--path",
+        composeDirectory,
+        "--current-version",
+        "6.0.0",
+        "--yes",
+      ],
+      { encoding: "utf8", env: environment }
+    );
+
+    expect(resumed.status, `${resumed.stdout}\n${resumed.stderr}`).toBe(0);
+    expect(JSON.parse(readFileSync(statePath, "utf8"))).toMatchObject({
+      state: "finalized",
+      receipt: "00000000-0000-4000-8000-000000000001",
+    });
+    expect(readFileSync(commandLog, "utf8").match(/activation prepare/g)).toHaveLength(2);
+  });
+
+  test("accepts an idempotent finalize after the database commit preceded the journal write", () => {
+    const directory = createTempDirectory();
+    const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory, {
+      authority: "spicedb",
+      transition: "idle",
+    });
+    const statePath = join(composeDirectory, ".formbricks-v6-upgrade-state.json");
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        state: "activated",
+        receipt: "00000000-0000-4000-8000-000000000001",
+        bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
+        bridgeManifestDigest: bridgeRuntimeManifestDigest,
+        targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+        targetManifestDigest: targetRuntimeManifestDigest,
+      })
+    );
+    chmodSync(statePath, 0o600);
+    const resumed = spawnSync(
+      assistantPath,
+      [
+        "resume",
+        "--manifest",
+        manifestPath,
+        "--path",
+        composeDirectory,
+        "--current-version",
+        "6.0.0",
+        "--yes",
+      ],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${binDirectory}:${process.env.PATH}`,
+          COMMAND_LOG: commandLog,
+          DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+          TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+          UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+          FORMBRICKS_UPGRADE_POLL_INTERVAL_SECONDS: "0",
+        },
+      }
+    );
+
+    expect(resumed.status, `${resumed.stdout}\n${resumed.stderr}`).toBe(0);
+    expect(JSON.parse(readFileSync(statePath, "utf8"))).toMatchObject({ state: "finalized" });
+    const commands = readFileSync(commandLog, "utf8");
+    expect(commands).toContain("activation finalize");
+    expect(commands).not.toContain("rollback-begin");
+  });
+
+  test("rolls back instead of finalizing when the candidate is not serving health", () => {
+    const directory = createTempDirectory();
+    const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory, {
+      failHealth: true,
+    });
+    const result = spawnSync(
+      assistantPath,
+      ["execute", "--manifest", manifestPath, "--path", composeDirectory, "--yes"],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${binDirectory}:${process.env.PATH}`,
+          COMMAND_LOG: commandLog,
+          DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+          TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+          UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+          FORMBRICKS_UPGRADE_POLL_INTERVAL_SECONDS: "0",
+        },
+      }
+    );
+
+    expect(result.status).toBe(1);
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      checks: [{ code: "candidate_failed_rolled_back", status: "blocked" }],
+    });
+    const commands = readFileSync(commandLog, "utf8");
+    expect(commands).toContain("http://127.0.0.1:");
+    expect(commands).toContain("rollback-begin");
+    expect(commands).not.toContain("activation finalize");
   });
 
   test("rolls authority and runtime back to the bridge when candidate finalization fails", () => {

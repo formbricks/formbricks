@@ -45,7 +45,7 @@ expect_render_failure() {
 
 helm lint "${CHART_DIR}" --values "${VALUES_FILE}" > "${TMP_DIR}/lint.out"
 
-phases=(prepare audit activate rollback-begin rollback-complete)
+phases=(status prepare audit activate rollback-begin rollback-complete)
 for phase in "${phases[@]}"; do
   manifest="${TMP_DIR}/${phase}.yaml"
   render "${phase}" "${manifest}"
@@ -162,6 +162,7 @@ done
 ruby -ryaml - "${TMP_DIR}" <<'RUBY'
 directory = ARGV.fetch(0)
 expected = {
+  "status" => ["activation", "status"],
   "prepare" => [
     "activation", "prepare",
     "--bridge-image-digest", "sha256:#{"1" * 64}",

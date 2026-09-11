@@ -256,8 +256,16 @@ create, rotate, rename, or repoint the referenced Secret during the version upgr
 
 The first v5-to-v6 candidate rollout must use `migration.mode=external`. Upgrade through the signed release
 assistant: it deploys the immutable v5 bridge, installs the temporary upgrade coordinator, prepares and activates
-the graph, then supplies the database receipt consumed by the candidate. The permanent chart contains no prepare,
-audit, fence, authority-switch, finalization, or rollback phases.
+the graph, verifies the exact candidate image, authorization runtime, and application health, then finalizes the
+database receipt. It restores the original replica/HPA state and intended migration policy, then removes the
+temporary release. The permanent chart contains no prepare, audit, fence, authority-switch, finalization, or
+rollback phases.
+
+Use the checksum-verified local `formbricks-<version>.tgz` and `formbricks-upgrade-<version>.tgz` assets with
+`formbricks-upgrade-assistant execute --install-type helm`. An interrupted attempt must be continued with `resume`
+and the same signed inputs and mode-`0600` journal. Do not use a blind `helm rollback`: before activation the
+assistant can select only the recorded original revision, and after activation it can select only an exact,
+quiesced bridge revision while following the database rollback protocol.
 
 Every Helm upgrade must set `deployment.image.digest`; mutable tags are accepted only on a fresh install. The
 default `authzed.activation.upgradeGate.enabled=true` pre-upgrade Job executes that exact candidate image's

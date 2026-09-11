@@ -57,7 +57,9 @@ formbricks.com/target-release: {{ .Values.targetRelease | quote }}
 
 {{/* Phase-specific deadline. */}}
 {{- define "formbricks-upgrade.activeDeadlineSeconds" -}}
-{{- if eq .Values.phase "prepare" -}}
+{{- if eq .Values.phase "status" -}}
+{{- .Values.job.activeDeadlineSeconds.status -}}
+{{- else if eq .Values.phase "prepare" -}}
 {{- .Values.job.activeDeadlineSeconds.prepare -}}
 {{- else if eq .Values.phase "audit" -}}
 {{- .Values.job.activeDeadlineSeconds.audit -}}

@@ -4,6 +4,7 @@ set -euo pipefail
 
 readonly ASSISTANT_SCHEMA_VERSION=1
 readonly DEFAULT_MANIFEST_NAME="formbricks-upgrade-manifest.json"
+readonly DEFAULT_CHECKSUMS_NAME="formbricks-upgrade-checksums.txt"
 readonly DEFAULT_DOCKER_OVERLAY_NAME="formbricks-authzed-overlay.yml"
 readonly DEFAULT_POSTGRES_BOOTSTRAP_NAME="authzed-postgres-bootstrap.sh"
 
@@ -11,12 +12,19 @@ action="preflight"
 manifest_path=""
 docker_overlay_path=""
 postgres_bootstrap_path=""
+checksums_path=""
+formbricks_chart_path=""
+upgrade_chart_path=""
+helm_values_path=""
+helm_state_path=""
 install_type="auto"
 installation_path="."
 helm_release=""
 helm_namespace=""
 current_version_override=""
 confirmed=false
+backup_confirmed=false
+gitops_paused=false
 
 checks='[]'
 blocked_count=0
@@ -57,7 +65,7 @@ add_check() {
 
 usage() {
   cat >&2 <<'EOF'
-Usage: formbricks-upgrade-assistant [preflight|execute] [options]
+Usage: formbricks-upgrade-assistant [preflight|execute|resume] [options]
 
 Read-only options:
   --manifest PATH          Signed release manifest (defaults beside this executable)
@@ -68,7 +76,14 @@ Read-only options:
   --current-version VER    Override a version that cannot be detected safely
   --overlay PATH           Signed Docker AuthZed overlay (execute only)
   --bootstrap-helper PATH  Signed PostgreSQL bootstrap helper (execute only)
-  --yes                    Confirm the mutating Docker/one-click cutover
+  --checksums PATH         Verified signed checksum set (Helm execute/resume only)
+  --chart PATH             Release-matched Formbricks chart archive (Helm only)
+  --upgrade-chart PATH     Release-matched temporary upgrade chart archive (Helm only)
+  --helm-values PATH       Additional permanent v6 Helm values (Helm only)
+  --state-file PATH        0600 Helm execution journal (Helm only)
+  --backup-confirmed       Acknowledge a verified database backup
+  --gitops-paused          Certify detected Argo CD/Flux reconciliation is paused
+  --yes                    Confirm the mutating cutover
   --help                    Show this help
 EOF
 }
@@ -78,7 +93,7 @@ fail_usage() {
   exit 64
 }
 
-if [[ "${1:-}" == "preflight" || "${1:-}" == "execute" ]]; then
+if [[ "${1:-}" == "preflight" || "${1:-}" == "execute" || "${1:-}" == "resume" ]]; then
   action="$1"
   shift
 elif [[ -n "${1:-}" && "${1:-}" != --* ]]; then
@@ -127,6 +142,39 @@ while [[ $# -gt 0 ]]; do
       postgres_bootstrap_path="$2"
       shift 2
       ;;
+    --checksums)
+      [[ $# -ge 2 ]] || fail_usage
+      checksums_path="$2"
+      shift 2
+      ;;
+    --chart)
+      [[ $# -ge 2 ]] || fail_usage
+      formbricks_chart_path="$2"
+      shift 2
+      ;;
+    --upgrade-chart)
+      [[ $# -ge 2 ]] || fail_usage
+      upgrade_chart_path="$2"
+      shift 2
+      ;;
+    --helm-values)
+      [[ $# -ge 2 ]] || fail_usage
+      helm_values_path="$2"
+      shift 2
+      ;;
+    --state-file)
+      [[ $# -ge 2 ]] || fail_usage
+      helm_state_path="$2"
+      shift 2
+      ;;
+    --backup-confirmed)
+      backup_confirmed=true
+      shift
+      ;;
+    --gitops-paused)
+      gitops_paused=true
+      shift
+      ;;
     --yes)
       confirmed=true
       shift
@@ -160,6 +208,9 @@ if [[ -z "$docker_overlay_path" && -n "$bundle_dir" ]]; then
 fi
 if [[ -z "$postgres_bootstrap_path" && -n "$bundle_dir" ]]; then
   postgres_bootstrap_path="${bundle_dir}/${DEFAULT_POSTGRES_BOOTSTRAP_NAME}"
+fi
+if [[ -z "$checksums_path" && -n "$bundle_dir" ]]; then
+  checksums_path="${bundle_dir}/${DEFAULT_CHECKSUMS_NAME}"
 fi
 
 readonly semver_pattern='^[vV]?([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$'
@@ -363,6 +414,9 @@ current_image_pinned=false
 current_image_digest=""
 database_mode="unknown"
 authzed_configured=false
+helm_inspected_values='{}'
+helm_release_revision=""
+helm_release_status=""
 
 inspect_docker_installation() {
   local compose_dir rendered image container_id inspected_version packaged_version
@@ -473,7 +527,10 @@ inspect_helm_installation() {
       add_check "helm_release_lookup_failed" "blocked"
       return
     fi
-    release_data=$(jq -c '[.[] | select((.chart // "") | startswith("formbricks-"))]' <<<"$releases")
+    release_data=$(jq -c '[.[] | select(
+      ((.chart // "") | startswith("formbricks-")) and
+      (((.chart // "") | startswith("formbricks-upgrade-")) | not)
+    )]' <<<"$releases")
   fi
 
   release_count=$(jq -r 'length' <<<"$release_data")
@@ -489,8 +546,16 @@ inspect_helm_installation() {
   helm_release=$(jq -er '.[0].name' <<<"$release_data")
   helm_namespace=$(jq -er '.[0].namespace' <<<"$release_data")
   release_status=$(jq -er '.[0].status // empty' <<<"$release_data" 2>/dev/null || true)
-  if [[ "$release_status" != "deployed" ]]; then
+  helm_release_status="$release_status"
+  helm_release_revision=$(jq -er '.[0].revision // empty' <<<"$release_data" 2>/dev/null || true)
+  if [[ "$release_status" != "deployed" && "$action" != "resume" ]]; then
     add_check "helm_release_not_deployed" "blocked"
+    return
+  fi
+  if [[ "$action" == "resume" ]] &&
+    [[ "$release_status" != "deployed" && "$release_status" != "failed" &&
+      "$release_status" != "pending-upgrade" && "$release_status" != "pending-rollback" ]]; then
+    add_check "helm_release_not_resumable" "blocked"
     return
   fi
   add_check "helm_release_deployed" "pass"
@@ -500,6 +565,7 @@ inspect_helm_installation() {
     return
   fi
   add_check "deployment_config_readable" "pass"
+  helm_inspected_values="$values"
   resolved_install_type="helm"
 
   if [[ -n "$current_version_override" ]]; then
@@ -569,6 +635,14 @@ hash_file() {
     sha256sum "$1" | awk '{print $1}'
   else
     shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
+hash_text() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum | awk '{print $1}'
+  else
+    shasum -a 256 | awk '{print $1}'
   fi
 }
 
@@ -706,6 +780,7 @@ read_upgrade_state() {
     'select(
       type == "object" and
       (.state | IN(
+        "initialized",
         "activated",
         "bridge_ready",
         "bridge_restored",
@@ -749,7 +824,25 @@ wait_for_runtime_check() {
       '.status == "ready" and .authority == $authority' <<<"$result" >/dev/null 2>&1; then
       return 0
     fi
-    sleep 2
+    sleep "${FORMBRICKS_UPGRADE_POLL_INTERVAL_SECONDS:-2}"
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
+wait_for_docker_application_health() {
+  local attempt=1
+
+  while [[ "$attempt" -le 30 ]]; do
+    if run_upgrade_compose exec -T formbricks node -e '
+      const port = process.env.PORT || "3000";
+      fetch(`http://127.0.0.1:${port}/health`, { signal: AbortSignal.timeout(5000) })
+        .then((response) => process.exit(response.ok ? 0 : 1))
+        .catch(() => process.exit(1));
+    ' >>"$docker_upgrade_log" 2>&1; then
+      return 0
+    fi
+    sleep "${FORMBRICKS_UPGRADE_POLL_INTERVAL_SECONDS:-2}"
     attempt=$((attempt + 1))
   done
   return 1
@@ -836,6 +929,24 @@ execute_docker_upgrade() {
   fi
 
   umask 077
+  # Persist the signed bridge/candidate pair before touching the installation. A process that dies
+  # during the first bridge deployment can then resume even though that v6 bridge reports major 6.
+  if [[ ! -e "$docker_upgrade_state" ]]; then
+    if ! write_upgrade_state "initialized"; then
+      emit_bootstrap_error "upgrade_state_initialize_failed"
+      return 2
+    fi
+  fi
+
+  # Bind any interrupted-run state to this signed bridge/target pair before changing configuration.
+  # Only a missing state file is treated as a new run.
+  existing_state=$(read_upgrade_state || true)
+  if [[ -z "$existing_state" ]]; then
+    emit_bootstrap_error "upgrade_state_invalid"
+    return 2
+  fi
+  state_name=$(jq -er '.state // empty' <<<"$existing_state" 2>/dev/null || true)
+  state_receipt=$(jq -er '.receipt // empty' <<<"$existing_state" 2>/dev/null || true)
   touch "$docker_env_file" "$docker_upgrade_log"
   chmod 600 "$docker_env_file" "$docker_upgrade_log"
   if [[ ! -e "${docker_env_file}.before-v6-authzed" ]]; then
@@ -932,7 +1043,20 @@ execute_docker_upgrade() {
     if [[ "$state_name" == "finalized" ]]; then
       set_active_formbricks_image "$target_image"
       if run_logged_upgrade_compose up -d --no-deps --force-recreate formbricks &&
-        wait_for_runtime_check spicedb; then
+        wait_for_runtime_check spicedb && wait_for_docker_application_health; then
+        emit_upgrade_success
+        return 0
+      fi
+    fi
+    if [[ "$state_name" == "activated" && "$transition" == "idle" && -n "$state_receipt" ]]; then
+      # Finalization can commit before its response or journal write reaches the assistant. Re-verify
+      # the exact candidate and call finalize with the same receipt; the activation protocol treats
+      # that exact already-finalized receipt as success.
+      set_active_formbricks_image "$target_image"
+      if run_logged_upgrade_compose up -d --no-deps --force-recreate formbricks &&
+        wait_for_runtime_check spicedb && wait_for_docker_application_health &&
+        run_activation_command finalize --receipt "$state_receipt" >/dev/null; then
+        write_upgrade_state "finalized" "$state_receipt"
         emit_upgrade_success
         return 0
       fi
@@ -953,11 +1077,19 @@ execute_docker_upgrade() {
     return 1
   fi
   if [[ "$transition" == "prepared" ]]; then
-    if [[ -z "$state_receipt" ]] || ! run_activation_command abort --receipt "$state_receipt" >/dev/null; then
+    if [[ -n "$state_receipt" ]]; then
+      if ! run_activation_command abort --receipt "$state_receipt" >/dev/null; then
+        emit_bootstrap_error "activation_state_requires_manual_recovery"
+        return 1
+      fi
+      write_upgrade_state "bridge_restored"
+    elif [[ "$state_name" != "initialized" && "$state_name" != "bridge_ready" ]]; then
       emit_bootstrap_error "activation_state_requires_manual_recovery"
       return 1
     fi
-    write_upgrade_state "bridge_restored"
+    # With no journaled receipt, prepare may have committed immediately before the process died.
+    # Repeating the same signed immutable plan returns that receipt; the normal prepare step below
+    # persists it before quiescing the workload.
   elif [[ "$transition" != "idle" && "$transition" != "preparing" ]]; then
     emit_bootstrap_error "activation_state_requires_manual_recovery"
     return 1
@@ -1008,6 +1140,7 @@ execute_docker_upgrade() {
   set_active_formbricks_image "$target_image"
   if ! run_logged_upgrade_compose up -d --no-deps --force-recreate formbricks ||
     ! wait_for_runtime_check spicedb ||
+    ! wait_for_docker_application_health ||
     ! run_activation_command finalize --receipt "$receipt" >/dev/null; then
     if rollback_after_activation "$receipt"; then
       emit_bootstrap_error "candidate_failed_rolled_back"
@@ -1021,9 +1154,1153 @@ execute_docker_upgrade() {
   emit_upgrade_success
 }
 
+helm_upgrade_log=""
+helm_work_directory=""
+helm_original_values_file=""
+helm_operator_values_file=""
+helm_retired_values_file=""
+helm_phase_values_file=""
+helm_upgrade_release=""
+helm_generation=""
+helm_deployment_name=""
+helm_deployment_component=""
+helm_selector=""
+
+cleanup_helm_work_directory() {
+  if [[ -n "$helm_work_directory" && -d "$helm_work_directory" ]]; then
+    find "$helm_work_directory" -type f -exec chmod 600 {} + 2>/dev/null || true
+    rm -rf -- "$helm_work_directory"
+  fi
+}
+
+verify_checksum_entry() {
+  local path="$1"
+  local expected_name="$2"
+  local actual_digest matches
+
+  [[ -f "$path" && "$(basename -- "$path")" == "$expected_name" ]] || return 1
+  actual_digest=$(hash_file "$path")
+  matches=$(awk -v digest="$actual_digest" -v name="$expected_name" \
+    '$1 == digest && $2 == name { count += 1 } END { print count + 0 }' "$checksums_path")
+  [[ "$matches" == "1" ]]
+}
+
+verify_helm_release_assets() {
+  local checksums_name
+
+  [[ -f "$checksums_path" ]] || return 1
+  checksums_name=$(basename -- "$checksums_path")
+  [[ "$checksums_name" == "$DEFAULT_CHECKSUMS_NAME" ]] || return 1
+
+  if [[ -z "$formbricks_chart_path" ]]; then
+    formbricks_chart_path="${bundle_dir}/${formbricks_chart}"
+  fi
+  if [[ -z "$upgrade_chart_path" ]]; then
+    upgrade_chart_path="${bundle_dir}/${upgrade_chart}"
+  fi
+
+  verify_checksum_entry "$manifest_path" "$DEFAULT_MANIFEST_NAME" &&
+    verify_checksum_entry "$formbricks_chart_path" "$formbricks_chart" &&
+    verify_checksum_entry "$upgrade_chart_path" "$upgrade_chart"
+}
+
+write_helm_journal() {
+  local state="$1"
+  local receipt="${2:-}"
+  local pending_phase="${3:-}"
+  local pending_execution="${4:-0}"
+  local temporary
+
+  temporary=$(mktemp "${helm_state_path}.tmp.XXXXXX")
+  jq \
+    --arg state "$state" \
+    --arg receipt "$receipt" \
+    --arg pendingPhase "$pending_phase" \
+    --argjson pendingExecution "$pending_execution" \
+    '.state = $state |
+      .receipt = (if $receipt == "" then null else $receipt end) |
+      .pendingPhase = (if $pendingPhase == "" then null else $pendingPhase end) |
+      .pendingExecution = $pendingExecution |
+      .execution = (if $pendingPhase == "" then .execution else $pendingExecution end)' \
+    "$helm_state_path" >"$temporary"
+  chmod 600 "$temporary"
+  mv "$temporary" "$helm_state_path"
+}
+
+read_bound_helm_journal() {
+  local checksums_digest main_chart_digest upgrade_chart_digest
+
+  [[ -f "$helm_state_path" ]] || return 1
+  checksums_digest="sha256:$(hash_file "$checksums_path")"
+  main_chart_digest="sha256:$(hash_file "$formbricks_chart_path")"
+  upgrade_chart_digest="sha256:$(hash_file "$upgrade_chart_path")"
+
+  jq -cer \
+    --arg release "$helm_release" \
+    --arg namespace "$helm_namespace" \
+    --arg manifestDigest "sha256:${manifest_digest}" \
+    --arg checksumsDigest "$checksums_digest" \
+    --arg bridgeImage "$bridge_image" \
+    --arg bridgeManifestDigest "$bridge_runtime_manifest_digest" \
+    --arg targetImage "$target_image" \
+    --arg targetManifestDigest "$target_runtime_manifest_digest" \
+    --arg mainChart "$formbricks_chart" \
+    --arg mainChartDigest "$main_chart_digest" \
+    --arg upgradeChart "$upgrade_chart" \
+    --arg upgradeChartDigest "$upgrade_chart_digest" \
+    'select(
+      .schemaVersion == 1 and
+      .release.name == $release and .release.namespace == $namespace and
+      .signed.manifestDigest == $manifestDigest and
+      .signed.checksumsDigest == $checksumsDigest and
+      .signed.bridgeImage == $bridgeImage and
+      .signed.bridgeManifestDigest == $bridgeManifestDigest and
+      .signed.targetImage == $targetImage and
+      .signed.targetManifestDigest == $targetManifestDigest and
+      .signed.mainChart.name == $mainChart and
+      .signed.mainChart.digest == $mainChartDigest and
+      .signed.upgradeChart.name == $upgradeChart and
+      .signed.upgradeChart.digest == $upgradeChartDigest and
+      (.originalValues | type == "object") and
+      (.operatorValues | type == "string") and
+      (.workload.deploymentName | type == "string") and
+      (.workload.component | type == "string") and
+      (.workload.originalImage | type == "string" and length > 0) and
+      (.workload.replicas | type == "number") and
+      (.workload.hpa.enabled | type == "boolean") and
+      (.generation | type == "string") and
+      (.upgradeRelease | type == "string") and
+      (.state | IN(
+        "initialized", "bridge_ready", "prepared", "audited", "quiesced", "activated",
+        "candidate_ready", "finalized", "completed", "rollback_started", "rollback_bridge_ready",
+        "rolled_back", "manual_recovery_required"
+      )) and
+      ((.receipt == null) or (.receipt | type == "string")) and
+      ((.pendingPhase == null) or (.pendingPhase | type == "string")) and
+      (.pendingExecution | type == "number") and
+      (.execution | type == "number")
+    )' "$helm_state_path" 2>/dev/null
+}
+
+helm_capture() {
+  helm "$@" 2>>"$helm_upgrade_log"
+}
+
+helm_logged() {
+  helm "$@" >>"$helm_upgrade_log" 2>&1
+}
+
+helm_render_logged() {
+  helm "$@" >/dev/null 2>>"$helm_upgrade_log"
+}
+
+kubectl_capture() {
+  kubectl "$@" 2>>"$helm_upgrade_log"
+}
+
+kubectl_logged() {
+  kubectl "$@" >>"$helm_upgrade_log" 2>&1
+}
+
+initialize_helm_journal() {
+  local deployments deployment_count deployment replicas hpa hpa_enabled=false hpa_min=1 hpa_max=1
+  local gitops_detected=false revision operator_values_content="" generation release_hash original_image
+  local checksums_digest main_chart_digest upgrade_chart_digest temporary
+
+  helm_deployment_component=$(jq -r '
+    (.componentOverride // empty | select(length > 0)) //
+    (.nameOverride // empty | select(length > 0)) //
+    "formbricks"
+  ' <<<"$helm_inspected_values")
+  helm_deployment_component="${helm_deployment_component:0:63}"
+  helm_deployment_component="${helm_deployment_component%-}"
+  helm_selector="app.kubernetes.io/instance=${helm_release},app.kubernetes.io/component=${helm_deployment_component}"
+
+  deployments=$(kubectl_capture get deployments --namespace "$helm_namespace" -l "$helm_selector" -o json) || return 1
+  deployment_count=$(jq -r '.items | length' <<<"$deployments")
+  [[ "$deployment_count" == "1" ]] || return 1
+  deployment=$(jq -c '.items[0]' <<<"$deployments")
+  helm_deployment_name=$(jq -er '.metadata.name' <<<"$deployment") || return 1
+  original_image=$(jq -er --arg container "$helm_deployment_name" '
+    [.spec.template.spec.containers[] | select(.name == $container)] |
+    select(length == 1) | .[0].image
+  ' <<<"$deployment") || return 1
+  replicas=$(jq -er '.spec.replicas // 1' <<<"$deployment") || return 1
+
+  if jq -e '
+      ((.metadata.annotations // {}) | keys | any(test("^(argocd\\.argoproj\\.io|fluxcd\\.io|kustomize\\.toolkit\\.fluxcd\\.io)/"))) or
+      ((.metadata.labels // {})["app.kubernetes.io/managed-by"] | strings | test("^(ArgoCD|argocd|Flux|flux)$")) or
+      ((.metadata.managedFields // []) | any(.manager | strings | test("argocd|flux"; "i")))
+    ' <<<"$deployment" >/dev/null 2>&1; then
+    gitops_detected=true
+  fi
+  if [[ "$gitops_detected" == "true" && "$gitops_paused" != "true" ]]; then
+    return 3
+  fi
+
+  if hpa=$(kubectl_capture get horizontalpodautoscaler "$helm_deployment_name" \
+    --namespace "$helm_namespace" -o json); then
+    hpa_enabled=true
+    hpa_min=$(jq -er '.spec.minReplicas // 1' <<<"$hpa") || return 1
+    hpa_max=$(jq -er '.spec.maxReplicas' <<<"$hpa") || return 1
+  fi
+
+  if [[ -n "$helm_values_path" ]]; then
+    [[ -f "$helm_values_path" ]] || return 1
+    operator_values_content=$(<"$helm_values_path")
+  fi
+
+  revision="$helm_release_revision"
+  if [[ -z "$revision" ]]; then
+    revision=$(helm_capture status "$helm_release" --namespace "$helm_namespace" -o json |
+      jq -er '.version') || return 1
+  fi
+
+  generation=$(date +%s)
+  release_hash=$(printf '%s' "${helm_namespace}/${helm_release}" | hash_text | cut -c1-8)
+  helm_upgrade_release="${helm_release:0:40}-${release_hash}-v6-upgrade"
+  checksums_digest="sha256:$(hash_file "$checksums_path")"
+  main_chart_digest="sha256:$(hash_file "$formbricks_chart_path")"
+  upgrade_chart_digest="sha256:$(hash_file "$upgrade_chart_path")"
+
+  temporary=$(mktemp "${helm_state_path}.tmp.XXXXXX")
+  jq -cn \
+    --arg release "$helm_release" \
+    --arg namespace "$helm_namespace" \
+    --arg revision "$revision" \
+    --arg manifestDigest "sha256:${manifest_digest}" \
+    --arg checksumsDigest "$checksums_digest" \
+    --arg bridgeImage "$bridge_image" \
+    --arg bridgeManifestDigest "$bridge_runtime_manifest_digest" \
+    --arg targetImage "$target_image" \
+    --arg targetManifestDigest "$target_runtime_manifest_digest" \
+    --arg mainChart "$formbricks_chart" \
+    --arg mainChartDigest "$main_chart_digest" \
+    --arg upgradeChart "$upgrade_chart" \
+    --arg upgradeChartDigest "$upgrade_chart_digest" \
+    --argjson originalValues "$helm_inspected_values" \
+    --arg operatorValues "$operator_values_content" \
+    --arg deploymentName "$helm_deployment_name" \
+    --arg component "$helm_deployment_component" \
+    --arg originalImage "$original_image" \
+    --argjson replicas "$replicas" \
+    --argjson hpaEnabled "$hpa_enabled" \
+    --argjson hpaMin "$hpa_min" \
+    --argjson hpaMax "$hpa_max" \
+    --arg generation "$generation" \
+    --arg upgradeRelease "$helm_upgrade_release" \
+    '{
+      schemaVersion: 1,
+      state: "initialized",
+      receipt: null,
+      pendingPhase: null,
+      pendingExecution: 0,
+      execution: 0,
+      release: { name: $release, namespace: $namespace, revision: $revision },
+      signed: {
+        manifestDigest: $manifestDigest,
+        checksumsDigest: $checksumsDigest,
+        bridgeImage: $bridgeImage,
+        bridgeManifestDigest: $bridgeManifestDigest,
+        targetImage: $targetImage,
+        targetManifestDigest: $targetManifestDigest,
+        mainChart: { name: $mainChart, digest: $mainChartDigest },
+        upgradeChart: { name: $upgradeChart, digest: $upgradeChartDigest }
+      },
+      originalValues: $originalValues,
+      operatorValues: $operatorValues,
+      workload: {
+        deploymentName: $deploymentName,
+        component: $component,
+        originalImage: $originalImage,
+        replicas: $replicas,
+        hpa: { enabled: $hpaEnabled, minReplicas: $hpaMin, maxReplicas: $hpaMax }
+      },
+      generation: $generation,
+      upgradeRelease: $upgradeRelease
+    }' >"$temporary"
+  chmod 600 "$temporary"
+  mv "$temporary" "$helm_state_path"
+}
+
+load_helm_journal_files() {
+  local journal="$1"
+
+  helm_deployment_name=$(jq -er '.workload.deploymentName' <<<"$journal")
+  helm_deployment_component=$(jq -er '.workload.component' <<<"$journal")
+  helm_selector="app.kubernetes.io/instance=${helm_release},app.kubernetes.io/component=${helm_deployment_component}"
+  helm_generation=$(jq -er '.generation' <<<"$journal")
+  helm_upgrade_release=$(jq -er '.upgradeRelease' <<<"$journal")
+
+  helm_work_directory=$(mktemp -d "${TMPDIR:-/tmp}/formbricks-v6-helm.XXXXXX")
+  chmod 700 "$helm_work_directory"
+  helm_original_values_file="${helm_work_directory}/original-values.json"
+  helm_operator_values_file="${helm_work_directory}/operator-values.yaml"
+  helm_retired_values_file="${helm_work_directory}/retired-values.json"
+  helm_phase_values_file="${helm_work_directory}/phase-values.json"
+  jq '.originalValues' <<<"$journal" >"$helm_original_values_file"
+  jq -r '.operatorValues' <<<"$journal" >"$helm_operator_values_file"
+  jq -cn '{
+    migration: { enabled: null },
+    authzed: { migrationAcknowledged: null, initialization: null }
+  }' >"$helm_retired_values_file"
+  chmod 600 "$helm_original_values_file" "$helm_operator_values_file" "$helm_retired_values_file"
+}
+
+write_main_phase_values() {
+  local image="$1"
+  local migration_mode="$2"
+  local replicas="$3"
+  local hpa_enabled="$4"
+  local gate_enabled="$5"
+  local repository digest hpa_min hpa_max
+
+  repository="${image%@*}"
+  digest="${image##*@}"
+  hpa_min=$(jq -er '.workload.hpa.minReplicas' "$helm_state_path")
+  hpa_max=$(jq -er '.workload.hpa.maxReplicas' "$helm_state_path")
+  jq -cn \
+    --arg repository "$repository" \
+    --arg digest "$digest" \
+    --arg migrationMode "$migration_mode" \
+    --argjson replicas "$replicas" \
+    --argjson hpaEnabled "$hpa_enabled" \
+    --argjson hpaMin "$hpa_min" \
+    --argjson hpaMax "$hpa_max" \
+    --argjson gateEnabled "$gate_enabled" \
+    '{
+      deployment: {
+        image: { repository: $repository, digest: $digest, tag: null },
+        replicas: $replicas
+      },
+      autoscaling: { enabled: $hpaEnabled, minReplicas: $hpaMin, maxReplicas: $hpaMax },
+      migration: (if $migrationMode == "" then {} else { mode: $migrationMode } end),
+      authzed: {
+        enabled: true,
+        consistency: "fully_consistent",
+        activation: {
+          installBootstrap: { enabled: false, retryOnUpgrade: false },
+          upgradeGate: { enabled: $gateEnabled }
+        }
+      }
+    }' >"$helm_phase_values_file"
+  chmod 600 "$helm_phase_values_file"
+}
+
+run_main_chart_upgrade() {
+  local phase="$1"
+
+  if ! helm_render_logged template "$helm_release" "$formbricks_chart_path" \
+    --namespace "$helm_namespace" --is-upgrade \
+    --values "$helm_original_values_file" \
+    --values "$helm_operator_values_file" \
+    --values "$helm_retired_values_file" \
+    --values "$helm_phase_values_file"; then
+    return 1
+  fi
+
+  printf '%s\n' "🔐 Applying the signed Helm ${phase} revision." >&2
+  helm_logged upgrade "$helm_release" "$formbricks_chart_path" \
+    --namespace "$helm_namespace" \
+    --reset-values \
+    --values "$helm_original_values_file" \
+    --values "$helm_operator_values_file" \
+    --values "$helm_retired_values_file" \
+    --values "$helm_phase_values_file" \
+    --wait --wait-for-jobs --timeout 45m
+}
+
+wait_for_zero_formbricks_pods() {
+  local attempt=1 pods
+  while [[ "$attempt" -le 120 ]]; do
+    pods=$(kubectl_capture get pods --namespace "$helm_namespace" -l "$helm_selector" -o json) || return 1
+    if jq -e '[.items[] | select(.metadata.deletionTimestamp == null)] | length == 0' \
+      <<<"$pods" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep "${FORMBRICKS_UPGRADE_POLL_INTERVAL_SECONDS:-2}"
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
+verify_helm_workload_image() {
+  local expected_image="$1"
+  local expected_digest="${expected_image##*@}"
+  local deployment pods
+
+  kubectl_logged rollout status "deployment/${helm_deployment_name}" --namespace "$helm_namespace" \
+    --timeout=15m || return 1
+  deployment=$(kubectl_capture get deployment "$helm_deployment_name" --namespace "$helm_namespace" -o json) ||
+    return 1
+  jq -e --arg image "$expected_image" \
+    --arg container "$helm_deployment_name" \
+    '[.spec.template.spec.containers[] | select(.name == $container and .image == $image)] | length == 1' \
+    <<<"$deployment" >/dev/null 2>&1 || return 1
+  pods=$(kubectl_capture get pods --namespace "$helm_namespace" -l "$helm_selector" -o json) || return 1
+  HELM_EXPECTED_DIGEST="$expected_digest" HELM_APP_CONTAINER="$helm_deployment_name" jq -e '
+    [.items[] | select(.metadata.deletionTimestamp == null)] as $pods |
+    ($pods | length) > 0 and
+    all($pods[];
+      any(.status.containerStatuses[]?;
+        .name == $ENV.HELM_APP_CONTAINER and .ready == true and
+        (.imageID | endswith("@" + $ENV.HELM_EXPECTED_DIGEST))))
+  ' <<<"$pods" >/dev/null 2>&1
+}
+
+run_helm_runtime_check() {
+  local expected_authority="$1"
+  local output
+  output=$(kubectl_capture exec --namespace "$helm_namespace" "deployment/${helm_deployment_name}" -- \
+    formbricks-authzed activation runtime-check) || return 1
+  jq -e --arg authority "$expected_authority" \
+    '.status == "ready" and .authority == $authority' <<<"$output" >/dev/null 2>&1
+}
+
+wait_for_helm_application_health() {
+  local attempt=1
+
+  while [[ "$attempt" -le 30 ]]; do
+    if kubectl_logged exec --namespace "$helm_namespace" "deployment/${helm_deployment_name}" -- \
+      node -e '
+        const port = process.env.PORT || "3000";
+        fetch(`http://127.0.0.1:${port}/health`, { signal: AbortSignal.timeout(5000) })
+          .then((response) => process.exit(response.ok ? 0 : 1))
+          .catch(() => process.exit(1));
+      '; then
+      return 0
+    fi
+    sleep "${FORMBRICKS_UPGRADE_POLL_INTERVAL_SECONDS:-2}"
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
+write_temporary_chart_values() {
+  local phase="$1"
+  local execution="$2"
+  local receipt="$3"
+  local quiesced="$4"
+  local effective endpoint mode app_name auth_secret token_key database_secret database_key
+  local system_key insecure node_selector tolerations affinity
+
+  effective=$(helm_capture get values "$helm_release" --namespace "$helm_namespace" --all -o json) || return 1
+  mode=$(jq -er '.authzed.mode' <<<"$effective") || return 1
+  app_name=$(jq -r '(.nameOverride // empty | select(length > 0)) // "formbricks"' <<<"$effective")
+  app_name="${app_name:0:63}"
+  app_name="${app_name%-}"
+  endpoint=$(jq -r '.authzed.endpoint // empty' <<<"$effective")
+  if [[ -z "$endpoint" && "$mode" == "selfHosted" ]]; then
+    endpoint=$(jq -r --arg fallback "${app_name}-spicedb" '.authzed.cluster.name // empty | select(length > 0) // $fallback' \
+      <<<"$effective")
+    endpoint="${endpoint:0:63}"
+    endpoint="${endpoint%-}:50051"
+  fi
+  [[ -n "$endpoint" ]] || return 1
+  auth_secret=$(jq -r --arg fallback "${app_name}-authzed" \
+    '.authzed.auth.existingSecret // empty | select(length > 0) // $fallback' <<<"$effective")
+  token_key=$(jq -er '.authzed.auth.tokenKey' <<<"$effective") || return 1
+  database_secret=$(jq -r --arg fallback "${app_name}-app-secrets" \
+    '.authzed.activation.database.existingSecret // empty | select(length > 0) // $fallback' <<<"$effective")
+  database_key=$(jq -er '.authzed.activation.database.urlKey' <<<"$effective") || return 1
+  system_key=$(jq -er '.authzed.systemKey' <<<"$effective") || return 1
+  insecure=$(jq -r 'if (.authzed.insecure | type) == "boolean" then .authzed.insecure else (.authzed.mode == "selfHosted") end' \
+    <<<"$effective")
+  node_selector=$(jq -c '.deployment.nodeSelector // {}' <<<"$effective")
+  tolerations=$(jq -c '.deployment.tolerations // []' <<<"$effective")
+  affinity=$(jq -c '.deployment.affinity // {}' <<<"$effective")
+
+  jq -cn \
+    --arg targetRelease "$helm_release" \
+    --arg generation "$helm_generation" \
+    --arg phase "$phase" \
+    --argjson execution "$execution" \
+    --arg bridgeRepository "${bridge_image%@*}" \
+    --arg bridgeDigest "$bridge_digest" \
+    --arg bridgeManifestDigest "$bridge_runtime_manifest_digest" \
+    --arg targetRepository "${target_image%@*}" \
+    --arg targetDigest "$target_digest" \
+    --arg targetManifestDigest "$target_runtime_manifest_digest" \
+    --arg receipt "$receipt" \
+    --argjson quiesced "$quiesced" \
+    --arg endpoint "$endpoint" \
+    --arg authSecret "$auth_secret" \
+    --arg tokenKey "$token_key" \
+    --arg databaseSecret "$database_secret" \
+    --arg databaseKey "$database_key" \
+    --arg systemKey "$system_key" \
+    --argjson insecure "$insecure" \
+    --argjson nodeSelector "$node_selector" \
+    --argjson tolerations "$tolerations" \
+    --argjson affinity "$affinity" \
+    '{
+      targetRelease: $targetRelease,
+      generation: $generation,
+      phase: $phase,
+      execution: $execution,
+      protocolVersion: 1,
+      images: {
+        bridge: { repository: $bridgeRepository, digest: $bridgeDigest, manifestDigest: $bridgeManifestDigest },
+        candidate: { repository: $targetRepository, digest: $targetDigest, manifestDigest: $targetManifestDigest },
+        pullPolicy: "IfNotPresent",
+        pullSecrets: []
+      },
+      schema: { expectedCurrentDigest: "" },
+      activation: { receipt: $receipt, workloadQuiesced: $quiesced },
+      database: { existingSecret: { name: $databaseSecret, key: $databaseKey } },
+      authzed: {
+        endpoint: $endpoint,
+        existingSecret: { name: $authSecret, key: $tokenKey },
+        systemKey: $systemKey,
+        insecure: $insecure,
+        consistency: "fully_consistent"
+      },
+      cli: { executable: "formbricks-authzed" },
+      job: {
+        ttlSecondsAfterFinished: 600,
+        activeDeadlineSeconds: {
+          status: 300, prepare: 21600, audit: 21600, activate: 2100,
+          rollbackBegin: 900, rollbackComplete: 900
+        },
+        activateConflictRetrySeconds: 960,
+        activateConflictRetryIntervalSeconds: 5,
+        resources: {
+          requests: { cpu: "100m", memory: "256Mi" },
+          limits: { memory: "1Gi" }
+        }
+      },
+      nodeSelector: $nodeSelector,
+      tolerations: $tolerations,
+      affinity: $affinity
+    }' >"$helm_phase_values_file"
+  chmod 600 "$helm_phase_values_file"
+}
+
+temporary_phase_job_output() {
+  local phase="$1"
+  local execution="$2"
+  local jobs count job_name succeeded failed
+
+  jobs=$(kubectl_capture get jobs --namespace "$helm_namespace" \
+    -l "formbricks.com/upgrade-generation=${helm_generation},formbricks.com/upgrade-phase=${phase},formbricks.com/upgrade-execution=${execution}" \
+    -o json) || return 1
+  count=$(jq -r '.items | length' <<<"$jobs")
+  [[ "$count" == "1" ]] || return 1
+  job_name=$(jq -er '.items[0].metadata.name' <<<"$jobs") || return 1
+  succeeded=$(jq -r '.items[0].status.succeeded // 0' <<<"$jobs")
+  failed=$(jq -r '.items[0].status.failed // 0' <<<"$jobs")
+  if [[ "$succeeded" != "1" && "$failed" == "0" ]]; then
+    kubectl_logged wait --for=condition=complete --timeout=45m "job/${job_name}" \
+      --namespace "$helm_namespace" || return 1
+    jobs=$(kubectl_capture get job "$job_name" --namespace "$helm_namespace" -o json) || return 1
+    succeeded=$(jq -r '.status.succeeded // 0' <<<"$jobs")
+  fi
+  [[ "$succeeded" == "1" ]] || return 1
+  kubectl_capture logs --namespace "$helm_namespace" "job/${job_name}"
+}
+
+recover_temporary_helm_release() {
+  local releases release_status history recovery_revision
+
+  releases=$(helm_capture list --namespace "$helm_namespace" --all -o json) || return 1
+  release_status=$(jq -er --arg release "$helm_upgrade_release" '
+    [.[] | select(.name == $release)] |
+    if length == 0 then "absent"
+    elif length == 1 then (.[0].status // "unknown")
+    else error("ambiguous temporary release")
+    end
+  ' <<<"$releases") || return 1
+
+  case "$release_status" in
+    absent|deployed|failed) return 0 ;;
+    pending-install)
+      # The chart contains only disposable coordination objects. If the initial Helm client vanished
+      # before storing a release revision, remove that incomplete shell and recreate the same signed,
+      # journal-bound phase. Database authority is consulted separately before any image choice.
+      helm_logged uninstall "$helm_upgrade_release" --namespace "$helm_namespace" --wait || return 1
+      ;;
+    pending-upgrade|pending-rollback)
+      history=$(helm_capture history "$helm_upgrade_release" --namespace "$helm_namespace" -o json) || return 1
+      recovery_revision=$(jq -er '
+        [.[] | select((.status == "deployed" or .status == "superseded") and (.revision | tonumber > 0))] |
+        sort_by(.revision | tonumber) | last | .revision
+      ' <<<"$history") || return 1
+      # This rollback is deliberately restricted to the temporary, resource-only coordinator chart.
+      # The application release is recovered separately according to database authority.
+      helm_logged rollback "$helm_upgrade_release" "$recovery_revision" --namespace "$helm_namespace" \
+        --no-hooks --wait --timeout 15m || return 1
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+run_temporary_phase() {
+  local phase="$1"
+  local receipt="${2:-}"
+  local quiesced="${3:-false}"
+  local pending_phase pending_execution execution output
+
+  if [[ -z "$receipt" ]]; then
+    receipt=$(jq -r '.receipt // empty' "$helm_state_path")
+  fi
+
+  pending_phase=$(jq -r '.pendingPhase // empty' "$helm_state_path")
+  pending_execution=$(jq -r '.pendingExecution // 0' "$helm_state_path")
+  if [[ "$pending_phase" == "$phase" && "$pending_execution" -gt 0 ]]; then
+    execution="$pending_execution"
+    output=$(temporary_phase_job_output "$phase" "$execution" 2>/dev/null || true)
+    if [[ -n "$output" ]]; then
+      printf '%s' "$output"
+      return 0
+    fi
+    execution=$(jq -r '.execution + 1' "$helm_state_path")
+    write_helm_journal "$(jq -r '.state' "$helm_state_path")" "$receipt" "$phase" "$execution"
+  else
+    execution=$(jq -r '.execution + 1' "$helm_state_path")
+    write_helm_journal "$(jq -r '.state' "$helm_state_path")" "$receipt" "$phase" "$execution"
+  fi
+
+  recover_temporary_helm_release || return 1
+  write_temporary_chart_values "$phase" "$execution" "$receipt" "$quiesced" || return 1
+  printf '%s\n' "🔐 Running the signed Helm ${phase} coordinator phase." >&2
+  helm_logged upgrade --install "$helm_upgrade_release" "$upgrade_chart_path" \
+    --namespace "$helm_namespace" --reset-values --values "$helm_phase_values_file" \
+    --wait --wait-for-jobs --timeout 45m || return 1
+  output=$(temporary_phase_job_output "$phase" "$execution") || return 1
+  printf '%s' "$output"
+}
+
+get_activation_status_via_chart() {
+  local output
+  output=$(run_temporary_phase status "" false) || return 1
+  jq -cer 'select(.status == "ready" and (.authority | IN("legacy", "spicedb"))) |
+    {authority, transition}' <<<"$output"
+}
+
+current_main_helm_release_status() {
+  local releases
+  releases=$(helm_capture list --namespace "$helm_namespace" --all -o json) || return 1
+  jq -er --arg release "$helm_release" '
+    [.[] | select(.name == $release)] |
+    select(length == 1) | .[0].status
+  ' <<<"$releases"
+}
+
+validate_original_helm_revision() {
+  local revision="$1"
+  local revision_values expected_values
+  revision_values=$(helm_capture get values "$helm_release" --namespace "$helm_namespace" \
+    --revision "$revision" -o json) || return 1
+  expected_values=$(jq -Sc '.originalValues' "$helm_state_path") || return 1
+  revision_values=$(jq -Sc '.' <<<"$revision_values") || return 1
+  [[ "$revision_values" == "$expected_values" ]]
+}
+
+find_quiesced_bridge_revision() {
+  local history revisions revision revision_values repository digest
+  repository="${bridge_image%@*}"
+  digest="${bridge_image##*@}"
+  history=$(helm_capture history "$helm_release" --namespace "$helm_namespace" -o json) || return 1
+  revisions=$(jq -r '
+    [.[] | select(.status == "deployed" or .status == "superseded")] |
+    sort_by(.revision | tonumber) | reverse | .[].revision
+  ' <<<"$history") || return 1
+  while IFS= read -r revision; do
+    [[ -n "$revision" ]] || continue
+    revision_values=$(helm_capture get values "$helm_release" --namespace "$helm_namespace" \
+      --revision "$revision" -o json) || continue
+    if jq -e --arg repository "$repository" --arg digest "$digest" '
+      .deployment.image.repository == $repository and
+      .deployment.image.digest == $digest and
+      .deployment.replicas == 0 and
+      .autoscaling.enabled == false and
+      .migration.mode == "external" and
+      .authzed.activation.installBootstrap.enabled == false and
+      .authzed.activation.upgradeGate.enabled == false
+    ' <<<"$revision_values" >/dev/null 2>&1; then
+      printf '%s' "$revision"
+      return 0
+    fi
+  done <<<"$revisions"
+  return 1
+}
+
+recover_pending_main_helm_release() {
+  local authority="$1"
+  local release_status recovery_revision original_revision
+
+  release_status=$(current_main_helm_release_status) || return 1
+  case "$release_status" in
+    deployed|failed) return 0 ;;
+    pending-upgrade|pending-rollback) ;;
+    *) return 1 ;;
+  esac
+
+  if [[ "$authority" == "legacy" ]]; then
+    original_revision=$(jq -er '.release.revision' "$helm_state_path") || return 1
+    validate_original_helm_revision "$original_revision" || return 1
+    recovery_revision="$original_revision"
+  elif [[ "$authority" == "spicedb" ]]; then
+    # Never restore a live legacy revision after authority has changed. The only safe Helm unlock
+    # target is a previously rendered exact bridge revision with zero replicas and no HPA.
+    recovery_revision=$(find_quiesced_bridge_revision) || return 1
+  else
+    return 1
+  fi
+
+  printf '%s\n' "↩️ Recovering an interrupted Helm client at a journal-verified safe revision." >&2
+  helm_logged rollback "$helm_release" "$recovery_revision" --namespace "$helm_namespace" \
+    --no-hooks --wait --timeout 30m || return 1
+  if [[ "$authority" == "spicedb" ]]; then
+    wait_for_zero_formbricks_pods || return 1
+  fi
+}
+
+verify_original_helm_workload() {
+  local expected_image replicas hpa_enabled deployment
+
+  expected_image=$(jq -er '.workload.originalImage' "$helm_state_path") || return 1
+  replicas=$(jq -er '.workload.replicas' "$helm_state_path") || return 1
+  hpa_enabled=$(jq -er '.workload.hpa.enabled' "$helm_state_path") || return 1
+  kubectl_logged rollout status "deployment/${helm_deployment_name}" --namespace "$helm_namespace" \
+    --timeout=15m || return 1
+  deployment=$(kubectl_capture get deployment "$helm_deployment_name" --namespace "$helm_namespace" -o json) ||
+    return 1
+  jq -e --arg image "$expected_image" --arg container "$helm_deployment_name" '
+    [.spec.template.spec.containers[] | select(.name == $container and .image == $image)] | length == 1
+  ' <<<"$deployment" >/dev/null 2>&1 || return 1
+
+  # A deliberately dormant release has no application process to probe. Its exact Deployment image
+  # and zero-Pod state are the complete safe-source assertion; active releases must answer /health.
+  if [[ "$replicas" == "0" && "$hpa_enabled" == "false" ]]; then
+    wait_for_zero_formbricks_pods
+  else
+    wait_for_helm_application_health
+  fi
+}
+
+restore_original_helm_release() {
+  local original_revision release_status
+
+  original_revision=$(jq -er '.release.revision' "$helm_state_path") || return 1
+  validate_original_helm_revision "$original_revision" || return 1
+  release_status=$(current_main_helm_release_status) || return 1
+  case "$release_status" in
+    pending-upgrade|pending-rollback)
+      recover_pending_main_helm_release legacy || return 1
+      verify_original_helm_workload
+      return $?
+      ;;
+    deployed)
+      if verify_original_helm_workload; then
+        return 0
+      fi
+      ;;
+    failed) ;;
+    *) return 1 ;;
+  esac
+
+  printf '%s\n' "↩️ Restoring the journal-verified pre-upgrade Helm revision." >&2
+  helm_logged rollback "$helm_release" "$original_revision" --namespace "$helm_namespace" \
+    --no-hooks --wait --timeout 30m || return 1
+  verify_original_helm_workload
+}
+
+restore_helm_bridge() {
+  local intended="$1"
+  local replicas hpa_enabled
+
+  # A vanished Helm client can leave the application release locked. Database authority is legacy
+  # at every call site here, so only the journal-verified original revision may unlock it.
+  recover_pending_main_helm_release legacy || return 1
+
+  if [[ "$intended" == "true" ]]; then
+    replicas=$(jq -r '.workload.replicas' "$helm_state_path")
+    hpa_enabled=$(jq -r '.workload.hpa.enabled' "$helm_state_path")
+  else
+    replicas=1
+    hpa_enabled=false
+  fi
+  write_main_phase_values "$bridge_image" external "$replicas" "$hpa_enabled" false
+  run_main_chart_upgrade "bridge recovery" &&
+    verify_helm_workload_image "$bridge_image" &&
+    run_helm_runtime_check legacy
+}
+
+quiesce_helm_candidate_for_rollback() {
+  local release_status
+  release_status=$(current_main_helm_release_status) || return 1
+  if [[ "$release_status" == "pending-upgrade" || "$release_status" == "pending-rollback" ]]; then
+    recover_pending_main_helm_release spicedb || return 1
+    wait_for_zero_formbricks_pods
+    return $?
+  fi
+  [[ "$release_status" == "deployed" || "$release_status" == "failed" ]] || return 1
+
+  write_main_phase_values "$target_image" external 0 false true
+  run_main_chart_upgrade "quiesced rollback candidate" && wait_for_zero_formbricks_pods
+}
+
+rollback_helm_after_activation() {
+  local receipt="$1"
+  local rollback_output status_output authority
+
+  printf '%s\n' "↩️ Candidate verification failed; restoring the signed Helm bridge." >&2
+  status_output=$(get_activation_status_via_chart 2>/dev/null || true)
+  authority=$(jq -r '.authority // empty' <<<"$status_output" 2>/dev/null || true)
+  if [[ "$authority" == "legacy" ]]; then
+    # A previous rollback-complete transaction may have committed before its client received the
+    # response. Repeating the exact receipt is the only accepted legacy/idle completion path.
+    rollback_output=$(run_temporary_phase rollback-complete "$receipt" false) || return 1
+    jq -e '.status == "rolled_back"' <<<"$rollback_output" >/dev/null 2>&1 || return 1
+    restore_helm_bridge true || return 1
+    write_helm_journal rolled_back "$receipt"
+    helm_logged uninstall "$helm_upgrade_release" --namespace "$helm_namespace" --wait || return 1
+    return 0
+  fi
+  [[ "$authority" == "spicedb" ]] || return 1
+
+  quiesce_helm_candidate_for_rollback || return 1
+  rollback_output=$(run_temporary_phase rollback-begin "$receipt" true) || return 1
+  jq -e '.status == "rollback_started"' <<<"$rollback_output" >/dev/null 2>&1 || return 1
+  write_helm_journal rollback_started "$receipt"
+
+  write_main_phase_values "$bridge_image" external 1 false false
+  run_main_chart_upgrade "rollback bridge" || return 1
+  verify_helm_workload_image "$bridge_image" || return 1
+  run_helm_runtime_check legacy || return 1
+  write_helm_journal rollback_bridge_ready "$receipt"
+
+  rollback_output=$(run_temporary_phase rollback-complete "$receipt" false) || return 1
+  jq -e '.status == "rolled_back"' <<<"$rollback_output" >/dev/null 2>&1 || return 1
+  restore_helm_bridge true || return 1
+  write_helm_journal rolled_back "$receipt"
+  helm_logged uninstall "$helm_upgrade_release" --namespace "$helm_namespace" --wait || return 1
+}
+
+emit_helm_upgrade_success() {
+  jq -cn --arg releaseVersion "$release_version" \
+    '{schemaVersion: 1, status: "upgraded", mutating: true, installType: "helm", releaseVersion: $releaseVersion}'
+}
+
+execute_helm_upgrade() {
+  local journal state receipt status_output authority transition prepare_output audit_output activate_output
+  local replicas hpa_enabled finalize_output
+  local resume_activation=false
+
+  if [[ "$resolved_install_type" != "helm" ]]; then
+    emit_bootstrap_error "helm_upgrade_required"
+    return 2
+  fi
+  if [[ "$confirmed" != "true" || "$backup_confirmed" != "true" ]]; then
+    emit_bootstrap_error "helm_confirmation_required"
+    return 2
+  fi
+  if ! verify_helm_release_assets; then
+    emit_bootstrap_error "signed_helm_artifact_invalid"
+    return 2
+  fi
+
+  if [[ -z "$helm_state_path" ]]; then
+    helm_state_path="${PWD}/.formbricks-v6-helm-upgrade-${helm_namespace}-${helm_release}.json"
+  fi
+  helm_upgrade_log="${helm_state_path%.json}.log"
+  umask 077
+  touch "$helm_upgrade_log"
+  chmod 600 "$helm_upgrade_log"
+
+  if [[ "$action" == "resume" ]]; then
+    journal=$(read_bound_helm_journal || true)
+    if [[ -z "$journal" ]]; then
+      emit_bootstrap_error "helm_upgrade_state_invalid"
+      return 2
+    fi
+  else
+    if [[ -e "$helm_state_path" ]]; then
+      emit_bootstrap_error "helm_upgrade_state_exists"
+      return 2
+    fi
+    set +e
+    initialize_helm_journal
+    initialize_result=$?
+    set -e
+    if [[ "$initialize_result" -ne 0 ]]; then
+      case "$initialize_result" in
+        3) emit_bootstrap_error "gitops_reconciliation_not_paused" ;;
+        *) emit_bootstrap_error "helm_workload_snapshot_failed" ;;
+      esac
+      return 2
+    fi
+    journal=$(read_bound_helm_journal || true)
+    if [[ -z "$journal" ]]; then
+      emit_bootstrap_error "helm_upgrade_state_invalid"
+      return 2
+    fi
+  fi
+
+  load_helm_journal_files "$journal"
+  trap cleanup_helm_work_directory EXIT
+  state=$(jq -r '.state' "$helm_state_path")
+  receipt=$(jq -r '.receipt // empty' "$helm_state_path")
+
+  if [[ "$state" == "completed" ]]; then
+    write_main_phase_values "$target_image" "" \
+      "$(jq -r '.workload.replicas' "$helm_state_path")" \
+      "$(jq -r '.workload.hpa.enabled' "$helm_state_path")" true
+    if verify_helm_workload_image "$target_image" && run_helm_runtime_check spicedb &&
+      wait_for_helm_application_health; then
+      emit_helm_upgrade_success
+      return 0
+    fi
+    emit_bootstrap_error "helm_completed_state_invalid"
+    return 1
+  fi
+
+  if [[ "$action" == "resume" && "$state" != "completed" ]]; then
+    # An initialized journal cannot have crossed the authority boundary: no receipt has been prepared.
+    # This lets recovery unlock a Helm client that disappeared during the first bridge upgrade, even
+    # when SpiceDB resources were not created far enough for the status Job to start.
+    authority=legacy
+    transition=idle
+    if [[ "$state" != "initialized" ]]; then
+      # The process may have disappeared after a database transaction committed but before the journal
+      # write. Consult the durable authority state before choosing an image; never infer authority from
+      # the running image or the journal alone.
+      status_output=$(get_activation_status_via_chart 2>/dev/null || true)
+      authority=$(jq -r '.authority // empty' <<<"$status_output" 2>/dev/null || true)
+      transition=$(jq -r '.transition // empty' <<<"$status_output" 2>/dev/null || true)
+      if [[ "$authority" == "spicedb" ]]; then
+        if [[ -z "$receipt" ]]; then
+          write_helm_journal manual_recovery_required
+          emit_bootstrap_error "helm_activation_state_requires_recovery"
+          return 1
+        fi
+        if [[ "$transition" == "rollback_fencing" || "$transition" == "rolling_back" ]]; then
+          write_helm_journal rollback_started "$receipt"
+          state=rollback_started
+        else
+          write_helm_journal activated "$receipt"
+          state=activated
+        fi
+      elif [[ "$authority" != "legacy" ]]; then
+        write_helm_journal manual_recovery_required "$receipt"
+        emit_bootstrap_error "helm_activation_status_failed"
+        return 1
+      elif [[ "$transition" == "activating" && "$state" == "quiesced" && -n "$receipt" ]]; then
+        resume_activation=true
+      fi
+    fi
+
+    if ! recover_pending_main_helm_release "$authority"; then
+      write_helm_journal manual_recovery_required "$receipt"
+      emit_bootstrap_error "helm_release_recovery_failed"
+      return 1
+    fi
+  fi
+
+  if [[ "$state" == "rollback_started" || "$state" == "rollback_bridge_ready" ||
+    "$state" == "manual_recovery_required" ]]; then
+    if [[ -n "$receipt" ]] && rollback_helm_after_activation "$receipt"; then
+      emit_bootstrap_error "interrupted_helm_upgrade_rolled_back"
+    else
+      write_helm_journal manual_recovery_required "$receipt"
+      emit_bootstrap_error "helm_rollback_incomplete"
+    fi
+    return 1
+  fi
+
+  if [[ "$state" == "activated" || "$state" == "candidate_ready" || "$state" == "finalized" ]]; then
+    authority=spicedb
+    transition=activating
+  else
+    authority=legacy
+    transition=idle
+  fi
+
+  if [[ "$resume_activation" == "true" ]]; then
+    if ! wait_for_zero_formbricks_pods; then
+      write_helm_journal manual_recovery_required "$receipt"
+      emit_bootstrap_error "helm_interrupted_activation_not_quiesced"
+      return 1
+    fi
+    activate_output=$(run_temporary_phase activate "$receipt" true) || {
+      status_output=$(get_activation_status_via_chart 2>/dev/null || true)
+      authority=$(jq -r '.authority // empty' <<<"$status_output" 2>/dev/null || true)
+      if [[ "$authority" == "spicedb" ]]; then
+        write_helm_journal activated "$receipt"
+        rollback_helm_after_activation "$receipt" || write_helm_journal manual_recovery_required "$receipt"
+      else
+        restore_helm_bridge true || true
+      fi
+      emit_bootstrap_error "helm_activation_failed"
+      return 1
+    }
+    if ! jq -e '.status == "activated"' <<<"$activate_output" >/dev/null 2>&1; then
+      write_helm_journal manual_recovery_required "$receipt"
+      emit_bootstrap_error "helm_activation_failed"
+      return 1
+    fi
+    write_helm_journal activated "$receipt"
+    state=activated
+  fi
+
+  if [[ "$state" != "activated" && "$state" != "candidate_ready" && "$state" != "finalized" ]]; then
+    write_main_phase_values "$bridge_image" job \
+      "$(jq -r '.workload.replicas' "$helm_state_path")" \
+      "$(jq -r '.workload.hpa.enabled' "$helm_state_path")" false
+    if ! run_main_chart_upgrade "legacy-authoritative bridge" ||
+      ! verify_helm_workload_image "$bridge_image" || ! run_helm_runtime_check legacy; then
+      if restore_original_helm_release; then
+        emit_bootstrap_error "helm_bridge_deployment_failed"
+      else
+        write_helm_journal manual_recovery_required "$receipt"
+        emit_bootstrap_error "helm_bridge_deployment_recovery_incomplete"
+      fi
+      return 1
+    fi
+    write_helm_journal bridge_ready "$receipt"
+
+    status_output=$(get_activation_status_via_chart) || {
+      restore_helm_bridge true || true
+      emit_bootstrap_error "helm_activation_status_failed"
+      return 1
+    }
+    authority=$(jq -r '.authority' <<<"$status_output")
+    transition=$(jq -r '.transition' <<<"$status_output")
+    if [[ "$authority" == "spicedb" ]]; then
+      if [[ -z "$receipt" ]]; then
+        write_helm_journal manual_recovery_required
+        emit_bootstrap_error "helm_activation_state_requires_recovery"
+        return 1
+      fi
+      write_helm_journal activated "$receipt"
+    elif [[ "$authority" != "legacy" ||
+      ("$transition" != "idle" && "$transition" != "prepared" && "$transition" != "preparing") ]]; then
+      write_helm_journal manual_recovery_required "$receipt"
+      emit_bootstrap_error "helm_activation_state_requires_recovery"
+      return 1
+    fi
+  fi
+
+  state=$(jq -r '.state' "$helm_state_path")
+  if [[ "$state" != "activated" && "$state" != "candidate_ready" && "$state" != "finalized" ]]; then
+    prepare_output=$(run_temporary_phase prepare "" false) || {
+      restore_helm_bridge true || true
+      emit_bootstrap_error "helm_activation_prepare_failed"
+      return 1
+    }
+    receipt=$(jq -er 'select(.status == "prepared") | .receipt' <<<"$prepare_output" 2>/dev/null || true)
+    if [[ -z "$receipt" ]]; then
+      restore_helm_bridge true || true
+      emit_bootstrap_error "helm_activation_prepare_failed"
+      return 1
+    fi
+    write_helm_journal prepared "$receipt"
+
+    audit_output=$(run_temporary_phase audit "$receipt" false) || {
+      restore_helm_bridge true || true
+      emit_bootstrap_error "helm_relationship_audit_failed"
+      return 1
+    }
+    if ! jq -e '.status == "reconciled" and .truncated == false and (.failures | length) == 0' \
+      <<<"$audit_output" >/dev/null 2>&1; then
+      restore_helm_bridge true || true
+      emit_bootstrap_error "helm_relationship_audit_dirty"
+      return 1
+    fi
+    write_helm_journal audited "$receipt"
+
+    write_main_phase_values "$bridge_image" external 0 false false
+    if ! run_main_chart_upgrade "quiesced bridge" || ! wait_for_zero_formbricks_pods; then
+      restore_helm_bridge true || true
+      emit_bootstrap_error "helm_workload_quiesce_failed"
+      return 1
+    fi
+    write_helm_journal quiesced "$receipt"
+
+    activate_output=$(run_temporary_phase activate "$receipt" true) || {
+      status_output=$(get_activation_status_via_chart 2>/dev/null || true)
+      authority=$(jq -r '.authority // empty' <<<"$status_output" 2>/dev/null || true)
+      if [[ "$authority" == "spicedb" ]]; then
+        write_helm_journal activated "$receipt"
+        rollback_helm_after_activation "$receipt" || write_helm_journal manual_recovery_required "$receipt"
+      else
+        restore_helm_bridge true || true
+      fi
+      emit_bootstrap_error "helm_activation_failed"
+      return 1
+    }
+    if ! jq -e '.status == "activated"' <<<"$activate_output" >/dev/null 2>&1; then
+      write_helm_journal manual_recovery_required "$receipt"
+      emit_bootstrap_error "helm_activation_failed"
+      return 1
+    fi
+    write_helm_journal activated "$receipt"
+  fi
+
+  write_main_phase_values "$target_image" external 1 false true
+  if ! run_main_chart_upgrade "authoritative candidate" || ! verify_helm_workload_image "$target_image" ||
+    ! run_helm_runtime_check spicedb || ! wait_for_helm_application_health; then
+    if rollback_helm_after_activation "$receipt"; then
+      emit_bootstrap_error "helm_candidate_failed_rolled_back"
+    else
+      write_helm_journal manual_recovery_required "$receipt"
+      emit_bootstrap_error "helm_candidate_failed_rollback_incomplete"
+    fi
+    return 1
+  fi
+  write_helm_journal candidate_ready "$receipt"
+
+  finalize_output=$(kubectl_capture exec --namespace "$helm_namespace" "deployment/${helm_deployment_name}" -- \
+    formbricks-authzed activation finalize --receipt "$receipt" || true)
+  if ! jq -e '.status == "finalized"' <<<"$finalize_output" >/dev/null 2>&1; then
+    if rollback_helm_after_activation "$receipt"; then
+      emit_bootstrap_error "helm_finalize_failed_rolled_back"
+    else
+      write_helm_journal manual_recovery_required "$receipt"
+      emit_bootstrap_error "helm_finalize_failed_rollback_incomplete"
+    fi
+    return 1
+  fi
+  write_helm_journal finalized "$receipt"
+
+  replicas=$(jq -r '.workload.replicas' "$helm_state_path")
+  hpa_enabled=$(jq -r '.workload.hpa.enabled' "$helm_state_path")
+  # The candidate is held in external migration mode only while the authority transaction is open.
+  # Omit the phase override after finalization so the operator's intended value (or the v6 default
+  # migration Job) governs every later ordinary Helm upgrade.
+  write_main_phase_values "$target_image" "" "$replicas" "$hpa_enabled" true
+  if ! run_main_chart_upgrade "restored candidate" || ! verify_helm_workload_image "$target_image" ||
+    ! run_helm_runtime_check spicedb; then
+    if rollback_helm_after_activation "$receipt"; then
+      emit_bootstrap_error "helm_restore_failed_rolled_back"
+    else
+      write_helm_journal manual_recovery_required "$receipt"
+      emit_bootstrap_error "helm_restore_failed_rollback_incomplete"
+    fi
+    return 1
+  fi
+
+  if ! helm_logged uninstall "$helm_upgrade_release" --namespace "$helm_namespace" --wait; then
+    emit_bootstrap_error "helm_temporary_cleanup_failed"
+    return 1
+  fi
+  write_helm_journal completed "$receipt"
+  emit_helm_upgrade_success
+}
+
 plan='[]'
 status="blocked"
-if [[ "$blocked_count" -eq 0 && "$version_state" == "already_target_major" ]]; then
+if [[ "$blocked_count" -eq 0 && "$action" == "resume" ]]; then
+  # A bridge or interrupted candidate already reports v6. The signed-pair-bound journal and database
+  # activation state, not the running image's major version, decide whether recovery is complete.
+  status="ready"
+  plan=$(jq -cn '[
+    {order: 1, phase: "resume_from_journal", mutating: true, requiresConfirmation: true},
+    {order: 2, phase: "verify_database_authority", mutating: false, requiresConfirmation: false},
+    {order: 3, phase: "complete_or_rollback", mutating: true, requiresConfirmation: true}
+  ]')
+elif [[ "$blocked_count" -eq 0 && "$version_state" == "already_target_major" ]]; then
   status="not_required"
 elif [[ "$blocked_count" -eq 0 ]]; then
   status="ready"
@@ -1099,9 +2376,9 @@ if [[ "$status" != "ready" && ! ( "$status" == "not_required" && "$install_type"
   exit 0
 fi
 
-if [[ "$install_type" == "helm" ]]; then
-  emit_bootstrap_error "helm_execution_not_supported"
-  exit 2
+if [[ "$resolved_install_type" == "helm" ]]; then
+  execute_helm_upgrade
+  exit $?
 fi
 
 execute_docker_upgrade

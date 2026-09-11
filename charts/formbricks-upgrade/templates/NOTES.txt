@@ -9,10 +9,13 @@ Follow this phase Job:
   kubectl get job -n {{ .Release.Namespace }} -l formbricks.com/upgrade-generation={{ .Values.generation }}
   kubectl logs -n {{ .Release.Namespace }} job/{{ include "formbricks-upgrade.jobName" . }}
 
-Do not advance until the Job succeeds and its sanitized JSON result satisfies the v6 upgrade runbook. Advance
-this same Helm release with the next phase and increment `execution` before rerunning a phase.
+The signed v6 upgrade assistant normally advances this release and validates each sanitized JSON result. Do not
+advance it manually unless Formbricks support directs you to the support-only chart runbook.
 
-{{- if eq .Values.phase "prepare" }}
+{{- if eq .Values.phase "status" }}
+This internal assistant phase reads the database-backed activation authority without changing it. Resume the
+same signed assistant and journal; do not select an application image from this result manually.
+{{- else if eq .Values.phase "prepare" }}
 Record the receipt printed by this Job in `activation.receipt`, then run the `audit` phase. Before `activate`,
 verify that the permanent release's bridge-image migration Job completed successfully. The bridge and
 candidate are built from the same release source and therefore contain the same expand migrations. The initial
