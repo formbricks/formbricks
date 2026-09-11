@@ -691,6 +691,68 @@ export async function createV3Response({
   }
 }
 
+type TV3PatchPlan =
+  | { ok: true; composed: ReturnType<typeof composeV3ResponseWrite>; effectiveLanguage: string | null }
+  | { ok: false; issues: InvalidParam[] };
+
+/**
+ * Everything a patch decides before the transaction opens: the language the response will carry, the
+ * two stored maps it will write, and every reason it cannot proceed.
+ *
+ * The language is resolved first because it decides which labels the answers are validated against —
+ * a payload that changes language and answers in one call must be checked against the labels it is
+ * about to have, not the ones it is leaving behind.
+ */
+async function planV3ResponsePatch({
+  survey,
+  body,
+  stored,
+}: {
+  survey: TV3WriteSurveyRow;
+  body: TV3PatchResponseBody;
+  stored: { language: string | null; data: unknown; variables: unknown };
+}): Promise<TV3PatchPlan> {
+  const patchLanguage =
+    body.language === undefined
+      ? { ok: true as const, code: stored.language }
+      : resolveV3WriteLanguage(survey.languages, body.language);
+  const effectiveLanguage = patchLanguage.ok ? patchLanguage.code : null;
+  const { lookupKey } = resolveV3LabelContext(survey.languages, effectiveLanguage);
+
+  const plan = buildAnswerPlan(
+    survey.blocks as never,
+    lookupKey,
+    (survey.embeddedFields ?? [])
+      .filter(({ field }) => field.source === "ingested")
+      .map(({ link }) => link.storageKey)
+  );
+
+  const composed = composeV3ResponseWrite({
+    plan,
+    survey,
+    body,
+    stored: {
+      data: (stored.data ?? {}) as TResponseData,
+      variables: (stored.variables ?? {}) as Record<string, TResponseDataValue>,
+    },
+  });
+
+  const endingIssue = body.endingId === undefined ? null : validateV3EndingId(survey.endings, body.endingId);
+
+  const issues: InvalidParam[] = [
+    ...composed.issues,
+    ...(patchLanguage.ok ? [] : [patchLanguage.issue]),
+    ...(endingIssue ? [endingIssue] : []),
+    // Only what the caller supplied — see `answerValidationIssues`.
+    ...(body.data === undefined ? [] : answerValidationIssues(survey, composed.data, effectiveLanguage)),
+    ...(await fileUploadIssues(survey, composed.data)),
+  ];
+
+  if (issues.length > 0) return { ok: false, issues };
+
+  return { ok: true, composed, effectiveLanguage };
+}
+
 /**
  * `PATCH /api/v3/responses/{responseId}` → 200 `{ data }`.
  *
@@ -742,48 +804,16 @@ export async function updateV3Response({
       return problemForbidden(requestId, undefined, instance);
     }
 
-    // The language the response will carry *after* this patch, so a payload that changes language and
-    // answers in one call is validated against the labels it is about to have rather than the old ones.
-    const patchLanguage =
-      body.language === undefined
-        ? { ok: true as const, code: stored.language }
-        : resolveV3WriteLanguage(survey.languages, body.language);
-    const effectiveLanguage = patchLanguage.ok ? patchLanguage.code : null;
-    const { lookupKey } = resolveV3LabelContext(survey.languages, effectiveLanguage);
-    const plan = buildAnswerPlan(
-      survey.blocks as never,
-      lookupKey,
-      (survey.embeddedFields ?? [])
-        .filter(({ field }) => field.source === "ingested")
-        .map(({ link }) => link.storageKey)
-    );
+    const planned = await planV3ResponsePatch({ survey, body, stored });
 
-    const composed = composeV3ResponseWrite({
-      plan,
-      survey,
-      body,
-      stored: {
-        data: (stored.data ?? {}) as TResponseData,
-        variables: (stored.variables ?? {}) as Record<string, TResponseDataValue>,
-      },
-    });
-
-    const issues: InvalidParam[] = [
-      ...composed.issues,
-      ...(patchLanguage.ok ? [] : [patchLanguage.issue]),
-      ...[body.endingId === undefined ? null : validateV3EndingId(survey.endings, body.endingId)].filter(
-        (issue): issue is InvalidParam => issue !== null
-      ),
-      ...(body.data === undefined ? [] : answerValidationIssues(survey, composed.data, effectiveLanguage)),
-      ...(await fileUploadIssues(survey, composed.data)),
-    ];
-
-    if (issues.length > 0) {
+    if (!planned.ok) {
       return problemUnprocessableContent(requestId, "The response conflicts with the survey definition", {
-        invalid_params: issues,
+        invalid_params: planned.issues,
         instance,
       });
     }
+
+    const { composed, effectiveLanguage } = planned;
 
     const outcome = await updateScopedResponse({
       responseId,
