@@ -26,10 +26,9 @@ Authority is now SpiceDB and source mutations remain fenced. Deploy the exact ca
 
   deployment.image.repository={{ .Values.images.candidate.repository }}
   deployment.image.digest={{ .Values.images.candidate.digest }}
-  migration.enabled=false
-  deployment.env.SKIP_STARTUP_MIGRATION="true"
-  authzed.initialization.enabled=false
-  authzed.migrationAcknowledged=true
+  migration.mode=external
+  authzed.activation.installBootstrap.enabled=false
+  authzed.activation.upgradeGate.enabled=true
 
 Do not use `helm --atomic`: an automatic Helm rollback cannot roll back the database-backed authority state.
 Start one candidate application Pod, verify its exact image ID and that no bridge application Pods remain,

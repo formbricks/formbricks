@@ -239,9 +239,12 @@ notes="$(helm install formbricks-v6-upgrade-1 "${CHART_DIR}" \
   --set-string activation.receipt="${RECEIPT}" \
   --set activation.workloadQuiesced=true \
   --dry-run --debug 2>&1)"
-grep -q 'migration.enabled=false' <<< "${notes}" || fail "activate notes omit external migration mode"
+grep -q 'migration.mode=external' <<< "${notes}" || fail "activate notes omit external migration mode"
 grep -q 'deployment.image.digest=sha256:' <<< "${notes}" || fail "activate notes omit candidate digest"
-grep -q 'SKIP_STARTUP_MIGRATION' <<< "${notes}" || fail "activate notes omit startup migration guard"
+grep -q 'authzed.activation.installBootstrap.enabled=false' <<< "${notes}" || \
+  fail "activate notes omit fresh-install bootstrap guard"
+grep -q 'authzed.activation.upgradeGate.enabled=true' <<< "${notes}" || \
+  fail "activate notes omit candidate receipt gate"
 grep -q 'Do not use `helm --atomic`' <<< "${notes}" || fail "activate notes omit atomic rollback warning"
 grep -q 'activation finalize' <<< "${notes}" || fail "activate notes omit candidate-side finalization"
 

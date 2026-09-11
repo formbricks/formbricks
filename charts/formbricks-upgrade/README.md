@@ -57,20 +57,20 @@ use `--atomic`: Helm cannot safely reverse the database-backed authority transit
 
    ```yaml
    migration:
-     enabled: false
+     mode: external
    deployment:
      image:
        repository: <candidate-repository>
        digest: sha256:<candidate-digest>
      replicas: 1
-     env:
-       SKIP_STARTUP_MIGRATION: "true"
    autoscaling:
      enabled: false
    authzed:
-     initialization:
-       enabled: false
-     migrationAcknowledged: true
+     activation:
+       installBootstrap:
+         enabled: false
+       upgradeGate:
+         enabled: true
    ```
 
 7. Verify the running Pod's image ID is the recorded candidate digest, its activation runtime check passes, and
