@@ -12,9 +12,10 @@ import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-n
 import { supportsTimeGrouping } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
   type ChartBuilderState,
-  type FilterRow,
+  type FilterNode,
   type TimeDimensionConfig,
   buildCubeQuery,
+  hasIncompleteFilterRow,
   parseQueryToState,
 } from "@/modules/ee/analysis/lib/query-builder";
 import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
@@ -50,7 +51,7 @@ const ACTION = {
 type Action =
   | { type: typeof ACTION.SET_MEASURES; payload: string[] }
   | { type: typeof ACTION.SET_DIMENSIONS; payload: string[] }
-  | { type: typeof ACTION.SET_FILTERS; payload: FilterRow[] }
+  | { type: typeof ACTION.SET_FILTERS; payload: FilterNode[] }
   | { type: typeof ACTION.SET_FILTER_LOGIC; payload: "and" | "or" }
   | { type: typeof ACTION.SET_TIME_DIMENSION; payload: TimeDimensionConfig | null }
   | { type: typeof ACTION.INIT_FROM_QUERY; payload: Partial<ChartBuilderState> };
@@ -169,9 +170,8 @@ export function AdvancedChartBuilder({
   const isConfigComplete = useMemo(() => {
     if (state.selectedMeasures.length === 0) return false;
     if (dimensionsOpen && state.selectedDimensions.length === 0) return false;
-    return !state.filters.some(
-      (f) => f.operator !== "set" && f.operator !== "notSet" && (f.values === null || f.values.length === 0)
-    );
+    // Walks into filter groups too, so a half-filled row nested in a group also holds the run back.
+    return !hasIncompleteFilterRow(state.filters);
   }, [state, dimensionsOpen]);
 
   // Latest-value ref so the debounce timer is not reset by parent re-renders or
