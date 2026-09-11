@@ -51,7 +51,7 @@ const workspaceB = "clwb1234567890123456789012";
 const recordId = "0197f5c8-9d3a-7b2e-8f41-2c6ad0e4b915";
 const organizationId = "org_1";
 
-const userPrincipal: TGatewayAuthenticatedPrincipal = { type: "user", userId: "user-1", source: "session" };
+const userPrincipal: TGatewayAuthenticatedPrincipal = { type: "user", userId: "user-1" };
 
 const apiKey = (overrides: Partial<TAuthenticationApiKey>): TGatewayAuthenticatedPrincipal => ({
   type: "apiKey",
@@ -101,11 +101,37 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
 
   // ENG-1770: records in a shared directory carry no workspace, so a workspace permission cannot
   // authorize changing or deleting them — only the organization role can.
+  /**
+   * Deleting by tenant or user id is not an operation this API offers, on either surface. The store
+   * has one and this path used to forward it; a single mistaken `user_id` erases every record for that
+   * person across the dataset, with nothing to undo it (ENG-3117).
+   */
+  test("refuses DELETE on the collection, and says which methods it takes", async () => {
+    const decision = await authorize(
+      "DELETE",
+      `/v1/feedback-records?tenant_id=${directoryId}`,
+      userPrincipal
+    );
+
+    expect(decision.status).toBe("deny");
+    if (decision.status !== "deny") return;
+    // 405, not 400: the path is real, the verb is not one it takes.
+    expect(decision.response.status).toBe(405);
+    expect(decision.response.headers.get("Allow")).toBe("GET, POST");
+  });
+
+  test("still refuses a path that is not ours with 400", async () => {
+    const decision = await authorize("GET", "/v1/feedback-records/not-a-uuid/nonsense", userPrincipal);
+
+    expect(decision.status).toBe("deny");
+    if (decision.status !== "deny") return;
+    expect(decision.response.status).toBe(400);
+  });
+
   describe("session principal", () => {
     test.each([
       ["delete", "DELETE", `/api/v3/feedbackRecords/${recordId}`],
       ["update", "PATCH", `/api/v3/feedbackRecords/${recordId}`],
-      ["bulkDelete", "DELETE", `/api/v3/feedbackRecords?tenant_id=${directoryId}`],
     ])(
       "%s requires an organization owner or manager, with no workspace fallback",
       async (_op, method, path) => {
@@ -172,7 +198,6 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
     test.each([
       ["delete", "DELETE", `/api/v3/feedbackRecords/${recordId}`],
       ["update", "PATCH", `/api/v3/feedbackRecords/${recordId}`],
-      ["bulkDelete", "DELETE", `/api/v3/feedbackRecords?tenant_id=${directoryId}`],
     ])(
       "refuses %s for a workspace-scoped key in a shared directory (ENG-2189)",
       async (_op, method, path) => {
@@ -207,16 +232,9 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
       });
 
       const deleted = await authorize("DELETE", `/api/v3/feedbackRecords/${recordId}`, workspaceWriteKey);
-      const bulkDeleted = await authorize(
-        "DELETE",
-        `/api/v3/feedbackRecords?tenant_id=${directoryId}`,
-        workspaceWriteKey
-      );
       const updated = await authorize("PATCH", `/api/v3/feedbackRecords/${recordId}`, workspaceWriteKey);
 
       expect(deleted.status).toBe("deny");
-      // bulkDelete moved write -> manage alongside the single delete, so it must move with it.
-      expect(bulkDeleted.status).toBe("deny");
       expect(updated.status).toBe("allow");
     });
 

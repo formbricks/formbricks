@@ -1,9 +1,0 @@
-description: >-
-  Conflict (`application/problem+json`). Either a **duplicate** — a record with this `tenant_id`,
-  `submission_id` and `field_id` already exists (`code: conflict`, terminal; update the existing
-  record instead) — or the dataset is being **purged** while you write to it
-  (`code: tenant_write_conflict`, transient; retry unchanged once the purge completes).
-content:
-  application/problem+json:
-    schema:
-      $ref: ../schemas/HubProblem.yml

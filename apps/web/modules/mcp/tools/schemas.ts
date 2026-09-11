@@ -10,7 +10,7 @@ import {
   ZV3FeedbackRecordSearchFilters,
   ZV3FeedbackRecordSimilarityFilters,
   ZV3FeedbackRecordUpdateBodyFields,
-} from "@/app/api/v3/feedbackRecords/lib/schemas";
+} from "@/app/api/v3/feedback-records/lib/schemas";
 
 /**
  * Every schema here is `.strict()`, so an argument a tool does not declare is a loud error instead of a
@@ -273,7 +273,7 @@ export const ZMcpCreateFeedbackRecordsInput = z
 // silently change nothing. The rejection is recoverable (Zod's `unrecognized_keys` names every offending
 // key) and the tool description tells the caller to strip them, so the loud version costs one retry where
 // the quiet version cost a lost correction. Note this is the opposite call to the one made for the shared
-// v3 REST body in `app/api/v3/feedbackRecords/lib/schemas.ts` — different clients: an agent re-reads the
+// v3 REST body in `app/api/v3/feedback-records/lib/schemas.ts` — different clients: an agent re-reads the
 // advertised schema and the error text on every call, a REST integration does not.
 export const ZMcpUpdateFeedbackRecordInput = ZV3FeedbackRecordUpdateBodyFields.extend({
   workspaceId: ZId.describe("Workspace ID that owns the feedback record."),

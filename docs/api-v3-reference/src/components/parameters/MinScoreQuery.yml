@@ -1,13 +1,14 @@
 in: query
-name: min_score
+name: minScore
 schema:
   type: number
   format: float
-  default: 0.7
+  minimum: 0
+  maximum: 1
+  default: 0.5
 description: >-
-  Only matches with `score >= min_score` are returned. Like `limit`, this value is **clamped rather
-  than rejected**: above `1` it becomes `1`, below `0` it becomes `0`, and a non-numeric value falls
-  back to the default of `0.7`. That default is conservative — on the embedding model we measured,
-  query→record similarities for genuinely relevant text often landed around `0.55–0.7` — so if a
-  good query returns nothing, lower it (e.g. `0.5`) and filter on the returned `value_text`. Score
-  distributions differ per model, so treat those numbers as an observation rather than a guarantee.
+  Only matches with `score >= minScore` are returned, from `0` (unrelated) to `1` (identical). Like
+  `limit`, out-of-range and non-numeric values are **rejected with 400** rather than coerced. Raise
+  it for stricter matches; lower it when a good query returns nothing. Score distributions differ
+  per embedding model, so treat the default as a starting point rather than a guarantee — the
+  applied value is echoed back as `meta.minScore`.

@@ -3,5 +3,5 @@ name: cursor
 schema:
   type: string
 description: >-
-  Opaque keyset cursor returned as `next_cursor` by the previous page. Omit on the first request. A
+  Opaque keyset cursor returned as `nextCursor` by the previous page. Omit on the first request. A
   malformed cursor answers **400**.

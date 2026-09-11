@@ -1,18 +1,23 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { proxyFeedbackRecordsRequest } from "@/modules/hub/feedback-records-proxy";
 
-const { mockAuthorizeGatewayRequest, mockLoggerError, runtime } = vi.hoisted(() => ({
-  mockAuthorizeGatewayRequest: vi.fn(),
-  mockLoggerError: vi.fn(),
-  runtime: {
-    isProduction: false,
-  },
-}));
+const { mockAuthorizeGatewayRequest, mockApplyRateLimit, mockLoggerError, mockLoggerWarn, runtime } =
+  vi.hoisted(() => ({
+    mockAuthorizeGatewayRequest: vi.fn(),
+    mockApplyRateLimit: vi.fn(),
+    mockLoggerError: vi.fn(),
+    mockLoggerWarn: vi.fn(),
+    runtime: {
+      isProduction: false,
+    },
+  }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: mockLoggerError,
+    warn: mockLoggerWarn,
   },
 }));
 
@@ -26,6 +31,16 @@ vi.mock("@/lib/constants", () => ({
 
 vi.mock("@/modules/gateway-auth/lib/request", () => ({
   authorizeGatewayRequest: mockAuthorizeGatewayRequest,
+  // Real implementations: the refusal shape and the choice of identifier are part of what these tests
+  // are checking, not incidental collaborators.
+  buildGatewayStatusResponse: (status: number, message: string) =>
+    new Response(message, { status, headers: { "content-type": "text/plain; charset=utf-8" } }),
+  getGatewayRateLimitIdentifier: (principal: { type: string; apiKeyId?: string; userId?: string }) =>
+    principal.type === "apiKey" ? "api-key-1" : (principal.userId ?? "user-1"),
+}));
+
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyRateLimit: mockApplyRateLimit,
 }));
 
 vi.mock("@/modules/hub/feedback-records-gateway", () => ({
@@ -70,7 +85,11 @@ describe("proxyFeedbackRecordsRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     runtime.isProduction = false;
-    mockAuthorizeGatewayRequest.mockResolvedValue(new Response(null, { status: 200 }));
+    mockAuthorizeGatewayRequest.mockResolvedValue({
+      status: "allow",
+      principal: { type: "apiKey", authentication: { apiKeyId: "api-key-1" } },
+    });
+    mockApplyRateLimit.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -109,7 +128,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     const body = JSON.stringify({ tenant_id: "dir_1", text: "Feedback" });
     mockAuthorizeGatewayRequest.mockImplementationOnce(async ({ request }: { request: NextRequest }) => {
       expect(await request.text()).toBe(body);
-      return new Response(null, { status: 200 });
+      return { status: "allow", principal: { type: "apiKey", authentication: { apiKeyId: "api-key-1" } } };
     });
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }));
     vi.stubGlobal("fetch", fetchMock);
@@ -186,7 +205,7 @@ describe("proxyFeedbackRecordsRequest", () => {
 
   test("returns the authorization response without calling Hub", async () => {
     const authorizationResponse = new Response("Forbidden", { status: 403 });
-    mockAuthorizeGatewayRequest.mockResolvedValueOnce(authorizationResponse);
+    mockAuthorizeGatewayRequest.mockResolvedValueOnce({ status: "deny", response: authorizationResponse });
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
@@ -198,10 +217,60 @@ describe("proxyFeedbackRecordsRequest", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  test("returns the authorizer response for an unsupported operation", async () => {
-    mockAuthorizeGatewayRequest.mockResolvedValueOnce(
-      new Response("Unsupported FeedbackRecords route", { status: 400 })
+  /**
+   * The same config every v3 route gets from the shared wrapper, counted against the same identifier.
+   * This path cannot use the wrapper — it forwards a request rather than handling one — so what is
+   * pinned here is that it borrows the shared config rather than inventing a limit of its own.
+   */
+  test("applies the shared v3 rate limit, keyed on the authorized principal", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await proxyFeedbackRecordsRequest(
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
     );
+
+    expect(mockApplyRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "api:v3", allowedPerInterval: 100, interval: 60 }),
+      "api-key-1"
+    );
+  });
+
+  test("refuses with 429 and Retry-After when the limit is exceeded", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    mockApplyRateLimit.mockRejectedValueOnce(new TooManyRequestsError("Rate limit exceeded", 30));
+
+    const response = await proxyFeedbackRecordsRequest(
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
+    );
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("30");
+    // Same media type as the 401 and 403 on this path, not the v3 routes' problem+json.
+    expect(response.headers.get("content-type")).toContain("text/plain");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test("does not forward to the store when the limit is exceeded", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    mockApplyRateLimit.mockRejectedValueOnce(new TooManyRequestsError("Rate limit exceeded"));
+
+    const response = await proxyFeedbackRecordsRequest(
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
+    );
+
+    expect(response.status).toBe(429);
+    // No retryAfter on the error, so no header rather than a header with "undefined" in it.
+    expect(response.headers.get("Retry-After")).toBeNull();
+  });
+
+  test("returns the authorizer response for an unsupported operation", async () => {
+    mockAuthorizeGatewayRequest.mockResolvedValueOnce({
+      status: "deny",
+      response: new Response("Unsupported FeedbackRecords route", { status: 400 }),
+    });
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
@@ -271,17 +340,39 @@ describe("proxyFeedbackRecordsRequest", () => {
     expect(serializeIncludingErrors(mockLoggerError.mock.calls)).not.toContain("secret-url");
   });
 
-  test("is unavailable in production", async () => {
+  /**
+   * The inverse of what this asserted before ENG-3117. The proxy refused in production while the
+   * gateway served these paths there; now it is the only thing serving `/v1/feedback-records`, so
+   * refusing would take the compatibility path down in the one environment that has callers.
+   */
+  test("serves production, now that no gateway routes these paths", async () => {
     runtime.isProduction = true;
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1")
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
     );
 
-    expect(response.status).toBe(404);
-    expect(mockAuthorizeGatewayRequest).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(mockAuthorizeGatewayRequest).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  test("still authorizes before forwarding in production", async () => {
+    runtime.isProduction = true;
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    mockAuthorizeGatewayRequest.mockResolvedValueOnce({
+      status: "deny",
+      response: new Response("Forbidden", { status: 403 }),
+    });
+
+    const response = await proxyFeedbackRecordsRequest(
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
+    );
+
+    expect(response.status).toBe(403);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

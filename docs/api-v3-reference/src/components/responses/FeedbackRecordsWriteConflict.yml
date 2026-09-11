@@ -1,9 +1,0 @@
-description: >-
-  Conflict (`application/problem+json`, `code: tenant_write_conflict`). The dataset is being
-  **purged** while you write to it. Transient: retry the request unchanged once the purge
-  completes. Only creates can conflict on a duplicate, so this operation never answers
-  `code: conflict`.
-content:
-  application/problem+json:
-    schema:
-      $ref: ../schemas/HubProblem.yml

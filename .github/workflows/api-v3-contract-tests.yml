@@ -149,6 +149,89 @@ jobs:
         run: pnpm --filter=@formbricks/database db:migrate:ci
         shell: bash
 
+      # Feedback records are the one v3 resource whose data lives outside this database: the app
+      # authorizes the call and forwards it to the feedback store (ghcr.io/formbricks/hub). Without a
+      # store, the nine feedback operations answer 503 — documented, but a 5xx, so the run would fail
+      # on `not_a_server_error` and the operations would only ever be seen degraded.
+      #
+      # Started with `docker run` rather than as a `services:` container because the sequence matters:
+      # create the database, migrate it, *then* start the API. A service container starts before any
+      # step runs and would exit against an unmigrated database with nothing to restart it.
+      - name: Start the embedding stub
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        run: |
+          node docs/api-v3-reference/contract-tests/embedding-stub.mjs 8079 > embedding-stub.log 2>&1 &
+          for _ in {1..10}; do
+            if [ "$(curl -o /dev/null -s -w "%{http_code}" http://localhost:8079/health)" -eq 200 ]; then
+              echo "Embedding stub is ready."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Embedding stub failed to start; the two semantic-search operations would answer 503."
+          cat embedding-stub.log
+          exit 1
+
+      - name: Start the feedback store
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        env:
+          # Same tag the dev compose pins, and the same one the chart ships, so CI exercises the
+          # contract the product actually serves. Keep the API and the worker on one tag: they share
+          # an image, and drift breaks migrations or job processing.
+          HUB_IMAGE: ghcr.io/formbricks/hub:0.8.5
+          # Matches .env.example, which `pnpm dev:setup` copied — so the app needs no further wiring.
+          HUB_API_KEY: dev-api-key
+          HUB_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hub?sslmode=disable
+        run: |
+          set -euo pipefail
+
+          # psql from the same pinned image the postgres service runs, rather than assuming the runner
+          # ships a client. Already pulled, so this costs nothing.
+          docker run --rm --network host \
+            -e PGPASSWORD=postgres \
+            pgvector/pgvector@sha256:9ae02a756ba16a2d69dd78058e25915e36e189bb36ddf01ceae86390d7ed786a \
+            psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "CREATE DATABASE hub"
+
+          # goose for the schema, river for the job queue the embedding worker consumes — the same two
+          # commands, in the same order, as the `hub-migrate` service in docker-compose.dev.yml.
+          docker run --rm --network host -e DATABASE_URL="${HUB_DATABASE_URL}" \
+            --entrypoint sh "${HUB_IMAGE}" -c \
+            '/usr/local/bin/goose -dir /app/migrations postgres "$DATABASE_URL" up && /usr/local/bin/river migrate-up --database-url "$DATABASE_URL"'
+
+          # `--network host` so the store reaches postgres and the embedding stub on localhost, and the
+          # app reaches the store the same way. The embedding provider must be `openai`: it is the only
+          # one that honours EMBEDDING_BASE_URL, and it insists on a non-empty key the stub ignores.
+          hub_env=(
+            -e "DATABASE_URL=${HUB_DATABASE_URL}"
+            -e "API_KEY=${HUB_API_KEY}"
+            -e PGHOST=localhost -e PGPORT=5432 -e PGUSER=postgres -e PGPASSWORD=postgres
+            -e PGDATABASE=hub -e PGSSLMODE=disable
+            -e EMBEDDING_PROVIDER=openai
+            -e EMBEDDING_MODEL=text-embedding-3-small
+            -e EMBEDDING_PROVIDER_API_KEY=embedding-stub-ignores-this
+            -e EMBEDDING_BASE_URL=http://localhost:8079/v1
+          )
+          docker run -d --name hub --network host "${hub_env[@]}" "${HUB_IMAGE}"
+          docker run -d --name hub-worker --network host "${hub_env[@]}" \
+            --entrypoint /app/hub-worker "${HUB_IMAGE}"
+
+          for attempt in {1..20}; do
+            # 401 is the healthy answer to an unauthenticated read: the store is up and refusing.
+            status=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:8080/v1/feedback-records)
+            if [ "${status}" -eq 401 ]; then
+              echo "Feedback store is ready."
+              exit 0
+            fi
+            echo "Waiting for the feedback store... (${attempt}/20, last status ${status})"
+            sleep 3
+          done
+          echo "::error::Feedback store failed to start in time."
+          docker logs hub 2>&1 | tail -40
+          exit 1
+
       - name: Seed the workspace and a throwaway API key
         if: steps.harness.outputs.present == 'true'
         shell: bash
@@ -246,6 +329,108 @@ jobs:
             exit 1
           fi
 
+      # Same reasoning as the survey fixture check above: the feedback operations all answer a
+      # documented 403 when the dataset is not reachable, so a broken fixture would leave the run
+      # green having validated none of the record or dataset schemas.
+      - name: Verify the feedback fixtures reach real data
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixtures=./docs/api-v3-reference/contract-tests/fixtures.json
+          workspace_id=$(node -p "require('${fixtures}').workspaceId")
+          dataset_id=$(node -p "require('${fixtures}').read.datasetId ?? ''")
+          record_id=$(node -p "require('${fixtures}').read.feedbackRecordId ?? ''")
+
+          if [ -z "${dataset_id}" ] || [ -z "${record_id}" ]; then
+            echo "::error::No feedback fixtures in the id map. The seeder could not reach the feedback store, so all nine feedback operations would only be checked against their documented 403."
+            exit 1
+          fi
+
+          record_status=$(curl -o /tmp/preflight-feedback.json -s -w "%{http_code}" \
+            -H "x-api-key: fbk_${SEED_API_KEY}" \
+            "http://localhost:3000/api/v3/feedback-records/${record_id}?workspaceId=${workspace_id}")
+          if [ "${record_status}" -ne 200 ]; then
+            echo "::error::Feedback record fixture read returned ${record_status}, expected 200."
+            cat /tmp/preflight-feedback.json
+            exit 1
+          fi
+
+          # The rename this whole change is about. A response that still carried the store's spelling
+          # would satisfy the schema only if the schema were wrong too, and both were written in the
+          # same sitting — so assert the wire name directly rather than trusting the pair to disagree.
+          if ! node -e "
+            const body = require('/tmp/preflight-feedback.json');
+            const record = body.data ?? {};
+            if (!('datasetId' in record)) throw new Error('response carries no datasetId: ' + JSON.stringify(Object.keys(record)));
+            if ('tenant_id' in record || 'dataset_id' in record) throw new Error('response still carries the store spelling');
+          "; then
+            echo "::error::The feedback record response is not in v3 spelling."
+            cat /tmp/preflight-feedback.json
+            exit 1
+          fi
+          echo "::notice::Feedback fixtures live; record responses are in v3 spelling."
+
+          # The compatibility path is the one thing here Schemathesis structurally cannot reach: it is
+          # deliberately absent from the spec, so nothing drives it. It is also the only path whose
+          # production behaviour changed (it used to refuse outright when `IS_PRODUCTION`), and this job
+          # is the only place the app runs a production build. Asserting it here is what stops it from
+          # shipping unexercised.
+          compat_status=$(curl -o /tmp/preflight-compat.json -s -w "%{http_code}" \
+            -H "x-api-key: fbk_${SEED_API_KEY}" \
+            "http://localhost:3000/v1/feedback-records?tenant_id=${dataset_id}&limit=1")
+          if [ "${compat_status}" -ne 200 ]; then
+            echo "::error::The /v1/feedback-records compatibility path returned ${compat_status}, expected 200."
+            cat /tmp/preflight-compat.json
+            exit 1
+          fi
+
+          # It forwards the store's response untouched, so it must still be the store's spelling. If this
+          # ever comes back camelCase, the passthrough has grown a translation layer it is not meant to have.
+          if ! node -e "
+            const body = require('/tmp/preflight-compat.json');
+            const record = (body.data ?? [])[0];
+            if (!record) throw new Error('no records returned; the fixture dataset is empty');
+            if (!('value_text' in record)) throw new Error('response is not in the store spelling: ' + JSON.stringify(Object.keys(record)));
+          "; then
+            echo "::error::The compatibility path is no longer forwarding the store's contract."
+            cat /tmp/preflight-compat.json
+            exit 1
+          fi
+          echo "::notice::Compatibility path serves the store contract from a production build."
+
+      # Text is embedded asynchronously after it is stored, so a freshly seeded record has no embedding
+      # for a moment and `/similar` correctly answers 409. Both are documented, so the run is green
+      # either way — but 200 is the one that validates the match schema, so wait for it and say so when
+      # it does not arrive.
+      - name: Wait for the seeded record to be embedded
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        run: |
+          set -uo pipefail
+          fixtures=./docs/api-v3-reference/contract-tests/fixtures.json
+          workspace_id=$(node -p "require('${fixtures}').workspaceId")
+          record_id=$(node -p "require('${fixtures}').read.feedbackRecordId")
+
+          for _ in {1..20}; do
+            status=$(curl -o /tmp/preflight-similar.json -s -w "%{http_code}" \
+              -H "x-api-key: fbk_${SEED_API_KEY}" \
+              "http://localhost:3000/api/v3/feedback-records/${record_id}/similar?workspaceId=${workspace_id}")
+            if [ "${status}" -eq 200 ]; then
+              echo "::notice::Seeded record is embedded — the similarity operations run against real vectors."
+              exit 0
+            fi
+            if [ "${status}" -ne 409 ]; then
+              echo "::error::Similarity probe returned ${status}, expected 200 or 409."
+              cat /tmp/preflight-similar.json
+              docker logs hub-worker 2>&1 | tail -20
+              exit 1
+            fi
+            sleep 3
+          done
+          echo "::warning::Seeded record still has no embedding after 60s. The two similarity operations are only checked against their documented 409 — the response schema for a match is not validated by this run."
+          docker logs hub-worker 2>&1 | tail -20
+
       - name: Set up Python
         if: steps.harness.outputs.present == 'true'
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -282,6 +467,15 @@ jobs:
             --report-dir schemathesis-report \
             -H "x-api-key: fbk_${SEED_API_KEY}"
 
+      # Schemathesis proves the surface matches its documentation. It cannot prove tenancy: it is only
+      # ever told about one workspace, so a cross-tenant read would never be attempted, let alone
+      # caught. This is that missing axis, and it is deliberately a separate script so it can be run
+      # against any instance rather than only here.
+      - name: Check tenant isolation
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        run: bash docs/api-v3-reference/contract-tests/tenancy-check.sh http://localhost:3000
+
       - name: Upload contract test report
         if: always() && steps.harness.outputs.present == 'true'
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
@@ -299,3 +493,23 @@ jobs:
           name: api-v3-contract-app-logs
           if-no-files-found: ignore
           path: app.log
+
+      # The store and its worker are the new moving parts, and an embedding failure is invisible in
+      # the app log — it shows up as a permanent 409 on the similarity operations and nothing else.
+      - name: Collect feedback store logs
+        if: failure() && steps.harness.outputs.present == 'true'
+        shell: bash
+        run: |
+          docker logs hub > hub.log 2>&1 || true
+          docker logs hub-worker > hub-worker.log 2>&1 || true
+
+      - name: Upload feedback store logs
+        if: failure() && steps.harness.outputs.present == 'true'
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: api-v3-contract-store-logs
+          if-no-files-found: ignore
+          path: |
+            hub.log
+            hub-worker.log
+            embedding-stub.log

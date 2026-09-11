@@ -894,7 +894,6 @@ envoy:
       v2Client: true
       v1Management: true
       v1Webhooks: true
-      feedbackRecords: false
       storage: true
     policies:
       enabled: false

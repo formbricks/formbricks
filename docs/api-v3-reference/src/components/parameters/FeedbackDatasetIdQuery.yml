@@ -1,0 +1,8 @@
+in: query
+name: datasetId
+schema:
+  type: string
+  format: cuid2
+description: >-
+  Names one feedback dataset explicitly. Optional: a workspace reaches at most one active dataset,
+  so `workspaceId` alone normally resolves it. List the ids with `GET /api/v3/feedback-datasets`.

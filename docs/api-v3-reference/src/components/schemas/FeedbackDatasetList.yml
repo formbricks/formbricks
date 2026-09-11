@@ -1,0 +1,12 @@
+type: object
+additionalProperties: false
+required:
+  - data
+  - meta
+properties:
+  data:
+    type: array
+    items:
+      $ref: ./FeedbackDataset.yml
+  meta:
+    $ref: ./FeedbackDatasetListMeta.yml

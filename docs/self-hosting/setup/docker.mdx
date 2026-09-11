@@ -345,10 +345,11 @@ memory, and LLM capacity.
 </Info>
 
 <Info>
-  If you use the one-click Traefik setup, FeedbackRecords are available on the Formbricks origin at
-  `/api/v3/feedbackRecords` and `/v1/feedback-records`. Custom Docker reverse proxies need equivalent wiring:
-  run gateway auth against the Formbricks app, rewrite `/api/v3/feedbackRecords` to Hub's
-  `/v1/feedback-records`, and inject `Authorization: Bearer <HUB_API_KEY>` only on the Hub-bound hop.
+  Feedback Records are served by the Formbricks application at `/api/v3/feedback-records`, so a reverse
+  proxy needs no special wiring for them — forward the path like any other. The application authenticates
+  the caller, checks the dataset, and talks to Hub itself, so Hub stays internal and its API key never
+  leaves the application. Earlier releases required the proxy to run gateway auth, rewrite the path and
+  inject Hub's credential; that is no longer the case, and configuration doing it should be removed.
 </Info>
 
 ## Update

@@ -1,0 +1,18 @@
+description: >-
+  Payload Too Large — the request body exceeds the 2 MiB cap every v3 write shares. Split the
+  request and retry; the limit is not negotiable per request. Unlike most refusals in front of an
+  API this is written by the application itself, so it is `problem+json` like every other error
+  here rather than a proxy's plain-text local reply.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

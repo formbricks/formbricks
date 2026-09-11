@@ -910,10 +910,9 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.entrypoints=websecure");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.tls.certresolver=default");
     expect(formbricksBlock).toContain("traefik.http.services.formbricks.loadbalancer.server.port=3000");
-    expect(formbricksBlock).toContain(
-      "traefik.http.routers.feedback-records-token.rule=Host(`example.com`) && Path(`/api/v3/feedbackRecords/token`)"
-    );
-    expect(formbricksBlock).toContain("traefik.http.routers.feedback-records-token.tls.certresolver=default");
+    // ENG-3117: the feedback-records routers are gone. They existed to steer paths around the hub's
+    // PathPrefix router; with no hub router, the default `formbricks` router already serves them.
+    expect(formbricksBlock).not.toContain("feedback-records");
     expect(formbricksBlock).toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
     expect(formbricksBlock).not.toContain("traefik.http.routers.formbricks_http.entrypoints=web");
   });
@@ -928,7 +927,6 @@ describe("docker/formbricks.sh Traefik label injection", () => {
 
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.entrypoints=websecure");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.tls=true");
-    expect(formbricksBlock).toContain("traefik.http.routers.feedback-records-token.tls=true");
     expect(formbricksBlock).toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
   });
@@ -946,9 +944,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain("    labels:");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks_http.entrypoints=web");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks_http.rule=Host(`example.com`)");
-    expect(formbricksBlock).toContain(
-      "traefik.http.routers.feedback-records-token-http.rule=Host(`example.com`) && Path(`/api/v3/feedbackRecords/token`)"
-    );
+    expect(formbricksBlock).not.toContain("feedback-records");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
     expect(formbricksBlock).not.toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
   });

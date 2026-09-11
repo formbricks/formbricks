@@ -1,15 +1,14 @@
 description: >-
-  Service Unavailable. From the **gateway** (`text/plain`): the record's dataset could not be
-  resolved because the feedback store did not answer, the authorization service itself was
-  unreachable, or the record's stored `tenant_id` is not a dataset id this API can address. From the
-  **feedback store** (`application/problem+json`, `code: service_unavailable`): the operation needs
-  a capability that is not configured on this instance — semantic search and similar records require
-  an embedding model.
-content:
-  text/plain:
+  Service Unavailable — the operation needs a capability this instance does not have configured.
+  Semantic search and similar-record lookups require an embedding model; without one they answer
+  this rather than an empty result, so a caller can tell "nothing matched" from "the feature is
+  off". Also returned when the feedback store itself is unreachable.
+headers:
+  X-Request-Id:
     schema:
       type: string
-    example: Feedback record lookup failed
+    description: Request correlation ID
+content:
   application/problem+json:
     schema:
-      $ref: ../schemas/HubProblem.yml
+      $ref: ../schemas/Problem.yml

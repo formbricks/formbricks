@@ -1,0 +1,7 @@
+in: query
+name: filter[hasSentiment][eq]
+schema:
+  type: boolean
+description: >-
+  `true` selects records carrying a sentiment label, `false` those without. A presence filter
+  on a member rather than a member of the record itself.

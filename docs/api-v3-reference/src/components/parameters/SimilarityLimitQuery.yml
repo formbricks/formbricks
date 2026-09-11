@@ -2,9 +2,11 @@ in: query
 name: limit
 schema:
   type: integer
+  minimum: 1
+  maximum: 100
   default: 10
 description: >-
-  Page size, at most 100. Unlike the `limit` on `GET /api/v3/feedbackRecords`, this one is never
-  rejected: the search endpoints **clamp** instead of answering 400. A value above 100 is reduced to
-  100, and `0`, a negative number or a non-numeric value falls back to the default of 10. Read the
-  `limit` in the response to see what was actually applied.
+  Page size, from 1 to 100. Out-of-range and non-numeric values are **rejected with 400** — the
+  bounds are enforced here rather than passed to the vector store, which coerces a bad value to its
+  own default instead of complaining, so `limit=999` would otherwise quietly return something other
+  than what was asked for.

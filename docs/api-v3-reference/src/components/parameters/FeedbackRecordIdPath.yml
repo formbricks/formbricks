@@ -1,13 +1,12 @@
 in: path
-name: id
+name: feedbackRecordId
 required: true
 schema:
   type: string
   format: uuid
 description: >-
   Feedback record id (UUID). The dataset is resolved from the record itself, so the caller cannot
-  choose which dataset it is authorized against. An id that is not a UUID answers **400**, and an
-  id whose dataset the API key cannot reach answers **403** rather than 404, so ids cannot be
-  probed. The gateway caches the record→dataset lookup for 60 seconds, so for up to a minute after
-  a delete the id is still authorized and the store answers **404**; after that the same id answers
-  **403**.
+  choose which dataset it is authorized against. An id that is not a UUID answers **400**. A
+  nonexistent id and an id in a dataset the API key cannot reach are deliberately
+  indistinguishable: both answer **403** with the same body, so existence cannot be probed. This
+  API never answers **404** on a record id.

@@ -1,0 +1,70 @@
+post:
+  operationId: searchFeedbackRecordsV3
+  summary: Search feedback records semantically
+  description: |
+    Embeds `query` and returns the ids of the records in the dataset whose text is closest to it,
+    with cosine similarity scores. Only records with a non-empty `valueText` are embedded, so only
+    those can match. `datasetId` is a query parameter, as on list and count. Requires an API key with **read**
+    permission (or higher) on a workspace the dataset is assigned to.
+
+    Results carry ids and the embedded text only — fetch a match with
+    `GET /api/v3/feedback-records/{feedbackRecordId}` for the full record. Answers **503** on instances without
+    an embedding model configured.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
+    - $ref: ../components/parameters/SimilarityLimitQuery.yml
+    - $ref: ../components/parameters/SimilarityCursorQuery.yml
+    - $ref: ../components/parameters/MinScoreQuery.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/FeedbackRecordSemanticSearchRequest.yml
+        example:
+          query: complaints about waiting times at the gates
+  responses:
+    "200":
+      description: Matches retrieved
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FeedbackRecordSimilarityResult.yml
+          examples:
+            matches:
+              summary: Two matches above the threshold
+              value:
+                data:
+                  - feedbackRecordId: 018e1234-5678-7abc-8ef0-123456789abd
+                    score: 0.71
+                    fieldLabel: What could we improve?
+                    valueText: Queues at the north gate were far too long.
+                  - feedbackRecordId: 018e1234-5678-7abc-8ef0-1234567890aa
+                    score: 0.64
+                    fieldLabel: Anything else?
+                    valueText: Took 40 minutes to get in. Please open more turnstiles.
+                meta:
+                  limit: 10
+                  nextCursor: null
+                  minScore: 0.5
+                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                  datasetName: Customer feedback
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "413":
+      $ref: ../components/responses/V3PayloadTooLarge.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []

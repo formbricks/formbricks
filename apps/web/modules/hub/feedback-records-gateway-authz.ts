@@ -2,7 +2,7 @@ import type { ApiKeyPermission } from "@formbricks/database/prisma";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 
 // Pure authorization logic for feedback records, shared by the gateway (`feedback-records-gateway.ts`)
-// and the v3/MCP surface (`app/api/v3/feedbackRecords/lib/access.ts`) so one policy is not written
+// and the v3/MCP surface (`app/api/v3/feedback-records/lib/access.ts`) so one policy is not written
 // twice. Kept free of server-only, Prisma, and env imports so it can be unit-tested in isolation (the
 // gateway module itself pulls in the full request/DB/env stack).
 
