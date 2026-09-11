@@ -143,7 +143,7 @@ describe("AuthZed runtime activation", () => {
     expect(getCanonicalAuthzedSchemaDigest).not.toHaveBeenCalled();
   });
 
-  test("rejects a different target manifest after activation is finalized", async () => {
+  test("accepts a compatible target manifest after activation is finalized", async () => {
     vi.mocked(getAuthzedActivationStatus).mockResolvedValue({
       activeReceiptId: receiptId,
       authority: "spicedb",
@@ -154,13 +154,42 @@ describe("AuthZed runtime activation", () => {
     });
     vi.mocked(createAuthzedReleaseManifestDigest).mockReturnValue(digest("9"));
 
+    await expect(checkAuthzedRuntimeActivation()).resolves.toEqual({
+      authority: "spicedb",
+      status: "ready",
+    });
+  });
+
+  test("keeps compatibility gates active after activation is finalized", async () => {
+    vi.mocked(getAuthzedActivationStatus).mockResolvedValue({
+      activeReceiptId: receiptId,
+      authority: "spicedb",
+      fenceActive: false,
+      generation: 1n,
+      pendingReceiptId: null,
+      transition: "idle",
+    });
+
+    vi.mocked(getAuthzedAuthorizationContractDigest).mockReturnValueOnce(digest("9"));
+    await expect(checkAuthzedRuntimeActivation()).rejects.toMatchObject({
+      code: "authzed_activation_required",
+      operation: "activation_runtime_receipt",
+    });
+
+    vi.mocked(getCanonicalAuthzedSchemaDigest).mockResolvedValueOnce(digest("9"));
+    await expect(checkAuthzedRuntimeActivation()).rejects.toMatchObject({
+      code: "authzed_activation_required",
+      operation: "activation_runtime_receipt",
+    });
+
+    vi.mocked(getAuthzedClientConfigDigest).mockReturnValueOnce(digest("9"));
     await expect(checkAuthzedRuntimeActivation()).rejects.toMatchObject({
       code: "authzed_activation_required",
       operation: "activation_runtime_receipt",
     });
   });
 
-  test("accepts a fresh-install target only when its finalized receipt matches the manifest", async () => {
+  test("accepts compatible targets after a fresh-install receipt is finalized", async () => {
     vi.mocked(getAuthzedActivationStatus).mockResolvedValue({
       activeReceiptId: receiptId,
       authority: "spicedb",
@@ -190,9 +219,9 @@ describe("AuthZed runtime activation", () => {
     });
 
     vi.mocked(createAuthzedReleaseManifestDigest).mockReturnValue(digest("9"));
-    await expect(checkAuthzedRuntimeActivation()).rejects.toMatchObject({
-      code: "authzed_activation_required",
-      operation: "activation_runtime_receipt",
+    await expect(checkAuthzedRuntimeActivation()).resolves.toEqual({
+      authority: "spicedb",
+      status: "ready",
     });
   });
 

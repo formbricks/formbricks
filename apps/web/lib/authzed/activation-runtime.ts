@@ -78,12 +78,17 @@ export const checkAuthzedRuntimeActivation = async (): Promise<TAuthzedRuntimeAc
     Promise.resolve(getAuthzedAuthorizationContractDigest()),
     getCanonicalAuthzedSchemaDigest(),
   ]);
+  // While the cutover fence is active, only the exact release candidate recorded by the bridge may
+  // start. After finalization, compatible v6 images are admitted by the durable protocol, contract,
+  // schema, and client-configuration digests below; retaining the source-revision check forever would
+  // make every ordinary v6 patch upgrade require another legacy bridge activation.
   if (
     receipt.status !== "active" ||
     receipt.generation !== status.generation ||
     receipt.protocolVersion !== AUTHZED_ACTIVATION_PROTOCOL_VERSION ||
-    receipt.candidateManifestDigest !== createAuthzedReleaseManifestDigest(manifest) ||
-    (status.transition === "activating" && receipt.kind !== "upgrade") ||
+    (status.transition === "activating" &&
+      (receipt.kind !== "upgrade" ||
+        receipt.candidateManifestDigest !== createAuthzedReleaseManifestDigest(manifest))) ||
     receipt.contractDigest !== contractDigest ||
     receipt.schemaDigest !== schemaDigest ||
     receipt.clientConfigDigest !== getAuthzedClientConfigDigest()
