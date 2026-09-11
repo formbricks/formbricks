@@ -49,6 +49,16 @@ migration:
   # temporary upgrade coordinator rather than racing the authorization cutover.
   mode: job
 
+  # The migration Job reads database credentials from one explicit Secret instead of inheriting
+  # deployment.envFrom. This is important for Helm pre-upgrade hooks: normal release resources are not
+  # updated until every pre-upgrade hook succeeds. Leave the name empty to reuse the activation database
+  # Secret and then the chart-managed <release>-app-secrets Secret. A custom Secret must exist before
+  # starting a Helm upgrade. migrateUrlKey is optional at runtime; DATABASE_URL is used when it is absent.
+  database:
+    existingSecret: ""
+    urlKey: DATABASE_URL
+    migrateUrlKey: MIGRATE_DATABASE_URL
+
   # Additional annotations for the migration job
   annotations: {}
 
@@ -640,6 +650,10 @@ authzed:
     # disable this while deploying the v5 bridge; the release assistant supplies the cutover receipt.
     installBootstrap:
       enabled: true
+      # Helm-only recovery for an install that created its resources but failed before writing the fresh
+      # activation receipt. On the recovery upgrade this runs after migrations/database bootstrap and
+      # before the mandatory receipt gate. Argo retries the ordinary Sync hook and does not need this.
+      retryOnUpgrade: false
       timeoutSeconds: 900
       intervalSeconds: 5
       backoffLimit: 0

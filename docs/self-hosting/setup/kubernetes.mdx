@@ -162,6 +162,20 @@ The default `migration.mode: job` is appropriate for fresh installs and compatib
 already completed them. Follow [AuthZed Operations](/self-hosting/advanced/authzed-operations) and do not expose
 SpiceDB through an Ingress.
 
+The migration Job deliberately does not inherit `deployment.envFrom`. A Helm pre-upgrade hook runs before normal
+candidate Secrets and ConfigMaps are updated. If an upgrade changes the database URL, credentials, or source
+Secret, first create or update a stable database Secret outside the release and wait for it to become available.
+Then configure `migration.database.existingSecret`, `authzed.activation.database.existingSecret`, and the
+application's `DATABASE_URL` to use that Secret before starting the Helm upgrade. The Secret may also contain an
+optional `MIGRATE_DATABASE_URL`; never introduce or rotate it in the same release operation as the migration Job.
+
+If a fresh Helm install fails after creating its resources but before writing the activation receipt, correct the
+underlying failure and rerun the same digest-pinned `helm upgrade --install` with
+`authzed.activation.installBootstrap.retryOnUpgrade: true`. Recovery replays migrations and database bootstrap,
+retries the empty-install activation, and still runs the mandatory receipt gate before replacing Pods. Use this
+only to recover a failed fresh install and return it to `false` after success; it is not an existing-installation
+upgrade path.
+
 Set AuthZed client configuration through `authzed.*` and its named Secrets, not `deployment.env.AUTHZED_*`.
 Using one chart-level source keeps the activation Jobs and application Pods on the same endpoint, token, system
 key, transport, and consistency contract. When `deployment.env` or a custom `deployment.envFrom` selects the

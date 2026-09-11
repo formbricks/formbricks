@@ -188,6 +188,26 @@ them.
 For an externally managed PostgreSQL server, use `authzed.externalPostgresqlBootstrap` instead, which takes a
 full administrator URL from a Secret and enforces TLS on it.
 
+### Keep pre-upgrade migrations on the intended database
+
+The Helm migration Job reads only `WEBAPP_URL`, `DATABASE_URL`, and the optional `MIGRATE_DATABASE_URL`; it does
+not inherit the application's broad `deployment.envFrom`. This prevents a pre-upgrade hook from depending on a
+candidate Secret, ExternalSecret, or ConfigMap that Helm has not applied yet.
+
+An unchanged chart-managed database needs no extra value. If an upgrade changes the database URL, credentials,
+or source Secret, perform a two-step update:
+
+1. Create or update a stable database Secret outside the Formbricks Helm release and wait until Kubernetes can
+   read it.
+2. Point `migration.database.existingSecret`, `authzed.activation.database.existingSecret`, and the application
+   `DATABASE_URL` at that Secret, then run the Helm upgrade.
+
+The Secret must contain `migration.database.urlKey` (default `DATABASE_URL`). It may also contain
+`migration.database.migrateUrlKey` (default `MIGRATE_DATABASE_URL`); when that optional key is absent, migrations
+use the runtime URL. Never introduce, rename, or rotate this Secret in the same Helm operation as a pre-upgrade
+migration. The chart rejects custom database environment sources that do not name the database Secret
+explicitly.
+
 For an external AuthZed endpoint:
 
 ```yaml
@@ -217,6 +237,28 @@ kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed activatio
 
 Replace the namespace and deployment name if you override them. These commands execute inside the existing
 application pod and do not require exposing PostgreSQL or SpiceDB.
+
+### Recover an interrupted fresh Helm install
+
+A fresh install can create its Secrets, databases, and migration resources but fail before the activation Job
+writes the empty-install receipt. Do not disable the receipt gate. Correct the original failure and rerun the
+same chart and values with an immutable image digest and the explicit recovery switch:
+
+```bash
+helm upgrade --install <release> formbricks/formbricks \
+  --namespace <namespace> \
+  --version <chart-version> \
+  --values values.yaml \
+  --set deployment.image.digest=sha256:<digest> \
+  --set authzed.activation.installBootstrap.retryOnUpgrade=true \
+  --wait
+```
+
+On a failed release this renders ordered `pre-upgrade` hooks: Formbricks migrations, the idempotent SpiceDB
+database bootstrap, the activation bootstrap, and finally the mandatory receipt check. Application Pods are not
+replaced unless the final check succeeds. If an atomic install removed the release, Helm uses ordinary fresh
+install semantics instead. Recovery cannot convert a populated v5 database: activation refuses a nonempty graph
+without the migration receipt. Return `retryOnUpgrade` to `false` after a successful recovery.
 
 ## Upgrade an existing installation to v6
 

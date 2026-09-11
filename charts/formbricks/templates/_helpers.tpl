@@ -156,6 +156,10 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- .Values.authzed.activation.database.existingSecret | default (include "formbricks.appSecretName" .) -}}
 {{- end }}
 
+{{- define "formbricks.migrationDatabaseSecretName" -}}
+{{- .Values.migration.database.existingSecret | default .Values.authzed.activation.database.existingSecret | default (include "formbricks.appSecretName" .) -}}
+{{- end }}
+
 {{- define "formbricks.authzedEndpoint" -}}
 {{- if .Values.authzed.endpoint -}}
 {{- .Values.authzed.endpoint -}}
@@ -271,45 +275,29 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{/*
-Render the database environment shared by the migration readiness and migration containers.
-Keeping this in one helper ensures both containers resolve DATABASE_URL and MIGRATE_DATABASE_URL identically.
+Render the narrow environment shared by the migration readiness and migration containers. A Helm
+pre-upgrade hook runs before normal Secrets, ExternalSecrets, and ConfigMaps are updated, so inheriting
+deployment.envFrom could make the migration depend on resources that do not exist yet. The selected
+Secret is an explicit pre-existing contract; WEBAPP_URL is the only non-database value consumed by a
+current data migration.
 */}}
 {{- define "formbricks.migrationEnvironment" -}}
-{{- if or .Values.deployment.envFrom (or (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) .Values.secret.enabled) }}
-envFrom:
-{{- if or .Values.secret.enabled (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
-  - secretRef:
-      name: {{ template "formbricks.name" . }}-app-secrets
-{{- end }}
-{{- range $value := .Values.deployment.envFrom }}
-{{- if (eq .type "configmap") }}
-  - configMapRef:
-      {{- if .name }}
-      name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
-      {{- else if .nameSuffix }}
-      name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
-      {{- else }}
-      name: {{ template "formbricks.name" $ }}
-      {{- end }}
-{{- end }}
-{{- if (eq .type "secret") }}
-  - secretRef:
-      {{- if .name }}
-      name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
-      {{- else if .nameSuffix }}
-      name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
-      {{- else }}
-      name: {{ template "formbricks.name" $ }}
-      {{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- if .Values.deployment.env }}
 env:
-{{- range $key, $value := .Values.deployment.env }}
-  {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 2 }}
-{{- end }}
-{{- end }}
+  - name: WEBAPP_URL
+    value: {{ required "formbricks.webappUrl is required for database migrations" .Values.formbricks.webappUrl | quote }}
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "formbricks.migrationDatabaseSecretName" . }}
+        key: {{ .Values.migration.database.urlKey }}
+  {{- with .Values.migration.database.migrateUrlKey }}
+  - name: MIGRATE_DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "formbricks.migrationDatabaseSecretName" $ }}
+        key: {{ . }}
+        optional: true
+  {{- end }}
 {{- end }}
 
 {{/*

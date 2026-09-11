@@ -1,4 +1,5 @@
-{{- if and .Values.authzed.enabled .Values.authzed.activation.installBootstrap.enabled .Release.IsInstall }}
+{{- $retryOnUpgrade := and .Release.IsUpgrade .Values.authzed.activation.installBootstrap.retryOnUpgrade -}}
+{{- if and .Values.authzed.enabled .Values.authzed.activation.installBootstrap.enabled (or .Release.IsInstall $retryOnUpgrade) }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -8,8 +9,14 @@ metadata:
     {{- include "formbricks.labels" . | nindent 4 }}
   annotations:
     # This is an ordinary install resource for Helm: a pre/post-install hook would run before its
-    # Secrets/PostgreSQL exist or after the receipt-gated Deployment, respectively. Argo CD executes
-    # the same idempotent command after migrations and the SpiceDB resource have reached lower waves.
+    # Secrets/PostgreSQL exist or after the receipt-gated Deployment, respectively. The explicit Helm
+    # recovery path reuses it as a pre-upgrade hook after migrations/bootstrap and before the mandatory
+    # receipt gate. Argo CD executes the ordinary idempotent Sync hook after lower waves.
+    {{- if $retryOnUpgrade }}
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    {{- end }}
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
     argocd.argoproj.io/sync-wave: "1"

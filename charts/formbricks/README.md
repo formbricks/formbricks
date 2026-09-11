@@ -217,6 +217,39 @@ Select one database migration owner with `migration.mode`:
 - `startup` leaves migrations to application startup.
 - `external` skips both paths because an operator or upgrade coordinator completed them first.
 
+The migration Job receives only `WEBAPP_URL`, `DATABASE_URL`, and the optional `MIGRATE_DATABASE_URL`. It never
+inherits `deployment.envFrom`, because a Helm `pre-upgrade` hook runs before candidate Secrets, ExternalSecrets,
+and ConfigMaps are applied. On a fresh install and an unchanged chart-managed database, the Job reuses
+`<release>-app-secrets` by default.
+
+If an upgrade changes the database endpoint, credentials, or the Secret/config source that selects them, use a
+two-step update. First create or update a stable database Secret outside this Helm release and wait until it exists
+in the release namespace. Then point the migration, activation, and application containers at that same Secret and
+run the Helm upgrade:
+
+```yaml
+deployment:
+  env:
+    DATABASE_URL:
+      valueFrom:
+        secretKeyRef:
+          name: formbricks-database
+          key: DATABASE_URL
+migration:
+  database:
+    existingSecret: formbricks-database
+    urlKey: DATABASE_URL
+    migrateUrlKey: MIGRATE_DATABASE_URL
+authzed:
+  activation:
+    database:
+      existingSecret: formbricks-database
+      urlKey: DATABASE_URL
+```
+
+The optional migration key may be absent; the runner then uses `DATABASE_URL`. Do not create, rotate, or rename the
+referenced Secret in the same Helm upgrade as the pre-upgrade migration.
+
 The first v5-to-v6 candidate rollout must use `migration.mode=external`. Upgrade through the signed release
 assistant: it deploys the immutable v5 bridge, installs the temporary upgrade coordinator, prepares and activates
 the graph, then supplies the database receipt consumed by the candidate. The permanent chart contains no prepare,
@@ -228,6 +261,23 @@ default `authzed.activation.upgradeGate.enabled=true` pre-upgrade Job executes t
 the receipt, schema, contract, or client configuration does not match. The signed release assistant disables the
 gate only for the initial, digest-pinned v5 bridge rollout, while authorization is still legacy-authoritative.
 Application startup always performs the bounded receipt check, including for that bridge exception.
+
+If a fresh Helm install created release resources but failed after migrations and before activation wrote its
+receipt, fix the underlying failure and retry with the same values, chart version, and an immutable image digest:
+
+```bash
+helm upgrade --install <release> formbricks/formbricks \
+  --namespace <namespace> \
+  --version <chart-version> \
+  --values values.yaml \
+  --set deployment.image.digest=sha256:<digest> \
+  --set authzed.activation.installBootstrap.retryOnUpgrade=true \
+  --wait
+```
+
+This explicit recovery mode reruns the idempotent migration and database bootstrap hooks, retries activation, and
+then runs the mandatory receipt gate before any application Pod changes. It is only for a failed fresh install;
+the activation command refuses a nonempty legacy database. Return `retryOnUpgrade` to `false` after recovery.
 
 Both activation Jobs import only explicit `DATABASE_URL` and AuthZed Secret keys. They never inherit the entire
 application Secret. By default `DATABASE_URL` comes from `<release>-app-secrets`. If `deployment.env` defines
@@ -706,6 +756,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | authzed.activation.installBootstrap.backoffLimit                   | int    | `0`                                                                         | Kubernetes retries for the fresh-install bootstrap Job.   |
 | authzed.activation.installBootstrap.enabled                        | bool   | `true`                                                                      | Bootstrap an empty graph and receipt on fresh installs.   |
 | authzed.activation.installBootstrap.intervalSeconds                | int    | `5`                                                                         | Delay between bounded bootstrap attempts.                 |
+| authzed.activation.installBootstrap.retryOnUpgrade                 | bool   | `false`                                                                     | Retry failed fresh-install activation on a Helm upgrade.  |
 | authzed.activation.installBootstrap.timeoutSeconds                 | int    | `900`                                                                       | Fresh-install bootstrap deadline.                         |
 | authzed.activation.startupWait.intervalSeconds                     | int    | `5`                                                                         | Delay between startup receipt checks.                     |
 | authzed.activation.startupWait.timeoutSeconds                      | int    | `900`                                                                       | Application startup receipt deadline.                     |
@@ -894,6 +945,9 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | llm.servingEngineSpec.strategy.type                                | string | `"Recreate"`                                                                | Avoids requiring a second GPU during model pod upgrades.  |
 | migration.annotations                                              | object | `{}`                                                                        |                                                           |
 | migration.backoffLimit                                             | int    | `3`                                                                         |                                                           |
+| migration.database.existingSecret                                  | string | `""`                                                                        | Pre-existing Secret used by the migration Job.            |
+| migration.database.migrateUrlKey                                   | string | `"MIGRATE_DATABASE_URL"`                                                    | Optional elevated migration database URL key.             |
+| migration.database.urlKey                                          | string | `"DATABASE_URL"`                                                            | Runtime database URL key used by migrations.              |
 | migration.mode                                                     | string | `"job"`                                                                   | One of `job`, `startup`, or `external`.                  |
 | migration.resources.limits.memory                                  | string | `"512Mi"`                                                                   |                                                           |
 | migration.resources.requests.cpu                                   | string | `"100m"`                                                                    |                                                           |

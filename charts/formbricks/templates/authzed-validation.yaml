@@ -1,8 +1,10 @@
-{{- $installBootstrapEnabled := and .Release.IsInstall .Values.authzed.activation.installBootstrap.enabled -}}
+{{- $installBootstrapRetryEnabled := and .Release.IsUpgrade .Values.authzed.activation.installBootstrap.enabled .Values.authzed.activation.installBootstrap.retryOnUpgrade -}}
+{{- $installBootstrapEnabled := and .Values.authzed.activation.installBootstrap.enabled (or .Release.IsInstall $installBootstrapRetryEnabled) -}}
 {{- $upgradeGateEnabled := and .Release.IsUpgrade .Values.authzed.activation.upgradeGate.enabled -}}
 {{- $externalAppSecretEnabled := and .Values.externalSecret.enabled (hasKey (default dict .Values.externalSecret.files) "app-secrets") -}}
 {{- $chartManagesAppSecret := or .Values.secret.enabled $externalAppSecretEnabled -}}
 {{- $customDatabaseEnvironment := or (hasKey .Values.deployment.env "DATABASE_URL") (hasKey .Values.deployment.env "MIGRATE_DATABASE_URL") (gt (len (default dict .Values.deployment.envFrom)) 0) -}}
+{{- $explicitMigrationDatabaseSecret := or .Values.migration.database.existingSecret .Values.authzed.activation.database.existingSecret -}}
 {{- if not .Values.authzed.enabled -}}
 {{- fail "Formbricks v6 requires AuthZed. Follow the v6 migration guide instead of upgrading with authzed.enabled=false" -}}
 {{- end -}}
@@ -26,6 +28,12 @@
 {{- if and .Release.IsUpgrade (not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.deployment.image.digest)) -}}
 {{- fail "deployment.image.digest must be a lowercase sha256 digest for every Formbricks v6 Helm upgrade" -}}
 {{- end -}}
+{{- if and .Release.IsUpgrade .Values.authzed.activation.installBootstrap.retryOnUpgrade (not .Values.authzed.activation.installBootstrap.enabled) -}}
+{{- fail "authzed.activation.installBootstrap.enabled must remain true when retryOnUpgrade is enabled" -}}
+{{- end -}}
+{{- if and $installBootstrapRetryEnabled (not .Values.authzed.activation.upgradeGate.enabled) -}}
+{{- fail "authzed.activation.upgradeGate.enabled must remain true during install-bootstrap recovery" -}}
+{{- end -}}
 {{- if and (or $installBootstrapEnabled $upgradeGateEnabled) (not .Values.authzed.activation.database.existingSecret) (not $chartManagesAppSecret) -}}
 {{- fail "authzed.activation.database.existingSecret is required when the chart does not manage the app-secrets Secret" -}}
 {{- end -}}
@@ -34,6 +42,18 @@
 {{- end -}}
 {{- if not .Values.authzed.activation.database.urlKey -}}
 {{- fail "authzed.activation.database.urlKey is required" -}}
+{{- end -}}
+{{- if and (eq .Values.migration.mode "job") (not .Values.migration.database.urlKey) -}}
+{{- fail "migration.database.urlKey is required when migration.mode=job" -}}
+{{- end -}}
+{{- if and (eq .Values.migration.mode "job") (not $explicitMigrationDatabaseSecret) (not $chartManagesAppSecret) -}}
+{{- fail "migration.database.existingSecret is required when the chart does not manage the app-secrets Secret" -}}
+{{- end -}}
+{{- if and .Release.IsUpgrade (eq .Values.migration.mode "job") $customDatabaseEnvironment (not $explicitMigrationDatabaseSecret) -}}
+{{- fail "migration.database.existingSecret is required for a Helm pre-upgrade migration when deployment.env or deployment.envFrom can select a custom application database" -}}
+{{- end -}}
+{{- if and (eq .Values.migration.mode "job") (hasKey .Values.deployment.env "MIGRATE_DATABASE_URL") (not .Values.migration.database.existingSecret) -}}
+{{- fail "migration.database.existingSecret must contain the migration database URL when deployment.env.MIGRATE_DATABASE_URL is configured" -}}
 {{- end -}}
 {{- if or (lt (int .Values.authzed.activation.installBootstrap.timeoutSeconds) 1) (gt (int .Values.authzed.activation.installBootstrap.timeoutSeconds) 3600) -}}
 {{- fail "authzed.activation.installBootstrap.timeoutSeconds must be between 1 and 3600" -}}
