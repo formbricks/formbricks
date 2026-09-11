@@ -47,5 +47,6 @@ export type TAuthzedOutboxDrainResult = Readonly<{
 
 export type TAuthzedOutboxDrainOptions = Readonly<{
   maxBatches?: number;
+  signal?: AbortSignal;
   throughSourceSequence?: bigint;
 }>;

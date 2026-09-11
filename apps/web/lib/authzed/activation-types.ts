@@ -3,6 +3,8 @@ import "server-only";
 export const AUTHZED_ACTIVATION_PROTOCOL_VERSION = 1;
 export const AUTHZED_ACTIVATION_CONTROL_ID = "formbricks";
 export const AUTHZED_ACTIVATION_FINALIZATION_TIMEOUT_MS = 10 * 60_000;
+export const AUTHZED_ACTIVATION_FINALIZATION_SETTLEMENT_GRACE_MS = 5 * 60_000;
+export const AUTHZED_ACTIVATION_PREPARATION_LEASE_RENEWAL_MS = 60_000;
 
 export type TAuthzedAuthorizationAuthority = "legacy" | "spicedb";
 export type TAuthzedAuthorizationTransition =

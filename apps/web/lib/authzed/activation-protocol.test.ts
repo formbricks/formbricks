@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { bootstrapFreshAuthzedActivation } from "./activation-protocol";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { bootstrapFreshAuthzedActivation, prepareAuthzedActivation } from "./activation-protocol";
 import {
   acquireAuthzedPreparationLease,
   activateAuthzedAuthorization,
@@ -8,8 +8,10 @@ import {
   getAuthzedActivationReceipt,
   getAuthzedActivationStatus,
   recoverExpiredFreshAuthzedActivation,
+  renewAuthzedPreparationLease,
 } from "./activation-repository";
 import { checkAuthzedRuntimeActivation } from "./activation-runtime";
+import { readAuthzedReleaseManifest } from "./release-manifest";
 
 const { digest } = vi.hoisted(() => ({
   digest: (character: string): `sha256:${string}` => `sha256:${character.repeat(64)}`,
@@ -37,6 +39,7 @@ vi.mock("./activation-repository", () => ({
   getAuthzedActivationStatus: vi.fn(),
   getLatestAuthzedSourceSequence: vi.fn(async () => 0n),
   recoverExpiredFreshAuthzedActivation: vi.fn(),
+  renewAuthzedPreparationLease: vi.fn(),
 }));
 vi.mock("./activation-runtime", () => ({ checkAuthzedRuntimeActivation: vi.fn() }));
 vi.mock("./backfill", () => ({ runAuthzedBackfill: vi.fn() }));
@@ -211,5 +214,92 @@ describe("fresh AuthZed activation bootstrap", () => {
       bootstrapFreshAuthzedActivation({ countOrganizations: vi.fn(async () => 0) })
     ).rejects.toMatchObject({ code: "authzed_activation_manifest_mismatch" });
     expect(activateAuthzedAuthorization).not.toHaveBeenCalled();
+  });
+});
+
+describe("AuthZed activation preparation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(createPreparedAuthzedActivationReceipt).mockResolvedValue(receiptId);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("renews its preparation lease while schema work is still running", async () => {
+    vi.useFakeTimers();
+    vi.mocked(readAuthzedReleaseManifest).mockResolvedValue({ authorizationMode: "legacy_bridge" } as never);
+    let finishSchema!: (value: Readonly<{ sourceDigest: `sha256:${string}` }>) => void;
+    const applySchema = vi.fn(
+      () =>
+        new Promise<Readonly<{ sourceDigest: `sha256:${string}` }>>((resolve) => {
+          finishSchema = resolve;
+        })
+    );
+    const cleanAudit = {
+      completedAtSnapshot: "snapshot",
+      counters: {
+        failed: 0,
+        ignored: 0,
+        invalid: 0,
+        mismatchedParents: 0,
+        mismatchedPermissions: 0,
+        missing: 0,
+        orphaned: 0,
+        pruned: 0,
+        reconciled: 1,
+        scanned: 1,
+        skipped: 0,
+        unmanaged: 0,
+      },
+      failures: [],
+      lastOrganizationId: null,
+      mismatchedParents: [],
+      mismatchedPermissions: [],
+      mode: "apply" as const,
+      orphanScope: "all" as const,
+      orphans: [],
+      scope: "all" as const,
+      status: "reconciled" as const,
+      truncated: false,
+      unmanaged: [],
+    };
+    const preparation = prepareAuthzedActivation(
+      {
+        bridgeImageDigest: digest("1"),
+        bridgeManifestDigest: digest("a"),
+        candidateImageDigest: digest("2"),
+        candidateManifestDigest: digest("3"),
+      },
+      {
+        applySchema: applySchema as never,
+        audit: vi.fn(async (mode) => ({ ...cleanAudit, mode })),
+        checkSchema: vi.fn(async () => ({ status: "matched" }) as never),
+        drainOutbox: vi.fn(async () => ({
+          claimed: 0,
+          deadLettered: 0,
+          delivered: 0,
+          failed: 0,
+          remaining: 0,
+          status: "drained" as const,
+        })),
+        getOutboxStatus: vi.fn(async () => ({
+          deadLettered: 0,
+          oldestPendingAgeSeconds: null,
+          overdueRevocations: 0,
+          pending: 0,
+          revocationsPastCritical: 0,
+          revocationsPastWarning: 0,
+        })),
+      }
+    );
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(renewAuthzedPreparationLease).toHaveBeenCalledOnce();
+
+    finishSchema({ sourceDigest: digest("c") });
+    await expect(preparation).resolves.toBe(receiptId);
+    expect(createPreparedAuthzedActivationReceipt).toHaveBeenCalledOnce();
   });
 });

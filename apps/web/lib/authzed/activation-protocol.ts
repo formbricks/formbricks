@@ -20,8 +20,10 @@ import {
   getAuthzedActivationStatus,
   getLatestAuthzedSourceSequence,
   recoverExpiredFreshAuthzedActivation,
+  renewAuthzedPreparationLease,
 } from "./activation-repository";
 import { checkAuthzedRuntimeActivation } from "./activation-runtime";
+import { runWithRenewingAuthzedPreparationLease, throwIfAuthzedActivationAborted } from "./activation-safety";
 import type { TAuthzedActivationEvidence, TAuthzedDigest } from "./activation-types";
 import { type TAuthzedBackfillApply, type TAuthzedBackfillResult, runAuthzedBackfill } from "./backfill";
 import { createAuthzedBackfillApply, createAuthzedBackfillNoopApply } from "./backfill-apply";
@@ -61,7 +63,11 @@ type TReceiptIdentity =
 
 type TActivationDependencies = Readonly<{
   applySchema: typeof applyCanonicalAuthzedSchema;
-  audit: (mode: "apply" | "dry_run", apply: TAuthzedBackfillApply) => Promise<TAuthzedBackfillResult>;
+  audit: (
+    mode: "apply" | "dry_run",
+    apply: TAuthzedBackfillApply,
+    signal?: AbortSignal
+  ) => Promise<TAuthzedBackfillResult>;
   checkHealth: typeof checkAuthzedHealth;
   checkSchema: typeof checkCanonicalAuthzedSchema;
   countOrganizations: () => Promise<number>;
@@ -71,10 +77,10 @@ type TActivationDependencies = Readonly<{
 
 const defaultDependencies: TActivationDependencies = {
   applySchema: applyCanonicalAuthzedSchema,
-  audit: (mode, apply) =>
+  audit: (mode, apply, signal) =>
     runAuthzedBackfill(
       { maxPrune: AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN, mode, prune: false, scope: { kind: "all" } },
-      { apply, client: getAuthzedClient() }
+      { apply, client: getAuthzedClient(), signal }
     ),
   checkHealth: checkAuthzedHealth,
   checkSchema: checkCanonicalAuthzedSchema,
@@ -115,10 +121,12 @@ const assertConfiguration = (): void => {
   }
 };
 
-const assertHealthy = async (dependencies: TActivationDependencies): Promise<void> => {
+const assertHealthy = async (dependencies: TActivationDependencies, signal?: AbortSignal): Promise<void> => {
+  throwIfAuthzedActivationAborted(signal);
   if ((await dependencies.checkHealth()).status !== "healthy") {
     throw protocolError(AUTHZED_ERROR_CODES.FAILED_PRECONDITION, "activation_health");
   }
+  throwIfAuthzedActivationAborted(signal);
 };
 
 const assertCleanAudit = (result: TAuthzedBackfillResult): void => {
@@ -128,28 +136,37 @@ const assertCleanAudit = (result: TAuthzedBackfillResult): void => {
 };
 
 const reconcileAndAudit = async (
-  dependencies: TActivationDependencies
+  dependencies: TActivationDependencies,
+  signal?: AbortSignal
 ): Promise<Pick<TAuthzedActivationEvidence, "auditCounters" | "completedAtSnapshot">> => {
-  const reconciliation = await dependencies.audit("apply", createAuthzedBackfillApply());
+  throwIfAuthzedActivationAborted(signal);
+  const reconciliation = await dependencies.audit("apply", createAuthzedBackfillApply(), signal);
+  throwIfAuthzedActivationAborted(signal);
   if (reconciliation.status === "failed" || reconciliation.truncated) {
     throw protocolError(AUTHZED_ERROR_CODES.ACTIVATION_GRAPH_DIRTY, "activation_graph_reconcile");
   }
-  const audit = await dependencies.audit("dry_run", createAuthzedBackfillNoopApply());
+  const audit = await dependencies.audit("dry_run", createAuthzedBackfillNoopApply(), signal);
+  throwIfAuthzedActivationAborted(signal);
   assertCleanAudit(audit);
   return { auditCounters: audit.counters, completedAtSnapshot: reconciliation.completedAtSnapshot };
 };
 
 const collectEvidence = async (
   dependencies: TActivationDependencies,
-  throughSourceSequence?: bigint
+  throughSourceSequence?: bigint,
+  signal?: AbortSignal
 ): Promise<TAuthzedActivationEvidence> => {
+  throwIfAuthzedActivationAborted(signal);
   const sourceSequenceWatermark = throughSourceSequence ?? (await getLatestAuthzedSourceSequence());
-  const drain = await dependencies.drainOutbox({ throughSourceSequence: sourceSequenceWatermark });
+  throwIfAuthzedActivationAborted(signal);
+  const drain = await dependencies.drainOutbox({ signal, throughSourceSequence: sourceSequenceWatermark });
+  throwIfAuthzedActivationAborted(signal);
   if (drain.status !== "drained" || drain.deadLettered > 0 || drain.failed > 0) {
     throw protocolError(AUTHZED_ERROR_CODES.ACTIVATION_OUTBOX_PENDING, "activation_outbox_drain");
   }
-  const graph = await reconcileAndAudit(dependencies);
+  const graph = await reconcileAndAudit(dependencies, signal);
   const outbox = await dependencies.getOutboxStatus(sourceSequenceWatermark);
+  throwIfAuthzedActivationAborted(signal);
   if (!isOutboxClean(outbox)) {
     throw protocolError(AUTHZED_ERROR_CODES.ACTIVATION_OUTBOX_PENDING, "activation_outbox_verify");
   }
@@ -182,26 +199,34 @@ const prepareAuthzedActivationReceipt = async (
   await acquireAuthzedPreparationLease(leaseOwner);
   try {
     configureAuthzedClientForBulkWork();
-    await assertHealthy(dependencies);
-    const schema = await dependencies.applySchema(expectedCurrentDigest);
-    const evidence = await collectEvidence(dependencies);
-    const [contractDigest, schemaDigest] = await Promise.all([
-      Promise.resolve(getAuthzedAuthorizationContractDigest()),
-      getCanonicalAuthzedSchemaDigest(),
-    ]);
-    if (schema.sourceDigest !== schemaDigest || (await dependencies.checkSchema()).status !== "matched") {
-      throw protocolError(AUTHZED_ERROR_CODES.ACTIVATION_GRAPH_DIRTY, "activation_schema_verify");
-    }
-    return await createPreparedAuthzedActivationReceipt(
-      {
-        ...evidence,
-        ...identity,
-        clientConfigDigest: getAuthzedClientConfigDigest(),
-        contractDigest,
-        schemaDigest,
+    const receiptInput = await runWithRenewingAuthzedPreparationLease(
+      async (signal) => {
+        await assertHealthy(dependencies, signal);
+        const schema = await dependencies.applySchema(expectedCurrentDigest);
+        throwIfAuthzedActivationAborted(signal);
+        const evidence = await collectEvidence(dependencies, undefined, signal);
+        const [contractDigest, schemaDigest] = await Promise.all([
+          Promise.resolve(getAuthzedAuthorizationContractDigest()),
+          getCanonicalAuthzedSchemaDigest(),
+        ]);
+        throwIfAuthzedActivationAborted(signal);
+        if (schema.sourceDigest !== schemaDigest || (await dependencies.checkSchema()).status !== "matched") {
+          throw protocolError(AUTHZED_ERROR_CODES.ACTIVATION_GRAPH_DIRTY, "activation_schema_verify");
+        }
+        throwIfAuthzedActivationAborted(signal);
+
+        return {
+          ...evidence,
+          ...identity,
+          clientConfigDigest: getAuthzedClientConfigDigest(),
+          contractDigest,
+          schemaDigest,
+        };
       },
-      leaseOwner
+      () => renewAuthzedPreparationLease(leaseOwner)
     );
+
+    return await createPreparedAuthzedActivationReceipt(receiptInput, leaseOwner);
   } catch (error) {
     await abandonAuthzedPreparation(leaseOwner);
     throw error;
@@ -238,7 +263,9 @@ export const activatePreparedAuthzedAuthorization = async (
   configureAuthzedClientForBulkWork();
   try {
     await assertHealthy(dependencies);
-    await activateAuthzedAuthorization(receiptId, manifestDigest, () => collectEvidence(dependencies));
+    await activateAuthzedAuthorization(receiptId, manifestDigest, (signal) =>
+      collectEvidence(dependencies, undefined, signal)
+    );
   } finally {
     closeAuthzedClient();
   }
@@ -254,7 +281,9 @@ export const finalizePreparedAuthzedAuthorization = async (
   configureAuthzedClientForBulkWork();
   try {
     await assertHealthy(dependencies);
-    await finalizeAuthzedActivation(receiptId, manifestDigest, () => collectEvidence(dependencies));
+    await finalizeAuthzedActivation(receiptId, manifestDigest, (signal) =>
+      collectEvidence(dependencies, undefined, signal)
+    );
   } finally {
     closeAuthzedClient();
   }
@@ -348,8 +377,8 @@ export const bootstrapFreshAuthzedActivation = async (
 
   configureAuthzedClientForBulkWork();
   try {
-    await activateAuthzedAuthorization(receiptId, candidateManifestDigest, () =>
-      collectEvidence(dependencies)
+    await activateAuthzedAuthorization(receiptId, candidateManifestDigest, (signal) =>
+      collectEvidence(dependencies, undefined, signal)
     );
   } finally {
     closeAuthzedClient();

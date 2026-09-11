@@ -143,7 +143,7 @@ describe("AuthZed runtime activation", () => {
     expect(getCanonicalAuthzedSchemaDigest).not.toHaveBeenCalled();
   });
 
-  test("accepts a compatible successor target after activation is finalized", async () => {
+  test("rejects a different target manifest after activation is finalized", async () => {
     vi.mocked(getAuthzedActivationStatus).mockResolvedValue({
       activeReceiptId: receiptId,
       authority: "spicedb",
@@ -154,9 +154,45 @@ describe("AuthZed runtime activation", () => {
     });
     vi.mocked(createAuthzedReleaseManifestDigest).mockReturnValue(digest("9"));
 
+    await expect(checkAuthzedRuntimeActivation()).rejects.toMatchObject({
+      code: "authzed_activation_required",
+      operation: "activation_runtime_receipt",
+    });
+  });
+
+  test("accepts a fresh-install target only when its finalized receipt matches the manifest", async () => {
+    vi.mocked(getAuthzedActivationStatus).mockResolvedValue({
+      activeReceiptId: receiptId,
+      authority: "spicedb",
+      fenceActive: false,
+      generation: 1n,
+      pendingReceiptId: null,
+      transition: "idle",
+    });
+    vi.mocked(getAuthzedActivationReceipt).mockResolvedValue({
+      bridgeImageDigest: null,
+      bridgeManifestDigest: null,
+      candidateImageDigest: null,
+      candidateManifestDigest: digest("a"),
+      clientConfigDigest: digest("d"),
+      contractDigest: digest("b"),
+      generation: 1n,
+      id: receiptId,
+      kind: "fresh_install",
+      protocolVersion: 1,
+      schemaDigest: digest("c"),
+      status: "active",
+    });
+
     await expect(checkAuthzedRuntimeActivation()).resolves.toEqual({
       authority: "spicedb",
       status: "ready",
+    });
+
+    vi.mocked(createAuthzedReleaseManifestDigest).mockReturnValue(digest("9"));
+    await expect(checkAuthzedRuntimeActivation()).rejects.toMatchObject({
+      code: "authzed_activation_required",
+      operation: "activation_runtime_receipt",
     });
   });
 

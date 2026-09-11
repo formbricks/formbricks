@@ -82,9 +82,8 @@ export const checkAuthzedRuntimeActivation = async (): Promise<TAuthzedRuntimeAc
     receipt.status !== "active" ||
     receipt.generation !== status.generation ||
     receipt.protocolVersion !== AUTHZED_ACTIVATION_PROTOCOL_VERSION ||
-    (status.transition === "activating" &&
-      (receipt.kind !== "upgrade" ||
-        receipt.candidateManifestDigest !== createAuthzedReleaseManifestDigest(manifest))) ||
+    receipt.candidateManifestDigest !== createAuthzedReleaseManifestDigest(manifest) ||
+    (status.transition === "activating" && receipt.kind !== "upgrade") ||
     receipt.contractDigest !== contractDigest ||
     receipt.schemaDigest !== schemaDigest ||
     receipt.clientConfigDigest !== getAuthzedClientConfigDigest()

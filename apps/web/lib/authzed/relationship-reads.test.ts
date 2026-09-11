@@ -72,6 +72,18 @@ describe("readAllRelationships", () => {
     });
   });
 
+  test("stops pagination after activation cancellation", async () => {
+    const controller = new AbortController();
+    const cancellation = new Error("activation_cancelled");
+    readRelationships.mockImplementationOnce(async () => {
+      controller.abort(cancellation);
+      return fullPage("first", "cursor-1");
+    });
+
+    await expect(readAllRelationships(client, filter, controller.signal)).rejects.toBe(cancellation);
+    expect(readRelationships).toHaveBeenCalledOnce();
+  });
+
   test("abandons the read when a later page reports a different revision", async () => {
     // The cursor is supposed to hold the revision steady. If it ever did not, the pages would describe
     // different views and a pruning caller could delete a relationship that merely moved between them.

@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { throwIfAuthzedActivationAborted } from "./activation-safety";
 import { reconcileApiKeyRelationships } from "./api-key";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
@@ -89,8 +90,15 @@ const PROJECTED_WITHOUT_WORK: TAuthzedProjectionResult = { passes: 0, status: "p
  */
 const runChunkedProjection = async <TTargets extends Readonly<Record<string, ReadonlyArray<unknown>>>>(
   reconcile: (targets: TTargets) => Promise<TAuthzedProjectionResult>,
-  targets: TTargets
-): Promise<TAuthzedProjectionResult> => (await runChunked(reconcile, targets)) ?? PROJECTED_WITHOUT_WORK;
+  targets: TTargets,
+  signal?: AbortSignal
+): Promise<TAuthzedProjectionResult> =>
+  (await runChunked(async (chunk) => {
+    throwIfAuthzedActivationAborted(signal);
+    const result = await reconcile(chunk);
+    throwIfAuthzedActivationAborted(signal);
+    return result;
+  }, targets)) ?? PROJECTED_WITHOUT_WORK;
 
 /**
  * Run per-subject projections with a bounded fan-out, stopping at the first that does not project.
@@ -100,12 +108,15 @@ const runChunkedProjection = async <TTargets extends Readonly<Record<string, Rea
  * so `Promise.all` cannot reject here.
  */
 const runBoundedConcurrently = async (
-  operations: ReadonlyArray<() => Promise<TAuthzedProjectionResult>>
+  operations: ReadonlyArray<() => Promise<TAuthzedProjectionResult>>,
+  signal?: AbortSignal
 ): Promise<TAuthzedProjectionResult> => {
   for (let start = 0; start < operations.length; start += AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES) {
+    throwIfAuthzedActivationAborted(signal);
     const results = await Promise.all(
       operations.slice(start, start + AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES).map((run) => run())
     );
+    throwIfAuthzedActivationAborted(signal);
     const failure = results.find((result) => result.status !== "projected");
     if (failure) return failure;
   }
@@ -121,8 +132,10 @@ const runBoundedConcurrently = async (
  * would have returned as `null`, and both mean there is no active user left to hold relationships.
  */
 const reconcileUsers = async (
-  events: ReadonlyArray<TAuthzedOutboxEvent>
+  events: ReadonlyArray<TAuthzedOutboxEvent>,
+  signal?: AbortSignal
 ): Promise<TAuthzedProjectionResult> => {
+  throwIfAuthzedActivationAborted(signal);
   const userIds = [...new Set(events.map(({ primaryId }) => primaryId))];
   if (userIds.length === 0) return PROJECTED_WITHOUT_WORK;
 
@@ -145,28 +158,39 @@ const reconcileUsers = async (
       .flatMap((userId) => [
         () => deleteUserOrganizationRelationships(userId),
         () => deleteUserTeamRelationships(userId),
-      ])
+      ]),
+    signal
   );
   if (removal.status !== "projected") return removal;
 
-  const memberships = await runChunkedProjection(reconcileOrganizationMemberships, {
-    memberships: active.flatMap((user) =>
-      user.memberships.map(({ organizationId }) => ({ organizationId, userId: user.id }))
-    ),
-  });
+  const memberships = await runChunkedProjection(
+    reconcileOrganizationMemberships,
+    {
+      memberships: active.flatMap((user) =>
+        user.memberships.map(({ organizationId }) => ({ organizationId, userId: user.id }))
+      ),
+    },
+    signal
+  );
   if (memberships.status !== "projected") return memberships;
 
-  return runChunkedProjection(reconcileTeamWorkspaceRelationships, {
-    teamMemberships: active.flatMap((user) =>
-      user.teamUsers.map(({ teamId }) => ({ teamId, userId: user.id }))
-    ),
-  });
+  return runChunkedProjection(
+    reconcileTeamWorkspaceRelationships,
+    {
+      teamMemberships: active.flatMap((user) =>
+        user.teamUsers.map(({ teamId }) => ({ teamId, userId: user.id }))
+      ),
+    },
+    signal
+  );
 };
 
 /** Organization events are inserts and deletes only; a row that is gone must lose its relationships. */
 const reconcileOrganizations = async (
-  events: ReadonlyArray<TAuthzedOutboxEvent>
+  events: ReadonlyArray<TAuthzedOutboxEvent>,
+  signal?: AbortSignal
 ): Promise<TAuthzedProjectionResult> => {
+  throwIfAuthzedActivationAborted(signal);
   const organizationIds = [...new Set(events.map(({ primaryId }) => primaryId))];
   if (organizationIds.length === 0) return PROJECTED_WITHOUT_WORK;
 
@@ -182,7 +206,8 @@ const reconcileOrganizations = async (
   return runBoundedConcurrently(
     organizationIds
       .filter((organizationId) => !existing.has(organizationId))
-      .map((organizationId) => () => deleteOrganizationRelationships(organizationId))
+      .map((organizationId) => () => deleteOrganizationRelationships(organizationId)),
+    signal
   );
 };
 
@@ -195,7 +220,10 @@ const reconcileOrganizations = async (
  */
 type TDeliveryGroup = Readonly<{
   events: ReadonlyArray<TAuthzedOutboxEvent>;
-  run: (events: ReadonlyArray<TAuthzedOutboxEvent>) => Promise<TAuthzedProjectionResult>;
+  run: (
+    events: ReadonlyArray<TAuthzedOutboxEvent>,
+    signal?: AbortSignal
+  ) => Promise<TAuthzedProjectionResult>;
 }>;
 
 const buildDeliveryGroups = (grouped: TGroupedEvents): ReadonlyArray<TDeliveryGroup> => {
@@ -206,49 +234,65 @@ const buildDeliveryGroups = (grouped: TGroupedEvents): ReadonlyArray<TDeliveryGr
   const groups: ReadonlyArray<TDeliveryGroup> = [
     {
       events: collect("membership"),
-      run: (events) =>
-        runChunkedProjection(reconcileOrganizationMemberships, {
-          memberships: secondaryTargets(events).map(({ primaryId, secondaryId }) => ({
-            organizationId: primaryId,
-            userId: secondaryId,
-          })),
-        }),
+      run: (events, signal) =>
+        runChunkedProjection(
+          reconcileOrganizationMemberships,
+          {
+            memberships: secondaryTargets(events).map(({ primaryId, secondaryId }) => ({
+              organizationId: primaryId,
+              userId: secondaryId,
+            })),
+          },
+          signal
+        ),
     },
     { events: collect("organization"), run: reconcileOrganizations },
     { events: collect("user"), run: reconcileUsers },
     {
       events: collect("team", "team_membership", "workspace", "workspace_team"),
-      run: (events) =>
-        runChunkedProjection(reconcileTeamWorkspaceRelationships, {
-          teamIds: byType(events, "team").map(({ primaryId }) => primaryId),
-          teamMemberships: secondaryTargets(byType(events, "team_membership")).map(
-            ({ primaryId, secondaryId }) => ({ teamId: primaryId, userId: secondaryId })
-          ),
-          workspaceIds: byType(events, "workspace").map(({ primaryId }) => primaryId),
-          workspaceTeamGrants: secondaryTargets(byType(events, "workspace_team")).map(
-            ({ primaryId, secondaryId }) => ({ teamId: secondaryId, workspaceId: primaryId })
-          ),
-        }),
+      run: (events, signal) =>
+        runChunkedProjection(
+          reconcileTeamWorkspaceRelationships,
+          {
+            teamIds: byType(events, "team").map(({ primaryId }) => primaryId),
+            teamMemberships: secondaryTargets(byType(events, "team_membership")).map(
+              ({ primaryId, secondaryId }) => ({ teamId: primaryId, userId: secondaryId })
+            ),
+            workspaceIds: byType(events, "workspace").map(({ primaryId }) => primaryId),
+            workspaceTeamGrants: secondaryTargets(byType(events, "workspace_team")).map(
+              ({ primaryId, secondaryId }) => ({ teamId: secondaryId, workspaceId: primaryId })
+            ),
+          },
+          signal
+        ),
     },
     {
       events: collect("api_key", "api_key_workspace"),
-      run: (events) =>
-        runChunkedProjection(reconcileApiKeyRelationships, {
-          apiKeyIds: byType(events, "api_key").map(({ primaryId }) => primaryId),
-          apiKeyWorkspaceGrants: secondaryTargets(byType(events, "api_key_workspace")).map(
-            ({ primaryId, secondaryId }) => ({ apiKeyId: primaryId, workspaceId: secondaryId })
-          ),
-        }),
+      run: (events, signal) =>
+        runChunkedProjection(
+          reconcileApiKeyRelationships,
+          {
+            apiKeyIds: byType(events, "api_key").map(({ primaryId }) => primaryId),
+            apiKeyWorkspaceGrants: secondaryTargets(byType(events, "api_key_workspace")).map(
+              ({ primaryId, secondaryId }) => ({ apiKeyId: primaryId, workspaceId: secondaryId })
+            ),
+          },
+          signal
+        ),
     },
     {
       events: collect("feedback_directory", "feedback_directory_assignment"),
-      run: (events) =>
-        runChunkedProjection(reconcileFeedbackDirectoryRelationships, {
-          assignments: secondaryTargets(byType(events, "feedback_directory_assignment")).map(
-            ({ primaryId, secondaryId }) => ({ feedbackDirectoryId: primaryId, workspaceId: secondaryId })
-          ),
-          feedbackDirectoryIds: byType(events, "feedback_directory").map(({ primaryId }) => primaryId),
-        }),
+      run: (events, signal) =>
+        runChunkedProjection(
+          reconcileFeedbackDirectoryRelationships,
+          {
+            assignments: secondaryTargets(byType(events, "feedback_directory_assignment")).map(
+              ({ primaryId, secondaryId }) => ({ feedbackDirectoryId: primaryId, workspaceId: secondaryId })
+            ),
+            feedbackDirectoryIds: byType(events, "feedback_directory").map(({ primaryId }) => primaryId),
+          },
+          signal
+        ),
     },
   ];
 
@@ -266,12 +310,16 @@ type TGroupOutcome =
 
 const runGroup = async (
   group: TDeliveryGroup,
-  events: ReadonlyArray<TAuthzedOutboxEvent>
+  events: ReadonlyArray<TAuthzedOutboxEvent>,
+  signal?: AbortSignal
 ): Promise<TGroupOutcome> => {
+  throwIfAuthzedActivationAborted(signal);
   let result: TAuthzedProjectionResult;
   try {
-    result = await group.run(events);
+    result = await group.run(events, signal);
+    throwIfAuthzedActivationAborted(signal);
   } catch (error) {
+    throwIfAuthzedActivationAborted(signal);
     // Reconcilers never throw — `runBestEffortProjection` converts failures into a result — but the
     // PostgreSQL reads this module makes around them can. Treat that as transient rather than as a
     // fault attributable to any single event.
@@ -341,9 +389,11 @@ const failureOutcome = (
 const deliverGroup = async (
   group: TDeliveryGroup,
   events: ReadonlyArray<TAuthzedOutboxEvent>,
-  depth: number
+  depth: number,
+  signal?: AbortSignal
 ): Promise<TDeliveryOutcome> => {
-  const outcome = await runGroup(group, events);
+  throwIfAuthzedActivationAborted(signal);
+  const outcome = await runGroup(group, events, signal);
   if (outcome.status === "projected") {
     return { delivered: events.map(({ id }) => id), failures: [], haltCode: null };
   }
@@ -356,7 +406,7 @@ const deliverGroup = async (
   if (!splittable) return failureOutcome(events, outcome);
 
   const middle = Math.ceil(events.length / 2);
-  const left = await deliverGroup(group, events.slice(0, middle), depth + 1);
+  const left = await deliverGroup(group, events.slice(0, middle), depth + 1, signal);
   if (left.haltCode) {
     const untried = events.slice(middle).map(({ id }) => id);
     return {
@@ -371,7 +421,7 @@ const deliverGroup = async (
     };
   }
 
-  const right = await deliverGroup(group, events.slice(middle), depth + 1);
+  const right = await deliverGroup(group, events.slice(middle), depth + 1, signal);
   return {
     delivered: [...left.delivered, ...right.delivered],
     failures: [...left.failures, ...right.failures],
@@ -379,13 +429,17 @@ const deliverGroup = async (
   };
 };
 
-const deliverEventGroups = async (grouped: TGroupedEvents): Promise<TDeliveryOutcome> => {
+const deliverEventGroups = async (
+  grouped: TGroupedEvents,
+  signal?: AbortSignal
+): Promise<TDeliveryOutcome> => {
   const groups = buildDeliveryGroups(grouped);
   const delivered: string[] = [];
   const failures: TFailure[] = [];
 
   for (const [index, group] of groups.entries()) {
-    const outcome = await deliverGroup(group, group.events, 0);
+    throwIfAuthzedActivationAborted(signal);
+    const outcome = await deliverGroup(group, group.events, 0, signal);
     delivered.push(...outcome.delivered);
     failures.push(...outcome.failures);
 
@@ -418,13 +472,17 @@ const mergeFailures = (failures: ReadonlyArray<TFailure>): ReadonlyArray<TFailur
 export const processAuthzedOutboxBatch = async (
   leaseOwner = createAuthzedOutboxLeaseOwner(),
   batchSize = AUTHZED_OUTBOX_BATCH_SIZE,
-  throughSourceSequence?: bigint
+  throughSourceSequence?: bigint,
+  signal?: AbortSignal
 ): Promise<Readonly<{ claimed: number; deadLettered: number; delivered: number; failed: number }>> => {
+  throwIfAuthzedActivationAborted(signal);
   const events = await claimAuthzedOutboxEvents(leaseOwner, batchSize, throughSourceSequence);
+  throwIfAuthzedActivationAborted(signal);
   if (events.length === 0) return { claimed: 0, deadLettered: 0, delivered: 0, failed: 0 };
 
   const startedAt = performance.now();
-  const outcome = await deliverEventGroups(groupEvents(events));
+  const outcome = await deliverEventGroups(groupEvents(events), signal);
+  throwIfAuthzedActivationAborted(signal);
   const durationMs = performance.now() - startedAt;
 
   await markAuthzedOutboxEventsDelivered(leaseOwner, outcome.delivered);
@@ -476,15 +534,18 @@ export const drainAuthzedOutbox = async (
   options: number | TAuthzedOutboxDrainOptions = 100
 ): Promise<TAuthzedOutboxDrainResult> => {
   const maxBatches = typeof options === "number" ? options : (options.maxBatches ?? 100);
+  const signal = typeof options === "number" ? undefined : options.signal;
   const throughSourceSequence = typeof options === "number" ? undefined : options.throughSourceSequence;
   const totals = { claimed: 0, deadLettered: 0, delivered: 0, failed: 0 };
   const leaseOwner = createAuthzedOutboxLeaseOwner();
 
   for (let batch = 0; batch < maxBatches; batch++) {
+    throwIfAuthzedActivationAborted(signal);
     const result = await processAuthzedOutboxBatch(
       leaseOwner,
       AUTHZED_OUTBOX_BATCH_SIZE,
-      throughSourceSequence
+      throughSourceSequence,
+      signal
     );
     totals.claimed += result.claimed;
     totals.deadLettered += result.deadLettered;
@@ -496,7 +557,9 @@ export const drainAuthzedOutbox = async (
     if (result.claimed === 0 || result.delivered === 0) break;
   }
 
+  throwIfAuthzedActivationAborted(signal);
   const status = await getAuthzedOutboxStatus(throughSourceSequence);
+  throwIfAuthzedActivationAborted(signal);
   recordAuthzedOutboxStatus(status);
   return { ...totals, remaining: status.pending, status: status.pending === 0 ? "drained" : "partial" };
 };

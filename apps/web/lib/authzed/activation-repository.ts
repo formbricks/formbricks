@@ -2,8 +2,10 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { runAuthzedActivationWithTimeout } from "./activation-safety";
 import {
   AUTHZED_ACTIVATION_CONTROL_ID,
+  AUTHZED_ACTIVATION_FINALIZATION_SETTLEMENT_GRACE_MS,
   AUTHZED_ACTIVATION_FINALIZATION_TIMEOUT_MS,
   AUTHZED_ACTIVATION_PROTOCOL_VERSION,
   type TAuthzedActivationEvidence,
@@ -138,6 +140,20 @@ export const acquireAuthzedPreparationLease = async (leaseOwner: string): Promis
   assertOne(count, "activation_prepare_lease");
 };
 
+export const renewAuthzedPreparationLease = async (leaseOwner: string): Promise<void> => {
+  const count = await prisma.$executeRaw`
+    UPDATE "AuthzedAuthorizationControl"
+    SET "maintenanceLeaseExpiresAt" = clock_timestamp() + INTERVAL '5 minutes',
+        "updatedAt" = clock_timestamp()
+    WHERE "id" = ${AUTHZED_ACTIVATION_CONTROL_ID}
+      AND "authority" = 'legacy'::"AuthzedAuthorizationAuthority"
+      AND "transition" = 'preparing'::"AuthzedAuthorizationTransition"
+      AND "maintenanceLeaseOwner" = ${leaseOwner}
+      AND "maintenanceLeaseExpiresAt" > clock_timestamp()
+  `;
+  assertOne(count, "activation_prepare_lease_renew");
+};
+
 export const abandonAuthzedPreparation = async (leaseOwner: string): Promise<void> => {
   await prisma.authzedAuthorizationControl.updateMany({
     where: {
@@ -226,28 +242,11 @@ const resetFailedActivation = async (receiptId: string): Promise<void> => {
   });
 };
 
-const withTimeout = async <T>(operation: Promise<T>): Promise<T> => {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      operation,
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(
-          () => reject(activationError(AUTHZED_ERROR_CODES.ACTIVATION_REQUIRED, "activation_timeout")),
-          AUTHZED_ACTIVATION_FINALIZATION_TIMEOUT_MS
-        );
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-};
-
 /** Fence source mutations, verify the final graph, and make SpiceDB authoritative atomically. */
 export const activateAuthzedAuthorization = async (
   receiptId: string,
   runtimeManifestDigest: TAuthzedDigest,
-  collectFinalEvidence: () => Promise<TAuthzedActivationEvidence>
+  collectFinalEvidence: (signal: AbortSignal) => Promise<TAuthzedActivationEvidence>
 ): Promise<void> => {
   await prisma.$transaction(async (tx) => {
     const control = await lockControl(tx);
@@ -284,7 +283,7 @@ export const activateAuthzedAuthorization = async (
         await tx.$executeRaw`
           SELECT pg_advisory_xact_lock(${AUTHZED_ADVISORY_LOCK_NAMESPACE}, ${AUTHZED_ADVISORY_LOCK_KEY})
         `;
-        const evidence = await withTimeout(collectFinalEvidence());
+        const evidence = await runAuthzedActivationWithTimeout(collectFinalEvidence);
         const control = await lockControl(tx);
         if (
           control.authority !== "legacy" ||
@@ -324,7 +323,10 @@ export const activateAuthzedAuthorization = async (
         `;
         assertOne(count, "activation_authority_cas");
       },
-      { timeout: AUTHZED_ACTIVATION_FINALIZATION_TIMEOUT_MS + 30_000 }
+      {
+        timeout:
+          AUTHZED_ACTIVATION_FINALIZATION_TIMEOUT_MS + AUTHZED_ACTIVATION_FINALIZATION_SETTLEMENT_GRACE_MS,
+      }
     );
   } catch (error) {
     await resetFailedActivation(receiptId);
@@ -335,7 +337,7 @@ export const activateAuthzedAuthorization = async (
 export const finalizeAuthzedActivation = async (
   receiptId: string,
   candidateManifestDigest: TAuthzedDigest,
-  collectFinalEvidence: () => Promise<TAuthzedActivationEvidence>
+  collectFinalEvidence: (signal: AbortSignal) => Promise<TAuthzedActivationEvidence>
 ): Promise<void> => {
   // The candidate validation window can legitimately outlive the original 15-minute fence. Renew it
   // before finalization so a slow rollout always has a safe forward path instead of becoming wedged.
@@ -370,7 +372,7 @@ export const finalizeAuthzedActivation = async (
       await tx.$executeRaw`
         SELECT pg_advisory_xact_lock(${AUTHZED_ADVISORY_LOCK_NAMESPACE}, ${AUTHZED_ADVISORY_LOCK_KEY})
       `;
-      const evidence = await withTimeout(collectFinalEvidence());
+      const evidence = await runAuthzedActivationWithTimeout(collectFinalEvidence);
       const control = await lockControl(tx);
       const receipt = await readReceipt(tx, receiptId);
       if (
@@ -410,7 +412,10 @@ export const finalizeAuthzedActivation = async (
       });
       assertOne(updated.count, "activation_finalize_cas");
     },
-    { timeout: AUTHZED_ACTIVATION_FINALIZATION_TIMEOUT_MS + 30_000 }
+    {
+      timeout:
+        AUTHZED_ACTIVATION_FINALIZATION_TIMEOUT_MS + AUTHZED_ACTIVATION_FINALIZATION_SETTLEMENT_GRACE_MS,
+    }
   );
 };
 

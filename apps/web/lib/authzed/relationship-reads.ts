@@ -1,4 +1,5 @@
 import "server-only";
+import { throwIfAuthzedActivationAborted } from "./activation-safety";
 import type {
   TAuthzedClient,
   TAuthzedReadCursor,
@@ -96,17 +97,20 @@ export type TAuthzedRelationshipObservation = Readonly<{
 export const forEachRelationshipPage = async (
   client: Pick<TAuthzedClient, "readRelationships">,
   filter: TAuthzedRelationshipReadFilter,
-  onPage: (relationships: ReadonlyArray<TAuthzedRelationship>) => Promise<void>
+  onPage: (relationships: ReadonlyArray<TAuthzedRelationship>) => Promise<void>,
+  signal?: AbortSignal
 ): Promise<TAuthzedSnapshot | null> => {
   let snapshot: TAuthzedSnapshot | null = null;
   let cursor: TAuthzedReadCursor | undefined;
 
   do {
+    throwIfAuthzedActivationAborted(signal);
     const page = await client.readRelationships({
       ...(cursor ? { cursor } : {}),
       filter,
       limit: AUTHZED_MAX_RELATIONSHIP_READS,
     });
+    throwIfAuthzedActivationAborted(signal);
 
     assertSameRevision(snapshot, page.snapshot, "for_each_relationship_page");
     assertCursorAdvanced(cursor, page.cursor, "for_each_relationship_page");
@@ -116,6 +120,7 @@ export const forEachRelationshipPage = async (
 
     if (page.relationships.length > 0) {
       await onPage(page.relationships);
+      throwIfAuthzedActivationAborted(signal);
     }
   } while (cursor);
 
@@ -146,18 +151,21 @@ export const forEachRelationshipPage = async (
  */
 export const readAllRelationships = async (
   client: Pick<TAuthzedClient, "readRelationships">,
-  filter: TAuthzedRelationshipReadFilter
+  filter: TAuthzedRelationshipReadFilter,
+  signal?: AbortSignal
 ): Promise<TAuthzedRelationshipObservation> => {
   const relationships: TAuthzedRelationship[] = [];
   let snapshot: TAuthzedSnapshot | null = null;
   let cursor: TAuthzedReadCursor | undefined;
 
   do {
+    throwIfAuthzedActivationAborted(signal);
     const page = await client.readRelationships({
       ...(cursor ? { cursor } : {}),
       filter,
       limit: AUTHZED_MAX_RELATIONSHIP_READS,
     });
+    throwIfAuthzedActivationAborted(signal);
 
     if (relationships.length + page.relationships.length > AUTHZED_MAX_OBSERVED_RELATIONSHIPS_PER_UNIT) {
       throw new AuthzedError({
