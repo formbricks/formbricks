@@ -296,6 +296,8 @@ describe("fresh AuthZed activation bootstrap", () => {
 describe("AuthZed activation preparation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(readAuthzedReleaseManifest).mockResolvedValue({ authorizationMode: "legacy_bridge" } as never);
+    vi.mocked(getAuthzedActivationStatus).mockResolvedValue(status());
     vi.mocked(createPreparedAuthzedActivationReceipt).mockResolvedValue(receiptId);
   });
 
@@ -303,9 +305,64 @@ describe("AuthZed activation preparation", () => {
     vi.useRealTimers();
   });
 
+  test("returns the same prepared receipt when the previous CLI response was lost", async () => {
+    vi.mocked(getAuthzedActivationStatus).mockResolvedValue(
+      status({ pendingReceiptId: receiptId, transition: "prepared" })
+    );
+    vi.mocked(getAuthzedActivationReceipt).mockResolvedValue(
+      receipt({
+        bridgeImageDigest: digest("1"),
+        bridgeManifestDigest: digest("a"),
+        candidateImageDigest: digest("2"),
+        candidateManifestDigest: digest("3"),
+        kind: "upgrade",
+      })
+    );
+
+    await expect(
+      prepareAuthzedActivation({
+        bridgeImageDigest: digest("1"),
+        bridgeManifestDigest: digest("a"),
+        candidateImageDigest: digest("2"),
+        candidateManifestDigest: digest("3"),
+      })
+    ).resolves.toBe(receiptId);
+
+    expect(acquireAuthzedPreparationLease).not.toHaveBeenCalled();
+    expect(createPreparedAuthzedActivationReceipt).not.toHaveBeenCalled();
+  });
+
+  test("rejects a prepared receipt from a different immutable plan", async () => {
+    vi.mocked(getAuthzedActivationStatus).mockResolvedValue(
+      status({ pendingReceiptId: receiptId, transition: "prepared" })
+    );
+    vi.mocked(getAuthzedActivationReceipt).mockResolvedValue(
+      receipt({
+        bridgeImageDigest: digest("1"),
+        bridgeManifestDigest: digest("a"),
+        candidateImageDigest: digest("2"),
+        candidateManifestDigest: digest("9"),
+        kind: "upgrade",
+      })
+    );
+
+    await expect(
+      prepareAuthzedActivation({
+        bridgeImageDigest: digest("1"),
+        bridgeManifestDigest: digest("a"),
+        candidateImageDigest: digest("2"),
+        candidateManifestDigest: digest("3"),
+      })
+    ).rejects.toMatchObject({
+      code: "authzed_activation_manifest_mismatch",
+      operation: "activation_prepare_existing_receipt",
+    });
+
+    expect(acquireAuthzedPreparationLease).not.toHaveBeenCalled();
+  });
+
   test("renews its preparation lease while schema work is still running", async () => {
     vi.useFakeTimers();
-    vi.mocked(readAuthzedReleaseManifest).mockResolvedValue({ authorizationMode: "legacy_bridge" } as never);
     let finishSchema!: (value: Readonly<{ sourceDigest: `sha256:${string}` }>) => void;
     const applySchema = vi.fn(
       () =>

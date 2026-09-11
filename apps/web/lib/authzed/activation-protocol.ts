@@ -24,7 +24,11 @@ import {
 } from "./activation-repository";
 import { checkAuthzedRuntimeActivation } from "./activation-runtime";
 import { runWithRenewingAuthzedPreparationLease, throwIfAuthzedActivationAborted } from "./activation-safety";
-import type { TAuthzedActivationEvidence, TAuthzedDigest } from "./activation-types";
+import {
+  AUTHZED_ACTIVATION_PROTOCOL_VERSION,
+  type TAuthzedActivationEvidence,
+  type TAuthzedDigest,
+} from "./activation-types";
 import { type TAuthzedBackfillApply, type TAuthzedBackfillResult, runAuthzedBackfill } from "./backfill";
 import { createAuthzedBackfillApply, createAuthzedBackfillNoopApply } from "./backfill-apply";
 import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
@@ -238,8 +242,44 @@ const prepareAuthzedActivationReceipt = async (
 export const prepareAuthzedActivation = async (
   input: TPrepareInput,
   dependencyOverrides: Partial<TActivationDependencies> = {}
-): Promise<string> =>
-  prepareAuthzedActivationReceipt(
+): Promise<string> => {
+  assertConfiguration();
+  const runtimeManifestDigest = await currentManifestDigest("legacy_bridge");
+  if (runtimeManifestDigest !== input.bridgeManifestDigest) {
+    throw protocolError(AUTHZED_ERROR_CODES.ACTIVATION_MANIFEST_MISMATCH, "activation_runtime_manifest");
+  }
+
+  const status = await getAuthzedActivationStatus();
+  if (status.authority === "legacy" && status.transition === "prepared" && status.pendingReceiptId) {
+    const [existingReceipt, contractDigest, schemaDigest] = await Promise.all([
+      getAuthzedActivationReceipt(status.pendingReceiptId),
+      Promise.resolve(getAuthzedAuthorizationContractDigest()),
+      getCanonicalAuthzedSchemaDigest(),
+    ]);
+    if (
+      existingReceipt.kind === "upgrade" &&
+      existingReceipt.status === "prepared" &&
+      existingReceipt.generation === status.generation &&
+      existingReceipt.protocolVersion === AUTHZED_ACTIVATION_PROTOCOL_VERSION &&
+      existingReceipt.bridgeImageDigest === input.bridgeImageDigest &&
+      existingReceipt.bridgeManifestDigest === input.bridgeManifestDigest &&
+      existingReceipt.candidateImageDigest === input.candidateImageDigest &&
+      existingReceipt.candidateManifestDigest === input.candidateManifestDigest &&
+      existingReceipt.contractDigest === contractDigest &&
+      existingReceipt.schemaDigest === schemaDigest &&
+      existingReceipt.clientConfigDigest === getAuthzedClientConfigDigest()
+    ) {
+      // The receipt transaction may have committed even when the CLI response was lost. Returning the
+      // same immutable receipt makes a rerun safe without exposing receipt identifiers through status.
+      return existingReceipt.id;
+    }
+    throw protocolError(
+      AUTHZED_ERROR_CODES.ACTIVATION_MANIFEST_MISMATCH,
+      "activation_prepare_existing_receipt"
+    );
+  }
+
+  return prepareAuthzedActivationReceipt(
     {
       bridgeImageDigest: input.bridgeImageDigest,
       bridgeManifestDigest: input.bridgeManifestDigest,
@@ -252,6 +292,7 @@ export const prepareAuthzedActivation = async (
     input.expectedCurrentDigest,
     dependencyOverrides
   );
+};
 
 export const activatePreparedAuthzedAuthorization = async (
   receiptId: string,
