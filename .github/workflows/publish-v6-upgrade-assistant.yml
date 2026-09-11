@@ -11,8 +11,16 @@ on:
         description: Immutable, signed v5 bridge image reference
         required: true
         type: string
+      bridge_runtime_manifest_digest:
+        description: Verified digest of the runtime manifest embedded in the bridge image
+        required: true
+        type: string
       target_image_ref:
         description: Immutable, signed v6 target image reference
+        required: true
+        type: string
+      target_runtime_manifest_digest:
+        description: Verified digest of the runtime manifest embedded in the target image
         required: true
         type: string
       minimum_source_version:
@@ -30,8 +38,16 @@ on:
         description: Immutable, signed v5 bridge image reference
         required: true
         type: string
+      bridge_runtime_manifest_digest:
+        description: Verified digest of the runtime manifest embedded in the bridge image
+        required: true
+        type: string
       target_image_ref:
         description: Immutable, signed v6 target image reference
+        required: true
+        type: string
+      target_runtime_manifest_digest:
+        description: Verified digest of the runtime manifest embedded in the target image
         required: true
         type: string
       minimum_source_version:
@@ -76,9 +92,11 @@ jobs:
       - name: Validate release and signed immutable images
         env:
           BRIDGE_IMAGE_REF: ${{ inputs.bridge_image_ref }}
+          BRIDGE_RUNTIME_MANIFEST_DIGEST: ${{ inputs.bridge_runtime_manifest_digest }}
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
           TARGET_IMAGE_REF: ${{ inputs.target_image_ref }}
+          TARGET_RUNTIME_MANIFEST_DIGEST: ${{ inputs.target_runtime_manifest_digest }}
         run: |
           set -euo pipefail
 
@@ -95,6 +113,15 @@ jobs:
             echo "::error::Bridge and target images must be distinct build artifacts"
             exit 1
           fi
+          digest_pattern='^sha256:[0-9a-f]{64}$'
+          if [[ ! "$BRIDGE_RUNTIME_MANIFEST_DIGEST" =~ $digest_pattern || ! "$TARGET_RUNTIME_MANIFEST_DIGEST" =~ $digest_pattern ]]; then
+            echo "::error::runtime manifest digests must come from verified image artifacts"
+            exit 1
+          fi
+          if [[ "$BRIDGE_RUNTIME_MANIFEST_DIGEST" == "$TARGET_RUNTIME_MANIFEST_DIGEST" ]]; then
+            echo "::error::Bridge and target runtime manifests must be distinct"
+            exit 1
+          fi
 
           gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
 
@@ -108,9 +135,11 @@ jobs:
       - name: Build release-matched preflight bundle
         env:
           BRIDGE_IMAGE_REF: ${{ inputs.bridge_image_ref }}
+          BRIDGE_RUNTIME_MANIFEST_DIGEST: ${{ inputs.bridge_runtime_manifest_digest }}
           MINIMUM_SOURCE_VERSION: ${{ inputs.minimum_source_version }}
           RELEASE_TAG: ${{ inputs.release_tag }}
           TARGET_IMAGE_REF: ${{ inputs.target_image_ref }}
+          TARGET_RUNTIME_MANIFEST_DIGEST: ${{ inputs.target_runtime_manifest_digest }}
         run: |
           set -euo pipefail
           source_revision=$(git rev-parse HEAD)
@@ -119,7 +148,9 @@ jobs:
             --source-revision "$source_revision" \
             --minimum-source-version "$MINIMUM_SOURCE_VERSION" \
             --bridge-image "$BRIDGE_IMAGE_REF" \
+            --bridge-runtime-manifest-digest "$BRIDGE_RUNTIME_MANIFEST_DIGEST" \
             --target-image "$TARGET_IMAGE_REF" \
+            --target-runtime-manifest-digest "$TARGET_RUNTIME_MANIFEST_DIGEST" \
             --output-directory dist/v6-upgrade
 
           release_version="${RELEASE_TAG#v}"

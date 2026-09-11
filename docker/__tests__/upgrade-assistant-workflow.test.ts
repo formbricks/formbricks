@@ -69,8 +69,12 @@ describe("v6 upgrade assistant release workflow", () => {
     expect(publishJob?.with).toMatchObject({
       bridge_image_ref:
         "ghcr.io/${{ github.repository }}@${{ needs.docker-build-authzed-bridge.outputs.IMAGE_DIGEST }}",
+      bridge_runtime_manifest_digest:
+        "${{ needs.docker-build-authzed-bridge.outputs.AUTHZED_RUNTIME_MANIFEST_DIGEST }}",
       target_image_ref:
         "ghcr.io/${{ github.repository }}@${{ needs.docker-build-community.outputs.IMAGE_DIGEST }}",
+      target_runtime_manifest_digest:
+        "${{ needs.docker-build-community.outputs.AUTHZED_RUNTIME_MANIFEST_DIGEST }}",
     });
     expect(bridgeJob).toMatchObject({
       if: expect.stringContaining("github.event.release.tag_name"),
@@ -86,6 +90,9 @@ describe("v6 upgrade assistant release workflow", () => {
 
     const dockerRelease = readWorkflow(dockerReleaseWorkflowPath);
     expect(dockerRelease.jobs?.build?.outputs?.IMAGE_DIGEST).toBe("${{ steps.build.outputs.image_digest }}");
+    expect(dockerRelease.jobs?.build?.outputs?.AUTHZED_RUNTIME_MANIFEST_DIGEST).toBe(
+      "${{ steps.build.outputs.authzed_runtime_manifest_digest }}"
+    );
     expect(readFileSync(join(repositoryRoot, dockerReleaseWorkflowPath), "utf8")).toContain(
       "value: ${{ jobs.build.outputs.IMAGE_DIGEST }}"
     );
@@ -95,6 +102,11 @@ describe("v6 upgrade assistant release workflow", () => {
     );
     expect(dockerAction).toContain("FORMBRICKS_AUTHZED_RELEASE_MODE=${{ inputs.authzed_release_mode }}");
     expect(dockerAction).toContain("FORMBRICKS_BUILD_REVISION=${{ github.sha }}");
+    expect(dockerAction).toContain('"${container_id}:/home/nextjs/authzed-cli/release-manifest.json"');
+    expect(dockerAction).toContain('echo "digest=$manifest_digest" >> "$GITHUB_OUTPUT"');
+    const assistantRelease = readFileSync(join(repositoryRoot, publishWorkflowPath), "utf8");
+    expect(assistantRelease).toContain('--bridge-runtime-manifest-digest "$BRIDGE_RUNTIME_MANIFEST_DIGEST"');
+    expect(assistantRelease).toContain('--target-runtime-manifest-digest "$TARGET_RUNTIME_MANIFEST_DIGEST"');
   });
 
   test("publishes the temporary upgrade chart only for v6 and signs the release copy", () => {

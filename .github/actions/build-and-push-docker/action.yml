@@ -95,6 +95,9 @@ outputs:
   image_digest:
     description: "Image digest from the build"
     value: ${{ steps.build.outputs.digest }}
+  authzed_runtime_manifest_digest:
+    description: "Digest of the AuthZed runtime manifest extracted from the pushed image"
+    value: ${{ steps.authzed-runtime-manifest.outputs.digest }}
 
 runs:
   using: "composite"
@@ -364,6 +367,75 @@ runs:
         DUMMY_CUBEJS_API_SECRET: ${{ env.DUMMY_CUBEJS_API_SECRET }}
         SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
         POSTHOG_KEY: ${{ env.POSTHOG_KEY }}
+
+    - name: Verify embedded AuthZed runtime manifest
+      id: authzed-runtime-manifest
+      if: ${{ github.event_name != 'pull_request' }}
+      shell: bash
+      env:
+        AUTHZED_RELEASE_MODE: ${{ inputs.authzed_release_mode }}
+        ECR_REGISTRY: ${{ inputs.ecr_registry }}
+        ECR_REPOSITORY: ${{ inputs.ecr_repository }}
+        GHCR_IMAGE_NAME: ${{ inputs.ghcr_image_name }}
+        IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        REGISTRY_TYPE: ${{ inputs.registry_type }}
+        SOURCE_REVISION: ${{ github.sha }}
+      run: |
+        set -euo pipefail
+
+        if [[ ! "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+          echo "ERROR: Docker build did not return an immutable image digest"
+          exit 1
+        fi
+
+        if [[ "$REGISTRY_TYPE" == "ghcr" ]]; then
+          image_ref="ghcr.io/${GHCR_IMAGE_NAME}@${IMAGE_DIGEST}"
+        else
+          image_ref="${ECR_REGISTRY}/${ECR_REPOSITORY}@${IMAGE_DIGEST}"
+        fi
+
+        temporary_directory=$(mktemp -d)
+        container_id=""
+        cleanup() {
+          if [[ -n "$container_id" ]]; then
+            docker rm "$container_id" >/dev/null 2>&1 || true
+          fi
+          rm -rf "$temporary_directory"
+        }
+        trap cleanup EXIT
+
+        docker pull --platform linux/amd64 "$image_ref" >/dev/null
+        container_id=$(docker create --platform linux/amd64 "$image_ref")
+        docker cp \
+          "${container_id}:/home/nextjs/authzed-cli/release-manifest.json" \
+          "$temporary_directory/release-manifest.json"
+
+        expected_migration_head=$(jq -er '.migrationHead' authzed/runtime-contract.json)
+        expected_protocol_version=$(jq -er '.protocolVersion' authzed/runtime-contract.json)
+        expected_client_contract_version=$(jq -er '.clientContractVersion' authzed/runtime-contract.json)
+
+        jq -e \
+          --arg authorizationMode "$AUTHZED_RELEASE_MODE" \
+          --arg migrationHead "$expected_migration_head" \
+          --arg sourceRevision "$SOURCE_REVISION" \
+          --argjson clientContractVersion "$expected_client_contract_version" \
+          --argjson protocolVersion "$expected_protocol_version" \
+          '
+            type == "object" and
+            keys == ["authorizationMode", "clientContractVersion", "migrationHead", "protocolVersion", "sourceRevision"] and
+            .authorizationMode == $authorizationMode and
+            .clientContractVersion == $clientContractVersion and
+            .migrationHead == $migrationHead and
+            .protocolVersion == $protocolVersion and
+            .sourceRevision == $sourceRevision
+          ' "$temporary_directory/release-manifest.json" >/dev/null
+
+        canonical_manifest=$(jq -c \
+          '{ authorizationMode, clientContractVersion, migrationHead, protocolVersion, sourceRevision }' \
+          "$temporary_directory/release-manifest.json")
+        manifest_digest="sha256:$(printf '%s' "$canonical_manifest" | sha256sum | awk '{print $1}')"
+        echo "digest=$manifest_digest" >> "$GITHUB_OUTPUT"
+        echo "SUCCESS: Verified the embedded AuthZed runtime manifest"
 
     - name: Sign GHCR image (GHCR only)
       if: ${{ inputs.registry_type == 'ghcr' && (github.event_name == 'workflow_call' || github.event_name == 'release' || github.event_name == 'workflow_dispatch') }}

@@ -9,7 +9,9 @@ Usage: build-v6-upgrade-assistant-bundle.sh \
   --source-revision SHA \
   --minimum-source-version VERSION \
   --bridge-image IMAGE@sha256:DIGEST \
+  --bridge-runtime-manifest-digest sha256:DIGEST \
   --target-image IMAGE@sha256:DIGEST \
+  --target-runtime-manifest-digest sha256:DIGEST \
   --output-directory DIRECTORY
 EOF
 }
@@ -18,7 +20,9 @@ release_version=""
 source_revision=""
 minimum_source_version=""
 bridge_image=""
+bridge_runtime_manifest_digest=""
 target_image=""
+target_runtime_manifest_digest=""
 output_directory=""
 
 while [[ $# -gt 0 ]]; do
@@ -27,33 +31,26 @@ while [[ $# -gt 0 ]]; do
     --source-revision) source_revision="${2:-}"; shift 2 ;;
     --minimum-source-version) minimum_source_version="${2:-}"; shift 2 ;;
     --bridge-image) bridge_image="${2:-}"; shift 2 ;;
+    --bridge-runtime-manifest-digest) bridge_runtime_manifest_digest="${2:-}"; shift 2 ;;
     --target-image) target_image="${2:-}"; shift 2 ;;
+    --target-runtime-manifest-digest) target_runtime_manifest_digest="${2:-}"; shift 2 ;;
     --output-directory) output_directory="${2:-}"; shift 2 ;;
     *) usage; exit 64 ;;
   esac
 done
 
 if [[ -z "$release_version" || -z "$source_revision" || -z "$minimum_source_version" ||
-  -z "$bridge_image" || -z "$target_image" || -z "$output_directory" ]]; then
+  -z "$bridge_image" || -z "$bridge_runtime_manifest_digest" || -z "$target_image" ||
+  -z "$target_runtime_manifest_digest" || -z "$output_directory" ]]; then
   usage
   exit 64
 fi
 
 command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 1; }
 
-readonly runtime_contract_path="authzed/runtime-contract.json"
-if ! jq -e '
-  type == "object" and
-  (.clientContractVersion | type == "number") and
-  (.migrationHead | type == "string") and
-  (.protocolVersion | type == "number")
-' "$runtime_contract_path" >/dev/null 2>&1; then
-  echo "invalid AuthZed runtime contract" >&2
-  exit 1
-fi
-
 readonly semver_pattern='^[vV]?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
 readonly image_pattern='^ghcr\.io/formbricks/formbricks@sha256:[0-9a-f]{64}$'
+readonly digest_pattern='^sha256:[0-9a-f]{64}$'
 
 [[ "$release_version" =~ $semver_pattern ]] || { echo "invalid release version" >&2; exit 1; }
 [[ "$minimum_source_version" =~ $semver_pattern ]] || { echo "invalid minimum source version" >&2; exit 1; }
@@ -63,51 +60,15 @@ readonly image_pattern='^ghcr\.io/formbricks/formbricks@sha256:[0-9a-f]{64}$'
 [[ "$bridge_image" =~ $image_pattern ]] || { echo "bridge image must be an immutable official image" >&2; exit 1; }
 [[ "$target_image" =~ $image_pattern ]] || { echo "target image must be an immutable official image" >&2; exit 1; }
 [[ "$bridge_image" != "$target_image" ]] || { echo "bridge and target images must be distinct" >&2; exit 1; }
+[[ "$bridge_runtime_manifest_digest" =~ $digest_pattern ]] || { echo "invalid bridge runtime manifest digest" >&2; exit 1; }
+[[ "$target_runtime_manifest_digest" =~ $digest_pattern ]] || { echo "invalid target runtime manifest digest" >&2; exit 1; }
+[[ "$bridge_runtime_manifest_digest" != "$target_runtime_manifest_digest" ]] || {
+  echo "bridge and target runtime manifests must be distinct" >&2
+  exit 1
+}
 
 release_version="${release_version#[vV]}"
 minimum_source_version="${minimum_source_version#[vV]}"
-client_contract_version=$(jq -er '.clientContractVersion' "$runtime_contract_path")
-migration_head=$(jq -er '.migrationHead' "$runtime_contract_path")
-protocol_version=$(jq -er '.protocolVersion' "$runtime_contract_path")
-
-bridge_runtime_manifest=$(jq -cn \
-  --arg authorizationMode legacy_bridge \
-  --argjson clientContractVersion "$client_contract_version" \
-  --arg migrationHead "$migration_head" \
-  --argjson protocolVersion "$protocol_version" \
-  --arg sourceRevision "$source_revision" \
-  '{
-    authorizationMode: $authorizationMode,
-    clientContractVersion: $clientContractVersion,
-    migrationHead: $migrationHead,
-    protocolVersion: $protocolVersion,
-    sourceRevision: $sourceRevision
-  }')
-target_runtime_manifest=$(jq -cn \
-  --arg authorizationMode spicedb_authoritative \
-  --argjson clientContractVersion "$client_contract_version" \
-  --arg migrationHead "$migration_head" \
-  --argjson protocolVersion "$protocol_version" \
-  --arg sourceRevision "$source_revision" \
-  '{
-    authorizationMode: $authorizationMode,
-    clientContractVersion: $clientContractVersion,
-    migrationHead: $migrationHead,
-    protocolVersion: $protocolVersion,
-    sourceRevision: $sourceRevision
-  }')
-
-hash_text() {
-  if command -v sha256sum >/dev/null 2>&1; then
-    printf '%s' "$1" | sha256sum | awk '{print $1}'
-  else
-    printf '%s' "$1" | shasum -a 256 | awk '{print $1}'
-  fi
-}
-
-bridge_runtime_manifest_digest="sha256:$(hash_text "$bridge_runtime_manifest")"
-target_runtime_manifest_digest="sha256:$(hash_text "$target_runtime_manifest")"
-
 mkdir -p "$output_directory"
 cp docker/formbricks-upgrade-assistant "$output_directory/formbricks-upgrade-assistant"
 chmod 0755 "$output_directory/formbricks-upgrade-assistant"
