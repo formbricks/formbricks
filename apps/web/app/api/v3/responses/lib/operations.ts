@@ -393,7 +393,7 @@ export async function getV3Response({
     const survey = surveys.get(row.surveyId);
 
     if (!survey) {
-      return problemForbidden(requestId, undefined, instance);
+      return problemForbidden(requestId, "Survey not found in this workspace", instance);
     }
 
     const resource = createV3ResponseSerializer().toResource(row, survey);
@@ -628,14 +628,14 @@ export async function createV3Response({
       finished: body.finished,
       data: composed.data ?? {},
       variables: composed.variables ?? {},
-      ttc: {},
-      meta: undefined,
-      tagIds: [],
+      ttc: normalizeV3Ttc(body.ttc, body.finished),
+      meta: body.meta,
+      tagIds: body.tags ?? [],
       endingId: body.endingId,
       language: storedLanguage,
-      contactId: undefined,
+      contactId: body.contactId,
       displayId: body.displayId,
-      singleUseId: undefined,
+      singleUseId: body.singleUseId,
     });
 
     if (!outcome.ok) {
