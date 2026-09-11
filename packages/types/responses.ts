@@ -328,8 +328,10 @@ const ZResponseFilterCriteriaFields = z.object({
 
   tags: z
     .object({
-      applied: z.array(z.string()).optional(),
-      notApplied: z.array(z.string()).optional(),
+      // `applied` expands to one relation subquery per tag in createFilterTags, so it carries the
+      // same clause-expansion risk as the data filters above.
+      applied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
+      notApplied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
     })
     .optional(),
 
