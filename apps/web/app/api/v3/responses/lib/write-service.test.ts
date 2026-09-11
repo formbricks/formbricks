@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createScopedResponse, dispatchV3ResponsePipeline, updateScopedResponse } from "./write-service";
+import {
+  type TV3WriteSurveyRow,
+  createScopedResponse,
+  dispatchV3ResponsePipeline,
+  updateScopedResponse,
+} from "./write-service";
 
 vi.mock("server-only", () => ({}));
 
@@ -41,7 +46,22 @@ vi.mock("@/lib/embedded-data/survey-fields", () => ({
 
 const { Prisma } = await import("@formbricks/database/prisma");
 
-const survey = { id: "clsv000000000000000000001", workspaceId: "clws000000000000000000001" } as never;
+/**
+ * The mocked constructor takes `(message, code, meta)`; the real one takes `(message, params)`, and
+ * `vi.mock` replaces the value without replacing the type. Cast at the one place that builds one
+ * rather than spreading `as never` through every assertion below.
+ */
+const knownRequestError = (message: string, code: string, target?: string[]) =>
+  new (Prisma.PrismaClientKnownRequestError as unknown as new (
+    message: string,
+    code: string,
+    meta?: { target?: string[] }
+  ) => Error)(message, code, target ? { target } : undefined);
+
+const survey = {
+  id: "clsv000000000000000000001",
+  workspaceId: "clws000000000000000000001",
+} as unknown as TV3WriteSurveyRow;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -55,11 +75,9 @@ describe("unique-constraint races", () => {
    */
   test("a singleUseId collision becomes the same 422 issue the pre-check raises", async () => {
     mockTransaction.mockRejectedValueOnce(
-      new Prisma.PrismaClientKnownRequestError(
-        "Unique constraint failed on the fields: (`singleUseId`)",
-        "P2002",
-        { target: ["Response_singleUseId_key"] }
-      )
+      knownRequestError("Unique constraint failed on the fields: (`singleUseId`)", "P2002", [
+        "Response_singleUseId_key",
+      ])
     );
 
     const outcome = await createScopedResponse({
@@ -86,9 +104,7 @@ describe("unique-constraint races", () => {
 
   /** The index name is internal, and naming it in a response body tells a caller about our schema. */
   test("the constraint name never reaches the issue", async () => {
-    mockTransaction.mockRejectedValueOnce(
-      new Prisma.PrismaClientKnownRequestError("boom", "P2002", { target: ["Response_singleUseId_key"] })
-    );
+    mockTransaction.mockRejectedValueOnce(knownRequestError("boom", "P2002", ["Response_singleUseId_key"]));
 
     const outcome = await updateScopedResponse({
       responseId: "clrs000000000000000000001",
@@ -103,7 +119,7 @@ describe("unique-constraint races", () => {
 
   /** Anything that is not a recognised race is still a real failure and must not be swallowed. */
   test("an unrelated Prisma error is rethrown rather than reported as a caller mistake", async () => {
-    mockTransaction.mockRejectedValueOnce(new Prisma.PrismaClientKnownRequestError("gone", "P2025"));
+    mockTransaction.mockRejectedValueOnce(knownRequestError("gone", "P2025"));
 
     await expect(
       updateScopedResponse({
