@@ -645,11 +645,11 @@ authzed:
       backoffLimit: 0
 
     # On Helm upgrades, run the candidate image's DB-only receipt check before replacing application
-    # pods. The release assistant enables this for the initial v5-to-v6 cutover. Keep it disabled for
-    # normal tag-based upgrades unless the operator deliberately opts into the extra pre-upgrade gate
-    # with an immutable deployment.image.digest.
+    # pods. Every Helm upgrade must pin deployment.image.digest so the gate and rollout execute the
+    # same immutable image. The release assistant disables this only for the initial, digest-pinned v5
+    # bridge rollout; application startup still verifies that the bridge remains legacy-authoritative.
     upgradeGate:
-      enabled: false
+      enabled: true
       activeDeadlineSeconds: 120
       backoffLimit: 0
 

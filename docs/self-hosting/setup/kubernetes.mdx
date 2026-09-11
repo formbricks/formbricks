@@ -153,11 +153,11 @@ A fresh install runs a bounded, idempotent activation bootstrap and waits for it
 application starts. General health probes remain independent from SpiceDB. Existing installations upgrade with
 the signed v6 release assistant and temporary upgrade chart; there is no boolean acknowledgement to bypass. The
 first v6 candidate uses an immutable image digest and `migration.mode: external`. The assistant opts that rollout
-into the Helm pre-upgrade gate, which verifies the receipt before replacing application Pods. The gate stays
-disabled for ordinary tag-based upgrades and requires `deployment.image.digest` when enabled; application startup
-always performs the bounded database-only check.
+into the Helm pre-upgrade gate, which verifies the receipt before replacing application Pods. Every Helm upgrade
+must set `deployment.image.digest`, and the receipt gate is enabled by default. The assistant disables it only for
+the initial, digest-pinned bridge rollout; application startup still performs the bounded database-only check.
 
-The default `migration.mode: job` is appropriate for fresh installs and ordinary compatible upgrades. Use
+The default `migration.mode: job` is appropriate for fresh installs and compatible digest-pinned upgrades. Use
 `startup` only when application startup owns migrations, or `external` when your deployment automation has
 already completed them. Follow [AuthZed Operations](/self-hosting/advanced/authzed-operations) and do not expose
 SpiceDB through an Ingress.

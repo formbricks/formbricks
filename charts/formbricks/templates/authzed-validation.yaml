@@ -23,8 +23,8 @@
 {{- fail (printf "deployment.env.%s is not supported; configure the matching authzed value or Secret so activation Jobs and application Pods use one contract" $name) -}}
 {{- end -}}
 {{- end -}}
-{{- if and $upgradeGateEnabled (not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.deployment.image.digest)) -}}
-{{- fail "deployment.image.digest must be a lowercase sha256 digest when the AuthZed pre-upgrade receipt gate is enabled" -}}
+{{- if and .Release.IsUpgrade (not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.deployment.image.digest)) -}}
+{{- fail "deployment.image.digest must be a lowercase sha256 digest for every Formbricks v6 Helm upgrade" -}}
 {{- end -}}
 {{- if and (or $installBootstrapEnabled $upgradeGateEnabled) (not .Values.authzed.activation.database.existingSecret) (not $chartManagesAppSecret) -}}
 {{- fail "authzed.activation.database.existingSecret is required when the chart does not manage the app-secrets Secret" -}}

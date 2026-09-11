@@ -237,7 +237,8 @@ For Helm, the assistant drives two deliberately separate charts:
 The assistant performs this sequence:
 
 1. Deploy the bridge with `authzed.activation.upgradeGate.enabled=false`. PostgreSQL remains authoritative for
-   decisions while the durable projection is populated.
+   decisions while the durable projection is populated. This is the only documented Helm upgrade without the
+   pre-upgrade receipt gate, and the bridge image must still be pinned through `deployment.image.digest`.
 2. Apply the release schema, drain the projection outbox, reconcile the complete relationship graph, and create a
    database-backed receipt tied to the bridge and candidate image digests.
 3. Quiesce authorization mutations, verify a clean final audit and monotonic outbox watermark, then atomically

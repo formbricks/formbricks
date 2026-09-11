@@ -241,25 +241,26 @@ if authzed_disabled_error="$(helm template authzed-disabled "${CHART_DIR}" "${CO
 fi
 grep --fixed-strings 'Formbricks v6 requires AuthZed' <<<"${authzed_disabled_error}" >/dev/null
 
-tag_upgrade="$(helm template authzed-tag-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+if mutable_upgrade="$(helm template authzed-mutable-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --is-upgrade \
   --set global.postgresql.auth.password=test-password \
-  --set global.postgresql.auth.postgresPassword=test-password)"
-if grep --fixed-strings 'name: formbricks-authzed-upgrade-gate' <<<"${tag_upgrade}" >/dev/null; then
-  printf '%s\n' "Normal tag-based upgrades must not opt into the receipt gate automatically." >&2
+  --set global.postgresql.auth.postgresPassword=test-password 2>&1)"; then
+  printf '%s\n' "Every Helm upgrade must pin the exact application image by digest." >&2
   exit 1
 fi
+grep --fixed-strings 'deployment.image.digest must be a lowercase sha256 digest for every Formbricks v6 Helm upgrade' \
+  <<<"${mutable_upgrade}" >/dev/null
 
-if mutable_gated_upgrade="$(helm template authzed-mutable-gated-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+if mutable_bridge_upgrade="$(helm template authzed-mutable-bridge-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --is-upgrade \
   --set global.postgresql.auth.password=test-password \
   --set global.postgresql.auth.postgresPassword=test-password \
-  --set authzed.activation.upgradeGate.enabled=true 2>&1)"; then
-  printf '%s\n' "An opt-in pre-upgrade gate must use the same immutable image as the rollout." >&2
+  --set authzed.activation.upgradeGate.enabled=false 2>&1)"; then
+  printf '%s\n' "The bridge exception must still pin the exact application image by digest." >&2
   exit 1
 fi
-grep --fixed-strings 'deployment.image.digest must be a lowercase sha256 digest' \
-  <<<"${mutable_gated_upgrade}" >/dev/null
+grep --fixed-strings 'deployment.image.digest must be a lowercase sha256 digest for every Formbricks v6 Helm upgrade' \
+  <<<"${mutable_bridge_upgrade}" >/dev/null
 
 readonly TEST_IMAGE_DIGEST="sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 gated_upgrade="$(helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
@@ -267,7 +268,6 @@ gated_upgrade="$(helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}
   --set global.postgresql.auth.password=test-password \
   --set global.postgresql.auth.postgresPassword=test-password \
   --set migration.mode=external \
-  --set authzed.activation.upgradeGate.enabled=true \
   --set deployment.image.digest="${TEST_IMAGE_DIGEST}")"
 grep --fixed-strings 'name: formbricks-authzed-upgrade-gate' <<<"${gated_upgrade}" >/dev/null
 grep --fixed-strings 'args: ["activation", "runtime-check"]' <<<"${gated_upgrade}" >/dev/null

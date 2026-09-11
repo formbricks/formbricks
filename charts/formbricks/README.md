@@ -222,13 +222,12 @@ assistant: it deploys the immutable v5 bridge, installs the temporary upgrade co
 the graph, then supplies the database receipt consumed by the candidate. The permanent chart contains no prepare,
 audit, fence, authority-switch, finalization, or rollback phases.
 
-The signed release assistant pins the initial v6 candidate by digest. It may also enable
-`authzed.activation.upgradeGate.enabled=true`, whose pre-upgrade Job executes the candidate image's
-`formbricks-authzed activation runtime-check`; the DB-only check fails before any application Pod is replaced when
-the receipt, schema, contract, or client configuration does not match. The permanent chart leaves this hook
-disabled by default so ordinary tag-based patch upgrades remain supported. Application startup always performs
-the bounded receipt check. Enabling the hook requires `deployment.image.digest`, ensuring the gate and rollout
-execute the same candidate image.
+Every Helm upgrade must set `deployment.image.digest`; mutable tags are accepted only on a fresh install. The
+default `authzed.activation.upgradeGate.enabled=true` pre-upgrade Job executes that exact candidate image's
+`formbricks-authzed activation runtime-check`. The DB-only check fails before any application Pod is replaced when
+the receipt, schema, contract, or client configuration does not match. The signed release assistant disables the
+gate only for the initial, digest-pinned v5 bridge rollout, while authorization is still legacy-authoritative.
+Application startup always performs the bounded receipt check, including for that bridge exception.
 
 Both activation Jobs import only explicit `DATABASE_URL` and AuthZed Secret keys. They never inherit the entire
 application Secret. By default `DATABASE_URL` comes from `<release>-app-secrets`. If `deployment.env` defines
@@ -712,7 +711,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | authzed.activation.startupWait.timeoutSeconds                      | int    | `900`                                                                       | Application startup receipt deadline.                     |
 | authzed.activation.upgradeGate.activeDeadlineSeconds               | int    | `120`                                                                       | Pre-upgrade receipt gate deadline.                        |
 | authzed.activation.upgradeGate.backoffLimit                        | int    | `0`                                                                         | Kubernetes retries for the pre-upgrade gate Job.          |
-| authzed.activation.upgradeGate.enabled                             | bool   | `false`                                                                     | Opt into a digest-pinned receipt check before an upgrade. |
+| authzed.activation.upgradeGate.enabled                             | bool   | `true`                                                                      | Verify the activation receipt before a Helm upgrade.      |
 | componentOverride                                                  | string | `""`                                                                        |                                                           |
 | deployment.additionalLabels                                        | object | `{}`                                                                        |                                                           |
 | deployment.additionalPodAnnotations                                | object | `{}`                                                                        |                                                           |
