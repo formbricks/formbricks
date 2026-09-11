@@ -343,7 +343,7 @@ export const FEEDBACK_FIELDS = {
       label: "NPS: Score",
       type: "number",
       group: "score",
-      description: "Net Promoter Score: ((Promoters - Detractors) / Total NPS responses) * 100",
+      description: "Net Promoter Score: ((Promoters - Detractors) / Answered NPS responses) * 100",
     },
     {
       id: "FeedbackRecords.npsAverage",

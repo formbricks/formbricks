@@ -40,6 +40,7 @@ const getCubeMemberName = (id: string): string => id.replace("FeedbackRecords.",
 
 interface CubeMember {
   sql?: string;
+  description?: string;
   filters?: { sql: string }[];
 }
 interface CubeDefinition {
@@ -77,6 +78,13 @@ const SQL_NUMBER = String.raw`-?\d+(?:\.\d+)?`;
  * The small SQL dialect the bucket filters are written in: comparisons on `field_type` and
  * `value_number` joined by AND. `BETWEEN` is supported because the pre-fix predicates used it —
  * dropping it would make this pass against the very code it has to fail on.
+ *
+ * Ordering here is IEEE-754, not Postgres: `NaN >= 9` is false in JS but true in Postgres, which
+ * sorts NaN above every other `numeric` / `double precision` value. So NaN buckets as a promoter
+ * on the real database and as nothing here — the partition still holds on both sides, just in
+ * different buckets. NaN is unreachable anyway (Zod's `z.number()` rejects NaN and ±Infinity, and
+ * both ingest paths drop it), so do not "fix" this by adding NaN to the value lists: it would
+ * report a gap that the database does not have.
  */
 const SQL_CLAUSES: { pattern: RegExp; holds: (match: RegExpExecArray, record: CubeRecord) => boolean }[] = [
   {
@@ -817,8 +825,35 @@ describe("schema-definition", () => {
     const NPS_BUCKETS = ["promoterCount", "passiveCount", "detractorCount"];
     const CSAT_BUCKETS = ["csatSatisfiedCount", "csatNeutralCount", "csatDissatisfiedCount"];
 
-    const NPS_VALUES = [-1, 0, 6, 6.5, 7, 8, 8.5, 9, 10, 11];
-    const CSAT_VALUES = [0, 1, 2, 2.5, 3, 3.5, 4, 5, 6];
+    // One table per scale: the boundary values and the one bucket each must land in. Both the
+    // per-value cases and the score-denominator invariants below read their values from here, so
+    // there is a single list to extend when a new boundary is worth covering.
+    const NPS_BUCKET_CASES: [number, string][] = [
+      [-1, "detractorCount"],
+      [0, "detractorCount"],
+      [6, "detractorCount"],
+      [6.5, "detractorCount"],
+      [7, "passiveCount"],
+      [8, "passiveCount"],
+      [8.5, "passiveCount"],
+      [9, "promoterCount"],
+      [10, "promoterCount"],
+      [11, "promoterCount"],
+    ];
+    const CSAT_BUCKET_CASES: [number, string][] = [
+      [0, "csatDissatisfiedCount"],
+      [1, "csatDissatisfiedCount"],
+      [2, "csatDissatisfiedCount"],
+      [2.5, "csatDissatisfiedCount"],
+      [3, "csatNeutralCount"],
+      [3.5, "csatNeutralCount"],
+      [4, "csatSatisfiedCount"],
+      [5, "csatSatisfiedCount"],
+      [6, "csatSatisfiedCount"],
+    ];
+
+    const NPS_VALUES = NPS_BUCKET_CASES.map(([value]) => value);
+    const CSAT_VALUES = CSAT_BUCKET_CASES.map(([value]) => value);
 
     const bucketPredicate = (model: CubeDefinition, measure: string): string => {
       const filters = model.measures[measure]?.filters ?? [];
@@ -845,32 +880,11 @@ describe("schema-definition", () => {
     ])("%s cube schema", (_label, schemaPath) => {
       const model = evaluateCubeSchema(schemaPath);
 
-      test.each([
-        [-1, "detractorCount"],
-        [0, "detractorCount"],
-        [6, "detractorCount"],
-        [6.5, "detractorCount"],
-        [7, "passiveCount"],
-        [8, "passiveCount"],
-        [8.5, "passiveCount"],
-        [9, "promoterCount"],
-        [10, "promoterCount"],
-        [11, "promoterCount"],
-      ])("an NPS value of %p falls in exactly one bucket", (value, expected) => {
+      test.each(NPS_BUCKET_CASES)("an NPS value of %p falls in exactly one bucket", (value, expected) => {
         expect(matchingBuckets(model, NPS_BUCKETS, { fieldType: "nps", value })).toEqual([expected]);
       });
 
-      test.each([
-        [0, "csatDissatisfiedCount"],
-        [1, "csatDissatisfiedCount"],
-        [2, "csatDissatisfiedCount"],
-        [2.5, "csatDissatisfiedCount"],
-        [3, "csatNeutralCount"],
-        [3.5, "csatNeutralCount"],
-        [4, "csatSatisfiedCount"],
-        [5, "csatSatisfiedCount"],
-        [6, "csatSatisfiedCount"],
-      ])("a CSAT value of %p falls in exactly one bucket", (value, expected) => {
+      test.each(CSAT_BUCKET_CASES)("a CSAT value of %p falls in exactly one bucket", (value, expected) => {
         expect(matchingBuckets(model, CSAT_BUCKETS, { fieldType: "csat", value })).toEqual([expected]);
       });
 
@@ -931,6 +945,34 @@ describe("schema-definition", () => {
             "TBL.field_type = 'csat' AND TBL.value_number IS NOT NULL",
           ])
         );
+      });
+
+      // Each of these measures describes its own predicate, and that sentence is written twice —
+      // once in the Cube schema, once as the chart picker's copy in FEEDBACK_FIELDS. Editing one
+      // copy and not the other is how "score 0-6" survived a predicate that no longer said 0-6.
+      // Scoped to the bucket and score measures on purpose: the rest of the two description sets
+      // deliberately diverge, because the picker's copy is written for a chart builder (it says
+      // "Value (Option)" and "empty") while the schema's is written for the SQL model ("valueId",
+      // "NULL"). `toStartWith` rather than equality, because the two score measures append a
+      // "NULL when there are no answered…" sentence that the picker has no room for.
+      test.each([
+        "npsScore",
+        "promoterCount",
+        "passiveCount",
+        "detractorCount",
+        "csatScore",
+        "csatSatisfiedCount",
+        "csatNeutralCount",
+        "csatDissatisfiedCount",
+      ])("%s describes the same bucket in the schema and the chart picker", (measure) => {
+        const pickerDescription = FEEDBACK_FIELDS.measures.find(
+          (m) => m.id === `FeedbackRecords.${measure}`
+        )?.description;
+        expect(pickerDescription).toBeTruthy();
+
+        // Sliced rather than `startsWith` so a drifted string fails with a diff of the two copies.
+        const schemaDescription = model.measures[measure]?.description ?? "";
+        expect(schemaDescription.slice(0, (pickerDescription ?? "").length)).toBe(pickerDescription);
       });
     });
 
