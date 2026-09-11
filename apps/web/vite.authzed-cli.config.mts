@@ -4,6 +4,19 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 const canonicalSchema = readFileSync(new URL("../../authzed/schema.zed", import.meta.url), "utf8");
+const releaseMode = process.env.FORMBRICKS_AUTHZED_RELEASE_MODE ?? "spicedb_authoritative";
+
+if (releaseMode !== "legacy_bridge" && releaseMode !== "spicedb_authoritative") {
+  throw new Error("FORMBRICKS_AUTHZED_RELEASE_MODE must be legacy_bridge or spicedb_authoritative");
+}
+
+const releaseManifest = JSON.stringify({
+  authorizationMode: releaseMode,
+  clientContractVersion: 1,
+  migrationHead: "20260911090000_add_authzed_activation_protocol",
+  protocolVersion: 1,
+  sourceRevision: process.env.FORMBRICKS_BUILD_REVISION ?? process.env.GITHUB_SHA ?? "development",
+});
 
 export default defineConfig({
   plugins: [
@@ -12,6 +25,7 @@ export default defineConfig({
       name: "bundle-authzed-schema",
       generateBundle() {
         this.emitFile({ fileName: "schema.zed", source: canonicalSchema, type: "asset" });
+        this.emitFile({ fileName: "release-manifest.json", source: releaseManifest, type: "asset" });
       },
     },
   ],

@@ -25,6 +25,7 @@ import {
   markAuthzedOutboxEventsFailed,
 } from "./outbox-repository";
 import type {
+  TAuthzedOutboxDrainOptions,
   TAuthzedOutboxDrainResult,
   TAuthzedOutboxEvent,
   TAuthzedOutboxTargetType,
@@ -416,9 +417,10 @@ const mergeFailures = (failures: ReadonlyArray<TFailure>): ReadonlyArray<TFailur
 
 export const processAuthzedOutboxBatch = async (
   leaseOwner = createAuthzedOutboxLeaseOwner(),
-  batchSize = AUTHZED_OUTBOX_BATCH_SIZE
+  batchSize = AUTHZED_OUTBOX_BATCH_SIZE,
+  throughSourceSequence?: bigint
 ): Promise<Readonly<{ claimed: number; deadLettered: number; delivered: number; failed: number }>> => {
-  const events = await claimAuthzedOutboxEvents(leaseOwner, batchSize);
+  const events = await claimAuthzedOutboxEvents(leaseOwner, batchSize, throughSourceSequence);
   if (events.length === 0) return { claimed: 0, deadLettered: 0, delivered: 0, failed: 0 };
 
   const startedAt = performance.now();
@@ -470,12 +472,20 @@ export const processAuthzedOutboxBatch = async (
   return { claimed: events.length, deadLettered, delivered: outcome.delivered.length, failed };
 };
 
-export const drainAuthzedOutbox = async (maxBatches = 100): Promise<TAuthzedOutboxDrainResult> => {
+export const drainAuthzedOutbox = async (
+  options: number | TAuthzedOutboxDrainOptions = 100
+): Promise<TAuthzedOutboxDrainResult> => {
+  const maxBatches = typeof options === "number" ? options : (options.maxBatches ?? 100);
+  const throughSourceSequence = typeof options === "number" ? undefined : options.throughSourceSequence;
   const totals = { claimed: 0, deadLettered: 0, delivered: 0, failed: 0 };
   const leaseOwner = createAuthzedOutboxLeaseOwner();
 
   for (let batch = 0; batch < maxBatches; batch++) {
-    const result = await processAuthzedOutboxBatch(leaseOwner);
+    const result = await processAuthzedOutboxBatch(
+      leaseOwner,
+      AUTHZED_OUTBOX_BATCH_SIZE,
+      throughSourceSequence
+    );
     totals.claimed += result.claimed;
     totals.deadLettered += result.deadLettered;
     totals.delivered += result.delivered;
@@ -486,7 +496,7 @@ export const drainAuthzedOutbox = async (maxBatches = 100): Promise<TAuthzedOutb
     if (result.claimed === 0 || result.delivered === 0) break;
   }
 
-  const status = await getAuthzedOutboxStatus();
+  const status = await getAuthzedOutboxStatus(throughSourceSequence);
   recordAuthzedOutboxStatus(status);
   return { ...totals, remaining: status.pending, status: status.pending === 0 ? "drained" : "partial" };
 };

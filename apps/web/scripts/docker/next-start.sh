@@ -58,6 +58,27 @@ else
   run_with_timeout 300 "database migration" node packages/database/dist/scripts/apply-migrations.js
 fi
 
+AUTHZED_ACTIVATION_STARTUP_WAIT_SECONDS="${AUTHZED_ACTIVATION_STARTUP_WAIT_SECONDS:-900}"
+AUTHZED_ACTIVATION_STARTUP_INTERVAL_SECONDS="${AUTHZED_ACTIVATION_STARTUP_INTERVAL_SECONDS:-5}"
+case "$AUTHZED_ACTIVATION_STARTUP_WAIT_SECONDS" in
+  ""|0|*[!0-9]*)
+    echo "❌ AuthZed activation startup wait must use positive integer seconds"
+    exit 1
+    ;;
+esac
+case "$AUTHZED_ACTIVATION_STARTUP_INTERVAL_SECONDS" in
+  ""|0|*[!0-9]*)
+    echo "❌ AuthZed activation startup interval must use positive integer seconds"
+    exit 1
+    ;;
+esac
+
+echo "🔐 Waiting for the AuthZed activation receipt..."
+run_with_timeout 3630 "AuthZed activation check" \
+  formbricks-authzed activation runtime-wait \
+  --timeout-seconds "$AUTHZED_ACTIVATION_STARTUP_WAIT_SECONDS" \
+  --interval-seconds "$AUTHZED_ACTIVATION_STARTUP_INTERVAL_SECONDS"
+
 echo "🗃️ Running SAML database setup..."
 run_with_timeout 60 "SAML database setup" node packages/database/dist/scripts/create-saml-database.js
 

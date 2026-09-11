@@ -1,4 +1,5 @@
 import "server-only";
+import { configureAuthzedReleaseManifestUrl } from "../../lib/authzed/release-manifest";
 import { configureCanonicalAuthzedSchemaUrl } from "../../lib/authzed/schema-source";
 import { exitAfterStdoutFlush } from "../authzed-health-process";
 import { INVALID_CONFIGURATION_RESULT, INVALID_REQUEST_RESULT } from "../authzed-schema-results";
@@ -8,6 +9,7 @@ import { INVALID_CONFIGURATION_RESULT, INVALID_REQUEST_RESULT } from "../authzed
 process.env.LOG_LEVEL = "fatal";
 
 configureCanonicalAuthzedSchemaUrl(import.meta.url, "./schema.zed");
+configureAuthzedReleaseManifestUrl(import.meta.url, "./release-manifest.json");
 
 const HEALTH_INVALID_CONFIGURATION_RESULT = {
   code: "authzed_internal",
@@ -122,6 +124,23 @@ const run = async (): Promise<void> => {
         const { runAuthzedUpgradeCli } = await import("../../lib/authzed/upgrade-cli");
         console.error = originalConsoleError;
         process.exitCode = await runAuthzedUpgradeCli(upgradeCommand);
+        return;
+      }
+      case "activation": {
+        const { parseAuthzedActivationCliCommand } = await import("../../lib/authzed/activation-cli-command");
+        const activationCommand = parseAuthzedActivationCliCommand(args);
+
+        if (!activationCommand) {
+          console.error = originalConsoleError;
+          writeResult(INVALID_REQUEST_RESULT);
+          process.exitCode = 1;
+          return;
+        }
+
+        shouldCloseDatabase = true;
+        const { runAuthzedActivationCli } = await import("../../lib/authzed/activation-cli");
+        console.error = originalConsoleError;
+        process.exitCode = await runAuthzedActivationCli(activationCommand);
         return;
       }
       default:

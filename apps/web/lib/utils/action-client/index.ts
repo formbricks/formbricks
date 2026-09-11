@@ -1,8 +1,15 @@
 import * as Sentry from "@sentry/nextjs";
 import { DEFAULT_SERVER_ERROR_MESSAGE, createSafeActionClient } from "next-safe-action";
 import { v4 as uuidv4 } from "uuid";
+import { withDatabaseOperationalErrorBoundary } from "@formbricks/database/operational-errors";
 import { logger } from "@formbricks/logger";
-import { AuthenticationError, AuthorizationError, isExpectedError } from "@formbricks/types/errors";
+import {
+  AUTHZED_MUTATIONS_FENCED_ERROR_CODE,
+  AuthenticationError,
+  AuthorizationError,
+  isAuthzedMutationsFencedError,
+  isExpectedError,
+} from "@formbricks/types/errors";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
@@ -14,6 +21,13 @@ import { ActionClientCtx } from "./types/context";
 export const actionClient = createSafeActionClient({
   handleServerError(e, utils) {
     const eventId = (utils.ctx as Record<string, any>)?.auditLoggingCtx?.eventId ?? undefined; // keep explicit fallback
+
+    if (isAuthzedMutationsFencedError(e)) {
+      logger
+        .withContext({ component: "authzed", code: AUTHZED_MUTATIONS_FENCED_ERROR_CODE, eventId })
+        .warn("Authorization mutations are temporarily fenced");
+      return AUTHZED_MUTATIONS_FENCED_ERROR_CODE;
+    }
 
     if (isExpectedError(e)) {
       return e.message;
@@ -44,7 +58,7 @@ export const actionClient = createSafeActionClient({
     }
   }
 
-  return next({ ctx });
+  return withDatabaseOperationalErrorBoundary(() => next({ ctx }));
 });
 
 export const authenticatedActionClient = actionClient.use(async ({ ctx, next }) => {

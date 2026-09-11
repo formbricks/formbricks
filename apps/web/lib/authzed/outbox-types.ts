@@ -23,6 +23,7 @@ export type TAuthzedOutboxEvent = Readonly<{
   isRevocation: boolean;
   primaryId: string;
   secondaryId: string | null;
+  sourceSequence: bigint;
   targetType: TAuthzedOutboxTargetType;
 }>;
 
@@ -42,4 +43,9 @@ export type TAuthzedOutboxDrainResult = Readonly<{
   failed: number;
   remaining: number;
   status: "drained" | "partial";
+}>;
+
+export type TAuthzedOutboxDrainOptions = Readonly<{
+  maxBatches?: number;
+  throughSourceSequence?: bigint;
 }>;

@@ -39,6 +39,17 @@ const getLoopbackOriginVariants = (value) => {
 
 const getUniqueValues = (values) => [...new Set(values.filter(Boolean))];
 
+const authzedReleaseMode = process.env.FORMBRICKS_AUTHZED_RELEASE_MODE ?? "spicedb_authoritative";
+if (!new Set(["legacy_bridge", "spicedb_authoritative"]).has(authzedReleaseMode)) {
+  throw new Error("FORMBRICKS_AUTHZED_RELEASE_MODE must be legacy_bridge or spicedb_authoritative");
+}
+
+const authorizationRuntimeModule =
+  authzedReleaseMode === "legacy_bridge"
+    ? "./lib/authorization/runtime-evaluator.bridge.ts"
+    : "./lib/authorization/runtime-evaluator.ts";
+const authorizationRuntimeModulePath = fileURLToPath(new URL(authorizationRuntimeModule, import.meta.url));
+
 // NOTE: every `process.env.*` read in this file shapes the build output and MUST be listed in the
 // `build.env` array of apps/web/turbo.json — the web build's own task config since ENG-1682, not the
 // root turbo.json — so Turborepo hashes it into the cache key. Adding a read here without updating
@@ -91,7 +102,18 @@ const nextConfig = {
       "../../node_modules/otlp-logger/**/*",
     ],
   },
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      "@formbricks/authorization-runtime": authorizationRuntimeModule,
+    },
+  },
+  webpack(config) {
+    config.resolve.alias = {
+      ...(config.resolve.alias ?? {}),
+      "@formbricks/authorization-runtime": authorizationRuntimeModulePath,
+    };
+    return config;
+  },
   experimental: {
     proxyClientMaxBodySize: "16mb",
   },

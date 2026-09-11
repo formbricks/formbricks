@@ -38,6 +38,11 @@
       "import": "./dist/src/prisma-adapter.js",
       "require": "./dist/src/prisma-adapter.cjs"
     },
+    "./operational-errors": {
+      "types": "./dist/src/operational-error-context.d.ts",
+      "import": "./dist/src/operational-error-context.js",
+      "require": "./dist/src/operational-error-context.cjs"
+    },
     "./zod/*": {
       "types": "./zod/*.ts",
       "import": "./zod/*.ts"

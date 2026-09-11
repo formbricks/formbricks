@@ -42,6 +42,13 @@ ARG TARGETARCH
 ARG BASE_PATH=""
 ENV BASE_PATH=${BASE_PATH}
 
+# Authorization is selected while compiling the image. The normal v6 image contains only the
+# SpiceDB evaluator; release tooling builds the temporary rollback bridge with `legacy_bridge`.
+ARG FORMBRICKS_AUTHZED_RELEASE_MODE="spicedb_authoritative"
+ENV FORMBRICKS_AUTHZED_RELEASE_MODE=${FORMBRICKS_AUTHZED_RELEASE_MODE}
+ARG FORMBRICKS_BUILD_REVISION="development"
+ENV FORMBRICKS_BUILD_REVISION=${FORMBRICKS_BUILD_REVISION}
+
 # Set the working directory
 WORKDIR /app
 

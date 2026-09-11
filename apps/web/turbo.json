@@ -7,6 +7,8 @@
         "ASSET_PREFIX_URL",
         "BASE_PATH",
         "E2E_TESTING",
+        "FORMBRICKS_AUTHZED_RELEASE_MODE",
+        "FORMBRICKS_BUILD_REVISION",
         "NEXTAUTH_URL",
         "NODE_ENV",
         "POSTHOG_KEY",

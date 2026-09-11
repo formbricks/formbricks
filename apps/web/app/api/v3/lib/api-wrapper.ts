@@ -1,10 +1,12 @@
 import { type NextRequest } from "next/server";
 import { z } from "zod";
+import { withDatabaseOperationalErrorBoundary } from "@formbricks/database/operational-errors";
 import { logger } from "@formbricks/logger";
-import { TooManyRequestsError } from "@formbricks/types/errors";
+import { TooManyRequestsError, isAuthzedMutationsFencedError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
+import { createAuthzedMutationFenceProblemResponse } from "@/lib/authzed/mutation-fence-response";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getSession } from "@/modules/auth/lib/session";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -392,7 +394,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
 
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url);
 
-      const execute = () =>
+      const execute = async (): Promise<Response> =>
         handler({
           req,
           props,
@@ -402,9 +404,9 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
           requestId,
           instance,
         });
-      const response = authResult.authentication
-        ? await withAuthorizationSurface("api_v3", execute)
-        : await execute();
+      const response = await withDatabaseOperationalErrorBoundary(() =>
+        authResult.authentication ? withAuthorizationSurface("api_v3", execute) : execute()
+      );
 
       if (auditLog) {
         if (response.ok) {
@@ -420,6 +422,13 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       if (auditLog) {
         auditLog.eventId = requestId;
         await queueV3AuditLog(auditLog, requestId, log);
+      }
+      if (isAuthzedMutationsFencedError(error)) {
+        log.warn(
+          { component: "authzed", code: "authzed_mutations_fenced", statusCode: 503 },
+          "Authorization mutations are temporarily fenced"
+        );
+        return createAuthzedMutationFenceProblemResponse(requestId, instance);
       }
       log.error({ error, statusCode: 500 }, "V3 API unexpected error");
       return problemInternalError(requestId, "An unexpected error occurred.", instance);

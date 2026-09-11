@@ -1,3 +1,6 @@
+import { withDatabaseOperationalErrorBoundary } from "@formbricks/database/operational-errors";
+import { isAuthzedMutationsFencedError } from "@formbricks/types/errors";
+import { createAuthzedMutationFenceLegacyResponse } from "@/lib/authzed/mutation-fence-response";
 import { auth } from "@/modules/auth/lib/auth";
 import {
   recordSsoCallbackOutcome,
@@ -67,16 +70,18 @@ const handler = async (request: Request): Promise<Response> => {
   // registration (see each module). Both no-op for every other request.
   const mappedRequest = await normalizeDcrRequest(mapLegacySsoCallbackRequest(request));
   try {
-    const response = await runWithBetterAuthRequestContext(
-      { path: labelAuthPath(mappedRequest.url), method: mappedRequest.method },
-      () =>
-        runWithSsoRequestContext(() =>
-          // ENG-2562: carries "this request just verified an email" from Better Auth's
-          // `afterEmailVerification` hook to the `hooks.after` chain, which is where the session can
-          // actually be minted. Innermost because it is the narrowest scope of the three — one endpoint,
-          // not the whole handler.
-          runWithEmailVerificationRequestContext(() => auth.handler(mappedRequest))
-        )
+    const response = await withDatabaseOperationalErrorBoundary(() =>
+      runWithBetterAuthRequestContext(
+        { path: labelAuthPath(mappedRequest.url), method: mappedRequest.method },
+        () =>
+          runWithSsoRequestContext(() =>
+            // ENG-2562: carries "this request just verified an email" from Better Auth's
+            // `afterEmailVerification` hook to the `hooks.after` chain, which is where the session can
+            // actually be minted. Innermost because it is the narrowest scope of the three — one endpoint,
+            // not the whole handler.
+            runWithEmailVerificationRequestContext(() => auth.handler(mappedRequest))
+          )
+      )
     );
     // ENG-2551: the one place that sees the outcome of every SSO callback, whatever went wrong and
     // whichever provider it was — a failed callback is a redirect carrying `?error=`, or a 4xx/5xx.
@@ -85,6 +90,13 @@ const handler = async (request: Request): Promise<Response> => {
     recordSsoCallbackOutcome(mappedRequest.url, response);
     return response;
   } catch (error) {
+    if (isAuthzedMutationsFencedError(error)) {
+      const response = createAuthzedMutationFenceLegacyResponse(
+        mappedRequest.headers.get("x-request-id") ?? undefined
+      );
+      recordSsoCallbackOutcome(mappedRequest.url, response);
+      return response;
+    }
     // A throw is the most severe callback failure there is — Next answers 500 and the user cannot sign
     // in — so it must not be the one case the signal misses. Recorded, then rethrown unchanged so the
     // existing error handling (and the Sentry capture in this module) behaves exactly as before.

@@ -4,9 +4,10 @@ import type { AuthInfo, ServerContext } from "@modelcontextprotocol/server";
 import type { JWTPayload } from "jose";
 import type { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
+import { withDatabaseOperationalErrorBoundary } from "@formbricks/database/operational-errors";
 import { logger } from "@formbricks/logger";
 import type { Session, TAuthenticationApiKey } from "@formbricks/types/auth";
-import { TooManyRequestsError } from "@formbricks/types/errors";
+import { TooManyRequestsError, isAuthzedMutationsFencedError } from "@formbricks/types/errors";
 import {
   problemBadRequest,
   problemForbidden,
@@ -16,6 +17,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
+import { createAuthzedMutationFenceProblemResponse } from "@/lib/authzed/mutation-fence-response";
 import { parseApiKeyV2 } from "@/lib/crypto";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
@@ -657,6 +659,14 @@ export async function handleAuthenticatedMcpRequest(
   }
 
   (request as Request & { auth?: AuthInfo }).auth = authResult.authInfo;
-  const response = await withAuthorizationSurface("mcp", () => handler(request));
+  let response: Response;
+  try {
+    response = await withDatabaseOperationalErrorBoundary(() =>
+      withAuthorizationSurface("mcp", () => handler(request))
+    );
+  } catch (error) {
+    if (!isAuthzedMutationsFencedError(error)) throw error;
+    response = createAuthzedMutationFenceProblemResponse(authResult.requestId, request.nextUrl.pathname);
+  }
   return withMcpResponseHeaders(response, authResult.requestId);
 }

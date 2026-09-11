@@ -2,6 +2,11 @@ import "server-only";
 import { status } from "@grpc/grpc-js";
 
 export const AUTHZED_ERROR_CODES = {
+  ACTIVATION_CONFLICT: "authzed_activation_conflict",
+  ACTIVATION_GRAPH_DIRTY: "authzed_activation_graph_dirty",
+  ACTIVATION_MANIFEST_MISMATCH: "authzed_activation_manifest_mismatch",
+  ACTIVATION_OUTBOX_PENDING: "authzed_activation_outbox_pending",
+  ACTIVATION_REQUIRED: "authzed_activation_required",
   ABORTED: "authzed_aborted",
   CANCELLED: "authzed_cancelled",
   CONFLICT: "authzed_conflict",

@@ -79,6 +79,7 @@ const event = (
   isRevocation: false,
   primaryId,
   secondaryId,
+  sourceSequence: 1n,
   targetType,
 });
 
