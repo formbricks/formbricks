@@ -4,14 +4,14 @@ import {
   type TEmbeddedValueResponse,
   deriveLegacyEmbeddedData,
 } from "@formbricks/types/embedded-data-resolver";
-import { TResponse } from "@formbricks/types/responses";
+import { InvalidInputError } from "@formbricks/types/errors";
+import { TResponse, TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   calculateTtcTotal,
   extractChoiceIdsFromResponse,
   extractSurveyDetails,
-  generateAllPermutationsOfSubsets,
   getReservedFilterEntries,
   getResponseContactAttributes,
   getResponseHiddenFields,
@@ -439,16 +439,20 @@ describe("Response Utils", () => {
         data: { qMulti: { op: "includesOne", value: ["Other"] } },
       });
 
+      // One probe per array position (choices.length), each asserting the entry exists and is
+      // none of the predefined labels. Exact toEqual, not arrayContaining: the old weak matcher is
+      // what let an unbounded clause set pass as "correct" (ENG-3161).
       expect(result.AND).toEqual([
         {
           AND: [
             {
-              NOT: {
-                OR: expect.arrayContaining([
-                  { data: { path: ["qMulti"], equals: ["A"] } },
-                  { data: { path: ["qMulti"], equals: ["B"] } },
-                ]),
-              },
+              OR: [0, 1, 2].map((index) => ({
+                AND: [
+                  { data: { path: ["qMulti", String(index)], not: Prisma.DbNull } },
+                  { data: { path: ["qMulti", String(index)], not: "A" } },
+                  { data: { path: ["qMulti", String(index)], not: "B" } },
+                ],
+              })),
             },
           ],
         },
@@ -506,6 +510,134 @@ describe("Response Utils", () => {
           ],
         },
       ]);
+    });
+
+    describe("includesOne: 'Other' clause budget (ENG-3161)", () => {
+      /**
+       * One choice element per id in `elementIds`, each carrying `choiceCount` predefined choices
+       * (localized into every entry of `languages`) plus the "Other" choice.
+       */
+      const buildChoiceSurvey = (
+        elementType: TSurveyElementTypeEnum.MultipleChoiceMulti | TSurveyElementTypeEnum.MultipleChoiceSingle,
+        choiceCount: number,
+        languages: string[] = ["default"],
+        elementIds: string[] = ["q0"]
+      ): TSurvey =>
+        ({
+          id: "sBudget",
+          name: "BudgetSurvey",
+          blocks: [
+            {
+              id: "block1",
+              name: "Block 1",
+              elements: elementIds.map((elementId) => ({
+                id: elementId,
+                type: elementType,
+                headline: { default: "Pick" },
+                required: false,
+                choices: [
+                  ...Array.from({ length: choiceCount }, (_unused, index) => ({
+                    id: `c${index}`,
+                    label: Object.fromEntries(
+                      languages.map((language) => [language, `${language}-label-${index}`])
+                    ),
+                  })),
+                  { id: "other", label: { default: "Other" } },
+                ],
+                shuffleOption: "none",
+                isDraft: false,
+              })),
+            },
+          ],
+          questions: [],
+          type: "app",
+          hiddenFields: { enabled: false, fieldIds: [] },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          workspaceId: "eBudget",
+          createdBy: "uBudget",
+          status: "inProgress",
+        }) as unknown as TSurvey;
+
+      const otherFilter = (elementIds: string[]): TResponseFilterCriteria => ({
+        data: Object.fromEntries(
+          elementIds.map((elementId) => [elementId, { op: "includesOne" as const, value: ["Other"] }])
+        ),
+      });
+
+      // The multi branch emits (choices + 1) probes x (labels + 1) clauses, so a monolingual
+      // element sits at (c + 1)^2 -- exactly the budget at c = 99.
+      test("multi: a survey just inside the budget still builds", () => {
+        const survey = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceMulti, 99);
+
+        const result = buildWhereClause(survey, otherFilter(["q0"]));
+
+        expect(result.AND).toHaveLength(1);
+      });
+
+      test("multi: a survey just past the budget is refused", () => {
+        const survey = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceMulti, 100);
+
+        expect(() => buildWhereClause(survey, otherFilter(["q0"]))).toThrow(InvalidInputError);
+      });
+
+      test("single: the label-count budget is enforced too", () => {
+        const withinBudget = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceSingle, 10_000);
+        expect(() => buildWhereClause(withinBudget, otherFilter(["q0"]))).not.toThrow();
+
+        const pastBudget = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceSingle, 10_001);
+        expect(() => buildWhereClause(pastBudget, otherFilter(["q0"]))).toThrow(InvalidInputError);
+      });
+
+      // The budget is per call, not per branch: filterCriteria.data is a record and every key is
+      // expanded. This is the test that fails if the budget is ever made per-branch again.
+      test("many individually-cheap filter keys still exhaust the budget", () => {
+        const cheapIds = Array.from({ length: 5 }, (_unused, index) => `q${index}`);
+        const cheapSurvey = buildChoiceSurvey(
+          TSurveyElementTypeEnum.MultipleChoiceMulti,
+          40,
+          ["default"],
+          cheapIds
+        );
+        // 5 x (41 x 41) = 8405, inside the budget.
+        expect(() => buildWhereClause(cheapSurvey, otherFilter(cheapIds))).not.toThrow();
+
+        const manyIds = Array.from({ length: 10 }, (_unused, index) => `q${index}`);
+        const manySurvey = buildChoiceSurvey(
+          TSurveyElementTypeEnum.MultipleChoiceMulti,
+          40,
+          ["default"],
+          manyIds
+        );
+        // 10 x (41 x 41) = 16810, past the budget, though each key alone is far inside it.
+        expect(() => buildWhereClause(manySurvey, otherFilter(manyIds))).toThrow(InvalidInputError);
+      });
+
+      // Tags are the other client-supplied list that expands one clause per entry — a relation
+      // subquery each — so they are charged against the same budget rather than a separate cap.
+      test("applied tags are charged against the budget too", () => {
+        const survey = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceMulti, 2);
+        const tags = (count: number): TResponseFilterCriteria => ({
+          tags: { applied: Array.from({ length: count }, (_unused, index) => `tag-${index}`) },
+        });
+
+        expect(() => buildWhereClause(survey, tags(10_000))).not.toThrow();
+        expect(() => buildWhereClause(survey, tags(10_001))).toThrow(InvalidInputError);
+      });
+
+      // Every language variant of every label is a separate clause, which is how a modest-looking
+      // survey reached the old factorial blow-up at 11 labels.
+      test("extra languages count against the budget", () => {
+        const monolingual = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceMulti, 60);
+        expect(() => buildWhereClause(monolingual, otherFilter(["q0"]))).not.toThrow();
+
+        const trilingual = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceMulti, 60, [
+          "default",
+          "de",
+          "fr",
+        ]);
+        expect(() => buildWhereClause(trilingual, otherFilter(["q0"]))).toThrow(InvalidInputError);
+      });
     });
 
     test("includesOne: regular choice match", () => {
@@ -1597,18 +1729,6 @@ describe("Response Utils", () => {
         hidden1: [],
         hidden2: [],
       });
-    });
-  });
-
-  describe("generateAllPermutationsOfSubsets", () => {
-    test("with empty array returns empty", () => {
-      expect(generateAllPermutationsOfSubsets([])).toEqual([]);
-    });
-
-    test("with two elements returns 4 permutations", () => {
-      const out = generateAllPermutationsOfSubsets(["x", "y"]);
-      expect(out).toEqual(expect.arrayContaining([["x"], ["y"], ["x", "y"], ["y", "x"]]));
-      expect(out).toHaveLength(4);
     });
   });
 });
