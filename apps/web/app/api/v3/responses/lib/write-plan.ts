@@ -129,6 +129,130 @@ const ingestDropIssues = (dropped: readonly { key: string; reason: string }[]): 
     }));
 
 /**
+ * Match one payload name to exactly one declared field, or say why it cannot be matched.
+ *
+ * Case-insensitive, and collisions are refused rather than guessed: a survey predating the
+ * reserved-name guard can carry a variable and a hidden field under one name, and with no `kind` in
+ * the payload such a name cannot say which field it means. Writing the caller's value into the wrong
+ * one is worse than refusing. The set is finite, frozen and tracked — nothing new can enter it.
+ */
+const matchDeclaredField = (
+  byName: ReadonlyMap<string, TLinkedEmbeddedField[]>,
+  name: string
+): { ok: true; linked: TLinkedEmbeddedField } | { ok: false; issue: InvalidParam } => {
+  const group = byName.get(name.toLowerCase());
+
+  if (!group) {
+    // Checked only after the declared lookup misses, which is the precedence the contract sets: a
+    // name matching both a declared field and a catalog entry resolves to the declared one. So
+    // reaching here with a catalog hit means the *only* match is auto-captured context.
+    const isReserved = RESERVED_FIELD_CATALOG.some(
+      (entry) => entry.name.toLowerCase() === name.toLowerCase()
+    );
+
+    return {
+      ok: false,
+      issue: {
+        name,
+        reason: isReserved
+          ? `'${name}' is auto-captured context and is not writable. 'source', 'url' and 'action' are accepted under 'meta' on create.`
+          : `'${name}' is not an Embedded Data field on this survey.`,
+        code: "unsupported_field",
+      },
+    };
+  }
+
+  if (group.length > 1) {
+    return {
+      ok: false,
+      issue: {
+        name,
+        reason: `'${name}' matches more than one Embedded Data field on this survey, so it cannot say which one to write. Rename one of them.`,
+        code: "duplicate_identifier",
+      },
+    };
+  }
+
+  return { ok: true, linked: group[0] };
+};
+
+/** What one payload entry does to storage, decided before anything is applied. */
+type TEmbeddedWriteEffect =
+  | { kind: "issue"; issue: InvalidParam }
+  /** A locked field: the write is ignored rather than refused. */
+  | { kind: "ignore" }
+  | { kind: "clearData"; storageKey: string }
+  | { kind: "clearVariable"; storageKey: string }
+  | { kind: "writeVariable"; storageKey: string; value: TResponseDataValue }
+  | { kind: "writeIngested"; storageKey: string; value: string | number | boolean };
+
+/**
+ * Decide what one `embeddedData` entry does, without doing it.
+ *
+ * Separating the decision from the application is what keeps the rules readable: every refusal, and
+ * the reason for it, is reachable from this one function, while the caller below is a plain fold
+ * over the effects.
+ */
+const planEmbeddedEntry = (
+  byName: ReadonlyMap<string, TLinkedEmbeddedField[]>,
+  elementIds: ReadonlySet<string>,
+  name: string,
+  value: string | number | boolean | null
+): TEmbeddedWriteEffect => {
+  const matched = matchDeclaredField(byName, name);
+  if (!matched.ok) return { kind: "issue", issue: matched.issue };
+
+  const { field, link } = matched.linked;
+
+  // A locked field ignores the write rather than refusing it — the same verdict the ingest contract
+  // reaches, and it covers the clear as well: `null` on a locked field is still a write.
+  if (field.locked) return { kind: "ignore" };
+
+  if (field.source === "computed") {
+    if (value === null) return { kind: "clearVariable", storageKey: link.storageKey };
+
+    // Stricter than the ingested path, deliberately. A variable feeds quota evaluation and recall,
+    // so a value that cannot honestly represent its declared type would corrupt a downstream
+    // calculation rather than just read back oddly — and unlike a hidden field arriving from a URL,
+    // this one was typed by a caller who can be told.
+    const normalized = normalizeIngestedValue(value, field.dataType);
+    if (normalized === undefined || normalized.flag === "coercion_failed") {
+      return {
+        kind: "issue",
+        issue: {
+          name,
+          reason: `'${name}' is a ${field.dataType} variable and cannot store this value.`,
+          code: "unsupported_field",
+          referenceType: "variable",
+        },
+      };
+    }
+
+    return { kind: "writeVariable", storageKey: link.storageKey, value: normalized.value };
+  }
+
+  // An answer owns this address and an answer is never rewritten, so the field can never hold a
+  // value — which is why the read reports neither the field nor a place to put one. Refused here
+  // rather than left to `applyIngestContract`: its answer pass-through would write the value as an
+  // answer before its own collision check ever ran.
+  if (elementIds.has(link.storageKey)) {
+    return {
+      kind: "issue",
+      issue: {
+        name,
+        reason: `'${name}' is stored under an id a question already owns on this survey, so it holds the answer rather than a field value.`,
+        code: "unsupported_field",
+        referenceType: "hiddenField",
+      },
+    };
+  }
+
+  if (value === null) return { kind: "clearData", storageKey: link.storageKey };
+
+  return { kind: "writeIngested", storageKey: link.storageKey, value };
+};
+
+/**
  * Resolve a name-keyed `embeddedData` payload into storage writes.
  *
  * Three things the caller is deliberately not asked to know, each resolved here:
@@ -141,11 +265,6 @@ const ingestDropIssues = (dropped: readonly { key: string; reason: string }[]): 
  *    nothing about which, because the survey already knows.
  * 3. **Omission versus `null`.** Omitted leaves the stored value alone — this map merges, unlike
  *    `data`. `null` clears, which is the only way a merge-shaped map can express deletion at all.
- *
- * Matching is case-insensitive and collisions are refused rather than guessed. A survey predating
- * the reserved-name guard can carry a variable and a hidden field under one name; with no `kind` in
- * the payload, such a name cannot say which field it means, and writing the caller's value into the
- * wrong one is worse than refusing. The set is finite and frozen — nothing new can enter it.
  */
 export const planEmbeddedDataWrite = ({
   embeddedFields,
@@ -165,86 +284,27 @@ export const planEmbeddedDataWrite = ({
   const byName = indexFieldsByName(embeddedFields);
 
   for (const [name, value] of Object.entries(incoming)) {
-    const group = byName.get(name.toLowerCase());
+    const effect = planEmbeddedEntry(byName, elementIds, name, value);
 
-    if (!group) {
-      // Checked only after the declared lookup misses, which is the precedence the contract sets: a
-      // name matching both a declared field and a catalog entry resolves to the declared one. So
-      // reaching here with a catalog hit means the *only* match is auto-captured context.
-      const isReserved = RESERVED_FIELD_CATALOG.some(
-        (entry) => entry.name.toLowerCase() === name.toLowerCase()
-      );
-
-      issues.push({
-        name,
-        reason: isReserved
-          ? `'${name}' is auto-captured context and is not writable. 'source', 'url' and 'action' are accepted under 'meta' on create.`
-          : `'${name}' is not an Embedded Data field on this survey.`,
-        code: "unsupported_field",
-      });
-      continue;
+    switch (effect.kind) {
+      case "issue":
+        issues.push(effect.issue);
+        break;
+      case "clearData":
+        dataClears.push(effect.storageKey);
+        break;
+      case "clearVariable":
+        variableClears.push(effect.storageKey);
+        break;
+      case "writeVariable":
+        variableWrites[effect.storageKey] = effect.value;
+        break;
+      case "writeIngested":
+        ingestedBag[effect.storageKey] = effect.value;
+        break;
+      default:
+        break;
     }
-
-    if (group.length > 1) {
-      issues.push({
-        name,
-        reason: `'${name}' matches more than one Embedded Data field on this survey, so it cannot say which one to write. Rename one of them.`,
-        code: "duplicate_identifier",
-      });
-      continue;
-    }
-
-    const { field, link } = group[0];
-
-    // A locked field ignores the write rather than refusing it — the same verdict the ingest
-    // contract reaches, and it covers the clear as well: `null` on a locked field is still a write.
-    if (field.locked) continue;
-
-    if (field.source === "computed") {
-      if (value === null) {
-        variableClears.push(link.storageKey);
-        continue;
-      }
-
-      // Stricter than the ingested path below, deliberately. A variable feeds quota evaluation and
-      // recall, so a value that cannot honestly represent its declared type would corrupt a
-      // downstream calculation rather than just read back oddly — and unlike a hidden field arriving
-      // from a URL, this one was typed by a caller who can be told.
-      const normalized = normalizeIngestedValue(value, field.dataType);
-      if (normalized === undefined || normalized.flag === "coercion_failed") {
-        issues.push({
-          name,
-          reason: `'${name}' is a ${field.dataType} variable and cannot store this value.`,
-          code: "unsupported_field",
-          referenceType: "variable",
-        });
-        continue;
-      }
-
-      variableWrites[link.storageKey] = normalized.value;
-      continue;
-    }
-
-    // An answer owns this address and an answer is never rewritten, so the field can never hold a
-    // value — which is why the read reports neither the field nor a place to put one. Refused here
-    // rather than left to `applyIngestContract`: its answer pass-through would write the value as an
-    // answer before its own collision check ever ran.
-    if (elementIds.has(link.storageKey)) {
-      issues.push({
-        name,
-        reason: `'${name}' is stored under an id a question already owns on this survey, so it holds the answer rather than a field value.`,
-        code: "unsupported_field",
-        referenceType: "hiddenField",
-      });
-      continue;
-    }
-
-    if (value === null) {
-      dataClears.push(link.storageKey);
-      continue;
-    }
-
-    ingestedBag[link.storageKey] = value;
   }
 
   // The same contract the SDK writes through — allow-list, coerce, bound — rather than a second copy
