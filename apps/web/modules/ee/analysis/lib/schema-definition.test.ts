@@ -38,6 +38,112 @@ const readChartCubeSchema = (): string => readFileSync(chartCubeSchemaPath, "utf
 const readDockerCubeSchema = (): string => readFileSync(dockerCubeSchemaPath, "utf8");
 const getCubeMemberName = (id: string): string => id.replace("FeedbackRecords.", "");
 
+interface CubeMember {
+  sql?: string;
+  filters?: { sql: string }[];
+}
+interface CubeDefinition {
+  dimensions: Record<string, CubeMember>;
+  measures: Record<string, CubeMember>;
+}
+
+/**
+ * Runs a deployed Cube schema file for real and hands back the model it defines, with `${CUBE}`
+ * resolved to the table alias `TBL`. Reading the evaluated model rather than the file text is what
+ * keeps these assertions honest: a member added or renamed later cannot sidestep them.
+ */
+const evaluateCubeSchema = (path: string): CubeDefinition => {
+  let captured: CubeDefinition | undefined;
+  const sandbox = {
+    CUBE: "TBL",
+    cube: (_name: string, definition: CubeDefinition) => {
+      captured = definition;
+    },
+  };
+  createContext(sandbox);
+  runInContext(readFileSync(path, "utf8"), sandbox);
+  if (!captured) throw new Error(`No cube() definition found in ${path}`);
+  return captured;
+};
+
+interface CubeRecord {
+  fieldType: string;
+  value: number | null;
+}
+
+const SQL_NUMBER = String.raw`-?\d+(?:\.\d+)?`;
+
+/**
+ * The small SQL dialect the bucket filters are written in: comparisons on `field_type` and
+ * `value_number` joined by AND. `BETWEEN` is supported because the pre-fix predicates used it —
+ * dropping it would make this pass against the very code it has to fail on.
+ */
+const SQL_CLAUSES: { pattern: RegExp; holds: (match: RegExpExecArray, record: CubeRecord) => boolean }[] = [
+  {
+    pattern: /^TBL\.field_type = '([a-z_]+)'/,
+    holds: (match, record) => record.fieldType === match[1],
+  },
+  {
+    pattern: /^TBL\.value_number IS NOT NULL/,
+    holds: (_match, record) => record.value !== null,
+  },
+  {
+    pattern: new RegExp(String.raw`^TBL\.value_number BETWEEN (${SQL_NUMBER}) AND (${SQL_NUMBER})`),
+    holds: (match, record) =>
+      record.value !== null && record.value >= Number(match[1]) && record.value <= Number(match[2]),
+  },
+  {
+    pattern: new RegExp(String.raw`^TBL\.value_number (>=|<=|<>|>|<|=) (${SQL_NUMBER})`),
+    holds: (match, record) => {
+      // SQL three-valued logic: every comparison against NULL is UNKNOWN, never true.
+      if (record.value === null) return false;
+      const operand = Number(match[2]);
+      switch (match[1]) {
+        case ">=":
+          return record.value >= operand;
+        case "<=":
+          return record.value <= operand;
+        case ">":
+          return record.value > operand;
+        case "<":
+          return record.value < operand;
+        case "=":
+          return record.value === operand;
+        default:
+          return record.value !== operand;
+      }
+    },
+  },
+];
+
+/**
+ * Evaluates one of those predicates against a single record. A clause it cannot read throws rather
+ * than evaluating to false, so a predicate rewritten into an unsupported form fails the suite
+ * loudly instead of quietly reporting an empty bucket.
+ */
+const evaluateSqlPredicate = (sql: string, record: CubeRecord): boolean => {
+  let rest = sql.replace(/\s+/g, " ").trim();
+  let result = true;
+
+  while (rest.length > 0) {
+    const clause = SQL_CLAUSES.map((candidate) => ({
+      candidate,
+      match: candidate.pattern.exec(rest),
+    })).find((entry): entry is { candidate: (typeof SQL_CLAUSES)[number]; match: RegExpExecArray } =>
+      Boolean(entry.match)
+    );
+    if (!clause) throw new Error(`Unsupported SQL clause in predicate: "${rest}"`);
+
+    result = clause.candidate.holds(clause.match, record) && result;
+    rest = rest.slice(clause.match[0].length).trim();
+    if (rest.length === 0) break;
+    if (!rest.startsWith("AND ")) throw new Error(`Unsupported SQL connective in predicate: "${rest}"`);
+    rest = rest.slice("AND ".length).trim();
+  }
+
+  return result;
+};
+
 describe("schema-definition", () => {
   describe("getFilterOperatorsForType", () => {
     test("returns string operators", () => {
@@ -242,21 +348,11 @@ describe("schema-definition", () => {
       const REPLACEMENT_SPECIAL = /\$(['`&$]|<|\d)/;
 
       for (const path of [dockerCubeSchemaPath, chartCubeSchemaPath]) {
-        let captured:
-          | { dimensions: Record<string, { sql?: string }>; measures: Record<string, { sql?: string }> }
-          | undefined;
-        const sandbox = {
-          CUBE: "TBL",
-          cube: (_name: string, definition: typeof captured) => {
-            captured = definition;
-          },
-        };
-        createContext(sandbox);
-        runInContext(readFileSync(path, "utf8"), sandbox);
+        const captured = evaluateCubeSchema(path);
 
         const members = [
-          ...Object.entries(captured?.dimensions ?? {}),
-          ...Object.entries(captured?.measures ?? {}),
+          ...Object.entries(captured.dimensions ?? {}),
+          ...Object.entries(captured.measures ?? {}),
         ];
         expect(members.length).toBeGreaterThan(0);
 
@@ -709,6 +805,164 @@ describe("schema-definition", () => {
       for (const member of normalizedMembers) {
         expect(exposedIds).not.toContain(`FeedbackRecords.${member}`);
       }
+    });
+  });
+
+  describe("NPS and CSAT bucket predicates (ENG-3147)", () => {
+    // `value_number` is an unbounded numeric — the API schema puts no integer or range bound on it,
+    // and both ingest paths parse it with Number.parseFloat. So a bucket set that only covers the
+    // integers of the documented scale leaves gaps, and a value in a gap still counts in the score's
+    // denominator: two records of 6.5 and 8.5 produced "NPS Average 7.5" beside "NPS Score 0".
+    // The buckets must therefore partition the whole number line, not just the scale.
+    const NPS_BUCKETS = ["promoterCount", "passiveCount", "detractorCount"];
+    const CSAT_BUCKETS = ["csatSatisfiedCount", "csatNeutralCount", "csatDissatisfiedCount"];
+
+    const NPS_VALUES = [-1, 0, 6, 6.5, 7, 8, 8.5, 9, 10, 11];
+    const CSAT_VALUES = [0, 1, 2, 2.5, 3, 3.5, 4, 5, 6];
+
+    const bucketPredicate = (model: CubeDefinition, measure: string): string => {
+      const filters = model.measures[measure]?.filters ?? [];
+      expect(filters).toHaveLength(1);
+      return filters[0].sql.replace(/\s+/g, " ").trim();
+    };
+
+    /** The `COUNT(CASE WHEN … THEN 1 END)` arms of a score measure, deduplicated. */
+    const scoreArms = (model: CubeDefinition, measure: string): Set<string> => {
+      const sql = model.measures[measure]?.sql ?? "";
+      const arms = [...sql.matchAll(/COUNT\(CASE WHEN ([\s\S]+?) THEN 1 END\)/g)].map(([, arm]) =>
+        arm.replace(/\s+/g, " ").trim()
+      );
+      expect(arms.length).toBeGreaterThan(0);
+      return new Set(arms);
+    };
+
+    const matchingBuckets = (model: CubeDefinition, buckets: string[], record: CubeRecord): string[] =>
+      buckets.filter((measure) => evaluateSqlPredicate(bucketPredicate(model, measure), record));
+
+    describe.each([
+      ["docker", dockerCubeSchemaPath],
+      ["helm chart", chartCubeSchemaPath],
+    ])("%s cube schema", (_label, schemaPath) => {
+      const model = evaluateCubeSchema(schemaPath);
+
+      test.each([
+        [-1, "detractorCount"],
+        [0, "detractorCount"],
+        [6, "detractorCount"],
+        [6.5, "detractorCount"],
+        [7, "passiveCount"],
+        [8, "passiveCount"],
+        [8.5, "passiveCount"],
+        [9, "promoterCount"],
+        [10, "promoterCount"],
+        [11, "promoterCount"],
+      ])("an NPS value of %p falls in exactly one bucket", (value, expected) => {
+        expect(matchingBuckets(model, NPS_BUCKETS, { fieldType: "nps", value })).toEqual([expected]);
+      });
+
+      test.each([
+        [0, "csatDissatisfiedCount"],
+        [1, "csatDissatisfiedCount"],
+        [2, "csatDissatisfiedCount"],
+        [2.5, "csatDissatisfiedCount"],
+        [3, "csatNeutralCount"],
+        [3.5, "csatNeutralCount"],
+        [4, "csatSatisfiedCount"],
+        [5, "csatSatisfiedCount"],
+        [6, "csatSatisfiedCount"],
+      ])("a CSAT value of %p falls in exactly one bucket", (value, expected) => {
+        expect(matchingBuckets(model, CSAT_BUCKETS, { fieldType: "csat", value })).toEqual([expected]);
+      });
+
+      test("no bucket claims a dismissed answer or another field type", () => {
+        expect(matchingBuckets(model, NPS_BUCKETS, { fieldType: "nps", value: null })).toEqual([]);
+        expect(matchingBuckets(model, CSAT_BUCKETS, { fieldType: "csat", value: null })).toEqual([]);
+        // A CSAT 5 must not be counted as an NPS detractor, nor an NPS 2 as CSAT dissatisfied.
+        expect(matchingBuckets(model, NPS_BUCKETS, { fieldType: "csat", value: 5 })).toEqual([]);
+        expect(matchingBuckets(model, CSAT_BUCKETS, { fieldType: "nps", value: 2 })).toEqual([]);
+      });
+
+      test("everything npsScore divides by lands in exactly one NPS bucket", () => {
+        // The defect this pins: the denominator counted every answered record while the numerator
+        // arms covered only part of the line, so a gap value dragged the score toward 0.
+        const denominator = [...scoreArms(model, "npsScore")].find((arm) => arm.includes("IS NOT NULL"));
+        expect(denominator).toBeDefined();
+
+        for (const value of NPS_VALUES) {
+          const record: CubeRecord = { fieldType: "nps", value };
+          expect({
+            value,
+            counted: evaluateSqlPredicate(denominator ?? "", record),
+            buckets: matchingBuckets(model, NPS_BUCKETS, record).length,
+          }).toEqual({ value, counted: true, buckets: 1 });
+        }
+      });
+
+      test("everything csatScore divides by lands in exactly one CSAT bucket", () => {
+        const denominator = [...scoreArms(model, "csatScore")].find((arm) => arm.includes("IS NOT NULL"));
+        expect(denominator).toBeDefined();
+
+        for (const value of CSAT_VALUES) {
+          const record: CubeRecord = { fieldType: "csat", value };
+          expect({
+            value,
+            counted: evaluateSqlPredicate(denominator ?? "", record),
+            buckets: matchingBuckets(model, CSAT_BUCKETS, record).length,
+          }).toEqual({ value, counted: true, buckets: 1 });
+        }
+      });
+
+      test("npsScore counts the same promoters and detractors as the bucket measures", () => {
+        // The partition above is proven on the `*Count` filters; the score has its predicates
+        // written out a second time inline, and only this ties the two copies together.
+        expect(scoreArms(model, "npsScore")).toEqual(
+          new Set([
+            bucketPredicate(model, "promoterCount"),
+            bucketPredicate(model, "detractorCount"),
+            "TBL.field_type = 'nps' AND TBL.value_number IS NOT NULL",
+          ])
+        );
+      });
+
+      test("csatScore counts the same satisfied responses as the bucket measure", () => {
+        expect(scoreArms(model, "csatScore")).toEqual(
+          new Set([
+            bucketPredicate(model, "csatSatisfiedCount"),
+            "TBL.field_type = 'csat' AND TBL.value_number IS NOT NULL",
+          ])
+        );
+      });
+    });
+
+    describe("the SQL predicate translator those assertions rest on", () => {
+      test("reads the comparison forms the schema uses, the pre-fix BETWEEN included", () => {
+        const between = "TBL.field_type = 'nps' AND TBL.value_number BETWEEN 7 AND 8";
+        expect(evaluateSqlPredicate(between, { fieldType: "nps", value: 7 })).toBe(true);
+        expect(evaluateSqlPredicate(between, { fieldType: "nps", value: 6.5 })).toBe(false);
+        expect(evaluateSqlPredicate(between, { fieldType: "csat", value: 7 })).toBe(false);
+
+        const halfOpen = "TBL.value_number >= 7 AND TBL.value_number < 9";
+        expect(evaluateSqlPredicate(halfOpen, { fieldType: "nps", value: 8.5 })).toBe(true);
+        expect(evaluateSqlPredicate(halfOpen, { fieldType: "nps", value: 9 })).toBe(false);
+
+        expect(evaluateSqlPredicate("TBL.value_number = 3", { fieldType: "csat", value: 3.5 })).toBe(false);
+        expect(evaluateSqlPredicate("TBL.value_number < 3", { fieldType: "csat", value: null })).toBe(false);
+        expect(evaluateSqlPredicate("TBL.value_number IS NOT NULL", { fieldType: "csat", value: null })).toBe(
+          false
+        );
+      });
+
+      test("throws on a clause it cannot read rather than reporting an empty bucket", () => {
+        expect(() =>
+          evaluateSqlPredicate("TBL.value_number IN (1, 2)", { fieldType: "nps", value: 1 })
+        ).toThrow(/Unsupported SQL clause/);
+        expect(() =>
+          evaluateSqlPredicate("TBL.value_number >= 7 OR TBL.value_number < 3", {
+            fieldType: "nps",
+            value: 1,
+          })
+        ).toThrow(/Unsupported SQL connective/);
+      });
     });
   });
 });
