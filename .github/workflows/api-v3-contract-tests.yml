@@ -371,6 +371,34 @@ jobs:
           fi
           echo "::notice::Feedback fixtures live; record responses are in v3 spelling."
 
+          # The compatibility path is the one thing here Schemathesis structurally cannot reach: it is
+          # deliberately absent from the spec, so nothing drives it. It is also the only path whose
+          # production behaviour changed (it used to refuse outright when `IS_PRODUCTION`), and this job
+          # is the only place the app runs a production build. Asserting it here is what stops it from
+          # shipping unexercised.
+          compat_status=$(curl -o /tmp/preflight-compat.json -s -w "%{http_code}" \
+            -H "x-api-key: fbk_${SEED_API_KEY}" \
+            "http://localhost:3000/v1/feedback-records?tenant_id=${dataset_id}&limit=1")
+          if [ "${compat_status}" -ne 200 ]; then
+            echo "::error::The /v1/feedback-records compatibility path returned ${compat_status}, expected 200."
+            cat /tmp/preflight-compat.json
+            exit 1
+          fi
+
+          # It forwards the store's response untouched, so it must still be the store's spelling. If this
+          # ever comes back camelCase, the passthrough has grown a translation layer it is not meant to have.
+          if ! node -e "
+            const body = require('/tmp/preflight-compat.json');
+            const record = (body.data ?? [])[0];
+            if (!record) throw new Error('no records returned; the fixture dataset is empty');
+            if (!('value_text' in record)) throw new Error('response is not in the store spelling: ' + JSON.stringify(Object.keys(record)));
+          "; then
+            echo "::error::The compatibility path is no longer forwarding the store's contract."
+            cat /tmp/preflight-compat.json
+            exit 1
+          fi
+          echo "::notice::Compatibility path serves the store contract from a production build."
+
       # Text is embedded asynchronously after it is stored, so a freshly seeded record has no embedding
       # for a moment and `/similar` correctly answers 409. Both are documented, so the run is green
       # either way — but 200 is the one that validates the match schema, so wait for it and say so when
