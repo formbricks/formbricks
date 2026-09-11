@@ -93,23 +93,31 @@ function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "pa
       // Bounded, because the key list is caller-controlled: a body full of unknown keys would
       // otherwise become one `invalid_params` entry per key, in both the response and the log line
       // that carries it. Naming the first few is all a caller needs to find its mistake.
-      const named = issue.keys.slice(0, MAX_REPORTED_UNKNOWN_KEYS);
+      // Read defensively rather than through the `code` narrowing: `error.issues` is typed as the
+      // base `$ZodIssue`, which does not discriminate on `code`, so `issue.keys` is not reachable
+      // through it even though the runtime value carries it.
+      const rawKeys = (issue as { keys?: unknown }).keys;
+      const unknownKeys = Array.isArray(rawKeys) ? rawKeys.map(String) : [];
+      const named = unknownKeys.slice(0, MAX_REPORTED_UNKNOWN_KEYS);
 
-      const params = named.map((key) => ({
+      const params: InvalidParam[] = named.map((key) => ({
         name: `${prefix}${key}`,
         reason: `Unsupported field '${key}'`,
         code: "unsupported_field" as const,
       }));
 
-      if (issue.keys.length > named.length) {
+      if (unknownKeys.length > named.length) {
         params.push({
-          name: prefix ? prefix.slice(0, -1) : "body",
-          reason: `${issue.keys.length - named.length} further unsupported fields were not listed`,
+          name: prefix ? prefix.slice(0, -1) : fallbackName,
+          reason: `${unknownKeys.length - named.length} further unsupported fields were not listed`,
           code: "unsupported_field" as const,
         });
       }
 
-      return params;
+      // An empty list would silently drop the issue, so fall back to naming the object itself.
+      return params.length > 0
+        ? params
+        : [{ name: fallbackName, reason: issue.message, code: "unsupported_field" as const }];
     }
 
     const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
