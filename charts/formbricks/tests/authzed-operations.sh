@@ -5,6 +5,7 @@ set -euo pipefail
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly CHART_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 readonly COMMON_ARGS=(--set formbricks.webappUrl=https://qa.example.com)
+readonly TEST_IMAGE_DIGEST="sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "${temp_dir}"' EXIT
@@ -73,36 +74,339 @@ authzed_notes="$(authzed_operations_notes "${external_notes}")"
 grep --fixed-strings 'SpiceDB is configured in `external` mode.' <<<"${authzed_notes}" >/dev/null
 grep --fixed-strings 'formbricks-authzed health' <<<"${authzed_notes}" >/dev/null
 grep --fixed-strings 'formbricks-authzed schema check' <<<"${authzed_notes}" >/dev/null
-grep --fixed-strings 'formbricks-authzed upgrade prepare' <<<"${authzed_notes}" >/dev/null
-grep --fixed-strings 'formbricks-authzed upgrade check' <<<"${authzed_notes}" >/dev/null
+grep --fixed-strings 'formbricks-authzed activation runtime-check' <<<"${authzed_notes}" >/dev/null
 grep --fixed-strings 'self-hosting/advanced/authzed-operations' <<<"${authzed_notes}" >/dev/null
 assert_safe_authzed_notes authzed-external "${authzed_notes}"
 
-# AuthZed is the v6 authorization engine. Fresh installs render the initialization Job, while an
-# existing release must explicitly acknowledge the completed release-matched preparation.
+# Fresh installs render an ordinary, idempotent bootstrap Job. It is not a Helm post-install hook:
+# the Deployment waits for its DB receipt, so a post-install hook would deadlock behind readiness.
 default_install="$(helm template authzed-default "${CHART_DIR}" "${COMMON_ARGS[@]}")"
-grep --fixed-strings 'name: formbricks-authzed-initialize' <<<"${default_install}" >/dev/null
-grep --fixed-strings 'helm.sh/hook-weight: "10"' <<<"${default_install}" >/dev/null
-grep --fixed-strings 'helm.sh/hook-weight: "-10"' <<<"${default_install}" >/dev/null
+grep --fixed-strings 'name: formbricks-authzed-install-bootstrap' <<<"${default_install}" >/dev/null
+grep --fixed-strings 'formbricks-authzed activation bootstrap' <<<"${default_install}" >/dev/null
+grep --fixed-strings 'argocd.argoproj.io/sync-wave: "1"' <<<"${default_install}" >/dev/null
+if grep --fixed-strings 'helm.sh/hook: post-install' <<<"${default_install}" >/dev/null; then
+  printf '%s\n' "Fresh AuthZed bootstrap must not be a post-install hook." >&2
+  exit 1
+fi
+grep --fixed-strings 'argocd.argoproj.io/sync-wave: "0"' <<<"${default_install}" >/dev/null
+grep --fixed-strings 'argocd.argoproj.io/sync-wave: "2"' <<<"${default_install}" >/dev/null
 grep --fixed-strings 'value: fully_consistent' <<<"${default_install}" >/dev/null
+grep --fixed-strings 'name: AUTHZED_ACTIVATION_STARTUP_WAIT_SECONDS' <<<"${default_install}" >/dev/null
+grep --fixed-strings 'name: AUTHZED_ACTIVATION_STARTUP_INTERVAL_SECONDS' <<<"${default_install}" >/dev/null
 
-if external_initialization_error="$(helm template authzed-external-initialization "${CHART_DIR}" \
-  "${COMMON_ARGS[@]}" \
-  --set authzed.initialization.enabled=false 2>&1)"; then
-  printf '%s\n' "Disabling automatic AuthZed initialization must require an explicit acknowledgement." >&2
+custom_startup_wait="$(helm template authzed-custom-startup-wait "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --set-string deployment.env.AUTHZED_ACTIVATION_STARTUP_WAIT_SECONDS=60 \
+  --set-string deployment.env.AUTHZED_ACTIVATION_STARTUP_INTERVAL_SECONDS=2)"
+custom_startup_wait_deployment="$(sed -n \
+  '/^# Source: formbricks\/templates\/deployment.yaml$/,/^---$/p' <<<"${custom_startup_wait}")"
+if [ "$(grep --count 'name: AUTHZED_ACTIVATION_STARTUP_WAIT_SECONDS' <<<"${custom_startup_wait_deployment}")" -ne 1 ] || \
+  [ "$(grep --count 'name: AUTHZED_ACTIVATION_STARTUP_INTERVAL_SECONDS' <<<"${custom_startup_wait_deployment}")" -ne 1 ]; then
+  printf '%s\n' "Explicit startup receipt wait overrides must replace the chart defaults." >&2
   exit 1
 fi
-grep --fixed-strings 'Disabling the AuthZed initialization Job requires authzed.migrationAcknowledged=true' \
-  <<<"${external_initialization_error}" >/dev/null
+grep --fixed-strings 'value: "60"' <<<"${custom_startup_wait_deployment}" >/dev/null
+grep --fixed-strings 'value: "2"' <<<"${custom_startup_wait_deployment}" >/dev/null
 
-externally_prepared_install="$(helm template authzed-externally-prepared "${CHART_DIR}" \
-  "${COMMON_ARGS[@]}" \
-  --set authzed.initialization.enabled=false \
-  --set authzed.migrationAcknowledged=true)"
-if grep --fixed-strings 'name: formbricks-authzed-initialize' <<<"${externally_prepared_install}" >/dev/null; then
-  printf '%s\n' "An externally prepared cutover must not render the AuthZed initialization Job." >&2
+install_migration="$(sed -n '/name: formbricks-migration/,/^---$/p' <<<"${default_install}")"
+if grep --fixed-strings 'helm.sh/hook:' <<<"${install_migration}" >/dev/null; then
+  printf '%s\n' "The fresh-install migration must be an ordinary resource." >&2
   exit 1
 fi
+grep --fixed-strings 'argocd.argoproj.io/sync-wave: "-1"' <<<"${install_migration}" >/dev/null
+if grep --fixed-strings 'envFrom:' <<<"${install_migration}" >/dev/null; then
+  printf '%s\n' "The migration Job must not inherit application envFrom sources." >&2
+  exit 1
+fi
+grep --fixed-strings 'name: WEBAPP_URL' <<<"${install_migration}" >/dev/null
+grep --fixed-strings 'value: "https://qa.example.com"' <<<"${install_migration}" >/dev/null
+grep --fixed-strings 'name: formbricks-app-secrets' <<<"${install_migration}" >/dev/null
+grep --fixed-strings 'key: DATABASE_URL' <<<"${install_migration}" >/dev/null
+grep --fixed-strings 'key: MIGRATE_DATABASE_URL' <<<"${install_migration}" >/dev/null
+grep --fixed-strings 'optional: true' <<<"${install_migration}" >/dev/null
+
+install_database_bootstrap="$(sed -n '/name: formbricks-spicedb-database-bootstrap/,/^---$/p' \
+  <<<"${default_install}")"
+if grep --fixed-strings 'helm.sh/hook:' <<<"${install_database_bootstrap}" >/dev/null; then
+  printf '%s\n' "The fresh-install AuthZed database bootstrap must be an ordinary resource." >&2
+  exit 1
+fi
+grep --fixed-strings 'argocd.argoproj.io/sync-wave: "-1"' <<<"${install_database_bootstrap}" >/dev/null
+
+install_bootstrap="$(sed -n '/name: formbricks-authzed-install-bootstrap/,/^---$/p' <<<"${default_install}")"
+if grep --fixed-strings 'envFrom:' <<<"${install_bootstrap}" >/dev/null; then
+  printf '%s\n' "The install bootstrap must use explicit secretKeyRef entries, not broad envFrom imports." >&2
+  exit 1
+fi
+grep --fixed-strings 'name: formbricks-app-secrets' <<<"${install_bootstrap}" >/dev/null
+grep --fixed-strings 'key: DATABASE_URL' <<<"${install_bootstrap}" >/dev/null
+
+if missing_activation_database_secret="$(helm template authzed-no-app-secret "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" --set secret.enabled=false 2>&1)"; then
+  printf '%s\n' "Activation Jobs must refuse an implicit DATABASE_URL when app Secret management is disabled." >&2
+  exit 1
+fi
+grep --fixed-strings 'authzed.activation.database.existingSecret is required' \
+  <<<"${missing_activation_database_secret}" >/dev/null
+
+explicit_activation_database="$(helm template authzed-explicit-app-secret "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --set secret.enabled=false \
+  --set authzed.activation.database.existingSecret=customer-database \
+  --set authzed.activation.database.urlKey=url)"
+explicit_install_bootstrap="$(sed -n '/name: formbricks-authzed-install-bootstrap/,/^---$/p' \
+  <<<"${explicit_activation_database}")"
+grep --fixed-strings 'name: customer-database' <<<"${explicit_install_bootstrap}" >/dev/null
+grep --fixed-strings 'key: url' <<<"${explicit_install_bootstrap}" >/dev/null
+explicit_install_migration="$(sed -n '/name: formbricks-migration/,/^---$/p' \
+  <<<"${explicit_activation_database}")"
+grep --fixed-strings 'name: customer-database' <<<"${explicit_install_migration}" >/dev/null
+grep --fixed-strings 'key: DATABASE_URL' <<<"${explicit_install_migration}" >/dev/null
+
+explicit_migration_database="$(helm template authzed-explicit-migration-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --set migration.database.existingSecret=precreated-migration-database \
+  --set migration.database.urlKey=runtime-url \
+  --set migration.database.migrateUrlKey=migration-url)"
+explicit_migration_job="$(sed -n '/name: formbricks-migration/,/^---$/p' \
+  <<<"${explicit_migration_database}")"
+grep --fixed-strings 'name: precreated-migration-database' <<<"${explicit_migration_job}" >/dev/null
+grep --fixed-strings 'key: runtime-url' <<<"${explicit_migration_job}" >/dev/null
+grep --fixed-strings 'key: migration-url' <<<"${explicit_migration_job}" >/dev/null
+if grep --fixed-strings 'envFrom:' <<<"${explicit_migration_job}" >/dev/null; then
+  printf '%s\n' "An explicit migration database Secret must not re-enable broad envFrom imports." >&2
+  exit 1
+fi
+
+if implicit_custom_database="$(helm template authzed-implicit-custom-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" --set-string deployment.env.DATABASE_URL=postgresql://database.example/formbricks 2>&1)"; then
+  printf '%s\n' "A custom application database must name the activation database Secret explicitly." >&2
+  exit 1
+fi
+grep --fixed-strings 'authzed.activation.database.existingSecret is required when deployment.env' \
+  <<<"${implicit_custom_database}" >/dev/null
+
+helm template authzed-explicit-custom-database "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.name=customer-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.key=DATABASE_URL \
+  --set authzed.activation.database.existingSecret=customer-database >/dev/null
+
+if scalar_custom_database="$(helm template authzed-scalar-custom-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --set-string deployment.env.DATABASE_URL=postgresql://database.example/formbricks \
+  --set authzed.activation.database.existingSecret=customer-database 2>&1)"; then
+  printf '%s\n' "A custom application database must use a verifiable secretKeyRef." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.env.DATABASE_URL must use a non-optional secretKeyRef matching' \
+  <<<"${scalar_custom_database}" >/dev/null
+
+if mismatched_custom_database="$(helm template authzed-mismatched-custom-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.name=other-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.key=DATABASE_URL \
+  --set authzed.activation.database.existingSecret=customer-database 2>&1)"; then
+  printf '%s\n' "Application and activation Jobs must not select different database Secrets." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.env.DATABASE_URL must use a non-optional secretKeyRef matching' \
+  <<<"${mismatched_custom_database}" >/dev/null
+
+custom_envfrom_upgrade="$(helm template authzed-custom-envfrom-upgrade "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.name=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.key=DATABASE_URL \
+  --set deployment.envFrom[0].type=secret \
+  --set deployment.envFrom[0].name=candidate-app-secrets)"
+custom_envfrom_migration="$(sed -n '/name: formbricks-migration/,/^---$/p' \
+  <<<"${custom_envfrom_upgrade}")"
+grep --fixed-strings 'name: precreated-application-database' <<<"${custom_envfrom_migration}" >/dev/null
+if grep --fixed-strings 'candidate-app-secrets' <<<"${custom_envfrom_migration}" >/dev/null; then
+  printf '%s\n' "A pre-upgrade migration must not consume candidate deployment.envFrom resources." >&2
+  exit 1
+fi
+
+if unpinned_envfrom_database="$(helm template authzed-unpinned-envfrom-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.envFrom[0].type=secret \
+  --set deployment.envFrom[0].name=candidate-app-secrets 2>&1)"; then
+  printf '%s\n' "Custom envFrom entries must pin DATABASE_URL to the activation Secret." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.env.DATABASE_URL must use a non-optional secretKeyRef matching' \
+  <<<"${unpinned_envfrom_database}" >/dev/null
+
+if unpinned_bridge_migration_database="$(helm template authzed-unpinned-bridge-migration-database \
+  "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.upgradeGate.enabled=false \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.envFrom[0].type=secret \
+  --set deployment.envFrom[0].name=bridge-app-secrets 2>&1)"; then
+  printf '%s\n' "The bridge migration must not bypass application database identity checks." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.env.DATABASE_URL must use a non-optional secretKeyRef matching' \
+  <<<"${unpinned_bridge_migration_database}" >/dev/null
+
+if unpinned_argo_bridge_database="$(helm template authzed-unpinned-argo-bridge-database \
+  "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.installBootstrap.enabled=false \
+  --set authzed.activation.upgradeGate.enabled=false \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.envFrom[0].type=secret \
+  --set deployment.envFrom[0].name=bridge-app-secrets 2>&1)"; then
+  printf '%s\n' "An install-semantics Argo bridge must not bypass database identity checks." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.env.DATABASE_URL must use a non-optional secretKeyRef matching' \
+  <<<"${unpinned_argo_bridge_database}" >/dev/null
+
+argo_bridge_database="$(helm template authzed-argo-bridge-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.installBootstrap.enabled=false \
+  --set authzed.activation.upgradeGate.enabled=false \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.name=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.key=DATABASE_URL \
+  --set deployment.envFrom[0].type=secret \
+  --set deployment.envFrom[0].name=bridge-app-secrets)"
+argo_bridge_migration="$(sed -n '/name: formbricks-migration/,/^---$/p' <<<"${argo_bridge_database}")"
+grep --fixed-strings 'name: precreated-application-database' <<<"${argo_bridge_migration}" >/dev/null
+if grep --fixed-strings 'bridge-app-secrets' <<<"${argo_bridge_migration}" >/dev/null; then
+  printf '%s\n' "An install-semantics Argo migration must use only the aligned database Secret." >&2
+  exit 1
+fi
+
+if mismatched_migration_database="$(helm template authzed-mismatched-migration-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.name=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.key=DATABASE_URL \
+  --set migration.database.existingSecret=other-migration-database \
+  --set migration.database.urlKey=DATABASE_URL 2>&1)"; then
+  printf '%s\n' "Migration and activation Jobs must not select different runtime database Secrets." >&2
+  exit 1
+fi
+grep --fixed-strings 'migration and activation DATABASE_URL references must use the same pre-existing Secret and key' \
+  <<<"${mismatched_migration_database}" >/dev/null
+
+if implicit_migration_database="$(helm template authzed-implicit-migration-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set-string deployment.env.DATABASE_URL=postgresql://database.example/formbricks 2>&1)"; then
+  printf '%s\n' "A custom upgrade database must name a pre-existing database Secret." >&2
+  exit 1
+fi
+grep --fixed-strings 'authzed.activation.database.existingSecret is required when deployment.env' \
+  <<<"${implicit_migration_database}" >/dev/null
+
+if implicit_migrate_database="$(helm template authzed-implicit-migrate-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set-string deployment.env.MIGRATE_DATABASE_URL=postgresql://migration.example/formbricks 2>&1)"; then
+  printf '%s\n' "A dedicated migration URL must name its own pre-existing Secret." >&2
+  exit 1
+fi
+grep --fixed-strings 'migration.database.existingSecret must contain the migration database URL' \
+  <<<"${implicit_migrate_database}" >/dev/null
+
+if retired_initialization_error="$(helm template authzed-retired-initialization "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" --set authzed.initialization.enabled=false 2>&1)"; then
+  printf '%s\n' "The retired AuthZed initialization values must be rejected." >&2
+  exit 1
+fi
+grep --fixed-strings 'authzed.initialization was replaced' <<<"${retired_initialization_error}" >/dev/null
+
+if retired_acknowledgement_error="$(helm template authzed-retired-acknowledgement "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" --set authzed.migrationAcknowledged=true 2>&1)"; then
+  printf '%s\n' "The retired boolean migration acknowledgement must be rejected." >&2
+  exit 1
+fi
+grep --fixed-strings 'authzed.migrationAcknowledged was removed' <<<"${retired_acknowledgement_error}" >/dev/null
+
+for authzed_override in \
+  AUTHZED_ENABLED \
+  AUTHZED_ENDPOINT \
+  AUTHZED_TOKEN \
+  AUTHZED_SYSTEM_KEY \
+  AUTHZED_INSECURE \
+  AUTHZED_CONSISTENCY; do
+  if split_authzed_contract="$(helm template authzed-split-contract "${CHART_DIR}" \
+    "${COMMON_ARGS[@]}" --set-string "deployment.env.${authzed_override}=test-value" 2>&1)"; then
+    printf '%s\n' "${authzed_override} must have one chart-level source of truth." >&2
+    exit 1
+  fi
+  grep --fixed-strings "deployment.env.${authzed_override} is not supported" \
+    <<<"${split_authzed_contract}" >/dev/null
+done
+
+if retired_migration_enabled_error="$(helm template authzed-retired-migration-enabled "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" --set migration.enabled=true 2>&1)"; then
+  printf '%s\n' "The ambiguous migration.enabled switch must be rejected." >&2
+  exit 1
+fi
+grep --fixed-strings 'migration.enabled was replaced by migration.mode' \
+  <<<"${retired_migration_enabled_error}" >/dev/null
+
+startup_install="$(helm template authzed-startup-migrations "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --set migration.mode=startup)"
+if grep --fixed-strings 'name: formbricks-migration' <<<"${startup_install}" >/dev/null; then
+  printf '%s\n' "migration.mode=startup must not render a migration Job." >&2
+  exit 1
+fi
+if grep --fixed-strings 'name: SKIP_STARTUP_MIGRATION' <<<"${startup_install}" >/dev/null; then
+  printf '%s\n' "migration.mode=startup must leave startup migrations enabled." >&2
+  exit 1
+fi
+
+external_migration_install="$(helm template authzed-external-migrations "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --set migration.mode=external)"
+if grep --fixed-strings 'name: formbricks-migration' <<<"${external_migration_install}" >/dev/null; then
+  printf '%s\n' "migration.mode=external must not render a migration Job." >&2
+  exit 1
+fi
+grep --fixed-strings 'name: SKIP_STARTUP_MIGRATION' <<<"${external_migration_install}" >/dev/null
+
+if invalid_migration_mode="$(helm template authzed-invalid-migration "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" --set migration.mode=automatic 2>&1)"; then
+  printf '%s\n' "Unknown migration ownership must fail at render time." >&2
+  exit 1
+fi
+grep --fixed-strings 'migration.mode must be one of' <<<"${invalid_migration_mode}" >/dev/null
+
+if invalid_startup_wait="$(helm template authzed-invalid-startup-wait "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" --set authzed.activation.startupWait.timeoutSeconds=0 2>&1)"; then
+  printf '%s\n' "An unbounded startup receipt configuration must fail at render time." >&2
+  exit 1
+fi
+grep --fixed-strings 'authzed.activation.startupWait.timeoutSeconds must be between 1 and 3600' \
+  <<<"${invalid_startup_wait}" >/dev/null
 
 helm template authzed-null-annotations "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --set-json 'deployment.annotations=null' >/dev/null
@@ -114,23 +418,143 @@ if authzed_disabled_error="$(helm template authzed-disabled "${CHART_DIR}" "${CO
 fi
 grep --fixed-strings 'Formbricks v6 requires AuthZed' <<<"${authzed_disabled_error}" >/dev/null
 
-if authzed_upgrade_error="$(helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+if mutable_upgrade="$(helm template authzed-mutable-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --is-upgrade \
   --set global.postgresql.auth.password=test-password \
   --set global.postgresql.auth.postgresPassword=test-password 2>&1)"; then
-  printf '%s\n' "An existing Helm release must acknowledge the AuthZed v6 migration." >&2
+  printf '%s\n' "Every Helm upgrade must pin the exact application image by digest." >&2
   exit 1
 fi
-grep --fixed-strings 'AuthZed v6 upgrade preparation is not acknowledged' \
-  <<<"${authzed_upgrade_error}" >/dev/null
+grep --fixed-strings 'deployment.image.digest must be a lowercase sha256 digest for every Formbricks v6 Helm upgrade' \
+  <<<"${mutable_upgrade}" >/dev/null
 
-acknowledged_upgrade="$(helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+if mutable_bridge_upgrade="$(helm template authzed-mutable-bridge-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --is-upgrade \
   --set global.postgresql.auth.password=test-password \
   --set global.postgresql.auth.postgresPassword=test-password \
-  --set authzed.migrationAcknowledged=true)"
-if ! grep --fixed-strings 'helm.sh/hook: pre-upgrade' <<<"${acknowledged_upgrade}" >/dev/null; then
-  printf '%s\n' "An acknowledged Helm upgrade must run the release-matched AuthZed gate before rollout." >&2
+  --set authzed.activation.upgradeGate.enabled=false 2>&1)"; then
+  printf '%s\n' "The bridge exception must still pin the exact application image by digest." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.image.digest must be a lowercase sha256 digest for every Formbricks v6 Helm upgrade' \
+  <<<"${mutable_bridge_upgrade}" >/dev/null
+
+gated_upgrade="$(helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set migration.mode=external \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}")"
+grep --fixed-strings 'name: formbricks-authzed-upgrade-gate' <<<"${gated_upgrade}" >/dev/null
+grep --fixed-strings 'args: ["activation", "runtime-check"]' <<<"${gated_upgrade}" >/dev/null
+grep --fixed-strings 'helm.sh/hook: pre-upgrade' <<<"${gated_upgrade}" >/dev/null
+grep --fixed-strings 'helm.sh/hook-weight: "20"' <<<"${gated_upgrade}" >/dev/null
+if grep --fixed-strings 'name: formbricks-authzed-install-bootstrap' <<<"${gated_upgrade}" >/dev/null; then
+  printf '%s\n' "An upgrade must not render the fresh-install bootstrap." >&2
+  exit 1
+fi
+if grep --fixed-strings 'name: formbricks-migration' <<<"${gated_upgrade}" >/dev/null; then
+  printf '%s\n' "The first receipt-gated candidate must not race an in-chart migration Job." >&2
+  exit 1
+fi
+if grep --fixed-strings 'envFrom:' <<<"$(sed -n '/name: formbricks-authzed-upgrade-gate/,/^---$/p' <<<"${gated_upgrade}")" >/dev/null; then
+  printf '%s\n' "The receipt gate must use explicit secretKeyRef entries, not broad envFrom imports." >&2
+  exit 1
+fi
+gated_upgrade_job="$(sed -n '/name: formbricks-authzed-upgrade-gate/,/^---$/p' <<<"${gated_upgrade}")"
+grep --fixed-strings 'name: formbricks-app-secrets' <<<"${gated_upgrade_job}" >/dev/null
+grep --fixed-strings 'key: DATABASE_URL' <<<"${gated_upgrade_job}" >/dev/null
+grep --fixed-strings 'name: formbricks-authzed' <<<"${gated_upgrade_job}" >/dev/null
+
+# If a fresh Helm install created its resources but failed before activation, an explicit recovery
+# upgrade replays the idempotent prerequisites in hook order, writes the receipt, and then still runs
+# the mandatory candidate receipt gate. It is not a general upgrade bypass.
+recovery_upgrade="$(helm template authzed-install-recovery "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.installBootstrap.retryOnUpgrade=true)"
+recovery_migration="$(sed -n '/name: formbricks-migration/,/^---$/p' <<<"${recovery_upgrade}")"
+recovery_database_bootstrap="$(sed -n \
+  '/name: formbricks-spicedb-database-bootstrap/,/^---$/p' <<<"${recovery_upgrade}")"
+recovery_install_bootstrap="$(sed -n \
+  '/name: formbricks-authzed-install-bootstrap/,/^---$/p' <<<"${recovery_upgrade}")"
+recovery_gate="$(sed -n '/name: formbricks-authzed-upgrade-gate/,/^---$/p' <<<"${recovery_upgrade}")"
+grep --fixed-strings 'helm.sh/hook: pre-upgrade' <<<"${recovery_migration}" >/dev/null
+grep --fixed-strings 'helm.sh/hook-weight: "-20"' <<<"${recovery_migration}" >/dev/null
+grep --fixed-strings 'helm.sh/hook: pre-upgrade' <<<"${recovery_database_bootstrap}" >/dev/null
+grep --fixed-strings 'helm.sh/hook-weight: "-10"' <<<"${recovery_database_bootstrap}" >/dev/null
+if grep --fixed-strings 'helm.sh/hook: post-upgrade' <<<"${recovery_database_bootstrap}" >/dev/null; then
+  printf '%s\n' "Install recovery must prepare the SpiceDB database before activation, not after rollout." >&2
+  exit 1
+fi
+grep --fixed-strings 'helm.sh/hook: pre-upgrade' <<<"${recovery_install_bootstrap}" >/dev/null
+grep --fixed-strings 'helm.sh/hook-weight: "10"' <<<"${recovery_install_bootstrap}" >/dev/null
+grep --fixed-strings 'activeDeadlineSeconds: 1200' <<<"${recovery_install_bootstrap}" >/dev/null
+grep --fixed-strings 'timeout=1200' <<<"${recovery_install_bootstrap}" >/dev/null
+grep --fixed-strings 'formbricks-authzed activation bootstrap' <<<"${recovery_install_bootstrap}" >/dev/null
+grep --fixed-strings "ghcr.io/formbricks/formbricks@${TEST_IMAGE_DIGEST}" \
+  <<<"${recovery_install_bootstrap}" >/dev/null
+grep --fixed-strings 'helm.sh/hook: pre-upgrade' <<<"${recovery_gate}" >/dev/null
+grep --fixed-strings 'helm.sh/hook-weight: "20"' <<<"${recovery_gate}" >/dev/null
+grep --fixed-strings 'args: ["activation", "runtime-check"]' <<<"${recovery_gate}" >/dev/null
+
+if recovery_without_bootstrap="$(helm template authzed-recovery-without-bootstrap "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.installBootstrap.enabled=false \
+  --set authzed.activation.installBootstrap.retryOnUpgrade=true 2>&1)"; then
+  printf '%s\n' "Install recovery must refuse a disabled activation bootstrap." >&2
+  exit 1
+fi
+grep --fixed-strings 'authzed.activation.installBootstrap.enabled must remain true' \
+  <<<"${recovery_without_bootstrap}" >/dev/null
+
+if recovery_without_gate="$(helm template authzed-recovery-without-gate "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.installBootstrap.retryOnUpgrade=true \
+  --set authzed.activation.upgradeGate.enabled=false 2>&1)"; then
+  printf '%s\n' "Install recovery must not disable the mandatory receipt gate." >&2
+  exit 1
+fi
+grep --fixed-strings 'authzed.activation.upgradeGate.enabled must remain true during install-bootstrap recovery' \
+  <<<"${recovery_without_gate}" >/dev/null
+
+if too_short_recovery="$(helm template authzed-too-short-install-recovery "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.installBootstrap.retryOnUpgrade=true \
+  --set authzed.activation.installBootstrap.recoveryTimeoutSeconds=900 2>&1)"; then
+  printf '%s\n' "Install recovery must outlive an abandoned mutation fence." >&2
+  exit 1
+fi
+grep --fixed-strings 'authzed.activation.installBootstrap.recoveryTimeoutSeconds must exceed the 15-minute mutation fence' \
+  <<<"${too_short_recovery}" >/dev/null
+
+if grep --extended-regexp 'authzed (initialize|upgrade (prepare|check))' <<<"${default_install}${gated_upgrade}" >/dev/null; then
+  printf '%s\n' "Permanent chart resources must not invoke the retired cutover protocol." >&2
+  exit 1
+fi
+
+bridge_upgrade="$(helm template authzed-bridge "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set authzed.activation.upgradeGate.enabled=false \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}")"
+if grep --fixed-strings 'name: formbricks-authzed-upgrade-gate' <<<"${bridge_upgrade}" >/dev/null; then
+  printf '%s\n' "The initial bridge rollout must be able to defer the candidate receipt gate." >&2
   exit 1
 fi
 

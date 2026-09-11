@@ -38,13 +38,28 @@ enterprise:
   licenseKey: ""
 
 ##########################################################
-# Database Migration Job Configuration Helm
+# Database Migration Ownership
 ##########################################################
 migration:
-  # Enable the migration job. In Argo CD, it runs as a Sync hook in wave -1
-  # after chart-managed secrets and bundled PostgreSQL are healthy. When enabled,
-  # the startup migration in the application container is skipped.
-  enabled: true
+  # Select exactly one owner for Formbricks database migrations:
+  # - job: the chart runs the release image as an install resource or pre-upgrade hook.
+  # - startup: one or more application pods run the existing startup migration path.
+  # - external: an operator or the v5-to-v6 upgrade assistant completes migrations before rollout.
+  # The first v5-to-v6 candidate deployment must use external so migrations remain under the
+  # temporary upgrade coordinator rather than racing the authorization cutover.
+  mode: job
+
+  # The migration Job reads database credentials from one explicit Secret instead of inheriting
+  # deployment.envFrom. This is important for Helm pre-upgrade hooks: normal release resources are not
+  # updated until every pre-upgrade hook succeeds. Leave the name empty to reuse the activation database
+  # Secret and then the chart-managed <release>-app-secrets Secret. A custom Secret must exist before
+  # starting a Helm upgrade. When application database overrides or envFrom entries are configured,
+  # this Secret/key must match the explicit deployment.env.DATABASE_URL secretKeyRef. migrateUrlKey is
+  # optional at runtime; DATABASE_URL is used when it is absent.
+  database:
+    existingSecret: ""
+    urlKey: DATABASE_URL
+    migrateUrlKey: MIGRATE_DATABASE_URL
 
   # Additional annotations for the migration job
   annotations: {}
@@ -631,15 +646,44 @@ authzed:
   # Formbricks v6 uses SpiceDB as its sole authorization decision engine.
   enabled: true
 
-  # Existing releases must complete the documented schema/backfill/audit preparation before their
-  # first v6 Helm upgrade. Fresh installs do not need to set this value.
-  migrationAcknowledged: false
+  activation:
+    # A fresh Helm installation creates an empty, release-matched graph and activation receipt. The
+    # command is idempotent so Argo CD may safely render it again. Existing Argo applications must
+    # disable this while deploying the v5 bridge; the release assistant supplies the cutover receipt.
+    installBootstrap:
+      enabled: true
+      # Helm-only recovery for an install that created its resources but failed before writing the fresh
+      # activation receipt. On the recovery upgrade this runs after migrations/database bootstrap and
+      # before the mandatory receipt gate. Argo retries the ordinary Sync hook and does not need this.
+      retryOnUpgrade: false
+      timeoutSeconds: 900
+      # Recovery must be able to outlive an abandoned 15-minute mutation fence before safely taking over.
+      recoveryTimeoutSeconds: 1200
+      intervalSeconds: 5
+      backoffLimit: 0
 
-  initialization:
-    # Fresh self-hosted installs run the release-matched schema and relationship preparation Job.
-    # Set this to false only when an operator performs the same guarded cutover externally, and set
-    # migrationAcknowledged=true only after that preparation has completed successfully.
-    enabled: true
+    # On Helm upgrades, run the candidate image's DB-only receipt check before replacing application
+    # pods. Every Helm upgrade must pin deployment.image.digest so the gate and rollout execute the
+    # same immutable image. The release assistant disables this only for the initial, digest-pinned v5
+    # bridge rollout; application startup still verifies that the bridge remains legacy-authoritative.
+    upgradeGate:
+      enabled: true
+      activeDeadlineSeconds: 120
+      backoffLimit: 0
+
+    # Both short-lived Jobs read only this named key. When empty, the chart-generated or
+    # ExternalSecret-managed <release>-app-secrets Secret is used. Installations that provide
+    # database overrides or deployment.envFrom must also pin deployment.env.DATABASE_URL to this exact,
+    # non-optional Secret/key so hooks and application Pods cannot select different databases.
+    database:
+      existingSecret: ""
+      urlKey: DATABASE_URL
+
+    # Application startup waits only on the database-backed activation receipt. It never probes
+    # SpiceDB. The shell startup path bounds this wait and exits when the timeout is exceeded.
+    startupWait:
+      timeoutSeconds: 900
+      intervalSeconds: 5
 
   # selfHosted creates a SpiceDBCluster. external only configures the app client.
   mode: selfHosted

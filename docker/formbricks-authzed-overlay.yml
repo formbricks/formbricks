@@ -1,0 +1,93 @@
+# Permanent, release-signed AuthZed services for supported v5 Docker and one-click upgrades.
+# Keep this file beside the existing docker-compose.yml after cutover. The base file remains customer-owned.
+services:
+  formbricks:
+    image: ${FORMBRICKS_IMAGE_REF:?FORMBRICKS_IMAGE_REF is required}
+    environment:
+      SKIP_STARTUP_MIGRATION: "true"
+      AUTHZED_ENABLED: ${AUTHZED_ENABLED:-true}
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_TOKEN: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
+      AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
+      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-fully_consistent}
+      # These variables are only upgrade/bootstrap inputs. Explicit overrides are required because
+      # the customer-owned v5 service still loads the shared .env file.
+      FORMBRICKS_AUTHZED_DATABASE_URL: ""
+      POSTGRES_PASSWORD_URL_ENCODED: ""
+      AUTHZED_DATABASE_PASSWORD: ""
+      AUTHZED_DATABASE_PASSWORD_URL_ENCODED: ""
+
+  authzed-db-bootstrap:
+    image: ${AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF:?AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF is required}
+    restart: "no"
+    entrypoint: ["/bin/sh", "/usr/local/bin/authzed-postgres-bootstrap.sh"]
+    environment:
+      POSTGRES_ADMIN_URL: postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:?POSTGRES_PASSWORD_URL_ENCODED is required}@postgres:5432/postgres?sslmode=disable
+      AUTHZED_DATABASE_NAME: spicedb
+      AUTHZED_DATABASE_USERNAME: spicedb
+      AUTHZED_DATABASE_PASSWORD: ${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}
+    volumes:
+      - ./authzed-postgres-bootstrap.sh:/usr/local/bin/authzed-postgres-bootstrap.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  spicedb-migrate:
+    image: ${SPICEDB_IMAGE_REF:?SPICEDB_IMAGE_REF is required}
+    restart: "no"
+    command: datastore migrate head
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      SPICEDB_DATASTORE_CONN_URI: postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD_URL_ENCODED:?AUTHZED_DATABASE_PASSWORD_URL_ENCODED is required}@postgres:5432/spicedb?sslmode=disable
+    depends_on:
+      authzed-db-bootstrap:
+        condition: service_completed_successfully
+
+  spicedb:
+    image: ${SPICEDB_IMAGE_REF:?SPICEDB_IMAGE_REF is required}
+    restart: always
+    command: serve
+    mem_limit: 512m
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      SPICEDB_DATASTORE_CONN_URI: postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD_URL_ENCODED:?AUTHZED_DATABASE_PASSWORD_URL_ENCODED is required}@postgres:5432/spicedb?sslmode=disable
+      SPICEDB_GRPC_PRESHARED_KEY: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      SPICEDB_LOG_FORMAT: json
+      SPICEDB_LOG_LEVEL: info
+      SPICEDB_TELEMETRY_ENDPOINT: ""
+    depends_on:
+      spicedb-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=localhost:50051"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  authzed-ops:
+    profiles: ["authzed-ops"]
+    image: ${FORMBRICKS_IMAGE_REF:?FORMBRICKS_IMAGE_REF is required}
+    entrypoint: ["formbricks-authzed"]
+    command: ["health"]
+    environment:
+      DATABASE_URL: ${FORMBRICKS_AUTHZED_DATABASE_URL:?FORMBRICKS_AUTHZED_DATABASE_URL is required}
+      ENCRYPTION_KEY: authzed-ops-unused
+      CUBEJS_API_SECRET: authzed-ops-unused
+      CUBEJS_API_URL: http://localhost
+      HUB_API_KEY: authzed-ops-unused
+      HUB_API_URL: http://localhost
+      REDIS_URL: redis://localhost
+      LOG_LEVEL: fatal
+      AUTHZED_ENABLED: ${AUTHZED_ENABLED:-true}
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_TOKEN: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
+      AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
+      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-fully_consistent}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      spicedb:
+        condition: service_healthy

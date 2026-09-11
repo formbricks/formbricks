@@ -36,8 +36,11 @@ jobs:
           echo "Fetching latest release from GitHub API..."
 
           # Use curl with error handling - API returns 404 if no releases exist
-          http_code=$(curl -s -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
-            "https://api.github.com/repos/${REPO}/releases/latest" -o /tmp/latest_release.json)
+          if ! http_code=$(curl -sS -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
+            "https://api.github.com/repos/${REPO}/releases/latest" -o /tmp/latest_release.json); then
+            echo "❌ GitHub API request failed; refusing to select a moving release alias."
+            exit 1
+          fi
 
           if [[ "$http_code" == "404" ]]; then
             echo "⚠️  No previous releases found (404). This appears to be the first release."
@@ -45,15 +48,15 @@ jobs:
           elif [[ "$http_code" == "200" ]]; then
             latest_release=$(jq -r .tag_name /tmp/latest_release.json)
             if [[ "$latest_release" == "null" || -z "$latest_release" ]]; then
-              echo "⚠️  API returned null/empty tag_name. Treating as first release."
-              echo "latest_release=" >> $GITHUB_OUTPUT
+              echo "❌ GitHub API returned an invalid latest release payload."
+              exit 1
             else
               echo "Latest release from API: ${latest_release}"
               echo "latest_release=${latest_release}" >> $GITHUB_OUTPUT
             fi
           else
-            echo "❌ GitHub API error (HTTP ${http_code}). Treating as first release."
-            echo "latest_release=" >> $GITHUB_OUTPUT
+            echo "❌ GitHub API error (HTTP ${http_code}); refusing to select a moving release alias."
+            exit 1
           fi
 
           echo "Current release tag: ${{ github.event.release.tag_name }}"
@@ -89,7 +92,49 @@ jobs:
       - check-latest-release
     with:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
-      MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
+      # The build publishes only the immutable release tag. Every moving alias is promoted from the
+      # verified digest after the Helm and, for v6, signed-upgrade artifacts have succeeded.
+      MAKE_LATEST: false
+      PUBLISH_RELEASE_ALIASES: false
+      # v5 is the durable projection bridge customers upgrade from; only v6 images may make
+      # SpiceDB authoritative. This keeps the supported 5.4.0 source release bootable without an
+      # activation receipt while still shipping the outbox and repair machinery.
+      AUTHZED_RELEASE_MODE: ${{ (startsWith(github.event.release.tag_name, '6.') || startsWith(github.event.release.tag_name, 'v6.')) && 'spicedb_authoritative' || 'legacy_bridge' }}
+
+  docker-build-authzed-bridge:
+    name: Build & release signed AuthZed bridge image
+    if: ${{ startsWith(github.event.release.tag_name, '6.') || startsWith(github.event.release.tag_name, 'v6.') }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/release-docker-github.yml
+    secrets: inherit
+    needs:
+      - check-latest-release
+    with:
+      IS_PRERELEASE: ${{ github.event.release.prerelease }}
+      MAKE_LATEST: false
+      AUTHZED_RELEASE_MODE: legacy_bridge
+      TAG_SUFFIX: -authzed-bridge
+      PUBLISH_RELEASE_ALIASES: false
+
+  publish-v6-upgrade-assistant:
+    name: Publish signed v6 upgrade assistant
+    if: ${{ startsWith(github.event.release.tag_name, '6.') || startsWith(github.event.release.tag_name, 'v6.') }}
+    permissions:
+      contents: write
+      id-token: write
+      packages: read
+    uses: ./.github/workflows/publish-v6-upgrade-assistant.yml
+    needs:
+      - docker-build-community
+      - docker-build-authzed-bridge
+    with:
+      release_tag: ${{ github.event.release.tag_name }}
+      bridge_image_ref: ghcr.io/${{ github.repository }}@${{ needs.docker-build-authzed-bridge.outputs.IMAGE_DIGEST }}
+      target_image_ref: ghcr.io/${{ github.repository }}@${{ needs.docker-build-community.outputs.IMAGE_DIGEST }}
+      minimum_source_version: 5.4.0
 
   docker-build-cloud:
     name: Build & push Formbricks Cloud to ECR
@@ -100,8 +145,11 @@ jobs:
     secrets: inherit
     with:
       image_tag: ${{ needs.docker-build-community.outputs.VERSION }}
-      IS_PRERELEASE: ${{ github.event.release.prerelease }}
-      MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
+      # Releases publish an immutable ECR version only. Moving staging/production aliases is an
+      # environment cutover action and must happen after that environment has an activation receipt.
+      IS_PRERELEASE: false
+      MAKE_LATEST: false
+      AUTHZED_RELEASE_MODE: ${{ (startsWith(github.event.release.tag_name, '6.') || startsWith(github.event.release.tag_name, 'v6.')) && 'spicedb_authoritative' || 'legacy_bridge' }}
     needs:
       - check-latest-release
       - docker-build-community
@@ -117,6 +165,74 @@ jobs:
       - docker-build-community
     with:
       VERSION: ${{ needs.docker-build-community.outputs.VERSION }}
+
+  promote-stable-image:
+    name: Promote verified community image to stable
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: formbricks-release-moving-aliases-${{ github.repository }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      aliases_complete: ${{ steps.promote.outputs.aliases_complete }}
+      promoted: ${{ steps.promote.outputs.promoted }}
+      source_stable: ${{ steps.promote.outputs.source_stable }}
+    needs:
+      - check-latest-release
+      - docker-build-community
+      - publish-v6-upgrade-assistant
+      - helm-chart-release
+    # `always()` lets non-v6 releases proceed past the intentionally skipped v6 bundle job. A v6
+    # release must publish its signed bridge/upgrade bundle before either stable entrypoint moves.
+    if: >-
+      ${{
+        always() &&
+        !github.event.release.prerelease &&
+        needs.docker-build-community.result == 'success' &&
+        needs.helm-chart-release.result == 'success' &&
+        (
+          (!startsWith(github.event.release.tag_name, '6.') && !startsWith(github.event.release.tag_name, 'v6.')) ||
+          needs.publish-v6-upgrade-assistant.result == 'success'
+        )
+      }}
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b163ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Promote and verify stable image alias
+        id: promote
+        env:
+          EXPECTED_DIGEST: ${{ needs.docker-build-community.outputs.IMAGE_DIGEST }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_NAME: ghcr.io/${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+          VERSION: ${{ needs.docker-build-community.outputs.VERSION }}
+          # Explicit release policy: keep `latest` on the supported v5 migration line until this
+          # value is deliberately changed after the published migration window.
+          KEEP_LATEST_ON_V5: "true"
+        run: |
+          scripts/promote-release-image-aliases.sh
 
   verify-cloud-build:
     name: Verify Cloud Build Outputs
@@ -147,14 +263,20 @@ jobs:
     permissions:
       contents: write # Required for tag push operations in called workflow
     uses: ./.github/workflows/move-stable-tag.yml
+    if: >-
+      ${{
+        always() &&
+        needs.promote-stable-image.outputs.promoted == 'true' &&
+        needs.promote-stable-image.outputs.source_stable == 'true'
+      }}
     needs:
       - check-latest-release
-      - docker-build-community # Ensure release is successful first
+      - promote-stable-image
     with:
       release_tag: ${{ github.event.release.tag_name }}
       commit_sha: ${{ github.sha }}
       is_prerelease: ${{ github.event.release.prerelease }}
-      make_latest: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
+      make_latest: true
 
   update-helm-app-version:
     name: Create Helm app version update
@@ -269,21 +391,32 @@ jobs:
     name: Mark Linear release as complete
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Published artifacts only, and only jobs that always run for a stable release.
+    # Published artifacts only. `always()` lets non-v6 releases proceed past the intentionally
+    # skipped v6 bundle while requiring that bundle for every v6 release.
     #
     # update-helm-app-version opens a follow-up PR against main rather than publishing
     # anything for this tag, so gating completion on it left Linear stuck on every stable
     # release its appVersion PR job failed.
     #
-    # move-stable-tag is excluded for a subtler reason: its called job is gated on
-    # `!is_prerelease && make_latest`, so it is legitimately skipped for any stable release
-    # that is not the latest - every patch on an older line. A skipped dependency skips this
-    # job too, so depending on it would keep Linear stuck on exactly those releases.
     needs:
       - docker-build-community
       - docker-build-cloud
       - helm-chart-release
-    if: ${{ !github.event.release.prerelease }}
+      - publish-v6-upgrade-assistant
+      - promote-stable-image
+    if: >-
+      ${{
+        always() &&
+        !github.event.release.prerelease &&
+        needs.docker-build-community.result == 'success' &&
+        needs.docker-build-cloud.result == 'success' &&
+        needs.helm-chart-release.result == 'success' &&
+        (
+          (!startsWith(github.event.release.tag_name, '6.') && !startsWith(github.event.release.tag_name, 'v6.')) ||
+          needs.publish-v6-upgrade-assistant.result == 'success'
+        ) &&
+        needs.promote-stable-image.outputs.aliases_complete == 'true'
+      }}
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0

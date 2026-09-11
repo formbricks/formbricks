@@ -214,9 +214,10 @@ general `/health` response, Kubernetes readiness, or application startup, so a t
 not restart or mark the rest of Formbricks unhealthy.
 
 Failed or unavailable permission checks fail the protected operation closed; there is no runtime fallback to
-legacy authorization. Existing installations must complete `formbricks-authzed upgrade prepare` followed by
-`upgrade check` before upgrading. The general application readiness probe remains independent from AuthZed so a
-transient authorization outage does not restart unrelated Formbricks workloads.
+legacy authorization. Existing v5 installations must use the signed
+[receipt-backed v6 upgrade assistant](/self-hosting/advanced/v6-upgrade-assistant) before starting v6. The
+general application readiness probe remains independent from AuthZed, so a transient authorization outage does
+not restart unrelated Formbricks workloads.
 
 #### Cube Analytics
 

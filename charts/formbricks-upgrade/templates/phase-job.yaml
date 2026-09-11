@@ -1,0 +1,170 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "formbricks-upgrade.jobName" . }}
+  labels:
+    {{- with .Values.job.podLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- include "formbricks-upgrade.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.job.podAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    formbricks.com/candidate-manifest-digest: {{ .Values.images.candidate.manifestDigest | quote }}
+    formbricks.com/workload-quiesced: {{ .Values.activation.workloadQuiesced | quote }}
+spec:
+  activeDeadlineSeconds: {{ include "formbricks-upgrade.activeDeadlineSeconds" . }}
+  backoffLimit: 0
+  completions: 1
+  parallelism: 1
+  ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        {{- with .Values.job.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "formbricks-upgrade.labels" . | nindent 8 }}
+      {{- with .Values.job.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      restartPolicy: Never
+      {{- with .Values.job.serviceAccountName }}
+      serviceAccountName: {{ . | quote }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.job.podSecurityContext | nindent 8 }}
+      {{- with .Values.images.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Values.phase }}
+          image: {{ include "formbricks-upgrade.phaseImage" . | quote }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.job.containerSecurityContext | nindent 12 }}
+          {{- if eq .Values.phase "activate" }}
+          command: ["sh", "-ec"]
+          args:
+            - |
+              interval={{ .Values.job.activateConflictRetryIntervalSeconds }}
+              retry_window={{ .Values.job.activateConflictRetrySeconds }}
+              elapsed=0
+              while true; do
+                set +e
+                output="$({{ .Values.cli.executable | quote }} activation activate --receipt {{ .Values.activation.receipt | quote }})"
+                result=$?
+                set -e
+                if [ "$result" -eq 0 ]; then
+                  printf '%s\n' "$output"
+                  exit 0
+                fi
+                case "$output" in
+                  *'"code":"authzed_activation_conflict"'*)
+                    if [ "$elapsed" -ge "$retry_window" ]; then
+                      printf '%s\n' "$output"
+                      exit "$result"
+                    fi
+                    sleep "$interval"
+                    elapsed=$((elapsed + interval))
+                    ;;
+                  *)
+                    printf '%s\n' "$output"
+                    exit "$result"
+                    ;;
+                esac
+              done
+          {{- else }}
+          command:
+            - {{ .Values.cli.executable | quote }}
+          args:
+            {{- if eq .Values.phase "status" }}
+            - activation
+            - status
+            {{- else if eq .Values.phase "prepare" }}
+            - activation
+            - prepare
+            - --bridge-image-digest
+            - {{ .Values.images.bridge.digest | quote }}
+            - --bridge-manifest-digest
+            - {{ .Values.images.bridge.manifestDigest | quote }}
+            - --candidate-image-digest
+            - {{ .Values.images.candidate.digest | quote }}
+            - --candidate-manifest-digest
+            - {{ .Values.images.candidate.manifestDigest | quote }}
+            {{- with .Values.schema.expectedCurrentDigest }}
+            - --expected-current-digest
+            - {{ . | quote }}
+            {{- end }}
+            {{- else if eq .Values.phase "audit" }}
+            - backfill
+            - --scope=all
+            {{- else if eq .Values.phase "rollback-begin" }}
+            - activation
+            - rollback-begin
+            - --receipt
+            - {{ .Values.activation.receipt | quote }}
+            {{- else if eq .Values.phase "rollback-complete" }}
+            - activation
+            - rollback-complete
+            - --receipt
+            - {{ .Values.activation.receipt | quote }}
+            {{- end }}
+          {{- end }}
+          env:
+            - name: LOG_LEVEL
+              value: fatal
+            # These values are deliberately inert. The release-matched CLI shares Formbricks' strict
+            # server environment parser but these upgrade operations never call Cube, Hub, or Redis.
+            - name: ENCRYPTION_KEY
+              value: formbricks-upgrade-unused
+            - name: CUBEJS_API_SECRET
+              value: formbricks-upgrade-unused
+            - name: CUBEJS_API_URL
+              value: http://localhost
+            - name: HUB_API_KEY
+              value: formbricks-upgrade-unused
+            - name: HUB_API_URL
+              value: http://localhost
+            - name: REDIS_URL
+              value: redis://localhost
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret.name }}
+                  key: {{ .Values.database.existingSecret.key }}
+            - name: AUTHZED_ENABLED
+              value: "true"
+            - name: AUTHZED_ENDPOINT
+              value: {{ .Values.authzed.endpoint | quote }}
+            - name: AUTHZED_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.authzed.existingSecret.name }}
+                  key: {{ .Values.authzed.existingSecret.key }}
+            - name: AUTHZED_SYSTEM_KEY
+              value: {{ .Values.authzed.systemKey | quote }}
+            - name: AUTHZED_INSECURE
+              value: {{ .Values.authzed.insecure | quote }}
+            - name: AUTHZED_CONSISTENCY
+              value: fully_consistent
+          resources:
+            {{- toYaml .Values.job.resources | nindent 12 }}

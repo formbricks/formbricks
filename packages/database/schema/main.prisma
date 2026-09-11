@@ -1743,6 +1743,11 @@ model FeedbackDirectoryWorkspace {
 /// them by rerunning the migration, which is the same contract its triggers already live under.
 model AuthzedProjectionOutbox {
   id                String    @id @default(uuid())
+  /// Monotonic source watermark used by the v6 activation protocol. Unlike timestamps this remains
+  /// unambiguous when several authorization mutations commit in the same millisecond.
+  /// Rows created before the v6 activation migration remain null so the migration never rewrites a
+  /// live outbox. Drain queries always include these legacy rows ahead of the sequence watermark.
+  sourceSequence    BigInt?   @default(autoincrement())
   targetType        String
   primaryId         String
   secondaryId       String?
@@ -1762,4 +1767,98 @@ model AuthzedProjectionOutbox {
   lastErrorCode     String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+}
+
+enum AuthzedAuthorizationAuthority {
+  legacy
+  spicedb
+}
+
+enum AuthzedAuthorizationTransition {
+  idle
+  preparing
+  prepared
+  activating
+  rollback_fencing
+  rolling_back
+}
+
+enum AuthzedActivationReceiptStatus {
+  prepared
+  active
+  rolled_back
+  invalidated
+}
+
+enum AuthzedActivationKind {
+  fresh_install
+  upgrade
+}
+
+enum AuthzedUpgradeRunStatus {
+  pending
+  running
+  completed
+  failed
+}
+
+/// Singleton database-backed authorization authority state. The fixed `formbricks` row is the only
+/// source of truth for cutover state; Helm values and environment variables cannot acknowledge it.
+model AuthzedAuthorizationControl {
+  id                        String                         @id @default("formbricks")
+  authority                 AuthzedAuthorizationAuthority  @default(legacy)
+  transition                AuthzedAuthorizationTransition @default(idle)
+  generation                BigInt                         @default(0)
+  pendingReceiptId          String?
+  activeReceiptId           String?
+  mutationFenceExpiresAt    DateTime?
+  maintenanceLeaseOwner     String?
+  maintenanceLeaseExpiresAt DateTime?
+  createdAt                 DateTime                       @default(now())
+  updatedAt                 DateTime                       @updatedAt
+}
+
+/// Immutable evidence produced by the release-matched upgrade tooling. Snapshot and digest fields
+/// are operationally sensitive and must never be copied into logs or public command output.
+model AuthzedActivationReceipt {
+  id                      String                         @id @default(uuid())
+  generation              BigInt                         @unique
+  kind                    AuthzedActivationKind
+  status                  AuthzedActivationReceiptStatus @default(prepared)
+  protocolVersion         Int
+  contractDigest          String
+  schemaDigest            String
+  clientConfigDigest      String
+  bridgeImageDigest       String?
+  bridgeManifestDigest    String?
+  candidateImageDigest    String?
+  candidateManifestDigest String
+  sourceSequenceWatermark BigInt
+  completedAtSnapshot     String?
+  auditCounters           Json
+  outboxCounters          Json
+  preparedAt              DateTime                       @default(now())
+  activatedAt             DateTime?
+  rolledBackAt            DateTime?
+  invalidatedAt           DateTime?
+  createdAt               DateTime                       @default(now())
+  updatedAt               DateTime                       @updatedAt
+}
+
+/// Resume state for long-running, idempotent upgrade phases. `privateCursor` may contain tenant
+/// identifiers and is intentionally never returned by the operator CLI.
+model AuthzedUpgradeRun {
+  id             String                  @id @default(uuid())
+  manifestDigest String
+  generation     BigInt
+  phase          String
+  status         AuthzedUpgradeRunStatus @default(pending)
+  privateCursor  Json?
+  lastErrorCode  String?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@unique([manifestDigest, generation, phase])
 }

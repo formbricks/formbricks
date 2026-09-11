@@ -1,0 +1,32 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -ne 4 ] || [ "$1" != "activation" ] || [ "$2" != "activate" ] || [ "$3" != "--receipt" ]; then
+  printf '%s\n' '{"code":"invalid_test_command","retryable":false,"status":"failed"}'
+  exit 1
+fi
+
+count=0
+if [ -f "$AUTHZED_FAKE_COUNT_FILE" ]; then
+  count="$(sed -n '1p' "$AUTHZED_FAKE_COUNT_FILE")"
+fi
+count=$((count + 1))
+printf '%s\n' "$count" > "$AUTHZED_FAKE_COUNT_FILE"
+
+case "$AUTHZED_FAKE_MODE" in
+  conflict_then_success)
+    if [ "$count" -lt 3 ]; then
+      printf '%s\n' '{"code":"authzed_activation_conflict","retryable":false,"status":"failed"}'
+      exit 1
+    fi
+    printf '%s\n' '{"status":"activated"}'
+    ;;
+  permanent)
+    printf '%s\n' '{"code":"authzed_unavailable","retryable":true,"status":"failed"}'
+    exit 1
+    ;;
+  *)
+    printf '%s\n' '{"code":"invalid_test_mode","retryable":false,"status":"failed"}'
+    exit 1
+    ;;
+esac

@@ -187,15 +187,16 @@ AuthZed / SpiceDB Operations:
    kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed schema check
    ```
 
-   Before upgrading an existing installation to v6, complete the release-matched preparation and
-   read-only gate, then set `authzed.migrationAcknowledged=true`:
+   A fresh install creates its activation receipt automatically. For an existing v5 release, use the
+   signed v6 upgrade assistant and temporary upgrade chart before selecting the v6 candidate image.
+   The release assistant can enable this optional database-only receipt gate before replacing any application Pod:
    ```sh
-   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed upgrade prepare
-   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed upgrade check
+   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed activation runtime-check
    ```
 
-   Schema application and relationship repair are explicit operator actions and never run as Helm
-   hooks. Read the safeguards and backup requirements before changing authorization state:
+   The assistant also pins the first candidate image by digest. Keep `migration.mode=external` for that
+   rollout. Schema preparation, relationship repair, and authority changes remain owned by the temporary
+   upgrade coordinator, never this chart:
    https://formbricks.com/docs/self-hosting/advanced/authzed-operations
 
 ---

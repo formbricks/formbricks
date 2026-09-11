@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import {
   AUTHZED_OUTBOX_TARGET_TYPES,
   type TAuthzedOutboxEvent,
@@ -47,8 +48,13 @@ export const createAuthzedOutboxLeaseOwner = (): string => randomUUID();
 
 export const claimAuthzedOutboxEvents = async (
   leaseOwner: string,
-  limit = AUTHZED_OUTBOX_BATCH_SIZE
+  limit = AUTHZED_OUTBOX_BATCH_SIZE,
+  throughSourceSequence?: bigint
 ): Promise<ReadonlyArray<TAuthzedOutboxEvent>> => {
+  const watermarkClause =
+    throughSourceSequence === undefined
+      ? Prisma.empty
+      : Prisma.sql`AND ("sourceSequence" IS NULL OR "sourceSequence" <= ${throughSourceSequence})`;
   const rows = await prisma.$queryRaw<TClaimedRow[]>`
     WITH claimable AS (
       SELECT "id"
@@ -57,7 +63,8 @@ export const claimAuthzedOutboxEvents = async (
         AND "deadLetteredAt" IS NULL
         AND "availableAt" <= NOW()
         AND ("leaseExpiresAt" IS NULL OR "leaseExpiresAt" <= NOW())
-      ORDER BY "isRevocation" DESC, "createdAt" ASC
+        ${watermarkClause}
+      ORDER BY "isRevocation" DESC, "sourceSequence" ASC NULLS FIRST, "createdAt" ASC, "id" ASC
       LIMIT ${limit}
       FOR UPDATE SKIP LOCKED
     )
@@ -71,7 +78,7 @@ export const claimAuthzedOutboxEvents = async (
     FROM claimable
     WHERE outbox."id" = claimable."id"
     RETURNING outbox."id", outbox."targetType", outbox."primaryId", outbox."secondaryId",
-              outbox."isRevocation", outbox."attempts", outbox."createdAt"
+              outbox."isRevocation", outbox."attempts", outbox."createdAt", outbox."sourceSequence"
   `;
 
   const invalidIds = rows.filter(({ targetType }) => !isTargetType(targetType)).map(({ id }) => id);
@@ -222,7 +229,13 @@ export const hasStaleAuthzedRevocation = async (): Promise<boolean> => {
  * dead-lettered row always has a NULL `processedAt`, because the claim skips dead letters and
  * `replayAuthzedOutboxDeadLetters` clears `deadLetteredAt` before delivery is possible again.
  */
-export const getAuthzedOutboxStatus = async (): Promise<TAuthzedOutboxStatus> => {
+export const getAuthzedOutboxStatus = async (
+  throughSourceSequence?: bigint
+): Promise<TAuthzedOutboxStatus> => {
+  const watermarkClause =
+    throughSourceSequence === undefined
+      ? Prisma.empty
+      : Prisma.sql`AND ("sourceSequence" IS NULL OR "sourceSequence" <= ${throughSourceSequence})`;
   const [row] = await prisma.$queryRaw<TStatusRow[]>`
     SELECT
       COUNT(*) FILTER (WHERE "deadLetteredAt" IS NULL) AS pending,
@@ -253,6 +266,7 @@ export const getAuthzedOutboxStatus = async (): Promise<TAuthzedOutboxStatus> =>
       ))::double precision AS oldest_pending_age_seconds
     FROM "AuthzedProjectionOutbox"
     WHERE "processedAt" IS NULL
+      ${watermarkClause}
   `;
 
   return {

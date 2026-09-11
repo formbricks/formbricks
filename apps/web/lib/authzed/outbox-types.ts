@@ -23,6 +23,8 @@ export type TAuthzedOutboxEvent = Readonly<{
   isRevocation: boolean;
   primaryId: string;
   secondaryId: string | null;
+  /** Null only for rows created before the online v6 activation migration. */
+  sourceSequence: bigint | null;
   targetType: TAuthzedOutboxTargetType;
 }>;
 
@@ -42,4 +44,10 @@ export type TAuthzedOutboxDrainResult = Readonly<{
   failed: number;
   remaining: number;
   status: "drained" | "partial";
+}>;
+
+export type TAuthzedOutboxDrainOptions = Readonly<{
+  maxBatches?: number;
+  signal?: AbortSignal;
+  throughSourceSequence?: bigint;
 }>;

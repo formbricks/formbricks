@@ -362,6 +362,7 @@
             "group": "Advanced",
             "pages": [
               "self-hosting/advanced/migration",
+              "self-hosting/advanced/v6-upgrade-assistant",
               "self-hosting/advanced/authzed-operations",
               "self-hosting/advanced/migrating-surveys",
               "self-hosting/advanced/license",

@@ -79,6 +79,7 @@ const event = (
   isRevocation: false,
   primaryId,
   secondaryId,
+  sourceSequence: 1n,
   targetType,
 });
 
@@ -354,6 +355,21 @@ describe("AuthZed projection outbox processor", () => {
 
     await drainAuthzedOutbox(10);
     expect(claimAuthzedOutboxEvents).toHaveBeenCalledOnce();
+  });
+
+  test("stops a drain after activation cancellation without committing a partial batch", async () => {
+    const controller = new AbortController();
+    const cancellation = new Error("activation_cancelled");
+    vi.mocked(claimAuthzedOutboxEvents).mockResolvedValue([event("membership", "org", "user")]);
+    vi.mocked(reconcileOrganizationMemberships).mockImplementationOnce(async () => {
+      controller.abort(cancellation);
+      return projected;
+    });
+
+    await expect(drainAuthzedOutbox({ signal: controller.signal })).rejects.toBe(cancellation);
+    expect(claimAuthzedOutboxEvents).toHaveBeenCalledOnce();
+    expect(markAuthzedOutboxEventsDelivered).not.toHaveBeenCalled();
+    expect(markAuthzedOutboxEventsFailed).not.toHaveBeenCalled();
   });
 
   test("records revocation propagation after successful delivery without identifier labels", async () => {

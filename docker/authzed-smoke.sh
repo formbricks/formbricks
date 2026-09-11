@@ -8,6 +8,7 @@ readonly COMPOSE_FILE="${REPO_ROOT}/docker-compose.dev.yml"
 readonly PROJECT_NAME="formbricks-authzed-smoke-${$}"
 readonly AUTHZED_TOKEN="0000000000000000000000000000000000000000000000000000000000000001"
 readonly AUTHZED_DATABASE_PASSWORD="0000000000000000000000000000000000000000000000000000000000000002"
+readonly AUTHZED_DATABASE_PASSWORD_URL_ENCODED="${AUTHZED_DATABASE_PASSWORD}"
 readonly WRONG_AUTHZED_TOKEN="0000000000000000000000000000000000000000000000000000000000000003"
 readonly SCHEMA_LOG_SENTINEL="Canonical Formbricks authorization schema."
 readonly RELATIONSHIP_USER_SENTINEL="application-graph-alice"
@@ -20,6 +21,18 @@ readonly DRIFT_SCHEMA_FILE="${SMOKE_TEMP_DIR}/schema-with-drift.zed"
 
 compose() {
   docker compose --project-name "${PROJECT_NAME}" --file "${COMPOSE_FILE}" "$@"
+}
+
+wait_for_postgres() {
+  for _ in $(seq 1 30); do
+    if compose exec -T postgres pg_isready --username postgres --dbname postgres >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+
+  printf '%s\n' "PostgreSQL did not become ready." >&2
+  return 1
 }
 
 wait_for_spicedb() {
@@ -161,12 +174,40 @@ trap 'on_error "${LINENO}"' ERR
 trap cleanup EXIT
 
 export AUTHZED_DATABASE_PASSWORD
+export AUTHZED_DATABASE_PASSWORD_URL_ENCODED
 export AUTHZED_TOKEN
 export POSTGRES_PORT=0
 export SPICEDB_GRPC_PORT=0
 
 compose config --quiet
 compose up --detach postgres
+wait_for_postgres
+
+if [[ "$(compose exec -T postgres psql --username postgres --dbname postgres -tAc \
+  "SELECT 1 FROM pg_database WHERE datname = 'formbricks'")" != "1" ]]; then
+  compose exec -T postgres createdb --username postgres formbricks
+fi
+
+# Exercise the activation fence duration against real PostgreSQL timestamp precision. The control
+# table stores milliseconds, so the runtime deliberately leaves one second below the 15-minute
+# database ceiling instead of relying on an exactly-equal timestamp surviving rounding.
+compose exec -T postgres psql --username postgres --dbname formbricks \
+  --set ON_ERROR_STOP=1 >/dev/null <<'SQL'
+DO $$
+DECLARE
+  attempt integer;
+  stored_fence TIMESTAMP(3);
+BEGIN
+  FOR attempt IN 1..10000 LOOP
+    stored_fence := clock_timestamp() + INTERVAL '14 minutes 59 seconds';
+    IF stored_fence > clock_timestamp() + INTERVAL '15 minutes' THEN
+      RAISE EXCEPTION 'authzed_activation_fence_precision_regression';
+    END IF;
+  END LOOP;
+END
+$$;
+SQL
+
 compose up authzed-db-bootstrap spicedb-migrate
 
 # Prove both initialization stages are safe to repeat before starting the server.

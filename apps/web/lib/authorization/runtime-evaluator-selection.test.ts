@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
@@ -24,28 +24,38 @@ const walkRuntimeSources = (directory: string): ReadonlyArray<string> =>
     return [absolutePath];
   });
 
-describe("direct-authority architecture", () => {
-  test("does not retain a legacy evaluator or rollout selector module", () => {
-    for (const relativePath of [
-      "lib/authorization/legacy-evaluator.ts",
-      "lib/authorization/legacy-api-key-access.ts",
-      "lib/authorization/legacy-workspace-access.ts",
-      "lib/authorization/rollout-config.ts",
-      "lib/authorization/workspace-list-observer.ts",
-      "lib/utils/action-client/action-client-middleware.ts",
-    ]) {
-      expect(existsSync(join(WEB_ROOT, relativePath)), relativePath).toBe(false);
-    }
+describe("authorization runtime selection", () => {
+  test("keeps legacy authorization behind the compile-time bridge module", () => {
+    const coordinator = readFileSync(join(WEB_ROOT, "lib/authorization/coordinator.ts"), "utf8");
+    const targetRuntime = readFileSync(join(WEB_ROOT, "lib/authorization/runtime-evaluator.ts"), "utf8");
+    const bridgeRuntime = readFileSync(
+      join(WEB_ROOT, "lib/authorization/runtime-evaluator.bridge.ts"),
+      "utf8"
+    );
+
+    expect(coordinator).toContain('from "@formbricks/authorization-runtime"');
+    expect(coordinator).not.toContain("legacyEvaluator");
+    expect(coordinator).not.toContain("spicedbEvaluator");
+    expect(targetRuntime).toContain("spicedbEvaluator");
+    expect(targetRuntime).not.toContain("legacyEvaluator");
+    expect(bridgeRuntime).toContain("legacyEvaluator");
+    expect(bridgeRuntime).not.toContain("spicedbEvaluator");
   });
 
-  test("keeps production authorization paths free of deleted compatibility entry points", () => {
+  test("keeps production paths free of deleted compatibility entry points", () => {
     const forbiddenSymbols = [
       "checkAuthorizationUpdated",
       "hasUserWorkspaceAccessForAction",
       "hasApiKeyWorkspaceAccess",
       "observeWorkspaceListAuthorization",
     ];
+    const allowedFiles = new Set([
+      "lib/authorization/legacy-evaluator.ts",
+      "lib/authorization/legacy-workspace-access.ts",
+    ]);
     const offenders = walkRuntimeSources(WEB_ROOT).filter((filePath) => {
+      const relativePath = filePath.slice(WEB_ROOT.length + 1);
+      if (allowedFiles.has(relativePath)) return false;
       const source = readFileSync(filePath, "utf8");
       return forbiddenSymbols.some((symbol) => source.includes(symbol));
     });

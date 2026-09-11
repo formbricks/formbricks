@@ -10,22 +10,29 @@ Formbricks v6 replaces the legacy authorization evaluator with AuthZed SpiceDB. 
 of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback, so an existing
 installation must migrate through the bridge-compatible v5 release identified in the v6 release notes.
 
-Before selecting a v6 image:
+Use the signed v6 upgrade assistant rather than performing the authorization migration by hand. It validates the
+current release, renders the exact image digests and Secret references, and drives the temporary upgrade chart.
+The customer-owned Helm values retain only the permanent AuthZed runtime after the coordinator is removed.
+
+The automated sequence is:
 
 1. Back up the Formbricks and SpiceDB PostgreSQL databases, secrets, deployment configuration, image versions,
    and canonical schema digest.
-2. Merge the release-matched AuthZed deployment services or Helm values without overwriting proxy, storage,
-   SMTP, or external-datastore customization.
-3. Run the v6 database migrations while the bridge application remains available.
-4. Run `formbricks-authzed upgrade prepare`, then require `formbricks-authzed upgrade check` to exit `0`.
-5. For one-click or Compose, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. For Helm, set
-   `authzed.migrationAcknowledged=true` in the v6 upgrade values.
-6. Deploy v6 and verify critical allow, deny, revocation, and cross-tenant cases.
+2. Deploy the immutable legacy-authoritative v5 bridge with
+   `authzed.activation.upgradeGate.enabled: false`; this creates the permanent SpiceDB resources and durable
+   projection without changing authorization decisions.
+3. Let the temporary coordinator apply the schema, drain projections, reconcile relationships, and record a
+   database-backed activation receipt while the bridge remains available.
+4. Quiesce authorization mutations briefly, activate that receipt, and deploy the immutable v6 candidate with
+   `migration.mode: external` and `authzed.activation.upgradeGate.enabled: true`.
+5. Let the candidate's pre-upgrade gate verify its embedded contract against the receipt before any application
+   Pod is replaced.
+6. Finalize, remove the temporary chart, and verify critical allow, deny, revocation, and cross-tenant cases.
 
-The update scripts and chart fail before replacing the running release when the deployment contract,
-acknowledgement, schema, outbox, or relationship graph is not ready. Do not bypass the acknowledgement to silence
-a failed gate. See [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6)
-for Docker and Kubernetes commands, guarded schema replacement, backups, repair, and rollback.
+There is no `migrationAcknowledged` flag: a stale or missing receipt cannot be bypassed by a values change. Keep
+the exact bridge image and values until the rollback window closes. See
+[AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6) for the
+assistant, backups, repair, cutover, and rollback procedure.
 
 The moving `latest` image tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable
 publication. Existing installations opt into v6 explicitly during that migration window.

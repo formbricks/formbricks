@@ -19,6 +19,7 @@ const row = (targetType: string) => ({
   isRevocation: true,
   primaryId: "private-primary",
   secondaryId: "private-secondary",
+  sourceSequence: 1n,
   targetType,
 });
 

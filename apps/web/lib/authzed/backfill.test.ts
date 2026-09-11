@@ -161,6 +161,29 @@ describe("dry-run inertness", () => {
   });
 });
 
+describe("activation cancellation", () => {
+  test("stops between reconcilers instead of starting more graph work", async () => {
+    const controller = new AbortController();
+    const cancellation = new Error("activation_cancelled");
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({
+      ...emptySource,
+      memberships: [{ organizationId: "org-1", userId: "user-1" }],
+    });
+    apply.reconcileMemberships.mockImplementationOnce(async () => {
+      controller.abort(cancellation);
+      return PROJECTED;
+    });
+
+    await expect(runAuthzedBackfill(request(), { ...dependencies, signal: controller.signal })).rejects.toBe(
+      cancellation
+    );
+    expect(apply.reconcileMemberships).toHaveBeenCalledOnce();
+    expect(apply.reconcileTeamWorkspace).not.toHaveBeenCalled();
+    expect(apply.reconcileApiKeys).not.toHaveBeenCalled();
+    expect(apply.reconcileFeedbackDirectories).not.toHaveBeenCalled();
+  });
+});
+
 describe("per-unit failure isolation", () => {
   test("continues the sweep when one organization fails and reports it", async () => {
     vi.mocked(source.readOrganizationIdPage)

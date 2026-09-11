@@ -146,15 +146,44 @@ inside a Formbricks pod. Start with:
 ```bash
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade check
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed activation runtime-check
 ```
 
-A fresh install runs an idempotent initialization Job, but application startup and probes remain independent
-from it. Upgrades never run relationship preparation automatically. Before the first v6 upgrade, run
-`formbricks-authzed upgrade prepare`, require `upgrade check` to exit `0`, and then set
-`authzed.migrationAcknowledged: true`. The chart refuses an unacknowledged upgrade, disabled AuthZed, or weaker
-consistency. Follow [AuthZed Operations](/self-hosting/advanced/authzed-operations) and do not expose SpiceDB
-through an Ingress.
+A fresh install runs a bounded, idempotent activation bootstrap and waits for its database receipt before the
+application starts. General health probes remain independent from SpiceDB. Existing installations upgrade with
+the signed v6 release assistant and temporary upgrade chart; there is no boolean acknowledgement to bypass. The
+first v6 candidate uses an immutable image digest and `migration.mode: external`. The assistant opts that rollout
+into the Helm pre-upgrade gate, which verifies the receipt before replacing application Pods. Every Helm upgrade
+must set `deployment.image.digest`, and the receipt gate is enabled by default. The assistant disables it only for
+the initial, digest-pinned bridge rollout; application startup still performs the bounded database-only check.
+
+The default `migration.mode: job` is appropriate for fresh installs and compatible digest-pinned upgrades. Use
+`startup` only when application startup owns migrations, or `external` when your deployment automation has
+already completed them. Follow [AuthZed Operations](/self-hosting/advanced/authzed-operations) and do not expose
+SpiceDB through an Ingress.
+
+The migration Job deliberately does not inherit `deployment.envFrom`. A Helm pre-upgrade hook runs before normal
+candidate Secrets and ConfigMaps are updated. Do not change the database URL, credentials, or source Secret during
+a Formbricks version upgrade. First create a stable Secret outside the release, update and restart the currently
+running release against it, and verify database reads and writes. Complete any database endpoint migration as its
+own cutover. In the later version upgrade, configure `migration.database.existingSecret`,
+`authzed.activation.database.existingSecret`, and an explicit, non-optional
+`deployment.env.DATABASE_URL.valueFrom.secretKeyRef` to use that already-active Secret and key. The explicit EnvVar
+takes precedence over all `deployment.envFrom` sources. The Secret may also contain an optional
+`MIGRATE_DATABASE_URL`; never rotate or repoint it during the version upgrade.
+
+If a fresh Helm install fails after creating its resources but before writing the activation receipt, correct the
+underlying failure and rerun the same digest-pinned `helm upgrade --install` with
+`authzed.activation.installBootstrap.retryOnUpgrade: true`. Recovery replays migrations and database bootstrap,
+retries the empty-install activation, and still runs the mandatory receipt gate before replacing Pods. Its
+20-minute default recovery deadline can outlive an abandoned 15-minute mutation fence. Use this only to recover a
+failed fresh install and return it to `false` after success; it is not an existing-installation upgrade path.
+
+Set AuthZed client configuration through `authzed.*` and its named Secrets, not `deployment.env.AUTHZED_*`.
+Using one chart-level source keeps the activation Jobs and application Pods on the same endpoint, token, system
+key, transport, and consistency contract. When `deployment.env` or a custom `deployment.envFrom` can select the
+application database, pin `deployment.env.DATABASE_URL`, `migration.database`, and
+`authzed.activation.database` to the same pre-existing Secret and runtime key.
 
 ## 3. v5-Specific Deployment Notes
 

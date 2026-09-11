@@ -24,10 +24,10 @@ If you’re looking to quickly set up a production instance of Formbricks on an 
 
 <Note>
   The installer stores generated PostgreSQL, Hub, Cube, and AuthZed credentials in `./formbricks/.env` and
-  restricts the file to `0600`. PostgreSQL has a raw password for the database plus a URL-encoded companion for
-  connection strings. When bundled RustFS is enabled, its generated credentials are stored there too. Keep that
-  file private, include it in your server backup plan, and avoid checking it into source control or copying it to
-  shared locations.
+  restricts the file to `0600`. PostgreSQL has a raw password for the database plus a URL-encoded companion
+  for connection strings. When bundled RustFS is enabled, its generated credentials are stored there too. Keep
+  that file private, include it in your server backup plan, and avoid checking it into source control or
+  copying it to shared locations.
 </Note>
 
 <Note>
@@ -55,14 +55,25 @@ curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
 ```
 
 <Info>
-  The v6 one-click stack is based on the production Docker Compose file and includes Formbricks Hub
-  and Cube as part of the baseline (Cube configuration lives under `formbricks/cube/`). Ensure your generated
+  The v6 one-click stack is based on the production Docker Compose file and includes Formbricks Hub and Cube
+  as part of the baseline (Cube configuration lives under `formbricks/cube/`). Ensure your generated
   `formbricks/docker-compose.yml` contains a non-empty `HUB_API_KEY` and that `formbricks/.env` contains
   `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` before treating the stack as ready.
-  The installer generates these values without printing them and restricts `.env` to `0600`. `HUB_API_URL`
+  The installer generates these values without printing them and restricts `.env` to `0600`. After
+  installation, you own the raw `AUTHZED_DATABASE_PASSWORD` credential.
+  `AUTHZED_DATABASE_PASSWORD_URL_ENCODED` is only its generated URI-safe representation, not a second
+  credential; the installer's hexadecimal value is safe to reuse for both. Rotate both together. `HUB_API_URL`
   should normally stay at `http://hub:8080`. Bundled SpiceDB is installed for every new setup and does not
   require an Enterprise license check.
 </Info>
+
+<Note>
+  On the initial v6 startup, Formbricks waits for the installer-created database activation receipt before it
+  serves traffic. The bounded wait does not call SpiceDB. After startup, the general `/health` endpoint
+  remains independent from SpiceDB. The bundled database configuration provides the two concurrent connections
+  required by activation; custom `DATABASE_URL` or PgBouncer configurations must provide at least two
+  connections in addition to normal application capacity.
+</Note>
 
 <Info>
   The v5 one-click Traefik setup also exposes Hub-backed FeedbackRecords through Formbricks at
@@ -75,251 +86,43 @@ curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
 
 During installation, the script will prompt you to provide some details:
 
-- **Overwriting Docker GPG Keys**:
-  If Docker GPG keys already exist, the script will ask whether you want to overwrite them.
+- **Overwriting Docker GPG keys:** If Docker's key already exists, choose whether to replace it.
 
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
+- **Domain name:** Enter the hostname only, without `http://` or `https://`.
 
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
+- **HTTPS certificate:** Accept the Let's Encrypt setup for a public production deployment.
 
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N)
-```
+- **DNS and firewall confirmation:** Confirm the domain points to the server and ports 80 and 443 are open.
 
-- **Domain Name**:
-  Enter the domain name where you’ll host Formbricks. The domain will be used to generate an SSL certificate. Do not include the protocol (http/https).
+- **Certificate email address:** Enter the address that should receive certificate notifications.
 
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
+- **HSTS:** Choose whether browsers must always use HTTPS. Enabling it is recommended once HTTPS is working.
 
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
+- **Email service:** Enter `Y` to configure SMTP, or accept the default `N` to continue without outbound email.
 
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
+```text
 File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-```
-
-- **HTTPS Certificate Setup**:
-  The script will ask if you’d like to create an HTTPS certificate for your domain. Enter `Y` to proceed (highly recommended for secure access).
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
+🔗 Please enter your domain name for the SSL certificate (do not include the protocol):
 my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-```
-
-- **DNS Setup Prompt**: Ensure that your domain's DNS is correctly configured and ports 80 and 443 are open. Confirm this by entering `Y`. This step is crucial for proper SSL certificate issuance and secure server access.
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-Y
-🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
-```
-
-- **Email Address for SSL Certificate**:
-  Provide an email address to register the SSL certificate. Notifications regarding the certificate will be sent to this address.
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-Y
-🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
-Y
+🔗 Do you want us to set up an HTTPS certificate for you? [Y/n] Y
+🔗 Is DNS configured and are ports 80 and 443 open? [Y/n] Y
 💡 Please enter your email address for the SSL certificate:
+docs@example.com
+🔗 Do you want to enforce HTTPS (HSTS)? [Y/n] Y
+📧 Do you want to set up the email service? [y/N] N
+🎉 All done! Open https://my.hosted.url.com to finish setup.
 ```
 
-- **Enforce HTTPS with HSTS**:
-  Enabling HTTP Strict Transport Security (HSTS) ensures all communication with your server is encrypted. It’s a recommended best practice. Enter `Y` to enforce HTTPS.
+After the script reports completion, visit the domain you entered and finish the Formbricks setup wizard.
 
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-Y
-🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
-Y
-💡 Please enter your email address for the SSL certificate:
-docs@formbricks.com
-🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]
-```
-
-- **Email Service Setup Prompt**: The script will ask if you want to set up the email service. Enter `Y` to proceed.(default is `N`). You can skip this step if you don't want to set up the email service. You will still be able to use Formbricks without setting up the email service.
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-Y
-🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
-Y
-💡 Please enter your email address for the SSL certificate:
-docs@formbricks.com
-🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]
-Y
-🚗 Configuring Traefik...
-💡 Created traefik.yaml and traefik-dynamic.yaml file.
-💡 Created acme.json file with correct permissions.
-📧 Do you want to set up the email service? You will need SMTP credentials for the same! [y/N]
-
-```
-
-**That's it**! After running the command and providing the required information, visit the domain name you entered, and you should see the Formbricks home wizard!
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-Y
-🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
-Y
-💡 Please enter your email address for the SSL certificate:
-docs@formbricks.com
-🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]
-Y
-🚗 Configuring Traefik...
-💡 Created traefik.yaml and traefik-dynamic.yaml file.
-💡 Created acme.json file with correct permissions.
-📧 Do you want to set up the email service? You will need SMTP credentials for the same! [y/N] N
-📥 Downloading docker-compose.yml from Formbricks GitHub repository...
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100  6632  100  6632    0     0  24280      0 --:--:-- --:--:-- --:--:-- 24382
-🚙 Updating docker-compose.yml with your custom inputs...
-🚗 NEXTAUTH_SECRET updated successfully!
-🚗 ENCRYPTION_KEY updated successfully!
-🚗 CRON_SECRET updated successfully!
-
-[+] Running 4/4
- ✔ Network formbricks_default         Created                                                                                                                                                    0.2s
- ✔ Container formbricks-postgres-1    Started                                                                                                                                                    1.0s
- ✔ Container formbricks-formbricks-1  Started                                                                                                                                                    1.6s
- ✔ Container traefik                  Started                                                                                                                                                    2.8s
-🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!
-🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance.
-
-🎉 All done! Please setup your Formbricks instance by visiting your domain at https://my.hosted.url.com. You can check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'
-```
+The installer writes `FORMBRICKS_IMAGE_REF=ghcr.io/formbricks/formbricks:stable` to `.env`. Formbricks moves
+that image alias with the Git `stable` source tag only for the GitHub-latest stable release; prereleases do not
+replace it. The `latest` image alias remains on the supported v5 migration line during the v6 upgrade window.
+Existing v5 installations use immutable bridge and target digests from the signed v6 bundle during cutover.
+The bridge runs the `legacy_bridge` contract, keeping PostgreSQL-backed v5 authorization authoritative while it
+prepares SpiceDB. The v6 target runs `spicedb_authoritative` and requires the compatible activation receipt.
+Release publication recognizes only declared v5 and v6 policies; an unknown future major does not move
+`stable`, `latest`, or version aliases until its upgrade policy is reviewed.
 
 ## Update
 
@@ -334,8 +137,9 @@ chmod +x formbricks.sh
 ./formbricks.sh update
 ```
 
-The script pulls the latest images, runs database migrations, executes the AuthZed v6 preparation and read-only
-gate, and only then stops and restarts the running stack. A failed gate leaves the existing application running.
+For an existing v5 installation, first download the target v6 release bundle and follow the
+[v6 Upgrade Assistant](/self-hosting/advanced/v6-upgrade-assistant). The normal command above deliberately
+blocks rather than starting a v6 image without a database-backed activation receipt.
 
 Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
 Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
@@ -352,49 +156,48 @@ The update command does not regenerate or rotate them.
   your existing deployment, confirm `HUB_API_KEY` is set, and only then run the update command. If your older
   one-click install also uses bundled MinIO for file uploads, review that storage path separately before the
   first v5 restart; newer self-hosting updates move the bundled object-storage path to RustFS, while external
-  S3-compatible storage keeps the same `S3_*` app contract. The v6 updater also refuses to continue until the
-  Compose file contains the release-matched AuthZed services and `.env` contains
-  `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` after a clean preparation.
+  S3-compatible storage keeps the same `S3_*` app contract. The v6 updater preserves that customized file and
+  adds the release-signed AuthZed services through a permanent Compose overlay. It does not use a boolean
+  acknowledgement or accept a bypass of the activation receipt.
 
-  The same applies to pinned third-party images. Because the update command only re-pulls what your Compose
-  file already names, a bundled `rustfs` service stays on whatever version it was installed with — `docker
+The same applies to pinned third-party images. Because the update command only re-pulls what your Compose
+file already names, a bundled `rustfs` service stays on whatever version it was installed with — `docker
   compose pull` cannot move a pinned tag. To take a newer RustFS, edit the `image:` line of the `rustfs`
-  service in `formbricks/docker-compose.yml` to match the version in the [Docker
-  guide](/self-hosting/setup/docker), then run the update command. Your `rustfs-data` volume is reused as-is;
-  roll back by restoring the previous `image:` line.
+service in `formbricks/docker-compose.yml` to match the version in the [Docker
+guide](/self-hosting/setup/docker), then run the update command. Your `rustfs-data` volume is reused as-is;
+roll back by restoring the previous `image:` line.
+
 </Warning>
 
 ### Add SpiceDB to an Existing One-Click Installation
 
-The update command intentionally preserves your customized Compose file, so it cannot add SpiceDB by itself.
-Before upgrading to a release that uses AuthZed:
+Back up `formbricks/.env`, `formbricks/docker-compose.yml`, and the PostgreSQL volume. Download and verify all
+assets from the target v6 release, then run:
 
-1. Back up `formbricks/.env`, `formbricks/docker-compose.yml`, and the PostgreSQL volume.
-2. Download the release-matched `authzed-postgres-bootstrap.sh` into the `formbricks` directory.
-3. Generate and add `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` to `.env` using `openssl rand -hex 32`.
-4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
-   `authzed-ops` service from the released Compose file while preserving installer-added Traefik, storage, and
-   mail configuration. Add the six application variables and use `AUTHZED_CONSISTENCY=fully_consistent`.
-5. Run `docker compose config`, `docker compose pull`, and `docker compose run --rm formbricks-migrate` from the
-   `formbricks` directory. The current application can remain running during these backward-compatible database
-   migrations.
-6. Start the datastore services, then prepare and verify the graph:
+```bash
+/absolute/path/to/the/verified-release-bundle/formbricks.sh update \
+  --v6-upgrade-bundle /absolute/path/to/the/verified-release-bundle \
+  --yes
+```
 
-   ```bash
-   docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade check
-   ```
+The updater verifies the signed bundle, leaves `docker-compose.yml` unchanged, and installs a permanent
+`formbricks-authzed-overlay.yml`. It runs the release bridge, graph preparation, quiesce, activation, candidate
+runtime check, and finalization as one receipt-backed operation. A post-activation failure automatically
+returns authority and the running application to the exact bridge image.
 
-7. If `upgrade check` exits `0`, add `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` to `.env` and run
-   `./formbricks.sh update`. Do not set the acknowledgement to bypass a blocked check.
-8. Verify `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy.
-9. Back up the authorization database with
-   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` and add it to your
-   regular backup procedure.
+The wrapper first instructs you to back up both databases. Its required `--yes` flag acknowledges those backups
+and the reviewed cutover plan, then delegates both confirmations to the direct assistant. If you call
+`formbricks-upgrade-assistant execute` or `resume` yourself, both `--backup-confirmed` and `--yes` are required;
+use the exact commands in the [v6 Upgrade Assistant](/self-hosting/advanced/v6-upgrade-assistant).
 
-Do not use `docker compose down -v` during this migration or rollback because the existing PostgreSQL volume
-stores both Formbricks and SpiceDB data.
+Keep the overlay, `.formbricks-v6-upgrade-state.json`, both databases, and the recorded bridge image through
+the rollback window. Do not use `docker compose down -v`. The automated path supports the bundled PostgreSQL
+service; contact support or follow the operator runbook for an external database.
+
+After the rollback window, keep the overlay as part of the installation. For a later v6 release, replace
+`FORMBRICKS_IMAGE_REF` in `formbricks/.env` with that release's reviewed immutable image digest and run the
+normal `./formbricks.sh update`. The updater detects the overlay and runs database migrations through the
+overlaid Formbricks service, so the preserved v5 Compose file does not need a `formbricks-migrate` service.
 
 For upgrades, restoration, schema changes, and relationship repair, follow the canonical
 [AuthZed Operations guide](/self-hosting/advanced/authzed-operations).
@@ -403,7 +206,7 @@ For upgrades, restoration, schema changes, and relationship repair, follow the c
 
 To stop Formbricks, simply run the following command:
 
-```
+```bash
 ./formbricks.sh stop
 ```
 
@@ -413,13 +216,13 @@ The script will automatically stop all the Formbricks related containers and bri
 
 To restart Formbricks, simply run the following command:
 
-```
+```bash
 ./formbricks.sh restart
 ```
 
 The script will automatically restart all the Formbricks related containers and brings the entire stack up with the previous configuration.
 
-## Cleanup RustFS init (optional)
+## Cleanup RustFS Init (Optional)
 
 During the one-click setup, a temporary `rustfs-init` service configures RustFS (bucket, policy, service
 user). It is idempotent and safe to leave in place; it will do nothing on subsequent starts once the
@@ -427,7 +230,7 @@ configuration exists.
 
 If you prefer to remove the `rustfs-init` service and its references after a successful setup, run:
 
-```
+```bash
 ./formbricks.sh cleanup-rustfs-init
 ```
 
@@ -440,7 +243,7 @@ configuration.
 
 To uninstall Formbricks, simply run the following command, but keep in mind that this will delete all your data!
 
-```
+```bash
 ./formbricks.sh uninstall
 ```
 
@@ -450,7 +253,7 @@ The script will automatically stop all the Formbricks related containers, remove
 
 If you encounter any issues, you can check the logs of the containers with:
 
-```
+```bash
 ./formbricks.sh logs
 ```
 

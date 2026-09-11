@@ -93,7 +93,7 @@ Modify the configuration to enforce SSL. The rest of the configuration should re
   services:
     formbricks:
       restart: always
-      image: ghcr.io/formbricks/formbricks:latest
+      image: ghcr.io/formbricks/formbricks:stable
       depends_on:
         - postgres
       labels:

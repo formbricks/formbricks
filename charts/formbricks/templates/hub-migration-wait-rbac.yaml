@@ -1,4 +1,4 @@
-{{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+{{- if and (eq .Values.migration.mode "job") .Values.hub.migration.waitForFormbricksMigration.enabled }}
 ---
 apiVersion: v1
 kind: ServiceAccount

@@ -1,4 +1,5 @@
 import "server-only";
+import { throwIfAuthzedActivationAborted } from "./activation-safety";
 import type { TApiKeyProjectionTargets } from "./api-key";
 import {
   type TAuthzedObservationSummary,
@@ -129,6 +130,7 @@ export type TAuthzedBackfillDependencies = Readonly<{
   apply: TAuthzedBackfillApply;
   /** Read-only slice of the facade. Deliberately not the whole client. */
   client: Pick<TAuthzedClient, "readRelationships">;
+  signal?: AbortSignal;
   source?: TAuthzedBackfillSource;
 }>;
 
@@ -417,7 +419,8 @@ const mergeTargets = (left: TReconcileTargets, right: TReconcileTargets): TRecon
  */
 const reconcileTargets = async (
   apply: TAuthzedBackfillApply,
-  targets: TReconcileTargets
+  targets: TReconcileTargets,
+  signal?: AbortSignal
 ): Promise<TAuthzedProjectionResult | undefined> => {
   // Stops at the first reconciler that does not project. Continuing would spend two more three-attempt
   // retry budgets against an instance already known to be unreachable, and the unit is failed either way.
@@ -449,7 +452,9 @@ const reconcileTargets = async (
   ];
 
   for (const step of steps) {
+    throwIfAuthzedActivationAborted(signal);
     const outcome = await step();
+    throwIfAuthzedActivationAborted(signal);
     if (outcome !== null && outcome.status !== "projected") {
       return outcome;
     }
@@ -470,7 +475,8 @@ const reconcileTargets = async (
 const observeOrganizationResources = async (
   client: Pick<TAuthzedClient, "readRelationships">,
   organizationId: string,
-  source: TAuthzedOrganizationSource
+  source: TAuthzedOrganizationSource,
+  signal?: AbortSignal
 ): Promise<Readonly<{ relationships: ReadonlyArray<TAuthzedRelationship>; snapshot: string | null }>> => {
   const filters = [
     { resourceId: organizationId, resourceType: "organization" },
@@ -498,11 +504,13 @@ const observeOrganizationResources = async (
   // source record a relationship implies, and the reconciler re-reads PostgreSQL before acting on it.
   // Nothing here compares two resources against each other.
   for (let start = 0; start < filters.length; start += AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES) {
+    throwIfAuthzedActivationAborted(signal);
     const observations = await Promise.all(
       filters
         .slice(start, start + AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES)
-        .map((filter) => readAllRelationships(client, filter))
+        .map((filter) => readAllRelationships(client, filter, signal))
     );
+    throwIfAuthzedActivationAborted(signal);
 
     for (const observation of observations) {
       relationships.push(...observation.relationships);
@@ -582,6 +590,7 @@ type TRunContext = Readonly<{
    * combination (dry run, full scope).
    */
   ownsOrphanAccounting: boolean;
+  signal?: AbortSignal;
   sourceReads: TAuthzedBackfillSource;
   state: TRunState;
 }>;
@@ -693,7 +702,8 @@ const observeOrganization = async (
   source: TAuthzedOrganizationSource
 ): Promise<TPruneDecision> => {
   const { state } = ctx;
-  const observation = await observeOrganizationResources(ctx.client, organizationId, source);
+  const observation = await observeOrganizationResources(ctx.client, organizationId, source, ctx.signal);
+  throwIfAuthzedActivationAborted(ctx.signal);
   const summary = summarizeObservation(observation.relationships);
 
   if (ctx.mode === "dry_run") {
@@ -715,6 +725,7 @@ const observeOrganization = async (
 };
 
 const processOrganization = async (ctx: TRunContext, organizationId: string): Promise<void> => {
+  throwIfAuthzedActivationAborted(ctx.signal);
   const { state } = ctx;
   state.scanned++;
   state.lastOrganizationId = organizationId;
@@ -722,7 +733,9 @@ const processOrganization = async (ctx: TRunContext, organizationId: string): Pr
   let source: TAuthzedOrganizationSource;
   try {
     source = await ctx.sourceReads.readOrganizationSource(organizationId);
+    throwIfAuthzedActivationAborted(ctx.signal);
   } catch (error) {
+    throwIfAuthzedActivationAborted(ctx.signal);
     recordFailure(state, organizationId, error);
 
     return;
@@ -742,6 +755,7 @@ const processOrganization = async (ctx: TRunContext, organizationId: string): Pr
     try {
       repairRefs = (await observeOrganization(ctx, organizationId, source)).refs;
     } catch (error) {
+      throwIfAuthzedActivationAborted(ctx.signal);
       // An abandoned observation must never be reported as a complete one: fewer relationships seen
       // means fewer orphans found, and a caller could otherwise read that as "nothing stale here".
       state.truncated = true;
@@ -771,7 +785,8 @@ const processOrganization = async (ctx: TRunContext, organizationId: string): Pr
         workspaceTeamGrants: source.workspaceTeamGrants,
       },
       toRepairTargets(repairRefs)
-    )
+    ),
+    ctx.signal
   );
 
   if (failure) {
@@ -847,13 +862,21 @@ const sweepGlobalOrphans = async (ctx: TRunContext): Promise<void> => {
   let sweepOrphans = 0;
 
   for (const resourceType of getManagedResourceTypes()) {
-    await forEachRelationshipPage(ctx.client, { resourceType }, async (relationships) => {
-      const fresh = await tallySweepPage(ctx, seenOrphanRefs, relationships);
-      sweepOrphans += fresh.length;
-      // Bounded by the prune budget, *not* by the reporting cap: `pushCapped` would silently stop at
-      // 100 and under-prune a run that is entirely within its budget.
-      prunable.push(...fresh.slice(0, Math.max(0, ctx.maxPrune - prunable.length)));
-    });
+    throwIfAuthzedActivationAborted(ctx.signal);
+    await forEachRelationshipPage(
+      ctx.client,
+      { resourceType },
+      async (relationships) => {
+        throwIfAuthzedActivationAborted(ctx.signal);
+        const fresh = await tallySweepPage(ctx, seenOrphanRefs, relationships);
+        throwIfAuthzedActivationAborted(ctx.signal);
+        sweepOrphans += fresh.length;
+        // Bounded by the prune budget, *not* by the reporting cap: `pushCapped` would silently stop at
+        // 100 and under-prune a run that is entirely within its budget.
+        prunable.push(...fresh.slice(0, Math.max(0, ctx.maxPrune - prunable.length)));
+      },
+      ctx.signal
+    );
   }
 
   if (!ctx.isPruning || sweepOrphans === 0) {
@@ -867,7 +890,7 @@ const sweepGlobalOrphans = async (ctx: TRunContext): Promise<void> => {
     return;
   }
 
-  const failure = await reconcileTargets(ctx.apply, toRepairTargets(prunable));
+  const failure = await reconcileTargets(ctx.apply, toRepairTargets(prunable), ctx.signal);
   if (failure) {
     // Attributed to no organization: a fully orphaned resource has none left to attribute it to.
     recordProjectionFailure(state, "", failure);
@@ -931,23 +954,32 @@ const observeWorkspace = async (
   source: TAuthzedWorkspaceSource
 ): Promise<TPruneDecision> => {
   const observations = await Promise.all([
-    readAllRelationships(ctx.client, { resourceId: workspaceId, resourceType: "workspace" }),
+    readAllRelationships(ctx.client, { resourceId: workspaceId, resourceType: "workspace" }, ctx.signal),
     ...[
       ...new Set(source.feedbackDirectoryAssignments.map(({ feedbackDirectoryId }) => feedbackDirectoryId)),
     ].map((feedbackDirectoryId) =>
-      readAllRelationships(ctx.client, {
-        resourceId: feedbackDirectoryId,
-        resourceType: "feedback_directory",
-      })
+      readAllRelationships(
+        ctx.client,
+        {
+          resourceId: feedbackDirectoryId,
+          resourceType: "feedback_directory",
+        },
+        ctx.signal
+      )
     ),
     ...source.feedbackDirectoryAssignments.map(
       ({ feedbackDirectoryId, workspaceId: assignmentWorkspaceId }) =>
-        readAllRelationships(ctx.client, {
-          resourceId: getFeedbackDirectoryAssignmentObjectId(feedbackDirectoryId, assignmentWorkspaceId),
-          resourceType: "feedback_directory_assignment",
-        })
+        readAllRelationships(
+          ctx.client,
+          {
+            resourceId: getFeedbackDirectoryAssignmentObjectId(feedbackDirectoryId, assignmentWorkspaceId),
+            resourceType: "feedback_directory_assignment",
+          },
+          ctx.signal
+        )
     ),
   ]);
+  throwIfAuthzedActivationAborted(ctx.signal);
   const summary = summarizeObservation(observations.flatMap(({ relationships }) => relationships));
   await recordObservationSummary(ctx, summary);
 
@@ -1028,13 +1060,16 @@ const withinWorkspaceScope = async (
  * strength of one orphan here — see that function for why those cases are deferred instead.
  */
 const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<void> => {
+  throwIfAuthzedActivationAborted(ctx.signal);
   const { state } = ctx;
   state.scanned++;
 
   let source: TAuthzedWorkspaceSource;
   try {
     source = await ctx.sourceReads.readWorkspaceSource(workspaceId);
+    throwIfAuthzedActivationAborted(ctx.signal);
   } catch (error) {
+    throwIfAuthzedActivationAborted(ctx.signal);
     // No organization to attribute this to: the read that would have told us which one failed.
     recordFailure(state, "", error);
 
@@ -1059,6 +1094,7 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
     const observed = await observeWorkspace(ctx, workspaceId, source);
     decision = { ...observed, refs: await withinWorkspaceScope(ctx, observed.refs) };
   } catch (error) {
+    throwIfAuthzedActivationAborted(ctx.signal);
     state.truncated = true;
     recordFailure(state, failureOrganizationId, error);
 
@@ -1094,7 +1130,8 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
         workspaceTeamGrants: source.workspaceTeamGrants,
       },
       toRepairTargets(decision.refs)
-    )
+    ),
+    ctx.signal
   );
 
   if (failure) {
@@ -1112,13 +1149,16 @@ const enumerateOrganizations = async (ctx: TRunContext, afterOrganizationId?: st
   let cursor = afterOrganizationId;
 
   for (;;) {
+    throwIfAuthzedActivationAborted(ctx.signal);
     let organizationIds: ReadonlyArray<string>;
     try {
       organizationIds = await ctx.sourceReads.readOrganizationIdPage({
         afterOrganizationId: cursor,
         limit: AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE,
       });
+      throwIfAuthzedActivationAborted(ctx.signal);
     } catch (error) {
+      throwIfAuthzedActivationAborted(ctx.signal);
       // Caught rather than propagated so the report survives. Letting this escape would replace the
       // whole result with a bare failure line, discarding `lastOrganizationId` — the only thing an
       // operator can resume a long sweep from.
@@ -1136,6 +1176,7 @@ const enumerateOrganizations = async (ctx: TRunContext, afterOrganizationId?: st
     // cursor, so processing out of order would let a resume skip an organization that failed while a
     // later one succeeded.
     for (const organizationId of organizationIds) {
+      throwIfAuthzedActivationAborted(ctx.signal);
       await processOrganization(ctx, organizationId);
     }
     cursor = organizationIds.at(-1);
@@ -1143,6 +1184,7 @@ const enumerateOrganizations = async (ctx: TRunContext, afterOrganizationId?: st
 };
 
 const runScope = async (ctx: TRunContext, scope: TAuthzedBackfillScope): Promise<void> => {
+  throwIfAuthzedActivationAborted(ctx.signal);
   if (scope.kind === "workspace") {
     await processWorkspace(ctx, scope.workspaceId);
 
@@ -1158,6 +1200,7 @@ const runScope = async (ctx: TRunContext, scope: TAuthzedBackfillScope): Promise
         retryable: false,
       });
     }
+    throwIfAuthzedActivationAborted(ctx.signal);
     await processOrganization(ctx, scope.organizationId);
 
     return;
@@ -1169,6 +1212,7 @@ const runScope = async (ctx: TRunContext, scope: TAuthzedBackfillScope): Promise
   try {
     await sweepGlobalOrphans(ctx);
   } catch (error) {
+    throwIfAuthzedActivationAborted(ctx.signal);
     ctx.state.truncated = true;
     recordFailure(ctx.state, "", error);
   }
@@ -1181,13 +1225,16 @@ const runScope = async (ctx: TRunContext, scope: TAuthzedBackfillScope): Promise
  */
 const captureClosingSnapshot = async (ctx: TRunContext): Promise<string | null> => {
   try {
+    throwIfAuthzedActivationAborted(ctx.signal);
     const closing = await ctx.client.readRelationships({
       filter: { resourceType: "organization" },
       limit: 1,
     });
+    throwIfAuthzedActivationAborted(ctx.signal);
 
     return closing.snapshot?.token ?? null;
   } catch {
+    throwIfAuthzedActivationAborted(ctx.signal);
     // A freshness floor that might pre-date the writes is worse than none at all.
     return null;
   }
@@ -1224,7 +1271,8 @@ export const runAuthzedBackfill = async (
   request: TAuthzedBackfillRequest,
   dependencies: TAuthzedBackfillDependencies
 ): Promise<TAuthzedBackfillResult> => {
-  const { apply, client, source: sourceReads = defaultBackfillSource } = dependencies;
+  const { apply, client, signal, source: sourceReads = defaultBackfillSource } = dependencies;
+  throwIfAuthzedActivationAborted(signal);
   const state = createRunState();
   const ctx: TRunContext = {
     apply,
@@ -1235,15 +1283,18 @@ export const runAuthzedBackfill = async (
     maxPrune: Math.max(1, Math.min(request.maxPrune, AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN)),
     mode: request.mode,
     ownsOrphanAccounting: request.scope.kind !== "all",
+    signal,
     sourceReads,
     state,
   };
 
   await runScope(ctx, request.scope);
+  throwIfAuthzedActivationAborted(signal);
 
   if (request.mode === "apply" && state.failed === 0) {
     state.completedAtSnapshot = await captureClosingSnapshot(ctx);
   }
+  throwIfAuthzedActivationAborted(signal);
 
   return {
     completedAtSnapshot: state.completedAtSnapshot,

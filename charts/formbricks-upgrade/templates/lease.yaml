@@ -1,0 +1,8 @@
+apiVersion: coordination.k8s.io/v1
+kind: Lease
+metadata:
+  name: {{ include "formbricks-upgrade.leaseName" . }}
+  labels:
+    {{- include "formbricks-upgrade.labels" . | nindent 4 }}
+spec:
+  holderIdentity: {{ .Release.Name | quote }}

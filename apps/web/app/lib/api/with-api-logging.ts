@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
+import { withDatabaseOperationalErrorBoundary } from "@formbricks/database/operational-errors";
 import { logger } from "@formbricks/logger";
 import type { Session, TAuthenticationApiKey } from "@formbricks/types/auth";
+import { isAuthzedMutationsFencedError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { getRateLimitErrorResponse } from "@/app/lib/api/client-rate-limit";
@@ -12,6 +14,7 @@ import {
   isManagementApiRoute,
 } from "@/app/middleware/endpoint-validator";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
+import { createAuthzedMutationFenceLegacyResponse } from "@/lib/authzed/mutation-fence-response";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getSession } from "@/modules/auth/lib/session";
@@ -352,9 +355,20 @@ export const withV1ApiWrapper = <TResult extends { response: Response; error?: u
 
     // === Handler Execution ===
     const execute = () => executeHandler(handler, req, props, auditLog, authentication);
-    const { result, error } = authentication
-      ? await withAuthorizationSurface("api_v1", execute)
-      : await execute();
+    let execution: Awaited<ReturnType<typeof execute>>;
+    try {
+      execution = await withDatabaseOperationalErrorBoundary(() =>
+        authentication ? withAuthorizationSurface("api_v1", execute) : execute()
+      );
+    } catch (error) {
+      if (!isAuthzedMutationsFencedError(error)) throw error;
+
+      const response = createAuthzedMutationFenceLegacyResponse(req.headers.get("x-request-id") ?? undefined);
+      await processResponse(response, req, auditLog, error);
+      return response;
+    }
+
+    const { result, error } = execution;
     const res = result.response;
     const reportedError = result.error ?? error;
 

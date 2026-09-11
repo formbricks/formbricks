@@ -89,22 +89,28 @@ describe("release workflows", () => {
     expect([...new Set(refs)]).toEqual([linearActionSha]);
   });
 
-  test("completes the Linear release once the published artifacts are out", () => {
-    const needs = readWorkflow(formbricksReleaseWorkflow).jobs?.["linear-release-complete"]?.needs;
+  test("completes the Linear release only after all applicable release artifacts are out", () => {
+    const job = readWorkflow(formbricksReleaseWorkflow).jobs?.["linear-release-complete"];
+    const needs = job?.needs;
 
     expect(needs).toEqual(
-      expect.arrayContaining(["docker-build-community", "docker-build-cloud", "helm-chart-release"])
+      expect.arrayContaining([
+        "docker-build-community",
+        "docker-build-cloud",
+        "helm-chart-release",
+        "publish-v6-upgrade-assistant",
+        "promote-stable-image",
+      ])
     );
-    // Exactly three, so a future non-publishing dependency cannot slip in and reintroduce the
-    // bug from a direction the named exclusions below do not anticipate.
-    expect(needs).toHaveLength(3);
-    // Neither of these publishes anything for the released tag, and a skipped or failed
-    // dependency skips this job, so either one gates Linear completion on unrelated work:
-    // update-helm-app-version opens a follow-up PR against main and fails without its
-    // credentials, and move-stable-tag is skipped by design for any stable release that is
-    // not the latest - i.e. every patch on an older line.
+    expect(needs).toHaveLength(5);
+    // The follow-up appVersion PR and Git source-tag move do not publish release artifacts.
+    expect(needs).not.toContain("check-latest-release");
     expect(needs).not.toContain("update-helm-app-version");
     expect(needs).not.toContain("move-stable-tag");
+    expect(job?.if).toContain("needs.publish-v6-upgrade-assistant.result == 'success'");
+    expect(job?.if).toContain("needs.promote-stable-image.outputs.aliases_complete == 'true'");
+    expect(job?.if).not.toContain("needs.promote-stable-image.outputs.promoted == 'true'");
+    expect(job?.if).not.toContain("needs.promote-stable-image.result == 'success'");
   });
 
   // The smoke job holds a pipeline-mutating Linear key, so it must only ever run main's copy of
@@ -133,8 +139,8 @@ describe("release workflows", () => {
   });
 
   test("skips the Linear completion for prereleases", () => {
-    expect(readWorkflow(formbricksReleaseWorkflow).jobs?.["linear-release-complete"]?.if).toBe(
-      "${{ !github.event.release.prerelease }}"
+    expect(readWorkflow(formbricksReleaseWorkflow).jobs?.["linear-release-complete"]?.if).toContain(
+      "!github.event.release.prerelease"
     );
   });
 

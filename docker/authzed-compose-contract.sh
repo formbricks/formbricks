@@ -9,16 +9,22 @@ readonly PROD_COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
 
 readonly AUTHZED_TOKEN="${AUTHZED_TOKEN:-0000000000000000000000000000000000000000000000000000000000000001}"
 readonly AUTHZED_DATABASE_PASSWORD="${AUTHZED_DATABASE_PASSWORD:-0000000000000000000000000000000000000000000000000000000000000002}"
+readonly AUTHZED_DATABASE_PASSWORD_URL_ENCODED="${AUTHZED_DATABASE_PASSWORD_URL_ENCODED:-${AUTHZED_DATABASE_PASSWORD}}"
 readonly SPICEDB_IMAGE_REF="authzed/spicedb:v1.52.0"
 readonly SPICEDB_GRPC_PORT="50051"
 readonly AUTHZED_GRPCUI_PORT="50052"
 readonly GRPCUI_IMAGE_REF="fullstorydev/grpcui:v1.5.2"
 readonly ZED_IMAGE_REF="authzed/zed:v1.1.1"
+readonly FORMBRICKS_IMAGE_REF="ghcr.io/formbricks/formbricks@sha256:0000000000000000000000000000000000000000000000000000000000000003"
+readonly POSTGRES_PASSWORD="authzed-compose-contract-postgres-password"
 
 export AUTHZED_DATABASE_PASSWORD
+export AUTHZED_DATABASE_PASSWORD_URL_ENCODED
 export AUTHZED_GRPCUI_PORT
 export AUTHZED_TOKEN
+export FORMBRICKS_IMAGE_REF
 export GRPCUI_IMAGE_REF
+export POSTGRES_PASSWORD
 export SPICEDB_GRPC_PORT
 export SPICEDB_IMAGE_REF
 export ZED_IMAGE_REF
@@ -28,7 +34,15 @@ trap 'rm -rf "${temp_dir}"' EXIT
 
 docker compose --file "${PROD_COMPOSE_FILE}" --profile authzed-ops config --format json >"${temp_dir}/production.json"
 docker compose --file "${PROD_COMPOSE_FILE}" config --services >"${temp_dir}/production-services.txt"
-docker compose --file "${DEV_COMPOSE_FILE}" --profile authzed-ui --profile authzed-tools config --format json >"${temp_dir}/development.json"
+docker compose \
+  --file "${DEV_COMPOSE_FILE}" \
+  --profile authzed-bundled \
+  --profile authzed-ui \
+  --profile authzed-tools \
+  config --format json >"${temp_dir}/development.json"
+env -u AUTHZED_DATABASE_PASSWORD COMPOSE_PROFILES="" docker compose \
+  --file "${DEV_COMPOSE_FILE}" config --services \
+  >"${temp_dir}/development-external-services.txt"
 
 jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   .services.spicedb.image == "authzed/spicedb:v1.52.0" and
@@ -46,7 +60,15 @@ jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   .services.formbricks.environment.AUTHZED_SYSTEM_KEY == "formbricks" and
   .services.formbricks.environment.AUTHZED_INSECURE == "true" and
   .services.formbricks.environment.AUTHZED_CONSISTENCY == "fully_consistent" and
+  .services.formbricks.environment.AUTHZED_DATABASE_PASSWORD == "" and
+  .services.formbricks.environment.AUTHZED_DATABASE_PASSWORD_URL_ENCODED == "" and
+  .services["formbricks-migrate"].environment.AUTHZED_ENABLED == "false" and
+  .services["formbricks-migrate"].environment.AUTHZED_TOKEN == "" and
+  .services["formbricks-migrate"].environment.AUTHZED_DATABASE_PASSWORD == "" and
+  .services["formbricks-migrate"].environment.AUTHZED_DATABASE_PASSWORD_URL_ENCODED == "" and
   .services.formbricks.depends_on.spicedb? == null and
+  .services.formbricks.image == "ghcr.io/formbricks/formbricks@sha256:0000000000000000000000000000000000000000000000000000000000000003" and
+  .services["formbricks-migrate"].image == .services.formbricks.image and
   .services["authzed-ops"].image == .services.formbricks.image and
   .services["authzed-ops"].profiles == ["authzed-ops"] and
   .services["authzed-ops"].entrypoint == ["formbricks-authzed"] and
@@ -57,7 +79,7 @@ jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   .services["authzed-ops"].environment.AUTHZED_CONSISTENCY == "fully_consistent" and
   .services["authzed-initialize"].image == .services.formbricks.image and
   .services["authzed-initialize"].entrypoint == ["formbricks-authzed"] and
-  .services["authzed-initialize"].command == ["upgrade", "prepare"] and
+  .services["authzed-initialize"].command == ["activation", "bootstrap"] and
   .services["authzed-initialize"].restart == "no" and
   .services["authzed-initialize"].depends_on["formbricks-migrate"].condition == "service_completed_successfully" and
   .services["authzed-initialize"].depends_on.spicedb.condition == "service_healthy" and
@@ -66,7 +88,14 @@ jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   (.services["authzed-ops"] | has("ports") | not) and
   (.services["authzed-ops"] | has("volumes") | not) and
   (.services["authzed-ops"] | has("restart") | not) and
-  ([.services | to_entries[] | select(.value.environment.AUTHZED_TOKEN? != null) | .key] | sort) == ["authzed-initialize", "authzed-ops", "formbricks"]
+  ([.services | to_entries[] |
+      select((.value.environment.AUTHZED_TOKEN? // "") != "") | .key] | sort) ==
+    ["authzed-initialize", "authzed-ops", "formbricks"] and
+  ([.services | to_entries[] |
+      select((.value.environment.AUTHZED_DATABASE_PASSWORD? // "") != "") | .key] | sort) ==
+    ["authzed-db-bootstrap"] and
+  ([.services | to_entries[] |
+      select((.value.environment.AUTHZED_DATABASE_PASSWORD_URL_ENCODED? // "") != "") | .key] | length) == 0
 ' "${temp_dir}/production.json" >/dev/null
 
 if grep --fixed-strings --line-regexp "authzed-ops" "${temp_dir}/production-services.txt" >/dev/null; then
@@ -76,7 +105,10 @@ fi
 
 jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   .services.spicedb.image == "authzed/spicedb:v1.52.0" and
+  .services.spicedb.profiles == ["authzed-bundled"] and
   .services["spicedb-migrate"].image == .services.spicedb.image and
+  .services["spicedb-migrate"].profiles == ["authzed-bundled"] and
+  .services["authzed-db-bootstrap"].profiles == ["authzed-bundled"] and
   .services.spicedb.mem_limit == "536870912" and
   (.services.spicedb | has("cpus") | not) and
   .services.spicedb.ports == [{"mode":"ingress","host_ip":"127.0.0.1","target":50051,"published":"50051","protocol":"tcp"}] and
@@ -87,5 +119,13 @@ jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   .services["authzed-ui"].ports == [{"mode":"ingress","host_ip":"127.0.0.1","target":8080,"published":"50052","protocol":"tcp"}] and
   .services["authzed-ui"].depends_on.spicedb.condition == "service_healthy"
 ' "${temp_dir}/development.json" >/dev/null
+
+for bundled_service in authzed-db-bootstrap spicedb-migrate spicedb; do
+  if grep --fixed-strings --line-regexp "${bundled_service}" \
+    "${temp_dir}/development-external-services.txt" >/dev/null; then
+    printf '%s\n' "${bundled_service} must not start in external AuthZed development mode." >&2
+    exit 1
+  fi
+done
 
 printf '%s\n' "AuthZed Compose contracts are valid."

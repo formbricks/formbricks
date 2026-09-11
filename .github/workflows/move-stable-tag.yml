@@ -28,7 +28,7 @@ permissions:
 # Prevent concurrent stable tag operations to avoid race conditions
 concurrency:
   group: move-stable-tag-${{ github.repository }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   move-stable-tag:
@@ -58,7 +58,7 @@ jobs:
           set -euo pipefail
 
           # Validate release tag format
-          if [[ ! "$RELEASE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+          if [[ ! "$RELEASE_TAG" =~ ^[vV]?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
             echo "❌ Error: Invalid release tag format. Expected format: 1.2.3, 1.2.3-alpha"
             echo "Provided: $RELEASE_TAG"
             exit 1
@@ -79,6 +79,8 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.release_tag }}
           COMMIT_SHA: ${{ inputs.commit_sha }}
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
 
@@ -86,10 +88,39 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Verify the commit exists
-          if ! git cat-file -e "$COMMIT_SHA"; then
+          # Verify both the commit and the immutable release-tag binding. A release event SHA alone
+          # is not sufficient for annotated tags or an edited/re-published release.
+          git fetch --force origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
+          if ! git cat-file -e "${COMMIT_SHA}^{commit}"; then
             echo "❌ Error: Commit $COMMIT_SHA does not exist in this repository"
             exit 1
+          fi
+          release_commit=$(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")
+          if [[ "$release_commit" != "$COMMIT_SHA" ]]; then
+            echo "❌ Error: Release tag does not resolve to the requested commit"
+            exit 1
+          fi
+
+          latest_payload=$(mktemp)
+          trap 'rm -f "$latest_payload"' EXIT
+          if ! http_code=$(curl -sS -w "%{http_code}" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/releases/latest" -o "$latest_payload"); then
+            echo "❌ Error: GitHub latest-release lookup failed; refusing to move stable"
+            exit 1
+          fi
+          if [[ "$http_code" != "200" ]]; then
+            echo "❌ Error: GitHub latest-release lookup returned HTTP ${http_code}"
+            exit 1
+          fi
+          latest_tag=$(jq -er '.tag_name | select(type == "string" and length > 0)' "$latest_payload") || {
+            echo "❌ Error: GitHub latest-release response is invalid"
+            exit 1
+          }
+          if [[ "$latest_tag" != "$RELEASE_TAG" ]]; then
+            echo "ℹ️  Release ${RELEASE_TAG} is no longer latest; leaving stable unchanged."
+            exit 0
           fi
 
           # Move stable tag to the release commit

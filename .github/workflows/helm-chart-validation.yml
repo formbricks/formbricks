@@ -28,6 +28,10 @@ jobs:
         with:
           version: v3.15.4
 
+      - name: Validate temporary v6 upgrade chart contract
+        shell: bash
+        run: bash charts/formbricks-upgrade/tests/contract.sh
+
       - name: Validate chart renders
         shell: bash
         run: |
@@ -541,8 +545,10 @@ jobs:
           grep -q 'argocd.argoproj.io/sync-wave: "-1"' "$render_dir/default.yaml"
           test "$(grep -c '^          image: ' "$render_dir/default.yaml")" -eq 2
           test "$(grep '^          image: ' "$render_dir/default.yaml" | sort -u | wc -l | tr -d ' ')" -eq 1
-          test "$(grep -c 'name: formbricks-app-secrets' "$render_dir/default.yaml")" -eq 2
-          ! grep -q '^          env:$' "$render_dir/default.yaml"
+          test "$(grep -c 'name: formbricks-app-secrets' "$render_dir/default.yaml")" -eq 4
+          test "$(grep -c 'key: DATABASE_URL' "$render_dir/default.yaml")" -eq 2
+          test "$(grep -c 'key: MIGRATE_DATABASE_URL' "$render_dir/default.yaml")" -eq 2
+          test "$(grep -c '^          env:$' "$render_dir/default.yaml")" -eq 2
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -564,10 +570,13 @@ jobs:
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
-            --set-string deployment.env.MIGRATE_DATABASE_URL=postgresql://user:password@migrate-postgresql:5432/formbricks \
+            --set migration.database.existingSecret=qa-migration-database \
+            --set migration.database.urlKey=runtime-url \
+            --set migration.database.migrateUrlKey=migration-url \
             --show-only templates/migration-job.yaml > "$render_dir/migrate-url.yaml"
-          test "$(grep -c 'name: MIGRATE_DATABASE_URL' "$render_dir/migrate-url.yaml")" -eq 2
-          test "$(grep -c '^          env:' "$render_dir/migrate-url.yaml")" -eq 2
+          test "$(grep -c 'name: qa-migration-database' "$render_dir/migrate-url.yaml")" -eq 4
+          test "$(grep -c 'key: runtime-url' "$render_dir/migrate-url.yaml")" -eq 2
+          test "$(grep -c 'key: migration-url' "$render_dir/migrate-url.yaml")" -eq 2
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

@@ -1,0 +1,4 @@
+{
+  "postgresBootstrap": "pgvector/pgvector@sha256:2ba9ca5f2e7daa0f0e7723cba1ee9167bab54efd3640516a44ac1a928dd67e7a",
+  "spicedb": "authzed/spicedb@sha256:1d205e9e98e39d87f9640893a06787c854a77d1ffcc3f7ece5e3293896565aa9"
+}

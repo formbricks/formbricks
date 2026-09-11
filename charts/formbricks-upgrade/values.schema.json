@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "deadline": {
+      "maximum": 86400,
+      "minimum": 60,
+      "type": "integer"
+    },
+    "digest": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "image": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": { "$ref": "#/definitions/digest" },
+        "manifestDigest": { "$ref": "#/definitions/digest" },
+        "repository": {
+          "maxLength": 255,
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._:/-]*[a-z0-9]$",
+          "type": "string"
+        }
+      },
+      "required": ["repository", "digest", "manifestDigest"],
+      "type": "object"
+    },
+    "kubernetesName": {
+      "maxLength": 253,
+      "minLength": 1,
+      "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+      "type": "string"
+    },
+    "kubernetesNameOrEmpty": {
+      "pattern": "^(|[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)$",
+      "type": "string"
+    },
+    "quantity": {
+      "maxLength": 32,
+      "minLength": 1,
+      "pattern": "^[0-9]+([.][0-9]+)?([EPTGMK]i?|m|u|n)?$",
+      "type": "string"
+    },
+    "secretReference": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "maxLength": 253,
+          "minLength": 1,
+          "pattern": "^[-._a-zA-Z0-9]+$",
+          "type": "string"
+        },
+        "name": { "$ref": "#/definitions/kubernetesName" }
+      },
+      "required": ["name", "key"],
+      "type": "object"
+    },
+    "stringMap": {
+      "additionalProperties": { "type": "string" },
+      "propertyNames": { "maxLength": 253, "minLength": 1 },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "activation": {
+      "additionalProperties": false,
+      "properties": {
+        "receipt": {
+          "pattern": "^(|[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$",
+          "type": "string"
+        },
+        "workloadQuiesced": { "type": "boolean" }
+      },
+      "required": ["receipt", "workloadQuiesced"],
+      "type": "object"
+    },
+    "affinity": { "type": "object" },
+    "authzed": {
+      "additionalProperties": false,
+      "properties": {
+        "consistency": { "enum": ["fully_consistent"], "type": "string" },
+        "endpoint": {
+          "maxLength": 261,
+          "minLength": 3,
+          "pattern": "^(\\[[0-9A-Fa-f:]+\\]|[A-Za-z0-9][A-Za-z0-9.-]*):[1-9][0-9]{0,4}$",
+          "type": "string"
+        },
+        "existingSecret": { "$ref": "#/definitions/secretReference" },
+        "insecure": { "type": "boolean" },
+        "systemKey": {
+          "maxLength": 64,
+          "minLength": 3,
+          "pattern": "^[a-z_][a-z0-9_]*[a-z0-9]$",
+          "type": "string"
+        }
+      },
+      "required": ["endpoint", "existingSecret", "systemKey", "insecure", "consistency"],
+      "type": "object"
+    },
+    "cli": {
+      "additionalProperties": false,
+      "properties": {
+        "executable": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_./-]+$",
+          "type": "string"
+        }
+      },
+      "required": ["executable"],
+      "type": "object"
+    },
+    "database": {
+      "additionalProperties": false,
+      "properties": {
+        "existingSecret": { "$ref": "#/definitions/secretReference" }
+      },
+      "required": ["existingSecret"],
+      "type": "object"
+    },
+    "execution": {
+      "maximum": 999999,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "generation": {
+      "pattern": "^[1-9][0-9]{0,18}$",
+      "type": "string"
+    },
+    "images": {
+      "additionalProperties": false,
+      "properties": {
+        "bridge": { "$ref": "#/definitions/image" },
+        "candidate": { "$ref": "#/definitions/image" },
+        "pullPolicy": {
+          "enum": ["Always", "IfNotPresent", "Never"],
+          "type": "string"
+        },
+        "pullSecrets": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": { "$ref": "#/definitions/kubernetesName" }
+            },
+            "required": ["name"],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": ["bridge", "candidate", "pullPolicy", "pullSecrets"],
+      "type": "object"
+    },
+    "job": {
+      "additionalProperties": false,
+      "properties": {
+        "activateConflictRetryIntervalSeconds": {
+          "maximum": 60,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "activateConflictRetrySeconds": {
+          "maximum": 3600,
+          "minimum": 60,
+          "type": "integer"
+        },
+        "activeDeadlineSeconds": {
+          "additionalProperties": false,
+          "properties": {
+            "activate": { "$ref": "#/definitions/deadline" },
+            "audit": { "$ref": "#/definitions/deadline" },
+            "prepare": { "$ref": "#/definitions/deadline" },
+            "rollbackBegin": { "$ref": "#/definitions/deadline" },
+            "rollbackComplete": { "$ref": "#/definitions/deadline" },
+            "status": { "$ref": "#/definitions/deadline" }
+          },
+          "required": ["status", "prepare", "audit", "activate", "rollbackBegin", "rollbackComplete"],
+          "type": "object"
+        },
+        "containerSecurityContext": { "type": "object" },
+        "podAnnotations": { "$ref": "#/definitions/stringMap" },
+        "podLabels": { "$ref": "#/definitions/stringMap" },
+        "podSecurityContext": { "type": "object" },
+        "resources": {
+          "additionalProperties": false,
+          "properties": {
+            "limits": {
+              "additionalProperties": false,
+              "properties": {
+                "cpu": { "$ref": "#/definitions/quantity" },
+                "memory": { "$ref": "#/definitions/quantity" }
+              },
+              "required": ["cpu", "memory"],
+              "type": "object"
+            },
+            "requests": {
+              "additionalProperties": false,
+              "properties": {
+                "cpu": { "$ref": "#/definitions/quantity" },
+                "memory": { "$ref": "#/definitions/quantity" }
+              },
+              "required": ["cpu", "memory"],
+              "type": "object"
+            }
+          },
+          "required": ["requests", "limits"],
+          "type": "object"
+        },
+        "serviceAccountName": { "$ref": "#/definitions/kubernetesNameOrEmpty" },
+        "ttlSecondsAfterFinished": { "maximum": 86400, "minimum": 60, "type": "integer" }
+      },
+      "required": [
+        "ttlSecondsAfterFinished",
+        "activeDeadlineSeconds",
+        "activateConflictRetrySeconds",
+        "activateConflictRetryIntervalSeconds",
+        "serviceAccountName",
+        "podLabels",
+        "podAnnotations",
+        "podSecurityContext",
+        "containerSecurityContext",
+        "resources"
+      ],
+      "type": "object"
+    },
+    "nodeSelector": { "type": "object" },
+    "phase": {
+      "enum": ["status", "prepare", "audit", "activate", "rollback-begin", "rollback-complete"],
+      "type": "string"
+    },
+    "protocolVersion": {
+      "maximum": 999,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "schema": {
+      "additionalProperties": false,
+      "properties": {
+        "expectedCurrentDigest": {
+          "pattern": "^(|sha256:[a-f0-9]{64})$",
+          "type": "string"
+        }
+      },
+      "required": ["expectedCurrentDigest"],
+      "type": "object"
+    },
+    "targetRelease": {
+      "maxLength": 53,
+      "minLength": 1,
+      "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+      "type": "string"
+    },
+    "tolerations": { "type": "array" }
+  },
+  "required": [
+    "targetRelease",
+    "generation",
+    "phase",
+    "execution",
+    "protocolVersion",
+    "images",
+    "schema",
+    "activation",
+    "database",
+    "authzed",
+    "cli",
+    "job",
+    "nodeSelector",
+    "tolerations",
+    "affinity"
+  ],
+  "type": "object"
+}

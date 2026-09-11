@@ -152,6 +152,14 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- .Values.authzed.datastore.existingSecret | default (include "formbricks.authzedManagedSecretName" .) -}}
 {{- end }}
 
+{{- define "formbricks.authzedActivationDatabaseSecretName" -}}
+{{- .Values.authzed.activation.database.existingSecret | default (include "formbricks.appSecretName" .) -}}
+{{- end }}
+
+{{- define "formbricks.migrationDatabaseSecretName" -}}
+{{- .Values.migration.database.existingSecret | default .Values.authzed.activation.database.existingSecret | default (include "formbricks.appSecretName" .) -}}
+{{- end }}
+
 {{- define "formbricks.authzedEndpoint" -}}
 {{- if .Values.authzed.endpoint -}}
 {{- .Values.authzed.endpoint -}}
@@ -229,46 +237,67 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- printf "%s-migration" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
+{{- define "formbricks.authzedActivationEnvironment" -}}
+- name: DATABASE_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "formbricks.authzedActivationDatabaseSecretName" . }}
+      key: {{ .Values.authzed.activation.database.urlKey }}
+- name: LOG_LEVEL
+  value: fatal
+- name: CUBEJS_API_URL
+  value: http://localhost
+- name: CUBEJS_API_SECRET
+  value: authzed-activation-unused
+- name: HUB_API_URL
+  value: http://localhost
+- name: HUB_API_KEY
+  value: authzed-activation-unused
+- name: REDIS_URL
+  value: redis://localhost
+- name: ENCRYPTION_KEY
+  value: authzed-activation-unused
+- name: AUTHZED_ENABLED
+  value: "true"
+- name: AUTHZED_ENDPOINT
+  value: {{ include "formbricks.authzedEndpoint" . | quote }}
+- name: AUTHZED_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "formbricks.authzedAuthSecretName" . }}
+      key: {{ .Values.authzed.auth.tokenKey }}
+- name: AUTHZED_SYSTEM_KEY
+  value: {{ .Values.authzed.systemKey | quote }}
+- name: AUTHZED_INSECURE
+  value: {{ include "formbricks.authzedInsecure" . | quote }}
+- name: AUTHZED_CONSISTENCY
+  value: fully_consistent
+{{- end }}
+
 {{/*
-Render the database environment shared by the migration readiness and migration containers.
-Keeping this in one helper ensures both containers resolve DATABASE_URL and MIGRATE_DATABASE_URL identically.
+Render the narrow environment shared by the migration readiness and migration containers. A Helm
+pre-upgrade hook runs before normal Secrets, ExternalSecrets, and ConfigMaps are updated, so inheriting
+deployment.envFrom could make the migration depend on resources that do not exist yet. The selected
+Secret is an explicit pre-existing contract; WEBAPP_URL is the only non-database value consumed by a
+current data migration.
 */}}
 {{- define "formbricks.migrationEnvironment" -}}
-{{- if or .Values.deployment.envFrom (or (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) .Values.secret.enabled) }}
-envFrom:
-{{- if or .Values.secret.enabled (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
-  - secretRef:
-      name: {{ template "formbricks.name" . }}-app-secrets
-{{- end }}
-{{- range $value := .Values.deployment.envFrom }}
-{{- if (eq .type "configmap") }}
-  - configMapRef:
-      {{- if .name }}
-      name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
-      {{- else if .nameSuffix }}
-      name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
-      {{- else }}
-      name: {{ template "formbricks.name" $ }}
-      {{- end }}
-{{- end }}
-{{- if (eq .type "secret") }}
-  - secretRef:
-      {{- if .name }}
-      name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
-      {{- else if .nameSuffix }}
-      name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
-      {{- else }}
-      name: {{ template "formbricks.name" $ }}
-      {{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- if .Values.deployment.env }}
 env:
-{{- range $key, $value := .Values.deployment.env }}
-  {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 2 }}
-{{- end }}
-{{- end }}
+  - name: WEBAPP_URL
+    value: {{ required "formbricks.webappUrl is required for database migrations" .Values.formbricks.webappUrl | quote }}
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "formbricks.migrationDatabaseSecretName" . }}
+        key: {{ .Values.migration.database.urlKey }}
+  {{- with .Values.migration.database.migrateUrlKey }}
+  - name: MIGRATE_DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "formbricks.migrationDatabaseSecretName" $ }}
+        key: {{ . }}
+        optional: true
+  {{- end }}
 {{- end }}
 
 {{/*

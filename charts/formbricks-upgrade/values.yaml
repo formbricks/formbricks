@@ -1,0 +1,103 @@
+# This chart is intentionally not installable with its defaults. Copy values.example.yaml and replace
+# every placeholder before rendering or installing it.
+
+# Name of the existing Formbricks Helm release being upgraded.
+targetRelease: ""
+
+# Monotonically increasing upgrade generation. Reuse it while advancing phases; start a new release and
+# generation only after the previous temporary release has been uninstalled.
+generation: ""
+
+# Exactly one bridge-image phase Job is rendered. Advance phases with `helm upgrade` and increment
+# `execution` whenever the same phase must be rerun. Candidate migration, deployment, and finalization are
+# deliberately external to this chart.
+phase: prepare
+execution: 1
+protocolVersion: 1
+
+images:
+  # Every Job rendered by this chart runs the bridge image. Tags are deliberately unsupported.
+  bridge:
+    repository: ""
+    digest: ""
+    manifestDigest: ""
+  # The candidate is recorded in the activation receipt and plan, but never run as a Job by this chart.
+  candidate:
+    repository: ""
+    digest: ""
+    manifestDigest: ""
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+schema:
+  # Optional guard returned by `formbricks-authzed schema check` for the currently installed schema.
+  expectedCurrentDigest: ""
+
+activation:
+  # Required only after prepare for activate, rollback-begin, and rollback-complete.
+  receipt: ""
+
+  # Set true only after pausing reconciliation/automation, suspending the target HPA, scaling the target
+  # Formbricks Deployment to zero, and verifying that no application Pods from the outgoing image remain.
+  # Required for activate and rollback-begin. The chart intentionally has no RBAC to do this itself.
+  workloadQuiesced: false
+
+database:
+  existingSecret:
+    name: ""
+    key: DATABASE_URL
+
+authzed:
+  endpoint: ""
+  existingSecret:
+    name: ""
+    key: preshared_key
+  systemKey: formbricks
+  insecure: false
+  consistency: fully_consistent
+
+cli:
+  executable: formbricks-authzed
+
+job:
+  ttlSecondsAfterFinished: 600
+  # The release assistant carries these fields from the active Formbricks workload so the disposable
+  # Job remains compatible with restricted/OpenShift clusters and private registries.
+  serviceAccountName: ""
+  podLabels: {}
+  podAnnotations: {}
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+  activeDeadlineSeconds:
+    status: 300
+    prepare: 21600
+    audit: 21600
+    # Allows an interrupted activation to wait out its 15-minute database fence and still retain the
+    # activation repository's full 15-minute evidence/settlement budget.
+    activate: 2100
+    rollbackBegin: 900
+    rollbackComplete: 900
+  # Only authzed_activation_conflict is retried. This window is long enough to outlive an abandoned
+  # 15-minute fence; graph, schema, credential, and transport failures still fail immediately.
+  activateConflictRetrySeconds: 960
+  activateConflictRetryIntervalSeconds: 5
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

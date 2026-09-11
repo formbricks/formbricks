@@ -4,7 +4,8 @@
     "jsx": "preserve",
     "jsxImportSource": "react",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@formbricks/authorization-runtime": ["./lib/authorization/runtime-evaluator.ts"]
     },
     "plugins": [
       {

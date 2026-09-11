@@ -1,0 +1,67 @@
+{{- if and .Values.authzed.enabled .Values.authzed.activation.upgradeGate.enabled .Release.IsUpgrade }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "formbricks.name" . }}-authzed-upgrade-gate
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+  annotations:
+    # The candidate image proves that its embedded contract matches the database receipt before any
+    # application Pod is replaced. This check reads PostgreSQL only and performs no SpiceDB RPC.
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "20"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  activeDeadlineSeconds: {{ .Values.authzed.activation.upgradeGate.activeDeadlineSeconds }}
+  backoffLimit: {{ .Values.authzed.activation.upgradeGate.backoffLimit }}
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: authzed-upgrade-gate
+    spec:
+      restartPolicy: Never
+      {{- if .Values.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.deployment.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml .Values.deployment.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if .Values.rbac.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.rbac.serviceAccount.name | default (include "formbricks.name" .) }}
+      {{- end }}
+      {{- if .Values.deployment.securityContext }}
+      securityContext:
+        {{- toYaml .Values.deployment.securityContext | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: verify-receipt
+          image: {{ include "formbricks.deploymentImage" . }}
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          command: ["formbricks-authzed"]
+          args: ["activation", "runtime-check"]
+          env:
+            {{- include "formbricks.authzedActivationEnvironment" . | nindent 12 }}
+          {{- if .Values.migration.resources }}
+          resources:
+            {{- toYaml .Values.migration.resources | nindent 12 }}
+          {{- end }}
+{{- end }}

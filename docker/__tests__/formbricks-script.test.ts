@@ -24,12 +24,14 @@ const multiArchValkeyImage =
 
 const tempDirs: string[] = [];
 const dockerComposeOverrideKeys = [
+  "FORMBRICKS_IMAGE_REF",
   "POSTGRES_PASSWORD",
   "POSTGRES_PASSWORD_URL_ENCODED",
   "HUB_DATABASE_URL",
   "CUBEJS_DB_PASS",
   "AUTHZED_TOKEN",
   "AUTHZED_DATABASE_PASSWORD",
+  "AUTHZED_DATABASE_PASSWORD_URL_ENCODED",
   "FORMBRICKS_UNSET_PASSWORD_SENTINEL",
 ];
 const dockerComposeTestTimeout = 30_000;
@@ -39,7 +41,7 @@ const dockerComposeTest = (name: string, testFunction: () => void): void => {
 };
 
 type RenderedDockerComposeConfig = {
-  services: Record<string, { environment?: Record<string, string> }>;
+  services: Record<string, { environment?: Record<string, string>; image?: string }>;
 };
 
 const createTempDir = (): string => {
@@ -117,8 +119,13 @@ const runDockerCompose = (args: string[], environment: NodeJS.ProcessEnv = {}): 
 
 const withRequiredComposeEnv = (envContents: string): string => {
   const requiredValues = [
+    [
+      "FORMBRICKS_IMAGE_REF",
+      "ghcr.io/formbricks/formbricks@sha256:0000000000000000000000000000000000000000000000000000000000000003",
+    ],
     ["AUTHZED_TOKEN", "test-authzed-token"],
     ["AUTHZED_DATABASE_PASSWORD", "test-authzed-database-password"],
+    ["AUTHZED_DATABASE_PASSWORD_URL_ENCODED", "test-authzed-database-password"],
   ];
   const missingValues = requiredValues
     .filter(([key]) => !new RegExp(`^${key}=`, "m").test(envContents))
@@ -192,16 +199,21 @@ const getRenderedDockerComposeEnvironment = (
     processEnvironment
   );
 
-const writeGeneratedEnvFile = (envPath: string, postgresPassword = ""): void => {
+const writeGeneratedEnvFile = (
+  envPath: string,
+  postgresPassword = "",
+  authzedDatabasePassword = ""
+): void => {
   execFileSync(
     "bash",
     [
       "-lc",
-      'source "$1"; write_generated_env_file "$2" "$3"',
+      'source "$1"; write_generated_env_file "$2" "$3" "" "" "" "$4"',
       "bash",
       formbricksScriptPath,
       envPath,
       postgresPassword,
+      authzedDatabasePassword,
     ],
     { encoding: "utf8" }
   );
@@ -212,6 +224,8 @@ const readExistingPostgresPassword = (
   composePath: string,
   processEnvironment: NodeJS.ProcessEnv = {}
 ): string => {
+  const imageReference =
+    "ghcr.io/formbricks/formbricks@sha256:0000000000000000000000000000000000000000000000000000000000000003";
   const result = spawnSync(
     "bash",
     [
@@ -224,7 +238,7 @@ const readExistingPostgresPassword = (
     ],
     {
       encoding: "utf8",
-      env: getDockerComposeProcessEnv(processEnvironment),
+      env: getDockerComposeProcessEnv({ FORMBRICKS_IMAGE_REF: imageReference, ...processEnvironment }),
       timeout: 20_000,
     }
   );
@@ -279,6 +293,126 @@ migrate_legacy_valkey_image "$2"`,
   return validationLogPath;
 };
 
+const runNoBundleUpdate = (
+  runtimeResult: Readonly<{ output: string; status: number }>,
+  includeLegacyValkey = true
+): Readonly<{
+  composeContents: string;
+  dockerCalls: string;
+  stderr: string;
+  stdout: string;
+  status: number | null;
+}> => {
+  const tempDir = createTempDir();
+  const installationDirectory = join(tempDir, "formbricks");
+  const binDirectory = join(tempDir, "bin");
+  const dockerPath = join(binDirectory, "docker");
+  const dockerCallsPath = join(tempDir, "docker-calls.log");
+  const composePath = join(installationDirectory, "docker-compose.yml");
+
+  mkdirSync(installationDirectory);
+  mkdirSync(binDirectory);
+  writeFileSync(
+    composePath,
+    `services:\n  formbricks:\n    image: ghcr.io/formbricks/formbricks:stable\n  redis:\n    image: ${includeLegacyValkey ? legacyValkeyImage : multiArchValkeyImage}\n`
+  );
+  writeFileSync(dockerCallsPath, "");
+  writeFileSync(
+    dockerPath,
+    `#!/bin/sh
+set -eu
+printf '%s\\n' "$*" >> "$FORMBRICKS_DOCKER_CALL_LOG"
+
+if [ "$*" = "info" ]; then
+  exit 0
+fi
+
+case "$*" in
+  *"exec -T formbricks formbricks-authzed activation runtime-check")
+    printf '%s\\n' "$FORMBRICKS_RUNTIME_RESULT"
+    exit "$FORMBRICKS_RUNTIME_STATUS"
+    ;;
+esac
+
+exit 0
+`
+  );
+  chmodSync(dockerPath, 0o755);
+
+  const result = spawnSync(
+    "bash",
+    ["-c", 'source "$1"; cd "$2"; update_formbricks', "bash", formbricksScriptPath, tempDir],
+    {
+      encoding: "utf8",
+      env: getDockerComposeProcessEnv({
+        FORMBRICKS_DOCKER_CALL_LOG: dockerCallsPath,
+        FORMBRICKS_RUNTIME_RESULT: runtimeResult.output,
+        FORMBRICKS_RUNTIME_STATUS: String(runtimeResult.status),
+        PATH: `${binDirectory}:${process.env.PATH ?? ""}`,
+      }),
+    }
+  );
+
+  return {
+    composeContents: readFileSync(composePath, "utf8"),
+    dockerCalls: readFileSync(dockerCallsPath, "utf8"),
+    stderr: result.stderr,
+    stdout: result.stdout,
+    status: result.status,
+  };
+};
+
+const runOneClickLifecycle = (
+  functionName: "get_logs" | "restart_formbricks" | "stop_formbricks" | "uninstall_formbricks"
+): Readonly<{ dockerCalls: string; installationExists: boolean; status: number | null }> => {
+  const tempDir = createTempDir();
+  const installationDirectory = join(tempDir, "formbricks");
+  const binDirectory = join(tempDir, "bin");
+  const dockerCallsPath = join(tempDir, "docker-calls.log");
+  const dockerPath = join(binDirectory, "docker");
+
+  mkdirSync(installationDirectory);
+  mkdirSync(binDirectory);
+  writeFileSync(join(installationDirectory, "docker-compose.yml"), "services:\n  formbricks: {}\n");
+  writeFileSync(join(installationDirectory, "formbricks-authzed-overlay.yml"), "services:\n  spicedb: {}\n");
+  writeFileSync(dockerCallsPath, "");
+  writeFileSync(
+    dockerPath,
+    `#!/bin/sh
+set -eu
+printf '%s\\n' "$*" >> "$FORMBRICKS_DOCKER_CALL_LOG"
+exit 0
+`
+  );
+  chmodSync(dockerPath, 0o755);
+
+  const result = spawnSync(
+    "bash",
+    [
+      "-c",
+      'source "$1"; sudo() { "$@"; }; cd "$2"; "$3"',
+      "bash",
+      formbricksScriptPath,
+      tempDir,
+      functionName,
+    ],
+    {
+      encoding: "utf8",
+      env: getDockerComposeProcessEnv({
+        FORMBRICKS_DOCKER_CALL_LOG: dockerCallsPath,
+        PATH: `${binDirectory}:${process.env.PATH ?? ""}`,
+      }),
+      input: functionName === "uninstall_formbricks" ? "yes\n" : undefined,
+    }
+  );
+
+  return {
+    dockerCalls: readFileSync(dockerCallsPath, "utf8"),
+    installationExists: existsSync(installationDirectory),
+    status: result.status,
+  };
+};
+
 const getServiceBlock = (composeContents: string, serviceName: string): string => {
   const lines = composeContents.split("\n");
   const startIndex = lines.findIndex((line) => line === `  ${serviceName}:`);
@@ -302,6 +436,57 @@ describe("docker/docker-compose.yml Cube configuration", () => {
     const cubeBlock = getServiceBlock(composeContents, "cube");
 
     expect(cubeBlock).toContain("      CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}");
+  });
+});
+
+describe("docker/docker-compose.yml Formbricks image contract", () => {
+  dockerComposeTest("uses one immutable-capable override for every Formbricks service", () => {
+    const imageReference =
+      "ghcr.io/formbricks/formbricks@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const config = renderDockerCompose("POSTGRES_PASSWORD=test-password\n", {
+      FORMBRICKS_IMAGE_REF: imageReference,
+    });
+
+    expect(config.services.formbricks.image).toBe(imageReference);
+    expect(config.services["formbricks-migrate"].image).toBe(imageReference);
+    expect(config.services["authzed-ops"].image).toBe(imageReference);
+    expect(config.services["authzed-initialize"].image).toBe(imageReference);
+  });
+
+  dockerComposeTest("uses the stable image for every Formbricks service when no override is supplied", () => {
+    const composePath = writeDockerComposeTemplate();
+    const envPath = join(dirname(composePath), ".env");
+    writeFileSync(
+      envPath,
+      [
+        "POSTGRES_PASSWORD=test-password",
+        "AUTHZED_TOKEN=test-authzed-token",
+        "AUTHZED_DATABASE_PASSWORD=test-authzed-database-password",
+        "AUTHZED_DATABASE_PASSWORD_URL_ENCODED=test-authzed-database-password",
+        "",
+      ].join("\n")
+    );
+
+    const config = JSON.parse(
+      runDockerCompose([
+        "--env-file",
+        envPath,
+        "--profile",
+        "authzed-ops",
+        "--file",
+        composePath,
+        "--project-directory",
+        dirname(composePath),
+        "config",
+        "--format",
+        "json",
+      ])
+    ) as RenderedDockerComposeConfig;
+
+    expect(config.services.formbricks.image).toBe("ghcr.io/formbricks/formbricks:stable");
+    expect(config.services["formbricks-migrate"].image).toBe("ghcr.io/formbricks/formbricks:stable");
+    expect(config.services["authzed-ops"].image).toBe("ghcr.io/formbricks/formbricks:stable");
+    expect(config.services["authzed-initialize"].image).toBe("ghcr.io/formbricks/formbricks:stable");
   });
 });
 
@@ -383,6 +568,7 @@ describe("Docker self-hosting credentials", () => {
     expect(envContents).toMatch(/^CUBEJS_API_SECRET=[a-f0-9]{64}$/m);
     expect(envContents).toMatch(/^AUTHZED_TOKEN=[a-f0-9]{64}$/m);
     expect(envContents).toMatch(/^AUTHZED_DATABASE_PASSWORD=[a-f0-9]{64}$/m);
+    expect(envContents).toMatch(/^AUTHZED_DATABASE_PASSWORD_URL_ENCODED=[a-f0-9]{64}$/m);
     expect(envContents).toContain(`
 CUBEJS_JWT_ISSUER=formbricks-web
 CUBEJS_JWT_AUDIENCE=formbricks-cube
@@ -595,7 +781,7 @@ export HUB_API_KEY=replace-me
     const quotedExistingPassword = readExistingPostgresPassword(envPath, composePath, {
       PASSWORD_SENTINEL: "rewritten",
     });
-    writeGeneratedEnvFile(envPath, quotedExistingPassword);
+    writeGeneratedEnvFile(envPath, quotedExistingPassword, "test-authzed-database-password");
 
     const firstEnvContents = readFileSync(envPath, "utf8");
     const renderedEnvironment = getRenderedDockerComposeEnvironment(composePath, envPath, {
@@ -623,6 +809,9 @@ export HUB_API_KEY=replace-me
     expect(firstEnvContents).toContain(`POSTGRES_PASSWORD_URL_ENCODED=${encodedPassword}`);
     expect(firstEnvContents).toContain("AUTHZED_TOKEN=test-authzed-token");
     expect(firstEnvContents).toContain("AUTHZED_DATABASE_PASSWORD=test-authzed-database-password");
+    expect(firstEnvContents).toContain(
+      "AUTHZED_DATABASE_PASSWORD_URL_ENCODED=test-authzed-database-password"
+    );
     expect(getDotenvValue(renderedEnvironment, "POSTGRES_PASSWORD")).toBe(password);
     expect(renderedPostgresPassword).toBe(password);
     expect(renderedCubePassword).toBe(password);
@@ -636,7 +825,7 @@ export HUB_API_KEY=replace-me
     const existingPassword = readExistingPostgresPassword(envPath, composePath, {
       PASSWORD_SENTINEL: "rewritten",
     });
-    writeGeneratedEnvFile(envPath, existingPassword);
+    writeGeneratedEnvFile(envPath, existingPassword, "replacement-authzed-database-password");
 
     const rerunEnvContents = readFileSync(envPath, "utf8");
 
@@ -648,7 +837,25 @@ export HUB_API_KEY=replace-me
     expect(rerunEnvContents.match(/^HUB_API_KEY=/gm)).toHaveLength(1);
     expect(rerunEnvContents.match(/^AUTHZED_TOKEN=/gm)).toHaveLength(1);
     expect(rerunEnvContents.match(/^AUTHZED_DATABASE_PASSWORD=/gm)).toHaveLength(1);
+    expect(rerunEnvContents.match(/^AUTHZED_DATABASE_PASSWORD_URL_ENCODED=/gm)).toHaveLength(1);
+    expect(rerunEnvContents).toContain("AUTHZED_DATABASE_PASSWORD=test-authzed-database-password");
+    expect(rerunEnvContents).toContain(
+      "AUTHZED_DATABASE_PASSWORD_URL_ENCODED=test-authzed-database-password"
+    );
+    expect(rerunEnvContents).not.toContain("replacement-authzed-database-password");
     expect(statSync(envPath).mode & 0o777).toBe(0o600);
+  });
+
+  test("refuses to reinterpret a non-URL-safe existing AuthZed database password", () => {
+    const tempDir = createTempDir();
+    const envPath = join(tempDir, ".env");
+
+    writeFileSync(envPath, 'AUTHZED_DATABASE_PASSWORD="do not evaluate $USER"\n');
+
+    expect(() => writeGeneratedEnvFile(envPath, "", "replacement-password")).toThrow(
+      /Could not safely preserve the existing AuthZed database password/
+    );
+    expect(readFileSync(envPath, "utf8")).toBe('AUTHZED_DATABASE_PASSWORD="do not evaluate $USER"\n');
   });
 
   dockerComposeTest("serializes preserved passwords without dotenv reinterpretation", () => {
@@ -707,68 +914,140 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(env.get("AUTHZED_DATABASE_PASSWORD")).toBe(authzedDatabasePassword);
     expect(env.get("AUTHZED_ENABLED")).toBe("true");
     expect(env.get("AUTHZED_CONSISTENCY")).toBe("fully_consistent");
-    expect(env.get("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED")).toBe("true");
+    expect(env.get("FORMBRICKS_IMAGE_REF")).toBe("ghcr.io/formbricks/formbricks:stable");
+    expect(env.has("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED")).toBe(false);
     expect(statSync(envPath).mode & 0o777).toBe(0o600);
   });
 
-  test("blocks customized updates until the AuthZed v6 contract is present and acknowledged", () => {
+  test("routes v5 updates through the signed receipt-backed upgrade executor", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const updateFunction = script.slice(
+      script.indexOf("verify_v6_upgrade_bundle()"),
+      script.indexOf("restart_formbricks()")
+    );
+
+    expect(updateFunction).toContain("cosign verify-blob");
+    expect(updateFunction).toContain("formbricks-upgrade-checksums.sigstore.json");
+    expect(updateFunction).toContain("formbricks.sh");
+    expect(updateFunction).toContain('"$bundle_directory/formbricks-upgrade-assistant"');
+    expect(updateFunction).toContain("assistant_status=$(jq -er");
+    expect(updateFunction).toContain('if [ "$assistant_status" == "upgraded" ]');
+    expect(updateFunction).toContain('if [ "$assistant_status" == "not_required" ]');
+    expect(updateFunction).toContain("execute");
+    expect(updateFunction).toContain("--yes");
+    expect(updateFunction).toContain("formbricks-authzed-overlay.yml");
+    expect(updateFunction).not.toContain("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED");
+    expect(updateFunction).not.toContain("authzed-ops upgrade prepare");
+    expect(updateFunction).not.toContain("authzed-ops upgrade check");
+    expect(updateFunction).toContain("formbricks-authzed activation runtime-check");
+    expect(updateFunction).toContain('.status == "ready" and .authority == "spicedb"');
+  });
+
+  test.each([
+    ["missing runtime command", { output: "", status: 127 }],
+    ["legacy authority", { output: '{"status":"ready","authority":"legacy"}', status: 0 }],
+    ["malformed response", { output: "not-json", status: 0 }],
+  ])("blocks no-bundle updates when activation proof is %s", (_label, runtimeResult) => {
+    const result = runNoBundleUpdate(runtimeResult);
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("no verified SpiceDB activation receipt");
+    expect(result.stdout).toContain("--v6-upgrade-bundle DIRECTORY --yes");
+    expect(result.dockerCalls).toContain(
+      "compose -f docker-compose.yml exec -T formbricks formbricks-authzed activation runtime-check"
+    );
+    expect(result.dockerCalls).not.toMatch(/compose .* (?:pull|run|up)(?: |$)/);
+    expect(result.composeContents).toContain(legacyValkeyImage);
+  });
+
+  test("allows no-bundle updates only after the runtime proves SpiceDB authority", () => {
+    const result = runNoBundleUpdate(
+      {
+        output: '{"status":"ready","authority":"spicedb"}',
+        status: 0,
+      },
+      false
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Formbricks updated successfully");
+    expect(result.dockerCalls).toContain("compose -f docker-compose.yml pull");
+    expect(result.dockerCalls).toContain("compose -f docker-compose.yml run --rm formbricks-migrate");
+    expect(result.dockerCalls).toContain("compose -f docker-compose.yml up -d");
+  });
+
+  test("keeps the customer's base Compose file outside the v6 executor's write path", () => {
     const script = readFileSync(formbricksScriptPath, "utf8");
     const updateFunction = script.slice(
       script.indexOf("update_formbricks()"),
       script.indexOf("restart_formbricks()")
     );
-
-    expect(updateFunction).toContain(
-      "This installation does not yet contain the AuthZed v6 Compose services"
+    const signedUpgradeBranch = updateFunction.slice(
+      updateFunction.indexOf('if [ -n "$bundle_directory" ]'),
+      updateFunction.indexOf("migrate_legacy_valkey_image docker-compose.yml")
     );
-    expect(updateFunction).toContain("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true");
-    expect(updateFunction).toContain("authzed-ops upgrade prepare");
-    expect(updateFunction).toContain("authzed-ops upgrade check");
-    expect(updateFunction.indexOf("upgrade check")).toBeLessThan(updateFunction.indexOf("compose down"));
+
+    expect(signedUpgradeBranch).not.toContain("migrate_legacy_valkey_image docker-compose.yml");
+    expect(signedUpgradeBranch).not.toMatch(/(?:cp|mv|sed|awk)[^\n]*docker-compose\.yml/);
+    expect(signedUpgradeBranch).toContain("The permanent formbricks-authzed-overlay.yml");
+    expect(updateFunction).toContain("migrate_legacy_valkey_image docker-compose.yml");
   });
 
-  test("runs the upgrade gates before stopping an existing installation", () => {
-    const tempDir = createTempDir();
-    const installationDir = join(tempDir, "formbricks");
-    const binDir = join(tempDir, "bin");
-    const commandLog = join(tempDir, "commands.log");
-    mkdirSync(installationDir, { recursive: true });
-    mkdirSync(binDir, { recursive: true });
-    writeFileSync(join(installationDir, "docker-compose.yml"), "services:\n  authzed-ops:\n  spicedb:\n");
-    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
-    writeFileSync(join(binDir, "sudo"), '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\n', {
-      mode: 0o700,
-    });
+  test("keeps later updates compatible with a preserved v5 Compose file", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const updateFunction = script.slice(
+      script.indexOf("update_formbricks()"),
+      script.indexOf("restart_formbricks()")
+    );
+    const overlayBranch = updateFunction.slice(
+      updateFunction.lastIndexOf("if [ -f formbricks-authzed-overlay.yml ]"),
+      updateFunction.indexOf('run_formbricks_docker_compose "${compose_args[@]}" up -d')
+    );
 
-    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
-      cwd: tempDir,
-      encoding: "utf8",
-      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
-    });
+    expect(overlayBranch).toContain("--entrypoint sh formbricks");
+    expect(overlayBranch).toContain("packages/database/dist/scripts/apply-migrations.js");
+    expect(overlayBranch).toContain("/home/nextjs/validate-env.mjs");
+    expect(overlayBranch).toContain("run --rm formbricks-migrate");
+  });
+
+  test.each([
+    ["stop_formbricks", "down --remove-orphans"],
+    ["restart_formbricks", "restart"],
+    ["get_logs", "logs"],
+  ] as const)("keeps the permanent AuthZed overlay in upgraded one-click %s", (functionName, command) => {
+    const result = runOneClickLifecycle(functionName);
 
     expect(result.status).toBe(0);
-    const commands = readFileSync(commandLog, "utf8").trim().split("\n");
-    expect(commands).toEqual([
-      "docker compose pull",
-      "docker compose run --rm formbricks-migrate",
-      "docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare",
-      "docker compose --profile authzed-ops run --rm authzed-ops upgrade check",
-      "docker compose down",
-      "docker compose up -d",
-    ]);
+    expect(result.dockerCalls).toContain(
+      `compose -f docker-compose.yml -f formbricks-authzed-overlay.yml ${command}`
+    );
   });
 
-  test("waits for the source migration before preparing a fresh AuthZed graph", () => {
+  test("stops overlay services before uninstalling an upgraded one-click installation", () => {
+    const result = runOneClickLifecycle("uninstall_formbricks");
+
+    expect(result.status).toBe(0);
+    expect(result.dockerCalls).toContain(
+      "compose -f docker-compose.yml -f formbricks-authzed-overlay.yml down --remove-orphans"
+    );
+    expect(result.installationExists).toBe(false);
+  });
+
+  test("waits for the source migration before bootstrapping fresh AuthZed authority", () => {
     const script = readFileSync(formbricksScriptPath, "utf8");
     const setupStart = script.indexOf(
       "docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate"
     );
     const migrationWait = script.indexOf("docker compose wait formbricks-migrate", setupStart);
-    const upgradePrepare = script.indexOf("authzed-ops upgrade prepare", setupStart);
+    const freshBootstrap = script.indexOf(
+      "docker compose run --rm -T --no-deps authzed-initialize",
+      setupStart
+    );
 
     expect(setupStart).toBeGreaterThanOrEqual(0);
     expect(migrationWait).toBeGreaterThan(setupStart);
-    expect(upgradePrepare).toBeGreaterThan(migrationWait);
+    expect(freshBootstrap).toBeGreaterThan(migrationWait);
+    expect(script.slice(setupStart, freshBootstrap)).not.toContain("authzed-ops upgrade prepare");
   });
 
   test("pins and verifies the downloaded bootstrap helper before making it executable", () => {
@@ -902,7 +1181,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(spicedbBlock).not.toContain("traefik.enable=true");
     expect(authzedOpsBlock).toContain('profiles: ["authzed-ops"]');
     expect(authzedOpsBlock).not.toContain("traefik.enable=true");
-    expect(authzedInitializeBlock).toContain('command: ["upgrade", "prepare"]');
+    expect(authzedInitializeBlock).toContain('command: ["activation", "bootstrap"]');
     expect(authzedInitializeBlock).not.toContain("traefik.enable=true");
     expect(formbricksBlock).toContain("    labels:");
     expect(formbricksBlock.indexOf("    labels:")).toBeLessThan(formbricksBlock.indexOf("    environment:"));

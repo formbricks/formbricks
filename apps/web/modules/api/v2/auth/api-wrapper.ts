@@ -1,9 +1,12 @@
 import { ZodRawShape, z } from "zod";
+import { withDatabaseOperationalErrorBoundary } from "@formbricks/database/operational-errors";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { isAuthzedMutationsFencedError } from "@formbricks/types/errors";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { TApiAuditLog } from "@/app/lib/api/with-api-logging";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
+import { createAuthzedMutationFenceV2Response } from "@/lib/authzed/mutation-fence-response";
 import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -164,12 +167,19 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
     }
   }
 
-  return withAuthorizationSurface("api_v2", () =>
-    handler({
-      authentication: authentication.data,
-      parsedInput,
-      request,
-      auditLog,
-    })
-  );
+  try {
+    return await withDatabaseOperationalErrorBoundary(() =>
+      withAuthorizationSurface("api_v2", () =>
+        handler({
+          authentication: authentication.data,
+          parsedInput,
+          request,
+          auditLog,
+        })
+      )
+    );
+  } catch (error) {
+    if (!isAuthzedMutationsFencedError(error)) throw error;
+    return createAuthzedMutationFenceV2Response(request.headers.get("x-request-id") ?? undefined);
+  }
 };

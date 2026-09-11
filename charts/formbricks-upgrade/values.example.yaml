@@ -1,0 +1,38 @@
+targetRelease: formbricks
+generation: "1"
+phase: prepare
+execution: 1
+protocolVersion: 1
+
+images:
+  bridge:
+    repository: ghcr.io/formbricks/formbricks
+    digest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+    manifestDigest: sha256:2222222222222222222222222222222222222222222222222222222222222222
+  candidate:
+    repository: ghcr.io/formbricks/formbricks
+    digest: sha256:3333333333333333333333333333333333333333333333333333333333333333
+    manifestDigest: sha256:4444444444444444444444444444444444444444444444444444444444444444
+
+schema:
+  expectedCurrentDigest: sha256:5555555555555555555555555555555555555555555555555555555555555555
+
+activation:
+  # Fill after prepare. Set workloadQuiesced only after suspending the HPA, scaling the application to
+  # zero, and verifying that no outgoing application Pods remain.
+  receipt: ""
+  workloadQuiesced: false
+
+database:
+  existingSecret:
+    name: formbricks-app-secrets
+    key: DATABASE_URL
+
+authzed:
+  endpoint: formbricks-spicedb:50051
+  existingSecret:
+    name: formbricks-authzed
+    key: preshared_key
+  systemKey: formbricks
+  insecure: true
+  consistency: fully_consistent

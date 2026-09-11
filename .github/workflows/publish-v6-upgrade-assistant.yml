@@ -1,0 +1,309 @@
+name: Publish v6 upgrade assistant
+
+on:
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Existing GitHub release tag receiving the signed bundle
+        required: true
+        type: string
+      bridge_image_ref:
+        description: Immutable, signed v5 bridge image reference
+        required: true
+        type: string
+      target_image_ref:
+        description: Immutable, signed v6 target image reference
+        required: true
+        type: string
+      minimum_source_version:
+        description: Oldest supported v5 source version
+        required: false
+        default: 5.4.0
+        type: string
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing GitHub release tag receiving the signed bundle
+        required: true
+        type: string
+      bridge_image_ref:
+        description: Immutable, signed v5 bridge image reference
+        required: true
+        type: string
+      target_image_ref:
+        description: Immutable, signed v6 target image reference
+        required: true
+        type: string
+      minimum_source_version:
+        description: Oldest supported v5 source version
+        required: false
+        default: 5.4.0
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Sign and attach preflight bundle
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: v6-upgrade-assets-${{ inputs.release_tag }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      id-token: write
+      packages: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout the released source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.release_tag }}
+          persist-credentials: false
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
+
+      - name: Set up Helm
+        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
+        with:
+          version: v3.15.4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Validate release-pinned third-party image manifests
+        run: |
+          set -euo pipefail
+
+          validate_multiarch_image() {
+            local image_ref="$1"
+            local expected_repository="$2"
+            local output_name="$3"
+            local raw_manifest
+
+            if [[ ! "$image_ref" =~ ^${expected_repository}@sha256:[0-9a-f]{64}$ ]]; then
+              echo "ERROR: release image pin is missing or invalid"
+              exit 1
+            fi
+
+            raw_manifest=$(docker buildx imagetools inspect "$image_ref" --raw)
+            jq -e '
+              select(
+                .mediaType == "application/vnd.oci.image.index.v1+json" or
+                .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json"
+              ) |
+              [.manifests[].platform | "\(.os)/\(.architecture)"] as $platforms |
+              ($platforms | index("linux/amd64")) != null and
+              ($platforms | index("linux/arm64")) != null
+            ' <<<"$raw_manifest" >/dev/null
+
+            printf '%s=%s\n' "$output_name" "$image_ref" >>"$GITHUB_ENV"
+          }
+
+          postgres_bootstrap_image=$(jq -er '.postgresBootstrap' authzed/release-images.json)
+          spicedb_image=$(jq -er '.spicedb' authzed/release-images.json)
+          validate_multiarch_image \
+            "$postgres_bootstrap_image" pgvector/pgvector POSTGRES_BOOTSTRAP_IMAGE_REF
+          validate_multiarch_image "$spicedb_image" authzed/spicedb SPICEDB_IMAGE_REF
+
+      - name: Validate release and signed immutable images
+        env:
+          BRIDGE_IMAGE_REF: ${{ inputs.bridge_image_ref }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          TARGET_IMAGE_REF: ${{ inputs.target_image_ref }}
+        run: |
+          set -euo pipefail
+
+          image_pattern='^ghcr\.io/formbricks/formbricks@sha256:[0-9a-f]{64}$'
+          if [[ ! "$BRIDGE_IMAGE_REF" =~ $image_pattern ]]; then
+            echo "::error::bridge_image_ref must be an immutable official image reference"
+            exit 1
+          fi
+          if [[ ! "$TARGET_IMAGE_REF" =~ $image_pattern ]]; then
+            echo "::error::target_image_ref must be an immutable official image reference"
+            exit 1
+          fi
+          if [[ "$BRIDGE_IMAGE_REF" == "$TARGET_IMAGE_REF" ]]; then
+            echo "::error::Bridge and target images must be distinct build artifacts"
+            exit 1
+          fi
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+
+          image_identity="https://github.com/formbricks/formbricks/.github/workflows/release-docker-github.yml@refs/tags/${RELEASE_TAG}"
+          issuer='https://token.actions.githubusercontent.com'
+          cosign verify --certificate-identity "$image_identity" --certificate-oidc-issuer "$issuer" \
+            "$BRIDGE_IMAGE_REF" >/dev/null
+          cosign verify --certificate-identity "$image_identity" --certificate-oidc-issuer "$issuer" \
+            "$TARGET_IMAGE_REF" >/dev/null
+
+          temporary_directory=$(mktemp -d)
+          container_ids=()
+          cleanup() {
+            for container_id in "${container_ids[@]}"; do
+              docker rm "$container_id" >/dev/null 2>&1 || true
+            done
+            rm -rf "$temporary_directory"
+          }
+          trap cleanup EXIT
+
+          source_revision=$(git rev-parse HEAD)
+          expected_migration_head=$(jq -er '.migrationHead' authzed/runtime-contract.json)
+          expected_protocol_version=$(jq -er '.protocolVersion' authzed/runtime-contract.json)
+          expected_client_contract_version=$(jq -er '.clientContractVersion' authzed/runtime-contract.json)
+
+          extract_runtime_manifest_digest() {
+            local image_ref="$1"
+            local expected_mode="$2"
+            local output_name="$3"
+            local manifest_file="${temporary_directory}/${expected_mode}.json"
+            local container_id
+            local canonical_manifest
+            local manifest_digest
+
+            docker pull --platform linux/amd64 "$image_ref" >/dev/null
+            container_id=$(docker create --platform linux/amd64 "$image_ref")
+            container_ids+=("$container_id")
+            docker cp \
+              "${container_id}:/home/nextjs/authzed-cli/release-manifest.json" \
+              "$manifest_file"
+
+            jq -e \
+              --arg authorizationMode "$expected_mode" \
+              --arg migrationHead "$expected_migration_head" \
+              --arg sourceRevision "$source_revision" \
+              --argjson clientContractVersion "$expected_client_contract_version" \
+              --argjson protocolVersion "$expected_protocol_version" \
+              '
+                type == "object" and
+                keys == ["authorizationMode", "clientContractVersion", "migrationHead", "protocolVersion", "sourceRevision"] and
+                .authorizationMode == $authorizationMode and
+                .clientContractVersion == $clientContractVersion and
+                .migrationHead == $migrationHead and
+                .protocolVersion == $protocolVersion and
+                .sourceRevision == $sourceRevision
+              ' "$manifest_file" >/dev/null
+
+            canonical_manifest=$(jq -c \
+              '{ authorizationMode, clientContractVersion, migrationHead, protocolVersion, sourceRevision }' \
+              "$manifest_file")
+            manifest_digest="sha256:$(printf '%s' "$canonical_manifest" | sha256sum | awk '{print $1}')"
+            echo "${output_name}=${manifest_digest}" >> "$GITHUB_ENV"
+          }
+
+          extract_runtime_manifest_digest \
+            "$BRIDGE_IMAGE_REF" legacy_bridge BRIDGE_RUNTIME_MANIFEST_DIGEST
+          extract_runtime_manifest_digest \
+            "$TARGET_IMAGE_REF" spicedb_authoritative TARGET_RUNTIME_MANIFEST_DIGEST
+
+      - name: Build release-matched preflight bundle
+        env:
+          BRIDGE_IMAGE_REF: ${{ inputs.bridge_image_ref }}
+          MINIMUM_SOURCE_VERSION: ${{ inputs.minimum_source_version }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          TARGET_IMAGE_REF: ${{ inputs.target_image_ref }}
+        run: |
+          set -euo pipefail
+          source_revision=$(git rev-parse HEAD)
+          scripts/build-v6-upgrade-assistant-bundle.sh \
+            --release-version "$RELEASE_TAG" \
+            --source-revision "$source_revision" \
+            --minimum-source-version "$MINIMUM_SOURCE_VERSION" \
+            --bridge-image "$BRIDGE_IMAGE_REF" \
+            --bridge-runtime-manifest-digest "$BRIDGE_RUNTIME_MANIFEST_DIGEST" \
+            --postgres-bootstrap-image "$POSTGRES_BOOTSTRAP_IMAGE_REF" \
+            --spicedb-image "$SPICEDB_IMAGE_REF" \
+            --target-image "$TARGET_IMAGE_REF" \
+            --target-runtime-manifest-digest "$TARGET_RUNTIME_MANIFEST_DIGEST" \
+            --output-directory dist/v6-upgrade
+
+          release_version="${RELEASE_TAG#[vV]}"
+          helm lint charts/formbricks
+          helm package charts/formbricks \
+            --version "$release_version" \
+            --app-version "$release_version" \
+            --destination dist/v6-upgrade
+          helm lint charts/formbricks-upgrade --values charts/formbricks-upgrade/values.example.yaml
+          helm package charts/formbricks-upgrade \
+            --version "$release_version" \
+            --app-version "$release_version" \
+            --destination dist/v6-upgrade
+          scripts/normalize-helm-package.sh \
+            "dist/v6-upgrade/formbricks-${release_version}.tgz" formbricks
+          scripts/normalize-helm-package.sh \
+            "dist/v6-upgrade/formbricks-upgrade-${release_version}.tgz" formbricks-upgrade
+          helm lint "dist/v6-upgrade/formbricks-${release_version}.tgz"
+          helm lint "dist/v6-upgrade/formbricks-upgrade-${release_version}.tgz"
+
+          (
+            cd dist/v6-upgrade
+            sha256sum \
+              authzed.com_spicedbclusters.yaml \
+              authzed-postgres-bootstrap.sh \
+              formbricks-authzed-overlay.yml \
+              formbricks-upgrade-assistant \
+              formbricks-upgrade-manifest.json \
+              "formbricks-${release_version}.tgz" \
+              formbricks.sh \
+              "formbricks-upgrade-${release_version}.tgz" \
+              > formbricks-upgrade-checksums.txt
+          )
+
+      - name: Sign and verify checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          issuer='https://token.actions.githubusercontent.com'
+          signature_bundle=dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json
+          existing_assets=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets \
+            --jq '.assets[].name')
+          if grep --fixed-strings --line-regexp formbricks-upgrade-checksums.sigstore.json \
+            <<<"$existing_assets" >/dev/null; then
+            gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --pattern formbricks-upgrade-checksums.sigstore.json \
+              --output "$signature_bundle"
+          else
+            cosign sign-blob --yes \
+              --bundle "$signature_bundle" \
+              dist/v6-upgrade/formbricks-upgrade-checksums.txt
+          fi
+          bundle_identity="https://github.com/formbricks/formbricks/.github/workflows/publish-v6-upgrade-assistant.yml@refs/tags/${RELEASE_TAG}"
+          cosign verify-blob \
+            --bundle "$signature_bundle" \
+            --certificate-identity "$bundle_identity" \
+            --certificate-oidc-issuer "$issuer" \
+            dist/v6-upgrade/formbricks-upgrade-checksums.txt
+          (cd dist/v6-upgrade && sha256sum --check formbricks-upgrade-checksums.txt)
+
+      - name: Attach signed bundle to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          release_version="${RELEASE_TAG#[vV]}"
+          scripts/reconcile-github-release-assets.sh "$RELEASE_TAG" "$GITHUB_REPOSITORY" \
+            dist/v6-upgrade/authzed.com_spicedbclusters.yaml \
+            dist/v6-upgrade/authzed-postgres-bootstrap.sh \
+            dist/v6-upgrade/formbricks-authzed-overlay.yml \
+            dist/v6-upgrade/formbricks-upgrade-assistant \
+            dist/v6-upgrade/formbricks-upgrade-manifest.json \
+            "dist/v6-upgrade/formbricks-${release_version}.tgz" \
+            dist/v6-upgrade/formbricks.sh \
+            "dist/v6-upgrade/formbricks-upgrade-${release_version}.tgz" \
+            dist/v6-upgrade/formbricks-upgrade-checksums.txt \
+            dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json

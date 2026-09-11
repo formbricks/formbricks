@@ -5,6 +5,8 @@ metadata:
   name: {{ include "formbricks.authzedClusterName" . }}
   labels:
     {{- include "formbricks.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   version: {{ .Values.authzed.cluster.version | quote }}
   channel: {{ .Values.authzed.cluster.channel | quote }}

@@ -2,6 +2,150 @@ import { z } from "zod";
 
 export const INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE = "ERR_INVALID_PASSWORD_RESET_TOKEN";
 
+/**
+ * Stable marker returned while authorization-source mutations are paused for an AuthZed cutover.
+ * Keep this value independent from human-readable database or transport messages: callers use it to
+ * decide whether a failed mutation is safe to retry.
+ */
+export const AUTHZED_MUTATIONS_FENCED_ERROR_CODE = "authzed_mutations_fenced" as const;
+
+/** A short retry hint for transports that support `Retry-After`. */
+export const AUTHZED_MUTATIONS_FENCED_RETRY_AFTER_SECONDS = 5;
+
+const POSTGRES_RAISE_EXCEPTION_CODE = "P0001";
+const PRISMA_RAW_QUERY_ERROR_CODE = "P2010";
+const MAX_ERROR_TRAVERSAL_DEPTH = 6;
+const MAX_ERROR_TRAVERSAL_NODES = 32;
+const NESTED_ERROR_KEYS = ["cause", "error", "errors", "meta", "driverAdapterError"] as const;
+
+type TUnknownRecord = Record<PropertyKey, unknown>;
+
+const isRecord = (value: unknown): value is TUnknownRecord => typeof value === "object" && value !== null;
+
+/** Read only own data properties so a hostile error object's getter cannot run during classification. */
+const readOwnProperty = (value: TUnknownRecord, key: PropertyKey): unknown => {
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    return descriptor && "value" in descriptor ? descriptor.value : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const readOwnString = (value: TUnknownRecord, key: PropertyKey): string | undefined => {
+  const property = readOwnProperty(value, key);
+  return typeof property === "string" ? property : undefined;
+};
+
+const isTypedAuthzedMutationsFencedError = (value: unknown): boolean => {
+  try {
+    return value instanceof AuthzedMutationsFencedError;
+  } catch {
+    return false;
+  }
+};
+
+const isExactSanitizedFenceMarker = (value: unknown): boolean => {
+  if (value === AUTHZED_MUTATIONS_FENCED_ERROR_CODE) return true;
+  if (!isRecord(value)) return false;
+
+  const code = readOwnString(value, "code");
+  if (code === AUTHZED_MUTATIONS_FENCED_ERROR_CODE) return true;
+
+  return code === undefined && readOwnString(value, "message") === AUTHZED_MUTATIONS_FENCED_ERROR_CODE;
+};
+
+const isRawPostgresFenceError = (value: unknown): boolean =>
+  isRecord(value) &&
+  readOwnString(value, "code") === POSTGRES_RAISE_EXCEPTION_CODE &&
+  readOwnString(value, "message") === AUTHZED_MUTATIONS_FENCED_ERROR_CODE;
+
+const hasPrismaDriverAdapterFenceCause = (value: TUnknownRecord): boolean => {
+  const meta = readOwnProperty(value, "meta");
+  if (!isRecord(meta)) return false;
+
+  const driverAdapterError = readOwnProperty(meta, "driverAdapterError");
+  if (!isRecord(driverAdapterError)) return false;
+
+  const cause = readOwnProperty(driverAdapterError, "cause");
+  if (!isRecord(cause)) return false;
+
+  return (
+    readOwnString(cause, "originalCode") === POSTGRES_RAISE_EXCEPTION_CODE &&
+    readOwnString(cause, "originalMessage") === AUTHZED_MUTATIONS_FENCED_ERROR_CODE
+  );
+};
+
+const isPrismaFenceError = (value: unknown): boolean =>
+  isRecord(value) &&
+  readOwnString(value, "code") === PRISMA_RAW_QUERY_ERROR_CODE &&
+  hasPrismaDriverAdapterFenceCause(value);
+
+export class AuthzedMutationsFencedError extends Error {
+  readonly code = AUTHZED_MUTATIONS_FENCED_ERROR_CODE;
+  readonly retryable = true;
+  readonly retryAfter = AUTHZED_MUTATIONS_FENCED_RETRY_AFTER_SECONDS;
+  readonly statusCode = 503;
+
+  constructor() {
+    super(AUTHZED_MUTATIONS_FENCED_ERROR_CODE);
+    this.name = "AuthzedMutationsFencedError";
+  }
+}
+
+/**
+ * Structurally recognizes the driver error across Prisma/adapter and HMR module boundaries.
+ * Traversal is deliberately narrow and bounded: errors can contain cycles, large metadata objects,
+ * proxies, or getters, none of which may turn classification into another operational failure.
+ */
+export const isAuthzedMutationsFencedError = (error: unknown): boolean => {
+  const queue: Array<Readonly<{ depth: number; value: unknown }>> = [{ depth: 0, value: error }];
+  const visited = new WeakSet<object>();
+  let visitedNodes = 0;
+
+  const enqueue = (value: unknown, depth: number): boolean => {
+    if (visitedNodes + queue.length >= MAX_ERROR_TRAVERSAL_NODES) return false;
+    queue.push({ depth, value });
+    return true;
+  };
+
+  while (queue.length > 0 && visitedNodes < MAX_ERROR_TRAVERSAL_NODES) {
+    const current = queue.shift();
+    if (!current) break;
+    visitedNodes += 1;
+
+    if (
+      isTypedAuthzedMutationsFencedError(current.value) ||
+      isExactSanitizedFenceMarker(current.value) ||
+      isRawPostgresFenceError(current.value) ||
+      isPrismaFenceError(current.value)
+    ) {
+      return true;
+    }
+
+    if (!isRecord(current.value) || current.depth >= MAX_ERROR_TRAVERSAL_DEPTH) continue;
+    if (visited.has(current.value)) continue;
+    visited.add(current.value);
+
+    for (const key of NESTED_ERROR_KEYS) {
+      const nested = readOwnProperty(current.value, key);
+      if (Array.isArray(nested)) {
+        for (const item of nested) {
+          if (!enqueue(item, current.depth + 1)) break;
+        }
+      } else if (nested !== undefined) {
+        enqueue(nested, current.depth + 1);
+      }
+    }
+  }
+
+  return false;
+};
+
+/** Returns a fresh, cause-free error safe to pass across application boundaries. */
+export const normalizeAuthzedMutationsFencedError = (error: unknown): AuthzedMutationsFencedError | null =>
+  isAuthzedMutationsFencedError(error) ? new AuthzedMutationsFencedError() : null;
+
 class ResourceNotFoundError extends Error {
   statusCode = 404;
   resourceId: string | null;
