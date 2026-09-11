@@ -92,6 +92,9 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
   }
 
   if (filterCriteria?.tags) {
+    // `applied` expands to one relation subquery per tag; `notApplied` is a single `notIn`.
+    spend((filterCriteria.tags.applied?.length ?? 0) + (filterCriteria.tags.notApplied ? 1 : 0));
+
     const tagFilters = createFilterTags(filterCriteria.tags);
     whereClause.push({
       AND: tagFilters,

@@ -275,8 +275,10 @@ const ZResponseFilterCriteriaFields = z.object({
 
   tags: z
     .object({
-      applied: z.array(z.string()).optional(),
-      notApplied: z.array(z.string()).optional(),
+      // `applied` expands to one relation subquery per tag in createFilterTags, so it carries the
+      // same clause-expansion risk as the data filters above.
+      applied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
+      notApplied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
     })
     .optional(),
 
@@ -325,13 +327,9 @@ const ZResponseFilterCriteriaFields = z.object({
  */
 export const ZResponseFilterCriteria = ZResponseFilterCriteriaFields.refine(
   (criteria) =>
-    [
-      criteria.contactAttributes,
-      criteria.data,
-      criteria.others,
-      criteria.meta,
-      criteria.quotas,
-    ].every((record) => !record || Object.keys(record).length <= MAX_FILTER_KEYS),
+    [criteria.contactAttributes, criteria.data, criteria.others, criteria.meta, criteria.quotas].every(
+      (record) => !record || Object.keys(record).length <= MAX_FILTER_KEYS
+    ),
   { error: `A response filter may not carry more than ${MAX_FILTER_KEYS} conditions per field` }
 );
 
