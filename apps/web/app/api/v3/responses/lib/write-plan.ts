@@ -245,7 +245,15 @@ export const planEmbeddedDataWrite = ({
 };
 
 /**
- * The survey language a response may be stamped with.
+ * Resolve the survey language a response will be stamped with, or say why it cannot be.
+ *
+ * **It returns the survey's own declared code rather than a canonicalized form of the caller's.**
+ * That is the whole point of the function, and it is not cosmetic: `normalizeResponseLanguage`
+ * expands `de` to `de-DE`, while `resolveV3LabelContext` matches a response against the survey's
+ * language set by exact (case-insensitive) code. A survey declaring `de` and a response stored as
+ * `de-DE` therefore do not match, the read falls back to the survey default, and every label on a
+ * German response comes back in English. Validating against one value and storing another is what
+ * creates that gap, so the value that was validated is the value that gets stored.
  *
  * Stricter than the read's `resolveV3LabelContext`, and deliberately so: that one falls back to the
  * default rather than failing, because a response collected before a language was removed still has
@@ -256,28 +264,32 @@ export const planEmbeddedDataWrite = ({
  * `enabled` is consulted here for the same reason it is ignored on the read: it says whether an
  * author still accepts submissions in that language, which is exactly the question a new write asks.
  *
- * The literal `"default"` is accepted. It is what the storage layer writes for a response in the
- * survey's default language, so the read publishes it, and refusing it would break the round trip on
- * a value this API itself handed out.
+ * The literal `"default"` is accepted and passes through. It is what the storage layer writes for a
+ * response in the survey's default language, so the read publishes it, and refusing it would break
+ * the round trip on a value this API itself handed out.
  */
-export const validateV3ResponseLanguage = (
+export const resolveV3WriteLanguage = (
   languages: readonly { default: boolean; enabled: boolean; language: { code: string } }[],
   language: string | null | undefined
-): InvalidParam | null => {
-  if (language === null || language === undefined || language === "default") return null;
+): { ok: true; code: string | null } | { ok: false; issue: InvalidParam } => {
+  if (language === null || language === undefined) return { ok: true, code: null };
+  if (language === "default") return { ok: true, code: "default" };
 
   const matched = languages.find(
     (entry) =>
       entry.language.code.toLowerCase() === language.toLowerCase() && (entry.enabled || entry.default)
   );
 
-  if (matched) return null;
+  if (matched) return { ok: true, code: matched.language.code };
 
   return {
-    name: "language",
-    reason: `'${language}' is not a language enabled on this survey.`,
-    code: "unsupported_locale",
-    referenceType: "language",
+    ok: false,
+    issue: {
+      name: "language",
+      reason: `'${language}' is not a language enabled on this survey.`,
+      code: "unsupported_locale",
+      referenceType: "language",
+    },
   };
 };
 

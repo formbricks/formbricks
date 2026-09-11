@@ -7,8 +7,8 @@ import {
   normalizeV3Ttc,
   planAnswerDataWrite,
   planEmbeddedDataWrite,
+  resolveV3WriteLanguage,
   validateV3EndingId,
-  validateV3ResponseLanguage,
 } from "./write-plan";
 
 vi.mock("server-only", () => ({}));
@@ -242,27 +242,47 @@ describe("planEmbeddedDataWrite — names in, storage keys out", () => {
   });
 });
 
-describe("validateV3ResponseLanguage", () => {
+describe("resolveV3WriteLanguage", () => {
   const languages = [
     { default: true, enabled: true, language: { code: "en" } },
     { default: false, enabled: true, language: { code: "de" } },
     { default: false, enabled: false, language: { code: "fr" } },
   ];
 
-  test.each([null, undefined, "default", "de", "DE"])("%s is accepted", (language) => {
-    expect(validateV3ResponseLanguage(languages, language)).toBeNull();
+  test.each([
+    [null, null],
+    [undefined, null],
+    ["default", "default"],
+  ])("%s resolves to %s", (input, expected) => {
+    const resolved = resolveV3WriteLanguage(languages, input);
+    expect(resolved).toEqual({ ok: true, code: expected });
   });
 
-  /** The read falls back to the default for an unknown language; a write must not invent one. */
+  /**
+   * The defect this function exists for. `normalizeResponseLanguage` expands `de` to `de-DE`, which
+   * no longer matches the survey's declared `de`, so the read falls back to the default and every
+   * label on a German response comes back in English. Storing the survey's own code is what closes
+   * that gap — validated value in, same value stored.
+   */
+  test("the survey's declared code is returned, not a canonicalized form of the caller's", () => {
+    expect(resolveV3WriteLanguage(languages, "de")).toEqual({ ok: true, code: "de" });
+  });
+
+  test("a case variant still resolves to the survey's own casing", () => {
+    expect(resolveV3WriteLanguage(languages, "DE")).toEqual({ ok: true, code: "de" });
+  });
+
   test("a language the survey does not declare is refused", () => {
-    expect(validateV3ResponseLanguage(languages, "es")).toMatchObject({
+    const resolved = resolveV3WriteLanguage(languages, "es");
+    expect(resolved.ok).toBe(false);
+    expect(resolved.ok === false && resolved.issue).toMatchObject({
       name: "language",
       referenceType: "language",
     });
   });
 
   test("a disabled language is refused — enabled is exactly the question a new write asks", () => {
-    expect(validateV3ResponseLanguage(languages, "fr")).not.toBeNull();
+    expect(resolveV3WriteLanguage(languages, "fr").ok).toBe(false);
   });
 });
 
