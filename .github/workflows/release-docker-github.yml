@@ -40,9 +40,6 @@ on:
       IMAGE_DIGEST:
         description: immutable community image digest
         value: ${{ jobs.build.outputs.IMAGE_DIGEST }}
-      AUTHZED_RUNTIME_MANIFEST_DIGEST:
-        description: verified digest of the runtime manifest embedded in the image
-        value: ${{ jobs.build.outputs.AUTHZED_RUNTIME_MANIFEST_DIGEST }}
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -67,7 +64,6 @@ jobs:
     outputs:
       VERSION: ${{ steps.extract_release_tag.outputs.VERSION }}
       IMAGE_DIGEST: ${{ steps.build.outputs.image_digest }}
-      AUTHZED_RUNTIME_MANIFEST_DIGEST: ${{ steps.build.outputs.authzed_runtime_manifest_digest }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)

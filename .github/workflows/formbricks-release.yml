@@ -123,9 +123,7 @@ jobs:
     with:
       release_tag: ${{ github.event.release.tag_name }}
       bridge_image_ref: ghcr.io/${{ github.repository }}@${{ needs.docker-build-authzed-bridge.outputs.IMAGE_DIGEST }}
-      bridge_runtime_manifest_digest: ${{ needs.docker-build-authzed-bridge.outputs.AUTHZED_RUNTIME_MANIFEST_DIGEST }}
       target_image_ref: ghcr.io/${{ github.repository }}@${{ needs.docker-build-community.outputs.IMAGE_DIGEST }}
-      target_runtime_manifest_digest: ${{ needs.docker-build-community.outputs.AUTHZED_RUNTIME_MANIFEST_DIGEST }}
       minimum_source_version: 5.4.0
 
   docker-build-cloud:
