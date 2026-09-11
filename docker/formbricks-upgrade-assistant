@@ -1,0 +1,545 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly ASSISTANT_SCHEMA_VERSION=1
+readonly DEFAULT_MANIFEST_NAME="formbricks-upgrade-manifest.json"
+
+manifest_path=""
+install_type="auto"
+installation_path="."
+helm_release=""
+helm_namespace=""
+current_version_override=""
+
+checks='[]'
+blocked_count=0
+warning_count=0
+
+emit_bootstrap_error() {
+  local code="$1"
+
+  printf '{"schemaVersion":1,"status":"blocked","mutating":false,"checks":[{"code":"%s","status":"blocked"}],"plan":[]}\n' "$code"
+}
+
+if ! command -v jq >/dev/null 2>&1; then
+  emit_bootstrap_error "jq_missing"
+  exit 2
+fi
+
+add_check() {
+  local code="$1"
+  local status="$2"
+
+  checks=$(jq -cn --argjson current "$checks" --arg code "$code" --arg status "$status" \
+    '$current + [{code: $code, status: $status}]')
+
+  case "$status" in
+    blocked) blocked_count=$((blocked_count + 1)) ;;
+    warning) warning_count=$((warning_count + 1)) ;;
+  esac
+}
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: formbricks-upgrade-assistant [preflight] [options]
+
+Read-only options:
+  --manifest PATH          Signed release manifest (defaults beside this executable)
+  --install-type TYPE      auto, docker, or helm (default: auto)
+  --path PATH              Docker Compose file or installation directory
+  --helm-release NAME      Helm release name (requires --namespace)
+  --namespace NAME         Helm namespace (requires --helm-release)
+  --current-version VER    Override a version that cannot be detected safely
+  --help                    Show this help
+EOF
+}
+
+fail_usage() {
+  usage
+  exit 64
+}
+
+if [[ "${1:-}" == "preflight" ]]; then
+  shift
+elif [[ -n "${1:-}" && "${1:-}" != --* ]]; then
+  fail_usage
+fi
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --manifest)
+      [[ $# -ge 2 ]] || fail_usage
+      manifest_path="$2"
+      shift 2
+      ;;
+    --install-type)
+      [[ $# -ge 2 ]] || fail_usage
+      install_type="$2"
+      shift 2
+      ;;
+    --path)
+      [[ $# -ge 2 ]] || fail_usage
+      installation_path="$2"
+      shift 2
+      ;;
+    --helm-release)
+      [[ $# -ge 2 ]] || fail_usage
+      helm_release="$2"
+      shift 2
+      ;;
+    --namespace)
+      [[ $# -ge 2 ]] || fail_usage
+      helm_namespace="$2"
+      shift 2
+      ;;
+    --current-version)
+      [[ $# -ge 2 ]] || fail_usage
+      current_version_override="$2"
+      shift 2
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *) fail_usage ;;
+  esac
+done
+
+case "$install_type" in
+  auto|docker|helm) ;;
+  *) fail_usage ;;
+esac
+
+if [[ -n "$helm_release" || -n "$helm_namespace" ]]; then
+  [[ -n "$helm_release" && -n "$helm_namespace" ]] || fail_usage
+  [[ "$install_type" == "auto" || "$install_type" == "helm" ]] || fail_usage
+  install_type="helm"
+fi
+
+if [[ -z "$manifest_path" ]]; then
+  script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+  manifest_path="${script_dir}/${DEFAULT_MANIFEST_NAME}"
+fi
+
+readonly semver_pattern='^[vV]?([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$'
+readonly digest_pattern='^sha256:[0-9a-f]{64}$'
+readonly image_pattern='^ghcr\.io/formbricks/formbricks@sha256:[0-9a-f]{64}$'
+
+normalize_version() {
+  local version="$1"
+  version="${version#[vV]}"
+  printf '%s' "$version"
+}
+
+version_core() {
+  local version
+  version=$(normalize_version "$1")
+  printf '%s' "${version%%-*}"
+}
+
+version_is_at_least() {
+  local actual_core minimum_core actual_major actual_minor actual_patch minimum_major minimum_minor minimum_patch
+  actual_core=$(version_core "$1")
+  minimum_core=$(version_core "$2")
+  IFS=. read -r actual_major actual_minor actual_patch <<<"$actual_core"
+  IFS=. read -r minimum_major minimum_minor minimum_patch <<<"$minimum_core"
+
+  ((10#$actual_major > 10#$minimum_major)) && return 0
+  ((10#$actual_major < 10#$minimum_major)) && return 1
+  ((10#$actual_minor > 10#$minimum_minor)) && return 0
+  ((10#$actual_minor < 10#$minimum_minor)) && return 1
+  ((10#$actual_patch >= 10#$minimum_patch))
+}
+
+extract_version_from_image() {
+  local image="$1"
+  local without_digest tag
+
+  without_digest="${image%@*}"
+  tag="${without_digest##*:}"
+  if [[ "$tag" =~ $semver_pattern ]]; then
+    normalize_version "$tag"
+  fi
+}
+
+extract_digest_from_image() {
+  local image="$1"
+  local digest=""
+
+  if [[ "$image" == *@* ]]; then
+    digest="${image##*@}"
+  fi
+  if [[ "$digest" =~ $digest_pattern ]]; then
+    printf '%s' "$digest"
+  fi
+}
+
+if [[ -n "$current_version_override" && ! "$current_version_override" =~ $semver_pattern ]]; then
+  add_check "current_version_override_invalid" "blocked"
+  current_version_override=""
+fi
+
+manifest_valid=false
+release_version=""
+minimum_source_version=""
+bridge_image=""
+target_image=""
+bridge_digest=""
+target_digest=""
+manifest_digest=""
+
+if [[ ! -f "$manifest_path" ]]; then
+  add_check "release_manifest_missing" "blocked"
+elif ! jq -e '
+    type == "object" and
+    .schemaVersion == 1 and
+    (.releaseVersion | type == "string") and
+    (.sourceRevision | type == "string") and
+    (.minimumSourceVersion | type == "string") and
+    (.artifacts | type == "object") and
+    (.artifacts.bridgeImage | type == "string") and
+    (.artifacts.targetImage | type == "string") and
+    (.supportedInstallTypes == ["docker_compose", "helm", "one_click"])
+  ' "$manifest_path" >/dev/null 2>&1; then
+  add_check "release_manifest_invalid" "blocked"
+else
+  release_version=$(jq -er '.releaseVersion' "$manifest_path")
+  minimum_source_version=$(jq -er '.minimumSourceVersion' "$manifest_path")
+  bridge_image=$(jq -er '.artifacts.bridgeImage' "$manifest_path")
+  target_image=$(jq -er '.artifacts.targetImage' "$manifest_path")
+  source_revision=$(jq -er '.sourceRevision' "$manifest_path")
+  release_major=$(version_core "$release_version")
+  release_major="${release_major%%.*}"
+  minimum_source_major=$(version_core "$minimum_source_version")
+  minimum_source_major="${minimum_source_major%%.*}"
+
+  if [[ "$release_version" =~ $semver_pattern ]] &&
+    [[ "$minimum_source_version" =~ $semver_pattern ]] &&
+    [[ "$release_major" == "6" ]] &&
+    [[ "$minimum_source_major" == "5" ]] &&
+    [[ "$source_revision" =~ ^[0-9a-f]{40}$ ]] &&
+    [[ "$bridge_image" =~ $image_pattern ]] &&
+    [[ "$target_image" =~ $image_pattern ]] &&
+    [[ "$bridge_image" != "$target_image" ]]; then
+    bridge_digest=$(extract_digest_from_image "$bridge_image")
+    target_digest=$(extract_digest_from_image "$target_image")
+    manifest_valid=true
+    add_check "release_manifest_valid" "pass"
+    add_check "release_images_immutable" "pass"
+  else
+    add_check "release_manifest_invalid" "blocked"
+  fi
+fi
+
+if command -v sha256sum >/dev/null 2>&1; then
+  manifest_digest=$(sha256sum "$manifest_path" 2>/dev/null | awk '{print $1}' || true)
+elif command -v shasum >/dev/null 2>&1; then
+  manifest_digest=$(shasum -a 256 "$manifest_path" 2>/dev/null | awk '{print $1}' || true)
+else
+  add_check "sha256_tool_missing" "blocked"
+fi
+
+resolve_compose_file() {
+  local requested="$1"
+  local candidate
+
+  if [[ -f "$requested" ]]; then
+    printf '%s' "$requested"
+    return 0
+  fi
+
+  for candidate in \
+    "$requested/docker-compose.yml" \
+    "$requested/compose.yml" \
+    "$requested/compose.yaml" \
+    "$requested/formbricks/docker-compose.yml" \
+    "$requested/formbricks/compose.yml" \
+    "$requested/formbricks/compose.yaml"; do
+    if [[ -f "$candidate" ]]; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+compose_file=""
+if compose_file=$(resolve_compose_file "$installation_path" 2>/dev/null); then
+  compose_detected=true
+else
+  compose_detected=false
+fi
+
+if [[ "$install_type" == "auto" ]]; then
+  if [[ "$compose_detected" == "true" ]]; then
+    install_type="docker"
+  elif command -v helm >/dev/null 2>&1; then
+    install_type="helm"
+  else
+    add_check "installation_not_detected" "blocked"
+    install_type="unknown"
+  fi
+fi
+
+resolved_install_type="unknown"
+current_version=""
+current_image_pinned=false
+current_image_digest=""
+database_mode="unknown"
+authzed_configured=false
+
+inspect_docker_installation() {
+  local compose_dir rendered image container_id inspected_version packaged_version
+
+  if ! command -v docker >/dev/null 2>&1; then
+    add_check "docker_missing" "blocked"
+    return
+  fi
+  if ! docker compose version >/dev/null 2>&1; then
+    add_check "docker_compose_missing" "blocked"
+    return
+  fi
+  add_check "docker_compose_available" "pass"
+
+  if [[ "$compose_detected" != "true" ]]; then
+    add_check "compose_file_missing" "blocked"
+    return
+  fi
+
+  compose_dir=$(cd -- "$(dirname -- "$compose_file")" && pwd)
+  if ! rendered=$(docker compose -f "$compose_file" --project-directory "$compose_dir" config --format json 2>/dev/null); then
+    add_check "compose_config_invalid" "blocked"
+    return
+  fi
+  if ! jq -e '.services.formbricks | type == "object"' <<<"$rendered" >/dev/null 2>&1; then
+    add_check "formbricks_service_missing" "blocked"
+    return
+  fi
+  add_check "deployment_config_readable" "pass"
+
+  if jq -e '.services.traefik | type == "object"' <<<"$rendered" >/dev/null 2>&1; then
+    resolved_install_type="one_click"
+  else
+    resolved_install_type="docker_compose"
+  fi
+
+  image=$(jq -er '.services.formbricks.image // empty' <<<"$rendered" 2>/dev/null || true)
+  current_image_digest=$(extract_digest_from_image "$image")
+  if [[ -n "$current_image_digest" ]]; then
+    current_image_pinned=true
+  else
+    add_check "current_image_mutable" "warning"
+  fi
+
+  if [[ -n "$current_version_override" ]]; then
+    current_version=$(normalize_version "$current_version_override")
+  else
+    current_version=$(extract_version_from_image "$image")
+    if [[ -z "$current_version" ]]; then
+      container_id=$(docker compose -f "$compose_file" --project-directory "$compose_dir" ps -q formbricks 2>/dev/null || true)
+      if [[ -n "$container_id" ]]; then
+        inspected_version=$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$container_id" 2>/dev/null || true)
+        if [[ "$inspected_version" =~ $semver_pattern ]]; then
+          current_version=$(normalize_version "$inspected_version")
+        else
+          packaged_version=$(docker exec "$container_id" node -p \
+            'JSON.parse(require("fs").readFileSync("/home/nextjs/package.json", "utf8")).version' \
+            2>/dev/null || true)
+          if [[ "$packaged_version" =~ $semver_pattern ]]; then
+            current_version=$(normalize_version "$packaged_version")
+          fi
+        fi
+      fi
+    fi
+  fi
+
+  if jq -e '.services.postgres | type == "object"' <<<"$rendered" >/dev/null 2>&1; then
+    database_mode="bundled"
+    add_check "database_configuration_present" "pass"
+  elif jq -e '.services.formbricks.environment.DATABASE_URL | type == "string" and length > 0' <<<"$rendered" >/dev/null 2>&1; then
+    database_mode="external"
+    add_check "database_configuration_present" "pass"
+  else
+    add_check "database_configuration_missing" "blocked"
+  fi
+
+  if jq -e '.services.spicedb and .services["authzed-ops"]' <<<"$rendered" >/dev/null 2>&1; then
+    authzed_configured=true
+  fi
+}
+
+inspect_helm_installation() {
+  local releases release_count release_data release_status values can_read can_create_jobs can_patch
+
+  if ! command -v helm >/dev/null 2>&1; then
+    add_check "helm_missing" "blocked"
+    return
+  fi
+  if ! command -v kubectl >/dev/null 2>&1; then
+    add_check "kubectl_missing" "blocked"
+    return
+  fi
+  add_check "helm_and_kubectl_available" "pass"
+
+  if [[ -n "$helm_release" ]]; then
+    if ! releases=$(helm list --namespace "$helm_namespace" --all -o json 2>/dev/null); then
+      add_check "helm_release_lookup_failed" "blocked"
+      return
+    fi
+    release_data=$(jq -c --arg name "$helm_release" '[.[] | select(.name == $name)]' <<<"$releases")
+  else
+    if ! releases=$(helm list --all-namespaces --all -o json 2>/dev/null); then
+      add_check "helm_release_lookup_failed" "blocked"
+      return
+    fi
+    release_data=$(jq -c '[.[] | select((.chart // "") | startswith("formbricks-"))]' <<<"$releases")
+  fi
+
+  release_count=$(jq -r 'length' <<<"$release_data")
+  if [[ "$release_count" != "1" ]]; then
+    if [[ "$release_count" == "0" ]]; then
+      add_check "helm_release_missing" "blocked"
+    else
+      add_check "helm_release_ambiguous" "blocked"
+    fi
+    return
+  fi
+
+  helm_release=$(jq -er '.[0].name' <<<"$release_data")
+  helm_namespace=$(jq -er '.[0].namespace' <<<"$release_data")
+  release_status=$(jq -er '.[0].status // empty' <<<"$release_data" 2>/dev/null || true)
+  if [[ "$release_status" != "deployed" ]]; then
+    add_check "helm_release_not_deployed" "blocked"
+    return
+  fi
+  add_check "helm_release_deployed" "pass"
+
+  if ! values=$(helm get values "$helm_release" --namespace "$helm_namespace" -o json 2>/dev/null); then
+    add_check "helm_values_unreadable" "blocked"
+    return
+  fi
+  add_check "deployment_config_readable" "pass"
+  resolved_install_type="helm"
+
+  if [[ -n "$current_version_override" ]]; then
+    current_version=$(normalize_version "$current_version_override")
+  else
+    current_version=$(jq -er '.[0].app_version // empty' <<<"$release_data" 2>/dev/null || true)
+    current_version=$(normalize_version "$current_version")
+  fi
+
+  current_image_digest=$(jq -er '.deployment.image.digest // empty' <<<"$values" 2>/dev/null || true)
+  if [[ "$current_image_digest" =~ $digest_pattern ]]; then
+    current_image_pinned=true
+  else
+    current_image_digest=""
+    add_check "current_image_mutable" "warning"
+  fi
+
+  if [[ "$(jq -r 'if .postgresql.enabled == false then "false" else "true" end' <<<"$values")" == "true" ]]; then
+    database_mode="bundled"
+  else
+    database_mode="external"
+  fi
+  add_check "database_configuration_present" "pass"
+
+  if [[ "$(jq -r '.authzed.enabled // false' <<<"$values")" == "true" ]]; then
+    authzed_configured=true
+  fi
+
+  can_read=$(kubectl auth can-i get deployments --namespace "$helm_namespace" 2>/dev/null || true)
+  can_create_jobs=$(kubectl auth can-i create jobs.batch --namespace "$helm_namespace" 2>/dev/null || true)
+  can_patch=$(kubectl auth can-i patch deployments --namespace "$helm_namespace" 2>/dev/null || true)
+  if [[ "$can_read" == "yes" && "$can_create_jobs" == "yes" && "$can_patch" == "yes" ]]; then
+    add_check "kubernetes_permissions_sufficient" "pass"
+  else
+    add_check "kubernetes_permissions_insufficient" "blocked"
+  fi
+}
+
+case "$install_type" in
+  docker) inspect_docker_installation ;;
+  helm) inspect_helm_installation ;;
+esac
+
+version_state="unknown"
+if [[ -z "$current_version" || ! "$current_version" =~ $semver_pattern ]]; then
+  add_check "current_version_unknown" "blocked"
+elif [[ "$manifest_valid" == "true" ]]; then
+  current_major=$(version_core "$current_version")
+  current_major="${current_major%%.*}"
+  target_major=$(version_core "$release_version")
+  target_major="${target_major%%.*}"
+
+  if [[ "$current_major" == "$target_major" ]]; then
+    version_state="already_target_major"
+    add_check "source_already_target_major" "pass"
+  elif [[ "$current_major" == "5" ]] && version_is_at_least "$current_version" "$minimum_source_version"; then
+    version_state="supported_upgrade"
+    add_check "source_version_supported" "pass"
+  else
+    version_state="unsupported"
+    add_check "source_version_unsupported" "blocked"
+  fi
+fi
+
+plan='[]'
+status="blocked"
+if [[ "$blocked_count" -eq 0 && "$version_state" == "already_target_major" ]]; then
+  status="not_required"
+elif [[ "$blocked_count" -eq 0 ]]; then
+  status="ready"
+  plan=$(jq -cn '[
+    {order: 1, phase: "backup", mutating: false, requiresConfirmation: true},
+    {order: 2, phase: "prepare_runtime", mutating: true, requiresConfirmation: true},
+    {order: 3, phase: "build_relationship_graph", mutating: true, requiresConfirmation: true},
+    {order: 4, phase: "fence_and_activate", mutating: true, requiresConfirmation: true},
+    {order: 5, phase: "verify", mutating: false, requiresConfirmation: false},
+    {order: 6, phase: "remove_temporary_resources", mutating: true, requiresConfirmation: true}
+  ]')
+fi
+
+jq -cn \
+  --argjson schemaVersion "$ASSISTANT_SCHEMA_VERSION" \
+  --arg status "$status" \
+  --arg installType "$resolved_install_type" \
+  --arg currentVersion "$current_version" \
+  --arg databaseMode "$database_mode" \
+  --argjson currentImagePinned "$current_image_pinned" \
+  --arg currentImageDigest "$current_image_digest" \
+  --argjson authzedConfigured "$authzed_configured" \
+  --arg releaseVersion "$release_version" \
+  --arg manifestDigest "$manifest_digest" \
+  --arg bridgeDigest "$bridge_digest" \
+  --arg targetDigest "$target_digest" \
+  --argjson warningCount "$warning_count" \
+  --argjson checks "$checks" \
+  --argjson plan "$plan" \
+  '{
+    schemaVersion: $schemaVersion,
+    status: $status,
+    mutating: false,
+    installation: {
+      type: $installType,
+      currentVersion: (if $currentVersion == "" then null else $currentVersion end),
+      currentImagePinned: $currentImagePinned,
+      currentImageDigest: (if $currentImageDigest == "" then null else $currentImageDigest end),
+      databaseMode: $databaseMode,
+      authzedConfigured: $authzedConfigured
+    },
+    release: {
+      version: (if $releaseVersion == "" then null else $releaseVersion end),
+      manifestDigest: (if $manifestDigest == "" then null else ("sha256:" + $manifestDigest) end),
+      bridgeImageDigest: (if $bridgeDigest == "" then null else $bridgeDigest end),
+      targetImageDigest: (if $targetDigest == "" then null else $targetDigest end)
+    },
+    warningCount: $warningCount,
+    checks: $checks,
+    plan: $plan
+  }'
+
+if [[ "$status" == "blocked" ]]; then
+  exit 2
+fi

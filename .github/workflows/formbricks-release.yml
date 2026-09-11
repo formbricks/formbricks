@@ -91,6 +91,24 @@ jobs:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
       MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
 
+  publish-v6-upgrade-assistant:
+    name: Publish signed v6 upgrade assistant
+    if: ${{ startsWith(github.event.release.tag_name, '6.') || startsWith(github.event.release.tag_name, 'v6.') }}
+    permissions:
+      contents: write
+      id-token: write
+      packages: read
+    uses: ./.github/workflows/publish-v6-upgrade-assistant.yml
+    needs:
+      - docker-build-community
+    with:
+      release_tag: ${{ github.event.release.tag_name }}
+      # The release workflow intentionally fails for v6 when this repository variable is absent or mutable.
+      # Set it to the signed bridge artifact approved for the complete v6 rollout window.
+      bridge_image_ref: ${{ vars.FORMBRICKS_V5_BRIDGE_IMAGE_REF }}
+      target_image_ref: ghcr.io/${{ github.repository }}@${{ needs.docker-build-community.outputs.IMAGE_DIGEST }}
+      minimum_source_version: 5.4.0
+
   docker-build-cloud:
     name: Build & push Formbricks Cloud to ECR
     permissions:

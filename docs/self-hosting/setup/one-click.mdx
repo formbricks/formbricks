@@ -367,6 +367,9 @@ The update command does not regenerate or rotate them.
 ### Add SpiceDB to an Existing One-Click Installation
 
 The update command intentionally preserves your customized Compose file, so it cannot add SpiceDB by itself.
+Download and verify the release's [v6 upgrade assistant](/self-hosting/advanced/v6-upgrade-assistant), then run
+its read-only preflight before changing the installation. A `ready` result confirms the source version and
+local prerequisites; it does not replace the graph preparation and final clean audit below.
 Before upgrading to a release that uses AuthZed:
 
 1. Back up `formbricks/.env`, `formbricks/docker-compose.yml`, and the PostgreSQL volume.

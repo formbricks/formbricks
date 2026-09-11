@@ -1,0 +1,146 @@
+name: Publish v6 upgrade assistant
+
+on:
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Existing GitHub release tag receiving the signed bundle
+        required: true
+        type: string
+      bridge_image_ref:
+        description: Immutable, signed v5 bridge image reference
+        required: true
+        type: string
+      target_image_ref:
+        description: Immutable, signed v6 target image reference
+        required: true
+        type: string
+      minimum_source_version:
+        description: Oldest supported v5 source version
+        required: false
+        default: 5.4.0
+        type: string
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing GitHub release tag receiving the signed bundle
+        required: true
+        type: string
+      bridge_image_ref:
+        description: Immutable, signed v5 bridge image reference
+        required: true
+        type: string
+      target_image_ref:
+        description: Immutable, signed v6 target image reference
+        required: true
+        type: string
+      minimum_source_version:
+        description: Oldest supported v5 source version
+        required: false
+        default: 5.4.0
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Sign and attach preflight bundle
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      id-token: write
+      packages: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout the released source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.release_tag }}
+          persist-credentials: false
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
+
+      - name: Validate release and signed immutable images
+        env:
+          BRIDGE_IMAGE_REF: ${{ inputs.bridge_image_ref }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          TARGET_IMAGE_REF: ${{ inputs.target_image_ref }}
+        run: |
+          set -euo pipefail
+
+          image_pattern='^ghcr\.io/formbricks/formbricks@sha256:[0-9a-f]{64}$'
+          if [[ ! "$BRIDGE_IMAGE_REF" =~ $image_pattern ]]; then
+            echo "::error::bridge_image_ref must be an immutable official image reference"
+            exit 1
+          fi
+          if [[ ! "$TARGET_IMAGE_REF" =~ $image_pattern ]]; then
+            echo "::error::target_image_ref must be an immutable official image reference"
+            exit 1
+          fi
+          if [[ "$BRIDGE_IMAGE_REF" == "$TARGET_IMAGE_REF" ]]; then
+            echo "::error::Bridge and target images must be distinct build artifacts"
+            exit 1
+          fi
+
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+
+          identity='^https://github\.com/formbricks/formbricks/\.github/workflows/.+@refs/(heads/main|tags/.+)$'
+          issuer='https://token.actions.githubusercontent.com'
+          cosign verify --certificate-identity-regexp "$identity" --certificate-oidc-issuer "$issuer" \
+            "$BRIDGE_IMAGE_REF" >/dev/null
+          cosign verify --certificate-identity-regexp "$identity" --certificate-oidc-issuer "$issuer" \
+            "$TARGET_IMAGE_REF" >/dev/null
+
+      - name: Build release-matched preflight bundle
+        env:
+          BRIDGE_IMAGE_REF: ${{ inputs.bridge_image_ref }}
+          MINIMUM_SOURCE_VERSION: ${{ inputs.minimum_source_version }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          TARGET_IMAGE_REF: ${{ inputs.target_image_ref }}
+        run: |
+          set -euo pipefail
+          source_revision=$(git rev-parse HEAD)
+          scripts/build-v6-upgrade-assistant-bundle.sh \
+            --release-version "$RELEASE_TAG" \
+            --source-revision "$source_revision" \
+            --minimum-source-version "$MINIMUM_SOURCE_VERSION" \
+            --bridge-image "$BRIDGE_IMAGE_REF" \
+            --target-image "$TARGET_IMAGE_REF" \
+            --output-directory dist/v6-upgrade
+
+      - name: Sign and verify checksums
+        env:
+          CERTIFICATE_IDENTITY_REGEXP: ^https://github\.com/formbricks/formbricks/\.github/workflows/.+@refs/(heads/main|tags/.+)$
+        run: |
+          set -euo pipefail
+          issuer='https://token.actions.githubusercontent.com'
+          cosign sign-blob --yes \
+            --bundle dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json \
+            dist/v6-upgrade/formbricks-upgrade-checksums.txt
+          cosign verify-blob \
+            --bundle dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json \
+            --certificate-identity-regexp "$CERTIFICATE_IDENTITY_REGEXP" \
+            --certificate-oidc-issuer "$issuer" \
+            dist/v6-upgrade/formbricks-upgrade-checksums.txt
+          (cd dist/v6-upgrade && sha256sum --check formbricks-upgrade-checksums.txt)
+
+      - name: Attach signed bundle to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            dist/v6-upgrade/formbricks-upgrade-assistant \
+            dist/v6-upgrade/formbricks-upgrade-manifest.json \
+            dist/v6-upgrade/formbricks-upgrade-checksums.txt \
+            dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json

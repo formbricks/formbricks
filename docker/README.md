@@ -139,6 +139,11 @@ release-matched AuthZed services and the two generated secrets manually, pass `u
 check`, and only then set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. Back up both databases first and
 never use `docker compose down -v` during migration or rollback.
 
+Before changing an existing v5 deployment, download all signed upgrade-assistant assets from the target v6
+GitHub release and run its read-only preflight. It validates the supported source version, local Compose
+prerequisites, and immutable bridge/target digests without printing environment values or changing the stack.
+See the [v6 upgrade assistant guide](../docs/self-hosting/advanced/v6-upgrade-assistant.mdx).
+
 The bundled PostgreSQL service keeps `track_commit_timestamp` at its default `off` value. SpiceDB therefore
 logs that its Watch API is disabled; schema, relationship, and permission-check APIs are unaffected. A future
 consumer of the Watch API must explicitly enable that PostgreSQL setting and account for the required restart.

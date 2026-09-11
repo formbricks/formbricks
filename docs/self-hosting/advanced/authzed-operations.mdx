@@ -224,6 +224,10 @@ Formbricks v6 has no legacy authorization fallback. Do not deploy it over an ins
 been proven complete. First upgrade to the bridge-compatible v5 release named in the v6 release notes, enable
 durable projection, and take coordinated Formbricks and SpiceDB backups.
 
+Begin with the [signed v6 upgrade assistant](/self-hosting/advanced/v6-upgrade-assistant). Its read-only
+preflight detects the installation and current version, verifies that the release manifest contains immutable
+bridge and target image digests, and reports missing prerequisites without changing the deployment.
+
 Run the release-matched v6 image as the operator container or executable while the bridge release still serves
 traffic:
 
