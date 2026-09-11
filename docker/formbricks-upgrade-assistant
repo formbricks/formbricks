@@ -787,6 +787,29 @@ execute_docker_upgrade() {
     emit_bootstrap_error "docker_upgrade_required"
     return 2
   fi
+
+  docker_compose_directory=$(cd -- "$(dirname -- "$compose_file")" && pwd)
+  docker_compose_file="${docker_compose_directory}/$(basename -- "$compose_file")"
+  docker_env_file="${docker_compose_directory}/.env"
+  docker_installed_overlay="${docker_compose_directory}/${DEFAULT_DOCKER_OVERLAY_NAME}"
+  docker_upgrade_log="${docker_compose_directory}/formbricks-v6-upgrade.log"
+  docker_upgrade_state="${docker_compose_directory}/.formbricks-v6-upgrade-state.json"
+
+  # The bridge and candidate are both built from the v6 release, so an interrupted run can report
+  # the target major even though activation is incomplete. Consult the signed-pair-bound journal
+  # before treating a v6 runtime as an ordinary, already-upgraded installation.
+  existing_state=$(read_upgrade_state || true)
+  if [[ -z "$existing_state" ]]; then
+    emit_bootstrap_error "upgrade_state_invalid"
+    return 2
+  fi
+  state_name=$(jq -er '.state // empty' <<<"$existing_state" 2>/dev/null || true)
+  state_receipt=$(jq -er '.receipt // empty' <<<"$existing_state" 2>/dev/null || true)
+  if [[ "$version_state" == "already_target_major" && -z "$state_name" ]]; then
+    printf '%s\n' "$preflight_result"
+    return 0
+  fi
+
   if [[ "$database_mode" != "bundled" ]]; then
     emit_bootstrap_error "docker_external_database_not_supported"
     return 2
@@ -799,23 +822,6 @@ execute_docker_upgrade() {
     emit_bootstrap_error "openssl_missing"
     return 2
   fi
-
-  docker_compose_directory=$(cd -- "$(dirname -- "$compose_file")" && pwd)
-  docker_compose_file="${docker_compose_directory}/$(basename -- "$compose_file")"
-  docker_env_file="${docker_compose_directory}/.env"
-  docker_installed_overlay="${docker_compose_directory}/${DEFAULT_DOCKER_OVERLAY_NAME}"
-  docker_upgrade_log="${docker_compose_directory}/formbricks-v6-upgrade.log"
-  docker_upgrade_state="${docker_compose_directory}/.formbricks-v6-upgrade-state.json"
-
-  # Bind any interrupted-run state to this signed bridge/target pair before changing configuration.
-  # Only a missing state file is treated as a new run.
-  existing_state=$(read_upgrade_state || true)
-  if [[ -z "$existing_state" ]]; then
-    emit_bootstrap_error "upgrade_state_invalid"
-    return 2
-  fi
-  state_name=$(jq -er '.state // empty' <<<"$existing_state" 2>/dev/null || true)
-  state_receipt=$(jq -er '.receipt // empty' <<<"$existing_state" 2>/dev/null || true)
 
   umask 077
   touch "$docker_env_file" "$docker_upgrade_log"
@@ -1074,7 +1080,7 @@ if [[ "$action" == "preflight" ]]; then
   exit 0
 fi
 
-if [[ "$status" != "ready" ]]; then
+if [[ "$status" != "ready" && ! ( "$status" == "not_required" && "$install_type" == "docker" ) ]]; then
   printf '%s\n' "$preflight_result"
   exit 0
 fi

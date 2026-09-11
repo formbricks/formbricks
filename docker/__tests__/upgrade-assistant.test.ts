@@ -717,6 +717,80 @@ describe("Formbricks v6 upgrade assistant", () => {
     ).toMatchObject({ state: "rolled_back" });
   });
 
+  test("consults the recovery journal when an interrupted bridge or candidate reports v6", () => {
+    const directory = createTempDirectory();
+    const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory, {
+      authority: "spicedb",
+      transition: "activating",
+    });
+    writeFileSync(
+      join(composeDirectory, ".formbricks-v6-upgrade-state.json"),
+      JSON.stringify({
+        state: "activated",
+        receipt: "00000000-0000-4000-8000-000000000001",
+        bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
+        bridgeManifestDigest: bridgeRuntimeManifestDigest,
+        targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+        targetManifestDigest: targetRuntimeManifestDigest,
+      })
+    );
+    const processResult = spawnSync(
+      assistantPath,
+      [
+        "execute",
+        "--manifest",
+        manifestPath,
+        "--path",
+        composeDirectory,
+        "--current-version",
+        "6.0.0",
+        "--yes",
+      ],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${binDirectory}:${process.env.PATH}`,
+          COMMAND_LOG: commandLog,
+          DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+          TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+          UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+        },
+      }
+    );
+
+    expect(processResult.status).toBe(1);
+    expect(JSON.parse(processResult.stdout)).toMatchObject({
+      checks: [{ code: "interrupted_upgrade_rolled_back", status: "blocked" }],
+    });
+    expect(readFileSync(commandLog, "utf8")).toContain("activation rollback-begin");
+  });
+
+  test("keeps execute read-only when a v6 install has no matching recovery journal", () => {
+    const directory = createTempDirectory();
+    const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory);
+    const processResult = spawnSync(
+      assistantPath,
+      ["execute", "--manifest", manifestPath, "--path", composeDirectory, "--current-version", "6.0.0"],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${binDirectory}:${process.env.PATH}`,
+          COMMAND_LOG: commandLog,
+          DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+          TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+          UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+        },
+      }
+    );
+
+    expect(processResult.status).toBe(0);
+    expect(JSON.parse(processResult.stdout)).toMatchObject({ status: "not_required", mutating: false });
+    expect(readFileSync(commandLog, "utf8")).not.toMatch(/\b(up|pull|run|stop)\b/);
+    expect(() => statSync(join(composeDirectory, "formbricks-authzed-overlay.yml"))).toThrow();
+  });
+
   test("aborts a recorded prepared receipt before creating a replacement", () => {
     const directory = createTempDirectory();
     const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory, {
