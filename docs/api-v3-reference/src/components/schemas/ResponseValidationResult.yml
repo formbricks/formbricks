@@ -1,0 +1,29 @@
+type: object
+description: >
+  Outcome of a dry-run validation. Deliberately the same shape as `SurveyValidationResult` — the
+  value of this endpoint is that the two behave alike, so a client can treat validation uniformly.
+
+
+  Answers are checked against the survey's own validation rules (`SurveyValidationRule`) rather than a
+  parallel rule set, so a payload this endpoint accepts is a payload the real write accepts.
+required:
+  - valid
+  - operation
+  - invalid_params
+properties:
+  valid:
+    type: boolean
+    description: Whether the submitted payload would be accepted by the real operation.
+  operation:
+    type: string
+    enum:
+      - create
+      - patch
+  invalid_params:
+    type: array
+    description: Repairable validation errors, using paths relative to the submitted `data` document.
+    items:
+      $ref: ./InvalidParam.yml
+  effects:
+    $ref: ./ResponseValidationEffects.yml
+additionalProperties: false

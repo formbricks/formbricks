@@ -1,0 +1,18 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - valueDate
+    properties:
+      elementType:
+        type: string
+        enum:
+          - date
+      valueDate:
+        type: string
+        description: >-
+          The submitted date as stored, an ISO-8601 date or date-time string. No `format` is asserted
+          because historical rows were written by several client versions and the stored precision
+          varies; parse defensively.
+unevaluatedProperties: false
+description: Date answer.
