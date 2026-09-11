@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -24,10 +24,27 @@ import { useTranslation } from "react-i18next";
  */
 export const useAppLocale = (locale: string): boolean => {
   const { i18n } = useTranslation();
+
+  // The effect below applies the locale THIS caller asked for, so it is keyed on that request alone.
+  // `i18n` cannot be a dependency: react-i18next hands back a fresh wrapper object on every language
+  // change, so an effect keyed on it re-fires on switches this caller never asked for and re-applies
+  // its own (by then stale) locale. Two callers alive at once — a PIN gate holding its server-resolved
+  // gate locale, and the survey behind it following the in-survey language picker — then overwrite each
+  // other's language forever, until React gives up with "Maximum update depth exceeded" and the
+  // respondent lands on the app's error boundary (ENG-3160). The instance itself is the singleton the
+  // root layout initialised; only its identity churns, so it is kept in a ref instead. Declared above
+  // the effect that reads it, so a commit that changes both lands the new instance first.
+  const i18nRef = useRef(i18n);
+  useEffect(() => {
+    i18nRef.current = i18n;
+  }, [i18n]);
+
   const [isLocaleReady, setIsLocaleReady] = useState(() => i18n.language === locale);
 
   useEffect(() => {
-    if (i18n.language === locale) {
+    const i18nInstance = i18nRef.current;
+
+    if (i18nInstance.language === locale) {
       setIsLocaleReady(true);
       return;
     }
@@ -35,10 +52,10 @@ export const useAppLocale = (locale: string): boolean => {
     let isCurrent = true;
     const applyLocale = async () => {
       try {
-        await i18n.changeLanguage(locale);
+        await i18nInstance.changeLanguage(locale);
       } catch {
         // A locale with no bundle would otherwise leave the UI on the previous language mid-render.
-        await i18n.changeLanguage("en-US").catch(() => undefined);
+        await i18nInstance.changeLanguage("en-US").catch(() => undefined);
       } finally {
         // Settled either way: a caller waiting on this must not be left with nothing to paint.
         if (isCurrent) setIsLocaleReady(true);
@@ -50,7 +67,7 @@ export const useAppLocale = (locale: string): boolean => {
     return () => {
       isCurrent = false;
     };
-  }, [locale, i18n]);
+  }, [locale]);
 
   return isLocaleReady;
 };
