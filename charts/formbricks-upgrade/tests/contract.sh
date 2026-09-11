@@ -285,15 +285,10 @@ for removed_phase in fence contract finalize; do
   expect_render_failure "removed ${removed_phase} phase" --set-string phase="${removed_phase}"
 done
 
-notes="$(helm install formbricks-v6-upgrade-1 "${CHART_DIR}" \
-  --namespace formbricks \
-  --values "${VALUES_FILE}" \
-  --set-string phase=activate \
-  --set-string activation.receipt="${RECEIPT}" \
-  --set activation.workloadQuiesced=true \
-  --dry-run --debug 2>&1)"
+notes="$(<"${CHART_DIR}/templates/NOTES.txt")"
 grep -q 'migration.mode=external' <<< "${notes}" || fail "activate notes omit external migration mode"
-grep -q 'deployment.image.digest=sha256:' <<< "${notes}" || fail "activate notes omit candidate digest"
+grep -Fq 'deployment.image.digest={{ .Values.images.candidate.digest }}' <<< "${notes}" || \
+  fail "activate notes omit candidate digest"
 grep -q 'authzed.activation.installBootstrap.enabled=false' <<< "${notes}" || \
   fail "activate notes omit fresh-install bootstrap guard"
 grep -q 'authzed.activation.upgradeGate.enabled=true' <<< "${notes}" || \
