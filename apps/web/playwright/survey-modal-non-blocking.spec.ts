@@ -25,6 +25,7 @@ declare global {
     __workspaceId: string;
     __hostEscapeDefaultPrevented: boolean | null;
     __hostChordDefaultPrevented: boolean | null;
+    __cardRects: ({ x: number; y: number; width: number; height: number } | null)[];
   }
 }
 
@@ -59,6 +60,49 @@ const HOST_PAGE = `<!doctype html>
     <script>
       window.__hostEscapeDefaultPrevented = null;
       window.__hostChordDefaultPrevented = null;
+
+      // Stand in for a native SDK. Only the mobile SDKs pass \`onCardRectChange\` — a web host has
+      // no use for it, since CSS pointer-events already keeps a no-overlay survey from swallowing
+      // clicks. So there is no way to observe the contract through the normal widget path, and it
+      // is wrapped here instead. Worth the artificiality: this exact contract silently stopped
+      // firing for the Flutter SDK once (it scraped the DOM for the card, and an a11y fix moved the
+      // attribute it matched on), and nothing failed anywhere until a user reported a dead survey.
+      window.__cardRects = [];
+      // Stand in for a native SDK. Only the mobile SDKs pass \`onCardRectChange\` — a web host has no
+      // use for it, since CSS pointer-events already keeps a no-overlay survey from swallowing
+      // clicks. So the contract cannot be observed through the normal widget path and is wrapped
+      // here instead. Worth the artificiality: this contract silently stopped firing for the
+      // Flutter SDK once (it scraped the DOM for the card, and an a11y fix moved the attribute it
+      // matched on) and nothing failed anywhere until a user reported a dead survey.
+      //
+      // Installed as a setter rather than by polling for the global: js-core resolves its runtime
+      // load and calls renderSurvey in the same microtask chain, so a \`setTimeout\` poll loses the
+      // race and the first — only — render goes unwrapped.
+      (function () {
+        var runtime = null;
+        Object.defineProperty(window, "formbricksSurveys", {
+          configurable: true,
+          get: function () {
+            return runtime;
+          },
+          set: function (value) {
+            if (value && value.renderSurvey && !value.__rectPatched) {
+              value.__rectPatched = true;
+              var original = value.renderSurvey.bind(value);
+              value.renderSurvey = function (props) {
+                return original(
+                  Object.assign({}, props, {
+                    onCardRectChange: function (rect) {
+                      window.__cardRects.push(rect);
+                    },
+                  })
+                );
+              };
+            }
+            runtime = value;
+          },
+        });
+      })();
       // Both reads are deferred to the next task. This listener is registered at page load
       // and the survey's on mount, so on the same target in the same phase they fire in
       // registration order — a synchronous read here always sees \`defaultPrevented === false\`
@@ -138,6 +182,29 @@ test.describe("App survey widget does not block the host page", () => {
     // which point any mount-time focus move has had its chance to land.
     await expect(dialog).toHaveCSS("opacity", "1");
 
+    // The card's rect reaches the host. A native host embeds this renderer in a full-screen WebView
+    // that hit-tests its whole rectangle no matter what CSS says, so without this it cannot tell
+    // which touches belong to the survey and which belong to the app underneath — and it has no way
+    // to work the card's position out for itself.
+    await expect
+      .poll(() => page.evaluate(() => window.__cardRects.filter((r) => r !== null).length), {
+        timeout: 30000,
+      })
+      .toBeGreaterThan(0);
+
+    const reportedRect = await page.evaluate(() => {
+      const rects = window.__cardRects.filter((r) => r !== null);
+      return rects[rects.length - 1];
+    });
+
+    const actualBox = await dialog.boundingBox();
+    expect(actualBox).not.toBeNull();
+    // Reported in whole pixels, so allow a pixel of rounding either way rather than an exact match.
+    expect(Math.abs(reportedRect!.x - actualBox!.x)).toBeLessThanOrEqual(2);
+    expect(Math.abs(reportedRect!.y - actualBox!.y)).toBeLessThanOrEqual(2);
+    expect(Math.abs(reportedRect!.width - actualBox!.width)).toBeLessThanOrEqual(2);
+    expect(Math.abs(reportedRect!.height - actualBox!.height)).toBeLessThanOrEqual(2);
+
     // The survey must not have taken the caret.
     await expect(page.locator("#host-input")).toBeFocused();
     await page.keyboard.type("-AFTER");
@@ -212,6 +279,14 @@ test.describe("App survey widget does not block the host page", () => {
     // Closing clears the announcement: identical text twice is not a change, so without the clear
     // a later open would stay silent.
     await expect(liveRegion).toBeEmpty();
+
+    // And the host is told the card has gone. Without this last report it would keep masking
+    // touches to a rect that is no longer on screen, leaving a dead patch over the app.
+    await expect
+      .poll(() => page.evaluate(() => window.__cardRects[window.__cardRects.length - 1]), {
+        timeout: 30000,
+      })
+      .toBeNull();
   });
 
   test("overlay:dark keeps the modal behaviour", async ({ page, users }) => {
