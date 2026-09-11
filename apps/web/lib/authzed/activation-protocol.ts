@@ -23,7 +23,11 @@ import {
   renewAuthzedPreparationLease,
 } from "./activation-repository";
 import { checkAuthzedRuntimeActivation } from "./activation-runtime";
-import { runWithRenewingAuthzedPreparationLease, throwIfAuthzedActivationAborted } from "./activation-safety";
+import {
+  assertAuthzedActivationDatabasePoolCapacity,
+  runWithRenewingAuthzedPreparationLease,
+  throwIfAuthzedActivationAborted,
+} from "./activation-safety";
 import {
   AUTHZED_ACTIVATION_PROTOCOL_VERSION,
   type TAuthzedActivationEvidence,
@@ -124,6 +128,7 @@ const assertConfiguration = (): void => {
   if (!enabled || env.AUTHZED_CONSISTENCY !== "fully_consistent") {
     throw protocolError(AUTHZED_ERROR_CODES.FAILED_PRECONDITION, "activation_configuration");
   }
+  assertAuthzedActivationDatabasePoolCapacity(env.DATABASE_URL);
 };
 
 const assertHealthy = async (dependencies: TActivationDependencies, signal?: AbortSignal): Promise<void> => {
@@ -347,8 +352,9 @@ export const rollbackAuthzedAuthorization = async (
   await completeAuthzedRollback(receiptId, manifestDigest);
 };
 
-export const bootstrapFreshAuthzedActivation = async (
-  dependencyOverrides: Partial<TActivationDependencies> = {}
+const bootstrapAuthzedActivation = async (
+  dependencyOverrides: Partial<TActivationDependencies> = {},
+  allowExistingSourceData = false
 ): Promise<void> => {
   const dependencies = { ...defaultDependencies, ...dependencyOverrides };
   assertConfiguration();
@@ -392,7 +398,7 @@ export const bootstrapFreshAuthzedActivation = async (
     return;
   }
 
-  if ((await dependencies.countOrganizations()) !== 0) {
+  if (!allowExistingSourceData && (await dependencies.countOrganizations()) !== 0) {
     throw protocolError(AUTHZED_ERROR_CODES.FAILED_PRECONDITION, "activation_bootstrap_nonempty");
   }
 
@@ -444,6 +450,23 @@ export const bootstrapFreshAuthzedActivation = async (
     closeAuthzedClient();
   }
   await finalizePreparedAuthzedAuthorization(receiptId, dependencies);
+};
+
+export const bootstrapFreshAuthzedActivation = async (
+  dependencyOverrides: Partial<TActivationDependencies> = {}
+): Promise<void> => bootstrapAuthzedActivation(dependencyOverrides);
+
+/**
+ * Migrate an existing local development database through the same schema, repair, fence, and receipt
+ * protocol as a fresh install. Production must use the signed v5 bridge upgrade assistant instead.
+ */
+export const bootstrapDevelopmentAuthzedActivation = async (
+  dependencyOverrides: Partial<TActivationDependencies> = {}
+): Promise<void> => {
+  if (env.NODE_ENV !== "development" && env.NODE_ENV !== "test") {
+    throw protocolError(AUTHZED_ERROR_CODES.FAILED_PRECONDITION, "activation_development_only");
+  }
+  return bootstrapAuthzedActivation(dependencyOverrides, true);
 };
 
 export { abortAuthzedActivation };

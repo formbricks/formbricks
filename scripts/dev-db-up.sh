@@ -99,7 +99,7 @@ main() {
   (
     cd "${REPO_ROOT}"
     pnpm db:migrate:dev
-    pnpm authzed:activation:bootstrap
+    pnpm authzed:activation:bootstrap:dev
   )
 }
 

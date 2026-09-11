@@ -2,7 +2,11 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { runAuthzedActivationWithTimeout } from "./activation-safety";
+import { env } from "@/lib/env";
+import {
+  assertAuthzedActivationDatabasePoolCapacity,
+  runAuthzedActivationWithTimeout,
+} from "./activation-safety";
 import {
   AUTHZED_ACTIVATION_CONTROL_ID,
   AUTHZED_ACTIVATION_FINALIZATION_SETTLEMENT_GRACE_MS,
@@ -19,6 +23,10 @@ import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
 const AUTHZED_ADVISORY_LOCK_NAMESPACE = 1_179_402_834;
 const AUTHZED_ADVISORY_LOCK_KEY = 6;
+// The database stores the fence at millisecond precision while clock_timestamp() has finer precision.
+// Leave a full-second margin below the trigger's 15-minute ceiling so timestamp rounding cannot reject
+// an otherwise valid fence nondeterministically.
+const AUTHZED_MUTATION_FENCE_DURATION_SECONDS = 14 * 60 + 59;
 
 type TControlRow = Readonly<{
   activeReceiptId: string | null;
@@ -92,7 +100,7 @@ const readReceipt = async (
 
 export const getLatestAuthzedSourceSequence = async (): Promise<bigint> => {
   const [row] = await prisma.$queryRaw<Array<{ sourceSequence: bigint | null }>>`
-    SELECT MAX("sourceSequence") AS "sourceSequence" FROM "AuthzedProjectionOutbox"
+    SELECT nextval('"AuthzedProjectionOutbox_sourceSequence_seq"') AS "sourceSequence"
   `;
   return row?.sourceSequence ?? 0n;
 };
@@ -248,6 +256,7 @@ export const activateAuthzedAuthorization = async (
   runtimeManifestDigest: TAuthzedDigest,
   collectFinalEvidence: (signal: AbortSignal) => Promise<TAuthzedActivationEvidence>
 ): Promise<void> => {
+  assertAuthzedActivationDatabasePoolCapacity(env.DATABASE_URL);
   const activationRequired = await prisma.$transaction(async (tx) => {
     const control = await lockControl(tx);
     const receipt = await readReceipt(tx, receiptId);
@@ -286,7 +295,8 @@ export const activateAuthzedAuthorization = async (
     }
     const count = await tx.$executeRaw`
       UPDATE "AuthzedAuthorizationControl"
-      SET "mutationFenceExpiresAt" = clock_timestamp() + INTERVAL '15 minutes',
+      SET "mutationFenceExpiresAt" = clock_timestamp() +
+            (${AUTHZED_MUTATION_FENCE_DURATION_SECONDS} * INTERVAL '1 second'),
           "transition" = 'activating'::"AuthzedAuthorizationTransition",
           "updatedAt" = clock_timestamp()
       WHERE "id" = ${AUTHZED_ACTIVATION_CONTROL_ID}
@@ -345,7 +355,8 @@ export const activateAuthzedAuthorization = async (
           UPDATE "AuthzedAuthorizationControl"
           SET "activeReceiptId" = ${receiptId},
               "authority" = 'spicedb'::"AuthzedAuthorizationAuthority",
-              "mutationFenceExpiresAt" = clock_timestamp() + INTERVAL '15 minutes',
+              "mutationFenceExpiresAt" = clock_timestamp() +
+                (${AUTHZED_MUTATION_FENCE_DURATION_SECONDS} * INTERVAL '1 second'),
               "pendingReceiptId" = NULL,
               "updatedAt" = clock_timestamp()
           WHERE "id" = ${AUTHZED_ACTIVATION_CONTROL_ID}
@@ -372,6 +383,7 @@ export const finalizeAuthzedActivation = async (
   candidateManifestDigest: TAuthzedDigest,
   collectFinalEvidence: (signal: AbortSignal) => Promise<TAuthzedActivationEvidence>
 ): Promise<void> => {
+  assertAuthzedActivationDatabasePoolCapacity(env.DATABASE_URL);
   // The candidate validation window can legitimately outlive the original 15-minute fence. Renew it
   // before finalization so a slow rollout always has a safe forward path instead of becoming wedged.
   const finalizationRequired = await prisma.$transaction(async (tx) => {
@@ -405,7 +417,8 @@ export const finalizeAuthzedActivation = async (
     }
     const count = await tx.$executeRaw`
       UPDATE "AuthzedAuthorizationControl"
-      SET "mutationFenceExpiresAt" = clock_timestamp() + INTERVAL '15 minutes',
+      SET "mutationFenceExpiresAt" = clock_timestamp() +
+            (${AUTHZED_MUTATION_FENCE_DURATION_SECONDS} * INTERVAL '1 second'),
           "updatedAt" = clock_timestamp()
       WHERE "id" = ${AUTHZED_ACTIVATION_CONTROL_ID}
         AND "activeReceiptId" = ${receiptId}
@@ -555,7 +568,8 @@ export const beginAuthzedRollback = async (receiptId: string): Promise<void> => 
     }
     const count = await tx.$executeRaw`
       UPDATE "AuthzedAuthorizationControl"
-      SET "mutationFenceExpiresAt" = clock_timestamp() + INTERVAL '15 minutes',
+      SET "mutationFenceExpiresAt" = clock_timestamp() +
+            (${AUTHZED_MUTATION_FENCE_DURATION_SECONDS} * INTERVAL '1 second'),
           "transition" = 'rollback_fencing'::"AuthzedAuthorizationTransition",
           "updatedAt" = clock_timestamp()
       WHERE "id" = ${AUTHZED_ACTIVATION_CONTROL_ID}

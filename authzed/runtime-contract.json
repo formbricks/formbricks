@@ -1,5 +1,5 @@
 {
   "clientContractVersion": 1,
-  "migrationHead": "20260911090000_add_authzed_activation_protocol",
+  "migrationHead": "20260911091000_add_authzed_sequence_claim_index",
   "protocolVersion": 1
 }

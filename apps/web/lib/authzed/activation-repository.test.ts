@@ -3,15 +3,22 @@ import {
   activateAuthzedAuthorization,
   completeAuthzedRollback,
   finalizeAuthzedActivation,
+  getLatestAuthzedSourceSequence,
 } from "./activation-repository";
 
 const { prisma } = vi.hoisted(() => ({
   prisma: {
+    $queryRaw: vi.fn(),
     $transaction: vi.fn(),
   },
 }));
 
 vi.mock("@formbricks/database", () => ({ prisma }));
+vi.mock("@/lib/env", () => ({
+  env: {
+    DATABASE_URL: "postgresql://formbricks:secret@postgres:5432/formbricks?connection_limit=2",
+  },
+}));
 
 const receiptId = "5d847b79-ae35-45d0-9dc5-595c1ccbdf61";
 const manifestDigest = `sha256:${"a".repeat(64)}` as const;
@@ -73,6 +80,18 @@ const useTransactions = (...transactions: ReadonlyArray<TTransaction>): void => 
 describe("AuthZed activation repository recovery", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  test("reads the source watermark from the sequence without scanning retained outbox history", async () => {
+    prisma.$queryRaw.mockResolvedValue([{ sourceSequence: 81n }]);
+
+    await expect(getLatestAuthzedSourceSequence()).resolves.toBe(81n);
+
+    const query = (prisma.$queryRaw.mock.calls[0]?.[0] as ReadonlyArray<string>).join(" ");
+    expect(query).toContain(`nextval('"AuthzedProjectionOutbox_sourceSequence_seq"')`);
+    expect(query).not.toContain("MAX");
+    expect(query).not.toContain("last_value");
+    expect(query).not.toContain('FROM "AuthzedProjectionOutbox"');
+  });
+
   test("treats an already committed authority switch as an idempotent success", async () => {
     const tx = transaction(
       control({
@@ -126,6 +145,7 @@ describe("AuthZed activation repository recovery", () => {
     ).resolves.toBeUndefined();
 
     expect(fenceTx.$executeRaw).toHaveBeenCalledOnce();
+    expect(fenceTx.$executeRaw.mock.calls[0]).toContain(899);
     expect(collectEvidence).toHaveBeenCalledOnce();
     expect(authorityTx.authzedActivationReceipt.update).toHaveBeenCalledWith(
       expect.objectContaining({

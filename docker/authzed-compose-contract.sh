@@ -9,6 +9,7 @@ readonly PROD_COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
 
 readonly AUTHZED_TOKEN="${AUTHZED_TOKEN:-0000000000000000000000000000000000000000000000000000000000000001}"
 readonly AUTHZED_DATABASE_PASSWORD="${AUTHZED_DATABASE_PASSWORD:-0000000000000000000000000000000000000000000000000000000000000002}"
+readonly AUTHZED_DATABASE_PASSWORD_URL_ENCODED="${AUTHZED_DATABASE_PASSWORD_URL_ENCODED:-${AUTHZED_DATABASE_PASSWORD}}"
 readonly SPICEDB_IMAGE_REF="authzed/spicedb:v1.52.0"
 readonly SPICEDB_GRPC_PORT="50051"
 readonly AUTHZED_GRPCUI_PORT="50052"
@@ -18,6 +19,7 @@ readonly FORMBRICKS_IMAGE_REF="ghcr.io/formbricks/formbricks@sha256:000000000000
 readonly POSTGRES_PASSWORD="authzed-compose-contract-postgres-password"
 
 export AUTHZED_DATABASE_PASSWORD
+export AUTHZED_DATABASE_PASSWORD_URL_ENCODED
 export AUTHZED_GRPCUI_PORT
 export AUTHZED_TOKEN
 export FORMBRICKS_IMAGE_REF
@@ -58,6 +60,12 @@ jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   .services.formbricks.environment.AUTHZED_SYSTEM_KEY == "formbricks" and
   .services.formbricks.environment.AUTHZED_INSECURE == "true" and
   .services.formbricks.environment.AUTHZED_CONSISTENCY == "fully_consistent" and
+  .services.formbricks.environment.AUTHZED_DATABASE_PASSWORD == "" and
+  .services.formbricks.environment.AUTHZED_DATABASE_PASSWORD_URL_ENCODED == "" and
+  .services["formbricks-migrate"].environment.AUTHZED_ENABLED == "false" and
+  .services["formbricks-migrate"].environment.AUTHZED_TOKEN == "" and
+  .services["formbricks-migrate"].environment.AUTHZED_DATABASE_PASSWORD == "" and
+  .services["formbricks-migrate"].environment.AUTHZED_DATABASE_PASSWORD_URL_ENCODED == "" and
   .services.formbricks.depends_on.spicedb? == null and
   .services.formbricks.image == "ghcr.io/formbricks/formbricks@sha256:0000000000000000000000000000000000000000000000000000000000000003" and
   .services["formbricks-migrate"].image == .services.formbricks.image and
@@ -80,7 +88,14 @@ jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   (.services["authzed-ops"] | has("ports") | not) and
   (.services["authzed-ops"] | has("volumes") | not) and
   (.services["authzed-ops"] | has("restart") | not) and
-  ([.services | to_entries[] | select(.value.environment.AUTHZED_TOKEN? != null) | .key] | sort) == ["authzed-initialize", "authzed-ops", "formbricks"]
+  ([.services | to_entries[] |
+      select((.value.environment.AUTHZED_TOKEN? // "") != "") | .key] | sort) ==
+    ["authzed-initialize", "authzed-ops", "formbricks"] and
+  ([.services | to_entries[] |
+      select((.value.environment.AUTHZED_DATABASE_PASSWORD? // "") != "") | .key] | sort) ==
+    ["authzed-db-bootstrap"] and
+  ([.services | to_entries[] |
+      select((.value.environment.AUTHZED_DATABASE_PASSWORD_URL_ENCODED? // "") != "") | .key] | length) == 0
 ' "${temp_dir}/production.json" >/dev/null
 
 if grep --fixed-strings --line-regexp "authzed-ops" "${temp_dir}/production-services.txt" >/dev/null; then

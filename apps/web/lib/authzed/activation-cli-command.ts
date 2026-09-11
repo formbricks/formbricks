@@ -5,6 +5,7 @@ export type TAuthzedActivationCliCommand =
   | Readonly<{ action: "abort"; receiptId: string }>
   | Readonly<{ action: "activate"; receiptId: string }>
   | Readonly<{ action: "bootstrap" }>
+  | Readonly<{ action: "bootstrap_development" }>
   | Readonly<{ action: "finalize"; receiptId: string }>
   | Readonly<{
       action: "prepare";
@@ -100,6 +101,9 @@ export const parseAuthzedActivationCliCommand = (
   }
 
   if (action === "bootstrap" && rest.length === 0) return { action: "bootstrap" };
+  if (action === "bootstrap-development" && rest.length === 0) {
+    return { action: "bootstrap_development" };
+  }
 
   const flags = parseFlags(rest);
   if (!flags) return undefined;

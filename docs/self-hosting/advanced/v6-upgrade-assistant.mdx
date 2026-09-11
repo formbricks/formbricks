@@ -9,6 +9,17 @@ PostgreSQL while a release-matched bridge keeps the v5 authorization behavior au
 upgrade assistant provides a read-only preflight for Docker Compose and Helm, and an automated receipt-backed
 cutover for Docker Compose, one-click, and Helm installations.
 
+The bridge and candidate are different runtime modes of release-matched Formbricks images:
+
+- A `legacy_bridge` image keeps the PostgreSQL-backed v5 evaluator authoritative while it writes and repairs the
+  SpiceDB projection. The signed v6 bundle supplies an immutable bridge digest built for that v6 cutover.
+- A `spicedb_authoritative` image is the v6 candidate and release runtime. It starts only after the database
+  contains a compatible activation receipt.
+
+Stable v5 releases use `legacy_bridge`; stable v6 releases use `spicedb_authoritative`. Release automation moves
+aliases only for explicitly supported major versions. An unknown future major fails closed without moving
+`stable`, `latest`, or major/minor aliases until its publication and upgrade policy is reviewed.
+
 Helm upgrades require Helm 3.15 or newer. The assistant validates each permanent-chart revision with a
 secret-hidden server-side dry run so the chart can safely reuse generated credentials from the live release.
 
@@ -22,7 +33,7 @@ secret-hidden server-side dry run so the chart can safely reuse generated creden
 Download these assets from the same [Formbricks v6 release](https://github.com/formbricks/formbricks/releases):
 
 - `formbricks.sh`, `formbricks-upgrade-assistant`, `formbricks-upgrade-manifest.json`
-- `formbricks-authzed-overlay.yml`, `authzed-postgres-bootstrap.sh`
+- `formbricks-authzed-overlay.yml`, `authzed-postgres-bootstrap.sh`, `authzed.com_spicedbclusters.yaml`
 - `formbricks-<version>.tgz`, `formbricks-upgrade-<version>.tgz` for Helm
 - `formbricks-upgrade-checksums.txt`, `formbricks-upgrade-checksums.sigstore.json`
 
@@ -30,10 +41,12 @@ Do not mix releases. Install [cosign](https://docs.sigstore.dev/cosign/system_co
 the release identity and every downloaded file:
 
 ```bash
+RELEASE_TAG=6.0.0
+
 cosign verify-blob \
   --bundle formbricks-upgrade-checksums.sigstore.json \
-  --certificate-identity-regexp \
-    '^https://github\.com/formbricks/formbricks/\.github/workflows/.+@refs/(heads/main|tags/.+)$' \
+  --certificate-identity \
+    "https://github.com/formbricks/formbricks/.github/workflows/publish-v6-upgrade-assistant.yml@refs/tags/${RELEASE_TAG}" \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   formbricks-upgrade-checksums.txt
 
@@ -47,6 +60,12 @@ operation to distinct immutable bridge and target images, their embedded runtime
 multi-architecture `pgvector/pgvector` and `authzed/spicedb` image digests used during the upgrade. The
 assistant rejects mutable or unexpected image references and installs the signed references into the Docker
 environment before Compose renders the upgrade overlay.
+
+The one-click `formbricks.sh` wrapper repeats the release-tag-specific Cosign identity check before delegation.
+When invoking `formbricks-upgrade-assistant` directly, the assistant verifies Docker asset digests from the
+manifest and Helm assets against the supplied checksum set, but it does not establish the Sigstore signer identity
+itself. Complete the exact Cosign command above first; neither `--yes` nor `--backup-confirmed` replaces that
+verification.
 
 ## Run the read-only preflight
 
@@ -67,9 +86,21 @@ If a customized mutable image does not expose its version, supply the version yo
   --current-version 5.4.3
 ```
 
+For Helm, a version override is not a rollback identity. Before running the assistant, pin the current v5
+workload with `deployment.image.digest` and complete that ordinary Helm rollout. The assistant blocks a
+tag-only source release because its first bridge upgrade could fail before an immutable bridge revision exists;
+rolling back a moved tag could otherwise start a different authorization mode. Docker preflight may use the
+version override because its rollback keeps the already installed image and then restores the signed bridge.
+
 Preflight renders configuration and reads runtime metadata only. It never pulls images, runs migrations,
 changes files, starts SpiceDB, or stops Formbricks. `ready` means the source is supported; it does not mean
 the relationship graph has already been built.
+
+The Formbricks `DATABASE_URL` used during activation must permit at least two concurrent connections. If it
+contains a `connection_limit`, set it to `2` or higher. When a database proxy such as PgBouncer is in front of
+PostgreSQL, reserve at least two usable database connections for each activation process in addition to normal
+application capacity. Activation fails closed when the URL declares a lower limit, but neither the assistant nor
+the application can prove a proxy's backend capacity.
 
 For Helm, select the release explicitly when the current context contains more than one Formbricks release:
 
@@ -81,8 +112,33 @@ For Helm, select the release explicitly when the current context contains more t
   --namespace formbricks
 ```
 
-Preflight never creates a journal or changes Kubernetes resources. For a GitOps-managed release, pause
-reconciliation before execution; preflight reports the detected controller without changing it.
+Preflight never creates a journal or changes Kubernetes resources. Helm automation requires an existing release
+that is visible through `helm list` and whose values can be read with `helm get values`. A Flux `HelmRelease` can
+use this path when its Helm release is visible; pause reconciliation before execution and use `--gitops-paused`
+only after verifying that pause.
+
+<Warning>
+  Argo CD normally renders Helm templates without creating a Helm release, so those installations cannot use
+  the automated Helm path. Preflight returns `helm_release_missing`; do not create a fake release or use
+  `--gitops-paused` as a bypass. Keep the deployment on v5 and use a support-reviewed migration plan until a
+  controller-native upgrade workflow is available.
+</Warning>
+
+Run the assistant from a trusted operator workstation with Bash, `jq`, and either `sha256sum` or `shasum`. Docker
+upgrades also need Docker Compose; Helm upgrades need Helm 3.15 or newer and `kubectl`. The working directory must
+allow creation of mode-`0600` state and log files. A restricted shell, read-only filesystem, or delegated platform
+that cannot provide these tools is not eligible for unattended execution.
+
+Helm preflight verifies every direct namespaced operation the assistant performs:
+
+- `get`, `list`, `watch`, `patch`, and `update` on Deployments and HPAs;
+- `get`, `list`, and `watch` on ReplicaSets and Pods, plus `get pods/log` and `create pods/exec`; and
+- `get`, `list`, `watch`, `create`, `update`, `patch`, and `delete` on Jobs, ConfigMaps, Leases, and Secrets.
+
+Helm's secret-hidden server-side dry runs remain the admission and RBAC check for all rendered chart resources.
+Self-hosted mode additionally requires cluster-scoped `get` access to the `SpiceDBCluster` CRD and, only when
+`operator.install=true` and the CRD is absent, `create` access. If your platform policy cannot grant the required
+access, preflight blocks without mutation; keep v5 serving and use a platform-owner or support-reviewed workflow.
 
 ## Execute a Helm upgrade
 
@@ -103,10 +159,26 @@ from another release for this cutover:
   --yes
 ```
 
-Add `--gitops-paused` only after you have paused an Argo CD or Flux controller detected by the assistant. Use
-`--helm-values ./values-v6.yaml` when the permanent v6 release needs reviewed value changes in addition to the
-existing release values. The assistant stores those values in its mode-`0600` journal; it never modifies the
-source file or prints Secret values.
+Add `--gitops-paused` only after you have paused a controller detected on the Deployment belonging to the actual
+Helm release. If v6 needs AuthZed values that are not already present, pass `--helm-values ./authzed-v6.json`.
+This file accepts only `authzed.mode`, `endpoint`, `insecure`, `systemKey`, named `auth` and `datastore` Secret
+references, and `operator.install`. Inline secrets, activation controls, cluster overrides, bootstrap jobs,
+workload identity, Formbricks database, PostgreSQL, and other topology changes are rejected during the authority
+cutover. Apply ordinary chart changes in a separate Helm upgrade afterward. The assistant stores these values in
+its mode-`0600` journal; it never modifies the source file or prints Secret values.
+
+The assistant preserves a custom application database from the running v5 Deployment after Helm has rendered any
+`tpl` expressions. `DATABASE_URL` must be an explicit, non-optional `secretKeyRef`. When `deployment.envFrom` is
+non-empty, `MIGRATE_DATABASE_URL` must also be an explicit, non-optional reference; otherwise a hidden envFrom value
+could select a different migration database. If present, both URLs must use keys in the same Secret. An envFrom-only
+database, literal URL, ConfigMap reference, or separate migration Secret is ambiguous to the temporary pre-upgrade
+Job and blocks before the release changes. Convert that configuration to the explicit Secret references first.
+
+In `selfHosted` mode with `operator.install=true`, the assistant may create a missing compatible
+`SpiceDBCluster` CRD. This is create-only: it never patches, replaces, upgrades, or deletes a cluster-scoped CRD.
+For a shared or externally managed operator, set `operator.install=false` and have the platform owner install a
+compatible, established CRD before the cutover. In `external` mode, also set `operator.install=false`; the
+assistant creates neither an operator nor a CRD and uses the existing endpoint and named Secrets.
 
 Execution automatically:
 
@@ -138,6 +210,9 @@ starting a new execution:
   --yes
 ```
 
+If the journal records a GitOps-managed Deployment, keep its controller paused and include `--gitops-paused`
+again on every `resume`. The acknowledgment is deliberately not carried across processes.
+
 Resume validates the journal against the signed manifest and chart checksums, then consults the database-backed
 activation state. A running v6 bridge or candidate is not treated as completion by itself. Do not delete or edit
 the journal, and do not use `helm rollback` on the Formbricks release during the cutover.
@@ -162,8 +237,26 @@ operators can invoke the verified assistant directly:
   --overlay ./formbricks-authzed-overlay.yml \
   --bootstrap-helper ./authzed-postgres-bootstrap.sh \
   --path /absolute/path/to/the/installation \
+  --backup-confirmed \
   --yes
 ```
+
+If execution is interrupted, use the same verified files and installation path with `resume`:
+
+```bash
+./formbricks-upgrade-assistant resume \
+  --manifest ./formbricks-upgrade-manifest.json \
+  --overlay ./formbricks-authzed-overlay.yml \
+  --bootstrap-helper ./authzed-postgres-bootstrap.sh \
+  --path /absolute/path/to/the/installation \
+  --backup-confirmed \
+  --yes
+```
+
+Direct `execute` and `resume` calls require both acknowledgments. `--backup-confirmed` confirms that the
+installation and PostgreSQL backup exist; `--yes` confirms the reviewed cutover plan. The one-click wrapper first
+instructs you to back up both databases, then treats its required `--yes` as both acknowledgments when it
+delegates to the assistant.
 
 The one-click updater re-verifies the signed checksum set before delegating. Execution then:
 
@@ -183,14 +276,19 @@ docker compose -f docker-compose.yml -f formbricks-authzed-overlay.yml ps
 The overlay requires `AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF` and `SPICEDB_IMAGE_REF`. The assistant writes the
 release-reviewed immutable values from the signed manifest; do not replace them with tags during the cutover.
 
-For a later v6 release, set `FORMBRICKS_IMAGE_REF` in `.env` to that release's reviewed immutable image digest
-and run the normal `./formbricks.sh update`. The updater runs migrations through the overlaid application
-service even when the preserved v5 Compose file has no `formbricks-migrate` service.
+For a later compatible v6 patch release, set `FORMBRICKS_IMAGE_REF` in `.env` to that release's reviewed
+immutable image digest and run the normal `./formbricks.sh update`. The updater runs migrations through the
+overlaid application service even when the preserved v5 Compose file has no `formbricks-migrate` service. The
+startup receipt gate rejects any release whose authorization contract or canonical schema digest differs from
+the activated receipt. Do not bypass that failure: a future schema-bearing release requires a supported,
+fenced authoritative-to-authoritative refresh procedure before its application Pods can start.
 
 SpiceDB remains private on the Compose network. The executor verifies both the authorization runtime contract and
-the container-local `/health` endpoint before finalization. It stores sanitized progress in
-`.formbricks-v6-upgrade-state.json` and detailed local command output in `formbricks-v6-upgrade.log`; both use
-mode `0600`. It never emits credentials in its JSON result.
+the container-local `/health` endpoint before finalization. For Docker, it stores sanitized progress in
+`.formbricks-v6-upgrade-state.json`. The Helm state file contains the original release values needed for exact
+recovery and can therefore contain database URLs, tokens, and other credentials. The state file and detailed local
+`formbricks-v6-upgrade.log` both use mode `0600`; keep them private and never attach either file to a support request
+without reviewing and redacting it. The assistant never emits credentials in its JSON result.
 
 ## Failure and rollback behavior
 
@@ -200,10 +298,23 @@ database authority back to legacy, and returns a sanitized rollback result. Helm
 back the application release: it selects only the journal-recorded original revision before activation or an
 exact, quiesced bridge revision after activation.
 
+Rollback is complete only after the restored bridge reports the `legacy` runtime contract and its container-local
+`/health` endpoint succeeds. Until both checks pass, the authority fence remains held and the assistant returns a
+manual-recovery result instead of claiming that service was restored. A deliberately dormant Helm source with
+zero replicas is the only case with no application process to probe.
+
 If the host or shell stops during the cutover, use `resume` with the same signed inputs. Do not delete the state
 file, overlay, bridge image, chart archives, or either database. A manual-recovery result means the journal and
-database authority cannot be matched safely; keep Formbricks quiesced and contact support with the sanitized state
-and log files.
+database authority cannot be matched safely; keep Formbricks quiesced and contact support with the command's JSON
+result plus only the minimal, manually redacted log excerpts needed for diagnosis. Treat the Helm state file as a
+credential-bearing recovery artifact and do not send it to support.
+
+The activation migration builds its outbox ordering index concurrently so a large existing queue does not block
+authorization-source writes. A PostgreSQL interruption during that one index build can leave both an invalid
+index and a failed Prisma migration record. Keep the bridge or v5 release serving and contact support instead of
+marking the migration applied. Recovery must verify and drop only the invalid
+`AuthzedProjectionOutbox_sequence_claim_idx`, mark that migration rolled back, and resume the same signed bundle;
+the next migration attempt then rebuilds it concurrently.
 
 ## Results
 

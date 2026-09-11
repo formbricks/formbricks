@@ -4,9 +4,12 @@ import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
+import { getLatestAuthzedSourceSequence } from "@/lib/authzed/activation-repository";
 import {
   AUTHZED_OUTBOX_MAX_PERMANENT_FAILURES,
   AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS,
+  claimAuthzedOutboxEvents,
+  getAuthzedOutboxStatus,
   hasStaleAuthzedRevocation,
   markAuthzedOutboxEventsFailed,
 } from "@/lib/authzed/outbox-repository";
@@ -15,6 +18,14 @@ const migration = readFileSync(
   join(
     dirname(fileURLToPath(import.meta.url)),
     "../../../../packages/database/migration/20260818120000_add_authzed_projection_outbox/migration.sql"
+  ),
+  "utf8"
+);
+
+const activationMigration = readFileSync(
+  join(
+    dirname(fileURLToPath(import.meta.url)),
+    "../../../../packages/database/migration/20260911090000_add_authzed_activation_protocol/migration.sql"
   ),
   "utf8"
 );
@@ -74,8 +85,56 @@ describe("AuthZed projection outbox triggers", () => {
          WHERE tgname LIKE 'authzed_projection_%'
            AND NOT tgisinternal) AS triggers
     `;
-    expect(Number(catalog?.indexes)).toBe(3);
+    expect(Number(catalog?.indexes)).toBe(4);
     expect(Number(catalog?.triggers)).toBe(11);
+  });
+
+  test("preserves and drains legacy unsequenced rows through a bounded activation watermark", async () => {
+    await prisma.$executeRaw`
+      INSERT INTO "AuthzedProjectionOutbox"
+        ("id", "targetType", "primaryId", "isRevocation", "sourceSequence", "updatedAt")
+      VALUES ('legacy-unsequenced', 'membership', 'legacy-organization', false, NULL, NOW())
+    `;
+
+    await prisma.$executeRawUnsafe(activationMigration);
+    await prisma.$executeRawUnsafe(activationMigration);
+    await prisma.$executeRaw`
+      INSERT INTO "AuthzedProjectionOutbox"
+        ("id", "targetType", "primaryId", "isRevocation", "updatedAt")
+      VALUES ('sequenced', 'membership', 'current-organization', false, NOW())
+    `;
+
+    await expect(getAuthzedOutboxStatus(0n)).resolves.toMatchObject({ pending: 1 });
+    const claimed = await claimAuthzedOutboxEvents("activation-upgrade-test", 1, 0n);
+    expect(claimed).toHaveLength(1);
+    expect(claimed[0]?.id).toBe("legacy-unsequenced");
+    expect(claimed[0]?.sourceSequence).toBeNull();
+  });
+
+  test("uses a gap-safe constant-time sequence sentinel as the activation watermark", async () => {
+    await prisma.$executeRawUnsafe('TRUNCATE "AuthzedProjectionOutbox" RESTART IDENTITY;');
+    await expect(getLatestAuthzedSourceSequence()).resolves.toBe(1n);
+
+    await prisma.$executeRaw`
+      INSERT INTO "AuthzedProjectionOutbox"
+        ("id", "targetType", "primaryId", "isRevocation", "updatedAt")
+      VALUES ('sequenced-one', 'membership', 'organization-one', false, NOW())
+    `;
+    await expect(getLatestAuthzedSourceSequence()).resolves.toBe(3n);
+
+    await expect(
+      prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`
+          INSERT INTO "AuthzedProjectionOutbox"
+            ("id", "targetType", "primaryId", "isRevocation", "updatedAt")
+          VALUES ('rolled-back-sequence', 'membership', 'organization-two', false, NOW())
+        `;
+        throw new Error("roll back the allocated sequence value");
+      })
+    ).rejects.toThrow("roll back the allocated sequence value");
+
+    await expect(getLatestAuthzedSourceSequence()).resolves.toBe(5n);
+    await expect(getAuthzedOutboxStatus(5n)).resolves.toMatchObject({ pending: 1 });
   });
 
   test("does not classify an accepted invite as a revocation", async () => {
@@ -425,6 +484,7 @@ describe("AuthZed projection outbox indexes", () => {
     expect(indexes.map(({ indexname }) => indexname)).toEqual([
       "AuthzedProjectionOutbox_claim_idx",
       "AuthzedProjectionOutbox_processed_idx",
+      "AuthzedProjectionOutbox_sequence_claim_idx",
       "AuthzedProjectionOutbox_undelivered_idx",
     ]);
     for (const { indexdef } of indexes) {
@@ -449,12 +509,12 @@ describe("AuthZed projection outbox indexes", () => {
       EXPLAIN SELECT "id" FROM "AuthzedProjectionOutbox"
       WHERE "processedAt" IS NULL AND "deadLetteredAt" IS NULL AND "availableAt" <= NOW()
         AND ("leaseExpiresAt" IS NULL OR "leaseExpiresAt" <= NOW())
-      ORDER BY "isRevocation" DESC, "createdAt" ASC
+      ORDER BY "isRevocation" DESC, "sourceSequence" ASC NULLS FIRST, "createdAt" ASC, "id" ASC
       LIMIT 200
     `;
     const rendered = plan.map((line) => line["QUERY PLAN"]).join("\n");
 
-    expect(rendered).toContain("AuthzedProjectionOutbox_claim_idx");
+    expect(rendered).toContain("AuthzedProjectionOutbox_sequence_claim_idx");
     expect(rendered).not.toContain("Sort");
   });
 });

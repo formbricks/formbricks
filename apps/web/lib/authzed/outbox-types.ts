@@ -23,7 +23,8 @@ export type TAuthzedOutboxEvent = Readonly<{
   isRevocation: boolean;
   primaryId: string;
   secondaryId: string | null;
-  sourceSequence: bigint;
+  /** Null only for rows created before the online v6 activation migration. */
+  sourceSequence: bigint | null;
   targetType: TAuthzedOutboxTargetType;
 }>;
 

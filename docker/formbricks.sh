@@ -185,6 +185,19 @@ run_formbricks_docker_compose() {
   "${formbricks_docker_command[@]}" compose "$@"
 }
 
+# Existing v5 one-click installations keep their customer-owned base Compose file after the v6
+# cutover. Every lifecycle command must load the permanent AuthZed overlay when it exists, otherwise
+# Compose cannot see (or stop) the SpiceDB services that the upgrade assistant added.
+run_formbricks_installation_compose() {
+  local compose_args=(-f docker-compose.yml)
+
+  if [ -f formbricks-authzed-overlay.yml ]; then
+    compose_args+=(-f formbricks-authzed-overlay.yml)
+  fi
+
+  run_formbricks_docker_compose "${compose_args[@]}" "$@"
+}
+
 read_rendered_compose_password() {
   local compose_file="$1"
   local env_file="${2:-}"
@@ -288,6 +301,42 @@ serialize_dotenv_value() {
   printf '"%s"' "$value"
 }
 
+read_existing_url_safe_dotenv_value() {
+  local env_file="$1"
+  local key="$2"
+  local value
+
+  value=$(
+    awk -v key="$key" '
+      {
+        line=$0
+        sub(/^[[:space:]]*/, "", line)
+        sub(/^export[[:space:]]+/, "", line)
+        if (line ~ "^" key "[[:space:]]*=") {
+          sub("^" key "[[:space:]]*=[[:space:]]*", "", line)
+          matches++
+          candidate=line
+        }
+      }
+      END {
+        if (matches != 1) {
+          exit 1
+        }
+        print candidate
+      }
+    ' "$env_file"
+  ) || return 1
+
+  # One-click owns this credential and has always generated it as URL-safe hexadecimal. Refuse
+  # ambiguous dotenv syntax instead of evaluating customer-controlled shell text or silently pairing
+  # a newly generated URI value with an older raw database password.
+  if [[ ! "$value" =~ ^[a-zA-Z0-9._~-]+$ ]]; then
+    return 1
+  fi
+
+  printf '%s' "$value"
+}
+
 write_generated_env_file() (
   local env_file="${1:-.env}"
   local postgres_password="${2:-}"
@@ -297,6 +346,8 @@ write_generated_env_file() (
   local authzed_database_password="${6:-}"
   local serialized_postgres_password
   local postgres_password_url_encoded
+  local authzed_database_password_url_encoded
+  local existing_authzed_database_password
   local tmp_file
 
   append_if_missing() {
@@ -321,18 +372,33 @@ write_generated_env_file() (
   if [ -z "$authzed_token" ]; then
     authzed_token=$(openssl rand -hex 32)
   fi
+  if [ -f "$env_file" ] \
+    && grep -Eq "^[[:space:]]*(export[[:space:]]+)?AUTHZED_DATABASE_PASSWORD[[:space:]]*=" "$env_file"; then
+    if ! existing_authzed_database_password=$(
+      read_existing_url_safe_dotenv_value "$env_file" "AUTHZED_DATABASE_PASSWORD"
+    ); then
+      echo "❌ Could not safely preserve the existing AuthZed database password. Refusing to rewrite $env_file." >&2
+      return 1
+    fi
+    authzed_database_password="$existing_authzed_database_password"
+  fi
   if [ -z "$authzed_database_password" ]; then
     authzed_database_password=$(openssl rand -hex 32)
   fi
+  if [[ ! "$authzed_database_password" =~ ^[a-zA-Z0-9._~-]+$ ]]; then
+    echo "❌ AuthZed database password must be URL-safe. Refusing to rewrite $env_file." >&2
+    return 1
+  fi
   serialized_postgres_password=$(serialize_dotenv_value "$postgres_password")
   postgres_password_url_encoded=$(url_encode "$postgres_password")
+  authzed_database_password_url_encoded=$(url_encode "$authzed_database_password")
 
   tmp_file=$(mktemp "${env_file}.tmp.XXXXXX")
   trap 'rm -f "$tmp_file"' EXIT
 
   if [ -f "$env_file" ]; then
     awk '
-      !/^[[:space:]]*(export[[:space:]]+)?(POSTGRES_PASSWORD|POSTGRES_PASSWORD_URL_ENCODED|HUB_API_KEY|CUBEJS_API_SECRET|CUBEJS_JWT_ISSUER|CUBEJS_JWT_AUDIENCE)[[:space:]]*=/
+      !/^[[:space:]]*(export[[:space:]]+)?(POSTGRES_PASSWORD|POSTGRES_PASSWORD_URL_ENCODED|HUB_API_KEY|CUBEJS_API_SECRET|CUBEJS_JWT_ISSUER|CUBEJS_JWT_AUDIENCE|AUTHZED_DATABASE_PASSWORD_URL_ENCODED)[[:space:]]*=/
     ' "$env_file" >"$tmp_file"
   fi
 
@@ -343,14 +409,16 @@ HUB_API_KEY=$hub_api_key
 CUBEJS_API_SECRET=$cubejs_api_secret
 CUBEJS_JWT_ISSUER=formbricks-web
 CUBEJS_JWT_AUDIENCE=formbricks-cube
+AUTHZED_DATABASE_PASSWORD_URL_ENCODED=$authzed_database_password_url_encoded
 EOF
 
   append_if_missing "AUTHZED_TOKEN" "$authzed_token"
   append_if_missing "AUTHZED_DATABASE_PASSWORD" "$authzed_database_password"
   append_if_missing "AUTHZED_ENABLED" "true"
   append_if_missing "AUTHZED_CONSISTENCY" "fully_consistent"
-  # The one-click installer follows the stable-release alias. Pre-releases never publish `latest`.
-  append_if_missing "FORMBRICKS_IMAGE_REF" "ghcr.io/formbricks/formbricks:latest"
+  # Fresh installs follow the release-matched `stable` source and image aliases. `latest` remains on
+  # the supported v5 migration line during the v6 upgrade window.
+  append_if_missing "FORMBRICKS_IMAGE_REF" "ghcr.io/formbricks/formbricks:stable"
 
   chmod 600 "$tmp_file"
   mv "$tmp_file" "$env_file"
@@ -1192,7 +1260,11 @@ uninstall_formbricks() {
   uninstall_confirmation=$(echo "$uninstall_confirmation" | tr '[:upper:]' '[:lower:]')
   if [[ $uninstall_confirmation == "yes" ]]; then
     cd formbricks
-    sudo docker compose down
+    if ! configure_formbricks_docker_command; then
+      echo "❌ Docker is not reachable for this user or through sudo." >&2
+      return 1
+    fi
+    run_formbricks_installation_compose down --remove-orphans
     cd ..
     sudo rm -rf formbricks
     echo "🛑 Formbricks uninstalled successfully!"
@@ -1204,7 +1276,11 @@ uninstall_formbricks() {
 stop_formbricks() {
   echo "🛑 Stopping Formbricks..."
   cd formbricks
-  sudo docker compose down
+  if ! configure_formbricks_docker_command; then
+    echo "❌ Docker is not reachable for this user or through sudo." >&2
+    return 1
+  fi
+  run_formbricks_installation_compose down --remove-orphans
   echo "🎉 Formbricks instance stopped successfully!"
 }
 
@@ -1289,8 +1365,9 @@ migrate_legacy_valkey_image() {
 
 verify_v6_upgrade_bundle() {
   local bundle_directory="$1"
-  local file expected actual matches
+  local file expected actual matches release_version escaped_release_version identity_regexp
   local required_files=(
+    authzed.com_spicedbclusters.yaml
     formbricks.sh
     formbricks-upgrade-assistant
     formbricks-upgrade-manifest.json
@@ -1310,9 +1387,17 @@ verify_v6_upgrade_bundle() {
     fi
   done
 
+  release_version=$(jq -er '.releaseVersion | select(test("^6\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"))' \
+    "$bundle_directory/formbricks-upgrade-manifest.json" 2>/dev/null) || {
+    echo "❌ The Formbricks v6 release manifest has an invalid release version." >&2
+    return 1
+  }
+  escaped_release_version=${release_version//./\\.}
+  identity_regexp="^https://github\\.com/formbricks/formbricks/\\.github/workflows/publish-v6-upgrade-assistant\\.yml@refs/tags/[vV]?${escaped_release_version}$"
+
   if ! cosign verify-blob \
     --bundle "$bundle_directory/formbricks-upgrade-checksums.sigstore.json" \
-    --certificate-identity-regexp '^https://github\.com/formbricks/formbricks/\.github/workflows/.+@refs/(heads/main|tags/.+)$' \
+    --certificate-identity-regexp "$identity_regexp" \
     --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
     "$bundle_directory/formbricks-upgrade-checksums.txt" >/dev/null; then
     echo "❌ The Formbricks v6 upgrade bundle signature is invalid." >&2
@@ -1346,6 +1431,10 @@ update_formbricks() {
   local docker_uses_sudo="false"
   local compose_args=(-f docker-compose.yml)
   local assistant_args=()
+  local assistant_exit=0
+  local assistant_output=""
+  local assistant_status=""
+  local runtime_status=""
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -1395,29 +1484,54 @@ update_formbricks() {
       --manifest "$bundle_directory/formbricks-upgrade-manifest.json"
       --overlay "$bundle_directory/formbricks-authzed-overlay.yml"
       --bootstrap-helper "$bundle_directory/authzed-postgres-bootstrap.sh"
+      --spicedb-crd "$bundle_directory/authzed.com_spicedbclusters.yaml"
       --path .
+      --backup-confirmed
       --yes
     )
     if [ -n "$current_version" ]; then
       assistant_args+=(--current-version "$current_version")
     fi
-    FORMBRICKS_DOCKER_USE_SUDO="$docker_uses_sudo" \
-      "$bundle_directory/formbricks-upgrade-assistant" "${assistant_args[@]}"
-    echo "🎉 Formbricks was upgraded through the receipt-backed AuthZed cutover."
-    echo "The permanent formbricks-authzed-overlay.yml keeps the customized base Compose file unchanged."
-    return 0
+    if assistant_output=$(FORMBRICKS_DOCKER_USE_SUDO="$docker_uses_sudo" \
+      "$bundle_directory/formbricks-upgrade-assistant" "${assistant_args[@]}"); then
+      assistant_exit=0
+    else
+      assistant_exit=$?
+      printf '%s\n' "$assistant_output"
+      return "$assistant_exit"
+    fi
+    printf '%s\n' "$assistant_output"
+    assistant_status=$(jq -er '.status' <<<"$assistant_output" 2>/dev/null || true)
+    if [ "$assistant_status" == "upgraded" ]; then
+      echo "🎉 Formbricks was upgraded through the receipt-backed AuthZed cutover."
+      echo "The permanent formbricks-authzed-overlay.yml keeps the customized base Compose file unchanged."
+      return 0
+    fi
+    if [ "$assistant_status" == "not_required" ]; then
+      echo "✅ This exact v6 release is already activated and healthy."
+      return 0
+    fi
+    echo "❌ The v6 upgrade assistant did not report a completed cutover." >&2
+    return 2
   fi
-
-  migrate_legacy_valkey_image docker-compose.yml
 
   if [ -f formbricks-authzed-overlay.yml ]; then
     compose_args+=(-f formbricks-authzed-overlay.yml)
-  elif ! grep -Eq '^  authzed-ops:$' docker-compose.yml || ! grep -Eq '^  spicedb:$' docker-compose.yml; then
-    echo "❌ A v5 installation must use the signed v6 upgrade bundle; the base Compose file was not changed."
+  fi
+
+  # Service names are not evidence that authority was activated: the pre-activation v6 release
+  # candidates already contained SpiceDB services. Only the current image's database-backed runtime
+  # contract can authorize a normal patch update without replaying the bridge cutover.
+  runtime_status=$(run_formbricks_docker_compose "${compose_args[@]}" exec -T formbricks \
+    formbricks-authzed activation runtime-check 2>/dev/null || true)
+  if ! jq -e '.status == "ready" and .authority == "spicedb"' <<<"$runtime_status" >/dev/null 2>&1; then
+    echo "❌ This installation has no verified SpiceDB activation receipt for a normal update."
     echo "Run this command again with --v6-upgrade-bundle DIRECTORY --yes after taking backups:"
     echo "https://formbricks.com/docs/self-hosting/advanced/v6-upgrade-assistant"
     return 1
   fi
+
+  migrate_legacy_valkey_image docker-compose.yml
 
   run_formbricks_docker_compose "${compose_args[@]}" pull
   if [ -f formbricks-authzed-overlay.yml ]; then
@@ -1437,19 +1551,32 @@ update_formbricks() {
 restart_formbricks() {
   echo "🔄 Restarting Formbricks..."
   cd formbricks
-  sudo docker compose restart
+  if ! configure_formbricks_docker_command; then
+    echo "❌ Docker is not reachable for this user or through sudo." >&2
+    return 1
+  fi
+  run_formbricks_installation_compose restart
   echo "🎉 Formbricks restarted successfully!"
 }
 
 get_logs() {
   echo "📃 Getting Formbricks logs..."
   cd formbricks
-  sudo docker compose logs
+  if ! configure_formbricks_docker_command; then
+    echo "❌ Docker is not reachable for this user or through sudo." >&2
+    return 1
+  fi
+  run_formbricks_installation_compose logs
 }
 
 cleanup_rustfs_init() {
   echo "🧹 Cleaning up RustFS init service and references..."
   cd formbricks
+
+  if ! configure_formbricks_docker_command; then
+    echo "❌ Docker is not reachable for this user or through sudo." >&2
+    return 1
+  fi
 
   # Remove rustfs-init service block from docker-compose.yml
   awk '
@@ -1479,9 +1606,9 @@ cleanup_rustfs_init() {
   fi
 
   # Remove any stopped init containers and restart without orphans
-  docker compose rm -f -s rustfs-init >/dev/null 2>&1 || true
-  docker compose rm -f -s minio-init >/dev/null 2>&1 || true
-  docker compose up -d --remove-orphans
+  run_formbricks_installation_compose rm -f -s rustfs-init >/dev/null 2>&1 || true
+  run_formbricks_installation_compose rm -f -s minio-init >/dev/null 2>&1 || true
+  run_formbricks_installation_compose up -d --remove-orphans
 
   echo "✅ RustFS init cleanup complete."
 }

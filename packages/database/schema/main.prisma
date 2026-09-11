@@ -1745,7 +1745,9 @@ model AuthzedProjectionOutbox {
   id                String    @id @default(uuid())
   /// Monotonic source watermark used by the v6 activation protocol. Unlike timestamps this remains
   /// unambiguous when several authorization mutations commit in the same millisecond.
-  sourceSequence    BigInt    @unique @default(autoincrement())
+  /// Rows created before the v6 activation migration remain null so the migration never rewrites a
+  /// live outbox. Drain queries always include these legacy rows ahead of the sequence watermark.
+  sourceSequence    BigInt?   @default(autoincrement())
   targetType        String
   primaryId         String
   secondaryId       String?

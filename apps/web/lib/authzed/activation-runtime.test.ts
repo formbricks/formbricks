@@ -6,6 +6,7 @@ import {
 } from "./activation-contract";
 import { getAuthzedActivationReceipt, getAuthzedActivationStatus } from "./activation-repository";
 import { checkAuthzedRuntimeActivation, waitForAuthzedRuntimeActivation } from "./activation-runtime";
+import { isAuthzedEnabled } from "./config";
 import { createAuthzedReleaseManifestDigest, readAuthzedReleaseManifest } from "./release-manifest";
 
 vi.mock("./activation-contract", () => ({
@@ -17,6 +18,9 @@ vi.mock("./activation-repository", () => ({
   getAuthzedActivationReceipt: vi.fn(),
   getAuthzedActivationStatus: vi.fn(),
 }));
+vi.mock("./config", () => ({
+  isAuthzedEnabled: vi.fn(),
+}));
 vi.mock("./release-manifest", () => ({
   createAuthzedReleaseManifestDigest: vi.fn(),
   readAuthzedReleaseManifest: vi.fn(),
@@ -27,7 +31,7 @@ const receiptId = "5d847b79-ae35-45d0-9dc5-595c1ccbdf61";
 const manifest = {
   authorizationMode: "spicedb_authoritative" as const,
   clientContractVersion: 1,
-  migrationHead: "20260911090000_add_authzed_activation_protocol",
+  migrationHead: "20260911091000_add_authzed_sequence_claim_index",
   protocolVersion: 1,
   sourceRevision: "revision",
 };
@@ -36,6 +40,7 @@ describe("AuthZed runtime activation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(readAuthzedReleaseManifest).mockResolvedValue(manifest);
+    vi.mocked(isAuthzedEnabled).mockReturnValue(true);
     vi.mocked(createAuthzedReleaseManifestDigest).mockReturnValue(digest("a"));
     vi.mocked(getAuthzedAuthorizationContractDigest).mockReturnValue(digest("b"));
     vi.mocked(getCanonicalAuthzedSchemaDigest).mockResolvedValue(digest("c"));
@@ -69,6 +74,17 @@ describe("AuthZed runtime activation", () => {
       authority: "spicedb",
       status: "ready",
     });
+  });
+
+  test("fails before reading activation state when the authoritative runtime is disabled", async () => {
+    vi.mocked(isAuthzedEnabled).mockReturnValue(false);
+
+    await expect(checkAuthzedRuntimeActivation()).rejects.toMatchObject({
+      code: "authzed_activation_required",
+      operation: "activation_runtime_authzed_disabled",
+    });
+    expect(getAuthzedActivationStatus).not.toHaveBeenCalled();
+    expect(getAuthzedActivationReceipt).not.toHaveBeenCalled();
   });
 
   test.each([
@@ -123,6 +139,7 @@ describe("AuthZed runtime activation", () => {
   });
 
   test("lets the bridge serve legacy states without constructing AuthZed or reading a receipt", async () => {
+    vi.mocked(isAuthzedEnabled).mockReturnValue(false);
     vi.mocked(readAuthzedReleaseManifest).mockResolvedValue({
       ...manifest,
       authorizationMode: "legacy_bridge",
@@ -160,7 +177,7 @@ describe("AuthZed runtime activation", () => {
     });
   });
 
-  test("keeps compatibility gates active after activation is finalized", async () => {
+  test("fails closed on graph-contract drift after finalization", async () => {
     vi.mocked(getAuthzedActivationStatus).mockResolvedValue({
       activeReceiptId: receiptId,
       authority: "spicedb",
@@ -291,6 +308,74 @@ describe("AuthZed runtime activation", () => {
     ).resolves.toEqual({ authority: "spicedb", status: "ready" });
     expect(check).toHaveBeenCalledTimes(3);
     expect(sleep).toHaveBeenCalledTimes(2);
+  });
+
+  test("fails immediately when an authoritative runtime has AuthZed disabled", async () => {
+    let now = 0;
+    const sleep = vi.fn(async (durationMs: number) => {
+      now += durationMs;
+    });
+    vi.mocked(isAuthzedEnabled).mockReturnValue(false);
+
+    await expect(
+      waitForAuthzedRuntimeActivation({ intervalMs: 1_000, timeoutMs: 900_000 }, { now: () => now, sleep })
+    ).rejects.toMatchObject({
+      code: "authzed_activation_required",
+      operation: "activation_runtime_authzed_disabled",
+    });
+    expect(sleep).not.toHaveBeenCalled();
+    expect(now).toBe(0);
+  });
+
+  test("keeps waiting while the real database authority transition is incomplete", async () => {
+    let now = 0;
+    vi.mocked(getAuthzedActivationStatus)
+      .mockResolvedValueOnce({
+        activeReceiptId: null,
+        authority: "legacy",
+        fenceActive: false,
+        generation: 0n,
+        pendingReceiptId: null,
+        transition: "preparing",
+      })
+      .mockResolvedValue({
+        activeReceiptId: receiptId,
+        authority: "spicedb",
+        fenceActive: true,
+        generation: 1n,
+        pendingReceiptId: null,
+        transition: "activating",
+      });
+    const sleep = vi.fn(async (durationMs: number) => {
+      now += durationMs;
+    });
+
+    await expect(
+      waitForAuthzedRuntimeActivation({ intervalMs: 1_000, timeoutMs: 5_000 }, { now: () => now, sleep })
+    ).resolves.toEqual({ authority: "spicedb", status: "ready" });
+    expect(getAuthzedActivationStatus).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledOnce();
+  });
+
+  test("fails immediately when the local authorization contract cannot be read", async () => {
+    let now = 0;
+    const sleep = vi.fn(async (durationMs: number) => {
+      now += durationMs;
+    });
+    vi.mocked(getCanonicalAuthzedSchemaDigest).mockRejectedValueOnce(
+      new Error("local schema details must stay private")
+    );
+
+    await expect(
+      waitForAuthzedRuntimeActivation({ intervalMs: 1_000, timeoutMs: 900_000 }, { now: () => now, sleep })
+    ).rejects.toMatchObject({
+      code: "authzed_activation_required",
+      operation: "activation_runtime_contract",
+      retryable: false,
+    });
+    expect(getAuthzedActivationStatus).toHaveBeenCalledOnce();
+    expect(sleep).not.toHaveBeenCalled();
+    expect(now).toBe(0);
   });
 
   test("returns one stable failure after the startup wait expires", async () => {

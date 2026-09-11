@@ -32,6 +32,10 @@
       "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
       "type": "string"
     },
+    "kubernetesNameOrEmpty": {
+      "pattern": "^(|[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)$",
+      "type": "string"
+    },
     "quantity": {
       "maxLength": 32,
       "minLength": 1,
@@ -50,6 +54,11 @@
         "name": { "$ref": "#/definitions/kubernetesName" }
       },
       "required": ["name", "key"],
+      "type": "object"
+    },
+    "stringMap": {
+      "additionalProperties": { "type": "string" },
+      "propertyNames": { "maxLength": 253, "minLength": 1 },
       "type": "object"
     }
   },
@@ -169,6 +178,10 @@
           "required": ["status", "prepare", "audit", "activate", "rollbackBegin", "rollbackComplete"],
           "type": "object"
         },
+        "containerSecurityContext": { "type": "object" },
+        "podAnnotations": { "$ref": "#/definitions/stringMap" },
+        "podLabels": { "$ref": "#/definitions/stringMap" },
+        "podSecurityContext": { "type": "object" },
         "resources": {
           "additionalProperties": false,
           "properties": {
@@ -178,7 +191,7 @@
                 "cpu": { "$ref": "#/definitions/quantity" },
                 "memory": { "$ref": "#/definitions/quantity" }
               },
-              "required": ["memory"],
+              "required": ["cpu", "memory"],
               "type": "object"
             },
             "requests": {
@@ -194,6 +207,7 @@
           "required": ["requests", "limits"],
           "type": "object"
         },
+        "serviceAccountName": { "$ref": "#/definitions/kubernetesNameOrEmpty" },
         "ttlSecondsAfterFinished": { "maximum": 86400, "minimum": 60, "type": "integer" }
       },
       "required": [
@@ -201,6 +215,11 @@
         "activeDeadlineSeconds",
         "activateConflictRetrySeconds",
         "activateConflictRetryIntervalSeconds",
+        "serviceAccountName",
+        "podLabels",
+        "podAnnotations",
+        "podSecurityContext",
+        "containerSecurityContext",
         "resources"
       ],
       "type": "object"

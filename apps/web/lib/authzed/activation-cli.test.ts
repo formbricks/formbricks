@@ -9,6 +9,7 @@ const dependencies = () => ({
   abort: vi.fn().mockResolvedValue(undefined),
   activate: vi.fn().mockResolvedValue(undefined),
   bootstrap: vi.fn().mockResolvedValue(undefined),
+  bootstrapDevelopment: vi.fn().mockResolvedValue(undefined),
   finalize: vi.fn().mockResolvedValue(undefined),
   prepare: vi.fn().mockResolvedValue(receipt),
   rollback: vi.fn().mockResolvedValue(undefined),
@@ -84,5 +85,15 @@ describe("AuthZed activation CLI", () => {
     expect(deps.writeOutput).toHaveBeenCalledWith(
       `${JSON.stringify({ authority: "spicedb", status: "ready" })}\n`
     );
+  });
+
+  test("uses the development-only bootstrap for local databases", async () => {
+    const deps = dependencies();
+
+    await expect(runAuthzedActivationCli({ action: "bootstrap_development" }, deps)).resolves.toBe(0);
+
+    expect(deps.bootstrapDevelopment).toHaveBeenCalledOnce();
+    expect(deps.bootstrap).not.toHaveBeenCalled();
+    expect(deps.writeOutput).toHaveBeenCalledWith(`${JSON.stringify({ status: "activated" })}\n`);
   });
 });

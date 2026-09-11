@@ -132,6 +132,28 @@ upsert_env_value() {
   TEMP_FILE=""
 }
 
+url_encode() {
+  local LC_ALL=C
+  local value="$1"
+  local encoded=""
+  local char
+  local byte
+  local i
+
+  for ((i = 0; i < ${#value}; i++)); do
+    char=${value:i:1}
+    case "$char" in
+      [a-zA-Z0-9.~_-]) encoded+="$char" ;;
+      *)
+        printf -v byte '%d' "'$char"
+        printf -v encoded '%s%%%02X' "$encoded" "$((byte & 255))"
+        ;;
+    esac
+  done
+
+  printf '%s' "$encoded"
+}
+
 resolve_dev_authzed_mode() {
   local configured_mode="${FORMBRICKS_DEV_AUTHZED_MODE:-}"
 
@@ -184,6 +206,7 @@ validate_enabled_authzed() {
 
 configure_bundled_authzed() {
   local spicedb_port="${SPICEDB_GRPC_PORT:-}"
+  local authzed_database_password
 
   if ! validate_enabled_authzed; then
     upsert_env_value "AUTHZED_ENABLED" "true"
@@ -202,6 +225,8 @@ configure_bundled_authzed() {
   fi
 
   generate_missing_secrets "${BUNDLED_AUTHZED_GENERATED_KEYS[@]}"
+  authzed_database_password="$(read_env_value "AUTHZED_DATABASE_PASSWORD")"
+  upsert_env_value "AUTHZED_DATABASE_PASSWORD_URL_ENCODED" "$(url_encode "${authzed_database_password}")"
   upsert_env_value "AUTHZED_ENDPOINT" "localhost:${spicedb_port}"
   upsert_env_value "AUTHZED_SYSTEM_KEY" "formbricks"
   upsert_env_value "AUTHZED_INSECURE" "true"

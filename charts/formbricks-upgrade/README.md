@@ -33,12 +33,13 @@ target Formbricks release; do not run a chart copied from another branch or rele
 archive so the chart identity is bound to its signed journal.
 
 The remaining commands are a support-only manual recovery interface. Do not substitute them for the assistant's
-normal path. A support-directed manual run may install the generation-specific temporary release from OCI:
+normal path. The temporary chart is deliberately not published as an independent OCI artifact because that
+would not be cryptographically bound to the signed release bundle. A support-directed manual run must use the
+checksum-verified local archive downloaded with that bundle:
 
 ```sh
 helm upgrade --install formbricks-v6-upgrade-1 \
-  oci://ghcr.io/formbricks/helm-charts/formbricks-upgrade \
-  --version 6.0.0 \
+  ./formbricks-upgrade-6.0.0.tgz \
   --namespace formbricks \
   --values upgrade-values.yaml \
   --wait --wait-for-jobs --timeout 30m

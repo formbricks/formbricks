@@ -19,6 +19,7 @@ describe("AuthZed activation CLI parser", () => {
     [["rollback-begin", "--receipt", receipt], { action: "rollback_begin", receiptId: receipt }],
     [["rollback-complete", "--receipt", receipt], { action: "rollback_complete", receiptId: receipt }],
     [["bootstrap"], { action: "bootstrap" }],
+    [["bootstrap-development"], { action: "bootstrap_development" }],
   ])("parses %j", (args, expected) => {
     expect(parseAuthzedActivationCliCommand(args as string[])).toEqual(expected);
   });
@@ -54,6 +55,7 @@ describe("AuthZed activation CLI parser", () => {
     ["activate"],
     ["activate", "--receipt", "not-a-receipt"],
     ["bootstrap", "--candidate-image-digest", digest("a")],
+    ["bootstrap-development", "extra"],
     ["runtime-wait", "--timeout-seconds", "0", "--interval-seconds", "1"],
     ["runtime-wait", "--timeout-seconds", "61", "--interval-seconds", "62"],
     ["runtime-wait", "--timeout-seconds", "3601", "--interval-seconds", "1"],

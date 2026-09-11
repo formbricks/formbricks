@@ -54,7 +54,7 @@ export const claimAuthzedOutboxEvents = async (
   const watermarkClause =
     throughSourceSequence === undefined
       ? Prisma.empty
-      : Prisma.sql`AND "sourceSequence" <= ${throughSourceSequence}`;
+      : Prisma.sql`AND ("sourceSequence" IS NULL OR "sourceSequence" <= ${throughSourceSequence})`;
   const rows = await prisma.$queryRaw<TClaimedRow[]>`
     WITH claimable AS (
       SELECT "id"
@@ -64,7 +64,7 @@ export const claimAuthzedOutboxEvents = async (
         AND "availableAt" <= NOW()
         AND ("leaseExpiresAt" IS NULL OR "leaseExpiresAt" <= NOW())
         ${watermarkClause}
-      ORDER BY "isRevocation" DESC, "sourceSequence" ASC
+      ORDER BY "isRevocation" DESC, "sourceSequence" ASC NULLS FIRST, "createdAt" ASC, "id" ASC
       LIMIT ${limit}
       FOR UPDATE SKIP LOCKED
     )
@@ -235,7 +235,7 @@ export const getAuthzedOutboxStatus = async (
   const watermarkClause =
     throughSourceSequence === undefined
       ? Prisma.empty
-      : Prisma.sql`AND "sourceSequence" <= ${throughSourceSequence}`;
+      : Prisma.sql`AND ("sourceSequence" IS NULL OR "sourceSequence" <= ${throughSourceSequence})`;
   const [row] = await prisma.$queryRaw<TStatusRow[]>`
     SELECT
       COUNT(*) FILTER (WHERE "deadLetteredAt" IS NULL) AS pending,

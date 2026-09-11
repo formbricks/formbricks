@@ -393,8 +393,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          docker run --name formbricks-skip-test \
-            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks" \
+          # This assertion deliberately uses an unreachable database. The authoritative v6 image must
+          # skip migrations and then fail closed at its activation gate; it must never start Next.js
+          # without a durable activation receipt.
+          set +e
+          logs="$(timeout 30s docker run --rm \
+            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks?connect_timeout=1" \
             -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
             -e BETTER_AUTH_SECRET="$DUMMY_ENCRYPTION_KEY" \
             -e REDIS_URL="redis://192.0.2.1:6379" \
@@ -402,33 +406,37 @@ jobs:
             -e HUB_API_KEY="build-time-placeholder" \
             -e CUBEJS_API_URL="http://192.0.2.1:4000" \
             -e CUBEJS_API_SECRET="build-time-placeholder" \
+            -e AUTHZED_ENABLED="true" \
+            -e AUTHZED_ENDPOINT="192.0.2.1:50051" \
+            -e AUTHZED_INSECURE="true" \
+            -e AUTHZED_SYSTEM_KEY="formbricks" \
+            -e AUTHZED_TOKEN="startup-skip-placeholder" \
+            -e AUTHZED_CONSISTENCY="fully_consistent" \
+            -e AUTHZED_ACTIVATION_STARTUP_WAIT_SECONDS="1" \
+            -e AUTHZED_ACTIVATION_STARTUP_INTERVAL_SECONDS="1" \
             -e SKIP_STARTUP_MIGRATION="true" \
-            -d "formbricks-test:$GITHUB_SHA"
+            "formbricks-test:$GITHUB_SHA" 2>&1)"
+          status=$?
+          set -e
 
-          trap 'docker rm -f formbricks-skip-test >/dev/null 2>&1 || true' EXIT
+          if [ "$status" -eq 0 ] || [ "$status" -eq 124 ]; then
+            echo "Authoritative startup did not fail closed promptly without an activation receipt"
+            echo "$logs"
+            exit 1
+          fi
 
-          for _ in $(seq 1 30); do
-            if docker logs formbricks-skip-test 2>&1 | grep -Fq "Starting Next.js server"; then
-              break
-            fi
-
-            if [ "$(docker inspect -f '{{.State.Running}}' formbricks-skip-test 2>/dev/null)" != "true" ]; then
-              echo "Container exited before exercising the startup migration skip"
-              docker logs formbricks-skip-test
-              exit 1
-            fi
-
-            sleep 1
-          done
-
-          logs="$(docker logs formbricks-skip-test 2>&1)"
           grep -Fq "Environment variables validated successfully" <<<"$logs"
           grep -Fq "Skipping startup migrations" <<<"$logs"
-          grep -Fq "Running SAML database setup" <<<"$logs"
-          grep -Fq "Starting Next.js server" <<<"$logs"
+          grep -Fq "Waiting for the AuthZed activation receipt" <<<"$logs"
 
           if grep -Fq "Running database migrations" <<<"$logs"; then
             echo "Startup migrations ran despite SKIP_STARTUP_MIGRATION=true"
+            echo "$logs"
+            exit 1
+          fi
+
+          if grep -Fq "Starting Next.js server" <<<"$logs"; then
+            echo "Authoritative image bypassed its activation receipt"
             echo "$logs"
             exit 1
           fi
@@ -490,24 +498,106 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
+          set -euo pipefail
           echo "🧪 Testing if the Docker image starts correctly..."
 
-          # Add extra docker run args to support host.docker.internal on Linux
-          DOCKER_RUN_ARGS="--add-host=host.docker.internal:host-gateway"
+          IMAGE="formbricks-test:$GITHUB_SHA"
+          SPICEDB_IMAGE="$(jq -r '.spicedb' authzed/release-images.json)"
+          AUTHZED_TOKEN="docker-health-authzed-token"
+          AUTHZED_DATABASE_PASSWORD="docker-health-spicedb-password"
+          DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks?schema=public&connection_limit=5"
+          SPICEDB_DATABASE_URL="postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD}@host.docker.internal:5432/spicedb?sslmode=disable"
+          DOCKER_RUN_ARGS=(--add-host=host.docker.internal:host-gateway)
+          COMMON_ENV=(
+            -e DATABASE_URL="$DATABASE_URL"
+            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY"
+            -e BETTER_AUTH_SECRET="$DUMMY_ENCRYPTION_KEY"
+            -e REDIS_URL="redis://host.docker.internal:6379"
+            -e HUB_API_URL="http://localhost:4000"
+            -e HUB_API_KEY="build-time-placeholder"
+            -e CUBEJS_API_URL="http://localhost:4000"
+            -e CUBEJS_API_SECRET="build-time-placeholder"
+          )
+          AUTHZED_ENV=(
+            -e AUTHZED_ENABLED="true"
+            -e AUTHZED_ENDPOINT="host.docker.internal:50051"
+            -e AUTHZED_INSECURE="true"
+            -e AUTHZED_SYSTEM_KEY="formbricks"
+            -e AUTHZED_TOKEN="$AUTHZED_TOKEN"
+            -e AUTHZED_CONSISTENCY="fully_consistent"
+          )
 
-          # Start the container with host.docker.internal pointing to the host
+          cleanup() {
+            docker rm -f formbricks-test formbricks-spicedb-test >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          # Build the same fresh-install prerequisites that the supported Compose path creates before
+          # starting the authoritative image. This validates the release image against a real receipt,
+          # not against an AuthZed-disabled environment that v6 intentionally rejects.
+          PGPASSWORD=test psql -h localhost -U test -d postgres --set ON_ERROR_STOP=1 <<SQL
+          DO \$\$
+          BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'spicedb') THEN
+              CREATE ROLE spicedb LOGIN PASSWORD '${AUTHZED_DATABASE_PASSWORD}';
+            ELSE
+              ALTER ROLE spicedb WITH LOGIN PASSWORD '${AUTHZED_DATABASE_PASSWORD}';
+            END IF;
+          END
+          \$\$;
+          SQL
+          if ! PGPASSWORD=test psql -h localhost -U test -d postgres -tAc \
+            "SELECT 1 FROM pg_database WHERE datname = 'spicedb'" | grep -Fqx 1; then
+            PGPASSWORD=test createdb -h localhost -U test --owner spicedb spicedb
+          fi
+
+          docker run --rm "${DOCKER_RUN_ARGS[@]}" \
+            -e SPICEDB_DATASTORE_ENGINE="postgres" \
+            -e SPICEDB_DATASTORE_CONN_URI="$SPICEDB_DATABASE_URL" \
+            "$SPICEDB_IMAGE" datastore migrate head
+
+          docker run --name formbricks-spicedb-test \
+            "${DOCKER_RUN_ARGS[@]}" \
+            -p 50051:50051 \
+            -e SPICEDB_DATASTORE_ENGINE="postgres" \
+            -e SPICEDB_DATASTORE_CONN_URI="$SPICEDB_DATABASE_URL" \
+            -e SPICEDB_GRPC_PRESHARED_KEY="$AUTHZED_TOKEN" \
+            -e SPICEDB_TELEMETRY_ENDPOINT="" \
+            -d "$SPICEDB_IMAGE" serve
+
+          for _ in $(seq 1 30); do
+            if docker exec formbricks-spicedb-test \
+              /usr/local/bin/grpc_health_probe -addr=localhost:50051 >/dev/null 2>&1; then
+              break
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' formbricks-spicedb-test 2>/dev/null)" != "true" ]; then
+              echo "SpiceDB exited before becoming healthy"
+              docker logs formbricks-spicedb-test
+              exit 1
+            fi
+            sleep 2
+          done
+          docker exec formbricks-spicedb-test \
+            /usr/local/bin/grpc_health_probe -addr=localhost:50051 >/dev/null
+
+          docker run --rm "${DOCKER_RUN_ARGS[@]}" \
+            --entrypoint node \
+            -e DATABASE_URL="$DATABASE_URL" \
+            "$IMAGE" packages/database/dist/scripts/apply-migrations.js
+
+          activation_output="$(docker run --rm "${DOCKER_RUN_ARGS[@]}" \
+            --entrypoint formbricks-authzed \
+            "${COMMON_ENV[@]}" \
+            "${AUTHZED_ENV[@]}" \
+            "$IMAGE" activation bootstrap)"
+          jq -e '.status == "activated"' <<<"$activation_output" >/dev/null
+
           docker run --name formbricks-test \
-            $DOCKER_RUN_ARGS \
+            "${DOCKER_RUN_ARGS[@]}" \
             -p 3000:3000 \
-            -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
-            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
-            -e BETTER_AUTH_SECRET="$DUMMY_ENCRYPTION_KEY" \
-            -e REDIS_URL="redis://host.docker.internal:6379" \
-            -e HUB_API_URL="http://localhost:4000" \
-            -e HUB_API_KEY="build-time-placeholder" \
-            -e CUBEJS_API_URL="http://localhost:4000" \
-            -e CUBEJS_API_SECRET="build-time-placeholder" \
-            -d "formbricks-test:$GITHUB_SHA"
+            "${COMMON_ENV[@]}" \
+            "${AUTHZED_ENV[@]}" \
+            -d "$IMAGE"
 
           # Start health check polling immediately (every 5 seconds for up to 5 minutes)
           echo "🏥 Polling /health endpoint every 5 seconds for up to 5 minutes..."
@@ -564,11 +654,14 @@ jobs:
 
           assert_log_once "Environment variables validated successfully"
           assert_log_once "Running database migrations"
+          assert_log_once "Waiting for the AuthZed activation receipt"
           assert_log_once "Running SAML database setup"
 
-          # Clean up the container
-          echo "🧹 Cleaning up..."
-          docker rm -f formbricks-test
+          if grep -Fq "$AUTHZED_TOKEN" <<<"$CONTAINER_LOGS" || \
+            grep -Fq "$AUTHZED_DATABASE_PASSWORD" <<<"$CONTAINER_LOGS"; then
+            echo "Authorization credentials appeared in application logs"
+            exit 1
+          fi
 
           # Exit with failure if health check did not succeed
           if [ "$HEALTH_CHECK_SUCCESS" != "true" ]; then

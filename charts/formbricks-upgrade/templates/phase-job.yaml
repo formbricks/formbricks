@@ -3,8 +3,14 @@ kind: Job
 metadata:
   name: {{ include "formbricks-upgrade.jobName" . }}
   labels:
+    {{- with .Values.job.podLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
     {{- include "formbricks-upgrade.labels" . | nindent 4 }}
   annotations:
+    {{- with .Values.job.podAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
     formbricks.com/candidate-manifest-digest: {{ .Values.images.candidate.manifestDigest | quote }}
     formbricks.com/workload-quiesced: {{ .Values.activation.workloadQuiesced | quote }}
 spec:
@@ -16,19 +22,23 @@ spec:
   template:
     metadata:
       labels:
+        {{- with .Values.job.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- include "formbricks-upgrade.labels" . | nindent 8 }}
+      {{- with .Values.job.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       automountServiceAccountToken: false
       enableServiceLinks: false
       restartPolicy: Never
+      {{- with .Values.job.serviceAccountName }}
+      serviceAccountName: {{ . | quote }}
+      {{- end }}
       securityContext:
-        fsGroup: 1001
-        fsGroupChangePolicy: OnRootMismatch
-        runAsGroup: 1001
-        runAsNonRoot: true
-        runAsUser: 1001
-        seccompProfile:
-          type: RuntimeDefault
+        {{- toYaml .Values.job.podSecurityContext | nindent 8 }}
       {{- with .Values.images.pullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -50,14 +60,7 @@ spec:
           image: {{ include "formbricks-upgrade.phaseImage" . | quote }}
           imagePullPolicy: {{ .Values.images.pullPolicy }}
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: true
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
+            {{- toYaml .Values.job.containerSecurityContext | nindent 12 }}
           {{- if eq .Values.phase "activate" }}
           command: ["sh", "-ec"]
           args:

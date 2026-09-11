@@ -3,6 +3,7 @@ import type { TAuthzedActivationCliCommand } from "./activation-cli-command";
 import {
   abortAuthzedActivation,
   activatePreparedAuthzedAuthorization,
+  bootstrapDevelopmentAuthzedActivation,
   bootstrapFreshAuthzedActivation,
   finalizePreparedAuthzedAuthorization,
   prepareAuthzedActivation,
@@ -16,6 +17,7 @@ type TActivationCliDependencies = Readonly<{
   abort: typeof abortAuthzedActivation;
   activate: typeof activatePreparedAuthzedAuthorization;
   bootstrap: typeof bootstrapFreshAuthzedActivation;
+  bootstrapDevelopment: typeof bootstrapDevelopmentAuthzedActivation;
   finalize: typeof finalizePreparedAuthzedAuthorization;
   prepare: typeof prepareAuthzedActivation;
   rollback: typeof rollbackAuthzedAuthorization;
@@ -29,6 +31,7 @@ const defaultDependencies: TActivationCliDependencies = {
   abort: abortAuthzedActivation,
   activate: activatePreparedAuthzedAuthorization,
   bootstrap: bootstrapFreshAuthzedActivation,
+  bootstrapDevelopment: bootstrapDevelopmentAuthzedActivation,
   finalize: finalizePreparedAuthzedAuthorization,
   prepare: prepareAuthzedActivation,
   rollback: rollbackAuthzedAuthorization,
@@ -81,6 +84,9 @@ const execute = async (
       return { status: "rolled_back" };
     case "bootstrap":
       await dependencies.bootstrap();
+      return { status: "activated" };
+    case "bootstrap_development":
+      await dependencies.bootstrapDevelopment();
       return { status: "activated" };
   }
 };

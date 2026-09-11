@@ -83,44 +83,40 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Resolve immutable third-party image manifests
+      - name: Validate release-pinned third-party image manifests
         run: |
           set -euo pipefail
 
-          resolve_multiarch_image() {
-            local tagged_image="$1"
+          validate_multiarch_image() {
+            local image_ref="$1"
             local expected_repository="$2"
             local output_name="$3"
-            local manifest
-            local digest
             local raw_manifest
 
-            [[ "$tagged_image" == "${expected_repository}:"* ]]
+            if [[ ! "$image_ref" =~ ^${expected_repository}@sha256:[0-9a-f]{64}$ ]]; then
+              echo "ERROR: release image pin is missing or invalid"
+              exit 1
+            fi
 
-            manifest=$(docker buildx imagetools inspect "$tagged_image" --format '{{json .Manifest}}')
-            digest=$(jq -er '
+            raw_manifest=$(docker buildx imagetools inspect "$image_ref" --raw)
+            jq -e '
               select(
                 .mediaType == "application/vnd.oci.image.index.v1+json" or
                 .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json"
               ) |
-              .digest |
-              select(test("^sha256:[0-9a-f]{64}$"))
-            ' <<<"$manifest")
-
-            raw_manifest=$(docker buildx imagetools inspect "${expected_repository}@${digest}" --raw)
-            jq -e '
               [.manifests[].platform | "\(.os)/\(.architecture)"] as $platforms |
               ($platforms | index("linux/amd64")) != null and
               ($platforms | index("linux/arm64")) != null
             ' <<<"$raw_manifest" >/dev/null
 
-            printf '%s=%s@%s\n' "$output_name" "$expected_repository" "$digest" >>"$GITHUB_ENV"
+            printf '%s=%s\n' "$output_name" "$image_ref" >>"$GITHUB_ENV"
           }
 
-          resolve_multiarch_image \
-            "pgvector/pgvector:pg18" pgvector/pgvector POSTGRES_BOOTSTRAP_IMAGE_REF
-          resolve_multiarch_image \
-            "authzed/spicedb:v1.52.0" authzed/spicedb SPICEDB_IMAGE_REF
+          postgres_bootstrap_image=$(jq -er '.postgresBootstrap' authzed/release-images.json)
+          spicedb_image=$(jq -er '.spicedb' authzed/release-images.json)
+          validate_multiarch_image \
+            "$postgres_bootstrap_image" pgvector/pgvector POSTGRES_BOOTSTRAP_IMAGE_REF
+          validate_multiarch_image "$spicedb_image" authzed/spicedb SPICEDB_IMAGE_REF
 
       - name: Validate release and signed immutable images
         env:
@@ -146,11 +142,11 @@ jobs:
           fi
           gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
 
-          identity='^https://github\.com/formbricks/formbricks/\.github/workflows/.+@refs/(heads/main|tags/.+)$'
+          image_identity="https://github.com/formbricks/formbricks/.github/workflows/release-docker-github.yml@refs/tags/${RELEASE_TAG}"
           issuer='https://token.actions.githubusercontent.com'
-          cosign verify --certificate-identity-regexp "$identity" --certificate-oidc-issuer "$issuer" \
+          cosign verify --certificate-identity "$image_identity" --certificate-oidc-issuer "$issuer" \
             "$BRIDGE_IMAGE_REF" >/dev/null
-          cosign verify --certificate-identity-regexp "$identity" --certificate-oidc-issuer "$issuer" \
+          cosign verify --certificate-identity "$image_identity" --certificate-oidc-issuer "$issuer" \
             "$TARGET_IMAGE_REF" >/dev/null
 
           temporary_directory=$(mktemp -d)
@@ -254,6 +250,7 @@ jobs:
           (
             cd dist/v6-upgrade
             sha256sum \
+              authzed.com_spicedbclusters.yaml \
               authzed-postgres-bootstrap.sh \
               formbricks-authzed-overlay.yml \
               formbricks-upgrade-assistant \
@@ -266,7 +263,6 @@ jobs:
 
       - name: Sign and verify checksums
         env:
-          CERTIFICATE_IDENTITY_REGEXP: ^https://github\.com/formbricks/formbricks/\.github/workflows/.+@refs/(heads/main|tags/.+)$
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
@@ -285,9 +281,10 @@ jobs:
               --bundle "$signature_bundle" \
               dist/v6-upgrade/formbricks-upgrade-checksums.txt
           fi
+          bundle_identity="https://github.com/formbricks/formbricks/.github/workflows/publish-v6-upgrade-assistant.yml@refs/tags/${RELEASE_TAG}"
           cosign verify-blob \
             --bundle "$signature_bundle" \
-            --certificate-identity-regexp "$CERTIFICATE_IDENTITY_REGEXP" \
+            --certificate-identity "$bundle_identity" \
             --certificate-oidc-issuer "$issuer" \
             dist/v6-upgrade/formbricks-upgrade-checksums.txt
           (cd dist/v6-upgrade && sha256sum --check formbricks-upgrade-checksums.txt)
@@ -300,6 +297,7 @@ jobs:
           set -euo pipefail
           release_version="${RELEASE_TAG#[vV]}"
           scripts/reconcile-github-release-assets.sh "$RELEASE_TAG" "$GITHUB_REPOSITORY" \
+            dist/v6-upgrade/authzed.com_spicedbclusters.yaml \
             dist/v6-upgrade/authzed-postgres-bootstrap.sh \
             dist/v6-upgrade/formbricks-authzed-overlay.yml \
             dist/v6-upgrade/formbricks-upgrade-assistant \

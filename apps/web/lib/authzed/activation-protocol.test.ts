@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   activatePreparedAuthzedAuthorization,
+  bootstrapDevelopmentAuthzedActivation,
   bootstrapFreshAuthzedActivation,
   finalizePreparedAuthzedAuthorization,
   prepareAuthzedActivation,
@@ -19,12 +20,18 @@ import { checkAuthzedRuntimeActivation } from "./activation-runtime";
 import { AuthzedError } from "./errors";
 import { readAuthzedReleaseManifest } from "./release-manifest";
 
-const { digest } = vi.hoisted(() => ({
+const { digest, mockedEnv } = vi.hoisted(() => ({
   digest: (character: string): `sha256:${string}` => `sha256:${character.repeat(64)}`,
+  mockedEnv: {
+    AUTHZED_CONSISTENCY: "fully_consistent",
+    AUTHZED_ENABLED: "true",
+    DATABASE_URL: "postgresql://formbricks:secret@postgres:5432/formbricks?connection_limit=2",
+    NODE_ENV: "test" as "development" | "production" | "test",
+  },
 }));
 
 vi.mock("@/lib/env", () => ({
-  env: { AUTHZED_CONSISTENCY: "fully_consistent", AUTHZED_ENABLED: "true" },
+  env: mockedEnv,
 }));
 vi.mock("@formbricks/database", () => ({ prisma: { organization: { count: vi.fn() } } }));
 vi.mock("./activation-contract", () => ({
@@ -133,6 +140,8 @@ const cleanAudit = {
 
 describe("fresh AuthZed activation bootstrap", () => {
   beforeEach(() => {
+    mockedEnv.DATABASE_URL = "postgresql://formbricks:secret@postgres:5432/formbricks?connection_limit=2";
+    mockedEnv.NODE_ENV = "test";
     vi.clearAllMocks();
     vi.mocked(getAuthzedActivationStatus).mockResolvedValue(status());
     vi.mocked(getAuthzedActivationReceipt).mockResolvedValue(receipt());
@@ -328,6 +337,49 @@ describe("fresh AuthZed activation bootstrap", () => {
     expect(acquireAuthzedPreparationLease).not.toHaveBeenCalled();
   });
 
+  test("migrates a populated local development database through the full activation protocol", async () => {
+    await bootstrapDevelopmentAuthzedActivation({
+      applySchema: vi.fn(async () => ({ sourceDigest: digest("c") })) as never,
+      audit: vi.fn(async (mode) => ({ ...cleanAudit, mode })),
+      checkSchema: vi.fn(async () => ({ status: "matched" }) as never),
+      countOrganizations: vi.fn(async () => 1),
+      drainOutbox: vi.fn(async () => ({
+        claimed: 0,
+        deadLettered: 0,
+        delivered: 0,
+        failed: 0,
+        remaining: 0,
+        status: "drained" as const,
+      })),
+      getOutboxStatus: vi.fn(async () => ({
+        deadLettered: 0,
+        oldestPendingAgeSeconds: null,
+        overdueRevocations: 0,
+        pending: 0,
+        revocationsPastCritical: 0,
+        revocationsPastWarning: 0,
+      })),
+    });
+
+    expect(createPreparedAuthzedActivationReceipt).toHaveBeenCalledOnce();
+    expect(activateAuthzedAuthorization).toHaveBeenCalledWith(receiptId, digest("a"), expect.any(Function));
+    expect(finalizeAuthzedActivation).toHaveBeenCalledWith(receiptId, digest("a"), expect.any(Function));
+  });
+
+  test("never allows the populated-database shortcut outside local development", async () => {
+    mockedEnv.NODE_ENV = "production";
+
+    await expect(
+      bootstrapDevelopmentAuthzedActivation({ countOrganizations: vi.fn(async () => 1) })
+    ).rejects.toMatchObject({
+      code: "authzed_failed_precondition",
+      operation: "activation_development_only",
+    });
+
+    expect(getAuthzedActivationStatus).not.toHaveBeenCalled();
+    expect(acquireAuthzedPreparationLease).not.toHaveBeenCalled();
+  });
+
   test("does not reuse a pending upgrade receipt as a fresh install", async () => {
     vi.mocked(getAuthzedActivationStatus).mockResolvedValue(
       status({ pendingReceiptId: receiptId, transition: "prepared" })
@@ -350,6 +402,7 @@ describe("fresh AuthZed activation bootstrap", () => {
 
 describe("AuthZed activation preparation", () => {
   beforeEach(() => {
+    mockedEnv.DATABASE_URL = "postgresql://formbricks:secret@postgres:5432/formbricks?connection_limit=2";
     vi.clearAllMocks();
     vi.mocked(readAuthzedReleaseManifest).mockResolvedValue({ authorizationMode: "legacy_bridge" } as never);
     vi.mocked(getAuthzedActivationStatus).mockResolvedValue(status());
@@ -385,6 +438,26 @@ describe("AuthZed activation preparation", () => {
 
     expect(acquireAuthzedPreparationLease).not.toHaveBeenCalled();
     expect(createPreparedAuthzedActivationReceipt).not.toHaveBeenCalled();
+  });
+
+  test("rejects an undersized database pool before reading or mutating activation state", async () => {
+    mockedEnv.DATABASE_URL = "postgresql://formbricks:secret@postgres:5432/formbricks?connection_limit=1";
+
+    await expect(
+      prepareAuthzedActivation({
+        bridgeImageDigest: digest("1"),
+        bridgeManifestDigest: digest("a"),
+        candidateImageDigest: digest("2"),
+        candidateManifestDigest: digest("3"),
+      })
+    ).rejects.toMatchObject({
+      code: "authzed_failed_precondition",
+      operation: "activation_database_pool_capacity",
+    });
+
+    expect(readAuthzedReleaseManifest).not.toHaveBeenCalled();
+    expect(getAuthzedActivationStatus).not.toHaveBeenCalled();
+    expect(acquireAuthzedPreparationLease).not.toHaveBeenCalled();
   });
 
   test("rejects a prepared receipt from a different immutable plan", async () => {

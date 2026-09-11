@@ -5,6 +5,8 @@ import {
 } from "./activation-types";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
+const AUTHZED_ACTIVATION_MINIMUM_DATABASE_CONNECTIONS = 2;
+
 type TPromiseOutcome<T> =
   | Readonly<{ status: "fulfilled"; value: T }>
   | Readonly<{ reason: unknown; status: "rejected" }>;
@@ -15,6 +17,28 @@ const settle = async <T>(promise: Promise<T>): Promise<TPromiseOutcome<T>> => {
   } catch (reason) {
     return { reason, status: "rejected" };
   }
+};
+
+/**
+ * Activation holds an advisory-lock transaction while collecting final evidence through the regular
+ * Prisma client. That evidence query needs a second pooled connection; reject undersized pools before
+ * creating a receipt or mutation fence instead of waiting for the pool timeout during cutover.
+ */
+export const assertAuthzedActivationDatabasePoolCapacity = (databaseUrl: string): void => {
+  const configuredLimit = new URL(databaseUrl).searchParams.get("connection_limit");
+  if (configuredLimit === null) return;
+
+  const parsedLimit = Number.parseInt(configuredLimit, 10);
+  if (!Number.isFinite(parsedLimit) || parsedLimit >= AUTHZED_ACTIVATION_MINIMUM_DATABASE_CONNECTIONS) {
+    return;
+  }
+
+  throw new AuthzedError({
+    attempts: 0,
+    code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION,
+    operation: "activation_database_pool_capacity",
+    retryable: false,
+  });
 };
 
 export const throwIfAuthzedActivationAborted = (signal?: AbortSignal): void => {

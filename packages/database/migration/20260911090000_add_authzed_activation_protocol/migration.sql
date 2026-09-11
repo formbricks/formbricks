@@ -4,25 +4,43 @@
 -- installer, and standalone upgrade assistant all use these records instead of trusting a Boolean
 -- acknowledgement in deployment configuration.
 
-CREATE TYPE "AuthzedAuthorizationAuthority" AS ENUM ('legacy', 'spicedb');
-CREATE TYPE "AuthzedAuthorizationTransition" AS ENUM (
-  'idle',
-  'preparing',
-  'prepared',
-  'activating',
-  'rollback_fencing',
-  'rolling_back'
-);
-CREATE TYPE "AuthzedActivationReceiptStatus" AS ENUM (
-  'prepared',
-  'active',
-  'rolled_back',
-  'invalidated'
-);
-CREATE TYPE "AuthzedActivationKind" AS ENUM ('fresh_install', 'upgrade');
-CREATE TYPE "AuthzedUpgradeRunStatus" AS ENUM ('pending', 'running', 'completed', 'failed');
+-- Prisma executes SQL migration files without an implicit transaction. Keep the activation tables
+-- and triggers atomic so a failed deployment cannot leave a partially installed fence. The partial
+-- claim index is built concurrently by the immediately following migration.
+BEGIN;
 
-CREATE TABLE "AuthzedAuthorizationControl" (
+SET LOCAL lock_timeout = '1s';
+DO $$
+BEGIN
+  CREATE TYPE "AuthzedAuthorizationAuthority" AS ENUM ('legacy', 'spicedb');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$
+BEGIN
+  CREATE TYPE "AuthzedAuthorizationTransition" AS ENUM (
+    'idle', 'preparing', 'prepared', 'activating', 'rollback_fencing', 'rolling_back'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$
+BEGIN
+  CREATE TYPE "AuthzedActivationReceiptStatus" AS ENUM (
+    'prepared', 'active', 'rolled_back', 'invalidated'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$
+BEGIN
+  CREATE TYPE "AuthzedActivationKind" AS ENUM ('fresh_install', 'upgrade');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$
+BEGIN
+  CREATE TYPE "AuthzedUpgradeRunStatus" AS ENUM ('pending', 'running', 'completed', 'failed');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE TABLE IF NOT EXISTS "AuthzedAuthorizationControl" (
   "id" TEXT NOT NULL DEFAULT 'formbricks',
   "authority" "AuthzedAuthorizationAuthority" NOT NULL DEFAULT 'legacy',
   "transition" "AuthzedAuthorizationTransition" NOT NULL DEFAULT 'idle',
@@ -38,7 +56,7 @@ CREATE TABLE "AuthzedAuthorizationControl" (
   CONSTRAINT "AuthzedAuthorizationControl_singleton_check" CHECK ("id" = 'formbricks')
 );
 
-CREATE TABLE "AuthzedActivationReceipt" (
+CREATE TABLE IF NOT EXISTS "AuthzedActivationReceipt" (
   "id" TEXT NOT NULL,
   "generation" BIGINT NOT NULL,
   "kind" "AuthzedActivationKind" NOT NULL,
@@ -95,7 +113,7 @@ CREATE TABLE "AuthzedActivationReceipt" (
   )
 );
 
-CREATE TABLE "AuthzedUpgradeRun" (
+CREATE TABLE IF NOT EXISTS "AuthzedUpgradeRun" (
   "id" TEXT NOT NULL,
   "manifestDigest" TEXT NOT NULL,
   "generation" BIGINT NOT NULL,
@@ -108,13 +126,12 @@ CREATE TABLE "AuthzedUpgradeRun" (
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT "AuthzedUpgradeRun_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "AuthzedUpgradeRun_manifestDigest_generation_phase_key"
+    UNIQUE ("manifestDigest", "generation", "phase"),
   CONSTRAINT "AuthzedUpgradeRun_manifestDigest_check"
     CHECK ("manifestDigest" ~ '^sha256:[0-9a-f]{64}$'),
   CONSTRAINT "AuthzedUpgradeRun_phase_check" CHECK ("phase" ~ '^[a-z][a-z0-9_]{0,63}$')
 );
-
-CREATE UNIQUE INDEX "AuthzedUpgradeRun_manifestDigest_generation_phase_key"
-  ON "AuthzedUpgradeRun"("manifestDigest", "generation", "phase");
 
 INSERT INTO "AuthzedAuthorizationControl" ("id")
 VALUES ('formbricks')
@@ -134,44 +151,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS "authzed_validate_authorization_control" ON "AuthzedAuthorizationControl";
 CREATE TRIGGER "authzed_validate_authorization_control"
 BEFORE INSERT OR UPDATE ON "AuthzedAuthorizationControl"
 FOR EACH ROW EXECUTE FUNCTION authzed_validate_authorization_control();
 
 -- Existing outbox timestamps are not a safe cutover watermark: several events can share one value.
--- Backfill a real monotonic sequence and let every trigger-generated row allocate the next value.
-CREATE SEQUENCE "AuthzedProjectionOutbox_sourceSequence_seq" AS BIGINT;
+-- New rows receive a monotonic sequence. Pre-migration rows intentionally remain NULL and are always
+-- included in bounded drains; avoiding a table rewrite keeps this migration safe for large backlogs.
+CREATE SEQUENCE IF NOT EXISTS "AuthzedProjectionOutbox_sourceSequence_seq" AS BIGINT;
 
 ALTER TABLE "AuthzedProjectionOutbox"
-  ADD COLUMN "sourceSequence" BIGINT;
+  ADD COLUMN IF NOT EXISTS "sourceSequence" BIGINT;
 
 ALTER TABLE "AuthzedProjectionOutbox"
   ALTER COLUMN "sourceSequence" SET DEFAULT nextval('"AuthzedProjectionOutbox_sourceSequence_seq"');
 
-WITH existing_rows AS (
-  SELECT "id"
-  FROM "AuthzedProjectionOutbox"
-  WHERE "sourceSequence" IS NULL
-  ORDER BY "createdAt" ASC, "id" ASC
-)
-UPDATE "AuthzedProjectionOutbox" AS outbox
-SET "sourceSequence" = nextval('"AuthzedProjectionOutbox_sourceSequence_seq"')
-FROM existing_rows
-WHERE outbox."id" = existing_rows."id";
-
-ALTER TABLE "AuthzedProjectionOutbox"
-  ALTER COLUMN "sourceSequence" SET NOT NULL;
-
 ALTER SEQUENCE "AuthzedProjectionOutbox_sourceSequence_seq"
   OWNED BY "AuthzedProjectionOutbox"."sourceSequence";
-
-CREATE UNIQUE INDEX "AuthzedProjectionOutbox_sourceSequence_key"
-  ON "AuthzedProjectionOutbox"("sourceSequence");
-
-DROP INDEX IF EXISTS "AuthzedProjectionOutbox_claim_idx";
-CREATE INDEX "AuthzedProjectionOutbox_claim_idx"
-  ON "AuthzedProjectionOutbox"("isRevocation" DESC, "sourceSequence" ASC)
-  WHERE "processedAt" IS NULL AND "deadLetteredAt" IS NULL;
 
 -- All product writes that can change authorization source facts take the shared side of this lock.
 -- The activation finalizer takes the exclusive side after publishing a short, committed fence. That
@@ -214,46 +211,59 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_organization" ON "Organization";
 CREATE TRIGGER "authzed_mutation_fence_organization"
 BEFORE INSERT OR DELETE OR UPDATE OF "id" ON "Organization"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_membership" ON "Membership";
 CREATE TRIGGER "authzed_mutation_fence_membership"
 BEFORE INSERT OR DELETE OR UPDATE OF "role", "accepted", "organizationId", "userId" ON "Membership"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_user" ON "User";
 CREATE TRIGGER "authzed_mutation_fence_user"
 BEFORE INSERT OR DELETE OR UPDATE OF "isActive" ON "User"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_team" ON "Team";
 CREATE TRIGGER "authzed_mutation_fence_team"
 BEFORE INSERT OR DELETE OR UPDATE OF "organizationId" ON "Team"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_team_user" ON "TeamUser";
 CREATE TRIGGER "authzed_mutation_fence_team_user"
 BEFORE INSERT OR DELETE OR UPDATE OF "role", "teamId", "userId" ON "TeamUser"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_workspace" ON "Workspace";
 CREATE TRIGGER "authzed_mutation_fence_workspace"
 BEFORE INSERT OR DELETE OR UPDATE OF "organizationId" ON "Workspace"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_workspace_team" ON "WorkspaceTeam";
 CREATE TRIGGER "authzed_mutation_fence_workspace_team"
 BEFORE INSERT OR DELETE OR UPDATE OF "permission", "workspaceId", "teamId" ON "WorkspaceTeam"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_api_key" ON "ApiKey";
 CREATE TRIGGER "authzed_mutation_fence_api_key"
 BEFORE INSERT OR DELETE OR UPDATE OF "organizationId", "organizationAccess" ON "ApiKey"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_api_key_workspace" ON "ApiKeyWorkspace";
 CREATE TRIGGER "authzed_mutation_fence_api_key_workspace"
 BEFORE INSERT OR DELETE OR UPDATE OF "permission", "apiKeyId", "workspaceId" ON "ApiKeyWorkspace"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_feedback_directory" ON "FeedbackDirectory";
 CREATE TRIGGER "authzed_mutation_fence_feedback_directory"
 BEFORE INSERT OR DELETE OR UPDATE OF "isArchived", "organizationId" ON "FeedbackDirectory"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
 
+DROP TRIGGER IF EXISTS "authzed_mutation_fence_feedback_directory_workspace" ON "FeedbackDirectoryWorkspace";
 CREATE TRIGGER "authzed_mutation_fence_feedback_directory_workspace"
 BEFORE INSERT OR DELETE OR UPDATE OF "feedbackDirectoryId", "workspaceId" ON "FeedbackDirectoryWorkspace"
 FOR EACH STATEMENT EXECUTE FUNCTION authzed_assert_mutations_allowed();
+
+COMMIT;

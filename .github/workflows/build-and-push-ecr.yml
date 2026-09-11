@@ -42,6 +42,11 @@ on:
         required: false
         type: string
         default: ""
+      AUTHZED_RELEASE_MODE:
+        description: "Compile-time AuthZed evaluator mode"
+        required: false
+        type: string
+        default: "spicedb_authoritative"
     secrets:
       AWS_ECR_PUSH_ROLE_ARN:
         required: true
@@ -120,6 +125,7 @@ jobs:
           deployment_tag: ${{ inputs.deployment_tag }}
           is_prerelease: ${{ inputs.IS_PRERELEASE }}
           make_latest: ${{ inputs.MAKE_LATEST }}
+          authzed_release_mode: ${{ inputs.AUTHZED_RELEASE_MODE }}
         env:
           DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           DUMMY_DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}

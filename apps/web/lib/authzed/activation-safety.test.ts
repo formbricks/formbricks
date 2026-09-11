@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
+  assertAuthzedActivationDatabasePoolCapacity,
   runAuthzedActivationWithTimeout,
   runWithRenewingAuthzedPreparationLease,
   throwIfAuthzedActivationAborted,
@@ -16,6 +17,28 @@ const deferred = <T>() => {
 describe("AuthZed activation safety", () => {
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  test("requires a second database connection for final activation evidence", () => {
+    expect(() =>
+      assertAuthzedActivationDatabasePoolCapacity(
+        "postgresql://formbricks:secret@postgres:5432/formbricks?connection_limit=1"
+      )
+    ).toThrowError(
+      expect.objectContaining({
+        code: "authzed_failed_precondition",
+        operation: "activation_database_pool_capacity",
+      })
+    );
+
+    expect(() =>
+      assertAuthzedActivationDatabasePoolCapacity(
+        "postgresql://formbricks:secret@postgres:5432/formbricks?connection_limit=2"
+      )
+    ).not.toThrow();
+    expect(() =>
+      assertAuthzedActivationDatabasePoolCapacity("postgresql://formbricks:secret@postgres:5432/formbricks")
+    ).not.toThrow();
   });
 
   test("aborts a timed-out operation and waits for its cleanup before rejecting", async () => {

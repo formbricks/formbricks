@@ -34,17 +34,21 @@ The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (
 
 - **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API starts. Both migration services run on every `docker compose up` and are idempotent.
 - **Production** (`docker/docker-compose.yml`): Fresh stable installations default `FORMBRICKS_IMAGE_REF` to
-  `ghcr.io/formbricks/formbricks:latest`. Set it to a reviewed full release digest for immutable deployments
+  `ghcr.io/formbricks/formbricks:stable`. Set it to a reviewed full release digest for immutable deployments
   or pre-release testing. Every Formbricks application, migration, and AuthZed operation container uses this
   one reference.
   Set `POSTGRES_PASSWORD` to a unique random value and set non-empty `HUB_API_KEY`, `CUBEJS_API_SECRET`,
   `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` values in `.env` before starting the stack. Keep
   `POSTGRES_PASSWORD` unchanged after the database volume has been initialized. The installer also writes a
-  URL-encoded companion for connection strings. Manual installs only need to set
-  `POSTGRES_PASSWORD_URL_ENCODED` when the raw password contains URI-reserved characters; existing URL-safe
-  passwords continue to work through the raw-value fallback. The `docker compose config >/dev/null` command
-  validates Compose syntax and fails when `POSTGRES_PASSWORD` is missing; other missing secrets are reported by
-  the service that needs them at startup. `HUB_API_URL` defaults to `http://hub:8080` and `CUBEJS_API_URL`
+  URL-encoded companion for each database password used in a connection string. `AUTHZED_DATABASE_PASSWORD` is
+  the operator-owned credential used to create the dedicated `spicedb` role;
+  `AUTHZED_DATABASE_PASSWORD_URL_ENCODED` is only its generated interpolation-safe representation, not a second
+  credential. Manual installs only need a distinct encoded value when the raw password contains URI-reserved
+  characters; hexadecimal passwords use the same value for both variables. Never rotate one without the other.
+  The same rule applies to `POSTGRES_PASSWORD` and `POSTGRES_PASSWORD_URL_ENCODED`. The
+  `docker compose config >/dev/null` command validates Compose syntax and fails when `POSTGRES_PASSWORD` is
+  missing; other missing secrets are reported by the service that needs them at startup. `HUB_API_URL` defaults
+  to `http://hub:8080` and `CUBEJS_API_URL`
   defaults to `http://cube:4000` so the Formbricks app reaches Hub and Cube inside the Compose network. Cube JWT
   issuer/audience default to `formbricks-web` and `formbricks-cube`, and the bundled Cube service exposes only
   `meta,data` API scopes. The bundled single-replica Cube uses in-memory cache and queue storage and defaults
@@ -67,9 +71,10 @@ database credentials, `spicedb-migrate` applies datastore migrations, and only t
 one-shot services are idempotent.
 
 For production Docker, generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with
-`openssl rand -hex 32` and keep them in the mode-`0600` `.env` file. SpiceDB remains internal at
-`spicedb:50051`; it is not published through Traefik. The one-click installer generates both values and
-downloads `authzed-postgres-bootstrap.sh` automatically.
+`openssl rand -hex 32`, set `AUTHZED_DATABASE_PASSWORD_URL_ENCODED` to the same URL-safe hexadecimal password,
+and keep them in the mode-`0600` `.env` file. SpiceDB remains internal at `spicedb:50051`; it is not published
+through Traefik. The one-click installer generates the raw credentials and encoded companion without printing
+them, and downloads `authzed-postgres-bootstrap.sh` automatically.
 
 For repository development, `FORMBRICKS_DEV_AUTHZED_MODE=bundled` is the default. `pnpm db:up` generates and
 preserves the local credentials, enforces fully-consistent authorization, and starts SpiceDB on
@@ -93,7 +98,9 @@ result, and exits `0` only for a healthy connection. Disabled, invalid, authenti
 overload, unavailable, and unexpected states exit `1` with a stable `authzed_*` code. It never prints the
 token, schema, raw SDK error, or stack trace. It is intentionally not exposed through a browser or HTTP route,
 and SpiceDB availability does not affect the normal Formbricks `/health` result. Restart Formbricks after
-changing AuthZed configuration.
+changing AuthZed configuration. Token and TLS rotation at the same endpoint do not need a new activation receipt.
+The endpoint and system namespace are receipt-bound and cannot be changed in place. Follow the replacement and
+verification procedure in the [public operations guide](../docs/self-hosting/advanced/authzed-operations.mdx).
 
 Check or explicitly apply the canonical Formbricks schema with:
 
@@ -113,9 +120,13 @@ docker compose --profile authzed-ops run --rm authzed-ops backfill
 
 The first apply to an empty SpiceDB needs no additional argument. Replacing a non-empty schema requires
 `--expected-current-digest sha256:<digest-from-check>`. The command verifies the write by reading and comparing
-the schema again. Fresh installs run the idempotent `authzed-initialize` service independently; Formbricks
-startup and `/health` do not depend on it. Existing v5 installations must use the signed receipt-backed
-executor in the [v6 upgrade assistant guide](../docs/self-hosting/advanced/v6-upgrade-assistant.mdx). See the
+the schema again. Fresh installs run the idempotent `authzed-initialize` service, and the initial Formbricks
+startup waits for its database activation receipt. That bounded wait performs no SpiceDB RPC; after startup,
+`/health` remains independent from SpiceDB. The activation process requires the application database URL to
+permit at least two concurrent connections. Set an explicit `connection_limit` to `2` or higher and give
+PgBouncer or another proxy at least two usable backend connections in addition to normal application capacity.
+Existing v5 installations must use the signed receipt-backed executor in the
+[v6 upgrade assistant guide](../docs/self-hosting/advanced/v6-upgrade-assistant.mdx). See the
 [public operations guide](../docs/self-hosting/advanced/authzed-operations.mdx) for the JSON contract, exit
 codes, backup requirements, repair, and rollback rules.
 
@@ -136,6 +147,12 @@ Existing one-click installations keep their customized Compose file during `form
 v6 executor installs `formbricks-authzed-overlay.yml` beside it, creates the database-backed activation receipt,
 and automatically restores the recorded bridge after a candidate failure. Back up both databases first and
 never use `docker compose down -v` during migration or rollback.
+
+The release-matched bridge uses the `legacy_bridge` runtime contract: PostgreSQL-backed v5 authorization remains
+authoritative while SpiceDB is populated and audited. The v6 candidate uses `spicedb_authoritative` and cannot
+start without its compatible receipt. Stable v5 images remain bridge-compatible; stable v6 images are
+SpiceDB-authoritative. Release automation recognizes only those declared major-version policies and refuses to
+move `stable`, `latest`, or version aliases for an unknown future major.
 
 Before changing an existing v5 deployment, download all signed upgrade-assistant assets from the target v6
 GitHub release and run its read-only preflight. It validates the supported source version, local Compose

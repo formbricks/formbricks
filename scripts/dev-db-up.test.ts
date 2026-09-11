@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, test } from "vitest";
 
 const devDbUpScriptPath = fileURLToPath(new URL("./dev-db-up.sh", import.meta.url));
+const packageJsonPath = fileURLToPath(new URL("../package.json", import.meta.url));
 const tempDirs: string[] = [];
 
 const createFixture = (authzedMode: "bundled" | "external", composeProfiles: string) => {
@@ -86,6 +87,19 @@ afterEach(() => {
 });
 
 describe("scripts/dev-db-up.sh", () => {
+  test("runs activation from the bundled CLI with its release-matched schema and manifest", () => {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+      scripts: Record<string, string>;
+    };
+
+    for (const scriptName of ["authzed:activation:bootstrap", "authzed:activation:bootstrap:dev"]) {
+      expect(packageJson.scripts[scriptName]).toContain("pnpm --filter @formbricks/database build");
+      expect(packageJson.scripts[scriptName]).toContain("pnpm --dir apps/web build:authzed-cli");
+      expect(packageJson.scripts[scriptName]).toContain("node ./apps/web/dist/authzed-cli/index.mjs");
+      expect(packageJson.scripts[scriptName]).not.toContain("scripts/docker/authzed-cli.ts");
+    }
+  });
+
   test("starts bundled SpiceDB alongside the developer's other Compose profiles", () => {
     const fixture = runDevDbUp("bundled", "qwen,taxonomy");
 
@@ -95,7 +109,7 @@ describe("scripts/dev-db-up.sh", () => {
     );
     expect(readFileSync(fixture.pnpmInvocationsPath, "utf8").trim().split("\n")).toEqual([
       "db:migrate:dev",
-      "authzed:activation:bootstrap",
+      "authzed:activation:bootstrap:dev",
     ]);
   });
 
@@ -107,7 +121,7 @@ describe("scripts/dev-db-up.sh", () => {
     expect(readFileSync(fixture.envPath, "utf8")).toContain("AUTHZED_INSECURE=false");
     expect(readFileSync(fixture.pnpmInvocationsPath, "utf8").trim().split("\n")).toEqual([
       "db:migrate:dev",
-      "authzed:activation:bootstrap",
+      "authzed:activation:bootstrap:dev",
     ]);
   });
 });

@@ -7,7 +7,7 @@ vi.mock("node:fs/promises", () => ({ readFile: vi.fn() }));
 const validManifest = {
   authorizationMode: "spicedb_authoritative",
   clientContractVersion: 1,
-  migrationHead: "20260911090000_add_authzed_activation_protocol",
+  migrationHead: "20260911091000_add_authzed_sequence_claim_index",
   protocolVersion: 1,
   sourceRevision: "16663b0eaaa1010c0c62b7f1c8f207695def8167",
 } as const;

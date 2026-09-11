@@ -61,6 +61,22 @@ cli:
 
 job:
   ttlSecondsAfterFinished: 600
+  # The release assistant carries these fields from the active Formbricks workload so the disposable
+  # Job remains compatible with restricted/OpenShift clusters and private registries.
+  serviceAccountName: ""
+  podLabels: {}
+  podAnnotations: {}
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
   activeDeadlineSeconds:
     status: 300
     prepare: 21600
@@ -79,6 +95,7 @@ job:
       cpu: 100m
       memory: 256Mi
     limits:
+      cpu: 500m
       memory: 1Gi
 
 nodeSelector: {}
