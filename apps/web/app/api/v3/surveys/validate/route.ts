@@ -1,6 +1,7 @@
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
 import { validateV3Survey } from "../lib/operations";
-import { ZV3EmptyQuery, ZV3SurveyValidationRequestBody } from "../schemas";
+import { ZV3SurveyValidationRequestBody } from "../schemas";
 
 export const POST = withV3ApiWrapper({
   auth: "both",

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
 import { archiveV3Survey } from "../../lib/operations";
-import { ZV3EmptyQuery } from "../../schemas";
 
 const surveyParamsSchema = z.object({
   surveyId: z.cuid2(),

@@ -1308,8 +1308,6 @@ export const ZV3SurveyValidationRequestBody = z.discriminatedUnion("operation", 
     .strict(),
 ]);
 
-export const ZV3EmptyQuery = z.object({}).strict();
-
 /**
  * `-fLang-` is an editor-only delimiter: the shared label validators embed it in the issue message so
  * the editor can split the language list off for its toast (`survey-menu-bar.tsx`). v3 clients receive
