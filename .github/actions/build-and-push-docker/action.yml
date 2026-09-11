@@ -72,6 +72,18 @@ inputs:
     description: "Build context"
     required: false
     default: "."
+  authzed_release_mode:
+    description: "Compile-time AuthZed evaluator mode: spicedb_authoritative or legacy_bridge"
+    required: false
+    default: "spicedb_authoritative"
+  tag_suffix:
+    description: "Optional validated suffix for a distinct immutable release artifact"
+    required: false
+    default: ""
+  publish_release_aliases:
+    description: "Whether a GHCR release build may publish major, minor, or latest aliases"
+    required: false
+    default: "true"
 
 outputs:
   image_tag:
@@ -97,6 +109,9 @@ runs:
         AWS_ROLE_ARN: ${{ inputs.aws_role_arn }}
         GHCR_IMAGE_NAME: ${{ inputs.ghcr_image_name }}
         DEPLOYMENT_TAG: ${{ inputs.deployment_tag }}
+        AUTHZED_RELEASE_MODE: ${{ inputs.authzed_release_mode }}
+        TAG_SUFFIX: ${{ inputs.tag_suffix }}
+        PUBLISH_RELEASE_ALIASES: ${{ inputs.publish_release_aliases }}
       run: |
         set -euo pipefail
 
@@ -121,6 +136,31 @@ runs:
 
         if [[ -n "$DEPLOYMENT_TAG" && "$DEPLOYMENT_TAG" != "staging" && "$DEPLOYMENT_TAG" != "staging-artemis" ]]; then
           echo "ERROR: deployment_tag must be 'staging' or 'staging-artemis', got: $DEPLOYMENT_TAG"
+          exit 1
+        fi
+
+        if [[ "$AUTHZED_RELEASE_MODE" != "spicedb_authoritative" && "$AUTHZED_RELEASE_MODE" != "legacy_bridge" ]]; then
+          echo "ERROR: authzed_release_mode must be 'spicedb_authoritative' or 'legacy_bridge'"
+          exit 1
+        fi
+
+        if [[ ! "$TAG_SUFFIX" =~ ^(-[a-z0-9][a-z0-9.-]*)?$ ]]; then
+          echo "ERROR: tag_suffix must be empty or a lowercase, dash-prefixed Docker tag suffix"
+          exit 1
+        fi
+
+        if [[ "$PUBLISH_RELEASE_ALIASES" != "true" && "$PUBLISH_RELEASE_ALIASES" != "false" ]]; then
+          echo "ERROR: publish_release_aliases must be 'true' or 'false'"
+          exit 1
+        fi
+
+        if [[ "$PUBLISH_RELEASE_ALIASES" == "true" && -n "$TAG_SUFFIX" ]]; then
+          echo "ERROR: suffixed artifacts must not publish shared release aliases"
+          exit 1
+        fi
+
+        if [[ "$REGISTRY_TYPE" == "ecr" && -n "$TAG_SUFFIX" ]]; then
+          echo "ERROR: tag_suffix is supported only for GHCR release artifacts"
           exit 1
         fi
 
@@ -217,14 +257,16 @@ runs:
         IMAGE_NAME: ${{ inputs.ghcr_image_name }}
         IS_PRERELEASE: ${{ inputs.is_prerelease }}
         MAKE_LATEST: ${{ inputs.make_latest }}
+        TAG_SUFFIX: ${{ inputs.tag_suffix }}
+        PUBLISH_RELEASE_ALIASES: ${{ inputs.publish_release_aliases }}
       run: |
         set -euo pipefail
 
         # Start with base version tag
-        TAGS="ghcr.io/${IMAGE_NAME}:${VERSION}"
+        TAGS="ghcr.io/${IMAGE_NAME}:${VERSION}${TAG_SUFFIX}"
 
         # For proper SemVer releases, add major.minor and major tags
-        if [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        if [[ "${PUBLISH_RELEASE_ALIASES}" == "true" && "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
           # Extract major and minor versions
           MAJOR=$(echo "${VERSION}" | cut -d. -f1)
           MINOR=$(echo "${VERSION}" | cut -d. -f2)
@@ -236,7 +278,7 @@ runs:
         fi
 
         # Add latest tag for stable releases marked as latest
-        if [[ "${IS_PRERELEASE}" == "false" && "${MAKE_LATEST}" == "true" ]]; then
+        if [[ "${PUBLISH_RELEASE_ALIASES}" == "true" && "${IS_PRERELEASE}" == "false" && "${MAKE_LATEST}" == "true" ]]; then
           TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:latest"
           echo "Added latest tag for stable release marked as latest"
         fi
@@ -274,6 +316,8 @@ runs:
         echo "Is Prerelease: ${{ inputs.is_prerelease }}"
         echo "Make Latest: ${{ inputs.make_latest }}"
         echo "Version: ${{ steps.version.outputs.version }}"
+        echo "AuthZed Release Mode: ${{ inputs.authzed_release_mode }}"
+        echo "Tag Suffix: ${{ inputs.tag_suffix }}"
 
         if [[ "${{ inputs.registry_type }}" == "ecr" ]]; then
           echo "ECR Tags: ${{ steps.ecr-tags.outputs.tags }}"
@@ -296,6 +340,9 @@ runs:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ inputs.registry_type == 'ecr' && steps.ecr-tags.outputs.tags || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags) || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && steps.ghcr-extra-tags.outputs.tags) || (inputs.registry_type == 'ghcr' && format('ghcr.io/{0}:{1}', inputs.ghcr_image_name, steps.version.outputs.version)) || (inputs.registry_type == 'ecr' && format('{0}/{1}:{2}', inputs.ecr_registry, inputs.ecr_repository, steps.version.outputs.version)) }}
         labels: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.labels || '' }}
+        build-args: |
+          FORMBRICKS_AUTHZED_RELEASE_MODE=${{ inputs.authzed_release_mode }}
+          FORMBRICKS_BUILD_REVISION=${{ github.sha }}
         secrets: |
           database_url=${{ env.DUMMY_DATABASE_URL }}
           encryption_key=${{ env.DUMMY_ENCRYPTION_KEY }}

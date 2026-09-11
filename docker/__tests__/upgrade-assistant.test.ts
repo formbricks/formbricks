@@ -10,6 +10,8 @@ const assistantPath = join(repositoryRoot, "docker/formbricks-upgrade-assistant"
 const bundleBuilderPath = join(repositoryRoot, "scripts/build-v6-upgrade-assistant-bundle.sh");
 const bridgeDigest = `sha256:${"a".repeat(64)}`;
 const targetDigest = `sha256:${"b".repeat(64)}`;
+const bridgeRuntimeManifestDigest = `sha256:${"c".repeat(64)}`;
+const targetRuntimeManifestDigest = `sha256:${"d".repeat(64)}`;
 const tempDirectories: string[] = [];
 
 type TAssistantResult = Readonly<{
@@ -31,7 +33,9 @@ type TAssistantResult = Readonly<{
     release: {
       version: string | null;
       bridgeImageDigest: string | null;
+      bridgeRuntimeManifestDigest: string | null;
       targetImageDigest: string | null;
+      targetRuntimeManifestDigest: string | null;
     };
     checks: { code: string; status: "blocked" | "pass" | "warning" }[];
     plan: { phase: string; mutating: boolean; requiresConfirmation: boolean }[];
@@ -61,7 +65,9 @@ const writeManifest = (directory: string, overrides: Record<string, unknown> = {
       supportedInstallTypes: ["docker_compose", "helm", "one_click"],
       artifacts: {
         bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
+        bridgeRuntimeManifestDigest,
         targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+        targetRuntimeManifestDigest,
       },
       ...overrides,
     })
@@ -189,7 +195,9 @@ describe("Formbricks v6 upgrade assistant", () => {
       minimumSourceVersion: "5.4.0",
       artifacts: {
         bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
+        bridgeRuntimeManifestDigest: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
         targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+        targetRuntimeManifestDigest: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
       },
     });
     expect(readFileSync(join(outputDirectory, "formbricks-upgrade-checksums.txt"), "utf8")).toMatch(
@@ -238,7 +246,12 @@ describe("Formbricks v6 upgrade assistant", () => {
         databaseMode: "bundled",
         authzedConfigured: true,
       },
-      release: { bridgeImageDigest: bridgeDigest, targetImageDigest: targetDigest },
+      release: {
+        bridgeImageDigest: bridgeDigest,
+        bridgeRuntimeManifestDigest,
+        targetImageDigest: targetDigest,
+        targetRuntimeManifestDigest,
+      },
     });
     expect(result.result.plan.map(({ phase }) => phase)).toEqual([
       "backup",

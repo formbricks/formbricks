@@ -57,17 +57,30 @@ describe("v6 upgrade assistant release workflow", () => {
     expect(uploadCommand).not.toContain("--clobber");
   });
 
-  test("passes the immutable community digest into v6 assistant publishing", () => {
+  test("builds release-matched target and bridge images and publishes both immutable digests", () => {
     const releaseWorkflow = readWorkflow(releaseWorkflowPath);
     const publishJob = releaseWorkflow.jobs?.["publish-v6-upgrade-assistant"];
+    const bridgeJob = releaseWorkflow.jobs?.["docker-build-authzed-bridge"];
 
     expect(publishJob?.uses).toBe("./.github/workflows/publish-v6-upgrade-assistant.yml");
-    expect(publishJob?.needs).toEqual(["docker-build-community"]);
+    expect(publishJob?.needs).toEqual(["docker-build-community", "docker-build-authzed-bridge"]);
     expect(publishJob?.if).toContain("github.event.release.tag_name");
     expect(publishJob?.with).toMatchObject({
-      bridge_image_ref: "${{ vars.FORMBRICKS_V5_BRIDGE_IMAGE_REF }}",
+      bridge_image_ref:
+        "ghcr.io/${{ github.repository }}@${{ needs.docker-build-authzed-bridge.outputs.IMAGE_DIGEST }}",
       target_image_ref:
         "ghcr.io/${{ github.repository }}@${{ needs.docker-build-community.outputs.IMAGE_DIGEST }}",
+    });
+    expect(bridgeJob).toMatchObject({
+      if: expect.stringContaining("github.event.release.tag_name"),
+      uses: "./.github/workflows/release-docker-github.yml",
+      with: {
+        AUTHZED_RELEASE_MODE: "legacy_bridge",
+        IS_PRERELEASE: "${{ github.event.release.prerelease }}",
+        MAKE_LATEST: false,
+        PUBLISH_RELEASE_ALIASES: false,
+        TAG_SUFFIX: "-authzed-bridge",
+      },
     });
 
     const dockerRelease = readWorkflow(dockerReleaseWorkflowPath);
@@ -75,5 +88,11 @@ describe("v6 upgrade assistant release workflow", () => {
     expect(readFileSync(join(repositoryRoot, dockerReleaseWorkflowPath), "utf8")).toContain(
       "value: ${{ jobs.build.outputs.IMAGE_DIGEST }}"
     );
+    const dockerAction = readFileSync(
+      join(repositoryRoot, ".github/actions/build-and-push-docker/action.yml"),
+      "utf8"
+    );
+    expect(dockerAction).toContain("FORMBRICKS_AUTHZED_RELEASE_MODE=${{ inputs.authzed_release_mode }}");
+    expect(dockerAction).toContain("FORMBRICKS_BUILD_REVISION=${{ github.sha }}");
   });
 });

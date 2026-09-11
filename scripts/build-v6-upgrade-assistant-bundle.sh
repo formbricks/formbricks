@@ -41,6 +41,17 @@ fi
 
 command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 1; }
 
+readonly runtime_contract_path="authzed/runtime-contract.json"
+if ! jq -e '
+  type == "object" and
+  (.clientContractVersion | type == "number") and
+  (.migrationHead | type == "string") and
+  (.protocolVersion | type == "number")
+' "$runtime_contract_path" >/dev/null 2>&1; then
+  echo "invalid AuthZed runtime contract" >&2
+  exit 1
+fi
+
 readonly semver_pattern='^[vV]?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
 readonly image_pattern='^ghcr\.io/formbricks/formbricks@sha256:[0-9a-f]{64}$'
 
@@ -55,6 +66,47 @@ readonly image_pattern='^ghcr\.io/formbricks/formbricks@sha256:[0-9a-f]{64}$'
 
 release_version="${release_version#[vV]}"
 minimum_source_version="${minimum_source_version#[vV]}"
+client_contract_version=$(jq -er '.clientContractVersion' "$runtime_contract_path")
+migration_head=$(jq -er '.migrationHead' "$runtime_contract_path")
+protocol_version=$(jq -er '.protocolVersion' "$runtime_contract_path")
+
+bridge_runtime_manifest=$(jq -cn \
+  --arg authorizationMode legacy_bridge \
+  --argjson clientContractVersion "$client_contract_version" \
+  --arg migrationHead "$migration_head" \
+  --argjson protocolVersion "$protocol_version" \
+  --arg sourceRevision "$source_revision" \
+  '{
+    authorizationMode: $authorizationMode,
+    clientContractVersion: $clientContractVersion,
+    migrationHead: $migrationHead,
+    protocolVersion: $protocolVersion,
+    sourceRevision: $sourceRevision
+  }')
+target_runtime_manifest=$(jq -cn \
+  --arg authorizationMode spicedb_authoritative \
+  --argjson clientContractVersion "$client_contract_version" \
+  --arg migrationHead "$migration_head" \
+  --argjson protocolVersion "$protocol_version" \
+  --arg sourceRevision "$source_revision" \
+  '{
+    authorizationMode: $authorizationMode,
+    clientContractVersion: $clientContractVersion,
+    migrationHead: $migrationHead,
+    protocolVersion: $protocolVersion,
+    sourceRevision: $sourceRevision
+  }')
+
+hash_text() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '%s' "$1" | sha256sum | awk '{print $1}'
+  else
+    printf '%s' "$1" | shasum -a 256 | awk '{print $1}'
+  fi
+}
+
+bridge_runtime_manifest_digest="sha256:$(hash_text "$bridge_runtime_manifest")"
+target_runtime_manifest_digest="sha256:$(hash_text "$target_runtime_manifest")"
 
 mkdir -p "$output_directory"
 cp docker/formbricks-upgrade-assistant "$output_directory/formbricks-upgrade-assistant"
@@ -65,7 +117,9 @@ jq -cn \
   --arg sourceRevision "$source_revision" \
   --arg minimumSourceVersion "$minimum_source_version" \
   --arg bridgeImage "$bridge_image" \
+  --arg bridgeRuntimeManifestDigest "$bridge_runtime_manifest_digest" \
   --arg targetImage "$target_image" \
+  --arg targetRuntimeManifestDigest "$target_runtime_manifest_digest" \
   '{
     schemaVersion: 1,
     releaseVersion: $releaseVersion,
@@ -74,7 +128,9 @@ jq -cn \
     supportedInstallTypes: ["docker_compose", "helm", "one_click"],
     artifacts: {
       bridgeImage: $bridgeImage,
-      targetImage: $targetImage
+      bridgeRuntimeManifestDigest: $bridgeRuntimeManifestDigest,
+      targetImage: $targetImage,
+      targetRuntimeManifestDigest: $targetRuntimeManifestDigest
     }
   }' >"$output_directory/formbricks-upgrade-manifest.json"
 

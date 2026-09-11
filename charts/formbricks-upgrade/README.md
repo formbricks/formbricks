@@ -11,7 +11,7 @@ deployment, runtime verification, and finalization are explicit external steps.
 
 ## Before installing
 
-Use the signed release assistant to produce `upgrade-values.yaml` and verify:
+Use the signed release assistant output to populate `upgrade-values.yaml` and verify:
 
 - bridge and candidate references are immutable image and embedded-manifest digests;
 - the bridge is serving legacy authorization while delivering the durable projection outbox;

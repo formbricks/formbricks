@@ -18,6 +18,21 @@ on:
         required: false
         type: boolean
         default: false
+      AUTHZED_RELEASE_MODE:
+        description: "Compile-time authorization evaluator mode"
+        required: false
+        type: string
+        default: spicedb_authoritative
+      TAG_SUFFIX:
+        description: "Optional suffix for a distinct immutable release artifact"
+        required: false
+        type: string
+        default: ""
+      PUBLISH_RELEASE_ALIASES:
+        description: "Whether to publish major, minor, and latest aliases"
+        required: false
+        type: boolean
+        default: true
     outputs:
       VERSION:
         description: release version
@@ -103,6 +118,9 @@ jobs:
           version: ${{ steps.extract_release_tag.outputs.VERSION }}
           is_prerelease: ${{ inputs.IS_PRERELEASE }}
           make_latest: ${{ inputs.MAKE_LATEST }}
+          authzed_release_mode: ${{ inputs.AUTHZED_RELEASE_MODE }}
+          tag_suffix: ${{ inputs.TAG_SUFFIX }}
+          publish_release_aliases: ${{ inputs.PUBLISH_RELEASE_ALIASES }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}

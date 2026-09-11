@@ -91,6 +91,24 @@ jobs:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
       MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
 
+  docker-build-authzed-bridge:
+    name: Build & release signed AuthZed bridge image
+    if: ${{ startsWith(github.event.release.tag_name, '6.') || startsWith(github.event.release.tag_name, 'v6.') }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/release-docker-github.yml
+    secrets: inherit
+    needs:
+      - check-latest-release
+    with:
+      IS_PRERELEASE: ${{ github.event.release.prerelease }}
+      MAKE_LATEST: false
+      AUTHZED_RELEASE_MODE: legacy_bridge
+      TAG_SUFFIX: -authzed-bridge
+      PUBLISH_RELEASE_ALIASES: false
+
   publish-v6-upgrade-assistant:
     name: Publish signed v6 upgrade assistant
     if: ${{ startsWith(github.event.release.tag_name, '6.') || startsWith(github.event.release.tag_name, 'v6.') }}
@@ -101,11 +119,10 @@ jobs:
     uses: ./.github/workflows/publish-v6-upgrade-assistant.yml
     needs:
       - docker-build-community
+      - docker-build-authzed-bridge
     with:
       release_tag: ${{ github.event.release.tag_name }}
-      # The release workflow intentionally fails for v6 when this repository variable is absent or mutable.
-      # Set it to the signed bridge artifact approved for the complete v6 rollout window.
-      bridge_image_ref: ${{ vars.FORMBRICKS_V5_BRIDGE_IMAGE_REF }}
+      bridge_image_ref: ghcr.io/${{ github.repository }}@${{ needs.docker-build-authzed-bridge.outputs.IMAGE_DIGEST }}
       target_image_ref: ghcr.io/${{ github.repository }}@${{ needs.docker-build-community.outputs.IMAGE_DIGEST }}
       minimum_source_version: 5.4.0
 

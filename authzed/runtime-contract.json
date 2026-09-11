@@ -1,0 +1,5 @@
+{
+  "clientContractVersion": 1,
+  "migrationHead": "20260911090000_add_authzed_activation_protocol",
+  "protocolVersion": 1
+}

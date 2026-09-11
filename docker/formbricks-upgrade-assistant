@@ -187,6 +187,8 @@ bridge_image=""
 target_image=""
 bridge_digest=""
 target_digest=""
+bridge_runtime_manifest_digest=""
+target_runtime_manifest_digest=""
 manifest_digest=""
 
 if [[ ! -f "$manifest_path" ]]; then
@@ -199,7 +201,9 @@ elif ! jq -e '
     (.minimumSourceVersion | type == "string") and
     (.artifacts | type == "object") and
     (.artifacts.bridgeImage | type == "string") and
+    (.artifacts.bridgeRuntimeManifestDigest | type == "string") and
     (.artifacts.targetImage | type == "string") and
+    (.artifacts.targetRuntimeManifestDigest | type == "string") and
     (.supportedInstallTypes == ["docker_compose", "helm", "one_click"])
   ' "$manifest_path" >/dev/null 2>&1; then
   add_check "release_manifest_invalid" "blocked"
@@ -207,7 +211,9 @@ else
   release_version=$(jq -er '.releaseVersion' "$manifest_path")
   minimum_source_version=$(jq -er '.minimumSourceVersion' "$manifest_path")
   bridge_image=$(jq -er '.artifacts.bridgeImage' "$manifest_path")
+  bridge_runtime_manifest_digest=$(jq -er '.artifacts.bridgeRuntimeManifestDigest' "$manifest_path")
   target_image=$(jq -er '.artifacts.targetImage' "$manifest_path")
+  target_runtime_manifest_digest=$(jq -er '.artifacts.targetRuntimeManifestDigest' "$manifest_path")
   source_revision=$(jq -er '.sourceRevision' "$manifest_path")
   release_major=$(version_core "$release_version")
   release_major="${release_major%%.*}"
@@ -221,6 +227,8 @@ else
     [[ "$source_revision" =~ ^[0-9a-f]{40}$ ]] &&
     [[ "$bridge_image" =~ $image_pattern ]] &&
     [[ "$target_image" =~ $image_pattern ]] &&
+    [[ "$bridge_runtime_manifest_digest" =~ $digest_pattern ]] &&
+    [[ "$target_runtime_manifest_digest" =~ $digest_pattern ]] &&
     [[ "$bridge_image" != "$target_image" ]]; then
     bridge_digest=$(extract_digest_from_image "$bridge_image")
     target_digest=$(extract_digest_from_image "$target_image")
@@ -513,7 +521,9 @@ jq -cn \
   --arg releaseVersion "$release_version" \
   --arg manifestDigest "$manifest_digest" \
   --arg bridgeDigest "$bridge_digest" \
+  --arg bridgeRuntimeManifestDigest "$bridge_runtime_manifest_digest" \
   --arg targetDigest "$target_digest" \
+  --arg targetRuntimeManifestDigest "$target_runtime_manifest_digest" \
   --argjson warningCount "$warning_count" \
   --argjson checks "$checks" \
   --argjson plan "$plan" \
@@ -533,7 +543,9 @@ jq -cn \
       version: (if $releaseVersion == "" then null else $releaseVersion end),
       manifestDigest: (if $manifestDigest == "" then null else ("sha256:" + $manifestDigest) end),
       bridgeImageDigest: (if $bridgeDigest == "" then null else $bridgeDigest end),
-      targetImageDigest: (if $targetDigest == "" then null else $targetDigest end)
+      bridgeRuntimeManifestDigest: (if $bridgeRuntimeManifestDigest == "" then null else $bridgeRuntimeManifestDigest end),
+      targetImageDigest: (if $targetDigest == "" then null else $targetDigest end),
+      targetRuntimeManifestDigest: (if $targetRuntimeManifestDigest == "" then null else $targetRuntimeManifestDigest end)
     },
     warningCount: $warningCount,
     checks: $checks,
