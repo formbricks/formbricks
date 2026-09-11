@@ -12,6 +12,8 @@ const bridgeDigest = `sha256:${"a".repeat(64)}`;
 const targetDigest = `sha256:${"b".repeat(64)}`;
 const bridgeManifestDigest = `sha256:${"c".repeat(64)}`;
 const targetManifestDigest = `sha256:${"d".repeat(64)}`;
+const postgresBootstrapImage = `pgvector/pgvector@sha256:${"e".repeat(64)}`;
+const spicedbImage = `authzed/spicedb@sha256:${"f".repeat(64)}`;
 const receipt = "00000000-0000-4000-8000-000000000001";
 const temporaryDirectories: string[] = [];
 
@@ -81,6 +83,8 @@ const createFixture = (
         formbricksChart: "formbricks-6.0.0.tgz",
         dockerAuthzedOverlaySha256: `sha256:${"e".repeat(64)}`,
         authzedPostgresBootstrapSha256: `sha256:${"f".repeat(64)}`,
+        postgresBootstrapImage,
+        spicedbImage,
         targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
         targetRuntimeManifestDigest: targetManifestDigest,
         upgradeChart: "formbricks-upgrade-6.0.0.tgz",
@@ -202,6 +206,24 @@ case "$1" in
       if [[ "$previous" == "--values" ]]; then values_file="$argument"; fi
       previous="$argument"
     done
+    if [[ "$*" == *"--dry-run=server"* ]]; then
+      [[ "$*" == *"--hide-secret"* ]]
+      found_cleanup=false
+      previous=""
+      for argument in "$@"; do
+        if [[ "$previous" == "--values" ]] &&
+          jq -e '
+            (.migration | has("enabled")) and .migration.enabled == null and
+            (.authzed | has("migrationAcknowledged")) and .authzed.migrationAcknowledged == null and
+            (.authzed | has("initialization")) and .authzed.initialization == null
+          ' "$argument" >/dev/null 2>&1; then
+          found_cleanup=true
+        fi
+        previous="$argument"
+      done
+      [[ "$found_cleanup" == "true" ]]
+      exit 0
+    fi
     if [[ "$2" == "--install" ]]; then
       temporary_release="$3"
       phase=$(jq -r '.phase' "$values_file")
@@ -493,6 +515,8 @@ describe("Formbricks v6 Helm upgrade executor", { timeout: 20_000 }, () => {
 
     const commands = readFileSync(fixture.commandLog, "utf8");
     expect(commands).toContain("helm upgrade customer");
+    expect(commands).toContain("--dry-run=server --hide-secret");
+    expect(commands).not.toContain("helm template");
     expect(commands).toContain("phase-values.json --wait --wait-for-jobs");
     expect(commands).toContain("helm uninstall customer-");
     expect(commands).not.toContain("helm rollback");

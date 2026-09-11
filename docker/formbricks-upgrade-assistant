@@ -1490,12 +1490,18 @@ write_main_phase_values() {
 run_main_chart_upgrade() {
   local phase="$1"
 
-  if ! helm_render_logged template "$helm_release" "$formbricks_chart_path" \
-    --namespace "$helm_namespace" --is-upgrade \
+  # Render against the live cluster so chart lookups can retain generated credentials from the
+  # existing release. A client-only `helm template` cannot see those Secrets and rejects the default
+  # bundled-PostgreSQL upgrade as if its passwords were missing. Suppress rendered output and hide
+  # Secret manifests so the validation log cannot capture credentials.
+  if ! helm_render_logged upgrade "$helm_release" "$formbricks_chart_path" \
+    --namespace "$helm_namespace" \
+    --reset-values \
     --values "$helm_original_values_file" \
     --values "$helm_operator_values_file" \
     --values "$helm_retired_values_file" \
-    --values "$helm_phase_values_file"; then
+    --values "$helm_phase_values_file" \
+    --dry-run=server --hide-secret; then
     return 1
   fi
 
