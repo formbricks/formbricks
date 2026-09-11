@@ -366,7 +366,7 @@ describe("listV3Responses", () => {
     vi.clearAllMocks();
     mockRequireAccess.mockResolvedValue({ workspaceId: WORKSPACE, organizationId: "org_1" });
     mockGetSurveys.mockResolvedValue(new Map([[SURVEY.id, SURVEY]]));
-    mockKeysetPage.mockResolvedValue([{ id: ROW.id, createdAt: ROW.createdAt }]);
+    mockKeysetPage.mockResolvedValue([{ id: ROW.id, createdAt: ROW.createdAt, surveyId: ROW.surveyId }]);
     mockHydrate.mockResolvedValue([ROW]);
   });
 

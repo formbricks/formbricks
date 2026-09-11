@@ -231,16 +231,18 @@ export async function listV3Responses({
       sortValue: (row) => row.createdAt,
     });
 
-    // The total is a second query, so it only runs when asked for — and in parallel with the
-    // hydration rather than after it, since neither needs the other's result.
-    const [rows, total] = await Promise.all([
+    // Three independent queries, so all three go together: hydration, the surveys the page refers
+    // to, and the total when it was asked for. The surveys are keyed off the keyset page rather
+    // than the hydrated rows — phase one already carries `surveyId`, so waiting for the hydration
+    // to learn which surveys to load would serialize two queries that need nothing from each other.
+    const [rows, surveys, total] = await Promise.all([
       hydrateV3Responses(page.map((row) => row.id)),
+      getV3ResponseSurveys(page.map((row) => row.surveyId)),
       parsed.includeTotalCount
         ? countV3Responses({ filter: parsed.filter, precision: "capped" })
         : Promise.resolve(null),
     ]);
 
-    const surveys = await getV3ResponseSurveys(rows.map((row) => row.surveyId));
     const serializer = createV3ResponseSerializer();
 
     // A response whose survey vanished between the two queries cannot be serialized against a

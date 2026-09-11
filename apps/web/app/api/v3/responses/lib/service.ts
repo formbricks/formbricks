@@ -476,6 +476,12 @@ const scopeAndFilters = (filter: TV3ResponsesFilter): Prisma.Sql[] => {
 export interface TV3ResponseKeysetRow {
   id: string;
   createdAt: Date;
+  /**
+   * Carried out of phase one so the caller can load the page's surveys in parallel with hydrating
+   * it, rather than waiting for the rows to come back to learn which surveys they belong to. It
+   * costs nothing here — the column is already in the index this query walks.
+   */
+  surveyId: string;
 }
 
 /**
@@ -511,15 +517,15 @@ export async function listV3ResponseKeysetPage({
     clauses.push(keysetPagePredicate({ sortColumn: sortColumn(), idColumn: idColumn(), direction, cursor }));
   }
 
-  const rows = await prisma.$queryRaw<{ id: string; created_at: Date }[]>`
-    SELECT r."id", r."created_at"
+  const rows = await prisma.$queryRaw<{ id: string; created_at: Date; surveyId: string }[]>`
+    SELECT r."id", r."created_at", r."surveyId"
     FROM "Response" r
     WHERE ${Prisma.join(clauses, " AND ")}
     ${keysetOrderBy({ sortColumn: sortColumn(), idColumn: idColumn(), direction })}
     LIMIT ${limit + 1}
   `;
 
-  return rows.map((row) => ({ id: row.id, createdAt: row.created_at }));
+  return rows.map((row) => ({ id: row.id, createdAt: row.created_at, surveyId: row.surveyId }));
 }
 
 /**
