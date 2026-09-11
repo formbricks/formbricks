@@ -139,6 +139,16 @@ describe("date bounds", () => {
     expect(names).toEqual(["filter[createdAt][gte]"]);
   });
 
+  test("the lower-bound violation names the bound the caller actually sent", () => {
+    const names = namesOf(
+      listQuery(
+        `workspaceId=${WORKSPACE}&filter[createdAt][gt]=2026-02-01T00:00:00Z&filter[createdAt][lt]=2026-01-01T00:00:00Z`
+      )
+    );
+
+    expect(names).toEqual(["filter[createdAt][gt]"]);
+  });
+
   test("an offset-bearing instant is accepted, not only Z", () => {
     const result = okList(`workspaceId=${WORKSPACE}&filter[createdAt][gte]=2026-01-01T00:00:00%2B01:00`);
 
@@ -168,6 +178,61 @@ describe("multi-value filters", () => {
     const result = okList(`workspaceId=${WORKSPACE}&surveyId=${SURVEY}&filter[language][in]=default`);
 
     expect(result.filter.languages).toEqual(["default"]);
+  });
+});
+
+describe("every filter survives into the parsed filter", () => {
+  /**
+   * `toFilter` maps the bracket-spelled query keys onto the filter object by hand, so a field can
+   * fall out of it while the suite stays green — the parse still succeeds, the filter is simply
+   * absent and the endpoint quietly returns more rows than asked for.
+   */
+  test("all nine filters round-trip", () => {
+    const result = okList(
+      [
+        `workspaceId=${WORKSPACE}`,
+        `surveyId=${SURVEY}`,
+        `contactId=${RESPONSE}`,
+        "filter[createdAt][gte]=2026-01-01T00:00:00Z",
+        "filter[createdAt][lte]=2026-12-01T00:00:00Z",
+        "filter[finished][eq]=false",
+        "filter[language][in]=de,en",
+        `filter[id][in]=${RESPONSE}`,
+      ].join("&")
+    );
+
+    expect(result.filter).toEqual({
+      workspaceId: WORKSPACE,
+      surveyId: SURVEY,
+      contactId: RESPONSE,
+      createdAtGte: new Date("2026-01-01T00:00:00Z"),
+      createdAtGt: undefined,
+      createdAtLte: new Date("2026-12-01T00:00:00Z"),
+      createdAtLt: undefined,
+      finished: false,
+      languages: ["de", "en"],
+      ids: [RESPONSE],
+    });
+  });
+
+  /** The exclusive bounds are a separate pair and are just as easy to drop. */
+  test("the exclusive bounds round-trip too", () => {
+    const result = okList(
+      `workspaceId=${WORKSPACE}&filter[createdAt][gt]=2026-01-01T00:00:00Z&filter[createdAt][lt]=2026-12-01T00:00:00Z`
+    );
+
+    expect(result.filter.createdAtGt).toEqual(new Date("2026-01-01T00:00:00Z"));
+    expect(result.filter.createdAtLt).toEqual(new Date("2026-12-01T00:00:00Z"));
+  });
+
+  /**
+   * `false` is the value the service's `!== undefined` check exists for — a truthiness test would
+   * drop it and silently widen the result set to every response.
+   */
+  test("filter[finished][eq]=false is a filter, not an absence", () => {
+    const result = okList(`workspaceId=${WORKSPACE}&surveyId=${SURVEY}&filter[finished][eq]=false`);
+
+    expect(result.filter.finished).toBe(false);
   });
 });
 
@@ -229,6 +294,42 @@ describe("the cursor's binding", () => {
     const two = okList(`workspaceId=${WORKSPACE}&surveyId=${SURVEY}&filter[language][in]=en,de`);
 
     expect(one.fingerprint).toBe(two.fingerprint);
+  });
+
+  /**
+   * The binding's regression guard. Every field of `TV3ResponsesFilter` reaches the SQL, so every
+   * one must reach the fingerprint — otherwise a cursor issued under that filter validates against a
+   * request without it, and page two comes back correct-looking and wrong. One `surveyId` case
+   * proved only that the mechanism exists; this proves the coverage.
+   */
+  /**
+   * Each row varies exactly ONE field against its own baseline. `finished` and `language` need an
+   * anchor, so theirs carries `surveyId` on both sides — putting it on the variant alone would make
+   * the fingerprints differ because of `surveyId` and prove nothing about the field under test.
+   */
+  test.each([
+    ["surveyId", "", `surveyId=${SURVEY}`],
+    ["contactId", "", `contactId=${RESPONSE}`],
+    ["createdAt gte", "", "filter[createdAt][gte]=2026-01-01T00:00:00Z"],
+    ["createdAt gt", "", "filter[createdAt][gt]=2026-01-01T00:00:00Z"],
+    ["createdAt lte", "", "filter[createdAt][lte]=2026-12-01T00:00:00Z"],
+    ["createdAt lt", "", "filter[createdAt][lt]=2026-12-01T00:00:00Z"],
+    ["finished", `surveyId=${SURVEY}`, `surveyId=${SURVEY}&filter[finished][eq]=true`],
+    ["language", `surveyId=${SURVEY}`, `surveyId=${SURVEY}&filter[language][in]=de`],
+    ["id", "", `filter[id][in]=${RESPONSE}`],
+  ])("%s changes the fingerprint", (_label, baseline, variant) => {
+    const base = okList(`workspaceId=${WORKSPACE}${baseline ? "&" + baseline : ""}`);
+    const withFilter = okList(`workspaceId=${WORKSPACE}&${variant}`);
+
+    expect(withFilter.fingerprint).not.toBe(base.fingerprint);
+  });
+
+  /** Two different values of one filter are two different filter sets, not merely "filtered". */
+  test("two values of the same filter fingerprint differently", () => {
+    const one = okList(`workspaceId=${WORKSPACE}&surveyId=${SURVEY}&filter[language][in]=de`);
+    const two = okList(`workspaceId=${WORKSPACE}&surveyId=${SURVEY}&filter[language][in]=en`);
+
+    expect(one.fingerprint).not.toBe(two.fingerprint);
   });
 
   test("the list and count fingerprints agree for the same filters", () => {

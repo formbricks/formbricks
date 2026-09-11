@@ -259,8 +259,10 @@ const crossFieldIssues = (filter: TV3ResponsesFilter): TV3InvalidParam[] => {
   const upper = filter.createdAtLte ?? filter.createdAtLt;
 
   if (lower && upper && lower > upper) {
+    // Names the bound the caller actually sent. Reporting `gte` for a violation expressed with `gt`
+    // points them at a parameter that is not in their request.
     issues.push({
-      name: CREATED_AT_GTE,
+      name: filter.createdAtGte !== undefined ? CREATED_AT_GTE : CREATED_AT_GT,
       reason: "The lower bound must not be later than the upper bound.",
     });
   }
@@ -271,23 +273,23 @@ const crossFieldIssues = (filter: TV3ResponsesFilter): TV3InvalidParam[] => {
 /**
  * What the cursor's fingerprint covers: the authorized scope and every allow-listed filter.
  *
- * Deliberately not `limit`, `sortBy`, `includeTotalCount` or `precision`. `sortBy` is bound
- * separately by the cursor's own field, and the other three are presentation: AIP-158 requires a
- * changed page size to be honoured mid-walk rather than invalidating the position.
+ * Spread rather than re-listed, and that is the point. `TV3ResponsesFilter` holds exactly the fields
+ * `scopeAndFilters` turns into SQL, so spreading it means a filter added to one is automatically in
+ * the binding. A hand-copied list here would compile without the new field and silently drop it from
+ * the fingerprint — which is not a cosmetic slip: a cursor issued under that filter would then
+ * validate against a request without it, and page two would come back correct-looking and wrong.
+ * `computeFilterFingerprint` takes `Record<string, unknown>`, so nothing would have caught it.
+ *
+ * `renderFilterValue` handles the `Date` bounds (as `toISOString()`, the same bytes the old hand
+ * list produced, so existing cursors stay valid) and throws on anything it cannot render — so a
+ * future non-scalar filter fails loudly here instead of vanishing from the binding.
+ *
+ * Deliberately absent: `limit`, `sortBy`, `includeTotalCount` and `precision`. They are not on
+ * `TV3ResponsesFilter` at all, which is what keeps them out. `sortBy` is bound separately by the
+ * cursor's own field; the rest are presentation, and AIP-158 requires a changed page size to be
+ * honoured mid-walk rather than invalidating the caller's position.
  */
-const fingerprintOf = (filter: TV3ResponsesFilter): string =>
-  computeFilterFingerprint({
-    workspaceId: filter.workspaceId,
-    surveyId: filter.surveyId,
-    contactId: filter.contactId,
-    createdAtGte: filter.createdAtGte?.toISOString(),
-    createdAtGt: filter.createdAtGt?.toISOString(),
-    createdAtLte: filter.createdAtLte?.toISOString(),
-    createdAtLt: filter.createdAtLt?.toISOString(),
-    finished: filter.finished,
-    languages: filter.languages,
-    ids: filter.ids,
-  });
+const fingerprintOf = (filter: TV3ResponsesFilter): string => computeFilterFingerprint({ ...filter });
 
 export const parseV3ResponsesListQuery = (
   searchParams: URLSearchParams
