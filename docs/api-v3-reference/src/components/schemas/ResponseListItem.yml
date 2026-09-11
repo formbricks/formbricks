@@ -1,0 +1,13 @@
+allOf:
+  - $ref: ./ResponseBase.yml
+unevaluatedProperties: false
+description: >
+  A survey response as returned by the list endpoint. Self-describing: `answers[]` carries each
+  element's id, label, type and value, so a consumer can read a response without also fetching the
+  survey.
+
+
+  `answers[]` and `embeddedData[]` ship on the list view as well as the detailed view — they are the
+  point of the resource, and withholding them from the list would force consumers into an N+1 of item
+  reads. The list view omits only the identity and provenance fields: `contact`, `displayId` and
+  `singleUseId`. See `ResponseResource` for those.

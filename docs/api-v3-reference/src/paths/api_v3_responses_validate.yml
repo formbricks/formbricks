@@ -1,0 +1,130 @@
+post:
+  operationId: validateResponseV3
+  summary: Validate a response payload
+  description: >
+    Checks a create or patch payload and reports what a real write would do — **without writing
+    anything**. Never has side effects: no response is created, no pipeline fires, nothing is metered.
+
+
+    Deliberately the same shape as `POST /api/v3/surveys/validate`: same dual auth, a request
+    discriminated on `operation` carrying the body the real call would take, and a result of `valid`,
+    `operation` and `invalid_params` with document-relative paths. The value is that the two endpoints
+    behave alike, so a client can validate uniformly. Answers are checked against the survey's own
+    validation rules, so a payload this endpoint accepts is one the real write accepts.
+
+
+    **It reports effects, not just a verdict.** When `valid` is `true`, `effects` names the language
+    that would be stamped, the contact and display that would be linked, the quotas that would count,
+    whether the pipeline would fire, and whether the write would be metered. The language is the
+    field that motivated this endpoint: an importer can see that a payload produces language-less
+    responses *before* writing thousands of them.
+
+
+    Authorization is the same as the operation being validated — read-write for `create` and `patch` —
+    so this cannot be used as a cheaper cross-tenant existence probe than the write itself. An
+    inaccessible `responseId` on a patch validation answers **403**, as the patch would.
+
+
+    **What it does not do:** an endpoint lets a caller check; it cannot stop a caller writing a bad
+    record anyway. Consistency across the write paths comes from all of them calling the same
+    validator — this endpoint is that validator's public face, not a gate in front of it.
+  tags:
+    - V3 Responses
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/ValidateResponseRequest.yml
+        examples:
+          validateCreate:
+            summary: Validate an intended create
+            value:
+              operation: create
+              data:
+                surveyId: clsv1234567890123456789012
+                finished: true
+                language: de
+                data:
+                  nps_score: 9
+                  what_could_be_better: Die Suche ist zu langsam.
+          validatePatch:
+            summary: Validate an intended patch
+            value:
+              operation: patch
+              responseId: clrs1234567890123456789012
+              data:
+                finished: true
+                endingId: cmpthankyou00000000000000
+  responses:
+    "200":
+      description: >-
+        Validation completed. A `200` means the check ran, **not** that the payload is valid — read
+        `valid`.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ResponseValidationResult.yml
+          examples:
+            valid:
+              summary: Payload is valid, with the effects a write would have
+              value:
+                data:
+                  valid: true
+                  operation: create
+                  invalid_params: []
+                  effects:
+                    language: de
+                    contactId: null
+                    displayId: null
+                    firesPipeline: true
+                    countsTowardMeteredResponses: true
+                    quotas: []
+            invalid:
+              summary: Payload is invalid, with repairable errors
+              value:
+                data:
+                  valid: false
+                  operation: create
+                  invalid_params:
+                    - name: data.nps_score
+                      reason: Value 12 is outside the element's 0–10 range.
+                    - name: language
+                      reason: Language "fr" is not enabled on this survey.
+                      code: unsupported_locale
+                      identifier: fr
+                      referenceType: language
+    "400":
+      description: >-
+        Bad Request — the envelope itself is malformed: missing or unknown `operation`, missing
+        `data`, or a `patch` without `responseId`. Problems *inside* `data` are the point of this
+        endpoint and come back as `200` with `valid: false`, not as a 400.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
