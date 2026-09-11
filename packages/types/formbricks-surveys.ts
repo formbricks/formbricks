@@ -4,6 +4,21 @@ import type { TUploadFileConfig } from "./storage";
 import type { TSurveyStyling } from "./surveys/types";
 import type { TWorkspaceStyling } from "./workspace";
 
+/**
+ * Viewport rect of the survey card, in CSS pixels, as the renderer measures it.
+ *
+ * Consumed by the native SDKs, which embed the renderer in a full-screen WebView. A platform
+ * WebView hit-tests its whole rectangle and ignores the `pointer-events: none` this renderer puts
+ * outside the card, so a survey with no overlay freezes the host app unless the host masks touches
+ * itself — and the host cannot know where the card is, because CSS decides that inside the page.
+ */
+export interface TSurveyCardRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface SurveyBaseProps {
   survey: TJsWorkspaceStateSurvey;
   styling: TSurveyStyling | TWorkspaceStyling;
@@ -74,6 +89,14 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   onResponseCreated?: (responseId?: string) => void | Promise<void>;
   onFileUpload?: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
+  /** Notifies the host where the survey card is, and `null` once no card is on screen (while it
+   *  animates out, or before the first paint). Exists so a native host can pass touches outside the
+   *  card through to the app — see `TSurveyCardRect` for why it cannot work that out for itself.
+   *
+   *  Modal mode only, and nothing is measured unless a host passes it: web hosts omit it, because
+   *  CSS `pointer-events` already does the job inside a page. Reported on open, on every resize of
+   *  the card (each question changes its height), and on viewport resize or rotation. */
+  onCardRectChange?: (rect: TSurveyCardRect | null) => void;
   mode?: "modal" | "inline";
   containerId?: string;
   overlay?: "none" | "light" | "dark";
