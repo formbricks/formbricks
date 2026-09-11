@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ZResponse } from "@formbricks/types/responses";
 import {
+  type TV3WriteReadbackRow,
   type TV3WriteSurveyRow,
   createScopedResponse,
   dispatchV3ResponsePipeline,
+  toV3PipelineResponse,
   updateScopedResponse,
 } from "./write-service";
 
@@ -62,6 +65,38 @@ const survey = {
   id: "clsv000000000000000000001",
   workspaceId: "clws000000000000000000001",
 } as unknown as TV3WriteSurveyRow;
+
+/** A read-back row in the exact shape `v3WriteReadbackSelect` produces — join rows and all. */
+const readbackRow = (over: Record<string, unknown> = {}): TV3WriteReadbackRow =>
+  ({
+    id: "clrs000000000000000000001",
+    surveyId: survey.id,
+    createdAt: new Date("2026-09-11T10:00:00.000Z"),
+    updatedAt: new Date("2026-09-11T10:05:00.000Z"),
+    finished: true,
+    endingId: null,
+    language: "de",
+    data: { q1: "hi" },
+    variables: {},
+    ttc: { q1: 1200, _total: 1200 },
+    meta: { source: "smoke" },
+    displayId: null,
+    singleUseId: null,
+    contactAttributes: { userId: "user-42" },
+    contact: { id: "clct000000000000000000001", attributes: [{ value: "user-42" }] },
+    tags: [
+      {
+        tag: {
+          id: "cltg000000000000000000001",
+          createdAt: new Date("2026-09-01T10:00:00.000Z"),
+          updatedAt: new Date("2026-09-01T10:00:00.000Z"),
+          name: "tag-a",
+          workspaceId: survey.workspaceId,
+        },
+      },
+    ],
+    ...over,
+  }) as unknown as TV3WriteReadbackRow;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -146,7 +181,7 @@ describe("dispatchV3ResponsePipeline", () => {
         event: "responseCreated",
         workspaceId: "clws000000000000000000001",
         surveyId: survey.id,
-        response: {},
+        response: readbackRow(),
         alsoFinished: false,
       })
     ).resolves.toBeUndefined();
@@ -161,7 +196,7 @@ describe("dispatchV3ResponsePipeline", () => {
       event: "responseCreated",
       workspaceId: "clws000000000000000000001",
       surveyId: survey.id,
-      response: {},
+      response: readbackRow(),
       alsoFinished: true,
     });
 
@@ -176,10 +211,45 @@ describe("dispatchV3ResponsePipeline", () => {
       event: "responseUpdated",
       workspaceId: "clws000000000000000000001",
       surveyId: survey.id,
-      response: {},
+      response: readbackRow(),
       alsoFinished: false,
     });
 
     expect(mockSendToPipeline).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("toV3PipelineResponse", () => {
+  /**
+   * The guard for the defect a live create exposed. `enqueueResponsePipeline` parses its payload
+   * against `ZResponse` in-request, and the stored row's `tags` are join rows while `contact` carries
+   * an attribute row. Handing the raw row over throws inside `sendToPipeline` — and because dispatch
+   * is deliberately non-fatal, the create still answered 201 while no webhook, integration,
+   * follow-up or Hub ingestion ran, with nothing in the reply to say so.
+   */
+  test("the payload parses against the schema the queue validates with", () => {
+    const parsed = ZResponse.safeParse(toV3PipelineResponse(readbackRow()));
+
+    expect(parsed.error?.issues).toBeUndefined();
+    expect(parsed.success).toBe(true);
+  });
+
+  test("join rows are flattened to the tag itself", () => {
+    expect(toV3PipelineResponse(readbackRow()).tags).toEqual([
+      expect.objectContaining({ id: "cltg000000000000000000001", name: "tag-a" }),
+    ]);
+  });
+
+  test("the contact carries its userId from the snapshot taken at create time", () => {
+    expect(toV3PipelineResponse(readbackRow()).contact).toEqual({
+      id: "clct000000000000000000001",
+      userId: "user-42",
+    });
+  });
+
+  test("an anonymous response still parses", () => {
+    const row = readbackRow({ contact: null, contactAttributes: null, tags: [] });
+
+    expect(ZResponse.safeParse(toV3PipelineResponse(row)).success).toBe(true);
   });
 });

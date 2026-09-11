@@ -40,8 +40,8 @@ import {
   normalizeV3Ttc,
   planAnswerDataWrite,
   planEmbeddedDataWrite,
+  resolveV3WriteLanguage,
   validateV3EndingId,
-  validateV3ResponseLanguage,
 } from "./write-plan";
 import {
   type TV3WriteSurveyRow,
@@ -545,7 +545,11 @@ export async function createV3Response({
       return access;
     }
 
-    const { lookupKey } = resolveV3LabelContext(survey.languages, body.language ?? null);
+    // Resolved before the plan is built: the language the response will carry decides which labels
+    // the answers are validated against, and it is the survey's own code rather than the caller's.
+    const language = resolveV3WriteLanguage(survey.languages, body.language);
+    const storedLanguage = language.ok ? language.code : null;
+    const { lookupKey } = resolveV3LabelContext(survey.languages, storedLanguage);
     const plan = buildAnswerPlan(
       survey.blocks as never,
       lookupKey,
@@ -557,11 +561,11 @@ export async function createV3Response({
     const composed = composeV3ResponseWrite({ plan, survey, body, stored: undefined });
     const issues: InvalidParam[] = [
       ...composed.issues,
-      ...[
-        validateV3ResponseLanguage(survey.languages, body.language),
-        validateV3EndingId(survey.endings, body.endingId),
-      ].filter((issue): issue is InvalidParam => issue !== null),
-      ...answerValidationIssues(survey, composed.data, body.language ?? null),
+      ...(language.ok ? [] : [language.issue]),
+      ...[validateV3EndingId(survey.endings, body.endingId)].filter(
+        (issue): issue is InvalidParam => issue !== null
+      ),
+      ...answerValidationIssues(survey, composed.data, storedLanguage),
     ];
 
     if (issues.length > 0) {
@@ -581,7 +585,7 @@ export async function createV3Response({
       meta: body.meta,
       tagIds: body.tags ?? [],
       endingId: body.endingId,
-      language: body.language,
+      language: storedLanguage,
       contactId: body.contactId,
       displayId: body.displayId,
       singleUseId: body.singleUseId,
@@ -693,8 +697,12 @@ export async function updateV3Response({
 
     // The language the response will carry *after* this patch, so a payload that changes language and
     // answers in one call is validated against the labels it is about to have rather than the old ones.
-    const effectiveLanguage = body.language !== undefined ? body.language : stored.language;
-    const { lookupKey } = resolveV3LabelContext(survey.languages, effectiveLanguage ?? null);
+    const patchLanguage =
+      body.language === undefined
+        ? { ok: true as const, code: stored.language }
+        : resolveV3WriteLanguage(survey.languages, body.language);
+    const effectiveLanguage = patchLanguage.ok ? patchLanguage.code : null;
+    const { lookupKey } = resolveV3LabelContext(survey.languages, effectiveLanguage);
     const plan = buildAnswerPlan(
       survey.blocks as never,
       lookupKey,
@@ -715,11 +723,11 @@ export async function updateV3Response({
 
     const issues: InvalidParam[] = [
       ...composed.issues,
-      ...[
-        body.language === undefined ? null : validateV3ResponseLanguage(survey.languages, body.language),
-        body.endingId === undefined ? null : validateV3EndingId(survey.endings, body.endingId),
-      ].filter((issue): issue is InvalidParam => issue !== null),
-      ...answerValidationIssues(survey, composed.data, effectiveLanguage ?? null),
+      ...(patchLanguage.ok ? [] : [patchLanguage.issue]),
+      ...[body.endingId === undefined ? null : validateV3EndingId(survey.endings, body.endingId)].filter(
+        (issue): issue is InvalidParam => issue !== null
+      ),
+      ...answerValidationIssues(survey, composed.data, effectiveLanguage),
     ];
 
     if (issues.length > 0) {
@@ -736,7 +744,8 @@ export async function updateV3Response({
       patch: {
         finished: body.finished,
         endingId: body.endingId,
-        language: body.language,
+        // Only when the payload carried it — and then as the survey's own code, never the caller's.
+        language: body.language === undefined ? undefined : effectiveLanguage,
         data: composed.data,
         variables: composed.variables,
         tagIds: body.tags,

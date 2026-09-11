@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type {
+  TResponse,
   TResponseData,
   TResponseDataValue,
   TResponseMeta,
@@ -12,7 +13,6 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
-import { normalizeResponseLanguage } from "@/lib/response/utils";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { type TV3ResponseSurveyRow, v3ResponseReadSelect, v3ResponseSurveySelect } from "./service";
 
@@ -275,7 +275,9 @@ export type TV3CreateResponsePersist = {
  */
 export async function createScopedResponse(input: TV3CreateResponsePersist): Promise<TV3WriteOutcome> {
   const { workspaceId, survey, meta, tagIds, contactId, displayId, singleUseId } = input;
-  const language = normalizeResponseLanguage(input.language) ?? null;
+  // Already resolved to one of the survey's own declared codes by `resolveV3WriteLanguage`, so it is
+  // deliberately not canonicalized again here — that is what would push it out of the survey's set.
+  const language = input.language ?? null;
 
   try {
     return await prisma.$transaction(async (tx) => {
@@ -390,9 +392,7 @@ export async function updateScopedResponse({
         data: {
           ...(patch.finished === undefined ? {} : { finished: patch.finished }),
           ...(patch.endingId === undefined ? {} : { endingId: patch.endingId }),
-          ...(patch.language === undefined
-            ? {}
-            : { language: normalizeResponseLanguage(patch.language) ?? null }),
+          ...(patch.language === undefined ? {} : { language: patch.language }),
           ...(patch.data === undefined ? {} : { data: patch.data }),
           ...(patch.variables === undefined ? {} : { variables: patch.variables }),
           ...(patch.tagIds === undefined
@@ -432,6 +432,48 @@ export async function updateScopedResponse({
 }
 
 /**
+ * Reshape a read-back row into the `TResponse` the pipeline is parsed against.
+ *
+ * Not cosmetic, and not optional. `enqueueResponsePipeline` Zod-parses its payload against
+ * `ZResponse` **in-request**, and two of this row's fields are stored shapes rather than that shape:
+ * `tags` arrives as join rows (`{ tag: … }[]`) where `ZResponse` wants `TTag[]`, and `contact`
+ * carries an attribute row where it wants `{ id, userId }`. Handing the raw row over parses as a
+ * failure, `sendToPipeline` throws, and because dispatch is deliberately non-fatal the request still
+ * answers 201 — so the response is created and **no webhook, integration, follow-up or Hub ingestion
+ * ever runs**, with nothing in the reply to say so. Found by smoke-testing a real create; a unit test
+ * now parses this function's output against `ZResponse` so it cannot drift back.
+ */
+export function toV3PipelineResponse(row: TV3WriteReadbackRow): TResponse {
+  return {
+    id: row.id,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    surveyId: row.surveyId,
+    displayId: row.displayId,
+    contact: row.contact
+      ? {
+          id: row.contact.id,
+          // The snapshot taken at create time, not a live read: it is what the response was
+          // attributed to, and it is the same source v1 and v2 hand the pipeline.
+          ...((row.contactAttributes as Record<string, string> | null)?.userId
+            ? { userId: (row.contactAttributes as Record<string, string>).userId }
+            : {}),
+        }
+      : null,
+    contactAttributes: (row.contactAttributes ?? null) as TResponse["contactAttributes"],
+    finished: row.finished,
+    endingId: row.endingId,
+    data: (row.data ?? {}) as TResponse["data"],
+    variables: (row.variables ?? {}) as TResponse["variables"],
+    ttc: (row.ttc ?? {}) as TResponse["ttc"],
+    tags: row.tags.map(({ tag }) => tag),
+    meta: (row.meta ?? {}) as TResponse["meta"],
+    singleUseId: row.singleUseId,
+    language: row.language,
+  };
+}
+
+/**
  * Emit the pipeline events for a committed write — after commit, and never fatally.
  *
  * **A queueing failure does not fail the request.** The row is already committed, so a 500 here
@@ -452,21 +494,18 @@ export async function dispatchV3ResponsePipeline({
   event: "responseCreated" | "responseUpdated";
   workspaceId: string;
   surveyId: string;
-  response: unknown;
+  response: TV3WriteReadbackRow;
   alsoFinished: boolean;
 }): Promise<void> {
+  const payload = toV3PipelineResponse(response);
+
   const events: ("responseCreated" | "responseUpdated" | "responseFinished")[] = alsoFinished
     ? [event, "responseFinished"]
     : [event];
 
   for (const pipelineEvent of events) {
     try {
-      await sendToPipeline({
-        event: pipelineEvent,
-        workspaceId,
-        surveyId,
-        response: response as never,
-      });
+      await sendToPipeline({ event: pipelineEvent, workspaceId, surveyId, response: payload });
     } catch (error) {
       logger.error(
         { err: error, event: pipelineEvent, surveyId, workspaceId },
