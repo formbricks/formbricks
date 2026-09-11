@@ -1,9 +1,9 @@
 import "server-only";
 import { Prisma } from "@formbricks/database/prisma";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { generateAllPermutationsOfSubsets } from "./utils";
 
 const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
   if (!tags) return [];
@@ -42,8 +42,34 @@ const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
   return filterTags.flat();
 };
 
+/**
+ * Upper bound on the filter clauses a single buildWhereClause call may emit.
+ *
+ * The "Other" branches below scale with the element's choice count, which has no maximum
+ * (ZSurveyElementChoice is `.min(2)` only), so an unbounded predicate is a denial-of-service
+ * vector — a low-privilege request could allocate until the process died (ENG-3161).
+ *
+ * The budget is per CALL, not per branch: `filterCriteria.data` is a record whose keys are each
+ * iterated below, so a per-branch cap would simply be multiplied by the key count.
+ *
+ * 10k clauses is ~30k bind parameters (each probe binds key + index + label), comfortably under
+ * PostgreSQL's 65535 ceiling, and allows ~99 monolingual choices on a single element — far past
+ * any real survey.
+ */
+const MAX_FILTER_CLAUSES = 10_000;
+
 export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];
+
+  let clauseBudget = MAX_FILTER_CLAUSES;
+
+  /** Charge `count` clauses against this call's budget, refusing the filter once it is exhausted. */
+  const spend = (count: number): void => {
+    clauseBudget -= count;
+    if (clauseBudget < 0) {
+      throw new InvalidInputError("This response filter is too large to evaluate");
+    }
+  };
 
   if (filterCriteria?.finished !== undefined) {
     whereClause.push({
@@ -353,17 +379,31 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
               });
             });
 
-            const subsets = generateAllPermutationsOfSubsets(predefinedLabels);
             if (element.type === "multipleChoiceMulti") {
-              const subsetConditions = subsets.map((subset) => ({
-                data: { path: [key], equals: subset },
-              }));
+              // A multi answer is a string[] of the chosen labels, with the "Other" write-in stored
+              // as the raw typed text. "Other was chosen" therefore means: at least one entry is
+              // not a predefined label. Prisma's JSON filters have no subset operator, so each
+              // array position is probed by numeric path segment. An answer holds at most one entry
+              // per choice, so choices.length positions cover it; positions past the end extract to
+              // SQL NULL, so unanswered and empty ([]) responses correctly do not match.
+              const positions = element.choices.length;
+              spend(positions * (predefinedLabels.length + 1));
+
               data.push({
-                NOT: {
-                  OR: subsetConditions,
-                },
+                OR: Array.from({ length: positions }, (_unused, index) => ({
+                  AND: [
+                    { data: { path: [key, String(index)], not: Prisma.DbNull } },
+                    ...predefinedLabels.map((label) => ({
+                      data: { path: [key, String(index)], not: label },
+                    })),
+                  ],
+                })),
               });
             } else {
+              // A single answer is a scalar string, so "not any predefined label" is directly
+              // expressible and stays linear in the label count.
+              spend(predefinedLabels.length);
+
               data.push({
                 AND: predefinedLabels.map((label) => ({
                   NOT: {
@@ -376,6 +416,9 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
               });
             }
           } else {
+            // Two clauses per selected value: the array shape and the scalar shape.
+            spend(val.value.length * 2);
+
             data.push({
               OR: val.value.map((value: string | number) => ({
                 OR: [
