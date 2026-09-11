@@ -393,7 +393,7 @@ export async function getV3Response({
     const survey = surveys.get(row.surveyId);
 
     if (!survey) {
-      return problemForbidden(requestId, "Survey not found in this workspace", instance);
+      return problemForbidden(requestId, undefined, instance);
     }
 
     const resource = createV3ResponseSerializer().toResource(row, survey);
