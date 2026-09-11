@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponse } from "@formbricks/types/responses";
 import {
   type TV3CreateResponsePersist,
@@ -259,8 +260,13 @@ describe("unique-constraint races", () => {
     });
   });
 
-  /** Anything that is not a recognised race is still a real failure and must not be swallowed. */
-  test("an unrelated Prisma error is rethrown rather than reported as a caller mistake", async () => {
+  /**
+   * The scoped `where` carries `survey: { workspaceId }`, so P2025 means the row is gone or was never
+   * this caller's — the same fact a pre-flight rejection establishes, and it has to answer the same
+   * 403. `mapV3ThrownError` does not map raw Prisma errors, so without this translation the caller
+   * got a 500 instead of the 403 the scoped update's own comment promises.
+   */
+  test("P2025 from the scoped update becomes the not-found the 403 is rendered from", async () => {
     mockTransaction.mockRejectedValueOnce(knownRequestError("gone", "P2025"));
 
     await expect(
@@ -270,7 +276,44 @@ describe("unique-constraint races", () => {
         survey,
         patch: { finished: true },
       })
-    ).rejects.toThrow("gone");
+    ).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  test("the same translation applies to a create that loses its survey", async () => {
+    mockTransaction.mockRejectedValueOnce(knownRequestError("gone", "P2025"));
+
+    await expect(createScopedResponse(createInput())).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  /** Anything that is neither a recognised race nor a scoped miss is still a real failure. */
+  test("an unrelated Prisma error is rethrown rather than reported as a caller mistake", async () => {
+    mockTransaction.mockRejectedValueOnce(knownRequestError("fk violated", "P2003"));
+
+    await expect(
+      updateScopedResponse({
+        responseId: "clrs000000000000000000001",
+        workspaceId: survey.workspaceId,
+        survey,
+        patch: { finished: true },
+      })
+    ).rejects.toThrow("fk violated");
+  });
+
+  /** Duplicates in a patch are redundant, not an error — the join table's PK says otherwise. */
+  test("a repeated tag id is deduplicated before the join rows are written", async () => {
+    const tx = runTx(txStub({ tag: { findMany: vi.fn().mockResolvedValue([{ id: "cltg1" }]) } }));
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { tagIds: ["cltg1", "cltg1", "cltg1"] },
+    });
+
+    expect(tx.response.update.mock.calls[0][0].data.tags).toEqual({
+      deleteMany: {},
+      create: [{ tag: { connect: { id: "cltg1" } } }],
+    });
   });
 });
 

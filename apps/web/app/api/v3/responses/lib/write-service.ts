@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type {
   TResponse,
   TResponseData,
@@ -309,6 +310,22 @@ function raceIssuesFromUniqueViolation(error: unknown): InvalidParam[] | null {
   return null;
 }
 
+/**
+ * A scoped write that matched no row.
+ *
+ * The `where` carries `survey: { workspaceId }`, so P2025 means the response is gone or was never
+ * this caller's — the same fact a pre-flight rejection establishes, and it has to answer the same
+ * 403. `mapV3ThrownError` does not map raw Prisma errors, so without this translation the promise in
+ * the scoped-update comment is not kept and the caller gets a 500 instead.
+ */
+function rethrowScopedNotFound(error: unknown): void {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+    // No id in the message: it is already correlated by requestId, and the operation keeps it out of
+    // the body.
+    throw new ResourceNotFoundError("Response", null);
+  }
+}
+
 /** Either the row a write persisted, or the reference failures that stopped it. */
 export type TV3WriteOutcome = { ok: true; responseId: string } | { ok: false; issues: InvalidParam[] };
 
@@ -336,6 +353,10 @@ export type TV3CreateResponsePersist = {
  */
 export async function createScopedResponse(input: TV3CreateResponsePersist): Promise<TV3WriteOutcome> {
   const { workspaceId, survey, meta, tagIds, contactId, displayId, singleUseId } = input;
+  // `TagsOnResponses` is keyed on (responseId, tagId), so a repeated id is a composite-primary-key
+  // violation rather than a redundant write. The contract calls `tags` a set; this is what makes it
+  // one. Create already refuses duplicates at the schema, but the patch deliberately allows them.
+  const uniqueTagIds = [...new Set(tagIds)];
   // Already resolved to one of the survey's own declared codes by `resolveV3WriteLanguage`, so it is
   // deliberately not canonicalized again here — that is what would push it out of the survey's set.
   const language = input.language ?? null;
@@ -375,8 +396,8 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
           language,
           endingId: input.endingId ?? null,
           singleUseId: singleUseId ?? null,
-          ...(tagIds.length > 0
-            ? { tags: { create: tagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })) } }
+          ...(uniqueTagIds.length > 0
+            ? { tags: { create: uniqueTagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })) } }
             : {}),
         },
         select: { id: true, finished: true, data: true, variables: true },
@@ -400,6 +421,7 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
     const raceIssues = raceIssuesFromUniqueViolation(error);
     if (raceIssues) return { ok: false, issues: raceIssues };
 
+    rethrowScopedNotFound(error);
     throw error;
   }
 }
@@ -416,6 +438,11 @@ export type TV3UpdateResponsePersist = {
     data?: TResponseData;
     variables?: Record<string, TResponseDataValue>;
     tagIds?: string[];
+    /**
+     * Server-derived, never caller-supplied: `ttc` is create-only for a caller, but `_total` is a
+     * derivation the shared update service performs on any write that finishes a response.
+     */
+    ttc?: TResponseTtc;
   };
 };
 
@@ -455,13 +482,15 @@ export async function updateScopedResponse({
           ...(patch.endingId === undefined ? {} : { endingId: patch.endingId }),
           ...(patch.language === undefined ? {} : { language: patch.language }),
           ...(patch.data === undefined ? {} : { data: patch.data }),
+          ...(patch.ttc === undefined ? {} : { ttc: patch.ttc }),
           ...(patch.variables === undefined ? {} : { variables: patch.variables }),
           ...(patch.tagIds === undefined
             ? {}
             : {
                 tags: {
                   deleteMany: {},
-                  create: patch.tagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })),
+                  // Deduplicated — see the note in `createScopedResponse`.
+                  create: [...new Set(patch.tagIds)].map((tagId) => ({ tag: { connect: { id: tagId } } })),
                 },
               }),
         },
@@ -488,6 +517,7 @@ export async function updateScopedResponse({
     const raceIssues = raceIssuesFromUniqueViolation(error);
     if (raceIssues) return { ok: false, issues: raceIssues };
 
+    rethrowScopedNotFound(error);
     throw error;
   }
 }

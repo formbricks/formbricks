@@ -74,6 +74,9 @@ function getUnauthenticatedDetail(authMode: TV3AuthMode): string {
   return "Not authenticated";
 }
 
+/** How many unknown keys a 400 will name before it stops enumerating them. */
+const MAX_REPORTED_UNKNOWN_KEYS = 20;
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -87,12 +90,26 @@ function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "pa
     // `code: unsupported_field` on the offending key for every v3 operation that rejects one.
     if (issue.code === "unrecognized_keys") {
       const prefix = issue.path.length > 0 ? `${issue.path.join(".")}.` : "";
+      // Bounded, because the key list is caller-controlled: a body full of unknown keys would
+      // otherwise become one `invalid_params` entry per key, in both the response and the log line
+      // that carries it. Naming the first few is all a caller needs to find its mistake.
+      const named = issue.keys.slice(0, MAX_REPORTED_UNKNOWN_KEYS);
 
-      return issue.keys.map((key) => ({
+      const params = named.map((key) => ({
         name: `${prefix}${key}`,
         reason: `Unsupported field '${key}'`,
         code: "unsupported_field" as const,
       }));
+
+      if (issue.keys.length > named.length) {
+        params.push({
+          name: prefix ? prefix.slice(0, -1) : "body",
+          reason: `${issue.keys.length - named.length} further unsupported fields were not listed`,
+          code: "unsupported_field" as const,
+        });
+      }
+
+      return params;
     }
 
     const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
