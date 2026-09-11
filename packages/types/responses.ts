@@ -104,14 +104,23 @@ const ZResponseFilterCriteriaDataGreaterThan = z.object({
   value: z.number(),
 });
 
+/**
+ * Response filters are client-supplied and every entry below is expanded into Prisma filter clauses
+ * by buildWhereClause, so unbounded arrays and records are a denial-of-service vector (ENG-3161).
+ * These caps are defence in depth behind that builder's own clause budget — deliberately far above
+ * any real survey, since the budget is what makes the cost provably finite.
+ */
+const MAX_FILTER_VALUES = 1_000;
+const MAX_FILTER_KEYS = 500;
+
 const ZResponseFilterCriteriaDataIncludesOne = z.object({
   op: z.literal(ZResponseFilterCondition.enum.includesOne),
-  value: z.union([z.array(z.string()), z.array(z.number())]),
+  value: z.union([z.array(z.string()).max(MAX_FILTER_VALUES), z.array(z.number()).max(MAX_FILTER_VALUES)]),
 });
 
 const ZResponseFilterCriteriaDataIncludesAll = z.object({
   op: z.literal(ZResponseFilterCondition.enum.includesAll),
-  value: z.array(z.string()),
+  value: z.array(z.string()).max(MAX_FILTER_VALUES),
 });
 
 const ZResponseFilterCriteriaDataEquals = z.object({
@@ -216,7 +225,7 @@ const ZQuotasFilterCriteriaScreenedOutNotInQuota = z.object({
   op: z.literal("screenedOutNotInQuota"),
 });
 
-export const ZResponseFilterCriteria = z.object({
+const ZResponseFilterCriteriaFields = z.object({
   finished: z.boolean().optional(),
   responseIds: z.array(ZId).optional(),
   createdAt: z
@@ -266,8 +275,10 @@ export const ZResponseFilterCriteria = z.object({
 
   tags: z
     .object({
-      applied: z.array(z.string()).optional(),
-      notApplied: z.array(z.string()).optional(),
+      // `applied` expands to one relation subquery per tag in createFilterTags, so it carries the
+      // same clause-expansion risk as the data filters above.
+      applied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
+      notApplied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
     })
     .optional(),
 
@@ -308,6 +319,19 @@ export const ZResponseFilterCriteria = z.object({
     )
     .optional(),
 });
+
+/**
+ * Every record field above is iterated per key by buildWhereClause, so an unbounded key count
+ * multiplies the filter clauses it emits. z.record carries no size check in Zod 4, hence the
+ * refinement — kept separate from the shape so the object literal stays untouched.
+ */
+export const ZResponseFilterCriteria = ZResponseFilterCriteriaFields.refine(
+  (criteria) =>
+    [criteria.contactAttributes, criteria.data, criteria.others, criteria.meta, criteria.quotas].every(
+      (record) => !record || Object.keys(record).length <= MAX_FILTER_KEYS
+    ),
+  { error: `A response filter may not carry more than ${MAX_FILTER_KEYS} conditions per field` }
+);
 
 export const ZResponseContact = z.object({
   id: ZId,
