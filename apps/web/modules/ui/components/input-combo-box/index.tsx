@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
+import { filterComboboxOption } from "./lib/search";
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
@@ -80,6 +81,8 @@ function flattenOptions(options?: TComboboxOption[]): TComboboxOption[] {
   return options.flatMap((option) => [option, ...(option.children ? flattenOptions(option.children) : [])]);
 }
 
+// The search terms for an option. `filterComboboxOption` scores these instead of the item's
+// `value`, which is an opaque id the user never sees.
 function getOptionKeywords(option: TComboboxOption): string[] {
   return [option.label];
 }
@@ -386,7 +389,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           align="start"
           className="w-(--radix-dropdown-menu-trigger-width) min-w-52"
           data-testid="dropdown-menu-content">
-          <Command className="flex h-full w-full flex-col overflow-hidden">
+          <Command className="flex h-full w-full flex-col overflow-hidden" filter={filterComboboxOption}>
             {showSearch ? (
               <div className="border-b border-slate-100">
                 <CommandInput
