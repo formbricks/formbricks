@@ -149,6 +149,11 @@ describe("authenticateMcpRequest", () => {
       // refresh token (ENG-2175). Asserted against the real constant, not a literal.
       expect(result.response.headers.get("WWW-Authenticate")).toContain(`scope="${MCP_CHALLENGE_SCOPE}"`);
       expect(MCP_CHALLENGE_SCOPE).toContain("offline_access");
+      // Exactly one challenge, this one. `problemUnauthorized` contributes none of its own — the plain
+      // bearer challenge is attached by the v3 wrapper only for auth modes that accept a bearer API key
+      // — so this pins that MCP's richer challenge stands alone. Were a second ever to join it, a client
+      // reading two comma-joined challenges would discover no `resource_metadata`.
+      expect(result.response.headers.get("WWW-Authenticate")).not.toContain('realm="formbricks"');
       expect(await result.response.json()).toMatchObject({
         code: "not_authenticated",
         detail: "API key or OAuth access token required",

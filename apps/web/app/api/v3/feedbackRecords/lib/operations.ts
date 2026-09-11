@@ -338,7 +338,7 @@ export async function listV3FeedbackDatasets({
       { requestId, cache: CACHE }
     );
   } catch (err) {
-    return handleUnexpectedError(err, log, requestId, instance);
+    return handleUnexpectedError(err, log, requestId, instance, "feedbackDatasets.list");
   }
 }
 
@@ -435,7 +435,7 @@ export async function listV3FeedbackRecords({
       { requestId, cache: CACHE }
     );
   } catch (err) {
-    return handleUnexpectedError(err, log, requestId, instance);
+    return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.list");
   }
 }
 
@@ -496,7 +496,7 @@ export async function countV3FeedbackRecords({
       { requestId, cache: CACHE }
     );
   } catch (err) {
-    return handleUnexpectedError(err, log, requestId, instance);
+    return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.count");
   }
 }
 
@@ -550,7 +550,7 @@ export async function getV3FeedbackRecord({
 
     return successResponse(serializeV3FeedbackRecord(owned.record), { requestId, cache: CACHE });
   } catch (err) {
-    return handleUnexpectedError(err, log, requestId, instance);
+    return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.get");
   }
 }
 
@@ -620,7 +620,7 @@ export async function createV3FeedbackRecord({
 
     return successResponse(serialized, { requestId, status: 201, cache: CACHE });
   } catch (err) {
-    return handleUnexpectedError(err, log, requestId, instance);
+    return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.create");
   }
 }
 
@@ -745,7 +745,7 @@ export async function createV3FeedbackRecords({
       { requestId, cache: CACHE }
     );
   } catch (err) {
-    return handleUnexpectedError(err, log, requestId, instance);
+    return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.createBatch");
   }
 }
 
@@ -884,7 +884,7 @@ export async function updateV3FeedbackRecord({
 
     return successResponse(serialized, { requestId, cache: CACHE });
   } catch (err) {
-    return handleUnexpectedError(err, log, requestId, instance);
+    return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.update");
   }
 }
 
@@ -982,7 +982,7 @@ export async function deleteV3FeedbackRecord({
     // 204, as the v3 delete convention has it (see `deleteV3Survey`).
     return noContentResponse({ requestId });
   } catch (err) {
-    return handleUnexpectedError(err, log, requestId, instance);
+    return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.delete");
   }
 }
 
@@ -1065,7 +1065,7 @@ export async function searchV3FeedbackRecords({
 
     return similarityMatchesResponse(result.data, resolution, filters.data.minScore, requestId);
   } catch (err) {
-    return handleUnexpectedError(err, log, requestId, instance);
+    return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.search");
   }
 }
 
@@ -1164,6 +1164,6 @@ export async function findSimilarV3FeedbackRecords({
 
     return similarityMatchesResponse(result.data, resolution, filters.data.minScore, requestId);
   } catch (err) {
-    return handleUnexpectedError(err, log, requestId, instance);
+    return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.findSimilar");
   }
 }

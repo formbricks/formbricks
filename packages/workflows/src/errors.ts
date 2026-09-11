@@ -12,14 +12,26 @@ import type { WorkflowsLogger } from "./services/ports";
  * indistinguishable from the rest of the v3 API.
  */
 
-export type WorkflowProblemCode =
-  | "bad_request"
-  | "forbidden"
-  | "conflict"
-  | "invalid_workflow_state"
-  | "workflow_not_executable"
-  | "unprocessable_content"
-  | "internal_server_error";
+/**
+ * The subset of the v3 API's problem-`code` vocabulary this package emits.
+ *
+ * A runtime array rather than a bare union so `spec-drift.test.ts` can assert every value is published
+ * in `Problem.yml`. That spec file is the shared contract with `apps/web`'s `V3_PROBLEM_CODES`
+ * (`apps/web/app/api/v3/lib/response.ts`), which this list must stay a subset of; the two are checked
+ * against the same YAML rather than importing each other, because this package is deliberately a leaf
+ * and cannot depend on `apps/web`.
+ */
+export const WORKFLOW_PROBLEM_CODES = [
+  "bad_request",
+  "forbidden",
+  "conflict",
+  "invalid_workflow_state",
+  "workflow_not_executable",
+  "unprocessable_content",
+  "internal_server_error",
+] as const;
+
+export type WorkflowProblemCode = (typeof WORKFLOW_PROBLEM_CODES)[number];
 
 export interface WorkflowInvalidParam {
   name: string;
@@ -235,7 +247,10 @@ export const toProblemResponse = (error: unknown, ctx: ProblemContext): Response
     });
   }
 
-  ctx.logger.error({ error, statusCode: 500 }, "Unexpected workflow API error");
+  // `err`, not `error`: `@formbricks/logger` registers pino's `stdSerializers.err` for that key only, so
+  // any other key logs the enumerable own properties and silently drops `message` and `stack` — which is
+  // most of what a 500's log is for. Same fix as the nine boundaries in `app/api/v3`.
+  ctx.logger.error({ err: error, statusCode: 500 }, "Unexpected workflow API error");
   return problemResponse(500, "An unexpected error occurred.", {
     requestId: ctx.requestId,
     code: "internal_server_error",

@@ -4,7 +4,7 @@ get:
   description: |
     Returns the contact attribute keys for a workspace. Use the returned `key` values as
     `targeting.filters[].root.contactAttributeKey` when targeting app surveys; `dataType` hints which
-    operators apply. Session cookie or x-api-key. (Applying targeting filters requires the Contacts
+    operators apply. Session cookie, `x-api-key`, or a Bearer token. (Applying targeting filters requires the Contacts
     entitlement; this discovery endpoint does not.)
   tags:
     - V3 Contact Attribute Keys
@@ -83,3 +83,4 @@ get:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

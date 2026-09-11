@@ -1,6 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { describe, expect, test } from "vitest";
 import type { z } from "zod";
+import { WORKFLOW_PROBLEM_CODES } from "../errors";
 import { ZWorkflowRunLogStatus, ZWorkflowRunStatus, ZWorkflowStatus } from "../types";
 import {
   WORKFLOW_API_OPERATIONS,
@@ -129,6 +130,16 @@ describe("resource shapes", () => {
     const problems = (yamlSchema.properties as Record<string, { items: Record<string, unknown> }>).problems;
     const code = (problems.items.properties as Record<string, { enum: string[] }>).code;
     expect(code.enum).toEqual([...ZWorkflowTestProblemCode.options]);
+  });
+
+  test("every problem code this package emits is published in Problem.yml", async () => {
+    const yamlSchema = await loadYaml("components/schemas/Problem.yml");
+    const code = (yamlSchema.properties as Record<string, { enum: string[] }>).code;
+
+    // A subset of the v3 API's vocabulary, checked against the spec rather than against
+    // `V3_PROBLEM_CODES` directly: this package is a leaf and cannot import from `apps/web`, so the
+    // shared YAML is what keeps the two lists from drifting apart.
+    expect(code.enum).toEqual(expect.arrayContaining([...WORKFLOW_PROBLEM_CODES]));
   });
 });
 
