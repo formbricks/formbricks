@@ -28,6 +28,10 @@ jobs:
         with:
           version: v3.15.4
 
+      - name: Validate temporary v6 upgrade chart contract
+        shell: bash
+        run: bash charts/formbricks-upgrade/tests/contract.sh
+
       - name: Validate chart renders
         shell: bash
         run: |

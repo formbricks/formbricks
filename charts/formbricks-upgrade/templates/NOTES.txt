@@ -1,0 +1,61 @@
+The temporary Formbricks v6 AuthZed upgrade release {{ .Release.Name }} rendered phase {{ .Values.phase }}
+for target release {{ .Values.targetRelease }} (generation {{ .Values.generation }}, execution {{ .Values.execution }}).
+
+This chart runs only the immutable bridge image. It records the candidate image in the activation plan but
+never starts it. It does not deploy Formbricks, SpiceDB, an operator, networking, storage, or credentials.
+
+Follow this phase Job:
+
+  kubectl get job -n {{ .Release.Namespace }} -l formbricks.com/upgrade-generation={{ .Values.generation }}
+  kubectl logs -n {{ .Release.Namespace }} job/{{ include "formbricks-upgrade.jobName" . }}
+
+Do not advance until the Job succeeds and its sanitized JSON result satisfies the v6 upgrade runbook. Advance
+this same Helm release with the next phase and increment `execution` before rerunning a phase.
+
+{{- if eq .Values.phase "prepare" }}
+Record the receipt printed by this Job in `activation.receipt`, then run the `audit` phase. Before `activate`,
+run the release assistant's external candidate-migration compatibility step. The initial v6 cutover permits
+only bridge-compatible migrations; it has no destructive contract-migration phase.
+{{- else if eq .Values.phase "audit" }}
+Before `activate`, pause GitOps reconciliation, suspend the target HPA, scale the Formbricks application
+Deployment to zero, and verify that no application Pod using the outgoing bridge digest remains. Then set
+`activation.workloadQuiesced=true`, set the prepared receipt, and advance to `activate`.
+{{- else if eq .Values.phase "activate" }}
+Authority is now SpiceDB and source mutations remain fenced. Deploy the exact candidate image
+{{ include "formbricks-upgrade.candidateImage" . }} with the main chart in external-migration mode:
+
+  deployment.image.repository={{ .Values.images.candidate.repository }}
+  deployment.image.digest={{ .Values.images.candidate.digest }}
+  migration.enabled=false
+  deployment.env.SKIP_STARTUP_MIGRATION="true"
+  authzed.initialization.enabled=false
+  authzed.migrationAcknowledged=true
+
+Do not use `helm --atomic`: an automatic Helm rollback cannot roll back the database-backed authority state.
+Start one candidate application Pod, verify its exact image ID and that no bridge application Pods remain,
+then run this from that candidate Pod before restoring replicas or the HPA:
+
+  formbricks-authzed activation finalize --receipt {{ .Values.activation.receipt }}
+
+After finalization succeeds, restore the intended replica/HPA state and uninstall this temporary chart.
+{{- else if eq .Values.phase "rollback-begin" }}
+The outgoing candidate workload must already be quiesced. Restore the exact bridge image recorded in the plan
+with migrations and startup migrations disabled, without `helm --atomic`. Verify bridge readiness and that no
+candidate application Pods remain, then advance to `rollback-complete` with the same receipt.
+{{- else if eq .Values.phase "rollback-complete" }}
+Legacy authority is restored and the mutation fence is released. Restore normal bridge replicas/HPA, verify a
+clean relationship audit, then uninstall this temporary chart.
+{{- end }}
+
+The fixed plan {{ include "formbricks-upgrade.planName" . }} and Lease
+{{ include "formbricks-upgrade.leaseName" . }} prevent a second temporary release from targeting
+{{ .Values.targetRelease }} concurrently. The Lease is an ownership marker, not an expiring heartbeat.
+
+After successful finalization or completed rollback, remove all temporary objects:
+
+  helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+Verify cleanup:
+
+  kubectl get configmap,lease,job -n {{ .Release.Namespace }} \
+    -l formbricks.com/upgrade-generation={{ .Values.generation }}

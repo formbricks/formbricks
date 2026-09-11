@@ -1,0 +1,19 @@
+apiVersion: v2
+name: formbricks-upgrade
+description: Temporary orchestration chart for the Formbricks v5 to v6 AuthZed upgrade
+type: application
+version: 0.1.0
+appVersion: "6.0.0"
+icon: https://formbricks.com/favicon.ico
+keywords:
+  - formbricks
+  - authzed
+  - spicedb
+  - upgrade
+home: https://formbricks.com/docs/self-hosting/advanced/authzed-operations
+maintainers:
+  - name: Formbricks
+    email: info@formbricks.com
+annotations:
+  formbricks.com/lifecycle: temporary
+  formbricks.com/purpose: v5-to-v6-authzed-upgrade

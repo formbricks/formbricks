@@ -1,0 +1,136 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "formbricks-upgrade.jobName" . }}
+  labels:
+    {{- include "formbricks-upgrade.labels" . | nindent 4 }}
+  annotations:
+    formbricks.com/candidate-manifest-digest: {{ .Values.images.candidate.manifestDigest | quote }}
+    formbricks.com/workload-quiesced: {{ .Values.activation.workloadQuiesced | quote }}
+spec:
+  activeDeadlineSeconds: {{ include "formbricks-upgrade.activeDeadlineSeconds" . }}
+  backoffLimit: 0
+  completions: 1
+  parallelism: 1
+  ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        {{- include "formbricks-upgrade.labels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      restartPolicy: Never
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 1001
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      {{- with .Values.images.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Values.phase }}
+          image: {{ include "formbricks-upgrade.phaseImage" . | quote }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+          command:
+            - {{ .Values.cli.executable | quote }}
+          args:
+            {{- if eq .Values.phase "prepare" }}
+            - activation
+            - prepare
+            - --bridge-image-digest
+            - {{ .Values.images.bridge.digest | quote }}
+            - --bridge-manifest-digest
+            - {{ .Values.images.bridge.manifestDigest | quote }}
+            - --candidate-image-digest
+            - {{ .Values.images.candidate.digest | quote }}
+            - --candidate-manifest-digest
+            - {{ .Values.images.candidate.manifestDigest | quote }}
+            {{- with .Values.schema.expectedCurrentDigest }}
+            - --expected-current-digest
+            - {{ . | quote }}
+            {{- end }}
+            {{- else if eq .Values.phase "audit" }}
+            - backfill
+            - --scope=all
+            {{- else if eq .Values.phase "activate" }}
+            - activation
+            - activate
+            - --receipt
+            - {{ .Values.activation.receipt | quote }}
+            {{- else if eq .Values.phase "rollback-begin" }}
+            - activation
+            - rollback-begin
+            - --receipt
+            - {{ .Values.activation.receipt | quote }}
+            {{- else if eq .Values.phase "rollback-complete" }}
+            - activation
+            - rollback-complete
+            - --receipt
+            - {{ .Values.activation.receipt | quote }}
+            {{- end }}
+          env:
+            - name: LOG_LEVEL
+              value: fatal
+            # These values are deliberately inert. The release-matched CLI shares Formbricks' strict
+            # server environment parser but these upgrade operations never call Cube, Hub, or Redis.
+            - name: ENCRYPTION_KEY
+              value: formbricks-upgrade-unused
+            - name: CUBEJS_API_SECRET
+              value: formbricks-upgrade-unused
+            - name: CUBEJS_API_URL
+              value: http://localhost
+            - name: HUB_API_KEY
+              value: formbricks-upgrade-unused
+            - name: HUB_API_URL
+              value: http://localhost
+            - name: REDIS_URL
+              value: redis://localhost
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret.name }}
+                  key: {{ .Values.database.existingSecret.key }}
+            - name: AUTHZED_ENABLED
+              value: "true"
+            - name: AUTHZED_ENDPOINT
+              value: {{ .Values.authzed.endpoint | quote }}
+            - name: AUTHZED_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.authzed.existingSecret.name }}
+                  key: {{ .Values.authzed.existingSecret.key }}
+            - name: AUTHZED_SYSTEM_KEY
+              value: {{ .Values.authzed.systemKey | quote }}
+            - name: AUTHZED_INSECURE
+              value: {{ .Values.authzed.insecure | quote }}
+            - name: AUTHZED_CONSISTENCY
+              value: fully_consistent
+          resources:
+            {{- toYaml .Values.job.resources | nindent 12 }}
