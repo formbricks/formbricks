@@ -27,6 +27,7 @@ import { runWithRenewingAuthzedPreparationLease, throwIfAuthzedActivationAborted
 import {
   AUTHZED_ACTIVATION_PROTOCOL_VERSION,
   type TAuthzedActivationEvidence,
+  type TAuthzedActivationStatus,
   type TAuthzedDigest,
 } from "./activation-types";
 import { type TAuthzedBackfillApply, type TAuthzedBackfillResult, runAuthzedBackfill } from "./backfill";
@@ -366,11 +367,22 @@ export const bootstrapFreshAuthzedActivation = async (
         try {
           await finalizePreparedAuthzedAuthorization(receipt.id, dependencies);
         } catch (error) {
-          // A concurrent idempotent bootstrap may have finalized first. Only accept the race when the
-          // complete runtime invariant now proves this image safe.
+          // A concurrent bootstrap may have finalized while this caller observed a transaction error.
+          // Runtime validation also accepts the still-activating state, so it cannot distinguish that
+          // lost-response race from a genuine finalization failure. Only the durable idle state for this
+          // exact receipt proves that another caller completed finalization.
+          let finalizedStatus: TAuthzedActivationStatus;
           try {
-            await checkAuthzedRuntimeActivation();
+            finalizedStatus = await getAuthzedActivationStatus();
           } catch {
+            throw error;
+          }
+          if (
+            finalizedStatus.authority !== "spicedb" ||
+            finalizedStatus.transition !== "idle" ||
+            finalizedStatus.activeReceiptId !== receipt.id ||
+            finalizedStatus.generation !== receipt.generation
+          ) {
             throw error;
           }
         }

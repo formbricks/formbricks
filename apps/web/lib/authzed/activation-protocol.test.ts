@@ -16,6 +16,7 @@ import {
   renewAuthzedPreparationLease,
 } from "./activation-repository";
 import { checkAuthzedRuntimeActivation } from "./activation-runtime";
+import { AuthzedError } from "./errors";
 import { readAuthzedReleaseManifest } from "./release-manifest";
 
 const { digest } = vi.hoisted(() => ({
@@ -188,6 +189,55 @@ describe("fresh AuthZed activation bootstrap", () => {
 
     await bootstrapFreshAuthzedActivation({ countOrganizations: vi.fn() });
     expect(finalizeAuthzedActivation).not.toHaveBeenCalled();
+  });
+
+  test("preserves a finalization failure while the same activation is still in progress", async () => {
+    const activatingStatus = status({
+      activeReceiptId: receiptId,
+      authority: "spicedb",
+      fenceActive: true,
+      transition: "activating",
+    });
+    vi.mocked(getAuthzedActivationStatus)
+      .mockResolvedValueOnce(activatingStatus)
+      .mockResolvedValueOnce(activatingStatus);
+    vi.mocked(getAuthzedActivationReceipt).mockResolvedValue(receipt({ status: "active" }));
+    const finalizationError = new AuthzedError({
+      attempts: 0,
+      code: "authzed_activation_graph_dirty",
+      operation: "activation_schema_verify",
+      retryable: false,
+    });
+    vi.mocked(finalizeAuthzedActivation).mockRejectedValue(finalizationError);
+
+    await expect(bootstrapFreshAuthzedActivation({ countOrganizations: vi.fn() })).rejects.toBe(
+      finalizationError
+    );
+
+    expect(getAuthzedActivationStatus).toHaveBeenCalledTimes(2);
+    expect(checkAuthzedRuntimeActivation).not.toHaveBeenCalled();
+  });
+
+  test("accepts a lost finalization response only after the same receipt reached idle", async () => {
+    vi.mocked(getAuthzedActivationStatus)
+      .mockResolvedValueOnce(
+        status({
+          activeReceiptId: receiptId,
+          authority: "spicedb",
+          fenceActive: true,
+          transition: "activating",
+        })
+      )
+      .mockResolvedValueOnce(
+        status({ activeReceiptId: receiptId, authority: "spicedb", transition: "idle" })
+      );
+    vi.mocked(getAuthzedActivationReceipt).mockResolvedValue(receipt({ status: "active" }));
+    vi.mocked(finalizeAuthzedActivation).mockRejectedValue(new Error("transaction response lost"));
+
+    await expect(bootstrapFreshAuthzedActivation({ countOrganizations: vi.fn() })).resolves.toBeUndefined();
+
+    expect(getAuthzedActivationStatus).toHaveBeenCalledTimes(2);
+    expect(checkAuthzedRuntimeActivation).toHaveBeenCalledOnce();
   });
 
   test("resumes an existing prepared fresh-install receipt", async () => {
