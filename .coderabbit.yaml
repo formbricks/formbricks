@@ -180,6 +180,24 @@ reviews:
         - Caching uses `cache.withCache()` with a key from `createCacheKey.*`. Next.js
           `unstable_cache()` is banned, and cache keys are never built by string concatenation.
 
+    - path: "{apps/web,packages}/**/*.ts"
+      instructions: |
+        Performance is an explicit review dimension in this repo (AGENTS.md "Performance in Review"):
+        the patterns below reach `main` when nobody looks for them. Raise one where the diff
+        introduces it:
+        - N+1 work: a query, AI call or cross-service fetch issued inside a `for`/`map`/`Promise.all`
+          over rows. Ask for one `findMany` with an `in` filter, an `include`, or a single grouped
+          query.
+        - Unbounded work: a `findMany` with no `take`, a pagination or retry loop with no ceiling, or
+          a whole table pulled into memory and filtered in JS.
+        - A new `where`/`orderBy` combination with no index that serves it.
+        - Expensive calls repeated per request or per row — embeddings, AI calls, cross-service
+          fetches — that are not behind `cache.withCache()`, batched, or moved into a job.
+        - Independent queries awaited sequentially instead of `Promise.all`.
+        Quantify the cost against the data ("one query per response, ~5k on a 5k-response survey").
+        If you cannot, ask the author for numbers instead of speculating. Do not raise these on
+        `*.test.ts`, `__mocks__`, or seed scripts, where looping over fixtures is expected.
+
     - path: "packages/database/schema/*.prisma"
       instructions: |
         - Every tenant-owned model needs a workspace/organization scope column, and cross-model
