@@ -79,15 +79,32 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "params"): InvalidParam[] {
-  return error.issues.map((issue) => {
+  return error.issues.flatMap((issue) => {
+    // A strict object reports every unknown key in ONE issue, whose path points at the object rather
+    // than at any of the keys. Left as-is it becomes a single `name: "body"` with the keys buried in
+    // prose — so a client is told it sent something unsupported without being told what. Expanded
+    // here, once, rather than by a hand-written refinement per schema: the contract promises
+    // `code: unsupported_field` on the offending key for every v3 operation that rejects one.
+    if (issue.code === "unrecognized_keys") {
+      const prefix = issue.path.length > 0 ? `${issue.path.join(".")}.` : "";
+
+      return issue.keys.map((key) => ({
+        name: `${prefix}${key}`,
+        reason: `Unsupported field '${key}'`,
+        code: "unsupported_field" as const,
+      }));
+    }
+
     const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
     const code = isInvalidParamCode(params.code) ? params.code : undefined;
 
-    return {
-      name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
-      reason: issue.message,
-      ...(code ? { code } : {}),
-    };
+    return [
+      {
+        name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
+        reason: issue.message,
+        ...(code ? { code } : {}),
+      },
+    ];
   });
 }
 
