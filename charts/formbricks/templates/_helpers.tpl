@@ -136,6 +136,34 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- printf "%s-app-secrets" (include "formbricks.name" .) -}}
 {{- end }}
 
+{{/*
+Resolve bundled PostgreSQL connection details through the dependency's own helpers so every
+consumer follows the same override and global-value precedence as the rendered Service.
+*/}}
+{{- define "formbricks.postgresqlPrimaryHost" -}}
+{{- include "postgresql.v1.primary.fullname" .Subcharts.postgresql -}}
+{{- end }}
+
+{{- define "formbricks.postgresqlServicePort" -}}
+{{- include "postgresql.v1.service.port" .Subcharts.postgresql -}}
+{{- end }}
+
+{{- define "formbricks.postgresqlUsername" -}}
+{{- include "postgresql.v1.username" .Subcharts.postgresql | default "postgres" -}}
+{{- end }}
+
+{{- define "formbricks.postgresqlDatabase" -}}
+{{- include "postgresql.v1.database" .Subcharts.postgresql -}}
+{{- end }}
+
+{{- define "formbricks.postgresqlAppPasswordKey" -}}
+{{- if eq (include "formbricks.postgresqlUsername" .) "postgres" -}}
+{{- "POSTGRES_ADMIN_PASSWORD" -}}
+{{- else -}}
+{{- "POSTGRES_USER_PASSWORD" -}}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.authzedClusterName" -}}
 {{- .Values.authzed.cluster.name | default (printf "%s-spicedb" (include "formbricks.name" .)) | trunc 63 | trimSuffix "-" -}}
 {{- end }}

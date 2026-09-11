@@ -62,6 +62,7 @@ jobs:
           }
 
           helm lint "$chart" --set formbricks.webappUrl=https://qa.example.com
+          bash charts/formbricks/tests/postgresql-overrides.sh
           bash charts/formbricks/tests/authzed-operations.sh
 
           helm template qa "$chart" \
