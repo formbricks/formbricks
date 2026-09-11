@@ -100,13 +100,118 @@ export async function readbackV3Response(
 }
 
 /**
+ * Resolve the contact a create attributes the response to, and snapshot its attributes.
+ *
+ * Scoped to the caller's workspace, so "not in this workspace" and "does not exist" are one answer —
+ * which is what keeps it from being an existence oracle for the tenant next door.
+ */
+async function checkContact(
+  tx: Prisma.TransactionClient,
+  workspaceId: string,
+  contactId: string
+): Promise<{ issue?: InvalidParam; contactAttributes?: Prisma.JsonValue }> {
+  const contact = await tx.contact.findFirst({
+    where: { id: contactId, workspaceId },
+    select: { id: true, attributes: { select: { value: true, attributeKey: { select: { key: true } } } } },
+  });
+
+  if (!contact) {
+    return {
+      issue: {
+        name: "contactId",
+        reason: "No contact with this id exists in this workspace.",
+        code: "invalid_reference",
+      },
+    };
+  }
+
+  // Snapshotted at create time, exactly as v1 and v2 do. v3 never publishes it, but the pipeline
+  // reads `contactAttributes.userId` to identify the respondent to integrations, and an export
+  // written months later cannot reconstruct what the attributes were on the day.
+  return {
+    contactAttributes: Object.fromEntries(
+      contact.attributes.map(({ attributeKey, value }) => [attributeKey.key, value])
+    ),
+  };
+}
+
+/** A display belongs to one survey and backs at most one response. Both halves are checked here. */
+async function checkDisplay(
+  tx: Prisma.TransactionClient,
+  surveyId: string,
+  displayId: string,
+  excludeResponseId?: string
+): Promise<InvalidParam | null> {
+  const display = await tx.display.findFirst({
+    where: { id: displayId, surveyId },
+    select: { id: true, response: { select: { id: true } } },
+  });
+
+  if (!display) {
+    return {
+      name: "displayId",
+      reason: "No display with this id exists for this survey.",
+      code: "invalid_reference",
+    };
+  }
+
+  if (display.response && display.response.id !== excludeResponseId) {
+    return {
+      name: "displayId",
+      reason: "This display already backs another response.",
+      code: "duplicate_identifier",
+    };
+  }
+
+  return null;
+}
+
+/** Single-use ids are unique per survey; the index enforces it, this reports it as the caller's. */
+async function checkSingleUseId(
+  tx: Prisma.TransactionClient,
+  surveyId: string,
+  singleUseId: string,
+  excludeResponseId?: string
+): Promise<InvalidParam | null> {
+  const taken = await tx.response.findFirst({
+    where: { singleUseId, surveyId, id: { not: excludeResponseId } },
+    select: { id: true },
+  });
+
+  if (!taken) return null;
+
+  return {
+    name: "singleUseId",
+    reason: "This single-use id has already been used for this survey.",
+    code: "duplicate_identifier",
+  };
+}
+
+/** One query for the whole set, then one issue per id that did not come back. */
+async function checkTags(
+  tx: Prisma.TransactionClient,
+  workspaceId: string,
+  tagIds: string[]
+): Promise<InvalidParam[]> {
+  const found = await tx.tag.findMany({ where: { id: { in: tagIds }, workspaceId }, select: { id: true } });
+  const foundIds = new Set(found.map((tag) => tag.id));
+
+  return tagIds
+    .filter((tagId) => !foundIds.has(tagId))
+    .map((tagId) => ({
+      name: "tags",
+      reason: `No tag with id '${tagId}' exists in this workspace.`,
+      code: "invalid_reference" as const,
+      identifier: tagId,
+    }));
+}
+
+/**
  * The reference checks that need the database, run against the transaction's own snapshot.
  *
  * Every one of these is a 422 rather than a 404: the body is well-formed and the conflict is with
  * stored state. They are also all scoped to the workspace the caller is already authorized for, so
- * none of them can report on a resource outside it — "not in this workspace" and "does not exist"
- * produce the same message deliberately, which is what keeps them from being existence oracles for
- * the tenant next door.
+ * none of them can report on a resource outside it.
  */
 async function collectReferenceIssues(
   tx: Prisma.TransactionClient,
@@ -132,80 +237,23 @@ async function collectReferenceIssues(
   let contactAttributes: Prisma.JsonValue | undefined;
 
   if (contactId) {
-    const contact = await tx.contact.findFirst({
-      where: { id: contactId, workspaceId },
-      select: { id: true, attributes: { select: { value: true, attributeKey: { select: { key: true } } } } },
-    });
-
-    if (contact) {
-      // Snapshotted at create time, exactly as v1 and v2 do. v3 never publishes it, but the pipeline
-      // reads `contactAttributes.userId` to identify the respondent to integrations, and an export
-      // written months later cannot reconstruct what the attributes were on the day.
-      contactAttributes = Object.fromEntries(
-        contact.attributes.map(({ attributeKey, value }) => [attributeKey.key, value])
-      );
-    } else {
-      issues.push({
-        name: "contactId",
-        reason: "No contact with this id exists in this workspace.",
-        code: "invalid_reference",
-      });
-    }
+    const result = await checkContact(tx, workspaceId, contactId);
+    if (result.issue) issues.push(result.issue);
+    contactAttributes = result.contactAttributes;
   }
 
   if (displayId) {
-    const display = await tx.display.findFirst({
-      where: { id: displayId, surveyId },
-      select: { id: true, response: { select: { id: true } } },
-    });
-
-    if (!display) {
-      issues.push({
-        name: "displayId",
-        reason: "No display with this id exists for this survey.",
-        code: "invalid_reference",
-      });
-    } else if (display.response && display.response.id !== excludeResponseId) {
-      issues.push({
-        name: "displayId",
-        reason: "This display already backs another response.",
-        code: "duplicate_identifier",
-      });
-    }
+    const issue = await checkDisplay(tx, surveyId, displayId, excludeResponseId);
+    if (issue) issues.push(issue);
   }
 
   if (singleUseId) {
-    const taken = await tx.response.findFirst({
-      where: { singleUseId, surveyId, id: { not: excludeResponseId } },
-      select: { id: true },
-    });
-
-    if (taken) {
-      issues.push({
-        name: "singleUseId",
-        reason: "This single-use id has already been used for this survey.",
-        code: "duplicate_identifier",
-      });
-    }
+    const issue = await checkSingleUseId(tx, surveyId, singleUseId, excludeResponseId);
+    if (issue) issues.push(issue);
   }
 
   if (tagIds && tagIds.length > 0) {
-    const found = await tx.tag.findMany({
-      where: { id: { in: tagIds }, workspaceId },
-      select: { id: true },
-    });
-    const foundIds = new Set(found.map((tag) => tag.id));
-
-    for (const tagId of tagIds) {
-      if (!foundIds.has(tagId)) {
-        issues.push({
-          name: "tags",
-          reason: `No tag with id '${tagId}' exists in this workspace.`,
-          code: "invalid_reference",
-          identifier: tagId,
-        });
-      }
-    }
+    issues.push(...(await checkTags(tx, workspaceId, tagIds)));
   }
 
   return { issues, contactAttributes };
@@ -223,7 +271,9 @@ function raceIssuesFromUniqueViolation(error: unknown): InvalidParam[] | null {
   if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") return null;
 
   const target = error.meta?.target;
-  const columns = Array.isArray(target) ? target.map(String) : typeof target === "string" ? [target] : [];
+  let columns: string[] = [];
+  if (Array.isArray(target)) columns = target.map(String);
+  else if (typeof target === "string") columns = [target];
 
   if (columns.some((column) => column.includes("singleUseId"))) {
     return [
