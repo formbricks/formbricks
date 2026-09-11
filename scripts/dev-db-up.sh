@@ -93,9 +93,14 @@ main() {
     --project-directory "${REPO_ROOT}" \
     up --detach
 
-  # Integration point: the durable receipt-aware AuthZed activation command will run here once the
-  # activation foundation lands. Keeping this after infrastructure startup avoids hiding activation
-  # inside Compose or making local application startup race an unprepared authorization datastore.
+  # A development database is application-ready only after both the source schema and the durable
+  # AuthZed activation receipt exist. Keep these steps outside Compose so external AuthZed mode uses
+  # the exact same release-matched application code and no local service has to mount node_modules.
+  (
+    cd "${REPO_ROOT}"
+    pnpm db:migrate:dev
+    pnpm authzed:activation:bootstrap
+  )
 }
 
 main "$@"

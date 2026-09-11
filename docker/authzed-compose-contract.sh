@@ -71,7 +71,7 @@ jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   .services["authzed-ops"].environment.AUTHZED_CONSISTENCY == "fully_consistent" and
   .services["authzed-initialize"].image == .services.formbricks.image and
   .services["authzed-initialize"].entrypoint == ["formbricks-authzed"] and
-  .services["authzed-initialize"].command == ["upgrade", "prepare"] and
+  .services["authzed-initialize"].command == ["activation", "bootstrap"] and
   .services["authzed-initialize"].restart == "no" and
   .services["authzed-initialize"].depends_on["formbricks-migrate"].condition == "service_completed_successfully" and
   .services["authzed-initialize"].depends_on.spicedb.condition == "service_healthy" and

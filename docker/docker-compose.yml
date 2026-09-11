@@ -413,7 +413,7 @@ services:
     image: ${FORMBRICKS_IMAGE_REF:?FORMBRICKS_IMAGE_REF is required}
     restart: "no"
     entrypoint: ["formbricks-authzed"]
-    command: ["upgrade", "prepare"]
+    command: ["activation", "bootstrap"]
     environment:
       <<: *formbricks-database
       ENCRYPTION_KEY: authzed-initialize-unused

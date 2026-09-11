@@ -15,6 +15,7 @@ const createFixture = (authzedMode: "bundled" | "external", composeProfiles: str
   const templatePath = join(tempDir, ".env.example");
   const composePath = join(tempDir, "docker-compose.dev.yml");
   const invocationPath = join(tempDir, "docker-invocation.txt");
+  const pnpmInvocationsPath = join(tempDir, "pnpm-invocations.txt");
   const profilesPath = join(tempDir, "docker-profiles.txt");
   tempDirs.push(tempDir);
   mkdirSync(binDir);
@@ -44,8 +45,18 @@ const createFixture = (authzedMode: "bundled" | "external", composeProfiles: str
     '#!/bin/sh\nprintf "%s\\n" "$*" > "$DOCKER_INVOCATION_PATH"\nprintf "%s\\n" "$COMPOSE_PROFILES" > "$DOCKER_PROFILES_PATH"\n'
   );
   chmodSync(join(binDir, "docker"), 0o700);
+  writeFileSync(join(binDir, "pnpm"), '#!/bin/sh\nprintf "%s\\n" "$*" >> "$PNPM_INVOCATIONS_PATH"\n');
+  chmodSync(join(binDir, "pnpm"), 0o700);
 
-  return { binDir, composePath, envPath, invocationPath, profilesPath, templatePath };
+  return {
+    binDir,
+    composePath,
+    envPath,
+    invocationPath,
+    pnpmInvocationsPath,
+    profilesPath,
+    templatePath,
+  };
 };
 
 const runDevDbUp = (authzedMode: "bundled" | "external", composeProfiles: string) => {
@@ -60,6 +71,7 @@ const runDevDbUp = (authzedMode: "bundled" | "external", composeProfiles: string
       FORMBRICKS_ENV_PATH: fixture.envPath,
       FORMBRICKS_ENV_TEMPLATE_PATH: fixture.templatePath,
       PATH: `${fixture.binDir}:${process.env.PATH ?? ""}`,
+      PNPM_INVOCATIONS_PATH: fixture.pnpmInvocationsPath,
     },
   });
 
@@ -81,6 +93,10 @@ describe("scripts/dev-db-up.sh", () => {
     expect(readFileSync(fixture.invocationPath, "utf8").trim()).toBe(
       `compose --env-file ${fixture.envPath} --file ${fixture.composePath} --project-directory ${fileURLToPath(new URL("..", import.meta.url)).replace(/\/$/, "")} up --detach`
     );
+    expect(readFileSync(fixture.pnpmInvocationsPath, "utf8").trim().split("\n")).toEqual([
+      "db:migrate:dev",
+      "authzed:activation:bootstrap",
+    ]);
   });
 
   test("removes the bundled profile when external AuthZed is selected", () => {
@@ -89,5 +105,9 @@ describe("scripts/dev-db-up.sh", () => {
     expect(readFileSync(fixture.profilesPath, "utf8").trim()).toBe("qwen");
     expect(readFileSync(fixture.envPath, "utf8")).toContain("AUTHZED_ENDPOINT=grpc.authzed.com:443");
     expect(readFileSync(fixture.envPath, "utf8")).toContain("AUTHZED_INSECURE=false");
+    expect(readFileSync(fixture.pnpmInvocationsPath, "utf8").trim().split("\n")).toEqual([
+      "db:migrate:dev",
+      "authzed:activation:bootstrap",
+    ]);
   });
 });

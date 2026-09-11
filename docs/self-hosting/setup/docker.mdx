@@ -186,10 +186,12 @@ If a future integration consumes the Watch API, enable that PostgreSQL setting s
 required database restart.
 
 Repository development defaults to `FORMBRICKS_DEV_AUTHZED_MODE=bundled`; `pnpm db:up` generates and preserves
-its credentials, uses fully-consistent authorization, and exposes SpiceDB on `127.0.0.1:50051`. Set the mode
-to `external` to preserve an existing external client configuration and skip the bundled SpiceDB services.
-External mode requires enabled, fully-consistent AuthZed configuration. To start the optional authenticated
-browser UI for bundled mode:
+its credentials, starts the datastore, applies the Formbricks database migrations, and creates the durable
+fresh-install activation receipt before returning. It uses fully-consistent authorization and exposes SpiceDB
+on `127.0.0.1:50051`. Set the mode to `external` to preserve an existing external client configuration and skip
+the bundled SpiceDB services. External mode requires enabled, fully-consistent AuthZed configuration and the
+same empty-database bootstrap will initialize it. To start the optional authenticated browser UI for bundled
+mode:
 
 ```bash
 docker compose -f docker-compose.dev.yml --profile authzed-bundled --profile authzed-ui up -d authzed-ui

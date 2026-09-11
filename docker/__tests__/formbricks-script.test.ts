@@ -950,7 +950,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(spicedbBlock).not.toContain("traefik.enable=true");
     expect(authzedOpsBlock).toContain('profiles: ["authzed-ops"]');
     expect(authzedOpsBlock).not.toContain("traefik.enable=true");
-    expect(authzedInitializeBlock).toContain('command: ["upgrade", "prepare"]');
+    expect(authzedInitializeBlock).toContain('command: ["activation", "bootstrap"]');
     expect(authzedInitializeBlock).not.toContain("traefik.enable=true");
     expect(formbricksBlock).toContain("    labels:");
     expect(formbricksBlock.indexOf("    labels:")).toBeLessThan(formbricksBlock.indexOf("    environment:"));
