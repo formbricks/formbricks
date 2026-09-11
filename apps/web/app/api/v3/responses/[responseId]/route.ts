@@ -1,5 +1,5 @@
 /**
- * GET and DELETE /api/v3/responses/{responseId}.
+ * GET, PATCH and DELETE /api/v3/responses/{responseId}.
  *
  * The workspace is resolved from the response, never from the request, so the caller cannot choose the
  * scope it is authorized against. Deletes at `manage`, per the AuthZed schema's own assignment of
@@ -10,8 +10,8 @@
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
-import { deleteV3Response, getV3Response } from "../lib/operations";
-import { ZV3ResponseIdParams } from "../lib/schemas";
+import { deleteV3Response, getV3Response, updateV3Response } from "../lib/operations";
+import { ZV3PatchResponseBody, ZV3ResponseIdParams } from "../lib/schemas";
 
 export const GET = withV3ApiWrapper({
   auth: "both",
@@ -36,6 +36,28 @@ export const DELETE = withV3ApiWrapper({
     deleteV3Response({
       authentication,
       responseId: parsedInput.params.responseId,
+      auditLog,
+      requestId,
+      instance,
+    }),
+});
+
+/**
+ * PATCH — the only update verb; there is no PUT.
+ *
+ * Updates at `readWrite` rather than the `manage` DELETE requires: correcting a response is the
+ * capability an integration needs, while destroying one is not.
+ */
+export const PATCH = withV3ApiWrapper({
+  auth: "both",
+  action: "updated",
+  targetType: "response",
+  schemas: { params: ZV3ResponseIdParams, query: ZV3EmptyQuery, body: ZV3PatchResponseBody },
+  handler: async ({ authentication, parsedInput, auditLog, requestId, instance }) =>
+    updateV3Response({
+      authentication,
+      responseId: parsedInput.params.responseId,
+      body: parsedInput.body,
       auditLog,
       requestId,
       instance,

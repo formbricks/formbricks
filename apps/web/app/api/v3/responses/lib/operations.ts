@@ -1,22 +1,30 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import type { TResponseData, TResponseDataValue } from "@formbricks/types/responses";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { buildKeysetPage } from "@/app/api/v3/lib/keyset-cursor";
 import {
+  type InvalidParam,
+  createdResponse,
   noContentResponse,
   problemBadRequest,
   problemForbidden,
+  problemUnprocessableContent,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { validateResponseData } from "@/modules/api/lib/validation";
+import { buildAnswerPlan } from "./answers";
+import { resolveV3LabelContext } from "./label-resolution";
 import {
   RESPONSES_CURSOR_KIND,
   type TV3InvalidParam,
   parseV3ResponsesCountQuery,
   parseV3ResponsesListQuery,
 } from "./parse-v3-responses-list-query";
+import type { TV3CreateResponseBody, TV3PatchResponseBody } from "./schemas";
 import { createV3ResponseSerializer } from "./serializers";
 import {
   countV3Responses,
@@ -28,6 +36,21 @@ import {
   hydrateV3Responses,
   listV3ResponseKeysetPage,
 } from "./service";
+import {
+  planAnswerDataWrite,
+  planEmbeddedDataWrite,
+  validateV3EndingId,
+  validateV3ResponseLanguage,
+} from "./write-plan";
+import {
+  type TV3WriteSurveyRow,
+  createScopedResponse,
+  dispatchV3ResponsePipeline,
+  getSurveyForV3Write,
+  normalizeV3Ttc,
+  readbackV3Response,
+  updateScopedResponse,
+} from "./write-service";
 
 type TDeleteParams = {
   responseId: string;
@@ -379,6 +402,385 @@ export async function getV3Response({
       requestId,
       instance: instance ?? "",
       operation: "responses.get",
+    });
+  }
+}
+
+/**
+ * Compose one write's two stored maps, or the reasons it cannot be composed.
+ *
+ * Shared by create and patch because the rules are identical — what differs is only which keys the
+ * payload carried and whether there is a stored row underneath. Every issue it returns is a 422:
+ * each one needed the survey definition to detect, which is precisely the line the contract draws
+ * between 400 and 422 on these operations.
+ */
+function composeV3ResponseWrite({
+  plan,
+  survey,
+  body,
+  stored,
+}: {
+  plan: ReturnType<typeof buildAnswerPlan>;
+  survey: TV3WriteSurveyRow;
+  body: { data?: TResponseData; embeddedData?: Record<string, string | number | boolean | null> };
+  stored: { data: TResponseData; variables: Record<string, TResponseDataValue> } | undefined;
+}): {
+  issues: InvalidParam[];
+  data: TResponseData | undefined;
+  variables: Record<string, TResponseDataValue> | undefined;
+} {
+  const issues: InvalidParam[] = [];
+
+  let data = stored?.data;
+  let dataTouched = false;
+
+  if (body.data !== undefined) {
+    const answerPlan = planAnswerDataWrite(plan, body.data, stored?.data);
+    issues.push(...answerPlan.issues);
+    data = answerPlan.data;
+    dataTouched = true;
+  }
+
+  let variables = stored?.variables;
+  let variablesTouched = false;
+
+  if (body.embeddedData !== undefined) {
+    const embeddedPlan = planEmbeddedDataWrite({
+      embeddedFields: survey.embeddedFields ?? [],
+      elementIds: new Set(plan.elementById.keys()),
+      incoming: body.embeddedData,
+    });
+    issues.push(...embeddedPlan.issues);
+
+    // Applied over whatever the answer step produced, which is what makes `embeddedData` a merge
+    // while `data` is a replacement: a field the payload omits keeps the value already in the map.
+    const nextData: TResponseData = { ...(data ?? {}), ...embeddedPlan.dataWrites };
+    for (const key of embeddedPlan.dataClears) delete nextData[key];
+    data = nextData;
+    dataTouched =
+      dataTouched || embeddedPlan.dataClears.length > 0 || Object.keys(embeddedPlan.dataWrites).length > 0;
+
+    const nextVariables = { ...(variables ?? {}), ...embeddedPlan.variableWrites };
+    for (const key of embeddedPlan.variableClears) delete nextVariables[key];
+    variables = nextVariables;
+    variablesTouched =
+      embeddedPlan.variableClears.length > 0 || Object.keys(embeddedPlan.variableWrites).length > 0;
+  }
+
+  return {
+    issues,
+    data: dataTouched ? (data ?? {}) : undefined,
+    variables: variablesTouched ? (variables ?? {}) : undefined,
+  };
+}
+
+/** Survey validation-rule failures, itemized per element rather than collapsed into one message. */
+function answerValidationIssues(
+  survey: TV3WriteSurveyRow,
+  data: TResponseData | undefined,
+  language: string | null
+) {
+  const errorMap = validateResponseData(
+    survey.blocks as unknown[],
+    data,
+    language ?? "en",
+    survey.questions as never
+  );
+
+  if (!errorMap) return [];
+
+  return Object.entries(errorMap).flatMap(([elementId, errors]) =>
+    errors.map((error) => ({
+      name: elementId,
+      reason: error.message,
+      referenceType: "element" as const,
+      identifier: error.ruleId,
+    }))
+  );
+}
+
+type TWriteParams = {
+  authentication: TV3Authentication;
+  requestId: string;
+  instance?: string;
+  auditLog?: TV3AuditLog;
+};
+
+/**
+ * `POST /api/v3/responses` → 201 `{ data }` with a `Location` header.
+ *
+ * **The workspace is resolved from `surveyId`, and a survey the caller cannot write to answers 403
+ * whether it is missing or someone else's.** The contract's 422 list named an unresolvable
+ * `surveyId` alongside `endingId`, `contactId` and the rest, but it does not belong with them: those
+ * are checked *after* authorization, inside a workspace the caller already holds, so they disclose
+ * nothing. `surveyId` is the scope anchor and is necessarily checked *before* it — a distinct answer
+ * for "no such survey" would let any valid key probe the id space of every other tenant. The spec
+ * has been corrected to match; see `api_v3_responses.yml`.
+ */
+export async function createV3Response({
+  body,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TWriteParams & { body: TV3CreateResponseBody }): Promise<Response> {
+  const log = logger.withContext({ requestId, surveyId: body.surveyId });
+
+  try {
+    const survey = await getSurveyForV3Write(body.surveyId);
+
+    if (!survey) {
+      return problemForbidden(requestId, undefined, instance);
+    }
+
+    const access = await requireV3WorkspaceAccess(
+      authentication,
+      survey.workspaceId,
+      "readWrite",
+      requestId,
+      instance
+    );
+
+    if (access instanceof Response) {
+      return access;
+    }
+
+    const { lookupKey } = resolveV3LabelContext(survey.languages, body.language ?? null);
+    const plan = buildAnswerPlan(
+      survey.blocks as never,
+      lookupKey,
+      (survey.embeddedFields ?? [])
+        .filter(({ field }) => field.source === "ingested")
+        .map(({ link }) => link.storageKey)
+    );
+
+    const composed = composeV3ResponseWrite({ plan, survey, body, stored: undefined });
+    const issues: InvalidParam[] = [
+      ...composed.issues,
+      ...[
+        validateV3ResponseLanguage(survey.languages, body.language),
+        validateV3EndingId(survey.endings, body.endingId),
+      ].filter((issue): issue is InvalidParam => issue !== null),
+      ...answerValidationIssues(survey, composed.data, body.language ?? null),
+    ];
+
+    if (issues.length > 0) {
+      return problemUnprocessableContent(requestId, "The response conflicts with the survey definition", {
+        invalid_params: issues,
+        instance,
+      });
+    }
+
+    const outcome = await createScopedResponse({
+      workspaceId: survey.workspaceId,
+      survey,
+      finished: body.finished,
+      data: composed.data ?? {},
+      variables: composed.variables ?? {},
+      ttc: normalizeV3Ttc(body.ttc, body.finished),
+      meta: body.meta,
+      tagIds: body.tags ?? [],
+      endingId: body.endingId,
+      language: body.language,
+      contactId: body.contactId,
+      displayId: body.displayId,
+      singleUseId: body.singleUseId,
+    });
+
+    if (!outcome.ok) {
+      return problemUnprocessableContent(requestId, "The response conflicts with stored data", {
+        invalid_params: outcome.issues,
+        instance,
+      });
+    }
+
+    const row = await readbackV3Response(outcome.responseId, { workspaceId: survey.workspaceId });
+
+    if (!row) {
+      // Deleted between the commit and the read back. Nothing truthful is left to return, and the
+      // row genuinely existed, so this is a server-side race rather than a caller error.
+      return mapV3ThrownError(new Error("Created response disappeared before read-back"), {
+        log,
+        requestId,
+        instance: instance ?? "",
+        operation: "responses.create",
+      });
+    }
+
+    if (auditLog) {
+      auditLog.targetId = row.id;
+      auditLog.organizationId = access.organizationId;
+      auditLog.newObject = { id: row.id, surveyId: row.surveyId, finished: row.finished };
+    }
+
+    const resource = createV3ResponseSerializer().toResource(row, survey);
+
+    // After the commit, and never fatal — see `dispatchV3ResponsePipeline`. `finished` comes from the
+    // persisted row because quota evaluation can finish a response submitted as partial.
+    await dispatchV3ResponsePipeline({
+      event: "responseCreated",
+      workspaceId: survey.workspaceId,
+      surveyId: survey.id,
+      response: row,
+      alsoFinished: row.finished,
+    });
+
+    return createdResponse(resource, {
+      location: `/api/v3/responses/${row.id}`,
+      requestId,
+      cache: "private, no-store",
+    });
+  } catch (error) {
+    return mapV3ThrownError(error, {
+      log,
+      requestId,
+      instance: instance ?? "",
+      operation: "responses.create",
+    });
+  }
+}
+
+/**
+ * `PATCH /api/v3/responses/{responseId}` → 200 `{ data }`.
+ *
+ * `responseFinished` fires on the **transition** to finished, not on every patch of a response that
+ * is already finished. v1 and v2 both re-emit, and this deliberately does not: the contract defines
+ * the event as firing "for a patch that transitions the response to finished"
+ * (`ResponseValidationEffects.firesPipeline`), and re-emitting means a correction to a typo in a
+ * finished response re-runs every webhook, integration and follow-up email the original submission
+ * ran. Worth knowing when comparing against the older paths.
+ */
+export async function updateV3Response({
+  responseId,
+  body,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TWriteParams & { responseId: string; body: TV3PatchResponseBody }): Promise<Response> {
+  const log = logger.withContext({ requestId, responseId });
+
+  try {
+    const workspaceId = await getResponseWorkspaceId(responseId);
+
+    if (!workspaceId) {
+      return problemForbidden(requestId, undefined, instance);
+    }
+
+    const access = await requireV3WorkspaceAccess(
+      authentication,
+      workspaceId,
+      "readWrite",
+      requestId,
+      instance
+    );
+
+    if (access instanceof Response) {
+      return access;
+    }
+
+    const stored = await getScopedV3Response(responseId, { workspaceId });
+
+    if (!stored) {
+      return problemForbidden(requestId, undefined, instance);
+    }
+
+    const survey = await getSurveyForV3Write(stored.surveyId);
+
+    if (!survey) {
+      return problemForbidden(requestId, undefined, instance);
+    }
+
+    // The language the response will carry *after* this patch, so a payload that changes language and
+    // answers in one call is validated against the labels it is about to have rather than the old ones.
+    const effectiveLanguage = body.language !== undefined ? body.language : stored.language;
+    const { lookupKey } = resolveV3LabelContext(survey.languages, effectiveLanguage ?? null);
+    const plan = buildAnswerPlan(
+      survey.blocks as never,
+      lookupKey,
+      (survey.embeddedFields ?? [])
+        .filter(({ field }) => field.source === "ingested")
+        .map(({ link }) => link.storageKey)
+    );
+
+    const composed = composeV3ResponseWrite({
+      plan,
+      survey,
+      body,
+      stored: {
+        data: (stored.data ?? {}) as TResponseData,
+        variables: (stored.variables ?? {}) as Record<string, TResponseDataValue>,
+      },
+    });
+
+    const issues: InvalidParam[] = [
+      ...composed.issues,
+      ...[
+        body.language === undefined ? null : validateV3ResponseLanguage(survey.languages, body.language),
+        body.endingId === undefined ? null : validateV3EndingId(survey.endings, body.endingId),
+      ].filter((issue): issue is InvalidParam => issue !== null),
+      ...answerValidationIssues(survey, composed.data, effectiveLanguage ?? null),
+    ];
+
+    if (issues.length > 0) {
+      return problemUnprocessableContent(requestId, "The response conflicts with the survey definition", {
+        invalid_params: issues,
+        instance,
+      });
+    }
+
+    const outcome = await updateScopedResponse({
+      responseId,
+      workspaceId,
+      survey,
+      patch: {
+        finished: body.finished,
+        endingId: body.endingId,
+        language: body.language,
+        data: composed.data,
+        variables: composed.variables,
+        tagIds: body.tags,
+      },
+    });
+
+    if (!outcome.ok) {
+      return problemUnprocessableContent(requestId, "The response conflicts with stored data", {
+        invalid_params: outcome.issues,
+        instance,
+      });
+    }
+
+    const row = await readbackV3Response(responseId, { workspaceId });
+
+    if (!row) {
+      return problemForbidden(requestId, undefined, instance);
+    }
+
+    if (auditLog) {
+      auditLog.targetId = responseId;
+      auditLog.organizationId = access.organizationId;
+      auditLog.oldObject = { id: stored.id, finished: stored.finished };
+      auditLog.newObject = { id: row.id, finished: row.finished };
+    }
+
+    const resource = createV3ResponseSerializer().toResource(row, survey);
+
+    await dispatchV3ResponsePipeline({
+      event: "responseUpdated",
+      workspaceId,
+      surveyId: survey.id,
+      response: row,
+      // The transition, not the state — see the note on this function.
+      alsoFinished: !stored.finished && row.finished,
+    });
+
+    return successResponse(resource, { requestId, cache: "private, no-store" });
+  } catch (error) {
+    return mapV3ThrownError(error, {
+      log,
+      requestId,
+      instance: instance ?? "",
+      operation: "responses.update",
     });
   }
 }
