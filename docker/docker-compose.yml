@@ -334,7 +334,7 @@ services:
 
   # Run Formbricks Prisma migrations before Hub writes tables to the shared database.
   formbricks-migrate:
-    image: ghcr.io/formbricks/formbricks:latest
+    image: ${FORMBRICKS_IMAGE_REF:?FORMBRICKS_IMAGE_REF is required}
     restart: "no"
     env_file:
       - path: .env
@@ -351,7 +351,7 @@ services:
 
   formbricks:
     restart: always
-    image: ghcr.io/formbricks/formbricks:latest
+    image: ${FORMBRICKS_IMAGE_REF:?FORMBRICKS_IMAGE_REF is required}
     env_file:
       - path: .env
         required: false
@@ -380,7 +380,7 @@ services:
   # the normal stack. Example: docker compose --profile authzed-ops run --rm authzed-ops health
   authzed-ops:
     profiles: ["authzed-ops"]
-    image: ghcr.io/formbricks/formbricks:latest
+    image: ${FORMBRICKS_IMAGE_REF:?FORMBRICKS_IMAGE_REF is required}
     entrypoint: ["formbricks-authzed"]
     command: ["health"]
     environment:
@@ -410,7 +410,7 @@ services:
   # readiness, or liveness depend on SpiceDB. Existing installations are gated by formbricks.sh and
   # the explicit v6 migration acknowledgement before this release is started.
   authzed-initialize:
-    image: ghcr.io/formbricks/formbricks:latest
+    image: ${FORMBRICKS_IMAGE_REF:?FORMBRICKS_IMAGE_REF is required}
     restart: "no"
     entrypoint: ["formbricks-authzed"]
     command: ["upgrade", "prepare"]

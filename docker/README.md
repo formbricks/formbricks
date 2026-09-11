@@ -33,9 +33,10 @@ That's it! After running the command and providing the required information, vis
 The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (`ghcr.io/formbricks/hub`) and the bundled Cube service. Hub and Cube share the same database as Formbricks by default and both start as part of the baseline `docker compose up`.
 
 - **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API starts. Both migration services run on every `docker compose up` and are idempotent.
-- **Production** (`docker/docker-compose.yml`): Set `POSTGRES_PASSWORD` to a unique random value and set
-  non-empty `HUB_API_KEY`, `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` values in
-  `.env` before starting the stack. Keep
+- **Production** (`docker/docker-compose.yml`): Set `FORMBRICKS_IMAGE_REF` to the full release image digest.
+  Every Formbricks application, migration, and AuthZed operation container uses this one required reference.
+  Set `POSTGRES_PASSWORD` to a unique random value and set non-empty `HUB_API_KEY`, `CUBEJS_API_SECRET`,
+  `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` values in `.env` before starting the stack. Keep
   `POSTGRES_PASSWORD` unchanged after the database volume has been initialized. The installer also writes a
   URL-encoded companion for connection strings. Manual installs only need to set
   `POSTGRES_PASSWORD_URL_ENCODED` when the raw password contains URI-reserved characters; existing URL-safe
@@ -68,8 +69,11 @@ For production Docker, generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` 
 `spicedb:50051`; it is not published through Traefik. The one-click installer generates both values and
 downloads `authzed-postgres-bootstrap.sh` automatically.
 
-For repository development, `pnpm dev:setup` generates and preserves the same credentials and `pnpm db:up`
-starts SpiceDB on `127.0.0.1:50051`. Run the isolated persistence test with:
+For repository development, `FORMBRICKS_DEV_AUTHZED_MODE=bundled` is the default. `pnpm db:up` generates and
+preserves the local credentials, enforces fully-consistent authorization, and starts SpiceDB on
+`127.0.0.1:50051`. Set the mode to `external` to preserve an existing external endpoint, token, system key,
+and TLS setting without starting the bundled SpiceDB services. External development also requires
+`AUTHZED_ENABLED=true` and `AUTHZED_CONSISTENCY=fully_consistent`. Run the isolated persistence test with:
 
 ```bash
 pnpm authzed:smoke
@@ -125,7 +129,7 @@ TLS, respectively. `AUTHZED_ENDPOINT` is a bare `host:port` (including bracketed
 To use the optional authenticated grpcui browser in development:
 
 ```bash
-docker compose -f docker-compose.dev.yml --profile authzed-ui up -d authzed-ui
+docker compose -f docker-compose.dev.yml --profile authzed-bundled --profile authzed-ui up -d authzed-ui
 ```
 
 Open `http://127.0.0.1:50052`. The browser UI and gRPC port are development-only.

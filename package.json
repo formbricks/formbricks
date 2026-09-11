@@ -15,7 +15,7 @@
     "db:push": "turbo run db:push",
     "db:seed": "turbo run db:seed",
     "db:seed:clear": "turbo run db:seed -- -- --clear",
-    "db:up": "pnpm dev:setup && docker compose -f docker-compose.dev.yml up -d",
+    "db:up": "bash scripts/dev-db-up.sh",
     "db:down": "docker compose -f docker-compose.dev.yml down",
     "authzed:backfill": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-backfill.ts",
     "authzed:perf": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-perf.ts",

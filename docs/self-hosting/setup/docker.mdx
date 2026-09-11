@@ -74,11 +74,14 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 
    Store your configuration in `.env`. Docker Compose reads this file for variable interpolation, and the
    Formbricks container also loads it at startup. For a local install, use `http://localhost:3000`. For a server
-   install, replace both URL values with your public HTTPS URL before starting the stack.
+   install, replace both URL values with your public HTTPS URL before starting the stack. Copy the immutable
+   community image reference from the release metadata; the placeholder below must be replaced with its full
+   SHA-256 digest.
 
    ```bash
    POSTGRES_PASSWORD=$(openssl rand -hex 32)
    cat <<EOF > .env
+   FORMBRICKS_IMAGE_REF=ghcr.io/formbricks/formbricks@sha256:<release-digest>
    WEBAPP_URL=http://localhost:3000
    NEXTAUTH_URL=http://localhost:3000
    POSTGRES_PASSWORD=$POSTGRES_PASSWORD
@@ -96,7 +99,9 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    chmod 600 .env
    ```
 
-   Keep `POSTGRES_PASSWORD` unchanged after PostgreSQL initializes the `postgres` volume. The generated
+   Keep `FORMBRICKS_IMAGE_REF` identical for the application, migration, and AuthZed operation containers; the
+   Compose file rejects a missing value so those processes cannot drift between releases. Keep
+   `POSTGRES_PASSWORD` unchanged after PostgreSQL initializes the `postgres` volume. The generated
    hexadecimal value is already URL-safe, so `POSTGRES_PASSWORD_URL_ENCODED` uses the same value. If you replace
    an existing `docker-compose.yml`, copy the exact password from that deployment instead of generating a new
    one. If it contains URI-reserved characters, set `POSTGRES_PASSWORD_URL_ENCODED` to its percent-encoded form;
@@ -180,10 +185,14 @@ that its Watch API is disabled. This does not affect schema writes, relationship
 If a future integration consumes the Watch API, enable that PostgreSQL setting separately and plan for the
 required database restart.
 
-Repository development exposes SpiceDB on `127.0.0.1:50051`. To start the optional authenticated browser UI:
+Repository development defaults to `FORMBRICKS_DEV_AUTHZED_MODE=bundled`; `pnpm db:up` generates and preserves
+its credentials, uses fully-consistent authorization, and exposes SpiceDB on `127.0.0.1:50051`. Set the mode
+to `external` to preserve an existing external client configuration and skip the bundled SpiceDB services.
+External mode requires enabled, fully-consistent AuthZed configuration. To start the optional authenticated
+browser UI for bundled mode:
 
 ```bash
-docker compose -f docker-compose.dev.yml --profile authzed-ui up -d authzed-ui
+docker compose -f docker-compose.dev.yml --profile authzed-bundled --profile authzed-ui up -d authzed-ui
 ```
 
 Then open [http://127.0.0.1:50052](http://127.0.0.1:50052). Run `pnpm authzed:smoke` for an isolated
@@ -462,7 +471,7 @@ If you cloned the Formbricks repository, the fastest way to test file uploads lo
    From the repository root:
 
    ```bash
-   docker compose -f docker-compose.dev.yml up -d
+   pnpm db:up
    ```
 
    This starts PostgreSQL, Valkey (Redis), Mailhog, RustFS, a permissions helper, a one-time bucket

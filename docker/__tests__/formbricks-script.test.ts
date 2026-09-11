@@ -24,6 +24,7 @@ const multiArchValkeyImage =
 
 const tempDirs: string[] = [];
 const dockerComposeOverrideKeys = [
+  "FORMBRICKS_IMAGE_REF",
   "POSTGRES_PASSWORD",
   "POSTGRES_PASSWORD_URL_ENCODED",
   "HUB_DATABASE_URL",
@@ -39,7 +40,7 @@ const dockerComposeTest = (name: string, testFunction: () => void): void => {
 };
 
 type RenderedDockerComposeConfig = {
-  services: Record<string, { environment?: Record<string, string> }>;
+  services: Record<string, { environment?: Record<string, string>; image?: string }>;
 };
 
 const createTempDir = (): string => {
@@ -117,6 +118,10 @@ const runDockerCompose = (args: string[], environment: NodeJS.ProcessEnv = {}): 
 
 const withRequiredComposeEnv = (envContents: string): string => {
   const requiredValues = [
+    [
+      "FORMBRICKS_IMAGE_REF",
+      "ghcr.io/formbricks/formbricks@sha256:0000000000000000000000000000000000000000000000000000000000000003",
+    ],
     ["AUTHZED_TOKEN", "test-authzed-token"],
     ["AUTHZED_DATABASE_PASSWORD", "test-authzed-database-password"],
   ];
@@ -212,6 +217,8 @@ const readExistingPostgresPassword = (
   composePath: string,
   processEnvironment: NodeJS.ProcessEnv = {}
 ): string => {
+  const imageReference =
+    "ghcr.io/formbricks/formbricks@sha256:0000000000000000000000000000000000000000000000000000000000000003";
   const result = spawnSync(
     "bash",
     [
@@ -224,7 +231,7 @@ const readExistingPostgresPassword = (
     ],
     {
       encoding: "utf8",
-      env: getDockerComposeProcessEnv(processEnvironment),
+      env: getDockerComposeProcessEnv({ FORMBRICKS_IMAGE_REF: imageReference, ...processEnvironment }),
       timeout: 20_000,
     }
   );
@@ -302,6 +309,47 @@ describe("docker/docker-compose.yml Cube configuration", () => {
     const cubeBlock = getServiceBlock(composeContents, "cube");
 
     expect(cubeBlock).toContain("      CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}");
+  });
+});
+
+describe("docker/docker-compose.yml Formbricks image contract", () => {
+  dockerComposeTest("uses one required immutable-capable reference for every Formbricks service", () => {
+    const imageReference =
+      "ghcr.io/formbricks/formbricks@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const config = renderDockerCompose("POSTGRES_PASSWORD=test-password\n", {
+      FORMBRICKS_IMAGE_REF: imageReference,
+    });
+
+    expect(config.services.formbricks.image).toBe(imageReference);
+    expect(config.services["formbricks-migrate"].image).toBe(imageReference);
+    expect(config.services["authzed-ops"].image).toBe(imageReference);
+    expect(config.services["authzed-initialize"].image).toBe(imageReference);
+  });
+
+  dockerComposeTest("rejects a missing Formbricks image reference", () => {
+    const composePath = writeDockerComposeTemplate();
+    const envPath = join(dirname(composePath), ".env");
+    writeFileSync(
+      envPath,
+      [
+        "POSTGRES_PASSWORD=test-password",
+        "AUTHZED_TOKEN=test-authzed-token",
+        "AUTHZED_DATABASE_PASSWORD=test-authzed-database-password",
+        "",
+      ].join("\n")
+    );
+
+    expect(() =>
+      runDockerCompose([
+        "--env-file",
+        envPath,
+        "--file",
+        composePath,
+        "--project-directory",
+        dirname(composePath),
+        "config",
+      ])
+    ).toThrow(/FORMBRICKS_IMAGE_REF.*required/);
   });
 });
 
