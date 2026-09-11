@@ -19,6 +19,7 @@ and generates phase values internally. If interrupted, use `resume` with the sam
 
 Before execution, verify:
 
+- Helm 3.15 or newer is installed so secret-hidden server-side dry runs are available;
 - bridge and candidate references are immutable image and embedded-manifest digests;
 - the bridge is serving legacy authorization while delivering the durable projection outbox;
 - SpiceDB health, schema, outbox, repair, and backup gates pass;

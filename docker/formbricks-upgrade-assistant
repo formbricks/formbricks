@@ -228,6 +228,7 @@ normalize_version() {
 version_core() {
   local version
   version=$(normalize_version "$1")
+  version="${version%%+*}"
   printf '%s' "${version%%-*}"
 }
 
@@ -505,6 +506,7 @@ inspect_docker_installation() {
 
 inspect_helm_installation() {
   local releases release_count release_data release_status values can_read can_create_jobs can_patch
+  local helm_cli_version helm_semver
 
   if ! command -v helm >/dev/null 2>&1; then
     add_check "helm_missing" "blocked"
@@ -512,6 +514,12 @@ inspect_helm_installation() {
   fi
   if ! command -v kubectl >/dev/null 2>&1; then
     add_check "kubectl_missing" "blocked"
+    return
+  fi
+  helm_cli_version=$(helm version --template '{{.Version}}' 2>/dev/null || true)
+  helm_semver="${helm_cli_version%%+*}"
+  if [[ ! "$helm_semver" =~ $semver_pattern ]] || ! version_is_at_least "$helm_semver" "3.15.0"; then
+    add_check "helm_version_unsupported" "blocked"
     return
   fi
   add_check "helm_and_kubectl_available" "pass"

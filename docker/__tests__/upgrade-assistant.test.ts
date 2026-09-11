@@ -167,6 +167,7 @@ const createFakeHelm = (
     `#!/bin/sh
 printf 'helm %s\\n' "$*" >> "$COMMAND_LOG"
 case "$1" in
+  version) printf '%s\n' 'v3.15.4' ;;
   list) cat "$HELM_RELEASES_JSON" ;;
   get) cat "$HELM_VALUES_JSON" ;;
   *) exit 1 ;;

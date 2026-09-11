@@ -42,7 +42,7 @@ type TFixture = Readonly<{
 
 const createFixture = (
   directory: string,
-  options: Readonly<{ gitops?: boolean; invalidChart?: boolean }> = {}
+  options: Readonly<{ gitops?: boolean; invalidChart?: boolean; helmVersion?: string }> = {}
 ): TFixture => {
   const bundle = join(directory, "bundle");
   const bin = join(directory, "bin");
@@ -160,6 +160,7 @@ const createFixture = (
 set -euo pipefail
 printf 'helm %s\n' "$*" >> "$COMMAND_LOG"
 case "$1" in
+  version) printf '%s\n' '${options.helmVersion ?? "v3.15.4"}' ;;
   list)
     if [[ $(jq -r '.status' "$TEMP_RELEASE_STATE") == "absent" ]]; then
       cat "$RELEASES_JSON"
@@ -553,6 +554,18 @@ describe("Formbricks v6 Helm upgrade executor", { timeout: 20_000 }, () => {
     expect(result.status).toBe(2);
     expect(JSON.parse(result.stdout)).toMatchObject({
       checks: [{ code: "helm_confirmation_required", status: "blocked" }],
+    });
+    expect(readFileSync(fixture.commandLog, "utf8")).not.toContain("helm upgrade");
+  });
+
+  test("rejects Helm versions that cannot perform secret-hidden server dry runs", () => {
+    const fixture = createFixture(temporaryDirectory(), { helmVersion: "v3.14.4" });
+    const result = run(fixture);
+
+    expect(result.status).toBe(2);
+    expect(JSON.parse(result.stdout).checks).toContainEqual({
+      code: "helm_version_unsupported",
+      status: "blocked",
     });
     expect(readFileSync(fixture.commandLog, "utf8")).not.toContain("helm upgrade");
   });

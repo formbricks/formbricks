@@ -9,6 +9,9 @@ PostgreSQL while a release-matched bridge keeps the v5 authorization behavior au
 upgrade assistant provides a read-only preflight for Docker Compose and Helm, and an automated receipt-backed
 cutover for Docker Compose, one-click, and Helm installations.
 
+Helm upgrades require Helm 3.15 or newer. The assistant validates each permanent-chart revision with a
+secret-hidden server-side dry run so the chart can safely reuse generated credentials from the live release.
+
 <Warning>
   Back up the Formbricks PostgreSQL database and the installation directory before executing the upgrade. Do
   not use `docker compose down -v`: the PostgreSQL volume is the source of product and authorization data.

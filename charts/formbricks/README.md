@@ -258,8 +258,9 @@ The first v5-to-v6 candidate rollout must use `migration.mode=external`. Upgrade
 assistant: it deploys the immutable v5 bridge, installs the temporary upgrade coordinator, prepares and activates
 the graph, verifies the exact candidate image, authorization runtime, and application health, then finalizes the
 database receipt. It restores the original replica/HPA state and intended migration policy, then removes the
-temporary release. The permanent chart contains no prepare, audit, fence, authority-switch, finalization, or
-rollback phases.
+temporary release. Helm 3.15 or newer is required so the assistant can validate upgrades against the live release
+with Secret output hidden. The permanent chart contains no prepare, audit, fence, authority-switch, finalization,
+or rollback phases.
 
 Use the checksum-verified local `formbricks-<version>.tgz` and `formbricks-upgrade-<version>.tgz` assets with
 `formbricks-upgrade-assistant execute --install-type helm`. An interrupted attempt must be continued with `resume`
