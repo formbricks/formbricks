@@ -34,7 +34,9 @@ info:
 
     **Responses**
     The response resource is **self-describing**. Answers come back as a typed `answers[]` array in which each entry carries the element's id, label, type and value, rather than as a map keyed by element id — so a consumer holding only a response can read it without fetching the survey and joining. Hidden fields, survey variables and auto-captured context are one `embeddedData[]` collection rather than three parallel concepts, each entry declaring a `kind` and a `type`. Data whose element has since been deleted is reported in `unresolved[]` instead of being dropped silently. Labels are resolved at read time against the current survey definition, and the `resolution` object discloses that policy along with the survey's `updatedAt` so a consumer can detect wording drift.
-    Writes take answers in the **stored map form** (`data`, `variables`) while reads return the typed array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching caller-supplied labels back onto option ids, so the write side keeps the stored shape. To stop that costing round-trippability, the **detailed read returns `data` and `variables` unchanged** — so a single-response read can be edited and sent back as `PATCH { "data": … }`, and the typed `answers[]` array is an addition rather than a replacement. Those two are the resource's writable state and carry no `readOnly`; the derived views (`answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the timestamps) are marked `readOnly` instead, per its meaning of server-managed. The list view omits the stored maps, since a bulk reader is not editing. `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what a write would do, before committing to it.
+    Writes take answers in the **stored map form** (`data`) while reads return the typed array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching caller-supplied labels back onto option ids, so the write side keeps the stored shape. To stop that costing round-trippability, the **detailed read returns `data` unchanged** — so a single-response read can be edited and sent back as `PATCH { "data": … }`, and the typed `answers[]` array is an addition rather than a replacement.
+    Embedded Data is the exception, and it is symmetric rather than round-tripped: hidden fields and variables are read and written through `embeddedData`, addressed by **name** in both directions. No raw map of them is echoed, because a name is already what a write accepts — publishing the storage keys underneath (a variable's is its cuid) would expose a layout the caller has no use for. `data` therefore carries element answers only.
+    Of those two, only `data` carries no `readOnly`, because it is the same map on the way in and on the way out. Embedded Data is writable through the **request's own** `embeddedData` map, not through the response field of that name — so `embeddedData[]`, like every other derived view on the resource, is marked `readOnly`, per its meaning of server-managed. `ResponseResource` lists them all. The list view omits `data`, since a bulk reader is not editing. `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what a write would do, before committing to it.
     `createdAt` and `updatedAt` are **server-owned** on this resource: they cannot be supplied on create or changed by a patch. Response metering counts rows by `(surveyId, createdAt)`, and a client-chosen `createdAt` also lets rows be inserted into the middle of another consumer's already-paginated stream. Backdating stays available on v2 until a dedicated import path exists. The respondent's IP address and the `contactAttributes` snapshot that v1/v2 expose are not part of this resource in any view; that snapshot is copied from the contact at submission time and never refreshed, so it is stale PII by construction.
     Response filtering is allow-listed and index-backed: `filter[createdAt][gte|gt|lte|lt]` (at most one lower and one upper bound — `gte` xor `gt`, `lte` xor `lt`), `filter[finished][eq]`, `filter[language][in]` and `filter[id][in]`. `filter[finished][eq]` and `filter[language][in]` require `surveyId` or `contactId` as well, because both are heap residuals bounded only by an anchored index range. Per-answer, hidden-field, submission-metadata, contact-attribute, quota and tag filters are **not** offered; each is a JSON path or an unindexed join on the largest table in the product. The in-app dashboard does offer them, so this API is knowingly behind the dashboard here — closing the gap requires index work and is tracked separately rather than quietly omitted.
     `GET /api/v3/responses/count` answers "how many match?" directly. The list endpoint's `meta.totalCount` covers a caller that is already paging and is **opt-in** via `includeTotalCount` (default `false`, unlike the survey list) because responses are the highest-cardinality table in the product. Both response counts are **capped at 10 000** and carry an exactness flag — `meta.totalCountRelation` on the list, `data.relation` on `/count` — reading `eq` when the figure is exact and `gte` when the cap was reached and it is a lower bound. An exact count over this table grows superlinearly with the data while a capped one stays flat, so an uncapped total would be the only part of a response whose cost is unbounded. `/count` accepts `precision=exact` for the cases that genuinely need a precise figure, documented as the deliberate slow path. The survey list's `totalCount` stays exact and uncapped: surveys are low-cardinality and that count has a covering index built for it.
@@ -2116,7 +2118,7 @@ paths:
                           elementType: fileUpload
                           elementLabel: Screenshots
                           fileUrls:
-                            - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshot/shot.png
+                            - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshots/shot.png
                           fileCount: 1
                         - position: 5
                           elementId: priorities
@@ -2176,13 +2178,12 @@ paths:
                           - '10115'
                           - Deutschland
                         screenshots:
-                          - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshot/shot.png
+                          - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshots/shot.png
                         priorities:
                           - Geschwindigkeit
                           - Preis
                         nps_matrix:
                           Support: Gut
-                        plan: enterprise
                 anonymous:
                   summary: An anonymous, unfinished response
                   value:
@@ -6594,12 +6595,7 @@ components:
           type:
             - string
             - 'null'
-          description: |-
-            The language the labels in this payload were resolved in. Follows the response's `language` whenever the survey still declares it, and the survey's default language otherwise.
-
-            Deliberately **not** gated on whether that language is still enabled. `enabled` is a current authoring setting, not a property of the response: honouring it would silently re-language every historical response the day an author switches a translation off, and it would disagree with the display surfaces, which resolve the same labels without consulting it.
-
-            `null` when the survey declares no default language.
+          description: The language the labels in this payload were resolved in. Follows the response's `language` when it is set and the survey has that language enabled, otherwise the survey's default language. `null` when the survey carries no translations.
         surveyUpdatedAt:
           type: string
           format: date-time
@@ -6737,9 +6733,7 @@ components:
               type: string
               description: The token as stored — conventionally `accepted` for `consent` and `clicked` for `cta`. Returned because the boolean is a derivation and this is the underlying fact.
       unevaluatedProperties: false
-      description: |-
-        Acknowledgement answer. Covers `consent` (accepted) and `cta` (clicked through).
-        A skipped element usually has no entry in `answers[]` at all, because nothing was written for it. The exception is a legacy row: older clients recorded a skipped `cta` as the token `dismissed` rather than writing nothing, and an unchecked `consent` as `""`. Those are stored values, so they are returned — `valueBoolean: false` with the token on `rawValue` — rather than dropped to make the payload tidier.
+      description: Acknowledgement answer. Covers `consent` (accepted) and `cta` (clicked through). A `cta` element the respondent skipped has no entry in `answers[]` at all.
     ResponseValueMatch:
       type: string
       enum:
@@ -6754,15 +6748,12 @@ components:
         - `label` — the stored value matched an option's **label text** (ids are stable, labels are
           editable and language-dependent, so a label match is weaker evidence).
 
-        - `other` — no option resolves **and** the element offers an Other free-text input. Read it as
-          "this element accepts write-ins and this is not one of its current options", not as proof the
-          respondent typed it: nothing in storage marks a write-in, so a genuine one and an option renamed
-          since collection are byte-identical. Every surface that reads these values concludes the same
-          thing from the same bytes — the survey renderer decides it by this exact elimination — so the
-          alternative is not more certainty, only a different guess.
+        - `other` — the value arrived through the element's **Other** free-text input. Only reported when
+          the element actually has that input enabled and the value was submitted through it.
 
-        - `unmatched` — no option resolves and the element has **no** Other input, which makes a write-in
-          impossible: the value is a renamed or deleted option. Returned verbatim rather than dropped.
+        - `unmatched` — no option resolves. The raw value is still returned; it is **not** silently
+          reclassified as `other`, because a *renamed* option is also unmatched text and filing it as a
+          write-in would misattribute the answer.
     ResponseSelection:
       type: object
       description: |
@@ -6782,7 +6773,7 @@ components:
           type:
             - string
             - 'null'
-          description: Option label in the resolved language. `null` when `match` is `unmatched`, and also for `pictureSelection`, whose options are images and carry no label to resolve.
+          description: Option label in the resolved language. `null` when `match` is `unmatched`.
         rawValue:
           type: string
           description: 'The value as stored on the response, verbatim and before resolution — always present, and the string to use when rebuilding the stored map. Note what is stored differs by element type: `multipleChoiceSingle`, `multipleChoiceMulti` and `ranking` store the option **label** in the respondent''s language, while `pictureSelection` stores the option **id**. `""` occurs when the respondent selected Other and left it blank, and is returned rather than dropped.'
@@ -7260,7 +7251,13 @@ components:
       description: |
         Answers as stored, **keyed by element id**.
 
-        Hidden-field values do not live here. They are stored in the same underlying map, but that is a storage detail rather than part of this contract: a hidden field is an Embedded Data field, and Embedded Data is addressed by name through `embeddedData`. A hidden field's name appearing as a key here is a 400 naming the key and pointing at `embeddedData`, not a silent write to the wrong namespace.
+        Hidden-field values do not live here. They are stored in the same underlying map, but that is a storage detail rather than part of this contract: a hidden field is an Embedded Data field, and Embedded Data is addressed by name through `embeddedData`.
+
+        A hidden field's name appearing as a key here is rejected rather than silently written to the wrong namespace — with **422**, not 400, because knowing that a key names a hidden field means loading the survey, and these operations route every failure that needs stored state to 422. The problem carries `invalid_params[]` with `name` set to the offending key, `code: unsupported_field` and `referenceType: hiddenField`, so a client can point at it without parsing prose.
+
+        A key that is **also** an element id is the exception, and it is **accepted**: the answer owns that address. Answers and hidden fields do share one slot, and the older surveys that declare a field named after a question have exactly one value under that key — but it is always the answer's. The field is dropped at ingest with `element_id_collision` (`packages/types/embedded-data-ingest.ts`) and filtered again in the renderer before it can reach a submission, precisely so a display-time field value cannot land on top of what the respondent answered. So on such a survey `answers[]` carries the value, `embeddedData` neither reports it nor accepts a write for it, and refusing the key here would block the only write that fits it.
+
+        New surveys cannot reach that state through the editor or `POST`/`PATCH /api/v3/surveys`, which refuse an element id colliding with a declared field name. Both v1 management survey writes still accept one — that guard reads variable and hidden-field names but never element ids — so this set, unlike the reserved-name one, is still growing.
 
         Keeping the two apart is what lets the storage layout change underneath — the legacy columns go away eventually — without this contract either following it or breaking a round-trip it promised.
 
@@ -7298,6 +7295,8 @@ components:
 
 
         Values follow their field's declared type. A field the payload omits is left as it is; this is a merge over named fields, not a replacement of the collection.
+
+        `null` **clears** a field. Omission and `null` therefore mean different things — leave it alone versus remove its value — which is the only reading that makes a merge-shaped map able to express deletion at all. A cleared field is then absent from `embeddedData[]` on the next read, exactly as one that was never written, and a field whose definition carries a `defaultValue` falls back to that default rather than disappearing.
 
         **An ambiguous name is refused.** The read says `key` is unique per `kind` rather than across the collection, because a survey predating the reserved-name guard can hold a variable and a hidden field under one name. This map has no `kind`, so on such a survey a name cannot say which field it means — and guessing would write the caller's value into the wrong one. A name that matches more than one declared field is a 400 naming it; rename one side on the survey to clear it. The set is finite, frozen and tracked, and nothing new can enter it.
 
@@ -7467,7 +7466,11 @@ components:
       description: |
         A survey response in the detailed view, as returned by `GET /api/v3/responses/{responseId}` and by the write endpoints. Everything in `ResponseListItem`, plus the identity and provenance fields the list view omits.
 
-        It also carries `data` — the answers as stored, returned unchanged, so a client can read a response, edit an answer and send it straight back. Embedded Data is not echoed in stored form: `embeddedData[]` is already both the readable and the writable view of it, addressed by name, so a second raw map would only republish the storage layout. That is the property v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is "burdensome for clients, particularly when the JSON data is complex or deeply nested".
+        It also carries `data` — the answers as stored, returned unchanged, so a client can read a response, edit an answer and send it straight back. Embedded Data is not echoed in stored form: the read's `embeddedData[]` and a request's `embeddedData` map already address the same fields by the same names, so a second raw map would only republish the storage layout. That is the property v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is "burdensome for clients, particularly when the JSON data is complex or deeply nested".
+
+        They are not the *same* view, and the differences are deliberate. A write accepts `ingested` and `computed` fields only: a `reserved` entry describes the submission environment, and being able to read one back is not a licence to author it. An unset field is **omitted** from the read while `null` on a write **clears** one, because a merge-shaped map has no other way to spell deletion. And a name the read returns twice under different `kind`s cannot be written at all — see `ResponseEmbeddedDataInput`, which refuses an ambiguous name rather than guessing.
+
+        Values themselves round-trip: within those two kinds every value the read emits is accepted verbatim on a write, and a `date` reads and writes as the same ISO-8601 string. So a read-edit-write cycle loses nothing except on the finite set of legacy surveys carrying one name as both a variable and a hidden field, where the write refuses the name outright.
 
         Note which fields carry `readOnly` here and which do not, because it is the opposite of what an "echo" framing would suggest. `readOnly` means a value is managed exclusively by the server, so it marks the **derived** views — `answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the denormalized `surveyName` and `workspaceId`, the timestamps, `durationSeconds` and `id`. `data` is *not* read-only: it is exactly what the write endpoints accept, and leaving it unmarked is what makes this representation round-trippable rather than merely informative.
 

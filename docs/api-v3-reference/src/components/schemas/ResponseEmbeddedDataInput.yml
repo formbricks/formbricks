@@ -30,6 +30,13 @@ description: >
   merge over named fields, not a replacement of the collection.
 
 
+  `null` **clears** a field. Omission and `null` therefore mean different things — leave it alone
+  versus remove its value — which is the only reading that makes a merge-shaped map able to express
+  deletion at all. A cleared field is then absent from `embeddedData[]` on the next read, exactly as
+  one that was never written, and a field whose definition carries a `defaultValue` falls back to
+  that default rather than disappearing.
+
+
   **An ambiguous name is refused.** The read says `key` is unique per `kind` rather than across the
   collection, because a survey predating the reserved-name guard can hold a variable and a hidden
   field under one name. This map has no `kind`, so on such a survey a name cannot say which field it

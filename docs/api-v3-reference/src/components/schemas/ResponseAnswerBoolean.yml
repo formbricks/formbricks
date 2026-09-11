@@ -22,10 +22,5 @@ allOf:
           Returned because the boolean is a derivation and this is the underlying fact.
 unevaluatedProperties: false
 description: >-
-  Acknowledgement answer. Covers `consent` (accepted) and `cta` (clicked through).
-
-  A skipped element usually has no entry in `answers[]` at all, because nothing was written for it.
-  The exception is a legacy row: older clients recorded a skipped `cta` as the token `dismissed`
-  rather than writing nothing, and an unchecked `consent` as `""`. Those are stored values, so they
-  are returned — `valueBoolean: false` with the token on `rawValue` — rather than dropped to make the
-  payload tidier.
+  Acknowledgement answer. Covers `consent` (accepted) and `cta` (clicked through). A `cta` element
+  the respondent skipped has no entry in `answers[]` at all.

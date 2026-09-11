@@ -121,7 +121,7 @@ get:
                       elementType: fileUpload
                       elementLabel: Screenshots
                       fileUrls:
-                        - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshot/shot.png
+                        - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshots/shot.png
                       fileCount: 1
                     - position: 5
                       elementId: priorities
@@ -181,13 +181,12 @@ get:
                       - "10115"
                       - Deutschland
                     screenshots:
-                      - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshot/shot.png
+                      - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshots/shot.png
                     priorities:
                       - Geschwindigkeit
                       - Preis
                     nps_matrix:
                       Support: Gut
-                    plan: enterprise
             anonymous:
               summary: An anonymous, unfinished response
               value:
