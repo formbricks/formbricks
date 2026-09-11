@@ -15,7 +15,9 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { validateResponseData } from "@/modules/api/lib/validation";
+import { validateClientFileUploads } from "@/modules/storage/utils";
 import { buildAnswerPlan } from "./answers";
 import { resolveV3LabelContext } from "./label-resolution";
 import {
@@ -475,6 +477,49 @@ function composeV3ResponseWrite({
   };
 }
 
+/**
+ * File-upload answers must point at files this workspace, survey and element own.
+ *
+ * Every v1 and v2 write path runs this, and omitting it is not a cosmetic gap: a stored answer is a
+ * storage path that later gets resolved into a signed URL by the dashboard, the export and the read
+ * endpoints. A caller with write access to workspace A could otherwise store
+ * `/storage/{workspaceB}/private/surveys/…` under a file-upload element and have it resolved on
+ * their own response — the cross-tenant storage reference ENG-1981 closed on the management routes.
+ *
+ * `legacyOwnedStoragePrefixes` is passed for the same reason the management routes pass it: this is a
+ * management-plane API, and a caller replaying an old response carries file URLs that predate the
+ * scoped shape. The client widget path stays strict without it.
+ *
+ * 422 rather than v1/v2's 400, because the check needs the survey definition — the line this
+ * contract draws between the two.
+ */
+async function fileUploadIssues(
+  survey: TV3WriteSurveyRow,
+  data: TResponseData | undefined
+): Promise<InvalidParam[]> {
+  if (!data) return [];
+
+  const valid = validateClientFileUploads({
+    data,
+    workspaceId: survey.workspaceId,
+    surveyId: survey.id,
+    blocks: survey.blocks as never,
+    questions: survey.questions as never,
+    legacyOwnedStoragePrefixes: await getWorkspaceLegacyStoragePrefixes(survey.workspaceId),
+  });
+
+  if (valid) return [];
+
+  return [
+    {
+      name: "data",
+      reason: "A file-upload answer references a file that does not belong to this survey's upload element.",
+      code: "invalid_reference",
+      referenceType: "element",
+    },
+  ];
+}
+
 /** Survey validation-rule failures, itemized per element rather than collapsed into one message. */
 function answerValidationIssues(
   survey: TV3WriteSurveyRow,
@@ -567,6 +612,7 @@ export async function createV3Response({
         (issue): issue is InvalidParam => issue !== null
       ),
       ...answerValidationIssues(survey, composed.data, storedLanguage),
+      ...(await fileUploadIssues(survey, composed.data)),
     ];
 
     if (issues.length > 0) {
@@ -729,6 +775,7 @@ export async function updateV3Response({
         (issue): issue is InvalidParam => issue !== null
       ),
       ...answerValidationIssues(survey, composed.data, effectiveLanguage),
+      ...(await fileUploadIssues(survey, composed.data)),
     ];
 
     if (issues.length > 0) {
