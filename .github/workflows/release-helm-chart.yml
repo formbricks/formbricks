@@ -68,6 +68,11 @@ jobs:
           yq -i ".version = \"${VERSION}\"" charts/formbricks/Chart.yaml
           yq -i ".appVersion = \"${VERSION}\"" charts/formbricks/Chart.yaml
 
+          if [[ "$VERSION" == 6.* ]]; then
+            yq -i ".version = \"${VERSION}\"" charts/formbricks-upgrade/Chart.yaml
+            yq -i ".appVersion = \"${VERSION}\"" charts/formbricks-upgrade/Chart.yaml
+          fi
+
           echo "✅ Successfully updated Chart.yaml"
 
       - name: Validate default Formbricks image tag
@@ -238,6 +243,11 @@ jobs:
           echo "Packaging Helm chart version: ${VERSION}"
           helm package ./charts/formbricks
 
+          if [[ "$VERSION" == 6.* ]]; then
+            helm lint ./charts/formbricks-upgrade --values ./charts/formbricks-upgrade/values.example.yaml
+            helm package ./charts/formbricks-upgrade
+          fi
+
           echo "✅ Successfully packaged formbricks-${VERSION}.tgz"
 
       - name: Push Helm chart to GitHub Container Registry
@@ -248,5 +258,10 @@ jobs:
 
           echo "Pushing Helm chart to registry: formbricks-${VERSION}.tgz"
           helm push "formbricks-${VERSION}.tgz" oci://ghcr.io/formbricks/helm-charts
+
+          if [[ "$VERSION" == 6.* ]]; then
+            echo "Pushing temporary v6 upgrade chart: formbricks-upgrade-${VERSION}.tgz"
+            helm push "formbricks-upgrade-${VERSION}.tgz" oci://ghcr.io/formbricks/helm-charts
+          fi
 
           echo "✅ Successfully pushed Helm chart to registry"

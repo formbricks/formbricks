@@ -8,6 +8,7 @@ const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const publishWorkflowPath = ".github/workflows/publish-v6-upgrade-assistant.yml";
 const releaseWorkflowPath = ".github/workflows/formbricks-release.yml";
 const dockerReleaseWorkflowPath = ".github/workflows/release-docker-github.yml";
+const helmReleaseWorkflowPath = ".github/workflows/release-helm-chart.yml";
 
 type TWorkflow = {
   jobs?: Record<
@@ -94,5 +95,17 @@ describe("v6 upgrade assistant release workflow", () => {
     );
     expect(dockerAction).toContain("FORMBRICKS_AUTHZED_RELEASE_MODE=${{ inputs.authzed_release_mode }}");
     expect(dockerAction).toContain("FORMBRICKS_BUILD_REVISION=${{ github.sha }}");
+  });
+
+  test("publishes the temporary upgrade chart only for v6 and signs the release copy", () => {
+    const helmRelease = readFileSync(join(repositoryRoot, helmReleaseWorkflowPath), "utf8");
+    const assistantRelease = readFileSync(join(repositoryRoot, publishWorkflowPath), "utf8");
+
+    expect(helmRelease).toContain('if [[ "$VERSION" == 6.* ]]');
+    expect(helmRelease).toContain("helm lint ./charts/formbricks-upgrade");
+    expect(helmRelease).toContain('helm push "formbricks-upgrade-${VERSION}.tgz"');
+    expect(assistantRelease).toContain("helm package charts/formbricks-upgrade");
+    expect(assistantRelease).toContain('"formbricks-upgrade-${release_version}.tgz"');
+    expect(assistantRelease).toContain("dist/v6-upgrade/formbricks-upgrade-*.tgz");
   });
 });

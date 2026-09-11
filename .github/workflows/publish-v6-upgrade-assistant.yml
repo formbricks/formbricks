@@ -68,6 +68,11 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
 
+      - name: Set up Helm
+        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
+        with:
+          version: v3.15.4
+
       - name: Validate release and signed immutable images
         env:
           BRIDGE_IMAGE_REF: ${{ inputs.bridge_image_ref }}
@@ -117,6 +122,22 @@ jobs:
             --target-image "$TARGET_IMAGE_REF" \
             --output-directory dist/v6-upgrade
 
+          release_version="${RELEASE_TAG#v}"
+          helm lint charts/formbricks-upgrade --values charts/formbricks-upgrade/values.example.yaml
+          helm package charts/formbricks-upgrade \
+            --version "$release_version" \
+            --app-version "$release_version" \
+            --destination dist/v6-upgrade
+
+          (
+            cd dist/v6-upgrade
+            sha256sum \
+              formbricks-upgrade-assistant \
+              formbricks-upgrade-manifest.json \
+              "formbricks-upgrade-${release_version}.tgz" \
+              > formbricks-upgrade-checksums.txt
+          )
+
       - name: Sign and verify checksums
         env:
           CERTIFICATE_IDENTITY_REGEXP: ^https://github\.com/formbricks/formbricks/\.github/workflows/.+@refs/(heads/main|tags/.+)$
@@ -142,5 +163,6 @@ jobs:
           gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
             dist/v6-upgrade/formbricks-upgrade-assistant \
             dist/v6-upgrade/formbricks-upgrade-manifest.json \
+            dist/v6-upgrade/formbricks-upgrade-*.tgz \
             dist/v6-upgrade/formbricks-upgrade-checksums.txt \
             dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json

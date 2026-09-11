@@ -21,14 +21,21 @@ Use the signed release assistant output to populate `upgrade-values.yaml` and ve
 Do not start if a candidate migration is destructive or makes the bridge unable to read the database. Contract
 migrations belong after the documented rollback-retention window; initial v6 has no contract-migration phase.
 
-Install the generation-specific temporary release:
+Each v6 release publishes this temporary chart both as a checksum-signed release asset and in the Formbricks
+OCI chart registry. Use the chart version matching the target Formbricks release; do not run a chart copied
+from another branch or release. Install the generation-specific temporary release from OCI:
 
 ```sh
-helm upgrade --install formbricks-v6-upgrade-1 ./charts/formbricks-upgrade \
+helm upgrade --install formbricks-v6-upgrade-1 \
+  oci://ghcr.io/formbricks/helm-charts/formbricks-upgrade \
+  --version 6.0.0 \
   --namespace formbricks \
   --values upgrade-values.yaml \
   --wait --wait-for-jobs --timeout 30m
 ```
+
+For an air-gapped installation, download `formbricks-upgrade-<version>.tgz` with the other release-assistant
+assets, verify it through the same signed checksum file, and replace the OCI reference with the local archive.
 
 Keep `generation` fixed for one attempt. Advance `phase` only after the current Job succeeds and the runbook
 gate passes. Increment `execution` before rerunning a phase so Kubernetes receives a new immutable Job. Never
