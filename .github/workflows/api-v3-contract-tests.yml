@@ -257,13 +257,12 @@ jobs:
         run: python -m pip install schemathesis==4.25.0
         shell: bash
 
-      # `--exclude-path-regex '^/api/v3/responses'` skips the eight response operations. They are
-      # documented (ENG-2868 agreed the contract before implementation, deliberately) but not yet
-      # routed, and `fill-missing` in schemathesis.toml means a documented operation is exercised the
-      # moment it appears — so each one answers Next.js's HTML 404 against a spec that documents
-      # 200/400/401/403/429/500. Remove the flag when the routes land: ENG-2959, which is blocked by
-      # the read, write, delete, batch-delete and validate tickets. Verify by re-running the command
-      # below without the flag and checking the selected-operation count rises.
+      # Which operations are skipped, and why, lives in schemathesis.toml next to the operations it
+      # names — not here. An endpoint's own PR deletes its block there as the route lands, so each
+      # one is contract-checked when it ships rather than all of them at the end (ENG-2959).
+      #
+      # The selected-operation count is the check: it is printed on every run, and it must rise by
+      # exactly the number of operations a PR claims to have implemented.
       - name: Run v3 contract tests
         if: steps.harness.outputs.present == 'true'
         shell: bash
@@ -276,7 +275,6 @@ jobs:
             --url http://localhost:3000 \
             --phases examples \
             --checks not_a_server_error,status_code_conformance,content_type_conformance,response_schema_conformance \
-            --exclude-path-regex '^/api/v3/responses' \
             --generation-database=:memory: \
             --report junit \
             --report-dir schemathesis-report \
