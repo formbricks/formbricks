@@ -9,6 +9,7 @@
         "E2E_TESTING",
         "FORMBRICKS_AUTHZED_RELEASE_MODE",
         "FORMBRICKS_BUILD_REVISION",
+        "GITHUB_SHA",
         "NEXTAUTH_URL",
         "NODE_ENV",
         "POSTHOG_KEY",
