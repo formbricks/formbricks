@@ -1690,7 +1690,9 @@ paths:
           $ref: '#/components/responses/V3Forbidden'
         '422':
           description: |
-            Unprocessable Content — the body is well-formed but conflicts with stored state: `surveyId` does not resolve, `endingId` is not an ending of that survey, `language` is not enabled on it, `contactId` is not a contact in the same workspace, `displayId` already backs another response, `singleUseId` is already used for this survey, or an answer violates the survey's own validation rules. Each is itemized in `invalid_params`.
+            Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is not an ending of that survey, `language` is not enabled on it, `contactId` is not a contact in the same workspace, `displayId` already backs another response, `singleUseId` is already used for this survey, an `embeddedData` name is not declared on the survey or is ambiguous, or an answer violates the survey's own validation rules. Each is itemized in `invalid_params`.
+
+            **`surveyId` is not in that list, and answers 403 instead** — whether it names no survey at all or one in another workspace. Every other id here is checked *after* authorization, inside a workspace the caller already holds, so a distinct answer for each discloses nothing. `surveyId` is the scope anchor and is necessarily checked *before* authorization, so a separate "no such survey" would let any valid API key probe the id space of every other tenant. The two cases are therefore byte-identical, as they are on `GET`, `PATCH` and `DELETE` of a response id.
           content:
             application/problem+json:
               schema:
@@ -7284,7 +7286,8 @@ components:
         - `ingested` (hidden fields) — accepted, through the same ingest contract the SDK uses: the name
           must be declared on the survey, the value is coerced to the field's declared `type`, a `locked`
           field ignores the write, and the whole payload is bounded. A name the survey does not declare is
-          a 400 rather than a silent drop.
+          a **422** rather than a silent drop — knowing whether a name is declared means loading the
+          survey, and these operations route every failure that needs stored state to 422.
 
         - `computed` (variables) — accepted, because a management caller correcting a response needs to,
           and v1 and v2 both allow it today.
@@ -7298,7 +7301,7 @@ components:
 
         `null` **clears** a field. Omission and `null` therefore mean different things — leave it alone versus remove its value — which is the only reading that makes a merge-shaped map able to express deletion at all. A cleared field is then absent from `embeddedData[]` on the next read, exactly as one that was never written, and a field whose definition carries a `defaultValue` falls back to that default rather than disappearing.
 
-        **An ambiguous name is refused.** The read says `key` is unique per `kind` rather than across the collection, because a survey predating the reserved-name guard can hold a variable and a hidden field under one name. This map has no `kind`, so on such a survey a name cannot say which field it means — and guessing would write the caller's value into the wrong one. A name that matches more than one declared field is a 400 naming it; rename one side on the survey to clear it. The set is finite, frozen and tracked, and nothing new can enter it.
+        **An ambiguous name is refused.** The read says `key` is unique per `kind` rather than across the collection, because a survey predating the reserved-name guard can hold a variable and a hidden field under one name. This map has no `kind`, so on such a survey a name cannot say which field it means — and guessing would write the caller's value into the wrong one. A name that matches more than one declared field is a **422** naming it, for the same reason as an undeclared one; rename one side on the survey to clear it. The set is finite, frozen and tracked, and nothing new can enter it.
 
         Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
       additionalProperties:
