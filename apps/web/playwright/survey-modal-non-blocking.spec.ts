@@ -272,6 +272,25 @@ test.describe("App survey widget does not block the host page", () => {
     await surveyInput.fill("still works");
     await expect(surveyInput).toHaveValue("still works");
 
+    // Reported again when the viewport changes. Every assertion above is satisfied by a single
+    // report on open, so without this the resize listener could be deleted and nothing would go
+    // red — leaving a host masking touches to where the card used to be after a rotation.
+    const reportsBeforeResize = await page.evaluate(() => window.__cardRects.length);
+    await page.setViewportSize({ width: 900, height: 700 });
+    await expect
+      .poll(() => page.evaluate(() => window.__cardRects.length), { timeout: 30000 })
+      .toBeGreaterThan(reportsBeforeResize);
+
+    // No two consecutive reports are identical. The card animates over 500ms and the rect is
+    // sampled per frame, so without the whole-pixel dedupe a native host takes roughly thirty
+    // bridge hops per open instead of a handful.
+    const hasRepeatedReport = await page.evaluate(() => {
+      const key = (r: (typeof window.__cardRects)[number]) =>
+        r ? [r.x, r.y, r.width, r.height].map(Math.round).join(",") : "none";
+      return window.__cardRects.some((r, i) => i > 0 && key(r) === key(window.__cardRects[i - 1]));
+    });
+    expect(hasRepeatedReport).toBe(false);
+
     // Escape closes the survey when focus is inside it.
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
