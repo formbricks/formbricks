@@ -272,6 +272,36 @@ describe("resolveV3WriteLanguage", () => {
     expect(resolveV3WriteLanguage(languages, "DE")).toEqual({ ok: true, code: "de" });
   });
 
+  /**
+   * The realistic shape, and the one that caught a real divergence. A survey's language rows are
+   * canonicalized when created, so a real survey declares `de-DE` while callers send `de`. v1 and v2
+   * accept that because they canonicalize the caller's value; comparing raw strings made v3 answer
+   * 422 for a payload the other two take. Matching is canonical; storing is still verbatim.
+   */
+  test("a bare code matches a survey that declares the canonical one, and stores the survey's", () => {
+    const canonical = [
+      { default: true, enabled: true, language: { code: "en-US" } },
+      { default: false, enabled: true, language: { code: "de-DE" } },
+    ];
+
+    expect(resolveV3WriteLanguage(canonical, "de")).toEqual({ ok: true, code: "de-DE" });
+    expect(resolveV3WriteLanguage(canonical, "de-DE")).toEqual({ ok: true, code: "de-DE" });
+    expect(resolveV3WriteLanguage(canonical, "DE-de")).toEqual({ ok: true, code: "de-DE" });
+  });
+
+  /** And the reverse: a legacy survey declaring the bare code still takes a canonical payload. */
+  test("a canonical code matches a survey that declares the bare one", () => {
+    expect(resolveV3WriteLanguage(languages, "de-DE")).toEqual({ ok: true, code: "de" });
+  });
+
+  /** Canonical matching must not smuggle a language the survey never declared. */
+  test("canonicalization does not widen the accepted set", () => {
+    const canonical = [{ default: true, enabled: true, language: { code: "en-US" } }];
+
+    expect(resolveV3WriteLanguage(canonical, "de").ok).toBe(false);
+    expect(resolveV3WriteLanguage(canonical, "de-DE").ok).toBe(false);
+  });
+
   test("a language the survey does not declare is refused", () => {
     const resolved = resolveV3WriteLanguage(languages, "es");
     expect(resolved.ok).toBe(false);

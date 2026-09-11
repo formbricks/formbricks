@@ -1,3 +1,4 @@
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import { applyIngestContract, normalizeIngestedValue } from "@formbricks/types/embedded-data-ingest";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
@@ -324,21 +325,37 @@ export const planEmbeddedDataWrite = ({
 };
 
 /**
+ * Both sides of a language comparison, reduced to one canonical form.
+ *
+ * Necessary because the two sides are canonicalized at different times by different code. A survey's
+ * language rows go through `normalizeLanguageCode` when they are created (`lib/language/service.ts`),
+ * so a real survey declares `de-DE`; a caller naturally sends `de`. Comparing the raw strings makes
+ * those two disagree, and v1/v2 do not have that problem only because they canonicalize the caller's
+ * value instead of matching it. Falls back to the raw value for a code that does not canonicalize, so
+ * a private or legacy tag still matches itself.
+ */
+const canonicalLanguageKey = (code: string): string => (normalizeLanguageCode(code) ?? code).toLowerCase();
+
+/**
  * Resolve the survey language a response will be stamped with, or say why it cannot be.
  *
  * **It returns the survey's own declared code rather than a canonicalized form of the caller's.**
- * That is the whole point of the function, and it is not cosmetic: `normalizeResponseLanguage`
- * expands `de` to `de-DE`, while `resolveV3LabelContext` matches a response against the survey's
- * language set by exact (case-insensitive) code. A survey declaring `de` and a response stored as
- * `de-DE` therefore do not match, the read falls back to the survey default, and every label on a
- * German response comes back in English. Validating against one value and storing another is what
- * creates that gap, so the value that was validated is the value that gets stored.
+ * That is the point of the function, and it is not cosmetic: `resolveV3LabelContext` matches a
+ * response against the survey's language set by plain case-insensitive code equality, so a response
+ * stored in any other spelling falls back to the survey default and every label on it comes back in
+ * the wrong language. Validating against one value and storing another is what creates that gap, so
+ * the value that matched is the value that gets stored.
  *
- * Stricter than the read's `resolveV3LabelContext`, and deliberately so: that one falls back to the
- * default rather than failing, because a response collected before a language was removed still has
- * to serialize. A *write* has no such history to respect — a caller naming a language the survey
- * does not offer has made a mistake, and silently storing the default would attribute the response
- * to the wrong language forever.
+ * Matching is canonical, storing is verbatim — the two halves solve different problems. Matching
+ * canonically is what lets a caller send `de` to a survey that declares `de-DE`, which v1 and v2 both
+ * accept; comparing raw strings made v3 answer 422 where they answer 200, and that divergence was
+ * only visible by driving all three APIs against the same survey.
+ *
+ * Stricter than the read's `resolveV3LabelContext` in one respect: that one falls back to the default
+ * rather than failing, because a response collected before a language was removed still has to
+ * serialize. A *write* has no such history to respect — a caller naming a language the survey does
+ * not offer has made a mistake, and silently storing the default would attribute the response to the
+ * wrong language forever.
  *
  * `enabled` is consulted here for the same reason it is ignored on the read: it says whether an
  * author still accepts submissions in that language, which is exactly the question a new write asks.
@@ -354,9 +371,9 @@ export const resolveV3WriteLanguage = (
   if (language === null || language === undefined) return { ok: true, code: null };
   if (language === "default") return { ok: true, code: "default" };
 
+  const wanted = canonicalLanguageKey(language);
   const matched = languages.find(
-    (entry) =>
-      entry.language.code.toLowerCase() === language.toLowerCase() && (entry.enabled || entry.default)
+    (entry) => canonicalLanguageKey(entry.language.code) === wanted && (entry.enabled || entry.default)
   );
 
   if (matched) return { ok: true, code: matched.language.code };
