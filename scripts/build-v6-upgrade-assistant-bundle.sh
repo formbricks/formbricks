@@ -118,8 +118,10 @@ jq -cn \
   --arg minimumSourceVersion "$minimum_source_version" \
   --arg bridgeImage "$bridge_image" \
   --arg bridgeRuntimeManifestDigest "$bridge_runtime_manifest_digest" \
+  --arg formbricksChart "formbricks-${release_version}.tgz" \
   --arg targetImage "$target_image" \
   --arg targetRuntimeManifestDigest "$target_runtime_manifest_digest" \
+  --arg upgradeChart "formbricks-upgrade-${release_version}.tgz" \
   '{
     schemaVersion: 1,
     releaseVersion: $releaseVersion,
@@ -129,8 +131,10 @@ jq -cn \
     artifacts: {
       bridgeImage: $bridgeImage,
       bridgeRuntimeManifestDigest: $bridgeRuntimeManifestDigest,
+      formbricksChart: $formbricksChart,
       targetImage: $targetImage,
-      targetRuntimeManifestDigest: $targetRuntimeManifestDigest
+      targetRuntimeManifestDigest: $targetRuntimeManifestDigest,
+      upgradeChart: $upgradeChart
     }
   }' >"$output_directory/formbricks-upgrade-manifest.json"
 

@@ -123,6 +123,11 @@ jobs:
             --output-directory dist/v6-upgrade
 
           release_version="${RELEASE_TAG#v}"
+          helm lint charts/formbricks
+          helm package charts/formbricks \
+            --version "$release_version" \
+            --app-version "$release_version" \
+            --destination dist/v6-upgrade
           helm lint charts/formbricks-upgrade --values charts/formbricks-upgrade/values.example.yaml
           helm package charts/formbricks-upgrade \
             --version "$release_version" \
@@ -134,6 +139,7 @@ jobs:
             sha256sum \
               formbricks-upgrade-assistant \
               formbricks-upgrade-manifest.json \
+              "formbricks-${release_version}.tgz" \
               "formbricks-upgrade-${release_version}.tgz" \
               > formbricks-upgrade-checksums.txt
           )
@@ -163,6 +169,7 @@ jobs:
           gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
             dist/v6-upgrade/formbricks-upgrade-assistant \
             dist/v6-upgrade/formbricks-upgrade-manifest.json \
+            dist/v6-upgrade/formbricks-[0-9]*.tgz \
             dist/v6-upgrade/formbricks-upgrade-*.tgz \
             dist/v6-upgrade/formbricks-upgrade-checksums.txt \
             dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json

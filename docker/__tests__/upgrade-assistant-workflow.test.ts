@@ -105,7 +105,10 @@ describe("v6 upgrade assistant release workflow", () => {
     expect(helmRelease).toContain("helm lint ./charts/formbricks-upgrade");
     expect(helmRelease).toContain('helm push "formbricks-upgrade-${VERSION}.tgz"');
     expect(assistantRelease).toContain("helm package charts/formbricks-upgrade");
+    expect(assistantRelease).toContain("helm package charts/formbricks");
+    expect(assistantRelease).toContain('"formbricks-${release_version}.tgz"');
     expect(assistantRelease).toContain('"formbricks-upgrade-${release_version}.tgz"');
+    expect(assistantRelease).toContain("dist/v6-upgrade/formbricks-[0-9]*.tgz");
     expect(assistantRelease).toContain("dist/v6-upgrade/formbricks-upgrade-*.tgz");
   });
 });

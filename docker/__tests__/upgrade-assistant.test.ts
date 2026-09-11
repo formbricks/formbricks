@@ -66,8 +66,10 @@ const writeManifest = (directory: string, overrides: Record<string, unknown> = {
       artifacts: {
         bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
         bridgeRuntimeManifestDigest,
+        formbricksChart: "formbricks-6.0.0.tgz",
         targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
         targetRuntimeManifestDigest,
+        upgradeChart: "formbricks-upgrade-6.0.0.tgz",
       },
       ...overrides,
     })
@@ -196,8 +198,10 @@ describe("Formbricks v6 upgrade assistant", () => {
       artifacts: {
         bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
         bridgeRuntimeManifestDigest: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+        formbricksChart: "formbricks-6.0.0.tgz",
         targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
         targetRuntimeManifestDigest: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+        upgradeChart: "formbricks-upgrade-6.0.0.tgz",
       },
     });
     expect(readFileSync(join(outputDirectory, "formbricks-upgrade-checksums.txt"), "utf8")).toMatch(
