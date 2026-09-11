@@ -74,6 +74,27 @@ describe("ZV3CreateResponseBody", () => {
     ).toBe(true);
   });
 
+  /**
+   * Bounded for two concrete reasons, both of which turn a caller mistake into a 500 otherwise: an
+   * empty string skips the truthiness-gated uniqueness pre-check and is still written, and an
+   * oversize one overflows the (surveyId, singleUseId) btree entry, raising a Postgres 54000 that is
+   * not a P2002.
+   */
+  test("an empty singleUseId is refused rather than written", () => {
+    expect(create({ singleUseId: "" }).success).toBe(false);
+  });
+
+  test("an oversize singleUseId is refused before it can reach the index", () => {
+    expect(create({ singleUseId: "x".repeat(256) }).success).toBe(false);
+    expect(create({ singleUseId: "x".repeat(255) }).success).toBe(true);
+  });
+
+  test("both shapes a real single-use link carries still fit", () => {
+    // A plaintext cuid2, and an encrypted one at roughly a hundred characters.
+    expect(create({ singleUseId: "clsu1234567890123456789012" }).success).toBe(true);
+    expect(create({ singleUseId: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6:" + "f".repeat(64) }).success).toBe(true);
+  });
+
   /** Clamped server-side rather than rejected, so only a non-number fails here. */
   test("ttc takes any number, including one past the clamp", () => {
     expect(create({ ttc: { q1: 999_999_999 } }).success).toBe(true);
