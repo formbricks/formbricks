@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getAuthzedClientConfigDigest } from "./activation-contract";
+import { getAuthzedAuthorizationContractDigest, getAuthzedClientConfigDigest } from "./activation-contract";
 
 const envMock = vi.hoisted(() => ({
   AUTHZED_CONSISTENCY: "fully_consistent" as "minimize_latency" | "fully_consistent" | undefined,
@@ -29,6 +29,12 @@ describe("AuthZed activation contract", () => {
     envMock.AUTHZED_ENABLED = "false";
 
     expect(getAuthzedClientConfigDigest()).not.toBe(enabledDigest);
+  });
+
+  test("serializes the authorization vocabulary in a stable order", () => {
+    expect(getAuthzedAuthorizationContractDigest()).toBe(
+      "sha256:c84c6067b784ee0b15111a31f679421475c6fa033f0d55a5cf7693a5ac63fae5"
+    );
   });
 
   test("does not invalidate receipts when the client token rotates", () => {

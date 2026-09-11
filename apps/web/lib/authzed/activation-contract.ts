@@ -12,7 +12,10 @@ const digest = (value: string): TAuthzedDigest =>
 export const getAuthzedAuthorizationContractDigest = (): TAuthzedDigest => {
   const permissions = Object.entries(AUTHORIZATION_PERMISSION_MAP)
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([resource, permissions]) => [resource, [...permissions].sort()] as const);
+    .map(
+      ([resource, permissions]) =>
+        [resource, [...permissions].sort((left, right) => left.localeCompare(right))] as const
+    );
   return digest(JSON.stringify({ clientContractVersion: AUTHZED_CLIENT_CONTRACT_VERSION, permissions }));
 };
 
