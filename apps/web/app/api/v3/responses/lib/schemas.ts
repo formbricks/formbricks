@@ -105,7 +105,17 @@ const createFields = {
   language: z.string().nullable().optional(),
   contactId: z.cuid2().optional(),
   displayId: z.cuid2().optional(),
-  singleUseId: z.string().optional(),
+  /**
+   * Bounded and non-empty, unlike the free-form string the obvious version of this would be.
+   *
+   * `min(1)` is load-bearing rather than tidiness: the uniqueness pre-check is gated on the value
+   * being truthy, so an empty string would skip it and still be written — and the *second* such
+   * create would reach the unique index instead of the 422. `max(255)` keeps an oversize value from
+   * overflowing the `(surveyId, singleUseId)` btree entry, which raises a Postgres 54000 rather than
+   * a P2002 and so answers 500. A generated id is a cuid2, or an encrypted one at roughly 100
+   * characters, so this is far above anything legitimate.
+   */
+  singleUseId: z.string().min(1).max(255).optional(),
 };
 
 /**

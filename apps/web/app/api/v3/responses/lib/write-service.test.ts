@@ -42,8 +42,8 @@ vi.mock("@formbricks/database/prisma", () => ({
     JsonNull: "JsonNull",
     PrismaClientKnownRequestError: class extends Error {
       code: string;
-      meta?: { target?: string[] };
-      constructor(message: string, code: string, meta?: { target?: string[] }) {
+      meta?: Record<string, unknown>;
+      constructor(message: string, code: string, meta?: Record<string, unknown>) {
         super(message);
         this.code = code;
         this.meta = meta;
@@ -66,12 +66,29 @@ const { Prisma } = await import("@formbricks/database/prisma");
  * `vi.mock` replaces the value without replacing the type. Cast at the one place that builds one
  * rather than spreading `as never` through every assertion below.
  */
-const knownRequestError = (message: string, code: string, target?: string[]) =>
+const knownRequestError = (message: string, code: string, meta?: Record<string, unknown>) =>
   new (Prisma.PrismaClientKnownRequestError as unknown as new (
     message: string,
     code: string,
-    meta?: { target?: string[] }
-  ) => Error)(message, code, target ? { target } : undefined);
+    meta?: Record<string, unknown>
+  ) => Error)(message, code, meta);
+
+/**
+ * A P2002 in the shape THIS repo actually produces.
+ *
+ * Prisma 7 + `@prisma/adapter-pg` leaves `meta.target` absent and puts the columns at
+ * `meta.driverAdapterError.cause.constraint.fields`, still quoted exactly as Postgres emitted them
+ * — the adapter scrapes them out of the error DETAIL and never unquotes. A handler written against
+ * `meta.target` matches nothing here, which is a 500 on every real race.
+ */
+const adapterUniqueError = (...fields: string[]) =>
+  knownRequestError("Unique constraint failed", "P2002", {
+    driverAdapterError: { cause: { constraint: { fields } } },
+  });
+
+/** The library/legacy engine shape, which the shared helper still accepts. */
+const legacyUniqueError = (...fields: string[]) =>
+  knownRequestError("Unique constraint failed", "P2002", { target: fields });
 
 const survey = {
   id: "clsv000000000000000000001",
@@ -163,11 +180,7 @@ describe("unique-constraint races", () => {
    * the check, and the endpoint answers a status its own contract does not list.
    */
   test("a singleUseId collision becomes the same 422 issue the pre-check raises", async () => {
-    mockTransaction.mockRejectedValueOnce(
-      knownRequestError("Unique constraint failed on the fields: (`singleUseId`)", "P2002", [
-        "Response_singleUseId_key",
-      ])
-    );
+    mockTransaction.mockRejectedValueOnce(adapterUniqueError('"surveyId"', '"singleUseId"'));
 
     const outcome = await createScopedResponse({
       workspaceId: survey.workspaceId,
@@ -191,9 +204,22 @@ describe("unique-constraint races", () => {
     });
   });
 
-  /** The index name is internal, and naming it in a response body tells a caller about our schema. */
-  test("the constraint name never reaches the issue", async () => {
-    mockTransaction.mockRejectedValueOnce(knownRequestError("boom", "P2002", ["Response_singleUseId_key"]));
+  /**
+   * The index name is internal, and the Postgres DETAIL behind it carries the offending VALUES —
+   * `Key ("surveyId", "singleUseId")=(…, …) already exists`, i.e. the single-use token itself.
+   * Neither may reach the body, which is why only the structured column list is read.
+   */
+  test("neither the constraint name nor the offending value reaches the issue", async () => {
+    mockTransaction.mockRejectedValueOnce(
+      knownRequestError("Unique constraint failed on the constraint: `Response_singleUseId_key`", "P2002", {
+        driverAdapterError: {
+          cause: {
+            constraint: { fields: ['"surveyId"', '"singleUseId"'] },
+            originalMessage: 'Key ("surveyId", "singleUseId")=(clsv1, secret-token-abc) already exists',
+          },
+        },
+      })
+    );
 
     const outcome = await updateScopedResponse({
       responseId: "clrs000000000000000000001",
@@ -204,6 +230,33 @@ describe("unique-constraint races", () => {
 
     expect(JSON.stringify(outcome)).not.toContain("Response_singleUseId_key");
     expect(JSON.stringify(outcome)).not.toContain("Unique constraint");
+    expect(JSON.stringify(outcome)).not.toContain("secret-token-abc");
+  });
+
+  /**
+   * The same violation in the library-engine shape. Both are accepted because the shared helper
+   * reads both, and a test that only covered this one is exactly how the adapter shape got missed.
+   */
+  test("the legacy meta.target shape maps to the same issue", async () => {
+    mockTransaction.mockRejectedValueOnce(legacyUniqueError("surveyId", "singleUseId"));
+
+    const outcome = await createScopedResponse(createInput({ singleUseId: "su-1" }));
+
+    expect(outcome).toEqual({
+      ok: false,
+      issues: [expect.objectContaining({ name: "singleUseId", code: "duplicate_identifier" })],
+    });
+  });
+
+  test("a displayId collision names displayId, not singleUseId", async () => {
+    mockTransaction.mockRejectedValueOnce(adapterUniqueError('"displayId"'));
+
+    const outcome = await createScopedResponse(createInput({ displayId: "cldp1" }));
+
+    expect(outcome).toEqual({
+      ok: false,
+      issues: [expect.objectContaining({ name: "displayId", code: "duplicate_identifier" })],
+    });
   });
 
   /** Anything that is not a recognised race is still a real failure and must not be swallowed. */

@@ -13,6 +13,7 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { type TV3ResponseSurveyRow, v3ResponseReadSelect, v3ResponseSurveySelect } from "./service";
 
@@ -264,18 +265,28 @@ async function collectReferenceIssues(
  *
  * Mapped to the same 422 the pre-check would have produced rather than to the generic 409, because
  * `POST`/`PATCH` do not document a 409 and a race must not be distinguishable from losing the check
- * outright. **The constraint name never reaches the body** — `Response_singleUseId_key` names an
- * internal index, and the field is named from `meta.target` instead.
+ * outright.
+ *
+ * The columns come from `getUniqueConstraintFields`, which is the one place in the codebase allowed
+ * to touch Prisma's `error.meta` — a shape Prisma states is not public API and which differs by
+ * engine. Reading `meta.target` directly, as the obvious version of this does, matches nothing on
+ * this repo: under Prisma 7 + `@prisma/adapter-pg` that key is absent and the columns sit at
+ * `meta.driverAdapterError.cause.constraint.fields`, still quoted. The obvious version therefore
+ * returns `null` for every real race, and the caller rethrows into the generic 500.
+ *
+ * **That fallthrough leaks, which is why this matters beyond the status code.** The 500 branch logs
+ * the error under `err`, and pino's error serializer copies its enumerable properties — including
+ * `meta.driverAdapterError.cause.originalMessage`, the Postgres DETAIL, which carries the offending
+ * values: `Key ("surveyId", "singleUseId")=(…, …) already exists`. That is the single-use token in a
+ * log line. `prisma-constraint.ts` warns against surfacing that string to a response *or a log*, and
+ * reading only the structured column list is how this path honours it.
  */
 function raceIssuesFromUniqueViolation(error: unknown): InvalidParam[] | null {
-  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") return null;
+  if (!isUniqueConstraintError(error)) return null;
 
-  const target = error.meta?.target;
-  let columns: string[] = [];
-  if (Array.isArray(target)) columns = target.map(String);
-  else if (typeof target === "string") columns = [target];
+  const columns = getUniqueConstraintFields(error);
 
-  if (columns.some((column) => column.includes("singleUseId"))) {
+  if (columns.includes("singleUseId")) {
     return [
       {
         name: "singleUseId",
@@ -285,7 +296,7 @@ function raceIssuesFromUniqueViolation(error: unknown): InvalidParam[] | null {
     ];
   }
 
-  if (columns.some((column) => column.includes("displayId"))) {
+  if (columns.includes("displayId")) {
     return [
       {
         name: "displayId",
