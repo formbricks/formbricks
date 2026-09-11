@@ -11,9 +11,14 @@ description: >
   bounds are declared here.
 
 
-  **Do not send a `_total` key.** The server writes that bucket itself when the response is finished,
-  by summing every value in this map — including a `_total` you supplied, which is then counted twice
-  and permanently skews the stored total. `durationSeconds` on the read is computed from the real
-  element entries and ignores the bucket entirely, so there is nothing to gain by sending one.
+  **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and
+  writes its own when the response is finished, by summing the element entries. Sending one therefore
+  changes nothing rather than skewing the stored total, and `durationSeconds` on the read is computed
+  from the element entries regardless.
+
+
+  **An omitted map is not the same as an empty one.** Omitting `ttc` stores no timings at all and the
+  response reports no `durationSeconds`; sending `{}` on a finished response stores a `_total` of
+  zero, which reads as "completed instantly".
 additionalProperties:
   type: number

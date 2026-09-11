@@ -232,6 +232,43 @@ describe("planEmbeddedDataWrite — names in, storage keys out", () => {
     expect(plan.issues).toEqual([expect.objectContaining({ name: "score", referenceType: "variable" })]);
   });
 
+  /**
+   * Two payload names can resolve to one field, because the match is case-insensitive. Then one
+   * entry's write and another's clear target the same slot and whichever ran last silently wins —
+   * the same ambiguity as one name matching two fields, and refused the same way.
+   */
+  test("two payload names addressing one field are refused rather than raced", () => {
+    const fields = [declared("Plan", "ingested", { storageKey: "plan" })];
+
+    const plan = planEmbedded(fields, { Plan: "written", plan: null });
+
+    expect(plan.issues).toEqual([expect.objectContaining({ name: "plan", code: "duplicate_identifier" })]);
+    expect(plan.dataClears).toEqual([]);
+    expect(plan.dataWrites).toEqual({ plan: "written" });
+  });
+
+  test("the same rule covers two writes to one field", () => {
+    const fields = [declared("Plan", "ingested", { storageKey: "plan" })];
+
+    expect(planEmbedded(fields, { Plan: "a", PLAN: "b" }).issues).toEqual([
+      expect.objectContaining({ code: "duplicate_identifier" }),
+    ]);
+  });
+
+  /**
+   * A storage key only has to satisfy `isLegacyIdCharset`, which admits `__proto__`. On a plain `{}`
+   * that key hits `Object.prototype`'s setter and vanishes with no value, no issue and no drop —
+   * which is why the ingest contract itself uses a null-prototype object.
+   */
+  test("a __proto__ storage key is stored rather than swallowed", () => {
+    const fields = [declared("Proto", "ingested", { storageKey: "__proto__" })];
+
+    const plan = planEmbedded(fields, { Proto: "kept" });
+
+    expect(plan.issues).toEqual([]);
+    expect(Object.prototype.hasOwnProperty.call(plan.dataWrites, "__proto__")).toBe(true);
+  });
+
   /** Hidden fields keep the SDK's lenient semantics: stored and flagged, never a 422. */
   test("a hidden field that fails coercion is still stored", () => {
     const fields = [declared("age", "ingested", { dataType: "number" })];
