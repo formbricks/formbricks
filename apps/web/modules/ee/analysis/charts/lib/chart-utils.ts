@@ -331,6 +331,75 @@ export const getCategoryAxisWidth = (labels: string[]): number => {
   return Math.min(CATEGORY_AXIS_MAX_WIDTH, Math.max(CATEGORY_AXIS_MIN_WIDTH, needed));
 };
 
+// ── Wrapped axis label sizing ─────────────────────────────────────────────────
+// Both axes render their category labels into a `foreignObject` so long question text can wrap.
+// These describe that box, and are shared with the tick components so the space a chart reserves
+// and the space a label is allowed to use are derived from the same numbers.
+
+/** Line height (px) of a wrapped axis label at `text-xs`/`leading-tight`: ~15px for 12px text, plus
+ * a hair of headroom so descenders on the last line are not clipped. */
+export const AXIS_LABEL_LINE_HEIGHT = 16;
+/** Lines a wrapped axis label may use before it clamps. */
+export const AXIS_LABEL_MAX_LINES = 3;
+/** Gap (px) kept between adjacent axis labels so wrapped text never touches its neighbour. */
+export const AXIS_LABEL_GAP = 8;
+/** Height (px) of a label box using the full line budget. */
+export const AXIS_LABEL_BOX_HEIGHT = AXIS_LABEL_MAX_LINES * AXIS_LABEL_LINE_HEIGHT;
+
+/** Height (px) a category band must have before a label in it can use the full line budget: the
+ * label box plus the gap that keeps neighbouring labels apart. */
+export const CATEGORY_BAND_MIN_HEIGHT = AXIS_LABEL_BOX_HEIGHT + AXIS_LABEL_GAP;
+
+/** Height (px) a chart legend occupies — the `height` handed to `<ChartLegend>`, named here so the
+ * min-height calculation and the legend itself cannot drift apart. */
+export const CHART_LEGEND_HEIGHT = 36;
+
+/** Vertical space (px) a flipped bar chart spends outside its plot area: recharts' default 5px top
+ * and bottom chart margins plus the 30px value axis under the plot. */
+const FLIPPED_CHART_CHROME_HEIGHT = 40;
+
+/**
+ * Height (px) of the label box inside a category band of `band` px.
+ *
+ * A box taller than its band would overlap the neighbouring label, so the box is clamped to the
+ * band (less the gap) and never grows past the full line budget. A missing or non-finite band means
+ * the caller has no band to fit into yet — recharts has not measured the axis — so the label gets
+ * the full budget rather than a guess that silently sheds lines.
+ */
+export const getCategoryLabelBoxHeight = (band?: number): number => {
+  if (band === undefined || !Number.isFinite(band)) return AXIS_LABEL_BOX_HEIGHT;
+  return Math.max(AXIS_LABEL_LINE_HEIGHT, Math.min(AXIS_LABEL_BOX_HEIGHT, band - AXIS_LABEL_GAP));
+};
+
+/**
+ * Lines a wrapped category label may use inside a band of `band` px.
+ *
+ * Whole lines only: a box sized to 2.5 lines would clip the third mid-glyph rather than drop it.
+ */
+export const getCategoryLabelLineClamp = (band?: number): number =>
+  Math.max(1, Math.floor(getCategoryLabelBoxHeight(band) / AXIS_LABEL_LINE_HEIGHT));
+
+/**
+ * Minimum height (px) a flipped bar chart needs so every category band clears
+ * {@link CATEGORY_BAND_MIN_HEIGHT} — i.e. so every label keeps the full line budget however many
+ * categories the chart plots.
+ *
+ * A flipped chart takes its height from its container, not from its row count, so the band was
+ * `height / categoryCount`: a chart with few categories (a CES question) wrapped its labels over
+ * three lines while a dense one (CSAT touchpoints) collapsed every label to a single truncated line,
+ * making the rows indistinguishable (ENG-3148). Claiming a floor per band makes the treatment
+ * density-independent; the container scrolls past the floor instead of the labels shedding lines.
+ *
+ * `extraChromeHeight` covers anything else stacked outside the plot — a legend, for instance —
+ * which would otherwise eat into the bands.
+ */
+export const getFlippedChartMinHeight = (categoryCount: number, extraChromeHeight = 0): number => {
+  if (!Number.isFinite(categoryCount) || categoryCount <= 0) return 0;
+  return (
+    Math.ceil(categoryCount) * CATEGORY_BAND_MIN_HEIGHT + FLIPPED_CHART_CHROME_HEIGHT + extraChromeHeight
+  );
+};
+
 /** Ceiling (px) for the value-label gutter — enough for a grouped number like "1,234,567". */
 export const VALUE_LABEL_MAX_PADDING = 72;
 /** Floor (px): a single digit still needs the label to clear the bar's end. */

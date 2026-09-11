@@ -1,9 +1,15 @@
 import { describe, expect, test } from "vitest";
 import { SENTIMENT_VALUE_ORDER } from "@/modules/ee/analysis/lib/schema-definition";
 import {
+  AXIS_LABEL_BOX_HEIGHT,
+  AXIS_LABEL_GAP,
+  AXIS_LABEL_LINE_HEIGHT,
+  AXIS_LABEL_MAX_LINES,
   CATEGORY_AXIS_MAX_WIDTH,
   CATEGORY_AXIS_MIN_WIDTH,
+  CATEGORY_BAND_MIN_HEIGHT,
   CHART_BRAND_DARK,
+  CHART_LEGEND_HEIGHT,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
   CHART_SENTIMENT_COLORS,
@@ -18,6 +24,9 @@ import {
   formatPercentShare,
   formatXAxisTick,
   getCategoryAxisWidth,
+  getCategoryLabelBoxHeight,
+  getCategoryLabelLineClamp,
+  getFlippedChartMinHeight,
   getSemanticDimensionColor,
   getSentimentMeasureColor,
   getValueLabelPadding,
@@ -441,6 +450,80 @@ describe("flipped bar axis sizing", () => {
 
   test("caps the value gutter so a huge number cannot eat the plot", () => {
     expect(getValueLabelPadding(["123,456,789,012,345"])).toBe(VALUE_LABEL_MAX_PADDING);
+  });
+});
+
+describe("flipped bar chart height", () => {
+  // What a chart rendered at its own minimum height leaves for the category bands: the min height
+  // less the chrome (value axis + chart margins) the helper reserved on top of the bands.
+  const chromeHeight = getFlippedChartMinHeight(1) - CATEGORY_BAND_MIN_HEIGHT;
+  const bandAtMinHeight = (categoryCount: number, extraChrome = 0) =>
+    (getFlippedChartMinHeight(categoryCount, extraChrome) - chromeHeight - extraChrome) / categoryCount;
+
+  test("gives every label the same line budget however many categories are plotted", () => {
+    // The bug: a sparse CES chart wrapped its questions over three lines while a dense CSAT chart
+    // truncated every one of them to a single line, since the band was height / categoryCount.
+    for (const categoryCount of [2, 5, 12, 40]) {
+      expect(getCategoryLabelLineClamp(bandAtMinHeight(categoryCount))).toBe(AXIS_LABEL_MAX_LINES);
+    }
+  });
+
+  test("keeps the full budget when a legend also sits outside the plot", () => {
+    expect(getFlippedChartMinHeight(12, CHART_LEGEND_HEIGHT)).toBe(
+      getFlippedChartMinHeight(12) + CHART_LEGEND_HEIGHT
+    );
+    expect(getCategoryLabelLineClamp(bandAtMinHeight(12, CHART_LEGEND_HEIGHT))).toBe(AXIS_LABEL_MAX_LINES);
+  });
+
+  test("grows by one band per category", () => {
+    expect(getFlippedChartMinHeight(10) - getFlippedChartMinHeight(9)).toBe(CATEGORY_BAND_MIN_HEIGHT);
+  });
+
+  test("reserves recharts' own vertical chrome on top of the bands", () => {
+    // Stated independently of the helper, since every other assertion here derives the chrome from
+    // the helper and so cancels it out. The number models recharts' flipped layout: 5px top and
+    // bottom chart margins plus the 30px value axis under the plot. A band needs the full
+    // CATEGORY_BAND_MIN_HEIGHT to keep three lines — boxHeight is min(48, band - 8) and
+    // floor(47.9 / 16) is 2 — so under-reserving by a single pixel silently costs every label a
+    // line. If a recharts upgrade or a `margin` passed through `chartProps` changes the layout,
+    // this is the assertion that says so.
+    expect(getFlippedChartMinHeight(1)).toBe(CATEGORY_BAND_MIN_HEIGHT + 40);
+  });
+
+  test("claims no height at all without categories, so a chart with no rows keeps its container", () => {
+    expect(getFlippedChartMinHeight(0)).toBe(0);
+    expect(getFlippedChartMinHeight(-1)).toBe(0);
+    expect(getFlippedChartMinHeight(Number.NaN)).toBe(0);
+  });
+});
+
+describe("wrapped category label box", () => {
+  test("never outgrows its band down to the one-line floor, so labels cannot overlap", () => {
+    // Only down to the floor: below a 24px band the one-line minimum wins over the gap, since a
+    // label shorter than a single line is not worth rendering. The reserved band keeps real charts
+    // well above this.
+    for (const band of [24, 30, 47, 56, 200]) {
+      expect(getCategoryLabelBoxHeight(band)).toBeLessThanOrEqual(band - AXIS_LABEL_GAP);
+    }
+    expect(getCategoryLabelBoxHeight(20)).toBe(AXIS_LABEL_LINE_HEIGHT);
+  });
+
+  test("sheds whole lines as the band tightens, and never drops below one", () => {
+    expect(getCategoryLabelLineClamp(CATEGORY_BAND_MIN_HEIGHT)).toBe(AXIS_LABEL_MAX_LINES);
+    expect(getCategoryLabelLineClamp(CATEGORY_BAND_MIN_HEIGHT - AXIS_LABEL_LINE_HEIGHT)).toBe(2);
+    // A box sized to 2.5 lines clamps to 2: a partial line would be clipped mid-glyph.
+    expect(getCategoryLabelLineClamp(CATEGORY_BAND_MIN_HEIGHT - AXIS_LABEL_LINE_HEIGHT / 2)).toBe(2);
+    expect(getCategoryLabelLineClamp(4)).toBe(1);
+  });
+
+  test("caps at the full budget however tall the band is", () => {
+    expect(getCategoryLabelBoxHeight(1000)).toBe(AXIS_LABEL_BOX_HEIGHT);
+    expect(getCategoryLabelLineClamp(1000)).toBe(AXIS_LABEL_MAX_LINES);
+  });
+
+  test("falls back to the full budget when recharts has not measured the axis yet", () => {
+    expect(getCategoryLabelBoxHeight(undefined)).toBe(AXIS_LABEL_BOX_HEIGHT);
+    expect(getCategoryLabelLineClamp(undefined)).toBe(AXIS_LABEL_MAX_LINES);
   });
 });
 
