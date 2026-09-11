@@ -37,6 +37,7 @@ import {
   listV3ResponseKeysetPage,
 } from "./service";
 import {
+  normalizeV3Ttc,
   planAnswerDataWrite,
   planEmbeddedDataWrite,
   validateV3EndingId,
@@ -47,7 +48,6 @@ import {
   createScopedResponse,
   dispatchV3ResponsePipeline,
   getSurveyForV3Write,
-  normalizeV3Ttc,
   readbackV3Response,
   updateScopedResponse,
 } from "./write-service";

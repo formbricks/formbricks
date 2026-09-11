@@ -16,7 +16,8 @@ description: >
   - `ingested` (hidden fields) — accepted, through the same ingest contract the SDK uses: the name
     must be declared on the survey, the value is coerced to the field's declared `type`, a `locked`
     field ignores the write, and the whole payload is bounded. A name the survey does not declare is
-    a 400 rather than a silent drop.
+    a **422** rather than a silent drop — knowing whether a name is declared means loading the
+    survey, and these operations route every failure that needs stored state to 422.
 
   - `computed` (variables) — accepted, because a management caller correcting a response needs to,
     and v1 and v2 both allow it today.
@@ -41,8 +42,9 @@ description: >
   collection, because a survey predating the reserved-name guard can hold a variable and a hidden
   field under one name. This map has no `kind`, so on such a survey a name cannot say which field it
   means — and guessing would write the caller's value into the wrong one. A name that matches more
-  than one declared field is a 400 naming it; rename one side on the survey to clear it. The set is
-  finite, frozen and tracked, and nothing new can enter it.
+  than one declared field is a **422** naming it, for the same reason as an undeclared one; rename
+  one side on the survey to clear it. The set is finite, frozen and tracked, and nothing new can
+  enter it.
 
 
   Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a

@@ -12,7 +12,7 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
-import { calculateTtcTotal, normalizeResponseLanguage } from "@/lib/response/utils";
+import { normalizeResponseLanguage } from "@/lib/response/utils";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { type TV3ResponseSurveyRow, v3ResponseReadSelect, v3ResponseSurveySelect } from "./service";
 
@@ -34,36 +34,6 @@ import { type TV3ResponseSurveyRow, v3ResponseReadSelect, v3ResponseSurveySelect
  *    back, never from the request body. A dispatch inside the transaction emits an event for a
  *    response a rollback then removes.
  */
-
-/** Milliseconds in a day: the contract's upper bound for one element's time-to-complete. */
-const TTC_MAX_MS = 86_400_000;
-
-/**
- * The bucket the server owns. A caller-supplied `_total` is dropped rather than trusted: it is
- * derived, so honouring one would let a caller disagree with the sum of its own buckets, and
- * `calculateTtcTotal` would then add it into the total a second time.
- */
-const TTC_TOTAL_KEY = "_total";
-
-/**
- * Clamp rather than reject, which is the contract's choice and worth restating: `ttc` is client
- * telemetry, and a single absurd bucket from a laptop that slept mid-survey should not cost a caller
- * the whole response. The total is computed here only on a finished response, matching every other
- * write path.
- */
-export const normalizeV3Ttc = (
-  ttc: Readonly<Record<string, number>> | undefined,
-  finished: boolean
-): TResponseTtc => {
-  const clamped: TResponseTtc = {};
-
-  for (const [key, value] of Object.entries(ttc ?? {})) {
-    if (key === TTC_TOTAL_KEY) continue;
-    clamped[key] = Math.min(Math.max(value, 0), TTC_MAX_MS);
-  }
-
-  return finished ? calculateTtcTotal(clamped) : clamped;
-};
 
 /**
  * The survey a write is validated against: the read's select plus the three things only a write

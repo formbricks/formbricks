@@ -1,7 +1,8 @@
 import { applyIngestContract, normalizeIngestedValue } from "@formbricks/types/embedded-data-ingest";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
-import type { TResponseData, TResponseDataValue } from "@formbricks/types/responses";
+import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
+import { calculateTtcTotal } from "@/lib/response/utils";
 import { type TV3AnswerPlan, isPublishableDataKey } from "./answers";
 
 /**
@@ -300,4 +301,34 @@ export const validateV3EndingId = (
     referenceType: "ending",
     missingId: endingId,
   };
+};
+
+/** Milliseconds in a day: the contract's upper bound for one element's time-to-complete. */
+const TTC_MAX_MS = 86_400_000;
+
+/**
+ * The bucket the server owns. A caller-supplied `_total` is dropped rather than trusted: it is
+ * derived, so honouring one would let a caller disagree with the sum of its own buckets, and
+ * `calculateTtcTotal` would then add it into the total a second time.
+ */
+const TTC_TOTAL_KEY = "_total";
+
+/**
+ * Clamp rather than reject, which is the contract's choice and worth restating: `ttc` is client
+ * telemetry, and a single absurd bucket from a laptop that slept mid-survey should not cost a caller
+ * the whole response. The total is computed here only on a finished response, matching every other
+ * write path.
+ */
+export const normalizeV3Ttc = (
+  ttc: Readonly<Record<string, number>> | undefined,
+  finished: boolean
+): TResponseTtc => {
+  const clamped: TResponseTtc = {};
+
+  for (const [key, value] of Object.entries(ttc ?? {})) {
+    if (key === TTC_TOTAL_KEY) continue;
+    clamped[key] = Math.min(Math.max(value, 0), TTC_MAX_MS);
+  }
+
+  return finished ? calculateTtcTotal(clamped) : clamped;
 };
