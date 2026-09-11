@@ -358,3 +358,48 @@ describe("updateV3Response", () => {
     );
   });
 });
+
+describe("the read-back race", () => {
+  /**
+   * The row was committed and then removed before it could be read back. There is nothing truthful
+   * left to return, and the two operations answer differently on purpose: a create has no resource
+   * to name, while a patch falls back to the same 403 every other missing response gets.
+   */
+  test("a create whose row vanishes answers 500 rather than inventing a resource", async () => {
+    mockReadback.mockResolvedValueOnce(null);
+
+    const response = await createV3Response({
+      ...params,
+      body: { surveyId: SURVEY_ID, finished: false, data: {} } as never,
+    });
+
+    expect(response.status).toBe(500);
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  test("a patch whose row vanishes answers the same 403 as any missing response", async () => {
+    mockReadback.mockResolvedValueOnce(null);
+
+    const response = await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { finished: true } as never,
+    });
+
+    expect(response.status).toBe(403);
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  test("a survey deleted under an in-flight patch answers 403 rather than throwing", async () => {
+    mockGetSurveyForWrite.mockResolvedValueOnce(null);
+
+    const response = await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { finished: true } as never,
+    });
+
+    expect(response.status).toBe(403);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+});

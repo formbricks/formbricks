@@ -1,28 +1,40 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ZResponse } from "@formbricks/types/responses";
 import {
+  type TV3CreateResponsePersist,
   type TV3WriteReadbackRow,
   type TV3WriteSurveyRow,
   createScopedResponse,
   dispatchV3ResponsePipeline,
+  getSurveyForV3Write,
+  readbackV3Response,
   toV3PipelineResponse,
   updateScopedResponse,
 } from "./write-service";
 
 vi.mock("server-only", () => ({}));
 
-const { mockTransaction, mockSendToPipeline, mockEvaluateQuotas, mockLoggerError } = vi.hoisted(() => ({
+const {
+  mockTransaction,
+  mockSendToPipeline,
+  mockEvaluateQuotas,
+  mockLoggerError,
+  mockResponseFindFirst,
+  mockSurveyFindUnique,
+} = vi.hoisted(() => ({
   mockTransaction: vi.fn(),
   mockSendToPipeline: vi.fn(),
   mockEvaluateQuotas: vi.fn(),
   mockLoggerError: vi.fn(),
+  mockResponseFindFirst: vi.fn(),
+  mockSurveyFindUnique: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: mockTransaction,
-    response: { findFirst: vi.fn() },
-    survey: { findUnique: vi.fn() },
+    response: { findFirst: mockResponseFindFirst },
+    survey: { findUnique: mockSurveyFindUnique },
   },
 }));
 vi.mock("@formbricks/database/prisma", () => ({
@@ -98,8 +110,50 @@ const readbackRow = (over: Record<string, unknown> = {}): TV3WriteReadbackRow =>
     ...over,
   }) as unknown as TV3WriteReadbackRow;
 
+/**
+ * A transaction client stub, so the callback the service passes to `$transaction` actually runs.
+ * Mocking `$transaction` to resolve or reject skips the body entirely — which is where the scoped
+ * `where` clauses, the tag join shape and the reference checks all live.
+ */
+const txStub = (over: Record<string, unknown> = {}) => ({
+  contact: { findFirst: vi.fn().mockResolvedValue({ id: "clct000000000000000000001", attributes: [] }) },
+  display: { findFirst: vi.fn().mockResolvedValue({ id: "cldp1", response: null }) },
+  tag: { findMany: vi.fn().mockResolvedValue([]) },
+  response: {
+    findFirst: vi.fn().mockResolvedValue(null),
+    create: vi.fn().mockResolvedValue({ id: "clrs1", finished: false, data: {}, variables: {} }),
+    update: vi
+      .fn()
+      .mockResolvedValue({ id: "clrs1", finished: false, data: {}, variables: {}, language: null }),
+  },
+  ...over,
+});
+
+const runTx = (tx: ReturnType<typeof txStub>) => {
+  mockTransaction.mockImplementationOnce(async (fn: (client: unknown) => Promise<unknown>) => fn(tx));
+  return tx;
+};
+
+const createInput = (over: Partial<TV3CreateResponsePersist> = {}): TV3CreateResponsePersist => ({
+  workspaceId: survey.workspaceId,
+  survey,
+  finished: false,
+  data: { q1: "hi" },
+  variables: {},
+  ttc: {},
+  meta: undefined,
+  tagIds: [],
+  endingId: null,
+  language: null,
+  contactId: undefined,
+  displayId: undefined,
+  singleUseId: undefined,
+  ...over,
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
+  mockEvaluateQuotas.mockResolvedValue({ shouldEndSurvey: false });
 });
 
 describe("unique-constraint races", () => {
@@ -251,5 +305,200 @@ describe("toV3PipelineResponse", () => {
     const row = readbackRow({ contact: null, contactAttributes: null, tags: [] });
 
     expect(ZResponse.safeParse(toV3PipelineResponse(row)).success).toBe(true);
+  });
+});
+
+describe("createScopedResponse — what actually reaches Prisma", () => {
+  test("tags are written as join rows in the same transaction", async () => {
+    const tx = runTx(txStub({ tag: { findMany: vi.fn().mockResolvedValue([{ id: "cltg1" }]) } }));
+
+    const outcome = await createScopedResponse(createInput({ tagIds: ["cltg1"] }));
+
+    expect(outcome).toEqual({ ok: true, responseId: "clrs1" });
+    expect(tx.response.create.mock.calls[0][0].data.tags).toEqual({
+      create: [{ tag: { connect: { id: "cltg1" } } }],
+    });
+  });
+
+  test("no tags means no tags key at all, rather than an empty create", async () => {
+    const tx = runTx(txStub());
+
+    await createScopedResponse(createInput());
+
+    expect(tx.response.create.mock.calls[0][0].data.tags).toBeUndefined();
+  });
+
+  /** The reference checks run inside the transaction, against the snapshot the write will use. */
+  test("a contact outside the workspace stops the write before it happens", async () => {
+    const tx = runTx(txStub({ contact: { findFirst: vi.fn().mockResolvedValue(null) } }));
+
+    const outcome = await createScopedResponse(createInput({ contactId: "clct000000000000000000009" }));
+
+    expect(outcome).toEqual({
+      ok: false,
+      issues: [expect.objectContaining({ name: "contactId", code: "invalid_reference" })],
+    });
+    expect(tx.response.create).not.toHaveBeenCalled();
+  });
+
+  test("a display already backing another response is refused", async () => {
+    const tx = runTx(
+      txStub({
+        display: { findFirst: vi.fn().mockResolvedValue({ id: "cldp1", response: { id: "other" } }) },
+      })
+    );
+
+    const outcome = await createScopedResponse(createInput({ displayId: "cldp1" }));
+
+    expect(outcome.ok).toBe(false);
+    expect(tx.response.create).not.toHaveBeenCalled();
+  });
+
+  test("a single-use id already used on this survey is refused", async () => {
+    const tx = txStub();
+    tx.response.findFirst.mockResolvedValueOnce({ id: "clrs-existing" });
+    runTx(tx);
+
+    const outcome = await createScopedResponse(createInput({ singleUseId: "su-1" }));
+
+    expect(outcome).toEqual({
+      ok: false,
+      issues: [expect.objectContaining({ name: "singleUseId", code: "duplicate_identifier" })],
+    });
+  });
+
+  test("every unresolvable tag id is reported, not just the first", async () => {
+    runTx(txStub({ tag: { findMany: vi.fn().mockResolvedValue([{ id: "cltg1" }]) } }));
+
+    const outcome = await createScopedResponse(createInput({ tagIds: ["cltg1", "cltg2", "cltg3"] }));
+
+    expect(outcome.ok).toBe(false);
+    expect(outcome.ok === false && outcome.issues.map((i) => i.identifier)).toEqual(["cltg2", "cltg3"]);
+  });
+
+  /** Quotas resolve `reserved` operands off the persisted row, so they run after it exists. */
+  test("quota evaluation gets the row as persisted, not the request body", async () => {
+    const tx = txStub();
+    tx.response.create.mockResolvedValueOnce({
+      id: "clrs1",
+      finished: true,
+      data: { q1: "x" },
+      variables: {},
+    });
+    runTx(tx);
+
+    await createScopedResponse(createInput({ finished: false }));
+
+    expect(mockEvaluateQuotas).toHaveBeenCalledWith(
+      expect.objectContaining({ responseFinished: true, responseId: "clrs1" })
+    );
+  });
+});
+
+describe("updateScopedResponse — what actually reaches Prisma", () => {
+  /** A bare id is how a caller reaches another tenant's response; the scope goes in the `where`. */
+  test("the update is scoped by workspace, never by id alone", async () => {
+    const tx = runTx(txStub());
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { finished: true },
+    });
+
+    expect(tx.response.update.mock.calls[0][0].where).toEqual({
+      id: "clrs1",
+      survey: { workspaceId: survey.workspaceId },
+    });
+  });
+
+  /**
+   * Spreading an absent key as `undefined` is the difference between "leave it" and "null it" for a
+   * nullable column, and `endingId` and `language` are both nullable.
+   */
+  test("a key the payload omits does not appear in the update at all", async () => {
+    const tx = runTx(txStub());
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { finished: true },
+    });
+
+    expect(Object.keys(tx.response.update.mock.calls[0][0].data)).toEqual(["finished"]);
+  });
+
+  test("an explicit null does reach the update", async () => {
+    const tx = runTx(txStub());
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { endingId: null },
+    });
+
+    expect(tx.response.update.mock.calls[0][0].data).toEqual({ endingId: null });
+  });
+
+  /** `tags` is the complete set, so the join rows are cleared and rewritten rather than added to. */
+  test("patching tags replaces the set", async () => {
+    const tx = runTx(txStub({ tag: { findMany: vi.fn().mockResolvedValue([{ id: "cltg1" }]) } }));
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { tagIds: ["cltg1"] },
+    });
+
+    expect(tx.response.update.mock.calls[0][0].data.tags).toEqual({
+      deleteMany: {},
+      create: [{ tag: { connect: { id: "cltg1" } } }],
+    });
+  });
+
+  /**
+   * Not only on a patch that finishes the response: for a quota with `countPartialSubmissions: false`
+   * the link row is written once the response is finished, so a create-only evaluation under-counts.
+   */
+  test("quotas are evaluated on every patch", async () => {
+    runTx(txStub());
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { data: { q1: "typo fixed" } },
+    });
+
+    expect(mockEvaluateQuotas).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("scoped reads", () => {
+  test("a survey read for a write carries its inlined embedded fields", async () => {
+    mockSurveyFindUnique.mockResolvedValueOnce({ id: survey.id, workspaceId: survey.workspaceId });
+
+    await expect(getSurveyForV3Write(survey.id)).resolves.toMatchObject({ embeddedFields: [] });
+  });
+
+  test("a survey that does not exist resolves to null rather than throwing", async () => {
+    mockSurveyFindUnique.mockResolvedValueOnce(null);
+
+    await expect(getSurveyForV3Write(survey.id)).resolves.toBeNull();
+  });
+
+  test("the read-back is scoped by workspace", async () => {
+    mockResponseFindFirst.mockResolvedValueOnce(readbackRow());
+
+    await readbackV3Response("clrs1", { workspaceId: survey.workspaceId });
+
+    expect(mockResponseFindFirst.mock.calls[0][0].where).toEqual({
+      id: "clrs1",
+      survey: { workspaceId: survey.workspaceId },
+    });
   });
 });
