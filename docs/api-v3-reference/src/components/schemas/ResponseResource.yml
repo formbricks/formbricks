@@ -1,0 +1,95 @@
+allOf:
+  - $ref: ./ResponseBase.yml
+  - type: object
+    required:
+      - contact
+      - displayId
+      - singleUseId
+      - data
+    properties:
+      data:
+        allOf:
+          - $ref: ./ResponseDataMap.yml
+        description: >
+          Answers in their **stored** form — byte-for-byte the same map `POST /api/v3/responses` and
+          `PATCH /api/v3/responses/{responseId}` accept. Returned so that a read can be edited and
+          written straight back: take this map, change what you need, and `PATCH` it. Without it a
+          client wanting to correct one answer would have to rebuild the map from `answers[]`,
+          which is possible but is work the server can simply not impose.
+
+
+          `answers[]` remains the field to read — it is typed, labelled and ordered, and it
+          separates answers from hidden fields. This is the same data in the shape the write side
+          speaks, offered alongside rather than instead.
+
+
+          Present on the detailed view only. The list view omits it deliberately: on a page of 250
+          it would carry every answer twice, and a bulk reader is not editing.
+      contact:
+        anyOf:
+          - $ref: ./ResponseContact.yml
+          - type: "null"
+        description: >-
+          The contact that submitted the response, or `null` when the response is anonymous. Present
+          on the detailed view only.
+      displayId:
+        type:
+          - string
+          - "null"
+        description: >-
+          The display (survey impression) this response was submitted against, when one was recorded.
+      singleUseId:
+        type:
+          - string
+          - "null"
+        description: >-
+          The single-use link id this response was submitted through, when the survey uses single-use
+          links.
+unevaluatedProperties: false
+description: >
+  A survey response in the detailed view, as returned by `GET /api/v3/responses/{responseId}` and by
+  the write endpoints. Everything in `ResponseListItem`, plus the identity and provenance fields the
+  list view omits.
+
+
+  It also carries `data` — the answers as stored, returned unchanged, so a client can read a
+  response, edit an answer and send it straight back. Embedded Data is not echoed in stored form:
+  the read's `embeddedData[]` and a request's `embeddedData` map already address the same fields by
+  the same names, so a second raw map would only republish the storage layout. That is the property
+  v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating
+  `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is
+  "burdensome for clients, particularly when the JSON data is complex or deeply nested".
+
+
+  They are not the *same* view, and the differences are deliberate. A write accepts `ingested` and
+  `computed` fields only: a `reserved` entry describes the submission environment, and being able to
+  read one back is not a licence to author it. An unset field is **omitted** from the read while
+  `null` on a write **clears** one, because a merge-shaped map has no other way to spell deletion.
+  And a name the read returns twice under different `kind`s cannot be written at all — see
+  `ResponseEmbeddedDataInput`, which refuses an ambiguous name rather than guessing.
+
+
+  Values themselves round-trip: within those two kinds every value the read emits is accepted
+  verbatim on a write, and a `date` reads and writes as the same ISO-8601 string. So a
+  read-edit-write cycle loses nothing except on the finite set of legacy surveys carrying one name
+  as both a variable and a hidden field, where the write refuses the name outright.
+
+
+  Note which fields carry `readOnly` here and which do not, because it is the opposite of what an
+  "echo" framing would suggest. `readOnly` means a value is managed exclusively by the server, so it
+  marks the **derived** views — `answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the
+  denormalized `surveyName` and `workspaceId`, the timestamps, `durationSeconds` and `id`.
+  `data` is *not* read-only: it is exactly what the write endpoints accept, and leaving it unmarked
+  is what makes this representation round-trippable rather than merely informative.
+
+
+  To correct one answer, read this resource, take `data`, change the entry you want and `PATCH`
+  `{ "data": … }`. Send only the fields you are changing — `PATCH` rejects unknown and non-patchable
+  keys, so passing the whole representation back verbatim is not the intended flow; passing `data`
+  back is.
+
+
+  **Never exposed on this resource, in either view:** the respondent's IP address, and the
+  `contactAttributes` snapshot that v1/v2 return. That snapshot is copied from the contact at
+  submission time and never updated after, so it is stale PII by construction — `contact` covers the
+  legitimate need to know who answered.
