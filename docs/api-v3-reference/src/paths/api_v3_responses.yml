@@ -1,0 +1,471 @@
+get:
+  operationId: getResponsesV3
+  summary: List responses
+  description: >
+    Returns responses for a workspace, newest first. Session cookie or x-api-key with read access.
+
+
+    **Scoping.** `workspaceId` is required, as on every v3 collection read. Add `surveyId` to narrow
+    to one survey — the common case, and the one the storage layer is indexed for
+    (`(surveyId, createdAt)`). A workspace-wide list has to reach responses through their surveys and
+    is correspondingly slower, so pass `surveyId` whenever you know it. `contactId` narrows to one
+    respondent.
+
+
+    **Pagination is keyset**, on `(createdAt, id)`. The `cursor` is opaque and bound to the sort order
+    and the filter set it was issued for; changing either invalidates it. `meta.nextCursor` being
+    `null` is the only end-of-collection signal — do not infer the end from a short page.
+
+
+    `id` is there purely as a tie-breaker, and it makes the order **total**, so no row is ever skipped
+    or repeated across pages. What it is not is a finer-grained clock: `createdAt` is stored to
+    millisecond precision, so responses sharing a millisecond — everything written in one bulk insert,
+    for instance — come back in an order that is stable and repeatable but is not their true creation
+    order. Do not read the sequence within a millisecond as meaningful.
+
+
+    **Filters are allow-listed**, and each one on its own is either served by an index or bounded by
+    one. `filter[finished][eq]` and `filter[language][in]` additionally require `surveyId` or
+    `contactId`, because both are heap residuals that are only bounded when the scan is anchored to
+    one survey or one contact; sending either without such a scope returns **400**.
+
+
+    Be aware that **combining** a `filter[createdAt]` bound with `filter[finished][eq]` is the one
+    case no single index covers: the ordered scan uses `(surveyId, createdAt)` and `finished` stays a
+    heap residual, so a page whose matches are sparse reads far more rows than it returns. Prefer
+    narrowing by `surveyId` and a tight `createdAt` window, and treat that combination as the slow
+    path until a covering index exists.
+
+
+    **What this endpoint deliberately does not filter on:** individual answers, hidden-field values,
+    submission metadata (`source`, `url`, `country`, `browser`, `os`, `deviceType`), contact attributes,
+    quotas, and tags. Each is a JSON path or an unindexed join on the largest table in the database,
+    where the honest outcome is a timeout rather than a slow query. The in-app dashboard does offer
+    these, so this endpoint is knowingly behind it; closing the gap needs index work and is tracked
+    separately rather than quietly omitted.
+  tags:
+    - V3 Responses
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/LimitQuery.yml
+    - $ref: ../components/parameters/CursorQuery.yml
+    - in: query
+      name: surveyId
+      schema:
+        type: string
+        format: cuid2
+      description: >-
+        Optional survey scoping. Single-valued deliberately: an `[in]` form would defeat the ordered
+        index scan that makes this the fast path.
+    - in: query
+      name: contactId
+      schema:
+        type: string
+        format: cuid2
+      description: Optional contact scoping. Returns only responses submitted by this contact.
+    - in: query
+      name: includeTotalCount
+      schema:
+        type: boolean
+        default: false
+      description: >
+        Whether to compute `meta.totalCount`. Defaults to **`false`** here, unlike the survey list,
+        because responses are the highest-cardinality table in the product and the extra count is not
+        free at that size. When `false`, both `meta.totalCount` and `meta.totalCountRelation` are
+        `null`.
+
+
+        When `true`, the count is capped at 10 000 and `meta.totalCountRelation` says whether the
+        figure is exact (`eq`) or a lower bound (`gte`). If all you need is the count, use
+        `GET /api/v3/responses/count` rather than fetching a page to get it — and if you need an
+        exact figure beyond the cap, that endpoint takes an explicit `precision=exact`.
+    - $ref: ../components/parameters/CreatedAtGteQuery.yml
+    - $ref: ../components/parameters/CreatedAtGtQuery.yml
+    - $ref: ../components/parameters/CreatedAtLteQuery.yml
+    - $ref: ../components/parameters/CreatedAtLtQuery.yml
+    - in: query
+      name: filter[finished][eq]
+      schema:
+        type: boolean
+      description: >-
+        Completed (`true`) or partial (`false`) responses only. Omit for both. Requires `surveyId` or
+        `contactId`.
+    - in: query
+      name: filter[language][in]
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+      description: >
+        Survey language codes to include. Repeat the parameter or use comma-separated values. Values
+        are survey language codes rather than BCP-47 locales — `default` is legitimate. Requires
+        `surveyId` or `contactId`.
+    - in: query
+      name: filter[id][in]
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          format: cuid2
+      style: form
+      explode: true
+      description: >-
+        Fetch a specific set of responses by id, at most 100 per call. Ids outside the requested scope
+        are simply absent from the result rather than erroring, so this cannot be used to probe
+        whether an id exists elsewhere.
+    - in: query
+      name: sortBy
+      schema:
+        type: string
+        enum:
+          - "-createdAt"
+          - createdAt
+        default: "-createdAt"
+      description: >
+        Sort order. `-createdAt` (newest first) is the default; `createdAt` sorts oldest first, which
+        is what a consumer doing an incremental backfill wants. The leading `-` marks descending.
+
+
+        `updatedAt` is not offered: it has no index, no product usage, and being mutable it cannot
+        anchor a keyset cursor.
+  responses:
+    "200":
+      description: Responses retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/ResponseListItem.yml
+              meta:
+                type: object
+                required:
+                  - limit
+                  - nextCursor
+                  - totalCount
+                  - totalCountRelation
+                properties:
+                  limit:
+                    type: integer
+                    minimum: 1
+                    description: >-
+                      The page size actually applied. Carries no `maximum` — it echoes what the
+                      server used rather than bounding what may be asked for.
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                    description: >-
+                      Opaque cursor for the next page. `null` when there are no more results — the
+                      only reliable end-of-collection signal. Pass it back verbatim: the encoding is
+                      deliberately unspecified and may change without notice, so a client that
+                      decodes or constructs one is relying on something this contract does not
+                      promise.
+                  totalCount:
+                    type:
+                      - integer
+                      - "null"
+                    minimum: 0
+                    description: >
+                      Responses matching the current scope and filters across all pages, **counted
+                      only up to 10 000**. Exact below that; at the cap the value is exactly `10000`
+                      and means "at least 10 000", which `totalCountRelation` states explicitly.
+                      `null` unless `includeTotalCount=true`.
+
+
+                      The cap is not timidity — an exact count over this table grows superlinearly
+                      with the data while a capped one stays flat, so an uncapped total is the one
+                      part of a page whose cost is unbounded. Read `totalCountRelation` rather than
+                      testing for the magic number.
+                  totalCountRelation:
+                    type:
+                      - string
+                      - "null"
+                    enum:
+                      - eq
+                      - gte
+                      - null
+                    description: >
+                      How to read `totalCount`: `eq` when it is exact, `gte` when the 10 000 cap was
+                      reached and it is a lower bound, `null` when `includeTotalCount=false`. This is
+                      the same eq/gte convention Elasticsearch uses for `hits.total.relation`, so a
+                      consumer can render "10,000+" honestly instead of claiming a precise figure it
+                      does not have.
+                additionalProperties: false
+          examples:
+            page:
+              summary: One page of responses, exercising several answer types
+              value:
+                data:
+                  - id: clrs1234567890123456789012
+                    surveyId: clsv1234567890123456789012
+                    surveyName: Q3 Product Feedback
+                    workspaceId: clws1234567890123456789012
+                    createdAt: 2026-08-27T09:14:03.417Z
+                    updatedAt: 2026-08-27T09:17:41.902Z
+                    finished: true
+                    endingId: cmpthankyou00000000000000
+                    language: de
+                    durationSeconds: 107.9
+                    resolution:
+                      labelPolicy: currentSurveyDefinition
+                      labelsLanguage: de
+                      surveyUpdatedAt: 2026-08-20T11:02:55.000Z
+                    answers:
+                      - position: 1
+                        elementId: nps_score
+                        elementType: nps
+                        elementLabel: Wie wahrscheinlich ist es, dass Sie uns weiterempfehlen?
+                        valueNumber: 9
+                        range:
+                          min: 0
+                          max: 10
+                        durationSeconds: 12.1
+                      - position: 2
+                        elementId: what_could_be_better
+                        elementType: openText
+                        elementLabel: Was koennten wir besser machen?
+                        valueText: Die Suche ist zu langsam.
+                        inputType: text
+                        durationSeconds: 64.8
+                      - position: 3
+                        elementId: channels
+                        elementType: multipleChoiceMulti
+                        elementLabel: Wie haben Sie von uns erfahren?
+                        selections:
+                          - optionId: ch_2f8a
+                            optionLabel: Ein Freund
+                            rawValue: Ein Freund
+                            match: label
+                          - optionId: other
+                            optionLabel: Andere
+                            rawValue: Podcast
+                            match: other
+                          - optionId: null
+                            optionLabel: null
+                            rawValue: Twitter
+                            match: unmatched
+                        durationSeconds: 31.0
+                      - position: 4
+                        elementId: consent_terms
+                        elementType: consent
+                        elementLabel: Ich stimme den Bedingungen zu
+                        valueBoolean: true
+                        rawValue: accepted
+                    embeddedData:
+                      - key: plan
+                        kind: ingested
+                        type: string
+                        label: Plan
+                        value: enterprise
+                      - key: score
+                        kind: computed
+                        type: number
+                        label: Score
+                        value: 12
+                      - key: country
+                        kind: reserved
+                        type: string
+                        label: Country
+                        value: DE
+                    unresolved:
+                      - key: old_question_id
+                        rawValue: some answer
+                        reason: elementNotInSurvey
+                    tags:
+                      - id: cltg1234567890123456789012
+                        name: vip
+                meta:
+                  limit: 20
+                  totalCountRelation: null
+                  nextCursor: eyJ2ZXJzaW9uIjoxLCJraW5kIjoicmVzcG9uc2VzIiwic29ydEJ5IjoiLWNyZWF0ZWRBdCIsImZwIjoiZTNpT0pQNkN4V0p0TEZTOSIsInZhbHVlIjoiMjAyNi0wOC0yN1QwOToxNDowMy40MTdaIiwiaWQiOiJjbHJzMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMiJ9
+                  totalCount: null
+    "400":
+      description: >
+        Bad Request — invalid or unrecognized query parameters. Covers an unknown `filter[...]` key, a
+        filter value of the wrong type, `filter[id][in]` over 100 ids, a `cursor` that does not match
+        the requested sort order or filter set, and `filter[finished][eq]` or `filter[language][in]`
+        sent without `surveyId` or `contactId`.
+
+
+        Date bounds are also validated as a pair: at most **one lower bound** (`gte` xor `gt`) and at
+        most **one upper bound** (`lte` xor `lt`), and the lower bound must not fall after the upper
+        one. Sending both forms of the same bound is rejected rather than resolved by a precedence
+        rule nobody can guess.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+post:
+  operationId: createResponseV3
+  summary: Create a response
+  description: >
+    Records a survey response. Requires read-write access to the workspace, which is resolved from
+    `surveyId` rather than supplied by the caller.
+
+
+    **This performs a real submission.** It runs the full response pipeline — webhooks, integrations,
+    follow-ups, quota evaluation, and Hub ingestion once the response is finished — and it consumes
+    one metered monthly response. That is the same power a v1/v2 management create has today, and the
+    same power an API key with write access already carries; it is called out because an agent holding
+    that key can create genuine submissions. Use `POST /api/v3/responses/validate` to check a payload
+    without any of that happening.
+
+
+    `createdAt` cannot be supplied. Bulk historical loading is therefore not what this endpoint is
+    for — see `ResponseListItem.createdAt` for why, and use v2 while a dedicated import path is
+    outstanding.
+  tags:
+    - V3 Responses
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateResponseRequest.yml
+        examples:
+          finishedResponse:
+            summary: A complete response with answers and Embedded Data
+            value:
+              surveyId: clsv1234567890123456789012
+              finished: true
+              endingId: cmpthankyou00000000000000
+              language: de
+              data:
+                nps_score: 9
+                what_could_be_better: Die Suche ist zu langsam.
+                channels:
+                  - Ein Freund
+                  - Podcast
+              embeddedData:
+                plan: enterprise
+          partialResponse:
+            summary: A partial response, still open
+            value:
+              surveyId: clsv1234567890123456789012
+              finished: false
+              data:
+                nps_score: 7
+          integrationResponse:
+            summary: A response created by an integration, with timing, tags and source
+            description: >
+              `ttc` carries per-element timing in milliseconds and reads back as `durationSeconds`
+              in seconds. `meta.source` is worth setting on any API-created response — nothing else
+              can distinguish it from an organic submission. `tags` are applied in the same
+              transaction, so no follow-up patch is needed.
+            value:
+              surveyId: clsv1234567890123456789012
+              finished: true
+              language: de
+              data:
+                nps_score: 9
+                what_could_be_better: Die Suche ist zu langsam.
+              ttc:
+                nps_score: 12100
+                what_could_be_better: 64800
+              meta:
+                source: zendesk-integration
+                url: https://support.example.com/tickets/4821
+              tags:
+                - cltg1234567890123456789012
+          identifiedResponse:
+            summary: A response attributed to a known contact
+            description: >
+              `contactId` is create-only — a response cannot later be re-attributed to a different
+              person. The contact must already exist in the same workspace.
+            value:
+              surveyId: clsv1234567890123456789012
+              finished: true
+              contactId: clct1234567890123456789012
+              data:
+                nps_score: 10
+  responses:
+    "201":
+      description: Response created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+          description: Relative URL of the created response.
+          example: /api/v3/responses/clrs1234567890123456789012
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ResponseResource.yml
+    "400":
+      description: >
+        Bad Request — the body failed schema validation: invalid JSON, a missing required field, a
+        value of the wrong type, or an unsupported field. Sending a server-owned or create-forbidden
+        field (`createdAt`, `updatedAt`, `contactAttributes`, `userId`, or a `meta` member outside
+        the accepted `source` / `url` / `action` — notably `meta.ipAddress` and the derived
+        `userAgent` / `country` / `device` family) is rejected here with `code: unsupported_field`
+        rather than being silently dropped. Failures that need stored state to detect return
+        **422** instead.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      description: >
+        Unprocessable Content — the body is well-formed but conflicts with stored state: `surveyId`
+        does not resolve, `endingId` is not an ending of that survey, `language` is not enabled on
+        it, `contactId` is not a contact in the same workspace, `displayId` already backs another
+        response, `singleUseId` is already used for this survey, or an answer violates the survey's
+        own validation rules. Each is itemized in `invalid_params`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

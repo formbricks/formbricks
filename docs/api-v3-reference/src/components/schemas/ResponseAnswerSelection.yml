@@ -1,0 +1,26 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - selections
+    properties:
+      elementType:
+        type: string
+        enum:
+          - multipleChoiceSingle
+          - multipleChoiceMulti
+          - pictureSelection
+          - ranking
+      selections:
+        type: array
+        description: >-
+          The chosen options, resolved against the current definition. Always an array, including for
+          `multipleChoiceSingle`, so consumers need one code path rather than two. For `ranking`, the
+          array is in rank order and each entry also carries an explicit `rank`.
+        items:
+          $ref: ./ResponseSelection.yml
+unevaluatedProperties: false
+description: >-
+  Choice-style answer. Covers `multipleChoiceSingle`, `multipleChoiceMulti`, `pictureSelection` and
+  `ranking`. See `ResponseValueMatch` for how each selection was resolved and why an unresolvable
+  value is never reclassified as a write-in.

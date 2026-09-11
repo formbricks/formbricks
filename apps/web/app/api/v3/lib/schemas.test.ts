@@ -45,7 +45,23 @@ describe("ZV3WorkspaceListQuery", () => {
       ZV3WorkspaceListQuery.safeParse({ workspaceId: "clseedworkspace000000000", limit: 0 }).success
     ).toBe(false);
     expect(
-      ZV3WorkspaceListQuery.safeParse({ workspaceId: "clseedworkspace000000000", limit: 101 }).success
+      ZV3WorkspaceListQuery.safeParse({ workspaceId: "clseedworkspace000000000", limit: 251 }).success
     ).toBe(false);
+  });
+
+  /**
+   * The accept side of the boundary, asserted against the literal rather than the constant. Every
+   * other assertion in this file returns the same result whether the cap is 100 or 250, so without
+   * this one the raise is pinned by nothing and reverting it leaves the suite green — while
+   * `LimitQuery.yml` still publishes `maximum: 250` to every client.
+   */
+  test("accepts the documented maximum limit", () => {
+    const result = ZV3WorkspaceListQuery.safeParse({
+      workspaceId: "clseedworkspace000000000",
+      limit: 250,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.limit).toBe(250);
   });
 });

@@ -1,0 +1,72 @@
+type: object
+description: >
+  What a successful write **would** do, reported without doing it. This mirrors the detail that makes
+  `POST /api/v3/surveys/validate` useful: it reports effects, not just a verdict, so a caller can see
+  the consequences of a payload before committing thousands of them.
+
+
+  Present only when `valid` is `true`.
+required:
+  - language
+  - firesPipeline
+  - countsTowardMeteredResponses
+properties:
+  language:
+    type:
+      - string
+      - "null"
+    description: >-
+      The survey language code that would be stamped on the response. `null` means the response would
+      be stored **without** a language — the case worth catching before a bulk write, since
+      language-less responses cannot later be told apart by language.
+  contactId:
+    type:
+      - string
+      - "null"
+    description: The contact that would be linked, or `null` if the response would be anonymous.
+  displayId:
+    type:
+      - string
+      - "null"
+    description: The display that would be linked, or `null` if none.
+  firesPipeline:
+    type: boolean
+    description: >-
+      Whether a real write would run the response pipeline — webhooks, integrations, follow-ups, and
+      Hub ingestion. True for a create, and for a patch that transitions the response to finished.
+  countsTowardMeteredResponses:
+    type: boolean
+    description: Whether a real write would consume one metered monthly response.
+  quotas:
+    type: array
+    description: >-
+      Quotas this response would count against, and whether it would fill them. Empty when the survey
+      defines no quotas or the plan does not include them.
+    items:
+      type: object
+      required:
+        - quotaId
+        - quotaName
+        - wouldCount
+      properties:
+        quotaId:
+          type: string
+          format: cuid2
+        quotaName:
+          type: string
+        wouldCount:
+          type: boolean
+          description: Whether this response matches the quota's criteria.
+        wouldFill:
+          type: boolean
+          description: >-
+            Whether counting this response would take the quota to its limit. Absent when
+            `wouldCount` is `false`.
+      additionalProperties: false
+  tagsToApply:
+    type: array
+    description: Tag ids that would end up applied to the response. Patch operations only.
+    items:
+      type: string
+      format: cuid2
+additionalProperties: false
