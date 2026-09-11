@@ -16,7 +16,7 @@ Use the signed release assistant output to populate `upgrade-values.yaml` and ve
 - bridge and candidate references are immutable image and embedded-manifest digests;
 - the bridge is serving legacy authorization while delivering the durable projection outbox;
 - SpiceDB health, schema, outbox, repair, and backup gates pass;
-- candidate database migrations are classified as bridge-compatible expand migrations only.
+- the permanent release's bridge-image migration Job completed successfully.
 
 Do not start if a candidate migration is destructive or makes the bridge unable to read the database. Contract
 migrations belong after the documented rollback-retention window; initial v6 has no contract-migration phase.
@@ -45,8 +45,9 @@ use `--atomic`: Helm cannot safely reverse the database-backed authority transit
 
 1. Run `prepare` and copy the returned receipt into `activation.receipt`.
 2. Run `audit` and require a clean full-deployment dry run.
-3. Run the release assistant's external candidate-migration step while the bridge still serves traffic. Initial
-   v6 should be a no-op after the bridge's additive migrations; stop if compatibility cannot be proven.
+3. Verify the permanent release's migration Job ran successfully with the exact bridge digest. The bridge and
+   candidate images are built from the same release source and contain the same expand migrations, so the
+   candidate must later use external migration mode. Stop if any migration is not bridge-compatible.
 4. Pause GitOps reconciliation for the application release. Suspend or remove the HPA, scale the Formbricks
    application Deployment to zero, and wait until no application Pod using the bridge digest remains. Do not
    count this chart's short-lived bridge Job as an application Pod.

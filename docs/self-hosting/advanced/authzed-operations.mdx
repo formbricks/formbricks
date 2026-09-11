@@ -243,7 +243,8 @@ The assistant performs this sequence:
 3. Quiesce authorization mutations, verify a clean final audit and monotonic outbox watermark, then atomically
    activate the receipt.
 4. Upgrade the permanent release to the digest-pinned v6 candidate with `migration.mode=external` and the
-   pre-upgrade receipt gate enabled. The candidate image validates the database receipt before replacing Pods.
+   pre-upgrade receipt gate enabled. The candidate image validates the database receipt before replacing Pods;
+   the exact bridge image already applied the release's shared expand migrations.
 5. Finalize the receipt, uninstall the temporary chart, and retain the exact bridge image for the rollback window.
 
 The candidate gate runs `formbricks-authzed activation runtime-check`. It reads PostgreSQL only and fails when the
@@ -252,9 +253,9 @@ acknowledgement and no supported bypass. Schema mutation, graph repair, authorit
 as hooks in the permanent chart.
 
 <Warning>
-  The first v6 candidate rollout must use `migration.mode=external`; the temporary coordinator applies the
-  release's rollback-compatible migrations while the bridge still serves traffic. Do not let a normal migration
-  Job race the authority switch.
+  The first v6 candidate rollout must use `migration.mode=external`; the permanent release's bridge-image
+  migration Job applies the release's rollback-compatible migrations while legacy authorization still serves
+  traffic. Do not let a candidate migration Job race the authority switch.
 </Warning>
 
 Argo CD renders Helm templates with install semantics rather than setting `.Release.IsUpgrade`. Existing Argo

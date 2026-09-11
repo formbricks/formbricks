@@ -14,8 +14,9 @@ this same Helm release with the next phase and increment `execution` before reru
 
 {{- if eq .Values.phase "prepare" }}
 Record the receipt printed by this Job in `activation.receipt`, then run the `audit` phase. Before `activate`,
-run the release assistant's external candidate-migration compatibility step. The initial v6 cutover permits
-only bridge-compatible migrations; it has no destructive contract-migration phase.
+verify that the permanent release's bridge-image migration Job completed successfully. The bridge and
+candidate are built from the same release source and therefore contain the same expand migrations. The initial
+v6 cutover has no destructive contract-migration phase.
 {{- else if eq .Values.phase "audit" }}
 Before `activate`, pause GitOps reconciliation, suspend the target HPA, scale the Formbricks application
 Deployment to zero, and verify that no application Pod using the outgoing bridge digest remains. Then set
