@@ -10,6 +10,8 @@ Usage: build-v6-upgrade-assistant-bundle.sh \
   --minimum-source-version VERSION \
   --bridge-image IMAGE@sha256:DIGEST \
   --bridge-runtime-manifest-digest sha256:DIGEST \
+  --postgres-bootstrap-image pgvector/pgvector@sha256:DIGEST \
+  --spicedb-image authzed/spicedb@sha256:DIGEST \
   --target-image IMAGE@sha256:DIGEST \
   --target-runtime-manifest-digest sha256:DIGEST \
   --output-directory DIRECTORY
@@ -21,6 +23,8 @@ source_revision=""
 minimum_source_version=""
 bridge_image=""
 bridge_runtime_manifest_digest=""
+postgres_bootstrap_image=""
+spicedb_image=""
 target_image=""
 target_runtime_manifest_digest=""
 output_directory=""
@@ -32,6 +36,8 @@ while [[ $# -gt 0 ]]; do
     --minimum-source-version) minimum_source_version="${2:-}"; shift 2 ;;
     --bridge-image) bridge_image="${2:-}"; shift 2 ;;
     --bridge-runtime-manifest-digest) bridge_runtime_manifest_digest="${2:-}"; shift 2 ;;
+    --postgres-bootstrap-image) postgres_bootstrap_image="${2:-}"; shift 2 ;;
+    --spicedb-image) spicedb_image="${2:-}"; shift 2 ;;
     --target-image) target_image="${2:-}"; shift 2 ;;
     --target-runtime-manifest-digest) target_runtime_manifest_digest="${2:-}"; shift 2 ;;
     --output-directory) output_directory="${2:-}"; shift 2 ;;
@@ -40,8 +46,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$release_version" || -z "$source_revision" || -z "$minimum_source_version" ||
-  -z "$bridge_image" || -z "$bridge_runtime_manifest_digest" || -z "$target_image" ||
-  -z "$target_runtime_manifest_digest" || -z "$output_directory" ]]; then
+  -z "$bridge_image" || -z "$bridge_runtime_manifest_digest" || -z "$postgres_bootstrap_image" ||
+  -z "$spicedb_image" || -z "$target_image" || -z "$target_runtime_manifest_digest" ||
+  -z "$output_directory" ]]; then
   usage
   exit 64
 fi
@@ -53,6 +60,8 @@ readonly postgres_bootstrap_path="docker/authzed-postgres-bootstrap.sh"
 readonly one_click_updater_path="docker/formbricks.sh"
 readonly semver_pattern='^[vV]?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
 readonly image_pattern='^ghcr\.io/formbricks/formbricks@sha256:[0-9a-f]{64}$'
+readonly postgres_bootstrap_image_pattern='^pgvector/pgvector@sha256:[0-9a-f]{64}$'
+readonly spicedb_image_pattern='^authzed/spicedb@sha256:[0-9a-f]{64}$'
 readonly digest_pattern='^sha256:[0-9a-f]{64}$'
 
 [[ "$release_version" =~ $semver_pattern ]] || { echo "invalid release version" >&2; exit 1; }
@@ -62,6 +71,14 @@ readonly digest_pattern='^sha256:[0-9a-f]{64}$'
 [[ "$source_revision" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid source revision" >&2; exit 1; }
 [[ "$bridge_image" =~ $image_pattern ]] || { echo "bridge image must be an immutable official image" >&2; exit 1; }
 [[ "$target_image" =~ $image_pattern ]] || { echo "target image must be an immutable official image" >&2; exit 1; }
+[[ "$postgres_bootstrap_image" =~ $postgres_bootstrap_image_pattern ]] || {
+  echo "PostgreSQL bootstrap image must be an immutable pgvector image" >&2
+  exit 1
+}
+[[ "$spicedb_image" =~ $spicedb_image_pattern ]] || {
+  echo "SpiceDB image must be an immutable AuthZed image" >&2
+  exit 1
+}
 [[ "$bridge_image" != "$target_image" ]] || { echo "bridge and target images must be distinct" >&2; exit 1; }
 [[ "$bridge_runtime_manifest_digest" =~ $digest_pattern ]] || { echo "invalid bridge runtime manifest digest" >&2; exit 1; }
 [[ "$target_runtime_manifest_digest" =~ $digest_pattern ]] || { echo "invalid target runtime manifest digest" >&2; exit 1; }
@@ -102,6 +119,8 @@ jq -cn \
   --arg formbricksChart "formbricks-${release_version}.tgz" \
   --arg dockerAuthzedOverlaySha256 "$docker_overlay_digest" \
   --arg authzedPostgresBootstrapSha256 "$postgres_bootstrap_digest" \
+  --arg postgresBootstrapImage "$postgres_bootstrap_image" \
+  --arg spicedbImage "$spicedb_image" \
   --arg targetImage "$target_image" \
   --arg targetRuntimeManifestDigest "$target_runtime_manifest_digest" \
   --arg upgradeChart "formbricks-upgrade-${release_version}.tgz" \
@@ -117,6 +136,8 @@ jq -cn \
       formbricksChart: $formbricksChart,
       dockerAuthzedOverlaySha256: $dockerAuthzedOverlaySha256,
       authzedPostgresBootstrapSha256: $authzedPostgresBootstrapSha256,
+      postgresBootstrapImage: $postgresBootstrapImage,
+      spicedbImage: $spicedbImage,
       targetImage: $targetImage,
       targetRuntimeManifestDigest: $targetRuntimeManifestDigest,
       upgradeChart: $upgradeChart

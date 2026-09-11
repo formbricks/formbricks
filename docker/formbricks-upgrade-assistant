@@ -165,6 +165,8 @@ fi
 readonly semver_pattern='^[vV]?([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$'
 readonly digest_pattern='^sha256:[0-9a-f]{64}$'
 readonly image_pattern='^ghcr\.io/formbricks/formbricks@sha256:[0-9a-f]{64}$'
+readonly postgres_bootstrap_image_pattern='^pgvector/pgvector@sha256:[0-9a-f]{64}$'
+readonly spicedb_image_pattern='^authzed/spicedb@sha256:[0-9a-f]{64}$'
 
 normalize_version() {
   local version="$1"
@@ -233,6 +235,8 @@ formbricks_chart=""
 upgrade_chart=""
 docker_overlay_digest=""
 postgres_bootstrap_digest=""
+postgres_bootstrap_image=""
+spicedb_image=""
 manifest_digest=""
 
 if [[ ! -f "$manifest_path" ]]; then
@@ -249,6 +253,8 @@ elif ! jq -e '
     (.artifacts.formbricksChart | type == "string") and
     (.artifacts.dockerAuthzedOverlaySha256 | type == "string") and
     (.artifacts.authzedPostgresBootstrapSha256 | type == "string") and
+    (.artifacts.postgresBootstrapImage | type == "string") and
+    (.artifacts.spicedbImage | type == "string") and
     (.artifacts.targetImage | type == "string") and
     (.artifacts.targetRuntimeManifestDigest | type == "string") and
     (.artifacts.upgradeChart | type == "string") and
@@ -263,6 +269,8 @@ else
   formbricks_chart=$(jq -er '.artifacts.formbricksChart' "$manifest_path")
   docker_overlay_digest=$(jq -er '.artifacts.dockerAuthzedOverlaySha256' "$manifest_path")
   postgres_bootstrap_digest=$(jq -er '.artifacts.authzedPostgresBootstrapSha256' "$manifest_path")
+  postgres_bootstrap_image=$(jq -er '.artifacts.postgresBootstrapImage' "$manifest_path")
+  spicedb_image=$(jq -er '.artifacts.spicedbImage' "$manifest_path")
   target_image=$(jq -er '.artifacts.targetImage' "$manifest_path")
   target_runtime_manifest_digest=$(jq -er '.artifacts.targetRuntimeManifestDigest' "$manifest_path")
   upgrade_chart=$(jq -er '.artifacts.upgradeChart' "$manifest_path")
@@ -282,6 +290,8 @@ else
     [[ "$bridge_runtime_manifest_digest" =~ $digest_pattern ]] &&
     [[ "$docker_overlay_digest" =~ $digest_pattern ]] &&
     [[ "$postgres_bootstrap_digest" =~ $digest_pattern ]] &&
+    [[ "$postgres_bootstrap_image" =~ $postgres_bootstrap_image_pattern ]] &&
+    [[ "$spicedb_image" =~ $spicedb_image_pattern ]] &&
     [[ "$target_runtime_manifest_digest" =~ $digest_pattern ]] &&
     [[ "$formbricks_chart" == "formbricks-${release_version#[vV]}.tgz" ]] &&
     [[ "$upgrade_chart" == "formbricks-upgrade-${release_version#[vV]}.tgz" ]] &&
@@ -644,7 +654,9 @@ docker_upgrade_log=""
 docker_upgrade_state=""
 
 run_upgrade_compose() {
-  run_docker compose \
+  AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF="$postgres_bootstrap_image" \
+    SPICEDB_IMAGE_REF="$spicedb_image" \
+    run_docker compose \
     --project-directory "$docker_compose_directory" \
     --env-file "$docker_env_file" \
     -f "$docker_compose_file" \
@@ -879,6 +891,8 @@ execute_docker_upgrade() {
   upsert_dotenv_value "$docker_env_file" "AUTHZED_SYSTEM_KEY" "formbricks"
   upsert_dotenv_value "$docker_env_file" "AUTHZED_INSECURE" "true"
   upsert_dotenv_value "$docker_env_file" "AUTHZED_CONSISTENCY" "fully_consistent"
+  upsert_dotenv_value "$docker_env_file" "AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF" "$postgres_bootstrap_image"
+  upsert_dotenv_value "$docker_env_file" "SPICEDB_IMAGE_REF" "$spicedb_image"
   upsert_dotenv_value "$docker_env_file" "FORMBRICKS_AUTHZED_BRIDGE_IMAGE_REF" "$bridge_image"
   upsert_dotenv_value "$docker_env_file" "FORMBRICKS_AUTHZED_TARGET_IMAGE_REF" "$target_image"
   case "$state_name" in

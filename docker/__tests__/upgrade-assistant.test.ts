@@ -22,6 +22,8 @@ const bridgeDigest = `sha256:${"a".repeat(64)}`;
 const targetDigest = `sha256:${"b".repeat(64)}`;
 const bridgeRuntimeManifestDigest = `sha256:${"c".repeat(64)}`;
 const targetRuntimeManifestDigest = `sha256:${"d".repeat(64)}`;
+const postgresBootstrapImage = `pgvector/pgvector@sha256:${"e".repeat(64)}`;
+const spicedbImage = `authzed/spicedb@sha256:${"f".repeat(64)}`;
 const dockerOverlayPath = join(repositoryRoot, "docker/formbricks-authzed-overlay.yml");
 const postgresBootstrapPath = join(repositoryRoot, "docker/authzed-postgres-bootstrap.sh");
 const digestFile = (path: string): string =>
@@ -85,6 +87,8 @@ const writeManifest = (directory: string, overrides: Record<string, unknown> = {
         formbricksChart: "formbricks-6.0.0.tgz",
         dockerAuthzedOverlaySha256: dockerOverlayDigest,
         authzedPostgresBootstrapSha256: postgresBootstrapDigest,
+        postgresBootstrapImage,
+        spicedbImage,
         targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
         targetRuntimeManifestDigest,
         upgradeChart: "formbricks-upgrade-6.0.0.tgz",
@@ -122,6 +126,14 @@ const createFakeDocker = (
     join(binDirectory, "docker"),
     `#!/bin/sh
 printf '%s\\n' "$*" >> "$COMMAND_LOG"
+case "$*" in
+  *"formbricks-authzed-overlay.yml"*)
+    grep -Fqx 'AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF=${postgresBootstrapImage}' "$UPGRADE_ENV_FILE" || exit 97
+    grep -Fqx 'SPICEDB_IMAGE_REF=${spicedbImage}' "$UPGRADE_ENV_FILE" || exit 98
+    [ "$AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF" = '${postgresBootstrapImage}' ] || exit 99
+    [ "$SPICEDB_IMAGE_REF" = '${spicedbImage}' ] || exit 100
+    ;;
+esac
 case "$*" in
   "compose version") exit 0 ;;
   *" config --format json") cat "$DOCKER_CONFIG_JSON" ;;
@@ -272,6 +284,10 @@ describe("Formbricks v6 upgrade assistant", () => {
         `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
         "--bridge-runtime-manifest-digest",
         bridgeRuntimeManifestDigest,
+        "--postgres-bootstrap-image",
+        postgresBootstrapImage,
+        "--spicedb-image",
+        spicedbImage,
         "--target-image",
         `ghcr.io/formbricks/formbricks@${targetDigest}`,
         "--target-runtime-manifest-digest",
@@ -297,6 +313,8 @@ describe("Formbricks v6 upgrade assistant", () => {
         formbricksChart: "formbricks-6.0.0.tgz",
         dockerAuthzedOverlaySha256: dockerOverlayDigest,
         authzedPostgresBootstrapSha256: postgresBootstrapDigest,
+        postgresBootstrapImage,
+        spicedbImage,
         targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
         targetRuntimeManifestDigest,
         upgradeChart: "formbricks-upgrade-6.0.0.tgz",
@@ -559,6 +577,53 @@ describe("Formbricks v6 upgrade assistant", () => {
     expect(result.stdout).not.toContain("ghcr.io/formbricks/formbricks:5.4");
   });
 
+  test.each([
+    ["tag-only PostgreSQL bootstrap image", "pgvector/pgvector:pg18", spicedbImage],
+    [
+      "foreign PostgreSQL bootstrap repository",
+      `example.invalid/pgvector@sha256:${"e".repeat(64)}`,
+      spicedbImage,
+    ],
+    ["tag-only SpiceDB image", postgresBootstrapImage, "authzed/spicedb:v1.52.0"],
+    [
+      "foreign SpiceDB repository",
+      postgresBootstrapImage,
+      `example.invalid/spicedb@sha256:${"f".repeat(64)}`,
+    ],
+  ])("rejects a %s", (_label, invalidPostgresImage, invalidSpicedbImage) => {
+    const directory = createTempDirectory();
+    const manifestPath = writeManifest(directory, {
+      artifacts: {
+        bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
+        bridgeRuntimeManifestDigest,
+        formbricksChart: "formbricks-6.0.0.tgz",
+        dockerAuthzedOverlaySha256: dockerOverlayDigest,
+        authzedPostgresBootstrapSha256: postgresBootstrapDigest,
+        postgresBootstrapImage: invalidPostgresImage,
+        spicedbImage: invalidSpicedbImage,
+        targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+        targetRuntimeManifestDigest,
+        upgradeChart: "formbricks-upgrade-6.0.0.tgz",
+      },
+    });
+
+    const result = runAssistant([
+      "--manifest",
+      manifestPath,
+      "--install-type",
+      "docker",
+      "--path",
+      "/does-not-exist",
+      "--current-version",
+      "5.4.0",
+    ]);
+
+    expect(result.status).toBe(2);
+    expect(result.result.checks).toContainEqual({ code: "release_manifest_invalid", status: "blocked" });
+    expect(result.stdout).not.toContain(String(invalidPostgresImage));
+    expect(result.stdout).not.toContain(String(invalidSpicedbImage));
+  });
+
   test("does not echo an invalid current-version override", () => {
     const directory = createTempDirectory();
     const manifestPath = writeManifest(directory);
@@ -596,6 +661,8 @@ describe("Formbricks v6 upgrade assistant", () => {
           PATH: `${binDirectory}:${process.env.PATH}`,
           COMMAND_LOG: commandLog,
           DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+          AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF: "pgvector/pgvector:tampered",
+          SPICEDB_IMAGE_REF: "authzed/spicedb:tampered",
           TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
           UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
         },
@@ -610,6 +677,12 @@ describe("Formbricks v6 upgrade assistant", () => {
     );
     expect(readFileSync(join(composeDirectory, ".env"), "utf8")).toContain(
       `FORMBRICKS_IMAGE_REF=ghcr.io/formbricks/formbricks@${targetDigest}`
+    );
+    expect(readFileSync(join(composeDirectory, ".env"), "utf8")).toContain(
+      `AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF=${postgresBootstrapImage}`
+    );
+    expect(readFileSync(join(composeDirectory, ".env"), "utf8")).toContain(
+      `SPICEDB_IMAGE_REF=${spicedbImage}`
     );
     expect(
       JSON.parse(readFileSync(join(composeDirectory, ".formbricks-v6-upgrade-state.json"), "utf8"))

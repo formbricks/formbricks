@@ -40,8 +40,10 @@ chmod 0755 formbricks.sh
 ```
 
 On macOS, use `shasum -a 256 --check formbricks-upgrade-checksums.txt`. The signed manifest binds the
-operation to distinct immutable bridge and target images and to their embedded runtime contracts. Mutable
-image tags are rejected.
+operation to distinct immutable bridge and target images, their embedded runtime contracts, and the exact
+multi-architecture `pgvector/pgvector` and `authzed/spicedb` image digests used during the upgrade. The
+assistant rejects mutable or unexpected image references and installs the signed references into the Docker
+environment before Compose renders the upgrade overlay.
 
 ## Run the read-only preflight
 
@@ -116,6 +118,9 @@ The base Compose file is never rewritten. Keep the overlay beside it for all lat
 ```bash
 docker compose -f docker-compose.yml -f formbricks-authzed-overlay.yml ps
 ```
+
+The overlay requires `AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF` and `SPICEDB_IMAGE_REF`. The assistant writes the
+release-reviewed immutable values from the signed manifest; do not replace them with tags during the cutover.
 
 For a later v6 release, set `FORMBRICKS_IMAGE_REF` in `.env` to that release's reviewed immutable image digest
 and run the normal `./formbricks.sh update`. The updater runs migrations through the overlaid application

@@ -49,6 +49,9 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    concurrency:
+      group: v6-upgrade-assets-${{ inputs.release_tag }}
+      cancel-in-progress: false
     permissions:
       contents: write
       id-token: write
@@ -79,6 +82,45 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
+
+      - name: Resolve immutable third-party image manifests
+        run: |
+          set -euo pipefail
+
+          resolve_multiarch_image() {
+            local tagged_image="$1"
+            local expected_repository="$2"
+            local output_name="$3"
+            local manifest
+            local digest
+            local raw_manifest
+
+            [[ "$tagged_image" == "${expected_repository}:"* ]]
+
+            manifest=$(docker buildx imagetools inspect "$tagged_image" --format '{{json .Manifest}}')
+            digest=$(jq -er '
+              select(
+                .mediaType == "application/vnd.oci.image.index.v1+json" or
+                .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json"
+              ) |
+              .digest |
+              select(test("^sha256:[0-9a-f]{64}$"))
+            ' <<<"$manifest")
+
+            raw_manifest=$(docker buildx imagetools inspect "${expected_repository}@${digest}" --raw)
+            jq -e '
+              [.manifests[].platform | "\(.os)/\(.architecture)"] as $platforms |
+              ($platforms | index("linux/amd64")) != null and
+              ($platforms | index("linux/arm64")) != null
+            ' <<<"$raw_manifest" >/dev/null
+
+            printf '%s=%s@%s\n' "$output_name" "$expected_repository" "$digest" >>"$GITHUB_ENV"
+          }
+
+          resolve_multiarch_image \
+            "pgvector/pgvector:pg18" pgvector/pgvector POSTGRES_BOOTSTRAP_IMAGE_REF
+          resolve_multiarch_image \
+            "authzed/spicedb:v1.52.0" authzed/spicedb SPICEDB_IMAGE_REF
 
       - name: Validate release and signed immutable images
         env:
@@ -185,11 +227,13 @@ jobs:
             --minimum-source-version "$MINIMUM_SOURCE_VERSION" \
             --bridge-image "$BRIDGE_IMAGE_REF" \
             --bridge-runtime-manifest-digest "$BRIDGE_RUNTIME_MANIFEST_DIGEST" \
+            --postgres-bootstrap-image "$POSTGRES_BOOTSTRAP_IMAGE_REF" \
+            --spicedb-image "$SPICEDB_IMAGE_REF" \
             --target-image "$TARGET_IMAGE_REF" \
             --target-runtime-manifest-digest "$TARGET_RUNTIME_MANIFEST_DIGEST" \
             --output-directory dist/v6-upgrade
 
-          release_version="${RELEASE_TAG#v}"
+          release_version="${RELEASE_TAG#[vV]}"
           helm lint charts/formbricks
           helm package charts/formbricks \
             --version "$release_version" \
@@ -200,6 +244,12 @@ jobs:
             --version "$release_version" \
             --app-version "$release_version" \
             --destination dist/v6-upgrade
+          scripts/normalize-helm-package.sh \
+            "dist/v6-upgrade/formbricks-${release_version}.tgz" formbricks
+          scripts/normalize-helm-package.sh \
+            "dist/v6-upgrade/formbricks-upgrade-${release_version}.tgz" formbricks-upgrade
+          helm lint "dist/v6-upgrade/formbricks-${release_version}.tgz"
+          helm lint "dist/v6-upgrade/formbricks-upgrade-${release_version}.tgz"
 
           (
             cd dist/v6-upgrade
@@ -217,14 +267,26 @@ jobs:
       - name: Sign and verify checksums
         env:
           CERTIFICATE_IDENTITY_REGEXP: ^https://github\.com/formbricks/formbricks/\.github/workflows/.+@refs/(heads/main|tags/.+)$
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           set -euo pipefail
           issuer='https://token.actions.githubusercontent.com'
-          cosign sign-blob --yes \
-            --bundle dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json \
-            dist/v6-upgrade/formbricks-upgrade-checksums.txt
+          signature_bundle=dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json
+          existing_assets=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets \
+            --jq '.assets[].name')
+          if grep --fixed-strings --line-regexp formbricks-upgrade-checksums.sigstore.json \
+            <<<"$existing_assets" >/dev/null; then
+            gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --pattern formbricks-upgrade-checksums.sigstore.json \
+              --output "$signature_bundle"
+          else
+            cosign sign-blob --yes \
+              --bundle "$signature_bundle" \
+              dist/v6-upgrade/formbricks-upgrade-checksums.txt
+          fi
           cosign verify-blob \
-            --bundle dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json \
+            --bundle "$signature_bundle" \
             --certificate-identity-regexp "$CERTIFICATE_IDENTITY_REGEXP" \
             --certificate-oidc-issuer "$issuer" \
             dist/v6-upgrade/formbricks-upgrade-checksums.txt
@@ -236,13 +298,14 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           set -euo pipefail
-          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+          release_version="${RELEASE_TAG#[vV]}"
+          scripts/reconcile-github-release-assets.sh "$RELEASE_TAG" "$GITHUB_REPOSITORY" \
             dist/v6-upgrade/authzed-postgres-bootstrap.sh \
             dist/v6-upgrade/formbricks-authzed-overlay.yml \
             dist/v6-upgrade/formbricks-upgrade-assistant \
             dist/v6-upgrade/formbricks-upgrade-manifest.json \
-            dist/v6-upgrade/formbricks-[0-9]*.tgz \
+            "dist/v6-upgrade/formbricks-${release_version}.tgz" \
             dist/v6-upgrade/formbricks.sh \
-            dist/v6-upgrade/formbricks-upgrade-*.tgz \
+            "dist/v6-upgrade/formbricks-upgrade-${release_version}.tgz" \
             dist/v6-upgrade/formbricks-upgrade-checksums.txt \
             dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json

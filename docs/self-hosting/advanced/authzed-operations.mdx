@@ -103,6 +103,9 @@ Fresh one-click installations generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PAS
 run the activation bootstrap before reporting success. Existing v5 installations use the signed Docker
 executor, which preserves the customized base Compose file and adds a permanent AuthZed overlay. It stops the
 application only after the bridge is healthy and a database-backed preparation receipt has been created.
+For this upgrade path, the release manifest pins both the PostgreSQL bootstrap and SpiceDB multi-architecture
+images by digest. The executor writes `AUTHZED_POSTGRES_BOOTSTRAP_IMAGE_REF` and `SPICEDB_IMAGE_REF` before
+rendering the overlay; tag-only or unexpected repositories are rejected.
 
 <Warning>
   `docker compose down` preserves PostgreSQL data. `docker compose down -v` deletes the volume containing both
