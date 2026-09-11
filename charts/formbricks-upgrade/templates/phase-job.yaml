@@ -58,6 +58,38 @@ spec:
             runAsGroup: 1001
             runAsNonRoot: true
             runAsUser: 1001
+          {{- if eq .Values.phase "activate" }}
+          command: ["sh", "-ec"]
+          args:
+            - |
+              interval={{ .Values.job.activateConflictRetryIntervalSeconds }}
+              retry_window={{ .Values.job.activateConflictRetrySeconds }}
+              elapsed=0
+              while true; do
+                set +e
+                output="$({{ .Values.cli.executable | quote }} activation activate --receipt {{ .Values.activation.receipt | quote }})"
+                result=$?
+                set -e
+                if [ "$result" -eq 0 ]; then
+                  printf '%s\n' "$output"
+                  exit 0
+                fi
+                case "$output" in
+                  *'"code":"authzed_activation_conflict"'*)
+                    if [ "$elapsed" -ge "$retry_window" ]; then
+                      printf '%s\n' "$output"
+                      exit "$result"
+                    fi
+                    sleep "$interval"
+                    elapsed=$((elapsed + interval))
+                    ;;
+                  *)
+                    printf '%s\n' "$output"
+                    exit "$result"
+                    ;;
+                esac
+              done
+          {{- else }}
           command:
             - {{ .Values.cli.executable | quote }}
           args:
@@ -79,11 +111,6 @@ spec:
             {{- else if eq .Values.phase "audit" }}
             - backfill
             - --scope=all
-            {{- else if eq .Values.phase "activate" }}
-            - activation
-            - activate
-            - --receipt
-            - {{ .Values.activation.receipt | quote }}
             {{- else if eq .Values.phase "rollback-begin" }}
             - activation
             - rollback-begin
@@ -95,6 +122,7 @@ spec:
             - --receipt
             - {{ .Values.activation.receipt | quote }}
             {{- end }}
+          {{- end }}
           env:
             - name: LOG_LEVEL
               value: fatal

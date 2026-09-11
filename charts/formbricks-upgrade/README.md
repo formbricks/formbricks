@@ -55,6 +55,10 @@ authority transition.
    count this chart's short-lived bridge Job as an application Pod.
 5. Set `activation.workloadQuiesced=true`, advance to `activate`, and run the phase. The Job takes the database
    fence, drains to a monotonic outbox watermark, re-audits, and atomically makes SpiceDB authoritative.
+   If a previous activate process disappeared after taking the fence, the replacement Job retries only the
+   sanitized `authzed_activation_conflict` result until that 15-minute fence expires. The default 35-minute Job
+   deadline then retains the activation repository's complete evidence and settlement budget. Schema, graph,
+   credential, and transport failures still fail immediately.
 6. Deploy the exact candidate digest with the permanent chart. Use external migration mode so neither the chart
    migration Job nor application startup can mutate the database:
 
@@ -88,7 +92,9 @@ authority transition.
 10. Uninstall this temporary chart and confirm its ConfigMap, Lease, and Jobs are gone.
 
 The activation fence expires after 15 minutes. If the candidate cannot be verified and finalized inside that
-window, keep traffic quiesced and follow rollback; do not resume writes or improvise a Helm rollback.
+window, keep traffic quiesced and follow rollback; do not resume writes or improvise a Helm rollback. Incrementing
+`execution` after an interrupted activate Job is safe: the new Job waits for an abandoned active fence, and the
+repository treats the exact already-activated receipt as success if the previous response was lost.
 
 ## Rollback
 

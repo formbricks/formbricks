@@ -95,4 +95,12 @@ formbricks.com/target-release: {{ .Values.targetRelease | quote }}
 {{- if ne .Values.authzed.consistency "fully_consistent" -}}
 {{- fail "authzed.consistency must be fully_consistent for the v6 upgrade" -}}
 {{- end -}}
+{{- $minimumConflictRetrySeconds := add 930 (int .Values.job.activateConflictRetryIntervalSeconds) -}}
+{{- if le (int .Values.job.activateConflictRetrySeconds) $minimumConflictRetrySeconds -}}
+{{- fail "job.activateConflictRetrySeconds must exceed the 15-minute activation fence by at least activateConflictRetryIntervalSeconds plus 30 seconds" -}}
+{{- end -}}
+{{- $minimumActivateDeadline := add 930 (int .Values.job.activateConflictRetrySeconds) -}}
+{{- if le (int .Values.job.activeDeadlineSeconds.activate) $minimumActivateDeadline -}}
+{{- fail "job.activeDeadlineSeconds.activate must exceed activateConflictRetrySeconds by at least the 15-minute activation transaction budget plus 30 seconds" -}}
+{{- end -}}
 {{- end -}}

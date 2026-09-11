@@ -96,6 +96,17 @@ unless job.dig("spec", "completions") == 1 && job.dig("spec", "parallelism") == 
 end
 abort "#{phase}: missing Job TTL" unless job.dig("spec", "ttlSecondsAfterFinished").to_i >= 60
 abort "#{phase}: missing active deadline" unless job.dig("spec", "activeDeadlineSeconds").to_i >= 60
+if phase == "activate"
+  abort "activate: recovery deadline is not 35 minutes" unless job.dig("spec", "activeDeadlineSeconds") == 2100
+  abort "activate: retry wrapper is missing" unless container["command"] == ["sh", "-ec"]
+  script = container.fetch("args").fetch(0)
+  unless script.include?('"code":"authzed_activation_conflict"') &&
+      script.include?("retry_window=960") && script.include?("interval=5")
+    abort "activate: conflict-only retry contract is missing"
+  end
+else
+  abort "#{phase}: unexpected executable" unless container["command"] == ["formbricks-authzed"]
+end
 if job.fetch("metadata", {}).fetch("annotations", {}).key?("helm.sh/hook")
   abort "#{phase}: automatic Helm hook present"
 end
@@ -160,7 +171,6 @@ expected = {
     "--expected-current-digest", "sha256:#{"5" * 64}",
   ],
   "audit" => ["backfill", "--scope=all"],
-  "activate" => ["activation", "activate", "--receipt", "123e4567-e89b-42d3-a456-426614174000"],
   "rollback-begin" => [
     "activation", "rollback-begin", "--receipt", "123e4567-e89b-42d3-a456-426614174000",
   ],
@@ -175,6 +185,34 @@ expected.each do |phase, expected_args|
   abort "#{phase}: unexpected args #{args}" unless args == expected_args
 end
 RUBY
+
+activate_script="$(ruby -ryaml - "${TMP_DIR}/activate.yaml" <<'RUBY'
+documents = YAML.load_stream(File.read(ARGV.fetch(0))).compact
+job = documents.find { |document| document["kind"] == "Job" }
+puts job.dig("spec", "template", "spec", "containers").first.fetch("args").fetch(0)
+RUBY
+)"
+AUTHZED_FAKE_MODE=conflict_then_success \
+  AUTHZED_FAKE_COUNT_FILE="${TMP_DIR}/activate-retry-count" \
+  PATH="${CHART_DIR}/tests:${PATH}" \
+  sh -ec "${activate_script}" > "${TMP_DIR}/activate-retry.out"
+[[ "$(cat "${TMP_DIR}/activate-retry-count")" -eq 3 ]] || fail "activate did not retry conflicts"
+grep -Fxq '{"status":"activated"}' "${TMP_DIR}/activate-retry.out" || \
+  fail "activate retry did not preserve the successful CLI result"
+if grep -q 'authzed_activation_conflict' "${TMP_DIR}/activate-retry.out"; then
+  fail "activate retry emitted intermediate conflict noise"
+fi
+
+if AUTHZED_FAKE_MODE=permanent \
+  AUTHZED_FAKE_COUNT_FILE="${TMP_DIR}/activate-permanent-count" \
+  PATH="${CHART_DIR}/tests:${PATH}" \
+  sh -ec "${activate_script}" > "${TMP_DIR}/activate-permanent.out"; then
+  fail "activate retried or accepted a permanent error"
+fi
+[[ "$(cat "${TMP_DIR}/activate-permanent-count")" -eq 1 ]] || \
+  fail "activate retried a permanent error"
+grep -q 'authzed_unavailable' "${TMP_DIR}/activate-permanent.out" || \
+  fail "activate suppressed the permanent CLI result"
 
 render prepare "${TMP_DIR}/prepare-without-schema-guard.yaml" --set-string schema.expectedCurrentDigest=
 if grep -q -- '--expected-current-digest' "${TMP_DIR}/prepare-without-schema-guard.yaml"; then
@@ -235,6 +273,8 @@ expect_render_failure "receipt-less rollback begin" --set-string phase=rollback-
   --set activation.workloadQuiesced=true
 expect_render_failure "receipt-less rollback complete" --set-string phase=rollback-complete
 expect_render_failure "weak consistency" --set-string authzed.consistency=minimize_latency
+expect_render_failure "short activation conflict retry" --set job.activateConflictRetrySeconds=935
+expect_render_failure "short activation recovery deadline" --set job.activeDeadlineSeconds.activate=1890
 expect_render_failure "scheme-bearing endpoint" --set-string authzed.endpoint=http://spicedb:50051
 expect_render_failure "out-of-range endpoint port" --set-string authzed.endpoint=spicedb:65536
 expect_render_failure "invalid system key" --set-string authzed.systemKey=Formbricks

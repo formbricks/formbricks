@@ -146,6 +146,16 @@
     "job": {
       "additionalProperties": false,
       "properties": {
+        "activateConflictRetryIntervalSeconds": {
+          "maximum": 60,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "activateConflictRetrySeconds": {
+          "maximum": 3600,
+          "minimum": 60,
+          "type": "integer"
+        },
         "activeDeadlineSeconds": {
           "additionalProperties": false,
           "properties": {
@@ -185,7 +195,13 @@
         },
         "ttlSecondsAfterFinished": { "maximum": 86400, "minimum": 60, "type": "integer" }
       },
-      "required": ["ttlSecondsAfterFinished", "activeDeadlineSeconds", "resources"],
+      "required": [
+        "ttlSecondsAfterFinished",
+        "activeDeadlineSeconds",
+        "activateConflictRetrySeconds",
+        "activateConflictRetryIntervalSeconds",
+        "resources"
+      ],
       "type": "object"
     },
     "nodeSelector": { "type": "object" },

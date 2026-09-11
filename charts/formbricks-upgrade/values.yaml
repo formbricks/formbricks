@@ -64,9 +64,15 @@ job:
   activeDeadlineSeconds:
     prepare: 21600
     audit: 21600
-    activate: 900
+    # Allows an interrupted activation to wait out its 15-minute database fence and still retain the
+    # activation repository's full 15-minute evidence/settlement budget.
+    activate: 2100
     rollbackBegin: 900
     rollbackComplete: 900
+  # Only authzed_activation_conflict is retried. This window is long enough to outlive an abandoned
+  # 15-minute fence; graph, schema, credential, and transport failures still fail immediately.
+  activateConflictRetrySeconds: 960
+  activateConflictRetryIntervalSeconds: 5
   resources:
     requests:
       cpu: 100m

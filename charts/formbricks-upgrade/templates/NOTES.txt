@@ -32,6 +32,8 @@ Authority is now SpiceDB and source mutations remain fenced. Deploy the exact ca
   authzed.activation.upgradeGate.enabled=true
 
 Do not use `helm --atomic`: an automatic Helm rollback cannot roll back the database-backed authority state.
+If an earlier activate Job disappeared, this phase retries only activation conflicts long enough for its
+15-minute fence to expire; every other failure remains fail-fast.
 Start one candidate application Pod, verify its exact image ID and that no bridge application Pods remain,
 then run this from that candidate Pod before restoring replicas or the HPA:
 
