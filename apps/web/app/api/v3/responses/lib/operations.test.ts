@@ -1,15 +1,45 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { problemForbidden } from "@/app/api/v3/lib/response";
-import { batchDeleteV3Responses, deleteV3Response } from "./operations";
+import {
+  batchDeleteV3Responses,
+  countV3ResponsesOperation,
+  deleteV3Response,
+  getV3Response,
+  listV3Responses,
+} from "./operations";
 
 vi.mock("server-only", () => ({}));
 
-const { mockRequireAccess, mockGetWorkspaceId, mockDelete, mockBatchDelete } = vi.hoisted(() => ({
+/**
+ * The list operation fingerprints its filters, and `vitestSetup.ts` mocks `createHash` globally to
+ * return the literal "fake-hash" — calling `.update()` on which throws, so every list call would
+ * answer 500 from the catch block rather than exercising anything. Restored for the same reason
+ * `keyset-cursor.test.ts` restores it.
+ */
+vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
+vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
+
+const {
+  mockRequireAccess,
+  mockGetWorkspaceId,
+  mockDelete,
+  mockBatchDelete,
+  mockKeysetPage,
+  mockHydrate,
+  mockCount,
+  mockGetScoped,
+  mockGetSurveys,
+} = vi.hoisted(() => ({
   mockRequireAccess: vi.fn(),
   mockGetWorkspaceId: vi.fn(),
   mockDelete: vi.fn(),
   mockBatchDelete: vi.fn(),
+  mockKeysetPage: vi.fn(),
+  mockHydrate: vi.fn(),
+  mockCount: vi.fn(),
+  mockGetScoped: vi.fn(),
+  mockGetSurveys: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mockRequireAccess }));
@@ -17,6 +47,11 @@ vi.mock("./service", () => ({
   getResponseWorkspaceId: mockGetWorkspaceId,
   deleteScopedResponse: mockDelete,
   deleteScopedResponses: mockBatchDelete,
+  listV3ResponseKeysetPage: mockKeysetPage,
+  hydrateV3Responses: mockHydrate,
+  countV3Responses: mockCount,
+  getScopedV3Response: mockGetScoped,
+  getV3ResponseSurveys: mockGetSurveys,
 }));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }) },
@@ -250,5 +285,213 @@ describe("batchDeleteV3Responses", () => {
 
     expect(response.status).toBe(500);
     expect(JSON.stringify(await response.json())).not.toContain("something unexpected");
+  });
+});
+
+const WORKSPACE = "clwsaaaaaaaaaaaaaaaaaaaa";
+const read = {
+  authentication: { apiKeyId: "key_1", workspacePermissions: [] } as never,
+  requestId: "req_1",
+  instance: "/api/v3/responses",
+};
+const query = (q: string) => new URLSearchParams(q);
+
+/** A survey and a row thin enough to serialize, so these assert the operation rather than the mapper. */
+const SURVEY = {
+  id: "clsvaaaaaaaaaaaaaaaaaaaa",
+  name: "Survey",
+  workspaceId: WORKSPACE,
+  updatedAt: new Date("2026-09-01T00:00:00.000Z"),
+  blocks: [],
+  languages: [],
+  embeddedDataLinks: [],
+  embeddedFields: [],
+};
+const ROW = {
+  id: "clrsaaaaaaaaaaaaaaaaaaaa",
+  surveyId: SURVEY.id,
+  createdAt: new Date("2026-09-02T00:00:00.000Z"),
+  updatedAt: new Date("2026-09-02T00:00:00.000Z"),
+  finished: true,
+  endingId: null,
+  language: null,
+  data: {},
+  variables: {},
+  ttc: {},
+  meta: {},
+  displayId: null,
+  singleUseId: null,
+  contact: null,
+  tags: [],
+};
+
+describe("the read operations authorize before they read", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSurveys.mockResolvedValue(new Map([[SURVEY.id, SURVEY]]));
+  });
+
+  test.each([
+    ["list", () => listV3Responses({ ...read, searchParams: query(`workspaceId=${WORKSPACE}`) })],
+    ["count", () => countV3ResponsesOperation({ ...read, searchParams: query(`workspaceId=${WORKSPACE}`) })],
+  ])("%s returns the access Response and touches no service", async (_label, run) => {
+    const denied = problemForbidden("req_1", undefined, "/api/v3/responses");
+    mockRequireAccess.mockResolvedValue(denied);
+
+    expect((await run()).status).toBe(403);
+    expect(mockKeysetPage).not.toHaveBeenCalled();
+    expect(mockCount).not.toHaveBeenCalled();
+  });
+
+  /**
+   * A bad query must not reach the auth call either — it is a 400 before anything is looked up.
+   *
+   * The offender is a malformed `limit` rather than a malformed `workspaceId`: `z.cuid2()`
+   * constrains the charset but not the length, so a short lowercase string like `nope` parses fine
+   * and is refused later, as a 403 against a workspace that does not exist.
+   */
+  test("an invalid query is refused before authorization", async () => {
+    const res = await listV3Responses({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&limit=0`),
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockRequireAccess).not.toHaveBeenCalled();
+  });
+});
+
+describe("listV3Responses", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireAccess.mockResolvedValue({ workspaceId: WORKSPACE, organizationId: "org_1" });
+    mockGetSurveys.mockResolvedValue(new Map([[SURVEY.id, SURVEY]]));
+    mockKeysetPage.mockResolvedValue([{ id: ROW.id, createdAt: ROW.createdAt, surveyId: ROW.surveyId }]);
+    mockHydrate.mockResolvedValue([ROW]);
+  });
+
+  /**
+   * All four meta keys are required by the contract, with `null` — not absence — when no total was
+   * asked for, so a caller can branch on the value without first checking the key exists.
+   */
+  test("meta carries all four keys, with nulls when no total was requested", async () => {
+    const body = await (
+      await listV3Responses({ ...read, searchParams: query(`workspaceId=${WORKSPACE}`) })
+    ).json();
+
+    expect(Object.keys(body.meta).sort()).toEqual([
+      "limit",
+      "nextCursor",
+      "totalCount",
+      "totalCountRelation",
+    ]);
+    expect(body.meta.totalCount).toBeNull();
+    expect(body.meta.totalCountRelation).toBeNull();
+    expect(mockCount).not.toHaveBeenCalled();
+  });
+
+  test("the total is fetched only when asked for, and reported with its relation", async () => {
+    mockCount.mockResolvedValue({ count: 10_000, relation: "gte" });
+
+    const body = await (
+      await listV3Responses({
+        ...read,
+        searchParams: query(`workspaceId=${WORKSPACE}&includeTotalCount=true`),
+      })
+    ).json();
+
+    expect(body.meta.totalCount).toBe(10_000);
+    expect(body.meta.totalCountRelation).toBe("gte");
+  });
+
+  /** A response whose survey vanished between the two queries cannot be serialized against one. */
+  test("a row whose survey is missing is dropped rather than failing the page", async () => {
+    mockGetSurveys.mockResolvedValue(new Map());
+
+    const res = await listV3Responses({ ...read, searchParams: query(`workspaceId=${WORKSPACE}`) });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.data).toEqual([]);
+  });
+
+  test("every 200 carries the request id and a private, no-store cache directive", async () => {
+    const res = await listV3Responses({ ...read, searchParams: query(`workspaceId=${WORKSPACE}`) });
+
+    expect(res.headers.get("x-request-id")).toBe("req_1");
+    expect(res.headers.get("cache-control")).toBe("private, no-store");
+  });
+});
+
+describe("getV3Response", () => {
+  const idParams = { ...read, responseId: ROW.id, instance: `/api/v3/responses/${ROW.id}` };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSurveys.mockResolvedValue(new Map([[SURVEY.id, SURVEY]]));
+  });
+
+  /**
+   * The property the contract rests on: a response that does not exist, one in another workspace and
+   * one deleted mid-request must be indistinguishable. Compared as bytes, because two 403s differing
+   * by a word are still an oracle.
+   */
+  test("the three 403 exits are byte-identical", async () => {
+    mockGetWorkspaceId.mockResolvedValueOnce(null);
+    const missing = await (await getV3Response(idParams)).text();
+
+    mockGetWorkspaceId.mockResolvedValueOnce(WORKSPACE);
+    mockRequireAccess.mockResolvedValueOnce(problemForbidden("req_1", undefined, idParams.instance));
+    const foreign = await (await getV3Response(idParams)).text();
+
+    mockGetWorkspaceId.mockResolvedValueOnce(WORKSPACE);
+    mockRequireAccess.mockResolvedValueOnce({ workspaceId: WORKSPACE, organizationId: "org_1" });
+    mockGetScoped.mockResolvedValueOnce(null);
+    const raced = await (await getV3Response(idParams)).text();
+
+    expect(missing).toBe(foreign);
+    expect(foreign).toBe(raced);
+  });
+
+  test("a readable response comes back as a bare data envelope", async () => {
+    mockGetWorkspaceId.mockResolvedValue(WORKSPACE);
+    mockRequireAccess.mockResolvedValue({ workspaceId: WORKSPACE, organizationId: "org_1" });
+    mockGetScoped.mockResolvedValue(ROW);
+
+    const res = await getV3Response(idParams);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(Object.keys(body)).toEqual(["data"]);
+    expect(body.data.id).toBe(ROW.id);
+  });
+});
+
+describe("countV3ResponsesOperation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireAccess.mockResolvedValue({ workspaceId: WORKSPACE, organizationId: "org_1" });
+  });
+
+  test("returns count and relation in a bare data envelope, with no meta", async () => {
+    mockCount.mockResolvedValue({ count: 42, relation: "eq" });
+
+    const body = await (
+      await countV3ResponsesOperation({ ...read, searchParams: query(`workspaceId=${WORKSPACE}`) })
+    ).json();
+
+    expect(Object.keys(body)).toEqual(["data"]);
+    expect(body.data).toEqual({ count: 42, relation: "eq" });
+  });
+
+  test("passes the requested precision through", async () => {
+    mockCount.mockResolvedValue({ count: 1, relation: "eq" });
+
+    await countV3ResponsesOperation({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&precision=exact`),
+    });
+
+    expect(mockCount).toHaveBeenCalledWith(expect.objectContaining({ precision: "exact" }));
   });
 });
