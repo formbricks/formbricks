@@ -120,8 +120,9 @@ abort "#{phase}: unexpected environment variables: #{unexpected_environment}" un
 abort "#{phase}: candidate migration URL reached a bridge phase Job" if environment.key?("MIGRATE_DATABASE_URL")
 
 plan = documents.find { |document| document["kind"] == "ConfigMap" }
+abort "#{phase}: fixed plan ConfigMap is mutable" unless plan["immutable"] == true
 expected_plan_keys = %w[
-  targetRelease generation phase execution protocolVersion bridgeImage bridgeManifestDigest candidateImage
+  targetRelease generation protocolVersion bridgeImage bridgeManifestDigest candidateImage
   candidateManifestDigest candidateExecutionMode contractMigrationPhase expectedCurrentSchemaDigest
 ]
 unless plan.fetch("data", {}).keys.sort == expected_plan_keys.sort
@@ -209,6 +210,17 @@ second = YAML.load_stream(File.read(second_path)).compact
 first_job = first.find { |document| document["kind"] == "Job" }.dig("metadata", "name")
 second_job = second.find { |document| document["kind"] == "Job" }.dig("metadata", "name")
 abort "incrementing execution did not create a new Job name" if first_job == second_job
+RUBY
+
+ruby -ryaml - "${TMP_DIR}/prepare.yaml" "${TMP_DIR}/audit.yaml" "${TMP_DIR}/execution-2.yaml" <<'RUBY'
+paths = ARGV
+plans = paths.map do |path|
+  YAML.load_stream(File.read(path)).compact.find { |document| document["kind"] == "ConfigMap" }
+end
+first_data = plans.first.fetch("data")
+plans.drop(1).each do |plan|
+  abort "fixed plan data changed across phase or execution" unless plan.fetch("data") == first_data
+end
 RUBY
 
 expect_render_failure "missing bridge digest" --set-string images.bridge.digest=

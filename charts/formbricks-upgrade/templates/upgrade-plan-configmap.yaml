@@ -4,11 +4,10 @@ metadata:
   name: {{ include "formbricks-upgrade.planName" . }}
   labels:
     {{- include "formbricks-upgrade.labels" . | nindent 4 }}
+immutable: true
 data:
   targetRelease: {{ .Values.targetRelease | quote }}
   generation: {{ .Values.generation | quote }}
-  phase: {{ .Values.phase | quote }}
-  execution: {{ .Values.execution | quote }}
   protocolVersion: {{ .Values.protocolVersion | quote }}
   bridgeImage: {{ include "formbricks-upgrade.bridgeImage" . | quote }}
   bridgeManifestDigest: {{ .Values.images.bridge.manifestDigest | quote }}

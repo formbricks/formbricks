@@ -39,7 +39,9 @@ assets, verify it through the same signed checksum file, and replace the OCI ref
 
 Keep `generation` fixed for one attempt. Advance `phase` only after the current Job succeeds and the runbook
 gate passes. Increment `execution` before rerunning a phase so Kubernetes receives a new immutable Job. Never
-use `--atomic`: Helm cannot safely reverse the database-backed authority transition.
+change either image, either manifest digest, the protocol version, or the initial schema guard while advancing
+that attempt: they form an immutable plan. Never use `--atomic`: Helm cannot safely reverse the database-backed
+authority transition.
 
 ## Forward cutover
 
@@ -107,9 +109,10 @@ rollback.
 
 ## Ownership and cleanup
 
-The fixed target-release plan ConfigMap is created before the Job and acts as an install-order mutex. A fixed
-Lease records ownership. A second temporary release therefore cannot target the same Formbricks release. The
-Lease is an ownership marker, not an expiring heartbeat.
+The fixed target-release plan ConfigMap is immutable, excludes the changing phase/execution fields, and is
+created before the Job as an install-order mutex. A fixed Lease records ownership. A second temporary release
+therefore cannot target the same Formbricks release. The Lease is an ownership marker, not an expiring
+heartbeat.
 
 The chart deliberately has no Helm or Argo hook annotations and no permission to scale workloads. Operators
 must quiesce the application explicitly and set `activation.workloadQuiesced=true`; this acknowledgment is
