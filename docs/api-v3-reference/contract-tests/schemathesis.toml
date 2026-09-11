@@ -32,3 +32,44 @@ fill-missing = true
 [[operations]]
 include-tag = "V3 Feedback Records"
 enabled = false
+
+# The v3 response operations are documented but not all routed yet: ENG-2868 agreed the contract
+# before implementation, deliberately. `fill-missing` above means a documented operation is exercised
+# the moment it is selected, so an unrouted one answers Next.js's HTML 404 against a spec documenting
+# 200/400/401/403/429/500 — a red job that says nothing about the contract.
+#
+# One block per operation, keyed by `operationId`, so each endpoint's PR deletes exactly its own and
+# the gate opens as the route lands rather than all at once at the end (ENG-2959). Keyed by operation
+# id rather than path because three of these paths carry both a routed and an unrouted method, which
+# a path filter cannot separate.
+[[operations]]
+include-operation-id = "getResponsesV3"       # ENG-2865
+enabled = false
+
+[[operations]]
+include-operation-id = "countResponsesV3"     # ENG-2865
+enabled = false
+
+[[operations]]
+include-operation-id = "getResponseV3"        # ENG-2865
+enabled = false
+
+[[operations]]
+include-operation-id = "deleteResponseV3"     # ENG-2867
+enabled = false
+
+[[operations]]
+include-operation-id = "batchDeleteResponsesV3"  # ENG-2896
+enabled = false
+
+[[operations]]
+include-operation-id = "createResponseV3"     # ENG-2866
+enabled = false
+
+[[operations]]
+include-operation-id = "updateResponseV3"     # ENG-2866
+enabled = false
+
+[[operations]]
+include-operation-id = "validateResponseV3"   # ENG-2954
+enabled = false
