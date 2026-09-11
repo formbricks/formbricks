@@ -91,6 +91,44 @@ export type TV3EmbeddedDataPlan = TV3WritePlanIssues & {
 type TV3EmbeddedDataInput = Readonly<Record<string, string | number | boolean | null>>;
 
 /**
+ * Index the survey's declared fields by lower-cased name, keeping collisions as a group so
+ * {@link matchDeclaredField} can refuse them rather than silently taking the first.
+ */
+const indexFieldsByName = (
+  embeddedFields: readonly TLinkedEmbeddedField[]
+): Map<string, TLinkedEmbeddedField[]> => {
+  const byName = new Map<string, TLinkedEmbeddedField[]>();
+
+  for (const linked of embeddedFields) {
+    const key = linked.field.name.toLowerCase();
+    const group = byName.get(key);
+    if (group) group.push(linked);
+    else byName.set(key, [linked]);
+  }
+
+  return byName;
+};
+
+/**
+ * Turn the ingest contract's drops into issues, minus the two this planner already handled.
+ *
+ * `locked_field` is filtered before the contract runs and `element_id_collision` is refused there
+ * too, so anything left is a value shape the contract cannot store at all.
+ *
+ * `flags` are deliberately not issues. A `coercion_failed` or `truncated` value *is* stored, and the
+ * read reports it — turning one into a 422 here would make v3 refuse payloads the SDK accepts for
+ * the same field, which is the drift the shared contract exists to prevent.
+ */
+const ingestDropIssues = (dropped: readonly { key: string; reason: string }[]): InvalidParam[] =>
+  dropped
+    .filter((drop) => drop.reason !== "locked_field" && drop.reason !== "element_id_collision")
+    .map((drop) => ({
+      name: drop.key,
+      reason: `'${drop.key}' cannot be stored as an Embedded Data value.`,
+      code: "unsupported_field" as const,
+    }));
+
+/**
  * Resolve a name-keyed `embeddedData` payload into storage writes.
  *
  * Three things the caller is deliberately not asked to know, each resolved here:
@@ -124,13 +162,7 @@ export const planEmbeddedDataWrite = ({
   const variableClears: string[] = [];
   const ingestedBag: Record<string, string | number | boolean> = {};
 
-  const byName = new Map<string, TLinkedEmbeddedField[]>();
-  for (const linked of embeddedFields) {
-    const key = linked.field.name.toLowerCase();
-    const group = byName.get(key);
-    if (group) group.push(linked);
-    else byName.set(key, [linked]);
-  }
+  const byName = indexFieldsByName(embeddedFields);
 
   for (const [name, value] of Object.entries(incoming)) {
     const group = byName.get(name.toLowerCase());
@@ -226,21 +258,8 @@ export const planEmbeddedDataWrite = ({
     elementIds: [...elementIds],
   });
 
-  for (const drop of ingested.dropped) {
-    // `locked_field` is filtered above and `element_id_collision` cannot be reached, so anything
-    // arriving here is a value shape the ingest contract cannot store at all.
-    if (drop.reason === "locked_field" || drop.reason === "element_id_collision") continue;
+  issues.push(...ingestDropIssues(ingested.dropped));
 
-    issues.push({
-      name: drop.key,
-      reason: `'${drop.key}' cannot be stored as an Embedded Data value.`,
-      code: "unsupported_field",
-    });
-  }
-
-  // `flags` are deliberately not issues. A `coercion_failed` or `truncated` value *is* stored, and
-  // the read reports it — turning it into a 422 here would make v3 refuse payloads the SDK accepts
-  // for the same field, which is the drift the shared contract exists to prevent.
   return { dataWrites: ingested.data, dataClears, variableWrites, variableClears, issues };
 };
 
