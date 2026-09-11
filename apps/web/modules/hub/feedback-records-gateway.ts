@@ -27,7 +27,6 @@ const ZFeedbackRecordId = z.uuid();
 type TFeedbackRecordsGatewayOperation =
   | "list"
   | "create"
-  | "bulkDelete"
   | "semanticSearch"
   | "retrieve"
   | "update"
@@ -55,11 +54,42 @@ type TParsedGatewayRoute = {
  * question — a workspace permission cannot identify whose records these are — and neither applies to
  * `create`.
  */
-const RECORD_MUTATING_OPERATIONS = new Set<TFeedbackRecordsGatewayOperation>([
-  "update",
-  "delete",
-  "bulkDelete",
-]);
+const RECORD_MUTATING_OPERATIONS = new Set<TFeedbackRecordsGatewayOperation>(["update", "delete"]);
+
+/**
+ * The methods a known feedback-records path accepts, or `null` when the path itself is not one of
+ * ours. Kept beside the parser above and derived from the same shape, so a route added there without
+ * a matching entry here shows up as a wrong `Allow` header rather than silently.
+ *
+ * This exists so a refused *method* answers 405 with `Allow` rather than 400. `DELETE` on the
+ * collection is the case that matters: it is a real path, and the honest answer is "not that verb
+ * here", not "your request was malformed".
+ */
+const allowedMethodsForFeedbackRecordsPath = (pathname: string): string[] | null => {
+  const normalizedPath = normalizeFeedbackRecordsPath(pathname);
+  if (!normalizedPath) {
+    return null;
+  }
+
+  if (normalizedPath === "/") {
+    return ["GET", "POST"];
+  }
+
+  if (normalizedPath === "/search/semantic") {
+    return ["POST"];
+  }
+
+  const pathSegments = normalizedPath.split("/").filter(Boolean);
+  if (!ZFeedbackRecordId.safeParse(pathSegments[0]).success) {
+    return null;
+  }
+
+  if (pathSegments.length === 1) {
+    return ["GET", "PATCH", "DELETE"];
+  }
+
+  return pathSegments.length === 2 && pathSegments[1] === "similar" ? ["GET"] : null;
+};
 
 const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TParsedGatewayRoute | null => {
   const normalizedPath = normalizeFeedbackRecordsPath(pathname);
@@ -73,10 +103,11 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
         return { operation: "list", requiredPermission: "read", tenantSource: "query" };
       case "POST":
         return { operation: "create", requiredPermission: "write", tenantSource: "body" };
-      case "DELETE":
-        // `manage`, not `write`: everywhere else in the API `methodPermissionMap` reserves DELETE for
-        // `manage`, and feedback-record deletion is unrecoverable (ENG-2083).
-        return { operation: "bulkDelete", requiredPermission: "manage", tenantSource: "query" };
+      // No `DELETE` on the collection. The store has a delete-by-user, and this path used to forward
+      // it, but deleting by tenant or user id is not an operation this API offers: the store was not
+      // designed to be driven that way from outside, and a single mistaken `user_id` erases every
+      // record for that person across the dataset with nothing to undo it. Deletion is one record at
+      // a time, by id, on both surfaces (ENG-3117).
       default:
         return null;
     }
@@ -99,7 +130,7 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
       case "PATCH":
         return { operation: "update", requiredPermission: "write", tenantSource: "recordLookup", recordId };
       case "DELETE":
-        // `manage` for the same reason as `bulkDelete` above (ENG-2083).
+        // `manage`: deletion is unrecoverable (ENG-2083).
         return {
           operation: "delete",
           requiredPermission: "manage",
@@ -287,6 +318,12 @@ export const feedbackRecordsGatewayAuthorizer: TGatewayRequestAuthorizer = {
     withAuthorizationSurface("feedback_gateway", async () => {
       const route = parseFeedbackRecordsGatewayRoute(originalRequest.method, originalRequest.url.pathname);
       if (!route) {
+        const allowed = allowedMethodsForFeedbackRecordsPath(originalRequest.url.pathname);
+        if (allowed) {
+          const response = buildGatewayStatusResponse(405, "Method Not Allowed");
+          response.headers.set("Allow", allowed.join(", "));
+          return { status: "deny", response };
+        }
         return {
           status: "deny",
           response: buildGatewayStatusResponse(400, "Unsupported FeedbackRecords route"),

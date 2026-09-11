@@ -119,6 +119,10 @@ page.
 for callers pointing the [Hub TypeScript SDK](https://github.com/formbricks/hub-typescript) at a Formbricks
 instance, and it forwards requests unchanged — so it speaks the store's `snake_case` contract, not this one.
 
+With one exception: `DELETE /v1/feedback-records`, the store's delete-by-user, answers **405**. Deleting by
+tenant or user id is not an operation this API offers on either path — a single wrong id erases everything
+that person ever said, with nothing to undo it. Delete one record at a time, by id.
+
 It is a compatibility path and will not gain new operations. Use `/api/v3/feedback-records`.
 
 ## Feedback
