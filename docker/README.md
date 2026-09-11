@@ -33,8 +33,10 @@ That's it! After running the command and providing the required information, vis
 The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (`ghcr.io/formbricks/hub`) and the bundled Cube service. Hub and Cube share the same database as Formbricks by default and both start as part of the baseline `docker compose up`.
 
 - **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API starts. Both migration services run on every `docker compose up` and are idempotent.
-- **Production** (`docker/docker-compose.yml`): Set `FORMBRICKS_IMAGE_REF` to the full release image digest.
-  Every Formbricks application, migration, and AuthZed operation container uses this one required reference.
+- **Production** (`docker/docker-compose.yml`): Fresh stable installations default `FORMBRICKS_IMAGE_REF` to
+  `ghcr.io/formbricks/formbricks:latest`. Set it to a reviewed full release digest for immutable deployments
+  or pre-release testing. Every Formbricks application, migration, and AuthZed operation container uses this
+  one reference.
   Set `POSTGRES_PASSWORD` to a unique random value and set non-empty `HUB_API_KEY`, `CUBEJS_API_SECRET`,
   `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` values in `.env` before starting the stack. Keep
   `POSTGRES_PASSWORD` unchanged after the database volume has been initialized. The installer also writes a
@@ -107,19 +109,15 @@ docker compose --profile authzed-ops run --rm authzed-ops schema apply \
 
 # Relationship audit (dry run)
 docker compose --profile authzed-ops run --rm authzed-ops backfill
-
-# Release-matched v6 readiness gate
-docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
 The first apply to an empty SpiceDB needs no additional argument. Replacing a non-empty schema requires
 `--expected-current-digest sha256:<digest-from-check>`. The command verifies the write by reading and comparing
 the schema again. Fresh installs run the idempotent `authzed-initialize` service independently; Formbricks
-startup and `/health` do not depend on it. Existing upgrades require the explicit preparation and read-only gate. See
-the [public operations guide](../docs/self-hosting/advanced/authzed-operations.mdx) for the JSON contract, exit
-codes, backup requirements, repair, and rollback rules. Repository development retains the equivalent
-`pnpm authzed:*` commands.
+startup and `/health` do not depend on it. Existing v5 installations must use the signed receipt-backed
+executor in the [v6 upgrade assistant guide](../docs/self-hosting/advanced/v6-upgrade-assistant.mdx). See the
+[public operations guide](../docs/self-hosting/advanced/authzed-operations.mdx) for the JSON contract, exit
+codes, backup requirements, repair, and rollback rules.
 
 `AUTHZED_ENABLED` and `AUTHZED_INSECURE` accept `true`, `false`, `1`, and `0`. Unset means disabled and secure
 TLS, respectively. `AUTHZED_ENDPOINT` is a bare `host:port` (including bracketed IPv6) with no scheme or path;
@@ -134,9 +132,9 @@ docker compose -f docker-compose.dev.yml --profile authzed-bundled --profile aut
 
 Open `http://127.0.0.1:50052`. The browser UI and gRPC port are development-only.
 
-Existing one-click installations keep their customized Compose file during `formbricks.sh update`. Merge all
-release-matched AuthZed services and the two generated secrets manually, pass `upgrade prepare` and `upgrade
-check`, and only then set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. Back up both databases first and
+Existing one-click installations keep their customized Compose file during `formbricks.sh update`. The signed
+v6 executor installs `formbricks-authzed-overlay.yml` beside it, creates the database-backed activation receipt,
+and automatically restores the recorded bridge after a candidate failure. Back up both databases first and
 never use `docker compose down -v` during migration or rollback.
 
 Before changing an existing v5 deployment, download all signed upgrade-assistant assets from the target v6

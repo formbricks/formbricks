@@ -1,5 +1,15 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +22,12 @@ const bridgeDigest = `sha256:${"a".repeat(64)}`;
 const targetDigest = `sha256:${"b".repeat(64)}`;
 const bridgeRuntimeManifestDigest = `sha256:${"c".repeat(64)}`;
 const targetRuntimeManifestDigest = `sha256:${"d".repeat(64)}`;
+const dockerOverlayPath = join(repositoryRoot, "docker/formbricks-authzed-overlay.yml");
+const postgresBootstrapPath = join(repositoryRoot, "docker/authzed-postgres-bootstrap.sh");
+const digestFile = (path: string): string =>
+  `sha256:${createHash("sha256").update(readFileSync(path)).digest("hex")}`;
+const dockerOverlayDigest = digestFile(dockerOverlayPath);
+const postgresBootstrapDigest = digestFile(postgresBootstrapPath);
 const tempDirectories: string[] = [];
 
 type TAssistantResult = Readonly<{
@@ -67,6 +83,8 @@ const writeManifest = (directory: string, overrides: Record<string, unknown> = {
         bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
         bridgeRuntimeManifestDigest,
         formbricksChart: "formbricks-6.0.0.tgz",
+        dockerAuthzedOverlaySha256: dockerOverlayDigest,
+        authzedPostgresBootstrapSha256: postgresBootstrapDigest,
         targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
         targetRuntimeManifestDigest,
         upgradeChart: "formbricks-upgrade-6.0.0.tgz",
@@ -158,6 +176,79 @@ exit 1
   return { binDirectory, commandLog };
 };
 
+const createFakeUpgradeDocker = (
+  directory: string,
+  renderedConfig: Record<string, unknown>,
+  options: Readonly<{ failFinalize?: boolean; authority?: "legacy" | "spicedb"; transition?: string }> = {}
+): Readonly<{ binDirectory: string; commandLog: string }> => {
+  const binDirectory = join(directory, "bin");
+  const configPath = join(directory, "rendered-compose.json");
+  const commandLog = join(directory, "upgrade-docker-commands.log");
+  mkdirSync(binDirectory);
+  writeFileSync(configPath, JSON.stringify(renderedConfig));
+  writeFileSync(commandLog, "");
+  writeExecutable(
+    join(binDirectory, "docker"),
+    `#!/bin/sh
+printf '%s\\n' "$*" >> "$COMMAND_LOG"
+case "$*" in
+  "compose version") exit 0 ;;
+  *" config --format json") cat "$DOCKER_CONFIG_JSON" ;;
+  *" config") exit 0 ;;
+  *" activation prepare "*) printf '%s\\n' '{"status":"prepared","receipt":"00000000-0000-4000-8000-000000000001"}' ;;
+  *" activation status") printf '%s\\n' '{"status":"ready","authority":"${options.authority ?? "legacy"}","transition":"${options.transition ?? "idle"}"}' ;;
+  *" activation runtime-check")
+    if grep -Fqx "FORMBRICKS_IMAGE_REF=$TARGET_IMAGE" "$UPGRADE_ENV_FILE"; then
+      printf '%s\\n' '{"status":"ready","authority":"spicedb"}'
+    else
+      printf '%s\\n' '{"status":"ready","authority":"legacy"}'
+    fi
+    ;;
+  *" activation finalize "*) ${options.failFinalize ? "exit 1" : "printf '%s\\n' '{\"status\":\"finalized\"}'"} ;;
+  *" activation rollback-begin "*) printf '%s\\n' '{"status":"rollback_started"}' ;;
+  *" activation rollback-complete "*) printf '%s\\n' '{"status":"rolled_back"}' ;;
+  *) exit 0 ;;
+esac
+`
+  );
+  return { binDirectory, commandLog };
+};
+
+const createUpgradeFixture = (
+  directory: string,
+  options: Readonly<{ failFinalize?: boolean; authority?: "legacy" | "spicedb"; transition?: string }> = {}
+): Readonly<{
+  binDirectory: string;
+  commandLog: string;
+  composeDirectory: string;
+  manifestPath: string;
+}> => {
+  const bundleDirectory = join(directory, "bundle");
+  const composeDirectory = join(directory, "formbricks");
+  mkdirSync(bundleDirectory);
+  mkdirSync(composeDirectory);
+  const manifestPath = writeManifest(bundleDirectory);
+  copyFileSync(dockerOverlayPath, join(bundleDirectory, "formbricks-authzed-overlay.yml"));
+  copyFileSync(postgresBootstrapPath, join(bundleDirectory, "authzed-postgres-bootstrap.sh"));
+  writeFileSync(join(composeDirectory, "docker-compose.yml"), "services:\n  customer-owned: {}\n");
+  writeFileSync(join(composeDirectory, ".env"), 'POSTGRES_PASSWORD="existing-password"\n');
+  const { binDirectory, commandLog } = createFakeUpgradeDocker(
+    directory,
+    {
+      services: {
+        formbricks: {
+          image: "ghcr.io/formbricks/formbricks:5.4.2",
+          environment: { DATABASE_URL: "postgresql://postgres:existing-password@postgres:5432/formbricks" },
+        },
+        postgres: { environment: { POSTGRES_PASSWORD: "existing-password" } },
+        traefik: {},
+      },
+    },
+    options
+  );
+  return { binDirectory, commandLog, composeDirectory, manifestPath };
+};
+
 afterEach(() => {
   for (const directory of tempDirectories.splice(0)) {
     rmSync(directory, { force: true, recursive: true });
@@ -193,6 +284,7 @@ describe("Formbricks v6 upgrade assistant", () => {
 
     expect(process.status).toBe(0);
     expect(statSync(join(outputDirectory, "formbricks-upgrade-assistant")).mode & 0o111).not.toBe(0);
+    expect(statSync(join(outputDirectory, "formbricks.sh")).mode & 0o111).not.toBe(0);
     expect(
       JSON.parse(readFileSync(join(outputDirectory, "formbricks-upgrade-manifest.json"), "utf8"))
     ).toMatchObject({
@@ -203,13 +295,15 @@ describe("Formbricks v6 upgrade assistant", () => {
         bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
         bridgeRuntimeManifestDigest,
         formbricksChart: "formbricks-6.0.0.tgz",
+        dockerAuthzedOverlaySha256: dockerOverlayDigest,
+        authzedPostgresBootstrapSha256: postgresBootstrapDigest,
         targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
         targetRuntimeManifestDigest,
         upgradeChart: "formbricks-upgrade-6.0.0.tgz",
       },
     });
     expect(readFileSync(join(outputDirectory, "formbricks-upgrade-checksums.txt"), "utf8")).toMatch(
-      /^[0-9a-f]{64}  formbricks-upgrade-assistant\n[0-9a-f]{64}  formbricks-upgrade-manifest\.json\n$/
+      /^[0-9a-f]{64}  formbricks-upgrade-assistant\n[0-9a-f]{64}  formbricks-upgrade-manifest\.json\n[0-9a-f]{64}  formbricks-authzed-overlay\.yml\n[0-9a-f]{64}  authzed-postgres-bootstrap\.sh\n[0-9a-f]{64}  formbricks\.sh\n$/
     );
   });
 
@@ -486,5 +580,227 @@ describe("Formbricks v6 upgrade assistant", () => {
       status: "blocked",
     });
     expect(result.stdout).not.toContain(sensitiveOverride);
+  });
+
+  test("executes bridge, receipt activation, candidate verification, and finalization", () => {
+    const directory = createTempDirectory();
+    const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory);
+    const originalCompose = readFileSync(join(composeDirectory, "docker-compose.yml"), "utf8");
+    const processResult = spawnSync(
+      assistantPath,
+      ["execute", "--manifest", manifestPath, "--path", composeDirectory, "--yes"],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${binDirectory}:${process.env.PATH}`,
+          COMMAND_LOG: commandLog,
+          DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+          TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+          UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+        },
+      }
+    );
+
+    expect(processResult.status).toBe(0);
+    expect(JSON.parse(processResult.stdout)).toMatchObject({ status: "upgraded", mutating: true });
+    expect(readFileSync(join(composeDirectory, "docker-compose.yml"), "utf8")).toBe(originalCompose);
+    expect(readFileSync(join(composeDirectory, "formbricks-authzed-overlay.yml"), "utf8")).toBe(
+      readFileSync(dockerOverlayPath, "utf8")
+    );
+    expect(readFileSync(join(composeDirectory, ".env"), "utf8")).toContain(
+      `FORMBRICKS_IMAGE_REF=ghcr.io/formbricks/formbricks@${targetDigest}`
+    );
+    expect(
+      JSON.parse(readFileSync(join(composeDirectory, ".formbricks-v6-upgrade-state.json"), "utf8"))
+    ).toMatchObject({ state: "finalized" });
+
+    const commands = readFileSync(commandLog, "utf8");
+    expect(commands.indexOf(`pull ghcr.io/formbricks/formbricks@${targetDigest}`)).toBeLessThan(
+      commands.indexOf(" stop --timeout 60 formbricks")
+    );
+    expect(commands.indexOf("activation prepare")).toBeLessThan(
+      commands.indexOf(" stop --timeout 60 formbricks")
+    );
+    expect(commands.indexOf("activation activate")).toBeLessThan(
+      commands.lastIndexOf(" activation runtime-check")
+    );
+    expect(commands.lastIndexOf(" activation runtime-check")).toBeLessThan(
+      commands.indexOf("activation finalize")
+    );
+    expect(processResult.stdout + processResult.stderr).not.toContain("existing-password");
+    expect(readFileSync(join(composeDirectory, "formbricks-v6-upgrade.log"), "utf8")).not.toContain(
+      "existing-password"
+    );
+  });
+
+  test("rolls authority and runtime back to the bridge when candidate finalization fails", () => {
+    const directory = createTempDirectory();
+    const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory, {
+      failFinalize: true,
+    });
+    const processResult = spawnSync(
+      assistantPath,
+      ["execute", "--manifest", manifestPath, "--path", composeDirectory, "--yes"],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${binDirectory}:${process.env.PATH}`,
+          COMMAND_LOG: commandLog,
+          DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+          TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+          UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+        },
+      }
+    );
+
+    expect(processResult.status).toBe(1);
+    expect(JSON.parse(processResult.stdout)).toMatchObject({
+      status: "blocked",
+      checks: [{ code: "candidate_failed_rolled_back", status: "blocked" }],
+    });
+    expect(readFileSync(join(composeDirectory, ".env"), "utf8")).toContain(
+      `FORMBRICKS_IMAGE_REF=ghcr.io/formbricks/formbricks@${bridgeDigest}`
+    );
+    expect(
+      JSON.parse(readFileSync(join(composeDirectory, ".formbricks-v6-upgrade-state.json"), "utf8"))
+    ).toMatchObject({ state: "rolled_back" });
+    const commands = readFileSync(commandLog, "utf8");
+    expect(commands.indexOf("activation rollback-begin")).toBeLessThan(
+      commands.indexOf("activation rollback-complete")
+    );
+  });
+
+  test("recovers an interrupted post-activation run to the recorded bridge before returning", () => {
+    const directory = createTempDirectory();
+    const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory, {
+      authority: "spicedb",
+      transition: "activating",
+    });
+    writeFileSync(
+      join(composeDirectory, ".formbricks-v6-upgrade-state.json"),
+      JSON.stringify({
+        state: "activated",
+        receipt: "00000000-0000-4000-8000-000000000001",
+        bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
+        bridgeManifestDigest: bridgeRuntimeManifestDigest,
+        targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+        targetManifestDigest: targetRuntimeManifestDigest,
+      })
+    );
+    const processResult = spawnSync(
+      assistantPath,
+      ["execute", "--manifest", manifestPath, "--path", composeDirectory, "--yes"],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${binDirectory}:${process.env.PATH}`,
+          COMMAND_LOG: commandLog,
+          DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+          TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+          UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+        },
+      }
+    );
+
+    expect(processResult.status).toBe(1);
+    expect(JSON.parse(processResult.stdout)).toMatchObject({
+      checks: [{ code: "interrupted_upgrade_rolled_back", status: "blocked" }],
+    });
+    expect(readFileSync(join(composeDirectory, ".env"), "utf8")).toContain(
+      `FORMBRICKS_IMAGE_REF=ghcr.io/formbricks/formbricks@${bridgeDigest}`
+    );
+    expect(
+      JSON.parse(readFileSync(join(composeDirectory, ".formbricks-v6-upgrade-state.json"), "utf8"))
+    ).toMatchObject({ state: "rolled_back" });
+  });
+
+  test("aborts a recorded prepared receipt before creating a replacement", () => {
+    const directory = createTempDirectory();
+    const { binDirectory, commandLog, composeDirectory, manifestPath } = createUpgradeFixture(directory, {
+      authority: "legacy",
+      transition: "prepared",
+    });
+    writeFileSync(
+      join(composeDirectory, ".formbricks-v6-upgrade-state.json"),
+      JSON.stringify({
+        state: "prepared",
+        receipt: "00000000-0000-4000-8000-000000000001",
+        bridgeImage: `ghcr.io/formbricks/formbricks@${bridgeDigest}`,
+        bridgeManifestDigest: bridgeRuntimeManifestDigest,
+        targetImage: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+        targetManifestDigest: targetRuntimeManifestDigest,
+      })
+    );
+    const processResult = spawnSync(
+      assistantPath,
+      ["execute", "--manifest", manifestPath, "--path", composeDirectory, "--yes"],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${binDirectory}:${process.env.PATH}`,
+          COMMAND_LOG: commandLog,
+          DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+          TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+          UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+        },
+      }
+    );
+
+    expect(processResult.status).toBe(0);
+    const commands = readFileSync(commandLog, "utf8");
+    expect(commands.indexOf("activation abort")).toBeLessThan(commands.indexOf("activation prepare"));
+    expect(
+      JSON.parse(readFileSync(join(composeDirectory, ".formbricks-v6-upgrade-state.json"), "utf8"))
+    ).toMatchObject({ state: "finalized" });
+  });
+
+  test("blocks external PostgreSQL even when a stale postgres service remains in Compose", () => {
+    const directory = createTempDirectory();
+    const bundleDirectory = join(directory, "bundle");
+    const composeDirectory = join(directory, "formbricks");
+    mkdirSync(bundleDirectory);
+    mkdirSync(composeDirectory);
+    const manifestPath = writeManifest(bundleDirectory);
+    copyFileSync(dockerOverlayPath, join(bundleDirectory, "formbricks-authzed-overlay.yml"));
+    copyFileSync(postgresBootstrapPath, join(bundleDirectory, "authzed-postgres-bootstrap.sh"));
+    const composePath = join(composeDirectory, "docker-compose.yml");
+    writeFileSync(composePath, "services:\n  customer-owned: {}\n");
+    const originalCompose = readFileSync(composePath, "utf8");
+    const { binDirectory, commandLog } = createFakeUpgradeDocker(directory, {
+      services: {
+        formbricks: {
+          image: "ghcr.io/formbricks/formbricks:5.4.2",
+          environment: { DATABASE_URL: "postgresql://formbricks:redacted@database.example/formbricks" },
+        },
+        postgres: { environment: { POSTGRES_PASSWORD: "unused-stale-password" } },
+      },
+    });
+    const processResult = spawnSync(
+      assistantPath,
+      ["execute", "--manifest", manifestPath, "--path", composeDirectory, "--yes"],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${binDirectory}:${process.env.PATH}`,
+          COMMAND_LOG: commandLog,
+          DOCKER_CONFIG_JSON: join(directory, "rendered-compose.json"),
+          TARGET_IMAGE: `ghcr.io/formbricks/formbricks@${targetDigest}`,
+          UPGRADE_ENV_FILE: join(composeDirectory, ".env"),
+        },
+      }
+    );
+
+    expect(processResult.status).toBe(2);
+    expect(JSON.parse(processResult.stdout)).toMatchObject({
+      checks: [{ code: "docker_external_database_not_supported", status: "blocked" }],
+    });
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+    expect(readFileSync(commandLog, "utf8")).not.toMatch(/\b(up|pull|run|stop)\b/);
+    expect(() => statSync(join(composeDirectory, "formbricks-authzed-overlay.yml"))).toThrow();
   });
 });

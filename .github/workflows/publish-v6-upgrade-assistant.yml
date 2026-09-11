@@ -204,9 +204,12 @@ jobs:
           (
             cd dist/v6-upgrade
             sha256sum \
+              authzed-postgres-bootstrap.sh \
+              formbricks-authzed-overlay.yml \
               formbricks-upgrade-assistant \
               formbricks-upgrade-manifest.json \
               "formbricks-${release_version}.tgz" \
+              formbricks.sh \
               "formbricks-upgrade-${release_version}.tgz" \
               > formbricks-upgrade-checksums.txt
           )
@@ -234,9 +237,12 @@ jobs:
         run: |
           set -euo pipefail
           gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            dist/v6-upgrade/authzed-postgres-bootstrap.sh \
+            dist/v6-upgrade/formbricks-authzed-overlay.yml \
             dist/v6-upgrade/formbricks-upgrade-assistant \
             dist/v6-upgrade/formbricks-upgrade-manifest.json \
             dist/v6-upgrade/formbricks-[0-9]*.tgz \
+            dist/v6-upgrade/formbricks.sh \
             dist/v6-upgrade/formbricks-upgrade-*.tgz \
             dist/v6-upgrade/formbricks-upgrade-checksums.txt \
             dist/v6-upgrade/formbricks-upgrade-checksums.sigstore.json

@@ -321,6 +321,10 @@ Y
 🎉 All done! Please setup your Formbricks instance by visiting your domain at https://my.hosted.url.com. You can check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'
 ```
 
+The installer writes `FORMBRICKS_IMAGE_REF=ghcr.io/formbricks/formbricks:latest` to `.env`. Formbricks only
+updates that alias for the latest stable release; prereleases do not replace it. Existing v5 installations use
+the immutable bridge and target digests from the signed v6 bundle during their cutover.
+
 ## Update
 
 To update Formbricks for a minor or patch release, first go to the directory that contains your
@@ -334,8 +338,9 @@ chmod +x formbricks.sh
 ./formbricks.sh update
 ```
 
-The script pulls the latest images, runs database migrations, executes the AuthZed v6 preparation and read-only
-gate, and only then stops and restarts the running stack. A failed gate leaves the existing application running.
+For an existing v5 installation, first download the target v6 release bundle and follow the
+[v6 Upgrade Assistant](/self-hosting/advanced/v6-upgrade-assistant). The normal command above deliberately
+blocks rather than starting a v6 image without a database-backed activation receipt.
 
 Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
 Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
@@ -352,9 +357,9 @@ The update command does not regenerate or rotate them.
   your existing deployment, confirm `HUB_API_KEY` is set, and only then run the update command. If your older
   one-click install also uses bundled MinIO for file uploads, review that storage path separately before the
   first v5 restart; newer self-hosting updates move the bundled object-storage path to RustFS, while external
-  S3-compatible storage keeps the same `S3_*` app contract. The v6 updater also refuses to continue until the
-  Compose file contains the release-matched AuthZed services and `.env` contains
-  `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` after a clean preparation.
+  S3-compatible storage keeps the same `S3_*` app contract. The v6 updater preserves that customized file and
+  adds the release-signed AuthZed services through a permanent Compose overlay. It does not use a boolean
+  acknowledgement or accept a bypass of the activation receipt.
 
   The same applies to pinned third-party images. Because the update command only re-pulls what your Compose
   file already names, a bundled `rustfs` service stays on whatever version it was installed with — `docker
@@ -366,38 +371,28 @@ The update command does not regenerate or rotate them.
 
 ### Add SpiceDB to an Existing One-Click Installation
 
-The update command intentionally preserves your customized Compose file, so it cannot add SpiceDB by itself.
-Download and verify the release's [v6 upgrade assistant](/self-hosting/advanced/v6-upgrade-assistant), then run
-its read-only preflight before changing the installation. A `ready` result confirms the source version and
-local prerequisites; it does not replace the graph preparation and final clean audit below.
-Before upgrading to a release that uses AuthZed:
+Back up `formbricks/.env`, `formbricks/docker-compose.yml`, and the PostgreSQL volume. Download and verify all
+assets from the target v6 release, then run:
 
-1. Back up `formbricks/.env`, `formbricks/docker-compose.yml`, and the PostgreSQL volume.
-2. Download the release-matched `authzed-postgres-bootstrap.sh` into the `formbricks` directory.
-3. Generate and add `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` to `.env` using `openssl rand -hex 32`.
-4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
-   `authzed-ops` service from the released Compose file while preserving installer-added Traefik, storage, and
-   mail configuration. Add the six application variables and use `AUTHZED_CONSISTENCY=fully_consistent`.
-5. Run `docker compose config`, `docker compose pull`, and `docker compose run --rm formbricks-migrate` from the
-   `formbricks` directory. The current application can remain running during these backward-compatible database
-   migrations.
-6. Start the datastore services, then prepare and verify the graph:
+```bash
+/absolute/path/to/the/verified-release-bundle/formbricks.sh update \
+  --v6-upgrade-bundle /absolute/path/to/the/verified-release-bundle \
+  --yes
+```
 
-   ```bash
-   docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade check
-   ```
+The updater verifies the signed bundle, leaves `docker-compose.yml` unchanged, and installs a permanent
+`formbricks-authzed-overlay.yml`. It runs the release bridge, graph preparation, quiesce, activation, candidate
+runtime check, and finalization as one receipt-backed operation. A post-activation failure automatically
+returns authority and the running application to the exact bridge image.
 
-7. If `upgrade check` exits `0`, add `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` to `.env` and run
-   `./formbricks.sh update`. Do not set the acknowledgement to bypass a blocked check.
-8. Verify `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy.
-9. Back up the authorization database with
-   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` and add it to your
-   regular backup procedure.
+Keep the overlay, `.formbricks-v6-upgrade-state.json`, both databases, and the recorded bridge image through
+the rollback window. Do not use `docker compose down -v`. The automated path supports the bundled PostgreSQL
+service; contact support or follow the operator runbook for an external database.
 
-Do not use `docker compose down -v` during this migration or rollback because the existing PostgreSQL volume
-stores both Formbricks and SpiceDB data.
+After the rollback window, keep the overlay as part of the installation. For a later v6 release, replace
+`FORMBRICKS_IMAGE_REF` in `formbricks/.env` with that release's reviewed immutable image digest and run the
+normal `./formbricks.sh update`. The updater detects the overlay and runs database migrations through the
+overlaid Formbricks service, so the preserved v5 Compose file does not need a `formbricks-migrate` service.
 
 For upgrades, restoration, schema changes, and relationship repair, follow the canonical
 [AuthZed Operations guide](/self-hosting/advanced/authzed-operations).

@@ -1,31 +1,30 @@
 ---
 title: "v6 Upgrade Assistant"
-description: "Verify a Formbricks v5 installation and produce a safe, release-matched v6 upgrade plan."
+description: "Safely move an existing Formbricks v5 installation to the SpiceDB-authoritative v6 runtime."
 icon: "list-check"
 ---
 
-The Formbricks v6 upgrade assistant checks whether an existing v5 installation is ready for the AuthZed
-upgrade process. It detects one-click, Docker Compose, and Helm installations, validates the signed release
-manifest, and prints one sanitized JSON plan.
+Formbricks v6 uses SpiceDB for authorization decisions. Existing data must first be projected from Formbricks
+PostgreSQL while a release-matched bridge keeps the v5 authorization behavior authoritative. The signed
+upgrade assistant provides a read-only preflight for Docker Compose and Helm, and an automated receipt-backed
+cutover for installations using bundled Docker PostgreSQL.
 
 <Warning>
-  The preflight command is read-only. It does not pull images, run migrations, start SpiceDB, change Helm
-  values, stop Formbricks, or write an acknowledgement. A `ready` result means the detected installation can
-  enter the release-matched upgrade process; it is not proof that the relationship graph is ready for v6.
+  Back up the Formbricks PostgreSQL database and the installation directory before executing the upgrade. Do
+  not use `docker compose down -v`: the PostgreSQL volume is the source of product and authorization data.
 </Warning>
 
-## Download and verify the assistant
+## Download and verify the release bundle
 
-Each Formbricks v6 release includes four assets:
+Download these assets from the same [Formbricks v6 release](https://github.com/formbricks/formbricks/releases):
 
-- `formbricks-upgrade-assistant`
-- `formbricks-upgrade-manifest.json`
-- `formbricks-upgrade-checksums.txt`
-- `formbricks-upgrade-checksums.sigstore.json`
+- `formbricks.sh`, `formbricks-upgrade-assistant`, `formbricks-upgrade-manifest.json`
+- `formbricks-authzed-overlay.yml`, `authzed-postgres-bootstrap.sh`
+- `formbricks-upgrade-<version>.tgz` for Helm
+- `formbricks-upgrade-checksums.txt`, `formbricks-upgrade-checksums.sigstore.json`
 
-Download all four from the same [Formbricks release](https://github.com/formbricks/formbricks/releases). Do not
-mix assets from different releases. Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/)
-and verify the signed checksum before executing the assistant:
+Do not mix releases. Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/), then verify
+the release identity and every downloaded file:
 
 ```bash
 cosign verify-blob \
@@ -37,22 +36,16 @@ cosign verify-blob \
 
 sha256sum --check formbricks-upgrade-checksums.txt
 chmod 0755 formbricks-upgrade-assistant
+chmod 0755 formbricks.sh
 ```
 
-On macOS, replace the checksum command with `shasum -a 256 --check formbricks-upgrade-checksums.txt`.
+On macOS, use `shasum -a 256 --check formbricks-upgrade-checksums.txt`. The signed manifest binds the
+operation to distinct immutable bridge and target images and to their embedded runtime contracts. Mutable
+image tags are rejected.
 
-The signed manifest binds the plan to two distinct immutable images:
+## Run the read-only preflight
 
-- the v5 bridge image that keeps current authorization authoritative while projection is prepared;
-- the v6 target image that uses SpiceDB for authorization decisions.
-
-Both references must use the official `ghcr.io/formbricks/formbricks@sha256:...` form. Mutable tags such as
-`latest`, `5.4`, or `6.0.0` are rejected in the release manifest.
-
-## Run Docker or one-click preflight
-
-Run the assistant from the directory containing `docker-compose.yml`, or from the parent directory containing
-the one-click `formbricks/` folder:
+Point `--path` to the Compose file, its directory, or the parent of a one-click `formbricks/` directory:
 
 ```bash
 ./formbricks-upgrade-assistant preflight \
@@ -60,15 +53,7 @@ the one-click `formbricks/` folder:
   --path ./formbricks
 ```
 
-The assistant renders the Compose model without printing it. A Traefik service identifies a one-click install;
-other Compose installations are reported as `docker_compose`. It checks that:
-
-- Docker Compose can render the file and contains a Formbricks service;
-- a bundled or external PostgreSQL configuration is present;
-- the detected v5 version meets the release's minimum supported version.
-
-If a customized Compose file uses a mutable tag such as `latest` and the running image does not expose a
-version label, provide the version you verified from the current deployment:
+If a customized mutable image does not expose its version, supply the version you independently verified:
 
 ```bash
 ./formbricks-upgrade-assistant preflight \
@@ -77,21 +62,11 @@ version label, provide the version you verified from the current deployment:
   --current-version 5.4.3
 ```
 
-The override affects only the preflight comparison. It does not change the Compose file or running container.
-If the one-click installation normally requires `sudo docker`, run the verified assistant through `sudo` or
-use the explicit version override; otherwise it cannot inspect the running container for a version label.
+Preflight renders configuration and reads runtime metadata only. It never pulls images, runs migrations,
+changes files, starts SpiceDB, or stops Formbricks. `ready` means the source is supported; it does not mean
+the relationship graph has already been built.
 
-## Run Helm preflight
-
-When exactly one Formbricks release is visible, the assistant can detect it:
-
-```bash
-./formbricks-upgrade-assistant preflight \
-  --manifest ./formbricks-upgrade-manifest.json \
-  --install-type helm
-```
-
-Select a release explicitly when the current Kubernetes context contains more than one:
+For Helm, select the release explicitly when the current context contains more than one Formbricks release:
 
 ```bash
 ./formbricks-upgrade-assistant preflight \
@@ -101,44 +76,74 @@ Select a release explicitly when the current Kubernetes context contains more th
   --namespace formbricks
 ```
 
-Helm preflight reads release metadata and user-supplied values. It uses `kubectl auth can-i` to verify that the
-current identity can read deployments, create short-lived Jobs, and patch the Formbricks Deployment during the
-later cutover. It never runs `helm upgrade`, `kubectl apply`, or another mutating command.
+Helm execution remains an explicit temporary-chart procedure. The assistant's `execute` command does not
+mutate Kubernetes resources.
 
-## Interpret the result
+## Execute a Docker or one-click upgrade
 
-The assistant writes exactly one JSON object to standard output. It never includes Compose environment values,
-database URLs, AuthZed tokens, filesystem paths, Helm release names, Kubernetes namespaces, or raw command
-errors.
+The automated executor currently supports installations using the bundled `postgres` service. From the
+directory that contains the one-click `formbricks/` folder, run the verified updater and bundle:
 
-```json
-{"schemaVersion":1,"status":"ready","mutating":false,"installation":{"type":"one_click","currentVersion":"5.4.3","currentImagePinned":false,"currentImageDigest":null,"databaseMode":"bundled","authzedConfigured":false},"release":{"version":"6.0.0","manifestDigest":"sha256:...","bridgeImageDigest":"sha256:...","targetImageDigest":"sha256:..."},"warningCount":1,"checks":[{"code":"release_manifest_valid","status":"pass"},{"code":"release_images_immutable","status":"pass"},{"code":"docker_compose_available","status":"pass"},{"code":"deployment_config_readable","status":"pass"},{"code":"current_image_mutable","status":"warning"},{"code":"database_configuration_present","status":"pass"},{"code":"source_version_supported","status":"pass"}],"plan":[{"order":1,"phase":"backup","mutating":false,"requiresConfirmation":true},{"order":2,"phase":"prepare_runtime","mutating":true,"requiresConfirmation":true},{"order":3,"phase":"build_relationship_graph","mutating":true,"requiresConfirmation":true},{"order":4,"phase":"fence_and_activate","mutating":true,"requiresConfirmation":true},{"order":5,"phase":"verify","mutating":false,"requiresConfirmation":false},{"order":6,"phase":"remove_temporary_resources","mutating":true,"requiresConfirmation":true}]}
+```bash
+/absolute/path/to/the/verified-release-bundle/formbricks.sh update \
+  --v6-upgrade-bundle /absolute/path/to/the/verified-release-bundle \
+  --yes
 ```
 
-| Status         | Exit | Meaning                                                              |
-| -------------- | ---- | -------------------------------------------------------------------- |
-| `ready`        | `0`  | Supported v5 source and prerequisites were detected                  |
-| `not_required` | `0`  | The deployment is already on the target major version                |
-| `blocked`      | `2`  | At least one prerequisite failed; no upgrade action was attempted     |
-| usage error    | `64` | An option is invalid or a required option value is missing            |
+If version detection was not possible during preflight, add `--current-version 5.4.3`. Standard Docker Compose
+operators can invoke the verified assistant directly:
 
-Warnings do not block preflight. For example, a mutable current v5 image is reported as
-`current_image_mutable`; the signed bridge and target images remain immutable.
+```bash
+./formbricks-upgrade-assistant execute \
+  --manifest ./formbricks-upgrade-manifest.json \
+  --overlay ./formbricks-authzed-overlay.yml \
+  --bootstrap-helper ./authzed-postgres-bootstrap.sh \
+  --path /absolute/path/to/the/installation \
+  --yes
+```
 
-Common blocking codes include:
+The one-click updater re-verifies the signed checksum set before delegating. Execution then:
 
-- `release_manifest_missing`, `release_manifest_invalid`, and `sha256_tool_missing`;
-- `installation_not_detected`, `compose_config_invalid`, and `helm_release_ambiguous`;
-- `current_version_unknown`, `source_version_unsupported`, and `kubernetes_permissions_insufficient`.
+1. Preserves the customer-owned `docker-compose.yml` and backs up `.env`.
+2. Installs the signed, permanent `formbricks-authzed-overlay.yml` and database bootstrap helper.
+3. Generates stable AuthZed secrets, starts private SpiceDB, and runs bridge-compatible migrations.
+4. Starts the immutable legacy-authoritative bridge and checks its embedded runtime contract.
+5. Applies the canonical schema, drains the outbox, reconciles relationships, and creates a database receipt.
+6. Stops only Formbricks, activates the receipt, starts the immutable v6 candidate, checks it, and finalizes.
 
-## Continue the upgrade
+The base Compose file is never rewritten. Keep the overlay beside it for all later Compose operations:
 
-A `ready` plan deliberately separates inspection from mutation. Before running a release-matched cutover:
+```bash
+docker compose -f docker-compose.yml -f formbricks-authzed-overlay.yml ps
+```
 
-1. Back up the Formbricks and SpiceDB datastores and preserve the current configuration.
-2. Review the exact bridge and target digests from the signed plan.
-3. Follow [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6)
-   for graph preparation, the guarded activation, verification, rollback, and temporary-resource cleanup.
+For a later v6 release, set `FORMBRICKS_IMAGE_REF` in `.env` to that release's reviewed immutable image digest
+and run the normal `./formbricks.sh update`. The updater runs migrations through the overlaid application
+service even when the preserved v5 Compose file has no `formbricks-migrate` service.
 
-Re-run preflight after changing the deployment or downloading a newer release bundle. Never carry a manifest
-or image digest from one Formbricks release into another release's upgrade.
+SpiceDB remains private on the Compose network. The executor stores sanitized progress in
+`.formbricks-v6-upgrade-state.json` and detailed local command output in `formbricks-v6-upgrade.log`; both use
+mode `0600`. It never emits credentials in its JSON result.
+
+## Failure and rollback behavior
+
+Before activation, a failure leaves or restores the bridge. After activation, a failed candidate start,
+runtime check, or finalization fences writes, restores the exact signed bridge, switches database authority
+back to legacy, and returns `candidate_failed_rolled_back`.
+
+If the host or shell stops during the cutover, rerun the same signed command. A recorded post-activation run
+is conservatively rolled back before another attempt. Do not delete the state file, overlay, bridge image, or
+either database. `activation_state_requires_manual_recovery` means the local receipt cannot be matched safely;
+keep Formbricks quiesced and contact support with the sanitized state and log files.
+
+## Results
+
+Preflight prints one JSON object and exits `0` for `ready` or `not_required`, `2` for a blocked prerequisite,
+and `64` for invalid arguments. Execute exits `0` only for `status: "upgraded"`. A blocked or rolled-back
+execution exits non-zero. Raw command errors, tokens, database URLs, relationship identifiers, and filesystem
+paths are not written to standard output.
+
+External PostgreSQL and Helm upgrades require the explicit operator runbook because the assistant cannot
+derive or install their database credentials safely. Continue with
+[AuthZed Operations](/self-hosting/advanced/authzed-operations) for the Helm temporary chart, backups,
+validation, and recovery procedures.

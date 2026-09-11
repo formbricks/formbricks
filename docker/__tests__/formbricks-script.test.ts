@@ -313,7 +313,7 @@ describe("docker/docker-compose.yml Cube configuration", () => {
 });
 
 describe("docker/docker-compose.yml Formbricks image contract", () => {
-  dockerComposeTest("uses one required immutable-capable reference for every Formbricks service", () => {
+  dockerComposeTest("uses one immutable-capable override for every Formbricks service", () => {
     const imageReference =
       "ghcr.io/formbricks/formbricks@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     const config = renderDockerCompose("POSTGRES_PASSWORD=test-password\n", {
@@ -326,7 +326,7 @@ describe("docker/docker-compose.yml Formbricks image contract", () => {
     expect(config.services["authzed-initialize"].image).toBe(imageReference);
   });
 
-  dockerComposeTest("rejects a missing Formbricks image reference", () => {
+  dockerComposeTest("uses the stable image for every Formbricks service when no override is supplied", () => {
     const composePath = writeDockerComposeTemplate();
     const envPath = join(dirname(composePath), ".env");
     writeFileSync(
@@ -339,17 +339,26 @@ describe("docker/docker-compose.yml Formbricks image contract", () => {
       ].join("\n")
     );
 
-    expect(() =>
+    const config = JSON.parse(
       runDockerCompose([
         "--env-file",
         envPath,
+        "--profile",
+        "authzed-ops",
         "--file",
         composePath,
         "--project-directory",
         dirname(composePath),
         "config",
+        "--format",
+        "json",
       ])
-    ).toThrow(/FORMBRICKS_IMAGE_REF.*required/);
+    ) as RenderedDockerComposeConfig;
+
+    expect(config.services.formbricks.image).toBe("ghcr.io/formbricks/formbricks:latest");
+    expect(config.services["formbricks-migrate"].image).toBe("ghcr.io/formbricks/formbricks:latest");
+    expect(config.services["authzed-ops"].image).toBe("ghcr.io/formbricks/formbricks:latest");
+    expect(config.services["authzed-initialize"].image).toBe("ghcr.io/formbricks/formbricks:latest");
   });
 });
 
@@ -755,68 +764,79 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(env.get("AUTHZED_DATABASE_PASSWORD")).toBe(authzedDatabasePassword);
     expect(env.get("AUTHZED_ENABLED")).toBe("true");
     expect(env.get("AUTHZED_CONSISTENCY")).toBe("fully_consistent");
-    expect(env.get("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED")).toBe("true");
+    expect(env.get("FORMBRICKS_IMAGE_REF")).toBe("ghcr.io/formbricks/formbricks:latest");
+    expect(env.has("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED")).toBe(false);
     expect(statSync(envPath).mode & 0o777).toBe(0o600);
   });
 
-  test("blocks customized updates until the AuthZed v6 contract is present and acknowledged", () => {
+  test("routes v5 updates through the signed receipt-backed upgrade executor", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const updateFunction = script.slice(
+      script.indexOf("verify_v6_upgrade_bundle()"),
+      script.indexOf("restart_formbricks()")
+    );
+
+    expect(updateFunction).toContain("cosign verify-blob");
+    expect(updateFunction).toContain("formbricks-upgrade-checksums.sigstore.json");
+    expect(updateFunction).toContain("formbricks.sh");
+    expect(updateFunction).toContain('"$bundle_directory/formbricks-upgrade-assistant"');
+    expect(updateFunction).toContain("execute");
+    expect(updateFunction).toContain("--yes");
+    expect(updateFunction).toContain("formbricks-authzed-overlay.yml");
+    expect(updateFunction).not.toContain("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED");
+    expect(updateFunction).not.toContain("authzed-ops upgrade prepare");
+    expect(updateFunction).not.toContain("authzed-ops upgrade check");
+  });
+
+  test("keeps the customer's base Compose file outside the v6 executor's write path", () => {
     const script = readFileSync(formbricksScriptPath, "utf8");
     const updateFunction = script.slice(
       script.indexOf("update_formbricks()"),
       script.indexOf("restart_formbricks()")
     );
-
-    expect(updateFunction).toContain(
-      "This installation does not yet contain the AuthZed v6 Compose services"
+    const signedUpgradeBranch = updateFunction.slice(
+      updateFunction.indexOf('if [ -n "$bundle_directory" ]'),
+      updateFunction.indexOf("migrate_legacy_valkey_image docker-compose.yml")
     );
-    expect(updateFunction).toContain("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true");
-    expect(updateFunction).toContain("authzed-ops upgrade prepare");
-    expect(updateFunction).toContain("authzed-ops upgrade check");
-    expect(updateFunction.indexOf("upgrade check")).toBeLessThan(updateFunction.indexOf("compose down"));
+
+    expect(signedUpgradeBranch).not.toContain("migrate_legacy_valkey_image docker-compose.yml");
+    expect(signedUpgradeBranch).not.toMatch(/(?:cp|mv|sed|awk)[^\n]*docker-compose\.yml/);
+    expect(signedUpgradeBranch).toContain("The permanent formbricks-authzed-overlay.yml");
+    expect(updateFunction).toContain("migrate_legacy_valkey_image docker-compose.yml");
   });
 
-  test("runs the upgrade gates before stopping an existing installation", () => {
-    const tempDir = createTempDir();
-    const installationDir = join(tempDir, "formbricks");
-    const binDir = join(tempDir, "bin");
-    const commandLog = join(tempDir, "commands.log");
-    mkdirSync(installationDir, { recursive: true });
-    mkdirSync(binDir, { recursive: true });
-    writeFileSync(join(installationDir, "docker-compose.yml"), "services:\n  authzed-ops:\n  spicedb:\n");
-    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
-    writeFileSync(join(binDir, "sudo"), '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\n', {
-      mode: 0o700,
-    });
+  test("keeps later updates compatible with a preserved v5 Compose file", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const updateFunction = script.slice(
+      script.indexOf("update_formbricks()"),
+      script.indexOf("restart_formbricks()")
+    );
+    const overlayBranch = updateFunction.slice(
+      updateFunction.lastIndexOf("if [ -f formbricks-authzed-overlay.yml ]"),
+      updateFunction.indexOf('run_formbricks_docker_compose "${compose_args[@]}" up -d')
+    );
 
-    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
-      cwd: tempDir,
-      encoding: "utf8",
-      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
-    });
-
-    expect(result.status).toBe(0);
-    const commands = readFileSync(commandLog, "utf8").trim().split("\n");
-    expect(commands).toEqual([
-      "docker compose pull",
-      "docker compose run --rm formbricks-migrate",
-      "docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare",
-      "docker compose --profile authzed-ops run --rm authzed-ops upgrade check",
-      "docker compose down",
-      "docker compose up -d",
-    ]);
+    expect(overlayBranch).toContain("--entrypoint sh formbricks");
+    expect(overlayBranch).toContain("packages/database/dist/scripts/apply-migrations.js");
+    expect(overlayBranch).toContain("/home/nextjs/validate-env.mjs");
+    expect(overlayBranch).toContain("run --rm formbricks-migrate");
   });
 
-  test("waits for the source migration before preparing a fresh AuthZed graph", () => {
+  test("waits for the source migration before bootstrapping fresh AuthZed authority", () => {
     const script = readFileSync(formbricksScriptPath, "utf8");
     const setupStart = script.indexOf(
       "docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate"
     );
     const migrationWait = script.indexOf("docker compose wait formbricks-migrate", setupStart);
-    const upgradePrepare = script.indexOf("authzed-ops upgrade prepare", setupStart);
+    const freshBootstrap = script.indexOf(
+      "docker compose run --rm -T --no-deps authzed-initialize",
+      setupStart
+    );
 
     expect(setupStart).toBeGreaterThanOrEqual(0);
     expect(migrationWait).toBeGreaterThan(setupStart);
-    expect(upgradePrepare).toBeGreaterThan(migrationWait);
+    expect(freshBootstrap).toBeGreaterThan(migrationWait);
+    expect(script.slice(setupStart, freshBootstrap)).not.toContain("authzed-ops upgrade prepare");
   });
 
   test("pins and verifies the downloaded bootstrap helper before making it executable", () => {

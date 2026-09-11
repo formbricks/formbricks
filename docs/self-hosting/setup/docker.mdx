@@ -74,14 +74,15 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 
    Store your configuration in `.env`. Docker Compose reads this file for variable interpolation, and the
    Formbricks container also loads it at startup. For a local install, use `http://localhost:3000`. For a server
-   install, replace both URL values with your public HTTPS URL before starting the stack. Copy the immutable
-   community image reference from the release metadata; the placeholder below must be replaced with its full
-   SHA-256 digest.
+   install, replace both URL values with your public HTTPS URL before starting the stack. Fresh stable
+   installations can omit `FORMBRICKS_IMAGE_REF` and use `ghcr.io/formbricks/formbricks:latest`. For an
+   immutable deployment or prerelease, copy the full SHA-256 image reference from the release metadata.
 
    ```bash
    POSTGRES_PASSWORD=$(openssl rand -hex 32)
    cat <<EOF > .env
-   FORMBRICKS_IMAGE_REF=ghcr.io/formbricks/formbricks@sha256:<release-digest>
+   # Optional for stable. Uncomment with a real digest for immutable deployments or prereleases.
+   # FORMBRICKS_IMAGE_REF=ghcr.io/formbricks/formbricks@sha256:<release-digest>
    WEBAPP_URL=http://localhost:3000
    NEXTAUTH_URL=http://localhost:3000
    POSTGRES_PASSWORD=$POSTGRES_PASSWORD
@@ -99,8 +100,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    chmod 600 .env
    ```
 
-   Keep `FORMBRICKS_IMAGE_REF` identical for the application, migration, and AuthZed operation containers; the
-   Compose file rejects a missing value so those processes cannot drift between releases. Keep
+   Keep `FORMBRICKS_IMAGE_REF` identical for the application, migration, and AuthZed operation containers. If
+   it is omitted, all four use the stable `latest` alias together so those processes cannot drift. Keep
    `POSTGRES_PASSWORD` unchanged after PostgreSQL initializes the `postgres` volume. The generated
    hexadecimal value is already URL-safe, so `POSTGRES_PASSWORD_URL_ENCODED` uses the same value. If you replace
    an existing `docker-compose.yml`, copy the exact password from that deployment instead of generating a new
@@ -368,38 +369,16 @@ See our [migration guide](/self-hosting/advanced/migration) for version-specific
 
 ### Add SpiceDB to an Existing Docker Installation
 
-The normal image update commands do not add new services to an existing customized Compose file. Before the
-first release that requires the AuthZed runtime:
+Do not manually merge services into a customized v5 Compose file or use the old boolean acknowledgement. Back
+up the installation and PostgreSQL, download and verify every asset from the target v6 release, then use the
+receipt-backed Docker executor documented in the
+[v6 Upgrade Assistant](/self-hosting/advanced/v6-upgrade-assistant#execute-a-docker-or-one-click-upgrade).
 
-1. Back up `.env`, `docker-compose.yml`, and the PostgreSQL volume.
-2. Download `authzed-postgres-bootstrap.sh` from the same Formbricks release as the Compose file.
-3. Generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with `openssl rand -hex 32` and add them to `.env`.
-4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
-   `authzed-ops` service, plus the six `AUTHZED_*` Formbricks variables, from the released Compose file into your
-   customized file. Use `AUTHZED_CONSISTENCY=fully_consistent`. Preserve proxy, storage, and SMTP settings.
-5. Run `docker compose config` and `docker compose pull`. Apply the release's Formbricks database migrations
-   while the old application remains available: `docker compose run --rm formbricks-migrate`.
-6. Start PostgreSQL and SpiceDB, then run the guarded preparation and read-only gate:
-
-   ```bash
-   docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade check
-   ```
-
-   A non-empty mismatched schema requires the reviewed `remoteDigest` as described in
-   [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6).
-7. Only after `upgrade check` exits `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
-   run `docker compose up -d`. The one-click updater performs the same preparation before it stops the old app.
-8. Confirm `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy
-   with `docker compose ps -a`.
-9. Back up the new authorization database with
-   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` after validation and
-   include it in future database backup procedures.
-
-To roll back v6, restore the exact bridge-compatible v5 image and configuration kept for the migration. Keep
-outbox delivery enabled, require a clean audit, and do not delete or replace either PostgreSQL database. See the
-rollback procedure in [AuthZed Operations](/self-hosting/advanced/authzed-operations#roll-back-a-v6-upgrade).
+The executor installs a signed permanent overlay beside the customer-owned Compose file, generates the two
+stable AuthZed secrets, builds and audits the graph through the exact bridge image, then performs a guarded
+authority switch. A candidate failure automatically restores the recorded bridge. Bundled PostgreSQL is
+supported by the automated path; external PostgreSQL requires the operator runbook because its administrative
+credentials cannot be derived safely.
 
 <Info>
   For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.

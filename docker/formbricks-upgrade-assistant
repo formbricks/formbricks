@@ -4,17 +4,32 @@ set -euo pipefail
 
 readonly ASSISTANT_SCHEMA_VERSION=1
 readonly DEFAULT_MANIFEST_NAME="formbricks-upgrade-manifest.json"
+readonly DEFAULT_DOCKER_OVERLAY_NAME="formbricks-authzed-overlay.yml"
+readonly DEFAULT_POSTGRES_BOOTSTRAP_NAME="authzed-postgres-bootstrap.sh"
 
+action="preflight"
 manifest_path=""
+docker_overlay_path=""
+postgres_bootstrap_path=""
 install_type="auto"
 installation_path="."
 helm_release=""
 helm_namespace=""
 current_version_override=""
+confirmed=false
 
 checks='[]'
 blocked_count=0
 warning_count=0
+
+docker_command=(docker)
+if [[ "${FORMBRICKS_DOCKER_USE_SUDO:-false}" == "true" ]]; then
+  docker_command=(sudo docker)
+fi
+
+run_docker() {
+  "${docker_command[@]}" "$@"
+}
 
 emit_bootstrap_error() {
   local code="$1"
@@ -42,7 +57,7 @@ add_check() {
 
 usage() {
   cat >&2 <<'EOF'
-Usage: formbricks-upgrade-assistant [preflight] [options]
+Usage: formbricks-upgrade-assistant [preflight|execute] [options]
 
 Read-only options:
   --manifest PATH          Signed release manifest (defaults beside this executable)
@@ -51,6 +66,9 @@ Read-only options:
   --helm-release NAME      Helm release name (requires --namespace)
   --namespace NAME         Helm namespace (requires --helm-release)
   --current-version VER    Override a version that cannot be detected safely
+  --overlay PATH           Signed Docker AuthZed overlay (execute only)
+  --bootstrap-helper PATH  Signed PostgreSQL bootstrap helper (execute only)
+  --yes                    Confirm the mutating Docker/one-click cutover
   --help                    Show this help
 EOF
 }
@@ -60,7 +78,8 @@ fail_usage() {
   exit 64
 }
 
-if [[ "${1:-}" == "preflight" ]]; then
+if [[ "${1:-}" == "preflight" || "${1:-}" == "execute" ]]; then
+  action="$1"
   shift
 elif [[ -n "${1:-}" && "${1:-}" != --* ]]; then
   fail_usage
@@ -98,6 +117,20 @@ while [[ $# -gt 0 ]]; do
       current_version_override="$2"
       shift 2
       ;;
+    --overlay)
+      [[ $# -ge 2 ]] || fail_usage
+      docker_overlay_path="$2"
+      shift 2
+      ;;
+    --bootstrap-helper)
+      [[ $# -ge 2 ]] || fail_usage
+      postgres_bootstrap_path="$2"
+      shift 2
+      ;;
+    --yes)
+      confirmed=true
+      shift
+      ;;
     --help|-h)
       usage
       exit 0
@@ -120,6 +153,13 @@ fi
 if [[ -z "$manifest_path" ]]; then
   script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
   manifest_path="${script_dir}/${DEFAULT_MANIFEST_NAME}"
+fi
+bundle_dir=$(cd -- "$(dirname -- "$manifest_path")" 2>/dev/null && pwd || true)
+if [[ -z "$docker_overlay_path" && -n "$bundle_dir" ]]; then
+  docker_overlay_path="${bundle_dir}/${DEFAULT_DOCKER_OVERLAY_NAME}"
+fi
+if [[ -z "$postgres_bootstrap_path" && -n "$bundle_dir" ]]; then
+  postgres_bootstrap_path="${bundle_dir}/${DEFAULT_POSTGRES_BOOTSTRAP_NAME}"
 fi
 
 readonly semver_pattern='^[vV]?([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$'
@@ -191,6 +231,8 @@ bridge_runtime_manifest_digest=""
 target_runtime_manifest_digest=""
 formbricks_chart=""
 upgrade_chart=""
+docker_overlay_digest=""
+postgres_bootstrap_digest=""
 manifest_digest=""
 
 if [[ ! -f "$manifest_path" ]]; then
@@ -205,6 +247,8 @@ elif ! jq -e '
     (.artifacts.bridgeImage | type == "string") and
     (.artifacts.bridgeRuntimeManifestDigest | type == "string") and
     (.artifacts.formbricksChart | type == "string") and
+    (.artifacts.dockerAuthzedOverlaySha256 | type == "string") and
+    (.artifacts.authzedPostgresBootstrapSha256 | type == "string") and
     (.artifacts.targetImage | type == "string") and
     (.artifacts.targetRuntimeManifestDigest | type == "string") and
     (.artifacts.upgradeChart | type == "string") and
@@ -217,6 +261,8 @@ else
   bridge_image=$(jq -er '.artifacts.bridgeImage' "$manifest_path")
   bridge_runtime_manifest_digest=$(jq -er '.artifacts.bridgeRuntimeManifestDigest' "$manifest_path")
   formbricks_chart=$(jq -er '.artifacts.formbricksChart' "$manifest_path")
+  docker_overlay_digest=$(jq -er '.artifacts.dockerAuthzedOverlaySha256' "$manifest_path")
+  postgres_bootstrap_digest=$(jq -er '.artifacts.authzedPostgresBootstrapSha256' "$manifest_path")
   target_image=$(jq -er '.artifacts.targetImage' "$manifest_path")
   target_runtime_manifest_digest=$(jq -er '.artifacts.targetRuntimeManifestDigest' "$manifest_path")
   upgrade_chart=$(jq -er '.artifacts.upgradeChart' "$manifest_path")
@@ -234,6 +280,8 @@ else
     [[ "$bridge_image" =~ $image_pattern ]] &&
     [[ "$target_image" =~ $image_pattern ]] &&
     [[ "$bridge_runtime_manifest_digest" =~ $digest_pattern ]] &&
+    [[ "$docker_overlay_digest" =~ $digest_pattern ]] &&
+    [[ "$postgres_bootstrap_digest" =~ $digest_pattern ]] &&
     [[ "$target_runtime_manifest_digest" =~ $digest_pattern ]] &&
     [[ "$formbricks_chart" == "formbricks-${release_version#[vV]}.tgz" ]] &&
     [[ "$upgrade_chart" == "formbricks-upgrade-${release_version#[vV]}.tgz" ]] &&
@@ -313,7 +361,7 @@ inspect_docker_installation() {
     add_check "docker_missing" "blocked"
     return
   fi
-  if ! docker compose version >/dev/null 2>&1; then
+  if ! run_docker compose version >/dev/null 2>&1; then
     add_check "docker_compose_missing" "blocked"
     return
   fi
@@ -325,7 +373,7 @@ inspect_docker_installation() {
   fi
 
   compose_dir=$(cd -- "$(dirname -- "$compose_file")" && pwd)
-  if ! rendered=$(docker compose -f "$compose_file" --project-directory "$compose_dir" config --format json 2>/dev/null); then
+  if ! rendered=$(run_docker compose -f "$compose_file" --project-directory "$compose_dir" config --format json 2>/dev/null); then
     add_check "compose_config_invalid" "blocked"
     return
   fi
@@ -354,13 +402,13 @@ inspect_docker_installation() {
   else
     current_version=$(extract_version_from_image "$image")
     if [[ -z "$current_version" ]]; then
-      container_id=$(docker compose -f "$compose_file" --project-directory "$compose_dir" ps -q formbricks 2>/dev/null || true)
+      container_id=$(run_docker compose -f "$compose_file" --project-directory "$compose_dir" ps -q formbricks 2>/dev/null || true)
       if [[ -n "$container_id" ]]; then
-        inspected_version=$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$container_id" 2>/dev/null || true)
+        inspected_version=$(run_docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$container_id" 2>/dev/null || true)
         if [[ "$inspected_version" =~ $semver_pattern ]]; then
           current_version=$(normalize_version "$inspected_version")
         else
-          packaged_version=$(docker exec "$container_id" node -p \
+          packaged_version=$(run_docker exec "$container_id" node -p \
             'JSON.parse(require("fs").readFileSync("/home/nextjs/package.json", "utf8")).version' \
             2>/dev/null || true)
           if [[ "$packaged_version" =~ $semver_pattern ]]; then
@@ -371,7 +419,12 @@ inspect_docker_installation() {
     fi
   fi
 
-  if jq -e '.services.postgres | type == "object"' <<<"$rendered" >/dev/null 2>&1; then
+  if jq -e '
+      (.services.postgres | type == "object") and
+      (.services.formbricks.environment.DATABASE_URL | type == "string") and
+      (.services.formbricks.environment.DATABASE_URL |
+        test("^postgres(ql)?://[^/]+@postgres(:[0-9]+)?/"))
+    ' <<<"$rendered" >/dev/null 2>&1; then
     database_mode="bundled"
     add_check "database_configuration_present" "pass"
   elif jq -e '.services.formbricks.environment.DATABASE_URL | type == "string" and length > 0' <<<"$rendered" >/dev/null 2>&1; then
@@ -501,6 +554,453 @@ elif [[ "$manifest_valid" == "true" ]]; then
   fi
 fi
 
+hash_file() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
+verify_signed_artifact() {
+  local path="$1"
+  local expected_digest="$2"
+
+  [[ -f "$path" ]] || return 1
+  [[ "sha256:$(hash_file "$path")" == "$expected_digest" ]]
+}
+
+install_signed_artifact() {
+  local source_path="$1"
+  local destination_path="$2"
+  local expected_digest="$3"
+  local mode="$4"
+
+  verify_signed_artifact "$source_path" "$expected_digest" || return 1
+  if [[ -e "$destination_path" ]]; then
+    verify_signed_artifact "$destination_path" "$expected_digest" || return 1
+  else
+    cp "$source_path" "$destination_path"
+  fi
+  chmod "$mode" "$destination_path"
+}
+
+serialize_dotenv_value() {
+  local value="$1"
+  value=${value//\\/\\\\}
+  value=${value//\"/\\\"}
+  value=${value//\$/\$\$}
+  printf '"%s"' "$value"
+}
+
+upsert_dotenv_value() {
+  local env_path="$1"
+  local key="$2"
+  local value="$3"
+  local temporary
+
+  temporary=$(mktemp "${env_path}.tmp.XXXXXX")
+  awk -v key="$key" -v value="$value" '
+    BEGIN { written = 0 }
+    $0 ~ "^[[:space:]]*(export[[:space:]]+)?" key "[[:space:]]*=" {
+      if (!written) print key "=" value
+      written = 1
+      next
+    }
+    { print }
+    END { if (!written) print key "=" value }
+  ' "$env_path" >"$temporary"
+  chmod 600 "$temporary"
+  mv "$temporary" "$env_path"
+}
+
+dotenv_has_nonempty_value() {
+  local env_path="$1"
+  local key="$2"
+  awk -v key="$key" '
+    $0 ~ "^[[:space:]]*(export[[:space:]]+)?" key "[[:space:]]*=" {
+      value = $0
+      sub("^[[:space:]]*(export[[:space:]]+)?" key "[[:space:]]*=[[:space:]]*", "", value)
+      gsub("^[[:space:]]+|[[:space:]]+$", "", value)
+      if (value != "" && value != "\"\"" && value != "\047\047") found = 1
+    }
+    END { exit(found ? 0 : 1) }
+  ' "$env_path"
+}
+
+ensure_generated_secret() {
+  local env_path="$1"
+  local key="$2"
+  if ! dotenv_has_nonempty_value "$env_path" "$key"; then
+    upsert_dotenv_value "$env_path" "$key" "$(openssl rand -hex 32)"
+  fi
+}
+
+docker_compose_directory=""
+docker_compose_file=""
+docker_env_file=""
+docker_installed_overlay=""
+docker_upgrade_log=""
+docker_upgrade_state=""
+
+run_upgrade_compose() {
+  run_docker compose \
+    --project-directory "$docker_compose_directory" \
+    --env-file "$docker_env_file" \
+    -f "$docker_compose_file" \
+    -f "$docker_installed_overlay" \
+    "$@"
+}
+
+run_logged_upgrade_compose() {
+  run_upgrade_compose "$@" >>"$docker_upgrade_log" 2>&1
+}
+
+write_upgrade_state() {
+  local state="$1"
+  local receipt="${2:-}"
+  local temporary
+  temporary=$(mktemp "${docker_upgrade_state}.tmp.XXXXXX")
+  jq -cn \
+    --arg state "$state" \
+    --arg receipt "$receipt" \
+    --arg bridgeImage "$bridge_image" \
+    --arg bridgeManifestDigest "$bridge_runtime_manifest_digest" \
+    --arg targetImage "$target_image" \
+    --arg targetManifestDigest "$target_runtime_manifest_digest" \
+    '{
+      state: $state,
+      receipt: (if $receipt == "" then null else $receipt end),
+      bridgeImage: $bridgeImage,
+      bridgeManifestDigest: $bridgeManifestDigest,
+      targetImage: $targetImage,
+      targetManifestDigest: $targetManifestDigest
+    }' \
+    >"$temporary"
+  chmod 600 "$temporary"
+  mv "$temporary" "$docker_upgrade_state"
+}
+
+read_upgrade_state() {
+  if [[ ! -f "$docker_upgrade_state" ]]; then
+    printf '%s' '{}'
+    return
+  fi
+  jq -cer \
+    --arg bridgeImage "$bridge_image" \
+    --arg bridgeManifestDigest "$bridge_runtime_manifest_digest" \
+    --arg targetImage "$target_image" \
+    --arg targetManifestDigest "$target_runtime_manifest_digest" \
+    'select(
+      type == "object" and
+      (.state | IN(
+        "activated",
+        "bridge_ready",
+        "bridge_restored",
+        "finalized",
+        "manual_recovery_required",
+        "prepared",
+        "rollback_failed",
+        "rolled_back"
+      )) and
+      .bridgeImage == $bridgeImage and
+      .bridgeManifestDigest == $bridgeManifestDigest and
+      .targetImage == $targetImage and
+      .targetManifestDigest == $targetManifestDigest and
+      ((.receipt == null) or (.receipt | type == "string"))
+    )' "$docker_upgrade_state" 2>/dev/null
+}
+
+emit_upgrade_success() {
+  jq -cn --arg releaseVersion "$release_version" \
+    '{schemaVersion: 1, status: "upgraded", mutating: true, releaseVersion: $releaseVersion}'
+}
+
+set_active_formbricks_image() {
+  upsert_dotenv_value "$docker_env_file" "FORMBRICKS_IMAGE_REF" "$1"
+}
+
+run_activation_command() {
+  run_upgrade_compose --profile authzed-ops run --rm -T authzed-ops activation "$@" \
+    2>>"$docker_upgrade_log"
+}
+
+wait_for_runtime_check() {
+  local expected_authority="$1"
+  local attempt=1
+  local result
+
+  while [[ "$attempt" -le 30 ]]; do
+    result=$(run_upgrade_compose exec -T formbricks formbricks-authzed activation runtime-check \
+      2>>"$docker_upgrade_log" || true)
+    if jq -e --arg authority "$expected_authority" \
+      '.status == "ready" and .authority == $authority' <<<"$result" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
+restore_bridge_before_activation() {
+  local receipt="${1:-}"
+  set_active_formbricks_image "$bridge_image"
+  run_logged_upgrade_compose up -d --no-deps --force-recreate formbricks || true
+  write_upgrade_state "bridge_restored" "$receipt"
+}
+
+rollback_after_activation() {
+  local receipt="$1"
+
+  printf '%s\n' "↩️ Candidate verification failed; restoring the signed bridge." >&2
+  run_logged_upgrade_compose stop --timeout 60 formbricks || true
+  set_active_formbricks_image "$target_image"
+  if ! run_activation_command rollback-begin --receipt "$receipt" >/dev/null; then
+    write_upgrade_state "rollback_failed" "$receipt"
+    return 1
+  fi
+
+  set_active_formbricks_image "$bridge_image"
+  if ! run_logged_upgrade_compose up -d --no-deps --force-recreate formbricks; then
+    write_upgrade_state "rollback_failed" "$receipt"
+    return 1
+  fi
+  if ! wait_for_runtime_check legacy; then
+    write_upgrade_state "rollback_failed" "$receipt"
+    return 1
+  fi
+  if ! run_activation_command rollback-complete --receipt "$receipt" >/dev/null; then
+    write_upgrade_state "rollback_failed" "$receipt"
+    return 1
+  fi
+
+  write_upgrade_state "rolled_back" "$receipt"
+  return 0
+}
+
+execute_docker_upgrade() {
+  local rendered_base postgres_password postgres_password_encoded prepare_output receipt status_output authority
+  local transition existing_state state_name state_receipt
+
+  if [[ "$resolved_install_type" != "one_click" && "$resolved_install_type" != "docker_compose" ]]; then
+    emit_bootstrap_error "docker_upgrade_required"
+    return 2
+  fi
+  if [[ "$database_mode" != "bundled" ]]; then
+    emit_bootstrap_error "docker_external_database_not_supported"
+    return 2
+  fi
+  if [[ "$confirmed" != "true" ]]; then
+    emit_bootstrap_error "confirmation_required"
+    return 2
+  fi
+  if ! command -v openssl >/dev/null 2>&1; then
+    emit_bootstrap_error "openssl_missing"
+    return 2
+  fi
+
+  docker_compose_directory=$(cd -- "$(dirname -- "$compose_file")" && pwd)
+  docker_compose_file="${docker_compose_directory}/$(basename -- "$compose_file")"
+  docker_env_file="${docker_compose_directory}/.env"
+  docker_installed_overlay="${docker_compose_directory}/${DEFAULT_DOCKER_OVERLAY_NAME}"
+  docker_upgrade_log="${docker_compose_directory}/formbricks-v6-upgrade.log"
+  docker_upgrade_state="${docker_compose_directory}/.formbricks-v6-upgrade-state.json"
+
+  # Bind any interrupted-run state to this signed bridge/target pair before changing configuration.
+  # Only a missing state file is treated as a new run.
+  existing_state=$(read_upgrade_state || true)
+  if [[ -z "$existing_state" ]]; then
+    emit_bootstrap_error "upgrade_state_invalid"
+    return 2
+  fi
+  state_name=$(jq -er '.state // empty' <<<"$existing_state" 2>/dev/null || true)
+  state_receipt=$(jq -er '.receipt // empty' <<<"$existing_state" 2>/dev/null || true)
+
+  umask 077
+  touch "$docker_env_file" "$docker_upgrade_log"
+  chmod 600 "$docker_env_file" "$docker_upgrade_log"
+  if [[ ! -e "${docker_env_file}.before-v6-authzed" ]]; then
+    cp -p "$docker_env_file" "${docker_env_file}.before-v6-authzed"
+    chmod 600 "${docker_env_file}.before-v6-authzed"
+  fi
+
+  if ! install_signed_artifact "$docker_overlay_path" "$docker_installed_overlay" "$docker_overlay_digest" 644 ||
+    ! install_signed_artifact "$postgres_bootstrap_path" \
+      "${docker_compose_directory}/${DEFAULT_POSTGRES_BOOTSTRAP_NAME}" "$postgres_bootstrap_digest" 700; then
+    emit_bootstrap_error "signed_docker_artifact_invalid"
+    return 2
+  fi
+
+  if ! rendered_base=$(run_docker compose --project-directory "$docker_compose_directory" \
+    -f "$docker_compose_file" config --format json 2>>"$docker_upgrade_log"); then
+    emit_bootstrap_error "compose_config_invalid"
+    return 2
+  fi
+  if ! jq -e '
+      (.services.postgres | type == "object") and
+      (.services.formbricks.environment.DATABASE_URL | type == "string") and
+      (.services.formbricks.environment.DATABASE_URL |
+        test("^postgres(ql)?://[^/]+@postgres(:[0-9]+)?/"))
+    ' <<<"$rendered_base" >/dev/null 2>&1; then
+    emit_bootstrap_error "docker_external_database_not_supported"
+    return 2
+  fi
+  postgres_password=$(jq -er '
+      .services.postgres.environment.POSTGRES_PASSWORD
+      | select(type == "string" and length > 0)
+      | select((contains("\n") or contains("\r")) | not)
+    ' <<<"$rendered_base" 2>/dev/null || true)
+  if [[ -z "$postgres_password" ]]; then
+    emit_bootstrap_error "bundled_postgres_password_unavailable"
+    return 2
+  fi
+  postgres_password=${postgres_password//\$\$/\$}
+  if [[ "$postgres_password" == *\$* ]]; then
+    emit_bootstrap_error "bundled_postgres_password_unavailable"
+    return 2
+  fi
+  postgres_password_encoded=$(jq -rn --arg value "$postgres_password" '$value | @uri')
+
+  if ! dotenv_has_nonempty_value "$docker_env_file" "POSTGRES_PASSWORD"; then
+    upsert_dotenv_value "$docker_env_file" "POSTGRES_PASSWORD" "$(serialize_dotenv_value "$postgres_password")"
+  fi
+  upsert_dotenv_value "$docker_env_file" "POSTGRES_PASSWORD_URL_ENCODED" "$postgres_password_encoded"
+  ensure_generated_secret "$docker_env_file" "AUTHZED_TOKEN"
+  ensure_generated_secret "$docker_env_file" "AUTHZED_DATABASE_PASSWORD"
+  upsert_dotenv_value "$docker_env_file" "AUTHZED_ENABLED" "true"
+  upsert_dotenv_value "$docker_env_file" "AUTHZED_ENDPOINT" "spicedb:50051"
+  upsert_dotenv_value "$docker_env_file" "AUTHZED_SYSTEM_KEY" "formbricks"
+  upsert_dotenv_value "$docker_env_file" "AUTHZED_INSECURE" "true"
+  upsert_dotenv_value "$docker_env_file" "AUTHZED_CONSISTENCY" "fully_consistent"
+  upsert_dotenv_value "$docker_env_file" "FORMBRICKS_AUTHZED_BRIDGE_IMAGE_REF" "$bridge_image"
+  upsert_dotenv_value "$docker_env_file" "FORMBRICKS_AUTHZED_TARGET_IMAGE_REF" "$target_image"
+  case "$state_name" in
+    activated|finalized|manual_recovery_required|rollback_failed)
+      set_active_formbricks_image "$target_image"
+      ;;
+    *)
+      set_active_formbricks_image "$bridge_image"
+      ;;
+  esac
+
+  if ! run_upgrade_compose config >/dev/null 2>>"$docker_upgrade_log"; then
+    emit_bootstrap_error "authzed_overlay_config_invalid"
+    return 2
+  fi
+
+  printf '%s\n' "🔐 Preparing the signed legacy-authoritative bridge and private SpiceDB runtime." >&2
+  if ! run_logged_upgrade_compose pull formbricks authzed-ops spicedb-migrate spicedb ||
+    ! run_docker pull "$target_image" >>"$docker_upgrade_log" 2>&1 ||
+    ! run_logged_upgrade_compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb ||
+    ! run_logged_upgrade_compose run --rm -T --no-deps --entrypoint node formbricks \
+      packages/database/dist/scripts/apply-migrations.js; then
+    restore_bridge_before_activation
+    emit_bootstrap_error "bridge_deployment_failed"
+    return 1
+  fi
+
+  status_output=$(run_activation_command status 2>/dev/null || true)
+  authority=$(jq -er 'select(.status == "ready") | .authority' <<<"$status_output" 2>/dev/null || true)
+  transition=$(jq -er 'select(.status == "ready") | .transition' <<<"$status_output" 2>/dev/null || true)
+  if [[ -z "$authority" || -z "$transition" ]]; then
+    emit_bootstrap_error "activation_status_failed"
+    return 1
+  fi
+
+  if [[ "$authority" == "spicedb" ]]; then
+    if [[ "$state_name" == "finalized" ]]; then
+      set_active_formbricks_image "$target_image"
+      if run_logged_upgrade_compose up -d --no-deps --force-recreate formbricks &&
+        wait_for_runtime_check spicedb; then
+        emit_upgrade_success
+        return 0
+      fi
+    fi
+    if [[ -n "$state_receipt" ]] && rollback_after_activation "$state_receipt"; then
+      emit_bootstrap_error "interrupted_upgrade_rolled_back"
+      return 1
+    fi
+    set_active_formbricks_image "$target_image"
+    run_logged_upgrade_compose up -d --no-deps --force-recreate formbricks || true
+    write_upgrade_state "manual_recovery_required" "$state_receipt"
+    emit_bootstrap_error "activation_state_requires_manual_recovery"
+    return 1
+  fi
+
+  if [[ "$authority" != "legacy" ]]; then
+    emit_bootstrap_error "activation_state_requires_manual_recovery"
+    return 1
+  fi
+  if [[ "$transition" == "prepared" ]]; then
+    if [[ -z "$state_receipt" ]] || ! run_activation_command abort --receipt "$state_receipt" >/dev/null; then
+      emit_bootstrap_error "activation_state_requires_manual_recovery"
+      return 1
+    fi
+    write_upgrade_state "bridge_restored"
+  elif [[ "$transition" != "idle" && "$transition" != "preparing" ]]; then
+    emit_bootstrap_error "activation_state_requires_manual_recovery"
+    return 1
+  fi
+
+  printf '%s\n' "🔐 Starting the signed legacy-authoritative bridge." >&2
+  if ! run_logged_upgrade_compose up -d --no-deps --force-recreate formbricks ||
+    ! wait_for_runtime_check legacy; then
+    restore_bridge_before_activation
+    emit_bootstrap_error "bridge_deployment_failed"
+    return 1
+  fi
+  write_upgrade_state "bridge_ready"
+
+  prepare_output=$(run_activation_command prepare \
+    --bridge-image-digest "$bridge_digest" \
+    --bridge-manifest-digest "$bridge_runtime_manifest_digest" \
+    --candidate-image-digest "$target_digest" \
+    --candidate-manifest-digest "$target_runtime_manifest_digest" || true)
+  receipt=$(jq -er 'select(.status == "prepared") | .receipt' <<<"$prepare_output" 2>/dev/null || true)
+  if [[ -z "$receipt" ]]; then
+    write_upgrade_state "bridge_ready"
+    emit_bootstrap_error "activation_prepare_failed"
+    return 1
+  fi
+  write_upgrade_state "prepared" "$receipt"
+
+  printf '%s\n' "⏸️ Quiescing Formbricks while the final graph is fenced and activated." >&2
+  if ! run_logged_upgrade_compose stop --timeout 60 formbricks; then
+    restore_bridge_before_activation "$receipt"
+    emit_bootstrap_error "workload_quiesce_failed"
+    return 1
+  fi
+
+  if ! run_activation_command activate --receipt "$receipt" >/dev/null; then
+    status_output=$(run_activation_command status 2>/dev/null || true)
+    authority=$(jq -er '.authority // empty' <<<"$status_output" 2>/dev/null || true)
+    if [[ "$authority" == "spicedb" ]]; then
+      rollback_after_activation "$receipt" || true
+    else
+      restore_bridge_before_activation "$receipt"
+    fi
+    emit_bootstrap_error "activation_failed"
+    return 1
+  fi
+  write_upgrade_state "activated" "$receipt"
+
+  set_active_formbricks_image "$target_image"
+  if ! run_logged_upgrade_compose up -d --no-deps --force-recreate formbricks ||
+    ! wait_for_runtime_check spicedb ||
+    ! run_activation_command finalize --receipt "$receipt" >/dev/null; then
+    if rollback_after_activation "$receipt"; then
+      emit_bootstrap_error "candidate_failed_rolled_back"
+    else
+      emit_bootstrap_error "candidate_failed_rollback_incomplete"
+    fi
+    return 1
+  fi
+
+  write_upgrade_state "finalized" "$receipt"
+  emit_upgrade_success
+}
+
 plan='[]'
 status="blocked"
 if [[ "$blocked_count" -eq 0 && "$version_state" == "already_target_major" ]]; then
@@ -517,7 +1017,7 @@ elif [[ "$blocked_count" -eq 0 ]]; then
   ]')
 fi
 
-jq -cn \
+preflight_result=$(jq -cn \
   --argjson schemaVersion "$ASSISTANT_SCHEMA_VERSION" \
   --arg status "$status" \
   --arg installType "$resolved_install_type" \
@@ -562,8 +1062,26 @@ jq -cn \
     warningCount: $warningCount,
     checks: $checks,
     plan: $plan
-  }'
+  }')
 
 if [[ "$status" == "blocked" ]]; then
+  printf '%s\n' "$preflight_result"
   exit 2
 fi
+
+if [[ "$action" == "preflight" ]]; then
+  printf '%s\n' "$preflight_result"
+  exit 0
+fi
+
+if [[ "$status" != "ready" ]]; then
+  printf '%s\n' "$preflight_result"
+  exit 0
+fi
+
+if [[ "$install_type" == "helm" ]]; then
+  emit_bootstrap_error "helm_execution_not_supported"
+  exit 2
+fi
+
+execute_docker_upgrade

@@ -349,7 +349,8 @@ EOF
   append_if_missing "AUTHZED_DATABASE_PASSWORD" "$authzed_database_password"
   append_if_missing "AUTHZED_ENABLED" "true"
   append_if_missing "AUTHZED_CONSISTENCY" "fully_consistent"
-  append_if_missing "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED" "true"
+  # The one-click installer follows the stable-release alias. Pre-releases never publish `latest`.
+  append_if_missing "FORMBRICKS_IMAGE_REF" "ghcr.io/formbricks/formbricks:latest"
 
   chmod 600 "$tmp_file"
   mv "$tmp_file" "$env_file"
@@ -1164,8 +1165,7 @@ EOF
 set -e
 docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate
 docker compose wait formbricks-migrate
-docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+docker compose run --rm -T --no-deps authzed-initialize
 docker compose up -d
 
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
@@ -1287,36 +1287,151 @@ migrate_legacy_valkey_image() {
   echo "✅ Updated bundled Valkey to the native amd64/arm64 image. Backup: $backup_file"
 }
 
+verify_v6_upgrade_bundle() {
+  local bundle_directory="$1"
+  local file expected actual matches
+  local required_files=(
+    formbricks.sh
+    formbricks-upgrade-assistant
+    formbricks-upgrade-manifest.json
+    formbricks-authzed-overlay.yml
+    authzed-postgres-bootstrap.sh
+  )
+
+  if ! command -v cosign >/dev/null 2>&1; then
+    echo "❌ cosign is required to verify the Formbricks v6 upgrade bundle." >&2
+    return 1
+  fi
+  for file in "${required_files[@]}" formbricks-upgrade-checksums.txt \
+    formbricks-upgrade-checksums.sigstore.json; do
+    if [ ! -f "$bundle_directory/$file" ]; then
+      echo "❌ The signed v6 upgrade bundle is missing $file." >&2
+      return 1
+    fi
+  done
+
+  if ! cosign verify-blob \
+    --bundle "$bundle_directory/formbricks-upgrade-checksums.sigstore.json" \
+    --certificate-identity-regexp '^https://github\.com/formbricks/formbricks/\.github/workflows/.+@refs/(heads/main|tags/.+)$' \
+    --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+    "$bundle_directory/formbricks-upgrade-checksums.txt" >/dev/null; then
+    echo "❌ The Formbricks v6 upgrade bundle signature is invalid." >&2
+    return 1
+  fi
+
+  for file in "${required_files[@]}"; do
+    matches=$(awk -v file="$file" '$2 == file { count++; digest=$1 } END { if (count == 1) print digest }' \
+      "$bundle_directory/formbricks-upgrade-checksums.txt")
+    if [[ ! "$matches" =~ ^[0-9a-f]{64}$ ]]; then
+      echo "❌ The signed checksum set does not contain exactly one digest for $file." >&2
+      return 1
+    fi
+    expected="$matches"
+    if command -v sha256sum >/dev/null 2>&1; then
+      actual=$(sha256sum "$bundle_directory/$file" | awk '{print $1}')
+    else
+      actual=$(shasum -a 256 "$bundle_directory/$file" | awk '{print $1}')
+    fi
+    if [ "$actual" != "$expected" ]; then
+      echo "❌ The signed checksum for $file does not match." >&2
+      return 1
+    fi
+  done
+}
+
 update_formbricks() {
+  local bundle_directory=""
+  local current_version=""
+  local confirmed="false"
+  local docker_uses_sudo="false"
+  local compose_args=(-f docker-compose.yml)
+  local assistant_args=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --v6-upgrade-bundle)
+        [ $# -ge 2 ] || { echo "❌ --v6-upgrade-bundle requires a directory." >&2; return 64; }
+        bundle_directory=$(cd -- "$2" 2>/dev/null && pwd) || {
+          echo "❌ The v6 upgrade bundle directory does not exist." >&2
+          return 1
+        }
+        shift 2
+        ;;
+      --current-version)
+        [ $# -ge 2 ] || { echo "❌ --current-version requires a version." >&2; return 64; }
+        current_version="$2"
+        shift 2
+        ;;
+      --yes)
+        confirmed="true"
+        shift
+        ;;
+      *)
+        echo "Usage: $0 update [--v6-upgrade-bundle DIRECTORY --yes] [--current-version VERSION]" >&2
+        return 64
+        ;;
+    esac
+  done
+
   echo "🔄 Updating Formbricks..."
   cd formbricks
+  if ! configure_formbricks_docker_command; then
+    echo "❌ Docker is not reachable for this user or through sudo." >&2
+    return 1
+  fi
+  if [[ "${formbricks_docker_command[0]}" == "sudo" ]]; then
+    docker_uses_sudo="true"
+  fi
+
+  if [ -n "$bundle_directory" ]; then
+    verify_v6_upgrade_bundle "$bundle_directory" || return 1
+    if [ "$confirmed" != "true" ]; then
+      echo "❌ The signed v6 cutover changes authorization authority. Back up both databases and rerun with --yes." >&2
+      return 2
+    fi
+    chmod 0755 "$bundle_directory/formbricks-upgrade-assistant"
+    assistant_args=(
+      execute
+      --manifest "$bundle_directory/formbricks-upgrade-manifest.json"
+      --overlay "$bundle_directory/formbricks-authzed-overlay.yml"
+      --bootstrap-helper "$bundle_directory/authzed-postgres-bootstrap.sh"
+      --path .
+      --yes
+    )
+    if [ -n "$current_version" ]; then
+      assistant_args+=(--current-version "$current_version")
+    fi
+    FORMBRICKS_DOCKER_USE_SUDO="$docker_uses_sudo" \
+      "$bundle_directory/formbricks-upgrade-assistant" "${assistant_args[@]}"
+    echo "🎉 Formbricks was upgraded through the receipt-backed AuthZed cutover."
+    echo "The permanent formbricks-authzed-overlay.yml keeps the customized base Compose file unchanged."
+    return 0
+  fi
 
   migrate_legacy_valkey_image docker-compose.yml
 
-  if ! grep -Eq '^  authzed-ops:$' docker-compose.yml || ! grep -Eq '^  spicedb:$' docker-compose.yml; then
-    echo "❌ This installation does not yet contain the AuthZed v6 Compose services."
-    echo "Your customized Compose file was not changed. Follow the v6 AuthZed migration guide before updating:"
-    echo "https://formbricks.com/docs/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6"
-    exit 1
+  if [ -f formbricks-authzed-overlay.yml ]; then
+    compose_args+=(-f formbricks-authzed-overlay.yml)
+  elif ! grep -Eq '^  authzed-ops:$' docker-compose.yml || ! grep -Eq '^  spicedb:$' docker-compose.yml; then
+    echo "❌ A v5 installation must use the signed v6 upgrade bundle; the base Compose file was not changed."
+    echo "Run this command again with --v6-upgrade-bundle DIRECTORY --yes after taking backups:"
+    echo "https://formbricks.com/docs/self-hosting/advanced/v6-upgrade-assistant"
+    return 1
   fi
 
-  if ! grep -Eq '^FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true$' .env; then
-    echo "❌ The AuthZed v6 migration has not been acknowledged for this installation."
-    echo "Back up PostgreSQL, add the documented AuthZed services and secrets, then run the upgrade preparation."
-    echo "After its final check is clean, set FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true in .env and retry."
-    echo "https://formbricks.com/docs/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6"
-    exit 1
+  run_formbricks_docker_compose "${compose_args[@]}" pull
+  if [ -f formbricks-authzed-overlay.yml ]; then
+    # A supported v5 installation deliberately keeps its customer-owned base Compose file. It may not
+    # define the v6 formbricks-migrate service, so run the same release migration entrypoint through the
+    # overlaid Formbricks service and inherit that installation's complete application environment.
+    run_formbricks_docker_compose "${compose_args[@]}" run --rm -T --no-deps --entrypoint sh formbricks \
+      -c 'node /home/nextjs/validate-env.mjs && node packages/database/dist/scripts/apply-migrations.js'
+  else
+    run_formbricks_docker_compose "${compose_args[@]}" run --rm formbricks-migrate
   fi
-  sudo docker compose pull
-  # The outbox migration is backward compatible with the still-running v5 application. Apply it before
-  # the release-matched operator checks so the old deployment stays available if preparation blocks.
-  sudo docker compose run --rm formbricks-migrate
-  sudo docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-  sudo docker compose --profile authzed-ops run --rm authzed-ops upgrade check
-  sudo docker compose down
-  sudo docker compose up -d
+  run_formbricks_docker_compose "${compose_args[@]}" up -d
   echo "🎉 Formbricks updated successfully!"
-  echo "🎉 Check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose logs.'"
+  echo "🎉 Check the status with 'cd formbricks && docker compose ${compose_args[*]} logs'."
 }
 
 restart_formbricks() {
@@ -1381,7 +1496,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     install_formbricks
     ;;
   update)
-    update_formbricks
+    shift
+    update_formbricks "$@"
     ;;
   stop)
     stop_formbricks

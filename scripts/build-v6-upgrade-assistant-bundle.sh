@@ -48,6 +48,9 @@ fi
 
 command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 1; }
 
+readonly docker_overlay_path="docker/formbricks-authzed-overlay.yml"
+readonly postgres_bootstrap_path="docker/authzed-postgres-bootstrap.sh"
+readonly one_click_updater_path="docker/formbricks.sh"
 readonly semver_pattern='^[vV]?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
 readonly image_pattern='^ghcr\.io/formbricks/formbricks@sha256:[0-9a-f]{64}$'
 readonly digest_pattern='^sha256:[0-9a-f]{64}$'
@@ -69,9 +72,26 @@ readonly digest_pattern='^sha256:[0-9a-f]{64}$'
 
 release_version="${release_version#[vV]}"
 minimum_source_version="${minimum_source_version#[vV]}"
+
+hash_file() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
+docker_overlay_digest="sha256:$(hash_file "$docker_overlay_path")"
+postgres_bootstrap_digest="sha256:$(hash_file "$postgres_bootstrap_path")"
 mkdir -p "$output_directory"
 cp docker/formbricks-upgrade-assistant "$output_directory/formbricks-upgrade-assistant"
+cp "$docker_overlay_path" "$output_directory/formbricks-authzed-overlay.yml"
+cp "$postgres_bootstrap_path" "$output_directory/authzed-postgres-bootstrap.sh"
+cp "$one_click_updater_path" "$output_directory/formbricks.sh"
 chmod 0755 "$output_directory/formbricks-upgrade-assistant"
+chmod 0644 "$output_directory/formbricks-authzed-overlay.yml"
+chmod 0700 "$output_directory/authzed-postgres-bootstrap.sh"
+chmod 0755 "$output_directory/formbricks.sh"
 
 jq -cn \
   --arg releaseVersion "$release_version" \
@@ -80,6 +100,8 @@ jq -cn \
   --arg bridgeImage "$bridge_image" \
   --arg bridgeRuntimeManifestDigest "$bridge_runtime_manifest_digest" \
   --arg formbricksChart "formbricks-${release_version}.tgz" \
+  --arg dockerAuthzedOverlaySha256 "$docker_overlay_digest" \
+  --arg authzedPostgresBootstrapSha256 "$postgres_bootstrap_digest" \
   --arg targetImage "$target_image" \
   --arg targetRuntimeManifestDigest "$target_runtime_manifest_digest" \
   --arg upgradeChart "formbricks-upgrade-${release_version}.tgz" \
@@ -93,6 +115,8 @@ jq -cn \
       bridgeImage: $bridgeImage,
       bridgeRuntimeManifestDigest: $bridgeRuntimeManifestDigest,
       formbricksChart: $formbricksChart,
+      dockerAuthzedOverlaySha256: $dockerAuthzedOverlaySha256,
+      authzedPostgresBootstrapSha256: $authzedPostgresBootstrapSha256,
       targetImage: $targetImage,
       targetRuntimeManifestDigest: $targetRuntimeManifestDigest,
       upgradeChart: $upgradeChart
@@ -103,12 +127,14 @@ if command -v sha256sum >/dev/null 2>&1; then
   (
     cd "$output_directory"
     sha256sum formbricks-upgrade-assistant formbricks-upgrade-manifest.json \
+      formbricks-authzed-overlay.yml authzed-postgres-bootstrap.sh formbricks.sh \
       >formbricks-upgrade-checksums.txt
   )
 else
   (
     cd "$output_directory"
     shasum -a 256 formbricks-upgrade-assistant formbricks-upgrade-manifest.json \
+      formbricks-authzed-overlay.yml authzed-postgres-bootstrap.sh formbricks.sh \
       >formbricks-upgrade-checksums.txt
   )
 fi

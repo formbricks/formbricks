@@ -115,6 +115,9 @@ describe("v6 upgrade assistant release workflow", () => {
     expect(assistantRelease).toContain('"formbricks-${release_version}.tgz"');
     expect(assistantRelease).toContain('"formbricks-upgrade-${release_version}.tgz"');
     expect(assistantRelease).toContain("dist/v6-upgrade/formbricks-[0-9]*.tgz");
+    expect(assistantRelease).toContain("dist/v6-upgrade/formbricks-authzed-overlay.yml");
+    expect(assistantRelease).toContain("dist/v6-upgrade/authzed-postgres-bootstrap.sh");
+    expect(assistantRelease).toContain("dist/v6-upgrade/formbricks.sh");
     expect(assistantRelease).toContain("dist/v6-upgrade/formbricks-upgrade-*.tgz");
   });
 });

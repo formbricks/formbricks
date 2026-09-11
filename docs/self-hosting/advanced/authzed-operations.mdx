@@ -97,14 +97,12 @@ a short-lived operator container using the same release image and never starts d
 docker compose --profile authzed-ops run --rm authzed-ops health
 docker compose --profile authzed-ops run --rm authzed-ops schema check
 docker compose --profile authzed-ops run --rm authzed-ops backfill
-docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
 Fresh one-click installations generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD`, prepare the graph, and
-run the read-only gate before reporting success. The update command preserves customized Compose files. An older
-installation must merge the released AuthZed services and environment manually, then explicitly acknowledge the
-v6 migration. The updater refuses to stop the existing application until `upgrade prepare` and `upgrade check`
-succeed.
+run the activation bootstrap before reporting success. Existing v5 installations use the signed Docker
+executor, which preserves the customized base Compose file and adds a permanent AuthZed overlay. It stops the
+application only after the bridge is healthy and a database-backed preparation receipt has been created.
 
 <Warning>
   `docker compose down` preserves PostgreSQL data. `docker compose down -v` deletes the volume containing both
@@ -275,13 +273,13 @@ Begin with the [signed v6 upgrade assistant](/self-hosting/advanced/v6-upgrade-a
 preflight detects the installation and current version, verifies that the release manifest contains immutable
 bridge and target image digests, and reports missing prerequisites without changing the deployment.
 
-For Helm, the assistant drives two deliberately separate charts:
+For Helm, operators use two deliberately separate charts after the assistant's read-only preflight:
 
 - The permanent Formbricks chart receives the private SpiceDB runtime and the immutable v5 bridge image.
 - The temporary `formbricks-upgrade` chart owns preparation, audit, fencing, activation, finalization, and rollback
   coordination. Uninstall it after finalization; no temporary cutover Job remains in the permanent release.
 
-The assistant performs this sequence:
+The Docker executor automates the equivalent sequence. Helm operators advance the temporary chart explicitly:
 
 1. Deploy the bridge with `authzed.activation.upgradeGate.enabled=false`. PostgreSQL remains authoritative for
    decisions while the durable projection is populated. This is the only documented Helm upgrade without the
