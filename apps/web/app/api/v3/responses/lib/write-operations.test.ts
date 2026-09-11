@@ -117,8 +117,12 @@ describe("createV3Response — authorization", () => {
       body: { surveyId: SURVEY_ID, finished: false, data: {} } as never,
     });
 
+    // The foreign case must build its 403 through the real rejection path, not through the same
+    // object the missing branch constructs — otherwise this asserts the mock rather than the code.
     mockGetSurveyForWrite.mockResolvedValueOnce(survey({ workspaceId: "clws000000000000000000002" }));
-    mockRequireAccess.mockResolvedValueOnce(problemForbidden("req-1", undefined, undefined));
+    mockRequireAccess.mockImplementationOnce(async (_auth, _ws, _perm, requestId, instance) =>
+      problemForbidden(requestId, "You are not authorized to access this resource", instance)
+    );
     const foreign = await createV3Response({
       ...params,
       body: { surveyId: SURVEY_ID, finished: false, data: {} } as never,
@@ -401,5 +405,130 @@ describe("the read-back race", () => {
 
     expect(response.status).toBe(403);
     expect(mockUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("what the operation hands to the write", () => {
+  /** Nothing asserted the marshalling of the request body into the persist input. */
+  test("every create field reaches createScopedResponse", async () => {
+    await createV3Response({
+      ...params,
+      body: {
+        surveyId: SURVEY_ID,
+        finished: true,
+        data: { q1: "hi" },
+        ttc: { q1: 1200 },
+        meta: { source: "zendesk" },
+        tags: ["cltg000000000000000000001"],
+        endingId: "cmp1",
+        language: "en",
+        contactId: "clct000000000000000000001",
+        displayId: "cldp000000000000000000001",
+        singleUseId: "su-1",
+      } as never,
+    });
+
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        finished: true,
+        data: { q1: "hi" },
+        ttc: { q1: 1200, _total: 1200 },
+        meta: { source: "zendesk" },
+        tagIds: ["cltg000000000000000000001"],
+        endingId: "cmp1",
+        language: "en",
+        contactId: "clct000000000000000000001",
+        displayId: "cldp000000000000000000001",
+        singleUseId: "su-1",
+      })
+    );
+  });
+
+  /** An omitted ttc must not become {_total: 0} — see normalizeV3Ttc. */
+  test("an omitted ttc reaches the write as an empty map", async () => {
+    await createV3Response({
+      ...params,
+      body: { surveyId: SURVEY_ID, finished: true, data: {} } as never,
+    });
+
+    expect(mockCreate.mock.calls[0][0].ttc).toEqual({});
+  });
+
+  /**
+   * `ttc` is create-only for a caller, but a patch that finishes the response must still derive
+   * `_total`, which is what every other write path does.
+   */
+  test("a patch that finishes derives _total from the stored timings", async () => {
+    mockGetScoped.mockResolvedValueOnce(row({ finished: false, ttc: { q1: 1000, nps: 500 } }));
+
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } as never });
+
+    expect(mockUpdate.mock.calls[0][0].patch.ttc).toEqual({ q1: 1000, nps: 500, _total: 1500 });
+  });
+
+  test("a patch that does not finish leaves ttc alone", async () => {
+    mockGetScoped.mockResolvedValueOnce(row({ finished: false, ttc: { q1: 1000 } }));
+
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { data: { q1: "x" } } as never });
+
+    expect(mockUpdate.mock.calls[0][0].patch.ttc).toBeUndefined();
+  });
+
+  test("patching an already-finished response does not re-total", async () => {
+    mockGetScoped.mockResolvedValueOnce(row({ finished: true, ttc: { q1: 1000, _total: 1000 } }));
+
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } as never });
+
+    expect(mockUpdate.mock.calls[0][0].patch.ttc).toBeUndefined();
+  });
+
+  /**
+   * `embeddedData` merges while `data` replaces, and nothing exercised that fold through an
+   * operation — only the planner underneath it.
+   */
+  test("embeddedData merges onto the stored map while data replaces it", async () => {
+    mockGetSurveyForWrite.mockResolvedValue(
+      survey({
+        embeddedFields: [
+          {
+            field: { name: "Plan", source: "ingested", dataType: "text", locked: false, defaultValue: null },
+            link: { storageKey: "plan" },
+          },
+        ],
+      })
+    );
+    mockGetScoped.mockResolvedValueOnce(row({ data: { q1: "old", nps: 7, plan: "free" } }));
+
+    await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { data: { q1: "new" }, embeddedData: { Plan: "enterprise" } } as never,
+    });
+
+    // q1 replaced, nps dropped by the wholesale replace, plan merged from embeddedData.
+    expect(mockUpdate.mock.calls[0][0].patch.data).toEqual({ q1: "new", plan: "enterprise" });
+  });
+
+  test("null in embeddedData clears the stored key through the operation", async () => {
+    mockGetSurveyForWrite.mockResolvedValue(
+      survey({
+        embeddedFields: [
+          {
+            field: { name: "Plan", source: "ingested", dataType: "text", locked: false, defaultValue: null },
+            link: { storageKey: "plan" },
+          },
+        ],
+      })
+    );
+    mockGetScoped.mockResolvedValueOnce(row({ data: { q1: "a", plan: "free" } }));
+
+    await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { embeddedData: { Plan: null } } as never,
+    });
+
+    expect(mockUpdate.mock.calls[0][0].patch.data).toEqual({ q1: "a" });
   });
 });

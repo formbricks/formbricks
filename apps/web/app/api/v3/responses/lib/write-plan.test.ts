@@ -8,6 +8,7 @@ import {
   planAnswerDataWrite,
   planEmbeddedDataWrite,
   resolveV3WriteLanguage,
+  totalStoredV3Ttc,
   validateV3EndingId,
 } from "./write-plan";
 
@@ -357,7 +358,41 @@ describe("normalizeV3Ttc", () => {
     expect(normalizeV3Ttc({ q1: input }, false)).toEqual({ q1: expected });
   });
 
-  test("an absent ttc is an empty map rather than a crash", () => {
-    expect(normalizeV3Ttc(undefined, true)).toEqual({ _total: 0 });
+  /**
+   * Every other write path stores `{}` for a missing map. Totalling an absent one publishes a
+   * `durationSeconds` of zero, which reads as "answered instantly" rather than "not measured".
+   */
+  test("an omitted ttc stores {} even on a finished response", () => {
+    expect(normalizeV3Ttc(undefined, true)).toEqual({});
+    expect(normalizeV3Ttc(undefined, false)).toEqual({});
+  });
+
+  /** A supplied-but-empty map is still totalled, because that is what the other paths do with it. */
+  test("a supplied empty ttc is totalled on finish", () => {
+    expect(normalizeV3Ttc({}, true)).toEqual({ _total: 0 });
+  });
+});
+
+describe("totalStoredV3Ttc", () => {
+  /**
+   * The gap a patch leaves otherwise: `ttc` is create-only for a caller, but `_total` is derived, and
+   * the shared update service computes it on any write that finishes a response. Without this a
+   * response created partial and finished through PATCH reports no duration at all.
+   */
+  test("totals the stored buckets, ignoring any stored _total", () => {
+    expect(totalStoredV3Ttc({ q1: 1000, nps: 500, _total: 999_999 })).toEqual({
+      q1: 1000,
+      nps: 500,
+      _total: 1500,
+    });
+  });
+
+  test("a response with no stored timings totals to zero rather than crashing", () => {
+    expect(totalStoredV3Ttc(undefined)).toEqual({});
+    expect(totalStoredV3Ttc({})).toEqual({ _total: 0 });
+  });
+
+  test("non-numeric stored buckets are ignored rather than poisoning the sum", () => {
+    expect(totalStoredV3Ttc({ q1: 1000, junk: "x" as never })).toEqual({ q1: 1000, _total: 1000 });
   });
 });

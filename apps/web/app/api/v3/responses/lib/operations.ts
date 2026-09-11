@@ -41,6 +41,7 @@ import {
   planAnswerDataWrite,
   planEmbeddedDataWrite,
   resolveV3WriteLanguage,
+  totalStoredV3Ttc,
   validateV3EndingId,
 } from "./write-plan";
 import {
@@ -743,6 +744,12 @@ export async function updateV3Response({
       survey,
       patch: {
         finished: body.finished,
+        // `_total` is derived, not caller-supplied, and the shared update service computes it on any
+        // write that finishes a response. Without it a response created partial and finished here
+        // carries per-element timings but reports no duration at all.
+        ...(body.finished === true && !stored.finished
+          ? { ttc: totalStoredV3Ttc(stored.ttc as Record<string, unknown> | undefined) }
+          : {}),
         endingId: body.endingId,
         // Only when the payload carried it — and then as the survey's own code, never the caller's.
         language: body.language === undefined ? undefined : effectiveLanguage,

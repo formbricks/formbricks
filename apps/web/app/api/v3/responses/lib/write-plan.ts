@@ -6,6 +6,69 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { type TV3AnswerPlan, isPublishableDataKey } from "./answers";
 
+/** Milliseconds in a day: the contract's upper bound for one element's time-to-complete. */
+const TTC_MAX_MS = 86_400_000;
+
+/**
+ * The bucket the server owns. A caller-supplied `_total` is dropped rather than trusted: it is
+ * derived, so honouring one would let a caller disagree with the sum of its own buckets, and
+ * `calculateTtcTotal` would then add it into the total a second time.
+ */
+const TTC_TOTAL_KEY = "_total";
+
+const clampTtcBuckets = (ttc: Readonly<Record<string, number>>): TResponseTtc => {
+  const clamped: TResponseTtc = {};
+
+  for (const [key, value] of Object.entries(ttc)) {
+    if (key === TTC_TOTAL_KEY) continue;
+    clamped[key] = Math.min(Math.max(value, 0), TTC_MAX_MS);
+  }
+
+  return clamped;
+};
+
+/**
+ * Clamp rather than reject, which is the contract's choice and worth restating: `ttc` is client
+ * telemetry, and a single absurd bucket from a laptop that slept mid-survey should not cost a caller
+ * the whole response.
+ *
+ * **An omitted `ttc` stores `{}`, never `{_total: 0}`.** Every other write path treats a missing map
+ * as "no timing was collected" and stores an empty object; totalling an absent map instead publishes
+ * a `durationSeconds` of zero, which reads as "answered instantly" rather than "not measured". A
+ * supplied-but-empty map is still totalled, because that is what the other paths do with it.
+ */
+export const normalizeV3Ttc = (
+  ttc: Readonly<Record<string, number>> | undefined,
+  finished: boolean
+): TResponseTtc => {
+  if (ttc === undefined) return {};
+
+  const clamped = clampTtcBuckets(ttc);
+
+  return finished ? calculateTtcTotal(clamped) : clamped;
+};
+
+/**
+ * Total a `ttc` map that is already in storage, for a patch that finishes the response.
+ *
+ * `ttc` is create-only for a *caller*, but `_total` is derived rather than supplied, and the shared
+ * update service computes it on any write that finishes a response
+ * (`lib/response/service.ts`). Without this a response created partial and finished through `PATCH`
+ * carries per-element timings and no total, so it reports no duration at all — which no other write
+ * path does.
+ */
+export const totalStoredV3Ttc = (stored: Readonly<Record<string, unknown>> | undefined): TResponseTtc => {
+  if (!stored) return {};
+
+  const buckets: Record<string, number> = {};
+  for (const [key, value] of Object.entries(stored)) {
+    if (key === TTC_TOTAL_KEY) continue;
+    if (typeof value === "number" && Number.isFinite(value)) buckets[key] = value;
+  }
+
+  return calculateTtcTotal(clampTtcBuckets(buckets));
+};
+
 /**
  * Turning a write payload into the two stored maps, without touching the database.
  *
@@ -409,34 +472,4 @@ export const validateV3EndingId = (
     referenceType: "ending",
     missingId: endingId,
   };
-};
-
-/** Milliseconds in a day: the contract's upper bound for one element's time-to-complete. */
-const TTC_MAX_MS = 86_400_000;
-
-/**
- * The bucket the server owns. A caller-supplied `_total` is dropped rather than trusted: it is
- * derived, so honouring one would let a caller disagree with the sum of its own buckets, and
- * `calculateTtcTotal` would then add it into the total a second time.
- */
-const TTC_TOTAL_KEY = "_total";
-
-/**
- * Clamp rather than reject, which is the contract's choice and worth restating: `ttc` is client
- * telemetry, and a single absurd bucket from a laptop that slept mid-survey should not cost a caller
- * the whole response. The total is computed here only on a finished response, matching every other
- * write path.
- */
-export const normalizeV3Ttc = (
-  ttc: Readonly<Record<string, number>> | undefined,
-  finished: boolean
-): TResponseTtc => {
-  const clamped: TResponseTtc = {};
-
-  for (const [key, value] of Object.entries(ttc ?? {})) {
-    if (key === TTC_TOTAL_KEY) continue;
-    clamped[key] = Math.min(Math.max(value, 0), TTC_MAX_MS);
-  }
-
-  return finished ? calculateTtcTotal(clamped) : clamped;
 };

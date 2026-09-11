@@ -97,8 +97,14 @@ const createFields = {
   embeddedData: z.record(z.string(), ZV3EmbeddedDataValue).optional(),
   ttc: ZV3ResponseTtcInput.optional(),
   meta: ZV3ResponseMetaInput.optional(),
+  /**
+   * Bounded like the batch-delete body in this same file. Without a cap one 2 MB request becomes a
+   * `WHERE id IN (…)` of tens of thousands of ids plus that many join-row inserts, all inside the
+   * write transaction.
+   */
   tags: z
     .array(z.cuid2())
+    .max(100)
     .refine((ids) => new Set(ids).size === ids.length, { message: "Tag ids must be unique" })
     .optional(),
   endingId: z.string().nullable().optional(),
@@ -148,8 +154,9 @@ export const ZV3PatchResponseBody = z
     data: createFields.data.optional(),
     embeddedData: createFields.embeddedData,
     // No uniqueness refinement, matching the contract: the patch set is applied as a set, so a
-    // repeated id is redundant rather than ambiguous.
-    tags: z.array(z.cuid2()).optional(),
+    // repeated id is redundant rather than ambiguous. The service deduplicates before writing the
+    // join rows — without that, "redundant" was a composite-primary-key violation and a 500.
+    tags: z.array(z.cuid2()).max(100).optional(),
   })
   .strict()
   .refine((body) => Object.keys(body).length > 0, { message: "At least one field must be provided" });
