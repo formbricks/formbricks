@@ -248,18 +248,39 @@ export const activateAuthzedAuthorization = async (
   runtimeManifestDigest: TAuthzedDigest,
   collectFinalEvidence: (signal: AbortSignal) => Promise<TAuthzedActivationEvidence>
 ): Promise<void> => {
-  await prisma.$transaction(async (tx) => {
+  const activationRequired = await prisma.$transaction(async (tx) => {
     const control = await lockControl(tx);
     const receipt = await readReceipt(tx, receiptId);
+    const manifestMatches =
+      receipt.kind === "upgrade"
+        ? receipt.bridgeManifestDigest === runtimeManifestDigest
+        : receipt.candidateManifestDigest === runtimeManifestDigest;
+
+    if (
+      control.authority === "spicedb" &&
+      (control.transition === "activating" || control.transition === "idle") &&
+      control.activeReceiptId === receiptId &&
+      receipt.status === "active" &&
+      receipt.generation === control.generation &&
+      receipt.protocolVersion === AUTHZED_ACTIVATION_PROTOCOL_VERSION &&
+      manifestMatches
+    ) {
+      // The authority transaction may have committed even when the caller lost its response. Treat the
+      // exact active receipt as success so an immutable activation phase can be safely rerun.
+      return false;
+    }
+
+    const resumableTransition =
+      control.transition === "prepared" ||
+      (control.transition === "activating" && !control.mutationFenceActive);
     if (
       control.authority !== "legacy" ||
-      control.transition !== "prepared" ||
+      !resumableTransition ||
       control.pendingReceiptId !== receiptId ||
       receipt.status !== "prepared" ||
       receipt.generation !== control.generation ||
-      (receipt.kind === "upgrade"
-        ? receipt.bridgeManifestDigest !== runtimeManifestDigest
-        : receipt.candidateManifestDigest !== runtimeManifestDigest)
+      receipt.protocolVersion !== AUTHZED_ACTIVATION_PROTOCOL_VERSION ||
+      !manifestMatches
     ) {
       throw activationError(AUTHZED_ERROR_CODES.ACTIVATION_CONFLICT, "activation_activate");
     }
@@ -272,10 +293,22 @@ export const activateAuthzedAuthorization = async (
         AND "authority" = 'legacy'::"AuthzedAuthorizationAuthority"
         AND "generation" = ${control.generation}
         AND "pendingReceiptId" = ${receiptId}
-        AND "transition" = 'prepared'::"AuthzedAuthorizationTransition"
+        AND (
+          "transition" = 'prepared'::"AuthzedAuthorizationTransition"
+          OR (
+            "transition" = 'activating'::"AuthzedAuthorizationTransition"
+            AND (
+              "mutationFenceExpiresAt" IS NULL
+              OR "mutationFenceExpiresAt" <= clock_timestamp()
+            )
+          )
+        )
     `;
     assertOne(count, "activation_fence_cas");
+    return true;
   });
+
+  if (!activationRequired) return;
 
   try {
     await prisma.$transaction(
@@ -341,15 +374,31 @@ export const finalizeAuthzedActivation = async (
 ): Promise<void> => {
   // The candidate validation window can legitimately outlive the original 15-minute fence. Renew it
   // before finalization so a slow rollout always has a safe forward path instead of becoming wedged.
-  await prisma.$transaction(async (tx) => {
+  const finalizationRequired = await prisma.$transaction(async (tx) => {
     const control = await lockControl(tx);
     const receipt = await readReceipt(tx, receiptId);
+
+    if (
+      control.authority === "spicedb" &&
+      control.transition === "idle" &&
+      control.activeReceiptId === receiptId &&
+      receipt.status === "active" &&
+      receipt.generation === control.generation &&
+      receipt.protocolVersion === AUTHZED_ACTIVATION_PROTOCOL_VERSION &&
+      receipt.candidateManifestDigest === candidateManifestDigest
+    ) {
+      // Finalization may have committed even when its response was lost. The exact active receipt is
+      // durable proof that the requested candidate already completed this phase.
+      return false;
+    }
+
     if (
       control.authority !== "spicedb" ||
       control.transition !== "activating" ||
       control.activeReceiptId !== receiptId ||
       receipt.status !== "active" ||
       receipt.generation !== control.generation ||
+      receipt.protocolVersion !== AUTHZED_ACTIVATION_PROTOCOL_VERSION ||
       receipt.candidateManifestDigest !== candidateManifestDigest
     ) {
       throw activationError(AUTHZED_ERROR_CODES.ACTIVATION_CONFLICT, "activation_finalize");
@@ -365,7 +414,10 @@ export const finalizeAuthzedActivation = async (
         AND "transition" = 'activating'::"AuthzedAuthorizationTransition"
     `;
     assertOne(count, "activation_finalize_fence_cas");
+    return true;
   });
+
+  if (!finalizationRequired) return;
 
   await prisma.$transaction(
     async (tx) => {
@@ -382,6 +434,7 @@ export const finalizeAuthzedActivation = async (
         !control.mutationFenceActive ||
         receipt.status !== "active" ||
         receipt.generation !== control.generation ||
+        receipt.protocolVersion !== AUTHZED_ACTIVATION_PROTOCOL_VERSION ||
         receipt.candidateManifestDigest !== candidateManifestDigest
       ) {
         throw activationError(AUTHZED_ERROR_CODES.ACTIVATION_CONFLICT, "activation_finalize_state");
@@ -562,6 +615,22 @@ export const completeAuthzedRollback = async (
   await prisma.$transaction(async (tx) => {
     const control = await lockControl(tx);
     const receipt = await readReceipt(tx, receiptId);
+
+    if (
+      control.authority === "legacy" &&
+      control.transition === "idle" &&
+      control.activeReceiptId === null &&
+      receipt.kind === "upgrade" &&
+      receipt.status === "rolled_back" &&
+      receipt.generation === control.generation &&
+      receipt.protocolVersion === AUTHZED_ACTIVATION_PROTOCOL_VERSION &&
+      receipt.bridgeManifestDigest === bridgeManifestDigest
+    ) {
+      // The rollback transaction may have committed even when its response was lost. An exact rolled-back
+      // receipt is sufficient to make the immutable phase safely repeatable.
+      return;
+    }
+
     if (
       control.authority !== "spicedb" ||
       control.transition !== "rolling_back" ||
@@ -569,6 +638,8 @@ export const completeAuthzedRollback = async (
       !control.mutationFenceActive ||
       receipt.kind !== "upgrade" ||
       receipt.status !== "active" ||
+      receipt.generation !== control.generation ||
+      receipt.protocolVersion !== AUTHZED_ACTIVATION_PROTOCOL_VERSION ||
       receipt.bridgeManifestDigest !== bridgeManifestDigest
     ) {
       throw activationError(AUTHZED_ERROR_CODES.ACTIVATION_CONFLICT, "activation_rollback_complete");

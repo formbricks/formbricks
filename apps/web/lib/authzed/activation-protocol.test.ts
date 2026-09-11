@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { bootstrapFreshAuthzedActivation, prepareAuthzedActivation } from "./activation-protocol";
+import {
+  activatePreparedAuthzedAuthorization,
+  bootstrapFreshAuthzedActivation,
+  finalizePreparedAuthzedAuthorization,
+  prepareAuthzedActivation,
+} from "./activation-protocol";
 import {
   acquireAuthzedPreparationLease,
   activateAuthzedAuthorization,
@@ -406,5 +411,62 @@ describe("AuthZed activation preparation", () => {
     finishSchema({ sourceDigest: digest("c") });
     await expect(preparation).resolves.toBe(receiptId);
     expect(createPreparedAuthzedActivationReceipt).toHaveBeenCalledOnce();
+  });
+});
+
+describe("AuthZed activation final evidence", () => {
+  const dependencies = (schemaStatus: "matched" | "drifted") => ({
+    audit: vi.fn(async (mode: "apply" | "dry_run") => ({ ...cleanAudit, mode })),
+    checkSchema: vi.fn(async () => ({ status: schemaStatus }) as never),
+    drainOutbox: vi.fn(async () => ({
+      claimed: 0,
+      deadLettered: 0,
+      delivered: 0,
+      failed: 0,
+      remaining: 0,
+      status: "drained" as const,
+    })),
+    getOutboxStatus: vi.fn(async () => ({
+      deadLettered: 0,
+      oldestPendingAgeSeconds: null,
+      overdueRevocations: 0,
+      pending: 0,
+      revocationsPastCritical: 0,
+      revocationsPastWarning: 0,
+    })),
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("blocks the authority switch when the live schema drifted after preparation", async () => {
+    vi.mocked(readAuthzedReleaseManifest).mockResolvedValue({ authorizationMode: "legacy_bridge" } as never);
+    vi.mocked(activateAuthzedAuthorization).mockImplementation(async (_receipt, _manifest, collect) => {
+      await collect(new AbortController().signal);
+    });
+
+    await expect(
+      activatePreparedAuthzedAuthorization(receiptId, dependencies("drifted"))
+    ).rejects.toMatchObject({
+      code: "authzed_activation_graph_dirty",
+      operation: "activation_schema_verify",
+    });
+  });
+
+  test("keeps the mutation fence when the live schema drifts before finalization", async () => {
+    vi.mocked(readAuthzedReleaseManifest).mockResolvedValue({
+      authorizationMode: "spicedb_authoritative",
+    } as never);
+    vi.mocked(finalizeAuthzedActivation).mockImplementation(async (_receipt, _manifest, collect) => {
+      await collect(new AbortController().signal);
+    });
+
+    await expect(
+      finalizePreparedAuthzedAuthorization(receiptId, dependencies("drifted"))
+    ).rejects.toMatchObject({
+      code: "authzed_activation_graph_dirty",
+      operation: "activation_schema_verify",
+    });
   });
 });

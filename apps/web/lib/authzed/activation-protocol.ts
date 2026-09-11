@@ -174,6 +174,10 @@ const collectEvidence = async (
   if (!isOutboxClean(outbox)) {
     throw protocolError(AUTHZED_ERROR_CODES.ACTIVATION_OUTBOX_PENDING, "activation_outbox_verify");
   }
+  if ((await dependencies.checkSchema()).status !== "matched") {
+    throw protocolError(AUTHZED_ERROR_CODES.ACTIVATION_GRAPH_DIRTY, "activation_schema_verify");
+  }
+  throwIfAuthzedActivationAborted(signal);
   return { ...graph, outboxCounters: summarizeOutbox(outbox), sourceSequenceWatermark };
 };
 
@@ -214,7 +218,7 @@ const prepareAuthzedActivationReceipt = async (
           getCanonicalAuthzedSchemaDigest(),
         ]);
         throwIfAuthzedActivationAborted(signal);
-        if (schema.sourceDigest !== schemaDigest || (await dependencies.checkSchema()).status !== "matched") {
+        if (schema.sourceDigest !== schemaDigest) {
           throw protocolError(AUTHZED_ERROR_CODES.ACTIVATION_GRAPH_DIRTY, "activation_schema_verify");
         }
         throwIfAuthzedActivationAborted(signal);
