@@ -51,6 +51,7 @@ properties:
   tags:
     type: array
     uniqueItems: true
+    maxItems: 100
     description: >-
       Tag ids to apply, so a tagged response can be created in one call rather than a create
       followed by a patch. Tags must already exist in the same workspace — create them via
@@ -83,7 +84,10 @@ properties:
       one response.
   singleUseId:
     type: string
+    minLength: 1
+    maxLength: 255
     description: >-
       Single-use link id, for surveys configured with single-use links. Create-only, and unique per
-      survey.
+      survey. Bounded because the value is indexed with `surveyId`: an empty string would slip past
+      the uniqueness pre-check and still be stored, and an oversize one overflows the index entry.
 additionalProperties: false

@@ -74,20 +74,70 @@ function getUnauthenticatedDetail(authMode: TV3AuthMode): string {
   return "Not authenticated";
 }
 
+/** How many unknown keys a 400 will name before it stops enumerating them. */
+const MAX_REPORTED_UNKNOWN_KEYS = 20;
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Expand a strict object's single unrecognized-keys issue into one param per offending key.
+ *
+ * Zod reports every unknown key in ONE issue whose path points at the object rather than at any of
+ * the keys, so left as-is a caller is told it sent something unsupported without being told what.
+ * Bounded, because the key list is caller-controlled and both the response and the log line carry it.
+ */
+function expandUnrecognizedKeys(
+  issue: z.core.$ZodIssue,
+  fallbackName: "body" | "query" | "params"
+): InvalidParam[] {
+  const prefix = issue.path.length > 0 ? `${issue.path.join(".")}.` : "";
+  // Read defensively rather than through the `code` narrowing: `error.issues` is typed as the base
+  // `$ZodIssue`, which does not discriminate on `code`, so `issue.keys` is not reachable through it
+  // even though the runtime value carries it.
+  const rawKeys = (issue as { keys?: unknown }).keys;
+  const unknownKeys = Array.isArray(rawKeys) ? rawKeys.map(String) : [];
+
+  if (unknownKeys.length === 0) {
+    // An empty list would silently drop the issue, leaving a 400 with no `invalid_params` at all.
+    return [{ name: fallbackName, reason: issue.message, code: "unsupported_field" }];
+  }
+
+  const named = unknownKeys.slice(0, MAX_REPORTED_UNKNOWN_KEYS);
+  const params: InvalidParam[] = named.map((key) => ({
+    name: `${prefix}${key}`,
+    reason: `Unsupported field '${key}'`,
+    code: "unsupported_field",
+  }));
+
+  if (unknownKeys.length > named.length) {
+    params.push({
+      name: prefix ? prefix.slice(0, -1) : fallbackName,
+      reason: `${unknownKeys.length - named.length} further unsupported fields were not listed`,
+      code: "unsupported_field",
+    });
+  }
+
+  return params;
+}
+
 function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "params"): InvalidParam[] {
-  return error.issues.map((issue) => {
+  return error.issues.flatMap((issue) => {
+    if (issue.code === "unrecognized_keys") {
+      return expandUnrecognizedKeys(issue, fallbackName);
+    }
+
     const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
     const code = isInvalidParamCode(params.code) ? params.code : undefined;
 
-    return {
-      name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
-      reason: issue.message,
-      ...(code ? { code } : {}),
-    };
+    return [
+      {
+        name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
+        reason: issue.message,
+        ...(code ? { code } : {}),
+      },
+    ];
   });
 }
 

@@ -318,6 +318,12 @@ get:
       $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
+    "413":
+      description: Payload Too Large — the request body exceeds the 2 MB limit.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
     "429":
       $ref: ../components/responses/V3TooManyRequests.yml
     "500":
@@ -453,11 +459,29 @@ post:
       $ref: ../components/responses/V3Forbidden.yml
     "422":
       description: >
-        Unprocessable Content — the body is well-formed but conflicts with stored state: `surveyId`
-        does not resolve, `endingId` is not an ending of that survey, `language` is not enabled on
-        it, `contactId` is not a contact in the same workspace, `displayId` already backs another
-        response, `singleUseId` is already used for this survey, or an answer violates the survey's
-        own validation rules. Each is itemized in `invalid_params`.
+        Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId`
+        is not an ending of that survey, `language` is not enabled on it, `contactId` is not a
+        contact in the same workspace, `displayId` does not exist for that survey or already backs
+        another response, `singleUseId` is already used for this survey, a tag id does not resolve in
+        the same workspace, an `embeddedData` name is not declared on the survey, is ambiguous, or is
+        addressed twice by one payload, a file-upload answer references a file outside this survey's
+        upload element, or an answer violates the survey's own validation rules. Each is itemized in
+        `invalid_params`.
+
+
+        **`surveyId` is not in that list, and answers 403 instead** — whether it names no survey at
+        all or one in another workspace. Every other id here is checked *after* authorization,
+        inside a workspace the caller already holds, so a distinct answer for each discloses
+        nothing. `surveyId` is the scope anchor and is necessarily checked *before* authorization,
+        so a separate "no such survey" would let any valid API key probe the id space of every other
+        tenant. The two cases are therefore byte-identical, as they are on `GET`, `PATCH` and
+        `DELETE` of a response id.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "413":
+      description: Payload Too Large — the request body exceeds the 2 MB limit.
       content:
         application/problem+json:
           schema:

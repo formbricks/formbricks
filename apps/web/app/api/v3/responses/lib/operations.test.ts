@@ -53,6 +53,19 @@ vi.mock("./service", () => ({
   getScopedV3Response: mockGetScoped,
   getV3ResponseSurveys: mockGetSurveys,
 }));
+/**
+ * The write half is mocked out wholesale here: this file covers the read and delete operations, and
+ * loading `write-service` for real pulls in the BullMQ producer through `@/app/lib/pipelines`, which
+ * does not load under the unit harness. The writes have their own suite.
+ */
+vi.mock("./write-service", () => ({
+  getSurveyForV3Write: vi.fn(),
+  createScopedResponse: vi.fn(),
+  updateScopedResponse: vi.fn(),
+  readbackV3Response: vi.fn(),
+  dispatchV3ResponsePipeline: vi.fn(),
+  normalizeV3Ttc: vi.fn(() => ({})),
+}));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }) },
 }));
