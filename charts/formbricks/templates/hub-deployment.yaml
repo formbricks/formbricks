@@ -48,12 +48,12 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
       {{- end }}
-      {{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+      {{- if and (eq .Values.migration.mode "job") .Values.hub.migration.waitForFormbricksMigration.enabled }}
       serviceAccountName: {{ include "formbricks.hubMigrationWaitServiceAccountName" . }}
       automountServiceAccountToken: true
       {{- end }}
       initContainers:
-        {{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+        {{- if and (eq .Values.migration.mode "job") .Values.hub.migration.waitForFormbricksMigration.enabled }}
         - name: wait-for-formbricks-migration
           image: {{ include "formbricks.deploymentImage" . }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}

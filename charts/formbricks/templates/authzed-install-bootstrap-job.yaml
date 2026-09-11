@@ -1,0 +1,77 @@
+{{- if and .Values.authzed.enabled .Values.authzed.activation.installBootstrap.enabled .Release.IsInstall }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "formbricks.name" . }}-authzed-install-bootstrap
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+  annotations:
+    # This is an ordinary install resource for Helm: a pre/post-install hook would run before its
+    # Secrets/PostgreSQL exist or after the receipt-gated Deployment, respectively. Argo CD executes
+    # the same idempotent command after migrations and the SpiceDB resource have reached lower waves.
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  activeDeadlineSeconds: {{ .Values.authzed.activation.installBootstrap.timeoutSeconds }}
+  backoffLimit: {{ .Values.authzed.activation.installBootstrap.backoffLimit }}
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: authzed-install-bootstrap
+    spec:
+      restartPolicy: Never
+      {{- if .Values.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.deployment.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml .Values.deployment.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if .Values.rbac.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.rbac.serviceAccount.name | default (include "formbricks.name" .) }}
+      {{- end }}
+      {{- if .Values.deployment.securityContext }}
+      securityContext:
+        {{- toYaml .Values.deployment.securityContext | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: bootstrap
+          image: {{ include "formbricks.deploymentImage" . }}
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          command: ["sh", "-ec"]
+          args:
+            - |
+              timeout={{ .Values.authzed.activation.installBootstrap.timeoutSeconds }}
+              interval={{ .Values.authzed.activation.installBootstrap.intervalSeconds }}
+              elapsed=0
+              while ! formbricks-authzed activation bootstrap; do
+                elapsed=$((elapsed + interval))
+                if [ "$elapsed" -ge "$timeout" ]; then
+                  echo '{"code":"authzed_activation_required","retryable":false,"status":"failed"}'
+                  exit 1
+                fi
+                sleep "$interval"
+              done
+          env:
+            {{- include "formbricks.authzedActivationEnvironment" . | nindent 12 }}
+          {{- if .Values.migration.resources }}
+          resources:
+            {{- toYaml .Values.migration.resources | nindent 12 }}
+          {{- end }}
+{{- end }}

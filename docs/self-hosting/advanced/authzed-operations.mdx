@@ -202,9 +202,9 @@ authzed:
 ```
 
 AuthZed and `fully_consistent` authorization are enabled by default. The operator runs SpiceDB datastore
-migrations. A fresh Helm installation runs a release-matched, aggregate-only initialization Job after the
-datastore and Formbricks migrations become available. Application startup and probes do not depend on this Job.
-Existing releases never run it as an upgrade hook; they must use the explicit upgrade commands below.
+migrations. A fresh Helm installation runs a bounded, idempotent `activation bootstrap` Job after the datastore
+and Formbricks migrations become available. Formbricks startup waits for the resulting database receipt, but the
+wait performs no SpiceDB RPC and general health probes remain independent from SpiceDB after startup.
 
 The release notes print the exact deployment command. With the default release:
 
@@ -212,7 +212,7 @@ The release notes print the exact deployment command. With the default release:
 kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed health
 kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed schema check
 kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed backfill
-kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed upgrade check
+kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed activation runtime-check
 ```
 
 Replace the namespace and deployment name if you override them. These commands execute inside the existing
@@ -221,39 +221,46 @@ application pod and do not require exposing PostgreSQL or SpiceDB.
 ## Upgrade an existing installation to v6
 
 Formbricks v6 has no legacy authorization fallback. Do not deploy it over an installation whose graph has not
-been proven complete. First upgrade to the bridge-compatible v5 release named in the v6 release notes, enable
-durable projection, and take coordinated Formbricks and SpiceDB backups.
+been proven complete. Use the signed upgrade assistant distributed with the v6 release. It verifies signatures
+and image digests, detects the existing deployment shape, and produces a reviewable plan before making changes.
 
 Begin with the [signed v6 upgrade assistant](/self-hosting/advanced/v6-upgrade-assistant). Its read-only
 preflight detects the installation and current version, verifies that the release manifest contains immutable
 bridge and target image digests, and reports missing prerequisites without changing the deployment.
 
-Run the release-matched v6 image as the operator container or executable while the bridge release still serves
-traffic:
+For Helm, the assistant drives two deliberately separate charts:
 
-```bash
-formbricks-authzed upgrade prepare
-formbricks-authzed upgrade check
-```
+- The permanent Formbricks chart receives the private SpiceDB runtime and the immutable v5 bridge image.
+- The temporary `formbricks-upgrade` chart owns preparation, audit, fencing, activation, finalization, and rollback
+  coordination. Uninstall it after finalization; no temporary cutover Job remains in the permanent release.
 
-`prepare` verifies configuration and datastore readiness, applies an empty or already-matching canonical schema,
-drains the outbox, reconciles attributable relationships, and runs a final audit. If the remote schema is
-non-empty and differs, first run `schema check`, review the diff and backup, then pass its exact `remoteDigest`:
+The assistant performs this sequence:
 
-```bash
-formbricks-authzed upgrade prepare \
-  --expected-current-digest sha256:<reviewed-remote-digest>
-```
+1. Deploy the bridge with `authzed.activation.upgradeGate.enabled=false`. PostgreSQL remains authoritative for
+   decisions while the durable projection is populated.
+2. Apply the release schema, drain the projection outbox, reconcile the complete relationship graph, and create a
+   database-backed receipt tied to the bridge and candidate image digests.
+3. Quiesce authorization mutations, verify a clean final audit and monotonic outbox watermark, then atomically
+   activate the receipt.
+4. Upgrade the permanent release to the digest-pinned v6 candidate with `migration.mode=external` and the
+   pre-upgrade receipt gate enabled. The candidate image validates the database receipt before replacing Pods.
+5. Finalize the receipt, uninstall the temporary chart, and retain the exact bridge image for the rollback window.
 
-`check` is read-only. It exits `0` only when AuthZed is enabled with `fully_consistent`, authenticated health is
-good, the canonical schema matches, the outbox has no pending or dead-lettered work, no revocation has crossed a
-warning threshold, and a complete dry-run relationship audit is clean. Exit `2` means the release remains
-blocked; exit `1` means configuration or an operation failed. Output contains only aggregate counters and stable
-error codes.
+The candidate gate runs `formbricks-authzed activation runtime-check`. It reads PostgreSQL only and fails when the
+receipt, schema, authorization contract, or client configuration is incompatible. There is no boolean
+acknowledgement and no supported bypass. Schema mutation, graph repair, authority switching, and rollback never run
+as hooks in the permanent chart.
 
-For one-click, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` only after those commands pass.
-For Helm, set `authzed.migrationAcknowledged=true` only in the v6 upgrade values. The chart refuses an upgrade
-without it and refuses `authzed.enabled=false` or consistency weaker than `fully_consistent`.
+<Warning>
+  The first v6 candidate rollout must use `migration.mode=external`; the temporary coordinator applies the
+  release's rollback-compatible migrations while the bridge still serves traffic. Do not let a normal migration
+  Job race the authority switch.
+</Warning>
+
+Argo CD renders Helm templates with install semantics rather than setting `.Release.IsUpgrade`. Existing Argo
+applications must set `authzed.activation.installBootstrap.enabled=false` for the bridge rollout. The temporary
+coordinator establishes the receipt, and the application startup check remains the final fail-closed guard even
+though Argo does not execute Helm's pre-upgrade lifecycle.
 
 ## Activate or upgrade SpiceDB
 
@@ -310,13 +317,14 @@ Use the following sequence for a new deployment, schema change, SpiceDB version 
     Require a clean result before relying on SpiceDB authorization decisions.
 
   </Step>
-  <Step title="Run the release gate">
+  <Step title="Verify the activation receipt">
 
     ```bash
-    formbricks-authzed upgrade check
+    formbricks-authzed activation runtime-check
     ```
 
-    Do not start a direct-authority release unless this exits `0`.
+    Do not start a direct-authority release unless this exits `0`. Existing upgrades obtain the receipt from the
+    temporary coordinator; fresh installations create it through the install bootstrap.
 
   </Step>
   <Step title="Restart and observe">

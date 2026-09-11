@@ -1,11 +1,60 @@
+{{- $installBootstrapEnabled := and .Release.IsInstall .Values.authzed.activation.installBootstrap.enabled -}}
+{{- $upgradeGateEnabled := and .Release.IsUpgrade .Values.authzed.activation.upgradeGate.enabled -}}
+{{- $externalAppSecretEnabled := and .Values.externalSecret.enabled (hasKey (default dict .Values.externalSecret.files) "app-secrets") -}}
+{{- $chartManagesAppSecret := or .Values.secret.enabled $externalAppSecretEnabled -}}
+{{- $customDatabaseEnvironment := or (hasKey .Values.deployment.env "DATABASE_URL") (hasKey .Values.deployment.env "MIGRATE_DATABASE_URL") (gt (len (default dict .Values.deployment.envFrom)) 0) -}}
 {{- if not .Values.authzed.enabled -}}
 {{- fail "Formbricks v6 requires AuthZed. Follow the v6 migration guide instead of upgrading with authzed.enabled=false" -}}
 {{- end -}}
-{{- if and .Release.IsUpgrade (not .Values.authzed.migrationAcknowledged) -}}
-{{- fail "AuthZed v6 upgrade preparation is not acknowledged. Complete formbricks-authzed upgrade prepare and upgrade check, then set authzed.migrationAcknowledged=true" -}}
+{{- if hasKey .Values.migration "enabled" -}}
+{{- fail "migration.enabled was replaced by migration.mode; choose job, startup, or external" -}}
 {{- end -}}
-{{- if and (not .Values.authzed.initialization.enabled) (not .Values.authzed.migrationAcknowledged) -}}
-{{- fail "Disabling the AuthZed initialization Job requires authzed.migrationAcknowledged=true after completing the guarded preparation externally" -}}
+{{- if not (has .Values.migration.mode (list "job" "startup" "external")) -}}
+{{- fail "migration.mode must be one of: job, startup, external" -}}
+{{- end -}}
+{{- if hasKey .Values.authzed "migrationAcknowledged" -}}
+{{- fail "authzed.migrationAcknowledged was removed; the v6 candidate requires a database-backed activation receipt" -}}
+{{- end -}}
+{{- if hasKey .Values.authzed "initialization" -}}
+{{- fail "authzed.initialization was replaced by authzed.activation.installBootstrap and authzed.activation.upgradeGate" -}}
+{{- end -}}
+{{- range $name := list "AUTHZED_ENABLED" "AUTHZED_ENDPOINT" "AUTHZED_TOKEN" "AUTHZED_SYSTEM_KEY" "AUTHZED_INSECURE" "AUTHZED_CONSISTENCY" -}}
+{{- if hasKey $.Values.deployment.env $name -}}
+{{- fail (printf "deployment.env.%s is not supported; configure the matching authzed value or Secret so activation Jobs and application Pods use one contract" $name) -}}
+{{- end -}}
+{{- end -}}
+{{- if and $upgradeGateEnabled (not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.deployment.image.digest)) -}}
+{{- fail "deployment.image.digest must be a lowercase sha256 digest when the AuthZed pre-upgrade receipt gate is enabled" -}}
+{{- end -}}
+{{- if and (or $installBootstrapEnabled $upgradeGateEnabled) (not .Values.authzed.activation.database.existingSecret) (not $chartManagesAppSecret) -}}
+{{- fail "authzed.activation.database.existingSecret is required when the chart does not manage the app-secrets Secret" -}}
+{{- end -}}
+{{- if and (or $installBootstrapEnabled $upgradeGateEnabled) $customDatabaseEnvironment (not .Values.authzed.activation.database.existingSecret) -}}
+{{- fail "authzed.activation.database.existingSecret is required when deployment.env or deployment.envFrom can select a custom application database" -}}
+{{- end -}}
+{{- if not .Values.authzed.activation.database.urlKey -}}
+{{- fail "authzed.activation.database.urlKey is required" -}}
+{{- end -}}
+{{- if or (lt (int .Values.authzed.activation.installBootstrap.timeoutSeconds) 1) (gt (int .Values.authzed.activation.installBootstrap.timeoutSeconds) 3600) -}}
+{{- fail "authzed.activation.installBootstrap.timeoutSeconds must be between 1 and 3600" -}}
+{{- end -}}
+{{- if or (lt (int .Values.authzed.activation.installBootstrap.intervalSeconds) 1) (gt (int .Values.authzed.activation.installBootstrap.intervalSeconds) 60) -}}
+{{- fail "authzed.activation.installBootstrap.intervalSeconds must be between 1 and 60" -}}
+{{- end -}}
+{{- if or (lt (int .Values.authzed.activation.installBootstrap.backoffLimit) 0) (gt (int .Values.authzed.activation.installBootstrap.backoffLimit) 10) -}}
+{{- fail "authzed.activation.installBootstrap.backoffLimit must be between 0 and 10" -}}
+{{- end -}}
+{{- if or (lt (int .Values.authzed.activation.upgradeGate.activeDeadlineSeconds) 1) (gt (int .Values.authzed.activation.upgradeGate.activeDeadlineSeconds) 900) -}}
+{{- fail "authzed.activation.upgradeGate.activeDeadlineSeconds must be between 1 and 900" -}}
+{{- end -}}
+{{- if or (lt (int .Values.authzed.activation.upgradeGate.backoffLimit) 0) (gt (int .Values.authzed.activation.upgradeGate.backoffLimit) 10) -}}
+{{- fail "authzed.activation.upgradeGate.backoffLimit must be between 0 and 10" -}}
+{{- end -}}
+{{- if or (lt (int .Values.authzed.activation.startupWait.timeoutSeconds) 1) (gt (int .Values.authzed.activation.startupWait.timeoutSeconds) 3600) -}}
+{{- fail "authzed.activation.startupWait.timeoutSeconds must be between 1 and 3600" -}}
+{{- end -}}
+{{- if or (lt (int .Values.authzed.activation.startupWait.intervalSeconds) 1) (gt (int .Values.authzed.activation.startupWait.intervalSeconds) 60) -}}
+{{- fail "authzed.activation.startupWait.intervalSeconds must be between 1 and 60" -}}
 {{- end -}}
 {{- if ne .Values.authzed.consistency "fully_consistent" -}}
 {{- fail "Formbricks v6 requires authzed.consistency=fully_consistent" -}}

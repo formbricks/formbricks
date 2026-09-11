@@ -205,37 +205,59 @@ endpoint; plaintext transport sends the preshared token without TLS protection. 
 the Formbricks app. Authorization checks must fail closed once product enforcement is enabled; general
 Formbricks readiness remains independent from transient SpiceDB availability.
 
-Fresh installs run a release-matched post-install initialization Job that applies the canonical schema and verifies
-the empty or reconciled graph. An acknowledged existing release runs the same release-matched gate as a pre-upgrade
-hook; unacknowledged upgrades are rejected before rendering. Before the first v6 upgrade, run:
+Fresh installs run `formbricks-authzed activation bootstrap` in a bounded, idempotent Job. It applies the
+release schema, verifies an empty graph, and writes a database-backed activation receipt. It is deliberately an
+ordinary Helm install resource rather than a post-install hook: application startup waits for that receipt, so a
+post-install hook would deadlock behind Deployment readiness. The wait reads PostgreSQL only; `/health`, liveness,
+and readiness remain independent from transient SpiceDB availability after startup.
 
-```bash
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade prepare
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade check
+Select one database migration owner with `migration.mode`:
 
-# Empty instances only
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply
+- `job` (default) runs the release image as an install resource and as a `pre-upgrade` hook.
+- `startup` leaves migrations to application startup.
+- `external` skips both paths because an operator or upgrade coordinator completed them first.
 
-# Non-empty instances: use the remoteDigest returned by the immediately preceding check
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply \
-  --expected-current-digest sha256:<digest-from-check>
+The first v5-to-v6 candidate rollout must use `migration.mode=external`. Upgrade through the signed release
+assistant: it deploys the immutable v5 bridge, installs the temporary upgrade coordinator, prepares and activates
+the graph, then supplies the database receipt consumed by the candidate. The permanent chart contains no prepare,
+audit, fence, authority-switch, finalization, or rollback phases.
+
+The signed release assistant pins the initial v6 candidate by digest. It may also enable
+`authzed.activation.upgradeGate.enabled=true`, whose pre-upgrade Job executes the candidate image's
+`formbricks-authzed activation runtime-check`; the DB-only check fails before any application Pod is replaced when
+the receipt, schema, contract, or client configuration does not match. The permanent chart leaves this hook
+disabled by default so ordinary tag-based patch upgrades remain supported. Application startup always performs
+the bounded receipt check. Enabling the hook requires `deployment.image.digest`, ensuring the gate and rollout
+execute the same candidate image.
+
+Both activation Jobs import only explicit `DATABASE_URL` and AuthZed Secret keys. They never inherit the entire
+application Secret. By default `DATABASE_URL` comes from `<release>-app-secrets`. If `deployment.env` defines
+`DATABASE_URL` or `MIGRATE_DATABASE_URL`, or if a custom `deployment.envFrom` source can select the application
+database, name the matching database Secret explicitly:
+
+```yaml
+authzed:
+  activation:
+    database:
+      existingSecret: my-formbricks-database
+      urlKey: DATABASE_URL
 ```
 
-The initial apply to an empty instance needs no digest. A non-empty instance must first be checked and then
-prepared with `--expected-current-digest sha256:<digest-from-check>`. Once `upgrade check` exits `0`, set
-`authzed.migrationAcknowledged=true` in the v6 upgrade values. The chart refuses an unacknowledged upgrade,
-`authzed.enabled=false`, or consistency other than `fully_consistent`. Back up the current schema and affected
-relationships before replacement; see the repository `authzed/README.md` for exit codes and rollback rules.
-The public [AuthZed operations guide](../../docs/self-hosting/advanced/authzed-operations.mdx) covers backups,
-restoration, schema lifecycle, relationship repair, and monitoring.
+Configure the six AuthZed application variables through `authzed.*` and its named Secrets. The chart rejects
+matching `deployment.env.AUTHZED_*` entries so the activation Jobs and application Pods cannot use different
+endpoints, credentials, system keys, transport modes, or consistency contracts. An `envFrom` source cannot
+override them because Kubernetes applies the chart's explicit container environment entries last.
 
-Cloud operators that run the same guarded schema, outbox drain, reconciliation, and audit sequence outside Helm
-may set `authzed.initialization.enabled=false` together with `authzed.migrationAcknowledged=true`. This suppresses
-the initialization hook so a GitOps sync cannot mutate the authorization graph outside the controlled cutover
-window. The acknowledgement must be set only after the external preparation succeeds. Fresh self-hosted installs
-should keep the default initialization Job enabled.
+Argo CD applies chart-managed Secrets and PostgreSQL at wave `-2`, the database bootstrap and migration Job at
+`-1`, the SpiceDB cluster at `0`, the fresh-install activation Job at `1`, and Formbricks at `2`. Argo renders Helm
+charts with install semantics on every sync, so an existing Argo application must set
+`authzed.activation.installBootstrap.enabled=false` before its bridge rollout. The temporary coordinator owns the
+upgrade receipt; startup validation remains the final fail-closed gate because Argo does not execute Helm's
+`pre-upgrade` lifecycle.
+
+Back up the current schema and affected relationships before replacement. The public
+[AuthZed operations guide](../../docs/self-hosting/advanced/authzed-operations.mdx) covers the automated upgrade,
+backups, restoration, schema lifecycle, relationship repair, and rollback.
 
 ## Cube
 
@@ -267,12 +289,12 @@ seconds; `hub.worker.waitForApi.maxAttempts` limits the failed checks before the
 exits. Setting `hub.worker.waitForApi.enabled=false` omits the health gate, so the worker starts
 without waiting for Hub API health.
 
-When the Formbricks migration job is enabled, Hub waits for the `formbricks-migration` Job to complete before its own goose/river init migrations run. This keeps fresh shared-database installs from creating Hub tables before Prisma has initialized the Formbricks schema.
+When `migration.mode=job`, Hub waits for the `formbricks-migration` Job to complete before its own goose/river init migrations run. This keeps fresh shared-database installs from creating Hub tables before Prisma has initialized the Formbricks schema.
 If the Job has already been cleaned up, Hub only continues after all expected Prisma and data migration success markers are present in the database.
 
 Before migrations start, the migration Job waits for the effective PostgreSQL endpoint to accept TCP connections. `MIGRATE_DATABASE_URL` takes precedence over `DATABASE_URL`, matching the migration runner. Configure the timeout and retry interval under `migration.waitForDatabase`, or disable the readiness check for deployments that provide their own gate.
 
-When deployed with Argo CD, chart-managed Secrets, ExternalSecrets, and bundled PostgreSQL render in sync wave `-2`, and the Formbricks and Hub migration hooks run in sync wave `-1`. This lets app and Hub secrets exist and PostgreSQL become healthy before migration jobs start.
+When deployed with Argo CD, chart-managed Secrets, ExternalSecrets, and bundled PostgreSQL render in sync wave `-2`; database bootstrap and migration jobs run in wave `-1`; SpiceDB renders in wave `0`; fresh activation runs in wave `1`; and Formbricks renders in wave `2`.
 
 Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
 
@@ -680,6 +702,17 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | autoscaling.metrics[1].resource.target.type                        | string | `"Utilization"`                                                             |                                                           |
 | autoscaling.metrics[1].type                                        | string | `"Resource"`                                                                |                                                           |
 | autoscaling.minReplicas                                            | int    | `1`                                                                         |                                                           |
+| authzed.activation.database.existingSecret                         | string | `""`                                                                        | Secret containing the activation database URL.            |
+| authzed.activation.database.urlKey                                 | string | `"DATABASE_URL"`                                                            | Activation database URL key.                              |
+| authzed.activation.installBootstrap.backoffLimit                   | int    | `0`                                                                         | Kubernetes retries for the fresh-install bootstrap Job.   |
+| authzed.activation.installBootstrap.enabled                        | bool   | `true`                                                                      | Bootstrap an empty graph and receipt on fresh installs.   |
+| authzed.activation.installBootstrap.intervalSeconds                | int    | `5`                                                                         | Delay between bounded bootstrap attempts.                 |
+| authzed.activation.installBootstrap.timeoutSeconds                 | int    | `900`                                                                       | Fresh-install bootstrap deadline.                         |
+| authzed.activation.startupWait.intervalSeconds                     | int    | `5`                                                                         | Delay between startup receipt checks.                     |
+| authzed.activation.startupWait.timeoutSeconds                      | int    | `900`                                                                       | Application startup receipt deadline.                     |
+| authzed.activation.upgradeGate.activeDeadlineSeconds               | int    | `120`                                                                       | Pre-upgrade receipt gate deadline.                        |
+| authzed.activation.upgradeGate.backoffLimit                        | int    | `0`                                                                         | Kubernetes retries for the pre-upgrade gate Job.          |
+| authzed.activation.upgradeGate.enabled                             | bool   | `false`                                                                     | Opt into a digest-pinned receipt check before an upgrade. |
 | componentOverride                                                  | string | `""`                                                                        |                                                           |
 | deployment.additionalLabels                                        | object | `{}`                                                                        |                                                           |
 | deployment.additionalPodAnnotations                                | object | `{}`                                                                        |                                                           |
@@ -862,7 +895,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | llm.servingEngineSpec.strategy.type                                | string | `"Recreate"`                                                                | Avoids requiring a second GPU during model pod upgrades.  |
 | migration.annotations                                              | object | `{}`                                                                        |                                                           |
 | migration.backoffLimit                                             | int    | `3`                                                                         |                                                           |
-| migration.enabled                                                  | bool   | `true`                                                                      |                                                           |
+| migration.mode                                                     | string | `"job"`                                                                   | One of `job`, `startup`, or `external`.                  |
 | migration.resources.limits.memory                                  | string | `"512Mi"`                                                                   |                                                           |
 | migration.resources.requests.cpu                                   | string | `"100m"`                                                                    |                                                           |
 | migration.resources.requests.memory                                | string | `"256Mi"`                                                                   |                                                           |

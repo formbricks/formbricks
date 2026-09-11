@@ -146,15 +146,26 @@ inside a Formbricks pod. Start with:
 ```bash
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade check
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed activation runtime-check
 ```
 
-A fresh install runs an idempotent initialization Job, but application startup and probes remain independent
-from it. Upgrades never run relationship preparation automatically. Before the first v6 upgrade, run
-`formbricks-authzed upgrade prepare`, require `upgrade check` to exit `0`, and then set
-`authzed.migrationAcknowledged: true`. The chart refuses an unacknowledged upgrade, disabled AuthZed, or weaker
-consistency. Follow [AuthZed Operations](/self-hosting/advanced/authzed-operations) and do not expose SpiceDB
-through an Ingress.
+A fresh install runs a bounded, idempotent activation bootstrap and waits for its database receipt before the
+application starts. General health probes remain independent from SpiceDB. Existing installations upgrade with
+the signed v6 release assistant and temporary upgrade chart; there is no boolean acknowledgement to bypass. The
+first v6 candidate uses an immutable image digest and `migration.mode: external`. The assistant opts that rollout
+into the Helm pre-upgrade gate, which verifies the receipt before replacing application Pods. The gate stays
+disabled for ordinary tag-based upgrades and requires `deployment.image.digest` when enabled; application startup
+always performs the bounded database-only check.
+
+The default `migration.mode: job` is appropriate for fresh installs and ordinary compatible upgrades. Use
+`startup` only when application startup owns migrations, or `external` when your deployment automation has
+already completed them. Follow [AuthZed Operations](/self-hosting/advanced/authzed-operations) and do not expose
+SpiceDB through an Ingress.
+
+Set AuthZed client configuration through `authzed.*` and its named Secrets, not `deployment.env.AUTHZED_*`.
+Using one chart-level source keeps the activation Jobs and application Pods on the same endpoint, token, system
+key, transport, and consistency contract. When `deployment.env` or a custom `deployment.envFrom` selects the
+application database, also set `authzed.activation.database.existingSecret` to the matching database Secret.
 
 ## 3. v5-Specific Deployment Notes
 

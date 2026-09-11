@@ -152,6 +152,10 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- .Values.authzed.datastore.existingSecret | default (include "formbricks.authzedManagedSecretName" .) -}}
 {{- end }}
 
+{{- define "formbricks.authzedActivationDatabaseSecretName" -}}
+{{- .Values.authzed.activation.database.existingSecret | default (include "formbricks.appSecretName" .) -}}
+{{- end }}
+
 {{- define "formbricks.authzedEndpoint" -}}
 {{- if .Values.authzed.endpoint -}}
 {{- .Values.authzed.endpoint -}}
@@ -227,6 +231,43 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 
 {{- define "formbricks.migrationJobName" -}}
 {{- printf "%s-migration" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "formbricks.authzedActivationEnvironment" -}}
+- name: DATABASE_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "formbricks.authzedActivationDatabaseSecretName" . }}
+      key: {{ .Values.authzed.activation.database.urlKey }}
+- name: LOG_LEVEL
+  value: fatal
+- name: CUBEJS_API_URL
+  value: http://localhost
+- name: CUBEJS_API_SECRET
+  value: authzed-activation-unused
+- name: HUB_API_URL
+  value: http://localhost
+- name: HUB_API_KEY
+  value: authzed-activation-unused
+- name: REDIS_URL
+  value: redis://localhost
+- name: ENCRYPTION_KEY
+  value: authzed-activation-unused
+- name: AUTHZED_ENABLED
+  value: "true"
+- name: AUTHZED_ENDPOINT
+  value: {{ include "formbricks.authzedEndpoint" . | quote }}
+- name: AUTHZED_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "formbricks.authzedAuthSecretName" . }}
+      key: {{ .Values.authzed.auth.tokenKey }}
+- name: AUTHZED_SYSTEM_KEY
+  value: {{ .Values.authzed.systemKey | quote }}
+- name: AUTHZED_INSECURE
+  value: {{ include "formbricks.authzedInsecure" . | quote }}
+- name: AUTHZED_CONSISTENCY
+  value: fully_consistent
 {{- end }}
 
 {{/*
