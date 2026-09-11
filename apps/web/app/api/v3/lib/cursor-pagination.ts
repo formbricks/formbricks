@@ -3,7 +3,7 @@ import { InvalidInputError } from "@formbricks/types/errors";
 
 /** Default/max page size for v3 reference-collection list endpoints (action classes, attribute keys). */
 export const V3_LIST_DEFAULT_LIMIT = 50;
-export const V3_LIST_MAX_LIMIT = 100;
+export const V3_LIST_MAX_LIMIT = 250;
 
 const encodeIdCursor = (id: string): string => Buffer.from(id, "utf8").toString("base64url");
 

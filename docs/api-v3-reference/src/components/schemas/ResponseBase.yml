@@ -1,0 +1,129 @@
+type: object
+description: >
+  Fields shared by both response views. Self-describing: `answers[]` carries each
+  element's id, label, type and value, so a consumer can read a response without also fetching the
+  survey.
+
+
+  Deliberately open — `ResponseListItem` and `ResponseResource` compose this and close themselves, so
+  that the detailed view can add fields without the base rejecting them.
+required:
+  - id
+  - surveyId
+  - surveyName
+  - workspaceId
+  - createdAt
+  - updatedAt
+  - finished
+  - endingId
+  - language
+  - resolution
+  - answers
+  - embeddedData
+  - unresolved
+  - tags
+properties:
+  id:
+    readOnly: true
+    type: string
+    format: cuid2
+    description: Response identifier.
+  surveyId:
+    type: string
+    format: cuid2
+    description: The survey this response belongs to.
+  surveyName:
+    readOnly: true
+    type: string
+    description: >-
+      The survey's current name, denormalized into the payload so a consumer listing responses need
+      not resolve survey names separately.
+  workspaceId:
+    readOnly: true
+    type: string
+    format: cuid2
+    description: >-
+      The owning workspace, resolved through the survey. Responses carry no workspace column of their
+      own; this is a derived field.
+  createdAt:
+    readOnly: true
+    type: string
+    format: date-time
+    description: >
+      When the response was created. **Server-owned** — it cannot be supplied on create or changed by
+      a patch. This is the AIP-148 output-only convention, and it is deliberate on two counts:
+      monthly response metering counts rows by `(surveyId, createdAt)`, and a client-chosen
+      `createdAt` can insert rows into the middle of another consumer's already-paginated stream.
+      Backdating remains available on v1/v2; a dedicated import path is future work.
+  updatedAt:
+    readOnly: true
+    type: string
+    format: date-time
+    description: >-
+      When the response was last modified. Server-owned. Neither filterable nor sortable — it has no
+      index, and being mutable it cannot anchor a pagination cursor.
+  finished:
+    type: boolean
+    description: Whether the respondent reached an ending.
+  endingId:
+    type:
+      - string
+      - "null"
+    description: The ending card the respondent reached. `null` for unfinished responses.
+  language:
+    type:
+      - string
+      - "null"
+    description: >-
+      The survey language this response was collected in, as a survey language code (not
+      necessarily a BCP-47 locale — `default` is a legitimate value). `null` when the survey is
+      single-language or no language was stamped.
+  durationSeconds:
+    readOnly: true
+    type: number
+    minimum: 0
+    description: >-
+      Total seconds the respondent spent, summed from per-element timing and **excluding** the stored
+      `_total` bucket, which the server maintains alongside real element ids and which would otherwise
+      be double-counted. Absent when the submission carried no timing.
+
+
+      Summing rather than reading `_total` is deliberate: the stored bucket is only written when a
+      response is finished, so reading it would leave every partial response without a duration even
+      when it carries per-element timing. This is also why the value can differ from the reserved
+      `durationSeconds` catalog entry, which does read the bucket and rounds to whole seconds — that
+      entry is not projected into `embeddedData[]`, so the two never appear side by side.
+  resolution:
+    readOnly: true
+    $ref: ./ResponseResolution.yml
+  answers:
+    readOnly: true
+    type: array
+    description: >-
+      One entry per element the respondent reached, in survey order. Empty for a response that
+      recorded no answers.
+    items:
+      $ref: ./ResponseAnswer.yml
+  embeddedData:
+    readOnly: true
+    type: array
+    description: >-
+      Hidden fields, variables and auto-captured context, as one collection. Empty when the response
+      carries none.
+    items:
+      $ref: ./ResponseEmbeddedDatum.yml
+  unresolved:
+    readOnly: true
+    type: array
+    description: >-
+      Stored data whose element or key no longer exists in the survey definition. Empty in the normal
+      case.
+    items:
+      $ref: ./ResponseUnresolvedEntry.yml
+  tags:
+    type: array
+    description: >-
+      Tags applied to this response, as `{ id, name }` references. Empty when the response is
+      untagged.
+    items:
+      $ref: ./ResponseTag.yml

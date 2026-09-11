@@ -3,6 +3,11 @@ name: limit
 schema:
   type: integer
   minimum: 1
-  maximum: 100
+  maximum: 250
   default: 20
-description: Page size (max 100).
+description: >-
+  Page size. A value above the maximum is rejected with **400** rather than silently reduced to it —
+  v3 rejects unusable input instead of substituting its own, the same way it rejects unrecognized
+  query parameters. The server may still return fewer items than requested, so treat
+  `meta.nextCursor` as the only end-of-collection signal rather than comparing the page length
+  against `limit`.
