@@ -8,7 +8,7 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { formatDateWithOrdinal } from "@/lib/utils/datetime";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
-import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utils";
+import { hasMoreThanOneActiveOwner, isInviteExpired } from "@/modules/organization/settings/teams/lib/utils";
 import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Badge } from "@/modules/ui/components/badge";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
@@ -227,7 +227,7 @@ export const MembersInfo = ({
   const { isOwner, isManager } = getAccessFlags(currentUserRole);
   const isOwnerOrManager = isOwner || isManager;
 
-  const doesOrgHaveMoreThanOneOwner = allMembers.filter((member) => member.role === "owner").length > 1;
+  const doesOrgHaveMoreThanOneOwner = hasMoreThanOneActiveOwner(members);
 
   return (
     <SettingsTable
