@@ -258,10 +258,12 @@ helm upgrade --install <release> formbricks/formbricks \
 ```
 
 On a failed release this renders ordered `pre-upgrade` hooks: Formbricks migrations, the idempotent SpiceDB
-database bootstrap, the activation bootstrap, and finally the mandatory receipt check. Application Pods are not
-replaced unless the final check succeeds. If an atomic install removed the release, Helm uses ordinary fresh
-install semantics instead. Recovery cannot convert a populated v5 database: activation refuses a nonempty graph
-without the migration receipt. Return `retryOnUpgrade` to `false` after a successful recovery.
+database bootstrap, the activation bootstrap, and finally the mandatory receipt check. Recovery uses
+`authzed.activation.installBootstrap.recoveryTimeoutSeconds` (20 minutes by default), which can outlive an
+abandoned 15-minute mutation fence before safely resuming. Application Pods are not replaced unless the final
+check succeeds. If an atomic install removed the release, Helm uses ordinary fresh install semantics instead.
+Recovery cannot convert a populated v5 database: activation refuses a nonempty graph without the migration
+receipt. Return `retryOnUpgrade` to `false` after a successful recovery.
 
 ## Upgrade an existing installation to v6
 

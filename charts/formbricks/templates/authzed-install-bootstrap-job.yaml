@@ -1,4 +1,5 @@
 {{- $retryOnUpgrade := and .Release.IsUpgrade .Values.authzed.activation.installBootstrap.retryOnUpgrade -}}
+{{- $timeoutSeconds := ternary .Values.authzed.activation.installBootstrap.recoveryTimeoutSeconds .Values.authzed.activation.installBootstrap.timeoutSeconds $retryOnUpgrade -}}
 {{- if and .Values.authzed.enabled .Values.authzed.activation.installBootstrap.enabled (or .Release.IsInstall $retryOnUpgrade) }}
 ---
 apiVersion: batch/v1
@@ -21,7 +22,7 @@ metadata:
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  activeDeadlineSeconds: {{ .Values.authzed.activation.installBootstrap.timeoutSeconds }}
+  activeDeadlineSeconds: {{ $timeoutSeconds }}
   backoffLimit: {{ .Values.authzed.activation.installBootstrap.backoffLimit }}
   ttlSecondsAfterFinished: 300
   template:
@@ -64,7 +65,7 @@ spec:
           command: ["sh", "-ec"]
           args:
             - |
-              timeout={{ .Values.authzed.activation.installBootstrap.timeoutSeconds }}
+              timeout={{ $timeoutSeconds }}
               interval={{ .Values.authzed.activation.installBootstrap.intervalSeconds }}
               elapsed=0
               while ! formbricks-authzed activation bootstrap; do

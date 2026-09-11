@@ -491,6 +491,8 @@ if grep --fixed-strings 'helm.sh/hook: post-upgrade' <<<"${recovery_database_boo
 fi
 grep --fixed-strings 'helm.sh/hook: pre-upgrade' <<<"${recovery_install_bootstrap}" >/dev/null
 grep --fixed-strings 'helm.sh/hook-weight: "10"' <<<"${recovery_install_bootstrap}" >/dev/null
+grep --fixed-strings 'activeDeadlineSeconds: 1200' <<<"${recovery_install_bootstrap}" >/dev/null
+grep --fixed-strings 'timeout=1200' <<<"${recovery_install_bootstrap}" >/dev/null
 grep --fixed-strings 'formbricks-authzed activation bootstrap' <<<"${recovery_install_bootstrap}" >/dev/null
 grep --fixed-strings "ghcr.io/formbricks/formbricks@${TEST_IMAGE_DIGEST}" \
   <<<"${recovery_install_bootstrap}" >/dev/null
@@ -525,6 +527,20 @@ if recovery_without_gate="$(helm template authzed-recovery-without-gate "${CHART
 fi
 grep --fixed-strings 'authzed.activation.upgradeGate.enabled must remain true during install-bootstrap recovery' \
   <<<"${recovery_without_gate}" >/dev/null
+
+if too_short_recovery="$(helm template authzed-too-short-install-recovery "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.installBootstrap.retryOnUpgrade=true \
+  --set authzed.activation.installBootstrap.recoveryTimeoutSeconds=900 2>&1)"; then
+  printf '%s\n' "Install recovery must outlive an abandoned mutation fence." >&2
+  exit 1
+fi
+grep --fixed-strings 'authzed.activation.installBootstrap.recoveryTimeoutSeconds must exceed the 15-minute mutation fence' \
+  <<<"${too_short_recovery}" >/dev/null
 
 if grep --extended-regexp 'authzed (initialize|upgrade (prepare|check))' <<<"${default_install}${gated_upgrade}" >/dev/null; then
   printf '%s\n' "Permanent chart resources must not invoke the retired cutover protocol." >&2

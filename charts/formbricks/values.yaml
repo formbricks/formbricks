@@ -657,6 +657,8 @@ authzed:
       # before the mandatory receipt gate. Argo retries the ordinary Sync hook and does not need this.
       retryOnUpgrade: false
       timeoutSeconds: 900
+      # Recovery must be able to outlive an abandoned 15-minute mutation fence before safely taking over.
+      recoveryTimeoutSeconds: 1200
       intervalSeconds: 5
       backoffLimit: 0
 

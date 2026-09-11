@@ -175,9 +175,9 @@ takes precedence over all `deployment.envFrom` sources. The Secret may also cont
 If a fresh Helm install fails after creating its resources but before writing the activation receipt, correct the
 underlying failure and rerun the same digest-pinned `helm upgrade --install` with
 `authzed.activation.installBootstrap.retryOnUpgrade: true`. Recovery replays migrations and database bootstrap,
-retries the empty-install activation, and still runs the mandatory receipt gate before replacing Pods. Use this
-only to recover a failed fresh install and return it to `false` after success; it is not an existing-installation
-upgrade path.
+retries the empty-install activation, and still runs the mandatory receipt gate before replacing Pods. Its
+20-minute default recovery deadline can outlive an abandoned 15-minute mutation fence. Use this only to recover a
+failed fresh install and return it to `false` after success; it is not an existing-installation upgrade path.
 
 Set AuthZed client configuration through `authzed.*` and its named Secrets, not `deployment.env.AUTHZED_*`.
 Using one chart-level source keeps the activation Jobs and application Pods on the same endpoint, token, system

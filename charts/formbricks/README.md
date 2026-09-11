@@ -280,8 +280,10 @@ helm upgrade --install <release> formbricks/formbricks \
 ```
 
 This explicit recovery mode reruns the idempotent migration and database bootstrap hooks, retries activation, and
-then runs the mandatory receipt gate before any application Pod changes. It is only for a failed fresh install;
-the activation command refuses a nonempty legacy database. Return `retryOnUpgrade` to `false` after recovery.
+then runs the mandatory receipt gate before any application Pod changes. Its separate 20-minute default deadline
+can safely outlive an abandoned 15-minute mutation fence; reducing it below the guarded recovery minimum is
+rejected. It is only for a failed fresh install; the activation command refuses a nonempty legacy database. Return
+`retryOnUpgrade` to `false` after recovery.
 
 Both activation Jobs import only explicit `DATABASE_URL` and AuthZed Secret keys. They never inherit the entire
 application Secret. By default `DATABASE_URL` comes from `<release>-app-secrets`. If `deployment.env` overrides the
@@ -774,6 +776,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | authzed.activation.installBootstrap.backoffLimit                   | int    | `0`                                                                         | Kubernetes retries for the fresh-install bootstrap Job.   |
 | authzed.activation.installBootstrap.enabled                        | bool   | `true`                                                                      | Bootstrap an empty graph and receipt on fresh installs.   |
 | authzed.activation.installBootstrap.intervalSeconds                | int    | `5`                                                                         | Delay between bounded bootstrap attempts.                 |
+| authzed.activation.installBootstrap.recoveryTimeoutSeconds         | int    | `1200`                                                                      | Helm failed-install recovery deadline.                    |
 | authzed.activation.installBootstrap.retryOnUpgrade                 | bool   | `false`                                                                     | Retry failed fresh-install activation on a Helm upgrade.  |
 | authzed.activation.installBootstrap.timeoutSeconds                 | int    | `900`                                                                       | Fresh-install bootstrap deadline.                         |
 | authzed.activation.startupWait.intervalSeconds                     | int    | `5`                                                                         | Delay between startup receipt checks.                     |

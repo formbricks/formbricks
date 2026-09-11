@@ -79,6 +79,10 @@
 {{- if or (lt (int .Values.authzed.activation.installBootstrap.timeoutSeconds) 1) (gt (int .Values.authzed.activation.installBootstrap.timeoutSeconds) 3600) -}}
 {{- fail "authzed.activation.installBootstrap.timeoutSeconds must be between 1 and 3600" -}}
 {{- end -}}
+{{- $minimumRecoveryTimeout := add 930 (int .Values.authzed.activation.installBootstrap.intervalSeconds) -}}
+{{- if or (le (int .Values.authzed.activation.installBootstrap.recoveryTimeoutSeconds) $minimumRecoveryTimeout) (gt (int .Values.authzed.activation.installBootstrap.recoveryTimeoutSeconds) 3600) -}}
+{{- fail "authzed.activation.installBootstrap.recoveryTimeoutSeconds must exceed the 15-minute mutation fence by at least intervalSeconds plus 30 seconds, and must not exceed 3600" -}}
+{{- end -}}
 {{- if or (lt (int .Values.authzed.activation.installBootstrap.intervalSeconds) 1) (gt (int .Values.authzed.activation.installBootstrap.intervalSeconds) 60) -}}
 {{- fail "authzed.activation.installBootstrap.intervalSeconds must be between 1 and 60" -}}
 {{- end -}}
