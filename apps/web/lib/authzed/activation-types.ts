@@ -1,6 +1,12 @@
 import "server-only";
 
 export const AUTHZED_ACTIVATION_PROTOCOL_VERSION = 1;
+/**
+ * Bump whenever evaluator, resolver, or projection semantics change without changing the public
+ * action vocabulary or canonical SpiceDB schema. It is part of the durable contract digest, so an
+ * incompatible image cannot start from an older finalized activation receipt.
+ */
+export const AUTHZED_CLIENT_CONTRACT_VERSION = 1;
 export const AUTHZED_ACTIVATION_CONTROL_ID = "formbricks";
 export const AUTHZED_ACTIVATION_FINALIZATION_TIMEOUT_MS = 10 * 60_000;
 export const AUTHZED_ACTIVATION_FINALIZATION_SETTLEMENT_GRACE_MS = 5 * 60_000;

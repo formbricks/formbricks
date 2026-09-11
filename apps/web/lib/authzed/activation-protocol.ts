@@ -357,7 +357,10 @@ export const bootstrapFreshAuthzedActivation = async (
       await recoverExpiredFreshAuthzedActivation(receipt.id, candidateManifestDigest);
     }
     receiptId = receipt.id;
-  } else if (status.transition === "idle") {
+  } else if (status.transition === "idle" || status.transition === "preparing") {
+    // A process can exit after acquiring the preparation lease but before persisting a receipt. Re-enter
+    // preparation here: the repository rejects an active foreign lease and atomically steals an expired
+    // lease, so retries recover without allowing two graph writers to proceed concurrently.
     receiptId = await prepareAuthzedActivationReceipt(
       {
         bridgeImageDigest: null,

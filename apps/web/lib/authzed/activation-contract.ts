@@ -2,17 +2,17 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { AUTHORIZATION_PERMISSION_MAP } from "@/lib/authorization/contract";
 import { env } from "@/lib/env";
-import type { TAuthzedDigest } from "./activation-types";
+import { AUTHZED_CLIENT_CONTRACT_VERSION, type TAuthzedDigest } from "./activation-types";
 import { readCanonicalAuthzedSchema } from "./schema-source";
 
 const digest = (value: string): TAuthzedDigest =>
   `sha256:${createHash("sha256").update(value).digest("hex")}`;
 
 export const getAuthzedAuthorizationContractDigest = (): TAuthzedDigest => {
-  const normalized = Object.entries(AUTHORIZATION_PERMISSION_MAP)
+  const permissions = Object.entries(AUTHORIZATION_PERMISSION_MAP)
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([resource, permissions]) => [resource, [...permissions].sort()] as const);
-  return digest(JSON.stringify(normalized));
+  return digest(JSON.stringify({ clientContractVersion: AUTHZED_CLIENT_CONTRACT_VERSION, permissions }));
 };
 
 export const getCanonicalAuthzedSchemaDigest = async (): Promise<TAuthzedDigest> =>

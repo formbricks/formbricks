@@ -1,7 +1,11 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { AUTHZED_ACTIVATION_PROTOCOL_VERSION, type TAuthzedDigest } from "./activation-types";
+import {
+  AUTHZED_ACTIVATION_PROTOCOL_VERSION,
+  AUTHZED_CLIENT_CONTRACT_VERSION,
+  type TAuthzedDigest,
+} from "./activation-types";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
 export type TAuthzedReleaseMode = "legacy_bridge" | "spicedb_authoritative";
@@ -56,7 +60,7 @@ export const readAuthzedReleaseManifest = async (): Promise<TAuthzedReleaseManif
       !isReleaseMode(parsed.authorizationMode) ||
       !("clientContractVersion" in parsed) ||
       !Number.isSafeInteger(parsed.clientContractVersion) ||
-      parsed.clientContractVersion !== 1 ||
+      parsed.clientContractVersion !== AUTHZED_CLIENT_CONTRACT_VERSION ||
       !("migrationHead" in parsed) ||
       typeof parsed.migrationHead !== "string" ||
       !MIGRATION_HEAD_PATTERN.test(parsed.migrationHead) ||

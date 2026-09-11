@@ -96,6 +96,35 @@ const receipt = (
   ...overrides,
 });
 
+const cleanAudit = {
+  completedAtSnapshot: "snapshot",
+  counters: {
+    failed: 0,
+    ignored: 0,
+    invalid: 0,
+    mismatchedParents: 0,
+    mismatchedPermissions: 0,
+    missing: 0,
+    orphaned: 0,
+    pruned: 0,
+    reconciled: 1,
+    scanned: 1,
+    skipped: 0,
+    unmanaged: 0,
+  },
+  failures: [],
+  lastOrganizationId: null,
+  mismatchedParents: [],
+  mismatchedPermissions: [],
+  mode: "apply" as const,
+  orphanScope: "all" as const,
+  orphans: [],
+  scope: "all" as const,
+  status: "reconciled" as const,
+  truncated: false,
+  unmanaged: [],
+};
+
 describe("fresh AuthZed activation bootstrap", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -190,6 +219,53 @@ describe("fresh AuthZed activation bootstrap", () => {
     expect(activateAuthzedAuthorization).not.toHaveBeenCalled();
   });
 
+  test("retries rather than bypassing an active preparation lease", async () => {
+    vi.mocked(getAuthzedActivationStatus).mockResolvedValue(status({ transition: "preparing" }));
+    vi.mocked(acquireAuthzedPreparationLease).mockRejectedValueOnce({
+      code: "authzed_activation_conflict",
+    });
+
+    await expect(
+      bootstrapFreshAuthzedActivation({ countOrganizations: vi.fn(async () => 0) })
+    ).rejects.toMatchObject({ code: "authzed_activation_conflict" });
+
+    expect(acquireAuthzedPreparationLease).toHaveBeenCalledOnce();
+    expect(createPreparedAuthzedActivationReceipt).not.toHaveBeenCalled();
+    expect(activateAuthzedAuthorization).not.toHaveBeenCalled();
+  });
+
+  test("recovers preparation after an expired lease is acquired", async () => {
+    vi.mocked(getAuthzedActivationStatus).mockResolvedValue(status({ transition: "preparing" }));
+
+    await bootstrapFreshAuthzedActivation({
+      applySchema: vi.fn(async () => ({ sourceDigest: digest("c") })) as never,
+      audit: vi.fn(async (mode) => ({ ...cleanAudit, mode })),
+      checkSchema: vi.fn(async () => ({ status: "matched" }) as never),
+      countOrganizations: vi.fn(async () => 0),
+      drainOutbox: vi.fn(async () => ({
+        claimed: 0,
+        deadLettered: 0,
+        delivered: 0,
+        failed: 0,
+        remaining: 0,
+        status: "drained" as const,
+      })),
+      getOutboxStatus: vi.fn(async () => ({
+        deadLettered: 0,
+        oldestPendingAgeSeconds: null,
+        overdueRevocations: 0,
+        pending: 0,
+        revocationsPastCritical: 0,
+        revocationsPastWarning: 0,
+      })),
+    });
+
+    expect(acquireAuthzedPreparationLease).toHaveBeenCalledOnce();
+    expect(createPreparedAuthzedActivationReceipt).toHaveBeenCalledOnce();
+    expect(activateAuthzedAuthorization).toHaveBeenCalledWith(receiptId, digest("a"), expect.any(Function));
+    expect(finalizeAuthzedActivation).toHaveBeenCalledWith(receiptId, digest("a"), expect.any(Function));
+  });
+
   test("refuses to activate a populated uninitialized database", async () => {
     await expect(
       bootstrapFreshAuthzedActivation({ countOrganizations: vi.fn(async () => 1) })
@@ -237,34 +313,6 @@ describe("AuthZed activation preparation", () => {
           finishSchema = resolve;
         })
     );
-    const cleanAudit = {
-      completedAtSnapshot: "snapshot",
-      counters: {
-        failed: 0,
-        ignored: 0,
-        invalid: 0,
-        mismatchedParents: 0,
-        mismatchedPermissions: 0,
-        missing: 0,
-        orphaned: 0,
-        pruned: 0,
-        reconciled: 1,
-        scanned: 1,
-        skipped: 0,
-        unmanaged: 0,
-      },
-      failures: [],
-      lastOrganizationId: null,
-      mismatchedParents: [],
-      mismatchedPermissions: [],
-      mode: "apply" as const,
-      orphanScope: "all" as const,
-      orphans: [],
-      scope: "all" as const,
-      status: "reconciled" as const,
-      truncated: false,
-      unmanaged: [],
-    };
     const preparation = prepareAuthzedActivation(
       {
         bridgeImageDigest: digest("1"),
