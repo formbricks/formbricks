@@ -282,18 +282,26 @@ const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
  */
 const MAX_FILTER_CLAUSES = 10_000;
 
-export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
-  const whereClause: Prisma.ResponseWhereInput["AND"] = [];
+/**
+ * One call's clause allowance. The returned `spend` charges against it and refuses the filter once
+ * it is exhausted. Kept out of buildWhereClause so the budget is a self-contained concern rather
+ * than more branching inside an already-large builder.
+ */
+const createClauseBudget = (): ((count: number) => void) => {
+  let remaining = MAX_FILTER_CLAUSES;
 
-  let clauseBudget = MAX_FILTER_CLAUSES;
-
-  /** Charge `count` clauses against this call's budget, refusing the filter once it is exhausted. */
-  const spend = (count: number): void => {
-    clauseBudget -= count;
-    if (clauseBudget < 0) {
+  return (count: number): void => {
+    remaining -= count;
+    if (remaining < 0) {
       throw new InvalidInputError("This response filter is too large to evaluate");
     }
   };
+};
+
+export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
+  const whereClause: Prisma.ResponseWhereInput["AND"] = [];
+
+  const spend = createClauseBudget();
 
   if (filterCriteria?.finished !== undefined) {
     whereClause.push({
