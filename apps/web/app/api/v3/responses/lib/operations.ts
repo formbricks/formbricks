@@ -454,13 +454,13 @@ function composeV3ResponseWrite({
 
     // Applied over whatever the answer step produced, which is what makes `embeddedData` a merge
     // while `data` is a replacement: a field the payload omits keeps the value already in the map.
-    const nextData: TResponseData = { ...(data ?? {}), ...embeddedPlan.dataWrites };
+    const nextData: TResponseData = { ...data, ...embeddedPlan.dataWrites };
     for (const key of embeddedPlan.dataClears) delete nextData[key];
     data = nextData;
     dataTouched =
       dataTouched || embeddedPlan.dataClears.length > 0 || Object.keys(embeddedPlan.dataWrites).length > 0;
 
-    const nextVariables = { ...(variables ?? {}), ...embeddedPlan.variableWrites };
+    const nextVariables = { ...variables, ...embeddedPlan.variableWrites };
     for (const key of embeddedPlan.variableClears) delete nextVariables[key];
     variables = nextVariables;
     variablesTouched =

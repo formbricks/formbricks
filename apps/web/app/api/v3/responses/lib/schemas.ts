@@ -84,8 +84,11 @@ export const ZV3ResponseMetaInput = z
  *
  * Values are not bounded here on purpose — the contract clamps rather than rejects, because noisy
  * client telemetry should never cost a caller their response. The clamp lives in the service.
+ *
+ * `z.number()` already rejects `NaN` and both infinities in Zod 4, so the clamp only ever sees a
+ * real number; `.finite()` is deprecated and would add nothing.
  */
-const ZV3ResponseTtcInput = z.record(z.string(), z.number().finite());
+const ZV3ResponseTtcInput = z.record(z.string(), z.number());
 
 const createFields = {
   surveyId: z.cuid2(),
