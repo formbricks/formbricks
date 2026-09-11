@@ -103,6 +103,15 @@ describe("v6 upgrade assistant release workflow", () => {
     expect(assistantRelease).toContain('--target-runtime-manifest-digest "$TARGET_RUNTIME_MANIFEST_DIGEST"');
   });
 
+  test("does not move the latest image alias during the v6 migration window", () => {
+    const releaseWorkflow = readWorkflow(releaseWorkflowPath);
+    const communityJob = releaseWorkflow.jobs?.["docker-build-community"];
+
+    expect(communityJob?.with?.MAKE_LATEST).toBe(
+      "${{ needs.check-latest-release.outputs.is_latest == 'true' && !startsWith(github.event.release.tag_name, '6.') && !startsWith(github.event.release.tag_name, 'v6.') }}"
+    );
+  });
+
   test("publishes the temporary upgrade chart only for v6 and signs the release copy", () => {
     const helmRelease = readFileSync(join(repositoryRoot, helmReleaseWorkflowPath), "utf8");
     const assistantRelease = readFileSync(join(repositoryRoot, publishWorkflowPath), "utf8");

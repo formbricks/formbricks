@@ -89,7 +89,10 @@ jobs:
       - check-latest-release
     with:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
-      MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
+      # Keep existing v5 installations on the bridge-compatible moving alias during the v6
+      # migration window. Operators opt into v6 with an explicit version tag; moving `latest`
+      # after the documented window is a separate, deliberate release operation.
+      MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' && !startsWith(github.event.release.tag_name, '6.') && !startsWith(github.event.release.tag_name, 'v6.') }}
 
   docker-build-authzed-bridge:
     name: Build & release signed AuthZed bridge image
