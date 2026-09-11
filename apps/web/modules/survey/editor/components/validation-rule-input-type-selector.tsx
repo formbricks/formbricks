@@ -21,7 +21,7 @@ export const ValidationRuleInputTypeSelector = ({
   value,
   onChange,
   disabled = false,
-}: ValidationRuleInputTypeSelectorProps) => {
+}: Readonly<ValidationRuleInputTypeSelectorProps>) => {
   const { t } = useTranslation();
 
   return (
@@ -29,8 +29,10 @@ export const ValidationRuleInputTypeSelector = ({
       value={value}
       onValueChange={onChange ? (val) => onChange(val as TSurveyOpenTextElementInputType) : undefined}
       disabled={disabled}>
+      {/* w-auto, not the trigger's default w-full: this only ever sits on a single-line rule row, where
+          a basis of 100% would make the row split into equal thirds and starve the value group. */}
       <SelectTrigger
-        className={cn("h-9 min-w-[120px]", disabled ? "cursor-not-allowed bg-slate-100" : "bg-white")}>
+        className={cn("h-9 w-auto min-w-0 grow", disabled ? "cursor-not-allowed bg-slate-100" : "bg-white")}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
