@@ -20,14 +20,16 @@ export const ValidationRuleFieldSelector = ({
   value,
   onChange,
   fieldOptions,
-}: ValidationRuleFieldSelectorProps) => {
+}: Readonly<ValidationRuleFieldSelectorProps>) => {
   const { t } = useTranslation();
 
   return (
     <Select
       value={value ?? ""}
       onValueChange={(val) => onChange(val ? (val as TAddressField | TContactInfoField) : undefined)}>
-      <SelectTrigger className="h-9 min-w-[140px] bg-white">
+      {/* w-auto for the same reason as the other row children: Address and Contact Info fields only
+          ever carry string rules, so this never appears on the wrapping date row. */}
+      <SelectTrigger className="h-9 w-auto min-w-0 grow bg-white">
         <SelectValue placeholder={t("workspace.surveys.edit.select_field")} />
       </SelectTrigger>
       <SelectContent>
