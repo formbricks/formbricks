@@ -613,6 +613,18 @@ describe("Response Utils", () => {
         expect(() => buildWhereClause(manySurvey, otherFilter(manyIds))).toThrow(InvalidInputError);
       });
 
+      // Tags are the other client-supplied list that expands one clause per entry — a relation
+      // subquery each — so they are charged against the same budget rather than a separate cap.
+      test("applied tags are charged against the budget too", () => {
+        const survey = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceMulti, 2);
+        const tags = (count: number): TResponseFilterCriteria => ({
+          tags: { applied: Array.from({ length: count }, (_unused, index) => `tag-${index}`) },
+        });
+
+        expect(() => buildWhereClause(survey, tags(10_000))).not.toThrow();
+        expect(() => buildWhereClause(survey, tags(10_001))).toThrow(InvalidInputError);
+      });
+
       // Every language variant of every label is a separate clause, which is how a modest-looking
       // survey reached the old factorial blow-up at 11 labels.
       test("extra languages count against the budget", () => {
