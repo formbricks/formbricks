@@ -163,11 +163,14 @@ already completed them. Follow [AuthZed Operations](/self-hosting/advanced/authz
 SpiceDB through an Ingress.
 
 The migration Job deliberately does not inherit `deployment.envFrom`. A Helm pre-upgrade hook runs before normal
-candidate Secrets and ConfigMaps are updated. If an upgrade changes the database URL, credentials, or source
-Secret, first create or update a stable database Secret outside the release and wait for it to become available.
-Then configure `migration.database.existingSecret`, `authzed.activation.database.existingSecret`, and the
-application's `DATABASE_URL` to use that Secret before starting the Helm upgrade. The Secret may also contain an
-optional `MIGRATE_DATABASE_URL`; never introduce or rotate it in the same release operation as the migration Job.
+candidate Secrets and ConfigMaps are updated. Do not change the database URL, credentials, or source Secret during
+a Formbricks version upgrade. First create a stable Secret outside the release, update and restart the currently
+running release against it, and verify database reads and writes. Complete any database endpoint migration as its
+own cutover. In the later version upgrade, configure `migration.database.existingSecret`,
+`authzed.activation.database.existingSecret`, and an explicit, non-optional
+`deployment.env.DATABASE_URL.valueFrom.secretKeyRef` to use that already-active Secret and key. The explicit EnvVar
+takes precedence over all `deployment.envFrom` sources. The Secret may also contain an optional
+`MIGRATE_DATABASE_URL`; never rotate or repoint it during the version upgrade.
 
 If a fresh Helm install fails after creating its resources but before writing the activation receipt, correct the
 underlying failure and rerun the same digest-pinned `helm upgrade --install` with
@@ -178,8 +181,9 @@ upgrade path.
 
 Set AuthZed client configuration through `authzed.*` and its named Secrets, not `deployment.env.AUTHZED_*`.
 Using one chart-level source keeps the activation Jobs and application Pods on the same endpoint, token, system
-key, transport, and consistency contract. When `deployment.env` or a custom `deployment.envFrom` selects the
-application database, also set `authzed.activation.database.existingSecret` to the matching database Secret.
+key, transport, and consistency contract. When `deployment.env` or a custom `deployment.envFrom` can select the
+application database, pin `deployment.env.DATABASE_URL`, `migration.database`, and
+`authzed.activation.database` to the same pre-existing Secret and runtime key.
 
 ## 3. v5-Specific Deployment Notes
 

@@ -186,8 +186,30 @@ grep --fixed-strings 'authzed.activation.database.existingSecret is required whe
   <<<"${implicit_custom_database}" >/dev/null
 
 helm template authzed-explicit-custom-database "${CHART_DIR}" "${COMMON_ARGS[@]}" \
-  --set-string deployment.env.DATABASE_URL=postgresql://database.example/formbricks \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.name=customer-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.key=DATABASE_URL \
   --set authzed.activation.database.existingSecret=customer-database >/dev/null
+
+if scalar_custom_database="$(helm template authzed-scalar-custom-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --set-string deployment.env.DATABASE_URL=postgresql://database.example/formbricks \
+  --set authzed.activation.database.existingSecret=customer-database 2>&1)"; then
+  printf '%s\n' "A custom application database must use a verifiable secretKeyRef." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.env.DATABASE_URL must use a non-optional secretKeyRef matching' \
+  <<<"${scalar_custom_database}" >/dev/null
+
+if mismatched_custom_database="$(helm template authzed-mismatched-custom-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.name=other-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.key=DATABASE_URL \
+  --set authzed.activation.database.existingSecret=customer-database 2>&1)"; then
+  printf '%s\n' "Application and activation Jobs must not select different database Secrets." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.env.DATABASE_URL must use a non-optional secretKeyRef matching' \
+  <<<"${mismatched_custom_database}" >/dev/null
 
 custom_envfrom_upgrade="$(helm template authzed-custom-envfrom-upgrade "${CHART_DIR}" \
   "${COMMON_ARGS[@]}" \
@@ -196,6 +218,8 @@ custom_envfrom_upgrade="$(helm template authzed-custom-envfrom-upgrade "${CHART_
   --set global.postgresql.auth.postgresPassword=test-password \
   --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
   --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.name=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.key=DATABASE_URL \
   --set deployment.envFrom[0].type=secret \
   --set deployment.envFrom[0].name=candidate-app-secrets)"
 custom_envfrom_migration="$(sed -n '/name: formbricks-migration/,/^---$/p' \
@@ -205,6 +229,85 @@ if grep --fixed-strings 'candidate-app-secrets' <<<"${custom_envfrom_migration}"
   printf '%s\n' "A pre-upgrade migration must not consume candidate deployment.envFrom resources." >&2
   exit 1
 fi
+
+if unpinned_envfrom_database="$(helm template authzed-unpinned-envfrom-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.envFrom[0].type=secret \
+  --set deployment.envFrom[0].name=candidate-app-secrets 2>&1)"; then
+  printf '%s\n' "Custom envFrom entries must pin DATABASE_URL to the activation Secret." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.env.DATABASE_URL must use a non-optional secretKeyRef matching' \
+  <<<"${unpinned_envfrom_database}" >/dev/null
+
+if unpinned_bridge_migration_database="$(helm template authzed-unpinned-bridge-migration-database \
+  "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.upgradeGate.enabled=false \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.envFrom[0].type=secret \
+  --set deployment.envFrom[0].name=bridge-app-secrets 2>&1)"; then
+  printf '%s\n' "The bridge migration must not bypass application database identity checks." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.env.DATABASE_URL must use a non-optional secretKeyRef matching' \
+  <<<"${unpinned_bridge_migration_database}" >/dev/null
+
+if unpinned_argo_bridge_database="$(helm template authzed-unpinned-argo-bridge-database \
+  "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.installBootstrap.enabled=false \
+  --set authzed.activation.upgradeGate.enabled=false \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.envFrom[0].type=secret \
+  --set deployment.envFrom[0].name=bridge-app-secrets 2>&1)"; then
+  printf '%s\n' "An install-semantics Argo bridge must not bypass database identity checks." >&2
+  exit 1
+fi
+grep --fixed-strings 'deployment.env.DATABASE_URL must use a non-optional secretKeyRef matching' \
+  <<<"${unpinned_argo_bridge_database}" >/dev/null
+
+argo_bridge_database="$(helm template authzed-argo-bridge-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.installBootstrap.enabled=false \
+  --set authzed.activation.upgradeGate.enabled=false \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.name=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.key=DATABASE_URL \
+  --set deployment.envFrom[0].type=secret \
+  --set deployment.envFrom[0].name=bridge-app-secrets)"
+argo_bridge_migration="$(sed -n '/name: formbricks-migration/,/^---$/p' <<<"${argo_bridge_database}")"
+grep --fixed-strings 'name: precreated-application-database' <<<"${argo_bridge_migration}" >/dev/null
+if grep --fixed-strings 'bridge-app-secrets' <<<"${argo_bridge_migration}" >/dev/null; then
+  printf '%s\n' "An install-semantics Argo migration must use only the aligned database Secret." >&2
+  exit 1
+fi
+
+if mismatched_migration_database="$(helm template authzed-mismatched-migration-database "${CHART_DIR}" \
+  "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set deployment.image.digest="${TEST_IMAGE_DIGEST}" \
+  --set authzed.activation.database.existingSecret=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.name=precreated-application-database \
+  --set deployment.env.DATABASE_URL.valueFrom.secretKeyRef.key=DATABASE_URL \
+  --set migration.database.existingSecret=other-migration-database \
+  --set migration.database.urlKey=DATABASE_URL 2>&1)"; then
+  printf '%s\n' "Migration and activation Jobs must not select different runtime database Secrets." >&2
+  exit 1
+fi
+grep --fixed-strings 'migration and activation DATABASE_URL references must use the same pre-existing Secret and key' \
+  <<<"${mismatched_migration_database}" >/dev/null
 
 if implicit_migration_database="$(helm template authzed-implicit-migration-database "${CHART_DIR}" \
   "${COMMON_ARGS[@]}" \

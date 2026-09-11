@@ -53,7 +53,9 @@ migration:
   # deployment.envFrom. This is important for Helm pre-upgrade hooks: normal release resources are not
   # updated until every pre-upgrade hook succeeds. Leave the name empty to reuse the activation database
   # Secret and then the chart-managed <release>-app-secrets Secret. A custom Secret must exist before
-  # starting a Helm upgrade. migrateUrlKey is optional at runtime; DATABASE_URL is used when it is absent.
+  # starting a Helm upgrade. When application database overrides or envFrom entries are configured,
+  # this Secret/key must match the explicit deployment.env.DATABASE_URL secretKeyRef. migrateUrlKey is
+  # optional at runtime; DATABASE_URL is used when it is absent.
   database:
     existingSecret: ""
     urlKey: DATABASE_URL
@@ -669,7 +671,8 @@ authzed:
 
     # Both short-lived Jobs read only this named key. When empty, the chart-generated or
     # ExternalSecret-managed <release>-app-secrets Secret is used. Installations that provide
-    # DATABASE_URL only through deployment.envFrom must name its Secret here explicitly.
+    # database overrides or deployment.envFrom must also pin deployment.env.DATABASE_URL to this exact,
+    # non-optional Secret/key so hooks and application Pods cannot select different databases.
     database:
       existingSecret: ""
       urlKey: DATABASE_URL

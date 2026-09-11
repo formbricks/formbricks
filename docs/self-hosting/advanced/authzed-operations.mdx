@@ -194,19 +194,22 @@ The Helm migration Job reads only `WEBAPP_URL`, `DATABASE_URL`, and the optional
 not inherit the application's broad `deployment.envFrom`. This prevents a pre-upgrade hook from depending on a
 candidate Secret, ExternalSecret, or ConfigMap that Helm has not applied yet.
 
-An unchanged chart-managed database needs no extra value. If an upgrade changes the database URL, credentials,
-or source Secret, perform a two-step update:
+An unchanged chart-managed database needs no extra value. Do not change the database URL, credentials, or source
+Secret in the same operation as a Formbricks version upgrade. Normalize the database configuration first:
 
-1. Create or update a stable database Secret outside the Formbricks Helm release and wait until Kubernetes can
-   read it.
-2. Point `migration.database.existingSecret`, `authzed.activation.database.existingSecret`, and the application
-   `DATABASE_URL` at that Secret, then run the Helm upgrade.
+1. Create a stable database Secret outside the Formbricks Helm release, update the currently running release to use
+   it, restart the application, and verify normal database reads and writes. If the endpoint itself changes, finish
+   its separate data-migration and cutover procedure in this step.
+2. In a later version upgrade, point `migration.database.existingSecret`,
+   `authzed.activation.database.existingSecret`, and the application `DATABASE_URL` at that already-active Secret.
 
-The Secret must contain `migration.database.urlKey` (default `DATABASE_URL`). It may also contain
+Set `deployment.env.DATABASE_URL` as a non-optional `valueFrom.secretKeyRef`; this explicit EnvVar overrides every
+`deployment.envFrom` source. The chart requires its Secret and key to match the activation Job and requires the
+migration Job to use that same runtime Secret and key. The Secret may also contain
 `migration.database.migrateUrlKey` (default `MIGRATE_DATABASE_URL`); when that optional key is absent, migrations
-use the runtime URL. Never introduce, rename, or rotate this Secret in the same Helm operation as a pre-upgrade
-migration. The chart rejects custom database environment sources that do not name the database Secret
-explicitly.
+use the runtime URL. Helm verifies the references, not Secret contents. Never introduce, rotate, rename, or repoint
+this Secret during the version upgrade. Rendering fails when custom database environment sources cannot be proven
+to select this contract.
 
 For an external AuthZed endpoint:
 

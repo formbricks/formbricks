@@ -222,10 +222,11 @@ inherits `deployment.envFrom`, because a Helm `pre-upgrade` hook runs before can
 and ConfigMaps are applied. On a fresh install and an unchanged chart-managed database, the Job reuses
 `<release>-app-secrets` by default.
 
-If an upgrade changes the database endpoint, credentials, or the Secret/config source that selects them, use a
-two-step update. First create or update a stable database Secret outside this Helm release and wait until it exists
-in the release namespace. Then point the migration, activation, and application containers at that same Secret and
-run the Helm upgrade:
+Do not change the database endpoint, credentials, or source Secret in the same operation as a Formbricks version
+upgrade. First create a stable database Secret outside this Helm release, update the currently running release to
+use it, restart and verify that release, and only then perform the version upgrade. A database endpoint migration
+also needs its own data-migration and cutover procedure before the Formbricks upgrade. For the later version
+upgrade, point migration, activation, and application containers at the already-active Secret:
 
 ```yaml
 deployment:
@@ -247,8 +248,11 @@ authzed:
       urlKey: DATABASE_URL
 ```
 
-The optional migration key may be absent; the runner then uses `DATABASE_URL`. Do not create, rotate, or rename the
-referenced Secret in the same Helm upgrade as the pre-upgrade migration.
+The explicit application EnvVar overrides every `deployment.envFrom` source. For a custom database configuration,
+the chart verifies that this EnvVar is a non-optional `secretKeyRef`, that its Secret and key match the activation
+Job, and that the migration Job uses that same runtime Secret and key. The optional migration key may be absent;
+the runner then uses `DATABASE_URL`. Helm can verify the references but cannot verify Secret contents, so do not
+create, rotate, rename, or repoint the referenced Secret during the version upgrade.
 
 The first v5-to-v6 candidate rollout must use `migration.mode=external`. Upgrade through the signed release
 assistant: it deploys the immutable v5 bridge, installs the temporary upgrade coordinator, prepares and activates
@@ -280,17 +284,31 @@ then runs the mandatory receipt gate before any application Pod changes. It is o
 the activation command refuses a nonempty legacy database. Return `retryOnUpgrade` to `false` after recovery.
 
 Both activation Jobs import only explicit `DATABASE_URL` and AuthZed Secret keys. They never inherit the entire
-application Secret. By default `DATABASE_URL` comes from `<release>-app-secrets`. If `deployment.env` defines
-`DATABASE_URL` or `MIGRATE_DATABASE_URL`, or if a custom `deployment.envFrom` source can select the application
-database, name the matching database Secret explicitly:
+application Secret. By default `DATABASE_URL` comes from `<release>-app-secrets`. If `deployment.env` overrides the
+database or a custom `deployment.envFrom` source is configured, pin the application's `DATABASE_URL` to the same
+non-optional Secret/key used by activation and migration:
 
 ```yaml
+deployment:
+  env:
+    DATABASE_URL:
+      valueFrom:
+        secretKeyRef:
+          name: my-formbricks-database
+          key: DATABASE_URL
+migration:
+  database:
+    existingSecret: my-formbricks-database
+    urlKey: DATABASE_URL
 authzed:
   activation:
     database:
       existingSecret: my-formbricks-database
       urlKey: DATABASE_URL
 ```
+
+Create that Secret before the Helm operation. The chart rejects scalar database URLs, optional references, and
+different application/migration/activation runtime references when it must prove pre-upgrade database identity.
 
 Configure the six AuthZed application variables through `authzed.*` and its named Secrets. The chart rejects
 matching `deployment.env.AUTHZED_*` entries so the activation Jobs and application Pods cannot use different
