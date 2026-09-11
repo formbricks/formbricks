@@ -5,9 +5,32 @@ description: >
 
   Hidden-field values do not live here. They are stored in the same underlying map, but that is a
   storage detail rather than part of this contract: a hidden field is an Embedded Data field, and
-  Embedded Data is addressed by name through `embeddedData`. A hidden field's name appearing as a key
-  here is a 400 naming the key and pointing at `embeddedData`, not a silent write to the wrong
-  namespace.
+  Embedded Data is addressed by name through `embeddedData`.
+
+
+  A hidden field's name appearing as a key here is rejected rather than silently written to the
+  wrong namespace — with **422**, not 400, because knowing that a key names a hidden field means
+  loading the survey, and these operations route every failure that needs stored state to 422. The
+  problem carries `invalid_params[]` with `name` set to the offending key, `code:
+  unsupported_field` and `referenceType: hiddenField`, so a client can point at it without parsing
+  prose.
+
+
+  A key that is **also** an element id is the exception, and it is **accepted**: the answer owns
+  that address. Answers and hidden fields do share one slot, and the older surveys that declare a
+  field named after a question have exactly one value under that key — but it is always the
+  answer's. The field is dropped at ingest with `element_id_collision`
+  (`packages/types/embedded-data-ingest.ts`) and filtered again in the renderer before it can
+  reach a submission, precisely so a display-time field value cannot land on top of what the
+  respondent answered. So on such a survey `answers[]` carries the value, `embeddedData` neither
+  reports it nor accepts a write for it, and refusing the key here would block the only write that
+  fits it.
+
+
+  New surveys cannot reach that state through the editor or `POST`/`PATCH /api/v3/surveys`, which
+  refuse an element id colliding with a declared field name. Both v1 management survey writes
+  still accept one — that guard reads variable and hidden-field names but never element ids — so
+  this set, unlike the reserved-name one, is still growing.
 
 
   Keeping the two apart is what lets the storage layout change underneath — the legacy columns go
