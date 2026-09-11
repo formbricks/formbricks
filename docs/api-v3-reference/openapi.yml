@@ -1575,6 +1575,12 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: Payload Too Large — the request body exceeds the 2 MB limit.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -1688,9 +1694,15 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: Payload Too Large — the request body exceeds the 2 MB limit.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: |
-            Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is not an ending of that survey, `language` is not enabled on it, `contactId` is not a contact in the same workspace, `displayId` already backs another response, `singleUseId` is already used for this survey, an `embeddedData` name is not declared on the survey or is ambiguous, or an answer violates the survey's own validation rules. Each is itemized in `invalid_params`.
+            Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is not an ending of that survey, `language` is not enabled on it, `contactId` is not a contact in the same workspace, `displayId` does not exist for that survey or already backs another response, `singleUseId` is already used for this survey, a tag id does not resolve in the same workspace, an `embeddedData` name is not declared on the survey, is ambiguous, or is addressed twice by one payload, a file-upload answer references a file outside this survey's upload element, or an answer violates the survey's own validation rules. Each is itemized in `invalid_params`.
 
             **`surveyId` is not in that list, and answers 403 instead** — whether it names no survey at all or one in another workspace. Every other id here is checked *after* authorization, inside a workspace the caller already holds, so a distinct answer for each discloses nothing. `surveyId` is the scope anchor and is necessarily checked *before* authorization, so a separate "no such survey" would let any valid API key probe the id space of every other tenant. The two cases are therefore byte-identical, as they are on `GET`, `PATCH` and `DELETE` of a response id.
           content:
@@ -2301,8 +2313,14 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: Payload Too Large — the request body exceeds the 2 MB limit.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
-          description: 'Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is not an ending of the response''s survey, `language` is not enabled on it, a tag id does not resolve in the same workspace, or an answer violates the survey''s validation rules.'
+          description: 'Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is not an ending of the response''s survey, `language` is not enabled on it, a tag id does not resolve in the same workspace, an `embeddedData` name is not declared on the survey, is ambiguous, or is addressed twice by one payload, a file-upload answer references a file outside this survey''s upload element, or an answer violates the survey''s validation rules.'
           content:
             application/problem+json:
               schema:
@@ -7317,7 +7335,9 @@ components:
 
         This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite number is therefore accepted, which is why no bounds are declared here.
 
-        **Do not send a `_total` key.** The server writes that bucket itself when the response is finished, by summing every value in this map — including a `_total` you supplied, which is then counted twice and permanently skews the stored total. `durationSeconds` on the read is computed from the real element entries and ignores the bucket entirely, so there is nothing to gain by sending one.
+        **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and writes its own when the response is finished, by summing the element entries. Sending one therefore changes nothing rather than skewing the stored total, and `durationSeconds` on the read is computed from the element entries regardless.
+
+        **An omitted map is not the same as an empty one.** Omitting `ttc` stores no timings at all and the response reports no `durationSeconds`; sending `{}` on a finished response stores a `_total` of zero, which reads as "completed instantly".
       additionalProperties:
         type: number
     ResponseMetaInput:
@@ -7389,6 +7409,7 @@ components:
         tags:
           type: array
           uniqueItems: true
+          maxItems: 100
           description: Tag ids to apply, so a tagged response can be created in one call rather than a create followed by a patch. Tags must already exist in the same workspace — create them via `POST /api/v3/tags`. Applied in the same transaction as the response.
           items:
             type: string
@@ -7412,7 +7433,9 @@ components:
           description: Display (survey impression) this response answers. Create-only. Each display can back at most one response.
         singleUseId:
           type: string
-          description: Single-use link id, for surveys configured with single-use links. Create-only, and unique per survey.
+          minLength: 1
+          maxLength: 255
+          description: 'Single-use link id, for surveys configured with single-use links. Create-only, and unique per survey. Bounded because the value is indexed with `surveyId`: an empty string would slip past the uniqueness pre-check and still be stored, and an oversize one overflows the index entry.'
       additionalProperties: false
     ResponseContact:
       type: object
@@ -7525,7 +7548,8 @@ components:
           $ref: '#/components/schemas/ResponseEmbeddedDataInput'
         tags:
           type: array
-          description: Complete set of tag ids for this response, replacing whatever is currently applied. Tags must already exist in the same workspace — create them via `POST /api/v3/tags`.
+          maxItems: 100
+          description: Complete set of tag ids for this response, replacing whatever is currently applied. Repeats are allowed and collapse, because the set is applied as a set. Tags must already exist in the same workspace — create them via `POST /api/v3/tags`.
           items:
             type: string
             format: cuid2

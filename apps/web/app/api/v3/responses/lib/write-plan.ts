@@ -343,12 +343,35 @@ export const planEmbeddedDataWrite = ({
   const dataClears: string[] = [];
   const variableWrites: Record<string, TResponseDataValue> = {};
   const variableClears: string[] = [];
-  const ingestedBag: Record<string, string | number | boolean> = {};
+  // Null-prototype, for the same reason `applyIngestContract` uses one: a storage key only has to
+  // satisfy `isLegacyIdCharset`, which admits `__proto__`. On a plain `{}` that key hits
+  // `Object.prototype`'s setter and vanishes — no stored value, no issue, no drop.
+  const ingestedBag = Object.create(null) as Record<string, string | number | boolean>;
 
   const byName = indexFieldsByName(embeddedFields);
 
+  // Which payload name already claimed each storage key. Two names can resolve to one field — the
+  // match is case-insensitive — and then one entry's write and another's clear both target the same
+  // slot, with whichever ran last silently winning. Refused for the same reason the reverse collision
+  // is: the payload cannot say which it meant, and guessing writes the caller's value nowhere it can
+  // see.
+  const claimedBy = new Map<string, string>();
+
   for (const [name, value] of Object.entries(incoming)) {
     const effect = planEmbeddedEntry(byName, elementIds, name, value);
+
+    if ("storageKey" in effect) {
+      const firstName = claimedBy.get(effect.storageKey);
+      if (firstName !== undefined) {
+        issues.push({
+          name,
+          reason: `'${name}' and '${firstName}' both address the same Embedded Data field, so this payload cannot say which value to store.`,
+          code: "duplicate_identifier",
+        });
+        continue;
+      }
+      claimedBy.set(effect.storageKey, name);
+    }
 
     switch (effect.kind) {
       case "issue":
@@ -375,7 +398,7 @@ export const planEmbeddedDataWrite = ({
   // of its rules. Named explicitly in the contract for this field ("through the same ingest contract
   // the SDK uses"), so a value that ingests one way from a URL ingests the same way from here.
   const ingested = applyIngestContract({
-    incoming: ingestedBag,
+    incoming: { ...ingestedBag },
     ingestedFields: embeddedFields,
     // The bag is already free of colliding keys, so this array only has to stop the pass-through
     // branch from treating an answer id as an answer — it cannot reach one.

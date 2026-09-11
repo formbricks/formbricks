@@ -628,14 +628,14 @@ export async function createV3Response({
       finished: body.finished,
       data: composed.data ?? {},
       variables: composed.variables ?? {},
-      ttc: normalizeV3Ttc(body.ttc, body.finished),
-      meta: body.meta,
-      tagIds: body.tags ?? [],
+      ttc: {},
+      meta: undefined,
+      tagIds: [],
       endingId: body.endingId,
       language: storedLanguage,
-      contactId: body.contactId,
+      contactId: undefined,
       displayId: body.displayId,
-      singleUseId: body.singleUseId,
+      singleUseId: undefined,
     });
 
     if (!outcome.ok) {
@@ -774,7 +774,7 @@ export async function updateV3Response({
       ...[body.endingId === undefined ? null : validateV3EndingId(survey.endings, body.endingId)].filter(
         (issue): issue is InvalidParam => issue !== null
       ),
-      ...answerValidationIssues(survey, composed.data, effectiveLanguage),
+      ...(body.data === undefined ? [] : answerValidationIssues(survey, composed.data, effectiveLanguage)),
       ...(await fileUploadIssues(survey, composed.data)),
     ];
 

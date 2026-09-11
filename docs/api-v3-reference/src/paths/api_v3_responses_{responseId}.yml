@@ -315,7 +315,15 @@ patch:
       description: >-
         Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is
         not an ending of the response's survey, `language` is not enabled on it, a tag id does not
-        resolve in the same workspace, or an answer violates the survey's validation rules.
+        resolve in the same workspace, an `embeddedData` name is not declared on the survey, is
+        ambiguous, or is addressed twice by one payload, a file-upload answer references a file
+        outside this survey's upload element, or an answer violates the survey's validation rules.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "413":
+      description: Payload Too Large — the request body exceeds the 2 MB limit.
       content:
         application/problem+json:
           schema:

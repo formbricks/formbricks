@@ -39,8 +39,10 @@ properties:
     $ref: ./ResponseEmbeddedDataInput.yml
   tags:
     type: array
+    maxItems: 100
     description: >-
-      Complete set of tag ids for this response, replacing whatever is currently applied. Tags must
+      Complete set of tag ids for this response, replacing whatever is currently applied. Repeats are
+      allowed and collapse, because the set is applied as a set. Tags must
       already exist in the same workspace — create them via `POST /api/v3/tags`.
     items:
       type: string
