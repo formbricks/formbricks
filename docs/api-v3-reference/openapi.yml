@@ -7055,7 +7055,8 @@ components:
       description: |
         Stored data that nothing in the current survey definition can account for. Deleting an element, a hidden field or a variable leaves its values behind on already-collected responses and nothing cleans them up, so the payload reports them here instead of dropping them silently or faking them into `answers[]` without a type or a label. Consumers doing analysis can ignore this array; consumers doing export or migration should not.
 
-        **One case is deliberately not reported**, and it is stated here because this collection otherwise reads as exhaustive: a `locked` Embedded Data field, with no `defaultValue`, with a scalar stored under its key. A locked field ignores whatever a response supplies, so the value was never the field's to hold — it is absent from `embeddedData[]` for that reason, withheld from `data` because that map carries element answers only, and not reported here because its *shape* is not the problem. Non-scalar values under a locked field are reported, as `valueShapeMismatch`. If that gap proves to matter, a reason code can be added without breaking anyone; removing one could not, which is why it is written down rather than guessed at now.
+        **A declared field's `defaultValue` takes precedence over anything unreadable stored under its key**, and that is worth stating because this collection otherwise reads as exhaustive. Resolution falls back to the default before a value is ever judged unreadable, so a field that declares one always resolves — and the stored bytes, whatever their shape, are reported nowhere. Only a field with **no** `defaultValue` can reach `valueShapeMismatch`.
+        A `locked` field narrows that further: it ignores whatever a response supplies, so a *scalar* under its key is not reported either — the shape is not the problem, the lock is — while a non-scalar under a lockless, defaultless field is. Neither case is a silent drop by accident; both are consequences of resolution order, and they are written down so a consumer does not read `unresolved[]` as a guarantee that nothing was left behind. If either proves to matter in practice a reason code can be added without breaking anyone, whereas removing one could not — which is why this is documentation rather than a guess at a fifth enum member.
       required:
         - key
         - rawValue
@@ -7063,7 +7064,7 @@ components:
       properties:
         key:
           type: string
-          description: 'The key as stored on the response: a former element id or hidden-field name for the two `elementNotInSurvey` cases, and a variable''s cuid for `variableNotInSurvey` — that map is keyed by id rather than by name.'
+          description: The key as stored on the response. For `elementNotInSurvey` it is a former element id or hidden-field name; for `variableNotInSurvey` a variable's cuid, since that map is keyed by id rather than by name; and for `valueShapeMismatch` the id or name of the element or declared field that *does* still exist — that reason means the key resolved and the value did not.
         rawValue:
           description: The stored value, returned verbatim and untyped because nothing describes it any more.
           oneOf:
@@ -7085,9 +7086,9 @@ components:
             Why the entry could not be resolved:
 
             - `elementNotInSurvey` — nothing in the current definition claims this key. It covers a deleted
-              element **and** a deleted hidden field, because the two cannot be told apart: both are stored
-              under their own name in one map, and storage keeps no record of which kind a vanished key
-              used to be.
+              element **and** a deleted hidden field, because the two cannot be told apart: an answer is
+              stored under its element id and a hidden field under its name, in one shared map, and storage
+              keeps no record of which kind a vanished key used to be.
 
             - `variableNotInSurvey` — no variable with this id exists in the current definition. Variables
               *are* distinguishable, because they live in their own map keyed by cuid rather than sharing
