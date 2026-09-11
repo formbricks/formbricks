@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS "AuthzedAuthorizationControl" (
   "maintenanceLeaseOwner" TEXT,
   "maintenanceLeaseExpiresAt" TIMESTAMP(3),
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "AuthzedAuthorizationControl_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "AuthzedAuthorizationControl_singleton_check" CHECK ("id" = 'formbricks')
 );
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS "AuthzedActivationReceipt" (
   "rolledBackAt" TIMESTAMP(3),
   "invalidatedAt" TIMESTAMP(3),
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "AuthzedActivationReceipt_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "AuthzedActivationReceipt_generation_key" UNIQUE ("generation"),
   CONSTRAINT "AuthzedActivationReceipt_protocolVersion_check" CHECK ("protocolVersion" > 0),
@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS "AuthzedUpgradeRun" (
   "startedAt" TIMESTAMP(3),
   "completedAt" TIMESTAMP(3),
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "AuthzedUpgradeRun_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "AuthzedUpgradeRun_manifestDigest_generation_phase_key"
     UNIQUE ("manifestDigest", "generation", "phase"),
@@ -133,8 +133,8 @@ CREATE TABLE IF NOT EXISTS "AuthzedUpgradeRun" (
   CONSTRAINT "AuthzedUpgradeRun_phase_check" CHECK ("phase" ~ '^[a-z][a-z0-9_]{0,63}$')
 );
 
-INSERT INTO "AuthzedAuthorizationControl" ("id")
-VALUES ('formbricks')
+INSERT INTO "AuthzedAuthorizationControl" ("id", "updatedAt")
+VALUES ('formbricks', CURRENT_TIMESTAMP)
 ON CONFLICT ("id") DO NOTHING;
 
 CREATE OR REPLACE FUNCTION authzed_validate_authorization_control()
