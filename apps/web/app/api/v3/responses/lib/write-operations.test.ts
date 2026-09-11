@@ -16,6 +16,7 @@ const {
   mockGetWorkspaceId,
   mockGetScoped,
   mockValidateResponseData,
+  mockValidateFileUploads,
   mockToResource,
 } = vi.hoisted(() => ({
   mockRequireAccess: vi.fn(),
@@ -27,11 +28,14 @@ const {
   mockGetWorkspaceId: vi.fn(),
   mockGetScoped: vi.fn(),
   mockValidateResponseData: vi.fn(),
+  mockValidateFileUploads: vi.fn(),
   mockToResource: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mockRequireAccess }));
 vi.mock("@/modules/api/lib/validation", () => ({ validateResponseData: mockValidateResponseData }));
+vi.mock("@/lib/workspace/service", () => ({ getWorkspaceLegacyStoragePrefixes: async () => [] }));
+vi.mock("@/modules/storage/utils", () => ({ validateClientFileUploads: mockValidateFileUploads }));
 vi.mock("./serializers", () => ({
   createV3ResponseSerializer: () => ({ toResource: mockToResource, toListItem: vi.fn() }),
 }));
@@ -96,6 +100,7 @@ beforeEach(() => {
   mockRequireAccess.mockResolvedValue({ workspaceId: WORKSPACE_ID, organizationId: "org-1" });
   mockGetSurveyForWrite.mockResolvedValue(survey());
   mockValidateResponseData.mockReturnValue(null);
+  mockValidateFileUploads.mockReturnValue(true);
   mockToResource.mockReturnValue({ id: RESPONSE_ID });
   mockCreate.mockResolvedValue({ ok: true, responseId: RESPONSE_ID });
   mockUpdate.mockResolvedValue({ ok: true, responseId: RESPONSE_ID });
@@ -530,5 +535,53 @@ describe("what the operation hands to the write", () => {
     });
 
     expect(mockUpdate.mock.calls[0][0].patch.data).toEqual({ q1: "a" });
+  });
+});
+
+describe("file-upload answers", () => {
+  /**
+   * A stored answer is a storage path that the dashboard, the export and the read endpoints later
+   * resolve into a signed URL. Without this check a caller with write access to one workspace could
+   * store another workspace's path under a file-upload element and have it resolved on their own
+   * response — the cross-tenant storage reference ENG-1981 closed on v1 and v2.
+   */
+  test("a file URL outside this survey's element is refused", async () => {
+    mockValidateFileUploads.mockReturnValueOnce(false);
+
+    const response = await createV3Response({
+      ...params,
+      body: {
+        surveyId: SURVEY_ID,
+        finished: true,
+        data: { upload: ["http://x.test/storage/other-ws/private/surveys/other/elements/up/f.pdf"] },
+      } as never,
+    });
+
+    expect(response.status).toBe(422);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  test("the check is scoped to the survey's own workspace and id", async () => {
+    await createV3Response({
+      ...params,
+      body: { surveyId: SURVEY_ID, finished: true, data: { upload: ["ok"] } } as never,
+    });
+
+    expect(mockValidateFileUploads).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: WORKSPACE_ID, surveyId: SURVEY_ID })
+    );
+  });
+
+  test("patch is checked too, not only create", async () => {
+    mockValidateFileUploads.mockReturnValueOnce(false);
+
+    const response = await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { data: { upload: ["http://x.test/storage/other/private/surveys/o/elements/u/f.pdf"] } } as never,
+    });
+
+    expect(response.status).toBe(422);
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 });
