@@ -81,43 +81,51 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Expand a strict object's single unrecognized-keys issue into one param per offending key.
+ *
+ * Zod reports every unknown key in ONE issue whose path points at the object rather than at any of
+ * the keys, so left as-is a caller is told it sent something unsupported without being told what.
+ * Bounded, because the key list is caller-controlled and both the response and the log line carry it.
+ */
+function expandUnrecognizedKeys(
+  issue: z.core.$ZodIssue,
+  fallbackName: "body" | "query" | "params"
+): InvalidParam[] {
+  const prefix = issue.path.length > 0 ? `${issue.path.join(".")}.` : "";
+  // Read defensively rather than through the `code` narrowing: `error.issues` is typed as the base
+  // `$ZodIssue`, which does not discriminate on `code`, so `issue.keys` is not reachable through it
+  // even though the runtime value carries it.
+  const rawKeys = (issue as { keys?: unknown }).keys;
+  const unknownKeys = Array.isArray(rawKeys) ? rawKeys.map(String) : [];
+
+  if (unknownKeys.length === 0) {
+    // An empty list would silently drop the issue, leaving a 400 with no `invalid_params` at all.
+    return [{ name: fallbackName, reason: issue.message, code: "unsupported_field" }];
+  }
+
+  const named = unknownKeys.slice(0, MAX_REPORTED_UNKNOWN_KEYS);
+  const params: InvalidParam[] = named.map((key) => ({
+    name: `${prefix}${key}`,
+    reason: `Unsupported field '${key}'`,
+    code: "unsupported_field",
+  }));
+
+  if (unknownKeys.length > named.length) {
+    params.push({
+      name: prefix ? prefix.slice(0, -1) : fallbackName,
+      reason: `${unknownKeys.length - named.length} further unsupported fields were not listed`,
+      code: "unsupported_field",
+    });
+  }
+
+  return params;
+}
+
 function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "params"): InvalidParam[] {
   return error.issues.flatMap((issue) => {
-    // A strict object reports every unknown key in ONE issue, whose path points at the object rather
-    // than at any of the keys. Left as-is it becomes a single `name: "body"` with the keys buried in
-    // prose — so a client is told it sent something unsupported without being told what. Expanded
-    // here, once, rather than by a hand-written refinement per schema: the contract promises
-    // `code: unsupported_field` on the offending key for every v3 operation that rejects one.
     if (issue.code === "unrecognized_keys") {
-      const prefix = issue.path.length > 0 ? `${issue.path.join(".")}.` : "";
-      // Bounded, because the key list is caller-controlled: a body full of unknown keys would
-      // otherwise become one `invalid_params` entry per key, in both the response and the log line
-      // that carries it. Naming the first few is all a caller needs to find its mistake.
-      // Read defensively rather than through the `code` narrowing: `error.issues` is typed as the
-      // base `$ZodIssue`, which does not discriminate on `code`, so `issue.keys` is not reachable
-      // through it even though the runtime value carries it.
-      const rawKeys = (issue as { keys?: unknown }).keys;
-      const unknownKeys = Array.isArray(rawKeys) ? rawKeys.map(String) : [];
-      const named = unknownKeys.slice(0, MAX_REPORTED_UNKNOWN_KEYS);
-
-      const params: InvalidParam[] = named.map((key) => ({
-        name: `${prefix}${key}`,
-        reason: `Unsupported field '${key}'`,
-        code: "unsupported_field" as const,
-      }));
-
-      if (unknownKeys.length > named.length) {
-        params.push({
-          name: prefix ? prefix.slice(0, -1) : fallbackName,
-          reason: `${unknownKeys.length - named.length} further unsupported fields were not listed`,
-          code: "unsupported_field" as const,
-        });
-      }
-
-      // An empty list would silently drop the issue, so fall back to naming the object itself.
-      return params.length > 0
-        ? params
-        : [{ name: fallbackName, reason: issue.message, code: "unsupported_field" as const }];
+      return expandUnrecognizedKeys(issue, fallbackName);
     }
 
     const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
