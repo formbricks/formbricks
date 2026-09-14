@@ -327,6 +327,8 @@ const ZResponseFilterCriteriaFields = z.object({
  */
 export const ZResponseFilterCriteria = ZResponseFilterCriteriaFields.refine(
   (criteria) =>
+    // 5.4's filter has no `reserved` or `variables` field — both arrived with Embedded Data on a
+    // later release, so the upstream entries for them are omitted here.
     [criteria.contactAttributes, criteria.data, criteria.others, criteria.meta, criteria.quotas].every(
       (record) => !record || Object.keys(record).length <= MAX_FILTER_KEYS
     ),

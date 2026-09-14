@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponse, TResponseFilterCriteria } from "@formbricks/types/responses";
+import { TResponse, TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -493,6 +493,31 @@ describe("Response Utils", () => {
           ],
         },
       ]);
+    });
+
+    // Every record-shaped filter field is iterated per key by the builder, so the schema caps the
+    // key count. These live here rather than in packages/types, which has no test runner.
+    describe("filter record key caps (ENG-3161)", () => {
+      // Each record field accepts its own condition shape, so the fixture varies per field.
+      // No `variables` / `reserved` cases here: neither field exists on 5.4's filter schema, so an
+      // over-cap record would be stripped rather than rejected.
+      const CONDITION: Record<string, unknown> = {
+        meta: { op: "equals", value: "x" },
+        contactAttributes: { op: "equals", value: "x" },
+        data: { op: "submitted" },
+        others: { op: "equals", value: "x" },
+      };
+
+      const withKeys = (field: string, count: number): unknown => ({
+        [field]: Object.fromEntries(
+          Array.from({ length: count }, (_unused, index) => [`k${index}`, CONDITION[field]])
+        ),
+      });
+
+      test.each(Object.keys(CONDITION))("%s is capped at 500 keys", (field) => {
+        expect(ZResponseFilterCriteria.safeParse(withKeys(field, 500)).success).toBe(true);
+        expect(ZResponseFilterCriteria.safeParse(withKeys(field, 501)).success).toBe(false);
+      });
     });
 
     describe("includesOne: 'Other' clause budget (ENG-3161)", () => {
