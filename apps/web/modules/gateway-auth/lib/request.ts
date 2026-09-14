@@ -138,11 +138,15 @@ export const authenticateGatewayRequest = async (
 /**
  * The outcome of authorizing a request, rather than a response meaning "allowed".
  *
- * This used to answer a bare `Response` — a 200 with an empty body — because Envoy's ext_authz reads
- * an allow that way, and the caller supplied the body to send. That gateway is gone (ENG-3117) and
- * the single remaining caller forwards the request itself, so it needs the principal it was allowed
- * as: without it there is nothing to rate-limit against but the credential, which would mean
- * authenticating twice.
+ * This used to answer a bare `Response` — a 200 with an empty body — because ext_authz reads an allow
+ * that way, and the caller supplied the body to send. ENG-3117 added a second caller with a different
+ * need: the app's own `/v1/feedback-records` passthrough forwards the request itself, so it needs the
+ * principal it was allowed as. Without it there is nothing to rate-limit against but the credential,
+ * which would mean authenticating twice.
+ *
+ * So the shared function answers the decision and each caller renders it — the ext_authz services
+ * build their allow-response, the passthrough keeps the principal. When the gateway routes are
+ * retired the `allow` branch loses its second renderer, not its meaning.
  */
 export type TGatewayAuthorizationOutcome =
   | { status: "allow"; principal: TGatewayAuthenticatedPrincipal }
