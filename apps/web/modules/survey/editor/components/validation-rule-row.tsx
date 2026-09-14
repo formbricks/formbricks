@@ -93,7 +93,18 @@ export const ValidationRuleRow = ({
   // Date rules put up to nine controls on the value side. The operator select soaks up whatever width
   // those controls leave and shrinks first when space is short; at its floor the row wraps, since the
   // toggle's container is overflow-hidden and would otherwise clip the trailing buttons.
+  //
+  // Every other rule stays on one line, so no control on it may carry a pixel min-width: the toggle's
+  // container is overflow-hidden, so a child that refuses to shrink does not scroll into view, it
+  // paints over the delete and add buttons and eats their clicks (ENG-3175). Only the two buttons are
+  // shrink-0; everything else is min-w-0 and truncates.
+  //
+  // The three flexible children are sized `w-auto grow` so each asks for its own content width and
+  // the surplus is shared equally. Left at the SelectTrigger's `w-full`, all three would ask for the
+  // full row and the split would land on exact thirds — which starves the value group, the only one
+  // of the three that holds two controls, down to a value field too narrow to read a number in.
   const isDateRule = Boolean(config.supportsRelative);
+  const flexibleChildClasses = "w-auto grow";
 
   const row = (
     <div className={cn("flex w-full gap-2", isDateRule ? "flex-wrap items-start" : "items-center")}>
@@ -123,7 +134,7 @@ export const ValidationRuleRow = ({
         availableTypes={availableTypesForSelect}
         ruleLabels={ruleLabels}
         needsValue={config.needsValue}
-        className={isDateRule ? "min-w-[140px] flex-[1_1_0%]" : undefined}
+        className={isDateRule ? "min-w-[140px] flex-[1_1_0%]" : flexibleChildClasses}
       />
 
       {/* Value Input (if needed) */}
@@ -131,7 +142,7 @@ export const ValidationRuleRow = ({
         <div
           className={cn(
             "flex min-w-0 gap-2",
-            isDateRule ? "flex-[0_1_auto] items-start" : "w-full items-center"
+            isDateRule ? "flex-[0_1_auto] items-start" : `${flexibleChildClasses} items-center`
           )}>
           <ValidationRuleValueInput
             rule={rule}
