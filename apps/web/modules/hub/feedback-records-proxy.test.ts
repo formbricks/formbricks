@@ -271,17 +271,39 @@ describe("proxyFeedbackRecordsRequest", () => {
     expect(serializeIncludingErrors(mockLoggerError.mock.calls)).not.toContain("secret-url");
   });
 
-  test("is unavailable in production", async () => {
+  /**
+   * The inverse of what this asserted before ENG-3117. The guard existed because the gateway served
+   * these paths in production and a second data path would have been a liability. It is now the only
+   * thing serving `/v1/feedback-records` on a deployment that does not run the gateway -- a
+   * customer-managed ingress, or one-click -- so refusing would take the compatibility path down
+   * exactly where it has callers. Where the gateway *is* enabled it still matches first and the app's
+   * copy is simply never reached, which is why the two can overlap while the gateway is deprecated.
+   */
+  test("serves production, so deployments without the gateway still have the path", async () => {
     runtime.isProduction = true;
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1")
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
     );
 
-    expect(response.status).toBe(404);
-    expect(mockAuthorizeGatewayRequest).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(mockAuthorizeGatewayRequest).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  test("still authorizes before forwarding in production", async () => {
+    runtime.isProduction = true;
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    mockAuthorizeGatewayRequest.mockResolvedValueOnce(new Response("Forbidden", { status: 403 }));
+
+    const response = await proxyFeedbackRecordsRequest(
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
+    );
+
+    expect(response.status).toBe(403);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
