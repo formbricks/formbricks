@@ -293,7 +293,7 @@ const translateBody = (body: unknown, members: Map<string, string>): TV3BodyTran
     if (!operationParam) {
       unknown.push({
         name: key,
-        reason: `Unknown field. Expected one of: ${[...members.keys()].sort().join(", ")}.`,
+        reason: `Unknown field. Expected one of: ${[...members.keys()].sort((a, b) => a.localeCompare(b)).join(", ")}.`,
       });
       continue;
     }

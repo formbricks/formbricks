@@ -33,6 +33,9 @@
 import { createServer } from "node:http";
 
 const DIMENSIONS = 768;
+// Generous next to any real embedding model, and the ceiling on what a request may make this process
+// allocate. See the clamp in the /v1/embeddings handler.
+const MAX_DIMENSIONS = 4096;
 const MAX_BODY_BYTES = 1 << 20;
 
 /** FNV-1a, so a token maps to the same coordinate on every run and every machine. */
@@ -120,8 +123,14 @@ const server = createServer((req, res) => {
     }
 
     const inputs = Array.isArray(parsed.input) ? parsed.input : [parsed.input ?? ""];
+    // Bounded on purpose. `dimensions` is request-supplied and reaches two allocations below, so an
+    // unbounded value is an allocation the caller chooses the size of. The store only accepts vectors
+    // of `EmbeddingVectorDimensions`, so anything past this cap is useless as well as hostile —
+    // fall back to the default rather than honouring it.
     const dimensions =
-      Number.isInteger(parsed.dimensions) && parsed.dimensions > 0 ? parsed.dimensions : DIMENSIONS;
+      Number.isInteger(parsed.dimensions) && parsed.dimensions > 0 && parsed.dimensions <= MAX_DIMENSIONS
+        ? parsed.dimensions
+        : DIMENSIONS;
 
     reply(200, {
       object: "list",

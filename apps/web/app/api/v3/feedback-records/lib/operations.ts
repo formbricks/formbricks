@@ -324,15 +324,13 @@ type TV3FeedbackRecordScopedBase = TV3FeedbackRecordOperationBase & {
   datasetId?: string;
 };
 
-type TListV3FeedbackDatasetsParams = TV3FeedbackRecordOperationBase;
-
 /** List the active feedback datasets assigned to a workspace (discovery for the other tools). */
 export async function listV3FeedbackDatasets({
   workspaceId,
   authentication,
   requestId,
   instance,
-}: TListV3FeedbackDatasetsParams): Promise<Response> {
+}: TV3FeedbackRecordOperationBase): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
   try {
     // Not the tenant resolver: this operation *is* how a caller discovers dataset ids, so it stops at
