@@ -63,10 +63,14 @@ jobs:
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: audit
+          # This is a literal block, so every line below is an endpoint — no comments inside it.
+          # quay.io carries the MinIO images and serves their blobs directly, with no separate
+          # CDN host to allow; Docker Hub stays for every other image.
           allowed-endpoints: |
             ee.formbricks.com:443
             registry-1.docker.io:443
             docker.io:443
+            quay.io:443
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: ./.github/actions/dangerous-git-checkout
