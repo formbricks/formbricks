@@ -384,6 +384,7 @@ export const ZResponseFilterCriteria = ZResponseFilterCriteriaFields.refine(
       criteria.contactAttributes,
       criteria.data,
       criteria.reserved,
+      criteria.variables,
       criteria.others,
       criteria.meta,
       criteria.quotas,
