@@ -350,8 +350,19 @@ jobs:
           record_status=$(curl -o /tmp/preflight-feedback.json -s -w "%{http_code}" \
             -H "x-api-key: fbk_${SEED_API_KEY}" \
             "http://localhost:3000/api/v3/feedback-records/${record_id}?workspaceId=${workspace_id}")
+          # Same three-way shape as the workflows probe above, and for the same reason: the CI licence
+          # key does not grant every feature, and `feedbackDirectories` is one it is known to miss --
+          # ENG-2553 named it when the workflows gap was filed. A 403 is the documented answer for an
+          # ungranted entitlement, so it degrades this run rather than breaking it, loudly enough that
+          # the gap cannot settle into a silent permanent state. Anything that is neither 200 nor 403 is
+          # a setup failure and still fails the job.
+          if [ "${record_status}" -eq 403 ]; then
+            echo "::warning::Unify Feedback entitlement inactive (GET /api/v3/feedback-records/{id} -> 403). The nine feedback operations are only checked against their documented 403, and the compatibility path is not exercised at all. See ENG-2553."
+            cat /tmp/preflight-feedback.json
+            exit 0
+          fi
           if [ "${record_status}" -ne 200 ]; then
-            echo "::error::Feedback record fixture read returned ${record_status}, expected 200."
+            echo "::error::Feedback record fixture read returned ${record_status}, expected 200 or 403."
             cat /tmp/preflight-feedback.json
             exit 1
           fi
@@ -420,8 +431,13 @@ jobs:
               echo "::notice::Seeded record is embedded — the similarity operations run against real vectors."
               exit 0
             fi
+            # 403 means the entitlement is ungranted, which the preflight above already warned about;
+            # repeating it here would be noise, and failing would contradict that step's decision.
+            if [ "${status}" -eq 403 ]; then
+              exit 0
+            fi
             if [ "${status}" -ne 409 ]; then
-              echo "::error::Similarity probe returned ${status}, expected 200 or 409."
+              echo "::error::Similarity probe returned ${status}, expected 200, 403 or 409."
               cat /tmp/preflight-similar.json
               docker logs hub-worker 2>&1 | tail -20
               exit 1

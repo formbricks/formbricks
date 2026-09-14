@@ -37,6 +37,25 @@ if [ -z "${foreign_dataset_id}" ] || [ -z "${foreign_workspace_id}" ]; then
   exit 1
 fi
 
+# Positive control. Every assertion below expects a 403, so on an instance where the Unify Feedback
+# entitlement is ungranted the whole script passes while proving nothing -- every id is refused, for a
+# reason that has nothing to do with tenancy. Confirm the caller can read its OWN dataset first, and
+# skip rather than report a green that means nothing. (CI's licence is known to miss this feature --
+# ENG-2553.)
+owned_dataset_id=$(node -p "require('${FIXTURES}').read?.datasetId ?? ''")
+if [ -n "${owned_dataset_id}" ]; then
+  owned_status=$(curl -s -o /dev/null -w "%{http_code}" -H "x-api-key: fbk_${SEED_API_KEY}" \
+    "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${owned_dataset_id}&limit=1")
+  if [ "${owned_status}" = "403" ]; then
+    echo "::warning::Tenant-isolation check skipped: the caller cannot read its own dataset either (403), so every refusal below would be vacuous. See ENG-2553."
+    exit 0
+  fi
+  if [ "${owned_status}" != "200" ]; then
+    echo "::error::Positive control returned ${owned_status}, expected 200 or 403. The tenancy assertions cannot be trusted."
+    exit 1
+  fi
+fi
+
 # A syntactically valid id that was never created. Same shape as a real one (`z.cuid2()`: lowercase
 # alphanumeric), so it fails on existence rather than on validation.
 nonexistent_dataset_id="clctnosuchdataset0000001"
