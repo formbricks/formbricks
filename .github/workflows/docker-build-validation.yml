@@ -308,6 +308,11 @@ jobs:
           docker run --rm --network none --entrypoint node "${COMMON_ENV[@]}" \
             -e AUTHZED_ENABLED=true -e AUTHZED_ENDPOINT=spicedb:50051 -e AUTHZED_SYSTEM_KEY=formbricks \
             -e AUTHZED_TOKEN=authzed-secret-sentinel -e AUTHZED_CONSISTENCY=fully_consistent \
+            "$IMAGE" /home/nextjs/validate-env.mjs --server
+
+          # Migration-only preflight must accept the same base environment without
+          # AuthZed credentials. It must not construct a client or contact a database.
+          docker run --rm --network none --entrypoint node "${COMMON_ENV[@]}" \
             "$IMAGE" /home/nextjs/validate-env.mjs
 
           run_invalid_case \
@@ -419,6 +424,11 @@ jobs:
             -e CUBEJS_API_URL="http://192.0.2.1:4000" \
             -e CUBEJS_API_SECRET="build-time-placeholder" \
             -e SKIP_STARTUP_MIGRATION="true" \
+            -e AUTHZED_ENABLED=true \
+            -e AUTHZED_ENDPOINT=127.0.0.1:50051 \
+            -e AUTHZED_TOKEN=startup-test-placeholder \
+            -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_CONSISTENCY=fully_consistent \
             -d "formbricks-test:$GITHUB_SHA"
 
           trap 'docker rm -f formbricks-skip-test >/dev/null 2>&1 || true' EXIT
@@ -523,6 +533,11 @@ jobs:
             -e HUB_API_KEY="build-time-placeholder" \
             -e CUBEJS_API_URL="http://localhost:4000" \
             -e CUBEJS_API_SECRET="build-time-placeholder" \
+            -e AUTHZED_ENABLED=true \
+            -e AUTHZED_ENDPOINT=127.0.0.1:50051 \
+            -e AUTHZED_TOKEN=startup-test-placeholder \
+            -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_CONSISTENCY=fully_consistent \
             -d "formbricks-test:$GITHUB_SHA"
 
           # Start health check polling immediately (every 5 seconds for up to 5 minutes)

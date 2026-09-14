@@ -367,19 +367,20 @@ first release that requires the AuthZed runtime:
 4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
    `authzed-ops` service, plus the six `AUTHZED_*` Formbricks variables, from the released Compose file into your
    customized file. Use `AUTHZED_CONSISTENCY=fully_consistent`. Preserve proxy, storage, and SMTP settings.
-5. Validate the reviewed Compose configuration privately and pull the pinned images. Apply the release's
-   Formbricks database migrations only after writers are stopped: `docker compose run --rm --no-deps formbricks-migrate`.
-6. Start PostgreSQL and SpiceDB, then run the guarded preparation and read-only gate:
+5. Validate the reviewed Compose configuration privately and pull the pinned images. Keep writers stopped.
+6. Wait for PostgreSQL and SpiceDB, then run the target image's maintenance command. It runs application
+   migrations before graph preparation and verification:
 
    ```bash
-   docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+   docker compose up -d --wait postgres spicedb
+   docker compose --profile authzed-ops run --rm --no-deps \
+     --entrypoint formbricks-authzed-prepare authzed-ops \
+     --backup-confirmed --writers-stopped
    ```
 
    A non-empty mismatched schema requires the reviewed `remoteDigest` as described in
    [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6).
-7. Only after `upgrade check` exits `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
+7. Only after preparation and verification exit `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
    run `docker compose up -d`. The one-click updater only checks the already-prepared graph; it does not perform
    online preparation. Keep maintenance active until authorization checks pass.
 8. Confirm `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy
@@ -404,21 +405,31 @@ rollback procedure in [AuthZed Operations](/self-hosting/advanced/authzed-operat
    docker compose pull
    ```
 
+1. Check the target release's already-prepared authorization graph. If blocked, follow the maintenance
+   preparation guide above before proceeding.
+
+   ```bash
+   docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
+   ```
+
 1. Stop the Formbricks stack
 
    ```bash
    docker compose down
    ```
 
-1. Re-start the Formbricks stack with the updated image
+1. Wait for PostgreSQL and complete application migrations before restarting the updated stack. Stop if a
+   command fails; do not restart against a partially migrated database.
 
    ```bash
+   docker compose up -d --wait postgres &&
+   docker compose run --rm --no-deps formbricks-migrate &&
    docker compose up -d
    ```
 
 <Warning>
   **Security (existing installs):** these steps — and the [one-click setup script](/self-hosting/setup/one-click)
-  updater, which runs the same `pull` / `down` / `up -d` — do **not** rewrite your existing
+  updater — do **not** rewrite your existing
   `docker-compose.yml`. If your bundled `redis` (Valkey) service still publishes `ports: - "6379:6379"`, it
   stays exposed to the host after updating. See [Debug](#debug) for how to remove the mapping and, if the port
   was reachable from an untrusted network, invalidate existing sessions.

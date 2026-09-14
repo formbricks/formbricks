@@ -18,6 +18,7 @@ const run = async (): Promise<void> => {
     }
     const { runAuthzedUpgradeCli } = await import("../lib/authzed/upgrade-cli");
     databaseLoaded = true;
+    console.error = originalConsoleError;
     process.exitCode = await runAuthzedUpgradeCli(command);
   } catch {
     process.stdout.write(`${JSON.stringify(INVALID_CONFIGURATION_RESULT)}\n`);

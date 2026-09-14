@@ -5,7 +5,11 @@ set +x
 set -eu
 
 result() {
-  printf '{"status":"%s","code":"%s","restartRequired":true}\n' "$1" "$2"
+  if [ "$1" = prepared ]; then
+    printf '{"status":"prepared","code":"%s","restartRequired":true}\n' "$2"
+  else
+    printf '{"status":"blocked","code":"%s"}\n' "$2"
+  fi
 }
 
 backup=false
@@ -61,7 +65,7 @@ run_step() {
 
 run_step upgrade_configuration_invalid node /home/nextjs/validate-env.mjs
 run_step upgrade_spicedb_unhealthy formbricks-authzed health
-run_step upgrade_database_migration_failed node packages/database/dist/scripts/apply-migrations.js
+run_step upgrade_database_migration_failed node /home/nextjs/packages/database/dist/scripts/apply-migrations.js
 if [ -n "$digest" ]; then
   run_step upgrade_graph_not_ready formbricks-authzed upgrade prepare --expected-current-digest "$digest"
 else

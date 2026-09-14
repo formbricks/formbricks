@@ -5,8 +5,8 @@ import { describe, expect, test } from "vitest";
 const webRoot = fileURLToPath(new URL("../../", import.meta.url));
 const tsxExecutable = fileURLToPath(new URL("../../../../node_modules/.bin/tsx", import.meta.url));
 
-const validate = (authzed: Record<string, string> = {}) =>
-  spawnSync(tsxExecutable, ["scripts/docker/validate-env.ts"], {
+const validate = (authzed: Record<string, string> = {}, args = ["--server"]) =>
+  spawnSync(tsxExecutable, ["scripts/docker/validate-env.ts", ...args], {
     cwd: webRoot,
     encoding: "utf8",
     timeout: 10_000,
@@ -27,6 +27,20 @@ const validate = (authzed: Record<string, string> = {}) =>
   });
 
 describe("container environment preflight", () => {
+  test("allows migration-only validation without AuthZed credentials", () => {
+    const result = validate({}, []);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("Environment variables validated successfully\n");
+    expect(result.stderr).toBe("");
+  });
+
+  test("still rejects malformed migration environment without leaking values", () => {
+    const result = validate({ AI_PROVIDER: "private-invalid-provider" }, []);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("AI_PROVIDER");
+    expect(result.stdout + result.stderr).not.toContain("private-invalid-provider");
+  });
+
   test("fails before reporting success when all AuthZed variables are absent", () => {
     const result = validate();
     expect(result.status).toBe(1);

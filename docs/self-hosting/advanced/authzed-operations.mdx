@@ -104,8 +104,10 @@ docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 Fresh one-click installations generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD`, prepare the graph, and
 run the read-only gate before reporting success. The update command preserves customized Compose files. An older
 installation must merge the released AuthZed services and environment manually, then explicitly acknowledge the
-v6 migration. The updater refuses to stop the existing application until `upgrade prepare` and `upgrade check`
-succeed.
+v6 migration. The updater runs only the read-only `upgrade check` before stopping the existing application.
+A blocked check leaves it running. After a successful check, the updater stops the stack, waits for PostgreSQL,
+runs application migrations, and starts the new stack only if they succeed. Preparation is a separate
+[maintenance operation](/self-hosting/advanced/v6-maintenance-upgrade), including for later schema-changing releases.
 
 <Warning>
   `docker compose down` preserves PostgreSQL data. `docker compose down -v` deletes the volume containing both

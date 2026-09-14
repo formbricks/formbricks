@@ -1312,6 +1312,8 @@ update_formbricks() {
   # database migrations or schema/relationship writes against the still-running app.
   sudo docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
   sudo docker compose down
+  sudo docker compose up -d --wait postgres
+  sudo docker compose run --rm --no-deps formbricks-migrate
   sudo docker compose up -d
   echo "🎉 Formbricks updated successfully!"
   echo "🎉 Check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose logs.'"

@@ -202,32 +202,24 @@ authzed:
 `authzed.insecure` defaults to `false` in external mode. Set it to `true` only for a trusted plaintext gRPC
 endpoint; plaintext transport sends the preshared token without TLS protection. The chart injects `AUTHZED_ENABLED`,
 `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and `AUTHZED_CONSISTENCY` into
-the Formbricks app. Authorization checks must fail closed once product enforcement is enabled; general
+the Formbricks app. v6 authorization checks fail closed; general
 Formbricks readiness remains independent from transient SpiceDB availability.
 
 Fresh installs run a release-matched post-install initialization Job that applies the canonical schema and verifies
-the empty or reconciled graph. An acknowledged existing release runs the same release-matched gate as a pre-upgrade
-hook; unacknowledged upgrades are rejected before rendering. Before the first v6 upgrade, run:
+the empty or reconciled graph. An acknowledged existing release runs only the read-only `upgrade check` as a
+pre-upgrade hook; it does not run schema application or backfill. Unacknowledged upgrades are rejected before
+rendering. Before the first v6 upgrade, follow the [maintenance upgrade guide](../../docs/self-hosting/advanced/v6-maintenance-upgrade.mdx):
+stop all writers/controllers, take recoverable backups, and run `formbricks-authzed-prepare --backup-confirmed --writers-stopped`
+in a temporary Job using the exact target image and database/AuthZed bindings. Do not execute preparation through
+the old application pod. Deploy the target chart only after that Job succeeds.
 
-```bash
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade prepare
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade check
-
-# Empty instances only
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply
-
-# Non-empty instances: use the remoteDigest returned by the immediately preceding check
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply \
-  --expected-current-digest sha256:<digest-from-check>
-```
-
-The initial apply to an empty instance needs no digest. A non-empty instance must first be checked and then
-prepared with `--expected-current-digest sha256:<digest-from-check>`. Once `upgrade check` exits `0`, set
+An empty schema needs no digest. A non-empty mismatched schema must first be reviewed using `schema check`
+from the target image, then prepared with `--expected-current-digest sha256:<digest-from-check>`. Once verification exits `0`, set
 `authzed.migrationAcknowledged=true` in the v6 upgrade values. The chart refuses an unacknowledged upgrade,
 `authzed.enabled=false`, or consistency other than `fully_consistent`. Back up the current schema and affected
 relationships before replacement; see the repository `authzed/README.md` for exit codes and rollback rules.
+Later v6 releases with an unchanged canonical schema retain the read-only gate. A schema-changing release needs
+explicit preparation during maintenance; see [later v6 upgrades](../../docs/self-hosting/advanced/v6-maintenance-upgrade.mdx#later-v6-upgrades).
 The public [AuthZed operations guide](../../docs/self-hosting/advanced/authzed-operations.mdx) covers backups,
 restoration, schema lifecycle, relationship repair, and monitoring.
 

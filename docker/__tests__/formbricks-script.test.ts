@@ -723,14 +723,20 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     );
     expect(updateFunction).toContain("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true");
     expect(updateFunction).not.toContain("authzed-ops upgrade prepare");
-    expect(updateFunction).not.toContain("run --rm formbricks-migrate");
+    const migration = updateFunction.indexOf("run --rm --no-deps formbricks-migrate");
+    expect(migration).toBeGreaterThan(updateFunction.indexOf("compose down"));
+    expect(migration).toBeLessThan(updateFunction.lastIndexOf("compose up -d"));
     expect(updateFunction).toContain("authzed-ops upgrade check");
     expect(updateFunction.indexOf("upgrade check")).toBeLessThan(updateFunction.indexOf("compose down"));
   });
 
-  test.each([0, 2])(
-    "checks without online preparation and leaves a blocked installation running (exit %s)",
-    (checkExitCode) => {
+  test.each([
+    { checkExitCode: 0, migrationExitCode: 0 },
+    { checkExitCode: 2, migrationExitCode: 0 },
+    { checkExitCode: 0, migrationExitCode: 1 },
+  ])(
+    "checks before stopping, migrates before starting, and stops on failure: %j",
+    ({ checkExitCode, migrationExitCode }) => {
       const tempDir = createTempDir();
       const installationDir = join(tempDir, "formbricks");
       const binDir = join(tempDir, "bin");
@@ -741,7 +747,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
       writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
       writeFileSync(
         join(binDir, "sudo"),
-        '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\ncase "$*" in *"upgrade check") exit "$CHECK_EXIT_CODE" ;; esac\n',
+        '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\ncase "$*" in *"upgrade check") exit "$CHECK_EXIT_CODE" ;; *"run --rm --no-deps formbricks-migrate") exit "$MIGRATION_EXIT_CODE" ;; esac\n',
         {
           mode: 0o700,
         }
@@ -756,18 +762,26 @@ describe("docker/formbricks.sh AuthZed setup", () => {
           env: {
             ...process.env,
             CHECK_EXIT_CODE: String(checkExitCode),
+            MIGRATION_EXIT_CODE: String(migrationExitCode),
             COMMAND_LOG: commandLog,
             PATH: `${binDir}:${process.env.PATH ?? ""}`,
           },
         }
       );
 
-      expect(result.status).toBe(checkExitCode);
+      expect(result.status).toBe(checkExitCode || migrationExitCode);
       const commands = readFileSync(commandLog, "utf8").trim().split("\n");
       expect(commands).toEqual([
         "docker compose pull",
         "docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check",
-        ...(checkExitCode === 0 ? ["docker compose down", "docker compose up -d"] : []),
+        ...(checkExitCode === 0
+          ? [
+              "docker compose down",
+              "docker compose up -d --wait postgres",
+              "docker compose run --rm --no-deps formbricks-migrate",
+              ...(migrationExitCode === 0 ? ["docker compose up -d"] : []),
+            ]
+          : []),
       ]);
     }
   );

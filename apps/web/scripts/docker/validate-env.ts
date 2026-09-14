@@ -1,5 +1,9 @@
 import { assertAuthzedRuntimeConfiguration } from "../../lib/env";
 
-assertAuthzedRuntimeConfiguration();
+// Migrations reuse basic environment validation without client credentials.
+// Only application startup opts into the stricter, configuration-only contract.
+if (process.argv.includes("--server")) {
+  assertAuthzedRuntimeConfiguration();
+}
 
 console.log("Environment variables validated successfully");

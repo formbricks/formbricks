@@ -6,6 +6,7 @@ readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 readonly ENV_TEMPLATE_PATH="${FORMBRICKS_ENV_TEMPLATE_PATH:-${REPO_ROOT}/.env.example}"
 readonly ENV_PATH="${FORMBRICKS_ENV_PATH:-${REPO_ROOT}/.env}"
+source "${SCRIPT_DIR}/dev-env.sh"
 readonly REQUIRED_GENERATED_KEYS=(
   "ENCRYPTION_KEY"
   "NEXTAUTH_SECRET"
@@ -59,24 +60,6 @@ copy_env_template_if_missing() {
 
   cp "${ENV_TEMPLATE_PATH}" "${ENV_PATH}"
   return 0
-}
-
-read_env_value() {
-  local key="$1"
-
-  awk -F= -v key="${key}" '
-    $0 ~ "^[[:space:]]*" key "[[:space:]]*=" {
-      value = substr($0, index($0, "=") + 1)
-      gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
-
-      if ((value ~ /^".*"$/) || (value ~ /^'\''.*'\''$/)) {
-        value = substr(value, 2, length(value) - 2)
-      }
-
-      print value
-      exit
-    }
-  ' "${ENV_PATH}"
 }
 
 is_valid_encryption_key() {

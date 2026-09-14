@@ -182,7 +182,8 @@ Success prints one JSON result and exits `0`:
 {"status":"prepared","code":"upgrade_prepared","restartRequired":true}
 ```
 
-Blocked preparation exits `2`. The code identifies the failed step:
+Blocked preparation exits `2`, without a `restartRequired` field. It never authorizes restarting workloads,
+including when arguments were rejected before any work ran. The code identifies the failed step:
 
 | Code | Operator action |
 | --- | --- |
@@ -203,9 +204,33 @@ The command never restarts a workload on success, failure, or interruption. Retr
 same image after correcting the cause, provided the interrupted migration is safe to rerun. Never mark
 a failed Prisma migration applied without investigating it.
 
+### Diagnose migration failures privately
+
+The wrapper deliberately does not offer raw output in shared Job logs: migration errors can contain
+credentials, SQL, or customer identifiers. In a restricted PostgreSQL operator session, inspect failed
+Prisma migration records in `_prisma_migrations` (`migration_name`, `started_at`, `finished_at`,
+`rolled_back_at`, and `logs`). Treat `logs` as sensitive; do not paste it into CI, tickets, or Slack.
+For failures before Prisma records the attempt, check connectivity and permissions in that restricted
+session. If a migration must be retried, first establish whether partial changes need repair, then use
+the target image's `node /home/nextjs/packages/database/dist/scripts/apply-migrations.js` under maintenance.
+Capture any diagnostic output only in operator-controlled storage; never enable it on normal startup.
+
 After database changes, **`helm rollback` or changing the image is not necessarily a safe rollback**.
 Remain in maintenance and either complete the v6 preparation or restore the coordinated backup and
 matching v5 images/configuration. Resuming writes before restoration risks losing those new writes.
+
+## Later v6 upgrades
+
+The same read-only `upgrade check` gate also applies to v6.x updates. With an unchanged canonical
+SpiceDB schema and a clean graph/outbox, no additional authorization preparation is needed. One-click
+stops the stack before application migrations and starts it only after they succeed. Helm keeps its
+existing application-migration lifecycle; follow the target release's compatibility and maintenance notes.
+
+If a release changes the canonical SpiceDB schema, this flow deliberately blocks the upgrade until
+explicit maintenance preparation has completed with that target image and a reviewed current digest.
+Use the procedure above again; the persistent acknowledgement is not permission to skip preparation.
+An online, backward-compatible schema rollout would need its own reviewed and tested release procedure;
+neither the Helm hook nor the one-click updater infers that a schema change is safe while writers run.
 
 ## Cloud is a separate rollout path
 

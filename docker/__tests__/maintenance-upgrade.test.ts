@@ -34,6 +34,7 @@ if [ "$*" = "$FAIL_STEP" ]; then exit 1; fi
     { mode: 0o700 }
   );
   const result = spawnSync("sh", [script, ...args], {
+    cwd: directory,
     env: {
       ...process.env,
       AUTHZED_ENABLED: "true",
@@ -71,6 +72,7 @@ describe("maintenance-only preparation", () => {
     const result = execute(args);
     expect(result.status).toBe(2);
     expect(result.trace).toEqual([]);
+    expect(result.output).not.toHaveProperty("restartRequired");
   });
 
   test.each(["", "sha256:invalid", "sha256:" + "g".repeat(64), "token-secret"])(
@@ -97,7 +99,7 @@ describe("maintenance-only preparation", () => {
   const steps = [
     ["/home/nextjs/validate-env.mjs", "upgrade_configuration_invalid"],
     ["health", "upgrade_spicedb_unhealthy"],
-    ["packages/database/dist/scripts/apply-migrations.js", "upgrade_database_migration_failed"],
+    ["/home/nextjs/packages/database/dist/scripts/apply-migrations.js", "upgrade_database_migration_failed"],
     ["upgrade prepare", "upgrade_graph_not_ready"],
     ["upgrade check", "upgrade_verification_failed"],
   ];
@@ -105,7 +107,7 @@ describe("maintenance-only preparation", () => {
   test.each(steps)("stops after %s fails, without restarting workloads", (step, code) => {
     const result = execute(acknowledgements, { FAIL_STEP: step });
     expect(result.status).toBe(2);
-    expect(result.output).toEqual({ status: "blocked", code, restartRequired: true });
+    expect(result.output).toEqual({ status: "blocked", code });
     expect(result.trace).toEqual(
       steps.slice(0, steps.findIndex(([command]) => command === step) + 1).map(([command]) => command)
     );
