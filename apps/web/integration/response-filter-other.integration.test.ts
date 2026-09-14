@@ -119,10 +119,12 @@ const seed = async (): Promise<void> => {
 /** Names of the responses the filter selects, sorted so assertions are order-independent. */
 const matchingNames = async (filterCriteria: TResponseFilterCriteria): Promise<string[]> => {
   const where = { surveyId, ...buildWhereClause(survey, filterCriteria) };
-  const rows = await prisma.response.findMany({ where, select: { id: true } });
 
   // The count path runs the same predicate through a different Prisma call; they must agree.
-  const count = await prisma.response.count({ where });
+  const [rows, count] = await Promise.all([
+    prisma.response.findMany({ where, select: { id: true } }),
+    prisma.response.count({ where }),
+  ]);
   expect(count).toBe(rows.length);
 
   const nameById = new Map([...idsByName].map(([name, id]) => [id, name]));
