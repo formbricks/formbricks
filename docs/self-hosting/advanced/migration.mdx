@@ -30,6 +30,35 @@ for Docker and Kubernetes commands, guarded schema replacement, backups, repair,
 The moving `latest` image tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable
 publication. Existing installations opt into v6 explicitly during that migration window.
 
+### Feedback Records Are Served by the Application
+
+The Feedback Records API used to be served by the API gateway — Envoy on Kubernetes, Traefik on the
+one-click install — which authenticated the call and forwarded it to Hub. It is now served by the Formbricks
+application itself, like every other `/api/v3` operation. Hub stays internal either way, and its API key never
+leaves the application.
+
+**Nothing breaks on upgrade.** The gateway routing is kept so the two can overlap for a release:
+
+- `/api/v3/feedback-records` is the new path, kebab-case like every other v3 resource. It needs no gateway,
+  which is what makes it work behind a customer-managed ingress — Istio, an ALB, or any reverse proxy that
+  simply forwards to the application.
+- `/api/v3/feedbackRecords` still reaches Hub through the gateway, unchanged, while
+  `envoy.formbricks.routes.feedbackRecords` is enabled. **Deprecated** — it speaks Hub's contract
+  (`tenant_id`, `snake_case`) rather than Formbricks', and it will be removed in a later release along with
+  the Helm flag and the `/api/v3/gateway/token` endpoint.
+- `/v1/feedback-records` answers on the Formbricks origin for callers pointing the Hub TypeScript SDK at an
+  instance. Where the gateway is enabled it serves this path as before; where it is not — a custom ingress, or
+  one-click without Envoy — the application now serves it, which it did not do in v5.
+
+The v3 API is a different contract from the gateway surface, not a renamed one: camelCase members and enum
+values, `filter[member][op]` filters, `{data, meta}` envelopes and RFC 9457 problem responses. A client written
+against `/api/v3/feedbackRecords` needs updating rather than repointing. The reference documents the current
+contract.
+
+When the gateway routing is removed, an ingress still pinning `/api/v3/feedbackRecords` or
+`/v1/feedback-records` to the Envoy or Traefik service will need those path rules dropped so both fall through
+to the application. That release will say so again.
+
 ### Changes in Environment Variables
 
 <Note>
