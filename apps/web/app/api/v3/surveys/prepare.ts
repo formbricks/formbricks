@@ -155,39 +155,49 @@ function parseStoredV3SurveyDocument(
   return { ok: true, document: documentResult.data };
 }
 
-/**
- * Codes from the language validator, which walks the whole document rather than one subtree.
- *
- * Patching `languages` reaches every translatable map: adding a locale makes each field that lacks
- * it `missing_translation`, reported under `blocks`/`endings`/`metadata` — keys the caller never
- * sent. Those failures are the request's doing even though the paths say otherwise, so a submitted
- * `languages` owns them.
- */
-const LANGUAGE_VALIDATION_CODES: ReadonlySet<string> = new Set(["missing_translation", "unsupported_locale"]);
-
-function isCallerOwnedFailure(param: InvalidParam, providedTopLevelKeys: ReadonlySet<string>): boolean {
-  if (providedTopLevelKeys.has(param.name.split(".")[0])) {
-    return true;
-  }
-
-  return (
-    providedTopLevelKeys.has("languages") &&
-    param.code !== undefined &&
-    LANGUAGE_VALIDATION_CODES.has(param.code)
-  );
+/** Identity of a reported problem, stable across two validations of two documents. */
+function invalidParamSignature(param: InvalidParam): string {
+  return `${param.name}\u0000${param.code ?? ""}\u0000${param.identifier ?? ""}`;
 }
 
 /**
  * Whose fault is a merged-document failure?
  *
- * `storedSurvey` only when no reported issue belongs to the request. One that does is enough to make
- * the whole response the caller's, since a partial repair still leaves them responsible.
+ * Decided by delta, not by path prefix: validate the *stored* document too, and anything the merged
+ * document reports that the stored one did not is the request's doing. `storedSurvey` only when
+ * every reported issue already existed — one new issue is enough to make the whole response the
+ * caller's, since a partial repair still leaves them responsible.
+ *
+ * The path-prefix heuristic this replaces was wrong in both directions, and only one had been
+ * noticed. It needed a hand-carved exemption for `languages` (adding a locale reports
+ * `missing_translation` under `blocks`/`endings`/`metadata`, keys the caller never sent), and it
+ * still misattributed the symmetric case: reference validation walks the whole merged document, so a
+ * request that submits only `blocks` — which is *every* call to the two block endpoints, since they
+ * synthesize `{ blocks }` — got `storedSurvey` for damage it had just caused under `endings`,
+ * `welcomeCard` or `metadata`. Removing a block that an ending recalled answered with "the stored
+ * survey does not satisfy the contract, so this request was not evaluated … repair them in the
+ * editor" about a survey that was valid until that very call. That is ENG-3070's own failure mode,
+ * pointed the other way.
+ *
+ * Cost is one extra validation, and only on a path that is already returning an error.
+ *
+ * Known limit: a problem whose path shifts because the request moved an array element (a pre-existing
+ * `blocks.1.x` becoming `blocks.0.x` after a remove) reads as new and is attributed to the request.
+ * That errs toward blaming the caller, which is the safer half — it never tells someone their request
+ * "was not evaluated" when it was.
  */
 function deriveFailureOrigin(
   invalidParams: InvalidParam[],
-  providedTopLevelKeys: ReadonlySet<string>
+  storedDocument: TV3SurveyDocument
 ): "request" | "storedSurvey" {
-  return invalidParams.some((param) => isCallerOwnedFailure(param, providedTopLevelKeys))
+  const storedValidation = validateV3SurveyDocument(storedDocument);
+  if (storedValidation.valid) {
+    return "request";
+  }
+
+  const preExisting = new Set(storedValidation.invalidParams.map(invalidParamSignature));
+
+  return invalidParams.some((param) => !preExisting.has(invalidParamSignature(param)))
     ? "request"
     : "storedSurvey";
 }
@@ -526,7 +536,7 @@ export function prepareV3SurveyPatchInput(
   if (!validation.valid) {
     return invalidPreparation(
       validation.invalidParams,
-      deriveFailureOrigin(validation.invalidParams, new Set(Object.keys(aliases.rest)))
+      deriveFailureOrigin(validation.invalidParams, currentDocument.document)
     );
   }
 

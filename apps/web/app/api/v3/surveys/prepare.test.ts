@@ -766,6 +766,72 @@ describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", 
   });
 });
 
+describe("prepareV3SurveyPatchInput failure attribution for cross-key breakage", () => {
+  // The symmetric case to the language patch below, and the one the path-prefix heuristic got wrong.
+  // Reference validation walks the whole merged document, so a request that submits only `blocks` —
+  // which is *every* call to the two block endpoints, since they synthesize `{ blocks }` — can break
+  // a recall living under `endings` and have it reported there. Attributing that to the stored survey
+  // told the caller its request "was not evaluated" and to "repair them in the editor", about a survey
+  // that was valid until that very call. ENG-3070's own failure mode, pointed the other way.
+  const surveyRecalledFromEnding = {
+    ...survey,
+    endings: [
+      {
+        id: "clend1234567890123456789",
+        type: "endScreen",
+        headline: { "en-US": "Thanks #recall:satisfaction/fallback:there#" },
+      },
+    ],
+  } as unknown as TSurvey;
+
+  test("blames the request when a blocks-only patch orphans a recall under endings", () => {
+    const result = prepareV3SurveyPatchInput(surveyRecalledFromEnding, {
+      blocks: [
+        {
+          id: "clbk1234567890123456789099",
+          name: "Replacement Block",
+          elements: [
+            {
+              id: "clel1234567890123456789099",
+              type: "openText",
+              headline: { "en-US": "A different question" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    // The problem is reported under `endings`, a key the request never sent — and it is still the
+    // request's fault, because the stored survey validates clean.
+    expect(result.validation.invalidParams.some((param) => param.name.startsWith("endings."))).toBe(true);
+    expect(result.origin).toBe("request");
+  });
+
+  test("still blames the stored survey when the same problem pre-dates the request", () => {
+    // Same shape, but the recall is already dangling before anything is patched. A blocks patch that
+    // does not repair it must keep reporting `storedSurvey`, or ENG-3070 regresses.
+    const alreadyBroken = {
+      ...survey,
+      endings: [
+        {
+          id: "clend1234567890123456789",
+          type: "endScreen",
+          headline: { "en-US": "Thanks #recall:neverexisted/fallback:there#" },
+        },
+      ],
+    } as unknown as TSurvey;
+
+    const result = prepareV3SurveyPatchInput(alreadyBroken, { name: "Renamed" });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.origin).toBe("storedSurvey");
+  });
+});
+
 describe("prepareV3SurveyPatchInput failure attribution for language patches", () => {
   // A `languages` patch reaches every translatable map in the document, so adding a locale reports
   // `missing_translation` under `blocks` — a key the caller never sent. Attributing that to the
