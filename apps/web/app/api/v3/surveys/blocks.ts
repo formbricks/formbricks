@@ -67,22 +67,50 @@ export function readPublicBlocks(resource: { blocks: unknown }): TV3PublicBlock[
  * `reorderSurveyBlocks` emits one entry per unknown or repeated id, so a body full of junk ids turns
  * into a response several times its own size — the 2 MB request bound does not bound the response.
  * Report enough to act on, then say how many were left out. ENG-1652's policy, applied to an output.
+ *
+ * The cap has to bound the *building*, not just the reply. Capping only the reply still allocates one
+ * six-field object with three template strings per entry and then throws almost all of them away: a
+ * 2 MB body of repeated ids is ~419k entries, which measured at ~500 MB of transient heap for an 8 KB
+ * 422. So `OrderDiagnostics` stops allocating at the cap and only keeps counting — the reported
+ * prefix is byte-identical to before for every input, and the work is now bounded by the cap rather
+ * than by the body size.
  */
 const V3_BLOCK_ORDER_MAX_DIAGNOSTICS = 50;
 
-function boundOrderDiagnostics(invalidParams: InvalidParam[]): InvalidParam[] {
-  if (invalidParams.length <= V3_BLOCK_ORDER_MAX_DIAGNOSTICS) {
-    return invalidParams;
+/**
+ * Collects at most `V3_BLOCK_ORDER_MAX_DIAGNOSTICS` diagnostics, counting the rest without building
+ * them. `push` takes a thunk so the caller's object literal — and its template strings — are never
+ * evaluated once the cap is reached.
+ */
+class OrderDiagnostics {
+  private readonly kept: InvalidParam[] = [];
+  private omitted = 0;
+
+  push(build: () => InvalidParam): void {
+    if (this.kept.length < V3_BLOCK_ORDER_MAX_DIAGNOSTICS) {
+      this.kept.push(build());
+      return;
+    }
+    this.omitted += 1;
   }
 
-  const omitted = invalidParams.length - V3_BLOCK_ORDER_MAX_DIAGNOSTICS;
-  return [
-    ...invalidParams.slice(0, V3_BLOCK_ORDER_MAX_DIAGNOSTICS),
-    {
-      name: "order",
-      reason: `${omitted} further problems with this order were not reported; fix the ones above and retry`,
-    },
-  ];
+  get empty(): boolean {
+    return this.kept.length === 0 && this.omitted === 0;
+  }
+
+  report(): InvalidParam[] {
+    if (this.omitted === 0) {
+      return this.kept;
+    }
+
+    return [
+      ...this.kept,
+      {
+        name: "order",
+        reason: `${this.omitted} further problems with this order were not reported; fix the ones above and retry`,
+      },
+    ];
+  }
 }
 
 function blockIdOf(block: Record<string, unknown>): string | null {
@@ -293,51 +321,51 @@ export function reorderSurveyBlocks(
   order: readonly string[]
 ): TV3BlockReorderResult {
   const byId = new Map(currentBlocks.map((block) => [block.id, block]));
-  const invalidParams: InvalidParam[] = [];
+  const diagnostics = new OrderDiagnostics();
   const seenAt = new Map<string, number>();
 
   order.forEach((id, index) => {
     const firstIndex = seenAt.get(id);
     if (firstIndex !== undefined) {
-      invalidParams.push({
+      diagnostics.push(() => ({
         name: `order.${index}`,
         reason: `Block '${id}' is listed more than once`,
         code: "duplicate_identifier",
         identifier: id,
         referenceType: "block",
         firstUsedAt: `order.${firstIndex}`,
-      });
+      }));
       return;
     }
     seenAt.set(id, index);
 
     if (!byId.has(id)) {
-      invalidParams.push({
+      diagnostics.push(() => ({
         name: `order.${index}`,
         reason: `Block '${id}' does not exist on this survey`,
         code: "dangling_reference",
         identifier: id,
         referenceType: "block",
         missingId: id,
-      });
+      }));
     }
   });
 
   for (const block of currentBlocks) {
     if (!seenAt.has(block.id)) {
-      invalidParams.push({
+      diagnostics.push(() => ({
         name: "order",
         reason: `Block '${block.id}' is missing from the order; list every block exactly once`,
         code: "missing_required_field",
         identifier: block.id,
         referenceType: "block",
         missingId: block.id,
-      });
+      }));
     }
   }
 
-  if (invalidParams.length > 0) {
-    return { ok: false, invalidParams: boundOrderDiagnostics(invalidParams) };
+  if (!diagnostics.empty) {
+    return { ok: false, invalidParams: diagnostics.report() };
   }
 
   const unchanged = currentBlocks.every((block, index) => block.id === order[index]);

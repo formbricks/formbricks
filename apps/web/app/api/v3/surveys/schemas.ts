@@ -1360,8 +1360,22 @@ export const ZV3EditSurveyBlocksBody = z.strictObject({
   expectedUpdatedAt: ZV3ExpectedUpdatedAt.optional(),
 });
 
+/**
+ * Ceiling on a block order, defence in depth behind `reorderSurveyBlocks`'s bounded diagnostics.
+ *
+ * Not a batch size like `V3_SURVEY_BLOCK_OPS_MAX` — a valid order lists every block exactly once, so
+ * the real bound is blocks-per-survey, which nothing caps today. Set generously (the largest survey
+ * seen is 31 blocks) so no legitimate reorder is refused, while still keeping a 2 MB body from
+ * turning into ~419k entries. ENG-1652's policy applied to the input, as `ops` already does.
+ */
+export const V3_SURVEY_BLOCK_ORDER_MAX = 1000;
+
 export const ZV3SetSurveyBlockOrderBody = z.strictObject({
-  order: z.array(ZV3BlockRef).min(1).describe("Every current block id, exactly once, in the desired order."),
+  order: z
+    .array(ZV3BlockRef)
+    .min(1)
+    .max(V3_SURVEY_BLOCK_ORDER_MAX)
+    .describe("Every current block id, exactly once, in the desired order."),
   expectedUpdatedAt: ZV3ExpectedUpdatedAt.optional(),
 });
 

@@ -331,6 +331,44 @@ describe("reorderSurveyBlocks diagnostics bound", () => {
     });
   });
 
+  // Capping the *reply* is not the same as capping the *work*. Before this, one six-field object with
+  // three template strings was built per entry and then discarded: a 2 MB body of repeated ids is
+  // ~419k entries, measured at ~500 MB of transient heap for an 8 KB 422. The ids are only
+  // stringified when a diagnostic is actually built, so counting `toString` calls detects the
+  // difference deterministically — revert the thunks and this goes from 50 to 200000.
+  test("stops building diagnostics at the cap instead of building one per entry", () => {
+    const current = [{ id: "blk_a" }, { id: "blk_b" }] as never;
+    let stringified = 0;
+    const counting = (value: string): string =>
+      ({
+        toString: () => {
+          stringified += 1;
+          return value;
+        },
+      }) as unknown as string;
+    const order = Array.from({ length: 200_000 }, (_unused, index) => counting(`missing_${index}`));
+
+    const result = reorderSurveyBlocks(current, order);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.invalidParams).toHaveLength(51);
+    // The cap is 50; the other tests in this describe pin it via the 51-entry reply.
+    expect(stringified).toBeLessThanOrEqual(50);
+  });
+
+  test("counts every omitted problem, not just the ones it built", () => {
+    const current = [{ id: "blk_a" }] as never;
+    const order = Array.from({ length: 500 }, (_unused, index) => `missing_${index}`);
+
+    const result = reorderSurveyBlocks(current, order);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    // 500 unknown ids + blk_a missing = 501 problems; 50 reported, 451 counted.
+    expect(result.invalidParams.at(-1)?.reason).toContain("451 further problems");
+  });
+
   test("reports every problem when they fit under the cap", () => {
     const current = [{ id: "blk_a" }, { id: "blk_b" }] as never;
 
