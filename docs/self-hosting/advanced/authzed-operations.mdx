@@ -35,8 +35,9 @@ delivery worker, but PostgreSQL is the durable queue. A failed delivery is retri
 dead-lettered revocation makes protected operations fail closed. A six-hour audit repairs attributable missing
 or mismatched edges; operators must investigate state that cannot be repaired safely.
 
+The v6 server validates required AuthZed configuration before accepting requests, without making an RPC.
 The general Formbricks `/health` endpoint, application startup, and Kubernetes readiness and liveness probes
-do not depend on SpiceDB. This prevents a SpiceDB outage from restarting unrelated Formbricks workloads. It
+do not depend on SpiceDB connectivity. This prevents a SpiceDB outage from restarting unrelated Formbricks workloads. It
 also means `/health` alone cannot prove that authorization data is healthy.
 
 There is no browser health or administration page. Use the release-matched operator commands below.
@@ -544,7 +545,8 @@ restore, or shared SpiceDB before proceeding.
 
 | Result or symptom                                                                        | Meaning                                               | Operator response                                                                           |
 | ---------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `authzed_disabled`                                                                       | The client is intentionally disabled                  | Confirm whether this deployment should project relationships, then configure and restart it |
+| Missing AuthZed configuration at startup                                                 | Required v6 settings are absent, disabled, or use weaker consistency | Set the five required client settings, retain the appropriate TLS mode, and restart; there is no legacy fallback |
+| `authzed_disabled` in a diagnostic CLI                                                   | That command loaded disabled client configuration     | Configure the required v6 client settings before starting the server |
 | `authzed_unauthenticated` or `authzed_permission_denied` during health/schema operations | Token rejected or lacks the required API capability   | Verify the secret reference and coordinated token configuration without printing the token  |
 | `authzed_timeout`                                                                        | An attempt exceeded its deadline                      | Check network latency, datastore saturation, and SpiceDB load                               |
 | `authzed_overloaded`                                                                     | SpiceDB reported resource exhaustion                  | Inspect datastore connections, dispatch, cache, CPU, and memory                             |

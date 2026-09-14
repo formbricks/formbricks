@@ -296,6 +296,20 @@ jobs:
             fi
           }
 
+          run_invalid_case "missing AuthZed configuration" "AUTHZED_ENABLED=true" ""
+          run_invalid_case "disabled AuthZed" "AUTHZED_ENABLED=true" "" -e AUTHZED_ENABLED=false
+          run_invalid_case "missing AuthZed token" "AUTHZED_TOKEN" "" \
+            -e AUTHZED_ENABLED=true -e AUTHZED_ENDPOINT=spicedb:50051 -e AUTHZED_SYSTEM_KEY=formbricks
+          run_invalid_case "weak AuthZed consistency" "AUTHZED_CONSISTENCY=fully_consistent" "authzed-secret-sentinel" \
+            -e AUTHZED_ENABLED=true -e AUTHZED_ENDPOINT=spicedb:50051 -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_TOKEN=authzed-secret-sentinel -e AUTHZED_CONSISTENCY=minimize_latency
+
+          # Valid configuration succeeds even without networking: this is not a readiness RPC.
+          docker run --rm --network none --entrypoint node "${COMMON_ENV[@]}" \
+            -e AUTHZED_ENABLED=true -e AUTHZED_ENDPOINT=spicedb:50051 -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_TOKEN=authzed-secret-sentinel -e AUTHZED_CONSISTENCY=fully_consistent \
+            "$IMAGE" /home/nextjs/validate-env.mjs
+
           run_invalid_case \
             "invalid provider" \
             "AI_PROVIDER" \
