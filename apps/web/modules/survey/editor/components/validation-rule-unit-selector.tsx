@@ -26,10 +26,21 @@ export const ValidationRuleUnitSelector = ({
   unitOptions,
   ruleLabels,
   disabled = false,
-}: ValidationRuleUnitSelectorProps) => {
+}: Readonly<ValidationRuleUnitSelectorProps>) => {
+  // A single unit is a label, not a choice, so the trigger is inert either way.
+  const isDisabled = disabled || unitOptions.length === 1;
+
   return (
-    <Select value={value} onValueChange={() => {}} disabled={disabled || unitOptions.length === 1}>
-      <SelectTrigger className={cn("h-9 min-w-[180px] flex-1 bg-white", disabled && "cursor-not-allowed")}>
+    <Select value={value} onValueChange={() => {}} disabled={isDisabled}>
+      <SelectTrigger
+        className={cn(
+          // 180px wide where the row has room, but it must give that width back rather than spill out
+          // of the value group and cover the delete and add buttons (ENG-3175).
+          "h-9 w-[180px] min-w-0 bg-white",
+          // A disabled trigger still hit-tests: it swallowed every click aimed at whatever sat under
+          // it without doing anything itself.
+          isDisabled && "pointer-events-none"
+        )}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
