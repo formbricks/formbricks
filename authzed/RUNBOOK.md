@@ -337,6 +337,10 @@ Historical comparison evidence is preserved in the project records, not as an ex
 
 ## 7. Direct-authority cutover
 
+This bridge-based procedure is for the managed Cloud rollout. See [Cloud bridge and cutover](./CLOUD-CUTOVER.md)
+for artifact creation, availability limits, compatibility gates, and retirement. Self-hosters instead use the
+[maintenance-window procedure](../docs/self-hosting/advanced/v6-maintenance-upgrade.mdx); they do not need a bridge.
+
 The full approval contract is the [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad). This section is the operator's execution checklist.
 
 ### Freeze the bridge artifact

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
@@ -135,12 +136,50 @@ main() {
   local updated_keys=()
   local key=""
   local current_value=""
+  local spicedb_port=""
+  local bundled_endpoint=""
 
   ensure_prerequisites
   ensure_env_template_exists
 
   if copy_env_template_if_missing; then
     env_created="true"
+  fi
+  chmod 600 "${ENV_PATH}"
+  spicedb_port="$(read_env_value SPICEDB_GRPC_PORT)"
+  spicedb_port="${spicedb_port:-50051}"
+  bundled_endpoint="localhost:${spicedb_port}"
+
+  # Older .env files predate SpiceDB. Fill only absent defaults, never replace a
+  # custom endpoint or credential. Explicitly disabled/weaker configurations must
+  # be corrected by the developer before starting the v6 application.
+  for key in AUTHZED_ENABLED AUTHZED_ENDPOINT AUTHZED_SYSTEM_KEY AUTHZED_INSECURE AUTHZED_CONSISTENCY; do
+    if [[ -z "$(read_env_value "${key}")" ]]; then
+      case "${key}" in
+        AUTHZED_ENABLED) upsert_env_value "${key}" "true" ;;
+        AUTHZED_INSECURE)
+          if [[ "$(read_env_value AUTHZED_ENDPOINT)" == "${bundled_endpoint}" ]]; then
+            upsert_env_value "${key}" "true"
+          else
+            upsert_env_value "${key}" "false"
+          fi
+          ;;
+        AUTHZED_ENDPOINT) upsert_env_value "${key}" "${bundled_endpoint}" ;;
+        AUTHZED_SYSTEM_KEY) upsert_env_value "${key}" "formbricks" ;;
+        AUTHZED_CONSISTENCY) upsert_env_value "${key}" "fully_consistent" ;;
+      esac
+    fi
+  done
+
+  case "$(read_env_value AUTHZED_ENABLED)" in
+    true | 1) ;;
+    *) fail "v6 requires AUTHZED_ENABLED=true. Update .env and restart development." ;;
+  esac
+  if [[ "$(read_env_value AUTHZED_CONSISTENCY)" != "fully_consistent" ]]; then
+    fail "v6 requires AUTHZED_CONSISTENCY=fully_consistent. Update .env and restart development."
+  fi
+  if [[ "$(read_env_value AUTHZED_ENDPOINT)" != "${bundled_endpoint}" && -z "$(read_env_value AUTHZED_TOKEN)" ]]; then
+    fail "Custom AUTHZED_ENDPOINT requires its existing AUTHZED_TOKEN; no replacement token was generated."
   fi
 
   for key in "${REQUIRED_GENERATED_KEYS[@]}"; do
