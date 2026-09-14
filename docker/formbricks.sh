@@ -801,7 +801,7 @@ EOF
     if [[ $insert_rustfs_init == "y" ]]; then
       cat >> "$services_snippet_file" << EOF
   rustfs-init:
-    image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
+    image: quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
     depends_on:
       - rustfs
     environment:
