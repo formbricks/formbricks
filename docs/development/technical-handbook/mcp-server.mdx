@@ -752,10 +752,20 @@ Updates a survey by ID using the v3 survey patch contract. The tool writes data,
 destructive, and is not idempotent. Omitted top-level fields are preserved. Provided top-level
 objects and arrays replace that whole subtree, so omitted nested entries inside a provided subtree
 can be removed. The patch tool does not deep-merge nested objects and does not implement JSON Patch.
+For a change confined to one or a few blocks, prefer `edit_survey_blocks`, which does not require
+resending the others.
+
+The full `get_survey` output may be sent straight back: server-owned fields (`id`, `workspaceId`,
+`type`, `createdAt`, `archivedAt`, `defaultLanguage`, `languages[].alias`) are accepted and verified,
+and changing one is a `422` `read_only_field` rather than a silent ignore. A round-tripped
+`updatedAt` acts as an optimistic-concurrency precondition, so the patch is rejected with `409` if
+the survey changed since your read.
 
 <Note>
   For agent workflows, fetch the current survey first, modify only the intended top-level fields, run
-  `validate_survey` with `operation: "patch"`, and then submit the same patch with `patch_survey`.
+  `validate_survey` with `operation: "patch"`, and then submit the same patch with `patch_survey`. If
+  the change is confined to blocks, stop here and use `edit_survey_blocks` or
+  `set_survey_block_order` instead — they are cheaper and cannot drop a block by omission.
 </Note>
 
 Input:
@@ -777,6 +787,91 @@ Input:
 
 Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
 `requestId`.
+
+### edit_survey_blocks
+
+Edits a survey's blocks in place — update, insert or remove whole blocks without resending the ones
+you are not changing. The tool writes data, can be destructive, and is not idempotent. Operations
+apply in order against a single snapshot and land atomically: either all of them do or none do.
+
+Blocks are addressed by id, never by position, so a concurrent edit cannot redirect an operation onto
+a different block. An `update` replaces the target block entirely, and the replacement must carry
+every language the survey has configured. An `insert` anchors at `start`, `end`, or `after` a block
+id — including one an earlier operation in the same request inserted. `block.id` is optional on
+both: an insert without one gets a server-generated id, returned in the concise response's `applied`
+list, and an update takes it from the operation's `id`.
+
+Removing a block orphans any answers already collected for its elements, and the API cannot undo
+that. The editor shows a human a caution before this; an agent has no equivalent, so confirm with the
+user before removing a block from a survey that is not a draft.
+
+<Note>
+  Fetch the survey first and pass its `updatedAt` as `expectedUpdatedAt`. If the survey changed since
+  your read the call returns `409` with both timestamps in `details` — re-read and retry. The concise
+  response carries the new `updatedAt`, so a run of edits chains without fetching again.
+</Note>
+
+Input:
+
+```json
+{
+  "expectedUpdatedAt": "2026-04-21T10:00:00.000Z",
+  "ops": [
+    {
+      "id": "k1p9wq2m4x7c3v8b5n6t0j2r",
+      "op": "update",
+      "block": {
+        "id": "k1p9wq2m4x7c3v8b5n6t0j2r",
+        "name": "Satisfaction",
+        "elements": [
+          {
+            "headline": { "en-US": "How satisfied were you?" },
+            "id": "satisfaction",
+            "inputType": "text",
+            "required": true,
+            "type": "openText"
+          }
+        ]
+      }
+    }
+  ],
+  "response_format": "concise",
+  "surveyId": "clsv1234567890123456789012"
+}
+```
+
+Output defaults to a concise acknowledgement — `id`, `updatedAt`, `blockCount` and the operations
+applied — plus the MCP `requestId`. The full survey resource is ~15k tokens on a large survey, which
+would refill an agent's context as fast as resending the blocks did, so it is opt-in via
+`response_format: "detailed"`. `REST` always returns the full resource.
+
+### set_survey_block_order
+
+Replaces the order of a survey's blocks by listing every current block id exactly once. Block content
+is untouched. The tool writes data and can be destructive, but unlike every other survey write it is
+**idempotent**: the same order yields the same survey, and an order that already matches performs no
+write at all, so `updatedAt` does not move and other callers' preconditions stay valid. A stale
+`expectedUpdatedAt` still returns `409` on that path: the precondition is evaluated before the
+method, so a no-op outcome never reports success to a caller whose view is out of date.
+
+Because the list must be a permutation, a dropped or duplicated block is rejected rather than
+silently applied — the failure that resending the whole `blocks` array cannot catch.
+
+Input:
+
+```json
+{
+  "expectedUpdatedAt": "2026-04-21T10:00:00.000Z",
+  "order": [
+    "b4h8s2d6f0g3j5k7l9z1x3c5",
+    "k1p9wq2m4x7c3v8b5n6t0j2r"
+  ],
+  "response_format": "concise",
+  "surveyId": "clsv1234567890123456789012"
+}
+```
+
+Output matches `edit_survey_blocks`: concise by default, echoing the applied `order`.
 
 ### delete_survey
 
@@ -1422,6 +1517,8 @@ survey operations used by the REST routes:
 | `create_survey`   | `POST /api/v3/surveys`              |
 | `validate_survey` | `POST /api/v3/surveys/validate`     |
 | `patch_survey`    | `PATCH /api/v3/surveys/{surveyId}`  |
+| `edit_survey_blocks` | `PATCH /api/v3/surveys/{surveyId}/blocks` |
+| `set_survey_block_order` | `PUT /api/v3/surveys/{surveyId}/blocks/order` |
 | `delete_survey`   | `DELETE /api/v3/surveys/{surveyId}` |
 
 When the v3 OpenAPI contract changes, update the MCP schemas and this page together. The hand-maintained
@@ -1479,6 +1576,18 @@ query, like `create_feedback_record`.
   one they return 503. Embedding is asynchronous and covers only records with text.
 - `create_survey` creates link surveys only. In-app survey creation and distribution settings are not
   part of the current v3 create operation.
+- `edit_survey_blocks` and `set_survey_block_order` operate on whole blocks. There is no element-level
+  operation: elements travel inside the block payload, and going finer would reintroduce the same
+  resend problem one level down.
+- Ordering is validated as a delta on the **patch family only**: a change may not *introduce* a
+  `#recall:` that points forwards, a logic condition reading a later block, or a `requireAnswer`
+  targeting an earlier one (`misordered_reference`). Violations a survey already contains are left
+  alone, so an existing survey never becomes unpatchable — enforcing the full set would repeat the
+  ENG-3070 failure. `create_survey` is deliberately not covered: tightening it would reject payloads
+  that are valid today, which needs its own versioned rollout.
+- `stored_survey_invalid` (422) means the *stored* survey no longer satisfies the v3 document
+  contract, so the request was never evaluated; the reported paths are into the survey, not the
+  request. Repair it in the editor.
 - `patch_survey` follows the v3 PATCH contract: top-level partial document updates only, no JSON Patch,
   and no nested deep merge. Provided top-level objects and arrays replace their whole subtree and can
   remove omitted nested entries.
@@ -1508,6 +1617,7 @@ query, like `create_feedback_record`.
 - `apps/web/modules/mcp/tools/workflows.ts`
 - `apps/web/modules/mcp/tools/workflow-schemas.ts`
 - `apps/web/app/api/v3/surveys/lib/operations.ts`
+- `apps/web/app/api/v3/surveys/blocks.ts` (pure block op-application and reorder logic)
 - `apps/web/app/api/v3/workflows/lib/context.ts` (adapter to the `@formbricks/workflows` handlers)
 - `apps/web/app/api/v3/feedbackRecords/lib/operations.ts`
 - `apps/web/app/api/v3/feedbackRecords/lib/access.ts` (tenant resolution + per-record ownership guard)

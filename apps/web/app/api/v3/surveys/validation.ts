@@ -1,7 +1,11 @@
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { isInternalI18nString, isPlainObject } from "./guards";
-import { validateV3SurveyReferences } from "./reference-validation";
+import {
+  getV3SurveyIntroducedPrecedenceInvalidParams,
+  getV3SurveyPrecedenceInvalidParams,
+  validateV3SurveyReferences,
+} from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
 import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
@@ -155,22 +159,58 @@ export function getV3SurveyMediaInvalidParams(blocks: TV3SurveyDocument["blocks"
   ];
 }
 
-export function validateV3SurveyDocument(document: TV3SurveyDocument): TV3SurveyDocumentValidationResult {
-  const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
-  const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
-  const invalidParams = [...languageInvalidParams, ...mediaInvalidParams];
+/**
+ * How strictly to apply the ordering rules (ENG-3069).
+ *
+ * `enforce` on create, where there is no prior state to preserve. `introduced` on the patch family,
+ * which reports only what the change adds — enforcing the full set would make a survey that already
+ * contains a forward recall unpatchable, including by a patch that never touches it.
+ */
+export type TV3SurveyPrecedencePolicy =
+  // Not reached in production today: enforcing the full set anywhere would reject input that is
+  // currently valid. Kept for the rollout that tightens create behind a version bump.
+  | { mode: "enforce" }
+  | { mode: "introduced"; baseline: TV3SurveyDocument }
+  // Building the *stored* document: never judge its ordering. We did not author it, and failing here
+  // would make an existing survey with a forward recall unpatchable — precisely the ENG-3070 bug this
+  // rule is supposed to avoid causing.
+  | { mode: "skip" };
 
-  const referenceValidation = validateV3SurveyReferences({
+function toReferenceInput(document: TV3SurveyDocument) {
+  return {
     blocks: document.blocks,
     endings: document.endings,
     hiddenFields: document.hiddenFields,
     metadata: document.metadata,
     variables: document.variables,
     welcomeCard: document.welcomeCard,
-  });
+  };
+}
+
+/** Hoisted so the default is one shared frozen policy rather than a fresh literal per call. */
+const ENFORCE_PRECEDENCE: TV3SurveyPrecedencePolicy = { mode: "enforce" };
+
+export function validateV3SurveyDocument(
+  document: TV3SurveyDocument,
+  precedence: TV3SurveyPrecedencePolicy = ENFORCE_PRECEDENCE
+): TV3SurveyDocumentValidationResult {
+  const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
+  const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
+  const invalidParams = [...languageInvalidParams, ...mediaInvalidParams];
+
+  const referenceInput = toReferenceInput(document);
+  const referenceValidation = validateV3SurveyReferences(referenceInput);
 
   if (!referenceValidation.ok) {
     invalidParams.push(...referenceValidation.invalidParams);
+  }
+
+  if (precedence.mode === "enforce") {
+    invalidParams.push(...getV3SurveyPrecedenceInvalidParams(referenceInput));
+  } else if (precedence.mode === "introduced") {
+    invalidParams.push(
+      ...getV3SurveyIntroducedPrecedenceInvalidParams(toReferenceInput(precedence.baseline), referenceInput)
+    );
   }
 
   if (invalidParams.length > 0) {

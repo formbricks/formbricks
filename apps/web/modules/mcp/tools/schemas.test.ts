@@ -135,6 +135,12 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
     "ZMcpCreateSurveyInput.variables[]",
   ],
   ZMcpPatchSurveyInput: ["ZMcpPatchSurveyInput.data"],
+  // Both op branches that carry a block: the payload is the v3 document's block shape, validated
+  // downstream by the patch pipeline exactly as `blocks[]` is on create.
+  ZMcpEditSurveyBlocksInput: [
+    "ZMcpEditSurveyBlocksInput.ops[].oneOf|0.block",
+    "ZMcpEditSurveyBlocksInput.ops[].oneOf|1.block",
+  ],
   ZMcpValidateSurveyInput: ["ZMcpValidateSurveyInput.data"],
   ZMcpCreateFeedbackRecordInput: ["ZMcpCreateFeedbackRecordInput.metadata"],
   ZMcpCreateFeedbackRecordsInput: ["ZMcpCreateFeedbackRecordsInput.records[].metadata"],

@@ -37,6 +37,8 @@ const CONTRACT_IDS = {
   SURVEY_PATCH: "clctsurveypatch000000001",
   SURVEY_DELETE: "clctsurveydelete00000001",
   SURVEY_ARCHIVE: "clctsurveyarchive0000001",
+  SURVEY_BLOCKS_EDIT: "clctsurveyblocksedit0001",
+  SURVEY_BLOCKS_ORDER: "clctsurveyblocksorder001",
   SURVEY_RESTORE: "clctsurveyrestore0000001",
   WORKFLOW_PATCH: "clctworkflowpatch0000001",
   WORKFLOW_DELETE: "clctworkflowdelete000001",
@@ -98,21 +100,26 @@ async function seedSurveyLanguages(surveyId: string, codes: readonly string[]): 
   }
 }
 
-async function seedSurvey(id: string, name: string, archived: boolean): Promise<void> {
-  const blocks = [
-    {
-      id: `${id}block`,
-      name: "Main Block",
-      elements: [
-        {
-          id: `${id}element`,
-          type: "openText",
-          headline: { default: "Contract fixture question" },
-          required: false,
-        },
-      ],
-    },
-  ] as unknown as TSurveyBlocks;
+async function seedSurvey(
+  id: string,
+  name: string,
+  archived: boolean,
+  // The block operations need at least two blocks: one to address and one left over, since removing
+  // the last block is (correctly) rejected.
+  blockCount = 1
+): Promise<void> {
+  const blocks = Array.from({ length: blockCount }, (_unused, index) => ({
+    id: index === 0 ? `${id}block` : `${id}block${String(index + 1)}`,
+    name: `Main Block ${String(index + 1)}`,
+    elements: [
+      {
+        id: index === 0 ? `${id}element` : `${id}element${String(index + 1)}`,
+        type: "openText",
+        headline: { default: "Contract fixture question" },
+        required: false,
+      },
+    ],
+  })) as unknown as TSurveyBlocks;
 
   const fields = {
     name,
@@ -194,6 +201,8 @@ async function main(): Promise<void> {
   await seedSurvey(CONTRACT_IDS.SURVEY_PATCH, "Contract fixture — patch", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_DELETE, "Contract fixture — delete", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_ARCHIVE, "Contract fixture — archive", false);
+  await seedSurvey(CONTRACT_IDS.SURVEY_BLOCKS_EDIT, "Contract fixture — block edit", false, 2);
+  await seedSurvey(CONTRACT_IDS.SURVEY_BLOCKS_ORDER, "Contract fixture — block order", false, 2);
   // Restore only has something to do on an already-archived survey.
   await seedSurvey(CONTRACT_IDS.SURVEY_RESTORE, "Contract fixture — restore", true);
 
@@ -250,6 +259,21 @@ async function main(): Promise<void> {
       patchSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_PATCH } },
       deleteSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_DELETE } },
       archiveSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_ARCHIVE } },
+      editSurveyBlocksV3: {
+        path: { surveyId: CONTRACT_IDS.SURVEY_BLOCKS_EDIT },
+        body: {
+          blockId: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block`,
+          id: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block`,
+        },
+      },
+      // The order must be a permutation of the seeded survey's own block ids, so it cannot be
+      // generated — without this the operation only ever exercises its documented 422.
+      setSurveyBlockOrderV3: {
+        path: { surveyId: CONTRACT_IDS.SURVEY_BLOCKS_ORDER },
+        body: {
+          order: [`${CONTRACT_IDS.SURVEY_BLOCKS_ORDER}block`, `${CONTRACT_IDS.SURVEY_BLOCKS_ORDER}block2`],
+        },
+      },
       restoreSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_RESTORE } },
       patchWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_PATCH } },
       deleteWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_DELETE } },
