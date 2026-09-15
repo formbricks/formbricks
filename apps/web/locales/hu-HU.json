@@ -107,6 +107,8 @@
         "offline_access": "Hozzáférés megtartása frissítési tokenekkel",
         "openid": "Azonosítsa magát OpenID Connect használatával",
         "profile": "A profilja megtekintése",
+        "responses_read": "Kérdőívválaszok olvasása",
+        "responses_write": "Kérdőívválaszok létrehozása, frissítése és törlése",
         "surveys_read": "Kérdőívek olvasása",
         "surveys_write": "Kérdőívek létrehozása, frissítése és törlése",
         "workflows_read": "Munkafolyamatok olvasása",
