@@ -104,6 +104,12 @@ export const MCP_OAUTH_SCOPES = [
   "workflows:write",
   "feedbackRecords:read",
   "feedbackRecords:write",
+  // ENG-2862. Responses get their own pair rather than riding on `surveys:*`, which would silently
+  // widen every token an integrator already holds to include respondent PII — the survey document is
+  // configuration, a response is someone's answers. Appended rather than inserted: the seed migration
+  // keeps a literal copy of this list and its test compares the two in order.
+  "responses:read",
+  "responses:write",
 ] as const;
 
 export const MCP_RESOURCE_SCOPES = [
@@ -113,6 +119,8 @@ export const MCP_RESOURCE_SCOPES = [
   "workflows:write",
   "feedbackRecords:read",
   "feedbackRecords:write",
+  "responses:read",
+  "responses:write",
 ] as const;
 
 // Scopes advertised in the RFC 9728 protected-resource metadata. MCP clients derive their

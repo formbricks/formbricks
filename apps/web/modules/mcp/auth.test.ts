@@ -281,7 +281,14 @@ describe("authenticateMcpRequest", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.authInfo.scopes).toEqual(["surveys:read", "workflows:read", "feedbackRecords:read"]);
+      // `responses:read` rides along (ENG-2862): the same key can already read responses through v1/v2
+      // management, so withholding it would make MCP narrower than the REST surface this credential has.
+      expect(result.authInfo.scopes).toEqual([
+        "surveys:read",
+        "workflows:read",
+        "feedbackRecords:read",
+        "responses:read",
+      ]);
     }
   });
 
@@ -416,7 +423,7 @@ describe("authenticateMcpRequest", () => {
       // added, the baseline auth gate has been widened and MCP is accepting a token that grants no
       // resource access.
       expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
+        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write"'
       );
     }
     expect(applyRateLimit).not.toHaveBeenCalled();

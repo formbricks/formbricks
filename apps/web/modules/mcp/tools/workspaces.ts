@@ -19,7 +19,7 @@ export function registerWorkspaceTools(server: McpServer): void {
     {
       title: "List workspaces",
       description:
-        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow and feedback-record tools.",
+        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow, feedback-record and response tools.",
       inputSchema: ZMcpListWorkspacesInput,
       annotations: {
         readOnlyHint: true,
@@ -28,7 +28,9 @@ export function registerWorkspaceTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    { anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read"] },
+    // Every tool group needs a workspaceId first, so this has to admit any of them — a responses-only
+    // token would otherwise be unable to discover the workspace its own tools require (ENG-2862).
+    { anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read"] },
     async (_input: TMcpListWorkspacesInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
