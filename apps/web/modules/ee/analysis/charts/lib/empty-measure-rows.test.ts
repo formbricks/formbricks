@@ -78,6 +78,16 @@ describe("dropEmptyMeasureRows", () => {
     expect(dropEmptyMeasureRows(rows, groupedQuery)).toEqual([rows[1]]);
   });
 
+  test("keeps a row whose only reading is a measure the first row omits", () => {
+    const rows = [
+      { [FIELD_LABEL]: "How easy was it?", [CES_AVG]: "4.5" },
+      { [FIELD_LABEL]: "How satisfied are you?", [CSAT_AVG]: "4.1" },
+      { [FIELD_LABEL]: "Gender" },
+    ];
+
+    expect(dropEmptyMeasureRows(rows, groupedQuery)).toEqual([rows[0], rows[1]]);
+  });
+
   test("keeps every row when the result names none of the query's measures", () => {
     const rows = [
       { [FIELD_LABEL]: "Gender", "FeedbackRecords.count": null },

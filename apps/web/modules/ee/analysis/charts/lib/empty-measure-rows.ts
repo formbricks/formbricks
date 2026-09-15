@@ -43,15 +43,18 @@ export const canDropEmptyMeasureRows = (query: TChartQuery): boolean =>
  * and render as blank bars and empty rows in Chart Data (ENG-3150).
  *
  * A row survives when at least one selected measure carries a reading, so a group that answers one
- * of several measures keeps its place. Only measures actually present as columns are consulted: if
- * the rewritten query names none of them (a renamed column, an unexpected shape), every row would
- * otherwise be dropped, so the result is returned untouched instead.
+ * of several measures keeps its place. Only measures actually present as a column on some row are
+ * consulted: if the rewritten query names none of them (a renamed column, an unexpected shape),
+ * every row would otherwise be dropped, so the result is returned untouched instead.
  */
 export const dropEmptyMeasureRows = (rows: TChartDataRow[], query: TChartQuery): TChartDataRow[] => {
   if (rows.length === 0 || !canDropEmptyMeasureRows(query)) return rows;
 
-  const columns = Object.keys(rows[0]);
-  const measures = (query.measures ?? []).filter((measure) => columns.includes(measure));
+  // Every row is consulted rather than just the first: Cube's pivot fills each row with every
+  // column (`fillWithValue` in cube-client), but sampling one row would make that an unstated
+  // requirement, and a first row missing a measure a later row answers would take that row with it.
+  const columns = new Set(rows.flatMap((row) => Object.keys(row)));
+  const measures = (query.measures ?? []).filter((measure) => columns.has(measure));
   if (measures.length === 0) return rows;
 
   return rows.filter((row) => measures.some((measure) => !isEmptyMeasureValue(row[measure])));
