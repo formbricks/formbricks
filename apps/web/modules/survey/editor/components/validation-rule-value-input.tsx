@@ -59,7 +59,7 @@ export const ValidationRuleValueInput = ({
     const optionValue = typeof currentValue === "string" ? currentValue : "";
     return (
       <Select value={optionValue} onValueChange={onChange}>
-        <SelectTrigger className="h-9 min-w-[200px] bg-white">
+        <SelectTrigger className="h-9 min-w-0 bg-white">
           <SelectValue placeholder={t("workspace.surveys.edit.validation.select_option")} />
         </SelectTrigger>
         <SelectContent>
@@ -117,7 +117,11 @@ export const ValidationRuleValueInput = ({
         if (config.valueType === "number" && ["e", "E", "+"].includes(e.key)) e.preventDefault();
       }}
       placeholder={config.valuePlaceholder}
-      className="h-9 min-w-[80px] bg-white"
+      // 5rem is a preference, not a floor. This is the only grower in the value group, so it takes
+      // every pixel the 180px unit selector leaves. When the group is squeezed instead, both shrink
+      // in proportion to their bases, so the unit gives up the larger share (180/260) and this input
+      // the smaller (80/260) — the input is the last to become unreadable, not the first.
+      className="h-9 min-w-0 flex-[1_1_5rem] bg-white"
       min={config.valueType === "number" ? 0 : ""}
     />
   );

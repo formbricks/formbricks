@@ -1,0 +1,8 @@
+in: query
+name: filter[createdAt][gte]
+schema:
+  type: string
+  format: date-time
+description: >-
+  Only records created at or after this instant (**inclusive**). Mutually exclusive with
+  `filter[createdAt][gt]` — sending both is a **400**.

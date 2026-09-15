@@ -204,6 +204,29 @@ jobs:
           test "$status" -eq 1
           test "$output" = '{"status":"disabled"}'
 
+          UNREACHABLE_TOKEN="authzed-cli-validation-secret"
+          set +e
+          unreachable_output="$(timeout 10s docker run --rm \
+            --entrypoint formbricks-authzed \
+            "${AUTHZED_CLI_ENV[@]}" \
+            -e AUTHZED_ENABLED="true" \
+            -e AUTHZED_ENDPOINT="192.0.2.1:50051" \
+            -e AUTHZED_INSECURE="true" \
+            -e AUTHZED_SYSTEM_KEY="formbricks" \
+            -e AUTHZED_TOKEN="$UNREACHABLE_TOKEN" \
+            "$IMAGE" health 2>&1)"
+          unreachable_status=$?
+          set -e
+
+          test "$unreachable_status" -eq 1
+          test "$(printf '%s\n' "$unreachable_output" | wc -l)" -eq 1
+          ! printf '%s' "$unreachable_output" | grep -F "$UNREACHABLE_TOKEN"
+          printf '%s' "$unreachable_output" | jq -e '
+            .status == "unhealthy" and
+            .retryable == true and
+            (.latencyMs | type == "number")
+          ' >/dev/null
+
           set +e
           upgrade_output="$(docker run --rm \
             --entrypoint formbricks-authzed \

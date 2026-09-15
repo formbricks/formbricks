@@ -45,8 +45,8 @@ catalog:
   # newest vitest, whose own vite peer picks 8. That predates this catalog, no importer
   # references it, and nothing builds with it — every workspace resolves 7.3.5.
   vite: 7.3.5
-  vitest: 4.1.6
-  "@vitest/coverage-v8": 4.1.6
+  vitest: 4.1.11
+  "@vitest/coverage-v8": 4.1.11
   vite-plugin-dts: 4.5.4
   vite-tsconfig-paths: 6.1.1
   "@vitejs/plugin-react": 5.1.4
@@ -59,7 +59,7 @@ catalog:
   cross-env: 10.1.0
   glob: 13.0.6
   # Read by scripts/check-catalog.mjs; also a packages/workflows dev dep.
-  js-yaml: 4.3.1
+  js-yaml: 4.3.2
   "@playwright/test": 1.58.2
   "@testing-library/react": 16.3.2
   # --- lint & format ---
@@ -146,8 +146,14 @@ overrides:
   # requests, leaking one user's rendered HTML to another.
   # ENG-2320 / GHSA-79qm-7rj5-m7r9 (CVE-2026-71849): Proxy Helper forwards response headers named in
   # the origin's Connection header instead of stripping them. All four patched in 4.12.34.
+  # ENG-3094 / GHSA-crvj-82cr-hjcx (CVE-2026-84363): the query-string parser keeps reading params found
+  # after a `#` fragment, letting a crafted URL smuggle values the origin server never saw.
+  # ENG-3093 / GHSA-g6gw-c38x-mqfc (CVE-2026-84364): parseBody() honors unbounded dot-notation key
+  # nesting, so a deeply nested form field can exhaust CPU/memory building the resulting object (DoS).
+  # ENG-3092 / GHSA-gqvv-2mrq-wpjv (CVE-2026-84365): incomplete fix for CVE-2026-39408 — toSSG() can
+  # still write generated files outside its configured output directory. All three patched in 4.13.5.
   # load-bearing: @hono/node-server resolves 4.x via @modelcontextprotocol/sdk and @prisma/dev (dev/MCP-only).
-  hono: 4.12.34
+  hono: 4.13.5
   # OpenTelemetry / protobuf chains.
   # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
   # patched in 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype
@@ -224,8 +230,12 @@ overrides:
   # ENG-2278 / ENG-2279 / GHSA-5p4m-2wfm-xmqj (CVE-2026-59870): js-yaml 4.0.0–4.3.0 can spend quadratic
   # CPU resolving a large !!omap (linear indexOf scan per entry); patched in 4.3.1. Raises the 4.x pin
   # from 4.3.0 to 4.3.1 (still <5).
+  # ENG-3091 / GHSA-2883-xcg3-v3hh (CVE-2026-84375): js-yaml 4.0.0-4.3.1's merge-key handling doesn't
+  # bound CPU work for a mapping with no keys of its own (an empty `<<:` merge source), so a document
+  # built from many such empty merges still costs quadratic time; patched in 4.3.2. Raises the 4.x pin
+  # from 4.3.1 to 4.3.2 (still <5).
   # load-bearing: @redocly/openapi-core and @redocly/respect-core pin 4.2.0.
-  js-yaml@4: 4.3.1
+  js-yaml@4: 4.3.2
   # GHSA-4cwx-7wf7-3272, GHSA-8xcm-r25x-g524, GHSA-jr45-8vmc-qm54,
   # GHSA-m8rv-5g2x-5cg5 and GHSA-v3r7-h72x-cjcm: undici request handling findings are patched
   # in 6.28.0 and 7.29.0 respectively.
@@ -236,7 +246,9 @@ overrides:
   # ENG-1999 / ENG-1989 / GHSA-f88m-g3jw-g9cj: sharp <0.35.0 inherits libvips vulnerabilities
   # (CVE-2026-33327/33328/35590/35591). apps/web pins 0.35.0 directly; this override also coerces the
   # sharp 0.34.5 that next@16 declares as an optional peer, which otherwise keeps the alert open.
-  sharp: 0.35.0
+  # ENG-3105 / GHSA-rgj7-g3m4-5g8c (refs GHSA-g89c-p67h-r497, GHSA-2jg2-4ch7-h545): sharp <0.35.4 bundles
+  # libheif builds vulnerable to a set of HEIF-decoding RCE findings; patched in 0.35.4.
+  sharp: 0.35.4
   # ENG-1992 / GHSA-45rx-2jwx-cxfr (CVE-2026-59892): @opentelemetry/propagator-jaeger <2.9.0 DoS via an
   # unhandled decodeURIComponent() error on a malformed header; patched in 2.9.0. Coerces the transitive
   # 1.26.0 line up to 2.9.0 (core is already pinned to 2.x above).
@@ -336,6 +348,19 @@ overrides:
   # forever (DoS). Affects the 0.4.x line from 0.4.5; patched in 0.4.9.
   # load-bearing: posthog-js (browser, apps/web) resolves 0.4.8.
   fflate: 0.4.9
+  # === Dependabot security batch (ENG-3091..ENG-3110) ===
+  # ENG-3100 / GHSA-w5vr-8v7q-w6rv (CVE-2026-45819): baseline-browser-mapping <2.11.0 calls
+  # `process.exit()` when it can't parse browserslist-stats.json, taking down the whole process instead
+  # of throwing; patched in 2.11.0. Pinned to 2.11.20 (already resolved elsewhere in the tree, so this
+  # coerces the vulnerable copy up rather than introducing a new version).
+  # load-bearing: next resolves the vulnerable 2.10.31 line as a transitive dependency.
+  baseline-browser-mapping: 2.11.20
+  # ENG-3110 / GHSA-866g-f22w-33x8 (CVE-2026-8769): @ai-sdk/provider-utils <4.0.33's stream consumer has
+  # no backpressure limit on a slow/adversarial reader, letting an unbounded amount of response data
+  # buffer in memory (uncontrolled resource consumption); patched in 4.0.33.
+  # load-bearing: packages/ai's @ai-sdk/* providers (amazon-bedrock, anthropic, azure, gateway, google,
+  # google-vertex, openai, openai-compatible) and the `ai` package all resolve the vulnerable 4.0.27.
+  "@ai-sdk/provider-utils": 4.0.33
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
   # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.

@@ -57,6 +57,8 @@ import {
 export const ZMcpListSurveysInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID whose surveys should be listed."),
+    // Deliberately capped below the HTTP API's 250: for an agent client the binding constraint is
+    // context window, not server cost, so a larger page is a cost rather than a convenience.
     limit: z
       .number()
       .int()
