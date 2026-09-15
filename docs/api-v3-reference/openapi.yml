@@ -7053,7 +7053,10 @@ components:
     ResponseUnresolvedEntry:
       type: object
       description: |
-        Stored data whose element no longer exists in the survey definition. Deleting an element leaves its answers behind on already-collected responses and nothing cleans them up, so the payload reports them here instead of dropping them silently or faking them into `answers[]` without a type or a label. Consumers doing analysis can ignore this array; consumers doing export or migration should not.
+        Stored data that nothing in the current survey definition can account for. Deleting an element, a hidden field or a variable leaves its values behind on already-collected responses and nothing cleans them up, so the payload reports them here instead of dropping them silently or faking them into `answers[]` without a type or a label. Consumers doing analysis can ignore this array; consumers doing export or migration should not.
+
+        **A declared field's `defaultValue` takes precedence over anything unreadable stored under its key**, and that is worth stating because this collection otherwise reads as exhaustive. Resolution falls back to the default before a value is ever judged unreadable, so a field that declares one always resolves — and the stored bytes, whatever their shape, are reported nowhere. Only a field with **no** `defaultValue` can reach `valueShapeMismatch`.
+        A `locked` field narrows that further: it ignores whatever a response supplies, so a *scalar* under its key is not reported either — the shape is not the problem, the lock is — while a non-scalar under a lockless, defaultless field is. Neither case is a silent drop by accident; both are consequences of resolution order, and they are written down so a consumer does not read `unresolved[]` as a guarantee that nothing was left behind. If either proves to matter in practice a reason code can be added without breaking anyone, whereas removing one could not — which is why this is documentation rather than a guess at a fifth enum member.
       required:
         - key
         - rawValue
@@ -7061,7 +7064,7 @@ components:
       properties:
         key:
           type: string
-          description: The key as stored on the response — usually a former element id or hidden-field key.
+          description: The key as stored on the response. For `elementNotInSurvey` it is a former element id or hidden-field name; for `variableNotInSurvey` a variable's cuid, since that map is keyed by id rather than by name; and for `valueShapeMismatch` the id or name of the element or declared field that *does* still exist — that reason means the key resolved and the value did not.
         rawValue:
           description: The stored value, returned verbatim and untyped because nothing describes it any more.
           oneOf:
@@ -7077,15 +7080,20 @@ components:
           type: string
           enum:
             - elementNotInSurvey
-            - hiddenFieldNotInSurvey
             - variableNotInSurvey
             - valueShapeMismatch
           description: |
             Why the entry could not be resolved:
 
-            - `elementNotInSurvey` — no element with this id exists in the current definition.
-            - `hiddenFieldNotInSurvey` — the key is not among the survey's declared hidden fields.
-            - `variableNotInSurvey` — no variable with this id exists in the current definition.
+            - `elementNotInSurvey` — nothing in the current definition claims this key. It covers a deleted
+              element **and** a deleted hidden field, because the two cannot be told apart: an answer is
+              stored under its element id and a hidden field under its name, in one shared map, and storage
+              keeps no record of which kind a vanished key used to be.
+
+            - `variableNotInSurvey` — no variable with this id exists in the current definition. Variables
+              *are* distinguishable, because they live in their own map keyed by cuid rather than sharing
+              the answer map.
+
             - `valueShapeMismatch` — the key resolves to a current element **or a declared Embedded Data
               field**, but the stored value's shape cannot be read as an
               answer of that element's type (for example a string where the element expects a selection
