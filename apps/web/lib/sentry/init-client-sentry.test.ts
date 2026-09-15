@@ -108,6 +108,20 @@ describe("initClientSentryFromRuntimeConfig", () => {
     expect(beforeSend(event, {})).toBe(event);
   });
 
+  test("drops stale server action errors, which the reload prompt already handles", async () => {
+    window[SENTRY_CLIENT_RUNTIME_CONFIG_KEY] = CONFIG;
+
+    (await importInit())();
+
+    const { beforeSend } = mockInit.mock.calls[0][0];
+    const event = { message: "boom" };
+    const staleAction = Object.assign(new Error('Server Action "7f8e93d" was not found on the server.'), {
+      name: "UnrecognizedActionError",
+    });
+
+    expect(beforeSend(event, { originalException: staleAction })).toBeNull();
+  });
+
   test("does nothing on the server where there is no window", async () => {
     vi.stubGlobal("window", undefined);
 

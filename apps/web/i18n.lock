@@ -173,6 +173,8 @@ checksums:
     common/api_keys: f961b547cd312cc8b9b79f0c9e0b2cc3
     common/app: 77e32ac4e5a1e01bc9a6a15fdfef9bf8
     common/app_survey: f076d131d20bfdadb35fba29c8275232
+    common/app_updated_description: b6dfb214363f2fe89848aa8662f6e28a
+    common/app_updated_title: be282622c7354e4fbcdf32fc1869a5d0
     common/appearance: cdd8c41c5fb859234e8a603544fce631
     common/apply_filters: 6543c1e80038b3da0f4a42848d08d4d1
     common/archive: fa813ab3074103e5daad07462af25789
@@ -424,6 +426,7 @@ checksums:
     common/read_docs: d06513c266fdd9056e0500eab838ebac
     common/recipients: f90e7f266be3f5a724858f21a9fd855e
     common/refresh: c0aec3f31be4c984bae9a482572d2857
+    common/reload_page: 77740065847251933add64d7a50ccdd8
     common/remove: dba2fe5fe9f83f8078c687f28cba4b52
     common/remove_from_team: 69bcc7a1001c3017f9de578ee22cffd6
     common/rename: 6f9413e4606e8d83a010685008fb2931
