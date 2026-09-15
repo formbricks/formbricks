@@ -205,19 +205,17 @@ info:
 
 
     **Feedback Records**
-    `/api/v3/feedbackRecords` is served by the **API gateway** (Envoy on Formbricks Cloud, Traefik in
-    the one-click Docker install), which authorizes each call against the dataset and forwards it to
-    the feedback store — not by the application routes that serve the rest of v3. Three consequences:
-    the payload is the store's own, so members and filters are **`snake_case`** (`tenant_id`,
-    `value_text`) rather than v3's camelCase; the dataset is named **`tenant_id`** on the wire and is
-    required on every collection operation (it is the feedback dataset id, which the MCP
-    `list_feedback_datasets` tool reports as `dataset_id`); and errors come in two shapes — gateway
-    refusals (**400**, **401**, **403**, **413**, **503**) are `text/plain`, while the store's own
-    problems are `application/problem+json` with a stable `code`. These eight operations are the whole
-    of the gateway-served surface; any other path it receives under the prefix answers **400**. Authenticate with
-    **`x-api-key`**: the key needs a permission on a workspace the dataset is assigned to — `read` to
-    list, get and search, `write` to create and update, `manage` to delete — and may update or delete
-    only in a dataset assigned to exactly one workspace.
+    `/api/v3/feedback-records` reads and writes the normalized feedback store behind Unify Feedback.
+    It follows the same conventions as the rest of v3 — camelCase members, `{ data, meta }` list
+    envelopes with `meta.nextCursor`, `filter[field][op]` query filters, `sortBy`, and RFC 9457
+    problem responses — and is scoped by `workspaceId` like every other v3 list. A workspace reaches
+    at most one active dataset; `GET /api/v3/feedback-datasets` lists the ids, and `datasetId` names
+    one explicitly where a workspace has more than one.
+
+    Authenticate with **`x-api-key`**: the key needs a permission on a workspace the dataset is
+    assigned to — `read` to list, count, get and search, `write` to create and update, `manage` to
+    delete — and may update or delete only in a dataset assigned to exactly one workspace, because in
+    a shared dataset no workspace permission can say whose records they are.
 
     **OpenAPI**
 
@@ -341,14 +339,18 @@ paths:
     $ref: paths/api_v3_tags_{tagId}.yml
   /api/v3/tags/{tagId}/merge:
     $ref: paths/api_v3_tags_{tagId}_merge.yml
-  /api/v3/feedbackRecords:
-    $ref: paths/api_v3_feedbackRecords.yml
-  /api/v3/feedbackRecords/search/semantic:
-    $ref: paths/api_v3_feedbackRecords_search_semantic.yml
-  /api/v3/feedbackRecords/{id}:
-    $ref: paths/api_v3_feedbackRecords_{id}.yml
-  /api/v3/feedbackRecords/{id}/similar:
-    $ref: paths/api_v3_feedbackRecords_{id}_similar.yml
+  /api/v3/feedback-datasets:
+    $ref: paths/api_v3_feedback-datasets.yml
+  /api/v3/feedback-records:
+    $ref: paths/api_v3_feedback-records.yml
+  /api/v3/feedback-records/count:
+    $ref: paths/api_v3_feedback-records_count.yml
+  /api/v3/feedback-records/search/semantic:
+    $ref: paths/api_v3_feedback-records_search_semantic.yml
+  /api/v3/feedback-records/{feedbackRecordId}:
+    $ref: paths/api_v3_feedback-records_{feedbackRecordId}.yml
+  /api/v3/feedback-records/{feedbackRecordId}/similar:
+    $ref: paths/api_v3_feedback-records_{feedbackRecordId}_similar.yml
 components:
   securitySchemes:
     sessionAuth:

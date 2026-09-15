@@ -1,8 +1,0 @@
-description: >-
-  Unauthorized — no credentials, or an API key that does not exist or is revoked. Answered by the
-  gateway as `text/plain`, before the request reaches the feedback store.
-content:
-  text/plain:
-    schema:
-      type: string
-    example: Unauthorized

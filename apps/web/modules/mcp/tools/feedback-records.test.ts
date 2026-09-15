@@ -13,7 +13,7 @@ import {
   listV3FeedbackRecords,
   searchV3FeedbackRecords,
   updateV3FeedbackRecord,
-} from "@/app/api/v3/feedbackRecords/lib/operations";
+} from "@/app/api/v3/feedback-records/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
   noContentResponse,
@@ -32,7 +32,7 @@ import { ZMcpUpdateFeedbackRecordInput } from "./schemas";
 // with z.url() and drops the whole event otherwise.
 const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mcp$/);
 
-vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
+vi.mock("@/app/api/v3/feedback-records/lib/operations", () => ({
   countV3FeedbackRecords: vi.fn(),
   createV3FeedbackRecord: vi.fn(),
   createV3FeedbackRecords: vi.fn(),
@@ -688,10 +688,13 @@ describe("find_similar_feedback_records", () => {
 
 describe("count_feedback_records", () => {
   test("passes the filters through and returns the count", async () => {
+    // The shape the operation actually returns since ENG-3117: which dataset produced the count is
+    // `meta`, not part of `data`. Mocking the old shape here passed, because the assertion below only
+    // reads `data.count` — so it encoded a response the operation can no longer produce.
     vi.mocked(countV3FeedbackRecords).mockResolvedValue(
       successResponse(
-        { count: 7, dataset_id: directoryId, dataset_name: "Support" },
-        { requestId: "req_tool" }
+        { count: 7 },
+        { requestId: "req_tool", meta: { datasetId: directoryId, datasetName: "Support" } }
       )
     );
     const { tools } = createToolServer();
@@ -704,6 +707,9 @@ describe("count_feedback_records", () => {
       expect.objectContaining({ workspaceId, user_id: "user-1", field_type: "text", instance: "/api/mcp" })
     );
     expect(result.structuredContent.data.count).toBe(7);
+    // Pinned where an MCP reader will look: the dataset moved into `meta`, and this is the one
+    // MCP-visible shape change in the move off the gateway.
+    expect(result.structuredContent.meta).toEqual({ datasetId: directoryId, datasetName: "Support" });
   });
 
   test("requires the read scope", async () => {

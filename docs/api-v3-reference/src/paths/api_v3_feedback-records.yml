@@ -1,0 +1,231 @@
+get:
+  operationId: listFeedbackRecordsV3
+  summary: List feedback records
+  description: |
+    Lists feedback records in a workspace's dataset, newest first. Requires an API key with **read**
+    permission (or higher) on the workspace.
+
+    Scope is required, as it is on every v3 list: pass `workspaceId`. A workspace reaches at most one
+    active dataset, so that is normally enough; pass `datasetId` as well to name one explicitly. Use
+    `GET /api/v3/feedback-datasets` to discover the ids.
+
+    Pagination is keyset: pass the response's `meta.nextCursor` back as `cursor`, keeping `sortBy`
+    unchanged. The cursor is bound to the sort order.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
+
+    - $ref: ../components/parameters/FeedbackRecordFilterSubmissionIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSourceTypeIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSourceIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSourceNameIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterFieldIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterFieldGroupIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterLanguageIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterFieldTypeIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterUserIdIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCollectedAtGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCollectedAtLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCreatedAtGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterCreatedAtLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueNumberGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueNumberLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueDateGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterValueDateLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSentimentScoreGte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSentimentScoreLte.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterSentimentIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterEmotionsIn.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterHasSentimentEq.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterHasEmotionsEq.yml
+    - $ref: ../components/parameters/FeedbackRecordFilterHasTranslationEq.yml
+    # --- ordering and pagination ---------------------------------------------------------------
+    - in: query
+      name: sortBy
+      schema:
+        type: string
+        enum:
+          - collectedAt
+          - -collectedAt
+          - createdAt
+          - -createdAt
+        default: -collectedAt
+      description: >-
+        Sort order; a leading `-` is descending. Only columns that are non-null and immutable after
+        insert are offered: a mutable sort key would let a row move across the cursor between pages
+        and be skipped. Rows tied on the sort column are ordered by `id` ascending. The `cursor`
+        token is bound to the selected sort order.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 50
+      description: >-
+        Page size. The 1000 ceiling is higher than elsewhere in v3 because this surface is built for
+        bulk ingestion and export. Out-of-range and non-numeric values are rejected: `0`, `-5`,
+        `1001` and `abc` all answer **400**. Send no `limit` rather than `0` if
+        you are computing it.
+    - $ref: ../components/parameters/CursorQuery.yml
+  responses:
+    "200":
+      description: Feedback records retrieved
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FeedbackRecordList.yml
+          examples:
+            onePage:
+              summary: One page of two records
+              value:
+                data:
+                  - id: 018e1234-5678-7abc-8ef0-123456789abc
+                    datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                    collectedAt: "2026-08-15T10:30:00Z"
+                    createdAt: "2026-08-15T10:30:02Z"
+                    updatedAt: "2026-08-15T10:31:40Z"
+                    sourceType: survey
+                    sourceName: Post-match survey
+                    submissionId: cm2k7qa1z0007v8h1e6f7g8h9
+                    fieldId: q2
+                    fieldLabel: What could we improve?
+                    fieldType: text
+                    valueText: Queues at the north gate were far too long.
+                    userId: fan-8813
+                    language: en
+                    sentiment: negative
+                    sentimentScore: -0.62
+                    emotions:
+                      - anger
+                  - id: 018e1234-5678-7abc-8ef0-123456789abd
+                    datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                    collectedAt: "2026-08-15T10:29:11Z"
+                    createdAt: "2026-08-15T10:29:12Z"
+                    updatedAt: "2026-08-15T10:29:12Z"
+                    sourceType: survey
+                    submissionId: cm2k7qa1z0007v8h1e6f7g8h8
+                    fieldId: q1
+                    fieldType: nps
+                    valueNumber: 9
+                meta:
+                  limit: 100
+                  nextCursor: eyJjb2xsZWN0ZWRBdCI6IjIwMjYtMDgtMTVUMTA6Mjk6MTFaIn0
+                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                  datasetName: Customer feedback
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []
+
+post:
+  operationId: createFeedbackRecordV3
+  summary: Create a feedback record
+  description: |
+    Stores one feedback record. Requires an API key with **write** permission (or higher) on the
+    workspace.
+
+    Records are unique per (`datasetId`, `submissionId`, `fieldId`); re-posting the same triple
+    answers **409**. Send a `valueText` and the record is queued for enrichment — sentiment,
+    emotions and a translation appear on later reads rather than in this response.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateFeedbackRecordRequest.yml
+        examples:
+          rating:
+            summary: A rating answer
+            value:
+              sourceType: survey
+              sourceId: cm2k7q9x00003v8h1a2b3c4d5
+              submissionId: cm2k7qa1z0007v8h1e6f7g8h9
+              fieldId: q1
+              fieldType: nps
+              valueNumber: 9
+          freeText:
+            summary: A free-text answer (enriched and embedded)
+            value:
+              sourceType: review
+              sourceName: App Store
+              submissionId: appstore-review-88213
+              fieldId: review_body
+              fieldLabel: Review
+              fieldType: text
+              valueText: Crashes every time I open the settings screen.
+              userId: appstore-user-4471
+              language: en
+          choice:
+            summary: A choice answer with a stable option id
+            value:
+              sourceType: survey
+              submissionId: cm2k7qa1z0007v8h1e6f7g8h9
+              fieldId: q3
+              fieldType: categorical
+              valueId: choice_2f8a
+              valueText: A friend
+  responses:
+    "201":
+      description: Feedback record created
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FeedbackRecordEnvelope.yml
+          examples:
+            created:
+              summary: The stored record
+              value:
+                data:
+                  id: 018e1234-5678-7abc-8ef0-123456789abc
+                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                  collectedAt: "2026-08-15T10:30:00Z"
+                  createdAt: "2026-08-15T10:30:02Z"
+                  updatedAt: "2026-08-15T10:30:02Z"
+                  sourceType: review
+                  sourceName: App Store
+                  submissionId: appstore-review-88213
+                  fieldId: review_body
+                  fieldLabel: Review
+                  fieldType: text
+                  valueText: Crashes every time I open the settings screen.
+                  userId: appstore-user-4471
+                  language: en
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      $ref: ../components/responses/V3Conflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "413":
+      $ref: ../components/responses/V3PayloadTooLarge.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []

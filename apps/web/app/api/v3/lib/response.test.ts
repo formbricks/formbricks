@@ -145,6 +145,19 @@ describe("successResponse", () => {
     });
   });
 
+  /**
+   * `meta` is for what is true about the request rather than the resource — the dataset a
+   * feedback-record count was taken in. Pinned here because every v3 response goes through this
+   * helper: the key must stay absent unless asked for.
+   */
+  test("adds meta only when given", async () => {
+    const withMeta = successResponse({ count: 42 }, { meta: { datasetId: "ds_1" } });
+    expect(await withMeta.json()).toEqual({ data: { count: 42 }, meta: { datasetId: "ds_1" } });
+
+    const without = successResponse({ count: 42 });
+    expect(Object.keys((await without.json()) as object)).toEqual(["data"]);
+  });
+
   test("allows custom status and cache headers", async () => {
     const res = successResponse(
       { ok: true },

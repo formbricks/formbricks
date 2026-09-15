@@ -1,0 +1,7 @@
+in: query
+name: filter[hasEmotions][eq]
+schema:
+  type: boolean
+description: >-
+  `true` selects records carrying emotion labels, `false` those without. Note `false` covers
+  both "not yet classified" and "classified, no emotion detected".

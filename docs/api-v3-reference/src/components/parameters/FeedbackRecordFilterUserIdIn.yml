@@ -1,0 +1,11 @@
+in: query
+name: filter[userId][in]
+style: form
+explode: true
+schema:
+  type: array
+  maxItems: 100
+  items:
+    type: string
+    maxLength: 255
+description: Records attributed to any of these end users.

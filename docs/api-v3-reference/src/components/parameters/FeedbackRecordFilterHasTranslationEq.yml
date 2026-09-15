@@ -1,0 +1,5 @@
+in: query
+name: filter[hasTranslation][eq]
+schema:
+  type: boolean
+description: "`true` selects records carrying a translation, `false` those without."

@@ -150,7 +150,7 @@ describe("authorizeEnvoyRequest", () => {
     });
   });
 
-  test("returns 400 when bulkDelete is missing tenant_id", async () => {
+  test("refuses delete-by-user with 405 and an Allow header, before reading tenant_id", async () => {
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
       type: "apiKey",
@@ -169,7 +169,12 @@ describe("authorizeEnvoyRequest", () => {
       })
     );
 
-    expect(response.status).toBe(400);
+    // ENG-3117 removed delete-by-user from the route table entirely, so the collection answers the
+    // methods it does support rather than a 400 about the missing `tenant_id`. It reaches the gateway
+    // path too, which is the point: the operation is refused wherever it is attempted, not only on the
+    // route the application serves.
+    expect(response.status).toBe(405);
+    expect(response.headers.get("allow")).toBe("GET, POST");
   });
 
   test("returns 400 for unsupported envoy auth routes", async () => {
@@ -332,8 +337,10 @@ describe("authorizeEnvoyRequest", () => {
     });
 
     const response = await authorizeEnvoyRequest(
+      // GET rather than DELETE: delete-by-tenant is refused by method now, and a 405 would shadow the
+      // authorization check this test exists for.
       createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
-        method: "DELETE",
+        method: "GET",
         headers: {
           "x-api-key": "fbk_test",
         },
@@ -568,7 +575,7 @@ describe("authorizeEnvoyRequest", () => {
     expect(response.status).toBe(400);
   });
 
-  test("handles HEAD requests through the generic service instead of 405ing at Next.js", async () => {
+  test("answers HEAD on a known path with the methods it supports", async () => {
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
       type: "apiKey",
@@ -587,10 +594,11 @@ describe("authorizeEnvoyRequest", () => {
       })
     );
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(405);
+    expect(response.headers.get("allow")).toBe("GET, PATCH, DELETE");
   });
 
-  test("handles OPTIONS requests through the generic service instead of 405ing at Next.js", async () => {
+  test("answers OPTIONS on a known path with the methods it supports", async () => {
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
       type: "apiKey",
@@ -609,6 +617,7 @@ describe("authorizeEnvoyRequest", () => {
       })
     );
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(405);
+    expect(response.headers.get("allow")).toBe("GET, POST");
   });
 });

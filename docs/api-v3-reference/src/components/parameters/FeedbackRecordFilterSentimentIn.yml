@@ -1,0 +1,12 @@
+in: query
+name: filter[sentiment][in]
+style: form
+explode: true
+schema:
+  type: array
+  maxItems: 6
+  items:
+    $ref: ../schemas/FeedbackRecordSentiment.yml
+description: >-
+  Records carrying any of these sentiment labels. Repeat the parameter for several values. An empty
+  value is rejected, as on every other filter.

@@ -1,0 +1,43 @@
+get:
+  operationId: listFeedbackDatasetsV3
+  summary: List feedback datasets
+  description: |
+    Lists the feedback datasets a workspace can reach. Requires an API key with **read** permission
+    (or higher) on the workspace.
+
+    This is how a caller discovers the `datasetId` the record operations filter and write by — it is
+    not shown anywhere else in the API. A workspace reaches at most one active dataset, so this
+    normally returns a single entry.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+  responses:
+    "200":
+      description: Feedback datasets retrieved
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FeedbackDatasetList.yml
+          examples:
+            oneDataset:
+              summary: The workspace's dataset
+              value:
+                data:
+                  - id: ph7zv3w2u1x5k9d8m4q6c0bn
+                    name: Customer feedback
+                meta:
+                  nextCursor: null
+                  totalCount: 1
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - apiKeyAuth: []

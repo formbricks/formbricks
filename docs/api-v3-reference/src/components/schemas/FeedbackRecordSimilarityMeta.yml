@@ -1,0 +1,36 @@
+type: object
+additionalProperties: false
+required:
+  - limit
+  - nextCursor
+  - datasetId
+  - datasetName
+  - minScore
+properties:
+  limit:
+    type: integer
+    minimum: 1
+    description: The page size that was applied.
+  nextCursor:
+    type:
+      - string
+      - "null"
+    description: Opaque keyset cursor for the next page. `null` on the last page.
+  datasetId:
+    type: string
+    format: cuid2
+    description: >-
+      The dataset that was actually searched. Echoed because an empty `data` is otherwise
+      ambiguous — "this dataset holds no matching records" reads identically to "I don't know what
+      was searched" — and a caller that let `workspaceId` resolve the dataset would otherwise need
+      a second request to learn which one answered.
+  datasetName:
+    type: string
+    description: Human-readable name of that dataset.
+  minScore:
+    type: number
+    format: double
+    description: >-
+      The similarity threshold that was applied, including the server default when the caller sent
+      none. Echoed because this value is clamped rather than rejected, so what was applied is not
+      always what was asked for.

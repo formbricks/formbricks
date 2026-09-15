@@ -1,0 +1,11 @@
+in: query
+name: filter[fieldId][in]
+style: form
+explode: true
+schema:
+  type: array
+  maxItems: 100
+  items:
+    type: string
+    maxLength: 255
+description: Records for any of these question / field ids.

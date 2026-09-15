@@ -1,0 +1,62 @@
+get:
+  operationId: getSimilarFeedbackRecordsV3
+  summary: Find similar feedback records
+  description: |
+    Returns the records in the same dataset whose embedded text is closest to the given record's,
+    with cosine similarity scores. The anchor record itself is excluded. The dataset is read from the
+    anchor record. Requires an API key with **read** permission (or higher) on a workspace the
+    record's dataset is assigned to.
+
+    A record with no embedding yet answers **409**, not 404 — it exists, it simply has nothing to
+    compare. Records without text are never embedded.
+
+    Answers **403** for an unknown or inaccessible id. Answers **404** when the record exists but has
+    no embedding — it has no text, or was created moments ago and is not embedded yet. Answers
+    **503** on instances without an embedding model configured.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - $ref: ../components/parameters/FeedbackRecordIdPath.yml
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/FeedbackDatasetIdQuery.yml
+    - $ref: ../components/parameters/SimilarityLimitQuery.yml
+    - $ref: ../components/parameters/SimilarityCursorQuery.yml
+    - $ref: ../components/parameters/MinScoreQuery.yml
+  responses:
+    "200":
+      description: Similar records retrieved
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FeedbackRecordSimilarityResult.yml
+          examples:
+            matches:
+              summary: One neighbour above the threshold
+              value:
+                data:
+                  - feedbackRecordId: 018e1234-5678-7abc-8ef0-1234567890aa
+                    score: 0.83
+                    fieldLabel: Anything else?
+                    valueText: Took 40 minutes to get in. Please open more turnstiles.
+                meta:
+                  limit: 10
+                  nextCursor: null
+                  minScore: 0.5
+                  datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
+                  datasetName: Customer feedback
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      $ref: ../components/responses/FeedbackRecordsEmbeddingPending.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []

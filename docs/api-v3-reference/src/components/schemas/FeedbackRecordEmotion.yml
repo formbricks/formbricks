@@ -1,6 +1,6 @@
 type: string
 description: >-
-  A single emotion label inferred from `value_text` by the emotion enrichment (the six Ekman basic
+  A single emotion label inferred from `valueText` by the emotion enrichment (the six Ekman basic
   emotions). Emotions are multi-label, so a record carries zero or more of these; "mixed" is not a
   label, it is two or more present at once. Server-generated and read-only.
 enum:
