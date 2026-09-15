@@ -26,6 +26,7 @@ import {
 interface SelectPlanCardProps {
   nextUrl: string;
   organizationId: string;
+  trialDays: number;
 }
 
 const CUSTOMER_LOGOS = [
@@ -36,7 +37,7 @@ const CUSTOMER_LOGOS = [
   { src: ethereumLogo, alt: "Ethereum" },
 ];
 
-export const SelectPlanCard = ({ nextUrl, organizationId }: Readonly<SelectPlanCardProps>) => {
+export const SelectPlanCard = ({ nextUrl, organizationId, trialDays }: Readonly<SelectPlanCardProps>) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
@@ -44,7 +45,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: Readonly<SelectPlanC
   const { t } = useTranslation();
 
   const copy = {
-    header: t("workspace.settings.billing.select_plan_header"),
+    header: t("workspace.settings.billing.select_plan_header", { count: trialDays }),
     subheader: t("workspace.settings.billing.select_plan_subheader"),
     cta: t("workspace.settings.billing.select_plan_cta"),
     skip: t("workspace.settings.billing.select_plan_skip"),
