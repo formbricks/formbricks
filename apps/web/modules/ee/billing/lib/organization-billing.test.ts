@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  DEFAULT_PRO_TRIAL_DAYS,
   addOptimisticBillingFeature,
   applySetupCheckoutUpgrade,
   createPaidPlanCheckoutSession,
+  createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
   findOrganizationIdByStripeCustomerId,
@@ -3290,6 +3292,56 @@ describe("organization-billing", () => {
       const result = await getProTrialDays("org_1");
 
       expect(result).toBe(7);
+    });
+  });
+
+  describe("createProTrialSubscription", () => {
+    beforeEach(() => {
+      mocks.customersRetrieve.mockResolvedValue({
+        id: "cus_1",
+        deleted: false,
+        email: "owner@example.com",
+      });
+    });
+
+    // The trial length only reaches Stripe through `trial_period_days`. Assert on the Stripe call
+    // itself: every other test mocks this function away, so a hardcoded value here would be the
+    // A/B test silently running a 14-day trial for both arms while PostHog reports 7.
+    test("sends the resolved trial length to Stripe as trial_period_days", async () => {
+      await createProTrialSubscription("org_1", "cus_1", 7);
+
+      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customer: "cus_1",
+          trial_period_days: 7,
+          metadata: { organizationId: "org_1" },
+        }),
+        { idempotencyKey: "create-pro-trial-org_1" }
+      );
+    });
+
+    test("defaults to the 14-day trial when no trial length is passed", async () => {
+      await createProTrialSubscription("org_1", "cus_1");
+
+      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ trial_period_days: DEFAULT_PRO_TRIAL_DAYS }),
+        { idempotencyKey: "create-pro-trial-org_1" }
+      );
+    });
+
+    test("does not create a trial subscription when the email already used a Pro trial", async () => {
+      mocks.customersList.mockResolvedValue({ data: [{ id: "cus_old" }] });
+      mocks.subscriptionsList.mockResolvedValue({
+        data: [
+          {
+            trial_start: 1700000000,
+            items: { data: [{ price: { product: "prod_pro" } }] },
+          },
+        ],
+      });
+
+      await expect(createProTrialSubscription("org_1", "cus_1", 7)).rejects.toThrow("trial_already_used");
+      expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
     });
   });
 
