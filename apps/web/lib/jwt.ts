@@ -46,14 +46,6 @@ type TVerificationTokenOptions = SignOptions & {
   purpose?: TVerificationTokenPurpose;
 };
 
-type TSsoRelinkIntentPayload = {
-  callbackUrl: string;
-  email: string;
-  provider: string;
-  providerAccountId: string;
-  userId: string;
-};
-
 const DEFAULT_VERIFICATION_TOKEN_PURPOSE: TVerificationTokenPurpose = "email_verification";
 
 const getVerificationTokenPurpose = (purpose: unknown): TVerificationTokenPurpose => {
@@ -452,71 +444,6 @@ const getUserEmailForLegacyVerification = async (
   }
 
   return { userId: decryptedId, userEmail: foundUser.email };
-};
-
-const DEFAULT_SSO_RELINK_INTENT_OPTIONS: SignOptions = {
-  expiresIn: "15m",
-};
-
-export const createSsoRelinkIntent = (
-  payload: TSsoRelinkIntentPayload,
-  options: SignOptions = DEFAULT_SSO_RELINK_INTENT_OPTIONS
-): string => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
-
-  if (!ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
-  return jwt.sign(
-    {
-      userId: symmetricEncrypt(payload.userId, ENCRYPTION_KEY),
-      email: symmetricEncrypt(payload.email, ENCRYPTION_KEY),
-      provider: payload.provider,
-      providerAccountId: symmetricEncrypt(payload.providerAccountId, ENCRYPTION_KEY),
-      callbackUrl: symmetricEncrypt(payload.callbackUrl, ENCRYPTION_KEY),
-    },
-    NEXTAUTH_SECRET,
-    options
-  );
-};
-
-export const verifySsoRelinkIntent = (token: string): TSsoRelinkIntentPayload => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
-
-  if (!ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
-  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
-    userId: string;
-    email: string;
-    provider: string;
-    providerAccountId: string;
-    callbackUrl: string;
-  };
-
-  if (
-    !payload?.userId ||
-    !payload?.email ||
-    !payload?.provider ||
-    !payload?.providerAccountId ||
-    !payload?.callbackUrl
-  ) {
-    throw new Error("Token is invalid or missing required fields");
-  }
-
-  return {
-    userId: decryptWithFallback(payload.userId, ENCRYPTION_KEY),
-    email: decryptWithFallback(payload.email, ENCRYPTION_KEY),
-    provider: payload.provider,
-    providerAccountId: decryptWithFallback(payload.providerAccountId, ENCRYPTION_KEY),
-    callbackUrl: decryptWithFallback(payload.callbackUrl, ENCRYPTION_KEY),
-  };
 };
 
 export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> => {
