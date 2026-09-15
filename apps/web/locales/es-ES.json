@@ -2728,7 +2728,7 @@
         "select_plan_feature_2": "Acceso a MCP, conéctate a cualquier cliente de IA y toma decisiones basadas en datos.",
         "select_plan_feature_3": "Todas las integraciones y webhooks personalizados",
         "select_plan_feature_4": "2.000 respuestas al mes",
-        "select_plan_header": "Tienes Pro durante los próximos 14 días",
+        "select_plan_header": "{count, plural, one {Tienes Pro durante # día más} other {Tienes Pro durante # días más}}",
         "select_plan_skip": "Volver al plan 'Hobby'",
         "select_plan_subheader": "Todo lo siguiente está desbloqueado, gratis.",
         "status_trialing": "Prueba",
