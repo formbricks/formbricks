@@ -23,7 +23,8 @@
     "authzed:schema": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-schema.ts",
     "authzed:smoke": "bash docker/authzed-smoke.sh",
     "authzed:validate": "bash authzed/validate.sh",
-    "go": "pnpm db:up && turbo run go --concurrency 20",
+    "authzed:upgrade": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-upgrade.ts",
+    "go": "pnpm db:up && pnpm dev:authzed && turbo run go --concurrency 20",
     "dev": "turbo run dev --parallel",
     "pre-commit": "lint-staged",
     "start": "turbo run start --parallel",
@@ -49,7 +50,8 @@
     "api:v3:bundle": "node docs/api-v3-reference/scripts/bundle.mjs",
     "api:v3:lint": "node docs/api-v3-reference/scripts/bundle.mjs --lint",
     "api:v3:check": "node docs/api-v3-reference/scripts/bundle.mjs --check",
-    "dev:setup": "bash scripts/setup-dev-env.sh"
+    "dev:setup": "bash scripts/setup-dev-env.sh",
+    "dev:authzed": "bash scripts/dev-authzed-up.sh"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.3",

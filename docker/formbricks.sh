@@ -1308,12 +1308,12 @@ update_formbricks() {
     exit 1
   fi
   sudo docker compose pull
-  # The outbox migration is backward compatible with the still-running v5 application. Apply it before
-  # the release-matched operator checks so the old deployment stays available if preparation blocks.
-  sudo docker compose run --rm formbricks-migrate
-  sudo docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-  sudo docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+  # Preparation is an explicit maintenance operation. Never run target-version
+  # database migrations or schema/relationship writes against the still-running app.
+  sudo docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
   sudo docker compose down
+  sudo docker compose up -d --wait postgres
+  sudo docker compose run --rm --no-deps formbricks-migrate
   sudo docker compose up -d
   echo "🎉 Formbricks updated successfully!"
   echo "🎉 Check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose logs.'"
