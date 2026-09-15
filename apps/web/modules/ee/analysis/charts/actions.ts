@@ -19,6 +19,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
+import { dropEmptyMeasureRows } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
 import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import {
@@ -299,7 +300,9 @@ export const executeQueryAction = authenticatedActionClient
         source: "charts.executeQueryAction",
       });
 
-      const rows = Array.isArray(rawRows) ? rawRows : [];
+      // Cube emits a row per group present in the source, including groups no selected measure can
+      // answer for — they render as blank bars and empty Chart Data rows (ENG-3150).
+      const rows = dropEmptyMeasureRows(Array.isArray(rawRows) ? rawRows : [], rewrittenQuery);
 
       return { rows, ...(optionLabels ? { optionLabels } : {}), effectiveQuery: rewrittenQuery };
     }
