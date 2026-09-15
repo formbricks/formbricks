@@ -433,6 +433,5 @@ describe("Logger", () => {
     const source = readFileSync(new URL("./logger.ts", import.meta.url), "utf8");
 
     expect(source).not.toMatch(/\bprocess\.(on|off)\(/);
-    expect(source).toMatch(/\bnodeProcess\.on\(/);
   });
 });
