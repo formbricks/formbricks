@@ -184,6 +184,30 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 - Prefer cursor pagination for large datasets.
 - When filtering by `createdAt`, include indexed fields (e.g., `surveyId` + `createdAt`).
 
+## Performance in Review
+
+Performance is an explicit review dimension, not something to discover in production. The bottlenecks that
+have reached `main` — N+1 queries, embedding work that never finishes — were all visible in the diff that
+introduced them, so every review of data access, of a loop over tenant data, or of an AI/embedding path looks
+for them deliberately.
+
+What to look for:
+
+- **N+1 queries** — a query, AI call, or cross-service fetch issued inside a `for`/`map`/`Promise.all` over
+  rows. One `findMany` with an `in` filter, an `include`, or a single grouped query replaces it.
+- **Unbounded work** — a `findMany` with no `take`, a pagination or retry loop with no ceiling, or a whole
+  table pulled into memory and filtered in JS. Bound it and push the filter into the query.
+- **Missing indexes** — a new `where`/`orderBy` combination needs an index that serves it; see "Database &
+  Prisma Performance" for the `createdAt` rule.
+- **Uncached expensive calls** — embeddings, AI calls, and cross-service fetches repeated per request or per
+  row belong behind `cache.withCache()` (see "Caching"), batched, or moved into a job.
+- **Sequential awaits** — independent queries awaited one after another instead of `Promise.all`.
+
+State the cost in terms of the data: "one query per response, so ~5k queries on a 5k-response survey" is
+reviewable, "this might be slow" is not. Where the answer is genuinely unclear, ask the author for numbers
+rather than guessing. `.coderabbit.yaml` carries the same checks as path instructions, so the automated review
+raises them too — but that is a second pair of eyes, and its silence is not a pass.
+
 ## Testing Guidelines
 
 Principles:
