@@ -198,6 +198,69 @@ describe("resolveOptionGrouping", () => {
     expect(result.optionLabels).toEqual({ "c-in": "India", other: "Somewhere else" });
   });
 
+  // CodeRabbit on #9235: every choice element writes its free-text bucket under the same "other"
+  // id, so a workspace-wide map holds one entry shared by every question in it. Taking the first
+  // survey's wording printed "Somewhere else" against a question that worded its own differently.
+  test("labels the shared other bucket generically when no filter pins a question", async () => {
+    givenWorkspace([
+      {
+        mapping: { elementId: "el-a", surveyId: "survey-a", customFieldLabel: null },
+        survey: surveyWith(
+          "survey-a",
+          singleSelect("el-a", "Nationality", [
+            { id: "c-in", label: "India" },
+            { id: "other", label: "Somewhere else" },
+          ])
+        ),
+      },
+      {
+        mapping: { elementId: "el-b", surveyId: "survey-b", customFieldLabel: null },
+        survey: surveyWith(
+          "survey-b",
+          singleSelect("el-b", "Referral source", [
+            { id: "c-friend", label: "A friend" },
+            { id: "other", label: "Another way entirely" },
+          ])
+        ),
+      },
+    ]);
+
+    const result = await resolveOptionGrouping(groupByValueId() as never, "workspace-1");
+
+    expect(result.optionLabels?.other).toBe("Other");
+    // The ids that *can* be attributed are still labelled from their own survey.
+    expect(result.optionLabels).toMatchObject({ "c-in": "India", "c-friend": "A friend" });
+  });
+
+  test("keeps a pinned question's own other wording, which is attributable", async () => {
+    givenWorkspace([
+      {
+        mapping: { elementId: "el-a", surveyId: "survey-a", customFieldLabel: null },
+        survey: surveyWith(
+          "survey-a",
+          singleSelect("el-a", "Nationality", [
+            { id: "c-in", label: "India" },
+            { id: "other", label: "Somewhere else" },
+          ])
+        ),
+      },
+      {
+        mapping: { elementId: "el-b", surveyId: "survey-b", customFieldLabel: null },
+        survey: surveyWith(
+          "survey-b",
+          singleSelect("el-b", "Referral source", [{ id: "other", label: "Another way entirely" }])
+        ),
+      },
+    ]);
+
+    const result = await resolveOptionGrouping(
+      groupByValueId([fieldIdFilter("el-a")]) as never,
+      "workspace-1"
+    );
+
+    expect(result.optionLabels?.other).toBe("Somewhere else");
+  });
+
   // ENG-3140: matrix records store the matched *column* id in value_id.
   test("labels a matrix by its column ids", async () => {
     givenWorkspace([

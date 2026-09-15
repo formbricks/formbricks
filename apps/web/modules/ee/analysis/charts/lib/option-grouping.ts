@@ -127,16 +127,29 @@ const resolveMappingsByFieldLabel = async (
  * - ranking stores the rank as `value_number` and picture selection falls through the generic
  *   path, so neither carries a `value_id` — there is no bucket to label.
  *
- * Existing entries are never overwritten: ids are cuids and cannot collide across elements, but
- * the shared `"other"` id can, and the first mapped element's wording is as good as any.
+ * Existing entries are never overwritten: option ids are cuids and cannot collide across elements.
+ * The shared `"other"` id is the exception, and `attributable` says whether the surrounding map
+ * belongs to a known question — see the parameter's own note.
  */
 const collectOptionLabels = (
   element: { type: string; choices?: unknown; columns?: unknown; otherOptionPlaceholder?: unknown },
-  into: Record<string, string>
+  into: Record<string, string>,
+  /**
+   * Whether the filters pinned this map to a particular question.
+   *
+   * Every choice element writes its free-text bucket under the same `"other"` id, so a map built
+   * from the whole workspace holds one `"other"` entry shared by every question in it. Taking the
+   * first survey's wording there — "Somewhere else" — then prints that against rows belonging to a
+   * question that worded its own bucket differently. Unattributable means unlabelled-by-a-survey:
+   * the generic "Other" is the only honest answer. A field-pinned map has exactly one question
+   * behind it, so its explicit wording is correct and is kept.
+   */
+  attributable: boolean
 ): void => {
-  const addAll = (options: unknown): void => {
+  const addAll = (options: unknown, skipIds?: Set<string>): void => {
     if (!Array.isArray(options)) return;
     for (const option of options as { id: string; label: TSurveyElementChoice["label"] }[]) {
+      if (skipIds?.has(option.id)) continue;
       into[option.id] ??= getChoiceLabelDefault(option);
     }
   };
@@ -145,7 +158,7 @@ const collectOptionLabels = (
     element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
     element.type === TSurveyElementTypeEnum.MultipleChoiceMulti
   ) {
-    addAll(element.choices);
+    addAll(element.choices, attributable ? undefined : new Set(["other"]));
 
     // Free-text "other" answers are stored under the stable "other" id (transform.ts). Surveys
     // built in the editor carry an explicit choice with that id, so `addAll` already labelled it;
@@ -167,7 +180,8 @@ const collectOptionLabels = (
 /** Resolve each mapping to its element and merge every option label it can produce. */
 const buildOptionLabels = async (
   mappings: TMappingRef[],
-  loadSurvey: TSurveyLoader
+  loadSurvey: TSurveyLoader,
+  attributable: boolean
 ): Promise<Record<string, string>> => {
   const optionLabels: Record<string, string> = {};
   for (const mapping of mappings) {
@@ -175,7 +189,7 @@ const buildOptionLabels = async (
     if (!survey) continue;
     const element = getElementsFromBlocks(survey.blocks).find((el) => el.id === mapping.elementId);
     if (!element) continue;
-    collectOptionLabels(element, optionLabels);
+    collectOptionLabels(element, optionLabels, attributable);
   }
   return optionLabels;
 };
@@ -221,7 +235,9 @@ export const pruneOptionLabels = (
  *   contribute;
  * - when the filters pin nothing and the chart groups by valueId, every mapping in the workspace
  *   contributes. Grouping by valueId with no resolvable label map is exactly the case that renders
- *   bare cuids (ENG-3140), and option ids are cuids, so a wider map cannot mislabel a bucket.
+ *   bare cuids (ENG-3140), and option ids are cuids, so a wider map cannot mislabel a bucket — with
+ *   the one exception of the shared `"other"` id, which falls back to a generic label there rather
+ *   than borrowing whichever survey was read first.
  *   A valueText grouping is readable on its own and does not pay for that widening.
  *
  * Returns `{ rewrittenQuery, optionLabels }`. `rewrittenQuery` is always the original query
@@ -254,15 +270,18 @@ export async function resolveOptionGrouping(
   }
 
   // Nothing pinned down, but the chart is grouping by the raw option id: label from the whole
-  // workspace rather than leaving the ids bare.
+  // workspace rather than leaving the ids bare. The map is then not attributable to one question,
+  // which decides how the shared "other" bucket is labelled (see `collectOptionLabels`).
+  let attributable = true;
   if (mappings.length === 0 && hasValueId) {
     mappings = workspaceMappings;
+    attributable = false;
   }
   if (mappings.length === 0) {
     return { rewrittenQuery: query };
   }
 
-  const optionLabels = await buildOptionLabels(mappings, loadSurvey);
+  const optionLabels = await buildOptionLabels(mappings, loadSurvey, attributable);
   if (Object.keys(optionLabels).length === 0) {
     return { rewrittenQuery: query };
   }
