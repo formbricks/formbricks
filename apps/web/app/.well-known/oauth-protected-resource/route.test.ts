@@ -50,6 +50,8 @@ describe("OAuth protected resource metadata", () => {
         "workflows:write",
         "feedbackRecords:read",
         "feedbackRecords:write",
+        "responses:read",
+        "responses:write",
         "offline_access",
       ],
       bearer_methods_supported: ["header"],

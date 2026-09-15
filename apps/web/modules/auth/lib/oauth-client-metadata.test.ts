@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
+import enUS from "@/locales/en-US.json";
 import { getHostFromUrl, getOAuthScopeLabel, isLocalhostHost } from "./oauth-client-metadata";
+import { MCP_OAUTH_SCOPES } from "./oauth-urls";
 
 const t = (key: string) => `translated:${key}`;
 
@@ -25,6 +27,21 @@ describe("OAuth client metadata helpers", () => {
     expect(isLocalhostHost(null)).toBe(false);
   });
 
+  // Derived from MCP_OAUTH_SCOPES rather than listed by hand: the hand-written enumeration below used
+  // to be the only check, so adding a scope without a label left `getOAuthScopeLabel` falling through
+  // to `default: return scope` and the consent screen showing a raw `responses:write` — with every test
+  // still green. Proven by adding the two ENG-2862 scopes and watching nothing fail.
+  test("gives every grantable scope a label, and every label a translation", () => {
+    const missingLabel = MCP_OAUTH_SCOPES.filter((scope) => getOAuthScopeLabel(scope, t) === scope);
+    expect(missingLabel).toEqual([]);
+
+    // The key has to exist in en-US too, or the label is the key rendered verbatim.
+    const missingTranslation = MCP_OAUTH_SCOPES.map((scope) => getOAuthScopeLabel(scope, t))
+      .map((label) => label.replace("translated:auth.oauth.scopes.", ""))
+      .filter((key) => !(key in enUS.auth.oauth.scopes));
+    expect(missingTranslation).toEqual([]);
+  });
+
   test("maps known OAuth scopes to localized labels", () => {
     expect(getOAuthScopeLabel("openid", t)).toBe("translated:auth.oauth.scopes.openid");
     expect(getOAuthScopeLabel("profile", t)).toBe("translated:auth.oauth.scopes.profile");
@@ -40,6 +57,8 @@ describe("OAuth client metadata helpers", () => {
     expect(getOAuthScopeLabel("feedbackRecords:write", t)).toBe(
       "translated:auth.oauth.scopes.feedback_records_write"
     );
+    expect(getOAuthScopeLabel("responses:read", t)).toBe("translated:auth.oauth.scopes.responses_read");
+    expect(getOAuthScopeLabel("responses:write", t)).toBe("translated:auth.oauth.scopes.responses_write");
   });
 
   test("keeps unknown OAuth scopes readable", () => {

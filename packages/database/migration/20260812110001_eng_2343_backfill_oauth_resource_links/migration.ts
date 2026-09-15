@@ -74,6 +74,8 @@ export const MCP_RESOURCE_ALLOWED_SCOPES = [
   "workflows:write",
   "feedbackRecords:read",
   "feedbackRecords:write",
+  "responses:read",
+  "responses:write",
 ] as const;
 
 export const resolveMcpResourceIdentifier = (webAppUrl: string | undefined): string | null => {
