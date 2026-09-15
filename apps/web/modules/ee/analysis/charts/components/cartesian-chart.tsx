@@ -6,6 +6,7 @@ import {
   AXIS_LABEL_BOX_HEIGHT,
   AXIS_LABEL_GAP,
   AXIS_LABEL_MAX_LINES,
+  AXIS_TICK_GAP,
   CHART_LEGEND_HEIGHT,
   formatCellValue,
   formatXAxisTick,
@@ -186,16 +187,23 @@ function WrappingYAxisTick({
   visibleTicksCount?: number;
 }>) {
   const label = formatter(payload?.value);
+  // The box hangs left of the tick, ending `AXIS_TICK_GAP` short of the axis line. Recharts does not
+  // always leave the whole gutter to the left of that tick — a few pixels go to the chart margin —
+  // so a box sized to the gutter starts at a negative x and the SVG clips the first glyph off the
+  // longest label. Anchor the right edge and let the left edge stop at the viewport.
   const boxWidth = Math.max(1, axisWidth - AXIS_LABEL_GAP);
+  // Recharts does not always leave the whole gutter left of the tick, so an unguarded box starts at
+  // a negative x and the SVG clips the first glyph off the longest label.
+  const boxLeft = Math.max(0, (x ?? 0) - boxWidth - AXIS_TICK_GAP);
 
   const band = height && visibleTicksCount ? height / visibleTicksCount : undefined;
   const boxHeight = getCategoryLabelBoxHeight(band);
-  const lineClamp = getCategoryLabelLineClamp(band);
+  const lineClamp = getCategoryLabelLineClamp();
   const shownLabel = truncateLabelToBox(label, boxWidth, lineClamp);
 
   return (
     <foreignObject
-      x={(x ?? 0) - boxWidth - AXIS_LABEL_GAP}
+      x={boxLeft}
       y={(y ?? 0) - boxHeight / 2}
       width={boxWidth}
       height={boxHeight}
@@ -232,6 +240,7 @@ export function CartesianChart({
 }: Readonly<CartesianChartProps>) {
   const yScale = yAxisScale ?? computeYAxis(data, dataKeys, zeroBaseline);
   const tickFormatter = xAxisTickFormatter ?? formatXAxisTick;
+
   const categoryAxisWidth = useMemo(() => {
     if (!horizontal || !hasCategoryAxis) return 0;
     return getCategoryAxisWidth(data.map((row) => tickFormatter(row[xAxisKey])));

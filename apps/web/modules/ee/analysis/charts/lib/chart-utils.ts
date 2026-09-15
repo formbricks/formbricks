@@ -312,14 +312,28 @@ export function formatCellValue(value: unknown): string {
 // maximum: a flat gutter reads as a broken layout when the labels are short (three numeric
 // categories left ~150px of empty space before the bars started).
 
-/** Approximate advance width (px) of one character at `text-xs`. Errs wide on purpose:
- * over-estimating leaves a little slack, under-estimating clips or wraps text that had room. */
+/** Approximate advance width (px) of one character at `text-xs`, for sizing a gutter to the text
+ * that will sit in it. Errs narrow on purpose: over-estimating the gutter steals plot width from
+ * the bars, and the cap below is what a long label really lands on anyway. */
 const AXIS_CHAR_WIDTH = 6.5;
-/** Gap (px) between a tick's text and the axis line. */
-const AXIS_TICK_GAP = 8;
+
+/** The same advance width for deciding how much text *fits* a box, where the bias has to run the
+ * other way: measured against the rendered ui-sans-serif at 12px, a mixed-case question label
+ * averages ~6.6px per character, so sizing capacity with the gutter's estimate let a label that
+ * only just overran its box escape truncation and paint outside it. */
+const AXIS_CHAR_WIDTH_WIDE = 7;
+/** Gap (px) between a tick's text and the axis line. Exported so the flipped tick positions its box
+ * with the same clearance this module budgets for it, rather than borrowing {@link AXIS_LABEL_GAP},
+ * which measures the space between two neighbouring labels. */
+export const AXIS_TICK_GAP = 8;
 
 /** Ceiling (px) for the category gutter: wide enough for a short question label, capped so the bars
- * keep most of the plot. Longer labels wrap inside it. */
+ * keep most of the plot. Longer labels are cut inside it (see `truncateLabelToBox`).
+ *
+ * Flat, not a share of the chart's width: a gutter that grows after recharts has computed its plot
+ * offset leaves the label box and the plot disagreeing about where the gutter ends, and the labels
+ * paint under the bars. Scaling it with the chart is worth doing (ENG-3223) but needs the axis
+ * width settled before recharts lays the chart out, not after. */
 export const CATEGORY_AXIS_MAX_WIDTH = 160;
 /** Floor (px), so a one-character label still has a readable gutter. */
 export const CATEGORY_AXIS_MIN_WIDTH = 28;
@@ -350,25 +364,36 @@ export const AXIS_LABEL_BOX_HEIGHT = AXIS_LABEL_MAX_LINES * AXIS_LABEL_LINE_HEIG
 export const CHART_LEGEND_HEIGHT = 36;
 
 /**
- * Height (px) of the label box inside a category band of `band` px.
+ * Lines a flipped category label uses: one, whatever the row count.
  *
- * A box taller than its band would overlap the neighbouring label, so the box is clamped to the
- * band (less the gap) and never grows past the full line budget. A missing or non-finite band means
- * the caller has no band to fit into yet — recharts has not measured the axis — so the label gets
- * the full budget rather than a guess that silently sheds lines.
+ * This is the whole of ENG-3148. Deriving the budget from the band — `plotHeight / rowCount` —
+ * meant the same question rendered differently depending on how many rows sat beside it: a CES
+ * chart wrapped over three lines while a CSAT chart of the same questions at the same width used
+ * one, so the two charts could not be read the same way. A fixed single line takes row count out of
+ * the treatment entirely; what a label shows then depends only on the gutter and its own length,
+ * and {@link truncateLabelToBox} makes one line carry the distinguishing words.
+ *
+ * The x-axis is unaffected — its labels sit side by side, where the constraint is width, not
+ * density, and {@link AXIS_LABEL_MAX_LINES} still applies.
  */
-export const getCategoryLabelBoxHeight = (band?: number): number => {
-  if (band === undefined || !Number.isFinite(band)) return AXIS_LABEL_BOX_HEIGHT;
-  return Math.max(AXIS_LABEL_LINE_HEIGHT, Math.min(AXIS_LABEL_BOX_HEIGHT, band - AXIS_LABEL_GAP));
-};
+export const CATEGORY_AXIS_LABEL_LINES = 1;
 
 /**
- * Lines a wrapped category label may use inside a band of `band` px.
+ * Height (px) of the label box inside a category band of `band` px.
  *
- * Whole lines only: a box sized to 2.5 lines would clip the third mid-glyph rather than drop it.
+ * One line's worth, less whatever a band too tight to hold even that leaves — bands that small
+ * belong to a chart with more rows than its container can show, where the labels overlap whatever
+ * we do. A missing or non-finite band means recharts has not measured the axis yet, which changes
+ * nothing now that the budget no longer depends on it.
  */
-export const getCategoryLabelLineClamp = (band?: number): number =>
-  Math.max(1, Math.floor(getCategoryLabelBoxHeight(band) / AXIS_LABEL_LINE_HEIGHT));
+export const getCategoryLabelBoxHeight = (band?: number): number => {
+  const fullBudget = CATEGORY_AXIS_LABEL_LINES * AXIS_LABEL_LINE_HEIGHT;
+  if (band === undefined || !Number.isFinite(band)) return fullBudget;
+  return Math.max(1, Math.min(fullBudget, band - AXIS_LABEL_GAP));
+};
+
+/** Lines a flipped category label may use. Constant by design — see {@link CATEGORY_AXIS_LABEL_LINES}. */
+export const getCategoryLabelLineClamp = (): number => CATEGORY_AXIS_LABEL_LINES;
 
 /** Marks where the middle of a label was dropped. One character wide for the capacity arithmetic. */
 const ELLIPSIS = "…";
@@ -381,15 +406,14 @@ const ELLIPSIS = "…";
  * "CSAT with clarity of…" against every bar and the rows stop being tellable apart (ENG-3148). The
  * distinguishing words sit at the end, so the middle is what goes: "CSAT with clarity o…rocedures".
  *
- * Capacity is estimated from {@link AXIS_CHAR_WIDTH}, the same character-width model
- * {@link getCategoryAxisWidth} sizes the gutter with. It errs wide, so the CSS line clamp stays as
- * the backstop for a label whose glyphs run wider than the estimate; this keeps that clamp from
- * being what the reader normally meets.
+ * Capacity is estimated from {@link AXIS_CHAR_WIDTH_WIDE}, which over-estimates each character so
+ * a label that only just overruns its box is still cut. The CSS line clamp stays as the backstop
+ * for anything wider still; this keeps that clamp from being what the reader normally meets.
  */
 export const truncateLabelToBox = (label: string, boxWidth: number, lines: number): string => {
   if (!Number.isFinite(boxWidth) || !Number.isFinite(lines) || boxWidth <= 0 || lines <= 0) return label;
 
-  const capacity = Math.max(1, Math.floor(boxWidth / AXIS_CHAR_WIDTH)) * Math.floor(lines);
+  const capacity = Math.max(1, Math.floor(boxWidth / AXIS_CHAR_WIDTH_WIDE)) * Math.floor(lines);
   if (label.length <= capacity) return label;
   // Too little room to say anything from both ends: one end plus the mark reads better than two
   // single characters around it.

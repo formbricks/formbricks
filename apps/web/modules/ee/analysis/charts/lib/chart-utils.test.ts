@@ -5,6 +5,7 @@ import {
   AXIS_LABEL_GAP,
   AXIS_LABEL_LINE_HEIGHT,
   AXIS_LABEL_MAX_LINES,
+  CATEGORY_AXIS_LABEL_LINES,
   CATEGORY_AXIS_MAX_WIDTH,
   CATEGORY_AXIS_MIN_WIDTH,
   CHART_BRAND_DARK,
@@ -501,35 +502,29 @@ describe("category label truncation", () => {
 });
 
 describe("wrapped category label box", () => {
-  test("never outgrows its band down to the one-line floor, so labels cannot overlap", () => {
-    // Only down to the floor: below a 24px band the one-line minimum wins over the gap, since a
-    // label shorter than a single line is not worth rendering. The reserved band keeps real charts
-    // well above this.
-    for (const band of [24, 30, 47, 56, 200]) {
+  // ENG-3148: the budget used to come from the band (plotHeight / rowCount), so the same question
+  // wrapped over three lines on a sparse CES chart and clamped to one on a dense CSAT chart of the
+  // same questions at the same width. Row count is out of the treatment now.
+  test("gives every chart one line, whatever its row count leaves per band", () => {
+    for (const band of [12, 24, 40, 56, 200, 1000]) {
+      expect(getCategoryLabelLineClamp()).toBe(CATEGORY_AXIS_LABEL_LINES);
+      expect(getCategoryLabelBoxHeight(band)).toBeLessThanOrEqual(AXIS_LABEL_LINE_HEIGHT);
+    }
+  });
+
+  test("never overlaps the neighbouring label, however tight the band", () => {
+    for (const band of [12, 24, 40, 56, 200]) {
       expect(getCategoryLabelBoxHeight(band)).toBeLessThanOrEqual(band - AXIS_LABEL_GAP);
     }
-    expect(getCategoryLabelBoxHeight(20)).toBe(AXIS_LABEL_LINE_HEIGHT);
   });
 
-  test("sheds whole lines as the band tightens, and never drops below one", () => {
-    // The band a label needs for the full budget: the box plus the gap to its neighbour.
-    const fullBudgetBand = AXIS_LABEL_BOX_HEIGHT + AXIS_LABEL_GAP;
-
-    expect(getCategoryLabelLineClamp(fullBudgetBand)).toBe(AXIS_LABEL_MAX_LINES);
-    expect(getCategoryLabelLineClamp(fullBudgetBand - AXIS_LABEL_LINE_HEIGHT)).toBe(2);
-    // A box sized to 2.5 lines clamps to 2: a partial line would be clipped mid-glyph.
-    expect(getCategoryLabelLineClamp(fullBudgetBand - AXIS_LABEL_LINE_HEIGHT / 2)).toBe(2);
-    expect(getCategoryLabelLineClamp(4)).toBe(1);
+  test("keeps a box worth showing when the band cannot hold a line at all", () => {
+    expect(getCategoryLabelBoxHeight(4)).toBeGreaterThan(0);
   });
 
-  test("caps at the full budget however tall the band is", () => {
-    expect(getCategoryLabelBoxHeight(1000)).toBe(AXIS_LABEL_BOX_HEIGHT);
-    expect(getCategoryLabelLineClamp(1000)).toBe(AXIS_LABEL_MAX_LINES);
-  });
-
-  test("falls back to the full budget when recharts has not measured the axis yet", () => {
-    expect(getCategoryLabelBoxHeight(undefined)).toBe(AXIS_LABEL_BOX_HEIGHT);
-    expect(getCategoryLabelLineClamp(undefined)).toBe(AXIS_LABEL_MAX_LINES);
+  test("assumes the full line before recharts has measured the axis", () => {
+    expect(getCategoryLabelBoxHeight(undefined)).toBe(AXIS_LABEL_LINE_HEIGHT);
+    expect(getCategoryLabelBoxHeight(Number.NaN)).toBe(AXIS_LABEL_LINE_HEIGHT);
   });
 });
 
