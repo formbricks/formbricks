@@ -25,10 +25,12 @@ Formbricks follows [Semantic Versioning](https://semver.org/): `Major.Minor.Patc
 Every release is published on [GitHub Releases](https://github.com/formbricks/formbricks/releases) with its
 release notes.
 
-## Maintained versions
+## Maintained Versions
 
 Each minor release is maintained for **three calendar months**, starting on the day its first stable version
-is published. Release candidates and the date you installed it do not count.
+is published. Release candidates and the date you installed it do not count. If the ending month has no
+matching day, support ends on the last day of that month: a minor published on November 30 is maintained
+through the last day of February.
 
 - Patch releases do not restart the clock. `6.2.3` ends support on the same day as `6.2.0`.
 - A newer minor does not shorten the window of an older one. This is a time window, not a cap on the number
@@ -47,7 +49,7 @@ What a release receives depends on where it sits in its window:
 A maintained minor is not a frozen version. To stay covered, install its patch releases as they are
 published.
 
-## Security fixes
+## Security Fixes
 
 - **High and Critical vulnerabilities** (validated CVSS v4.0 base score of 7.0 or higher) are fixed on every
   maintained minor. A public CVE is not required.
@@ -60,18 +62,18 @@ published.
 
 These rules define which releases are covered. They are not a promise about how fast a fix ships.
 
-## Bug fixes
+## Bug Fixes
 
 Non-security bug fixes ship in the **latest minor only**. Older minors receive security fixes only, even
 when a bug is blocking for you. To receive a bug fix, upgrade to the latest minor.
 
-## End of support
+## End of Support
 
 After its support-end date, a minor receives no further fixes of any kind. Upgrade to a maintained minor to
 stay covered. A security fix accepted for backport before the end date is still completed and published,
 even if the work finishes after it.
 
-## Upgrade recommendations
+## Upgrade Recommendations
 
 - Run the latest stable release. It is the only version that receives every fix.
 - Pin a release tag in production instead of a moving tag such as `latest`.
