@@ -32,6 +32,7 @@ oneOf:
       blockId:
         type: string
         maxLength: 128
+        minLength: 1
         description: >
           Block to insert after. May be a block inserted by an earlier operation in the same
           request, since operations are applied in order.

@@ -9,8 +9,10 @@ properties:
     items:
       type: string
       maxLength: 128
+      minLength: 1
     description: >
-      Every current block id, exactly once, in the desired order. A missing, unknown or repeated id
+      Every current block id, exactly once, in the desired order. Ids are trimmed before use, so an
+      id that is empty or whitespace-only is a **400**. A missing, unknown or repeated id
       is a **422** — repeats are reported as `duplicate_identifier` rather than rejected by the
       schema, so the response names the offending entry. A missing or unknown id is likewise a
       **422** — which is what makes this safer than resending the blocks, since a dropped block

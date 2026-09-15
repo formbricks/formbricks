@@ -1408,7 +1408,13 @@ paths:
                   currentUpdatedAt: '2026-04-21T11:30:00.000Z'
         '422':
           description: |
-            The order is not a permutation of the survey's blocks. Unknown ids (`dangling_reference`), repeated ids (`duplicate_identifier`) and omitted blocks (`missing_required_field`, reported at `order`) are returned together.
+            The request is well-formed but could not be applied. Three distinct cases share this status; switch on the Problem-level `code`.
+
+            `unprocessable_content` — the order is not a permutation of the survey's blocks. Unknown ids (`dangling_reference`), repeated ids (`duplicate_identifier`) and omitted blocks (`missing_required_field`, reported at `order`) are returned together, capped at 50 with a final entry saying how many were left out. Also used when the new order would *introduce* a forward reference — a recall of an answer not yet given, or a logic condition reading a later block — reported as `misordered_reference` at the stored-document path. An order that already contains such a reference stays reorderable; only newly created ones are refused.
+
+            `stored_survey_invalid` — the stored survey cannot be reordered by id: it is a legacy question-based survey, exposes no v3 block list, or a block id occurs more than once. The request was not evaluated; `invalid_params[].name` points into the stored survey.
+
+            `archivedAt` in `invalid_params` (no `code`) — the survey is archived; restore it first.
           content:
             application/problem+json:
               schema:
@@ -6509,7 +6515,6 @@ components:
           enum:
             - link
             - app
-            - web
         status:
           type: string
           enum:
@@ -6888,6 +6893,7 @@ components:
         id:
           type: string
           maxLength: 128
+          minLength: 1
           description: Block to replace.
         block:
           allOf:
@@ -6929,6 +6935,7 @@ components:
             blockId:
               type: string
               maxLength: 128
+              minLength: 1
               description: |
                 Block to insert after. May be a block inserted by an earlier operation in the same request, since operations are applied in order.
       description: Where an inserted block goes. Anchored to a block id, never to a positional index.
@@ -6967,6 +6974,7 @@ components:
         id:
           type: string
           maxLength: 128
+          minLength: 1
           description: |
             Block to delete, along with every element in it. Answers already collected for those elements are orphaned and the API cannot undo that.
     SurveyBlockOperation:
@@ -7012,8 +7020,9 @@ components:
           items:
             type: string
             maxLength: 128
+            minLength: 1
           description: |
-            Every current block id, exactly once, in the desired order. A missing, unknown or repeated id is a **422** — repeats are reported as `duplicate_identifier` rather than rejected by the schema, so the response names the offending entry. A missing or unknown id is likewise a **422** — which is what makes this safer than resending the blocks, since a dropped block cannot pass unnoticed.
+            Every current block id, exactly once, in the desired order. Ids are trimmed before use, so an id that is empty or whitespace-only is a **400**. A missing, unknown or repeated id is a **422** — repeats are reported as `duplicate_identifier` rather than rejected by the schema, so the response names the offending entry. A missing or unknown id is likewise a **422** — which is what makes this safer than resending the blocks, since a dropped block cannot pass unnoticed.
         expectedUpdatedAt:
           type: string
           format: date-time

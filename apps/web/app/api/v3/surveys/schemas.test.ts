@@ -2,8 +2,12 @@ import { describe, expect, test } from "vitest";
 import { z } from "zod";
 import { validateElementLabels } from "@formbricks/types/surveys/elements-validation";
 import {
+  V3_SURVEY_BLOCK_OPS_MAX,
+  V3_SURVEY_BLOCK_ORDER_MAX,
   ZV3CreateSurveyBody,
+  ZV3EditSurveyBlocksBody,
   ZV3PatchSurveyBody,
+  ZV3SetSurveyBlockOrderBody,
   createZV3PatchSurveyBodySchema,
   formatV3ZodInvalidParams,
 } from "./schemas";
@@ -970,4 +974,46 @@ describe("formatV3ZodInvalidParams", () => {
     },
     2_000
   );
+});
+
+describe("block operation bodies are bounded (ENG-1652)", () => {
+  // The response-side diagnostics cap has its own tests; these pin the *input* bounds, which carry
+  // the abuse-cost argument — an unbounded op list is quadratic in `applySurveyBlockOperations`, an
+  // unbounded id is echoed into `invalid_params[].reason`, and an unbounded order is the amplification
+  // fixed on this branch. Delete any of the `.max()` calls and the matching case here goes red.
+  const removeOps = (count: number, id = "blk_a") =>
+    Array.from({ length: count }, () => ({ op: "remove", id }));
+
+  test("accepts exactly the op-list cap and refuses one more", () => {
+    expect(ZV3EditSurveyBlocksBody.safeParse({ ops: removeOps(V3_SURVEY_BLOCK_OPS_MAX) }).success).toBe(true);
+    expect(ZV3EditSurveyBlocksBody.safeParse({ ops: removeOps(V3_SURVEY_BLOCK_OPS_MAX + 1) }).success).toBe(
+      false
+    );
+  });
+
+  test("bounds every block reference at 128 characters, trimmed, non-empty", () => {
+    const ok = "a".repeat(128);
+    const long = "a".repeat(129);
+
+    expect(ZV3EditSurveyBlocksBody.safeParse({ ops: removeOps(1, ok) }).success).toBe(true);
+    expect(ZV3EditSurveyBlocksBody.safeParse({ ops: removeOps(1, long) }).success).toBe(false);
+    expect(ZV3SetSurveyBlockOrderBody.safeParse({ order: [long] }).success).toBe(false);
+    // Whitespace-only is empty after trim, which is what the contract's `minLength: 1` documents.
+    expect(ZV3SetSurveyBlockOrderBody.safeParse({ order: ["   "] }).success).toBe(false);
+    expect(ZV3SetSurveyBlockOrderBody.safeParse({ order: [" blk_a "] })).toMatchObject({
+      success: true,
+      data: { order: ["blk_a"] },
+    });
+  });
+
+  test("accepts exactly the order cap and refuses one more", () => {
+    const ids = (count: number) => Array.from({ length: count }, (_unused, index) => `blk_${index}`);
+
+    expect(ZV3SetSurveyBlockOrderBody.safeParse({ order: ids(V3_SURVEY_BLOCK_ORDER_MAX) }).success).toBe(
+      true
+    );
+    expect(ZV3SetSurveyBlockOrderBody.safeParse({ order: ids(V3_SURVEY_BLOCK_ORDER_MAX + 1) }).success).toBe(
+      false
+    );
+  });
 });

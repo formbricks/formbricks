@@ -88,9 +88,25 @@ put:
               currentUpdatedAt: 2026-04-21T11:30:00.000Z
     "422":
       description: >
-        The order is not a permutation of the survey's blocks. Unknown ids
+        The request is well-formed but could not be applied. Three distinct cases share this status;
+        switch on the Problem-level `code`.
+
+
+        `unprocessable_content` — the order is not a permutation of the survey's blocks. Unknown ids
         (`dangling_reference`), repeated ids (`duplicate_identifier`) and omitted blocks
-        (`missing_required_field`, reported at `order`) are returned together.
+        (`missing_required_field`, reported at `order`) are returned together, capped at 50 with a
+        final entry saying how many were left out. Also used when the new order would *introduce* a
+        forward reference — a recall of an answer not yet given, or a logic condition reading a
+        later block — reported as `misordered_reference` at the stored-document path. An order that
+        already contains such a reference stays reorderable; only newly created ones are refused.
+
+
+        `stored_survey_invalid` — the stored survey cannot be reordered by id: it is a legacy
+        question-based survey, exposes no v3 block list, or a block id occurs more than once. The
+        request was not evaluated; `invalid_params[].name` points into the stored survey.
+
+
+        `archivedAt` in `invalid_params` (no `code`) — the survey is archived; restore it first.
       content:
         application/problem+json:
           schema:

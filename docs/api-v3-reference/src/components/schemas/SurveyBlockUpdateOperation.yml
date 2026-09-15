@@ -13,6 +13,7 @@ properties:
   id:
     type: string
     maxLength: 128
+    minLength: 1
     description: Block to replace.
   block:
     allOf:
