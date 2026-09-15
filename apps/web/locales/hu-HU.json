@@ -4414,7 +4414,8 @@
       "value_date": "Érték (dátum)",
       "value_id": "Értékazonosító",
       "value_number": "Érték (szám)",
-      "value_text": "Érték (szöveg)"
+      "value_text": "Érték (szöveg)",
+      "view_survey": "Felmérés megtekintése"
     },
     "workflows": {
       "add_action": "Művelet hozzáadása",
