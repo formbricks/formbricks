@@ -2728,7 +2728,7 @@
         "select_plan_feature_2": "MCP-Zugang, verbinde dich mit jedem KI-Client und triff datenbasierte Entscheidungen.",
         "select_plan_feature_3": "Alle Integrationen und individuelle Webhooks",
         "select_plan_feature_4": "2.000 Antworten pro Monat",
-        "select_plan_header": "Du hast Pro für die nächsten 14 Tage",
+        "select_plan_header": "{count, plural, one {Du bist noch # Tag lang auf Pro} other {Du bist noch # Tage lang auf Pro}}",
         "select_plan_skip": "Zurück zum 'Hobby'-Tarif",
         "select_plan_subheader": "Alles unten ist freigeschaltet, kostenlos.",
         "status_trialing": "Testphase",

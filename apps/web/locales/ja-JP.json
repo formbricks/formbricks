@@ -2728,7 +2728,7 @@
         "select_plan_feature_2": "MCPアクセス、あらゆるAIクライアントに接続してデータに基づいた意思決定を。",
         "select_plan_feature_3": "すべての連携機能とカスタムWebhook",
         "select_plan_feature_4": "月間2,000件の回答",
-        "select_plan_header": "Formbricks Proを無料で利用しよう!",
+        "select_plan_header": "{count, plural, other {あと#日間Proプランをご利用いただけます}}",
         "select_plan_skip": "Hobbyプランを継続",
         "select_plan_subheader": "14日間トライアル、クレジットカード不要",
         "status_trialing": "Trial",
