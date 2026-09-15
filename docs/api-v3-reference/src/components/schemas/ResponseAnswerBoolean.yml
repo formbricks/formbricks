@@ -1,0 +1,26 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - valueBoolean
+      - rawValue
+    properties:
+      elementType:
+        type: string
+        enum:
+          - consent
+          - cta
+      valueBoolean:
+        type: boolean
+        description: >-
+          Whether the respondent accepted (`consent`) or clicked through (`cta`). Derived from the
+          stored token, which is why `rawValue` is returned alongside it.
+      rawValue:
+        type: string
+        description: >-
+          The token as stored — conventionally `accepted` for `consent` and `clicked` for `cta`.
+          Returned because the boolean is a derivation and this is the underlying fact.
+unevaluatedProperties: false
+description: >-
+  Acknowledgement answer. Covers `consent` (accepted) and `cta` (clicked through). A `cta` element
+  the respondent skipped has no entry in `answers[]` at all.

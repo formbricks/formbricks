@@ -11,8 +11,8 @@
     "next": "Következő",
     "no_results_found": "Nincsenek találatok",
     "open_in_new_tab": "Megnyitás új lapon",
-    "option_number": "Opció {number}",
-    "page_x_of_y": "{current}. oldal összesen {total}-ból",
+    "option_number": "{number}. lehetőség",
+    "page_x_of_y": "{current} / {total} oldal",
     "people_responded": "{count, plural, one {1 személy válaszolt} other {{count} személy válaszolt}}",
     "please_retry_now_or_try_again_later": "Próbálkozzon újra most, vagy próbálja meg később újra.",
     "powered_by": "A gépházban:",
@@ -25,23 +25,23 @@
     "response_saved_offline": "A válasza még nem lett elküldve. Automatikusan elküldésre kerül, amint újra elérhető lesz.",
     "retry": "Újrapróbálkozás",
     "retrying": "Újrapróbálkozás…",
-    "scheduling_calendar": "Ütemezési naptár",
+    "scheduling_calendar": "Naptár ütemezése",
     "scroll_to_bottom": "Görgetés az aljára",
     "search": "Keresés…",
     "select_option": "Lehetőség kiválasztása",
     "select_options": "Lehetőségek kiválasztása",
     "sending_responses": "Válaszok küldése…",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Ez a felmérés automatikusan bezáródik {count} másodperc múlva, hacsak nem válaszol} other {Ez a felmérés automatikusan bezáródik {count} másodperc múlva, hacsak nem válaszol}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Ez a kérdőív automatikusan lezáródik {count} másodperc múlva, hacsak nem válaszol} other {Ez a kérdőív automatikusan lezáródik {count} másodperc múlva, hacsak nem válaszol}}",
     "survey_dialog": "Kérdőív párbeszédablak",
-    "survey_opened_announcement": "Egy felmérés megnyílt az oldal végén.",
-    "survey_progress": "A felmérés előrehaladása",
+    "survey_opened_announcement": "Egy kérdőív nyílt meg az oldal végén.",
+    "survey_progress": "Kérdőív előrehaladása",
     "takes_less_than_x_minutes": "{count, plural, one {Kevesebb mint 1 percet vesz igénybe} other {Kevesebb mint {count} percet vesz igénybe}}",
     "takes_x_minutes": "{count, plural, one {1 percet vesz igénybe} other {{count} percet vesz igénybe}}",
     "takes_x_plus_minutes": "{count}+ percet vesz igénybe",
     "terms_of_service": "Használati feltételek",
     "the_servers_cannot_be_reached_at_the_moment": "Jelenleg nem lehet elérni a kiszolgálókat.",
     "they_will_be_redirected_immediately": "Azonnal át lesznek irányítva",
-    "time_remaining_before_the_survey_closes": "Hátralévő idő a felmérés bezárásáig",
+    "time_remaining_before_the_survey_closes": "A kérdőív lezárásáig hátralévő idő",
     "welcome_video": "Üdvözlő kártya videó",
     "your_feedback_is_stuck": "A visszajelzése elakadt :("
   },
@@ -91,12 +91,12 @@
       "title": "Nem tudtuk ellenőrizni, hogy Ön ember-e."
     },
     "response_already_completed": {
-      "message": "Ez a válasz már lezárásra került, és többé nem módosítható. Nyugodtan bezárhatja ezt az ablakot.",
-      "title": "Ez a válasz már lezárásra került."
+      "message": "Ez a válasz már befejeződött, és többé nem változtatható meg. Nyugodtan bezárhatja ezt az ablakot.",
+      "title": "Ez a válasz már befejeződött."
     },
     "response_sending_error_permanent": {
-      "message": "Az Ön válaszát nem sikerült elküldeni, és az újrapróbálkozás nem lehetséges. Kérjük, lépjen kapcsolatba a felmérés tulajdonosával, amennyiben ez a probléma továbbra is fennáll.",
-      "title": "Az Ön válaszát nem sikerült elküldeni."
+      "message": "A válaszát nem sikerült elküldeni, és nem lehet újra megpróbálni. Vegye fel a kapcsolatot a kérdőív tulajdonosával, ha folyamatosan ez történik.",
+      "title": "A válaszát nem sikerült elküldeni."
     },
     "value_must_contain": "Az értéknek tartalmaznia kell ezt: {value}",
     "value_must_equal": "Az értéknek egyenlőnek kell lennie ezzel: {value}",

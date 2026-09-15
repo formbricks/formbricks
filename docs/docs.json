@@ -173,7 +173,6 @@
                 "icon": "mobile",
                 "pages": [
                   "surveys/website-app-surveys/quickstart",
-                  "surveys/website-app-surveys/workspace-id-migration",
                   "surveys/website-app-surveys/framework-guides",
                   "surveys/website-app-surveys/google-tag-manager",
                   "surveys/website-app-surveys/custom-css",

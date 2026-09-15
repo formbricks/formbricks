@@ -1,0 +1,64 @@
+type: object
+description: >-
+  Fields every answer carries, whatever the element type. `elementType` selects the value-bearing
+  shape — see `ResponseAnswer`.
+required:
+  - position
+  - elementId
+  - elementType
+  - elementLabel
+properties:
+  position:
+    type: integer
+    minimum: 1
+    description: >-
+      1-based position of the element in the current survey definition, so a consumer can present
+      answers in survey order without fetching the survey. Elements the respondent never reached are
+      absent from `answers[]` entirely rather than present-and-empty.
+  elementId:
+    type: string
+    description: Stable element id, as authored on the survey.
+  elementType:
+    type: string
+    enum:
+      - openText
+      - multipleChoiceSingle
+      - multipleChoiceMulti
+      - nps
+      - rating
+      - csat
+      - ces
+      - consent
+      - pictureSelection
+      - cta
+      - date
+      - fileUpload
+      - cal
+      - matrix
+      - address
+      - ranking
+      - contactInfo
+    description: >-
+      The element's type in the current survey definition. Matches the `type` of the corresponding
+      `SurveyElement`.
+  elementLabel:
+    type: string
+    description: >-
+      The element's headline, resolved in `resolution.labelsLanguage`. Read at request time from the
+      current definition — see `ResponseResolution` for what that means for older responses.
+  durationSeconds:
+    type: number
+    minimum: 0
+    maximum: 86400
+    description: >
+      Seconds the respondent spent on this element. Converted from the stored per-element
+      time-to-complete, which is recorded in milliseconds. This telemetry is reported by the client
+      and is therefore not trustworthy input: treat it as an indication rather than a measurement.
+      Absent when the submission carried no timing for this element.
+
+
+      The bounds hold on **every** row, including ones collected before the write-side clamp shipped.
+      The stored representation is deliberately unbounded so that historical data still parses, and a
+      row written then can hold a negative value or a tab left open for days; those are clamped into
+      range on read rather than returned as-is, because a schema a real row violates is worse than a
+      slightly blunted outlier. So `86400` means "at least 24 hours", not exactly.
