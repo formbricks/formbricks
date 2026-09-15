@@ -1,10 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { SENTIMENT_VALUE_ORDER } from "@/modules/ee/analysis/lib/schema-definition";
 import {
-  AXIS_LABEL_BOX_HEIGHT,
   AXIS_LABEL_GAP,
   AXIS_LABEL_LINE_HEIGHT,
-  AXIS_LABEL_MAX_LINES,
   CATEGORY_AXIS_LABEL_LINES,
   CATEGORY_AXIS_MAX_WIDTH,
   CATEGORY_AXIS_MIN_WIDTH,
