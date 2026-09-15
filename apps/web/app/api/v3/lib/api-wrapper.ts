@@ -3,6 +3,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
+import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
@@ -339,6 +340,38 @@ async function applyV3RateLimitOrRespond(params: {
   return null;
 }
 
+/**
+ * Report a 5xx to the logs and to Sentry, through the same reporter v1 already uses.
+ *
+ * There was no error reporting under `app/api/v3` at all before this — the surface MCP agents and the
+ * SDK consume was the one with no signal when it broke. `reportApiError` is reused rather than calling
+ * `Sentry.captureException` here: it already owns the gating (`SENTRY_DSN && IS_PRODUCTION`), the
+ * correlation id, the safe error serialization, and the rule that a reporter failure can never affect
+ * the response.
+ *
+ * Called on both exits, because a v3 500 usually is not thrown. Operations return a problem response
+ * rather than throwing — they have to, since the MCP server calls them directly with no wrapper — so
+ * reporting only from the `catch` would miss almost every real failure. The thrown path additionally
+ * passes the original error, which is what gives Sentry a stack rather than a synthetic one.
+ *
+ * `apiVersion` is passed explicitly instead of being derived from the path: under a `basePath`
+ * deployment the request URL is prefixed, and the reporter's own matcher would fall back to "unknown".
+ */
+const reportServerError = (req: NextRequest, response: Response, error?: unknown): void => {
+  if (response.status < 500) {
+    return;
+  }
+
+  try {
+    reportApiError({ request: req, status: response.status, error, apiVersion: "v3" });
+  } catch {
+    // `reportApiError` already swallows its own failures, so this should be unreachable — but it is
+    // called on the success return path, where an escaping throw would be caught by the wrapper's own
+    // `catch` and rewrite the handler's status. A 503 becoming a 500 because Sentry hiccuped is the
+    // exact class of thing observability must not do.
+  }
+};
+
 export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unknown>(
   params: TWithV3ApiWrapperParams<S, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
@@ -421,6 +454,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       }
 
       await queueV3AuditLog(auditLog, requestId, log);
+      reportServerError(req, response);
       return ensureRequestIdHeader(response, requestId);
     } catch (error) {
       if (auditLog) {
@@ -430,7 +464,9 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       // Defence in depth. Operations map their own throws and return a problem response — they have to,
       // because the MCP tools call them directly, without this wrapper. Anything reaching here escaped
       // that, so it is mapped by the same rules rather than being flattened into a blanket 500.
-      return ensureRequestIdHeader(mapV3ThrownError(error, { log, requestId, instance }), requestId);
+      const mapped = mapV3ThrownError(error, { log, requestId, instance });
+      reportServerError(req, mapped, error);
+      return ensureRequestIdHeader(mapped, requestId);
     }
   };
 };

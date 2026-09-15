@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
+import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { withV3ApiWrapper } from "./api-wrapper";
 
@@ -51,6 +52,7 @@ vi.mock("@/app/lib/api/with-api-logging", () => ({
   buildAuditLogBaseObject: mockBuildAuditLogBaseObject,
 }));
 
+vi.mock("@/app/lib/api/api-error-reporter", () => ({ reportApiError: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({
@@ -716,5 +718,88 @@ describe("withV3ApiWrapper", () => {
     expect(mockQueueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ status: "failure", eventId: "req-audit" })
     );
+  });
+});
+
+/**
+ * There was no error reporting under `app/api/v3` before this. The tests matter more than usual
+ * because the reporting is invisible in every response: nothing about a 500's body tells you whether
+ * it reached Sentry, so a regression here is silent by construction.
+ */
+describe("5xx reporting", () => {
+  const reported = () => vi.mocked(reportApiError).mock.calls.map(([c]) => c);
+
+  beforeEach(() => {
+    vi.mocked(reportApiError).mockClear();
+    mockGetSession.mockResolvedValue({ user: { id: "user_1" }, expires: "2026-01-01" });
+  });
+
+  /**
+   * The path that would otherwise be missed. A v3 operation returns its problem response rather than
+   * throwing — it must, because the MCP server calls it directly with no wrapper — so a `catch`-only
+   * hook would see almost no real failure.
+   */
+  test("reports a 500 the handler returned rather than threw", async () => {
+    const route = withV3ApiWrapper({
+      auth: "session",
+      handler: async () => Response.json({ title: "Internal Server Error" }, { status: 500 }),
+    });
+
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(reported()).toHaveLength(1);
+    expect(reported()[0]).toMatchObject({ status: 500, apiVersion: "v3" });
+    // Reporting must be a pure observation: the caller's body reaches them untouched. Without this
+    // the test passes even if the reporter consumed or replaced the response.
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ title: "Internal Server Error" });
+  });
+
+  /** The thrown path carries the original error, which is what gives Sentry a stack. */
+  test("reports a thrown error, passing the error itself", async () => {
+    const boom = new Error("kaboom");
+    const route = withV3ApiWrapper({
+      auth: "session",
+      handler: async () => {
+        throw boom;
+      },
+    });
+
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(response.status).toBe(500);
+    expect(reported()).toHaveLength(1);
+    expect(reported()[0]).toMatchObject({ status: 500, apiVersion: "v3", error: boom });
+  });
+
+  test.each([
+    ["a success", 200],
+    ["a client error", 400],
+    ["a forbidden", 403],
+  ])("stays silent on %s — Sentry is for 5xx only", async (_label, status) => {
+    const route = withV3ApiWrapper({
+      auth: "session",
+      handler: async () => new Response(null, { status }),
+    });
+
+    await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(reported()).toHaveLength(0);
+  });
+
+  /** Observability must never change what the caller gets back. */
+  test("a reporter failure does not affect the response", async () => {
+    vi.mocked(reportApiError).mockImplementationOnce(() => {
+      throw new Error("sentry is down");
+    });
+    const route = withV3ApiWrapper({
+      auth: "session",
+      handler: async () => Response.json({ x: 1 }, { status: 503 }),
+    });
+
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({ x: 1 });
   });
 });
