@@ -3,10 +3,18 @@
 import { type ElementType, type ReactNode, useMemo } from "react";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
 import {
+  AXIS_LABEL_BOX_HEIGHT,
+  AXIS_LABEL_GAP,
+  AXIS_LABEL_MAX_LINES,
+  AXIS_TICK_GAP,
+  CHART_LEGEND_HEIGHT,
   formatCellValue,
   formatXAxisTick,
   getCategoryAxisWidth,
+  getCategoryLabelBoxHeight,
+  getCategoryLabelLineClamp,
   getValueLabelPadding,
+  truncateLabelToBox,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { type YAxisScale, computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
@@ -46,7 +54,8 @@ export interface CartesianChartProps {
   pointScale?: boolean;
   /** Flips the chart onto its side: categories run down the y-axis and values across the x-axis.
    * Bar charts only — the category labels move into a gutter on the left, sized to the labels
-   * present and wrapped inside it (see `getCategoryAxisWidth`). */
+   * present (see `getCategoryAxisWidth`), wrapped inside it, and cut from the middle to whatever
+   * lines the row density leaves (see `truncateLabelToBox`). */
   horizontal?: boolean;
 }
 
@@ -57,18 +66,11 @@ const X_AXIS_TICK_MAX_WIDTH = 220;
 /** Lower bound (px) so a label keeps a little room to wrap even on very dense axes. Below the band
  * width the label narrows to fit rather than overlapping its neighbours. */
 const X_AXIS_TICK_MIN_WIDTH = 32;
-/** Horizontal gap (px) reserved between adjacent labels so wrapped text never touches. */
-const X_AXIS_TICK_GAP = 8;
-/** Number of lines a wrapped label clamps to, and the `text-xs`/`leading-tight` line height (px,
- * ~15px for 12px text with a hair of headroom for descenders on the last line). */
-const X_AXIS_LABEL_MAX_LINES = 3;
-const X_AXIS_LABEL_LINE_HEIGHT = 16;
-/** Height (px) of the label box itself: just the clamped text, so on legend-less charts (bars) the
- * box does not overhang the plot below the labels. */
-const X_AXIS_LABEL_BOX_HEIGHT = X_AXIS_LABEL_MAX_LINES * X_AXIS_LABEL_LINE_HEIGHT;
 /** Vertical space reserved on the axis for the labels: the label box plus the tick margin and the
- * box's top offset below the axis line, so the last line is not clipped by the plot's bottom edge. */
-const X_AXIS_RESERVED_HEIGHT = X_AXIS_LABEL_BOX_HEIGHT + 24;
+ * box's top offset below the axis line, so the last line is not clipped by the plot's bottom edge.
+ * The box height itself is the shared `AXIS_LABEL_BOX_HEIGHT`: just the clamped text, so on
+ * legend-less charts (bars) the box does not overhang the plot below the labels. */
+const X_AXIS_RESERVED_HEIGHT = AXIS_LABEL_BOX_HEIGHT + 24;
 /** Vertical offset (px) of the label box below the axis line. */
 const X_AXIS_LABEL_TOP_OFFSET = 4;
 
@@ -104,7 +106,7 @@ function WrappingXAxisTick({
 }>) {
   const label = formatter(payload?.value);
   const band = width && visibleTicksCount ? width / visibleTicksCount : X_AXIS_TICK_MAX_WIDTH;
-  const tickWidth = Math.min(X_AXIS_TICK_MAX_WIDTH, Math.max(X_AXIS_TICK_MIN_WIDTH, band - X_AXIS_TICK_GAP));
+  const tickWidth = Math.min(X_AXIS_TICK_MAX_WIDTH, Math.max(X_AXIS_TICK_MIN_WIDTH, band - AXIS_LABEL_GAP));
   const tickX = x ?? 0;
 
   const isFirst = pointScale && index === 0;
@@ -136,14 +138,17 @@ function WrappingXAxisTick({
       x={boxX}
       y={(y ?? 0) + X_AXIS_LABEL_TOP_OFFSET}
       width={boxWidth}
-      height={X_AXIS_LABEL_BOX_HEIGHT}
+      height={AXIS_LABEL_BOX_HEIGHT}
       // Keep the label hit-testable so the `title` full-text tooltip works on hover. The tick sits
       // in the axis band below the plot, so this doesn't intercept hover over the bars/points.
       style={{ overflow: "visible" }}>
       <div
         title={label}
         className={`text-muted-foreground line-clamp-3 ${textAlign} text-xs leading-tight`}
-        style={{ textWrap: "pretty" }}>
+        // Inline, so the clamp tracks the shared line budget the box above is sized from. The class
+        // alone would keep clamping at 3 if AXIS_LABEL_MAX_LINES were raised, leaving a taller box
+        // with the same three lines in it.
+        style={{ textWrap: "pretty", WebkitLineClamp: AXIS_LABEL_MAX_LINES }}>
         {label}
       </div>
     </foreignObject>
@@ -154,10 +159,15 @@ function WrappingXAxisTick({
  * `WrappingXAxisTick`, but the box hangs to the left of the axis line and is centred on its
  * category band, since here the labels stack down the y-axis.
  *
- * The box height is clamped to the band the same way `WrappingXAxisTick` clamps its width: the
- * chart's height comes from its container, not from the row count, so the band shrinks as categories
- * are added. A fixed three-line box overlaps its neighbours as soon as the band falls below it, so
- * the label sheds lines instead — down to a single line, with the full text still on hover. */
+ * The box height is clamped to the band the same way `WrappingXAxisTick` clamps its width: a fixed
+ * three-line box overlaps its neighbours as soon as the band falls below it, so the label sheds
+ * lines instead — down to a single line, with the full text still on hover.
+ *
+ * Whatever lines that leaves, the label is cut to fit them from the middle rather than the end
+ * (`truncateLabelToBox`): survey questions in one source share their opening words, so a
+ * tail-truncated dense axis printed the same "CSAT with clarity of…" against every bar (ENG-3148).
+ * The chart keeps its container's height — the reader sees every row at once, and the label adapts
+ * to the room the density leaves. */
 function WrappingYAxisTick({
   x,
   y,
@@ -177,19 +187,23 @@ function WrappingYAxisTick({
   visibleTicksCount?: number;
 }>) {
   const label = formatter(payload?.value);
-  const boxWidth = Math.max(1, axisWidth - X_AXIS_TICK_GAP);
+  // The box hangs left of the tick, ending `AXIS_TICK_GAP` short of the axis line. Recharts does not
+  // always leave the whole gutter to the left of that tick — a few pixels go to the chart margin —
+  // so a box sized to the gutter starts at a negative x and the SVG clips the first glyph off the
+  // longest label. Anchor the right edge and let the left edge stop at the viewport.
+  const boxWidth = Math.max(1, axisWidth - AXIS_LABEL_GAP);
+  // Recharts does not always leave the whole gutter left of the tick, so an unguarded box starts at
+  // a negative x and the SVG clips the first glyph off the longest label.
+  const boxLeft = Math.max(0, (x ?? 0) - boxWidth - AXIS_TICK_GAP);
 
-  const band = height && visibleTicksCount ? height / visibleTicksCount : X_AXIS_LABEL_BOX_HEIGHT;
-  const boxHeight = Math.max(
-    X_AXIS_LABEL_LINE_HEIGHT,
-    Math.min(X_AXIS_LABEL_BOX_HEIGHT, band - X_AXIS_TICK_GAP)
-  );
-  // Whole lines only — a box sized to 2.5 lines would clip the third mid-glyph rather than drop it.
-  const lineClamp = Math.max(1, Math.floor(boxHeight / X_AXIS_LABEL_LINE_HEIGHT));
+  const band = height && visibleTicksCount ? height / visibleTicksCount : undefined;
+  const boxHeight = getCategoryLabelBoxHeight(band);
+  const lineClamp = getCategoryLabelLineClamp();
+  const shownLabel = truncateLabelToBox(label, boxWidth, lineClamp);
 
   return (
     <foreignObject
-      x={(x ?? 0) - boxWidth - X_AXIS_TICK_GAP}
+      x={boxLeft}
       y={(y ?? 0) - boxHeight / 2}
       width={boxWidth}
       height={boxHeight}
@@ -199,7 +213,7 @@ function WrappingYAxisTick({
         className="text-muted-foreground flex h-full items-center justify-end text-xs leading-tight"
         style={{ textWrap: "pretty" }}>
         <span className="line-clamp-3 text-right" style={{ WebkitLineClamp: lineClamp }}>
-          {label}
+          {shownLabel}
         </span>
       </div>
     </foreignObject>
@@ -226,6 +240,7 @@ export function CartesianChart({
 }: Readonly<CartesianChartProps>) {
   const yScale = yAxisScale ?? computeYAxis(data, dataKeys, zeroBaseline);
   const tickFormatter = xAxisTickFormatter ?? formatXAxisTick;
+
   const categoryAxisWidth = useMemo(() => {
     if (!horizontal || !hasCategoryAxis) return 0;
     return getCategoryAxisWidth(data.map((row) => tickFormatter(row[xAxisKey])));
@@ -241,6 +256,10 @@ export function CartesianChart({
   }, [horizontal, data, dataKeys]);
 
   return (
+    // A flipped chart keeps its container's height: every row stays on screen and the labels adapt
+    // to the band that leaves (see `WrappingYAxisTick`). Reserving height per row instead would put
+    // a scroll region inside a dashboard widget, hiding rows behind an interaction to show label
+    // text that a middle-truncated label already distinguishes.
     <div className="h-full min-h-64 w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
         <Chart data={data} {...(horizontal ? { layout: "vertical" as const } : {})} {...chartProps}>
@@ -320,7 +339,13 @@ export function CartesianChart({
             // hovered bar instead. Category charts keep the shared tooltip to compare within a group.
             shared={hasCategoryAxis}
           />
-          {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="bottom" height={36} />}
+          {showLegend && (
+            <ChartLegend
+              content={<ChartLegendContent />}
+              verticalAlign="bottom"
+              height={CHART_LEGEND_HEIGHT}
+            />
+          )}
           {children}
         </Chart>
       </ChartContainer>
