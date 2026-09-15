@@ -19,7 +19,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
+import { pruneOptionLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import {
   type TDimensionValue,
@@ -300,8 +300,9 @@ export const executeQueryAction = authenticatedActionClient
       });
 
       const rows = Array.isArray(rawRows) ? rawRows : [];
+      const usedLabels = pruneOptionLabels(rewrittenQuery, rows, optionLabels);
 
-      return { rows, ...(optionLabels ? { optionLabels } : {}), effectiveQuery: rewrittenQuery };
+      return { rows, ...(usedLabels ? { optionLabels: usedLabels } : {}), effectiveQuery: rewrittenQuery };
     }
   );
 

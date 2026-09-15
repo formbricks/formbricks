@@ -9,7 +9,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
+import { pruneOptionLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { checkFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
@@ -66,10 +66,13 @@ async function executeWidgetQuery(
       source: "dashboards.widget",
     });
 
+    const rows = Array.isArray(data) ? data : [];
+    const usedLabels = pruneOptionLabels(rewrittenQuery, rows, optionLabels);
+
     return {
-      data: Array.isArray(data) ? data : [],
+      data: rows,
       query: rewrittenQuery,
-      ...(optionLabels ? { optionLabels } : {}),
+      ...(usedLabels ? { optionLabels: usedLabels } : {}),
     };
   } catch (error) {
     logger.error(error, "Failed to load dashboard widget data");
