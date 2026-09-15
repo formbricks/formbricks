@@ -1218,13 +1218,15 @@ describe("editV3SurveyBlocksResponse", () => {
   });
 
   test("forwards expectedUpdatedAt as a write precondition", async () => {
+    // Matches the fixture's updatedAt: the precondition is now evaluated before the method, so a
+    // mismatching one never reaches patchV3Survey (that case is the 409 test below).
     await call({
       ops: [{ op: "remove", id: "blk_b" }],
-      expectedUpdatedAt: "2026-04-21T10:00:00.000Z",
+      expectedUpdatedAt: "2026-01-01T00:00:00.000Z",
     });
 
     expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, { blocks: [blockA] }, requestId, "org_1", {
-      expectedUpdatedAt: new Date("2026-04-21T10:00:00.000Z"),
+      expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
     });
   });
 
@@ -1243,6 +1245,43 @@ describe("editV3SurveyBlocksResponse", () => {
     const body = await response.json();
     expect(body.invalid_params).toEqual([
       expect.objectContaining({ name: "ops.0.id", code: "dangling_reference" }),
+    ]);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("answers a stale precondition with 409 even when the op could not have applied", async () => {
+    // The commonest reason an op fails to resolve is that the survey moved on — which is exactly what
+    // the caller's `expectedUpdatedAt` is asking about. RFC 9110 evaluates the precondition before
+    // the method, so the honest answer is 409 re-read-and-retry, not a 422 blaming the request.
+    const response = await call({
+      ops: [{ op: "remove", id: "blk_zz" }],
+      expectedUpdatedAt: "2020-01-01T00:00:00.000Z",
+    });
+
+    expect(response.status).toBe(409);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("refuses to edit by id when the stored survey repeats a block id", async () => {
+    // `findIndex` would act on whichever copy comes first — a guess. Refused as a stored-survey
+    // problem before anything is applied, with both positions named.
+    vi.mocked(serializeV3SurveyResource).mockReturnValue({
+      ...serializedWithBlocks,
+      blocks: [blockA, { ...blockB, id: "blk_a" }],
+    } as any);
+
+    const response = await call({ ops: [{ op: "remove", id: "blk_a" }] });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.code).toBe("stored_survey_invalid");
+    expect(body.invalid_params).toEqual([
+      expect.objectContaining({
+        name: "blocks.1.id",
+        code: "duplicate_identifier",
+        identifier: "blk_a",
+        firstUsedAt: "blocks.0.id",
+      }),
     ]);
     expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
   });
@@ -1311,10 +1350,12 @@ describe("editV3SurveyBlocksResponse", () => {
     ]);
   });
 
-  test("maps a stale precondition to 409 with both timestamps", async () => {
+  test("maps a race the compare-and-set catches to 409 with both timestamps", async () => {
+    // The pre-flight passes (precondition matches the fixture), then the UPDATE's own `where` finds the
+    // row moved on. That is the genuine race the CAS exists for, and it must surface the live value.
     vi.mocked(patchV3Survey).mockRejectedValue(
       new V3SurveyStaleError(
-        new Date("2026-04-21T10:00:00.000Z"),
+        new Date("2026-01-01T00:00:00.000Z"),
         new Date("2026-04-21T11:30:00.000Z"),
         "write"
       )
@@ -1322,14 +1363,14 @@ describe("editV3SurveyBlocksResponse", () => {
 
     const response = await call({
       ops: [{ op: "remove", id: "blk_b" }],
-      expectedUpdatedAt: "2026-04-21T10:00:00.000Z",
+      expectedUpdatedAt: "2026-01-01T00:00:00.000Z",
     });
 
     expect(response.status).toBe(409);
     const body = await response.json();
     expect(body.code).toBe("conflict");
     expect(body.details).toEqual({
-      expectedUpdatedAt: "2026-04-21T10:00:00.000Z",
+      expectedUpdatedAt: "2026-01-01T00:00:00.000Z",
       currentUpdatedAt: "2026-04-21T11:30:00.000Z",
     });
   });
@@ -1384,6 +1425,24 @@ describe("setV3SurveyBlockOrderResponse", () => {
     expect(response.status).toBe(200);
     expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
     expect(auditLog).toMatchObject({ oldObject: serializedWithBlocks, newObject: serializedWithBlocks });
+  });
+
+  test("refuses to reorder when the stored survey repeats a block id, instead of dropping one", async () => {
+    // `reorderSurveyBlocks` keys by id, so a duplicate collapses and a permutation of the unique ids
+    // passes — one block shorter, and validation never sees it because the result IS unique. Silent
+    // loss of a block is the failure these endpoints exist to prevent.
+    vi.mocked(serializeV3SurveyResource).mockReturnValue({
+      ...serializedWithBlocks,
+      blocks: [blockA, { ...blockB, id: "blk_a" }, { id: "blk_c", name: "C", elements: [] }],
+    } as any);
+
+    const response = await call({ order: ["blk_c", "blk_a"] });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.code).toBe("stored_survey_invalid");
+    expect(body.invalid_params[0]).toMatchObject({ name: "blocks.1.id", code: "duplicate_identifier" });
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
   });
 
   test("rejects a stale precondition even when the order would not change anything", async () => {

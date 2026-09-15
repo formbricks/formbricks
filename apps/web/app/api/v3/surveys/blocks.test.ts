@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   type TV3PublicBlock,
   applySurveyBlockOperations,
+  findDuplicateBlockId,
   readPublicBlocks,
   remapBlockInvalidParamPath,
   reorderSurveyBlocks,
@@ -302,6 +303,29 @@ describe("remapBlockInvalidParamPath", () => {
     );
   });
 
+  test("remaps firstUsedAt and conflictsWith too, since they are paths into the same array", () => {
+    // A duplicate-id report names both copies. Translating only `name` hands the caller
+    // `ops.3.block.elements.0.id` beside `blocks.1.elements.0.id` — half in coordinates it sent, half
+    // in coordinates it never did.
+    expect(
+      remapBlockInvalidParamPath(
+        {
+          name: "blocks.1.elements.0.id",
+          reason: "r",
+          code: "duplicate_identifier",
+          firstUsedAt: "blocks.1.elements.1.id",
+          conflictsWith: "blocks.0.elements.0.id",
+        },
+        origins
+      )
+    ).toMatchObject({
+      name: "ops.3.block.elements.0.id",
+      firstUsedAt: "ops.3.block.elements.1.id",
+      // Block 0 was not touched by the request, so its path stays where the problem is.
+      conflictsWith: "blocks.0.elements.0.id",
+    });
+  });
+
   test("preserves every other field on the param", () => {
     const param = {
       name: "blocks.1.id",
@@ -378,5 +402,59 @@ describe("reorderSurveyBlocks diagnostics bound", () => {
     if (result.ok) return;
     // blk_b missing + `nope` unknown, and nothing about a cap.
     expect(result.invalidParams).toHaveLength(2);
+  });
+});
+
+describe("insert collisions name the other copy where the caller can find it", () => {
+  test("a collision with a block an earlier op inserted points at that op, not at blocks.<i>", () => {
+    const current = [block("blk_a")];
+    const result = applySurveyBlockOperations(current, [
+      { op: "insert", block: { id: "blk_new", name: "first copy" }, position: { type: "end" } },
+      { op: "insert", block: { id: "blk_new", name: "second copy" }, position: { type: "end" } },
+    ] as TV3SurveyBlockOp[]);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.invalidParams[0]).toMatchObject({
+      name: "ops.1.block.id",
+      code: "duplicate_identifier",
+      firstUsedAt: "ops.0.block.id",
+    });
+  });
+
+  test("a collision with a stored block keeps the stored path", () => {
+    const result = applySurveyBlockOperations([block("blk_a"), block("blk_b")], [
+      { op: "insert", block: { id: "blk_b", name: "dup" }, position: { type: "start" } },
+    ] as TV3SurveyBlockOp[]);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.invalidParams[0]).toMatchObject({ firstUsedAt: "blocks.1.id" });
+  });
+});
+
+describe("findDuplicateBlockId", () => {
+  test("returns null for unique ids", () => {
+    expect(findDuplicateBlockId([block("a"), block("b")])).toBeNull();
+  });
+
+  test("names the first repeated id with both positions", () => {
+    expect(findDuplicateBlockId([block("a"), block("b"), block("a")])).toEqual({
+      id: "a",
+      firstIndex: 0,
+      index: 2,
+    });
+  });
+
+  test("a survey with a repeated block id would otherwise lose a block on reorder", () => {
+    // The reason the guard exists: `reorderSurveyBlocks` keys by id, so the duplicate collapses and a
+    // perfectly-formed permutation of the *unique* ids passes — one block shorter.
+    const stored = [block("a", "first a"), block("a", "second a"), block("b")];
+    const result = reorderSurveyBlocks(stored, ["b", "a"]);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.blocks).toHaveLength(2);
+    expect(findDuplicateBlockId(stored)).not.toBeNull();
   });
 });

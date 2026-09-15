@@ -666,7 +666,17 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
     });
   });
 
-  return violations;
+  // One report per key. A field can carry the same `#recall:` token any number of times — a headline
+  // that repeats a forward recall fifty thousand times is still one misordered reference, and
+  // reporting it per occurrence would let a request inflate the error body several-fold (the class
+  // ENG-1652 bounds). The key is already the dedupe unit the delta filter below relies on.
+  const byKey = new Map<string, TPrecedenceViolation>();
+  for (const violation of violations) {
+    if (!byKey.has(violation.key)) {
+      byKey.set(violation.key, violation);
+    }
+  }
+  return [...byKey.values()];
 }
 
 /** Every ordering violation in the document. Used on create, where there is no baseline to spare. */

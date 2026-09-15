@@ -48,6 +48,21 @@ function isPublicBlock(value: unknown): value is TV3PublicBlock {
   );
 }
 
+/** The first block id that occurs twice, with both positions, or `null` when every id is unique. */
+export function findDuplicateBlockId(
+  blocks: readonly TV3PublicBlock[]
+): { id: string; firstIndex: number; index: number } | null {
+  const firstIndexById = new Map<string, number>();
+  for (const [index, block] of blocks.entries()) {
+    const firstIndex = firstIndexById.get(block.id);
+    if (firstIndex !== undefined) {
+      return { id: block.id, firstIndex, index };
+    }
+    firstIndexById.set(block.id, index);
+  }
+  return null;
+}
+
 /**
  * Narrow the serialized resource's `blocks` to an array of id-bearing objects. A survey that cannot
  * satisfy this is not editable through these endpoints; the caller maps the `null` to a 422 rather
@@ -215,6 +230,10 @@ function applyInsertOp(state: TWorkingBlocks, opIndex: number, op: TV3BlockInser
 
   const existingIndex = state.blocks.findIndex((block) => block.id === newId);
   if (existingIndex !== -1) {
+    // The other copy is either a stored block (keep the `blocks.<i>` path — that is where it is) or
+    // one an earlier op in this request inserted, in which case `blocks.<i>` names an array the
+    // caller never sent and the actionable path is that op's payload.
+    const existingOrigin = state.origins[existingIndex];
     return [
       {
         name: `ops.${opIndex}.block.id`,
@@ -222,7 +241,8 @@ function applyInsertOp(state: TWorkingBlocks, opIndex: number, op: TV3BlockInser
         code: "duplicate_identifier",
         identifier: newId,
         referenceType: "block",
-        firstUsedAt: `blocks.${existingIndex}.id`,
+        firstUsedAt:
+          existingOrigin === null ? `blocks.${existingIndex}.id` : `ops.${existingOrigin}.block.id`,
       },
     ];
   }
@@ -389,15 +409,22 @@ export function remapBlockInvalidParamPath(
   param: InvalidParam,
   originOpIndexByBlockIndex: ReadonlyMap<number, number>
 ): InvalidParam {
-  const match = /^blocks\.(\d+)(?<rest>\..*)?$/.exec(param.name);
-  if (!match) {
-    return param;
-  }
+  const remap = (path: string): string => {
+    const match = /^blocks\.(\d+)(?<rest>\..*)?$/.exec(path);
+    if (!match) {
+      return path;
+    }
+    const opIndex = originOpIndexByBlockIndex.get(Number(match[1]));
+    return opIndex === undefined ? path : `ops.${opIndex}.block${match.groups?.rest ?? ""}`;
+  };
 
-  const opIndex = originOpIndexByBlockIndex.get(Number(match[1]));
-  if (opIndex === undefined) {
-    return param;
-  }
-
-  return { ...param, name: `ops.${opIndex}.block${match.groups?.rest ?? ""}` };
+  // `firstUsedAt` and `conflictsWith` are paths too — a duplicate-id report names both copies. Leaving
+  // them in `blocks.<i>` coordinates while `name` moves to `ops.<n>` hands the caller a half-translated
+  // pair it cannot resolve without a second GET.
+  return {
+    ...param,
+    name: remap(param.name),
+    ...(param.firstUsedAt === undefined ? {} : { firstUsedAt: remap(param.firstUsedAt) }),
+    ...(param.conflictsWith === undefined ? {} : { conflictsWith: remap(param.conflictsWith) }),
+  };
 }

@@ -1132,6 +1132,58 @@ describe("patchV3Survey", () => {
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
+    test("takes the precondition from a round-tripped body updatedAt when none is passed explicitly", async () => {
+      // The PATCH route's whole promise: GET output is a valid PATCH body, and the echoed `updatedAt`
+      // is the compare-and-set. That contract is one `??` in patchV3Survey; every other test here
+      // feeds the precondition through the explicit argument, so without this one deleting the
+      // fallback would leave the suite green and every round-tripping client silently unguarded.
+      await patchV3Survey(
+        currentSurvey,
+        { name: "CAS from body", updatedAt: "2026-04-21T10:00:00.000Z" },
+        "req_cas_body_1",
+        "org_1"
+      );
+
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: currentSurvey.id, updatedAt: expectedUpdatedAt } })
+      );
+    });
+
+    test("rejects a stale round-tripped body updatedAt before attempting the write", async () => {
+      const stale = new Date("2026-04-20T09:00:00.000Z");
+
+      await expect(
+        patchV3Survey(
+          currentSurvey,
+          { name: "stale from body", updatedAt: stale.toISOString() },
+          "req_cas_body_2",
+          "org_1"
+        )
+      ).rejects.toMatchObject({
+        name: "V3SurveyStaleError",
+        detectedAt: "read",
+        expectedUpdatedAt: stale,
+        currentUpdatedAt: currentSurvey.updatedAt,
+      });
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("an explicit precondition wins over the body's updatedAt", async () => {
+      // The block endpoints pass it explicitly; a body echo must not be able to weaken it.
+      const stale = new Date("2026-04-20T09:00:00.000Z");
+
+      await expect(
+        patchV3Survey(
+          currentSurvey,
+          { name: "x", updatedAt: "2026-04-21T10:00:00.000Z" },
+          "req_cas_body_3",
+          "org_1",
+          { expectedUpdatedAt: stale }
+        )
+      ).rejects.toMatchObject({ name: "V3SurveyStaleError", expectedUpdatedAt: stale });
+    });
+
     test("turns a P2025 under a precondition into a stale error carrying the live updatedAt", async () => {
       // The row moved on between the authorized read and the compare-and-set — the race the early
       // check cannot see.

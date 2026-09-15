@@ -25,7 +25,9 @@ import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/l
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import {
+  type TV3PublicBlock,
   applySurveyBlockOperations,
+  findDuplicateBlockId,
   readPublicBlocks,
   remapBlockInvalidParamPath,
   reorderSurveyBlocks,
@@ -842,6 +844,14 @@ async function runV3SurveyDocumentMutation({
       return cachedResource;
     };
 
+    // RFC 9110 evaluates a precondition *before* the method, so it goes ahead of `buildInput` and not
+    // only on the paths that reach the write. Block ops resolve against live server state, which
+    // means the commonest reason one fails to apply is exactly that the survey moved on — and the one
+    // caller who supplied `expectedUpdatedAt` would otherwise get a 422 blaming its request when the
+    // honest answer is 409, re-read and retry. `patchV3Survey` re-checks the same value for the
+    // body-derived precondition the PATCH route carries; the explicit one is settled here.
+    assertV3SurveyPrecondition(survey, precondition);
+
     const built = buildInput({ survey, getResource });
 
     if (!built.ok) {
@@ -853,11 +863,8 @@ async function runV3SurveyDocumentMutation({
     }
 
     if ("unchanged" in built) {
-      // This branch never reaches patchV3Survey, which is where every other write evaluates the
-      // precondition — so evaluate it here. Otherwise a reorder into the order the survey already
-      // holds answers a stale caller with 200, which reads as "your view is current" when it is not.
-      assertV3SurveyPrecondition(survey, precondition);
-
+      // Already precondition-checked above: a reorder into the order the survey already holds must
+      // still refuse a stale caller, or a 200 here reads as "your view is current" when it is not.
       const resource = getResource();
       if (auditLog) {
         auditLog.targetId = survey.id;
@@ -954,6 +961,70 @@ export function withGeneratedInsertIds(ops: TV3SurveyBlockOp[]): TV3SurveyBlockO
   );
 }
 
+type TEditableBlocksRead =
+  | { ok: true; blocks: TV3PublicBlock[] }
+  | { ok: false; rejection: Extract<TV3SurveyDocumentMutationInput, { ok: false }> };
+
+/**
+ * The stored blocks as the id-addressed endpoints need them, or the `stored_survey_invalid` that
+ * explains why they cannot be used.
+ *
+ * Two stored-survey states defeat addressing by id, and both have to be refused *before* any op or
+ * reorder is applied rather than left to document validation afterwards:
+ *
+ * - no v3 block list at all (a shape the serializer could not narrow);
+ * - a block id that occurs more than once. `reorderSurveyBlocks` builds a `Map` by id, so a
+ *   duplicate collapses and the survey comes back one block shorter — and because the *result* has
+ *   unique ids, the validation that would have caught the duplicate never sees it. Silent loss of a
+ *   block is the exact failure whole-array replacement has and these endpoints exist to prevent.
+ *   `applySurveyBlockOperations` would instead act on whichever copy `findIndex` finds first, which
+ *   is a guess. Nothing in the write path produces such a survey; the lenient draft-save path can.
+ */
+function readEditableBlocks(
+  resource: ReturnType<typeof serializeV3SurveyResource>,
+  verb: "edited" | "reordered"
+): TEditableBlocksRead {
+  const detail = `This survey's blocks cannot be ${verb} through the v3 API`;
+  const name = verb === "edited" ? "blocks" : "order";
+
+  const blocks = readPublicBlocks(resource);
+  if (!blocks) {
+    return {
+      ok: false,
+      rejection: {
+        ok: false,
+        code: "stored_survey_invalid",
+        detail,
+        invalidParams: [{ name, reason: "The stored survey does not expose a v3 block list." }],
+      },
+    };
+  }
+
+  const duplicate = findDuplicateBlockId(blocks);
+  if (duplicate) {
+    return {
+      ok: false,
+      rejection: {
+        ok: false,
+        code: "stored_survey_invalid",
+        detail,
+        invalidParams: [
+          {
+            name: `blocks.${duplicate.index}.id`,
+            reason: `Block id '${duplicate.id}' occurs more than once in the stored survey, so blocks cannot be addressed by id; repair it in the editor`,
+            code: "duplicate_identifier",
+            identifier: duplicate.id,
+            referenceType: "block",
+            firstUsedAt: `blocks.${duplicate.firstIndex}.id`,
+          },
+        ],
+      },
+    };
+  }
+
+  return { ok: true, blocks };
+}
+
 export async function editV3SurveyBlocksResponse({
   body,
   ...params
@@ -974,22 +1045,12 @@ export async function editV3SurveyBlocksResponse({
     operation: "blocks.edit",
     ...(expectedUpdatedAt ? { precondition: { expectedUpdatedAt: new Date(expectedUpdatedAt) } } : {}),
     buildInput: ({ getResource }) => {
-      const currentBlocks = readPublicBlocks(getResource());
-      if (!currentBlocks) {
-        return {
-          ok: false,
-          code: "stored_survey_invalid",
-          detail: "This survey's blocks cannot be edited through the v3 API",
-          invalidParams: [
-            {
-              name: "blocks",
-              reason: "The stored survey does not expose a v3 block list.",
-            },
-          ],
-        };
+      const current = readEditableBlocks(getResource(), "edited");
+      if (!current.ok) {
+        return current.rejection;
       }
 
-      const result = applySurveyBlockOperations(currentBlocks, withGeneratedInsertIds(ops));
+      const result = applySurveyBlockOperations(current.blocks, withGeneratedInsertIds(ops));
       if (!result.ok) {
         return {
           ok: false,
@@ -1029,23 +1090,18 @@ export async function setV3SurveyBlockOrderResponse({
     operation: "blocks.reorder",
     ...(expectedUpdatedAt ? { precondition: { expectedUpdatedAt: new Date(expectedUpdatedAt) } } : {}),
     buildInput: ({ getResource }) => {
-      const currentBlocks = readPublicBlocks(getResource());
-      if (!currentBlocks) {
-        return {
-          ok: false,
-          code: "stored_survey_invalid",
-          detail: "This survey's blocks cannot be reordered through the v3 API",
-          invalidParams: [{ name: "order", reason: "The stored survey does not expose a v3 block list." }],
-        };
+      const current = readEditableBlocks(getResource(), "reordered");
+      if (!current.ok) {
+        return current.rejection;
       }
 
-      const result = reorderSurveyBlocks(currentBlocks, order);
+      const result = reorderSurveyBlocks(current.blocks, order);
       if (!result.ok) {
         return {
           ok: false,
           detail: "Block order must list every block exactly once",
           invalidParams: result.invalidParams,
-          logFields: { blockCount: currentBlocks.length },
+          logFields: { blockCount: current.blocks.length },
         };
       }
 

@@ -559,6 +559,99 @@ describe("ordering rules (ENG-3069)", () => {
     expect(getV3SurveyPrecedenceInvalidParams(refInput(sameBlock))).toEqual([]);
   });
 
+  test("requireAnswer must target a later block: same block and earlier block are both flagged", () => {
+    const withRequireAnswer = (blockIndex: number, target: string) => {
+      const survey = twoBlockSurvey();
+      survey.blocks[blockIndex].logic = [
+        {
+          id: "cllogic11111111111111111",
+          conditions: {
+            id: "clcond11111111111111111",
+            connector: "and",
+            conditions: [
+              {
+                id: "clcond22222222222222222",
+                leftOperand: { type: "element", value: survey.blocks[blockIndex].elements[0].id },
+                operator: "isSubmitted",
+              },
+            ],
+          },
+          actions: [{ id: "clact111111111111111111", objective: "requireAnswer", target }],
+        },
+      ] as never;
+      return survey;
+    };
+
+    // Later block: the only legal shape (mirrors validateBlockActions).
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(withRequireAnswer(0, "second_q")))).toEqual([]);
+
+    // Same block.
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(withRequireAnswer(0, "first_q")))).toEqual([
+      expect.objectContaining({
+        name: "blocks.0.logic.0.actions.0.target",
+        code: "misordered_reference",
+        identifier: "first_q",
+        referenceType: "element",
+        reason: expect.stringContaining("same block"),
+      }),
+    ]);
+
+    // Earlier block.
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(withRequireAnswer(1, "first_q")))).toEqual([
+      expect.objectContaining({
+        name: "blocks.1.logic.0.actions.0.target",
+        code: "misordered_reference",
+        identifier: "first_q",
+        reason: expect.stringContaining("earlier block"),
+      }),
+    ]);
+  });
+
+  test("block-level labels render with the block, so they may only recall earlier blocks", () => {
+    const survey = twoBlockSurvey();
+    survey.blocks[0].name = "Section about #recall:second_q/fallback:x#";
+    (survey.blocks[1] as Record<string, unknown>).buttonLabel = {
+      "en-US": "Next after #recall:first_q/fallback:x#",
+    };
+
+    // Block 0's label recalls block 1 — forwards. Block 1's label recalls block 0 — fine.
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))).toEqual([
+      expect.objectContaining({
+        name: "blocks.0.name",
+        code: "misordered_reference",
+        identifier: "second_q",
+        referenceType: "recall",
+      }),
+    ]);
+  });
+
+  test("flags an element recall in metadata, which renders before any block", () => {
+    const survey = twoBlockSurvey({
+      metadata: { title: { "en-US": "Survey about #recall:first_q/fallback:x#" } },
+    });
+
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))).toEqual([
+      expect.objectContaining({
+        name: "metadata.title.default",
+        code: "misordered_reference",
+        identifier: "first_q",
+        reason: expect.stringContaining("no element has been answered yet"),
+      }),
+    ]);
+  });
+
+  test("reports one violation per reference, however many times the token repeats", () => {
+    // A field can carry the same forward recall any number of times. Reporting it per occurrence would
+    // let a request turn a ~30-byte token into a ~150-byte invalid_param, repeated — the same
+    // amplification class ENG-1652 bounds elsewhere. Same key, one report.
+    const repeated = "#recall:second_q/fallback:x# ".repeat(200);
+
+    const params = getV3SurveyPrecedenceInvalidParams(refInput(withHeadline(0, repeated)));
+
+    expect(params).toHaveLength(1);
+    expect(params[0]).toMatchObject({ code: "misordered_reference", identifier: "second_q" });
+  });
+
   test("keeps jumping backwards legal", () => {
     const survey = twoBlockSurvey();
     survey.blocks[1].logic = [
