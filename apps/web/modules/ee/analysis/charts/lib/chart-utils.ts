@@ -346,17 +346,8 @@ export const AXIS_LABEL_GAP = 8;
 /** Height (px) of a label box using the full line budget. */
 export const AXIS_LABEL_BOX_HEIGHT = AXIS_LABEL_MAX_LINES * AXIS_LABEL_LINE_HEIGHT;
 
-/** Height (px) a category band must have before a label in it can use the full line budget: the
- * label box plus the gap that keeps neighbouring labels apart. */
-export const CATEGORY_BAND_MIN_HEIGHT = AXIS_LABEL_BOX_HEIGHT + AXIS_LABEL_GAP;
-
-/** Height (px) a chart legend occupies — the `height` handed to `<ChartLegend>`, named here so the
- * min-height calculation and the legend itself cannot drift apart. */
+/** Height (px) a chart legend occupies — the `height` handed to `<ChartLegend>`. */
 export const CHART_LEGEND_HEIGHT = 36;
-
-/** Vertical space (px) a flipped bar chart spends outside its plot area: recharts' default 5px top
- * and bottom chart margins plus the 30px value axis under the plot. */
-const FLIPPED_CHART_CHROME_HEIGHT = 40;
 
 /**
  * Height (px) of the label box inside a category band of `band` px.
@@ -379,25 +370,35 @@ export const getCategoryLabelBoxHeight = (band?: number): number => {
 export const getCategoryLabelLineClamp = (band?: number): number =>
   Math.max(1, Math.floor(getCategoryLabelBoxHeight(band) / AXIS_LABEL_LINE_HEIGHT));
 
+/** Marks where the middle of a label was dropped. One character wide for the capacity arithmetic. */
+const ELLIPSIS = "…";
+
 /**
- * Minimum height (px) a flipped bar chart needs so every category band clears
- * {@link CATEGORY_BAND_MIN_HEIGHT} — i.e. so every label keeps the full line budget however many
- * categories the chart plots.
+ * A category label cut to what its box can show, from the middle.
  *
- * A flipped chart takes its height from its container, not from its row count, so the band was
- * `height / categoryCount`: a chart with few categories (a CES question) wrapped its labels over
- * three lines while a dense one (CSAT touchpoints) collapsed every label to a single truncated line,
- * making the rows indistinguishable (ENG-3148). Claiming a floor per band makes the treatment
- * density-independent; the container scrolls past the floor instead of the labels shedding lines.
+ * Question labels in one survey share their opening words — "CSAT with clarity of screening
+ * procedures", "CSAT with clarity of information" — so a tail-truncated axis prints the same
+ * "CSAT with clarity of…" against every bar and the rows stop being tellable apart (ENG-3148). The
+ * distinguishing words sit at the end, so the middle is what goes: "CSAT with clarity o…rocedures".
  *
- * `extraChromeHeight` covers anything else stacked outside the plot — a legend, for instance —
- * which would otherwise eat into the bands.
+ * Capacity is estimated from {@link AXIS_CHAR_WIDTH}, the same character-width model
+ * {@link getCategoryAxisWidth} sizes the gutter with. It errs wide, so the CSS line clamp stays as
+ * the backstop for a label whose glyphs run wider than the estimate; this keeps that clamp from
+ * being what the reader normally meets.
  */
-export const getFlippedChartMinHeight = (categoryCount: number, extraChromeHeight = 0): number => {
-  if (!Number.isFinite(categoryCount) || categoryCount <= 0) return 0;
-  return (
-    Math.ceil(categoryCount) * CATEGORY_BAND_MIN_HEIGHT + FLIPPED_CHART_CHROME_HEIGHT + extraChromeHeight
-  );
+export const truncateLabelToBox = (label: string, boxWidth: number, lines: number): string => {
+  if (!Number.isFinite(boxWidth) || !Number.isFinite(lines) || boxWidth <= 0 || lines <= 0) return label;
+
+  const capacity = Math.max(1, Math.floor(boxWidth / AXIS_CHAR_WIDTH)) * Math.floor(lines);
+  if (label.length <= capacity) return label;
+  // Too little room to say anything from both ends: one end plus the mark reads better than two
+  // single characters around it.
+  if (capacity <= ELLIPSIS.length + 1) return label.slice(0, capacity - ELLIPSIS.length) + ELLIPSIS;
+
+  const kept = capacity - ELLIPSIS.length;
+  const head = Math.ceil(kept / 2);
+  const tail = kept - head;
+  return label.slice(0, head) + ELLIPSIS + label.slice(label.length - tail);
 };
 
 /** Ceiling (px) for the value-label gutter — enough for a grouped number like "1,234,567". */

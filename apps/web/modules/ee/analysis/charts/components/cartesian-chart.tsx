@@ -2,7 +2,6 @@
 
 import { type ElementType, type ReactNode, useMemo } from "react";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
-import { cn } from "@/lib/cn";
 import {
   AXIS_LABEL_BOX_HEIGHT,
   AXIS_LABEL_GAP,
@@ -13,8 +12,8 @@ import {
   getCategoryAxisWidth,
   getCategoryLabelBoxHeight,
   getCategoryLabelLineClamp,
-  getFlippedChartMinHeight,
   getValueLabelPadding,
+  truncateLabelToBox,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { type YAxisScale, computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
@@ -54,9 +53,8 @@ export interface CartesianChartProps {
   pointScale?: boolean;
   /** Flips the chart onto its side: categories run down the y-axis and values across the x-axis.
    * Bar charts only — the category labels move into a gutter on the left, sized to the labels
-   * present and wrapped inside it (see `getCategoryAxisWidth`). The chart also claims a minimum
-   * height per category and scrolls past it, so a long label wraps the same way on a dense chart as
-   * on a sparse one (see `getFlippedChartMinHeight`). */
+   * present (see `getCategoryAxisWidth`), wrapped inside it, and cut from the middle to whatever
+   * lines the row density leaves (see `truncateLabelToBox`). */
   horizontal?: boolean;
 }
 
@@ -162,10 +160,13 @@ function WrappingXAxisTick({
  *
  * The box height is clamped to the band the same way `WrappingXAxisTick` clamps its width: a fixed
  * three-line box overlaps its neighbours as soon as the band falls below it, so the label sheds
- * lines instead — down to a single line, with the full text still on hover. That clamp is the
- * backstop, not the plan: the chart reserves `CATEGORY_BAND_MIN_HEIGHT` per category (see
- * `getFlippedChartMinHeight`) and scrolls, so in practice every band clears the full line budget
- * however many categories are plotted. */
+ * lines instead — down to a single line, with the full text still on hover.
+ *
+ * Whatever lines that leaves, the label is cut to fit them from the middle rather than the end
+ * (`truncateLabelToBox`): survey questions in one source share their opening words, so a
+ * tail-truncated dense axis printed the same "CSAT with clarity of…" against every bar (ENG-3148).
+ * The chart keeps its container's height — the reader sees every row at once, and the label adapts
+ * to the room the density leaves. */
 function WrappingYAxisTick({
   x,
   y,
@@ -190,6 +191,7 @@ function WrappingYAxisTick({
   const band = height && visibleTicksCount ? height / visibleTicksCount : undefined;
   const boxHeight = getCategoryLabelBoxHeight(band);
   const lineClamp = getCategoryLabelLineClamp(band);
+  const shownLabel = truncateLabelToBox(label, boxWidth, lineClamp);
 
   return (
     <foreignObject
@@ -203,7 +205,7 @@ function WrappingYAxisTick({
         className="text-muted-foreground flex h-full items-center justify-end text-xs leading-tight"
         style={{ textWrap: "pretty" }}>
         <span className="line-clamp-3 text-right" style={{ WebkitLineClamp: lineClamp }}>
-          {label}
+          {shownLabel}
         </span>
       </div>
     </foreignObject>
@@ -244,27 +246,13 @@ export function CartesianChart({
     return getValueLabelPadding(labels);
   }, [horizontal, data, dataKeys]);
 
-  // Flipped, the categories are rows, so the plot has to be tall enough for each of them to keep the
-  // full label line budget. The container never grows with the row count on its own, so claim a
-  // floor per band and let the chart scroll past it — otherwise a dense chart quietly truncates
-  // every label to one line while a sparse one wraps over three (ENG-3148).
-  const minChartHeight = useMemo(() => {
-    if (!horizontal || !hasCategoryAxis) return 0;
-    return getFlippedChartMinHeight(data.length, showLegend ? CHART_LEGEND_HEIGHT : 0);
-  }, [horizontal, hasCategoryAxis, data.length, showLegend]);
-
-  const scrolls = minChartHeight > 0;
-
   return (
-    // Scrolling turns the wrapper into a flex column so the chart is a flex item whose height flex
-    // layout resolves — fill the container, but never below `minChartHeight` — which keeps the
-    // percentage height ResponsiveContainer measures definite. A percentage child of an `h-full` box
-    // stretched only by its own `min-height` is the case browsers disagree on.
-    <div className={cn("h-full min-h-64 w-full", scrolls && "flex flex-col overflow-y-auto")}>
-      <ChartContainer
-        config={chartConfig}
-        className={cn("w-full", scrolls ? "flex-1" : "h-full")}
-        style={scrolls ? { minHeight: minChartHeight } : undefined}>
+    // A flipped chart keeps its container's height: every row stays on screen and the labels adapt
+    // to the band that leaves (see `WrappingYAxisTick`). Reserving height per row instead would put
+    // a scroll region inside a dashboard widget, hiding rows behind an interaction to show label
+    // text that a middle-truncated label already distinguishes.
+    <div className="h-full min-h-64 w-full">
+      <ChartContainer config={chartConfig} className="h-full w-full">
         <Chart data={data} {...(horizontal ? { layout: "vertical" as const } : {})} {...chartProps}>
           {/* syncWithTicks: draw a gridline only at each tick. Without it Recharts adds
               extra lines at the plot-area top/bottom edges (revealed by the YAxis padding),

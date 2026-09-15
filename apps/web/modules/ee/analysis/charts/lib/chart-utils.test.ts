@@ -7,9 +7,7 @@ import {
   AXIS_LABEL_MAX_LINES,
   CATEGORY_AXIS_MAX_WIDTH,
   CATEGORY_AXIS_MIN_WIDTH,
-  CATEGORY_BAND_MIN_HEIGHT,
   CHART_BRAND_DARK,
-  CHART_LEGEND_HEIGHT,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
   CHART_SENTIMENT_COLORS,
@@ -26,7 +24,6 @@ import {
   getCategoryAxisWidth,
   getCategoryLabelBoxHeight,
   getCategoryLabelLineClamp,
-  getFlippedChartMinHeight,
   getSemanticDimensionColor,
   getSentimentMeasureColor,
   getValueLabelPadding,
@@ -34,6 +31,7 @@ import {
   prepareMeasureSliceData,
   preparePieData,
   resolveChartType,
+  truncateLabelToBox,
 } from "./chart-utils";
 
 describe("chart-utils", () => {
@@ -453,47 +451,52 @@ describe("flipped bar axis sizing", () => {
   });
 });
 
-describe("flipped bar chart height", () => {
-  // What a chart rendered at its own minimum height leaves for the category bands: the min height
-  // less the chrome (value axis + chart margins) the helper reserved on top of the bands.
-  const chromeHeight = getFlippedChartMinHeight(1) - CATEGORY_BAND_MIN_HEIGHT;
-  const bandAtMinHeight = (categoryCount: number, extraChrome = 0) =>
-    (getFlippedChartMinHeight(categoryCount, extraChrome) - chromeHeight - extraChrome) / categoryCount;
+describe("category label truncation", () => {
+  // The gutter caps at CATEGORY_AXIS_MAX_WIDTH and the tick hands the helper `axisWidth - gap`.
+  const BOX_WIDTH = 152;
+  // Two real questions from the KAS pre-match survey, which share nineteen leading characters.
+  const CLARITY_SCREENING = "CSAT With clarity of screening procedures";
+  const CLARITY_INFO = "CSAT with clarity of information";
 
-  test("gives every label the same line budget however many categories are plotted", () => {
-    // The bug: a sparse CES chart wrapped its questions over three lines while a dense CSAT chart
-    // truncated every one of them to a single line, since the band was height / categoryCount.
-    for (const categoryCount of [2, 5, 12, 40]) {
-      expect(getCategoryLabelLineClamp(bandAtMinHeight(categoryCount))).toBe(AXIS_LABEL_MAX_LINES);
-    }
+  test("leaves a label that already fits alone", () => {
+    expect(truncateLabelToBox("Gender", BOX_WIDTH, 1)).toBe("Gender");
   });
 
-  test("keeps the full budget when a legend also sits outside the plot", () => {
-    expect(getFlippedChartMinHeight(12, CHART_LEGEND_HEIGHT)).toBe(
-      getFlippedChartMinHeight(12) + CHART_LEGEND_HEIGHT
-    );
-    expect(getCategoryLabelLineClamp(bandAtMinHeight(12, CHART_LEGEND_HEIGHT))).toBe(AXIS_LABEL_MAX_LINES);
+  // ENG-3148: tail truncation printed the shared opening words against every bar, so a dense axis
+  // read "CSAT with clarity of…" all the way down and the rows could not be told apart.
+  test("keeps the distinguishing tail when labels share an opening", () => {
+    const screening = truncateLabelToBox(CLARITY_SCREENING, BOX_WIDTH, 1);
+    const info = truncateLabelToBox(CLARITY_INFO, BOX_WIDTH, 1);
+
+    expect(screening).not.toBe(info);
+    expect(screening.endsWith("procedures")).toBe(true);
+    expect(screening).toContain("…");
   });
 
-  test("grows by one band per category", () => {
-    expect(getFlippedChartMinHeight(10) - getFlippedChartMinHeight(9)).toBe(CATEGORY_BAND_MIN_HEIGHT);
+  test("spends the whole box: more lines cut less", () => {
+    const oneLine = truncateLabelToBox(CLARITY_SCREENING, BOX_WIDTH, 1);
+    const threeLines = truncateLabelToBox(CLARITY_SCREENING, BOX_WIDTH, 3);
+
+    expect(threeLines.length).toBeGreaterThan(oneLine.length);
+    expect(threeLines).toBe(CLARITY_SCREENING);
   });
 
-  test("reserves recharts' own vertical chrome on top of the bands", () => {
-    // Stated independently of the helper, since every other assertion here derives the chrome from
-    // the helper and so cancels it out. The number models recharts' flipped layout: 5px top and
-    // bottom chart margins plus the 30px value axis under the plot. A band needs the full
-    // CATEGORY_BAND_MIN_HEIGHT to keep three lines — boxHeight is min(48, band - 8) and
-    // floor(47.9 / 16) is 2 — so under-reserving by a single pixel silently costs every label a
-    // line. If a recharts upgrade or a `margin` passed through `chartProps` changes the layout,
-    // this is the assertion that says so.
-    expect(getFlippedChartMinHeight(1)).toBe(CATEGORY_BAND_MIN_HEIGHT + 40);
+  test("cuts to what the box can show, so the CSS clamp is not what the reader meets", () => {
+    const capacity = Math.floor(BOX_WIDTH / 6.5);
+
+    expect(truncateLabelToBox(CLARITY_SCREENING, BOX_WIDTH, 1).length).toBeLessThanOrEqual(capacity);
   });
 
-  test("claims no height at all without categories, so a chart with no rows keeps its container", () => {
-    expect(getFlippedChartMinHeight(0)).toBe(0);
-    expect(getFlippedChartMinHeight(-1)).toBe(0);
-    expect(getFlippedChartMinHeight(Number.NaN)).toBe(0);
+  test("says something rather than nothing in a box with no room", () => {
+    expect(truncateLabelToBox("Nationality", 10, 1)).toBe("…");
+    expect(truncateLabelToBox("Nationality", 20, 1)).toContain("…");
+  });
+
+  // recharts has not measured the axis on the first render, and a guessed cut there would stick.
+  test("returns the label untouched when the box is not measured yet", () => {
+    expect(truncateLabelToBox(CLARITY_SCREENING, Number.NaN, 1)).toBe(CLARITY_SCREENING);
+    expect(truncateLabelToBox(CLARITY_SCREENING, 0, 1)).toBe(CLARITY_SCREENING);
+    expect(truncateLabelToBox(CLARITY_SCREENING, BOX_WIDTH, 0)).toBe(CLARITY_SCREENING);
   });
 });
 
@@ -509,10 +512,13 @@ describe("wrapped category label box", () => {
   });
 
   test("sheds whole lines as the band tightens, and never drops below one", () => {
-    expect(getCategoryLabelLineClamp(CATEGORY_BAND_MIN_HEIGHT)).toBe(AXIS_LABEL_MAX_LINES);
-    expect(getCategoryLabelLineClamp(CATEGORY_BAND_MIN_HEIGHT - AXIS_LABEL_LINE_HEIGHT)).toBe(2);
+    // The band a label needs for the full budget: the box plus the gap to its neighbour.
+    const fullBudgetBand = AXIS_LABEL_BOX_HEIGHT + AXIS_LABEL_GAP;
+
+    expect(getCategoryLabelLineClamp(fullBudgetBand)).toBe(AXIS_LABEL_MAX_LINES);
+    expect(getCategoryLabelLineClamp(fullBudgetBand - AXIS_LABEL_LINE_HEIGHT)).toBe(2);
     // A box sized to 2.5 lines clamps to 2: a partial line would be clipped mid-glyph.
-    expect(getCategoryLabelLineClamp(CATEGORY_BAND_MIN_HEIGHT - AXIS_LABEL_LINE_HEIGHT / 2)).toBe(2);
+    expect(getCategoryLabelLineClamp(fullBudgetBand - AXIS_LABEL_LINE_HEIGHT / 2)).toBe(2);
     expect(getCategoryLabelLineClamp(4)).toBe(1);
   });
 
