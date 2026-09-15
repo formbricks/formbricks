@@ -103,6 +103,30 @@ describe("ENG-2862 responses scope grant", () => {
     expect(await scopesOf(mcp)).toContain("responses:write");
   });
 
+  test("leaves a NULL allowedScopes NULL, because NULL already allows everything", async () => {
+    // The column is nullable and `resolveResourcePolicy` skips NULL rather than intersecting against
+    // it, so NULL means "allow everything" — including the new scopes. Coalescing it to `'{}'` here
+    // leaves an EMPTY allow-list rather than `{responses:*}` (the append compares against the original
+    // NULL column, and `= ANY(NULL)` is NULL), and an empty allow-list intersects every request down to
+    // zero scopes — MCP OAuth down instance-wide. `@>` against NULL yields NULL, so the WHERE never
+    // matches. This is the test that catches that mutation.
+    const identifier = "https://app.example.com/api/mcp";
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO "oauthResource" ("id", "identifier", "name", "allowedScopes") VALUES ($1, $2, $3, NULL)`,
+      "clnullscope000000000001",
+      identifier,
+      "Formbricks MCP"
+    );
+
+    await runGrant();
+
+    const [row] = await prisma.$queryRawUnsafe<{ allowedScopes: string[] | null }[]>(
+      `SELECT "allowedScopes" FROM "oauthResource" WHERE "identifier" = $1`,
+      identifier
+    );
+    expect(row.allowedScopes).toBeNull();
+  });
+
   test("is a no-op on a fresh database, as the migration harness requires", async () => {
     await expect(runGrant()).resolves.not.toThrow();
     expect(await prisma.oauthResource.count()).toBe(0);

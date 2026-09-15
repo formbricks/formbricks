@@ -26,6 +26,15 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
  *
  * No-op on a fresh database, as the harness requires: with no `oauthResource` rows the plugin seeds the
  * full current list at first boot.
+ *
+ * **A NULL `allowedScopes` is left alone on purpose, and that is load-bearing.** The column is nullable,
+ * and `resolveResourcePolicy` skips NULL/undefined rather than intersecting against it — so NULL means
+ * "allow everything", which already includes the new scopes. `@>` against NULL yields NULL, so the
+ * `WHERE` below never matches such a row. Do not "fix" that by coalescing to `'{}'` — measured, that
+ * turns the row into an **empty** allow-list, not into `{responses:*}`: the append's subquery compares
+ * against the original NULL column, `= ANY(NULL)` is NULL, so nothing is appended. Per ENG-2343, an
+ * empty allow-list intersects every request down to zero scopes and throws `invalid_scope`, taking MCP
+ * OAuth down on that instance entirely. There is a test pinning this.
  */
 
 const RESPONSE_SCOPES = ["responses:read", "responses:write"] as const;
