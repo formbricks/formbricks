@@ -1331,7 +1331,7 @@ paths:
       operationId: getResponsesV3
       summary: List responses
       description: |
-        Returns responses for a workspace, newest first. Session cookie or x-api-key with read access.
+        Returns responses for a workspace, newest first. Session cookie, `x-api-key`, or a Bearer token, with read access.
 
         **Scoping.** `workspaceId` is required, as on every v3 collection read. Add `surveyId` to narrow to one survey — the common case, and the one the storage layer is indexed for (`(surveyId, createdAt)`). A workspace-wide list has to reach responses through their surveys and is correspondingly slower, so pass `surveyId` whenever you know it. `contactId` narrows to one respondent.
 
@@ -1582,6 +1582,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
     post:
       operationId: createResponseV3
       summary: Create a response
@@ -1702,6 +1703,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/responses/count:
     get:
       operationId: countResponsesV3
@@ -1825,6 +1827,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/responses/validate:
     post:
       operationId: validateResponseV3
@@ -1934,6 +1937,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/responses/batch-delete:
     post:
       operationId: batchDeleteResponsesV3
@@ -2012,6 +2016,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/responses/{responseId}:
     get:
       operationId: getResponseV3
@@ -2229,6 +2234,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
     patch:
       operationId: updateResponseV3
       summary: Update a response
@@ -2312,6 +2318,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
     delete:
       operationId: deleteResponseV3
       summary: Delete a response
@@ -2350,6 +2357,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows:
     get:
       operationId: listWorkflowsV3
