@@ -1,10 +1,12 @@
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
 import {
   RESERVED_FIELD_CATALOG,
   type TEmbeddedValueResponse,
   type TReservedFieldCatalogEntry,
   dropShadowedReservedEntries,
   getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
   getIngestedStorageKeys,
   getSurveyEmbeddedFields,
   listShadowingNames,
@@ -290,9 +292,10 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
     }
   });
 
-  // ENG-1837: the two column groups keep today's shape — computed fields labelled by name, ingested
-  // ones by storage key — and today's order, which `inlineSurveyEmbeddedFields` preserves.
-  const hiddenFields = getIngestedStorageKeys(survey);
+  // ENG-1837: the two column groups keep today's order, which `inlineSurveyEmbeddedFields`
+  // preserves. Both are labelled by name — ENG-3233 moved the ingested group off its storage key,
+  // which stays the address `getResponsesJson` reads each cell from.
+  const hiddenFields = labelEmbeddedFields(getIngestedEmbeddedFields(survey)).map(({ label }) => label);
   const userAttributes = Array.from(
     new Set(responses.map((response) => Object.keys(response.contactAttributes ?? {})).flat())
   );
@@ -306,12 +309,13 @@ export const getResponsesJson = (
   responses: TResponseWithQuotas[],
   elementsHeadlines: string[][],
   userAttributes: string[],
-  hiddenFields: string[],
   isQuotasAllowed: boolean = false,
   timeZone: string = "UTC"
 ): Record<string, string | number>[] => {
   const jsonData: Record<string, string | number>[] = [];
   const reservedEntries = getReservedExportEntries(survey);
+  // Hoisted out of the per-response loop: the definitions are the survey's, not the response's.
+  const ingestedFields = labelEmbeddedFields(getIngestedEmbeddedFields(survey));
 
   responses.forEach((response, idx) => {
     // basic response details
@@ -391,16 +395,20 @@ export const getResponsesJson = (
       jsonData[idx][`person.${attribute}`] = response.contactAttributes?.[attribute] || "";
     });
 
-    // hidden fields — a number stays a number (the ingest contract stores coerced values, so a
-    // `dataType: "number"` field holds a real number and the XLSX cell should be numeric, not text)
-    hiddenFields.forEach((field) => {
-      const value = response.data[field];
+    // Hidden fields, keyed by the same labels `extractSurveyDetails` put in the header row — derived
+    // from the survey here rather than taken as an argument, exactly like the computed group above,
+    // so a cell and its column cannot be built from two different lists.
+    //
+    // A number stays a number (the ingest contract stores coerced values, so a `dataType: "number"`
+    // field holds a real number and the XLSX cell should be numeric, not text).
+    ingestedFields.forEach(({ link, label }) => {
+      const value = response.data[link.storageKey];
       if (Array.isArray(value)) {
-        jsonData[idx][field] = value.join("; ");
+        jsonData[idx][label] = value.join("; ");
       } else if (typeof value === "number") {
-        jsonData[idx][field] = value;
+        jsonData[idx][label] = value;
       } else {
-        jsonData[idx][field] = processResponseData(value);
+        jsonData[idx][label] = processResponseData(value);
       }
     });
 

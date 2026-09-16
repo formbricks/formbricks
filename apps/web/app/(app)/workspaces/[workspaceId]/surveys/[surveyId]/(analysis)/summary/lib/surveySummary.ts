@@ -4,7 +4,8 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
-import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
+import { getIngestedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TResponseContact,
@@ -960,10 +961,12 @@ export const getElementSummary = async (
     }
   }
 
-  getIngestedStorageKeys(survey).forEach((hiddenFieldId) => {
+  // ENG-3233: the card is titled by the field's name and the samples are read by its storage key,
+  // which stays on `id` — the two are the same string only for a field nobody renamed.
+  labelEmbeddedFields(getIngestedEmbeddedFields(survey)).forEach(({ link, label }) => {
     let values: TSurveyElementSummaryHiddenFields["samples"] = [];
     responses.forEach((response) => {
-      const answer = response.data[hiddenFieldId];
+      const answer = response.data[link.storageKey];
       if (answer && typeof answer === "string") {
         values.push({
           updatedAt: response.updatedAt,
@@ -976,7 +979,8 @@ export const getElementSummary = async (
 
     summary.push({
       type: "hiddenField",
-      id: hiddenFieldId,
+      id: link.storageKey,
+      label,
       responseCount: values.length,
       samples: values.slice(0, VALUES_LIMIT),
     });
