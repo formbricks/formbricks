@@ -360,6 +360,7 @@
           {
             "group": "Advanced",
             "pages": [
+              "self-hosting/advanced/release-maintenance-policy",
               "self-hosting/advanced/migration",
               "self-hosting/advanced/authzed-operations",
               "self-hosting/advanced/migrating-surveys",
