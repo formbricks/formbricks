@@ -313,10 +313,17 @@ function raceIssuesFromUniqueViolation(error: unknown): InvalidParam[] | null {
 /**
  * A scoped write that matched no row.
  *
- * The `where` carries `survey: { workspaceId }`, so P2025 means the response is gone or was never
- * this caller's — the same fact a pre-flight rejection establishes, and it has to answer the same
- * 403. `mapV3ThrownError` does not map raw Prisma errors, so without this translation the promise in
- * the scoped-update comment is not kept and the caller gets a 500 instead.
+ * The update's `where` carries `survey: { workspaceId }`, so P2025 means the response is gone or was
+ * never this caller's — the same fact a pre-flight rejection establishes, and it has to answer the
+ * same 403. `mapV3ThrownError` does not map raw Prisma errors, so without this translation the
+ * promise in the scoped-update comment is not kept and the caller gets a 500 instead.
+ *
+ * Since the reference `connect`s became scoped too, P2025 also covers a contact, display or tag that
+ * stopped matching its scope between the pre-flight check and the write. That is a race, not a
+ * routine rejection — the checks answer the routine case with a 422 naming the field — and 403 is
+ * the right answer for it: it is the same body a foreign reference would get from the pre-flight, so
+ * winning or losing the race tells the caller nothing extra. Which reference lost is recoverable
+ * from the logged Prisma error, and deliberately not from the response.
  */
 function rethrowScopedNotFound(error: unknown): void {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
@@ -379,10 +386,23 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
       const created = await tx.response.create({
         data: {
           survey: { connect: { id: survey.id } },
-          ...(displayId ? { display: { connect: { id: displayId } } } : {}),
+          // Every `connect` below carries its own scope, not just an id. The checks above already
+          // refused a foreign reference with a 422 naming the field, so this is the second layer:
+          // it re-states the tenant predicate inside the write, where it reaches the SQL and rolls
+          // the whole create back with P2025 on a non-match. That closes the window between check
+          // and write, and — more to the point — it keeps holding if someone later moves, reorders
+          // or forgets the checks. ENG-825, ENG-827 and ENG-1923 were all this shape.
+          //
+          // `display` is scoped by survey rather than workspace, and by `response: null`: Display has
+          // no `workspaceId`, and workspace-only scoping would lose the cross-survey check ENG-825
+          // was about. Verified against a real database — a foreign `surveyId` and an already-claimed
+          // display both raise P2025 and leave no row.
+          ...(displayId
+            ? { display: { connect: { id: displayId, surveyId: survey.id, response: null } } }
+            : {}),
           ...(contactId
             ? {
-                contact: { connect: { id: contactId } },
+                contact: { connect: { id: contactId, workspaceId } },
                 contactAttributes: contactAttributes ?? Prisma.JsonNull,
               }
             : {}),
@@ -397,7 +417,13 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
           endingId: input.endingId ?? null,
           singleUseId: singleUseId ?? null,
           ...(uniqueTagIds.length > 0
-            ? { tags: { create: uniqueTagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })) } }
+            ? {
+                tags: {
+                  create: uniqueTagIds.map((tagId) => ({
+                    tag: { connect: { id: tagId, workspaceId } },
+                  })),
+                },
+              }
             : {}),
         },
         select: { id: true, finished: true, data: true, variables: true },
@@ -490,7 +516,11 @@ export async function updateScopedResponse({
                 tags: {
                   deleteMany: {},
                   // Deduplicated — see the note in `createScopedResponse`.
-                  create: [...new Set(patch.tagIds)].map((tagId) => ({ tag: { connect: { id: tagId } } })),
+                  // Scoped like the create path: the id alone would let a tag that left the
+                  // workspace between check and write still attach.
+                  create: [...new Set(patch.tagIds)].map((tagId) => ({
+                    tag: { connect: { id: tagId, workspaceId } },
+                  })),
                 },
               }),
         },

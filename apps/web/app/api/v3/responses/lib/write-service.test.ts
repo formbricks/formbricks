@@ -312,7 +312,7 @@ describe("unique-constraint races", () => {
 
     expect(tx.response.update.mock.calls[0][0].data.tags).toEqual({
       deleteMany: {},
-      create: [{ tag: { connect: { id: "cltg1" } } }],
+      create: [{ tag: { connect: { id: "cltg1", workspaceId: survey.workspaceId } } }],
     });
   });
 });
@@ -412,7 +412,42 @@ describe("createScopedResponse — what actually reaches Prisma", () => {
 
     expect(outcome).toEqual({ ok: true, responseId: "clrs1" });
     expect(tx.response.create.mock.calls[0][0].data.tags).toEqual({
-      create: [{ tag: { connect: { id: "cltg1" } } }],
+      create: [{ tag: { connect: { id: "cltg1", workspaceId: survey.workspaceId } } }],
+    });
+  });
+
+  /**
+   * Every reference is connected by scope, not by id alone (ENG-2861). The pre-flight checks already
+   * refuse a foreign reference with a 422, so these assertions are about the second layer: the write
+   * itself re-states the tenant predicate, so a reference that stops matching between check and write
+   * cannot attach, and the guarantee survives someone moving or dropping the checks. Verified against
+   * a real database separately — a foreign scope raises P2025 and leaves no row.
+   *
+   * `display` is scoped by survey and by `response: null`, not by workspace: Display carries no
+   * `workspaceId`, and workspace-only scoping loses the cross-survey check ENG-825 was about and the
+   * reuse check behind ENG-827 / ENG-1923.
+   */
+  test("the contact connect carries the workspace, not just the id", async () => {
+    const tx = runTx(
+      txStub({ contact: { findFirst: vi.fn().mockResolvedValue({ id: "clct1", attributes: [] }) } })
+    );
+
+    await createScopedResponse(createInput({ contactId: "clct1" }));
+
+    expect(tx.response.create.mock.calls[0][0].data.contact).toEqual({
+      connect: { id: "clct1", workspaceId: survey.workspaceId },
+    });
+  });
+
+  test("the display connect carries the survey and refuses one already claimed", async () => {
+    const tx = runTx(
+      txStub({ display: { findFirst: vi.fn().mockResolvedValue({ id: "cldp1", responseId: null }) } })
+    );
+
+    await createScopedResponse(createInput({ displayId: "cldp1" }));
+
+    expect(tx.response.create.mock.calls[0][0].data.display).toEqual({
+      connect: { id: "cldp1", surveyId: survey.id, response: null },
     });
   });
 
@@ -552,7 +587,7 @@ describe("updateScopedResponse — what actually reaches Prisma", () => {
 
     expect(tx.response.update.mock.calls[0][0].data.tags).toEqual({
       deleteMany: {},
-      create: [{ tag: { connect: { id: "cltg1" } } }],
+      create: [{ tag: { connect: { id: "cltg1", workspaceId: survey.workspaceId } } }],
     });
   });
 
