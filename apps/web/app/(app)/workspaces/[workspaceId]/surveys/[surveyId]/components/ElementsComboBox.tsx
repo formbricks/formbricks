@@ -37,7 +37,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
-import { RESERVED_FIELD_ICONS } from "@/modules/analysis/lib/reserved-field-display";
+import { RESERVED_FIELD_ICONS } from "@/modules/embedded-data/lib/field-display";
 import { Button } from "@/modules/ui/components/button";
 import {
   Command,

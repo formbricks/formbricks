@@ -1,14 +1,11 @@
 import {
   CalendarDaysIcon,
   ContactIcon,
-  EyeOffIcon,
-  FileDigitIcon,
-  FileTextIcon,
   GaugeIcon,
-  GlobeIcon,
   HomeIcon,
   ListIcon,
   ListOrderedIcon,
+  type LucideIcon,
   MessageSquareTextIcon,
   PhoneIcon,
   PresentationIcon,
@@ -28,6 +25,11 @@ import { TSurveyElement, TSurveyElementId, TSurveyElementTypeEnum } from "@formb
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
+import {
+  EMBEDDED_FIELD_ICON_BY_DATA_TYPE,
+  getReservedFieldIcon,
+  getReservedFieldLabel,
+} from "@/modules/embedded-data/lib/field-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   DropdownMenu,
@@ -51,6 +53,22 @@ const elementIconMapping = {
   csat: SmilePlusIcon,
   ces: GaugeIcon,
 };
+
+/**
+ * One row of the picker. `TSurveyRecallItem` is what gets written into the text, so the two extras
+ * live here and go no further: the icon is display-only, and `secondaryLabel` is a shared Embedded
+ * Data field's library key, which labels the row but is not part of the token.
+ */
+interface TRecallOption extends TSurveyRecallItem {
+  icon: LucideIcon | null;
+  secondaryLabel?: string;
+}
+
+/** A labelled section of the picker, with each row's position in the flat keyboard order. */
+interface TRecallGroup {
+  label: string;
+  options: (TRecallOption & { index: number })[];
+}
 
 interface RecallItemSelectProps {
   localSurvey: TSurvey;
@@ -101,37 +119,45 @@ export const RecallItemSelect = ({
    * but a future filter there would silently shift every label past the first drop.
    */
   const embeddedFieldEntries = useMemo(() => {
-    const labelByKey = new Map(
+    const readableByKey = new Map(
       listReadableFields({
         blocks: [],
         embeddedData: embeddedFields,
         reservedEntries: [],
         contactAttributeKeys: [],
-      }).embeddedData.map(({ key, label }) => [key, label] as const)
+      }).embeddedData.map((readable) => [readable.key, readable] as const)
     );
 
-    return embeddedFields.map(({ field, link }) => ({
-      key: link.storageKey,
-      // The enumerator's blank-name fallback is the key, so mirror it when a field is not listed.
-      label: labelByKey.get(link.storageKey) ?? link.storageKey,
-      source: field.source,
-      dataType: field.dataType,
-    }));
+    return embeddedFields.map(({ field, link }) => {
+      const readable = readableByKey.get(link.storageKey);
+      return {
+        key: link.storageKey,
+        // The enumerator's blank-name fallback is the key, so mirror it when a field is not listed.
+        label: readable?.label ?? link.storageKey,
+        secondaryLabel: readable?.secondaryLabel,
+        source: field.source,
+        dataType: field.dataType,
+      };
+    });
   }, [embeddedFields]);
 
-  const hiddenFieldRecallItems = useMemo(
+  /**
+   * **One Embedded Data group** (ENG-1853), where the picker used to list variables and hidden
+   * fields as two runs of an undifferentiated flat list. `type` still distinguishes them — it is
+   * written into the recall item and read back by `resolveRecallItemLabel`, whose ingested-first
+   * precedence a merged type would destroy — but nothing in the UI does any more.
+   */
+  const embeddedDataRecallItems: TRecallOption[] = useMemo(
     () =>
       embeddedFieldEntries
-        .filter(({ key, source }) => source === "ingested" && !recallItemIds.includes(key))
-        .map(({ key, label }) => ({ id: key, label, type: "hiddenField" as const })),
-    [embeddedFieldEntries, recallItemIds]
-  );
-
-  const variableRecallItems = useMemo(
-    () =>
-      embeddedFieldEntries
-        .filter(({ key, source }) => source === "computed" && !recallItemIds.includes(key))
-        .map(({ key, label }) => ({ id: key, label, type: "variable" as const })),
+        .filter(({ key }) => !recallItemIds.includes(key))
+        .map(({ key, label, secondaryLabel, source, dataType }) => ({
+          id: key,
+          label,
+          secondaryLabel,
+          type: source === "computed" ? ("variable" as const) : ("hiddenField" as const),
+          icon: EMBEDDED_FIELD_ICON_BY_DATA_TYPE[dataType],
+        })),
     [embeddedFieldEntries, recallItemIds]
   );
 
@@ -140,10 +166,11 @@ export const RecallItemSelect = ({
    * server-derived entries — recall renders while the respondent is still answering, so `country` or
    * `durationSeconds` could only ever render as their fallback text — and it drops any entry this
    * survey already declares under the same name, which would otherwise show twice with no way to
-   * tell the rows apart. Labels come from `listReadableFields`, the same enumerator the other groups
-   * use, so reserved rows are title-cased consistently rather than by a rule local to this file.
+   * tell the rows apart. Labels come from `getReservedFieldLabel` (ENG-1853), the same helper the
+   * response table and the response filter use, so this picker offers `URL` where they show `URL`
+   * rather than the `Url` a title-case of the catalog name produces.
    */
-  const reservedRecallItems = useMemo(() => {
+  const reservedRecallItems: TRecallOption[] = useMemo(() => {
     const entries = listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, [
       ...embeddedFieldEntries.map(({ key }) => key),
       // Element ids shadow reserved entries too: an element answered under the id `country` writes
@@ -151,17 +178,17 @@ export const RecallItemSelect = ({
       ...elements.map((element) => element.id),
     ]);
 
-    return listReadableFields({
-      blocks: [],
-      embeddedData: [],
-      reservedEntries: entries,
-      contactAttributeKeys: [],
-    })
-      .reserved.filter(({ key }) => !recallItemIds.includes(key))
-      .map(({ key, label }) => ({ id: key, label, type: "reserved" as const }));
-  }, [embeddedFieldEntries, elements, recallItemIds]);
+    return entries
+      .filter((entry) => !recallItemIds.includes(entry.name))
+      .map((entry) => ({
+        id: entry.name,
+        label: getReservedFieldLabel(entry.name, t),
+        type: "reserved" as const,
+        icon: getReservedFieldIcon(entry.name),
+      }));
+  }, [embeddedFieldEntries, elements, recallItemIds, t]);
 
-  const surveyElementRecallItems = useMemo(() => {
+  const surveyElementRecallItems: TRecallOption[] = useMemo(() => {
     const isWelcomeCard = elementId === "start";
     if (isWelcomeCard) return [];
 
@@ -169,66 +196,59 @@ export const RecallItemSelect = ({
     const idx = isEndingCard
       ? elements.length
       : elements.findIndex((recallElement) => recallElement.id === elementId);
-    const filteredElements = elements
+
+    return elements
       .filter((element, index) => {
         const notAllowed = isNotAllowedElementType(element);
         return !recallItemIds.includes(element.id) && !notAllowed && element.id !== elementId && idx > index;
       })
-      .map((element) => {
-        return {
-          id: element.id,
-          label: element.headline[selectedLanguageCode],
-          type: "element" as const,
-        };
-      });
-
-    return filteredElements;
+      .map((element) => ({
+        id: element.id,
+        label: element.headline[selectedLanguageCode],
+        type: "element" as const,
+        icon: elementIconMapping[element.type as keyof typeof elementIconMapping] ?? null,
+      }));
   }, [elementId, elements, recallItemIds, selectedLanguageCode]);
 
-  const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
-    const allItems = [
-      ...surveyElementRecallItems,
-      ...hiddenFieldRecallItems,
-      ...variableRecallItems,
-      ...reservedRecallItems,
-    ];
+  /**
+   * The three groups, filtered by the search box and numbered across group boundaries.
+   *
+   * The index is assigned here rather than during render because it is the keyboard order: arrow
+   * keys walk `recallItem-<n>` by id, so it has to run continuously through the whole visible list
+   * no matter which group a row sits in. Empty groups are dropped, so a search that matches nothing
+   * in Embedded Data does not leave its heading floating over the next group's rows.
+   *
+   * Matching is on the label's text content, not the label itself: an element's label is its raw
+   * headline HTML (`<p class="fb-editor-paragraph">…`), so comparing against it made every query for
+   * question text miss. `includes` rather than `startsWith` so a query also matches mid-headline
+   * words, and so it still matches rows whose displayed label is elided by the truncation below. A
+   * shared field also matches on its library key, which is the spelling someone who knows the URL
+   * parameter would type.
+   */
+  const filteredGroups: TRecallGroup[] = useMemo(() => {
     const query = searchValue.trim().toLowerCase();
-    if (!query) return allItems;
+    const matches = (option: TRecallOption): boolean =>
+      query === "" ||
+      getTextContent(option.label).toLowerCase().includes(query) ||
+      (option.secondaryLabel ?? "").toLowerCase().includes(query);
 
-    // Match the label's text content, not the label itself: an element's label is its raw headline HTML
-    // (`<p class="fb-editor-paragraph">…`), so comparing against it made every query for question text
-    // miss. `includes` rather than `startsWith` so a query also matches mid-headline words, and so it
-    // still matches items whose displayed label is elided by the truncation below.
-    return allItems.filter((recallItem) => getTextContent(recallItem.label).toLowerCase().includes(query));
-  }, [
-    surveyElementRecallItems,
-    hiddenFieldRecallItems,
-    variableRecallItems,
-    reservedRecallItems,
-    searchValue,
-  ]);
+    let index = 0;
+    return [
+      { label: t("common.questions"), options: surveyElementRecallItems },
+      { label: t("common.embedded_data"), options: embeddedDataRecallItems },
+      { label: t("common.auto_captured"), options: reservedRecallItems },
+    ]
+      .map((group) => ({
+        label: group.label,
+        options: group.options.filter(matches).map((option) => ({ ...option, index: index++ })),
+      }))
+      .filter((group) => group.options.length > 0);
+  }, [surveyElementRecallItems, embeddedDataRecallItems, reservedRecallItems, searchValue, t]);
 
-  const getRecallItemIcon = (recallItem: TSurveyRecallItem) => {
-    switch (recallItem.type) {
-      case "element": {
-        const element = elements.find((element) => element.id === recallItem.id);
-        if (element) {
-          return elementIconMapping[element?.type as keyof typeof elementIconMapping];
-        }
-        return null;
-      }
-      case "hiddenField":
-        return EyeOffIcon;
-      case "reserved":
-        return GlobeIcon;
-      case "variable": {
-        const dataType = embeddedFieldEntries.find(({ key }) => key === recallItem.id)?.dataType;
-        return dataType === "number" ? FileDigitIcon : FileTextIcon;
-      }
-      default:
-        return null;
-    }
-  };
+  const visibleCount = useMemo(
+    () => filteredGroups.reduce((count, group) => count + group.options.length, 0),
+    [filteredGroups]
+  );
 
   return (
     <DropdownMenu defaultOpen={true} modal={true}>
@@ -255,36 +275,53 @@ export const RecallItemSelect = ({
           }}
         />
         <div className="max-h-72 overflow-x-hidden overflow-y-auto">
-          {filteredRecallItems.map((recallItem, index) => {
-            const IconComponent = getRecallItemIcon(recallItem);
-            return (
-              <DropdownMenuItem
-                id={"recallItem-" + index}
-                key={recallItem.id}
-                title={recallItem.type}
-                onSelect={() => {
-                  addRecallItem({ id: recallItem.id, label: recallItem.label, type: recallItem.type });
-                  setShowRecallItemSelect(false);
-                }}
-                autoFocus={false}
-                className="flex w-full cursor-pointer items-center rounded-md p-2 focus:bg-slate-200 focus:outline-hidden"
-                onKeyDown={(e) => {
-                  if (
-                    (e.key === "ArrowUp" && index === 0) ||
-                    (e.key === "ArrowDown" && index === filteredRecallItems.length - 1)
-                  ) {
-                    e.preventDefault();
-                    document.getElementById("recallItemSearchInput")?.focus();
-                  }
-                }}>
-                <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
-                <p className="max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap">
-                  {getTextContentWithRecallTruncated(recallItem.label).trim() || t("common.no_text_found")}
-                </p>
-              </DropdownMenuItem>
-            );
-          })}
-          {filteredRecallItems.length === 0 && (
+          {filteredGroups.map((group) => (
+            <div key={group.label}>
+              <p className="px-2 pt-2 pb-1 text-xs font-medium text-slate-500">{group.label}</p>
+              {group.options.map((recallItem) => {
+                const IconComponent = recallItem.icon;
+                return (
+                  <DropdownMenuItem
+                    id={"recallItem-" + recallItem.index}
+                    key={recallItem.id}
+                    title={recallItem.type}
+                    onSelect={() => {
+                      addRecallItem({ id: recallItem.id, label: recallItem.label, type: recallItem.type });
+                      setShowRecallItemSelect(false);
+                    }}
+                    autoFocus={false}
+                    className="flex w-full cursor-pointer items-center rounded-md p-2 focus:bg-slate-200 focus:outline-hidden"
+                    onKeyDown={(e) => {
+                      if (
+                        (e.key === "ArrowUp" && recallItem.index === 0) ||
+                        (e.key === "ArrowDown" && recallItem.index === visibleCount - 1)
+                      ) {
+                        e.preventDefault();
+                        document.getElementById("recallItemSearchInput")?.focus();
+                      }
+                    }}>
+                    <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
+                    <p className="max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap">
+                      {getTextContentWithRecallTruncated(recallItem.label).trim() ||
+                        t("common.no_text_found")}
+                    </p>
+                    {/*
+                      A shared field's library key, dim and right-aligned so a column of them can be
+                      scanned on its own, in mono because that is what the identifier looks like
+                      where it is used — a URL parameter, an integration payload key. A survey-only
+                      field has no library key and renders one string.
+                    */}
+                    {recallItem.secondaryLabel && (
+                      <span className="ml-auto max-w-[45%] truncate pl-2 font-mono text-xs text-slate-400">
+                        {recallItem.secondaryLabel}
+                      </span>
+                    )}
+                  </DropdownMenuItem>
+                );
+              })}
+            </div>
+          ))}
+          {visibleCount === 0 && (
             <p className="p-2 text-sm font-medium text-slate-700">
               {t("workspace.surveys.edit.no_recall_items_found")}
             </p>

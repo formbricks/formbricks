@@ -1076,6 +1076,19 @@ export interface TReadableField {
   key: string;
   /** Display label for pickers. Falls back to the key when nothing better exists. */
   label: string;
+  /**
+   * A second, dimmer string a picker may render beside the label — set only for a **shared**
+   * Embedded Data field, where it carries the workspace library `key` (ENG-1853).
+   *
+   * A shared field's name is workspace-wide prose ("Plan tier") while its key is the identifier an
+   * integration or a URL parameter actually spells (`plan_tier`), and the two are edited
+   * independently. Someone who knows only the key would otherwise have no way to find the field in
+   * a picker that labels by name alone. A survey-only field has no library key and therefore no
+   * secondary string — one row, one label — which is why this is optional rather than falling back
+   * to `storageKey`: repeating the storage key under every local field's name would be noise on the
+   * common case.
+   */
+  secondaryLabel?: string;
 }
 
 /**
@@ -1146,7 +1159,7 @@ const toElementLabel = (headline: TI18nString, languageCode: string): string => 
  * - question → the element id (label from its headline; the id itself when the headline is empty)
  * - embeddedData → the link's `storageKey` (never the definition's library `key` — the storage key
  *   is what recall tokens and response maps use, and the two can differ)
- * - reserved → the catalog entry name (title-cased for the label until the picker adds real labels)
+ * - reserved → the catalog entry name (title-cased; rendering callers relabel, see `reserved` below)
  * - contactAttribute → the contact attribute key (label from its display name when one is set)
  */
 export const listReadableFields = (input: TListReadableFieldsInput): TReadableFields => {
@@ -1162,10 +1175,18 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
   const embeddedData = input.embeddedData.map(({ field, link }) => ({
     key: link.storageKey,
     label: labelOrKey(field.name, link.storageKey),
+    // `key` is null for a survey-owned field and the library name for a shared one, so this is the
+    // shared/local distinction itself rather than a display choice made here. `?? undefined` keeps
+    // the property absent instead of null, so a consumer can test it with a plain truthiness check.
+    secondaryLabel: field.key ?? undefined,
   }));
 
   const reserved = input.reservedEntries.map((entry) => ({
     key: entry.name,
+    // English, derived from the catalog name. `packages/types` has no translator, so a *rendering*
+    // caller overrides this with `getReservedFieldLabel` (apps/web), which is localized and knows
+    // that `url` is "URL" rather than "Url". This stays as the label a non-rendering caller — an
+    // export header, a test — gets without one.
     label: labelOrKey(formatFieldNameToTitleCase(entry.name), entry.name),
   }));
 
