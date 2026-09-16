@@ -523,53 +523,6 @@ export const getResponseHiddenFields = (
   }
 };
 
-export const generateAllPermutationsOfSubsets = (array: string[]): string[][] => {
-  const subsets: string[][] = [];
-
-  // Helper function to generate permutations of an array
-  const generatePermutations = (arr: string[]): string[][] => {
-    const permutations: string[][] = [];
-
-    // Recursive function to generate permutations
-    const permute = (current: string[], remaining: string[]): void => {
-      if (remaining.length === 0) {
-        permutations.push(current.slice()); // Make a copy of the current permutation
-        return;
-      }
-
-      for (let i = 0; i < remaining.length; i++) {
-        current.push(remaining[i]);
-        permute(current, remaining.slice(0, i).concat(remaining.slice(i + 1)));
-        current.pop();
-      }
-    };
-
-    permute([], arr);
-    return permutations;
-  };
-
-  // Recursive function to generate subsets
-  const findSubsets = (currentIndex: number, currentSubset: string[]): void => {
-    if (currentIndex === array.length) {
-      if (currentSubset.length > 0) {
-        // Skip empty subset if not needed
-        const allPermutations = generatePermutations(currentSubset);
-        subsets.push(...allPermutations); // Spread operator to add all permutations individually
-      }
-      return;
-    }
-
-    // Include the current element
-    findSubsets(currentIndex + 1, currentSubset.concat(array[currentIndex]));
-
-    // Exclude the current element
-    findSubsets(currentIndex + 1, currentSubset);
-  };
-
-  findSubsets(0, []);
-  return subsets;
-};
-
 /**
  * Canonicalize a response's language code on write (ENG-1067). SDK clients — especially stale or
  * anonymous caches — can submit a legacy code (e.g. "hi") at any point; storing its canonical BCP-47

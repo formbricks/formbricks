@@ -2728,7 +2728,7 @@
         "select_plan_feature_2": "MCP-hozzáférés, kapcsolódás bármely MI-ügyfélprogramhoz, valamint adatokon alapuló döntések meghozatala.",
         "select_plan_feature_3": "Összes integráció és egyéni webhorgok",
         "select_plan_feature_4": "2 000 válasz havonta",
-        "select_plan_header": "Ön a Pro csomagot használja a következő 14 napon",
+        "select_plan_header": "{count, plural, one {Ön a következő # napig Pro előfizetéssel rendelkezik} other {Ön a következő # napig Pro előfizetéssel rendelkezik}}",
         "select_plan_skip": "Visszatérés a „Hobby” csomagra",
         "select_plan_subheader": "Az alábbiak mindegyike feloldva, ingyenesen.",
         "status_trialing": "Próbaidőszak",
@@ -4414,7 +4414,8 @@
       "value_date": "Érték (dátum)",
       "value_id": "Értékazonosító",
       "value_number": "Érték (szám)",
-      "value_text": "Érték (szöveg)"
+      "value_text": "Érték (szöveg)",
+      "view_survey": "Felmérés megtekintése"
     },
     "workflows": {
       "add_action": "Művelet hozzáadása",
