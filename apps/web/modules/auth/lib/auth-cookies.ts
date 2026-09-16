@@ -1,4 +1,5 @@
 import "server-only";
+import { AUTH_URL } from "@/lib/constants";
 import { env } from "@/lib/env";
 
 /**
@@ -15,16 +16,11 @@ import { env } from "@/lib/env";
  * can't persist. Gate on the configured URL scheme (parity with NextAuth's URL-based useSecureCookies
  * default) instead of hardcoding true, so local/dev over http works.
  *
- * WEBAPP_URL is part of the chain because all three vars are optional: a deployment that sets only
- * WEBAPP_URL=https://… — the primary documented variable — would otherwise fall through to "" and serve
- * the session cookie without `Secure`, letting a downgrade to plaintext HTTP leak it.
+ * WEBAPP_URL is part of the chain because every one of these vars is optional: a deployment that sets
+ * only WEBAPP_URL=https://… — the primary documented variable — would otherwise fall through to "" and
+ * serve the session cookie without `Secure`, letting a downgrade to plaintext HTTP leak it (ENG-2076).
  */
-export const USE_SECURE_COOKIES = (
-  env.BETTER_AUTH_URL ??
-  env.NEXTAUTH_URL ??
-  env.WEBAPP_URL ??
-  ""
-).startsWith("https://");
+export const USE_SECURE_COOKIES = (AUTH_URL ?? env.WEBAPP_URL ?? "").startsWith("https://");
 
 /**
  * Lifetime of a verification link, and therefore of the sign-up intent cookie that has to outlive it.

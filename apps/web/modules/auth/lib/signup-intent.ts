@@ -1,6 +1,6 @@
 import "server-only";
 import jwt from "jsonwebtoken";
-import { BETTER_AUTH_SECRET, ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
+import { AUTH_SECRET, ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cookies";
 
@@ -30,10 +30,9 @@ import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cooki
  *    token minted here cannot be parsed by `verifyToken` at all: it bails on `if (!payload?.id)` before any
  *    purpose is considered. Not exploitable either way today, since that helper's only caller demands
  *    `sso_recovery` — but a future consumer trusting a returned `email_verification` would otherwise have
- *    accepted this cookie, because both sign with the same secret on a deployment that sets only
- *    `NEXTAUTH_SECRET`.
+ *    accepted this cookie, because both sign with the same resolved auth secret.
  * 2. `verifyToken` falls back, on signature failure, to looking the user up by token and re-verifying
- *    with `NEXTAUTH_SECRET + userEmail`. That would put one or two database queries behind every
+ *    with `<auth secret> + userEmail`. That would put one or two database queries behind every
  *    malformed cookie on an unauthenticated GET — including every mail-scanner prefetch of a
  *    verification link — which is the exact amplification the new rate limits exist to prevent.
  *
@@ -43,10 +42,11 @@ import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cooki
 
 const SIGNUP_INTENT_KIND = "signup_intent";
 
-// Same chain as auth.ts's Better Auth `secret`: NEXTAUTH_SECRET is `optional()` in the env schema and
-// a deployment may run on BETTER_AUTH_SECRET alone, so pinning this token to NEXTAUTH_SECRET would
-// make sign-up throw on exactly the configuration auth.ts goes out of its way to support.
-const SIGNING_SECRET = BETTER_AUTH_SECRET ?? NEXTAUTH_SECRET;
+// The same resolved secret auth.ts hands Better Auth (see lib/constants.ts). Read at call time, not
+// captured at module scope: reading the constant at import time makes every unrelated test that mocks
+// "@/lib/constants" and transitively imports this module fail Vitest's strict missing-export check —
+// the reasoning pin-token.ts already spells out.
+const resolveSigningSecret = (): string | undefined => AUTH_SECRET;
 
 /**
  * Better Auth is configured with `cookiePrefix: "formbricks"` and adds `__Secure-` under
@@ -77,8 +77,9 @@ export const SIGNUP_INTENT_COOKIE_OPTIONS = {
  * `auth.ts`'s `sendVerificationEmail` is domain-only logging — never the address, the token, or the URL.
  */
 export const createSignupIntentToken = (userId: string): string => {
-  if (!SIGNING_SECRET) {
-    throw new Error("Neither BETTER_AUTH_SECRET nor NEXTAUTH_SECRET is set");
+  const signingSecret = resolveSigningSecret();
+  if (!signingSecret) {
+    throw new Error("No auth secret set (BETTER_AUTH_SECRET or NEXTAUTH_SECRET)");
   }
   if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
@@ -88,7 +89,7 @@ export const createSignupIntentToken = (userId: string): string => {
   // let `verifyToken` resolve this cookie as an `email_verification` token.
   return jwt.sign(
     { uid: symmetricEncrypt(userId, ENCRYPTION_KEY), kind: SIGNUP_INTENT_KIND },
-    SIGNING_SECRET,
+    signingSecret,
     { algorithm: "HS256", expiresIn: EMAIL_VERIFICATION_TTL_SECONDS }
   );
 };
@@ -114,12 +115,13 @@ export type TSignupIntentRead =
  * withholds the session, not to a 500 on a link that already verified the user.
  */
 export const readSignupIntent = (cookieValue: string | null | undefined): TSignupIntentRead => {
-  if (!cookieValue || !SIGNING_SECRET || !ENCRYPTION_KEY) return { userId: null, reason: "absent" };
+  const signingSecret = resolveSigningSecret();
+  if (!cookieValue || !signingSecret || !ENCRYPTION_KEY) return { userId: null, reason: "absent" };
 
   try {
     // `algorithms` pinned so a token cannot dictate its own verification algorithm, and `expiresIn`
     // above means `jwt.verify` rejects a stale cookie for us.
-    const payload = jwt.verify(cookieValue, SIGNING_SECRET, { algorithms: ["HS256"] });
+    const payload = jwt.verify(cookieValue, signingSecret, { algorithms: ["HS256"] });
     if (typeof payload !== "object" || payload === null) return { userId: null, reason: "invalid" };
 
     const { uid, kind } = payload as { uid?: unknown; kind?: unknown };

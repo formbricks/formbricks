@@ -1,4 +1,5 @@
 import "server-only";
+import { AUTH_URL } from "@/lib/constants";
 import { env } from "@/lib/env";
 
 const DEFAULT_WEBAPP_URL = "http://localhost:3000";
@@ -37,7 +38,7 @@ const appendPath = (base: URL, path: string): string => {
 const getWebAppBaseUrl = (): URL => normalizeConfiguredUrl(env.WEBAPP_URL, DEFAULT_WEBAPP_URL);
 
 export const getAuthIssuerUrl = (): string => {
-  const authBaseUrl = normalizeConfiguredUrl(env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL ?? env.WEBAPP_URL);
+  const authBaseUrl = normalizeConfiguredUrl(AUTH_URL ?? env.WEBAPP_URL);
   return appendPath(authBaseUrl, AUTH_BASE_PATH);
 };
 
