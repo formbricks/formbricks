@@ -51,6 +51,28 @@ export const mintStorageKey = (source: TEmbeddedDataSource, name: string): strin
   source === "computed" ? createId() : name;
 
 /**
+ * The same address, or null when the survey already has a field at it.
+ *
+ * An ingested field's address is its name, so a new one can land on an address another field holds —
+ * including a computed field's cuid, which the card displays and offers to copy. Nothing upstream
+ * refuses it: `validateNewDeclaredFields` compares *declared names*, and a computed field declares
+ * its display name, not its cuid. `upsertEmbeddedField` then keeps both rows, because it matches on
+ * source **and** address and these differ in source.
+ *
+ * The survey only fails at the save, on `@@unique([surveyId, storageKey])`, as a Prisma constraint
+ * violation with no field to point at. Refusing it at the modal is what turns that into a message.
+ * The caller passes the addresses minus the one being edited, so an edit keeping its own is free.
+ */
+export const mintFreeStorageKey = (
+  source: TEmbeddedDataSource,
+  name: string,
+  takenStorageKeys: readonly string[]
+): string | null => {
+  const storageKey = mintStorageKey(source, name);
+  return takenStorageKeys.includes(storageKey) ? null : storageKey;
+};
+
+/**
  * The library row slice the editor needs in order to link one.
  *
  * `key` is narrowed to a string because that is what makes a row shared; `TSharedEmbeddedDataListItem`

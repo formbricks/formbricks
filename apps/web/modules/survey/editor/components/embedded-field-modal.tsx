@@ -27,7 +27,7 @@ import {
   toEmbeddedFieldDraft,
   toLocalEmbeddedField,
 } from "@/modules/survey/editor/lib/embedded-field-draft";
-import { mintStorageKey, validateEmbeddedFieldName } from "@/modules/survey/editor/lib/embedded-fields";
+import { mintFreeStorageKey, validateEmbeddedFieldName } from "@/modules/survey/editor/lib/embedded-fields";
 import { getValidateIdErrorMessage } from "@/modules/survey/editor/lib/validation";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Badge } from "@/modules/ui/components/badge";
@@ -69,6 +69,11 @@ interface EmbeddedFieldModalProps {
   setOpen: (open: boolean) => void;
   /** Ids already spoken for in the survey's namespace: its elements and ending cards. */
   takenIds: string[];
+  /**
+   * The addresses this survey's other fields occupy. A passed-in field is addressed by its name, so
+   * a new one can be given an address another field already holds; see `mintFreeStorageKey`.
+   */
+  takenStorageKeys: string[];
   /** Every other field's declared name — what makes a repeat a duplicate. */
   otherFieldNames: string[];
   /** App locale — the date default's picker formats against it. */
@@ -96,6 +101,7 @@ export const EmbeddedFieldModal = ({
   open,
   setOpen,
   takenIds,
+  takenStorageKeys,
   otherFieldNames,
   locale,
   onSubmitField,
@@ -153,14 +159,17 @@ export const EmbeddedFieldModal = ({
       return;
     }
 
-    onSubmitField(
-      toLocalEmbeddedField(draft, {
-        // An edit keeps the address its responses are already stored under — it is read-only for the
-        // same reason the library's key is. Only a new field mints one.
-        storageKey: entry?.link.storageKey ?? mintStorageKey(draft.source, draft.name),
-        id: entry?.field.id,
-      })
-    );
+    // An edit keeps the address its responses are already stored under — it is read-only for the
+    // same reason the library's key is. Only a new field mints one, and only a new one can collide.
+    const storageKey =
+      entry?.link.storageKey ?? mintFreeStorageKey(draft.source, draft.name, takenStorageKeys);
+
+    if (storageKey === null) {
+      form.setError("name", { message: t("workspace.embedded_data.survey_field_address_taken") });
+      return;
+    }
+
+    onSubmitField(toLocalEmbeddedField(draft, { storageKey, id: entry?.field.id }));
     setOpen(false);
   };
 

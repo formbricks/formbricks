@@ -11,6 +11,7 @@ import {
   declaredEmbeddedFieldName,
   isPromotableEmbeddedField,
   listLinkableSharedFields,
+  mintFreeStorageKey,
   mintStorageKey,
   removeEmbeddedField,
   toSharedEntry,
@@ -77,6 +78,29 @@ describe("mintStorageKey", () => {
 
     expect(first).not.toBe("score");
     expect(mintStorageKey("computed", "score")).not.toBe(first);
+  });
+});
+
+describe("mintFreeStorageKey", () => {
+  test("refuses an address another field already holds", () => {
+    // The reachable case: a computed field's address is a cuid, which the card displays and offers to
+    // copy, and a cuid is a legal ingested field name. Nothing upstream catches it — the two declare
+    // different names, and `upsertEmbeddedField` keeps both because their sources differ — so without
+    // this the survey only fails at the save, on `@@unique([surveyId, storageKey])`.
+    expect(mintFreeStorageKey("ingested", "cm4abc123", ["cm4abc123"])).toBeNull();
+    expect(mintFreeStorageKey("ingested", "utm_source", ["utm_source"])).toBeNull();
+  });
+
+  test("mints when the address is free", () => {
+    expect(mintFreeStorageKey("ingested", "plan", ["utm_source"])).toBe("plan");
+    expect(mintFreeStorageKey("ingested", "plan", [])).toBe("plan");
+  });
+
+  test("a computed field's fresh id is free by construction", () => {
+    const key = mintFreeStorageKey("computed", "score", ["score"]);
+
+    expect(key).not.toBeNull();
+    expect(key).not.toBe("score");
   });
 });
 
