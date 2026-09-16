@@ -935,22 +935,116 @@ const setConditionDate = async (page: Page, conditionId: string, target: Date): 
   await pickCalendarDay(page, target);
 };
 
+/**
+ * Driving the editor's Embedded Data card (ENG-1851).
+ *
+ * Shared rather than per-spec: `survey-editor-embedded-fields.spec.ts` exercises the card itself and
+ * `survey.spec.ts` only needs two calculated fields on its way to the logic editor, and a second copy
+ * of "open the card, open the dialog, pick a source" is exactly the duplication that goes stale when
+ * the card changes.
+ */
+
+/** The source a field's value comes from, as the dialog's radios label it. */
+export type EmbeddedFieldSource = "Passed in" | "Calculated";
+
+/**
+ * The radio behind each source label. Clicked by id rather than by its text: the label and the span
+ * inside it both read "Calculated", so a text locator is two elements and fails strict mode.
+ */
+const EMBEDDED_FIELD_SOURCE_IDS: Record<EmbeddedFieldSource, string> = {
+  "Passed in": "embedded-field-source-ingested",
+  Calculated: "embedded-field-source-computed",
+};
+
+/** The kind of value a field holds, as the dialog's Type list labels it. */
+export type EmbeddedFieldType = "Text" | "Number" | "True/false" | "Date";
+
+/** The editor's left panel. Scoping to it keeps the live preview's copies of the same text out. */
+export const editorPanel = (page: Page): Locator => page.getByRole("main");
+
+/**
+ * Opens the Embedded Data card. Only one editor card is open at a time, so this is expressed as
+ * "click until its content is on screen": the click is a toggle, and asserting on the content first
+ * keeps it idempotent whichever card was open before.
+ */
+export const openEmbeddedDataCard = async (page: Page): Promise<void> => {
+  const content = editorPanel(page).getByTestId("embedded-data-card-content");
+
+  await expect(async () => {
+    if (!(await content.isVisible())) {
+      await editorPanel(page).getByTestId("embedded-data-card-trigger").click();
+    }
+    await expect(content).toBeVisible({ timeout: 5000 });
+  }).toPass({ timeout: 30000 });
+};
+
+/** One field's row in the card, addressed by the name it renders. */
+export const embeddedFieldRow = (page: Page, name: string): Locator =>
+  editorPanel(page).getByTestId("embedded-field-row").filter({ hasText: name });
+
+/** The open new-field / edit-field dialog. */
+const embeddedFieldDialog = (page: Page): Locator => page.getByRole("dialog");
+
+/** Fills the dialog that is already open, without submitting it. */
+export const fillEmbeddedFieldDialog = async (
+  page: Page,
+  field: { name?: string; source?: EmbeddedFieldSource; type?: EmbeddedFieldType; defaultValue?: string }
+): Promise<void> => {
+  const dialog = embeddedFieldDialog(page);
+
+  if (field.name !== undefined) await dialog.locator("#embedded-field-name").fill(field.name);
+  // Absent when editing: the source and the address a field is stored under are fixed once set.
+  if (field.source !== undefined) {
+    await dialog.locator(`#${EMBEDDED_FIELD_SOURCE_IDS[field.source]}`).click();
+  }
+  if (field.type !== undefined) {
+    await dialog.locator("#embedded-field-type").click();
+    await page.getByRole("option", { name: field.type, exact: true }).click();
+  }
+  if (field.defaultValue !== undefined) {
+    await dialog.locator("#embedded-field-default").fill(field.defaultValue);
+  }
+};
+
+/** Declares a field the survey owns, and waits for its row to appear. */
+export const addEmbeddedField = async (
+  page: Page,
+  field: { name: string; source: EmbeddedFieldSource; type?: EmbeddedFieldType; defaultValue?: string }
+): Promise<void> => {
+  await openEmbeddedDataCard(page);
+  await editorPanel(page).getByRole("button", { name: "New field", exact: true }).click();
+  await fillEmbeddedFieldDialog(page, field);
+  await embeddedFieldDialog(page).getByRole("button", { name: "Add", exact: true }).click();
+  await expect(embeddedFieldRow(page, field.name)).toBeVisible();
+};
+
+/** Opens one row's menu and picks an action from it. */
+const openEmbeddedFieldAction = async (page: Page, name: string, action: string): Promise<void> => {
+  await openEmbeddedDataCard(page);
+  await embeddedFieldRow(page, name)
+    .getByRole("button", { name: /Open options/ })
+    .click();
+  await page.getByRole("menuitem", { name: action, exact: true }).click();
+};
+
+/** Edits a field through its row menu, and waits for the change to reach the card. */
+export const editEmbeddedField = async (
+  page: Page,
+  name: string,
+  patch: { name?: string; type?: EmbeddedFieldType; defaultValue?: string }
+): Promise<void> => {
+  await openEmbeddedFieldAction(page, name, "Edit");
+  await fillEmbeddedFieldDialog(page, patch);
+  await embeddedFieldDialog(page).getByRole("button", { name: "Save", exact: true }).click();
+  await expect(embeddedFieldRow(page, patch.name ?? name)).toBeVisible();
+};
+
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   await createSurveyFromScratch(page);
 
-  // Add variables
-  await page.getByText("Variables").click();
-  await page.getByPlaceholder("Field name e.g, score, price").click();
-  await page.getByPlaceholder("Field name e.g, score, price").fill("score");
-  await page.getByRole("button", { name: "Add variable" }).click();
-  await page
-    .locator("form")
-    .filter({ hasText: "Add variable" })
-    .getByPlaceholder("Field name e.g, score, price")
-    .fill("secret");
-  await page.locator("form").filter({ hasText: "Add variable" }).getByRole("combobox").click();
-  await page.getByLabel("Text", { exact: true }).click();
-  await page.getByRole("button", { name: "Add variable" }).click();
+  // Two calculated fields for the logic below to read and write.
+  await addEmbeddedField(page, { name: "score", source: "Calculated", type: "Number" });
+  await addEmbeddedField(page, { name: "secret", source: "Calculated", type: "Text" });
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();

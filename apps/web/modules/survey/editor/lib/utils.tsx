@@ -155,8 +155,8 @@ const getElementHeadline = (
  * than reshaped at each of the pickers below.
  *
  * ENG-2628: sourced from the survey's rows, like every other reader. The editor's working copy is
- * now rows-native — the Variables and Hidden Fields cards edit `embeddedFields` directly — so a
- * card edit reaches these pickers on the next render without anything being derived here.
+ * rows-native — the Embedded Data card edits `embeddedFields` directly — so a card edit reaches
+ * these pickers on the next render without anything being derived here.
  *
  * ENG-1853: the *condition* pickers no longer go through this — they offer one Embedded Data group
  * built by {@link getEmbeddedFieldOptions}. What is left is the calculate action, which really does
