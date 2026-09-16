@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { type TAutoCapturedField, getAutoCapturedFields } from "../lib/auto-captured-fields";
-import { getAvailabilityLabel, getDataTypeLabel, getPrivacyLabel } from "./field-display";
+import { getAvailabilityLabel, getDataTypeLabel, getPrivacyLabel } from "./field-labels";
 
 /**
  * The second card: what every response already carries.
@@ -57,7 +57,7 @@ export const AutoCapturedCard = () => {
       bodyVariant="flush">
       <SettingsTable
         columns={columns}
-        rows={getAutoCapturedFields()}
+        rows={getAutoCapturedFields(t)}
         getRowId={(field) => field.name}
         emptyMessage={t("common.no_results")}
         aria-label={t("workspace.embedded_data.auto_captured")}
