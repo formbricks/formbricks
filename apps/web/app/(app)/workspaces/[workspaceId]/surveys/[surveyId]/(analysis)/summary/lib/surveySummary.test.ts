@@ -673,7 +673,14 @@ describe("getQuestionSummary", () => {
     );
 
     const hiddenFieldSummary = summary.find((s) => s.type === "hiddenField");
-    expect(hiddenFieldSummary).toMatchObject({ id: "utm_campaign", label: "Campaign" });
+    // `samples` as well as the metadata: the point of the rename is that the *label* changed while
+    // the key the value is read by did not, so an implementation that looked values up by label
+    // would still produce this id and label — with an empty sample list.
+    expect(hiddenFieldSummary).toMatchObject({
+      id: "utm_campaign",
+      label: "Campaign",
+      samples: [expect.objectContaining({ value: "spring_sale" })],
+    });
   });
 
   describe("Ranking question type tests", () => {
