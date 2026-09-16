@@ -16,7 +16,9 @@ import { LibraryCard } from "./components/library-card";
  * page. The library itself is read here and handed down; every write goes back through a server
  * action and `router.refresh()`.
  */
-export const EmbeddedDataSettingsPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
+export const EmbeddedDataSettingsPage = async (
+  props: Readonly<{ params: Promise<{ workspaceId: string }> }>
+) => {
   const params = await props.params;
   const t = await getTranslate();
   const { isReadOnly, workspace } = await getWorkspaceAuth(params.workspaceId);

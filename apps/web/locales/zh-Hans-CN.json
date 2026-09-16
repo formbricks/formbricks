@@ -2185,6 +2185,7 @@
       "new_library_field": "新建库字段",
       "new_library_field_description": "定义一次。此工作区中的任何调查问卷都可以添加它。",
       "no_default": "无默认值",
+      "no_default_placeholder": "–",
       "not_used": "未使用",
       "privacy_kept": "保留",
       "privacy_not_stored": "不存储",

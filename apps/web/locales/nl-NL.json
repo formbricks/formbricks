@@ -2185,6 +2185,7 @@
       "new_library_field": "Nieuw bibliotheeksveld",
       "new_library_field_description": "Definieer het één keer. Elke enquête in deze workspace kan het toevoegen.",
       "no_default": "Geen standaard",
+      "no_default_placeholder": "–",
       "not_used": "Niet gebruikt",
       "privacy_kept": "Bewaard",
       "privacy_not_stored": "Niet opgeslagen",
