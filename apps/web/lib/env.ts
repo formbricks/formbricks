@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
 import { isValidIanaTimeZone } from "@formbricks/types/common";
 import { throwEnvValidationError } from "./env-validation-error";
@@ -58,7 +59,10 @@ type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
 const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-type TEnvironmentIssuePath = keyof TAIConfigurationEnv | keyof TAuthzedConfigurationEnv;
+type TEnvironmentIssuePath =
+  | keyof TAIConfigurationEnv
+  | keyof TAuthzedConfigurationEnv
+  | keyof TAuthConfigurationEnv;
 
 const addEnvIssue = (ctx: z.RefinementCtx, path: TEnvironmentIssuePath, message: string): void => {
   ctx.addIssue({
@@ -293,6 +297,37 @@ const validateAuthzedConfiguration = (values: TAuthzedConfigurationEnv, ctx: z.R
   }
 };
 
+/**
+ * The auth secret pair, validated at server start rather than at import.
+ *
+ * Kept out of the module-eval `superRefine` chain on purpose, for the same reason
+ * `assertAuthzedRuntimeConfiguration` is: `next build`, the AuthZed CLI and the typegen script all
+ * import this module with no secrets in scope, and a hard requirement there would fail the build
+ * rather than the misconfigured boot.
+ */
+const ZAuthConfigurationEnv = z.object({
+  BETTER_AUTH_SECRET: z.string().optional(),
+  NEXTAUTH_SECRET: z.string().optional(),
+});
+
+type TAuthConfigurationEnv = z.infer<typeof ZAuthConfigurationEnv>;
+
+/** Truthiness, not `!== undefined`: a blank secret must count as missing here too. */
+const hasValue = (value: string | undefined): value is string => Boolean(value?.trim());
+
+const validateAuthConfiguration = (values: TAuthConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (hasValue(values.BETTER_AUTH_SECRET) || hasValue(values.NEXTAUTH_SECRET)) {
+    return;
+  }
+
+  addEnvIssue(
+    ctx,
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_SECRET is required. Generate one with `openssl rand -hex 32`. " +
+      "(An instance that predates the rename may set NEXTAUTH_SECRET instead; either is accepted.)"
+  );
+};
+
 const parsedEnv = createEnv({
   onValidationError: throwEnvValidationError,
   /*
@@ -393,12 +428,21 @@ const parsedEnv = createEnv({
     POSTHOG_KEY: z.string().optional(),
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "fatal"]).optional(),
     MAIL_FROM: z.email().optional(),
+    // `NEXTAUTH_*` are the undocumented backward-compatible alias for `BETTER_AUTH_*` (ENG-2599);
+    // lib/constants.ts resolves the pair and explains why the alias is permanent.
+    //
+    // `ZOptionalNonEmptyString`, not `z.string().optional()`: a blank value has to normalize to
+    // *unset* so it falls through to the other variable. `.env.example` ships these keys empty, and an
+    // empty secret is not "no secret" — it is a falsy one, which Better Auth silently replaces with
+    // its own hardcoded default. `assertAuthRuntimeConfiguration` then refuses to start if neither is
+    // actually set, so blank fails loudly at boot instead of quietly at the first invite.
     NEXTAUTH_URL: z.url().optional(),
-    NEXTAUTH_SECRET: z.string().optional(),
-    // Better Auth (ENG-1054). Optional during the additive migration; BA requires a strong
-    // (>=32 char) secret in production and throws if unset there. Enforce the floor when set so a
-    // weak secret can't silently ship (it stays optional for the pre-cutover rollout).
-    BETTER_AUTH_SECRET: z.string().min(32).optional(),
+    NEXTAUTH_SECRET: ZOptionalNonEmptyString,
+    // No length floor: Better Auth itself only warns below 32 characters, and a hard failure here
+    // would trap an operator renaming a shorter legacy secret — the one fix available to them would be
+    // changing its value, which invalidates every session and outstanding token. Warned about at boot
+    // instead (`warnOnAuthSecretRisks`).
+    BETTER_AUTH_SECRET: ZOptionalNonEmptyString,
     BETTER_AUTH_URL: z.url().optional(),
     MCP_OAUTH_JWKS_URL: ZMcpOauthJwksUrl.optional(),
     MAIL_FROM_NAME: z.string().optional(),
@@ -682,5 +726,55 @@ export const assertAuthzedRuntimeConfiguration = (): void => {
 
   if (!result.success) {
     throwEnvValidationError(result.error.issues);
+  }
+};
+
+/**
+ * Refuse to start without an auth secret.
+ *
+ * Deliberately a runtime assertion rather than a module-eval refinement — see
+ * `ZAuthConfigurationEnv`. Called from `instrumentation.ts` (behind the build-phase guard) and from
+ * `scripts/docker/validate-env.ts --server`, which the container entrypoint runs before migrations.
+ * Without it, a fresh install that set neither variable signs in and only then discovers that invites
+ * and verification links cannot be minted.
+ */
+export const assertAuthRuntimeConfiguration = (): void => {
+  const result = ZAuthConfigurationEnv.superRefine(validateAuthConfiguration).safeParse(env);
+
+  if (!result.success) {
+    throwEnvValidationError(result.error.issues);
+  }
+};
+
+/**
+ * Warn about the two auth-secret configurations that work but will bite.
+ *
+ * Never logs the secrets, their lengths, or any prefix of them: this goes to pino and on to SigNoz,
+ * and the precedent for anything secret-adjacent is `auth.ts`'s `sendVerificationEmail`, which logs
+ * the domain and never the address, the token, or the URL.
+ */
+export const warnOnAuthSecretRisks = (): void => {
+  const betterAuthSecret = env.BETTER_AUTH_SECRET?.trim();
+  const nextAuthSecret = env.NEXTAUTH_SECRET?.trim();
+
+  // The add-instead-of-rename footgun: BETTER_AUTH_SECRET wins, so adding it with a NEW value rather
+  // than moving the existing one across silently invalidates every session and every outstanding
+  // invite, verification and email-change link.
+  if (betterAuthSecret && nextAuthSecret && betterAuthSecret !== nextAuthSecret) {
+    logger.warn(
+      "BETTER_AUTH_SECRET and NEXTAUTH_SECRET are both set to different values. BETTER_AUTH_SECRET wins, " +
+        "so sessions and outstanding invite, verification and email-change links signed with the other one " +
+        "are no longer valid. To keep them, set BETTER_AUTH_SECRET to the value NEXTAUTH_SECRET already had."
+    );
+  }
+
+  // Better Auth warns below 32 too; ours is the actionable version, since we accept the shorter value.
+  const resolvedSecret = betterAuthSecret ?? nextAuthSecret;
+  if (resolvedSecret && resolvedSecret.length < 32) {
+    logger.warn(
+      "The configured auth secret is shorter than the recommended 32 characters. It signs session " +
+        "cookies and every invite, verification and email-change token, so a short one is worth rotating " +
+        "— generate a replacement with `openssl rand -hex 32`. Rotating invalidates existing sessions and links."
+    );
   }
 };
