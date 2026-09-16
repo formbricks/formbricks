@@ -5,6 +5,7 @@ import { testInputValidation } from "vitestSetup";
 import { ActionClass, Prisma, Survey } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass } from "@formbricks/types/action-classes";
+import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import {
   DatabaseError,
   InvalidInputError,
@@ -83,6 +84,16 @@ beforeEach(() => {
   vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
   vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
   vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
+  // `updateSurveyInternal` re-reads the survey after its Embedded Data reconcile (ENG-3228), so that
+  // read has to be answered too. Echo the last thing `survey.update` actually resolved to, which is
+  // each test's own fixture for what got persisted.
+  vi.mocked(prisma.survey.findUniqueOrThrow).mockImplementation((async () => {
+    for (const result of [...vi.mocked(prisma.survey.update).mock.results].reverse()) {
+      const value = result.value instanceof Promise ? await result.value : result.value;
+      if (value) return value;
+    }
+    return undefined;
+  }) as never);
 });
 
 describe("evaluateLogic with mockSurveyWithLogic", () => {
@@ -835,6 +846,19 @@ describe("Tests for updateSurvey", () => {
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
+    /**
+     * A stored survey's rows, as they would exist beside its columns. ENG-3228 made the naming guard
+     * read `existing.embeddedFields`, so a fixture whose rows and columns disagree grandfathers
+     * nothing — and every stored survey's rows are reconciled from its columns on every write.
+     */
+    const withRowsForColumns = <T extends { variables?: unknown; hiddenFields?: unknown }>(survey: T) => ({
+      ...survey,
+      embeddedDataLinks: toDesiredEmbeddedFields({
+        variables: survey.variables as never,
+        hiddenFields: survey.hiddenFields as never,
+      }).map(({ storageKey, ...field }) => ({ storageKey, embeddedData: field })),
+    });
+
     test("GRANDFATHER: a save on a survey that ALREADY has `country` succeeds and keeps the field", async () => {
       // Draft on both sides: `skipValidation` is restricted to draft-to-draft writes by the
       // ENG-1939/ENG-2115 gate, which runs after this guard. The grandfathering under test is
@@ -844,7 +868,7 @@ describe("Tests for updateSurvey", () => {
         status: "draft",
         hiddenFields: { enabled: true, fieldIds: ["country"] },
       };
-      prisma.survey.findUnique.mockResolvedValueOnce(grandfathered as any);
+      prisma.survey.findUnique.mockResolvedValueOnce(withRowsForColumns(grandfathered) as any);
       prisma.survey.update.mockResolvedValueOnce(grandfathered as any);
 
       await expect(
@@ -878,7 +902,7 @@ describe("Tests for updateSurvey", () => {
     test("GRANDFATHER: a survey that already declares `country` as a VARIABLE keeps it", async () => {
       const variable = { id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "country", type: "text" as const, value: "" };
       const grandfathered = { ...mockSurveyOutput, status: "draft", variables: [variable] };
-      prisma.survey.findUnique.mockResolvedValueOnce(grandfathered as any);
+      prisma.survey.findUnique.mockResolvedValueOnce(withRowsForColumns(grandfathered) as any);
       prisma.survey.update.mockResolvedValueOnce(grandfathered as any);
 
       await expect(

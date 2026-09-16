@@ -96,11 +96,15 @@ vi.mock("@formbricks/database", () => ({
     organization: {
       findFirst: vi.fn(),
     },
-    // Added for the Embedded Data reconcile the copy runs (ENG-1978)
+    // Added for the Embedded Data reconcile the copy runs (ENG-1978). `findMany` is ENG-3228: a
+    // cross-workspace copy looks the source's shared fields up in the target's library before it
+    // decides whether to link them or clone them.
     embeddedData: {
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       deleteMany: vi.fn(),
+      findMany: vi.fn(),
     },
     surveyEmbeddedData: {
       findMany: vi.fn(),
@@ -152,6 +156,7 @@ const resetMocks = () => {
 
   vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
   vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
+  vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([]);
   vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
   vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
 };
@@ -213,6 +218,34 @@ const mockExistingSurveyDetails = {
   endings: [{ type: "default", headline: { default: "Thanks!" } }],
   variables: [{ id: "var1", name: "Var One" }],
   hiddenFields: { enabled: true, fieldIds: ["hf1"] },
+  // ENG-3228: the copy plans its Embedded Data off the source's ROWS, so this relation — not the two
+  // columns above — is what decides which fields the duplicate gets and who owns each one.
+  embeddedDataLinks: [
+    {
+      storageKey: "var_cuid",
+      embeddedData: {
+        id: "ed_var",
+        key: null,
+        name: "score",
+        source: "computed" as const,
+        dataType: "number" as const,
+        defaultValue: 0,
+        locked: false,
+      },
+    },
+    {
+      storageKey: "plan",
+      embeddedData: {
+        id: "ed_plan",
+        key: null,
+        name: "plan",
+        source: "ingested" as const,
+        dataType: "string" as const,
+        defaultValue: null,
+        locked: false,
+      },
+    },
+  ],
   surveyClosedMessage: { enabled: false },
   singleUse: { enabled: false },
   workspaceOverwrites: null,

@@ -2,9 +2,16 @@ import { describe, expect, test } from "vitest";
 import { isDeepEqual } from "@/lib/utils/object";
 import { inlineSurveyEmbeddedFields, withInlinedEmbeddedFields } from "./survey-fields";
 
-const link = (storageKey: string, name: string, source: "computed" | "ingested") => ({
+const link = (
+  storageKey: string,
+  name: string,
+  source: "computed" | "ingested",
+  shared?: { id: string; key: string }
+) => ({
   storageKey,
   embeddedData: {
+    id: shared?.id ?? `ed_${storageKey}`,
+    key: shared?.key ?? null,
     name,
     source,
     dataType: "string" as const,
@@ -39,7 +46,15 @@ describe("inlineSurveyEmbeddedFields", () => {
     const fields = inlineSurveyEmbeddedFields({ embeddedDataLinks: JOINED_LINKS });
 
     expect(fields?.[0]).toStrictEqual({
-      field: { name: "tier", source: "computed", dataType: "string", defaultValue: null, locked: false },
+      field: {
+        id: "ed_clx000000000000000000002",
+        key: null,
+        name: "tier",
+        source: "computed",
+        dataType: "string",
+        defaultValue: null,
+        locked: false,
+      },
       link: { storageKey: "clx000000000000000000002" },
     });
   });
@@ -52,6 +67,17 @@ describe("inlineSurveyEmbeddedFields", () => {
         ({ link: { storageKey } }) => storageKey
       )
     ).toStrictEqual(["clx000000000000000000002", "clx000000000000000000001", "utm_source", "plan"]);
+  });
+
+  test("carries a shared row's id and key, which is what lets the editor send the link back", () => {
+    // ENG-3228: the pairs are a write shape too. Drop either of these on the read and a survey can
+    // load a library link but never save one — the write path would read it as a local field.
+    const links = [link("plan_tier", "Plan tier", "ingested", { id: "ed_shared", key: "plan_tier" })];
+
+    expect(inlineSurveyEmbeddedFields({ embeddedDataLinks: links })?.[0].field).toMatchObject({
+      id: "ed_shared",
+      key: "plan_tier",
+    });
   });
 
   test("a survey with no rows inlines an empty list", () => {

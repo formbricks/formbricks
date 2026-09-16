@@ -1659,7 +1659,7 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
 
   const computedRow = (dataType: "number" | "string", defaultValue: number | string) => [
     {
-      field: { name: "score", source: "computed" as const, dataType, defaultValue, locked: false },
+      field: { name: "score", key: null, source: "computed" as const, dataType, defaultValue, locked: false },
       link: { storageKey: STORAGE_KEY },
     },
   ];

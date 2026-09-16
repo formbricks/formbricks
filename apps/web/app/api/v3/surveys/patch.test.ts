@@ -377,10 +377,13 @@ describe("patchV3Survey", () => {
           embeddedData: {
             id: "ed_existing",
             surveyId: currentSurvey.id,
+            // Local, so no library key and no lock — the two columns ENG-3228 added to this select.
+            key: null,
             name: "utm_source",
             source: "ingested",
             dataType: "string",
             defaultValue: null,
+            locked: false,
           },
         },
       ] as never);

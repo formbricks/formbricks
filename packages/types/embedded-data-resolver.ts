@@ -570,9 +570,15 @@ export type TEmbeddedValueRef =
  * {@link listReadableFields} enumerates and {@link deriveLegacyEmbeddedData} synthesizes. The pair
  * is assignable to {@link TEmbeddedValueRef}, so whatever a caller lists it can also resolve,
  * without repackaging.
+ *
+ * `key` and `id` are what make the pair writable as well as readable (ENG-3228): the survey write
+ * path takes these same pairs back, and `key !== null` is how an entry says it links a shared
+ * library row rather than one the survey owns. `id` is optional because a pair derived from the
+ * legacy columns describes no stored row. Mirrored by `ZLinkedEmbeddedField` (embedded-data.ts),
+ * which carries the reasoning for what is and is not in this shape.
  */
 export interface TLinkedEmbeddedField {
-  field: TResolvableEmbeddedField & Pick<TEmbeddedData, "name">;
+  field: TResolvableEmbeddedField & Pick<TEmbeddedData, "name" | "key"> & Partial<Pick<TEmbeddedData, "id">>;
   link: TEmbeddedDataLink;
 }
 
@@ -1180,8 +1186,9 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
  * logic here.
  *
  * The §8 rules live in `toDesiredEmbeddedFields`, shared with ENG-1978's write bridge and ENG-1835's
- * backfill; this only reshapes them into `{field, link}` pairs and adds `locked: false`, which has no
- * legacy equivalent.
+ * backfill; this only reshapes them into `{field, link}` pairs. `locked: false` and `key: null` come
+ * from that mapping — neither has a legacy equivalent, and a column-derived field is local and
+ * unlocked by construction.
  *
  * `hiddenFields.enabled` is deliberately ignored: recall and logic consult `fieldIds` alone today,
  * and ingestion is split on the flag — the js-core SDK drops hidden fields when disabled, while the
@@ -1190,8 +1197,8 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
  * whatever either path stored still resolves, and what nothing stored reports as unset.
  */
 export const deriveLegacyEmbeddedData = (survey: TLegacyEmbeddedFields): TLinkedEmbeddedField[] =>
-  toDesiredEmbeddedFields(survey).map(({ storageKey, ...field }) => ({
-    field: { ...field, locked: false },
+  toDesiredEmbeddedFields(survey).map(({ storageKey, embeddedDataId: _embeddedDataId, ...field }) => ({
+    field,
     link: { storageKey },
   }));
 

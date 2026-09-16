@@ -79,7 +79,18 @@ const readRows = async (surveyId: string) =>
       where: { surveyId },
       select: {
         storageKey: true,
-        embeddedData: { select: { name: true, source: true, dataType: true, defaultValue: true } },
+        embeddedData: {
+          select: {
+            name: true,
+            source: true,
+            dataType: true,
+            defaultValue: true,
+            // Both are part of what `toDesiredEmbeddedFields` describes since ENG-3228, and both are
+            // what a legacy patch must leave alone: a local, unlocked field.
+            locked: true,
+            key: true,
+          },
+        },
       },
     })
     .then((links) =>
@@ -123,6 +134,9 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
         source: "computed",
         dataType: "number",
         defaultValue: 7,
+        // A column-derived field is local and unlocked: the legacy carrier can say neither.
+        locked: false,
+        key: null,
       },
     ]);
     await expectRowsAgreeWithColumns(survey.id);
@@ -144,6 +158,8 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
         source: "ingested",
         dataType: "string",
         defaultValue: null,
+        locked: false,
+        key: null,
       },
     ]);
     await expectRowsAgreeWithColumns(survey.id);
@@ -167,6 +183,8 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
         source: "computed",
         dataType: "number",
         defaultValue: 9,
+        locked: false,
+        key: null,
       },
     ]);
     await expectRowsAgreeWithColumns(survey.id);

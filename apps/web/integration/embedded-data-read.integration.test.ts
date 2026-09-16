@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
-import { deriveLegacyEmbeddedData, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
+import {
+  type TLinkedEmbeddedField,
+  deriveLegacyEmbeddedData,
+  getSurveyEmbeddedFields,
+} from "@formbricks/types/embedded-data-resolver";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
@@ -62,14 +66,24 @@ beforeEach(async () => {
   await resetDb();
 });
 
+/**
+ * The pairs without the stored row id. ENG-3228 added it to the read so the editor can hand a shared
+ * link back on the next save, and the legacy derivation has nothing to put there — so a comparison
+ * against derived pairs has to drop it, and assert it separately.
+ */
+const withoutRowIds = (fields: TLinkedEmbeddedField[] | undefined) =>
+  fields?.map(({ field: { id: _id, ...field }, link }) => ({ field, link }));
+
 describe("Embedded Data read seam (real Postgres)", () => {
   test("a loaded survey carries the rows the write bridge wrote", async () => {
     const { surveyId } = await seedSurvey();
 
     const survey = await loadSurvey(surveyId);
 
-    expect(survey.embeddedFields).toEqual(deriveLegacyEmbeddedData(LEGACY));
-    expect(getSurveyEmbeddedFields(survey)).toEqual(deriveLegacyEmbeddedData(LEGACY));
+    expect(withoutRowIds(survey.embeddedFields)).toEqual(deriveLegacyEmbeddedData(LEGACY));
+    expect(withoutRowIds(getSurveyEmbeddedFields(survey))).toEqual(deriveLegacyEmbeddedData(LEGACY));
+    // Every pair names the row it came from, which is what a save needs to address a shared link.
+    expect(survey.embeddedFields?.every(({ field }) => typeof field.id === "string")).toBe(true);
   });
 
   test("the raw relation never leaks onto the survey object", async () => {

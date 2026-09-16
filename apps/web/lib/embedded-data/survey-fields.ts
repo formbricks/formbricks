@@ -8,9 +8,15 @@ import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resol
  * every reader then resolves definitions through `getSurveyEmbeddedFields` instead of reading
  * `survey.variables` / `survey.hiddenFields`.
  *
- * Only the columns the read seam consumes are selected — this shape reaches public survey payloads
- * (the SDK workspace state and the link-survey page), so the row's ids, ownership and timestamps
- * stay server-side. It mirrors `SELECT_CURRENT_FIELDS` in reconcile.ts minus exactly those.
+ * Only the columns a reader or the editor's write-back needs are selected — this shape reaches
+ * public survey payloads (the SDK workspace state and the link-survey page), so the row's owning
+ * survey, workspace and timestamps stay server-side. It mirrors `SELECT_CURRENT_FIELDS` in
+ * reconcile.ts minus exactly those.
+ *
+ * `id` and `key` are here because the pairs are a **write** shape as well as a read one (ENG-3228):
+ * a shared entry is sent back by the id of the library row it links, and `key !== null` is what says
+ * it is shared at all. Drop either and the editor can load a shared link but never save one. A local
+ * row carries `key: null`, which is the same thing the row itself stores.
  *
  * **`orderBy` carries the entire ordering rule, and it has to live in the query.**
  * {@link withInlinedEmbeddedFields} only ever sees the rows the select returned, so a JS sort could
@@ -23,7 +29,15 @@ export const selectSurveyEmbeddedDataLinks = {
   select: {
     storageKey: true,
     embeddedData: {
-      select: { name: true, source: true, dataType: true, defaultValue: true, locked: true },
+      select: {
+        id: true,
+        key: true,
+        name: true,
+        source: true,
+        dataType: true,
+        defaultValue: true,
+        locked: true,
+      },
     },
   },
   orderBy: [{ order: "asc" }, { storageKey: "asc" }],
