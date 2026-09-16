@@ -60,7 +60,7 @@ export function LogicEditorActions({
 
   /**
    * ENG-1837: which input widget a calculate action gets is driven by the computed field's declared
-   * type. ENG-2628: read off the survey's rows, which the Variables card now edits directly, so a
+   * type. ENG-2628: read off the survey's rows, which the Embedded Data card edits directly, so a
    * retype still reaches this widget on the next render.
    */
   const getCalculateFieldType = (storageKey: string): "text" | "number" | undefined => {

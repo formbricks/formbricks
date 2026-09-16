@@ -43,7 +43,7 @@ export const UpdateElementId = ({
     const elementIds = elements.map((q) => q.id);
     const endingCardIds = localSurvey.endings.map((e) => e.id);
     // ENG-2628: the names an element id may not collide with come from the survey's Embedded Data
-    // rows, which is what the Hidden Fields card now edits.
+    // rows, which is what the Embedded Data card edits.
     const hiddenFieldIds = getIngestedStorageKeys(localSurvey);
 
     const validateIdError = validateId(currentValue, elementIds, endingCardIds, hiddenFieldIds);
