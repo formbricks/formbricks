@@ -18,13 +18,16 @@ import { responseToMcpToolResult } from "../errors";
 
 /**
  * Shared MCP scope gate: returns `null` when the caller holds all `requiredScopes`, otherwise an
- * insufficient-scope tool result. Used by every tool before it touches a v3 operation.
+ * insufficient-scope tool result.
  *
- * Exported for the feedback-record tools, which centralise the gate in their own shared read/write
- * handler factories rather than at registration. Prefer `registerScopedTool` for new tools: it makes
- * the gate structural (see ENG-1967) instead of something a hand-written handler can omit.
+ * Private on purpose (ENG-2119). It was briefly exported so the feedback-record tools could gate
+ * inside their own handler factories, which made the guarantee conventional rather than structural —
+ * a tool added outside those factories would have registered unguarded. Those tools are on
+ * `registerScopedTool` now, so this goes back to being reachable only through it. Keeping it private
+ * is what makes the invariant compiler-checked: there is no way to register a tool and forget the
+ * gate, because the gate is not reachable from a tool module.
  */
-export async function guardMcpScopes(
+async function guardMcpScopes(
   authInfo: AuthInfo | undefined,
   requiredScopes: string[],
   requestId: string
@@ -44,8 +47,11 @@ export async function guardMcpScopes(
  * workspace discovery tool, which the survey, workflow and feedback-record tools all need to resolve a
  * `workspaceId`. Returns `null` when the caller holds at least one of `allowedScopes`. The challenge
  * still advertises the full list, since RFC 6750 has no way to express "any one of these".
+ *
+ * Private for the same reason as its sibling: reachable only through `registerScopedTool`'s
+ * `{ anyOf: [...] }` form.
  */
-export async function guardMcpAnyScope(
+async function guardMcpAnyScope(
   authInfo: AuthInfo | undefined,
   allowedScopes: string[],
   requestId: string
@@ -72,10 +78,11 @@ type ScopedToolConfig<InputSchema extends StandardSchemaWithJSON> = {
  * tool cannot be registered without declaring the scope it needs — the gate always runs (returning a
  * 403 insufficient-scope result) BEFORE the handler, so no tool can reach a v3 operation unguarded.
  *
- * This is the single registration path for every MCP tool: read tools pass `["<resource>:read"]`,
- * mutating tools pass `["<resource>:write"]`. Enforcing scope structurally (vs. a per-tool
- * `guardMcpScopes` call that's easy to forget) is what prevents the ENG-1967 class of gap from
- * recurring as new tools are added.
+ * This is the single registration path for every MCP tool — true again as of ENG-2119, and now
+ * enforced rather than asserted: the guards below are private, so a tool module cannot gate by hand
+ * even if it wanted to. Read tools pass `["<resource>:read"]`, mutating tools pass
+ * `["<resource>:write"]`. Enforcing scope structurally (vs. a per-tool call that is easy to forget)
+ * is what prevents the ENG-1967 class of gap from recurring as new tools are added.
  *
  * Pass `{ anyOf: [...] }` instead of a plain tuple for the rare tool that more than one scope group
  * legitimately reaches (workspace discovery). That keeps such tools on this registration path rather
