@@ -100,7 +100,7 @@ export const ElementsView = ({
   isStorageConfigured = true,
   quotas,
   isExternalUrlsAllowed,
-}: ElementsViewProps) => {
+}: Readonly<ElementsViewProps>) => {
   const { t } = useTranslation();
   const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
     open: boolean;

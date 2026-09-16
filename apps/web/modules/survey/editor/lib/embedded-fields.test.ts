@@ -126,13 +126,42 @@ describe("cloneSharedFieldToLocal", () => {
 
     expect(cloned.field).toEqual({
       key: null,
-      name: "Plan tier",
+      name: "plan_tier",
       source: "computed",
       dataType: "string",
       defaultValue: "",
       locked: false,
     });
     expect(cloned.link.storageKey).toBe("var_id");
+  });
+
+  // The column a computed field is declared under moves with the ownership — the key while shared,
+  // the name once local — so keeping the label would declare `Plan tier` as a variable name and the
+  // survey could never be saved again.
+  test("renames a cloned computed field to the key it drops", () => {
+    const [cloned] = cloneSharedFieldToLocal(linked, "computed", "var_id");
+    const declaredName = declaredEmbeddedFieldName(cloned);
+
+    expect(
+      validateEmbeddedFieldName({
+        name: declaredName,
+        takenIds: [],
+        otherFieldNames: [],
+        previousName: null,
+      })
+    ).toBeNull();
+    expect(declaredName).toBe("plan_tier");
+  });
+
+  // An ingested field is declared by its storage key under either ownership, so nothing rides on its
+  // label and the author keeps the one the library showed them.
+  test("keeps a cloned ingested field's display name", () => {
+    const linkedIngested = [ingested("plan_tier", { key: "plan_tier", id: "ed_1", name: "Plan tier" })];
+
+    const [cloned] = cloneSharedFieldToLocal(linkedIngested, "ingested", "plan_tier");
+
+    expect(cloned.field).toMatchObject({ key: null, name: "Plan tier" });
+    expect(declaredEmbeddedFieldName(cloned)).toBe("plan_tier");
   });
 
   test("leaves a field the survey already owns alone", () => {

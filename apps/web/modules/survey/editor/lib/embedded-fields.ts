@@ -116,6 +116,13 @@ export const upsertEmbeddedField = (
  *
  * `id` goes with it: it names the workspace row, and carrying it on a local entry would be a lie
  * waiting to be dereferenced.
+ *
+ * **A computed field is renamed to the key it loses**, because the two ownerships declare it under
+ * different columns: shared, it answers to its library key, and local, to its name
+ * (`declaredEmbeddedFieldName`) — so keeping a label like `Plan tier` would declare a variable name
+ * `ZSurveyVariable` refuses, and the survey could never be saved again. The key is the one spelling
+ * of a shared field guaranteed to be a safe identifier. An ingested field is declared by its storage
+ * key under either ownership, so its display name is carried over untouched.
  */
 export const cloneSharedFieldToLocal = (
   embeddedFields: readonly TLinkedEmbeddedField[],
@@ -126,7 +133,9 @@ export const cloneSharedFieldToLocal = (
     if (!isFieldAt(source, storageKey)(entry) || entry.field.key === null) return entry;
 
     const { id: _sharedRowId, ...definition } = entry.field;
-    return { ...entry, field: { ...definition, key: null } };
+    const name = entry.field.source === "computed" ? entry.field.key : entry.field.name;
+
+    return { ...entry, field: { ...definition, key: null, name } };
   });
 
 /**

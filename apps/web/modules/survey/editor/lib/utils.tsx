@@ -1350,22 +1350,36 @@ export const findOptionUsedInLogic = (
   return findElementIndexByBlockLogic(survey, isUsedInLogicRule);
 };
 
-export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number => {
+/**
+ * The first element whose block logic still names this variable or hidden field, or -1.
+ *
+ * A calculate action **reads** an operand as well as writing one: `variableId` is where the result
+ * is stored, `value` is what the calculation consumes, and either side can name a field the author
+ * is about to remove. Searching only the conditions — or, for a hidden field, only the conditions of
+ * a rule whose action reads it — reports the field as unused and leaves the action pointing at
+ * nothing. The element finder already searches both sides; this is the same search, for the two
+ * operand types the Embedded Data card removes.
+ */
+const findFieldUsedInLogic = (survey: TSurvey, type: "hiddenField" | "variable", id: string): number => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
     if (isConditionGroup(condition)) {
-      // It's a TConditionGroup
       return condition.conditions.some(isUsedInCondition);
-    } else {
-      // It's a TSingleCondition
-      return (
-        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "variable", variableId)) ||
-        isUsedInLeftOperand(condition.leftOperand, "variable", variableId)
-      );
     }
+
+    return (
+      (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, type, id)) ||
+      isUsedInLeftOperand(condition.leftOperand, type, id)
+    );
   };
 
   const isUsedInAction = (action: TSurveyBlockLogicAction): boolean => {
-    return action.objective === "calculate" && action.variableId === variableId;
+    if (action.objective !== "calculate") return false;
+
+    // Only a variable can be a calculation's target; both types can be its input.
+    return (
+      (type === "variable" && action.variableId === id) ||
+      (action.value.type === type && action.value.value === id)
+    );
   };
 
   const isUsedInLogicRule = (logicRule: TSurveyBlockLogic): boolean => {
@@ -1375,27 +1389,11 @@ export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): nu
   return findElementIndexByBlockLogic(survey, isUsedInLogicRule);
 };
 
-export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: string): number => {
-  const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
-    if (isConditionGroup(condition)) {
-      // It's a TConditionGroup
-      return condition.conditions.some(isUsedInCondition);
-    } else {
-      // It's a TSingleCondition
-      return (
-        (condition.rightOperand &&
-          isUsedInRightOperand(condition.rightOperand, "hiddenField", hiddenFieldId)) ||
-        isUsedInLeftOperand(condition.leftOperand, "hiddenField", hiddenFieldId)
-      );
-    }
-  };
+export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number =>
+  findFieldUsedInLogic(survey, "variable", variableId);
 
-  const isUsedInLogicRule = (logicRule: TSurveyBlockLogic): boolean => {
-    return isUsedInCondition(logicRule.conditions);
-  };
-
-  return findElementIndexByBlockLogic(survey, isUsedInLogicRule);
-};
+export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: string): number =>
+  findFieldUsedInLogic(survey, "hiddenField", hiddenFieldId);
 
 export const getSurveyFollowUpActionDefaultBody = (t: TFunction): string => {
   return t("templates.follow_ups_modal_action_body")

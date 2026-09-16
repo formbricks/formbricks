@@ -72,6 +72,46 @@ const withLogicOn = (operandType: "hiddenField" | "variable"): TSurvey =>
     ],
   });
 
+/**
+ * A block whose logic *reads* the field as a calculation's input, with a condition that names
+ * something else — so only the action can make the lookup match.
+ */
+const withCalculateReading = (valueType: "hiddenField" | "variable"): TSurvey =>
+  survey({
+    blocks: [
+      {
+        id: "block1",
+        name: "Block 1",
+        elements: [element("q_one", "One?"), element("q_two", "Two?")],
+        logic: [
+          {
+            id: "logic1",
+            conditions: {
+              id: "group1",
+              connector: "and",
+              conditions: [
+                {
+                  id: "condition1",
+                  leftOperand: { type: "element", value: "q_one" },
+                  operator: "isSubmitted",
+                },
+              ],
+            },
+            actions: [
+              {
+                id: "action1",
+                objective: "calculate",
+                variableId: "other_var",
+                operator: "assign",
+                value: { type: valueType, value: PLAN },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
 const recallToken = `#recall:${PLAN}/fallback:#`;
 
 const quota = (name: string, criteria: Record<string, unknown>): TSurveyQuota =>
@@ -100,6 +140,18 @@ describe("findEmbeddedFieldRemovalBlocker", () => {
       reason: "logic",
       elementIndex: 0,
     });
+  });
+
+  // A calculate action reads an operand as well as writing one. Letting a field go while a
+  // calculation still consumes it leaves the action pointing at nothing.
+  test("finds a field a calculation reads as its input", () => {
+    expect(findEmbeddedFieldRemovalBlocker(withCalculateReading("variable"), [], entry("computed"))).toEqual({
+      reason: "logic",
+      elementIndex: 0,
+    });
+    expect(
+      findEmbeddedFieldRemovalBlocker(withCalculateReading("hiddenField"), [], entry("ingested"))
+    ).toEqual({ reason: "logic", elementIndex: 0 });
   });
 
   test("does not answer a computed lookup with an ingested field's logic", () => {
