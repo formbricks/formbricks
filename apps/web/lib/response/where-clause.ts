@@ -133,8 +133,10 @@ const buildJsonPathCondition = (
     return buildJsonPathRangeCondition(column, path, val, dataType);
   }
 
+  if (!("value" in val)) return null;
+
   const textOp = TEXT_OP_TO_PRISMA[val.op];
-  if (textOp && "value" in val) {
+  if (textOp) {
     if (dataType !== "string") return null;
     // The dynamic Prisma key needs one cast; the three keys above are all valid string filters.
     const filter = mkJsonColumnFilter(column, {
@@ -145,15 +147,12 @@ const buildJsonPathCondition = (
   }
 
   const comparisonKey = COMPARISON_OP_TO_PRISMA[val.op];
-  if (comparisonKey && "value" in val) {
-    if (dataType !== "number" && dataType !== "date") return null;
-    return mkJsonColumnFilter(column, {
-      path,
-      [comparisonKey]: val.value,
-    } as Prisma.ResponseWhereInput["meta"]);
-  }
-
-  return null;
+  if (!comparisonKey) return null;
+  if (dataType !== "number" && dataType !== "date") return null;
+  return mkJsonColumnFilter(column, {
+    path,
+    [comparisonKey]: val.value,
+  } as Prisma.ResponseWhereInput["meta"]);
 };
 
 /**
