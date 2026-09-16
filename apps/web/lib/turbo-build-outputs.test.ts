@@ -135,27 +135,38 @@ describe("turbo.json SDK bundle tasks declare the files they copy into apps/web/
     ).toEqual([]);
   });
 
-  test("no two tasks own the same public/js path", () => {
-    // The failure this pins, measured: two tasks declaring identical public/js globs each capture
+  test("every public/js output is declared by the one task that owns it", () => {
+    // The failure this pins, measured: two tasks declaring overlapping public/js globs each capture
     // whatever the other left behind, so the same cache key holds different bytes from one run to the
     // next and a hit can install the other task's — here, a production bundle — output.
-    const ownersByGlob: Record<string, string[]> = {};
-    for (const [taskName, task] of Object.entries(rootTasks)) {
-      for (const glob of task.outputs ?? []) {
-        if (!glob.startsWith(PUBLIC_JS_DIR)) continue;
-        ownersByGlob[glob] = [...(ownersByGlob[glob] ?? []), taskName];
-      }
-    }
+    //
+    // Comparing globs for equality would not catch it: `formbricks.*` and `formbricks.umd.cjs` are
+    // different strings that match the same file, so a second writer can be added without ever
+    // colliding textually. Pin the whole surface instead — every public/js glob anywhere in the file
+    // has to be one of the pairs above, declared by exactly that task and exactly once. A duplicate,
+    // a narrower pattern under an existing prefix, and a new task copying into the directory all land
+    // here as `unexpected`.
+    const owned = new Set(
+      Object.entries(BUNDLE_OUTPUTS).flatMap(([taskName, globs]) =>
+        globs.map((glob) => `${taskName} → ${glob}`)
+      )
+    );
 
-    const shared = Object.entries(ownersByGlob)
-      .filter(([, owners]) => owners.length > 1)
-      .map(([glob, owners]) => `${glob} claimed by ${owners.join(" + ")}`);
+    const declared = Object.entries(rootTasks).flatMap(([taskName, task]) =>
+      (task.outputs ?? [])
+        .filter((glob) => glob.startsWith(PUBLIC_JS_DIR))
+        .map((glob) => `${taskName} → ${glob}`)
+    );
+
+    const unexpected = declared.filter((entry) => !owned.has(entry));
+    const duplicated = declared.filter((entry, index) => declared.indexOf(entry) !== index);
 
     expect(
-      shared,
-      `public/js paths declared by more than one task: ${shared.join("; ")}. ` +
+      [...unexpected, ...duplicated],
+      `public/js outputs that no task owns, or that one task declares twice: ${[...unexpected, ...duplicated].join("; ")}. ` +
         "Turbo captures by glob after the task runs, so a second writer's files land in the first " +
-        "task's cache entry and a hit restores them. Keep one owning task per path (ENG-2924)."
+        "task's cache entry and a hit restores them. Add the path to BUNDLE_OUTPUTS under its single " +
+        "owning task, or do not declare it (ENG-2924)."
     ).toEqual([]);
   });
 });
