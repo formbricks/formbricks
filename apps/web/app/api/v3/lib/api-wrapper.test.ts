@@ -772,10 +772,16 @@ describe("5xx reporting", () => {
     expect(reported()[0]).toMatchObject({ status: 500, apiVersion: "v3", error: boom });
   });
 
+  /**
+   * 503 sits in this list rather than with the 5xx above because in v3 it is not a fault: it means the
+   * capability is not enabled on this deployment, and a transient outage is a 502. Without this row a
+   * self-hoster running without Hub or AI configured raises a Sentry error on every such request.
+   */
   test.each([
     ["a success", 200],
     ["a client error", 400],
     ["a forbidden", 403],
+    ["a not-configured 503", 503],
   ])("stays silent on %s — Sentry is for 5xx only", async (_label, status) => {
     const route = withV3ApiWrapper({
       auth: "session",
@@ -787,6 +793,22 @@ describe("5xx reporting", () => {
     expect(reported()).toHaveLength(0);
   });
 
+  /**
+   * The other half of skipping 503: a transient upstream failure is a 502 in v3, and that still has to
+   * reach Sentry. Without this the 503 exclusion could quietly widen to every dependency problem.
+   */
+  test("still reports a 502 — an outage is a fault, unlike a 503", async () => {
+    const route = withV3ApiWrapper({
+      auth: "session",
+      handler: async () => Response.json({ title: "Bad Gateway" }, { status: 502 }),
+    });
+
+    await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(reported()).toHaveLength(1);
+    expect(reported()[0]).toMatchObject({ status: 502, apiVersion: "v3" });
+  });
+
   /** Observability must never change what the caller gets back. */
   test("a reporter failure does not affect the response", async () => {
     vi.mocked(reportApiError).mockImplementationOnce(() => {
@@ -794,12 +816,13 @@ describe("5xx reporting", () => {
     });
     const route = withV3ApiWrapper({
       auth: "session",
-      handler: async () => Response.json({ x: 1 }, { status: 503 }),
+      // Deliberately 502, not 503: a 503 never reaches the reporter now, so this would assert nothing.
+      handler: async () => Response.json({ x: 1 }, { status: 502 }),
     });
 
     const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
 
-    expect(response.status).toBe(503);
+    expect(response.status).toBe(502);
     await expect(response.json()).resolves.toEqual({ x: 1 });
   });
 });
