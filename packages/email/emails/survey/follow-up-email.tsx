@@ -69,7 +69,7 @@ export function FollowUpEmail({
           <Row key={hiddenField.id}>
             <Column className="w-full">
               <Text className="mb-2 text-sm font-semibold text-slate-900" dir="auto">
-                {t("emails.hidden_field")}: {hiddenField.id}
+                {t("emails.hidden_field")}: {hiddenField.name}
               </Text>
               <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700" dir="auto">
                 {hiddenField.value}

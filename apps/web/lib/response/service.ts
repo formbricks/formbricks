@@ -504,7 +504,6 @@ export const getResponseDownloadFile = async (
       resolvedResponses,
       elements,
       userAttributes,
-      hiddenFields,
       isQuotasAllowed,
       organization?.displayTimeZone ?? "UTC"
     );

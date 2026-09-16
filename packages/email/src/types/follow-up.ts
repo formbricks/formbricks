@@ -14,6 +14,9 @@ export interface ProcessedVariable {
 }
 
 export interface ProcessedHiddenField {
+  /** The storage key the value was read from — the row key, never the label. */
   id: string;
+  /** What the field is called, disambiguated on collision (`labelEmbeddedFields`). */
+  name: string;
   value: string;
 }

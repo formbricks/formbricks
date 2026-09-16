@@ -1,6 +1,11 @@
 import { Column, Container, Heading, Hr, Link, Row, Section, Text } from "@react-email/components";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
-import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
+import {
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+  getIngestedStorageKeys,
+} from "@formbricks/types/embedded-data-resolver";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -108,18 +113,20 @@ export function ResponseFinishedEmail({
                   </Row>
                 );
               })}
-            {getIngestedStorageKeys(survey)
-              .filter((hiddenFieldId) => {
-                const hiddenFieldResponse = response.data[hiddenFieldId];
+            {/* ENG-3233: shown by name, read by storage key — which stays the React key, being the
+                only per-survey unique one of the two. */}
+            {labelEmbeddedFields(getIngestedEmbeddedFields(survey))
+              .filter(({ link }) => {
+                const hiddenFieldResponse = response.data[link.storageKey];
                 return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
               })
-              .map((hiddenFieldId) => {
-                const hiddenFieldResponse = response.data[hiddenFieldId] as string;
+              .map(({ link, label }) => {
+                const hiddenFieldResponse = response.data[link.storageKey] as string;
                 return (
-                  <Row key={hiddenFieldId}>
+                  <Row key={link.storageKey}>
                     <Column className="w-full font-medium">
                       <Text className="mb-2 flex items-center gap-2 text-sm">
-                        {hiddenFieldId} <EyeOffIcon />
+                        {label} <EyeOffIcon />
                       </Text>
                       <Text className="mt-0 text-sm break-words whitespace-pre-wrap">
                         {hiddenFieldResponse}
