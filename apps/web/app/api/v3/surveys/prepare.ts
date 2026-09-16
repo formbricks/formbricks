@@ -190,6 +190,15 @@ function deriveFailureOrigin(
   invalidParams: InvalidParam[],
   storedDocument: TV3SurveyDocument
 ): "request" | "storedSurvey" {
+  // Deliberately the default `enforce` policy, while the caller validates the patched document under
+  // `introduced`. The asymmetry looks like it should misattribute — `enforce` reports every precedence
+  // violation the stored survey already has, so `preExisting` is wider than the set the request is
+  // judged against — but it cannot, because the two sides discriminate on the same pair. A precedence
+  // issue's `violation.key` is `recall|<path>|<recallId>` and its `invalidParamSignature` is
+  // `<path>\0<code>\0<recallId>`, so a violation that survives the `introduced` filter is one whose
+  // (path, recallId) is absent from the baseline — and therefore absent from `preExisting` too. The
+  // extra entries are unreachable rather than harmful, and `enforce` keeps this readable as "what is
+  // already wrong with the stored survey".
   const storedValidation = validateV3SurveyDocument(storedDocument);
   if (storedValidation.valid) {
     return "request";
