@@ -16,15 +16,17 @@ allOf:
       — the v1 and v2 write paths store the same map without them — so a stored response may exceed
       them, and the read schema must not claim otherwise.
     maxProperties: 500
+    # Deliberately says nothing about which value shapes are allowed — `ResponseDataMap` above owns
+    # that, and restating its `oneOf` here would mean the write contract silently narrowed (or stopped
+    # bounding) whenever the read union gained a shape. This branch only bounds the two shapes that
+    # have a cardinality to bound, and is inert for every other one.
     additionalProperties:
-      oneOf:
-        - type: string
-        - type: number
-        - type: array
-          maxItems: 1000
-          items:
-            type: string
-        - type: object
+      if:
+        type: array
+      then:
+        maxItems: 1000
+      else:
+        if:
+          type: object
+        then:
           maxProperties: 1000
-          additionalProperties:
-            type: string

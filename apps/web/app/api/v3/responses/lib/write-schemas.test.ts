@@ -222,4 +222,67 @@ describe("ResponseDataMap contract bounds match the schema", () => {
     expect(declared("ResponseDataMap", "maxProperties")).toEqual([]);
     expect(declared("ResponseDataMap", "maxItems")).toEqual([]);
   });
+
+  /**
+   * The input composes the read map and adds bounds. It must not restate which value shapes are
+   * allowed: a second copy of that `oneOf` would go stale the moment the read union gained a shape,
+   * and the failure is silent in the worse direction — the write schema would start rejecting a value
+   * the read schema hands out, while every bound still looked correct. Bounding by `if/then` on the
+   * two shapes that have a cardinality keeps one source of truth for the union.
+   */
+  /**
+   * `embeddedData` and `ttc` are the other two element-keyed maps on this body, and both are stored.
+   * They carry the same key cap, so the contract has to publish it in the same place — these two are
+   * request-only schemas (`ResponseResource` names `ResponseEmbeddedDataInput` in prose but does not
+   * `$ref` it), so the bound sits on them directly rather than needing an input split.
+   */
+  test.each([
+    ["ResponseEmbeddedDataInput", "embeddedData"],
+    ["ResponseTtcMap", "ttc"],
+  ])("%s publishes the same key cap the schema enforces on %s", (file) => {
+    expect(declared(file, "maxProperties")).toEqual([MAX_RESPONSE_DATA_KEYS]);
+  });
+
+  test("the input map bounds the read map without re-declaring its value union", () => {
+    const input = schema("ResponseDataMapInput");
+    // Comments are stripped first: the prose above the bounds explains why the union is *not* restated
+    // here, and naming `oneOf` to say so must not trip the check that no `oneOf` is declared.
+    const declarations = input
+      .split("\n")
+      .filter((line) => !line.trimStart().startsWith("#"))
+      .join("\n");
+
+    expect(input).toContain("$ref: ./ResponseDataMap.yml");
+    expect(declarations).not.toContain("oneOf:");
+  });
+});
+
+/**
+ * `data` was capped first; these are the other two stored, element-keyed maps on the same body.
+ * `embeddedData` matters most: an unmatched name is echoed back in both `name` and `reason` of its own
+ * `invalid_params` entry, so uncapped it turns a large request into a larger rejection.
+ */
+describe("the other element-keyed maps carry the same key cap", () => {
+  const body = (extra: Record<string, unknown>) => ({
+    surveyId: "clct0000000000000000000001",
+    finished: false,
+    data: {},
+    ...extra,
+  });
+  const keys = (n: number, value: unknown) =>
+    Object.fromEntries(Array.from({ length: n }, (_, i) => [`k${i}`, value]));
+
+  test.each([
+    ["embeddedData", "v"],
+    ["ttc", 1],
+  ])("%s accepts the cap and refuses one more", (field, value) => {
+    const at = ZV3CreateResponseBody.safeParse(body({ [field]: keys(MAX_RESPONSE_DATA_KEYS, value) }));
+    const over = ZV3CreateResponseBody.safeParse(body({ [field]: keys(MAX_RESPONSE_DATA_KEYS + 1, value) }));
+
+    expect(at.success).toBe(true);
+    expect(over.success).toBe(false);
+    if (!over.success) {
+      expect(over.error.issues[0].path).toEqual([field]);
+    }
+  });
 });

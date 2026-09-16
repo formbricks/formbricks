@@ -82,6 +82,24 @@ const ZV3ResponseDataValue = z.union([
 const ZV3EmbeddedDataValue = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 
 /**
+ * The same key cap `data` carries, for the other two element-keyed maps on this body.
+ *
+ * `embeddedData` needs it for a second reason beyond storage: every name that matches no declared
+ * field becomes its own `invalid_params` entry, and the entry repeats the name in both `name` and
+ * `reason`. Uncapped, a 2 MB body of distinct short names answers with a 422 several times its own
+ * size — the request is rejected, and the rejection is the expensive part. Only Hub-relayed
+ * `invalid_params` are bounded (`hub-errors.ts`); locally generated ones are not.
+ *
+ * Free to apply here for the same reason the `data` cap is: these endpoints have no callers yet. The
+ * v1 and v2 paths still take both maps unbounded, which stays an open gap rather than a silent
+ * behaviour change.
+ */
+const withKeyCap = <T extends z.ZodType<Record<string, unknown>>>(schema: T, what: string) =>
+  schema.refine((entries) => Object.keys(entries).length <= MAX_RESPONSE_DATA_KEYS, {
+    message: `A response may carry at most ${MAX_RESPONSE_DATA_KEYS} ${what}`,
+  });
+
+/**
  * Submission context a caller may legitimately supply.
  *
  * `.strict()` is the contract's `additionalProperties: false`, and it is what rejects the twelve
@@ -120,8 +138,8 @@ const createFields = {
     .refine((entries) => Object.keys(entries).length <= MAX_RESPONSE_DATA_KEYS, {
       message: `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`,
     }),
-  embeddedData: z.record(z.string(), ZV3EmbeddedDataValue).optional(),
-  ttc: ZV3ResponseTtcInput.optional(),
+  embeddedData: withKeyCap(z.record(z.string(), ZV3EmbeddedDataValue), "Embedded Data fields").optional(),
+  ttc: withKeyCap(ZV3ResponseTtcInput, "timing entries").optional(),
   meta: ZV3ResponseMetaInput.optional(),
   /**
    * Bounded like the batch-delete body in this same file. Without a cap one 2 MB request becomes a
