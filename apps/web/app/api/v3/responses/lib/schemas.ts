@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { declareReference } from "./reference-manifest";
 
 /**
  * The response id is a path parameter, so it is validated here rather than trusted: an unparseable id
@@ -176,6 +177,50 @@ const createFields = {
  * an attempt into a 400 naming the key instead of a silent drop — which is the difference between a
  * caller learning that `createdAt` is server-owned and one believing they backdated a response.
  */
+/**
+ * Every value on this body that names something outside it, declared once (ENG-2861).
+ *
+ * `reference-manifest.test.ts` reads the schema, not this list: a new id-shaped field, or one named
+ * like a reference, fails there until it appears here. The point is that the set cannot grow quietly
+ * — the twelve response BOLA fixes were each a field nobody knew was a reference.
+ */
+declareReference(createFields.surveyId, {
+  kind: "fk",
+  resolvedAgainst: "Survey, resolved and authorized by workspace before the write",
+});
+declareReference(createFields.contactId, {
+  kind: "fk",
+  resolvedAgainst: "Contact filtered by workspaceId, and connected scoped in the write",
+});
+declareReference(createFields.displayId, {
+  kind: "fk",
+  resolvedAgainst: "Display filtered by surveyId and unclaimed, and connected scoped in the write",
+});
+declareReference(createFields.tags, {
+  kind: "fk",
+  resolvedAgainst: "Tag filtered by workspaceId in one query, and connected scoped in the write",
+});
+declareReference(createFields.endingId, {
+  kind: "document-local",
+  resolvedAgainst: "the survey's own endings",
+});
+declareReference(createFields.language, {
+  kind: "document-local",
+  resolvedAgainst: "the survey's own enabled languages",
+});
+declareReference(createFields.data, {
+  kind: "document-local",
+  resolvedAgainst: "the survey's element ids; file-upload values additionally carry an embedded-id",
+});
+declareReference(createFields.embeddedData, {
+  kind: "document-local",
+  resolvedAgainst: "the survey's declared Embedded Data field names",
+});
+declareReference(createFields.singleUseId, {
+  kind: "document-local",
+  resolvedAgainst: "unused for this survey — a token, scoped by surveyId rather than owned elsewhere",
+});
+
 export const ZV3CreateResponseBody = z.object(createFields).strict();
 export type TV3CreateResponseBody = z.infer<typeof ZV3CreateResponseBody>;
 
@@ -200,7 +245,10 @@ export const ZV3PatchResponseBody = z
     // No uniqueness refinement, matching the contract: the patch set is applied as a set, so a
     // repeated id is redundant rather than ambiguous. The service deduplicates before writing the
     // join rows — without that, "redundant" was a composite-primary-key violation and a 500.
-    tags: z.array(z.cuid2()).max(100).optional(),
+    tags: declareReference(z.array(z.cuid2()).max(100).optional(), {
+      kind: "fk",
+      resolvedAgainst: "Tag filtered by workspaceId in one query, and connected scoped in the write",
+    }),
   })
   .strict()
   .refine((body) => Object.keys(body).length > 0, { message: "At least one field must be provided" });
