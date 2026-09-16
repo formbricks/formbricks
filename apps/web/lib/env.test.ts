@@ -173,7 +173,7 @@ describe("env", () => {
     expect(env.AUTHZED_INSECURE).toBe(enabled);
   });
 
-  test("allows AuthZed to be disabled without credentials", async () => {
+  test("parses disabled AuthZed without credentials for builds and diagnostic commands", async () => {
     setTestEnv();
 
     const { env } = await import("./env");
@@ -183,6 +183,62 @@ describe("env", () => {
     expect(env.AUTHZED_TOKEN).toBeUndefined();
     expect(env.AUTHZED_SYSTEM_KEY).toBeUndefined();
   });
+
+  test.each([undefined, "false", "0"])(
+    "refuses server startup when AuthZed enablement is %s",
+    async (enabled) => {
+      setTestEnv({ AUTHZED_ENABLED: enabled });
+      const { assertAuthzedRuntimeConfiguration } = await import("./env");
+      const log = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        expect(assertAuthzedRuntimeConfiguration).toThrow("Formbricks v6 requires AUTHZED_ENABLED=true");
+        expect(log.mock.calls[0][0]).toContain("AUTHZED_ENDPOINT");
+        expect(log.mock.calls[0][0]).toContain("AUTHZED_TOKEN");
+        expect(log.mock.calls[0][0]).toContain("AUTHZED_SYSTEM_KEY");
+        expect(log.mock.calls[0][0]).toContain("AUTHZED_CONSISTENCY");
+      } finally {
+        log.mockRestore();
+      }
+    }
+  );
+
+  test.each([undefined, "minimize_latency"])(
+    "requires fully consistent server configuration, not %s",
+    async (consistency) => {
+      const token = "private-runtime-token";
+      setTestEnv({
+        AUTHZED_ENABLED: "true",
+        AUTHZED_ENDPOINT: "localhost:50051",
+        AUTHZED_SYSTEM_KEY: "formbricks",
+        AUTHZED_TOKEN: token,
+        AUTHZED_CONSISTENCY: consistency,
+      });
+      const { assertAuthzedRuntimeConfiguration } = await import("./env");
+      const log = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        expect(assertAuthzedRuntimeConfiguration).toThrow("AUTHZED_CONSISTENCY=fully_consistent");
+        expect(JSON.stringify(log.mock.calls)).not.toContain(token);
+      } finally {
+        log.mockRestore();
+      }
+    }
+  );
+
+  test.each(["true", "1"])(
+    "accepts complete server configuration with enablement %s without connecting",
+    async (enabled) => {
+      setTestEnv({
+        AUTHZED_ENABLED: enabled,
+        AUTHZED_ENDPOINT: "127.0.0.1:1",
+        AUTHZED_SYSTEM_KEY: "formbricks",
+        AUTHZED_TOKEN: "test-authzed-token",
+        AUTHZED_CONSISTENCY: "fully_consistent",
+      });
+      const { assertAuthzedRuntimeConfiguration, env } = await import("./env");
+      expect(assertAuthzedRuntimeConfiguration).not.toThrow();
+      expect(env.AUTHZED_INSECURE).toBeUndefined();
+    }
+  );
 
   test("allows valid AuthZed credentials to be prepared while disabled", async () => {
     setTestEnv({
