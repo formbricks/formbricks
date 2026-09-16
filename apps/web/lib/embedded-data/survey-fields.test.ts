@@ -173,8 +173,9 @@ describe("withInlinedEmbeddedFields", () => {
  * The survey editor clones the server survey into its working copy and the menu bar compares the two
  * with {@link isDeepEqual} to gate the draft auto-save, the discard-changes dialog and the
  * beforeunload prompt. That comparison short-circuits on differing key counts, so the working copy
- * must stay structurally identical to what the server sent — which is why ENG-1837 does NOT strip the
- * inlined `embeddedFields` there and gives editor surfaces `getDeclaredEmbeddedFields` instead.
+ * must stay structurally identical to what the server sent — which is why the inlined
+ * `embeddedFields` is neither stripped nor reshaped there. Since ENG-2628 it is also the editor's
+ * Embedded Data state: the cards edit that list in place and send it straight back.
  *
  * These cases fail if anyone reintroduces a key-shape mutation on the editor's clone: an untouched
  * editor would then report unsaved changes forever and re-save an open draft every 10 seconds.

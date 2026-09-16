@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurveyVariable } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isExternalImageSrc } from "@/lib/image-hosts";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -14,7 +14,12 @@ interface OptionIdsElementProps {
 
 interface OptionIdsVariablesProps {
   type: "variables";
-  variables: TSurveyVariable[];
+  /**
+   * The survey's computed Embedded Data fields (ENG-2628). A field is addressed everywhere — recall
+   * tokens, logic operands, stored responses — by its link's `storageKey`, which is the id this
+   * badge exists to let an author copy.
+   */
+  fields: TLinkedEmbeddedField[];
 }
 
 type OptionIdsProps = OptionIdsElementProps | OptionIdsVariablesProps;
@@ -70,12 +75,12 @@ export const OptionIds = (props: OptionIdsProps) => {
     }
   };
 
-  const renderVariableIds = (variables: TSurveyVariable[]) => {
+  const renderVariableIds = (fields: TLinkedEmbeddedField[]) => {
     return (
       <div className="flex flex-col gap-2">
-        {variables.map((variable) => (
-          <div key={variable.id}>
-            <IdBadge id={variable.id} label={variable.name} />
+        {fields.map(({ field, link }) => (
+          <div key={link.storageKey}>
+            <IdBadge id={link.storageKey} label={field.name} />
           </div>
         ))}
       </div>
@@ -86,7 +91,7 @@ export const OptionIds = (props: OptionIdsProps) => {
     return (
       <div className="space-y-3">
         <Label className="text-sm font-medium text-gray-700">{t("common.variable_ids")}</Label>
-        <div className="w-full">{renderVariableIds(props.variables)}</div>
+        <div className="w-full">{renderVariableIds(props.fields)}</div>
       </div>
     );
   }

@@ -5,9 +5,9 @@ import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
   RESERVED_FIELD_CATALOG,
   type TReservedFieldCatalogEntry,
-  getDeclaredComputedFields,
-  getDeclaredEmbeddedFields,
-  getDeclaredIngestedStorageKeys,
+  getComputedEmbeddedFields,
+  getIngestedStorageKeys,
+  getSurveyEmbeddedFields,
   listMidSurveyReservedEntries,
   listShadowingNames,
 } from "@formbricks/types/embedded-data-resolver";
@@ -150,9 +150,9 @@ const getElementHeadline = (
  * filters on an id/name/type triple, so the definitions are adapted to that shape once here rather
  * than reshaped at each of the five pickers below.
  *
- * Sourced from `getDeclaredEmbeddedFields`, which derives from the Variables and Hidden Fields cards
- * and ignores the saved rows — in the editor the cards are the live source of truth, and the rows
- * only catch up on save.
+ * ENG-2628: sourced from the survey's rows, like every other reader. The editor's working copy is
+ * now rows-native — the Variables and Hidden Fields cards edit `embeddedFields` directly — so a
+ * card edit reaches these pickers on the next render without anything being derived here.
  */
 interface TComputedFieldOption {
   id: string;
@@ -161,7 +161,7 @@ interface TComputedFieldOption {
 }
 
 const getComputedFieldOptions = (localSurvey: TSurvey): TComputedFieldOption[] =>
-  getDeclaredComputedFields(localSurvey).map(({ field, link }) => ({
+  getComputedEmbeddedFields(localSurvey).map(({ field, link }) => ({
     id: link.storageKey,
     name: field.name,
     type: field.dataType === "number" ? "number" : "text",
@@ -177,10 +177,10 @@ const getComputedFieldOptions = (localSurvey: TSurvey): TComputedFieldOption[] =
 const getDeclaredFieldNames = (localSurvey: TSurvey): string[] =>
   // `listShadowingNames` so the picker and the two value maps (the renderer's and
   // `buildServerEmbeddedValues`) agree on what "declared" means from one definition — ENG-2538 fixed
-  // the value maps by giving them this same list. `getDeclaredEmbeddedFields` rather than the stored
-  // rows because this is the editor: its working copy is stale from the first card edit until save.
+  // the value maps by giving them this same list. The rows, like every other reader: ENG-2628 made
+  // the editor's working copy rows-native, so there is nothing left for it to derive.
   listShadowingNames(
-    getDeclaredEmbeddedFields(localSurvey),
+    getSurveyEmbeddedFields(localSurvey),
     getElementsFromBlocks(localSurvey.blocks).map((element) => element.id)
   );
 
@@ -221,7 +221,7 @@ export const getConditionValueOptions = (
    */
   includeReservedFields = false
 ): TComboboxGroupedOption[] => {
-  const hiddenFields = getDeclaredIngestedStorageKeys(localSurvey);
+  const hiddenFields = getIngestedStorageKeys(localSurvey);
   const variables = getComputedFieldOptions(localSurvey);
   const reservedOptions = includeReservedFields
     ? getPickerReservedEntries(localSurvey).map(toReservedOption)
@@ -491,7 +491,7 @@ export const getMatchValueProps = (
           .flatMap((block) => block.elements);
 
   let variables = getComputedFieldOptions(localSurvey);
-  let hiddenFields = getDeclaredIngestedStorageKeys(localSurvey);
+  let hiddenFields = getIngestedStorageKeys(localSurvey);
 
   const selectedElement = elements.find((element) => element.id === condition.leftOperand.value);
   const selectedVariable = variables.find((variable) => variable.id === condition.leftOperand.value);
@@ -1330,7 +1330,7 @@ export const getActionValueOptions = (
   const allElements = localSurvey.blocks
     .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
     .flatMap((block) => block.elements);
-  const hiddenFields = getDeclaredIngestedStorageKeys(localSurvey);
+  const hiddenFields = getIngestedStorageKeys(localSurvey);
   let variables = getComputedFieldOptions(localSurvey);
 
   const hiddenFieldsOptions = hiddenFields.map((field) => {
