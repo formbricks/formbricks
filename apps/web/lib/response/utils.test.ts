@@ -439,14 +439,18 @@ describe("Response Utils", () => {
         data: { qMulti: { op: "includesOne", value: ["Other"] } },
       });
 
-      // One probe per array position (choices.length), each asserting the entry exists and is
-      // none of the predefined labels. Exact toEqual, not arrayContaining: the old weak matcher is
-      // what let an unbounded clause set pass as "correct" (ENG-3161).
+      // One probe per array position, each asserting the entry exists and is none of the predefined
+      // labels. Exact toEqual, not arrayContaining: the old weak matcher is what let an unbounded
+      // clause set pass as "correct" (ENG-3161).
+      //
+      // 11 positions, not 3: `choices.length` (a, b, other) plus OTHER_WRITE_IN_PROBE_SLACK. The
+      // slack exists because a stored answer can be longer than the choice list — repeated entries,
+      // or choices deleted after collection — and the write-in then sits past index 2.
       expect(result.AND).toEqual([
         {
           AND: [
             {
-              OR: [0, 1, 2].map((index) => ({
+              OR: Array.from({ length: 11 }, (_unused, index) => ({
                 AND: [
                   { data: { path: ["qMulti", String(index)], not: Prisma.DbNull } },
                   { data: { path: ["qMulti", String(index)], not: "A" } },
@@ -592,10 +596,10 @@ describe("Response Utils", () => {
         ),
       });
 
-      // The multi branch emits (choices + 1) probes x (labels + 1) clauses, so a monolingual
-      // element sits at (c + 1)^2 -- exactly the budget at c = 99.
+      // The multi branch probes (choices + 1 + SLACK) positions x (labels + 1) clauses, so a
+      // monolingual element of c choices costs (c + 9)(c + 1): 9984 at c = 95, 10185 at c = 96.
       test("multi: a survey just inside the budget still builds", () => {
-        const survey = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceMulti, 99);
+        const survey = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceMulti, 95);
 
         const result = buildWhereClause(survey, otherFilter(["q0"]));
 
@@ -603,7 +607,7 @@ describe("Response Utils", () => {
       });
 
       test("multi: a survey just past the budget is refused", () => {
-        const survey = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceMulti, 100);
+        const survey = buildChoiceSurvey(TSurveyElementTypeEnum.MultipleChoiceMulti, 96);
 
         expect(() => buildWhereClause(survey, otherFilter(["q0"]))).toThrow(InvalidInputError);
       });
@@ -622,21 +626,21 @@ describe("Response Utils", () => {
         const cheapIds = Array.from({ length: 5 }, (_unused, index) => `q${index}`);
         const cheapSurvey = buildChoiceSurvey(
           TSurveyElementTypeEnum.MultipleChoiceMulti,
-          40,
+          35,
           ["default"],
           cheapIds
         );
-        // 5 x (41 x 41) = 8405, inside the budget.
+        // 5 x (44 x 36) = 7920, inside the budget.
         expect(() => buildWhereClause(cheapSurvey, otherFilter(cheapIds))).not.toThrow();
 
         const manyIds = Array.from({ length: 10 }, (_unused, index) => `q${index}`);
         const manySurvey = buildChoiceSurvey(
           TSurveyElementTypeEnum.MultipleChoiceMulti,
-          40,
+          35,
           ["default"],
           manyIds
         );
-        // 10 x (41 x 41) = 16810, past the budget, though each key alone is far inside it.
+        // 10 x (44 x 36) = 15840, past the budget, though each key alone is far inside it.
         expect(() => buildWhereClause(manySurvey, otherFilter(manyIds))).toThrow(InvalidInputError);
       });
 
