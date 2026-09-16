@@ -101,6 +101,7 @@ export namespace Prisma {
   export type DateTimeFilter = PrismaModelTypes.DateTimeFilter;
   export type DateTimeNullableFilter = PrismaModelTypes.DateTimeNullableFilter;
   export type DisplaySelect = PrismaModelTypes.DisplaySelect;
+  export type EmbeddedDataSelect = PrismaModelTypes.EmbeddedDataSelect;
   export type FeedbackDirectoryUpdateInput = PrismaModelTypes.FeedbackDirectoryUpdateInput;
   export type FeedbackDirectoryWorkspaceUpdateManyWithoutFeedbackDirectoryNestedInput =
     PrismaModelTypes.FeedbackDirectoryWorkspaceUpdateManyWithoutFeedbackDirectoryNestedInput;

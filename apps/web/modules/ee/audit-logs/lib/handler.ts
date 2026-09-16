@@ -330,6 +330,9 @@ export const withAuditLogging = <
           case "feedbackSource":
             targetId = auditLoggingCtx.feedbackSourceId;
             break;
+          case "embeddedData":
+            targetId = auditLoggingCtx.embeddedDataId;
+            break;
           default:
             targetId = UNKNOWN_DATA;
             break;
