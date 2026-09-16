@@ -72,6 +72,40 @@ const COMPARISON_OP_TO_PRISMA: Record<string, string> = {
 };
 
 /**
+ * A half-open `[min, max)` window on a JSON path: what a date-only filter value means against a
+ * column that stores days and instants alike (ENG-3232). `notInRange` treats an absent value as a
+ * match, like `notEquals`.
+ *
+ * Gated on the same dataTypes as the comparisons it is assembled from — a range over a string or
+ * boolean field could only have been crafted by hand, so it fails closed.
+ */
+const buildJsonPathRangeCondition = (
+  column: "meta" | "variables",
+  path: string[],
+  val: Extract<TTypedFieldFilterCondition, { op: "inRange" | "notInRange" }>,
+  dataType: TEmbeddedDataType
+): Prisma.ResponseWhereInput | null => {
+  if (dataType !== "number" && dataType !== "date") return null;
+
+  if (val.op === "inRange") {
+    return {
+      AND: [
+        mkJsonColumnFilter(column, { path, gte: val.min }),
+        mkJsonColumnFilter(column, { path, lt: val.max }),
+      ],
+    };
+  }
+
+  return {
+    OR: [
+      mkJsonColumnFilter(column, { path, lt: val.min }),
+      mkJsonColumnFilter(column, { path, gte: val.max }),
+      mkJsonColumnFilter(column, { path, equals: Prisma.DbNull }),
+    ],
+  };
+};
+
+/**
  * One typed condition → one Prisma JSON-path filter on `meta` or `variables`. `notEquals` and
  * `isNotSet` treat an absent value as a match (same stance as the `data` branch below). Ops that
  * don't fit the field's dataType — text ops on anything but a string, comparisons on a boolean or
@@ -95,26 +129,8 @@ const buildJsonPathCondition = (
     };
   }
 
-  // A half-open [min, max) window: what a date-only filter value means against a column that stores
-  // days and instants alike (ENG-3232). Gated like the comparisons it is assembled from — a range
-  // over a string or boolean field could only have been crafted.
   if (val.op === "inRange" || val.op === "notInRange") {
-    if (dataType !== "number" && dataType !== "date") return null;
-    if (val.op === "inRange") {
-      return {
-        AND: [
-          mkJsonColumnFilter(column, { path, gte: val.min }),
-          mkJsonColumnFilter(column, { path, lt: val.max }),
-        ],
-      };
-    }
-    return {
-      OR: [
-        mkJsonColumnFilter(column, { path, lt: val.min }),
-        mkJsonColumnFilter(column, { path, gte: val.max }),
-        mkJsonColumnFilter(column, { path, equals: Prisma.DbNull }),
-      ],
-    };
+    return buildJsonPathRangeCondition(column, path, val, dataType);
   }
 
   const textOp = TEXT_OP_TO_PRISMA[val.op];
