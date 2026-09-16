@@ -285,6 +285,10 @@ export const EmbeddedDataCard = ({
           otherFieldNames={embeddedFields
             .filter((entry) => entry.link.storageKey !== editing.entry?.link.storageKey)
             .map(declaredEmbeddedFieldName)}
+          // Same exclusion, same reason: an edit keeps its own address and must not read as taking it.
+          takenStorageKeys={embeddedFields
+            .filter((entry) => entry.link.storageKey !== editing.entry?.link.storageKey)
+            .map(({ link }) => link.storageKey)}
           locale={locale}
           onSubmitField={handleSubmitField}
         />
