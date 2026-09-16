@@ -90,6 +90,9 @@ The controller scheduling values also move from the ineffective `envoy.deploymen
 `envoy.deployment.pod`. Move any node selectors, tolerations, topology spread constraints, extra volumes, or
 pod annotations that you placed under the old path before upgrading.
 
+The parent chart no longer repeats the bundled controller's default port list. The
+`envoy.deployment.ports` override remains supported, so existing port overrides need no migration.
+
 ### Database migrations
 
 All seven migrations apply automatically during the upgrade. Two want something from you first: one needs
