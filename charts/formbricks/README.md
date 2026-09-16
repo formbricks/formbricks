@@ -33,6 +33,8 @@ rate limiting.
 - `envoy.controller.enabled=true` installs a bundled Envoy Gateway controller with the release.
 - `envoy.crds.enabled=true` installs Gateway API v1.5.1 and the matching Envoy Gateway CRDs. Set it to `false`
   only when the platform manages both CRD sets separately.
+- `envoy.crds.gatewayAPI.safeUpgradePolicy.enabled=true` opts into a cluster-wide admission policy that denies
+  Gateway API CRD versions older than v1.5.0. It is disabled by default because it also affects unrelated releases.
 - `envoy.controller.enabled=false` keeps the chart in external-controller mode and assumes the cluster already has
   Gateway API CRDs plus an Envoy Gateway controller compatible with
   `envoy.config.envoyGateway.gateway.controllerName`.

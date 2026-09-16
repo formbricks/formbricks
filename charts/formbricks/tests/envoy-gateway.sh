@@ -29,14 +29,22 @@ helm template qa "${chart_dir}" --include-crds "${common_args[@]}" > "${render_d
 grep -q 'gateway.networking.k8s.io/bundle-version: v1.5.1' "${render_dir}/bundled.yaml"
 grep -q 'name: backendtlspolicies.gateway.networking.k8s.io' "${render_dir}/bundled.yaml"
 grep -q 'name: envoyproxies.gateway.envoyproxy.io' "${render_dir}/bundled.yaml"
-grep -B1 '^kind: ValidatingAdmissionPolicy$' "${render_dir}/bundled.yaml" \
-  | grep -q '^apiVersion: admissionregistration.k8s.io/v1$'
-grep -B1 '^kind: ValidatingAdmissionPolicyBinding$' "${render_dir}/bundled.yaml" \
-  | grep -q '^apiVersion: admissionregistration.k8s.io/v1$'
+if grep -q '^kind: ValidatingAdmissionPolicy' "${render_dir}/bundled.yaml"; then
+  echo "Cluster-wide safe-upgrade policies must be opt-in" >&2
+  exit 1
+fi
 grep -q 'image: docker.io/envoyproxy/gateway:v1.8.4' "${render_dir}/bundled.yaml"
 grep -q '^kind: EnvoyProxy$' "${render_dir}/bundled.yaml"
 grep -q '^kind: SecurityPolicy$' "${render_dir}/bundled.yaml"
 grep -q 'statusOnError: 503' "${render_dir}/bundled.yaml"
+
+helm template qa "${chart_dir}" --include-crds "${common_args[@]}" \
+  --set envoy.crds.gatewayAPI.safeUpgradePolicy.enabled=true > "${render_dir}/safe-policy.yaml"
+
+grep -B1 '^kind: ValidatingAdmissionPolicy$' "${render_dir}/safe-policy.yaml" \
+  | grep -q '^apiVersion: admissionregistration.k8s.io/v1$'
+grep -B1 '^kind: ValidatingAdmissionPolicyBinding$' "${render_dir}/safe-policy.yaml" \
+  | grep -q '^apiVersion: admissionregistration.k8s.io/v1$'
 
 helm template qa "${chart_dir}" "${common_args[@]}" \
   --set envoy.deployment.pod.nodeSelector.formbricks-test=scheduling-path \
@@ -46,6 +54,7 @@ helm template qa "${chart_dir}" "${common_args[@]}" \
 
 grep -q 'formbricks-test: scheduling-path' "${render_dir}/controller-overrides.yaml"
 grep -A2 'name: grpc-custom' "${render_dir}/controller-overrides.yaml" | grep -q 'port: 28000'
+grep -A2 'name: grpc-custom' "${render_dir}/controller-overrides.yaml" | grep -q 'targetPort: 18000'
 
 helm template qa "${chart_dir}" --include-crds "${common_args[@]}" \
   --set envoy.crds.enabled=false > "${render_dir}/platform-crds.yaml"
