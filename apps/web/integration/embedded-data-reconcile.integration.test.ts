@@ -751,6 +751,12 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
     // the client minted badly would persist a survey that then fails to load. Refused where the
     // columns are derived, not in the reconcile — the survey copy legitimately feeds that storage
     // keys the backfill moved across from columns no schema ever vetted.
+    //
+    // Two guards now derive those columns and refuse them: `surveyRefinement` (ENG-2628) reaches
+    // this payload first through `validateInputs([updatedSurvey, ZSurvey])`, and
+    // `assertDerivedLegacyColumnsAreStorable` still covers the internal callers that skip it. Both
+    // answer 400, which is what this test is named for, so it asserts the status and the absent
+    // write rather than which of the two got there.
     const { survey } = await seedEditableSurvey();
 
     await expect(
@@ -772,7 +778,7 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
           },
         ],
       })
-    ).rejects.toBeInstanceOf(InvalidInputError);
+    ).rejects.toMatchObject({ statusCode: 400 });
 
     expect(await prisma.surveyEmbeddedData.count({ where: { surveyId: survey.id } })).toBe(0);
   });

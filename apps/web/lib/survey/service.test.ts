@@ -885,7 +885,13 @@ describe("Tests for updateSurvey", () => {
 
     test("refuses a payload whose derived columns would not load again", async () => {
       // The columns are re-parsed by `ZSurvey` on every read, so a derived variable name the legacy
-      // schema refuses would store a survey that cannot be loaded. Caught before the transaction.
+      // schema refuses would store a survey that cannot be loaded.
+      //
+      // Refused twice over since ENG-2628: `surveyRefinement` validates the derived array, so
+      // `validateInputs([updatedSurvey, ZSurvey])` raises first on this public entry point, and
+      // `assertDerivedLegacyColumnsAreStorable` stays as the guard for the internal callers that
+      // reach `updateSurveyInternal` without it. Asserted on the refusal and the absent write
+      // rather than on which of the two got there first.
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
 
       await expect(
@@ -902,13 +908,13 @@ describe("Tests for updateSurvey", () => {
             link: { storageKey: "varbad000000000000000001" },
           },
         ])
-      ).rejects.toThrow(InvalidInputError);
+      ).rejects.toThrow(/lowercase letters, numbers, and underscores/);
 
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
     test("refuses two derived variables that would share a name", async () => {
-      // `ZSurveyVariables` is only an array; the uniqueness rule lives on `ZSurveyBase.variables`,
+      // `ZSurveyVariables` is only an array; the uniqueness rule lives on `ZStoredSurveyVariables`,
       // so a guard parsing the bare array would store a survey `ZSurvey` then refuses to load.
       // A local field and a shared one can reach the same legacy name from different columns.
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
@@ -938,7 +944,7 @@ describe("Tests for updateSurvey", () => {
             link: { storageKey: "varother00000000000000002" },
           },
         ])
-      ).rejects.toThrow(InvalidInputError);
+      ).rejects.toThrow(/Variable names must be unique/);
 
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });

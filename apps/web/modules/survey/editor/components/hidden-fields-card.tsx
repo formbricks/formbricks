@@ -202,8 +202,13 @@ export const HiddenFieldsCard = ({
               e.preventDefault();
               const existingElementIds = elements.map((element) => element.id);
               const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
-              const existingVariableNames = toCardVariables(getSurveyEmbeddedFields(localSurvey)).map(
-                (v) => v.name
+              // Both spellings a computed field answers to, not just its display name: a shared one
+              // is addressed by its library key, so `Plan tier` and `plan_tier` are the same field
+              // and a hidden field taking either would land a second row on one storage key. The
+              // save guard already refuses that; catching it here is where every other collision is
+              // caught, and spares the author a rejected save.
+              const existingVariableNames = toCardVariables(getSurveyEmbeddedFields(localSurvey)).flatMap(
+                ({ id, name }) => [id, name]
               );
               const validateIdError = validateId(
                 hiddenField,
