@@ -1,18 +1,22 @@
+import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import { RESERVED_FIELD_CATALOG } from "@formbricks/types/embedded-data-resolver";
 import { getAutoCapturedFields } from "./auto-captured-fields";
 
-const byName = (name: string) => getAutoCapturedFields().find((field) => field.name === name);
+/** Returns the key itself, so a label assertion reads which translation key was chosen. */
+const t = ((key: string) => key) as unknown as TFunction;
+
+const byName = (name: string) => getAutoCapturedFields(t).find((field) => field.name === name);
 
 describe("getAutoCapturedFields", () => {
   test("lists exactly the catalog entries a human-facing surface shows", () => {
-    expect(getAutoCapturedFields().map((field) => field.name)).toEqual(
+    expect(getAutoCapturedFields(t).map((field) => field.name)).toEqual(
       RESERVED_FIELD_CATALOG.filter((entry) => entry.display !== "none").map((entry) => entry.name)
     );
   });
 
   test("drops the entries the catalog marks as never listed", () => {
-    const names = getAutoCapturedFields().map((field) => field.name);
+    const names = getAutoCapturedFields(t).map((field) => field.name);
     expect(names).not.toContain("responseId");
     expect(names).not.toContain("finished");
     expect(names).not.toContain("startedAt");
@@ -36,9 +40,11 @@ describe("getAutoCapturedFields", () => {
     expect(byName("url")?.privacy).toBe("redactQuery");
   });
 
-  test("labels camelCase catalog names the way a person would write them", () => {
-    expect(byName("deviceType")?.label).toBe("Device Type");
-    expect(byName("ipAddress")?.label).toBe("Ip Address");
-    expect(byName("url")?.label).toBe("Url");
+  test("labels through the same helper the field pickers use, so acronyms match", () => {
+    // Keyed labels, not `formatFieldNameToTitleCase` — which spelled these `Ip Address` and `Url`
+    // while a logic operand for the same field said `IP Address` and `URL` (ENG-1853).
+    expect(byName("deviceType")?.label).toBe("workspace.surveys.responses.device");
+    expect(byName("ipAddress")?.label).toBe("workspace.surveys.responses.ip_address");
+    expect(byName("url")?.label).toBe("common.url");
   });
 });
