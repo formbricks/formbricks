@@ -29,7 +29,9 @@ interface CardActionProps {
   text?: string;
   newTab?: boolean;
   disabled?: boolean;
-  variant?: ButtonProps["variant"];
+  // NonNullable because cva types every variant as `… | null | undefined`; the `?` already
+  // carries optionality, so aliasing the raw type would declare it twice (sonar typescript:S4782).
+  variant?: NonNullable<ButtonProps["variant"]>;
 }
 
 /**
