@@ -18,7 +18,7 @@ interface OptionIdsProps {
  * field's storage key on the row itself, so a second list of the same ids under the card had nothing
  * left to add.
  */
-export const OptionIds = (props: OptionIdsProps) => {
+export const OptionIds = (props: Readonly<OptionIdsProps>) => {
   const { t } = useTranslation();
   const selectedLanguageCode = "default";
 
