@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import enUS from "@/locales/en-US.json";
 import { getHostFromUrl, getOAuthScopeLabel, isLocalhostHost } from "./oauth-client-metadata";
-import { MCP_OAUTH_SCOPES } from "./oauth-urls";
+import { MCP_OAUTH_SCOPES, MCP_PROTECTED_RESOURCE_SCOPES, MCP_RESOURCE_SCOPES } from "./oauth-urls";
 
 const t = (key: string) => `translated:${key}`;
 
@@ -63,5 +63,51 @@ describe("OAuth client metadata helpers", () => {
 
   test("keeps unknown OAuth scopes readable", () => {
     expect(getOAuthScopeLabel("custom:scope", t)).toBe("custom:scope");
+  });
+});
+
+/**
+ * A scope can be grantable without being advertised, and the two lists must be allowed to differ —
+ * but only in that direction, and only on purpose.
+ *
+ * Advertising is what makes a client ask: it reads `scopes_supported` from the protected-resource
+ * metadata and requests those at `/authorize`, where the plugin validates against the scopes it
+ * REGISTERED with. So publishing a scope to clients that registered before it existed earns them
+ * `invalid_scope` on their next consent. That is why `responses:*` ship grantable but unadvertised
+ * (ENG-2862) and are published only when the tools behind them land (ENG-2852).
+ */
+describe("advertised scopes are a deliberate subset of grantable scopes", () => {
+  test("everything advertised is grantable", () => {
+    const grantable = new Set<string>(MCP_OAUTH_SCOPES);
+
+    expect(MCP_PROTECTED_RESOURCE_SCOPES.filter((scope) => !grantable.has(scope))).toEqual([]);
+  });
+
+  test("the responses scopes are grantable but not yet advertised", () => {
+    const grantable = new Set<string>(MCP_OAUTH_SCOPES);
+    const advertised = new Set<string>(MCP_PROTECTED_RESOURCE_SCOPES);
+
+    for (const scope of ["responses:read", "responses:write"]) {
+      expect(grantable.has(scope)).toBe(true);
+      expect(advertised.has(scope)).toBe(false);
+    }
+  });
+
+  test("every other resource scope IS advertised, so this stays a one-off rather than a habit", () => {
+    const advertised = new Set<string>(MCP_PROTECTED_RESOURCE_SCOPES);
+    const unadvertised = [...MCP_OAUTH_SCOPES].filter(
+      (scope) => scope.includes(":") && !advertised.has(scope)
+    );
+
+    expect(unadvertised).toEqual(["responses:read", "responses:write"]);
+  });
+
+  test("the baseline MCP gate lists exactly the advertised resource scopes", () => {
+    // `hasAnyMcpScope(authInfo, MCP_RESOURCE_SCOPES)` is the "at least one resource scope" gate. A
+    // token holding only an unadvertised scope would fail it — fine while none can be issued, and the
+    // reason turning `responses:*` on means adding it here too.
+    expect([...MCP_RESOURCE_SCOPES]).toEqual(
+      MCP_PROTECTED_RESOURCE_SCOPES.filter((scope) => scope !== "offline_access")
+    );
   });
 });
