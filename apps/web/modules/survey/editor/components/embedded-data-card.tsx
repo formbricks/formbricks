@@ -15,6 +15,7 @@ import { EmbeddedDataCardRow } from "@/modules/survey/editor/components/embedded
 import { EmbeddedDataLibraryDialog } from "@/modules/survey/editor/components/embedded-data-library-dialog";
 import { EmbeddedFieldModal } from "@/modules/survey/editor/components/embedded-field-modal";
 import { PromoteEmbeddedFieldDialog } from "@/modules/survey/editor/components/promote-embedded-field-dialog";
+import { embeddedFieldKey, embeddedFieldWarnings } from "@/modules/survey/editor/lib/embedded-field-guards";
 import {
   type TEmbeddedFieldBlocker,
   findEmbeddedFieldRemovalBlocker,
@@ -47,6 +48,8 @@ interface EmbeddedDataCardProps {
   activeElementId: string | null;
   setActiveElementId: (id: string | null) => void;
   quotas: TSurveyQuota[];
+  /** How many responses the survey has. What makes retyping a field a question rather than an edit. */
+  responseCount: number;
   workspaceId: string;
   /** App locale — a date default's picker formats against it. */
   locale: string;
@@ -80,6 +83,7 @@ export const EmbeddedDataCard = ({
   activeElementId,
   setActiveElementId,
   quotas,
+  responseCount,
   workspaceId,
   locale,
 }: Readonly<EmbeddedDataCardProps>) => {
@@ -97,6 +101,7 @@ export const EmbeddedDataCard = ({
   const embeddedFields = getSurveyEmbeddedFields(localSurvey);
   const persistedFields = getSurveyEmbeddedFields(persistedSurvey);
   const libraryHref = `/workspaces/${workspaceId}/settings/workspace/embedded-data`;
+  const warnings = embeddedFieldWarnings(embeddedFields);
 
   const setOpenState = (next: boolean) => {
     setActiveElementId(next ? EMBEDDED_DATA_CARD_ID : null);
@@ -202,6 +207,19 @@ export const EmbeddedDataCard = ({
     setEditing(null);
   };
 
+  /**
+   * The type a field has **as stored**, or null when the survey has never saved it.
+   *
+   * Read off the persisted survey rather than the working copy, so retyping and retyping back is not
+   * two questions, and a field with no stored row is not a question at all: it has no responses to
+   * reinterpret. Addressed on `(source, storageKey)` for the same reason `isFieldAt` is.
+   */
+  const storedDataTypeOf = (entry: TLinkedEmbeddedField | null) =>
+    persistedFields.find(
+      (stored) =>
+        stored.field.source === entry?.field.source && stored.link.storageKey === entry.link.storageKey
+    )?.field.dataType ?? null;
+
   /** Ids a new name would collide with, beside the survey's other fields. */
   const takenIds = [
     ...getElementsFromBlocks(localSurvey.blocks).map((element) => element.id),
@@ -251,9 +269,10 @@ export const EmbeddedDataCard = ({
               {embeddedFields.length > 0 ? (
                 embeddedFields.map((entry) => (
                   <EmbeddedDataCardRow
-                    key={`${entry.field.source}-${entry.link.storageKey}`}
+                    key={embeddedFieldKey(entry)}
                     entry={entry}
                     libraryHref={libraryHref}
+                    warnings={warnings.get(embeddedFieldKey(entry)) ?? []}
                     onEdit={() => setEditing({ entry })}
                     onPromote={() => requestPromote(entry)}
                     onCloneToLocal={() => setCloning(entry)}
@@ -272,7 +291,7 @@ export const EmbeddedDataCard = ({
       {editing && (
         <EmbeddedFieldModal
           // Keyed by the row, so opening a different field remounts the form with that field's values.
-          key={editing.entry ? `${editing.entry.field.source}-${editing.entry.link.storageKey}` : "new"}
+          key={editing.entry ? embeddedFieldKey(editing.entry) : "new"}
           entry={editing.entry}
           open={true}
           setOpen={(next) => {
@@ -290,6 +309,8 @@ export const EmbeddedDataCard = ({
             .filter((entry) => entry.link.storageKey !== editing.entry?.link.storageKey)
             .map(({ link }) => link.storageKey)}
           locale={locale}
+          storedDataType={storedDataTypeOf(editing.entry)}
+          responseCount={responseCount}
           onSubmitField={handleSubmitField}
         />
       )}
