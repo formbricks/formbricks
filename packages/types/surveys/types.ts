@@ -1053,6 +1053,21 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
   const survey = withDerivedLegacyColumns(rawSurvey);
   const { questions, blocks, languages, welcomeCard, endings, isBackButtonHidden } = survey;
 
+  // `ZSurveyBase` already ran this over the *incoming* `variables`, which the derivation above has
+  // just replaced — so on a rows-native payload nothing has checked what the survey will actually
+  // hold. Two computed fields can derive one legacy name (a local `score` alongside a library field
+  // keyed `score`), and that survey would parse here and then fail to load again. `updateSurvey`
+  // refuses it before it writes; running the same schema here is what stops the editor's pre-flight
+  // and the server action's input schema disagreeing with the write path about the same payload.
+  if (survey.embeddedFields !== undefined) {
+    const derived = ZStoredSurveyVariables.safeParse(survey.variables);
+    if (!derived.success) {
+      for (const issue of derived.error.issues) {
+        ctx.addIssue({ code: "custom", message: issue.message, path: ["embeddedFields"] });
+      }
+    }
+  }
+
   // Validate: must have questions OR blocks with elements, not both
   const hasQuestions = questions.length > 0;
   const hasBlocks = blocks.length > 0 && blocks.some((b) => b.elements.length > 0);

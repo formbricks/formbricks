@@ -65,3 +65,54 @@ describe("legacy declared field names still load", () => {
     );
   });
 });
+
+/**
+ * ENG-2628: a rows-native payload replaces `variables` inside `surveyRefinement`, after `ZSurveyBase`
+ * has already validated the array the caller sent. The derived array is what the survey will hold, so
+ * it is the one that has to satisfy the stored-variable rules — otherwise `ZSurvey` accepts a payload
+ * `updateSurvey` then refuses, and the editor's pre-flight disagrees with the write path.
+ */
+describe("derived legacy variables are validated, not just the ones sent", () => {
+  const rowsNativeSurvey = (embeddedFields: unknown[]) => ({
+    ...mockSurvey,
+    followUps: [],
+    // Deliberately legal and unrelated: the derivation discards them, so anything they said would
+    // hide the thing under test.
+    variables: [],
+    hiddenFields: { enabled: false, fieldIds: [] },
+    embeddedFields,
+  });
+
+  const computed = (storageKey: string, name: string, key: string | null) => ({
+    field: { name, key, source: "computed", dataType: "string", defaultValue: null, locked: false },
+    link: { storageKey },
+  });
+
+  test("two computed fields that derive one variable name are refused", () => {
+    // A local field named `score` beside a library field keyed `score`: distinct storage keys, one
+    // derived name, because a shared field is written into the column under its key.
+    const result = ZSurvey.safeParse(
+      rowsNativeSurvey([
+        computed("rk8w2m4qp1zv7ns3jd0xtybc", "score", null),
+        computed("t5hn9wqk3mz1prdv8bx2cfj7", "Score label", "score"),
+      ])
+    );
+
+    expect(result.success).toBe(false);
+    expect(
+      result.error?.issues.some((issue) => issue.message.includes("Variable names must be unique"))
+    ).toBe(true);
+  });
+
+  test("distinct derived names still parse", () => {
+    const result = ZSurvey.safeParse(
+      rowsNativeSurvey([
+        computed("rk8w2m4qp1zv7ns3jd0xtybc", "score", null),
+        computed("t5hn9wqk3mz1prdv8bx2cfj7", "Plan tier", "plan_tier"),
+      ])
+    );
+
+    expect(result.error).toBeUndefined();
+    expect(result.success).toBe(true);
+  });
+});
