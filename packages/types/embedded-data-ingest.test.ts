@@ -7,6 +7,7 @@ import {
   normalizeIngestedValue,
 } from "./embedded-data-ingest";
 import { type TLinkedEmbeddedField, coerceToEmbeddedDataType } from "./embedded-data-resolver";
+import { ZResponseDataValue } from "./responses";
 
 const ingestedField = ({
   storageKey,
@@ -151,6 +152,29 @@ describe("normalizeIngestedValue", () => {
         flag: "coercion_failed",
       });
       expect(normalizeIngestedValue(2, "boolean")).toEqual({ value: "2", flag: "coercion_failed" });
+    });
+
+    test("the stored form is a legal ZResponseDataValue that reads back as the boolean it came from", () => {
+      // The whole round trip in one assertion, because every consumer downstream of ingest — the
+      // filter, the export, the logic engines — compares against the *stored* spelling rather than
+      // against a boolean (ENG-3231). Two things have to hold at once for that to be safe: the
+      // stored value must fit the column's schema (so no reader has to learn a fourth value shape),
+      // and the read seam must turn it back into the boolean the caller sent.
+      for (const [incoming, expected] of [
+        [true, true],
+        ["1", true],
+        ["yes", true],
+        [false, false],
+        ["off", false],
+        [0, false],
+      ] as const) {
+        const normalized = normalizeIngestedValue(incoming, "boolean");
+
+        expect(normalized?.flag).toBeUndefined();
+        expect(normalized?.value).toBe(expected ? "true" : "false");
+        expect(ZResponseDataValue.safeParse(normalized?.value).success).toBe(true);
+        expect(coerceToEmbeddedDataType(normalized?.value, "boolean")).toBe(expected);
+      }
     });
   });
 
