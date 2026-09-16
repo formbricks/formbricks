@@ -43,13 +43,13 @@ Database (PostgreSQL) Access:
    PostgreSQL is deployed within your cluster.
    Retrieve the password using:
    ```sh
-   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.POSTGRES_USER_PASSWORD}" | base64 --decode
+   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.{{ include "formbricks.postgresqlAppPasswordKey" . }}}" | base64 --decode
    ```
    Connection details:
-   - **Host**: `{{ include "formbricks.name" . }}-postgresql`
-   - **Port**: `5432`
-   - **Database**: `{{ .Values.postgresql.auth.database }}`
-   - **Username**: `{{ .Values.postgresql.auth.username }}`
+   - **Host**: `{{ include "formbricks.postgresqlPrimaryHost" . }}`
+   - **Port**: `{{ include "formbricks.postgresqlServicePort" . }}`
+   - **Database**: `{{ include "formbricks.postgresqlDatabase" . }}`
+   - **Username**: `{{ include "formbricks.postgresqlUsername" . }}`
 {{- else if .Values.postgresql.externalDatabaseUrl }}
    You're using an external PostgreSQL database.
    The connection URL is intentionally omitted from these notes because it may contain credentials.

@@ -66,6 +66,10 @@ Formbricks v6 enables AuthZed, `fully_consistent` authorization, and the bundled
 | -------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------- |
 | `authzed.operator.install` | `false`    | `true`     | Set `authzed.operator.install=false` before upgrading to avoid duplicate reconcilers. |
 
+Existing PVC-backed installations that change `postgresql.auth.username` or `postgresql.auth.database` must
+provision the target role and database and migrate existing Formbricks data before upgrading. See the detailed
+warning below.
+
 For a cluster where a compatible operator already watches the Formbricks namespace:
 
 ```yaml
@@ -99,6 +103,18 @@ postgresql:
 Helm cannot condition values passed to the PostgreSQL dependency on a sibling value, so the safe database
 baseline remains in effect. Override `authzed.cluster.resources` and `postgresql.primary.resources` to match the
 expected authorization traffic and the other workloads using the bundled database.
+
+The generated Formbricks `DATABASE_URL` and installation notes follow the bundled PostgreSQL dependency's
+effective service name, service port, username, and database. This includes username, database, and
+service-port overrides supplied through the dependency's `global.postgresql` values. The SpiceDB datastore URI
+and database bootstrap follow the same service name and port while continuing to provision and use the dedicated
+`spicedb` role and database.
+
+> [!WARNING]
+> PostgreSQL initializes users and databases only when the data directory is empty. Before applying connection
+> overrides to an existing PVC-backed installation, create the target user and database and migrate the
+> existing Formbricks data. Otherwise, the corrected consumers will point at credentials or data that do not yet
+> exist.
 
 Install only one operator per Kubernetes cluster. When a platform-managed operator already watches the Formbricks
 namespace, keep `authzed.operator.install=false`; the Formbricks release still owns its `SpiceDBCluster`.
