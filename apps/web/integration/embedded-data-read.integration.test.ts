@@ -127,7 +127,10 @@ describe("Embedded Data read seam (real Postgres)", () => {
    * that), and the first save through the fallback writes rows, so a given survey can only ever
    * take this path once.
    */
-  test("a survey with no rows falls back to its legacy columns, and reconciles itself", async () => {
+  // Named for what it asserts: the read. That this path is taken at most once per survey follows from
+  // the first save writing rows, which `embedded-data-reconcile.integration.test.ts` is what pins —
+  // nothing is saved here.
+  test("a survey with no rows falls back to its legacy columns", async () => {
     const { surveyId } = await seedSurvey();
     await prisma.surveyEmbeddedData.deleteMany({ where: { surveyId } });
 
