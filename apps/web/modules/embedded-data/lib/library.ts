@@ -376,13 +376,22 @@ export const promoteEmbeddedDataToShared = async (
 
   try {
     const updated = await prisma.embeddedData.update({
-      where: { id, workspaceId },
+      // `surveyId: { not: null }` a second time, so the write enforces what the read above checked
+      // rather than trusting it to still hold. Two authors promoting the same field would otherwise
+      // both pass that read and the later write would land its key and description on a row the
+      // earlier one had already shared, with no constraint to catch it.
+      where: { id, workspaceId, surveyId: { not: null } },
       data: { key: promoted.key, description: promoted.description, surveyId: null },
       select: SELECT_SHARED_FIELD,
     });
 
     return asSharedField(updated);
   } catch (error) {
+    // Nothing matched the predicate: the row was promoted or deleted between the read and the write.
+    if (error instanceof Error && "code" in error && error.code === PrismaErrorType.RecordNotFound) {
+      throw new ResourceNotFoundError("embeddedData", id);
+    }
+
     if (!isKeyConflict(error)) throw error;
 
     // The id of the row already holding the key, not just the fact of the clash: it is what the

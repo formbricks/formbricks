@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import type { AuditLoggingCtx } from "@/lib/utils/action-client/types/context";
@@ -42,13 +42,18 @@ import {
  * The workspace owning a field, resolved from the row.
  *
  * Single-field actions take a globally unique id and never a workspace, so the scope authorized
- * against is the row's own and cannot be supplied by the caller. A missing row and a row in a
- * workspace the caller cannot reach answer the same way — `assertCan` refuses the second, and this
- * refuses the first — so neither doubles as an existence oracle.
+ * against is the row's own and cannot be supplied by the caller — the lookup is what says which
+ * workspace to authorize against, and so has to happen first.
+ *
+ * That ordering is why a missing row raises the *authorization* refusal rather than a not-found one.
+ * The action client reduces a throw to `error.message`, so two different messages here would let a
+ * caller tell "no such field" from "a field you may not reach" and walk ids for free. One refusal
+ * for both costs a teammate racing a concurrent delete a less precise message, which is the cheaper
+ * side of the trade.
  */
 const requireWorkspaceScope = async (id: string): Promise<string> => {
   const workspaceId = await getEmbeddedDataWorkspaceId(id);
-  if (!workspaceId) throw new ResourceNotFoundError("embeddedData", id);
+  if (!workspaceId) throw new AuthorizationError("Not authorized");
 
   return workspaceId;
 };
@@ -120,13 +125,17 @@ export const createSharedEmbeddedDataAction = authenticatedActionClient
   .action(
     withAuditLogging("created", "embeddedData", async ({ ctx, parsedInput }) => {
       const { workspaceId, ...input } = parsedInput;
-      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
+      // Before the workspace is read, not after: this is the one action the caller names the
+      // workspace on, so there is nothing to resolve first, and `getOrganizationIdFromWorkspaceId`
+      // raises a not-found that would tell an unauthorized caller which workspace ids exist.
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
         type: "workspace",
         id: workspaceId,
       });
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
+
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
 

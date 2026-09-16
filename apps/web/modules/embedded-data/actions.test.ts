@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { z } from "zod";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthorizationError, InvalidInputError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import type { AuditLoggingCtx } from "@/lib/utils/action-client/types/context";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -190,12 +190,17 @@ describe("workspace scope", () => {
     ["delete", deleteSharedEmbeddedDataAction, { id: fieldId }],
     ["promote", promoteEmbeddedDataToSharedAction, { id: fieldId, key: "plan_tier" }],
   ])(
-    "%s refuses an id no row answers to, before authorizing anything",
+    "%s refuses an id no row answers to with the same refusal an unreachable row gets",
     async (_name, action, parsedInput) => {
       mocks.getEmbeddedDataWorkspaceId.mockResolvedValue(null);
-
-      await expect(run(action, parsedInput, ctx)).rejects.toBeInstanceOf(ResourceNotFoundError);
+      await expect(run(action, parsedInput, ctx)).rejects.toThrow("Not authorized");
       expect(assertCan).not.toHaveBeenCalled();
+
+      // The other half of the pair: a row that does exist, in a workspace the caller cannot reach.
+      // Same error, same message — which is the property that stops the id being an existence oracle.
+      vi.mocked(assertCan).mockRejectedValueOnce(new AuthorizationError("Not authorized"));
+      mocks.getEmbeddedDataWorkspaceId.mockResolvedValue(otherWorkspaceId);
+      await expect(run(action, parsedInput, ctx)).rejects.toThrow("Not authorized");
     }
   );
 

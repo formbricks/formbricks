@@ -296,11 +296,24 @@ describe("promoteEmbeddedDataToShared", () => {
 
     expect(field).toEqual(sharedRow);
     // The survey's link and its storageKey live on SurveyEmbeddedData, which promote never writes.
+    // `surveyId: { not: null }` in the predicate is what makes the write a compare-and-set against
+    // the state the read checked, rather than a blind overwrite a second promote could race.
     expect(prisma.embeddedData.update).toHaveBeenCalledWith({
-      where: { id: fieldId, workspaceId },
+      where: { id: fieldId, workspaceId, surveyId: { not: null } },
       data: { key: "plan_tier", description: null, surveyId: null },
       select: expect.anything(),
     });
+  });
+
+  test("answers a row promoted out from under it the same way it answers a missing one", async () => {
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(localRow as never);
+    vi.mocked(prisma.embeddedData.update).mockRejectedValue(
+      Object.assign(new Error("Record to update not found"), { code: PrismaErrorType.RecordNotFound })
+    );
+
+    await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "plan_tier" })).rejects.toThrow(
+      ResourceNotFoundError
+    );
   });
 
   test("refuses a field that is already shared, or lives in another workspace", async () => {
