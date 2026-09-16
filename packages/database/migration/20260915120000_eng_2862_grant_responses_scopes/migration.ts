@@ -27,14 +27,24 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
  * No-op on a fresh database, as the harness requires: with no `oauthResource` rows the plugin seeds the
  * full current list at first boot.
  *
- * **A NULL `allowedScopes` is left alone on purpose, and that is load-bearing.** The column is nullable,
- * and `resolveResourcePolicy` skips NULL/undefined rather than intersecting against it — so NULL means
- * "allow everything", which already includes the new scopes. `@>` against NULL yields NULL, so the
- * `WHERE` below never matches such a row. Do not "fix" that by coalescing to `'{}'` — measured, that
- * turns the row into an **empty** allow-list, not into `{responses:*}`: the append's subquery compares
- * against the original NULL column, `= ANY(NULL)` is NULL, so nothing is appended. Per ENG-2343, an
- * empty allow-list intersects every request down to zero scopes and throws `invalid_scope`, taking MCP
- * OAuth down on that instance entirely. There is a test pinning this.
+ * **A NULL `allowedScopes` is left alone, but not because NULL is permissive.** An earlier version of
+ * this comment claimed it was — that `resolveResourcePolicy` skips NULL/undefined, so NULL means "allow
+ * everything". That is wrong at this layer, and the mistake is worth recording. The column is nullable
+ * (`TEXT[] DEFAULT ARRAY[]::TEXT[]`, no NOT NULL), but the policy resolver never sees a NULL: Prisma
+ * types the field `String[]`, and reading a row whose column is genuinely NULL yields `[]`, not `null`
+ * — measured against this schema on a live database, not inferred. So a NULL row already behaves as an
+ * **empty** allow-list, which per ENG-2343 intersects every request down to zero scopes.
+ *
+ * The SQL is still right to skip it, for a plainer reason: `@>` against NULL yields NULL, so the `WHERE`
+ * never matches, and `NULL || ARRAY[…]` is NULL, so appending could not repair the row even if it did.
+ * Coalescing to `'{}'` does not help either — the append's subquery compares against the original NULL
+ * column and `= ANY(NULL)` is NULL, so nothing is appended and the row lands at an empty list.
+ *
+ * Such a row is therefore broken for every scope, not just the new ones, and repairing it is a different
+ * fix from this one. It is also not reachable through the product: the DDL defaults to `[]` and Prisma's
+ * `String[]` never writes NULL, so only hand-written SQL can produce one. Parked rather than widened
+ * into here. The test below pins that this migration leaves such a row untouched — which is all it
+ * proves, and all it should.
  */
 
 const RESPONSE_SCOPES = ["responses:read", "responses:write"] as const;
