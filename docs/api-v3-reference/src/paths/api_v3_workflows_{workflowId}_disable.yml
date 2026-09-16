@@ -32,3 +32,4 @@ post:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

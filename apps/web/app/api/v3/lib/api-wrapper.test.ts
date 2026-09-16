@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
-import { TooManyRequestsError } from "@formbricks/types/errors";
+import { ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { withV3ApiWrapper } from "./api-wrapper";
 
@@ -302,6 +302,37 @@ describe("withV3ApiWrapper", () => {
       }),
       "V3 API authentication failed"
     );
+  });
+
+  /**
+   * RFC 9110 §15.5.2 asks a 401 for a challenge "applicable to the target resource". Bearer is applicable
+   * where this API accepts `Authorization: Bearer <fbk_…>` — the `apiKey` and `both` modes — and is a
+   * false statement on a session-cookie route, which consults no HTTP authentication scheme at all.
+   * Pinned per mode, because the difference is the whole point and a single default cannot express it.
+   */
+  test("a 401 on a bearer-accepting route carries the challenge", async () => {
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      handler: vi.fn(async () => Response.json({ ok: true })),
+    });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {} as never);
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("WWW-Authenticate")).toBe('Bearer realm="formbricks"');
+  });
+
+  test("a 401 on a session-only route carries no challenge", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const wrapped = withV3ApiWrapper({
+      auth: "session",
+      handler: vi.fn(async () => Response.json({ ok: true })),
+    });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/tags"), {} as never);
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("WWW-Authenticate")).toBeNull();
   });
 
   test("returns 400 problem response for invalid query input", async () => {
@@ -629,5 +660,61 @@ describe("withV3ApiWrapper", () => {
     const body = await response.json();
     expect(body.code).toBe("internal_server_error");
     expect(body.requestId).toBe("req-boom");
+  });
+
+  /**
+   * The wrapper's catch is a backstop, not a flattener: operations map their own throws (they must — the
+   * MCP tools call them without this wrapper), so anything arriving here escaped that and gets the same
+   * treatment rather than a blanket 500. A missing resource is the case that matters, because 403-not-404
+   * is the disclosure rule the whole surface relies on.
+   */
+  test("maps a thrown ResourceNotFoundError to 403, not a blanket 500", async () => {
+    mockGetSession.mockResolvedValue({ user: { id: "user_1" }, expires: "2026-01-01" });
+
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      handler: async () => {
+        throw new ResourceNotFoundError("Survey", "survey_secret");
+      },
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        headers: { "x-request-id": "req-missing" },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.code).toBe("forbidden");
+    expect(body.requestId).toBe("req-missing");
+    expect(JSON.stringify(body)).not.toContain("survey_secret");
+  });
+
+  // The catch queues the audit event before mapping, so a throw stays attributable.
+  test("queues a failure audit log when the handler throws", async () => {
+    mockGetSession.mockResolvedValue({ user: { id: "user_1" }, expires: "2026-01-01" });
+
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      action: "created",
+      targetType: "survey",
+      handler: async () => {
+        throw new Error("boom");
+      },
+    });
+
+    await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        method: "POST",
+        headers: { "x-request-id": "req-audit" },
+      }),
+      {} as never
+    );
+
+    expect(mockQueueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failure", eventId: "req-audit" })
+    );
   });
 });

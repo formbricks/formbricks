@@ -4414,7 +4414,8 @@
       "value_date": "Value (Date)",
       "value_id": "Value ID",
       "value_number": "Value (Number)",
-      "value_text": "Value (Text)"
+      "value_text": "Value (Text)",
+      "view_survey": "View survey"
     },
     "workflows": {
       "add_action": "Add action",
