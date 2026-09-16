@@ -173,17 +173,26 @@ type TTypedFieldFilterCondition = NonNullable<TResponseFilterCriteria["reserved"
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * The UTC day after a `YYYY-MM-DD`, in the same spelling — the exclusive upper bound of that day.
+ * The UTC day after a `YYYY-MM-DD`, in the same spelling — the exclusive upper bound of that day —
+ * or `null` when that day has no representable successor.
  *
  * Through UTC arithmetic rather than string arithmetic so month, year and leap-day ends roll over,
  * and deliberately not through the local-zone constructor: `new Date(2026, 8, 1)` is midnight
  * wherever the browser happens to be, which lands the boundary on the wrong day for anyone east or
  * west of Greenwich — the same saved filter would then answer differently per viewer.
+ *
+ * The one day that has no successor is `9999-12-31`: `toISOString` switches to ISO 8601's expanded
+ * year form past it and returns `+010000-01-01T…`, whose first ten characters are `+010000-01`. That
+ * is not a date, and as a lexicographic upper bound it sorts below every stored value — so the
+ * window would be empty and the filter would silently match nothing. Refusing to name a bound sends
+ * the caller down the same path a stored instant already takes.
  */
-const nextUtcDay = (dateOnly: string): string => {
+const nextUtcDay = (dateOnly: string): string | null => {
   const day = new Date(`${dateOnly}T00:00:00.000Z`);
   day.setUTCDate(day.getUTCDate() + 1);
-  return day.toISOString().slice(0, 10);
+
+  const next = day.toISOString().slice(0, 10);
+  return DATE_ONLY_PATTERN.test(next) ? next : null;
 };
 
 /**

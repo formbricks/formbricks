@@ -1438,6 +1438,22 @@ describe("surveys", () => {
       expect(buildDateFieldCondition("lessThan", min)).toEqual({ op: "lessThan", value: min });
     });
 
+    test("the last representable day names no upper bound rather than a malformed one", () => {
+      // `new Date("9999-12-31Z")` plus a day is year 10000, which `toISOString` writes in ISO 8601's
+      // expanded form (`+010000-01-01T…`). Sliced to ten characters that is `+010000-01`, and `+`
+      // sorts below every digit — so as a `max` it would empty the window and the filter would match
+      // nothing at all. Falling back to the bare comparison keeps the day matchable.
+      const lastDay = "9999-12-31";
+
+      expect(buildDateFieldCondition("equals", lastDay)).toEqual({ op: "equals", value: lastDay });
+      expect(buildDateFieldCondition("notEquals", lastDay)).toEqual({ op: "notEquals", value: lastDay });
+      expect(buildDateFieldCondition("greaterThan", lastDay)).toEqual({
+        op: "greaterThan",
+        value: lastDay,
+      });
+      expect(buildDateFieldCondition("lessThan", lastDay)).toEqual({ op: "lessThan", value: lastDay });
+    });
+
     test("the window covers both spellings a date field stores", () => {
       const condition = buildDateFieldCondition("equals", "2026-09-01");
       if (condition?.op !== "inRange") throw new Error("expected a range condition");
