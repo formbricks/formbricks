@@ -20,7 +20,11 @@ const survey = {
   id: "survey1",
   blocks: [],
   embeddedFields: [
-    embeddedField("signup_date", "computed", "date"),
+    // The two groups live in different columns: `processIngestedFilters` writes ingested storage
+    // keys into `data`, `processVariableFilters` writes computed ones into `variables`.
+    embeddedField("signup_date", "ingested", "date"),
+    embeddedField("coupon", "ingested", "string"),
+    embeddedField("renewal_date", "computed", "date"),
     embeddedField("plan", "computed", "string"),
   ],
 } as unknown as TSurvey;
@@ -58,20 +62,29 @@ describe("buildWhereClause: date windows", () => {
   });
 
   test("a computed field's window filters the variables column the same way", () => {
-    expect(clausesFor({ variables: { signup_date: { op: "inRange", ...window } } })).toEqual([
+    expect(clausesFor({ variables: { renewal_date: { op: "inRange", ...window } } })).toEqual([
       {
         AND: [
-          { variables: { path: ["signup_date"], gte: window.min } },
-          { variables: { path: ["signup_date"], lt: window.max } },
+          { variables: { path: ["renewal_date"], gte: window.min } },
+          { variables: { path: ["renewal_date"], lt: window.max } },
         ],
       },
     ]);
   });
 
-  test("fails closed: a window on a string-typed field emits nothing", () => {
+  test("fails closed: a window on a string-typed field emits nothing, in either column", () => {
     // Nothing offers a range for a string field, so one could only have been crafted — and `lt` on
     // a string column would silently answer with a lexicographic slice of it.
     expect(clausesFor({ variables: { plan: { op: "inRange", ...window } } })).toEqual([]);
     expect(clausesFor({ variables: { plan: { op: "notInRange", ...window } } })).toEqual([]);
+    expect(clausesFor({ data: { coupon: { op: "inRange", ...window } } })).toEqual([]);
+    expect(clausesFor({ data: { coupon: { op: "notInRange", ...window } } })).toEqual([]);
+  });
+
+  test("fails closed: a window on a key no ingested field answers for emits nothing", () => {
+    // `data` is shared with element ids, so it cannot drop unrecognised keys the way `variables`
+    // does — but a range is still only ever produced for an ingested field.
+    expect(clausesFor({ data: { q1: { op: "inRange", ...window } } })).toEqual([]);
+    expect(clausesFor({ data: { renewal_date: { op: "inRange", ...window } } })).toEqual([]);
   });
 });

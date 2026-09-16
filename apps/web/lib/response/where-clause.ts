@@ -4,6 +4,7 @@ import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
   RESERVED_FIELD_CATALOG,
   getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
   getSurveyEmbeddedFields,
   listShadowingNames,
 } from "@formbricks/types/embedded-data-resolver";
@@ -246,6 +247,52 @@ const buildVariableConditions = (
 };
 
 /**
+ * The `data` keys a range may name: ingested fields whose dataType is ordered.
+ *
+ * The group is shared. `processIngestedFilters` writes ingested storageKeys into it beside the
+ * element ids that have always lived there, so unlike `variables` it cannot simply drop keys it
+ * does not recognise — an element id is a legitimate key that no embedded field answers for.
+ */
+const rangeableIngestedDataKeys = (survey: TSurvey): ReadonlySet<string> =>
+  new Set(
+    getIngestedEmbeddedFields(survey)
+      .filter(({ field }) => field.dataType === "number" || field.dataType === "date")
+      .map(({ link }) => link.storageKey)
+  );
+
+/**
+ * A half-open `[min, max)` window on the `data` column, or nothing at all.
+ *
+ * Same rule as {@link buildJsonPathRangeCondition} on `meta` and `variables`: a range is only
+ * meaningful over an ordered type, and the real producer never asks for another — `inRange` and
+ * `notInRange` reach `data` only through `processIngestedFilters`, which builds them from
+ * `buildTypedFieldCondition`. So this answers crafted criteria, and it answers them by failing
+ * closed rather than by lexicographically ranging a string. `notInRange` lets an absent value
+ * match, like `notEquals` in the same switch.
+ */
+const buildDataRangeConditions = (
+  key: string,
+  val: Extract<NonNullable<TResponseFilterCriteria["data"]>[string], { op: "inRange" | "notInRange" }>,
+  rangeableKeys: ReadonlySet<string>
+): Prisma.ResponseWhereInput[] => {
+  if (!rangeableKeys.has(key)) return [];
+
+  if (val.op === "inRange") {
+    return [{ AND: [{ data: { path: [key], gte: val.min } }, { data: { path: [key], lt: val.max } }] }];
+  }
+
+  return [
+    {
+      OR: [
+        { data: { path: [key], lt: val.min } },
+        { data: { path: [key], gte: val.max } },
+        { data: { path: [key], equals: Prisma.DbNull } },
+      ],
+    },
+  ];
+};
+
+/**
  * The ENG-1848 criteria groups as ready-to-push clauses. Both branches live here rather than in
  * `buildWhereClause`, which sat exactly at the cognitive-complexity limit before this feature —
  * even two plain `if`s there tip it over.
@@ -480,6 +527,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
 
   if (filterCriteria?.data) {
     const data: Prisma.ResponseWhereInput[] = [];
+    const rangeableIngestedKeys = rangeableIngestedDataKeys(survey);
 
     Object.entries(filterCriteria.data).forEach(([key, val]) => {
       const elements = getElementsFromBlocks(survey.blocks);
@@ -584,21 +632,9 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
             },
           });
           break;
-        // The day a date-only filter value names, as the half-open window it is (ENG-3232); the
-        // complement lets an absent value match, like `notEquals` above.
         case "inRange":
-          data.push({
-            AND: [{ data: { path: [key], gte: val.min } }, { data: { path: [key], lt: val.max } }],
-          });
-          break;
         case "notInRange":
-          data.push({
-            OR: [
-              { data: { path: [key], lt: val.min } },
-              { data: { path: [key], gte: val.max } },
-              { data: { path: [key], equals: Prisma.DbNull } },
-            ],
-          });
+          data.push(...buildDataRangeConditions(key, val, rangeableIngestedKeys));
           break;
         case "includesAll":
           data.push({
