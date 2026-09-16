@@ -2233,7 +2233,7 @@
       "value_source": "Honnan származik az érték?",
       "value_source_column": "Forrás",
       "value_true": "Igaz",
-      "warning_clashing_address": "Egy számított és egy átadott mező ugyanezt a nevet viseli. A felidézés és a logika egyiküket feloldja; nevezze át az egyiket, hogy biztosan tudja, melyik érvényesül.",
+      "warning_clashing_address": "Egy másik mező ezen a kérdőíven ugyanerre a névre válaszol. A felidézés és a logika az egyiket oldja fel; nevezze át az egyiket, hogy biztos legyen abban, melyikről van szó.",
       "warning_reserved_address": "Ez a név most már egy fenntartott, automatikusan rögzített mező. Ez a felmérés megtartja a sajátját, amely itt elsőbbséget élvez, így az automatikusan rögzített érték nem érhető el ezen a néven.",
       "warning_unsafe_address": "Ez a cím megelőzi a jelenlegi elnevezési szabályt. Továbbra is működik; egy új mező nem kaphatná meg ezt a nevet.",
       "when_anonymized": "Amikor a válaszok anonimizálva vannak"

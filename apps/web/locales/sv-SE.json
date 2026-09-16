@@ -2233,7 +2233,7 @@
       "value_source": "Varifrån kommer värdet?",
       "value_source_column": "Källa",
       "value_true": "Sant",
-      "warning_clashing_address": "Ett beräknat och ett inskickat fält delar det här namnet. Återanrop och logik löser ett av dem; byt namn på ett för att vara säker på vilket.",
+      "warning_clashing_address": "Ett annat fält i den här undersökningen svarar på detta namn. Återkallande och logik löser ett av dem; byt namn på ett för att vara säker på vilket.",
       "warning_reserved_address": "Det här namnet är nu ett reserverat auto-infångat fält. Den här undersökningen behåller sitt eget, som vinner här, så det auto-infångade värdet är inte tillgängligt under det här namnet.",
       "warning_unsafe_address": "Den här adressen är äldre än den nuvarande namnregeln. Den fortsätter att fungera; ett nytt fält skulle inte kunna namnges så här.",
       "when_anonymized": "När svar anonymiseras"
