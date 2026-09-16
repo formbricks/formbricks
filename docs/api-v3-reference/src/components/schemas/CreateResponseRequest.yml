@@ -41,7 +41,7 @@ properties:
       Whether this response is complete. Creating with `finished: true` fires the finish side of the
       pipeline immediately, including Hub ingestion.
   data:
-    $ref: ./ResponseDataMap.yml
+    $ref: ./ResponseDataMapInput.yml
   embeddedData:
     $ref: ./ResponseEmbeddedDataInput.yml
   ttc:
