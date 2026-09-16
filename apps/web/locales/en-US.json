@@ -2234,7 +2234,7 @@
       "value_source": "Where does the value come from?",
       "value_source_column": "Source",
       "value_true": "True",
-      "warning_clashing_address": "A calculated and a passed-in field share this name. Recall and logic resolve one of them; rename one to be sure which.",
+      "warning_clashing_address": "Another field on this survey answers to this name. Recall and logic resolve one of them; rename one to be sure which.",
       "warning_reserved_address": "This name is now a reserved auto-captured field. This survey keeps its own, which wins here, so the auto-captured value is not available under this name.",
       "warning_unsafe_address": "This address predates the current naming rule. It keeps working; a new field could not be named this.",
       "when_anonymized": "When responses are anonymized"

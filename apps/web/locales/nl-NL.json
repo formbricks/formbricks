@@ -2233,7 +2233,7 @@
       "value_source": "Waar komt de waarde vandaan?",
       "value_source_column": "Bron",
       "value_true": "Waar",
-      "warning_clashing_address": "Een berekend en een doorgegeven veld delen deze naam. Recall en logica lossen er één van op; hernoem er één om zeker te weten welke.",
+      "warning_clashing_address": "Een ander veld in deze enquête gebruikt deze naam. Recall en logica lossen er één op; hernoem er één om zeker te zijn welke.",
       "warning_reserved_address": "Deze naam is nu een gereserveerd automatisch vastgelegd veld. Deze enquête behoudt zijn eigen veld, dat hier voorrang heeft, dus de automatisch vastgelegde waarde is niet beschikbaar onder deze naam.",
       "warning_unsafe_address": "Dit adres is van vóór de huidige naamgevingsregel. Het blijft werken; een nieuw veld zou deze naam niet kunnen krijgen.",
       "when_anonymized": "Wanneer antwoorden zijn geanonimiseerd"
