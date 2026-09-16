@@ -2185,6 +2185,7 @@
       "new_library_field": "Új könyvtári mező",
       "new_library_field_description": "Egyszer definiálja. A munkaterület bármely felmérése hozzáadhatja.",
       "no_default": "Nincs alapértelmezett",
+      "no_default_placeholder": "–",
       "not_used": "Nem használt",
       "privacy_kept": "Megtartva",
       "privacy_not_stored": "Nem tárolva",

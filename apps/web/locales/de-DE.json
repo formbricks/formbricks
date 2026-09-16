@@ -2185,6 +2185,7 @@
       "new_library_field": "Neues Bibliotheksfeld",
       "new_library_field_description": "Einmal definieren. Jede Umfrage in diesem Workspace kann es hinzufügen.",
       "no_default": "Kein Standard",
+      "no_default_placeholder": "–",
       "not_used": "Nicht verwendet",
       "privacy_kept": "Gespeichert",
       "privacy_not_stored": "Nicht gespeichert",

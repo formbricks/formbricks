@@ -2185,6 +2185,7 @@
       "new_library_field": "Nytt biblioteksfält",
       "new_library_field_description": "Definiera det en gång. Alla undersökningar i den här arbetsytan kan lägga till det.",
       "no_default": "Inget standardvärde",
+      "no_default_placeholder": "–",
       "not_used": "Används inte",
       "privacy_kept": "Bevarad",
       "privacy_not_stored": "Lagras inte",

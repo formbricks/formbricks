@@ -2185,6 +2185,7 @@
       "new_library_field": "New library field",
       "new_library_field_description": "Define it once. Any survey in this workspace can add it.",
       "no_default": "No default",
+      "no_default_placeholder": "–",
       "not_used": "Not used",
       "privacy_kept": "Kept",
       "privacy_not_stored": "Not stored",

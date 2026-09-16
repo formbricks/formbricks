@@ -2185,6 +2185,7 @@
       "new_library_field": "Yeni kütüphane alanı",
       "new_library_field_description": "Bir kez tanımla. Bu çalışma alanındaki herhangi bir anket ekleyebilir.",
       "no_default": "Varsayılan yok",
+      "no_default_placeholder": "–",
       "not_used": "Kullanılmıyor",
       "privacy_kept": "Saklandı",
       "privacy_not_stored": "Saklanmadı",
