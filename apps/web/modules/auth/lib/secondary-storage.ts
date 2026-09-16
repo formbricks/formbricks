@@ -16,10 +16,27 @@ import { env } from "@/lib/env";
 type RedisClient = ReturnType<typeof createClient>;
 
 let clientPromise: Promise<RedisClient> | undefined;
+let supportsGetDel = true;
+
+const GET_AND_DELETE_SCRIPT = `local value = redis.call('GET', KEYS[1])
+if value then redis.call('DEL', KEYS[1]) end
+return value`;
+
+const isGetDelUnsupportedError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return message.includes("unknown command") && message.includes("getdel");
+};
 
 const getClient = (): Promise<RedisClient> => {
   if (!clientPromise) {
-    const client = createClient({ url: env.REDIS_URL, socket: { connectTimeout: 3000 } });
+    const client = createClient({
+      url: env.REDIS_URL,
+      socket: { connectTimeout: 3000 },
+      // Managed Redis services and their network paths can reap idle connections (for example,
+      // Azure Cache for Redis documents a 10-minute idle timeout). Ping well inside that limit.
+      pingInterval: 300_000,
+    });
     client.on("error", (error) => logger.error(error, "Better Auth Redis secondary storage error"));
     clientPromise = client
       .connect()
@@ -54,7 +71,17 @@ export const redisSecondaryStorage = {
   // consumed twice under concurrent requests on different instances.
   getAndDelete: async (key: string): Promise<string | null> => {
     const client = await getClient();
-    return client.getDel(key);
+    if (supportsGetDel) {
+      try {
+        return await client.getDel(key);
+      } catch (error) {
+        if (!isGetDelUnsupportedError(error)) throw error;
+        supportsGetDel = false;
+      }
+    }
+
+    const value = await client.eval(GET_AND_DELETE_SCRIPT, { keys: [key], arguments: [] });
+    return typeof value === "string" ? value : null;
   },
   // Atomic rate-limit counter across instances. INCR + EXPIRE-on-first-write run in a single Lua eval
   // so a crash between the two can't leave a TTL-less (never-expiring) counter that would wedge the

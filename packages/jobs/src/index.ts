@@ -37,6 +37,7 @@ export {
   ZUsageTelemetryJobData,
   ZWebhookDeliveryJobData,
   ZWorkflowRunJobData,
+  ZWorkflowsUsageSnapshotJobData,
   ZWorkflowRunReconcileJobData,
 } from "./types";
 export type {
@@ -48,6 +49,7 @@ export type {
   TTestLogJobData,
   TUsageTelemetryJobData,
   TWebhookDeliveryJobData,
+  TWorkflowsUsageSnapshotJobData,
   TWorkflowRunJobData,
   TWorkflowRunReconcileJobData,
 } from "./types";

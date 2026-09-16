@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon, Wand2 } from "lucide-react";
+import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -13,14 +13,17 @@ import { SuccessMessage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[su
 import { ShareSurveyModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
+import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { AiGlyph, AiStatusLine } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { IconBar } from "@/modules/ui/components/iconbar";
+import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 import { generateExampleResponsesAction, resetSurveyAction } from "../actions";
 
 interface SurveyAnalysisCTAProps {
@@ -73,6 +76,10 @@ export const SurveyAnalysisCTA = ({
   const { refreshAnalysisData } = useResponseFilter();
 
   const appSetupCompleted = survey.type === "app" && workspace.appSetupCompleted;
+
+  // The generation runs inside a server action that dies with the tab, so a reload mid-run throws
+  // away answers the user is waiting on and cannot cheaply ask for again.
+  useBeforeUnloadPrompt(() => isGeneratingExamples);
 
   useEffect(() => {
     setModalState((prev) => ({
@@ -158,7 +165,25 @@ export const SurveyAnalysisCTA = ({
   const handleGenerateExampleResponses = async () => {
     if (isGeneratingExamples) return;
     setIsGeneratingExamples(true);
-    const loadingToastId = toast.loading(t("workspace.surveys.summary.generating_example_responses"));
+    // The status line rides in the loading toast, where the static "Generating..." text used to sit,
+    // rather than in the action row: inline it widened the row enough to squeeze the survey title onto
+    // two lines for the whole wait. `icon: null` drops the toast's own spinner, since the status line
+    // brings the animated AI mark.
+    const loadingToastId = toast.loading(
+      <AiStatusLine
+        isActive
+        messages={[
+          t("workspace.surveys.summary.ai_status_reading_survey"),
+          t("workspace.surveys.summary.ai_status_drafting_answers"),
+          t("workspace.surveys.summary.ai_status_saving_responses"),
+        ]}
+      />,
+      { icon: null }
+    );
+    // Reusing the id turns the loading toast into the result in place. `icon: undefined` is deliberate:
+    // an update merges over the loading toast, so without it the `icon: null` above would carry over
+    // and the result would render without its check or cross.
+    const resultToastOptions = { id: loadingToastId, icon: undefined };
     try {
       const result = await generateExampleResponsesAction({ surveyId: survey.id });
       if (result?.data) {
@@ -166,14 +191,15 @@ export const SurveyAnalysisCTA = ({
           t("workspace.surveys.summary.example_responses_generated_successfully", {
             count: result.data.createdCount,
           }),
-          { id: loadingToastId }
+          resultToastOptions
         );
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"), {
-          id: loadingToastId,
-        });
+        toast.error(
+          errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"),
+          resultToastOptions
+        );
       }
     } finally {
       setIsGeneratingExamples(false);
@@ -184,14 +210,8 @@ export const SurveyAnalysisCTA = ({
     if (isGeneratingExamples) {
       return t("workspace.surveys.summary.generating_example_responses");
     }
-    if (aiUnavailableReason === "not_in_plan") {
-      return t("workspace.surveys.summary.generate_example_responses_locked_plan");
-    }
-    if (aiUnavailableReason === "not_enabled") {
-      return t("workspace.surveys.summary.generate_example_responses_locked_disabled");
-    }
-    if (aiUnavailableReason === "instance_not_configured") {
-      return t("workspace.surveys.summary.generate_example_responses_locked_instance");
+    if (aiUnavailableReason !== null) {
+      return getAIUnavailableMessage(aiUnavailableReason, t);
     }
     if (responseCount > 0) {
       return t("workspace.surveys.summary.generate_example_responses_disabled_has_responses");
@@ -235,7 +255,10 @@ export const SurveyAnalysisCTA = ({
       isVisible: survey.type === "link" && !survey.archivedAt,
     },
     {
-      icon: Wand2,
+      icon: AiGlyph,
+      // The one AI action in a bar of neutral tools, so it carries the kit's colour rather than
+      // sitting in the toolbar as another grey icon.
+      iconClassName: "text-ai-dark",
       tooltip: exampleResponsesTooltip,
       onClick: handleGenerateExampleResponses,
       disabled: isGeneratingExamples || aiUnavailableReason !== null || responseCount > 0,

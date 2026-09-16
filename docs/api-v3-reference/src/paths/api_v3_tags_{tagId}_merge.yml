@@ -1,5 +1,9 @@
 post:
   operationId: mergeTagsV3
+  # Session-only by design, so an API-key caller reading the published reference would only ever get a
+  # 401. Excluded from the generated docs pages until ENG-2533 decides between dropping the paths
+  # and opening them to API keys; the operation stays in the bundle for the contract tests.
+  x-excluded: true
   summary: Merge a tag into another
   description: |
     Moves every response tagged `{tagId}` onto `newTagId`, then deletes `{tagId}`.

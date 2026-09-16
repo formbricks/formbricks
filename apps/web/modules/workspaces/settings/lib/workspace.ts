@@ -123,7 +123,7 @@ export const createWorkspace = async (
     throw new ValidationError("Workspace Name is required");
   }
 
-  const { teamIds, ...data } = workspaceInput;
+  const { teamIds, config: configInput, ...data } = workspaceInput;
   // Captured out here so the guard above still narrows it: inside the transaction callback below,
   // TypeScript widens workspaceInput.name back to `string | undefined`.
   const name = workspaceInput.name;
@@ -164,11 +164,15 @@ export const createWorkspace = async (
 
       const workspace = await tx.workspace.create({
         data: {
-          config: {
-            channel: null,
-            industry: null,
-          },
           ...data,
+          // Built explicitly rather than spread from the caller: the default survey language has to be
+          // one of the workspace's own languages, and a workspace being created has only the seeded
+          // `DEFAULT_WORKSPACE_LANGUAGE`. It is configured afterwards from workspace settings, where
+          // `updateWorkspaceAction` can validate it against the languages that exist (ENG-2816).
+          config: {
+            channel: configInput?.channel ?? null,
+            industry: configInput?.industry ?? null,
+          },
           name,
           organizationId,
           contactAttributeKeys: {

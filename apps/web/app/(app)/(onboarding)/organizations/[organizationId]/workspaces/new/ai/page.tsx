@@ -5,6 +5,7 @@ import { CreateSurveyWithAIOnboarding } from "@/app/(app)/(onboarding)/organizat
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { TemplateCreateQueryClientProvider } from "@/modules/survey/components/template-list/query-client-provider";
 import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-availability";
 
 interface AIOnboardingPageProps {
@@ -42,7 +43,9 @@ const Page = async (props: AIOnboardingPageProps) => {
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center">
-      <CreateSurveyWithAIOnboarding workspaceId={workspace.id} language={locale} />
+      <TemplateCreateQueryClientProvider>
+        <CreateSurveyWithAIOnboarding workspaceId={workspace.id} language={locale} />
+      </TemplateCreateQueryClientProvider>
     </div>
   );
 };

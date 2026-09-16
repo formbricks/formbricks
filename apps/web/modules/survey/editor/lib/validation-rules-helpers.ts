@@ -1,10 +1,70 @@
-import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyElement,
+  TSurveyElementTypeEnum,
+  TSurveyOpenTextElementInputType,
+} from "@formbricks/types/surveys/elements";
 import {
   TAddressField,
   TContactInfoField,
+  TValidationRule,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
 import { RULE_TYPE_CONFIG } from "./validation-rules-config";
+
+/**
+ * The OpenText invariant: no validation rules means `inputType` must be `"text"`.
+ *
+ * The editor derives "validation is on" from the rule count, so any path that empties the rule list
+ * has to reset `inputType` too — otherwise the section reads as off while the element still carries
+ * `inputType: "number" | "email" | "url" | "phone"`, the Long answer toggle stays disabled, and the
+ * rendered input keeps enforcing browser-native format validation for respondents.
+ *
+ * `remainingRuleCount` is the count *after* the change, so deleting one of several rules leaves
+ * `inputType` alone.
+ */
+export const shouldResetInputTypeToText = (
+  elementType: TSurveyElementTypeEnum,
+  remainingRuleCount: number,
+  inputType?: TSurveyOpenTextElementInputType
+): boolean =>
+  elementType === TSurveyElementTypeEnum.OpenText &&
+  remainingRuleCount === 0 &&
+  inputType !== undefined &&
+  inputType !== "text";
+
+/**
+ * The full state transition for deleting one validation rule: the remaining rules plus whether the
+ * caller must also reset `inputType` to `"text"`.
+ *
+ * Returning both together is the point. Deleting the last rule and switching the section off used to
+ * be two code paths and only the latter reset `inputType`, so the editor could leave an OpenText
+ * element with zero rules and `inputType: "number"`. Computing the new rule list without being
+ * handed that decision is now impossible.
+ *
+ * The deletion path deliberately resets only `number`, which is narrower than `handleDisable`.
+ * Toggling the section off is an explicit "stop validating this" action, and `main` already clears
+ * any non-text `inputType` there. Deleting one rule is not that action, and zero rules with a
+ * non-text `inputType` is shipped data rather than the bug state: `app/lib/templates.ts` builds
+ * OpenText elements with `inputType: "email"`, `longAnswer: false` and no `validation` key at all
+ * (lines 139, 281, 2431). Resetting those on a trash-icon click would flip `longAnswer` to true via
+ * `open-element-form.tsx`, turning a template email question into a textarea that still shows
+ * `example@email.com`. `number` is the one case ENG-2419 reports and the one where the leftover type
+ * is vestigial — set by adding a number rule, and keeping Long answer disabled with nothing left
+ * enforcing it.
+ */
+export const applyRuleDeletion = (
+  rules: TValidationRule[],
+  ruleId: string,
+  elementType: TSurveyElementTypeEnum,
+  inputType?: TSurveyOpenTextElementInputType
+): { rules: TValidationRule[]; resetInputTypeToText: boolean } => {
+  const remaining = rules.filter((rule) => rule.id !== ruleId);
+  return {
+    rules: remaining,
+    resetInputTypeToText:
+      inputType === "number" && shouldResetInputTypeToText(elementType, remaining.length, inputType),
+  };
+};
 
 // Field options for address elements
 export const getAddressFields = (t: (key: string) => string): { value: TAddressField; label: string }[] => [
@@ -110,7 +170,21 @@ export const parseRuleValue = (
   }
 
   if (config.valueType === "number") {
-    return Number(value) || 0;
+    // `onKeyDown` blocks the exponent keys but not paste, and `Number()` happily reads `1e5` as
+    // 100000. Accept only a plain decimal — optionally signed, since the numeric rule params are
+    // bare `z.number()` and a negative threshold is legitimate — and treat anything else as 0.
+    // The fractional part is one group starting with the literal `.` rather than `\.?\d*`: the
+    // latter lets a digit run be split between two `\d*`, so a long non-numeric paste backtracks
+    // quadratically (Sonar S8786). Same accepted strings, linear time.
+    if (!/^-?\d*(\.\d*)?$/.test(value.trim())) return 0;
+    // The regex admits an arbitrarily long digit run, and `Number()` turns anything past ~1e308 into
+    // `Infinity`, which is truthy — so `Number(value) || 0` let it through. `createMinParams` /
+    // `createMaxParams` are also truthy-guarded, so it reached the stored rule, and `JSON.stringify`
+    // writes `Infinity` as `null`: a 400-digit paste stored `{ max: null }` against a `z.number()`
+    // param. `NaN` (from a lone `-`, `.` or `-.`, which the regex also admits) was already caught by
+    // the truthy guard; requiring a finite number covers both without relying on falsiness.
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   return value;

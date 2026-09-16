@@ -453,6 +453,7 @@ const END_SCREEN_KEYS = new Set([
   "buttonLink",
   "imageUrl",
   "videoUrl",
+  "hideDefaultIcon",
 ]);
 const REDIRECT_ENDING_KEYS = new Set(["id", "type", "url", "label"]);
 const ENDING_REQUIRED_KEYS = ["id", "type"] as const;

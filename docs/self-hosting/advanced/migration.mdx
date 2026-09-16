@@ -8,27 +8,38 @@ icon: "arrow-right"
 
 Formbricks v6 replaces the legacy authorization evaluator with AuthZed SpiceDB. PostgreSQL remains the source
 of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback, so an existing
-installation must migrate through the bridge-compatible v5 release identified in the v6 release notes.
+installation must prepare its complete authorization graph before serving v6 traffic.
 
-Before selecting a v6 image:
+Use the supported source/target pair in the release notes and the
+[maintenance upgrade procedure](/self-hosting/advanced/v6-maintenance-upgrade). A self-hosted v5 bridge is not required:
 
-1. Back up the Formbricks and SpiceDB PostgreSQL databases, secrets, deployment configuration, image versions,
-   and canonical schema digest.
+1. Enter maintenance, stop all writers, suspend their controllers, and drain in-flight work. Take recoverable
+   backups of the databases, secrets, configuration, and source image versions.
 2. Merge the release-matched AuthZed deployment services or Helm values without overwriting proxy, storage,
    SMTP, or external-datastore customization.
-3. Run the v6 database migrations while the bridge application remains available.
+3. Run the target-image database migrations while writers remain stopped, never against the still-running v5 app.
 4. Run `formbricks-authzed upgrade prepare`, then require `formbricks-authzed upgrade check` to exit `0`.
 5. For one-click or Compose, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. For Helm, set
    `authzed.migrationAcknowledged=true` in the v6 upgrade values.
 6. Deploy v6 and verify critical allow, deny, revocation, and cross-tenant cases.
 
-The update scripts and chart fail before replacing the running release when the deployment contract,
-acknowledgement, schema, outbox, or relationship graph is not ready. Do not bypass the acknowledgement to silence
-a failed gate. See [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6)
-for Docker and Kubernetes commands, guarded schema replacement, backups, repair, and rollback.
+The update script and Helm upgrade hook verify the prepared graph without repairing it. Do not bypass a failed
+gate. Keep maintenance active on failure: after database changes, recovery may require restoring coordinated
+backups rather than running `helm rollback`. Pin explicit releases and digests, not floating tags.
 
-The moving `latest` image tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable
-publication. Existing installations opt into v6 explicitly during that migration window.
+### Changes in Environment Variables
+
+<Note>
+  Both variables below drive SSO just-in-time provisioning, which is part of the Formbricks
+  [Enterprise Edition](/self-hosting/advanced/license). On a community instance they have no effect, so
+  there is nothing to rename.
+</Note>
+
+- **DEFAULT_ORGANIZATION_ID** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ID**, matching the
+  `AUTH_SSO_DEFAULT_TEAM_ID` naming pattern. Rename the variable in your configuration; the value is
+  unchanged. Support for this variable was missing between v3.0 and v5.x, so it takes effect again on v6.
+
+- **DEFAULT_ORGANIZATION_ROLE** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ROLE**.
 
 ## v5.4
 

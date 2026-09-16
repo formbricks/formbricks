@@ -2,8 +2,14 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  collectDeclaredFieldNames,
+  describeDeclaredFieldNameError,
+  validateNewDeclaredFieldNames,
+} from "@formbricks/types/surveys/declared-field-guard";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
+import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { selectSurvey } from "@/lib/survey/service";
 import {
@@ -190,6 +196,25 @@ export async function executeV3SurveyPatch(params: {
     ]);
   }
 
+  // ENG-1839: a newly declared field may not take a reserved name. Before the transaction, so a
+  // refusal is a validation response rather than a rollback, and before `ensureV3WorkspaceLanguages`
+  // — which writes workspace languages — so a rejected patch creates nothing. Names `currentSurvey`
+  // already declares are grandfathered and pass untouched.
+  const declaredFieldNameErrors = validateNewDeclaredFieldNames({
+    existing: collectDeclaredFieldNames(currentSurvey),
+    incoming: collectDeclaredFieldNames(document),
+  });
+  if (declaredFieldNameErrors.length > 0) {
+    throw new V3SurveyReferenceValidationError(
+      declaredFieldNameErrors.map((error) => ({
+        name: error.field,
+        reason: describeDeclaredFieldNameError(error),
+        code: "forbidden_identifier" as const,
+        identifier: error.field,
+      }))
+    );
+  }
+
   const languages = await ensureV3WorkspaceLanguages(currentSurvey.workspaceId, languageRequests, requestId);
   const normalizedScheduling = normalizeSurveyScheduling({
     currentStatus: currentSurvey.status,
@@ -219,19 +244,57 @@ export async function executeV3SurveyPatch(params: {
       ? await buildV3AppSurveyPatchWrites({ currentSurvey, document, data })
       : null;
 
-  const runSurveyUpdate = (client: Prisma.TransactionClient = prisma) =>
+  const runSurveyUpdate = (client: Prisma.TransactionClient) =>
     client.survey.update({ where: { id: currentSurvey.id }, data, select: selectSurvey });
 
   try {
-    // Segment filters live on a separate row; when they change, write them in the SAME transaction as
-    // the survey update so the two can't diverge on a mid-write failure. Patches that don't touch
-    // targeting stay a single statement (no transaction overhead).
-    const persistedSurvey = segmentFilterWrite
-      ? await prisma.$transaction(async (tx) => {
+    // One transaction, always. Two writes have to land with the survey or not at all:
+    //
+    // - Segment filters live on a separate row, so a mid-write failure would leave targeting out of
+    //   step with the survey it belongs to.
+    // - ENG-1837 made the EmbeddedData tables the read source of truth for definitions, so a patch
+    //   that moves `variables` / `hiddenFields` without reconciling the rows leaves recall, the logic
+    //   engine, export columns and the response filters reading the pre-patch set. This used to be a
+    //   dormant inconsistency (readers used the legacy columns this write does update); it stops
+    //   being dormant the moment the readers point at the rows.
+    //
+    // The reconcile therefore runs here rather than after the commit — matching `updateSurveyInternal`
+    // — which is what makes the unconditional transaction necessary: a same-statement fast path can
+    // no longer be correct.
+    const persistedSurvey = await prisma.$transaction(
+      async (tx) => {
+        if (segmentFilterWrite) {
           await setV3SurveySegmentFilters(segmentFilterWrite.segmentId, segmentFilterWrite.filters, tx);
-          return runSurveyUpdate(tx);
-        })
-      : await runSurveyUpdate();
+        }
+
+        const survey = await runSurveyUpdate(tx);
+
+        // ENG-2412: from the patch document, which is what makes the rows the write source of
+        // truth rather than a copy of the columns `data` just wrote. Safe on a partial patch for two
+        // reasons: `prepareV3SurveyPatchInput` merges the body over the current survey first, so both
+        // keys arrive populated; and `resolveDesiredEmbeddedFields` carries a group's current rows
+        // over untouched if its key is absent anyway. `workspaceId` comes from the stored survey,
+        // never the client (ENG-1749).
+        //
+        // NOTE for whoever moves the v3 serializer onto the tables (ENG-1853): `survey` was read
+        // BEFORE this reconcile, so the `embeddedDataLinks` it carries — and the `embeddedFields`
+        // inlined from them below — describe the PRE-patch rows. Inert today, because
+        // `serializeV3SurveyResource` and the audit log read the legacy columns and nothing else
+        // consumes them (`updateSurveyInternal` has the same shape). The moment the serializer reads
+        // the rows, this returns a stale PATCH/MCP response and needs a re-read after the reconcile.
+        await reconcileEmbeddedData(tx, {
+          surveyId: currentSurvey.id,
+          workspaceId: currentSurvey.workspaceId,
+          patch: { variables: document.variables, hiddenFields: document.hiddenFields },
+        });
+
+        return survey;
+      },
+      // Matched to the other reconcile call sites: this transaction rewrites blocks and languages,
+      // reads back through `selectSurvey`'s deep select, and now adds an indexed read plus a write
+      // per changed field — enough to approach Prisma's 5s default on a large survey.
+      { timeout: 20_000, maxWait: 10_000 }
+    );
 
     // ENG-2064: this route writes blocks directly rather than going through updateSurveyInternal, so
     // it needs the same feedback-source reconciliation — it is the surface an automation would use to

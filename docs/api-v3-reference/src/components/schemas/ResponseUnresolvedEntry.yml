@@ -1,0 +1,48 @@
+type: object
+description: >
+  Stored data whose element no longer exists in the survey definition. Deleting an element leaves its
+  answers behind on already-collected responses and nothing cleans them up, so the payload reports
+  them here instead of dropping them silently or faking them into `answers[]` without a type or a
+  label. Consumers doing analysis can ignore this array; consumers doing export or migration should
+  not.
+required:
+  - key
+  - rawValue
+  - reason
+properties:
+  key:
+    type: string
+    description: The key as stored on the response — usually a former element id or hidden-field key.
+  rawValue:
+    description: The stored value, returned verbatim and untyped because nothing describes it any more.
+    oneOf:
+      - type: string
+      - type: number
+      - type: array
+        items:
+          type: string
+      - type: object
+        additionalProperties:
+          type: string
+  reason:
+    type: string
+    enum:
+      - elementNotInSurvey
+      - hiddenFieldNotInSurvey
+      - variableNotInSurvey
+      - valueShapeMismatch
+    description: >
+      Why the entry could not be resolved:
+
+
+      - `elementNotInSurvey` — no element with this id exists in the current definition.
+
+      - `hiddenFieldNotInSurvey` — the key is not among the survey's declared hidden fields.
+
+      - `variableNotInSurvey` — no variable with this id exists in the current definition.
+
+      - `valueShapeMismatch` — the key resolves to a current element **or a declared Embedded Data
+        field**, but the stored value's shape cannot be read as an
+        answer of that element's type (for example a string where the element expects a selection
+        list). Signals element-type churn rather than deletion.
+additionalProperties: false

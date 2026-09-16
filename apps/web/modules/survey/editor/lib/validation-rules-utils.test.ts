@@ -1,7 +1,21 @@
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
-import { createRuleParams, getAvailableRuleTypes, getRuleValue } from "./validation-rules-utils";
+import {
+  MAX_RELATIVE_DATE_AMOUNT,
+  TValidationRule,
+  ZRelativeDateBound,
+} from "@formbricks/types/surveys/validation-rules";
+import {
+  clampRelativeAmount,
+  createRelativeDateParams,
+  createRuleParams,
+  describeRelativeDateRule,
+  getAvailableRuleTypes,
+  getRuleValue,
+  isRelativeDateParams,
+  parseDateRangeRuleValue,
+  parseDateRuleValue,
+} from "./validation-rules-utils";
 
 describe("getAvailableRuleTypes", () => {
   test("should return text rules for openText element with text inputType when no rules exist", () => {
@@ -476,5 +490,240 @@ describe("createRuleParams", () => {
   test("should handle invalid string number (defaults to 3 for maxSelections)", () => {
     const params = createRuleParams("maxSelections", "invalid");
     expect(params).toEqual({ max: 3 });
+  });
+});
+
+describe("relative date params", () => {
+  test("isRelativeDateParams distinguishes relative bounds from fixed dates", () => {
+    expect(isRelativeDateParams({ date: "2026-03-01" })).toBe(false);
+    expect(isRelativeDateParams({ startDate: "2026-03-01", endDate: "2026-03-10" })).toBe(false);
+    expect(isRelativeDateParams({ relative: { amount: 3, unit: "calendarDays", direction: "before" } })).toBe(
+      true
+    );
+    expect(
+      isRelativeDateParams({
+        relativeStart: { amount: 3, unit: "calendarDays", direction: "before" },
+        relativeEnd: { amount: 4, unit: "calendarDays", direction: "after" },
+      })
+    ).toBe(true);
+  });
+
+  test("createRelativeDateParams returns a single bound for single-bound rules", () => {
+    expect(createRelativeDateParams("isLaterThan")).toEqual({
+      relative: { amount: 0, unit: "calendarDays", direction: "before" },
+    });
+  });
+
+  test("createRelativeDateParams returns a window straddling the response date for range rules", () => {
+    expect(createRelativeDateParams("isBetween")).toEqual({
+      relativeStart: { amount: 0, unit: "calendarDays", direction: "before" },
+      relativeEnd: { amount: 0, unit: "calendarDays", direction: "after" },
+    });
+  });
+
+  test("getRuleValue returns undefined for relative params so they do not leak into the text input", () => {
+    const singleBound: TValidationRule = {
+      id: "1",
+      type: "isLaterThan",
+      params: { relative: { amount: 3, unit: "calendarDays", direction: "before" } },
+    };
+    const range: TValidationRule = {
+      id: "2",
+      type: "isBetween",
+      params: {
+        relativeStart: { amount: 3, unit: "workingDays", direction: "before" },
+        relativeEnd: { amount: 4, unit: "workingDays", direction: "after" },
+      },
+    };
+
+    expect(getRuleValue(singleBound)).toBeUndefined();
+    expect(getRuleValue(range)).toBeUndefined();
+  });
+
+  test("getRuleValue still reads fixed date params", () => {
+    const fixed: TValidationRule = {
+      id: "1",
+      type: "isBetween",
+      params: { startDate: "2026-03-01", endDate: "2026-03-10" },
+    };
+
+    expect(getRuleValue(fixed)).toBe("2026-03-01,2026-03-10");
+  });
+});
+
+describe("parseDateRuleValue", () => {
+  test("parses a stored day to local midnight, so the picker shows the day that was saved", () => {
+    const parsed = parseDateRuleValue("2026-03-01");
+
+    expect(parsed?.getFullYear()).toBe(2026);
+    expect(parsed?.getMonth()).toBe(2);
+    expect(parsed?.getDate()).toBe(1);
+    expect(parsed?.getHours()).toBe(0);
+  });
+
+  test.each([undefined, "", "not-a-date", "2026-3-1", "2026-02-30"])(
+    "returns null for %s rather than an invalid or rolled-over Date",
+    (value) => {
+      expect(parseDateRuleValue(value)).toBeNull();
+    }
+  );
+});
+
+describe("parseDateRangeRuleValue", () => {
+  test("splits the stored start,end pair", () => {
+    const { from, to } = parseDateRangeRuleValue("2026-03-01,2026-03-10");
+
+    expect(from?.getDate()).toBe(1);
+    expect(to?.getDate()).toBe(10);
+  });
+
+  test("leaves a half-set or empty range unparsed instead of guessing a bound", () => {
+    expect(parseDateRangeRuleValue("2026-03-01,")).toEqual({
+      from: new Date(2026, 2, 1),
+      to: null,
+    });
+    expect(parseDateRangeRuleValue("")).toEqual({ from: null, to: null });
+    expect(parseDateRangeRuleValue(undefined)).toEqual({ from: null, to: null });
+  });
+});
+
+describe("describeRelativeDateRule", () => {
+  // Mirrors the en-US strings closely enough to read the sentences (plural forms flattened);
+  // interpolates {name} placeholders and records which key each call used.
+  const strings: Record<string, string> = {
+    relative_bound_calendar_days_after: "{count} calendar days after submission",
+    relative_bound_calendar_days_before: "{count} calendar days before submission",
+    relative_bound_submission_day: "the submission day",
+    relative_bound_working_days_after: "{count} working days after submission",
+    relative_bound_working_days_before: "{count} working days before submission",
+    relative_summary_between: "Earliest accepted date: {start}. Latest accepted date: {end}.",
+    relative_summary_earlier_than: "Latest accepted date: {bound}.",
+    relative_summary_later_than: "Earliest accepted date: {bound}.",
+    relative_summary_not_between: "First rejected date: {start}. Last rejected date: {end}.",
+    relative_summary_working_days_note: "Working days skip Saturdays and Sundays.",
+  };
+  const calls: [string, Record<string, string | number> | undefined][] = [];
+  const t = (key: string, options?: Record<string, string | number>) => {
+    const short = key.replace("workspace.surveys.edit.validation.", "");
+    const template = strings[short];
+    if (!template) throw new Error(`missing key ${key}`);
+    calls.push([short, options]);
+    return template.replaceAll(/\{(\w+)\}/g, (_, name: string) => String(options?.[name]));
+  };
+
+  test("returns null for fixed dates and non-date rules", () => {
+    expect(describeRelativeDateRule("isLaterThan", { date: "2026-03-01" }, t)).toBeNull();
+    expect(describeRelativeDateRule("minLength", { min: 3 }, t)).toBeNull();
+  });
+
+  test("reads a single bound as an inclusive edge counted from submission", () => {
+    expect(
+      describeRelativeDateRule(
+        "isLaterThan",
+        { relative: { amount: 3, unit: "calendarDays", direction: "before" } },
+        t
+      )
+    ).toBe("Earliest accepted date: 3 calendar days before submission.");
+    expect(
+      describeRelativeDateRule(
+        "isEarlierThan",
+        { relative: { amount: 2, unit: "calendarDays", direction: "after" } },
+        t
+      )
+    ).toBe("Latest accepted date: 2 calendar days after submission.");
+  });
+
+  test("hands the amount to one whole-phrase key as its ICU count, never as a nested fragment", () => {
+    calls.length = 0;
+    describeRelativeDateRule(
+      "isLaterThan",
+      { relative: { amount: 1, unit: "calendarDays", direction: "before" } },
+      t
+    );
+
+    expect(calls).toEqual([
+      ["relative_bound_calendar_days_before", { count: 1 }],
+      ["relative_summary_later_than", { bound: "1 calendar days before submission" }],
+    ]);
+  });
+
+  test("names the submission day itself when the amount is 0", () => {
+    expect(
+      describeRelativeDateRule(
+        "isLaterThan",
+        { relative: { amount: 0, unit: "workingDays", direction: "after" } },
+        t
+      )
+    ).toBe("Earliest accepted date: the submission day.");
+    expect(
+      describeRelativeDateRule(
+        "isEarlierThan",
+        { relative: { amount: 0, unit: "calendarDays", direction: "before" } },
+        t
+      )
+    ).toBe("Latest accepted date: the submission day.");
+  });
+
+  test("describes both bounds of a range and adds the working-day note only when it applies", () => {
+    expect(
+      describeRelativeDateRule(
+        "isBetween",
+        {
+          relativeStart: { amount: 0, unit: "calendarDays", direction: "before" },
+          relativeEnd: { amount: 10, unit: "workingDays", direction: "after" },
+        },
+        t
+      )
+    ).toBe(
+      "Earliest accepted date: the submission day. Latest accepted date: 10 working days after submission. Working days skip Saturdays and Sundays."
+    );
+    expect(
+      describeRelativeDateRule(
+        "isNotBetween",
+        {
+          relativeStart: { amount: 2, unit: "calendarDays", direction: "before" },
+          relativeEnd: { amount: 0, unit: "workingDays", direction: "after" },
+        },
+        t
+      )
+    ).toBe("First rejected date: 2 calendar days before submission. Last rejected date: the submission day.");
+  });
+});
+
+describe("clampRelativeAmount", () => {
+  test("keeps a whole number inside the schema's range", () => {
+    expect(clampRelativeAmount("3")).toBe(3);
+    expect(clampRelativeAmount("0")).toBe(0);
+    expect(clampRelativeAmount(String(MAX_RELATIVE_DATE_AMOUNT))).toBe(MAX_RELATIVE_DATE_AMOUNT);
+  });
+
+  test("caps an amount the schema would reject", () => {
+    expect(clampRelativeAmount("5000000")).toBe(MAX_RELATIVE_DATE_AMOUNT);
+    expect(clampRelativeAmount(String(MAX_RELATIVE_DATE_AMOUNT + 1))).toBe(MAX_RELATIVE_DATE_AMOUNT);
+  });
+
+  test("floors a negative amount to zero", () => {
+    expect(clampRelativeAmount("-7")).toBe(0);
+  });
+
+  test("truncates a fractional amount rather than rounding", () => {
+    expect(clampRelativeAmount("2.9")).toBe(2);
+  });
+
+  test("reads an unparseable field as zero", () => {
+    expect(clampRelativeAmount("")).toBe(0);
+    expect(clampRelativeAmount("abc")).toBe(0);
+    expect(clampRelativeAmount("Infinity")).toBe(0);
+  });
+
+  test("every clamped amount parses against ZRelativeDateBound", () => {
+    for (const raw of ["-7", "", "abc", "2.9", "5000000", "3", String(MAX_RELATIVE_DATE_AMOUNT + 1)]) {
+      const result = ZRelativeDateBound.safeParse({
+        amount: clampRelativeAmount(raw),
+        unit: "calendarDays",
+        direction: "before",
+      });
+      expect(result.success, `raw input ${JSON.stringify(raw)} should clamp to a valid amount`).toBe(true);
+    }
   });
 });

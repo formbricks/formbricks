@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TDateOperator, TSegmentFilterValue, TTimeUnit } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
+import { formatLocalDay, parseStoredDay } from "@/lib/utils/datetime";
 import { toUTCDateString } from "@/modules/ee/contacts/segments/lib/date-utils";
+import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import {
   Select,
@@ -22,7 +24,8 @@ interface DateFilterValueProps {
 }
 
 export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFilterValueProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [error, setError] = useState("");
 
   // Relative time operators: isOlderThan, isNewerThan
@@ -76,23 +79,23 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
 
     return (
       <div className="flex items-center gap-2">
-        <Input
-          type="date"
-          className="h-9 w-auto bg-white"
+        <DatePicker
+          value={parseStoredDay(betweenValue[0])}
+          locale={locale}
           disabled={viewOnly}
-          value={betweenValue[0] ? betweenValue[0].split("T")[0] : ""}
-          onChange={(e) => {
-            onChange([toUTCDateString(e.target.value), betweenValue[1]]);
+          triggerClassName="h-9 w-[180px]"
+          onChange={(date) => {
+            onChange([toUTCDateString(formatLocalDay(date)), betweenValue[1]]);
           }}
         />
         <span className="text-sm text-slate-600">{t("common.and")}</span>
-        <Input
-          type="date"
-          className="h-9 w-auto bg-white"
+        <DatePicker
+          value={parseStoredDay(betweenValue[1])}
+          locale={locale}
           disabled={viewOnly}
-          value={betweenValue[1] ? betweenValue[1].split("T")[0] : ""}
-          onChange={(e) => {
-            onChange([betweenValue[0], toUTCDateString(e.target.value)]);
+          triggerClassName="h-9 w-[180px]"
+          onChange={(date) => {
+            onChange([betweenValue[0], toUTCDateString(formatLocalDay(date))]);
           }}
         />
       </div>
@@ -104,13 +107,13 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
   const dateValue = typeof value === "string" ? value : "";
 
   return (
-    <Input
-      type="date"
-      className="h-9 w-auto bg-white"
+    <DatePicker
+      value={parseStoredDay(dateValue)}
+      locale={locale}
       disabled={viewOnly}
-      value={dateValue ? dateValue.split("T")[0] : ""}
-      onChange={(e) => {
-        onChange(toUTCDateString(e.target.value));
+      triggerClassName="h-9 w-[180px]"
+      onChange={(date) => {
+        onChange(toUTCDateString(formatLocalDay(date)));
       }}
     />
   );

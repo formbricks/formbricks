@@ -3,6 +3,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { getDeclaredComputedFields } from "@formbricks/types/embedded-data-resolver";
 import {
   TSurveyBlock,
   TSurveyBlockLogic,
@@ -56,6 +57,18 @@ export function LogicEditorActions({
   const { t } = useTranslation();
 
   const blockLogic = block.logic ?? [];
+
+  /**
+   * ENG-1837: which input widget a calculate action gets is driven by the computed field's declared
+   * type, read from the Variables card rather than the saved rows — the author may have just changed
+   * it, and the rows only catch up on save.
+   */
+  const getCalculateFieldType = (storageKey: string): "text" | "number" | undefined => {
+    const dataType = getDeclaredComputedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)
+      ?.field.dataType;
+    if (dataType === undefined) return undefined;
+    return dataType === "number" ? "number" : "text";
+  };
 
   const handleActionsChange = (
     operation: "remove" | "addBelow" | "duplicate" | "update",
@@ -189,10 +202,7 @@ export function LogicEditorActions({
                         id={`action-${idx}-operator`}
                         key={`operator-${action.id}`}
                         showSearch={false}
-                        options={getActionOperatorOptions(
-                          t,
-                          localSurvey.variables.find((v) => v.id === action.variableId)?.type
-                        )}
+                        options={getActionOperatorOptions(t, getCalculateFieldType(action.variableId))}
                         value={action.operator}
                         onChangeValue={(val: string | number | string[]) => {
                           handleValuesChange(idx, {
@@ -214,7 +224,7 @@ export function LogicEditorActions({
                         value={action.value?.value ?? ""}
                         inputProps={{
                           placeholder: "Value",
-                          type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
+                          type: getCalculateFieldType(action.variableId) ?? "text",
                         }}
                         groupedOptions={getActionValueOptions(action.variableId, localSurvey, blockIdx, t)}
                         onChangeValue={(val, option, fromInput) => {

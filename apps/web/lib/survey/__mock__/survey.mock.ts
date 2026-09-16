@@ -1,6 +1,10 @@
 import { Prisma } from "@formbricks/database/prisma";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import {
+  type TLinkedEmbeddedField,
+  deriveLegacyEmbeddedData,
+} from "@formbricks/types/embedded-data-resolver";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
@@ -206,6 +210,7 @@ const baseSurveyProperties = {
   isBackButtonHidden: false,
   isAutoProgressingEnabled: false,
   isCaptureIpEnabled: false,
+  isAnonymizeResponsesEnabled: false,
   endings: [
     {
       id: "umyknohldc7w26ocjdhaa62c",
@@ -256,6 +261,9 @@ export const mockSyncSurveyOutput: SurveyMock = {
   segmentId: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
+  // ENG-1837: the join `selectSurvey` now carries. Empty here, so readers fall back to the legacy
+  // columns above — the shape these fixtures have always described.
+  embeddedDataLinks: [],
   ...baseSurveyProperties,
   followUps: [],
   variables: [],
@@ -283,6 +291,7 @@ export const mockSurveyOutput: SurveyMock = {
   segmentId: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
+  embeddedDataLinks: [],
   followUps: [],
   variables: [],
   showLanguageSwitch: null,
@@ -326,13 +335,18 @@ export const updateSurveyInput: TSurvey = {
   customHeadScriptsMode: null,
 };
 
-export const mockTransformedSurveyOutput = {
-  ...mockSurveyOutput,
-};
+/**
+ * What `transformPrismaSurvey` returns: the raw `embeddedDataLinks` relation is replaced by the
+ * inlined `embeddedFields` the read seam consumes (ENG-1837).
+ */
+const withInlinedEmbeddedFields = <T extends { embeddedDataLinks: unknown[] }>({
+  embeddedDataLinks,
+  ...survey
+}: T) => ({ ...survey, embeddedFields: [] as TLinkedEmbeddedField[] });
 
-export const mockTransformedSyncSurveyOutput = {
-  ...mockSyncSurveyOutput,
-};
+export const mockTransformedSurveyOutput = withInlinedEmbeddedFields(mockSurveyOutput);
+
+export const mockTransformedSyncSurveyOutput = withInlinedEmbeddedFields(mockSyncSurveyOutput);
 
 export const mockSurveyWithLogic: TSurvey = {
   ...mockSyncSurveyOutput,
@@ -576,6 +590,14 @@ export const mockSurveyWithLogic: TSurvey = {
     { id: "siog1dabtpo3l0a3xoxw2922", type: "text", name: "var1", value: "lmao" },
     { id: "km1srr55owtn2r7lkoh5ny1u", type: "number", name: "var2", value: 32 },
   ],
+  // Since ENG-2412 the rows are the only thing `getSurveyEmbeddedFields` reads, so a survey that
+  // declares variables has to carry the matching rows — that is what a real read returns.
+  embeddedFields: deriveLegacyEmbeddedData({
+    variables: [
+      { id: "siog1dabtpo3l0a3xoxw2922", type: "text", name: "var1", value: "lmao" },
+      { id: "km1srr55owtn2r7lkoh5ny1u", type: "number", name: "var2", value: 32 },
+    ],
+  }),
   customHeadScripts: null,
   customHeadScriptsMode: null,
 };

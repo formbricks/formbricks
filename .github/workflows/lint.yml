@@ -79,13 +79,46 @@ jobs:
             git fetch --no-tags --depth=1 origin "${base_sha}"
           fi
 
-          mapfile -d '' migration_files < <(
+          mapfile -d '' base_migration_files < <(
             git diff --diff-filter=ACMR --name-only -z "${base_sha}" HEAD -- \
               'packages/database/migration/*/migration.sql'
           )
 
-          if (( ${#migration_files[@]} == 0 )); then
+          if (( ${#base_migration_files[@]} == 0 )); then
             echo "::notice::No changed schema migrations to lint."
+            exit 0
+          fi
+
+          # The diff against the PR base is the wrong scope on its own for a merge-direction PR --
+          # one that syncs main into a long-lived epic branch. From that base's point of view every
+          # migration main has gained since the fork is newly added, so the step lints migrations
+          # that are already applied in production and immutable by checksum: unfixable findings on
+          # a PR that did not write them.
+          #
+          # A migration is this branch's business only if it is new or changed against *both* the
+          # PR base and main, so intersect the two diffs. For an ordinary PR into main the base is
+          # on main and the two sets are identical, which leaves that path behaving exactly as
+          # before.
+          git fetch --no-tags --depth=1 origin main
+          main_sha="$(git rev-parse FETCH_HEAD)"
+
+          mapfile -d '' main_migration_files < <(
+            git diff --diff-filter=ACMR --name-only -z "${main_sha}" HEAD -- \
+              'packages/database/migration/*/migration.sql'
+          )
+
+          migration_files=()
+          for base_migration_file in "${base_migration_files[@]}"; do
+            for main_migration_file in "${main_migration_files[@]}"; do
+              if [[ "${base_migration_file}" == "${main_migration_file}" ]]; then
+                migration_files+=("${base_migration_file}")
+                break
+              fi
+            done
+          done
+
+          if (( ${#migration_files[@]} == 0 )); then
+            echo "::notice::No schema migrations of this branch's own to lint."
             exit 0
           fi
 

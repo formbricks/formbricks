@@ -1,0 +1,55 @@
+type: object
+description: >
+  Embedded Data values to write, **keyed by field name**.
+
+
+  This is the write counterpart of `embeddedData[]` on the read, and it is keyed the way an author
+  names a field rather than the way storage addresses it. A hidden field is stored under its name but
+  a variable is stored under its cuid, and that split is an implementation detail of the storage
+  layout — the server resolves a name to its storage key through the survey's Embedded Data links, so
+  a caller never sees a cuid and never has to know which kind it is writing.
+
+
+  **Which kinds are writable:**
+
+
+  - `ingested` (hidden fields) — accepted, through the same ingest contract the SDK uses: the name
+    must be declared on the survey, the value is coerced to the field's declared `type`, a `locked`
+    field ignores the write, and the whole payload is bounded. A name the survey does not declare is
+    a 400 rather than a silent drop.
+
+  - `computed` (variables) — accepted, because a management caller correcting a response needs to,
+    and v1 and v2 both allow it today.
+
+  - `reserved` — refused. Auto-captured context describes the submission environment, and a
+    caller-supplied value would be fiction. The three exceptions are `source`, `url` and `action`,
+    which `ResponseMetaInput` accepts for exactly the replay case.
+
+
+  Values follow their field's declared type. A field the payload omits is left as it is; this is a
+  merge over named fields, not a replacement of the collection.
+
+
+  `null` **clears** a field. Omission and `null` therefore mean different things — leave it alone
+  versus remove its value — which is the only reading that makes a merge-shaped map able to express
+  deletion at all. A cleared field is then absent from `embeddedData[]` on the next read, exactly as
+  one that was never written, and a field whose definition carries a `defaultValue` falls back to
+  that default rather than disappearing.
+
+
+  **An ambiguous name is refused.** The read says `key` is unique per `kind` rather than across the
+  collection, because a survey predating the reserved-name guard can hold a variable and a hidden
+  field under one name. This map has no `kind`, so on such a survey a name cannot say which field it
+  means — and guessing would write the caller's value into the wrong one. A name that matches more
+  than one declared field is a 400 naming it; rename one side on the survey to clear it. The set is
+  finite, frozen and tracked, and nothing new can enter it.
+
+
+  Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a
+  name that matches both a declared field and a catalog entry resolves to the declared one.
+additionalProperties:
+  oneOf:
+    - type: string
+    - type: number
+    - type: boolean
+    - type: "null"

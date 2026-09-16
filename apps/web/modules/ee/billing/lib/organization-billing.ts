@@ -15,7 +15,8 @@ import {
 } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
-import { capturePostHogEvent } from "@/lib/posthog";
+import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
+import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -534,9 +535,21 @@ const hasEmailUsedProTrial = async (email: string, proProductId: string): Promis
   return false;
 };
 
+export const DEFAULT_PRO_TRIAL_DAYS = 14;
+// A/B test: shortening the Pro trial from 14 to 7 days. "test" variant gets the short trial.
+const SHORTENED_PRO_TRIAL_DAYS = 7;
+
+export const getProTrialDays = async (organizationId: string): Promise<number> => {
+  const shortenTrialVariant = await getPostHogFeatureFlag(organizationId, "a-b_billing_shorten-trial-days", {
+    organizationId,
+  });
+  return shortenTrialVariant === "test" ? SHORTENED_PRO_TRIAL_DAYS : DEFAULT_PRO_TRIAL_DAYS;
+};
+
 export const createProTrialSubscription = async (
   organizationId: string,
-  customerId: string
+  customerId: string,
+  trialDays: number = DEFAULT_PRO_TRIAL_DAYS
 ): Promise<void> => {
   if (!stripeClient) return;
   const proCatalogItem = await getCatalogItemForPlan("pro", "monthly");
@@ -557,7 +570,7 @@ export const createProTrialSubscription = async (
     {
       customer: customerId,
       items: await getCatalogItemsForPlan("pro", "monthly"),
-      trial_period_days: 14,
+      trial_period_days: trialDays,
       trial_settings: {
         end_behavior: {
           missing_payment_method: "cancel",
@@ -1675,6 +1688,16 @@ export const syncOrganizationBillingFromStripe = async (
   });
 
   await invalidateOrganizationBillingCache(organizationId);
+
+  // Keep the PostHog organization group's plan facts current on every sync (ENG-2851). The daily
+  // workflows snapshot refreshes them too, but a plan change should be breakdown-able the same day.
+  // Additive merge: `name` and `email_domain` set at signup stay untouched. Never throws.
+  groupIdentifyPostHog("organization", organizationId, {
+    plan: cloudPlan,
+    billing_interval: billingInterval,
+    subscription_status: subscriptionStatus,
+    has_payment_method: hasPaymentMethod,
+  });
 
   await emitSubscriptionLifecycleEvent({
     organizationId,

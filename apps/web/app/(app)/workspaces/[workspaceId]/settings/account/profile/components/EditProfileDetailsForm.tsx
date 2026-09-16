@@ -172,6 +172,11 @@ export const EditProfileDetailsForm = ({
                     required
                     placeholder={t("common.full_name")}
                     isInvalid={!!form.formState.errors.name}
+                    // The identity provider owns an SSO user's name: it is re-read on every sign-in
+                    // (`overrideUserInfo` in modules/ee/sso/lib/better-auth-providers.ts), so an edit
+                    // here would be silently reverted at their next login. Same treatment, and the
+                    // same condition, as the email field below.
+                    disabled={user.identityProvider !== "email"}
                   />
                 </FormControl>
                 <FormError />

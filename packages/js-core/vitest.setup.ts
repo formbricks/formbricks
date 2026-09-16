@@ -31,6 +31,9 @@ const windowMock = {
   },
   setInterval: vi.fn(),
   clearInterval: vi.fn(),
+  // The event bus (lib/common/events.ts) dispatches on window; a plain vi.fn() keeps every suite
+  // that transitively emits from crashing, and event tests assert on this mock directly.
+  dispatchEvent: vi.fn(),
 };
 
 // Stub globals

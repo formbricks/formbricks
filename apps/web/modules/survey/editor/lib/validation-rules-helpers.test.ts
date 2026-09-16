@@ -5,15 +5,19 @@ import type {
   TSurveyMultipleChoiceElement,
   TSurveyRankingElement,
 } from "@formbricks/types/surveys/elements";
+import type { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import { RULE_TYPE_CONFIG } from "./validation-rules-config";
 import {
+  applyRuleDeletion,
   getAddressFields,
   getContactInfoFields,
   getDefaultRuleValue,
   getRuleLabels,
   normalizeFileExtension,
   parseRuleValue,
+  shouldResetInputTypeToText,
 } from "./validation-rules-helpers";
+import { createRuleParams } from "./validation-rules-utils";
 
 // Mock translation function
 const mockT = (key: string): string => key;
@@ -233,5 +237,197 @@ describe("parseRuleValue", () => {
     const config = RULE_TYPE_CONFIG.equals;
     const value = parseRuleValue("equals", "test-value", config);
     expect(value).toBe("test-value");
+  });
+
+  // Scientific notation reaches the field by paste (onKeyDown only blocks typing), and `Number()`
+  // reads "1e5" as 100000 — a value the user never entered and cannot read back from the input.
+  describe("number value type rejects scientific notation", () => {
+    const config = RULE_TYPE_CONFIG.isGreaterThan;
+
+    test.each([
+      ["1e5", 0],
+      ["1E5", 0],
+      ["e", 0],
+      ["-1e5", 0],
+      ["1e-5", 0],
+      ["0x10", 0],
+      ["Infinity", 0],
+    ])("parses %j as %i", (input, expected) => {
+      expect(parseRuleValue("isGreaterThan", input, config)).toBe(expected);
+    });
+
+    // Found in review: the regex admits these, so only the finite check stops them. A long digit run
+    // overflows to Infinity, which is truthy and so survived the old `Number(value) || 0`; it then
+    // survived the truthy guard in createMaxParams too and stored `{ max: null }`, because
+    // JSON.stringify writes Infinity as null. The `-` / `.` / `-.` cases were already caught by the
+    // old truthy guard and are pinned here so the finite check is not credited with more than it does.
+    test.each([
+      ["a 400-digit run overflowing to Infinity", "9".repeat(400)],
+      ["a lone minus", "-"],
+      ["a lone decimal point", "."],
+      ["a minus and a point", "-."],
+    ])("parses %s as 0 rather than a non-finite number", (_label, input) => {
+      const parsed = parseRuleValue("isGreaterThan", input, config);
+      expect(parsed).toBe(0);
+      expect(Number.isFinite(parsed)).toBe(true);
+    });
+
+    test("the overflow never reaches the stored rule params", () => {
+      const parsed = parseRuleValue("isLessThan", "9".repeat(400), RULE_TYPE_CONFIG.isLessThan);
+      expect(createRuleParams("isLessThan", parsed)).toEqual({ max: 100 });
+    });
+
+    test.each([
+      ["10", 10],
+      ["2.5", 2.5],
+      [".5", 0.5],
+      // minValue/maxValue/isGreaterThan/isLessThan are bare z.number(), so a negative threshold
+      // is legitimate and must survive the guard.
+      ["-3", -3],
+      ["-2.5", -2.5],
+      [" 7 ", 7],
+    ])("still parses %j as %d", (input, expected) => {
+      expect(parseRuleValue("isGreaterThan", input, config)).toBe(expected);
+    });
+  });
+});
+
+// The editor derives "validation is on" from the rule count, so every path that empties the list
+// must reset inputType — otherwise the section reads as off while the element still carries
+// inputType: "number" | "email" | "url" | "phone", the Long answer toggle stays disabled, and the
+// rendered input keeps enforcing browser-native format validation for respondents.
+describe("shouldResetInputTypeToText", () => {
+  test.each(["number", "email", "url", "phone"] as const)(
+    "resets when the last rule is removed from an OpenText element with inputType %s",
+    (inputType) => {
+      expect(shouldResetInputTypeToText(TSurveyElementTypeEnum.OpenText, 0, inputType)).toBe(true);
+    }
+  );
+
+  test.each([1, 2, 5])("leaves inputType alone while %i rule(s) remain", (remaining) => {
+    expect(shouldResetInputTypeToText(TSurveyElementTypeEnum.OpenText, remaining, "number")).toBe(false);
+  });
+
+  test("is a no-op when inputType is already text", () => {
+    expect(shouldResetInputTypeToText(TSurveyElementTypeEnum.OpenText, 0, "text")).toBe(false);
+  });
+
+  test("is a no-op when the element has no inputType", () => {
+    expect(shouldResetInputTypeToText(TSurveyElementTypeEnum.OpenText, 0, undefined)).toBe(false);
+  });
+
+  test.each([TSurveyElementTypeEnum.Address, TSurveyElementTypeEnum.ContactInfo] as const)(
+    "does not apply to %s elements, which have no inputType to reset",
+    (elementType) => {
+      expect(shouldResetInputTypeToText(elementType, 0, "number")).toBe(false);
+    }
+  );
+});
+
+describe("applyRuleDeletion", () => {
+  const rule = (id: string): TValidationRule =>
+    ({ id, type: "minLength", params: { min: 1 } }) as TValidationRule;
+
+  test("removes only the named rule", () => {
+    const result = applyRuleDeletion(
+      [rule("a"), rule("b"), rule("c")],
+      "b",
+      TSurveyElementTypeEnum.OpenText,
+      "number"
+    );
+    expect(result.rules.map((r) => r.id)).toEqual(["a", "c"]);
+  });
+
+  test("deleting the last rule asks the caller to reset inputType", () => {
+    const result = applyRuleDeletion([rule("a")], "a", TSurveyElementTypeEnum.OpenText, "number");
+    expect(result.rules).toEqual([]);
+    expect(result.resetInputTypeToText).toBe(true);
+  });
+
+  // Found in review: `app/lib/templates.ts` ships OpenText elements with inputType "email",
+  // longAnswer false and no `validation` key (139, 281, 2431), so zero rules with a non-text
+  // inputType is legitimate data. Resetting it here would flip longAnswer to true via
+  // open-element-form.tsx and turn a template email question into a textarea still placeholdered
+  // `example@email.com`. Long answer being disabled for those types is correct, not the ENG-2419 bug.
+  test.each(["email", "url", "phone"] as const)(
+    "deleting the last rule leaves inputType %s alone — zero rules is a shipped state for it",
+    (inputType) => {
+      const result = applyRuleDeletion([rule("a")], "a", TSurveyElementTypeEnum.OpenText, inputType);
+      expect(result.rules).toEqual([]);
+      expect(result.resetInputTypeToText).toBe(false);
+    }
+  );
+
+  // The disable path stays broader on purpose: `main` clears any non-text inputType when the section
+  // is toggled off, and this PR does not change that. Only the delete path is narrowed.
+  test.each(["email", "url", "phone"] as const)(
+    "disabling the section still clears inputType %s, matching main",
+    (inputType) => {
+      expect(shouldResetInputTypeToText(TSurveyElementTypeEnum.OpenText, 0, inputType)).toBe(true);
+    }
+  );
+
+  test("deleting one of several rules leaves inputType alone", () => {
+    const result = applyRuleDeletion([rule("a"), rule("b")], "a", TSurveyElementTypeEnum.OpenText, "number");
+    expect(result.rules.map((r) => r.id)).toEqual(["b"]);
+    expect(result.resetInputTypeToText).toBe(false);
+  });
+
+  test("does not ask for a reset when inputType is already text", () => {
+    expect(
+      applyRuleDeletion([rule("a")], "a", TSurveyElementTypeEnum.OpenText, "text").resetInputTypeToText
+    ).toBe(false);
+  });
+
+  test("deleting an id that is not present is a no-op", () => {
+    const rules = [rule("a"), rule("b")];
+    const result = applyRuleDeletion(rules, "missing", TSurveyElementTypeEnum.OpenText, "number");
+    expect(result.rules.map((r) => r.id)).toEqual(["a", "b"]);
+    expect(result.resetInputTypeToText).toBe(false);
+  });
+
+  test("does not mutate the rules it was given", () => {
+    const rules = [rule("a"), rule("b")];
+    applyRuleDeletion(rules, "a", TSurveyElementTypeEnum.OpenText, "number");
+    expect(rules.map((r) => r.id)).toEqual(["a", "b"]);
+  });
+});
+
+// `parseRuleValue` returning 0 is not the end of the story: `handleRuleValueChange` feeds it into
+// `createRuleParams`, whose `createMinParams`/`createMaxParams` are `Number(value) || defaultValue`
+// — and 0 is falsy, so for every rule type with a non-zero default the rejected paste lands on that
+// default instead of on 0. Asserting the pair together so the value that actually reaches the rule
+// is visible, rather than only what the parser hands back.
+describe("parseRuleValue composed with createRuleParams", () => {
+  test.each([
+    ["isLessThan", "1e3", { max: 100 }],
+    ["maxLength", "1e5", { max: 100 }],
+    ["maxValue", "1e5", { max: 100 }],
+    ["maxSelections", "1e5", { max: 3 }],
+    ["minSelections", "1e5", { min: 1 }],
+    ["minRanked", "1e5", { min: 1 }],
+    ["minRowsAnswered", "1e5", { min: 1 }],
+    ["minLength", "1e5", { min: 0 }],
+    ["minValue", "1e5", { min: 0 }],
+    ["isGreaterThan", "1e5", { min: 0 }],
+  ] as const)("%s rejects %j and stores %j", (ruleType, input, expected) => {
+    const parsed = parseRuleValue(ruleType, input, RULE_TYPE_CONFIG[ruleType]);
+    expect(parsed).toBe(0);
+    expect(createRuleParams(ruleType, parsed)).toEqual(expected);
+  });
+
+  // The guarantee ENG-2419 actually asked for: whatever the fallback resolves to, the pasted
+  // magnitude never survives into the rule.
+  test("the pasted magnitude never reaches the stored rule", () => {
+    const parsed = parseRuleValue("isLessThan", "1e5", RULE_TYPE_CONFIG.isLessThan);
+    expect(createRuleParams("isLessThan", parsed)).not.toEqual({ max: 100000 });
+  });
+
+  // Pre-existing and independent of this PR — a literal 0 hits the same falsy fallback, so a
+  // user typing 0 into maxLength already gets 100 on main. Pinned so that fixing the fallback
+  // (see the ENG-2419 review thread) shows up here as a deliberate diff rather than a surprise.
+  test("a literal 0 is replaced by the rule default too (pre-existing behaviour)", () => {
+    expect(parseRuleValue("maxLength", "0", RULE_TYPE_CONFIG.maxLength)).toBe(0);
+    expect(createRuleParams("maxLength", 0)).toEqual({ max: 100 });
   });
 });

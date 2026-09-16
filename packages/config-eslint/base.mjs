@@ -62,16 +62,30 @@ export const unusedDirectivesConvention = {
   },
 };
 
-// TODO(ENG-2366): enable incrementally — pre-existing violations from the React Compiler-era
-// react-hooks rules that v7's `flat.recommended` turns on. Only the rules with existing
-// violations in the tiers' consumers are listed; the rest of the v7 rule set stays enforced.
-// `apps/web/eslint.config.mjs` carries the same opt-out for the `next` tier.
+/*
+ * React Compiler-era react-hooks rules that v7's `flat.recommended` turns on (ENG-2366). These
+ * were switched off wholesale during the ESLint 9 migration; each now carries the strongest
+ * severity its remaining violation count allows, and the rest of the v7 rule set stays enforced
+ * at flat.recommended's own severity. `apps/web/eslint.config.mjs` makes the same call separately
+ * for the `next` tier, where the counts are much larger.
+ *
+ * Counts are for the tiers' consumers — `packages/surveys` (react-hooks tier) and
+ * `packages/survey-ui` (react tier); `packages/email` is clean. The package lint scripts are a
+ * plain `eslint src`, so a warning surfaces without failing the build.
+ *
+ * Anything still at `warn` here is respondent-facing renderer code, where the fix is a
+ * derive-during-render or state-ownership change rather than a mechanical edit — worth doing, but
+ * not as a side effect of a lint config change.
+ */
 export const reactCompilerRulesOptOut = {
   rules: {
-    "react-hooks/purity": "off",
-    "react-hooks/immutability": "off",
-    "react-hooks/set-state-in-effect": "off",
-    "react-hooks/refs": "off",
+    // 16 violations in packages/surveys. Impure reads during render (ENG-3073).
+    "react-hooks/purity": "warn",
+    // 10 violations in packages/surveys, mostly in survey.tsx (ENG-3071).
+    "react-hooks/immutability": "warn",
+    // 1 in packages/surveys, 2 in packages/survey-ui — each an effect that derives state from a
+    // prop, so the fix is to derive it during render instead (ENG-3072).
+    "react-hooks/set-state-in-effect": "warn",
   },
 };
 

@@ -122,7 +122,7 @@ export function FilterValueCombobox({
           className={cn(
             // Grows into the leftover width of the filter row so long question labels stay
             // readable, without ever getting narrower than the other filter inputs.
-            "flex h-9 min-w-[200px] flex-1 items-center justify-between gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden hover:enabled:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:ring-2 data-[state=open]:ring-slate-400 data-[state=open]:ring-offset-1"
+            "flex h-9 min-w-0 flex-1 basis-36 items-center justify-between gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden hover:enabled:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:ring-2 data-[state=open]:ring-slate-400 data-[state=open]:ring-offset-1"
           )}>
           <span className={cn("truncate", !value && "text-slate-500")} title={value || undefined}>
             {value || t("workspace.analysis.charts.select_value")}

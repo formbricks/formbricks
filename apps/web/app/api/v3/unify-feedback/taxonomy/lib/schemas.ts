@@ -57,6 +57,10 @@ export const ZNodeRecordsQuery = z
   .object({
     workspaceId,
     directoryId,
+    // Stays at 100 while the rest of v3 moved to 250. This route is not in the OpenAPI bundle, so
+    // it is outside the contract job, and its operation forwards `limit` to the Hub and echoes the
+    // Hub's *applied* cap back as `meta.limit` — a silent clamp, which the documented v3 rule
+    // forbids. Raising it here would have widened an undocumented surface into a clamp nobody sees.
     limit: z.coerce.number().int().min(1).max(100).default(100),
   })
   .strict();

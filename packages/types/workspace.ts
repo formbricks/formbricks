@@ -20,6 +20,16 @@ export type TWorkspaceMode = z.infer<typeof ZWorkspaceMode>;
 export const ZWorkspaceConfig = z.object({
   channel: ZWorkspaceConfigChannel.optional(),
   industry: ZWorkspaceConfigIndustry.optional(),
+  /**
+   * The language new surveys in this workspace are authored in (ENG-2816). Unset/null means "whichever
+   * language the person clicking New survey uses the app in".
+   *
+   * A canonical BCP-47 tag limited to the languages the survey runtime ships strings for. The allowed
+   * set lives in `@formbricks/i18n-utils` and is enforced on write by `updateWorkspaceAction` — not
+   * here, because `packages/types` deliberately depends on no other workspace package. Readers must
+   * still treat an unsupported value as unset; `resolveDefaultSurveyLanguage` does.
+   */
+  defaultSurveyLanguage: z.string().trim().min(1).nullish(),
 });
 
 export type TWorkspaceConfig = z.infer<typeof ZWorkspaceConfig>;

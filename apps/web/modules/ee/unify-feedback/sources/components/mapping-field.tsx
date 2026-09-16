@@ -202,7 +202,9 @@ export const FormTargetField = ({
     hasMapping,
     isEnum,
     isTimestamp,
-    mapping?.staticValue,
+    // The whole `mapping`, not just `mapping?.staticValue`: a narrower dependency than the body
+    // actually reads lets the memo keep a value built from a stale mapping (ENG-2366).
+    mapping,
     otherUsageByColumn,
     sourceFields,
     t,
@@ -314,7 +316,7 @@ export const FormTargetField = ({
                 emptyDropdownText={t("workspace.surveys.edit.no_option_found")}
                 showSearch
                 disabled={disabled}
-                comboboxClasses="h-9 w-full max-w-none [&_[role=combobox]]:h-9"
+                comboboxClasses="h-9 w-full max-w-none"
               />
             </div>
             {!isEnum && mapping?.staticValue && mapping.staticValue !== "$now" && (

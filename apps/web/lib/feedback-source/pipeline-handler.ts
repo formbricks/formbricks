@@ -34,7 +34,7 @@ const logFailedRecords = (feedbackSourceId: string, failures: TReconcileFailure[
 const processFeedbackSource = async (
   feedbackSource: TFeedbackSourceWithMappings,
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "blocks" | "languages">,
+  survey: Pick<TSurvey, "id" | "name" | "type" | "blocks" | "languages">,
   workspaceId: string
 ): Promise<void> => {
   const feedbackRecords = transformResponseToFeedbackRecords(
@@ -106,7 +106,7 @@ const processFeedbackSource = async (
  */
 export const handleFeedbackSourcePipeline = async (
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "blocks" | "languages">,
+  survey: Pick<TSurvey, "id" | "name" | "type" | "blocks" | "languages">,
   workspaceId: string
 ): Promise<void> => {
   try {

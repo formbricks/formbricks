@@ -202,13 +202,13 @@ export function AdvancedChartBuilder({
   }, [currentQueryJson, isConfigComplete, feedbackDirectoryId]);
 
   return (
-    <div className="mx-1 space-y-2">
-      <div className="mt-4 flex w-full flex-col gap-3 overflow-hidden rounded-lg border bg-slate-50 p-4">
-        <MeasuresPanel
-          selectedMeasures={state.selectedMeasures}
-          onMeasuresChange={(measures) => dispatch({ type: ACTION.SET_MEASURES, payload: measures })}
-        />
-      </div>
+    <div className="space-y-2">
+      {/* Flat, like every other control in the rail: a filled box here read as a card inside a card. */}
+      <MeasuresPanel
+        hideTitle
+        selectedMeasures={state.selectedMeasures}
+        onMeasuresChange={(measures) => dispatch({ type: ACTION.SET_MEASURES, payload: measures })}
+      />
 
       <AdvancedOptionToggle
         isChecked={filtersOpen}

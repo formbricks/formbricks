@@ -79,12 +79,40 @@ const config = [
     rules: {
       // runtime-only env read in integration/gen-boolean-client.mjs; hashing it in turbo.json is tracked separately (ENG-1682)
       "turbo/no-undeclared-env-vars": ["error", { allowList: ["PATH"] }],
-      // TODO(ENG-2366): enable incrementally — pre-existing violations from the React Compiler-era react-hooks rules
-      "react-hooks/set-state-in-effect": "off",
-      "react-hooks/incompatible-library": "off",
-      "react-hooks/error-boundaries": "off",
-      "react-hooks/immutability": "off",
-      "react-hooks/preserve-manual-memoization": "off",
+      /*
+       * React Compiler-era react-hooks rules (ENG-2366). These were switched off wholesale during
+       * the ESLint 9 migration; each now carries the strongest severity its remaining violation
+       * count allows, on the same per-rule ratchet as the typescript-eslint baseline (ENG-2264).
+       * Counts below are for apps/web and were measured with `--no-inline-config`.
+       *
+       * Note the app does NOT run the React Compiler (there is no `reactCompiler` in
+       * next.config.mjs and no babel plugin), which is what splits these two groups apart.
+       */
+
+      // Real bug classes in plain React, so worth enforcing whether or not the compiler is on.
+      // At zero and enforced: `purity`, `refs` and `use-memo` come from flat.recommended and are
+      // deliberately not listed here — nothing to opt out of.
+      "react-hooks/error-boundaries": "error",
+      "react-hooks/preserve-manual-memoization": "error",
+      // 20 violations across 10 files, and they are genuine defects rather than lint noise:
+      // direct mutation of `useState` values (ResponseFilter), assignment to a prop
+      // (survey-menu-bar) and mutation of a hook argument (elements-view). Fixing them is
+      // behaviour-sensitive work on the survey editor and response filters, so it is ticketed
+      // separately (ENG-3071) rather than bundled into the lint change. Promote to "error" once
+      // that lands.
+      "react-hooks/immutability": "warn",
+      // ~98 violations across ~78 files — far too broad to fix in one change, and each one needs
+      // a judgement call about whether the effect should derive state instead. The count drifts as
+      // new code lands; it is a ratchet baseline, not an assertion. Ratcheted under ENG-3072.
+      "react-hooks/set-state-in-effect": "warn",
+
+      // Compiler-conditional advisories: with no compiler in the build these report what *would*
+      // be skipped, not a defect. `warn` is also what upstream `flat.recommended` ships.
+      // All 28 violations are third-party API shape — react-hook-form's `watch()` and TanStack
+      // Table's `useReactTable` — so this rule cannot reach zero while those are in use, and it
+      // is deliberately left without a ratchet ticket.
+      "react-hooks/incompatible-library": "warn",
+
       // Kept as a warning (not off): exhaustive-deps is the main guard against stale closures, and the
       // web lint script has no `--max-warnings 0`, so it surfaces violations without blocking.
       "react-hooks/exhaustive-deps": "warn",

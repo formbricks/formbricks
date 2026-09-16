@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurvey, TSurveyMetadata } from "@formbricks/types/surveys/types";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";

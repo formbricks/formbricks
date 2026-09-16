@@ -60,6 +60,18 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.reject": "Reject",
   "emails.render_email_response_value_file_upload_response_link_not_included":
     "Link to uploaded file is not included for data privacy reasons",
+  "emails.sso_recovery_factors_removed_email_did_not_expect":
+    "If you did not just sign in with single sign-on, contact your administrator immediately.",
+  "emails.sso_recovery_factors_removed_email_heading": "Sign-in factors removed from your account",
+  "emails.sso_recovery_factors_removed_email_password": "Your password was removed.",
+  "emails.sso_recovery_factors_removed_email_review_security": "Review security settings",
+  "emails.sso_recovery_factors_removed_email_sign_in_hint":
+    "You can keep signing in with single sign-on. To use a password or two-factor authentication again, set them up in your security settings.",
+  "emails.sso_recovery_factors_removed_email_subject":
+    "Sign-in factors were removed from your Formbricks account",
+  "emails.sso_recovery_factors_removed_email_text":
+    "You just signed in with single sign-on for the first time. Because your email address had never been verified, we removed the sign-in factors that were set on the account before:",
+  "emails.sso_recovery_factors_removed_email_two_factor": "Two-factor authentication was removed.",
   "emails.response_data": "Response data",
   "emails.response_finished_email_subject": "A response for {surveyName} was completed ✅",
   "emails.schedule_your_meeting": "Schedule your meeting",

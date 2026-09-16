@@ -23,6 +23,7 @@ interface SurveyCardProps {
   updateSurveyStatus: (surveyId: string, status: TSurveyStatus) => Promise<void>;
   archiveSurvey: (surveyId: string) => Promise<void>;
   restoreSurvey: (surveyId: string) => Promise<void>;
+  renameSurvey: (surveyId: string, name: string) => Promise<void>;
   locale: TUserLocale;
 }
 export const SurveyCard = ({
@@ -33,6 +34,7 @@ export const SurveyCard = ({
   updateSurveyStatus,
   archiveSurvey,
   restoreSurvey,
+  renameSurvey,
   locale,
 }: Readonly<SurveyCardProps>) => {
   const { t } = useTranslation();
@@ -145,6 +147,7 @@ export const SurveyCard = ({
           updateSurveyStatus={updateSurveyStatus}
           archiveSurvey={archiveSurvey}
           restoreSurvey={restoreSurvey}
+          renameSurvey={renameSurvey}
         />
       </div>
     </div>

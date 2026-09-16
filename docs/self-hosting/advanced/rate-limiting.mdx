@@ -28,7 +28,7 @@ Rate limits are scoped by identifier, depending on the endpoint and enforcement 
 - IP hash (for unauthenticated/client-side routes and public actions)
 - API key ID (for Envoy-managed and app-managed authenticated API calls)
 - User ID (for authenticated session-based calls and server actions)
-- Organization ID (for follow-up email dispatch)
+- Organization ID (for follow-up email dispatch and invitation budgets)
 
 When a limit is exceeded, the API returns `429 Too Many Requests`.
 
@@ -86,9 +86,14 @@ These are the limits that still run inside the Formbricks application server:
 | `storage.upload`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `POST /api/v1/management/storage`                                                                                                   |
 | `storage.delete`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `DELETE /storage/[workspaceId]/[accessType]/[fileName]`                                                                           |
 | `actions.emailUpdate`         | 3 requests   | 60 minutes | User ID                       | Profile email update action                                                                                                                               |
+| `actions.inviteMember`        | 50 recipients | 24 hours  | Organization ID               | Single, bulk, onboarding, and resend invite actions                                                                                                       |
 | `actions.surveyFollowUp`      | 50 requests  | 60 minutes | Organization ID               | Survey follow-up email processing                                                                                                                         |
 | `actions.sendLinkSurveyEmail` | 10 requests  | 60 minutes | IP hash                       | Link survey email send action                                                                                                                             |
 | `actions.licenseRecheck`      | 5 requests   | 1 minute   | User ID                       | Enterprise license recheck action                                                                                                                         |
+
+Invite limits are recipient-counted, so a bulk request for 25 people consumes 25 units. Self-hosters can
+change the limit with `INVITE_RATE_LIMIT_PER_24_HOURS`; Formbricks Cloud organizations with the
+`bulk-invite` entitlement receive a limit of 500 recipients.
 
 ## Explicit Envoy Exclusions
 

@@ -27,8 +27,14 @@ const lintErrors = async (source: string, relativeFilePath: string): Promise<str
 };
 
 describe("direct process.env access is linted (ENG-1685)", () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     eslint = new ESLint({ cwd: appDir });
+    // Lint once here so the first `test` below isn't the one paying for it. Resolving the flat
+    // config and loading its plugins costs ~1s even on an idle machine, and it all lands on
+    // whichever case runs first — under the full suite's parallel load that was enough to blow
+    // the 5s test timeout intermittently. A `beforeAll` hook gets its own 10s budget, and every
+    // case then runs against a warm instance.
+    await eslint.lintText("export const warmUp = 1;", { filePath: path.join(appDir, "lib/warm-up.ts") });
   });
 
   test.each([

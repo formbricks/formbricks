@@ -8,15 +8,15 @@ import {
   ZAllowedFileExtension,
 } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { type TFileUploadCandidate, getSurveyFileUploadConfigs } from "./survey-file-upload-elements";
 import { getOriginalFileNameFromUrl } from "./url-helpers";
 
-// Re-export for backward compatibility with server-side code
+// Re-exports for backward compatibility with server-side code
 export { getOriginalFileNameFromUrl } from "./url-helpers";
+export { getSurveyFileUploadConfigs } from "./survey-file-upload-elements";
 
 /**
  * Sanitize a provided file name to a safe subset.
@@ -119,19 +119,53 @@ const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExte
   return extensionValidation.success ? extensionValidation.data : null;
 };
 
-export const getSurveyFileUploadConfigs = ({
-  blocks,
-  questions,
-}: {
+/**
+ * The ids of the elements whose answers hold storage URLs.
+ *
+ * Every response-file delete path needs the id set rather than the configs, and it must come from the
+ * union of `blocks` and `questions` — the same source write-time validation reads — because keying off
+ * a single shape silently skips deletes for the other.
+ *
+ * Split from `collectResponseFileUrls` so a caller scanning many responses builds the set once, and so
+ * it can skip its scan entirely when the set is empty.
+ */
+export const getSurveyFileUploadElementIds = (survey: {
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
-}): TSurveyFileUploadElement[] => {
-  return [
-    ...(blocks ?? [])
-      .flatMap((block) => block.elements)
-      .filter((element) => element.type === TSurveyElementTypeEnum.FileUpload),
-    ...(questions ?? []).filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload),
-  ] as TSurveyFileUploadElement[];
+  questions?: readonly TFileUploadCandidate[] | null;
+}): Set<string> =>
+  new Set(
+    getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).map(
+      (config) => config.id
+    )
+  );
+
+/**
+ * Pulls the storage URLs out of one response's answers, ready to hand to `deleteResponseFileUrls`.
+ *
+ * Only file-upload answers hold storage URLs, and they are always stored as an array of strings.
+ * Anything else under a matching key is skipped rather than cast, so malformed data cannot produce a
+ * bogus delete target.
+ *
+ * `data` is deliberately `unknown`: callers hand this a raw `Prisma.JsonValue` column or an already
+ * typed `TResponseData`, and the shape is checked here either way rather than cast at each call site.
+ */
+export const collectResponseFileUrls = (data: unknown, fileUploadElementIds: Set<string>): string[] => {
+  if (fileUploadElementIds.size === 0 || !data || typeof data !== "object" || Array.isArray(data)) {
+    return [];
+  }
+
+  const fileUrls: string[] = [];
+  // Typed rather than left as `Object.entries`' implicit `any` values, so the guards below are the only
+  // thing that narrows an answer to a string.
+  const answers: [string, unknown][] = Object.entries(data);
+
+  for (const [elementId, answer] of answers) {
+    if (fileUploadElementIds.has(elementId) && Array.isArray(answer)) {
+      fileUrls.push(...answer.filter((url): url is string => typeof url === "string"));
+    }
+  }
+
+  return fileUrls;
 };
 
 export const validateSurveyAllowsFileUpload = ({
@@ -143,7 +177,7 @@ export const validateSurveyAllowsFileUpload = ({
   fileName: string;
   elementId: string;
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
 }): TSurveyFileUploadPermissionResult => {
   const fileUploadConfigs = getSurveyFileUploadConfigs({ blocks, questions });
 
@@ -338,7 +372,7 @@ export const validateClientFileUploads = ({
   workspaceId: string;
   surveyId: string;
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
   // Passed by the management routes (see getWorkspaceLegacyEnvironmentId) so a replayed old response
   // whose file URL predates the scoped shape still validates against a prefix the workspace owns.
   // Omitted by the client widget path, which stays strict on the scoped shape.

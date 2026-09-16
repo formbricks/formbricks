@@ -1,0 +1,21 @@
+type: object
+description: >
+  The contact that submitted the response, when the response is identified. Present on the detailed
+  view only — the list view omits it. `null` for anonymous (link-survey) responses.
+required:
+  - id
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: Contact identifier.
+  userId:
+    type:
+      - string
+      - "null"
+    description: >-
+      The contact's `userId` attribute — the id your application knows the person by. This is a
+      contact **attribute**, not a column, and it is not guaranteed unique within a workspace, so it
+      identifies the person for display but must not be used as a lookup key. `null` when the
+      contact has no `userId` attribute set.
+additionalProperties: false

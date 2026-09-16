@@ -6,9 +6,13 @@
 //
 // Only the bare specifier is aliased: `@formbricks/database/prisma` (the enums + Prisma namespace) is
 // schema-agnostic at runtime and resolves normally.
+//
+// Constructed with the same options as the app's client (packages/database/src/client.ts), so what a
+// read returns here is what a read returns in production — the global `omit` included.
 import { PrismaClient } from "../../../packages/database/generated/prisma-test/client";
+import { PRISMA_GLOBAL_OMIT } from "../../../packages/database/src/client-options";
 import { createPrismaPgAdapter } from "../../../packages/database/src/prisma-adapter";
 
 const { adapter } = createPrismaPgAdapter();
 
-export const prisma = new PrismaClient({ adapter });
+export const prisma = new PrismaClient({ adapter, omit: PRISMA_GLOBAL_OMIT });

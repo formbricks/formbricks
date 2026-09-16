@@ -1,8 +1,8 @@
 "use client";
 
-import { PlayIcon, RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AiIcon } from "@/modules/ui/components/ai";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -91,17 +91,20 @@ export const TaxonomyControls = ({
 
         <Button
           type="button"
+          variant="ai-primary"
           className="h-9"
           disabled={!canGenerate}
           loading={isGenerating}
           onClick={handleGenerateClick}>
           {isGenerating ? (
-            // The Button renders its own spinner while `loading`; show just the label (no Play/Refresh
-            // icon) so we don't end up with a spinner and a static icon side by side.
+            // The Button renders its own spinner while `loading`; show just the label (no AI mark) so
+            // we don't end up with a spinner and a static icon side by side.
             t("workspace.unify.taxonomy_generating")
           ) : (
             <>
-              {hasActiveTree ? <RefreshCwIcon className="size-4" /> : <PlayIcon className="size-4" />}
+              {/* The kit's one mark for anything that invokes a model, in place of the Play/Refresh
+                icons this button used to pick between — the action is the same either way. */}
+              <AiIcon tone="ai-light" />
               {hasActiveTree
                 ? t("workspace.unify.taxonomy_regenerate")
                 : t("workspace.unify.taxonomy_generate")}

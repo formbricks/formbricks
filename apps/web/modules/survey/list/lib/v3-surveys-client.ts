@@ -61,10 +61,13 @@ export type TSurveyListPage = {
   meta: {
     limit: number;
     nextCursor: string | null;
+    // Surveys matching the current filter.
     totalCount: number | null;
-    // Whether the workspace has any archived surveys. Only computed on the first
-    // page (when includeTotalCount is not false); null on subsequent pages.
-    hasArchived: boolean | null;
+    // Every survey in the workspace, archived ones included — filter-independent, so the list can
+    // tell an empty workspace from an empty result.
+    // Both counts are null when the request sets includeTotalCount=false, which this client does for
+    // every page after the first.
+    workspaceSurveyCount: number | null;
   };
 };
 
@@ -188,6 +191,31 @@ export async function updateSurveyStatus(
   }
 
   const responseBody = (await response.json()) as TV3UpdateSurveyStatusResponse;
+  return responseBody.data;
+}
+
+type TV3RenameSurveyResponse = {
+  data: {
+    id: string;
+    name: string;
+  };
+};
+
+export async function renameSurvey(surveyId: string, name: string): Promise<{ id: string; name: string }> {
+  const response = await fetch(`/api/v3/surveys/${surveyId}`, {
+    method: "PATCH",
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const responseBody = (await response.json()) as TV3RenameSurveyResponse;
   return responseBody.data;
 }
 

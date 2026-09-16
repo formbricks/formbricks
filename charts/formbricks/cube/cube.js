@@ -172,6 +172,12 @@ const CASE_INSENSITIVE_EQUALS_DIMENSIONS = {
   "FeedbackRecords.fieldGroupLabel": "FeedbackRecords.fieldGroupLabelNormalized",
   "FeedbackRecords.language": "FeedbackRecords.languageNormalized",
   "FeedbackRecords.valueText": "FeedbackRecords.valueTextNormalized",
+  "FeedbackRecords.metadataSource": "FeedbackRecords.metadataSourceNormalized",
+  "FeedbackRecords.metadataBrowser": "FeedbackRecords.metadataBrowserNormalized",
+  "FeedbackRecords.metadataOs": "FeedbackRecords.metadataOsNormalized",
+  "FeedbackRecords.metadataDevice": "FeedbackRecords.metadataDeviceNormalized",
+  "FeedbackRecords.metadataCountry": "FeedbackRecords.metadataCountryNormalized",
+  "FeedbackRecords.metadataAction": "FeedbackRecords.metadataActionNormalized",
 };
 
 const CASE_INSENSITIVE_OPERATORS = new Set(["equals", "notEquals"]);

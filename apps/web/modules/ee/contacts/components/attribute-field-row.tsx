@@ -1,8 +1,12 @@
 "use client";
 
 import { CalendarIcon, HashIcon, TagIcon, TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { formatLocalDay, parseStoredDay } from "@/lib/utils/datetime";
+import { toUTCDateString } from "@/modules/ee/contacts/segments/lib/date-utils";
 import { Button } from "@/modules/ui/components/button";
+import { DatePicker } from "@/modules/ui/components/date-picker";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import {
@@ -44,6 +48,9 @@ export const AttributeFieldRow = ({
   onRemove,
   t,
 }: AttributeFieldRowProps) => {
+  // Only the resolved language is read here; `t` stays prop-drilled from the modal that owns the form.
+  const { i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const availableOptions = getAvailableOptions(index);
 
   return (
@@ -104,16 +111,14 @@ export const AttributeFieldRow = ({
           const renderValueInput = () => {
             if (dataType === "date") {
               return (
-                <Input
-                  type="date"
-                  value={valueField.value ? valueField.value.split("T")[0] : ""}
-                  onChange={(e) => {
-                    const dateValue = e.target.value ? new Date(e.target.value).toISOString() : "";
-                    valueField.onChange(dateValue);
-                  }}
-                  placeholder={t("workspace.contacts.attribute_value_placeholder")}
-                  className="w-full"
-                />
+                <div className="flex-1">
+                  <DatePicker
+                    value={parseStoredDay(valueField.value)}
+                    locale={locale}
+                    triggerClassName="h-10 w-full"
+                    onChange={(date) => valueField.onChange(toUTCDateString(formatLocalDay(date)))}
+                  />
+                </div>
               );
             }
 

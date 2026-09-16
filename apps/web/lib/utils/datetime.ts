@@ -154,3 +154,28 @@ export const parseLocalDay = (value: string): Date => {
 
   return new Date(year, month - 1, day);
 };
+
+/**
+ * Parses a stored date value — a bare `yyyy-MM-dd` or a full ISO timestamp — to the local midnight of
+ * the calendar day it names, or `null` when it names none.
+ *
+ * The time part is dropped before parsing rather than handed to `Date`: a stored
+ * `2026-08-05T00:00:00.000Z` is the 5th as written, and reading it as an instant would select the 4th
+ * for any viewer west of UTC. Round-tripping through `formatLocalDay` accepts exactly the values an
+ * `<input type="date">` did, so a value that predates the picker still renders, a rolled-over one
+ * (`2026-13-45`) is refused rather than silently shown as a different day, and an unparseable one
+ * yields `null` instead of the Invalid Date that would break the calendar.
+ *
+ * Only the day is validated, so a well-formed day followed by a malformed time still resolves to that
+ * day. That is deliberate: the day is the part a date picker shows, these values can arrive from the
+ * Management API rather than only from this UI, and the `<input type="date">` this replaced split on
+ * `T` the same way — blanking a readable day over a broken time suffix would lose information.
+ */
+export const parseStoredDay = (value: string | null | undefined): Date | null => {
+  if (!value) return null;
+
+  const day = value.split("T")[0];
+  const parsed = parseLocalDay(day);
+
+  return formatLocalDay(parsed) === day ? parsed : null;
+};

@@ -548,3 +548,80 @@ describe("TLogicRuleOption type", () => {
     expect(sampleOption.value).toBe(ZSurveyLogicConditionsOperator.enum.equals);
   });
 });
+
+describe("reserved field rules (ENG-1840)", () => {
+  // Indexed explicitly rather than through a `Record<string, …>` cast: `getConditionOperatorOptions`
+  // reaches these keys as `reserved.${entry.dataType}`, and naming all four here means deleting one
+  // is a compile error in this test rather than a silently skipped loop iteration.
+  const reservedRules = {
+    string: logicRules["reserved.string"],
+    number: logicRules["reserved.number"],
+    boolean: logicRules["reserved.boolean"],
+    date: logicRules["reserved.date"],
+  };
+
+  const dataTypes = Object.keys(reservedRules) as (keyof typeof reservedRules)[];
+
+  const opValues = (dataType: keyof typeof reservedRules): string[] =>
+    reservedRules[dataType].options.map((option) => option.value);
+
+  test("there is a rule set for every embedded data type", () => {
+    // `TEmbeddedDataType` is exactly these four, so a catalog entry can never index a missing family.
+    expect(dataTypes.sort()).toStrictEqual(["boolean", "date", "number", "string"]);
+
+    for (const dataType of dataTypes) {
+      expect(opValues(dataType).length).toBeGreaterThan(0);
+    }
+  });
+
+  test("every family can branch on absence", () => {
+    // A reserved value is legitimately absent (`source` on a link opened without one), and isSet /
+    // isNotSet are the only operators that let an author handle that.
+    for (const dataType of dataTypes) {
+      expect(opValues(dataType)).toEqual(
+        expect.arrayContaining([
+          ZSurveyLogicConditionsOperator.enum.isSet,
+          ZSurveyLogicConditionsOperator.enum.isNotSet,
+        ])
+      );
+    }
+  });
+
+  test("numbers get ordering, strings get substring matching", () => {
+    expect(opValues("number")).toEqual(
+      expect.arrayContaining([
+        ZSurveyLogicConditionsOperator.enum.isGreaterThan,
+        ZSurveyLogicConditionsOperator.enum.isLessThan,
+      ])
+    );
+    expect(opValues("string")).toEqual(
+      expect.arrayContaining([
+        ZSurveyLogicConditionsOperator.enum.contains,
+        ZSurveyLogicConditionsOperator.enum.startsWith,
+      ])
+    );
+    expect(opValues("string")).not.toContain(ZSurveyLogicConditionsOperator.enum.isGreaterThan);
+  });
+
+  test("booleans offer equality only", () => {
+    // They project as the strings "true"/"false", so ordering or substring operators would read
+    // sensibly and never match.
+    expect(opValues("boolean").sort()).toStrictEqual(
+      [
+        ZSurveyLogicConditionsOperator.enum.equals,
+        ZSurveyLogicConditionsOperator.enum.doesNotEqual,
+        ZSurveyLogicConditionsOperator.enum.isSet,
+        ZSurveyLogicConditionsOperator.enum.isNotSet,
+      ].sort()
+    );
+  });
+
+  test("dates get chronological comparison", () => {
+    expect(opValues("date")).toEqual(
+      expect.arrayContaining([
+        ZSurveyLogicConditionsOperator.enum.isBefore,
+        ZSurveyLogicConditionsOperator.enum.isAfter,
+      ])
+    );
+  });
+});

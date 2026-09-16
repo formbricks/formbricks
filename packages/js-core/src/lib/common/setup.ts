@@ -1,6 +1,7 @@
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
 import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
+import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
@@ -68,6 +69,44 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TLegacyConfig } =
   return { changed: false };
 };
 
+/**
+ * Rebuild a legacy `user` into a complete `TUserState`.
+ *
+ * A legacy blob is unchecked JSON: `data` can be absent, or present with missing fields or wrong
+ * types. Spreading it over the default is not enough on its own — a spread only fills keys that are
+ * absent, so a stored `displays: null` would win over the default and reach `filterSurveys`, which
+ * calls `.filter` on it. The three fields it destructures as arrays are therefore type-checked.
+ *
+ * A repaired state is marked already-expired rather than trusted, because a half-empty one is not
+ * merely incomplete, it is wrong: an identified user completed to `segments: []` is filtered down
+ * to no surveys at all. Expiring it makes setup re-sync instead of rendering nothing.
+ */
+const completeLegacyUserState = (legacyUser: TLegacyConfig["user"]): TUserState => {
+  const legacyData = legacyUser?.data;
+
+  if (!legacyData) {
+    return DEFAULT_USER_STATE_NO_USER_ID;
+  }
+
+  const defaults = DEFAULT_USER_STATE_NO_USER_ID.data;
+  const wasRepaired =
+    !Array.isArray(legacyData.segments) ||
+    !Array.isArray(legacyData.displays) ||
+    !Array.isArray(legacyData.responses);
+
+  return {
+    // `new Date(0)` reads as expired wherever `expiresAt` is checked, which is what forces the sync.
+    expiresAt: wasRepaired ? new Date(0) : (legacyUser.expiresAt ?? null),
+    data: {
+      ...defaults,
+      ...legacyData,
+      segments: Array.isArray(legacyData.segments) ? legacyData.segments : defaults.segments,
+      displays: Array.isArray(legacyData.displays) ? legacyData.displays : defaults.displays,
+      responses: Array.isArray(legacyData.responses) ? legacyData.responses : defaults.responses,
+    },
+  };
+};
+
 export const setup = async (
   configInput: TConfigInput | (TConfigInput & { userId: string; attributes: Record<string, string> })
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
@@ -86,20 +125,11 @@ export const setup = async (
     config.resetConfig();
     config = Config.getInstance();
 
-    // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
-    // otherwise, we just sync again!
-
-    if (newState && !newState.user?.data?.userId) {
-      // Legacy configs could be persisted without a user state, or with a user missing `data` —
-      // substitute the default (rebuilding a complete state when only `data` survived) so
-      // downstream `config.user` reads keep working and the resync path still runs.
-      const legacyUser = newState.user;
-      config.update({
-        ...newState,
-        user: legacyUser?.data
-          ? { expiresAt: legacyUser.expiresAt ?? null, data: legacyUser.data }
-          : DEFAULT_USER_STATE_NO_USER_ID,
-      });
+    // Persist the migrated state for every legacy config, identified or not. `resetConfig()` has
+    // just wiped storage, so skipping the write leaves no config at all and the fresh-setup path
+    // below would silently downgrade an identified user to anonymous.
+    if (newState) {
+      config.update({ ...newState, user: completeLegacyUserState(newState.user) });
     }
   }
 
@@ -296,13 +326,26 @@ export const setup = async (
 
       let userState: TUserState = DEFAULT_USER_STATE_NO_USER_ID;
 
-      if ("userId" in configInput && configInput.userId) {
+      // A migrated legacy config reaches this branch whenever it carried no workspace state to
+      // reuse. It can still carry an identified user, so fall back to that id when setup was not
+      // given one — otherwise the migration would turn an identified user into an anonymous one.
+      // Scoped to the config the migration just wrote: another workspace or app URL is another
+      // integration, and its user must not be carried across.
+      const migratedUser =
+        changed && existingConfig?.workspaceId === effectiveId && existingConfig.appUrl === configInput.appUrl
+          ? existingConfig.user
+          : null;
+      const setupUserId = "userId" in configInput && configInput.userId ? configInput.userId : null;
+      const userId = setupUserId ?? migratedUser?.data.userId ?? null;
+
+      if (userId) {
         const updatesResponse = await sendUpdatesToBackend({
           appUrl: configInput.appUrl,
           workspaceId: effectiveId,
           updates: {
-            userId: configInput.userId,
-            attributes: configInput.attributes,
+            userId,
+            // Attributes only ever come from the setup call, never from the migrated state.
+            ...(setupUserId && "attributes" in configInput ? { attributes: configInput.attributes } : {}),
           },
         });
 
@@ -312,6 +355,14 @@ export const setup = async (
           logger.error(
             `Error updating user state: ${updatesResponse.error.code} - ${updatesResponse.error.responseMessage ?? ""}`
           );
+
+          // The migration is one-shot: the config just written no longer looks legacy, so `changed`
+          // is false on every later load and this id is gone for good if it is not kept now. Keep
+          // the migrated state, expired, so the next load retries the sync instead of persisting
+          // the default and stranding the user as anonymous.
+          if (!setupUserId && migratedUser) {
+            userState = { ...migratedUser, expiresAt: new Date(0) };
+          }
         }
       }
 
@@ -349,6 +400,16 @@ export const setup = async (
 
   setIsSetup(true);
   logger.debug("Set up complete");
+
+  // The readiness signal (ENG-1846): a consent-gated setup means `window.formbricks` may not exist
+  // at page load, so a GTM tag firing `setEmbeddedData` on page load silently drops its value — the
+  // host triggers on this event instead. Emitted here, at the single point every *fresh* setup
+  // converges on, and nowhere else: the "already set up" and missing-config early returns above
+  // return `okVoid()` without reaching this line, so a repeated `setup()` call cannot double-fire
+  // the host's tags.
+  // `effectiveId`, not `config.get().workspaceId`: the input is what this setup just ran with, and
+  // it is already resolved through the legacy `environmentId` shim above.
+  emitFormbricksEvent(FORMBRICKS_EVENTS.setupSuccessful, { workspaceId: effectiveId });
 
   return okVoid();
 };

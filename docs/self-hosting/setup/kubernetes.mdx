@@ -213,6 +213,15 @@ If you intentionally run a single app replica, either disable the PDB or use `ma
 `minAvailable` and accept downtime during the eviction. Never set both fields; set the unused field to `null` in
 your values file.
 
+Two autoscaling defaults are easy to miss:
+
+- **`maxReplicas: 10` can exceed what the node pool can hold.** Each app pod requests 1 vCPU, so the ceiling
+  needs about 10 allocatable vCPU for the app alone, on top of the platform reserve and the Hub, Cube and
+  SpiceDB pods. A smaller pool leaves the extra replicas `Pending` — an HPA does not lower its own ceiling.
+- **The HPA scales on CPU and memory utilization only.** Queue depth is not one of its metrics, so a job
+  backlog can grow while both targets sit under their thresholds and no replica is added. Backlog-driven
+  scaling needs a queue-depth metric published to the metrics API and added to the HPA yourself.
+
 ### Cube
 
 Cube is part of the baseline Formbricks v5 stack and is bundled with the chart by default

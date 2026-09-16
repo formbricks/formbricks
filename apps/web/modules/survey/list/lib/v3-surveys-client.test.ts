@@ -6,6 +6,7 @@ import {
   createV3Survey,
   deleteSurvey,
   generateSurveyCreatePayload,
+  renameSurvey,
   validateSurveyCreatePayload,
 } from "./v3-surveys-client";
 
@@ -198,5 +199,49 @@ describe("deleteSurvey", () => {
       code: "forbidden",
     };
     await expect(deleteSurvey("survey_1")).rejects.toMatchObject(expectedError);
+  });
+});
+
+describe("renameSurvey", () => {
+  test("PATCHes only the name and returns the updated survey", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({ data: { id: "survey_1", name: "Q3 feedback" } }, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(renameSurvey("survey_1", "Q3 feedback")).resolves.toEqual({
+      id: "survey_1",
+      name: "Q3 feedback",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/v3/surveys/survey_1", {
+      method: "PATCH",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Q3 feedback" }),
+    });
+  });
+
+  test("maps v3 problem responses to V3ApiError", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json(
+          {
+            status: 422,
+            detail: "Survey name is required",
+            code: "unprocessable_entity",
+          },
+          { status: 422 }
+        )
+      )
+    );
+
+    const expectedError: Partial<V3ApiError> = {
+      status: 422,
+      detail: "Survey name is required",
+      code: "unprocessable_entity",
+    };
+    await expect(renameSurvey("survey_1", " ")).rejects.toMatchObject(expectedError);
   });
 });

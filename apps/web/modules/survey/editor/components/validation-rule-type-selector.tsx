@@ -18,6 +18,7 @@ interface ValidationRuleTypeSelectorProps {
   availableTypes: TValidationRuleType[];
   ruleLabels: Record<string, string>;
   needsValue: boolean;
+  className?: string;
 }
 
 export const ValidationRuleTypeSelector = ({
@@ -26,10 +27,13 @@ export const ValidationRuleTypeSelector = ({
   availableTypes,
   ruleLabels,
   needsValue,
-}: ValidationRuleTypeSelectorProps) => {
+  className,
+}: Readonly<ValidationRuleTypeSelectorProps>) => {
   return (
     <Select value={value} onValueChange={(val) => onChange(val as TValidationRuleType)}>
-      <SelectTrigger className={cn("bg-white", needsValue ? "min-w-[200px]" : "flex-1")}>
+      {/* min-w-0 rather than a pixel floor: a floor here is what pushed the value group out of the
+          row and under the delete and add buttons at laptop widths (ENG-3175). */}
+      <SelectTrigger className={cn("bg-white", needsValue ? "min-w-0" : "flex-1", className)}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

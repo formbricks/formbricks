@@ -3,7 +3,11 @@ import { prisma } from "@formbricks/database";
 import { TWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import {
+  isPrismaKnownRequestError,
+  isUniqueConstraintError,
+  retryOnTransactionConflict,
+} from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { selectChart } from "@/modules/ee/analysis/charts/lib/charts";
 import {
@@ -17,11 +21,42 @@ import {
   ZDashboardCreateInput,
   ZDashboardUpdateInput,
 } from "@/modules/ee/analysis/types/analysis";
+import { findNextOpenSlot, parseWidgetLayouts } from "./widget-placement";
 
 const MAX_NAME_ATTEMPTS = 5;
 
 const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout =>
   chartType === "big_number" ? { x: 0, y: 0, w: 3, h: 2 } : { x: 0, y: 0, w: 4, h: 4 };
+
+/**
+ * The `x`/`y` a new widget takes on a dashboard that already holds `existingWidgets`.
+ *
+ * "nextOpenSlot" fills the first gap the widget fits in, so a duplicate lands beside its original
+ * instead of on top of it. The default keeps the requested `x` and starts the row below every
+ * existing widget.
+ *
+ * A gap can only be trusted when every stored layout is readable: `layout` is a JSON column, and a
+ * row that does not parse is a widget whose occupancy is unknown, so a "free" slot may be sitting
+ * under it. Placement then falls back to appending below the rows that are readable, which is what a
+ * dashboard with such a row already does today.
+ */
+const resolveWidgetPosition = (
+  existingWidgets: { layout: unknown }[],
+  baseLayout: TWidgetLayout,
+  placement: TAddWidgetInput["placement"]
+): Pick<TWidgetLayout, "x" | "y"> => {
+  const layouts = parseWidgetLayouts(existingWidgets);
+  const everyLayoutReadable = layouts.length === existingWidgets.length;
+
+  if (placement === "nextOpenSlot" && everyLayoutReadable) {
+    return findNextOpenSlot(layouts, baseLayout);
+  }
+
+  return {
+    x: baseLayout.x,
+    y: layouts.reduce((max, layout) => Math.max(max, layout.y + layout.h), 0),
+  };
+};
 
 const selectDashboard = {
   id: true,
@@ -348,69 +383,66 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
   validateInputs([data, ZAddWidgetInput]);
 
   try {
-    return await prisma.$transaction(
-      async (tx) => {
-        const [chart, dashboard] = await Promise.all([
-          tx.chart.findFirst({ where: { id: data.chartId, workspaceId: data.workspaceId } }),
-          tx.dashboard.findFirst({ where: { id: data.dashboardId, workspaceId: data.workspaceId } }),
-        ]);
+    // Retried rather than surfaced: `duplicateChartAndAddWidget` has already committed the chart
+    // copy by the time this runs, so failing here would leave a chart on no dashboard.
+    return await retryOnTransactionConflict(() =>
+      prisma.$transaction(
+        async (tx) => {
+          const [chart, dashboard] = await Promise.all([
+            tx.chart.findFirst({ where: { id: data.chartId, workspaceId: data.workspaceId } }),
+            tx.dashboard.findFirst({ where: { id: data.dashboardId, workspaceId: data.workspaceId } }),
+          ]);
 
-        if (!chart) {
-          throw new ResourceNotFoundError("Chart", data.chartId);
-        }
-        if (!dashboard) {
-          throw new ResourceNotFoundError("Dashboard", data.dashboardId);
-        }
+          if (!chart) {
+            throw new ResourceNotFoundError("Chart", data.chartId);
+          }
+          if (!dashboard) {
+            throw new ResourceNotFoundError("Dashboard", data.dashboardId);
+          }
 
-        const existingWidget = await tx.dashboardWidget.findFirst({
-          where: {
-            dashboardId: data.dashboardId,
-            chartId: data.chartId,
-          },
-          select: { id: true },
-        });
+          const existingWidget = await tx.dashboardWidget.findFirst({
+            where: {
+              dashboardId: data.dashboardId,
+              chartId: data.chartId,
+            },
+            select: { id: true },
+          });
 
-        if (existingWidget) {
-          throw new InvalidInputError("This chart is already on the dashboard");
-        }
+          if (existingWidget) {
+            throw new InvalidInputError("This chart is already on the dashboard");
+          }
 
-        const [maxOrder, existingWidgets] = await Promise.all([
-          tx.dashboardWidget.aggregate({
-            where: { dashboardId: data.dashboardId },
-            _max: { order: true },
-          }),
-          data.respectY
-            ? Promise.resolve([])
-            : tx.dashboardWidget.findMany({
-                where: { dashboardId: data.dashboardId },
-                select: { layout: true },
-              }),
-        ]);
+          const [maxOrder, existingWidgets] = await Promise.all([
+            tx.dashboardWidget.aggregate({
+              where: { dashboardId: data.dashboardId },
+              _max: { order: true },
+            }),
+            data.respectY
+              ? Promise.resolve([])
+              : tx.dashboardWidget.findMany({
+                  where: { dashboardId: data.dashboardId },
+                  select: { layout: true },
+                }),
+          ]);
 
-        const baseLayout = data.layout ?? getDefaultWidgetLayout(chart.type as TChartType);
-        const layout = data.respectY
-          ? baseLayout
-          : {
-              ...baseLayout,
-              y: existingWidgets.reduce((max, w) => {
-                const l =
-                  typeof w.layout === "object" && w.layout !== null
-                    ? (w.layout as Partial<{ y: number; h: number }>)
-                    : {};
-                return Math.max(max, (l.y ?? 0) + (l.h ?? 0));
-              }, 0),
-            };
+          const baseLayout = data.layout ?? getDefaultWidgetLayout(chart.type as TChartType);
+          // Positioned inside the transaction that creates the widget, off the layouts read within it:
+          // two concurrent adds would otherwise pick the same spot from the same stale read.
+          const layout = data.respectY
+            ? baseLayout
+            : { ...baseLayout, ...resolveWidgetPosition(existingWidgets, baseLayout, data.placement) };
 
-        return tx.dashboardWidget.create({
-          data: {
-            dashboardId: data.dashboardId,
-            chartId: data.chartId,
-            layout,
-            order: (maxOrder._max.order ?? -1) + 1,
-          },
-        });
-      },
-      { isolationLevel: "Serializable" }
+          return tx.dashboardWidget.create({
+            data: {
+              dashboardId: data.dashboardId,
+              chartId: data.chartId,
+              layout,
+              order: (maxOrder._max.order ?? -1) + 1,
+            },
+          });
+        },
+        { isolationLevel: "Serializable" }
+      )
     );
   } catch (error) {
     if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {

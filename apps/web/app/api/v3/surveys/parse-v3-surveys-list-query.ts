@@ -18,7 +18,7 @@ import {
 } from "@/modules/survey/list/lib/survey-page";
 
 const V3_SURVEYS_DEFAULT_LIMIT = 20;
-const V3_SURVEYS_MAX_LIMIT = 100;
+const V3_SURVEYS_MAX_LIMIT = 250;
 
 const FILTER_NAME_CONTAINS_QUERY_PARAM = "filter[name][contains]" as const;
 const FILTER_STATUS_IN_QUERY_PARAM = "filter[status][in]" as const;

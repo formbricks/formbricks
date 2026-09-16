@@ -630,6 +630,65 @@ describe("generateExampleResponseDataset", () => {
   });
 });
 
+describe("response language", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const withLanguages = (survey: TSurvey, languages: TSurvey["languages"]): TSurvey =>
+    ({ ...survey, languages }) as TSurvey;
+
+  const language = (code: string, isDefault: boolean, enabled = true) =>
+    ({ default: isDefault, enabled, language: { code } }) as unknown as TSurvey["languages"][number];
+
+  const generate = async (survey: TSurvey) => {
+    mockOpenTextAnswers(survey);
+    const result = await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
+    return result.responses.map((response) => response.language);
+  };
+
+  const ratingSurvey = () =>
+    makeSurvey([
+      { ...baseQuestion, id: "q_rating", type: TSurveyElementTypeEnum.Rating, scale: "number", range: 5 },
+    ] as unknown as TSurvey["questions"]);
+
+  test("labels every response with a language the survey declares", async () => {
+    const survey = withLanguages(ratingSurvey(), [language("en-US", true), language("de-DE", false)]);
+
+    const languages = await generate(survey);
+
+    expect(languages).toHaveLength(EXAMPLE_RESPONSE_COUNT);
+    expect(languages.every((code) => code === "en-US" || code === "de-DE")).toBe(true);
+  });
+
+  test("uses the default language when it is the survey's only one", async () => {
+    const survey = withLanguages(ratingSurvey(), [language("ar-AE", true)]);
+
+    const languages = await generate(survey);
+
+    expect(new Set(languages)).toEqual(new Set(["ar-AE"]));
+  });
+
+  test("ignores a disabled language, falling back to the default", async () => {
+    const survey = withLanguages(ratingSurvey(), [language("en-US", true), language("fr-FR", false, false)]);
+
+    const languages = await generate(survey);
+
+    expect(new Set(languages)).toEqual(new Set(["en-US"]));
+  });
+
+  test("asserts no language for a survey that declares none", async () => {
+    const survey = withLanguages(ratingSurvey(), []);
+
+    const languages = await generate(survey);
+
+    expect(new Set(languages)).toEqual(new Set([null]));
+  });
+});
+
 describe("toExampleResponseInput", () => {
   const createdAt = new Date("2026-05-20T10:00:00Z");
 
