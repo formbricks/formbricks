@@ -63,11 +63,13 @@ export const getLibraryColumns = ({
     {
       id: "source",
       header: t("workspace.embedded_data.value_source_column"),
-      headerClassName: "w-[12%]",
+      headerClassName: "w-[14%]",
       hideBelow: "md",
       skeletonWidth: "w-20",
       cell: (field) => (
-        <div className="flex items-center gap-2 text-slate-500">
+        // `whitespace-nowrap`: "Passed in" is two words, and a Badge is a pill — wrapping breaks the
+        // pill across two lines rather than eliding it.
+        <div className="flex items-center gap-2 whitespace-nowrap text-slate-500">
           {getSourceIcon(field.source, "size-4")}
           <Badge text={getSourceLabel(field.source, t)} type="gray" size="tiny" />
         </div>
