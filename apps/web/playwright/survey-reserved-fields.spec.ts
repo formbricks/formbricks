@@ -129,11 +129,11 @@ test.describe("Reserved fields in recall and logic", () => {
     const dropdown = recallDropdown(page);
 
     await test.step("client-available reserved fields are offered", async () => {
-      // Labels are title-cased from the catalog entry names by `formatFieldNameToTitleCase`, which
-      // splits camelCase as well as snake_case. Every client-available Group A entry happens to be a
-      // single word, so the split only shows here once ENG-1841's `utmSource`/`pagePath` land; it is
-      // load-bearing for the absence assertions below.
-      await expect(dropdown.getByText("Url", { exact: true })).toBeVisible();
+      // Labels come from `getReservedFieldLabel` (ENG-1853), which resolves each catalog name through
+      // a translation key and so spells the acronyms properly — `URL`, not the `Url` that
+      // `formatFieldNameToTitleCase` produced from the entry name. Asserting the exact rendered label
+      // is what keeps the absence assertions below load-bearing.
+      await expect(dropdown.getByText("URL", { exact: true })).toBeVisible();
       await expect(dropdown.getByText("Source", { exact: true })).toBeVisible();
       await expect(dropdown.getByText("Language", { exact: true })).toBeVisible();
     });
@@ -143,10 +143,9 @@ test.describe("Reserved fields in recall and logic", () => {
       // browser/os/deviceType as available mid-survey — they are not. All three are parsed from the
       // `user-agent` request header by UAParser in the ingest routes, so the renderer cannot know
       // them; the catalog marks them `server` and the picker filters on that.
-      // These are the labels the picker would actually render for these entries — before
-      // `formatFieldNameToTitleCase` they rendered as "DurationSeconds"/"IpAddress", so searching for
-      // the spaced forms passed no matter what the availability filter did.
-      for (const serverOnly of ["Country", "Duration Seconds", "Ip Address", "Browser", "Os", "Finished"]) {
+      // These are the labels the picker would actually render for these entries — searching for a
+      // spelling it never produces would pass no matter what the availability filter did.
+      for (const serverOnly of ["Country", "Duration Seconds", "IP Address", "Browser", "OS", "Finished"]) {
         await expect(dropdown.getByText(serverOnly, { exact: true })).toHaveCount(0);
       }
     });
@@ -170,7 +169,7 @@ test.describe("Reserved fields in recall and logic", () => {
       await fillRichTextEditor(page, "Question*", "You came from ");
       // Picking a recall item opens the fallback popover, and its Save button stays disabled until a
       // fallback is entered. Skipping it leaves the survey unpublishable ("Fallback missing").
-      await recallReservedFieldWithFallback(page, "Url", "somewhere");
+      await recallReservedFieldWithFallback(page, "URL", "somewhere");
     });
 
     const surveyUrl = await test.step("publish as a link survey", () => publishAsLinkSurvey(page));
@@ -215,7 +214,7 @@ test.describe("Reserved fields in recall and logic", () => {
     await test.step("recall the url with an unmistakable fallback", async () => {
       await openQuestionCard(page);
       await fillRichTextEditor(page, "Question*", "url=");
-      await recallReservedFieldWithFallback(page, "Url", FALLBACK_MARKER);
+      await recallReservedFieldWithFallback(page, "URL", FALLBACK_MARKER);
     });
 
     const surveyUrl = await test.step("publish as a link survey", () => publishAsLinkSurvey(page));

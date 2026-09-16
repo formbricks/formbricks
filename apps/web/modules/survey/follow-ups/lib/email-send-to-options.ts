@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { getIngestedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -14,6 +14,12 @@ export interface EmailSendToOption {
   type: "openTextElement" | "contactInfoElement" | "hiddenField" | "user" | "verifiedEmail";
   label: string;
   id: string;
+  /**
+   * A shared Embedded Data field's workspace library key, rendered beside the label (ENG-1853).
+   * Absent for every other kind of recipient, and for a field the survey owns — see
+   * `TReadableField`'s `secondaryLabel` for why a key earns its own dim line next to a name.
+   */
+  secondaryLabel?: string;
 }
 
 /**
@@ -49,10 +55,14 @@ export const buildEmailSendToOptions = ({
     return false;
   });
 
-  // ENG-2628: the survey's rows, like every other reader. The editor's Hidden Fields card edits them
+  // ENG-2628: the survey's rows, like every other reader. The editor's Embedded Data cards edit them
   // directly, so this picker — which WRITES a recipient — and `follow-up-item.tsx`, which renders the
   // stored one back, still read the same instant's definitions.
-  const hiddenFieldIds = getIngestedStorageKeys(survey);
+  //
+  // ENG-1853: the whole pair rather than the storage keys alone, because the row is now labelled by
+  // the field's NAME. The id is still the storage key, so a recipient stored before this — and
+  // `findEmailSendToOption`, which matches on it — is unaffected; only what the author reads changed.
+  const ingestedFields = getIngestedEmbeddedFields(survey);
 
   const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) =>
     teamMemberDetail.email === userEmail ? { name: "Yourself", email: userEmail } : teamMemberDetail
@@ -81,10 +91,11 @@ export const buildEmailSendToOptions = ({
         ? "openTextElement"
         : "contactInfoElement") as EmailSendToOption["type"],
     })),
-    ...hiddenFieldIds.map((fieldId) => ({
-      label: fieldId,
-      id: fieldId,
+    ...ingestedFields.map(({ field, link }) => ({
+      label: field.name.trim() === "" ? link.storageKey : field.name,
+      id: link.storageKey,
       type: "hiddenField" as EmailSendToOption["type"],
+      secondaryLabel: field.key ?? undefined,
     })),
     ...updatedTeamMembers.map((member) => ({
       label: `${member.name} (${member.email})`,
