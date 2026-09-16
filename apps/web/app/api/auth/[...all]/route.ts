@@ -70,8 +70,13 @@ const handler = async (request: Request): Promise<Response> => {
   // A rejected DCR registration is the one early return here. It runs before auth.handler, so it skips
   // Better Auth's `/oauth2/register` rate limit (5/min) and the SSO-callback observability below — both
   // acceptable: a rejected registration writes no client row (the limit exists to cap client creation,
-  // and this check actually strengthens that cap) and is not a callback. The work skipped is a JSON
-  // parse + a few URL parses, so it is not a rate-limiting target worth replicating here.
+  // and this check actually strengthens that cap) and is not a callback. Re-limiting here would cost a
+  // Redis round-trip to save one JSON parse, which is the wrong trade.
+  //
+  // That parse is of a body bounded only by `proxyClientMaxBodySize` (16mb, next.config.mjs) — but so
+  // was the read this replaced, and so is Better Auth's own, which also runs after the body is
+  // buffered. Bounding it belongs to the whole `/api/auth/*` surface rather than this one branch:
+  // ENG-3248.
   if (preparedRequest instanceof Response) return preparedRequest;
   const mappedRequest = preparedRequest;
   try {
