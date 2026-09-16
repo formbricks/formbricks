@@ -566,6 +566,166 @@ const getBooleanValueProps = (t: TFunction): TConditionValueProps => ({
   }),
 });
 
+/**
+ * The right-hand side for a condition whose left operand is a survey element.
+ *
+ * Its own function because it is a six-way dispatch on the element's type, and leaving it inline
+ * put `getMatchValueProps` at twice the cognitive complexity the repo allows. Everything it needs
+ * from the caller arrives in `ctx` — the element list is already narrowed to the blocks in scope
+ * and to elements other than the one being compared.
+ */
+const getElementMatchValueProps = (
+  condition: TSingleCondition,
+  localSurvey: TSurvey,
+  t: TFunction,
+  ctx: {
+    elements: TSurveyElement[];
+    selectedElement: TSurveyElement | undefined;
+    embeddedFieldsExcludingSelf: (comparableAs: TEmbeddedDataType) => TComboboxOption[];
+    toElementOption: (element: TSurveyElement) => TComboboxOption;
+  }
+): TConditionValueProps => {
+  const { elements, selectedElement, embeddedFieldsExcludingSelf, toElementOption } = ctx;
+
+  if (selectedElement?.type === TSurveyElementTypeEnum.OpenText) {
+    const isNumeric = selectedElement.inputType === "number";
+    const allowedElementTypes = [TSurveyElementTypeEnum.OpenText];
+
+    if (isNumeric) {
+      allowedElementTypes.push(
+        TSurveyElementTypeEnum.Rating,
+        TSurveyElementTypeEnum.NPS,
+        TSurveyElementTypeEnum.CSAT,
+        TSurveyElementTypeEnum.CES
+      );
+    }
+
+    if (["equals", "doesNotEqual"].includes(condition.operator) && !isNumeric) {
+      allowedElementTypes.push(
+        TSurveyElementTypeEnum.Date,
+        TSurveyElementTypeEnum.MultipleChoiceSingle,
+        TSurveyElementTypeEnum.MultipleChoiceMulti
+      );
+    }
+
+    return {
+      show: true,
+      showInput: true,
+      inputType: isNumeric ? "number" : "text",
+      options: toOperandGroups(t, {
+        questions: elements
+          .filter((element) => allowedElementTypes.includes(element.type))
+          .map(toElementOption),
+        embeddedData: embeddedFieldsExcludingSelf(isNumeric ? "number" : "string"),
+      }),
+    };
+  } else if (
+    selectedElement?.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+    selectedElement?.type === TSurveyElementTypeEnum.MultipleChoiceMulti
+  ) {
+    const operatorsToFilterNone = [
+      "includesOneOf",
+      "includesAllOf",
+      "doesNotIncludeOneOf",
+      "doesNotIncludeAllOf",
+    ];
+    const shouldFilterNone =
+      selectedElement.type === TSurveyElementTypeEnum.MultipleChoiceMulti &&
+      operatorsToFilterNone.includes(condition.operator);
+
+    const choices = selectedElement.choices
+      .filter((choice) => !shouldFilterNone || choice.id !== "none")
+      .map((choice) => ({
+        label: getLocalizedValue(choice.label, "default"),
+        value: choice.id,
+        meta: {
+          type: "static",
+        },
+      }));
+
+    return {
+      show: true,
+      showInput: false,
+      options: toOperandGroups(t, { choices }),
+    };
+  } else if (selectedElement?.type === TSurveyElementTypeEnum.PictureSelection) {
+    const choices = selectedElement.choices.map((choice, idx) => ({
+      imgSrc: choice.imageUrl,
+      label: `${t("common.picture")} ${idx + 1}`,
+      value: choice.id,
+      meta: {
+        type: "static",
+      },
+    }));
+
+    return {
+      show: true,
+      showInput: false,
+      options: toOperandGroups(t, { choices }),
+    };
+  } else if (
+    selectedElement?.type === TSurveyElementTypeEnum.Rating ||
+    selectedElement?.type === TSurveyElementTypeEnum.CSAT ||
+    selectedElement?.type === TSurveyElementTypeEnum.CES ||
+    selectedElement?.type === TSurveyElementTypeEnum.NPS
+  ) {
+    // NPS is 0-10; the other three are 1-range.
+    const isNps = selectedElement.type === TSurveyElementTypeEnum.NPS;
+    const choices = Array.from({ length: isNps ? 11 : selectedElement.range }, (_, idx) => ({
+      label: `${isNps ? idx : idx + 1}`,
+      value: isNps ? idx : idx + 1,
+      meta: {
+        type: "static",
+      },
+    }));
+
+    return {
+      show: true,
+      showInput: false,
+      options: toOperandGroups(t, {
+        choices,
+        // Computed fields only: a numeric scale has never been comparable against an ingested
+        // field, whose value is whatever arrived in the URL.
+        embeddedData: getEmbeddedFieldOptions(localSurvey, {
+          exclude: condition.leftOperand.value,
+          comparableAs: "number",
+          source: "computed",
+        }),
+      }),
+    };
+  } else if (selectedElement?.type === TSurveyElementTypeEnum.Date) {
+    return {
+      show: true,
+      showInput: true,
+      inputType: "date",
+      options: toOperandGroups(t, {
+        questions: elements
+          .filter((element) =>
+            [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.Date].includes(element.type)
+          )
+          .map(toElementOption),
+        embeddedData: embeddedFieldsExcludingSelf("date"),
+      }),
+    };
+  } else if (selectedElement?.type === TSurveyElementTypeEnum.Matrix) {
+    const choices = selectedElement.columns.map((column, colIdx) => ({
+      label: getLocalizedValue(column.label, "default"),
+      value: colIdx.toString(),
+      meta: {
+        type: "static",
+      },
+    }));
+
+    return {
+      show: true,
+      showInput: false,
+      options: toOperandGroups(t, { choices }),
+    };
+  }
+
+  return { show: false, options: [] };
+};
+
 export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
@@ -621,143 +781,12 @@ export const getMatchValueProps = (
   });
 
   if (condition.leftOperand.type === "element") {
-    if (selectedElement?.type === TSurveyElementTypeEnum.OpenText) {
-      const isNumeric = selectedElement.inputType === "number";
-      const allowedElementTypes = [TSurveyElementTypeEnum.OpenText];
-
-      if (isNumeric) {
-        allowedElementTypes.push(
-          TSurveyElementTypeEnum.Rating,
-          TSurveyElementTypeEnum.NPS,
-          TSurveyElementTypeEnum.CSAT,
-          TSurveyElementTypeEnum.CES
-        );
-      }
-
-      if (["equals", "doesNotEqual"].includes(condition.operator) && !isNumeric) {
-        allowedElementTypes.push(
-          TSurveyElementTypeEnum.Date,
-          TSurveyElementTypeEnum.MultipleChoiceSingle,
-          TSurveyElementTypeEnum.MultipleChoiceMulti
-        );
-      }
-
-      return {
-        show: true,
-        showInput: true,
-        inputType: isNumeric ? "number" : "text",
-        options: toOperandGroups(t, {
-          questions: elements
-            .filter((element) => allowedElementTypes.includes(element.type))
-            .map(toElementOption),
-          embeddedData: embeddedFieldsExcludingSelf(isNumeric ? "number" : "string"),
-        }),
-      };
-    } else if (
-      selectedElement?.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-      selectedElement?.type === TSurveyElementTypeEnum.MultipleChoiceMulti
-    ) {
-      const operatorsToFilterNone = [
-        "includesOneOf",
-        "includesAllOf",
-        "doesNotIncludeOneOf",
-        "doesNotIncludeAllOf",
-      ];
-      const shouldFilterNone =
-        selectedElement.type === TSurveyElementTypeEnum.MultipleChoiceMulti &&
-        operatorsToFilterNone.includes(condition.operator);
-
-      const choices = selectedElement.choices
-        .filter((choice) => !shouldFilterNone || choice.id !== "none")
-        .map((choice) => ({
-          label: getLocalizedValue(choice.label, "default"),
-          value: choice.id,
-          meta: {
-            type: "static",
-          },
-        }));
-
-      return {
-        show: true,
-        showInput: false,
-        options: toOperandGroups(t, { choices }),
-      };
-    } else if (selectedElement?.type === TSurveyElementTypeEnum.PictureSelection) {
-      const choices = selectedElement.choices.map((choice, idx) => ({
-        imgSrc: choice.imageUrl,
-        label: `${t("common.picture")} ${idx + 1}`,
-        value: choice.id,
-        meta: {
-          type: "static",
-        },
-      }));
-
-      return {
-        show: true,
-        showInput: false,
-        options: toOperandGroups(t, { choices }),
-      };
-    } else if (
-      selectedElement?.type === TSurveyElementTypeEnum.Rating ||
-      selectedElement?.type === TSurveyElementTypeEnum.CSAT ||
-      selectedElement?.type === TSurveyElementTypeEnum.CES ||
-      selectedElement?.type === TSurveyElementTypeEnum.NPS
-    ) {
-      // NPS is 0-10; the other three are 1-range.
-      const isNps = selectedElement.type === TSurveyElementTypeEnum.NPS;
-      const choices = Array.from({ length: isNps ? 11 : selectedElement.range }, (_, idx) => ({
-        label: `${isNps ? idx : idx + 1}`,
-        value: isNps ? idx : idx + 1,
-        meta: {
-          type: "static",
-        },
-      }));
-
-      return {
-        show: true,
-        showInput: false,
-        options: toOperandGroups(t, {
-          choices,
-          // Computed fields only: a numeric scale has never been comparable against an ingested
-          // field, whose value is whatever arrived in the URL.
-          embeddedData: getEmbeddedFieldOptions(localSurvey, {
-            exclude: condition.leftOperand.value,
-            comparableAs: "number",
-            source: "computed",
-          }),
-        }),
-      };
-    } else if (selectedElement?.type === TSurveyElementTypeEnum.Date) {
-      return {
-        show: true,
-        showInput: true,
-        inputType: "date",
-        options: toOperandGroups(t, {
-          questions: elements
-            .filter((element) =>
-              [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.Date].includes(element.type)
-            )
-            .map(toElementOption),
-          embeddedData: embeddedFieldsExcludingSelf("date"),
-        }),
-      };
-    } else if (selectedElement?.type === TSurveyElementTypeEnum.Matrix) {
-      const choices = selectedElement.columns.map((column, colIdx) => ({
-        label: getLocalizedValue(column.label, "default"),
-        value: colIdx.toString(),
-        meta: {
-          type: "static",
-        },
-      }));
-
-      return {
-        show: true,
-        showInput: false,
-        options: toOperandGroups(t, { choices }),
-      };
-    }
-
-    return { show: false, options: [] };
+    return getElementMatchValueProps(condition, localSurvey, t, {
+      elements,
+      selectedElement,
+      embeddedFieldsExcludingSelf,
+      toElementOption,
+    });
   }
 
   /*
