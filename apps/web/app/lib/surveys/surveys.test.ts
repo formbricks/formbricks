@@ -3,7 +3,7 @@ import { cleanup } from "@testing-library/react";
 import { TFunction } from "i18next";
 import { afterEach, describe, expect, test } from "vitest";
 import { normalizeIngestedValue } from "@formbricks/types/embedded-data-ingest";
-import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import { coerceToEmbeddedDataType, deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -1438,20 +1438,38 @@ describe("surveys", () => {
       expect(buildDateFieldCondition("lessThan", min)).toEqual({ op: "lessThan", value: min });
     });
 
-    test("the last representable day names no upper bound rather than a malformed one", () => {
+    test("the last representable day is still a day, not a point", () => {
       // `new Date("9999-12-31Z")` plus a day is year 10000, which `toISOString` writes in ISO 8601's
       // expanded form (`+010000-01-01T…`). Sliced to ten characters that is `+010000-01`, and `+`
-      // sorts below every digit — so as a `max` it would empty the window and the filter would match
-      // nothing at all. Falling back to the bare comparison keeps the day matchable.
+      // sorts below every digit — so as a `max` it would empty the window. Comparing against the
+      // bare date instead is the other failure: `9999-12-31T10:30:00Z` is an instant *on* that day,
+      // and it would miss "on" and match "after". The bound only has to sort above every value the
+      // day can hold, and it is never a stored value itself, so it does not have to be a real date.
       const lastDay = "9999-12-31";
+      const bound = "9999-12-32";
+      const instantOnLastDay = "9999-12-31T10:30:00.000Z";
 
-      expect(buildDateFieldCondition("equals", lastDay)).toEqual({ op: "equals", value: lastDay });
-      expect(buildDateFieldCondition("notEquals", lastDay)).toEqual({ op: "notEquals", value: lastDay });
+      expect(buildDateFieldCondition("equals", lastDay)).toEqual({
+        op: "inRange",
+        min: lastDay,
+        max: bound,
+      });
+      expect(buildDateFieldCondition("notEquals", lastDay)).toEqual({
+        op: "notInRange",
+        min: lastDay,
+        max: bound,
+      });
       expect(buildDateFieldCondition("greaterThan", lastDay)).toEqual({
-        op: "greaterThan",
-        value: lastDay,
+        op: "greaterEqual",
+        value: bound,
       });
       expect(buildDateFieldCondition("lessThan", lastDay)).toEqual({ op: "lessThan", value: lastDay });
+
+      // The property the bound exists for, read the way Postgres compares the strings.
+      expect(instantOnLastDay >= lastDay && instantOnLastDay < bound).toBe(true);
+      expect(instantOnLastDay >= bound).toBe(false);
+      // And nothing can be stored on the bound itself.
+      expect(coerceToEmbeddedDataType(bound, "date")).toBeUndefined();
     });
 
     test("the window covers both spellings a date field stores", () => {

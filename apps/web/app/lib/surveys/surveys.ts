@@ -173,26 +173,36 @@ type TTypedFieldFilterCondition = NonNullable<TResponseFilterCriteria["reserved"
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * The UTC day after a `YYYY-MM-DD`, in the same spelling — the exclusive upper bound of that day —
- * or `null` when that day has no representable successor.
+ * The exclusive upper bound of `9999-12-31`, the one day with no representable successor.
+ *
+ * `toISOString` switches to ISO 8601's expanded year form past it and returns `+010000-01-01T…`,
+ * whose first ten characters are `+010000-01`; `+` sorts below every digit, so as a `max` it would
+ * empty the window. The bound is only ever compared lexicographically, though, and all it has to do
+ * is sort above every value that day can hold — which `9999-12-32` does, for both stored spellings.
+ * Nothing can sit *on* it either: `coerceToEmbeddedDataType` refuses day 32, so no stored value is
+ * ever equal to it. Naming a real successor is not the requirement; ordering correctly is.
+ */
+const LAST_DAY_EXCLUSIVE_BOUND = "9999-12-32";
+
+/**
+ * The UTC day after a `YYYY-MM-DD`, in the same spelling — the exclusive upper bound of that day.
  *
  * Through UTC arithmetic rather than string arithmetic so month, year and leap-day ends roll over,
  * and deliberately not through the local-zone constructor: `new Date(2026, 8, 1)` is midnight
  * wherever the browser happens to be, which lands the boundary on the wrong day for anyone east or
  * west of Greenwich — the same saved filter would then answer differently per viewer.
  *
- * The one day that has no successor is `9999-12-31`: `toISOString` switches to ISO 8601's expanded
- * year form past it and returns `+010000-01-01T…`, whose first ten characters are `+010000-01`. That
- * is not a date, and as a lexicographic upper bound it sorts below every stored value — so the
- * window would be empty and the filter would silently match nothing. Refusing to name a bound sends
- * the caller down the same path a stored instant already takes.
+ * Past the last representable day it hands back {@link LAST_DAY_EXCLUSIVE_BOUND} rather than giving
+ * up: a day-granular filter on `9999-12-31` still has to cover the instants stored on it, and
+ * comparing against the bare date instead would miss `9999-12-31T10:30:00Z` on "on that day" and
+ * match it on "after that day".
  */
-const nextUtcDay = (dateOnly: string): string | null => {
+const nextUtcDay = (dateOnly: string): string => {
   const day = new Date(`${dateOnly}T00:00:00.000Z`);
   day.setUTCDate(day.getUTCDate() + 1);
 
   const next = day.toISOString().slice(0, 10);
-  return DATE_ONLY_PATTERN.test(next) ? next : null;
+  return DATE_ONLY_PATTERN.test(next) ? next : LAST_DAY_EXCLUSIVE_BOUND;
 };
 
 /**
@@ -229,6 +239,8 @@ export const buildDateFieldCondition = (op: string, value: string): TTypedFieldF
   // comparing it anyway would cut the ISO ordering at an arbitrary point. Dropping the row is the
   // same stance the boolean arm takes on `"yes"`.
   if (coerceToEmbeddedDataType(value, "date") === undefined) return null;
+  // Null only for a value that already names an instant: it means what it says, so it is compared
+  // as-is. Every date-only value has a bound, the last day included.
   const dayAfter = DATE_ONLY_PATTERN.test(value) ? nextUtcDay(value) : null;
 
   switch (op) {
