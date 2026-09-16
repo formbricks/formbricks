@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}} wordt nog gebruikt",
       "type_boolean": "Waar/onwaar",
       "type_change_body": "Waarden die al zijn verzameld blijven precies zoals ze zijn; alleen nieuwe antwoorden worden gelezen als {{to}}. Filters en logica die {{to}}-waarden vergelijken, komen mogelijk niet overeen met de oudere waarden.",
-      "type_change_subtitle": "{{count}} enquêtes die dit veld gebruiken hebben al antwoorden.",
+      "type_change_subtitle": "{count, plural, one {# enquête die dit veld gebruikt heeft al antwoorden.} other {# enquêtes die dit veld gebruiken hebben al antwoorden.}}",
       "type_change_title": "{{name}} wijzigen van {{from}} naar {{to}}?",
       "used_in": "Gebruikt in",
       "used_in_one_survey": "1 enquête",

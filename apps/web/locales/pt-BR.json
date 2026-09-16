@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}} ainda está sendo usado",
       "type_boolean": "Verdadeiro/falso",
       "type_change_body": "Os valores já coletados permanecem exatamente como estão; apenas novas respostas são lidas como {{to}}. Filtros e lógica que comparam valores {{to}} podem não corresponder aos mais antigos.",
-      "type_change_subtitle": "{{count}} pesquisas usando este campo já têm respostas.",
+      "type_change_subtitle": "{count, plural, one {# pesquisa usando este campo já tem respostas.} other {# pesquisas usando este campo já têm respostas.}",
       "type_change_title": "Alterar {{name}} de {{from}} para {{to}}?",
       "used_in": "Usado em",
       "used_in_one_survey": "1 pesquisa",
