@@ -2233,7 +2233,7 @@
       "value_source": "De onde vem o valor?",
       "value_source_column": "Origem",
       "value_true": "Verdadeiro",
-      "warning_clashing_address": "Um campo calculado e um campo transmitido partilham este nome. A recuperação e a lógica resolvem um deles; muda o nome de um para teres a certeza de qual é usado.",
+      "warning_clashing_address": "Outro campo neste questionário responde a este nome. A recuperação e a lógica resolvem um deles; renomeia um para teres a certeza de qual.",
       "warning_reserved_address": "Este nome é agora um campo auto-capturado reservado. Este inquérito mantém o seu próprio, que tem prioridade aqui, pelo que o valor auto-capturado não está disponível sob este nome.",
       "warning_unsafe_address": "Este endereço é anterior à regra de nomenclatura atual. Continua a funcionar; um novo campo não poderia ter este nome.",
       "when_anonymized": "Quando as respostas são anonimizadas"

@@ -91,6 +91,20 @@ describe("embeddedFieldWarnings", () => {
     expect(warningsFor([variable, hidden], variable)).toContain("clashingAddress");
   });
 
+  /**
+   * Two of a kind collide too, which is why the warning names no source. The server's clash guard
+   * only refuses a computed/ingested pair, and a same-source pair differing in case slips past the
+   * per-namespace uniqueness rules — but the Embedded Data namespace is case-insensitive, so recall
+   * and logic still resolve exactly one of them.
+   */
+  test("two fields of the same source clash on case alone", () => {
+    const first = ingested("UTM_Source");
+    const second = ingested("utm_source");
+
+    expect(warningsFor([first, second], first)).toContain("clashingAddress");
+    expect(warningsFor([first, second], second)).toContain("clashingAddress");
+  });
+
   test("two unrelated names are not a clash", () => {
     const variable = computed("score");
     const hidden = ingested("utm_campaign");
