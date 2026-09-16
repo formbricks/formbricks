@@ -49,11 +49,33 @@ export type TV3BatchDeleteResponsesBody = z.infer<typeof ZV3BatchDeleteResponses
  * would accept shapes no element can store and push the failure into the serializer, which reports
  * them as `valueShapeMismatch` on a row the caller could have been stopped from writing.
  */
+/**
+ * Cardinality caps on a stored answer, per the ENG-1652 input policy — the same reason `tags` and the
+ * batch-delete body are capped above.
+ *
+ * Both are far past any real survey: a multi-select answer holds at most one entry per choice, and a
+ * response holds at most one entry per element. The point is that neither has a bound today, so a
+ * single request inside the 2 MB body limit can store an array of tens of thousands of entries, and
+ * every later reader pays for it per entry — the serializer's per-answer mapping, export columns, and
+ * the positional probe the "Other" response filter emits (ENG-3161), whose window is sized from the
+ * survey's choice count rather than from the stored array.
+ *
+ * v3-only, and additive: these are new endpoints with no callers. The same unbounded shape reaches
+ * `ZResponseData` through the v1 and v2 write paths, where capping it would reject payloads that
+ * work today — see this PR's open gaps.
+ */
+const MAX_RESPONSE_DATA_VALUES = 1_000;
+const MAX_RESPONSE_DATA_KEYS = 500;
+
 const ZV3ResponseDataValue = z.union([
   z.string(),
   z.number(),
-  z.array(z.string()),
-  z.record(z.string(), z.string()),
+  z.array(z.string()).max(MAX_RESPONSE_DATA_VALUES),
+  z
+    .record(z.string(), z.string())
+    .refine((entries) => Object.keys(entries).length <= MAX_RESPONSE_DATA_VALUES, {
+      message: `A matrix answer may hold at most ${MAX_RESPONSE_DATA_VALUES} rows`,
+    }),
 ]);
 
 /** Embedded Data accepts scalars only, plus `null` to clear a field. No arrays, no objects. */
@@ -93,7 +115,11 @@ const ZV3ResponseTtcInput = z.record(z.string(), z.number());
 const createFields = {
   surveyId: z.cuid2(),
   finished: z.boolean(),
-  data: z.record(z.string(), ZV3ResponseDataValue),
+  data: z
+    .record(z.string(), ZV3ResponseDataValue)
+    .refine((entries) => Object.keys(entries).length <= MAX_RESPONSE_DATA_KEYS, {
+      message: `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`,
+    }),
   embeddedData: z.record(z.string(), ZV3EmbeddedDataValue).optional(),
   ttc: ZV3ResponseTtcInput.optional(),
   meta: ZV3ResponseMetaInput.optional(),
