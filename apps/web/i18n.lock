@@ -2078,6 +2078,57 @@ checksums:
     workspace/contacts/upload_contacts_modal_preview: 2ea999d47068d8d626cde456ae0ac44a
     workspace/contacts/upload_contacts_modal_upload_btn: 47b7f3bcf478a7d8dc258d2efc80af37
     workspace/contacts/upload_contacts_success: cd5d6b6d587586dd4f944868c92835bc
+    workspace/embedded_data/after_response_submitted: c1d7212d9014fe4217463b7a49c5efe7
+    workspace/embedded_data/anonymize_note: b4c1bb6ce7d2b86b0b3a67b377c0c24b
+    workspace/embedded_data/auto_captured: a21afd34cbc5054022951191a68ff3b5
+    workspace/embedded_data/auto_captured_description: 8056c99021616a7b38933126988d4154
+    workspace/embedded_data/calculated_type_hint: b557167b589c31374a98611c2e95a03e
+    workspace/embedded_data/change_type: 6dca99e3f1f2949403c3228879802d8d
+    workspace/embedded_data/create_field: dd3ccf3288361eb1a04f5d96fc8f4866
+    workspace/embedded_data/default_value: 61d4fd648cd0e2dfc6aeeb1b2b9f206c
+    workspace/embedded_data/delete_field_text: 1f897069412d58d88557a1897b5c7917
+    workspace/embedded_data/edit_library_field: 90c051b1ca138bc1ac8818f25aa60a32
+    workspace/embedded_data/edit_library_field_description: 8e153bf28afaa107cf3c6dadd0b594e3
+    workspace/embedded_data/empty_state: 71f68f07c8d55fe06dcb9a6177c7242c
+    workspace/embedded_data/field_created: adc44607163fc4ffdea20c5bce543135
+    workspace/embedded_data/field_deleted: 2a0ad830c6f351116340cc71dd62adef
+    workspace/embedded_data/field_updated: 424971310861f03c83b133055a9b8d21
+    workspace/embedded_data/in_logic_and_recall: 26ff2f3d1ea3e8511b004f94f1d627bf
+    workspace/embedded_data/key_already_exists: 47e710079893c06697d6adcf5ef74ed1
+    workspace/embedded_data/key_cannot_be_changed: 1bdac321f5f7d19340ad3717c0bd002a
+    workspace/embedded_data/key_hint: 97a2199b31ec54d359ca1dbb9d5e660b
+    workspace/embedded_data/library: 512895070bcbba02f534d584e7028ef4
+    workspace/embedded_data/library_description: a0ab57eecc73945af4386438bbc635f6
+    workspace/embedded_data/library_field: c8e3065796a15759a611c3f6d517a443
+    workspace/embedded_data/locked: 30950d887a19841aa481091affd091e6
+    workspace/embedded_data/locked_description: 2517f1abfd77f51225ec3dfec7e0f091
+    workspace/embedded_data/locked_without_default: 55deb54f44c754c1df6bb87afae5b68b
+    workspace/embedded_data/new_field: 2863c1f4be3274634ee06494767ea660
+    workspace/embedded_data/new_library_field: 77b1f4a7f7f430acb3bf162b2335d134
+    workspace/embedded_data/new_library_field_description: 743e88665598c88ff6eb49ab1cb3a9a6
+    workspace/embedded_data/no_default: 2dc1e7034bb92a28995c1518806f0081
+    workspace/embedded_data/not_used: b6be5b9d833d2c11e6e513b3550e071f
+    workspace/embedded_data/privacy_kept: 64008696044a893b9e4284feecff0626
+    workspace/embedded_data/privacy_not_stored: 9f9036aed04ee00a5f1c6fd02ef9a6af
+    workspace/embedded_data/privacy_query_removed: c92a007aed2adc08855242aeab0529d8
+    workspace/embedded_data/source_calculated: b03370f9b9ca6c31a2c8b0ea269dfbbf
+    workspace/embedded_data/source_cannot_be_changed: bb205d982c529bc516e684ae348a43f4
+    workspace/embedded_data/source_passed_in: b1a98da8ac51aa5b56a0e23db9405e1f
+    workspace/embedded_data/still_used_body: 8209ff54fcb63f5f5887c586fb5c1d11
+    workspace/embedded_data/still_used_description: 080d1377b235df9b11b8c52ade4d10d3
+    workspace/embedded_data/still_used_title: 22ce55eb48df121248094e423893612b
+    workspace/embedded_data/type_boolean: cd6b8f6ab199da93ec0401c546e491a9
+    workspace/embedded_data/type_change_body: 31e52388b4bf0ff02d377d7e7de4fb98
+    workspace/embedded_data/type_change_subtitle: 8cf5676b08bc7c6d05ca39893bbba085
+    workspace/embedded_data/type_change_title: 991765d1298b9016c3dd705f105a2e0c
+    workspace/embedded_data/used_in: 8e7b271da8b58c301d3553301b57e718
+    workspace/embedded_data/used_in_one_survey: 1a57c91994fa9d8797788477373856c8
+    workspace/embedded_data/used_in_surveys: 9129dd180cfd7f692e9c14edc3f81953
+    workspace/embedded_data/value_false: 41f6cab1a102e400d519b0b18736aa6e
+    workspace/embedded_data/value_source: bd5d40ed1d963afefe6c1a8657ad70ee
+    workspace/embedded_data/value_source_column: 6e87903ef260da661b2bf6d858ba68ca
+    workspace/embedded_data/value_true: 59278a86fd5e3f593dadbf04d95ea08f
+    workspace/embedded_data/when_anonymized: d16152700b47238b8ad828463b4cb9b5
     workspace/formbricks_logo: b7ee57de32c8b13463cc8ca8643eddd4
     workspace/general/cannot_delete_only_workspace: 853f32a75d92b06eaccc0d43d767c183
     workspace/general/cooldown_period_updated_successfully: 55ff7f3874ea30a1961107c495407696
