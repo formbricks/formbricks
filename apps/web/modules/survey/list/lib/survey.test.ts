@@ -409,6 +409,98 @@ describe("copySurveyToOtherWorkspace", () => {
     ]);
   });
 
+  describe("a shared field, on copy (ENG-3228)", () => {
+    // A shared field is a link to a workspace-owned definition, so what a copy does with it depends
+    // on where the copy lands. Definitions never cross a workspace boundary.
+    const sharedSourceRow = {
+      id: "ed_shared_source",
+      key: "plan_tier",
+      name: "Plan tier",
+      source: "ingested" as const,
+      dataType: "string" as const,
+      defaultValue: "free",
+      locked: true,
+    };
+
+    const surveyWithSharedField = {
+      ...mockExistingSurveyDetails,
+      embeddedDataLinks: [{ storageKey: "plan_tier", embeddedData: sharedSourceRow }],
+    };
+
+    const createdLinks = () =>
+      vi
+        .mocked(prisma.surveyEmbeddedData.create)
+        .mock.calls.map(([args]) => (args as { data: { embeddedDataId: string } }).data);
+
+    beforeEach(() => {
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(surveyWithSharedField as any);
+    });
+
+    test("re-links the same library row when the copy stays in the workspace", async () => {
+      vi.mocked(getWorkspaceWithLanguages).mockReset();
+      vi.mocked(getWorkspaceWithLanguages).mockResolvedValue(mockSourceWorkspace);
+      // The reconcile re-reads every shared row it is asked to link before it writes anything, so
+      // the row has to exist even on the path where the copy never looked a library up.
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([sharedSourceRow] as never);
+
+      await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+      // The library row is right there, so the two surveys go on sharing one definition.
+      expect(prisma.embeddedData.create).not.toHaveBeenCalled();
+      expect(createdLinks()).toEqual([expect.objectContaining({ embeddedDataId: "ed_shared_source" })]);
+    });
+
+    test("links the target workspace's own row when its library has the same field", async () => {
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([
+        { ...sharedSourceRow, id: "ed_shared_target" },
+      ] as never);
+
+      await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+      expect(prisma.embeddedData.create).not.toHaveBeenCalled();
+      expect(createdLinks()).toEqual([expect.objectContaining({ embeddedDataId: "ed_shared_target" })]);
+    });
+
+    test("localizes the field when the target's library answers the key with a different field", async () => {
+      // Same key, different source: a `plan_tier` that is ingested text here and computed there is a
+      // different field wearing the same name, so linking it would change what the copy resolves.
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([
+        { ...sharedSourceRow, id: "ed_other", source: "computed" },
+      ] as never);
+
+      await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+      // Localized rather than dropped, and named after the library KEY: a local field's name is the
+      // legacy hidden field id the copy's columns carry, and `Plan tier` is not a legal one.
+      expect(prisma.embeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            key: null,
+            name: "plan_tier",
+            source: "ingested",
+            dataType: "string",
+            defaultValue: "free",
+            locked: true,
+            workspaceId: targetWorkspaceId,
+          }),
+        })
+      );
+    });
+
+    test("localizes the field when the target's library has nothing under the key", async () => {
+      await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+      expect(prisma.embeddedData.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { workspaceId: targetWorkspaceId, surveyId: null, key: { in: ["plan_tier"] } },
+        })
+      );
+      expect(prisma.embeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ key: null, name: "plan_tier" }) })
+      );
+    });
+  });
+
   test("should copy survey to the same workspace successfully", async () => {
     vi.mocked(getWorkspaceWithLanguages).mockReset();
     vi.mocked(getWorkspaceWithLanguages).mockResolvedValue(mockSourceWorkspace);

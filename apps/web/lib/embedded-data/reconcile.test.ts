@@ -1,9 +1,10 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { type TDesiredEmbeddedField } from "@formbricks/types/embedded-data-mapping";
 import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import {
   type TCurrentEmbeddedField,
   planEmbeddedDataReconcile,
+  reconcileEmbeddedData,
   resolveDesiredEmbeddedFields,
 } from "./reconcile";
 
@@ -429,5 +430,154 @@ describe("planEmbeddedDataReconcile", () => {
     };
     const plan = planEmbeddedDataReconcile(SURVEY_ID, [foreignField], []);
     expect(plan.toUnlink).toEqual([{ linkId: "link_ed_foreign", fieldIdToDelete: null }]);
+  });
+});
+
+/**
+ * The two checks that run before anything is written, against a stub transaction.
+ *
+ * They are the reconcile's only reads, and both exist to turn a payload the database would reject
+ * — or worse, accept — into a 400 naming the field. The integration suite proves they hold against
+ * real rows; this proves each refusal fires, and that the reads that back them are workspace-scoped.
+ */
+describe("reconcileEmbeddedData refusals", () => {
+  const WORKSPACE_ID = "ws_1";
+
+  /** Just enough of a transaction client for the guards; nothing here should reach a write. */
+  const stubTx = (sharedRows: { id: string; key: string | null; source: string }[]) => ({
+    surveyEmbeddedData: {
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    embeddedData: {
+      findMany: vi.fn().mockResolvedValue(sharedRows),
+      create: vi.fn().mockResolvedValue({ id: "ed_new" }),
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+    },
+  });
+
+  /** The desired shape as the payload spells it: a definition paired with the link addressing it. */
+  const asLinked = (desired: TDesiredEmbeddedField) => ({
+    field: {
+      id: desired.embeddedDataId,
+      key: desired.key,
+      name: desired.name,
+      source: desired.source,
+      dataType: desired.dataType,
+      defaultValue: desired.defaultValue,
+      locked: desired.locked,
+    },
+    link: { storageKey: desired.storageKey },
+  });
+
+  const reconcile = (tx: ReturnType<typeof stubTx>, desired: TDesiredEmbeddedField[]): Promise<void> =>
+    reconcileEmbeddedData(tx as unknown as Parameters<typeof reconcileEmbeddedData>[0], {
+      surveyId: SURVEY_ID,
+      workspaceId: WORKSPACE_ID,
+      patch: { embeddedFields: desired.map(asLinked) },
+    });
+
+  test("refuses a reserved field, which is a code catalog and never a row", async () => {
+    const tx = stubTx([]);
+    await expect(reconcile(tx, [{ ...desiredPlan, source: "reserved" }])).rejects.toThrow(
+      "Reserved fields are a code catalog and cannot be stored: plan"
+    );
+    expect(tx.embeddedData.create).not.toHaveBeenCalled();
+  });
+
+  test("refuses a shared entry that does not name the row it links", async () => {
+    // Treating it as local instead would silently fork a private copy of a library field.
+    const tx = stubTx([]);
+    await expect(reconcile(tx, [{ ...desiredPlan, key: "plan" }])).rejects.toThrow(
+      "Shared embedded data field is missing its id: plan"
+    );
+    expect(tx.embeddedData.create).not.toHaveBeenCalled();
+  });
+
+  test("refuses a link to a row this workspace does not have", async () => {
+    const tx = stubTx([]);
+    await expect(reconcile(tx, [sharedDesired(desiredPlan, "ed_gone", "plan")])).rejects.toThrow(
+      "Unknown shared embedded data field: plan"
+    );
+    // Scoped, so a row in another workspace reads as absent rather than as linkable.
+    expect(tx.embeddedData.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: { in: ["ed_gone"] }, workspaceId: WORKSPACE_ID } })
+    );
+  });
+
+  test("refuses a link to a local row, which belongs to one survey", async () => {
+    const tx = stubTx([{ id: "ed_local", key: null, source: "ingested" }]);
+    await expect(reconcile(tx, [sharedDesired(desiredPlan, "ed_local", "plan")])).rejects.toThrow(
+      "Unknown shared embedded data field: plan"
+    );
+  });
+
+  test("refuses a link to a library field of the other source", async () => {
+    // The value would be resolved out of the wrong half of the response.
+    const tx = stubTx([{ id: "ed_shared", key: "plan", source: "computed" }]);
+    await expect(reconcile(tx, [sharedDesired(desiredPlan, "ed_shared", "plan")])).rejects.toThrow(
+      "Shared embedded data field plan is computed, not ingested"
+    );
+  });
+
+  test("links a valid shared entry without writing a definition", async () => {
+    const tx = stubTx([{ id: "ed_shared", key: "plan", source: "ingested" }]);
+    await reconcile(tx, [sharedDesired(desiredPlan, "ed_shared", "plan")]);
+
+    expect(tx.embeddedData.create).not.toHaveBeenCalled();
+    expect(tx.surveyEmbeddedData.create).toHaveBeenCalledWith({
+      data: {
+        surveyId: SURVEY_ID,
+        workspaceId: WORKSPACE_ID,
+        embeddedDataId: "ed_shared",
+        storageKey: "plan",
+        order: 0,
+      },
+    });
+  });
+
+  test("writes a local definition's new type, default and lock under the same address", async () => {
+    const tx = stubTx([]);
+    tx.surveyEmbeddedData.findMany.mockResolvedValue([
+      {
+        id: "link_ed_plan",
+        storageKey: "plan",
+        order: 0,
+        embeddedData: {
+          id: "ed_plan",
+          surveyId: SURVEY_ID,
+          key: null,
+          name: "plan",
+          source: "ingested",
+          dataType: "string",
+          defaultValue: null,
+          locked: false,
+        },
+      },
+    ]);
+
+    await reconcile(tx, [
+      { ...desiredPlan, dataType: "number", defaultValue: 7, locked: true, name: "plan" },
+    ]);
+
+    // An edit in place: the address never moves, so every response already stored under it keeps
+    // resolving. `locked` rides along, which is the whole point of the typed payload.
+    expect(tx.embeddedData.updateMany).toHaveBeenCalledWith({
+      where: { id: "ed_plan", surveyId: SURVEY_ID },
+      data: { name: "plan", dataType: "number", defaultValue: 7, locked: true },
+    });
+    expect(tx.surveyEmbeddedData.create).not.toHaveBeenCalled();
+    expect(tx.surveyEmbeddedData.deleteMany).not.toHaveBeenCalled();
+  });
+
+  test("refuses two fields at one address before it writes either", async () => {
+    const tx = stubTx([]);
+    await expect(reconcile(tx, [desiredPlan, { ...desiredPlan, name: "plan" }])).rejects.toThrow(
+      "Duplicate embedded data field: plan"
+    );
+    expect(tx.embeddedData.create).not.toHaveBeenCalled();
   });
 });

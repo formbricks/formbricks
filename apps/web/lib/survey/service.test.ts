@@ -829,6 +829,93 @@ describe("Tests for updateSurvey", () => {
    * The grandfather cases are the load-bearing ones: surveys in production already declare
    * `country`, `url`, `source`, `browser`, and this ticket must not rename or break any of them.
    */
+  describe("the embeddedFields carrier (ENG-3228)", () => {
+    /** One typed, defaulted, locked ingested field — none of which the legacy columns can carry. */
+    const typedPlan = {
+      field: {
+        key: null,
+        name: "plan",
+        source: "ingested" as const,
+        dataType: "number" as const,
+        defaultValue: 7,
+        locked: true,
+      },
+      link: { storageKey: "plan" },
+    };
+
+    const updateWith = (embeddedFields: unknown[]) =>
+      updateSurvey({ ...updateSurveyInput, embeddedFields } as never);
+
+    test("derives both legacy columns from the payload, ignoring the ones sent beside it", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateWith([
+        typedPlan,
+        {
+          field: {
+            key: null,
+            name: "score",
+            source: "computed" as const,
+            dataType: "number" as const,
+            defaultValue: 3,
+            locked: false,
+          },
+          link: { storageKey: "varscore0000000000000001" },
+        },
+      ]);
+
+      // The dual write continues, but the rows are what it is derived from: deployed SDK bundles
+      // still read these columns off the workspace-state payload.
+      const data = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data as {
+        variables: unknown;
+        hiddenFields: unknown;
+      };
+      expect(data.variables).toEqual([
+        { id: "varscore0000000000000001", name: "score", type: "number", value: 3 },
+      ]);
+      expect(data.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
+    });
+
+    test("refuses a payload whose derived columns would not load again", async () => {
+      // The columns are re-parsed by `ZSurvey` on every read, so a derived variable name the legacy
+      // schema refuses would store a survey that cannot be loaded. Caught before the transaction.
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+
+      await expect(
+        updateWith([
+          {
+            field: {
+              key: null,
+              name: "Not A Legal Variable Name",
+              source: "computed" as const,
+              dataType: "string" as const,
+              defaultValue: "",
+              locked: false,
+            },
+            link: { storageKey: "varbad000000000000000001" },
+          },
+        ])
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("leaves the legacy path alone when the payload does not carry the key", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateSurvey(updateSurveyInput);
+
+      const data = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data as {
+        variables: unknown;
+        hiddenFields: unknown;
+      };
+      expect(data.variables).toEqual(updateSurveyInput.variables);
+      expect(data.hiddenFields).toEqual(updateSurveyInput.hiddenFields);
+    });
+  });
+
   describe("reserved names for newly declared fields", () => {
     test("rejects a save that ADDS a hidden field named after a reserved field, and does not write", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({
