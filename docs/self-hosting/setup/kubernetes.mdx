@@ -167,10 +167,14 @@ deployment details.
 
 ### Envoy Bundle Modes
 
-The chart supports three edge patterns for the v5-covered routes:
+The chart supports these edge patterns for the v5-covered routes:
 
-- **Bundled Envoy controller**: set `envoy.enabled=true` and `envoy.controller.enabled=true`
-- **Existing cluster Envoy controller**: set `envoy.enabled=true` and `envoy.controller.enabled=false`
+- **Bundled Envoy controller and CRDs**: set `envoy.enabled=true`, `envoy.controller.enabled=true`, and
+  `envoy.crds.enabled=true`
+- **Bundled Envoy controller with platform-managed CRDs**: keep the controller enabled and set
+  `envoy.crds.enabled=false`
+- **Existing cluster Envoy controller**: set `envoy.enabled=true`, `envoy.controller.enabled=false`,
+  `envoy.formbricks.gatewayClass.create=false`, and `envoy.formbricks.gatewayClass.name` to the existing class
 - **Equivalent external edge protection**: keep using your platform's own ingress or gateway layer if it already
   provides equivalent rate-limiting coverage
 
@@ -181,18 +185,60 @@ envoy:
   enabled: true
   controller:
     enabled: true
+  crds:
+    enabled: true
 
 envoyRedis:
   enabled: true
 ```
 
-This keeps Envoy rate-limiting state separate from the application's own Redis traffic.
+This installs Envoy Gateway 1.8.4 with Gateway API 1.5.1 and keeps Envoy rate-limiting state separate from the
+application's own Redis traffic.
+
+If your platform already manages compatible Gateway API CRDs, install only the matching Envoy Gateway CRDs:
+
+```bash
+helm template envoy-gateway-crds \
+  oci://docker.io/envoyproxy/gateway-crds-helm \
+  --version v1.8.4 \
+  --set crds.gatewayAPI.enabled=false \
+  --set crds.envoyGateway.enabled=true \
+  | kubectl apply --server-side --force-conflicts -f -
+```
+
+Then keep the bundled controller but prevent the Formbricks release from managing either CRD set:
+
+```yaml
+envoy:
+  enabled: true
+  controller:
+    enabled: true
+  crds:
+    enabled: false
+```
+
+For a Flux `HelmRelease`, also make the ownership boundary explicit:
+
+```yaml
+spec:
+  install:
+    crds: Skip
+  upgrade:
+    crds: Skip
+```
 
 The example installs the bundled controller. If your cluster already provides a compatible Envoy Gateway
-controller, set `envoy.controller.enabled: false`. In either mode, configure
+controller, set `envoy.controller.enabled: false`, disable GatewayClass creation, and provide the existing
+GatewayClass name. The controller dependency, including its CRDs, is disabled in this mode. In either mode, configure
 `envoy.formbricks.ingress` or your platform ingress/load balancer so public traffic reaches the Envoy-managed
 routes. If you use an equivalent external edge solution instead, verify that it covers every route in the
 [rate-limiting guide](/self-hosting/advanced/rate-limiting) before exposing Formbricks.
+
+<Warning>
+  Istio and other Gateway API implementations can remain in front of Formbricks, but they do not reconcile
+  Envoy-specific resources such as `SecurityPolicy`, `HTTPRouteFilter`, or `EnvoyProxy`. Enabling the Feedback
+  Records gateway route therefore still requires an Envoy Gateway controller.
+</Warning>
 
 ### Production Replicas And Disruption Budgets
 
