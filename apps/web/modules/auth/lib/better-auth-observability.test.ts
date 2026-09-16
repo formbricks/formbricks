@@ -8,6 +8,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { SSO_PROVISIONING_REJECT_REASONS } from "@/modules/ee/sso/lib/provisioning-reject-reasons";
 import {
   auditFailedAuthAfter,
   auditPasswordReset,
@@ -829,6 +830,26 @@ describe("recordSsoCallbackOutcome (ENG-2551)", () => {
     );
 
     expect(contextOf()).toMatchObject({ ssoCallbackReason: "other" });
+  });
+
+  /**
+   * ENG-2882. The provisioning gate's reject reasons reach this field as the `?error=` code Better
+   * Auth redirects with, and before this they were absent from the allow-list, so the entire class —
+   * ~36 rejected SSO sign-ups a day — logged as `other`. That is indistinguishable from an outsider
+   * probing the callback with a junk `error`, and it is what made "are these rejections correct?"
+   * unanswerable: a personal-email block working exactly as designed and a misconfigured instance
+   * refusing every new user produced the same log line.
+   *
+   * Driven off the exported list rather than a copy, so a reason added to the gate without being
+   * classified fails here instead of silently rejoining the `other` bucket.
+   */
+  test.each(SSO_PROVISIONING_REJECT_REASONS)("records the provisioning reject reason %s", (reason) => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/google",
+      redirect(`https://app.test/auth/login?error=${reason}`)
+    );
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "failure", ssoCallbackReason: reason });
   });
 
   test.each([

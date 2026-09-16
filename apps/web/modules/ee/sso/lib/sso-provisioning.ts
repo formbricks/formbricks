@@ -22,10 +22,13 @@ import {
   ensureDefaultOrganization,
 } from "@/modules/ee/sso/lib/default-organization";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
+import type { TSsoProvisioningRejectReason } from "@/modules/ee/sso/lib/provisioning-reject-reasons";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 
 export type TSsoProvisioningDecision =
-  | { action: "reject"; reason: string }
+  // The reason is a closed set, not a free string: it leaves the server as the `?error=` code the
+  // login form and the callback-outcome log both key on (ENG-2882).
+  | { action: "reject"; reason: TSsoProvisioningRejectReason }
   | {
       action: "provision";
       /** Org to auto-assign the new member to; null = fresh instance / multi-org (no auto-assignment). */
@@ -46,7 +49,10 @@ export type TSsoProvisioningDecision =
  * gateSsoProvisioning so that gate stays under the cognitive-complexity budget — its behavior is
  * covered by sso-provisioning.test.ts.
  */
-const validateSsoInviteToken = async (email: string, callbackUrl: string): Promise<string | null> => {
+const validateSsoInviteToken = async (
+  email: string,
+  callbackUrl: string
+): Promise<TSsoProvisioningRejectReason | null> => {
   if (!callbackUrl) return "missing_callback_url";
   let inviteToken = "";
   try {
