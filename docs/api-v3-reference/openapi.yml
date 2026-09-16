@@ -7300,14 +7300,19 @@ components:
         Keeping the two apart is what lets the storage layout change underneath — the legacy columns go away eventually — without this contract either following it or breaking a round-trip it promised.
 
         The value shapes are the stored ones, and they differ by element type. `ResponseAnswer` documents each; `answers[]` on the read is the resolved view of this same map.
+
+        **Bounds.** At most 500 keys, and at most 1000 entries in a multi-select array or matrix object. Both sit far above any real survey — a response holds one entry per element, a multi-select answer one per choice — and exist because every later reader pays per entry. Exceeding either is a **400** from the request schema, not a 422. These bounds are v3-only: the v1 and v2 write paths store the same map without them.
+      maxProperties: 500
       additionalProperties:
         oneOf:
           - type: string
           - type: number
           - type: array
+            maxItems: 1000
             items:
               type: string
           - type: object
+            maxProperties: 1000
             additionalProperties:
               type: string
     ResponseEmbeddedDataInput:

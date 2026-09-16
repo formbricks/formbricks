@@ -36,6 +36,33 @@ describe("ZV3CreateResponseBody", () => {
     expect(create({ data: { q1: value } }).success).toBe(true);
   });
 
+  // ENG-1652 cardinality caps. Nothing bounded these before: a single request inside the 2 MB body
+  // limit could store an array of tens of thousands of entries, and every later reader pays per
+  // entry — the serializer, export columns, and the "Other" filter's positional probe, whose window
+  // is sized from the survey's choice count rather than from the stored array (ENG-3161).
+  test("a multi-select answer is capped at 1000 entries", () => {
+    const entries = (count: number) => Array.from({ length: count }, (_unused, i) => `c${i}`);
+
+    expect(create({ data: { q1: entries(1_000) } }).success).toBe(true);
+    expect(create({ data: { q1: entries(1_001) } }).success).toBe(false);
+  });
+
+  test("a matrix answer is capped at 1000 rows", () => {
+    const rows = (count: number) =>
+      Object.fromEntries(Array.from({ length: count }, (_unused, i) => [`r${i}`, "agree"]));
+
+    expect(create({ data: { q1: rows(1_000) } }).success).toBe(true);
+    expect(create({ data: { q1: rows(1_001) } }).success).toBe(false);
+  });
+
+  test("a response is capped at 500 answered fields", () => {
+    const fields = (count: number) =>
+      Object.fromEntries(Array.from({ length: count }, (_unused, i) => [`q${i}`, "text"]));
+
+    expect(create({ data: fields(500) }).success).toBe(true);
+    expect(create({ data: fields(501) }).success).toBe(false);
+  });
+
   test("data refuses a shape no element can store", () => {
     expect(create({ data: { q1: { nested: { deep: 1 } } } }).success).toBe(false);
   });
@@ -103,6 +130,17 @@ describe("ZV3CreateResponseBody", () => {
 });
 
 describe("ZV3PatchResponseBody", () => {
+  // The patch body reuses `createFields.data`, so the caps must come with it — a separate schema
+  // here would be the obvious way to lose them.
+  test("inherits the create body's data caps", () => {
+    const wide = Object.fromEntries(Array.from({ length: 501 }, (_unused, i) => [`q${i}`, "text"]));
+
+    expect(ZV3PatchResponseBody.safeParse({ data: wide }).success).toBe(false);
+    expect(
+      ZV3PatchResponseBody.safeParse({ data: { q1: Array.from({ length: 1_001 }, () => "c") } }).success
+    ).toBe(false);
+  });
+
   test("an empty body is refused — a caller sending nothing has a bug", () => {
     expect(ZV3PatchResponseBody.safeParse({}).success).toBe(false);
   });
