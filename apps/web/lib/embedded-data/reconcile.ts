@@ -200,15 +200,26 @@ const definitionDiffers = (wanted: TDesiredEmbeddedField, field: TCurrentEmbedde
  * this survey owns are not the same thing however alike their contents look. Naming the row rather
  * than just "shared" also catches a re-point from one library field to another at the same address.
  */
+const ownershipIdentity = (embeddedDataId: string | null): string =>
+  embeddedDataId === null ? "local" : `shared:${embeddedDataId}`;
+
 const currentIdentity = (entry: TCurrentEmbeddedField): string =>
   // Ownership off `key` on BOTH sides, deliberately. `surveyId` would say the same thing about any
   // row the schema admits (exactly one of the two is set), but the desired set is built from this
   // row's own `key`, so reading the same column back is what makes a survey that changed nothing
   // resolve to an identical identity — the difference between a no-op save and an unlink.
-  `${entry.field.source}|${entry.field.key === null ? "local" : `shared:${entry.field.id}`}|${entry.storageKey}`;
+  [
+    entry.field.source,
+    ownershipIdentity(entry.field.key === null ? null : entry.field.id),
+    entry.storageKey,
+  ].join("|");
 
 const desiredIdentity = (entry: TDesiredEmbeddedField): string =>
-  `${entry.source}|${isSharedDesiredField(entry) ? `shared:${entry.embeddedDataId}` : "local"}|${entry.storageKey}`;
+  [
+    entry.source,
+    ownershipIdentity(isSharedDesiredField(entry) ? entry.embeddedDataId : null),
+    entry.storageKey,
+  ].join("|");
 
 /**
  * Works out what has to change for a survey's Embedded Data to match `desired`.
@@ -512,7 +523,7 @@ const assertLinkableEmbeddedFields = async (
 
   for (const entry of shared) {
     const row = rowById.get(entry.embeddedDataId);
-    if (!row || row.key === null) {
+    if (row?.key == null) {
       throw new InvalidInputError(`Unknown shared embedded data field: ${entry.storageKey}`);
     }
     if (row.source !== entry.source) {
