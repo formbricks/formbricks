@@ -95,6 +95,28 @@ const buildJsonPathCondition = (
     };
   }
 
+  // A half-open [min, max) window: what a date-only filter value means against a column that stores
+  // days and instants alike (ENG-3232). Gated like the comparisons it is assembled from — a range
+  // over a string or boolean field could only have been crafted.
+  if (val.op === "inRange" || val.op === "notInRange") {
+    if (dataType !== "number" && dataType !== "date") return null;
+    if (val.op === "inRange") {
+      return {
+        AND: [
+          mkJsonColumnFilter(column, { path, gte: val.min }),
+          mkJsonColumnFilter(column, { path, lt: val.max }),
+        ],
+      };
+    }
+    return {
+      OR: [
+        mkJsonColumnFilter(column, { path, lt: val.min }),
+        mkJsonColumnFilter(column, { path, gte: val.max }),
+        mkJsonColumnFilter(column, { path, equals: Prisma.DbNull }),
+      ],
+    };
+  }
+
   const textOp = TEXT_OP_TO_PRISMA[val.op];
   if (textOp && "value" in val) {
     if (dataType !== "string") return null;
@@ -545,6 +567,22 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
               path: [key],
               gte: val.value,
             },
+          });
+          break;
+        // The day a date-only filter value names, as the half-open window it is (ENG-3232); the
+        // complement lets an absent value match, like `notEquals` above.
+        case "inRange":
+          data.push({
+            AND: [{ data: { path: [key], gte: val.min } }, { data: { path: [key], lt: val.max } }],
+          });
+          break;
+        case "notInRange":
+          data.push({
+            OR: [
+              { data: { path: [key], lt: val.min } },
+              { data: { path: [key], gte: val.max } },
+              { data: { path: [key], equals: Prisma.DbNull } },
+            ],
           });
           break;
         case "includesAll":

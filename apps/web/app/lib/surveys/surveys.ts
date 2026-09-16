@@ -1,6 +1,7 @@
 import { TFunction } from "i18next";
 import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
+  coerceToEmbeddedDataType,
   getComputedEmbeddedFields,
   getIngestedEmbeddedFields,
 } from "@formbricks/types/embedded-data-resolver";
@@ -154,6 +155,8 @@ const getTypedFieldOperators = (dataType: TEmbeddedDataType): string[] => {
 
 // Operator label → criteria op for the typed field groups. "Is before"/"Is after" reuse the
 // comparison ops: jsonb compares same-format ISO strings lexicographically, i.e. chronologically.
+// A date field's row is then re-read against its *value* by `buildDateFieldCondition`, which is
+// where a day-granular comparison stops being a plain `lessThan`/`greaterThan` (ENG-3232).
 const TYPED_FIELD_OP_MAP: Record<string, string> = {
   ...META_OP_MAP,
   "Is greater than": "greaterThan",
@@ -166,6 +169,75 @@ const TYPED_FIELD_OP_MAP: Record<string, string> = {
 
 type TTypedFieldFilterCondition = NonNullable<TResponseFilterCriteria["reserved"]>[string];
 
+/** `YYYY-MM-DD`: what the filter's date input emits, and one of the two stored date spellings. */
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * The UTC day after a `YYYY-MM-DD`, in the same spelling — the exclusive upper bound of that day.
+ *
+ * Through UTC arithmetic rather than string arithmetic so month, year and leap-day ends roll over,
+ * and deliberately not through the local-zone constructor: `new Date(2026, 8, 1)` is midnight
+ * wherever the browser happens to be, which lands the boundary on the wrong day for anyone east or
+ * west of Greenwich — the same saved filter would then answer differently per viewer.
+ */
+const nextUtcDay = (dateOnly: string): string => {
+  const day = new Date(`${dateOnly}T00:00:00.000Z`);
+  day.setUTCDate(day.getUTCDate() + 1);
+  return day.toISOString().slice(0, 10);
+};
+
+/**
+ * One date filter row → the condition that compares it against the value as *stored*, normalized
+ * here at filter time rather than at ingest (ENG-3232).
+ *
+ * The mismatch it resolves: the value arrives from an `<input type="date">`, so it is always a day,
+ * while the column holds exactly what was ingested — a day (`2026-09-01`) for `?signup=2026-09-01`,
+ * an instant (`2026-09-01T10:30:00Z`) when one was sent. Stored values are left exactly as they
+ * arrived (no backfill; machine-facing values stay ISO 8601), so the filter is the one place the two
+ * granularities can be made to meet, and a day-granular value becomes a day-wide window:
+ *
+ * - `equals` → `[day, next day)`. That is what makes it match the instants recorded on that day and
+ *   not only a stored date-only twin — the reported miss. `notEquals` → the complement.
+ * - `before` → `< day`, unchanged: every stored value on that day sorts at or after the bare date,
+ *   so the day is already excluded, which is what "before 1 Sep" means.
+ * - `after` → `>= next day`. The same boundary read from the other end: `> day` matched
+ *   `2026-09-01T10:30:00Z`, an instant *on* 1 Sep, which is the other half of the bug.
+ *
+ * The window is UTC because the stored datetimes are — `coerceToEmbeddedDataType` admits neither an
+ * offset nor a zone-less datetime, and nothing on the value records the respondent's zone, so there
+ * is no other clock available to read a day against. A value that is already a full datetime names
+ * the instant it means, so it is compared as-is.
+ *
+ * Every bound is written in the stored ISO spelling, which is what lets one lexicographic window
+ * cover both stored forms at once: `"2026-09-01" <= "2026-09-01T10:30:00Z" < "2026-09-02"` holds as
+ * text exactly as it does in time. A datetime bound would not — `"2026-09-02"` sorts *before*
+ * `"2026-09-02T00:00:00.000Z"`, so a next-day-midnight upper bound would pull a stored date-only 2
+ * Sep into 1 Sep's window.
+ */
+export const buildDateFieldCondition = (op: string, value: string): TTypedFieldFilterCondition | null => {
+  // Validated through the read seam rather than a second copy of its rules: a value outside the
+  // stored subset (`2026-02-30`, `01/09/2026`, an offset datetime) can never equal a stored one, and
+  // comparing it anyway would cut the ISO ordering at an arbitrary point. Dropping the row is the
+  // same stance the boolean arm takes on `"yes"`.
+  if (coerceToEmbeddedDataType(value, "date") === undefined) return null;
+  const dayAfter = DATE_ONLY_PATTERN.test(value) ? nextUtcDay(value) : null;
+
+  switch (op) {
+    case "equals":
+      return dayAfter ? { op: "inRange", min: value, max: dayAfter } : { op, value };
+    case "notEquals":
+      return dayAfter ? { op: "notInRange", min: value, max: dayAfter } : { op, value };
+    case "lessThan":
+      return { op, value };
+    case "greaterThan":
+      return dayAfter ? { op: "greaterEqual", value: dayAfter } : { op, value };
+    // The date menu offers nothing else, so anything here was crafted rather than picked: fail
+    // closed, like a text op on a boolean field.
+    default:
+      return null;
+  }
+};
+
 /**
  * One filter row → one typed condition, coerced to the field's **stored** form — which is not always
  * the obvious reading of its dataType. A number field must send a real number, because a
@@ -174,7 +246,9 @@ type TTypedFieldFilterCondition = NonNullable<TResponseFilterCriteria["reserved"
  * boolean member, so nothing under `data`, `variables` or `meta` is ever a jsonb boolean and a real
  * boolean here matched no row at all (ENG-3231). The picker below already offers a boolean field
  * exactly those two spellings as its options, so the value reaches this function in its stored form
- * and all this has to do is stop converting it.
+ * and all this has to do is stop converting it. A date field is the one whose *value* decides its
+ * condition rather than only its operator, because the picker is day-granular and the column is
+ * not — see {@link buildDateFieldCondition}.
  *
  * Returns null when the row cannot form a valid condition, so half-filled rows drop instead of
  * matching wrongly.
@@ -203,6 +277,7 @@ const buildTypedFieldCondition = (
     if (value !== "true" && value !== "false") return null;
     return { op, value };
   }
+  if (dataType === "date") return buildDateFieldCondition(op, value);
   return { op, value } as TTypedFieldFilterCondition;
 };
 
