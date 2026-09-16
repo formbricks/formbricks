@@ -1,5 +1,12 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, test, vi } from "vitest";
-import { ZV3CreateResponseBody, ZV3PatchResponseBody } from "./schemas";
+import {
+  MAX_RESPONSE_DATA_KEYS,
+  MAX_RESPONSE_DATA_VALUES,
+  ZV3CreateResponseBody,
+  ZV3PatchResponseBody,
+} from "./schemas";
 
 vi.mock("server-only", () => ({}));
 
@@ -169,5 +176,35 @@ describe("ZV3PatchResponseBody", () => {
     const dup = "cltg000000000000000000001";
 
     expect(ZV3PatchResponseBody.safeParse({ tags: [dup, dup] }).success).toBe(true);
+  });
+});
+
+/**
+ * The caps live twice: as Zod above, and as `maxProperties` / `maxItems` in the hand-authored
+ * contract. `resources.spec-drift.test.ts` guards that seam for the *response* payload, but it
+ * compares property names and requiredness — not numeric constraints — and it does not cover request
+ * bodies at all. So nothing tied these two numbers together, and a change to one would have published
+ * a bound the API does not enforce, or enforced one it never published.
+ *
+ * Read as text rather than parsed as YAML: the values under test are literals, so a regex is enough
+ * and it avoids adding a parser to the unit suite. Same approach as `mcp-oauth-resource-seed.test.ts`.
+ */
+describe("ResponseDataMap contract bounds match the schema", () => {
+  const spec = readFileSync(
+    resolve(process.cwd(), "../../docs/api-v3-reference/src/components/schemas/ResponseDataMap.yml"),
+    "utf8"
+  );
+
+  const declared = (keyword: string): number[] =>
+    [...spec.matchAll(new RegExp(`${keyword}:\\s*(\\d+)`, "g"))].map((match) => Number(match[1]));
+
+  test("the key cap is published as maxProperties on the map itself", () => {
+    // The map's own cap is the first maxProperties in the file; the matrix value's cap is the second.
+    expect(declared("maxProperties")[0]).toBe(MAX_RESPONSE_DATA_KEYS);
+  });
+
+  test("the value caps are published for both the array and the matrix shapes", () => {
+    expect(declared("maxItems")).toEqual([MAX_RESPONSE_DATA_VALUES]);
+    expect(declared("maxProperties").slice(1)).toEqual([MAX_RESPONSE_DATA_VALUES]);
   });
 });
