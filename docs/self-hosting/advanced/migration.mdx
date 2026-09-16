@@ -45,20 +45,25 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
 
 Encrypted single-use survey links issued before v6 stop working and have to be regenerated.
 
-#### What to do before upgrading
+#### What to do
 
-Regenerate and re-send the links for any survey with single-use enabled and **URL encryption of
-single-use ID** on, either from the survey's share modal or via
-`GET /api/v1/management/surveys/{surveyId}/singleUseIds`. Formbricks never stores generated links,
-so there is nothing to migrate and nothing to back up — new links simply replace the old ones.
+**Regenerate after upgrading, not before.** Links minted by the old version are unsigned whichever
+day you mint them, so regenerating first produces a second batch that the new version rejects exactly
+like the first.
+
+1. Plan a maintenance window covering the deploy and the redistribution. Outstanding links stop
+   working the moment the new version serves traffic, and a respondent who opened one before the
+   deploy and submits after it sees the invitation error and loses their answers.
+2. Deploy v6.
+3. Regenerate the links for any survey with single-use enabled and **URL encryption of single-use
+   ID** on, from the survey's share modal or via
+   `GET /api/v1/management/surveys/{surveyId}/singleUseIds`. The new version signs them.
+4. Re-send. Formbricks never stores generated links, so there is nothing to migrate and nothing to
+   back up — the new links simply replace the old ones.
 
 **Links with URL encryption off are unaffected**, including custom single-use IDs. Those have carried
 a `suToken` signature since 5.0 and validate exactly as before, so integrations that mint their own
 IDs need no changes.
-
-Because outstanding links stop working the moment the new version serves traffic, prefer a
-maintenance window: a respondent who opened an encrypted link before the deploy and submits after it
-will see the invitation error and lose their answers.
 
 #### What you will see if you skip it
 

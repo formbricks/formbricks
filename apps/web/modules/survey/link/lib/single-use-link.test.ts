@@ -4,7 +4,10 @@ import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricEncrypt } from "@/lib/crypto";
 import { env } from "@/lib/env";
-import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
+import {
+  generateSurveySingleUseLinkParams,
+  generateSurveySingleUseSignature,
+} from "@/lib/utils/single-use-surveys";
 import { resolveSingleUseIdForSurvey } from "./single-use-link";
 
 // 64 hex characters -> exactly 32 bytes once decoded.
@@ -105,12 +108,21 @@ describe("resolveSingleUseIdForSurvey (ENG-2758)", () => {
     expect(open(SURVEY_B)).toBeNull();
   });
 
-  test("rejects a suId this deployment's key cannot open, but only behind a valid token", () => {
+  test("rejects a suId this deployment's key cannot open, having reached decryption", () => {
+    // The token must sign THIS suId, or validation short-circuits at signature_mismatch and the
+    // decryption path is never exercised -- which is what this test previously did.
     const suId = "not-a-ciphertext";
-    const { suToken } = generateSurveySingleUseLinkParams(SURVEY_A, true);
+    const suToken = generateSurveySingleUseSignature(SURVEY_A, suId);
 
     expect(openOn(SURVEY_A, suId, suToken)).toBeNull();
+    expect(vi.mocked(logger.warn).mock.calls.at(-1)?.[0]).toMatchObject({
+      reason: "decryption_failed",
+    });
+  });
+
+  test("rejects a missing suId", () => {
     expect(openOn(SURVEY_A, null)).toBeNull();
+    expect(vi.mocked(logger.warn).mock.calls.at(-1)?.[0]).toMatchObject({ reason: "missing_su_id" });
   });
 
   describe("repeated query parameters", () => {
