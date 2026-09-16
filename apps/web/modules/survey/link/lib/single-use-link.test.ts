@@ -43,7 +43,7 @@ vi.mock("@formbricks/logger", () => ({
 const SURVEY_A = "cm0aaaaaaaaaaaaaaaaaaaaa1"; // the attacker's own survey
 const SURVEY_B = "cm0bbbbbbbbbbbbbbbbbbbbb2"; // the victim's survey, another organisation on Cloud
 
-const openOn = (surveyId: string, suId?: string | null, suToken?: string | null) =>
+const openOn = (surveyId: string, suId?: string | string[] | null, suToken?: string | string[] | null) =>
   resolveSingleUseIdForSurvey({ surveyId, isEncrypted: true, suId, suToken, surface: "link_page" });
 
 describe("resolveSingleUseIdForSurvey (ENG-2758)", () => {
@@ -111,6 +111,33 @@ describe("resolveSingleUseIdForSurvey (ENG-2758)", () => {
 
     expect(openOn(SURVEY_A, suId, suToken)).toBeNull();
     expect(openOn(SURVEY_A, null)).toBeNull();
+  });
+
+  describe("repeated query parameters", () => {
+    // Next's App Router yields `string[]` for `?suId=a&suId=b`. Before these were coerced, an array
+    // suToken reached createHash and threw ERR_INVALID_ARG_TYPE *outside* the resolver's try/catch,
+    // so a public page answered 500 and emitted a Sentry event on input any anonymous caller
+    // controls; an array suId threw inside it and was miscounted as `internal_error`, the signal
+    // reserved for a missing ENCRYPTION_KEY.
+    test("treats a repeated suToken as absent rather than crashing", () => {
+      const minted = generateSurveySingleUseLinkParams(SURVEY_A, true);
+
+      expect(() => openOn(SURVEY_A, minted.suId, ["a", "b"])).not.toThrow();
+      expect(openOn(SURVEY_A, minted.suId, ["a", "b"])).toBeNull();
+      expect(vi.mocked(logger.warn).mock.calls.at(-1)?.[0]).toMatchObject({
+        reason: "missing_signature",
+      });
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    test("treats a repeated suId as absent rather than an internal error", () => {
+      expect(() => openOn(SURVEY_A, ["a", "b"])).not.toThrow();
+      expect(openOn(SURVEY_A, ["a", "b"])).toBeNull();
+      expect(vi.mocked(logger.warn).mock.calls.at(-1)?.[0]).toMatchObject({
+        reason: "missing_su_id",
+      });
+      expect(logger.error).not.toHaveBeenCalled();
+    });
   });
 
   describe("observability", () => {

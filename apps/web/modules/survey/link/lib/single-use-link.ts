@@ -52,26 +52,41 @@ export const resolveSingleUseIdForSurvey = ({
 }: {
   surveyId: string;
   isEncrypted: boolean;
-  suId?: string | null;
-  suToken?: string | null;
+  suId?: string | string[] | null;
+  suToken?: string | string[] | null;
   surface: TSingleUseLinkSurface;
 }): string | null => {
   const mode = isEncrypted ? "encrypted" : "plaintext";
+
+  // Next's App Router hands back `string[]` for a repeated query parameter, and the page surfaces
+  // read these straight off `searchParams`. `TLinkSurveySearchParams` types them as `string`, but its
+  // `Record<string, string | string[] | undefined>` index signature means the intersection still
+  // reports `string | undefined`, so the compiler cannot catch it. Coerce here rather than at each
+  // caller: an array reaching the validator throws on `.trim()`, and one reaching `createHash` throws
+  // ERR_INVALID_ARG_TYPE, which would turn `?suToken=a&suToken=b` into a 500 plus a Sentry event that
+  // any anonymous caller could repeat at will.
+  const singleValue = (value: string | string[] | null | undefined): string | undefined =>
+    typeof value === "string" ? value : undefined;
+  const rawSuId = singleValue(suId);
+  const rawSuToken = singleValue(suToken);
 
   let result: TSurveySingleUseLinkValidation;
   try {
     result = validateSurveySingleUseLinkParams({
       surveyId,
-      suId,
-      suToken,
+      suId: rawSuId,
+      suToken: rawSuToken,
       isEncrypted,
       decrypt: (encryptedSingleUseId) => symmetricDecrypt(encryptedSingleUseId, ENCRYPTION_KEY),
     });
   } catch (error) {
     // Reachable only when ENCRYPTION_KEY is unset or empty, which the signing helper throws on. The
-    // response endpoints answer 500 for that before they reach here; the page renderer has no such
-    // check, so it has to fail closed rather than render the survey.
-    logger.error({ error, surveyId, surface }, "Single-use link validation failed unexpectedly");
+    // v1 endpoint answers 500 for that before it reaches here; v2 has no such check and the page
+    // renderer has none either, so this has to fail closed rather than render the survey.
+    //
+    // `err`, not `error`: the logger registers pino's serializer for that key only, and an Error
+    // under any other key serializes to `{}` — message and stack are non-enumerable.
+    logger.error({ err: error, surveyId, surface }, "Single-use link validation failed unexpectedly");
     recordSingleUseLinkValidation({ mode, outcome: "rejected", reason: "internal_error", surface });
     return null;
   }
@@ -92,7 +107,7 @@ export const resolveSingleUseIdForSurvey = ({
         surface,
         mode,
         reason: result.reason,
-        ...(suToken ? { suTokenFingerprint: fingerprintSuToken(suToken) } : {}),
+        ...(rawSuToken ? { suTokenFingerprint: fingerprintSuToken(rawSuToken) } : {}),
       },
       "Rejected single-use survey link"
     );

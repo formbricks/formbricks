@@ -146,10 +146,10 @@ export const validateSurveySingleUseLinkParams = ({
   // the `suId` as it appears in the URL, so it can be verified without touching the cipher, and must
   // be, for two reasons:
   //
-  //  1. `symmetricDecrypt` picks its algorithm by counting colons (lib/crypto.ts:88) and routes a
-  //     two-part payload to unauthenticated AES-256-CBC, bypassing the GCM path's own refusal to
-  //     fall back. Verifying first means no attacker-chosen bytes ever reach that branch from a
-  //     public endpoint.
+  //  1. `symmetricDecrypt` picks its algorithm by counting colons, and routes a two-part payload to
+  //     its unauthenticated AES-256-CBC V1 branch, bypassing the GCM path's own refusal to fall
+  //     back. Verifying first means no attacker-chosen bytes ever reach that branch from a public
+  //     endpoint.
   //  2. Decrypt-then-`isCuid` accepts *any* ciphertext under ENCRYPTION_KEY whose plaintext happens
   //     to be a cuid2 — including the `contactId` that getContactSurveyLink encrypts into the
   //     base64url (readable) payload of a /c/{jwt} personalized link. Only the MAC distinguishes
