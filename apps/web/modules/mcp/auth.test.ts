@@ -254,15 +254,20 @@ describe("authenticateMcpRequest", () => {
       expect(result.authInfo.token).toBe("key_1");
       expect(getMcpAuthentication(result.authInfo)).toEqual(apiKeyAuth);
       expect(getMcpRequestId(result.authInfo)).toBe("req_1");
-      // A write-capable key must reach both tool groups' read AND write tools.
-      expect(result.authInfo.scopes).toEqual(
-        expect.arrayContaining([
-          "surveys:read",
-          "surveys:write",
-          "feedbackRecords:read",
-          "feedbackRecords:write",
-        ])
-      );
+      // A write-capable key must reach every tool group's read AND write tools. Asserted exactly
+      // rather than with `arrayContaining`, which is a subset matcher: it passed whether or not
+      // `getMcpScopes` granted `responses:write`, so deleting that line left the whole suite green.
+      // The read-only case below has always been exact; this one now matches it.
+      expect(result.authInfo.scopes).toEqual([
+        "surveys:read",
+        "workflows:read",
+        "feedbackRecords:read",
+        "responses:read",
+        "surveys:write",
+        "workflows:write",
+        "feedbackRecords:write",
+        "responses:write",
+      ]);
     }
     expect(applyRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:v3" }), "key_1");
   });
