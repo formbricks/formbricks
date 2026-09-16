@@ -1,0 +1,27 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - valueText
+    properties:
+      elementType:
+        type: string
+        enum:
+          - openText
+      valueText:
+        type: string
+        description: The submitted text, verbatim.
+      inputType:
+        type: string
+        enum:
+          - text
+          - email
+          - url
+          - number
+          - phone
+        description: >-
+          The element's configured input type in the current definition. Useful for rendering and for
+          knowing how the value was validated at collection time; the value itself is always
+          returned as a string, including for `number`.
+unevaluatedProperties: false
+description: Free-text answer to an `openText` element.

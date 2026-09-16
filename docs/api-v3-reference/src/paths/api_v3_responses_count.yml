@@ -1,0 +1,151 @@
+get:
+  operationId: countResponsesV3
+  summary: Count responses
+  description: >
+    Returns how many responses match a scope and filter set, without fetching any of them.
+
+
+    This exists as its own operation because "how many match this?" is the question asked most often
+    and it should not require paging through data to answer — particularly for agent clients, where a
+    page of payloads to obtain a single integer is pure waste. It takes the same scope and filter
+    parameters as `GET /api/v3/responses`, minus pagination and sorting, so a count and a page are
+    always answering the same question.
+
+
+    The list endpoint's `meta.totalCount` covers the other case: a caller already paging that also
+    wants the total. That one is opt-in; this one is the direct route.
+  tags:
+    - V3 Responses
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - in: query
+      name: surveyId
+      schema:
+        type: string
+        format: cuid2
+      description: Optional survey scoping.
+    - in: query
+      name: contactId
+      schema:
+        type: string
+        format: cuid2
+      description: Optional contact scoping.
+    - $ref: ../components/parameters/CreatedAtGteQuery.yml
+    - $ref: ../components/parameters/CreatedAtGtQuery.yml
+    - $ref: ../components/parameters/CreatedAtLteQuery.yml
+    - $ref: ../components/parameters/CreatedAtLtQuery.yml
+    - in: query
+      name: filter[finished][eq]
+      schema:
+        type: boolean
+      description: >-
+        Completed (`true`) or partial (`false`) responses only. Requires `surveyId` or `contactId`,
+        for the same reason as on the list endpoint.
+    - in: query
+      name: filter[language][in]
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+      description: >-
+        Survey language codes to include. Requires `surveyId` or `contactId`.
+    - in: query
+      name: filter[id][in]
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          format: cuid2
+      style: form
+      explode: true
+      description: >-
+        Count a specific set of responses by id, at most 100 per call. Ids outside the requested
+        scope are simply not counted rather than erroring, so this cannot be used to probe whether
+        an id exists elsewhere.
+    - in: query
+      name: precision
+      schema:
+        type: string
+        enum:
+          - capped
+          - exact
+        default: capped
+      description: >
+        How hard to count. `capped` (the default) stops at 10 000 and reports `relation: gte` at the
+        cap — flat cost, safe to call on anything. `exact` counts every matching row and reports
+        `relation: eq` always.
+
+
+        `exact` is the deliberate slow path: cost grows superlinearly with the matching set, so on a
+        large or loosely-filtered scope it is markedly more expensive than a page of data. Ask for it
+        when a person needs a precise figure, not on a dashboard poll. It exists so that the capped
+        default is a sensible default rather than a limitation, and so the cap cannot be sidestepped
+        by accident.
+  responses:
+    "200":
+      description: Count retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - count
+                  - relation
+                properties:
+                  count:
+                    type: integer
+                    minimum: 0
+                    description: >-
+                      Responses matching the scope and filters. With `precision=capped` this stops at
+                      10 000; read `relation` before presenting it as a total.
+                  relation:
+                    type: string
+                    enum:
+                      - eq
+                      - gte
+                    description: >-
+                      `eq` when `count` is exact, `gte` when the 10 000 cap was reached and `count` is
+                      a lower bound. Always `eq` when `precision=exact`. Same convention as
+                      `meta.totalCountRelation` on the list endpoint.
+                additionalProperties: false
+    "400":
+      description: >
+        Bad Request — invalid or unrecognized query parameters, including `filter[finished][eq]` or
+        `filter[language][in]` without `surveyId` or `contactId`.
+
+
+        Date bounds follow the same pairing rule as the list endpoint: at most one lower bound (`gte`
+        xor `gt`), at most one upper bound (`lte` xor `lt`), and the lower bound must not fall after
+        the upper one.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

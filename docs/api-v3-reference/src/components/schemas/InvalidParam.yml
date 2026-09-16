@@ -26,7 +26,6 @@ properties:
       - duplicate_locale
       - forbidden_identifier
       - immutable_identifier
-      - invalid_graph
       - invalid_locale
       - invalid_reference
       - missing_required_field
@@ -34,13 +33,13 @@ properties:
       - unsupported_field
       - unsupported_locale
     description: >
-      Machine-readable validation category, when available. `invalid_graph`
-      covers workflow
+      Machine-readable validation category, when available.
 
-      graph-structure violations such as a duplicated trigger edge, an
-      unreachable node, or a
 
-      cycle.
+      This is the shared error shape every v3 operation returns, so it lists what the API can emit
+      today and nothing more — `INVALID_PARAM_CODES` in `app/api/v3/lib/response.ts` is the
+      registry, and a code absent from it is dropped before the response is built. Categories for
+      operations that do not exist yet are added with the code that emits them, not ahead of it.
   identifier:
     type: string
     description: >-
@@ -57,13 +56,9 @@ properties:
       - variable
       - variableName
       - recall
-      - node
-      - edge
-      - survey
-      - endingCard
     description: >-
-      Identifier namespace involved in the validation failure. `node`, `edge`,
-      `survey`, and `endingCard` are used by workflow validation.
+      Identifier namespace involved in the validation failure. Same rule as `code`: these are the
+      namespaces the API emits today, and more arrive with the operations that emit them.
   missingId:
     type: string
     description: Referenced id that does not exist in the submitted survey document.

@@ -17,7 +17,26 @@ properties:
   name:
     type: string
     pattern: ^[a-z0-9_]+$
-    description: Unique variable name. Lowercase letters, numbers, and underscores only.
+    description: >
+      Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held
+      to more than that, and the extra rules split into two groups that behave differently.
+
+
+      **400 `forbidden_identifier`, grandfathered.** A new name must match `^[a-z][a-z0-9_]*$` (no
+      leading digit or underscore) and must not take a reserved name — the link-survey system params
+      and internal ids (`userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`,
+      `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`,
+      `skipPrefilled`, `offlineSupport`) or an auto-captured system field name (`country`, `browser`,
+      `deviceType`, …; `SurveyHiddenFields` carries the full list, and the two sets are the same
+      there). Names the survey already declares are grandfathered against these, so re-sending an
+      existing document never trips them.
+
+
+      **400 `duplicate_identifier`, not grandfathered.** A variable name that collides
+      case-insensitively with a hidden field id on the same survey. This is checked by reference
+      validation over the whole merged document rather than against the incoming names, so a survey
+      that already holds such a clash is refused on **every** patch — including one that touches
+      neither collection — until one side is renamed.
   type:
     type: string
     enum:

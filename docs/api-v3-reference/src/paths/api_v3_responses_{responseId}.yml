@@ -1,0 +1,374 @@
+get:
+  operationId: getResponseV3
+  summary: Get a response
+  description: >
+    Returns one response in the detailed view — everything the list view carries, plus `contact`,
+    `displayId`, `singleUseId`, and the stored answer map `data`.
+
+
+    The workspace is resolved from the response itself, so the caller cannot choose which scope it is
+    authorized against and no `workspaceId` parameter is accepted. An unknown or inaccessible
+    `responseId` answers **403**, not **404**, so response ids cannot be probed for existence.
+
+
+    **Round-tripping.** This read returns `data` in the stored, write-shaped form, so the simplest
+    correction is to take it, change one entry and `PATCH` it back. Embedded Data round-trips
+    through `embeddedData[]` instead: the `key` you read is the `key` a write accepts. `answers[]`
+    is the typed view of the same information, offered alongside. Independently of that, a client
+    working from a *list* row — which omits the maps — can still rebuild the write-shaped payload:
+    `answers[]`, `embeddedData[]` and `unresolved[]` together carry every stored key and value
+    **verbatim**, with no need to refetch the survey. Two rules make that guarantee hold, and both
+    are contractual:
+
+
+    `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls` and composite slot values are always
+    the stored bytes, never resolved or reformatted — the resolved forms live in the separate
+    `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present
+    values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but
+    unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data`
+    wholesale, so an omitted key is a deleted answer rather than an unchanged one.
+  tags:
+    - V3 Responses
+  parameters:
+    - $ref: ../components/parameters/ResponseIdPath.yml
+  responses:
+    "200":
+      description: Response retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ResponseResource.yml
+          examples:
+            identified:
+              summary: An identified response in the detailed view
+              value:
+                data:
+                  id: clrs1234567890123456789012
+                  surveyId: clsv1234567890123456789012
+                  surveyName: Q3 Product Feedback
+                  workspaceId: clws1234567890123456789012
+                  createdAt: 2026-08-27T09:14:03.417Z
+                  updatedAt: 2026-08-27T09:17:41.902Z
+                  finished: true
+                  endingId: cmpthankyou00000000000000
+                  language: de
+                  durationSeconds: 8.2
+                  resolution:
+                    labelPolicy: currentSurveyDefinition
+                    labelsLanguage: de
+                    surveyUpdatedAt: 2026-08-20T11:02:55.000Z
+                  answers:
+                    - position: 1
+                      elementId: satisfaction
+                      elementType: rating
+                      elementLabel: Wie zufrieden sind Sie?
+                      valueNumber: 4
+                      range:
+                        min: 1
+                        max: 5
+                      scale: star
+                      durationSeconds: 8.2
+                    - position: 2
+                      elementId: signup_date
+                      elementType: date
+                      elementLabel: Wann haben Sie sich registriert?
+                      valueDate: 2026-05-14
+                    - position: 3
+                      elementId: your_address
+                      elementType: address
+                      elementLabel: Ihre Adresse
+                      fields:
+                        - slot: 0
+                          fieldId: addressLine1
+                          fieldLabel: Adresszeile 1
+                          valueText: Hauptstrasse 1
+                        - slot: 1
+                          fieldId: addressLine2
+                          fieldLabel: Adresszeile 2
+                          valueText: ""
+                        - slot: 2
+                          fieldId: city
+                          fieldLabel: Stadt
+                          valueText: Berlin
+                        - slot: 3
+                          fieldId: state
+                          fieldLabel: Bundesland
+                          valueText: ""
+                        - slot: 4
+                          fieldId: zip
+                          fieldLabel: PLZ
+                          valueText: "10115"
+                        - slot: 5
+                          fieldId: country
+                          fieldLabel: Land
+                          valueText: Deutschland
+                    - position: 4
+                      elementId: screenshots
+                      elementType: fileUpload
+                      elementLabel: Screenshots
+                      fileUrls:
+                        - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshots/shot.png
+                      fileCount: 1
+                    - position: 5
+                      elementId: priorities
+                      elementType: ranking
+                      elementLabel: Bitte sortieren Sie nach Wichtigkeit
+                      selections:
+                        - optionId: opt_speed
+                          optionLabel: Geschwindigkeit
+                          rawValue: Geschwindigkeit
+                          match: label
+                          rank: 1
+                        - optionId: opt_price
+                          optionLabel: Preis
+                          rawValue: Preis
+                          match: label
+                          rank: 2
+                    - position: 6
+                      elementId: nps_matrix
+                      elementType: matrix
+                      elementLabel: Bewerten Sie die Bereiche
+                      rows:
+                        - rawKey: Support
+                          rowId: row_support
+                          rowLabel: Support
+                          columnId: col_good
+                          columnLabel: Gut
+                          rawValue: Gut
+                          match: label
+                  embeddedData:
+                    - key: plan
+                      kind: ingested
+                      type: string
+                      label: Plan
+                      value: enterprise
+                    - key: deviceType
+                      kind: reserved
+                      type: string
+                      label: Device Type
+                      value: desktop
+                  unresolved: []
+                  tags:
+                    - id: cltg1234567890123456789012
+                      name: vip
+                  contact:
+                    id: clct1234567890123456789012
+                    userId: u_123
+                  displayId: cldp1234567890123456789012
+                  singleUseId: null
+                  data:
+                    satisfaction: 4
+                    signup_date: 2026-05-14
+                    your_address:
+                      - Hauptstrasse 1
+                      - ""
+                      - Berlin
+                      - ""
+                      - "10115"
+                      - Deutschland
+                    screenshots:
+                      - /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/screenshots/shot.png
+                    priorities:
+                      - Geschwindigkeit
+                      - Preis
+                    nps_matrix:
+                      Support: Gut
+            anonymous:
+              summary: An anonymous, unfinished response
+              value:
+                data:
+                  id: clrs2234567890123456789012
+                  surveyId: clsv1234567890123456789012
+                  surveyName: Q3 Product Feedback
+                  workspaceId: clws1234567890123456789012
+                  createdAt: 2026-08-27T10:01:00.000Z
+                  updatedAt: 2026-08-27T10:01:30.000Z
+                  finished: false
+                  endingId: null
+                  language: null
+                  resolution:
+                    labelPolicy: currentSurveyDefinition
+                    labelsLanguage: null
+                    surveyUpdatedAt: 2026-08-20T11:02:55.000Z
+                  answers:
+                    - position: 1
+                      elementId: cta_intro
+                      elementType: cta
+                      elementLabel: Jetzt starten
+                      valueBoolean: true
+                      rawValue: clicked
+                  embeddedData: []
+                  unresolved: []
+                  tags: []
+                  contact: null
+                  displayId: null
+                  singleUseId: null
+                  data:
+                    cta_intro: clicked
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+patch:
+  operationId: updateResponseV3
+  summary: Update a response
+  description: >
+    Partially updates a response. Requires read-write access; the workspace is resolved from the
+    response. An unknown or inaccessible `responseId` answers **403**.
+
+
+    `PATCH` is the only update verb — there is no `PUT`. Within it, `data` is replaced wholesale
+    rather than deep-merged, so send the complete answer map; `embeddedData` merges by field name. Unknown top-level keys are
+    rejected with **400** rather than ignored.
+
+
+    Setting `finished` to `true` fires the finish side of the response pipeline, including Hub
+    ingestion. Updates otherwise emit `responseUpdated`.
+  tags:
+    - V3 Responses
+  parameters:
+    - $ref: ../components/parameters/ResponseIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/PatchResponseRequest.yml
+        examples:
+          finishResponse:
+            summary: Mark a partial response finished
+            value:
+              finished: true
+              endingId: cmpthankyou00000000000000
+          replaceAnswers:
+            summary: Replace the stored answers wholesale
+            description: >
+              `data` is not merged. Anything omitted from this map is removed from the response.
+            value:
+              data:
+                nps_score: 8
+                what_could_be_better: Etwas schneller wäre gut.
+          retagResponse:
+            summary: Replace the response's tags
+            value:
+              tags:
+                - cltg1234567890123456789012
+  responses:
+    "200":
+      description: Response updated successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ResponseResource.yml
+    "400":
+      description: >
+        Bad Request — the body failed schema validation, or it carried a field that is not patchable.
+        `createdAt`, `updatedAt`, `surveyId`, `contactId`, `displayId`, `singleUseId`,
+        `contactAttributes` and `meta` are all rejected here with `code: unsupported_field`. An empty
+        body is also a 400.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      description: >-
+        Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is
+        not an ending of the response's survey, `language` is not enabled on it, a tag id does not
+        resolve in the same workspace, or an answer violates the survey's validation rules.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+delete:
+  operationId: deleteResponseV3
+  summary: Delete a response
+  description: >
+    Permanently deletes a response. Requires `manage` access; the workspace is resolved from the
+    response, and an unknown or inaccessible `responseId` answers **403**.
+
+
+    Deletion cascades to any files uploaded with the response, which are removed from storage after
+    the row is committed. No `responseDeleted` webhook is emitted — no such trigger exists.
+
+
+    **The Hub copy is not removed.** A submission forwarded to the Hub stays there and stays
+    searchable through the feedback-record endpoints after this returns 204. That cascade is ENG-2855
+    and lands after the Hub release; until then, an erasure workflow has to delete the feedback record
+    itself. Stated because a caller cannot cheaply verify deletion semantics on a destructive endpoint.
+  tags:
+    - V3 Responses
+  parameters:
+    - $ref: ../components/parameters/ResponseIdPath.yml
+  responses:
+    "204":
+      description: Response deleted successfully. No body.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
