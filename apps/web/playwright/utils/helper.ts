@@ -893,6 +893,48 @@ const editorElementHeading = (page: Page, name: string): Locator =>
 const blockCardHeader = (page: Page, blockNumber: number): Locator =>
   page.getByTestId("block-card-header").nth(blockNumber - 1);
 
+const formatVisibleMonth = (date: Date): string =>
+  new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(date);
+
+/**
+ * Clicks a day in the calendar an already-open `DatePicker` popover shows.
+ *
+ * Navigates by month rather than assuming the target is on screen: picking "yesterday" on the first
+ * of a month needs the previous one, which is the kind of two-days-a-month flake that reads as
+ * random. The caller opens the popover, because what triggers it differs per surface.
+ */
+export const pickCalendarDay = async (page: Page, target: Date): Promise<void> => {
+  const calendar = page.locator("[data-radix-popper-content-wrapper]").last().locator(".rdp-root");
+  const targetMonthLabel = formatVisibleMonth(target);
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const visibleMonthLabel = (await calendar.locator(".rdp-caption_label").textContent())?.trim();
+    if (visibleMonthLabel?.includes(targetMonthLabel)) break;
+
+    const showingLater = visibleMonthLabel ? new Date(`1 ${visibleMonthLabel}`) > target : false;
+    await calendar.locator(showingLater ? ".rdp-button_previous" : ".rdp-button_next").click();
+  }
+
+  // `:not(.rdp-outside)` matters where the grid pads with the neighbouring months' days: a bare
+  // day-number match would otherwise hit the same number in the wrong month.
+  await calendar
+    .locator(".rdp-day:not(.rdp-outside) .rdp-day_button:not([disabled])")
+    .filter({ hasText: new RegExp(`^${target.getDate().toString()}$`) })
+    .click();
+};
+
+/**
+ * Sets the date a logic condition compares against.
+ *
+ * A date condition's right-hand side is a `DatePicker`, not a text input (ENG-1853) — the editor
+ * never renders a raw date input — so the day is chosen from the calendar its trigger opens. The
+ * trigger sits beside the combobox carrying the condition's id.
+ */
+const setConditionDate = async (page: Page, conditionId: string, target: Date): Promise<void> => {
+  await page.locator(`#${conditionId}`).locator("..").getByRole("button").first().click();
+  await pickCalendarDay(page, target);
+};
+
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   await createSurveyFromScratch(page);
 
@@ -1406,9 +1448,9 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await blockCardHeader(page, 11).click();
 
   // Block 12 (Date Question)
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split("T")[0];
-  const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0];
+  const today = new Date();
+  const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
+  const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1));
 
   await page.getByRole("main").getByText(params.date.question).click();
   await page.getByText("Show Block settings").first().click();
@@ -1416,28 +1458,28 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.date.question }).click();
-  await page.getByPlaceholder("Value").fill(today);
+  await setConditionDate(page, "condition-0-0-conditionMatchValue", today);
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
   await page.locator("#condition-0-1-conditionValue").click();
   await page.getByRole("option", { name: params.date.question }).click();
   await page.locator("#condition-0-1-conditionOperator").click();
   await page.getByRole("option", { name: "does not equal" }).click();
-  await page.locator("#condition-0-1-conditionMatchValue-input").fill(yesterday);
+  await setConditionDate(page, "condition-0-1-conditionMatchValue", yesterday);
   await page.locator("#condition-0-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
   await page.locator("#condition-0-2-conditionValue").click();
   await page.getByRole("option", { name: params.date.question }).click();
   await page.locator("#condition-0-2-conditionOperator").click();
   await page.getByRole("option", { name: "is before" }).click();
-  await page.locator("#condition-0-2-conditionMatchValue-input").fill(tomorrow);
+  await setConditionDate(page, "condition-0-2-conditionMatchValue", tomorrow);
   await page.locator("#condition-0-2-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
   await page.locator("#condition-0-3-conditionValue").click();
   await page.getByRole("option", { name: params.date.question }).click();
   await page.locator("#condition-0-3-conditionOperator").click();
   await page.getByRole("option", { name: "is after" }).click();
-  await page.locator("#condition-0-3-conditionMatchValue-input").fill(yesterday);
+  await setConditionDate(page, "condition-0-3-conditionMatchValue", yesterday);
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
