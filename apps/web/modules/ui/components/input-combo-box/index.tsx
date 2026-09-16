@@ -384,6 +384,16 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             setLocalValue(day);
             onChangeValue(day, undefined, true);
           }}
+          // Without this a picked day cannot be taken back: `DatePicker` only ever emits from
+          // `onSelect`, and it renders its own clear button solely when handed an `onClear`. The
+          // wrapper's `XIcon` is no fallback either — it is gated on `inputType === "dropdown"`, and
+          // picking a date sets that to `"input"`. Emptying the stored day is what the text and
+          // number branches already do from `onInputChange` when their box is cleared.
+          onClear={() => {
+            setInputType("input");
+            setLocalValue("");
+            onChangeValue("", undefined, true);
+          }}
         />
       )}
 
