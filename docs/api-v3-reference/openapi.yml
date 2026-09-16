@@ -7306,17 +7306,15 @@ components:
             Deliberately separate from `ResponseDataMap`, which the read returns. These bounds are v3-only — the v1 and v2 write paths store the same map without them — so a stored response may exceed them, and the read schema must not claim otherwise.
           maxProperties: 500
           additionalProperties:
-            oneOf:
-              - type: string
-              - type: number
-              - type: array
-                maxItems: 1000
-                items:
-                  type: string
-              - type: object
+            if:
+              type: array
+            then:
+              maxItems: 1000
+            else:
+              if:
+                type: object
+              then:
                 maxProperties: 1000
-                additionalProperties:
-                  type: string
     ResponseEmbeddedDataInput:
       type: object
       description: |
@@ -7347,6 +7345,9 @@ components:
         **An ambiguous name is refused.** The read says `key` is unique per `kind` rather than across the collection, because a survey predating the reserved-name guard can hold a variable and a hidden field under one name. This map has no `kind`, so on such a survey a name cannot say which field it means — and guessing would write the caller's value into the wrong one. A name that matches more than one declared field is a **422** naming it, for the same reason as an undeclared one; rename one side on the survey to clear it. The set is finite, frozen and tracked, and nothing new can enter it.
 
         Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
+
+        **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. Far above any real survey; a v3-only bound, as on `data`.
+      maxProperties: 500
       additionalProperties:
         oneOf:
           - type: string
@@ -7358,11 +7359,14 @@ components:
       description: |
         Per-element time-to-complete, keyed by element id, in **milliseconds**. Accepted on create so that a caller replaying a real submission can carry its timing; reads report the same information as `durationSeconds` in seconds, on each answer and summed at the top level.
 
-        This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite number is therefore accepted, which is why no bounds are declared here.
+        This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite *value* is therefore accepted, and none is declared out of range.
+
+        The number of **entries** is capped at 500, matching `data`: a response holds one timing per element, so anything beyond that is not telemetry the server can use, and it is stored verbatim.
 
         **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and writes its own when the response is finished, by summing the element entries. Sending one therefore changes nothing rather than skewing the stored total, and `durationSeconds` on the read is computed from the element entries regardless.
 
         **An omitted map is not the same as an empty one.** Omitting `ttc` stores no timings at all and the response reports no `durationSeconds`; sending `{}` on a finished response stores a `_total` of zero, which reads as "completed instantly".
+      maxProperties: 500
       additionalProperties:
         type: number
     ResponseMetaInput:

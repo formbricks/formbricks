@@ -7,8 +7,12 @@ description: >
 
   This is client-reported telemetry, not a measurement the server can vouch for, so each value is
   clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value
-  should never cost you the response. Any finite number is therefore accepted, which is why no
-  bounds are declared here.
+  should never cost you the response. Any finite *value* is therefore accepted, and none is declared
+  out of range.
+
+
+  The number of **entries** is capped at 500, matching `data`: a response holds one timing per
+  element, so anything beyond that is not telemetry the server can use, and it is stored verbatim.
 
 
   **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and
@@ -20,5 +24,6 @@ description: >
   **An omitted map is not the same as an empty one.** Omitting `ttc` stores no timings at all and the
   response reports no `durationSeconds`; sending `{}` on a finished response stores a `_total` of
   zero, which reads as "completed instantly".
+maxProperties: 500
 additionalProperties:
   type: number
