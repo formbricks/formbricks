@@ -27,6 +27,7 @@ const WORKSPACE_NAV_HREF_SUFFIXES = [
   "look",
   "user-actions",
   "tags",
+  "embedded-data",
 ];
 
 // Distinct, run-unique organization and workspace names so the breadcrumb and the sidebar pill
