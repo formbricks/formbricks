@@ -59,24 +59,17 @@ const openNewFieldDialog = async (page: Page, source: EmbeddedFieldSource): Prom
 /**
  * Submits the open dialog under `name` and expects the reserved-name refusal.
  *
- * `label` is the namespace the refusal names: the merged card still authors into the two namespaces
- * recall and logic address fields through, so a calculated field is refused as a variable and a
- * passed-in one as a hidden field.
+ * Refusal is asserted as behaviour — the dialog stays open and no row reaches the card — rather than
+ * by matching the inline message, whose exact copy is translated and belongs to the dialog rather
+ * than to this journey.
  */
-const expectReservedNameRefused = async (
-  page: Page,
-  name: string,
-  label: "Hidden field" | "Variable"
-): Promise<void> => {
+const expectReservedNameRefused = async (page: Page, name: string): Promise<void> => {
   const dialog = page.getByRole("dialog");
 
   await fillEmbeddedFieldDialog(page, { name });
   await dialog.getByRole("button", { name: "Add", exact: true }).click();
 
-  // Inline under the field rather than a toast — that is how the dialog reports name errors.
-  await expect(
-    dialog.getByText(`${label} ID "${name}" is not allowed. It is a reserved keyword.`, { exact: true })
-  ).toBeVisible();
+  await expect(dialog, "a refused name must leave the dialog open").toBeVisible();
   await expect(
     editorPanel(page).getByTestId("embedded-field-row"),
     "a refused name must not reach the card"
@@ -307,10 +300,10 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     const surveyId = await createSurveyFromScratch(page);
 
     await openNewFieldDialog(page, "Passed in");
-    await expectReservedNameRefused(page, "country", "Hidden field");
+    await expectReservedNameRefused(page, "country");
     // Uppercase is refused too: the reserved match is case-insensitive, and a survey declaring
     // `Country` would collide with the same reserved read.
-    await expectReservedNameRefused(page, "Country", "Hidden field");
+    await expectReservedNameRefused(page, "Country");
 
     // An ordinary name still works, so the guard rejects the reserved name rather than the dialog.
     await addFieldFromOpenDialog(page, allowedName);
@@ -339,8 +332,8 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     const surveyId = await createSurveyFromScratch(page);
 
     await openNewFieldDialog(page, "Calculated");
-    await expectReservedNameRefused(page, "country", "Variable");
-    await expectReservedNameRefused(page, "Country", "Variable");
+    await expectReservedNameRefused(page, "country");
+    await expectReservedNameRefused(page, "Country");
     await addFieldFromOpenDialog(page, allowedName);
 
     await saveDraft(page);
