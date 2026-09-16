@@ -244,6 +244,9 @@ const enqueueWebhookDeliveryJobs = async ({
   logger.error(
     {
       ...logContext,
+      // The cause only reaches the operator on the earlier attempts, via the error this throws above.
+      // The final attempt is the one that drops the deliveries, so it has to carry the reason itself.
+      err: failedResults[0].reason,
       failedWebhookCount: failedResults.length,
     },
     "Response pipeline webhook delivery enqueue exhausted retries; continuing with remaining side effects"

@@ -766,6 +766,9 @@ describe("processResponsePipelineJob", () => {
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         attempt: 3,
+        // The final attempt is the one that drops the deliveries, so it must name the cause
+        // itself — no later log carries it.
+        err: enqueueError,
         failedWebhookCount: 1,
         maxAttempts: 3,
       }),
