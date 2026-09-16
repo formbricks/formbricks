@@ -28,10 +28,11 @@ Consuming one of those source-only packages from another package's build config
 (`../vite-plugins/node-next-dts`, `.../postcss-scope-fbjs.cjs`, `.../copy-compiled-assets`) takes two
 things: declare it in `devDependencies`, and give every build task that reads it a `^build` /
 `^build:dev` edge. The declaration alone invalidates nothing — a task's hash folds in the tasks named
-in `dependsOn`, so the `^` edge is what carries the helper's contents. A package-scoped `pkg#task`
-block in `turbo.json` replaces the shared task config rather than merging with it, and a package's own
-`turbo.json` replaces both, so the `^` entry has to be repeated at whichever level declares the task,
-or a helper edit silently replays an older build (ENG-1681, ENG-2925). Guarded by
+in `dependsOn`, so the `^` edge is what carries the helper's contents. A root `pkg#task` block
+overwrites the shared task config outright — nothing is inherited — so the `^` entry has to be
+repeated in every block that declares the task, or a helper edit silently replays an older build
+(ENG-1681, ENG-2925). A package's own `turbo.json` behaves differently: it inherits the shared config
+per field, so it only needs `dependsOn` when it is changing it. Guarded by
 `apps/web/lib/turbo-vite-plugins-edge.test.ts`.
 
 ### Shared dependency versions (pnpm catalog)

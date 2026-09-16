@@ -71,9 +71,9 @@ const consumers = fs
 type Consumer = (typeof consumers)[number];
 
 // Resolve `dependsOn` the way Turbo does: a package's own `turbo.json` wins, then the root `pkg#task`
-// block, then the shared task config — each rung REPLACES rather than merges per key, which is the
-// override trap this test exists for. A package config that declares the task without `dependsOn`
-// still inherits the shared one through `extends: ["//"]`.
+// block, then the shared task config. The two rungs differ, and the difference is the override trap
+// this test exists for: a root `pkg#task` block OVERWRITES the whole task config, inheriting nothing,
+// while a package config merges per field and keeps the shared `dependsOn` unless it sets its own.
 const resolvedDependsOn = (consumer: Consumer, task: string): string[] => {
   const packageTurboJsonPath = path.join(consumer.dir, "turbo.json");
   if (fs.existsSync(packageTurboJsonPath)) {
