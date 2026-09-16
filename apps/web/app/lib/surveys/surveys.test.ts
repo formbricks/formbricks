@@ -1084,20 +1084,19 @@ describe("surveys", () => {
       ],
     } as TSurvey;
 
-    const boolFilter = (filterValue: string, filterComboBoxValue: string) =>
-      getFormattedFilters(
-        typedSurvey,
-        {
-          responseStatus: "all",
-          filter: [
-            {
-              elementType: { type: "Hidden Fields", label: "is_pro", id: "is_pro" },
-              filterType: { filterValue, filterComboBoxValue },
-            },
-          ],
-        } as any,
-        {} as any
-      );
+    const boolFilter = (filterValue: string, filterComboBoxValue: string) => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            elementType: { type: OptionsType.HIDDEN_FIELDS, label: "is_pro", id: "is_pro" },
+            filterType: { filterValue, filterComboBoxValue },
+          },
+        ],
+      };
+
+      return getFormattedFilters(typedSurvey, selectedFilter, { from: undefined });
+    };
 
     test("boolean and date ingested fields coerce per dataType; invalid numbers drop the row", () => {
       const result = getFormattedFilters(
