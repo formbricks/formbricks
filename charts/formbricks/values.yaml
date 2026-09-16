@@ -613,8 +613,10 @@ envoy:
   crds:
     enabled: true
     gatewayAPI:
+      # Cluster-wide policy that denies Gateway API CRD versions older than v1.5.0.
+      # Enable only after confirming that no other release reconciles an older bundle.
       safeUpgradePolicy:
-        enabled: true
+        enabled: false
 
   createNamespace: false
 

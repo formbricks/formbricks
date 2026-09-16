@@ -25,9 +25,10 @@ API 1.5.1. Fresh installations receive the new CRDs automatically. Helm does not
 upgrade, so existing installations using the bundled controller must apply the matching CRDs before upgrading:
 
 ```bash
-helm template envoy-gateway-crds \
-  oci://docker.io/envoyproxy/gateway-crds-helm \
-  --version v1.8.4 \
+crd_dir="$(mktemp -d)"
+helm pull oci://docker.io/envoyproxy/gateway-crds-helm \
+  --version v1.8.4 --untar --untardir "${crd_dir}"
+helm template envoy-gateway-crds "${crd_dir}/gateway-crds-helm" \
   --set crds.gatewayAPI.enabled=true \
   --set crds.gatewayAPI.channel=experimental \
   --set crds.envoyGateway.enabled=true \
@@ -35,6 +36,13 @@ helm template envoy-gateway-crds \
 ```
 
 `--force-conflicts` transfers the existing CRD fields from Helm's field manager to this explicit CRD upgrade.
+Pulling the OCI chart first keeps Helm 4's pull messages out of the manifest pipe. Remove the temporary directory
+after the apply succeeds.
+
+The chart does not install Envoy Gateway's cluster-wide safe-upgrade admission policy by default. Enabling
+`envoy.crds.gatewayAPI.safeUpgradePolicy.enabled` denies Gateway API CRD versions older than v1.5.0 across the
+whole cluster, including CRDs reconciled by unrelated releases. Enable it only after platform review; a chart
+rollback does not remove that policy automatically.
 
 If the platform already manages compatible Gateway API CRDs, do not install another Gateway API bundle. Install
 only the Envoy Gateway CRDs as described in the [Kubernetes guide](/self-hosting/setup/kubernetes), set

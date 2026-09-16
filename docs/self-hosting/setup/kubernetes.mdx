@@ -147,13 +147,17 @@ application's own Redis traffic.
 If your platform already manages compatible Gateway API CRDs, install only the matching Envoy Gateway CRDs:
 
 ```bash
-helm template envoy-gateway-crds \
-  oci://docker.io/envoyproxy/gateway-crds-helm \
-  --version v1.8.4 \
+crd_dir="$(mktemp -d)"
+helm pull oci://docker.io/envoyproxy/gateway-crds-helm \
+  --version v1.8.4 --untar --untardir "${crd_dir}"
+helm template envoy-gateway-crds "${crd_dir}/gateway-crds-helm" \
   --set crds.gatewayAPI.enabled=false \
   --set crds.envoyGateway.enabled=true \
   | kubectl apply --server-side --force-conflicts -f -
 ```
+
+Pulling the OCI chart first keeps Helm 4's pull messages out of the manifest pipe. Remove the temporary directory
+after the apply succeeds.
 
 Then keep the bundled controller but prevent the Formbricks release from managing either CRD set:
 
