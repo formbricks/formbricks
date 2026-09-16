@@ -140,8 +140,8 @@ to an externally managed AuthZed endpoint. The external endpoint must serve TLS 
 sent on every authenticated request. The application endpoint remains internal and uses plaintext gRPC by
 default when the chart owns SpiceDB.
 
-Helm prints release-specific commands that execute the release-matched operator CLI
-inside a Formbricks pod. Start with:
+For an already-running v6 installation, Helm prints release-specific diagnostic commands that execute the
+release-matched operator CLI inside a Formbricks pod:
 
 ```bash
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
@@ -150,10 +150,10 @@ kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgr
 ```
 
 A fresh install runs an idempotent initialization Job, but application startup and probes remain independent
-from it. Upgrades never run relationship preparation automatically. Before the first v6 upgrade, run
-`formbricks-authzed upgrade prepare`, require `upgrade check` to exit `0`, and then set
-`authzed.migrationAcknowledged: true`. The chart refuses an unacknowledged upgrade, disabled AuthZed, or weaker
-consistency. Follow [AuthZed Operations](/self-hosting/advanced/authzed-operations) and do not expose SpiceDB
+from it. Upgrades never run relationship preparation automatically. For an existing v5 installation, follow
+[the v6 upgrade procedure below](#upgrading-from-v5-to-v6) before running `helm upgrade` or resuming GitOps.
+The chart refuses an unacknowledged upgrade, disabled AuthZed, or weaker consistency. Follow
+[AuthZed Operations](/self-hosting/advanced/authzed-operations) for ongoing operations and do not expose SpiceDB
 through an Ingress.
 
 ## 3. v5-Specific Deployment Notes
@@ -320,11 +320,59 @@ operator validation and requires the internal taxonomy bearer token.
 
 ## 4. Upgrade The Deployment
 
-For normal chart upgrades:
+### Upgrading from v5 to v6
+
+Use the [v6 maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade) for the complete procedure,
+temporary Job template, and recovery instructions. Use only an upgrade pair listed as tested in the target
+release notes. Pin the target Formbricks image by digest and the matching chart version; preserve existing
+database, storage, and Secret bindings.
+
+<Steps>
+  <Step title="Enter maintenance and take backups">
+    Prepare private SpiceDB connectivity and complete its datastore migrations before the application upgrade.
+    Suspend GitOps reconciliation, autoscalers, image updaters, and schedules that could restart writers. Stop
+    all writers, including application replicas, Hub/workflow workers, running Jobs, and external integrations,
+    then wait for in-flight work and database transactions to finish. Take recoverable backups after writers
+    stop and keep maintenance active through preparation and access verification.
+  </Step>
+  <Step title="Prepare with the target v6 image">
+    Run an explicit, temporary Kubernetes Job using the exact target image and the database/AuthZed environment
+    bindings that v6 will use, including `AUTHZED_CONSISTENCY=fully_consistent`. Run this command in that Job,
+    not in an existing v5 application pod:
+
+    ```bash
+    formbricks-authzed-prepare --backup-confirmed --writers-stopped
+    ```
+
+    The command validates configuration and SpiceDB health, runs application database migrations, prepares the
+    schema, drains the outbox, repairs relationships, and performs a separate final `upgrade check`. The flags
+    acknowledge prerequisites you have already verified; they do not stop workloads or take backups. Review
+    any non-empty schema mismatch using the guide's guarded replacement procedure.
+  </Step>
+  <Step title="Deploy only after preparation succeeds">
+    Require the preparation Job to exit `0`, then set `authzed.migrationAcknowledged: true` and deploy the same
+    image digest with the reviewed chart version. The Helm pre-upgrade hook verifies the prepared graph; it
+    does not run database migrations, apply the schema, or backfill relationships. Verify authorization and
+    outbox delivery before restoring controllers, workers, and public traffic as described in the guide.
+  </Step>
+</Steps>
+
+<Warning>
+  If preparation fails, remain in maintenance. After database changes, `helm rollback` or switching back to a
+  v5 image may be unsafe; recovery may require restoring the coordinated backups. `/health` alone does not
+  establish authorization readiness.
+</Warning>
+
+### Later chart upgrades
+
+For later v6 upgrades, follow the target release's compatibility and maintenance notes. A changed canonical
+SpiceDB schema requires explicit preparation again; a previous migration acknowledgement does not bypass
+verification. For a compatible routine upgrade:
 
 ```sh
 helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks \
   -n formbricks \
+  --version <reviewed-chart-version> \
   -f values.yaml
 ```
 
