@@ -2185,6 +2185,7 @@
       "new_library_field": "Novo campo de biblioteca",
       "new_library_field_description": "Define-o uma vez. Qualquer inquérito neste espaço de trabalho pode adicioná-lo.",
       "no_default": "Sem predefinição",
+      "no_default_placeholder": "–",
       "not_used": "Não utilizado",
       "privacy_kept": "Mantido",
       "privacy_not_stored": "Não armazenado",

@@ -2185,6 +2185,7 @@
       "new_library_field": "新しいライブラリフィールド",
       "new_library_field_description": "一度定義すれば、このワークスペース内のすべてのアンケートで追加できます。",
       "no_default": "デフォルトなし",
+      "no_default_placeholder": "–",
       "not_used": "未使用",
       "privacy_kept": "保持",
       "privacy_not_stored": "保存されない",

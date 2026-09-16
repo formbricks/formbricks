@@ -2185,6 +2185,7 @@
       "new_library_field": "新資料庫欄位",
       "new_library_field_description": "定義一次,此工作區中的任何問卷都可以加入。",
       "no_default": "無預設值",
+      "no_default_placeholder": "–",
       "not_used": "未使用",
       "privacy_kept": "保留",
       "privacy_not_stored": "不儲存",

@@ -2185,6 +2185,7 @@
       "new_library_field": "Câmp nou de bibliotecă",
       "new_library_field_description": "Definește-l o singură dată. Orice sondaj din acest spațiu de lucru îl poate adăuga.",
       "no_default": "Fără valoare implicită",
+      "no_default_placeholder": "–",
       "not_used": "Nefolosit",
       "privacy_kept": "Păstrat",
       "privacy_not_stored": "Nestocat",

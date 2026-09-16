@@ -2107,6 +2107,7 @@ checksums:
     workspace/embedded_data/new_library_field: 77b1f4a7f7f430acb3bf162b2335d134
     workspace/embedded_data/new_library_field_description: 743e88665598c88ff6eb49ab1cb3a9a6
     workspace/embedded_data/no_default: 2dc1e7034bb92a28995c1518806f0081
+    workspace/embedded_data/no_default_placeholder: 9f39060a747ff1eab251d823a50094da
     workspace/embedded_data/not_used: b6be5b9d833d2c11e6e513b3550e071f
     workspace/embedded_data/privacy_kept: 64008696044a893b9e4284feecff0626
     workspace/embedded_data/privacy_not_stored: 9f9036aed04ee00a5f1c6fd02ef9a6af

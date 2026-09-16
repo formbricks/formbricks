@@ -2185,6 +2185,7 @@
       "new_library_field": "Новое поле библиотеки",
       "new_library_field_description": "Определи один раз. Любой опрос в этом рабочем пространстве сможет его добавить.",
       "no_default": "Без значения по умолчанию",
+      "no_default_placeholder": "–",
       "not_used": "Не используется",
       "privacy_kept": "Сохранено",
       "privacy_not_stored": "Не сохраняется",

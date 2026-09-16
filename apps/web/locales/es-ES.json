@@ -2185,6 +2185,7 @@
       "new_library_field": "Nuevo campo de biblioteca",
       "new_library_field_description": "Defínelo una vez. Cualquier encuesta en este espacio de trabajo puede añadirlo.",
       "no_default": "Sin predeterminado",
+      "no_default_placeholder": "–",
       "not_used": "Sin usar",
       "privacy_kept": "Conservado",
       "privacy_not_stored": "No almacenado",
