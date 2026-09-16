@@ -77,7 +77,12 @@ export const selectPublicSurveyEmbeddedDataLinks = {
   },
 } as const satisfies Prisma.SurveySelect["embeddedDataLinks"];
 
-/** The shape {@link selectSurveyEmbeddedDataLinks} produces, as much of it as the mapping needs. */
+/**
+ * The shape {@link selectSurveyEmbeddedDataLinks} produces, as much of it as the mapping needs.
+ *
+ * The legacy columns ride along because the mapping falls back to them for a row-less survey; both
+ * members are optional, so a select that omits them is unaffected.
+ */
 interface TSurveyWithEmbeddedDataLinks extends TLegacyEmbeddedFields {
   embeddedDataLinks?: {
     storageKey: string;
