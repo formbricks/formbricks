@@ -30,8 +30,8 @@ const shapeOf = (schema: z.ZodType): Record<string, z.ZodType> => {
   let current: unknown = schema;
 
   for (let depth = 0; current && depth < 10; depth += 1) {
-    const def = (current as { _zod?: { def?: Record<string, unknown> }; def?: Record<string, unknown> })
-      ._zod?.def;
+    const def = (current as { _zod?: { def?: Record<string, unknown> }; def?: Record<string, unknown> })._zod
+      ?.def;
     if (def?.shape) return def.shape as Record<string, z.ZodType>;
     current = def?.innerType ?? def?.in ?? def?.schema;
   }
@@ -69,9 +69,7 @@ describe.each(BODIES)("%s reference manifest", (_name, body) => {
    * is a token, so neither is cuid2-validated and neither would be caught above.
    */
   test("every field named like a reference is declared", () => {
-    const undeclared = fields.filter(
-      (field) => looksLikeReferenceName(field) && !referenceFor(shape[field])
-    );
+    const undeclared = fields.filter((field) => looksLikeReferenceName(field) && !referenceFor(shape[field]));
 
     expect(undeclared).toEqual([]);
   });
