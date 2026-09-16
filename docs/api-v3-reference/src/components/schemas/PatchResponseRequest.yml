@@ -34,7 +34,7 @@ properties:
       - string
       - "null"
   data:
-    $ref: ./ResponseDataMap.yml
+    $ref: ./ResponseDataMapInput.yml
   embeddedData:
     $ref: ./ResponseEmbeddedDataInput.yml
   tags:

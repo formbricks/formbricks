@@ -7301,20 +7301,40 @@ components:
 
         The value shapes are the stored ones, and they differ by element type. `ResponseAnswer` documents each; `answers[]` on the read is the resolved view of this same map.
 
-        **Bounds.** At most 500 keys, and at most 1000 entries in a multi-select array or matrix object. Both sit far above any real survey — a response holds one entry per element, a multi-select answer one per choice — and exist because every later reader pays per entry. Exceeding either is a **400** from the request schema, not a 422. These bounds are v3-only: the v1 and v2 write paths store the same map without them.
-      maxProperties: 500
+        **Bounds are a write-side concern and live on `ResponseDataMapInput`, not here.** This schema is the stored shape, and a read must describe what the API can actually return: the v1 and v2 write paths store this same map with no cardinality limit, so a response written through them can carry more keys — or a longer multi-select — than a v3 write would accept. Declaring the write bounds on this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for those rows.
       additionalProperties:
         oneOf:
           - type: string
           - type: number
           - type: array
-            maxItems: 1000
             items:
               type: string
           - type: object
-            maxProperties: 1000
             additionalProperties:
               type: string
+    ResponseDataMapInput:
+      allOf:
+        - $ref: '#/components/schemas/ResponseDataMap'
+        - type: object
+          description: |
+            The same map on the way in, with the cardinality bounds a v3 write enforces.
+
+            At most 500 keys, and at most 1000 entries in a multi-select array or matrix object. Both sit far above any real survey — a response holds one entry per element, a multi-select answer one per choice — and exist because every later reader pays per entry: the serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter emits. Exceeding either is a **400** from the request schema, not a 422.
+
+            Deliberately separate from `ResponseDataMap`, which the read returns. These bounds are v3-only — the v1 and v2 write paths store the same map without them — so a stored response may exceed them, and the read schema must not claim otherwise.
+          maxProperties: 500
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: array
+                maxItems: 1000
+                items:
+                  type: string
+              - type: object
+                maxProperties: 1000
+                additionalProperties:
+                  type: string
     ResponseEmbeddedDataInput:
       type: object
       description: |
@@ -7422,7 +7442,7 @@ components:
           type: boolean
           description: 'Whether this response is complete. Creating with `finished: true` fires the finish side of the pipeline immediately, including Hub ingestion.'
         data:
-          $ref: '#/components/schemas/ResponseDataMap'
+          $ref: '#/components/schemas/ResponseDataMapInput'
         embeddedData:
           $ref: '#/components/schemas/ResponseEmbeddedDataInput'
         ttc:
@@ -7566,7 +7586,7 @@ components:
             - string
             - 'null'
         data:
-          $ref: '#/components/schemas/ResponseDataMap'
+          $ref: '#/components/schemas/ResponseDataMapInput'
         embeddedData:
           $ref: '#/components/schemas/ResponseEmbeddedDataInput'
         tags:

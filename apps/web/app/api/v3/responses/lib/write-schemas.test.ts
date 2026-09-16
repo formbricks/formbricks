@@ -190,21 +190,36 @@ describe("ZV3PatchResponseBody", () => {
  * and it avoids adding a parser to the unit suite. Same approach as `mcp-oauth-resource-seed.test.ts`.
  */
 describe("ResponseDataMap contract bounds match the schema", () => {
-  const spec = readFileSync(
-    resolve(process.cwd(), "../../docs/api-v3-reference/src/components/schemas/ResponseDataMap.yml"),
-    "utf8"
-  );
+  const schema = (name: string): string =>
+    readFileSync(
+      resolve(process.cwd(), `../../docs/api-v3-reference/src/components/schemas/${name}.yml`),
+      "utf8"
+    );
 
-  const declared = (keyword: string): number[] =>
-    [...spec.matchAll(new RegExp(`${keyword}:\\s*(\\d+)`, "g"))].map((match) => Number(match[1]));
+  const declared = (name: string, keyword: string): number[] =>
+    [...schema(name).matchAll(new RegExp(`${keyword}:\\s*(\\d+)`, "g"))].map((match) => Number(match[1]));
 
-  test("the key cap is published as maxProperties on the map itself", () => {
+  test("the key cap is published as maxProperties on the input map", () => {
     // The map's own cap is the first maxProperties in the file; the matrix value's cap is the second.
-    expect(declared("maxProperties")[0]).toBe(MAX_RESPONSE_DATA_KEYS);
+    expect(declared("ResponseDataMapInput", "maxProperties")[0]).toBe(MAX_RESPONSE_DATA_KEYS);
   });
 
   test("the value caps are published for both the array and the matrix shapes", () => {
-    expect(declared("maxItems")).toEqual([MAX_RESPONSE_DATA_VALUES]);
-    expect(declared("maxProperties").slice(1)).toEqual([MAX_RESPONSE_DATA_VALUES]);
+    expect(declared("ResponseDataMapInput", "maxItems")).toEqual([MAX_RESPONSE_DATA_VALUES]);
+    expect(declared("ResponseDataMapInput", "maxProperties").slice(1)).toEqual([MAX_RESPONSE_DATA_VALUES]);
+  });
+
+  /**
+   * The bounds are enforced by the request schema only. `ResponseDataMap` is what the read returns,
+   * and the v1 and v2 write paths store the same map uncapped — so a response can legitimately carry
+   * more than these bounds allow, and publishing them on the read shape would make
+   * `GET /api/v3/responses/{responseId}` describe payloads it actually returns as invalid. Putting
+   * them there is the mistake this guards, because nothing else would fail: the Zod bounds are
+   * request-side already, so the contract would simply lie until a big enough stored response met a
+   * response-validating client.
+   */
+  test("the read map publishes no bounds — stored data may exceed what a v3 write accepts", () => {
+    expect(declared("ResponseDataMap", "maxProperties")).toEqual([]);
+    expect(declared("ResponseDataMap", "maxItems")).toEqual([]);
   });
 });
