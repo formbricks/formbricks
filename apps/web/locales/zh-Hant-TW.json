@@ -2234,7 +2234,7 @@
       "value_source": "值從何處來?",
       "value_source_column": "來源",
       "value_true": "真",
-      "warning_clashing_address": "此問卷中有另一個欄位使用相同名稱。召回和邏輯會解析其中一個；請重新命名其中一個以確保使用正確的欄位。",
+      "warning_clashing_address": "此問卷中有另一個欄位使用了這個名稱。召回和邏輯將解析其中一個。",
       "warning_reserved_address": "此名稱現在是保留的自動擷取欄位。此問卷保留自己的欄位且優先使用，因此自動擷取的值無法以此名稱取得。",
       "warning_unsafe_address": "此位址早於目前的命名規則。它仍可正常運作；但新欄位無法使用此名稱。",
       "when_anonymized": "當回應被匿名化時"

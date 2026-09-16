@@ -2234,7 +2234,7 @@
       "value_source": "Değer nereden geliyor?",
       "value_source_column": "Kaynak",
       "value_true": "Doğru",
-      "warning_clashing_address": "Bu ankette başka bir alan da bu ada yanıt veriyor. Geri çağırma ve mantık bunlardan birini çözümler; hangisinin kullanılacağından emin olmak için birini yeniden adlandırın.",
+      "warning_clashing_address": "Bu anketteki başka bir alan da bu isme yanıt veriyor. Hatırlama ve mantık bunlardan birini çözümler.",
       "warning_reserved_address": "Bu ad artık ayrılmış bir otomatik yakalama alanı. Bu anket kendi değerini tutar ve burada kazanan o olur, bu nedenle otomatik yakalanan değer bu ad altında kullanılamaz.",
       "warning_unsafe_address": "Bu adres mevcut adlandırma kuralından önce oluşturulmuş. Çalışmaya devam eder; yeni bir alan bu şekilde adlandırılamaz.",
       "when_anonymized": "Yanıtlar anonimleştirildiğinde"

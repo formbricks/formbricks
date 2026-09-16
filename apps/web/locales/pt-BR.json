@@ -2234,7 +2234,7 @@
       "value_source": "De onde vem o valor?",
       "value_source_column": "Origem",
       "value_true": "Verdadeiro",
-      "warning_clashing_address": "Outro campo nesta pesquisa responde a este nome. Recall e lógica resolvem um deles; renomeie um para ter certeza de qual.",
+      "warning_clashing_address": "Outro campo nesta pesquisa responde a este nome. Recall e lógica resolvem um deles.",
       "warning_reserved_address": "Este nome agora é um campo reservado capturado automaticamente. Esta pesquisa mantém o seu próprio, que tem prioridade aqui, então o valor capturado automaticamente não está disponível sob este nome.",
       "warning_unsafe_address": "Este endereço é anterior à regra de nomenclatura atual. Ele continua funcionando; um novo campo não poderia ser nomeado assim.",
       "when_anonymized": "Quando as respostas forem anonimizadas"
