@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}} ainda está a ser utilizado",
       "type_boolean": "Verdadeiro/falso",
       "type_change_body": "Os valores já recolhidos permanecem exatamente como estão; apenas as novas respostas são lidas como {{to}}. Filtros e lógica que comparam valores {{to}} podem não corresponder aos mais antigos.",
-      "type_change_subtitle": "{{count}} inquéritos que utilizam este campo já têm respostas.",
+      "type_change_subtitle": "{count, plural, one {# inquérito que utiliza este campo já tem respostas.} other {# inquéritos que utilizam este campo já têm respostas.}",
       "type_change_title": "Alterar {{name}} de {{from}} para {{to}}?",
       "used_in": "Utilizado em",
       "used_in_one_survey": "1 inquérito",

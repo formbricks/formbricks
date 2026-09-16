@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}} 仍在使用中",
       "type_boolean": "真/假",
       "type_change_body": "已收集的值會保持不變;只有新的回應會以 {{to}} 讀取。比較 {{to}} 值的篩選和邏輯可能無法與較舊的值相符。",
-      "type_change_subtitle": "使用此欄位的 {{count}} 份問卷已有回應。",
+      "type_change_subtitle": "{count, plural, other {# 個使用此欄位的調查問卷已有回覆。}}",
       "type_change_title": "將 {{name}} 從 {{from}} 變更為 {{to}}?",
       "used_in": "使用於",
       "used_in_one_survey": "1 份問卷",

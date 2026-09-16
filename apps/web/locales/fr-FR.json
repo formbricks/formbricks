@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}} est toujours utilisé",
       "type_boolean": "Vrai/faux",
       "type_change_body": "Les valeurs déjà collectées restent exactement telles quelles ; seules les nouvelles réponses sont lues comme {{to}}. Les filtres et la logique qui comparent les valeurs {{to}} peuvent ne pas correspondre aux anciennes.",
-      "type_change_subtitle": "{{count}} enquêtes utilisant ce champ ont déjà des réponses.",
+      "type_change_subtitle": "{count, plural, one {# enquête utilisant ce champ a déjà des réponses.} other {# enquêtes utilisant ce champ ont déjà des réponses.}}",
       "type_change_title": "Changer {{name}} de {{from}} à {{to}} ?",
       "used_in": "Utilisé dans",
       "used_in_one_survey": "1 enquête",
