@@ -6,11 +6,21 @@ import { EyeOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import {
+  type TLinkedEmbeddedField,
+  getIngestedStorageKeys,
+  getSurveyEmbeddedFields,
+} from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
-import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { extractRecallInfo } from "@/lib/utils/recall";
+import {
+  appendIngestedField,
+  removeEmbeddedField,
+  toCardVariables,
+} from "@/modules/survey/editor/lib/embedded-fields";
 import { findHiddenFieldUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { getValidateIdErrorMessage } from "@/modules/survey/editor/lib/validation";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -47,8 +57,14 @@ export const HiddenFieldsCard = ({
   };
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+  const hiddenFieldIds = getIngestedStorageKeys(localSurvey);
 
-  const updateSurvey = (data: TSurveyHiddenFields, currentFieldId?: string) => {
+  /**
+   * ENG-2628: the card writes the survey's Embedded Data rows, not `hiddenFields`. The legacy
+   * column is derived from them on the server at save time — including `enabled`, which is a
+   * survey-level toggle with no per-field carrier and is therefore no longer this card's to set.
+   */
+  const updateSurvey = (embeddedFields: TLinkedEmbeddedField[], currentFieldId?: string) => {
     let updatedSurvey = { ...localSurvey };
 
     if (currentFieldId) {
@@ -69,13 +85,7 @@ export const HiddenFieldsCard = ({
       }));
     }
 
-    setLocalSurvey({
-      ...updatedSurvey,
-      hiddenFields: {
-        ...updatedSurvey.hiddenFields,
-        ...data,
-      },
-    });
+    setLocalSurvey({ ...updatedSurvey, embeddedFields });
   };
 
   const handleDeleteHiddenField = (fieldId: string) => {
@@ -137,13 +147,7 @@ export const HiddenFieldsCard = ({
       return;
     }
 
-    updateSurvey(
-      {
-        enabled: true,
-        fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
-      },
-      fieldId
-    );
+    updateSurvey(removeEmbeddedField(getSurveyEmbeddedFields(localSurvey), "ingested", fieldId), fieldId);
   };
 
   const [parent] = useAutoAnimate();
@@ -175,8 +179,8 @@ export const HiddenFieldsCard = ({
         <Collapsible.CollapsibleContent
           className={`flex flex-col px-4 ${open && "pb-6"} overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down`}>
           <div className="flex flex-wrap gap-2" ref={parent}>
-            {localSurvey.hiddenFields?.fieldIds && localSurvey.hiddenFields?.fieldIds?.length > 0 ? (
-              localSurvey.hiddenFields?.fieldIds?.map((fieldId) => {
+            {hiddenFieldIds.length > 0 ? (
+              hiddenFieldIds.map((fieldId) => {
                 return (
                   <Tag
                     key={fieldId}
@@ -198,13 +202,14 @@ export const HiddenFieldsCard = ({
               e.preventDefault();
               const existingElementIds = elements.map((element) => element.id);
               const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
-              const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
-              const existingVariableNames = localSurvey.variables.map((v) => v.name);
+              const existingVariableNames = toCardVariables(getSurveyEmbeddedFields(localSurvey)).map(
+                (v) => v.name
+              );
               const validateIdError = validateId(
                 hiddenField,
                 existingElementIds,
                 existingEndingCardIds,
-                existingHiddenFieldIds,
+                hiddenFieldIds,
                 existingVariableNames,
                 // New hidden fields follow the shared naming rule; already stored names are
                 // untouched and keep loading through the lenient survey schema.
@@ -216,10 +221,7 @@ export const HiddenFieldsCard = ({
                 return;
               }
 
-              updateSurvey({
-                fieldIds: [...(localSurvey.hiddenFields?.fieldIds || []), hiddenField],
-                enabled: true,
-              });
+              updateSurvey(appendIngestedField(getSurveyEmbeddedFields(localSurvey), hiddenField));
               toast.success(t("workspace.surveys.edit.hidden_field_added_successfully"));
               setHiddenField("");
             }}>

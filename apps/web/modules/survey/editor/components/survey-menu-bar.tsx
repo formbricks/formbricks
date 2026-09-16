@@ -173,6 +173,23 @@ export const SurveyMenuBar = ({
     draftPrimaryLabel = t("workspace.surveys.edit.save_and_close");
   }
 
+  /**
+   * **What every payload below sends for Embedded Data (ENG-2628).**
+   *
+   * `localSurvey.embeddedFields` is the editor's Embedded Data state — the Variables and Hidden
+   * Fields cards write it — and on the wire it is the COMPLETE desired set for both sources. The
+   * server derives `variables` / `hiddenFields` back off it (`toLegacyEmbeddedFields`) and writes
+   * the rows from it, so the two legacy keys travelling in the same payload are ignored: they are
+   * forwarded exactly as they arrived at mount, and nothing here recomputes them. Deriving them
+   * client-side too would give one survey two descriptions that can disagree, which is the failure
+   * this ticket removed.
+   *
+   * There is nothing to spell out at each call site: spreading `localSurvey` carries all three keys.
+   * What matters is that the save return replaces the working copy — `updateSurveyInternal` re-reads
+   * through `selectSurvey` after the reconcile, so it carries the freshly written rows with their
+   * `id`, `key`, `locked` and minted storage keys. That is what stops the next dirty check seeing a
+   * difference, and with it the auto-save loop.
+   */
   const getDraftSurveyToPersist = (draftSurvey: TSurvey, segment: TSegment | null): TSurveyDraft => ({
     ...draftSurvey,
     closeOn: draftSurvey.publishOn ? null : draftSurvey.closeOn,

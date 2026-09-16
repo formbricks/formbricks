@@ -4,7 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getDeclaredIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -89,18 +89,16 @@ export const FollowUpItem = ({
       return false;
     });
 
-    // ENG-1837: the id list comes from the Embedded Data definitions, but the `enabled` gate stays.
-    // `deriveLegacyEmbeddedData` ignores `hiddenFields.enabled` by design and TLinkedEmbeddedField
-    // carries no equivalent, and this is the one reader that consults the flag — reading it here is a
-    // flag read, not a field-list read, so it keeps this recipient label behaving exactly as before.
-    const matchedHiddenField = localSurvey.hiddenFields?.enabled
-      ? // Editor surface: the ids come from the Hidden Fields card, not the saved rows. Only the
-        // slice that feeds it is passed, so this memo keeps depending on it rather than on the whole
-        // survey object.
-        getDeclaredIngestedStorageKeys({ hiddenFields: localSurvey.hiddenFields }).find(
-          (storageKey) => storageKey === to
-        )
-      : undefined;
+    // ENG-2628: the id list comes from the survey's Embedded Data rows, and the `hiddenFields.enabled`
+    // gate is gone with them. A row carries no equivalent flag, and the gate was already the odd one
+    // out: `buildEmailSendToOptions` — the picker that WROTE this recipient — never consulted it, so a
+    // survey with fields but the flag off offered a recipient here and then reported it unavailable.
+    // The flag is a survey-level ingest toggle, not a statement about which fields exist.
+    // Only the slice that feeds it is passed, so this memo keeps depending on that slice rather than
+    // on the whole survey object.
+    const matchedHiddenField = getIngestedStorageKeys({
+      embeddedFields: localSurvey.embeddedFields,
+    }).find((storageKey) => storageKey === to);
 
     const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
       if (teamMemberDetail.email === userEmail) {
@@ -123,9 +121,9 @@ export const FollowUpItem = ({
     return !matchedQuestion && !matchedHiddenField && !matchedEmail;
   }, [
     followUp.action.properties,
-    // The whole `hiddenFields`, not its two sub-properties: a narrower dependency than the body
-    // actually reads lets the memo keep a value built from stale hidden fields (ENG-2366).
-    localSurvey.hiddenFields,
+    // The whole list, not a projection of it: a narrower dependency than the body actually reads lets
+    // the memo keep a value built from stale definitions (ENG-2366).
+    localSurvey.embeddedFields,
     localSurvey.blocks,
     teamMemberDetails,
     userEmail,

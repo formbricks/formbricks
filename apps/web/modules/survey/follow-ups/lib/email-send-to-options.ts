@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { getDeclaredIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -49,10 +49,10 @@ export const buildEmailSendToOptions = ({
     return false;
   });
 
-  // Authoring surface (the editor's Follow-Ups tab and the workflow email inspector), so the ids come
-  // from the Hidden Fields card rather than the saved rows — the picker that WRITES a recipient and
-  // `follow-up-item.tsx`, which renders the stored one back, must agree on the same instant.
-  const hiddenFieldIds = getDeclaredIngestedStorageKeys(survey);
+  // ENG-2628: the survey's rows, like every other reader. The editor's Hidden Fields card edits them
+  // directly, so this picker — which WRITES a recipient — and `follow-up-item.tsx`, which renders the
+  // stored one back, still read the same instant's definitions.
+  const hiddenFieldIds = getIngestedStorageKeys(survey);
 
   const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) =>
     teamMemberDetail.email === userEmail ? { name: "Yourself", email: userEmail } : teamMemberDetail
