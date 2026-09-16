@@ -579,7 +579,7 @@ const SSO_CALLBACK_REASONS = new Set([
   // logged as `other`, which is what made "are these rejections correct?" unanswerable.
   //
   // These stay on the FAILURE side deliberately. A rejection is a correct decision per sign-up, so
-  // the temptation is to score it as neither — but the operator-misconfiguration reasons below
+  // the temptation is to score it as neither — but the operator-misconfiguration reasons in that set
   // (`missing_default_team_id`, `no_organization_found`) are exactly how a deploy that locks every
   // new user out presents, and ENG-2089 was that incident. Excluding them would blind the ratio
   // alert to the outage class it exists for. What was missing was never the severity; it was the
