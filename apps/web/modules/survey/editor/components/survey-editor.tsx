@@ -238,6 +238,7 @@ export const SurveyEditor = ({
             <ElementsView
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
+              persistedSurvey={survey}
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               workspace={localWorkspace}
