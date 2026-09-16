@@ -38,6 +38,15 @@ grep -q '^kind: EnvoyProxy$' "${render_dir}/bundled.yaml"
 grep -q '^kind: SecurityPolicy$' "${render_dir}/bundled.yaml"
 grep -q 'statusOnError: 503' "${render_dir}/bundled.yaml"
 
+helm template qa "${chart_dir}" "${common_args[@]}" \
+  --set envoy.deployment.pod.nodeSelector.formbricks-test=scheduling-path \
+  --set 'envoy.deployment.ports[0].name=grpc-custom' \
+  --set 'envoy.deployment.ports[0].port=28000' \
+  --set 'envoy.deployment.ports[0].targetPort=18000' > "${render_dir}/controller-overrides.yaml"
+
+grep -q 'formbricks-test: scheduling-path' "${render_dir}/controller-overrides.yaml"
+grep -A2 'name: grpc-custom' "${render_dir}/controller-overrides.yaml" | grep -q 'port: 28000'
+
 helm template qa "${chart_dir}" --include-crds "${common_args[@]}" \
   --set envoy.crds.enabled=false > "${render_dir}/platform-crds.yaml"
 
