@@ -2234,7 +2234,7 @@
       "value_source": "De unde vine valoarea?",
       "value_source_column": "Sursă",
       "value_true": "Adevărat",
-      "warning_clashing_address": "Un alt câmp din acest sondaj răspunde la acest nume. Rechemarea și logica rezolvă unul dintre ele; redenumește unul pentru a fi sigur care.",
+      "warning_clashing_address": "Un alt câmp din acest sondaj răspunde la acest nume. Rechemarea și logica rezolvă unul dintre ele.",
       "warning_reserved_address": "Acest nume este acum un câmp auto-capturat rezervat. Acest sondaj își păstrează propriul câmp, care are prioritate aici, astfel încât valoarea auto-capturată nu este disponibilă sub acest nume.",
       "warning_unsafe_address": "Această adresă este anterioară regulii actuale de denumire. Continuă să funcționeze; un câmp nou nu ar putea fi denumit astfel.",
       "when_anonymized": "Când răspunsurile sunt anonimizate"

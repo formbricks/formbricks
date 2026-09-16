@@ -2234,7 +2234,7 @@
       "value_source": "值从何而来？",
       "value_source_column": "来源",
       "value_true": "真",
-      "warning_clashing_address": "此调查中的另一个字段使用了相同的名称。召回和逻辑会解析其中一个；请重命名其中一个以确保明确使用哪个字段。",
+      "warning_clashing_address": "此调查中的另一个字段使用相同的名称。召回和逻辑将解析其中一个。",
       "warning_reserved_address": "此名称现在是一个保留的自动捕获字段。此调查保留了自己的字段，该字段在此处优先，因此自动捕获的值在此名称下不可用。",
       "warning_unsafe_address": "此地址早于当前的命名规则。它仍可正常使用；但新字段无法使用此名称。",
       "when_anonymized": "当回复被匿名化时"
