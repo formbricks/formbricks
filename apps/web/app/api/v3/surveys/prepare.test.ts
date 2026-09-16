@@ -847,3 +847,50 @@ describe("prepareV3SurveyPatchInput failure attribution for language patches", (
     expect(result.origin).toBe("request");
   });
 });
+
+/**
+ * The delta in `deriveFailureOrigin` compares `invalidParamSignature` — `<path>\0<code>\0<recallId>` —
+ * against the stored survey's own findings. The `introduced` precedence filter it is paired with keys
+ * on `violation.key`, which is `recall|<scopeKey>|<recallId>`: a *scope*, not a path. Two different
+ * lenses, so a violation the request genuinely introduced can carry the same signature as a stored one
+ * while having a different scope — put a different element at the index the old one occupied, recalling
+ * the same target, and the paths coincide.
+ *
+ * Validating the stored document under `enforce` put those stored precedence findings into the
+ * pre-existing set, and the new violation matched one, so the caller was told its own edit was a
+ * pre-existing problem with the survey — ENG-3070's misattribution through a side door.
+ */
+describe("patch attribution when a new violation lands on an old one's path", () => {
+  const block = (blockId: string, elementId: string, headline: Record<string, string>) => ({
+    id: blockId,
+    name: "Block",
+    elements: [{ id: elementId, type: "openText", headline, required: false }],
+  });
+
+  const RECALL = { "en-US": "See #recall:targetq/fallback:x#", "de-DE": "Siehe #recall:targetq/fallback:x#" };
+  const PLAIN = { "en-US": "Target", "de-DE": "Ziel" };
+
+  // `alphaq` recalls an element in a later block: a precedence violation the stored survey already has.
+  const storedSurvey = {
+    ...survey,
+    blocks: [
+      block("clbkmis0000000000000001", "alphaq", RECALL),
+      block("clbkmis0000000000000002", "targetq", PLAIN),
+    ],
+  } as unknown as TSurvey;
+
+  test("blames the request for a violation it introduced at that path, not the stored survey", () => {
+    // Same position, same recall target, different element — so the signature collides with the stored
+    // finding while the scope does not.
+    const result = prepareV3SurveyPatchInput(storedSurvey, {
+      blocks: [
+        block("clbkmis0000000000000001", "betaq", RECALL),
+        block("clbkmis0000000000000002", "targetq", PLAIN),
+      ],
+    } as never);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.origin).toBe("request");
+  });
+});

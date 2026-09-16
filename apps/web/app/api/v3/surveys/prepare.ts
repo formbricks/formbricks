@@ -190,16 +190,24 @@ function deriveFailureOrigin(
   invalidParams: InvalidParam[],
   storedDocument: TV3SurveyDocument
 ): "request" | "storedSurvey" {
-  // Deliberately the default `enforce` policy, while the caller validates the patched document under
-  // `introduced`. The asymmetry looks like it should misattribute — `enforce` reports every precedence
-  // violation the stored survey already has, so `preExisting` is wider than the set the request is
-  // judged against — but it cannot, because the two sides discriminate on the same pair. A precedence
-  // issue's `violation.key` is `recall|<path>|<recallId>` and its `invalidParamSignature` is
-  // `<path>\0<code>\0<recallId>`, so a violation that survives the `introduced` filter is one whose
-  // (path, recallId) is absent from the baseline — and therefore absent from `preExisting` too. The
-  // extra entries are unreachable rather than harmful, and `enforce` keeps this readable as "what is
-  // already wrong with the stored survey".
-  const storedValidation = validateV3SurveyDocument(storedDocument);
+  // The stored document is validated under the *same* policy shape the caller judges the patched one
+  // with, and that matters. `introduced` filters precedence violations on `violation.key`, which is
+  // `recall|<scopeKey>|<recallId>` — a scope, not a path — while `invalidParamSignature` is
+  // `<path>\0<code>\0<recallId>`. Two different lenses. Under the default `enforce` here, `preExisting`
+  // would carry the stored survey's own precedence violations keyed by path, and a violation the
+  // request genuinely introduced could match one of them: move a different element into the index the
+  // old one occupied, recalling the same target, and the new violation's (path, code, recallId) is
+  // identical to the old one's while its scope is not. It survives the `introduced` filter, then gets
+  // blamed on the stored survey — the ENG-3070 misattribution, back through a side door.
+  //
+  // Validating the stored document against itself introduces nothing, so no precedence violation enters
+  // `preExisting` at all. That is the correct set: an `introduced`-mode precedence finding is by
+  // definition the request's doing. Language, media and reference issues are unaffected by the policy
+  // and still appear on both sides, which is what ENG-3070 actually needed.
+  const storedValidation = validateV3SurveyDocument(storedDocument, {
+    mode: "introduced",
+    baseline: storedDocument,
+  });
   if (storedValidation.valid) {
     return "request";
   }
