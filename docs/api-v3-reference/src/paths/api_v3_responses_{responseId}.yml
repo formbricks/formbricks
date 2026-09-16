@@ -232,6 +232,7 @@ get:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 patch:
   operationId: updateResponseV3
   summary: Update a response
@@ -327,6 +328,7 @@ patch:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 delete:
   operationId: deleteResponseV3
   summary: Delete a response
@@ -372,3 +374,4 @@ delete:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

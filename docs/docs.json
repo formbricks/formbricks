@@ -360,8 +360,10 @@
           {
             "group": "Advanced",
             "pages": [
+              "self-hosting/advanced/release-maintenance-policy",
               "self-hosting/advanced/migration",
               "self-hosting/advanced/authzed-operations",
+              "self-hosting/advanced/v6-maintenance-upgrade",
               "self-hosting/advanced/migrating-surveys",
               "self-hosting/advanced/license",
               "self-hosting/advanced/license-activation",
