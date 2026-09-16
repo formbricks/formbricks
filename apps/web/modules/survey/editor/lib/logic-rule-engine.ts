@@ -403,64 +403,30 @@ export const getLogicRules = (t: TFunction) => {
     },
     ["variable.text"]: { options: textOperatorOptions },
     ["variable.number"]: { options: numberComparisonOptions },
-    hiddenField: {
-      options: [
-        {
-          label: t("workspace.surveys.edit.equals"),
-          value: ZSurveyLogicConditionsOperator.enum.equals,
-        },
-        {
-          label: t("workspace.surveys.edit.does_not_equal"),
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-        },
-        {
-          label: t("workspace.surveys.edit.contains"),
-          value: ZSurveyLogicConditionsOperator.enum.contains,
-        },
-        {
-          label: t("workspace.surveys.edit.does_not_contain"),
-          value: ZSurveyLogicConditionsOperator.enum.doesNotContain,
-        },
-        {
-          label: t("workspace.surveys.edit.starts_with"),
-          value: ZSurveyLogicConditionsOperator.enum.startsWith,
-        },
-        {
-          label: t("workspace.surveys.edit.does_not_start_with"),
-          value: ZSurveyLogicConditionsOperator.enum.doesNotStartWith,
-        },
-        {
-          label: t("workspace.surveys.edit.ends_with"),
-          value: ZSurveyLogicConditionsOperator.enum.endsWith,
-        },
-        {
-          label: t("workspace.surveys.edit.does_not_end_with"),
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEndWith,
-        },
-        {
-          label: t("workspace.surveys.edit.is_set"),
-          value: ZSurveyLogicConditionsOperator.enum.isSet,
-        },
-        {
-          label: t("workspace.surveys.edit.is_not_set"),
-          value: ZSurveyLogicConditionsOperator.enum.isNotSet,
-        },
-      ],
-    },
     /*
-     * Reserved fields (ENG-1840) are keyed by the catalog entry's `dataType` rather than by name, so
-     * a new entry inherits the right operators from the type it already declares instead of needing a
-     * rule set of its own. Every family keeps isSet/isNotSet: a reserved value can legitimately be
-     * absent (`source` on a link survey opened without one), and those two are the only operators
-     * that let an author branch on that.
+     * **The dataType-keyed families.** Reserved fields (ENG-1840) are keyed by the catalog entry's
+     * `dataType` rather than by name, so a new entry inherits the right operators from the type it
+     * already declares instead of needing a rule set of its own.
+     *
+     * ENG-1853 pointed **ingested Embedded Data fields** at these same four, which is why they are
+     * `field.*` and not `reserved.*`: an ingested field declares a `dataType` exactly as a catalog
+     * entry does, so a `boolean` one gets equality and a `date` one gets isBefore/isAfter instead of
+     * the free-text set every hidden field used to get regardless of what it holds. There was a
+     * separate `hiddenField` family until then; it was byte-identical to `field.string`, which is
+     * also why a legacy survey — where every ingested field is a `string` — sees exactly the
+     * operators it saw before.
+     *
+     * Every family keeps isSet/isNotSet: such a value can legitimately be absent (`source` on a link
+     * survey opened without one), and those two are the only operators that let an author branch on
+     * that.
      */
-    ["reserved.string"]: { options: [...textOperatorOptions, ...presenceOptions] },
-    ["reserved.number"]: { options: [...numberComparisonOptions, ...presenceOptions] },
+    ["field.string"]: { options: [...textOperatorOptions, ...presenceOptions] },
+    ["field.number"]: { options: [...numberComparisonOptions, ...presenceOptions] },
     // Booleans project as the strings "true"/"false" (see `projectReservedValues`), so equality is
     // the only comparison that means anything — ordering or substring operators would invite a
     // condition that reads sensibly and never matches.
-    ["reserved.boolean"]: { options: [...equalityOptions, ...presenceOptions] },
-    ["reserved.date"]: {
+    ["field.boolean"]: { options: [...equalityOptions, ...presenceOptions] },
+    ["field.date"]: {
       options: [
         ...equalityOptions,
         { label: t("workspace.surveys.edit.is_before"), value: ZSurveyLogicConditionsOperator.enum.isBefore },

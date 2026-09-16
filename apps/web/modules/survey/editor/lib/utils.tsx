@@ -1,19 +1,17 @@
 import { TFunction } from "i18next";
-import { EyeOffIcon, FileDigitIcon, FileType2Icon, GlobeIcon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
   RESERVED_FIELD_CATALOG,
+  type TLinkedEmbeddedField,
   type TReservedFieldCatalogEntry,
   getComputedEmbeddedFields,
-  getIngestedStorageKeys,
   getSurveyEmbeddedFields,
   listMidSurveyReservedEntries,
   listShadowingNames,
 } from "@formbricks/types/embedded-data-resolver";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
-import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
@@ -33,9 +31,15 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
+import {
+  EMBEDDED_FIELD_ICON_BY_DATA_TYPE,
+  getReservedFieldIcon,
+  getReservedFieldLabel,
+} from "@/modules/embedded-data/lib/field-display";
 import { findElementLocation, getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { type TElement, getElementTypes, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
+import { TConditionValueProps } from "@/modules/ui/components/conditions-editor/types";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
@@ -146,13 +150,18 @@ const getElementHeadline = (
 };
 
 /**
- * ENG-1837: the editor's view of one computed Embedded Data field. The logic builder renders and
+ * ENG-1837: the editor's view of one computed Embedded Data field. The calculate action renders and
  * filters on an id/name/type triple, so the definitions are adapted to that shape once here rather
- * than reshaped at each of the five pickers below.
+ * than reshaped at each of the pickers below.
  *
  * ENG-2628: sourced from the survey's rows, like every other reader. The editor's working copy is
  * now rows-native — the Variables and Hidden Fields cards edit `embeddedFields` directly — so a
  * card edit reaches these pickers on the next render without anything being derived here.
+ *
+ * ENG-1853: the *condition* pickers no longer go through this — they offer one Embedded Data group
+ * built by {@link getEmbeddedFieldOptions}. What is left is the calculate action, which really does
+ * target computed fields alone (there is nothing to assign to an ingested one), plus the operator
+ * lookup for a `variable` operand.
  */
 interface TComputedFieldOption {
   id: string;
@@ -189,26 +198,147 @@ const getPickerReservedEntries = (localSurvey: TSurvey): TReservedFieldCatalogEn
   listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, getDeclaredFieldNames(localSurvey));
 
 /**
- * Which HTML input the literal comparison value gets, per reserved dataType. A map rather than a
- * chain of ternaries so it stays exhaustive: adding a dataType is a compile error here instead of
- * silently falling through to a text box. `boolean` is deliberately text — the value is compared as
- * the string "true"/"false" (see `projectReservedValues`).
+ * Which HTML input the literal comparison value gets, per dataType. A map rather than a chain of
+ * ternaries so it stays exhaustive: adding a dataType is a compile error here instead of silently
+ * falling through to a text box.
+ *
+ * `boolean` has no entry because a boolean operand offers no input at all (ENG-1853) — it picks from
+ * the two stored spellings, see {@link getBooleanValueProps}. `date` reaches `InputCombobox`, which
+ * renders `DatePicker` rather than a raw `<input type="date">` for it.
  */
-const INPUT_TYPE_BY_DATA_TYPE: Record<TEmbeddedDataType, HTMLInputTypeAttribute> = {
+const INPUT_TYPE_BY_DATA_TYPE: Record<Exclude<TEmbeddedDataType, "boolean">, HTMLInputTypeAttribute> = {
   string: "text",
   number: "number",
-  boolean: "text",
   date: "date",
 };
 
-const toReservedOption = (entry: TReservedFieldCatalogEntry): TComboboxOption => ({
-  icon: GlobeIcon,
-  label: formatFieldNameToTitleCase(entry.name),
+/**
+ * One Embedded Data field as an operand option.
+ *
+ * **`meta.type` is the stored discriminator and it does not move.** ENG-1853 merged the Variables
+ * and Hidden Fields *groups*; the data model still has two sources, and `ConditionsEditor` copies
+ * this `meta` straight onto `leftOperand.type` / `rightOperand.type`. Emitting one merged type here
+ * would rewrite every condition an author touches into something neither
+ * {@link getConditionOperatorOptions} nor the runtime evaluator can read.
+ *
+ * `meta.hint` is the workspace library key, which only a shared field has — `TReadableField`'s
+ * `secondaryLabel` carries the reasoning for why a key earns its own dim line beside a name.
+ */
+const toEmbeddedFieldOption = ({ field, link }: TLinkedEmbeddedField): TComboboxOption => ({
+  icon: EMBEDDED_FIELD_ICON_BY_DATA_TYPE[field.dataType],
+  label: field.name.trim() === "" ? link.storageKey : field.name,
+  value: link.storageKey,
+  meta: {
+    type: field.source === "computed" ? "variable" : "hiddenField",
+    ...(field.key === null ? {} : { hint: field.key }),
+  },
+});
+
+/**
+ * Which Embedded Data fields may sit opposite a `wanted`-typed operand. Merging two groups into one
+ * is a change of *label*, so this reproduces today's two filters rather than inventing a single rule
+ * that would quietly drop rows from surveys that already have them:
+ *
+ * - a **computed** field (ex-variable) must match the wanted type — a text variable was never
+ *   offered against a numeric comparison — except against a `date`, where today's Date branch does
+ *   offer text variables, whose values are free text a respondent may well have typed a date into.
+ * - an **ingested** field (ex-hidden-field) that is a `string` is offered against everything. Every
+ *   field a legacy survey has is one and today's lists never filtered them: hidden fields stayed in
+ *   every list because they were untyped strings. One that declares a narrower type is held to it,
+ *   which is what stops a `boolean` field turning up under a numeric comparison.
+ */
+const isEmbeddedFieldComparableAs = (
+  field: TLinkedEmbeddedField["field"],
+  wanted: TEmbeddedDataType
+): boolean => {
+  if (field.dataType === wanted) return true;
+  if (field.dataType !== "string") return false;
+  return field.source === "ingested" || wanted === "date";
+};
+
+interface TEmbeddedFieldOptionFilter {
+  /** A storage key to leave out — usually the operand already on the other side of the comparison. */
+  exclude?: string;
+  /** Keeps only fields whose value can be compared against this type. */
+  comparableAs?: TEmbeddedDataType;
+  /** Keeps only fields of this source. The numeric-scale branches offer computed fields alone. */
+  source?: TLinkedEmbeddedField["field"]["source"];
+}
+
+/**
+ * The survey's Embedded Data fields as operand options — one group where the UI used to draw two
+ * (ENG-1853), in the rows' own order rather than variables-then-hidden-fields.
+ */
+const getEmbeddedFieldOptions = (
+  localSurvey: TSurvey,
+  filter: TEmbeddedFieldOptionFilter = {}
+): TComboboxOption[] =>
+  getSurveyEmbeddedFields(localSurvey)
+    .filter(({ field, link }) => {
+      if (link.storageKey === filter.exclude) return false;
+      if (filter.source !== undefined && field.source !== filter.source) return false;
+      return filter.comparableAs === undefined || isEmbeddedFieldComparableAs(field, filter.comparableAs);
+    })
+    .map(toEmbeddedFieldOption);
+
+/**
+ * One auto-captured field as an operand option. The label comes from `getReservedFieldLabel`, the
+ * same helper the response table and the response filter use, so the editor calls a field `URL`
+ * where they do rather than title-casing the catalog name into `Url` (ENG-1853).
+ */
+const toReservedOption = (entry: TReservedFieldCatalogEntry, t: TFunction): TComboboxOption => ({
+  icon: getReservedFieldIcon(entry.name),
+  label: getReservedFieldLabel(entry.name, t),
   value: entry.name,
   meta: {
     type: "reserved",
   },
 });
+
+/**
+ * The groups every field picker draws, in one fixed order (ENG-1853): the survey's own questions,
+ * then its Embedded Data, then what Formbricks captures by itself. An empty group is dropped rather
+ * than drawn as a heading with nothing under it.
+ *
+ * A group's `value` is its key inside `InputCombobox` and never reaches storage — an option's
+ * `meta.type` is what a saved condition carries — so `reservedFields` keeps its spelling even though
+ * the heading it now renders reads "Auto-captured".
+ */
+const toOperandGroups = (
+  t: TFunction,
+  groups: {
+    /** The element's own answer options, which are static values rather than references. */
+    choices?: TComboboxOption[];
+    questions?: TComboboxOption[];
+    embeddedData?: TComboboxOption[];
+    autoCaptured?: TComboboxOption[];
+  }
+): TComboboxGroupedOption[] => {
+  const grouped: TComboboxGroupedOption[] = [];
+
+  if (groups.choices?.length) {
+    grouped.push({ label: t("common.choices"), value: "choices", options: groups.choices });
+  }
+  if (groups.questions?.length) {
+    grouped.push({ label: t("common.questions"), value: "elements", options: groups.questions });
+  }
+  if (groups.embeddedData?.length) {
+    grouped.push({
+      label: t("common.embedded_data"),
+      value: "embeddedData",
+      options: groups.embeddedData,
+    });
+  }
+  if (groups.autoCaptured?.length) {
+    grouped.push({
+      label: t("common.auto_captured"),
+      value: "reservedFields",
+      options: groups.autoCaptured,
+    });
+  }
+
+  return grouped;
+};
 
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
@@ -221,12 +351,6 @@ export const getConditionValueOptions = (
    */
   includeReservedFields = false
 ): TComboboxGroupedOption[] => {
-  const hiddenFields = getIngestedStorageKeys(localSurvey);
-  const variables = getComputedFieldOptions(localSurvey);
-  const reservedOptions = includeReservedFields
-    ? getPickerReservedEntries(localSurvey).map(toReservedOption)
-    : [];
-
   // If blockIdx is provided, get elements from current block and all previous blocks
   // Otherwise, get all elements from all blocks
   const allElements =
@@ -234,7 +358,6 @@ export const getConditionValueOptions = (
       ? getElementsFromBlocks(localSurvey.blocks)
       : localSurvey.blocks.slice(0, blockIdx + 1).flatMap((block) => block.elements);
 
-  const groupedOptions: TComboboxGroupedOption[] = [];
   const elementOptions: TComboboxOption[] = [];
 
   allElements.forEach((element) => {
@@ -289,61 +412,13 @@ export const getConditionValueOptions = (
     }
   });
 
-  const variableOptions = variables.map((variable) => {
-    return {
-      icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
-      label: variable.name,
-      value: variable.id,
-      meta: {
-        type: "variable",
-      },
-    };
+  return toOperandGroups(t, {
+    questions: elementOptions,
+    embeddedData: getEmbeddedFieldOptions(localSurvey),
+    autoCaptured: includeReservedFields
+      ? getPickerReservedEntries(localSurvey).map((entry) => toReservedOption(entry, t))
+      : [],
   });
-
-  const hiddenFieldsOptions = hiddenFields.map((field) => {
-    return {
-      icon: EyeOffIcon,
-      label: field,
-      value: field,
-      meta: {
-        type: "hiddenField",
-      },
-    };
-  });
-
-  if (elementOptions.length > 0) {
-    groupedOptions.push({
-      label: t("common.questions"),
-      value: "elements",
-      options: elementOptions,
-    });
-  }
-
-  if (variableOptions.length > 0) {
-    groupedOptions.push({
-      label: t("common.variables"),
-      value: "variables",
-      options: variableOptions,
-    });
-  }
-
-  if (hiddenFieldsOptions.length > 0) {
-    groupedOptions.push({
-      label: t("common.hidden_fields"),
-      value: "hiddenFields",
-      options: hiddenFieldsOptions,
-    });
-  }
-
-  if (reservedOptions.length > 0) {
-    groupedOptions.push({
-      label: t("common.survey_data"),
-      value: "reservedFields",
-      options: reservedOptions,
-    });
-  }
-
-  return groupedOptions;
 };
 
 export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: string) => {
@@ -413,6 +488,31 @@ export const getFormatLeftOperandValue = (condition: TSingleCondition, localSurv
   return condition.leftOperand.value;
 };
 
+/**
+ * The dataType an operand's value carries, for the `hiddenField` and `reserved` operand types — the
+ * two whose operators and right-hand input follow the *field's* declared type rather than an
+ * element's answer shape.
+ *
+ * Both fall back to `string` for a value that resolves to no definition, which is the widest safe
+ * set rather than a guess: a condition outlives the thing it points at (a field deleted from the
+ * survey, a catalog entry shadowed by a later declaration of the same name), and an operand with no
+ * operators at all would strand the author in a row they can neither complete nor understand.
+ *
+ * The reserved lookup reads the whole catalog rather than {@link getPickerReservedEntries} for that
+ * exact reason: the filtered list is what may be *offered*, not what may be *shown*.
+ */
+const getOperandDataType = (condition: TSingleCondition, localSurvey: TSurvey): TEmbeddedDataType => {
+  if (condition.leftOperand.type === "reserved") {
+    const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === condition.leftOperand.value);
+    return entry?.dataType ?? "string";
+  }
+
+  const field = getSurveyEmbeddedFields(localSurvey).find(
+    ({ link }) => link.storageKey === condition.leftOperand.value
+  );
+  return field?.field.dataType ?? "string";
+};
+
 export const getConditionOperatorOptions = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
@@ -423,16 +523,11 @@ export const getConditionOperatorOptions = (
     const variableType =
       variables.find((variable) => variable.id === condition.leftOperand.value)?.type || "text";
     return getLogicRules(t)[`variable.${variableType}`].options;
-  } else if (condition.leftOperand.type === "hiddenField") {
-    return getLogicRules(t).hiddenField.options;
-  } else if (condition.leftOperand.type === "reserved") {
-    // Read off the whole catalog, not the picker's filtered list: a condition can outlive the entry
-    // being offered (the survey later declares a field of the same name), and an operand with no
-    // operators at all would strand the author in a broken row. Unknown names fall back to string,
-    // which is the widest safe set.
-    const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === condition.leftOperand.value);
-    const dataType = entry?.dataType ?? "string";
-    return getLogicRules(t)[`reserved.${dataType}`].options;
+  } else if (condition.leftOperand.type === "hiddenField" || condition.leftOperand.type === "reserved") {
+    // One lookup for both, because ENG-1853 gave them one rule: the operators follow the dataType the
+    // field declares. A legacy ingested field is a `string` and `field.string` is the exact list the
+    // retired `hiddenField` family held, so those conditions keep every operator they had.
+    return getLogicRules(t)[`field.${getOperandDataType(condition, localSurvey)}`].options;
   } else if (condition.leftOperand.type === "element") {
     // Derive elements from blocks
     const elements = getElementsFromBlocks(localSurvey.blocks);
@@ -451,17 +546,32 @@ export const getConditionOperatorOptions = (
   return [];
 };
 
+/**
+ * The right-hand side of a boolean comparison: the two spellings the value is actually stored as,
+ * and no free-text box (ENG-1853).
+ *
+ * `"true"` / `"false"` are stored strings, not booleans — an ingested boolean field is coerced to
+ * that pair on the way in and `projectReservedValues` stringifies a reserved one the same way — so
+ * these values compare equal to what the evaluator reads. Typing the word was the only way to write
+ * this condition before, and a typo produced a row that read correctly and could never match.
+ */
+const getBooleanValueProps = (t: TFunction): TConditionValueProps => ({
+  show: true,
+  showInput: false,
+  options: toOperandGroups(t, {
+    choices: [
+      { label: t("common.true"), value: "true", meta: { type: "static" } },
+      { label: t("common.false"), value: "false", meta: { type: "static" } },
+    ],
+  }),
+});
+
 export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
   t: TFunction,
   blockIdx?: number // Optional - if provided, includes elements from this block and all previous blocks
-): {
-  show?: boolean;
-  showInput?: boolean;
-  inputType?: HTMLInputTypeAttribute;
-  options: TComboboxGroupedOption[];
-} => {
+): TConditionValueProps => {
   if (
     [
       "isAccepted",
@@ -490,25 +600,32 @@ export const getMatchValueProps = (
           .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
           .flatMap((block) => block.elements);
 
-  let variables = getComputedFieldOptions(localSurvey);
-  let hiddenFields = getIngestedStorageKeys(localSurvey);
-
   const selectedElement = elements.find((element) => element.id === condition.leftOperand.value);
-  const selectedVariable = variables.find((variable) => variable.id === condition.leftOperand.value);
 
   if (condition.leftOperand.type === "element") {
     elements = elements.filter((element) => element.id !== condition.leftOperand.value);
-  } else if (condition.leftOperand.type === "variable") {
-    variables = variables.filter((variable) => variable.id !== condition.leftOperand.value);
-  } else if (condition.leftOperand.type === "hiddenField") {
-    hiddenFields = hiddenFields.filter((field) => field !== condition.leftOperand.value);
   }
+
+  // Comparing a field to itself is never a useful condition, so whatever is on the left is dropped
+  // from the right — for all three field-ish operand types, which now share one list.
+  const embeddedFieldsExcludingSelf = (comparableAs: TEmbeddedDataType): TComboboxOption[] =>
+    getEmbeddedFieldOptions(localSurvey, { exclude: condition.leftOperand.value, comparableAs });
+
+  const toElementOption = (element: TSurveyElement): TComboboxOption => ({
+    icon: getElementIconMapping(t)[element.type],
+    label: getElementHeadline(localSurvey, element, "default", t),
+    value: element.id,
+    meta: {
+      type: "element",
+    },
+  });
 
   if (condition.leftOperand.type === "element") {
     if (selectedElement?.type === TSurveyElementTypeEnum.OpenText) {
+      const isNumeric = selectedElement.inputType === "number";
       const allowedElementTypes = [TSurveyElementTypeEnum.OpenText];
 
-      if (selectedElement.inputType === "number") {
+      if (isNumeric) {
         allowedElementTypes.push(
           TSurveyElementTypeEnum.Rating,
           TSurveyElementTypeEnum.NPS,
@@ -517,87 +634,24 @@ export const getMatchValueProps = (
         );
       }
 
-      if (["equals", "doesNotEqual"].includes(condition.operator)) {
-        if (selectedElement.inputType !== "number") {
-          allowedElementTypes.push(
-            TSurveyElementTypeEnum.Date,
-            TSurveyElementTypeEnum.MultipleChoiceSingle,
-            TSurveyElementTypeEnum.MultipleChoiceMulti
-          );
-        }
+      if (["equals", "doesNotEqual"].includes(condition.operator) && !isNumeric) {
+        allowedElementTypes.push(
+          TSurveyElementTypeEnum.Date,
+          TSurveyElementTypeEnum.MultipleChoiceSingle,
+          TSurveyElementTypeEnum.MultipleChoiceMulti
+        );
       }
 
-      const allowedElements = elements.filter((element) => allowedElementTypes.includes(element.type));
-
-      const elementOptions = allowedElements.map((element) => {
-        return {
-          icon: getElementIconMapping(t)[element.type],
-          label: getTextContent(
-            recallToHeadline(element.headline, localSurvey, false, "default").default ?? ""
-          ),
-          value: element.id,
-          meta: {
-            type: "element",
-          },
-        };
-      });
-
-      const variableOptions = variables
-        .filter((variable) =>
-          selectedElement.inputType === "number" ? variable.type === "number" : variable.type === "text"
-        )
-        .map((variable) => {
-          return {
-            icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
-            label: variable.name,
-            value: variable.id,
-            meta: {
-              type: "variable",
-            },
-          };
-        });
-
-      const hiddenFieldsOptions = hiddenFields.map((field) => {
-        return {
-          icon: EyeOffIcon,
-          label: field,
-          value: field,
-          meta: {
-            type: "hiddenField",
-          },
-        };
-      });
-
-      const groupedOptions: TComboboxGroupedOption[] = [];
-
-      if (elementOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.questions"),
-          value: "elements",
-          options: elementOptions,
-        });
-      }
-
-      if (variableOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.variables"),
-          value: "variables",
-          options: variableOptions,
-        });
-      }
-
-      if (hiddenFieldsOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.hidden_fields"),
-          value: "hiddenFields",
-          options: hiddenFieldsOptions,
-        });
-      }
       return {
         show: true,
         showInput: true,
-        inputType: selectedElement.inputType === "number" ? "number" : "text",
-        options: groupedOptions,
+        inputType: isNumeric ? "number" : "text",
+        options: toOperandGroups(t, {
+          questions: elements
+            .filter((element) => allowedElementTypes.includes(element.type))
+            .map(toElementOption),
+          embeddedData: embeddedFieldsExcludingSelf(isNumeric ? "number" : "string"),
+        }),
       };
     } else if (
       selectedElement?.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
@@ -615,582 +669,153 @@ export const getMatchValueProps = (
 
       const choices = selectedElement.choices
         .filter((choice) => !shouldFilterNone || choice.id !== "none")
-        .map((choice) => {
-          return {
-            label: getLocalizedValue(choice.label, "default"),
-            value: choice.id,
-            meta: {
-              type: "static",
-            },
-          };
-        });
-
-      return {
-        show: true,
-        showInput: false,
-        options: [{ label: t("common.choices"), value: "choices", options: choices }],
-      };
-    } else if (selectedElement?.type === TSurveyElementTypeEnum.PictureSelection) {
-      const choices = selectedElement.choices.map((choice, idx) => {
-        return {
-          imgSrc: choice.imageUrl,
-          label: `${t("common.picture")} ${idx + 1}`,
+        .map((choice) => ({
+          label: getLocalizedValue(choice.label, "default"),
           value: choice.id,
           meta: {
             type: "static",
           },
-        };
-      });
+        }));
 
       return {
         show: true,
         showInput: false,
-        options: [{ label: t("common.choices"), value: "choices", options: choices }],
+        options: toOperandGroups(t, { choices }),
+      };
+    } else if (selectedElement?.type === TSurveyElementTypeEnum.PictureSelection) {
+      const choices = selectedElement.choices.map((choice, idx) => ({
+        imgSrc: choice.imageUrl,
+        label: `${t("common.picture")} ${idx + 1}`,
+        value: choice.id,
+        meta: {
+          type: "static",
+        },
+      }));
+
+      return {
+        show: true,
+        showInput: false,
+        options: toOperandGroups(t, { choices }),
       };
     } else if (
       selectedElement?.type === TSurveyElementTypeEnum.Rating ||
       selectedElement?.type === TSurveyElementTypeEnum.CSAT ||
-      selectedElement?.type === TSurveyElementTypeEnum.CES
+      selectedElement?.type === TSurveyElementTypeEnum.CES ||
+      selectedElement?.type === TSurveyElementTypeEnum.NPS
     ) {
-      const choices = Array.from({ length: selectedElement.range }, (_, idx) => {
-        return {
-          label: `${idx + 1}`,
-          value: idx + 1,
-          meta: {
-            type: "static",
-          },
-        };
-      });
-
-      const numberVariables = variables.filter((variable) => variable.type === "number");
-
-      const variableOptions = numberVariables.map((variable) => {
-        return {
-          icon: FileDigitIcon,
-          label: variable.name,
-          value: variable.id,
-          meta: {
-            type: "variable",
-          },
-        };
-      });
-
-      const groupedOptions: TComboboxGroupedOption[] = [];
-
-      if (choices.length > 0) {
-        groupedOptions.push({
-          label: t("common.choices"),
-          value: "choices",
-          options: choices,
-        });
-      }
-
-      if (variableOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.variables"),
-          value: "variables",
-          options: variableOptions,
-        });
-      }
+      // NPS is 0-10; the other three are 1-range.
+      const isNps = selectedElement.type === TSurveyElementTypeEnum.NPS;
+      const choices = Array.from({ length: isNps ? 11 : selectedElement.range }, (_, idx) => ({
+        label: `${isNps ? idx : idx + 1}`,
+        value: isNps ? idx : idx + 1,
+        meta: {
+          type: "static",
+        },
+      }));
 
       return {
         show: true,
         showInput: false,
-        options: groupedOptions,
-      };
-    } else if (selectedElement?.type === TSurveyElementTypeEnum.NPS) {
-      const choices = Array.from({ length: 11 }, (_, idx) => {
-        return {
-          label: `${idx}`,
-          value: idx,
-          meta: {
-            type: "static",
-          },
-        };
-      });
-
-      const numberVariables = variables.filter((variable) => variable.type === "number");
-
-      const variableOptions = numberVariables.map((variable) => {
-        return {
-          icon: FileDigitIcon,
-          label: variable.name,
-          value: variable.id,
-          meta: {
-            type: "variable",
-          },
-        };
-      });
-
-      const groupedOptions: TComboboxGroupedOption[] = [];
-
-      if (choices.length > 0) {
-        groupedOptions.push({
-          label: t("common.choices"),
-          value: "choices",
-          options: choices,
-        });
-      }
-
-      if (variableOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.variables"),
-          value: "variables",
-          options: variableOptions,
-        });
-      }
-
-      return {
-        show: true,
-        showInput: false,
-        options: groupedOptions,
+        options: toOperandGroups(t, {
+          choices,
+          // Computed fields only: a numeric scale has never been comparable against an ingested
+          // field, whose value is whatever arrived in the URL.
+          embeddedData: getEmbeddedFieldOptions(localSurvey, {
+            exclude: condition.leftOperand.value,
+            comparableAs: "number",
+            source: "computed",
+          }),
+        }),
       };
     } else if (selectedElement?.type === TSurveyElementTypeEnum.Date) {
-      const openTextElements = elements.filter((element) =>
-        [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.Date].includes(element.type)
-      );
-
-      const elementOptions = openTextElements.map((element) => {
-        return {
-          icon: getElementIconMapping(t)[element.type],
-          label: getTextContent(
-            recallToHeadline(element.headline, localSurvey, false, "default").default ?? ""
-          ),
-          value: element.id,
-          meta: {
-            type: "element",
-          },
-        };
-      });
-
-      const stringVariables = variables.filter((variable) => variable.type === "text");
-
-      const variableOptions = stringVariables.map((variable) => {
-        return {
-          icon: FileType2Icon,
-          label: variable.name,
-          value: variable.id,
-          meta: {
-            type: "variable",
-          },
-        };
-      });
-
-      const hiddenFieldsOptions = hiddenFields.map((field) => {
-        return {
-          icon: EyeOffIcon,
-          label: field,
-          value: field,
-          meta: {
-            type: "hiddenField",
-          },
-        };
-      });
-
-      const groupedOptions: TComboboxGroupedOption[] = [];
-
-      if (elementOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.questions"),
-          value: "elements",
-          options: elementOptions,
-        });
-      }
-
-      if (variableOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.variables"),
-          value: "variables",
-          options: variableOptions,
-        });
-      }
-
-      if (hiddenFieldsOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.hidden_fields"),
-          value: "hiddenFields",
-          options: hiddenFieldsOptions,
-        });
-      }
-
       return {
         show: true,
         showInput: true,
         inputType: "date",
-        options: groupedOptions,
+        options: toOperandGroups(t, {
+          questions: elements
+            .filter((element) =>
+              [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.Date].includes(element.type)
+            )
+            .map(toElementOption),
+          embeddedData: embeddedFieldsExcludingSelf("date"),
+        }),
       };
     } else if (selectedElement?.type === TSurveyElementTypeEnum.Matrix) {
-      const choices = selectedElement.columns.map((column, colIdx) => {
-        return {
-          label: getLocalizedValue(column.label, "default"),
-          value: colIdx.toString(),
-          meta: {
-            type: "static",
-          },
-        };
-      });
+      const choices = selectedElement.columns.map((column, colIdx) => ({
+        label: getLocalizedValue(column.label, "default"),
+        value: colIdx.toString(),
+        meta: {
+          type: "static",
+        },
+      }));
 
       return {
         show: true,
         showInput: false,
-        options: [{ label: t("common.choices"), value: "choices", options: choices }],
+        options: toOperandGroups(t, { choices }),
       };
     }
-  } else if (condition.leftOperand.type === "variable") {
-    if (selectedVariable?.type === "text") {
-      const allowedElementTypes = [
-        TSurveyElementTypeEnum.OpenText,
-        TSurveyElementTypeEnum.MultipleChoiceSingle,
-      ];
 
-      if (["equals", "doesNotEqual"].includes(condition.operator)) {
-        allowedElementTypes.push(TSurveyElementTypeEnum.MultipleChoiceMulti, TSurveyElementTypeEnum.Date);
-      }
-
-      const allowedElements = elements.filter((element) => allowedElementTypes.includes(element.type));
-
-      const elementOptions = allowedElements.map((element) => {
-        return {
-          icon: getElementIconMapping(t)[element.type],
-          label: getElementHeadline(localSurvey, element, "default", t),
-          value: element.id,
-          meta: {
-            type: "element",
-          },
-        };
-      });
-
-      const stringVariables = variables.filter((variable) => variable.type === "text");
-
-      const variableOptions = stringVariables.map((variable) => {
-        return {
-          icon: FileType2Icon,
-          label: variable.name,
-          value: variable.id,
-          meta: {
-            type: "variable",
-          },
-        };
-      });
-
-      const hiddenFieldsOptions = hiddenFields.map((field) => {
-        return {
-          icon: EyeOffIcon,
-          label: field,
-          value: field,
-          meta: {
-            type: "hiddenField",
-          },
-        };
-      });
-
-      const groupedOptions: TComboboxGroupedOption[] = [];
-
-      if (elementOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.questions"),
-          value: "elements",
-          options: elementOptions,
-        });
-      }
-
-      if (variableOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.variables"),
-          value: "variables",
-          options: variableOptions,
-        });
-      }
-
-      if (hiddenFieldsOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.hidden_fields"),
-          value: "hiddenFields",
-          options: hiddenFieldsOptions,
-        });
-      }
-
-      return {
-        show: true,
-        showInput: true,
-        inputType: "text",
-        options: groupedOptions,
-      };
-    } else if (selectedVariable?.type === "number") {
-      const allowedElements = elements.filter(
-        (element) =>
-          [
-            TSurveyElementTypeEnum.Rating,
-            TSurveyElementTypeEnum.NPS,
-            TSurveyElementTypeEnum.CSAT,
-            TSurveyElementTypeEnum.CES,
-          ].includes(element.type) ||
-          (element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
-      );
-
-      const elementOptions = allowedElements.map((element) => {
-        return {
-          icon: getElementIconMapping(t)[element.type],
-          label: getElementHeadline(localSurvey, element, "default", t),
-          value: element.id,
-          meta: {
-            type: "element",
-          },
-        };
-      });
-
-      const numberVariables = variables.filter((variable) => variable.type === "number");
-
-      const variableOptions = numberVariables.map((variable) => {
-        return {
-          icon: FileDigitIcon,
-          label: variable.name,
-          value: variable.id,
-          meta: {
-            type: "variable",
-          },
-        };
-      });
-
-      const hiddenFieldsOptions = hiddenFields.map((field) => {
-        return {
-          icon: EyeOffIcon,
-          label: field,
-          value: field,
-          meta: {
-            type: "hiddenField",
-          },
-        };
-      });
-
-      const groupedOptions: TComboboxGroupedOption[] = [];
-
-      if (elementOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.questions"),
-          value: "elements",
-          options: elementOptions,
-        });
-      }
-
-      if (variableOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.variables"),
-          value: "variables",
-          options: variableOptions,
-        });
-      }
-
-      if (hiddenFieldsOptions.length > 0) {
-        groupedOptions.push({
-          label: t("common.hidden_fields"),
-          value: "hiddenFields",
-          options: hiddenFieldsOptions,
-        });
-      }
-
-      return {
-        show: true,
-        showInput: true,
-        inputType: "number",
-        options: groupedOptions,
-      };
-    }
-  } else if (condition.leftOperand.type === "hiddenField") {
-    const allowedElementTypes = [
-      TSurveyElementTypeEnum.OpenText,
-      TSurveyElementTypeEnum.MultipleChoiceSingle,
-    ];
-
-    if (["equals", "doesNotEqual"].includes(condition.operator)) {
-      allowedElementTypes.push(TSurveyElementTypeEnum.MultipleChoiceMulti, TSurveyElementTypeEnum.Date);
-    }
-
-    const allowedElements = elements.filter((element) => allowedElementTypes.includes(element.type));
-
-    const elementOptions = allowedElements.map((element) => {
-      return {
-        icon: getElementIconMapping(t)[element.type],
-        label: getElementHeadline(localSurvey, element, "default", t),
-        value: element.id,
-        meta: {
-          type: "element",
-        },
-      };
-    });
-
-    const variableOptions = variables
-      .filter((variable) => variable.type === "text")
-      .map((variable) => {
-        return {
-          icon: FileType2Icon,
-          label: variable.name,
-          value: variable.id,
-          meta: {
-            type: "variable",
-          },
-        };
-      });
-
-    const hiddenFieldsOptions = hiddenFields.map((field) => {
-      return {
-        icon: EyeOffIcon,
-        label: field,
-        value: field,
-        meta: {
-          type: "hiddenField",
-        },
-      };
-    });
-
-    const groupedOptions: TComboboxGroupedOption[] = [];
-
-    if (elementOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.questions"),
-        value: "elements",
-        options: elementOptions,
-      });
-    }
-
-    if (variableOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.variables"),
-        value: "variables",
-        options: variableOptions,
-      });
-    }
-
-    if (hiddenFieldsOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.hidden_fields"),
-        value: "hiddenFields",
-        options: hiddenFieldsOptions,
-      });
-    }
-
-    return {
-      show: true,
-      showInput: true,
-      inputType: "text",
-      options: groupedOptions,
-    };
-  } else if (condition.leftOperand.type === "reserved") {
-    // Without this branch a reserved condition falls through to `{ show: false }` and renders with no
-    // right-hand side at all — an operator the author can never complete.
-    const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === condition.leftOperand.value);
-    const dataType = entry?.dataType ?? "string";
-    const inputType = INPUT_TYPE_BY_DATA_TYPE[dataType];
-
-    /*
-     * Only operands that can actually hold this field's dataType. Without the filter a
-     * `reserved.number` condition could be pointed at a text variable, and a `reserved.date` one at a
-     * numeric answer — selectable, and silently never true. The per-type rules mirror the element and
-     * variable branches above. Hidden fields stay in every list because they are untyped strings,
-     * exactly as they do for a number variable.
-     */
-    const comparableElements = elements.filter((element) => {
-      if (dataType === "number") {
-        return (
-          [
-            TSurveyElementTypeEnum.Rating,
-            TSurveyElementTypeEnum.NPS,
-            TSurveyElementTypeEnum.CSAT,
-            TSurveyElementTypeEnum.CES,
-          ].includes(element.type) ||
-          (element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
-        );
-      }
-      if (dataType === "date") return element.type === TSurveyElementTypeEnum.Date;
-      // No element type answers with a boolean, so a boolean reserved field has no comparable answer.
-      if (dataType === "boolean") return false;
-
-      const allowedTextTypes = [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.MultipleChoiceSingle];
-      if (["equals", "doesNotEqual"].includes(condition.operator)) {
-        allowedTextTypes.push(TSurveyElementTypeEnum.MultipleChoiceMulti, TSurveyElementTypeEnum.Date);
-      }
-      return allowedTextTypes.includes(element.type);
-    });
-
-    // Variables are only ever text or number, so date and boolean reserved fields have none to offer.
-    const comparableVariables = variables.filter((variable) => {
-      if (dataType === "number") return variable.type === "number";
-      if (dataType === "string") return variable.type === "text";
-      return false;
-    });
-
-    const elementOptions = comparableElements.map((element) => ({
-      icon: getElementIconMapping(t)[element.type],
-      label: getElementHeadline(localSurvey, element, "default", t),
-      value: element.id,
-      meta: { type: "element" },
-    }));
-
-    const variableOptions = comparableVariables.map((variable) => ({
-      icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
-      label: variable.name,
-      value: variable.id,
-      meta: { type: "variable" },
-    }));
-
-    const hiddenFieldsOptions = hiddenFields.map((field) => ({
-      icon: EyeOffIcon,
-      label: field,
-      value: field,
-      meta: { type: "hiddenField" },
-    }));
-
-    // Other reserved entries of the SAME dataType are comparable (`source` equals `action`, say),
-    // minus the one already on the left — comparing a field to itself is never a useful condition.
-    const reservedOptions = getPickerReservedEntries(localSurvey)
-      .filter(
-        (candidate) => candidate.name !== condition.leftOperand.value && candidate.dataType === dataType
-      )
-      .map(toReservedOption);
-
-    const groupedOptions: TComboboxGroupedOption[] = [];
-
-    if (elementOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.questions"),
-        value: "elements",
-        options: elementOptions,
-      });
-    }
-
-    if (variableOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.variables"),
-        value: "variables",
-        options: variableOptions,
-      });
-    }
-
-    if (hiddenFieldsOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.hidden_fields"),
-        value: "hiddenFields",
-        options: hiddenFieldsOptions,
-      });
-    }
-
-    if (reservedOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.survey_data"),
-        value: "reservedFields",
-        options: reservedOptions,
-      });
-    }
-
-    return {
-      show: true,
-      showInput: true,
-      inputType,
-      options: groupedOptions,
-    };
+    return { show: false, options: [] };
   }
 
-  return { show: false, options: [] };
+  /*
+   * One branch for all three field-ish operands — `variable`, `hiddenField` and `reserved` (ENG-1853).
+   * They used to have three near-identical branches that differed only in which groups they built;
+   * now they share one list and differ only in the dataType they compare against, which is exactly
+   * what {@link getOperandDataType} answers.
+   */
+  const dataType = getOperandDataType(condition, localSurvey);
+
+  if (dataType === "boolean") return getBooleanValueProps(t);
+
+  /*
+   * Only elements that can actually hold this dataType. Without the filter a numeric condition could
+   * be pointed at a text answer, and a date one at a rating — selectable, and silently never true.
+   */
+  const comparableElements = elements.filter((element) => {
+    if (dataType === "number") {
+      return (
+        [
+          TSurveyElementTypeEnum.Rating,
+          TSurveyElementTypeEnum.NPS,
+          TSurveyElementTypeEnum.CSAT,
+          TSurveyElementTypeEnum.CES,
+        ].includes(element.type) ||
+        (element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
+      );
+    }
+    if (dataType === "date") return element.type === TSurveyElementTypeEnum.Date;
+
+    const allowedTextTypes = [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.MultipleChoiceSingle];
+    if (["equals", "doesNotEqual"].includes(condition.operator)) {
+      allowedTextTypes.push(TSurveyElementTypeEnum.MultipleChoiceMulti, TSurveyElementTypeEnum.Date);
+    }
+    return allowedTextTypes.includes(element.type);
+  });
+
+  return {
+    show: true,
+    showInput: true,
+    inputType: INPUT_TYPE_BY_DATA_TYPE[dataType],
+    options: toOperandGroups(t, {
+      questions: comparableElements.map(toElementOption),
+      embeddedData: embeddedFieldsExcludingSelf(dataType),
+      // Other auto-captured fields of the same dataType are comparable (`source` equals `action`,
+      // say), minus the one already on the left. Offered only opposite another auto-captured field,
+      // as before: a quota condition projects no reserved values at all.
+      autoCaptured:
+        condition.leftOperand.type === "reserved"
+          ? getPickerReservedEntries(localSurvey)
+              .filter(
+                (candidate) =>
+                  candidate.name !== condition.leftOperand.value && candidate.dataType === dataType
+              )
+              .map((entry) => toReservedOption(entry, t))
+          : [],
+    }),
+  };
 };
 
 export const getActionTargetOptions = (
@@ -1263,20 +888,25 @@ export const getActionTargetOptions = (
   return [...blockOptions, ...endingCardOptions];
 };
 
-export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] => {
-  const variables = getComputedFieldOptions(localSurvey);
-
-  return variables.map((variable) => {
-    return {
-      icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
-      label: variable.name,
-      value: variable.id,
-      meta: {
-        variableType: variable.type,
-      },
-    };
-  });
-};
+/**
+ * The targets a `calculate` action may assign to: the survey's computed Embedded Data fields, and
+ * only those — there is nothing to assign to an ingested field, whose value arrives from outside.
+ *
+ * Flat rather than grouped for that reason (ENG-1853): one source means one group, and a lone
+ * heading over every row says nothing. The rows are labelled by the shared mapping, so a shared
+ * field carries its library key here exactly as it does in the condition pickers.
+ *
+ * `meta.variableType` rather than `meta.type`: this option feeds `getActionOperatorOptions`, which
+ * asks what kind of value it is assigning, not what kind of reference it is.
+ */
+export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] =>
+  getComputedEmbeddedFields(localSurvey).map((embeddedField) => ({
+    ...toEmbeddedFieldOption(embeddedField),
+    meta: {
+      variableType: embeddedField.field.dataType === "number" ? "number" : "text",
+      ...(embeddedField.field.key === null ? {} : { hint: embeddedField.field.key }),
+    },
+  }));
 
 export const getActionOperatorOptions = (
   t: TFunction,
@@ -1320,6 +950,12 @@ export const getActionOperatorOptions = (
   return [];
 };
 
+/**
+ * The right-hand side of a `calculate` action. Same grouping as the condition pickers (ENG-1853):
+ * Questions, then one Embedded Data group. No auto-captured group — `evaluateLogic` computes these
+ * assignments from `responseData` and variables alone, so a reserved value offered here would read
+ * as unset every time.
+ */
 export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
@@ -1330,29 +966,23 @@ export const getActionValueOptions = (
   const allElements = localSurvey.blocks
     .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
     .flatMap((block) => block.elements);
-  const hiddenFields = getIngestedStorageKeys(localSurvey);
-  let variables = getComputedFieldOptions(localSurvey);
 
-  const hiddenFieldsOptions = hiddenFields.map((field) => {
-    return {
-      icon: EyeOffIcon,
-      label: field,
-      value: field,
-      meta: {
-        type: "hiddenField",
-      },
-    };
-  });
-
-  const selectedVariable = variables.find((variable) => variable.id === variableId);
-
-  variables = variables.filter((variable) => variable.id !== variableId);
+  const selectedVariable = getComputedFieldOptions(localSurvey).find(
+    (variable) => variable.id === variableId
+  );
 
   if (!selectedVariable) return [];
 
-  if (selectedVariable.type === "text") {
-    const allowedElements = allElements.filter((element) =>
-      [
+  const isNumeric = selectedVariable.type === "number";
+
+  const allowedElementTypes = isNumeric
+    ? [
+        TSurveyElementTypeEnum.Rating,
+        TSurveyElementTypeEnum.NPS,
+        TSurveyElementTypeEnum.CSAT,
+        TSurveyElementTypeEnum.CES,
+      ]
+    : [
         TSurveyElementTypeEnum.OpenText,
         TSurveyElementTypeEnum.MultipleChoiceSingle,
         TSurveyElementTypeEnum.Rating,
@@ -1360,126 +990,29 @@ export const getActionValueOptions = (
         TSurveyElementTypeEnum.CSAT,
         TSurveyElementTypeEnum.CES,
         TSurveyElementTypeEnum.Date,
-      ].includes(element.type)
-    );
+      ];
 
-    const elementOptions = allowedElements.map((element) => {
-      return {
-        icon: getElementIconMapping(t)[element.type],
-        label: getElementHeadline(localSurvey, element, "default", t),
-        value: element.id,
-        meta: {
-          type: "element",
-        },
-      };
-    });
+  const allowedElements = allElements.filter(
+    (element) =>
+      allowedElementTypes.includes(element.type) ||
+      // A number variable also accepts a numeric open text answer, which is not a type of its own.
+      (isNumeric && element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
+  );
 
-    const stringVariables = variables.filter((variable) => variable.type === "text");
-
-    const variableOptions = stringVariables.map((variable) => {
-      return {
-        icon: FileType2Icon,
-        label: variable.name,
-        value: variable.id,
-        meta: {
-          type: "variable",
-        },
-      };
-    });
-
-    const groupedOptions: TComboboxGroupedOption[] = [];
-
-    if (elementOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.questions"),
-        value: "elements",
-        options: elementOptions,
-      });
-    }
-
-    if (variableOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.variables"),
-        value: "variables",
-        options: variableOptions,
-      });
-    }
-
-    if (hiddenFieldsOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.hidden_fields"),
-        value: "hiddenFields",
-        options: hiddenFieldsOptions,
-      });
-    }
-
-    return groupedOptions;
-  } else if (selectedVariable.type === "number") {
-    const allowedElements = allElements.filter(
-      (element) =>
-        [
-          TSurveyElementTypeEnum.Rating,
-          TSurveyElementTypeEnum.NPS,
-          TSurveyElementTypeEnum.CSAT,
-          TSurveyElementTypeEnum.CES,
-        ].includes(element.type) ||
-        (element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
-    );
-
-    const elementOptions = allowedElements.map((element) => {
-      return {
-        icon: getElementIconMapping(t)[element.type],
-        label: getTextContent(getLocalizedValue(element.headline, "default")),
-        value: element.id,
-        meta: {
-          type: "element",
-        },
-      };
-    });
-
-    const numberVariables = variables.filter((variable) => variable.type === "number");
-
-    const variableOptions = numberVariables.map((variable) => {
-      return {
-        icon: FileDigitIcon,
-        label: variable.name,
-        value: variable.id,
-        meta: {
-          type: "variable",
-        },
-      };
-    });
-
-    const groupedOptions: TComboboxGroupedOption[] = [];
-
-    if (elementOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.questions"),
-        value: "elements",
-        options: elementOptions,
-      });
-    }
-
-    if (variableOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.variables"),
-        value: "variables",
-        options: variableOptions,
-      });
-    }
-
-    if (hiddenFieldsOptions.length > 0) {
-      groupedOptions.push({
-        label: t("common.hidden_fields"),
-        value: "hiddenFields",
-        options: hiddenFieldsOptions,
-      });
-    }
-
-    return groupedOptions;
-  }
-
-  return [];
+  return toOperandGroups(t, {
+    questions: allowedElements.map((element) => ({
+      icon: getElementIconMapping(t)[element.type],
+      label: getElementHeadline(localSurvey, element, "default", t),
+      value: element.id,
+      meta: {
+        type: "element",
+      },
+    })),
+    embeddedData: getEmbeddedFieldOptions(localSurvey, {
+      exclude: variableId,
+      comparableAs: isNumeric ? "number" : "string",
+    }),
+  });
 };
 
 const isUsedInLeftOperand = (
