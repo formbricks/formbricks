@@ -23,9 +23,14 @@ import { responseToMcpToolResult } from "../errors";
  * Private on purpose (ENG-2119). It was briefly exported so the feedback-record tools could gate
  * inside their own handler factories, which made the guarantee conventional rather than structural —
  * a tool added outside those factories would have registered unguarded. Those tools are on
- * `registerScopedTool` now, so this goes back to being reachable only through it. Keeping it private
- * is what makes the invariant compiler-checked: there is no way to register a tool and forget the
- * gate, because the gate is not reachable from a tool module.
+ * `registerScopedTool` now, so this goes back to being reachable only through it.
+ *
+ * What that buys is narrower than it looks, and an earlier version of this comment claimed too much.
+ * Privacy removes the *hand-rolled gate* — a module can no longer check scopes itself and diverge from
+ * the shared behaviour. It does not make an unguarded registration impossible: `server` is an argument
+ * to every tool module, so `server.registerTool(...)` is always one call away. Nothing in the type
+ * system prevents that, and nothing can. Tests are what catch it — `feedback-records.test.ts` drives
+ * all ten tools with the opposite scope, which fails if any of them stops being gated.
  */
 async function guardMcpScopes(
   authInfo: AuthInfo | undefined,

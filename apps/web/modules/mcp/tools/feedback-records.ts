@@ -50,8 +50,10 @@ const FEEDBACK_RECORDS_READ_SCOPE: [string, ...string[]] = ["feedbackRecords:rea
 const FEEDBACK_RECORDS_WRITE_SCOPE: [string, ...string[]] = ["feedbackRecords:write"];
 
 /**
- * Shared handler body for the read-only tools: resolve the request id, gate on the read scope, run the
- * v3 operation, map its Response to a tool result. Only `run` differs between them.
+ * Shared handler body for the read-only tools: resolve the request id, run the v3 operation, map its
+ * Response to a tool result. Only `run` differs between them.
+ *
+ * No scope gate here any more — `registerScopedTool` applies it before this body runs (ENG-2119).
  */
 function readOnlyHandler<TInput>(
   run: (input: TInput, authentication: TV3Authentication, requestId: string) => Promise<Response>
@@ -66,9 +68,11 @@ function readOnlyHandler<TInput>(
 }
 
 /**
- * Shared handler body for the mutating tools: write scope, plus the audit-log lifecycle — the record is
- * stamped by the operation, and the outcome (`success`, or an `eventId` on failure) by this wrapper. A
- * throw still queues the log, so a failed mutation is never silently unaudited.
+ * Shared handler body for the mutating tools: the audit-log lifecycle — the record is stamped by the
+ * operation, and the outcome (`success`, or an `eventId` on failure) by this wrapper. A throw still
+ * queues the log, so a failed mutation is never silently unaudited.
+ *
+ * The write scope is no longer checked here; `registerScopedTool` gates it before this runs (ENG-2119).
  */
 function writeHandler<TInput extends { workspaceId: string }>(
   action: "created" | "updated" | "deleted",
