@@ -418,12 +418,29 @@ export function remapBlockInvalidParamPath(
     return opIndex === undefined ? path : `ops.${opIndex}.block${match.groups?.rest ?? ""}`;
   };
 
+  /**
+   * The same rewrite for paths quoted inside prose rather than held in a field of their own.
+   *
+   * Several reasons name the other end of a problem in words — "first used at blocks.3.elements.1",
+   * "conflicts with … at …", the recall reasons naming the element they point at. Remapping only the
+   * structured fields leaves those sentences in `blocks.<i>` coordinates beside a `name` that now
+   * reads `ops.<n>.block`, so one param contradicts itself and half of it names an array the caller
+   * never sent. Unanchored on purpose — the path sits mid-sentence — and still keyed by the same map,
+   * so a quoted path into a block the request did not touch is left exactly as it is.
+   */
+  const remapWithin = (text: string): string =>
+    text.replace(/blocks\.(\d+)((?:\.[A-Za-z0-9_-]+)*)/g, (whole, index: string, rest: string) => {
+      const opIndex = originOpIndexByBlockIndex.get(Number(index));
+      return opIndex === undefined ? whole : `ops.${opIndex}.block${rest}`;
+    });
+
   // `firstUsedAt` and `conflictsWith` are paths too — a duplicate-id report names both copies. Leaving
   // them in `blocks.<i>` coordinates while `name` moves to `ops.<n>` hands the caller a half-translated
   // pair it cannot resolve without a second GET.
   return {
     ...param,
     name: remap(param.name),
+    reason: remapWithin(param.reason),
     ...(param.firstUsedAt === undefined ? {} : { firstUsedAt: remap(param.firstUsedAt) }),
     ...(param.conflictsWith === undefined ? {} : { conflictsWith: remap(param.conflictsWith) }),
   };

@@ -458,3 +458,42 @@ describe("findDuplicateBlockId", () => {
     expect(findDuplicateBlockId(stored)).not.toBeNull();
   });
 });
+
+/**
+ * Several reasons quote the other end of a problem in prose — "first used at blocks.3.elements.1"
+ * (reference-validation.ts), "conflicts with … identifier at …", and the recall reasons naming the
+ * element they point at. Those sentences are paths too, and remapping only the structured fields left
+ * one param disagreeing with itself: `firstUsedAt` in `ops.<n>` coordinates beside a `reason` still
+ * naming `blocks.<i>`, an array the caller never sent.
+ */
+describe("remapBlockInvalidParamPath rewrites paths quoted inside the reason", () => {
+  const origins = new Map([[3, 0]]);
+
+  test("translates a quoted path into a block the request touched", () => {
+    const param = {
+      name: "ops.0.block.elements.1.id",
+      reason: "Element id 'q1' is duplicated; first used at blocks.3.elements.1",
+      firstUsedAt: "blocks.3.elements.1",
+    };
+
+    const remapped = remapBlockInvalidParamPath(param, origins);
+
+    expect(remapped.firstUsedAt).toBe("ops.0.block.elements.1");
+    expect(remapped.reason).toBe("Element id 'q1' is duplicated; first used at ops.0.block.elements.1");
+  });
+
+  test("leaves a quoted path into an untouched block alone", () => {
+    const remapped = remapBlockInvalidParamPath(
+      { name: "blocks.9.name", reason: "Recall points at blocks.9.elements.0, which appears later" },
+      origins
+    );
+
+    expect(remapped.reason).toBe("Recall points at blocks.9.elements.0, which appears later");
+  });
+
+  test("does not disturb a reason carrying no path", () => {
+    expect(
+      remapBlockInvalidParamPath({ name: "blocks.3.id", reason: "Block 'b1' does not exist" }, origins).reason
+    ).toBe("Block 'b1' does not exist");
+  });
+});

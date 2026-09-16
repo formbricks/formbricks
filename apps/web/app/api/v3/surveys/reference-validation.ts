@@ -494,6 +494,28 @@ function misorderedIssue(
   return { name, reason, code: "misordered_reference", identifier, referenceType };
 }
 
+/**
+ * First-wins collector for precedence violations, deduping at insert rather than at the end.
+ *
+ * `build` is a thunk on purpose. The issue carries a sentence of a hundred-odd characters, and a
+ * single field can repeat one `#recall:` token as many times as the 2 MB body allows — tens of
+ * thousands of occurrences that all collapse to one report. Building each issue and then discarding
+ * it bounded the response while leaving the allocation unbounded, which is the same half-fix the
+ * order diagnostics needed (ENG-1652). Deferring construction makes the cost proportional to the
+ * distinct violations, which the document's own structure bounds.
+ */
+function addViolation(
+  violations: Map<string, TPrecedenceViolation>,
+  key: string,
+  build: () => InvalidParam
+): void {
+  if (violations.has(key)) {
+    return;
+  }
+
+  violations.set(key, { key, issue: build() });
+}
+
 /** Report every `#recall:` token in one string that points at or after `position`. */
 function addRecallViolationsInText(
   text: string,
@@ -501,7 +523,7 @@ function addRecallViolationsInText(
   position: number,
   scopeKey: string,
   positions: Map<string, TElementPosition>,
-  violations: TPrecedenceViolation[]
+  violations: Map<string, TPrecedenceViolation>
 ): void {
   for (const match of text.matchAll(/#recall:([A-Za-z0-9_-]+)/g)) {
     const recallId = match[1];
@@ -512,17 +534,16 @@ function addRecallViolationsInText(
       continue;
     }
 
-    violations.push({
-      key: `recall|${scopeKey}|${recallId}`,
-      issue: misorderedIssue(
+    addViolation(violations, `recall|${scopeKey}|${recallId}`, () =>
+      misorderedIssue(
         path,
         position < 0
           ? `Recall reference '${recallId}' cannot be used here because no element has been answered yet; only hidden fields and variables can be recalled before the first block`
           : `Recall reference '${recallId}' points at an element that appears later in the survey (${target.path}); a recall can only use elements shown before it`,
         recallId,
         "recall"
-      ),
-    });
+      )
+    );
   }
 }
 
@@ -533,7 +554,7 @@ function addRecallPrecedenceViolations(
   position: number,
   scopeKey: string,
   positions: Map<string, TElementPosition>,
-  violations: TPrecedenceViolation[]
+  violations: Map<string, TPrecedenceViolation>
 ): void {
   if (typeof value === "string") {
     addRecallViolationsInText(value, path, position, scopeKey, positions, violations);
@@ -583,7 +604,7 @@ function forEachSingleCondition(
 
 function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPrecedenceViolation[] {
   const positions = buildElementPositions(input.blocks);
-  const violations: TPrecedenceViolation[] = [];
+  const violations = new Map<string, TPrecedenceViolation>();
 
   // Before the first element: an element recall here can never resolve to an answer.
   addRecallPrecedenceViolations(input.welcomeCard, "welcomeCard", -1, "welcomeCard", positions, violations);
@@ -635,15 +656,14 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
         const target = positions.get(condition.leftOperand.value);
         if (!target || target.blockIndex <= blockIndex) return;
 
-        violations.push({
-          key: `condition|${block.id}|${condition.leftOperand.value}`,
-          issue: misorderedIssue(
+        addViolation(violations, `condition|${block.id}|${condition.leftOperand.value}`, () =>
+          misorderedIssue(
             `${conditionPath}.leftOperand.value`,
             `Condition references element '${condition.leftOperand.value}' in a later block (blocks.${target.blockIndex}); logic in blocks.${blockIndex} can only evaluate elements from the same or an earlier block`,
             condition.leftOperand.value,
             "element"
-          ),
-        });
+          )
+        );
       });
 
       logic.actions.forEach((action, actionIndex) => {
@@ -651,32 +671,23 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
         const target = positions.get(action.target);
         if (!target || target.blockIndex > blockIndex) return;
 
-        violations.push({
-          key: `requireAnswer|${block.id}|${action.target}`,
-          issue: misorderedIssue(
+        addViolation(violations, `requireAnswer|${block.id}|${action.target}`, () =>
+          misorderedIssue(
             `${logicPath}.actions.${actionIndex}.target`,
             target.blockIndex === blockIndex
               ? `requireAnswer target '${action.target}' is in the same block (blocks.${blockIndex}); requireAnswer must target an element in a later block`
               : `requireAnswer target '${action.target}' is in an earlier block (blocks.${target.blockIndex}); requireAnswer must target an element in a later block`,
             action.target,
             "element"
-          ),
-        });
+          )
+        );
       });
     });
   });
 
-  // One report per key. A field can carry the same `#recall:` token any number of times — a headline
-  // that repeats a forward recall fifty thousand times is still one misordered reference, and
-  // reporting it per occurrence would let a request inflate the error body several-fold (the class
-  // ENG-1652 bounds). The key is already the dedupe unit the delta filter below relies on.
-  const byKey = new Map<string, TPrecedenceViolation>();
-  for (const violation of violations) {
-    if (!byKey.has(violation.key)) {
-      byKey.set(violation.key, violation);
-    }
-  }
-  return [...byKey.values()];
+  // One report per key, and the map has held that invariant since insert — see `addViolation`. The key
+  // is also the dedupe unit the delta filter below relies on.
+  return [...violations.values()];
 }
 
 /** Every ordering violation in the document. Used on create, where there is no baseline to spare. */
