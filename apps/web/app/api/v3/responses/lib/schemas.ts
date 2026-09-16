@@ -64,8 +64,8 @@ export type TV3BatchDeleteResponsesBody = z.infer<typeof ZV3BatchDeleteResponses
  * `ZResponseData` through the v1 and v2 write paths, where capping it would reject payloads that
  * work today — see this PR's open gaps.
  */
-const MAX_RESPONSE_DATA_VALUES = 1_000;
-const MAX_RESPONSE_DATA_KEYS = 500;
+export const MAX_RESPONSE_DATA_VALUES = 1_000;
+export const MAX_RESPONSE_DATA_KEYS = 500;
 
 const ZV3ResponseDataValue = z.union([
   z.string(),
