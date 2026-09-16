@@ -659,3 +659,28 @@ if (!postParseResult.success) {
 }
 
 export const env = parsedEnv;
+
+/**
+ * v6 has no legacy authorization fallback. Validate configuration before serving
+ * requests, not during builds or diagnostic CLI imports. This never contacts SpiceDB.
+ */
+export const assertAuthzedRuntimeConfiguration = (): void => {
+  const result = ZAuthzedConfigurationEnv.superRefine((values, ctx) => {
+    if (values.AUTHZED_ENABLED !== "true" && values.AUTHZED_ENABLED !== "1") {
+      addEnvIssue(
+        ctx,
+        "AUTHZED_ENABLED",
+        "Formbricks v6 requires AUTHZED_ENABLED=true; configure SpiceDB before starting the server. See https://formbricks.com/docs/self-hosting/advanced/authzed-operations"
+      );
+    }
+    // Report missing credentials even when enablement was omitted.
+    validateAuthzedConfiguration({ ...values, AUTHZED_ENABLED: "true" }, ctx);
+    if (values.AUTHZED_CONSISTENCY !== "fully_consistent") {
+      addEnvIssue(ctx, "AUTHZED_CONSISTENCY", "Formbricks v6 requires AUTHZED_CONSISTENCY=fully_consistent");
+    }
+  }).safeParse(env);
+
+  if (!result.success) {
+    throwEnvValidationError(result.error.issues);
+  }
+};

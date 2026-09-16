@@ -10,6 +10,7 @@ jobs:
   validate:
     name: Validate Helm Chart
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -27,6 +28,9 @@ jobs:
         uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
         with:
           version: v3.15.4
+
+      - name: Validate default operator against Kubernetes API
+        run: bash charts/formbricks/tests/authzed-api-server.sh
 
       - name: Validate chart renders
         shell: bash
