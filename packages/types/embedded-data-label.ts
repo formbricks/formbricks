@@ -35,9 +35,17 @@ export interface TLabelledEmbeddedField extends TLinkedEmbeddedField {
  *
  * Order is the input's order: callers pass `getIngestedEmbeddedFields(survey)` (or the computed
  * counterpart), whose order is already the user-visible one.
+ *
+ * `reserved` seeds that set with strings the labels must also avoid, for a caller whose surface has
+ * other columns in the same namespace. The response export is the one that needs it: its rows are
+ * flat objects keyed by header, so a field named `Response ID` would not add a column, it would
+ * overwrite one.
  */
-export const labelEmbeddedFields = (fields: readonly TLinkedEmbeddedField[]): TLabelledEmbeddedField[] => {
-  const taken = new Set<string>();
+export const labelEmbeddedFields = (
+  fields: readonly TLinkedEmbeddedField[],
+  reserved: ReadonlySet<string> = new Set()
+): TLabelledEmbeddedField[] => {
+  const taken = new Set<string>(reserved);
 
   return fields.map(({ field, link }) => {
     const base = taken.has(field.name) ? `${field.name} (${link.storageKey})` : field.name;

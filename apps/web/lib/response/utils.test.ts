@@ -1205,12 +1205,33 @@ describe("Response Utils", () => {
         // headers would drop a column's values into the other's.
         const colliding = {
           ...legacySurvey,
-          embeddedFields: [ingestedRow("Source", "utm_source"), ingestedRow("Source", "referrer")],
+          embeddedFields: [ingestedRow("Channel", "utm_channel"), ingestedRow("Channel", "partner_ref")],
         } as TSurvey;
 
         expect(extractSurveyDetails(colliding, mockResponses as TResponse[]).hiddenFields).toEqual([
-          "Source",
-          "Source (referrer)",
+          "Channel",
+          "Channel (partner_ref)",
+        ]);
+      });
+
+      /**
+       * The other half of the same rule, and the one a name-only allocation misses: the row object
+       * is keyed by header across the *whole* schema, not just this group, so a display name equal
+       * to a column the export already writes would overwrite that column rather than add one. A
+       * storage key never could — it is a safe identifier — but a library field's name is free text.
+       */
+      test.each([
+        ["a fixed column", "Response ID", "resp_id", "Response ID (resp_id)"],
+        // `formatFieldNameToTitleCase` heads the reserved `source` entry exactly this way.
+        ["a reserved column", "Source", "utm_source", "Source (utm_source)"],
+      ])("an ingested field named like %s does not take it", (_case, name, storageKey, expected) => {
+        const shadowing = {
+          ...legacySurvey,
+          embeddedFields: [ingestedRow(name, storageKey)],
+        } as TSurvey;
+
+        expect(extractSurveyDetails(shadowing, mockResponses as TResponse[]).hiddenFields).toEqual([
+          expected,
         ]);
       });
     });
