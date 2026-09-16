@@ -8,7 +8,7 @@ import { getEmbeddedDataUsageAction } from "@/modules/embedded-data/actions";
 import type { TEmbeddedDataUsageItem } from "@/modules/embedded-data/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { getUsageLabel } from "../lib/library-field";
-import { getSurveyStatusLabel } from "./field-display";
+import { getSurveyStatusLabel } from "./field-labels";
 
 interface FieldUsageCellProps {
   fieldId: string;

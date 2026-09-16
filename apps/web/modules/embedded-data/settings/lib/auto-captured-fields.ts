@@ -1,6 +1,7 @@
+import { type TFunction } from "i18next";
 import { type TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { RESERVED_FIELD_CATALOG, type TReservedFieldPrivacy } from "@formbricks/types/embedded-data-resolver";
-import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
+import { getReservedFieldLabel } from "@/modules/embedded-data/lib/field-display";
 
 /**
  * The read-only "Auto-captured fields" table, projected from `RESERVED_FIELD_CATALOG`.
@@ -23,7 +24,10 @@ export type TAutoCapturedAvailability = "always" | "afterSubmit";
 export interface TAutoCapturedField {
   /** The catalog name — what logic, recall and exports address the field by. */
   name: string;
-  /** The same name as a label: catalog names are camelCase (`deviceType`, `ipAddress`). */
+  /**
+   * The translated label, from the same helper the field pickers use (ENG-1853) — so this table and
+   * a logic operand call the field the same thing, acronyms included (`URL`, not `Url`).
+   */
   label: string;
   dataType: TEmbeddedDataType;
   availability: TAutoCapturedAvailability;
@@ -37,10 +41,10 @@ export interface TAutoCapturedField {
  * `startedAt`, `finished`, …) are rendered by the surfaces that own them and are not fields an
  * author reads as data.
  */
-export const getAutoCapturedFields = (): TAutoCapturedField[] =>
+export const getAutoCapturedFields = (t: TFunction): TAutoCapturedField[] =>
   RESERVED_FIELD_CATALOG.filter((entry) => entry.display !== "none").map((entry) => ({
     name: entry.name,
-    label: formatFieldNameToTitleCase(entry.name),
+    label: getReservedFieldLabel(entry.name, t),
     dataType: entry.dataType,
     availability: entry.availability === "server" ? "afterSubmit" : "always",
     privacy: entry.privacy,

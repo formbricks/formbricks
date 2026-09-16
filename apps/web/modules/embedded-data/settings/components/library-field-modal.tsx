@@ -63,7 +63,7 @@ import {
   narrowDataTypeToSource,
   parseDefaultValueDraft,
 } from "../lib/library-field";
-import { getDataTypeLabel, getSourceIcon, getSourceLabel } from "./field-display";
+import { getDataTypeLabel, getSourceIcon, getSourceLabel } from "./field-labels";
 
 /**
  * Create and edit in one component, because the two dialogs differ only in what is fixed.
