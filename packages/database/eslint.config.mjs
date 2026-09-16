@@ -12,6 +12,13 @@ export default [
   },
   {
     files: ["migration/**"],
+    // `reportUnusedDisableDirectives` is fixable, so with it on, `pnpm lint:fix` (`eslint . --fix`)
+    // rewrites any shipped migration whose disable directives a config change has since made
+    // redundant — deleting comments from a file that has already run, which is exactly what the
+    // grandfathering below exists to prevent. Off for the whole directory rather than one file:
+    // every migration in here is frozen once it ships, so none of them should ever be rewritten
+    // by an autofix, and a stale directive in one is not something we would act on anyway.
+    linterOptions: { reportUnusedDisableDirectives: "off" },
     rules: {
       // `while (true) { ... break }` is the batch-drain idiom these data migrations use to page
       // through a table. `only-allowed-literals` exempts a loop test that is literally
@@ -35,9 +42,9 @@ export default [
    * the rules it actually violates, so a *new* violation of any other rule still fails.
    *
    * For the same reason, `20241209104738_xm_user_identification/migration.ts` keeps its two
-   * file-level disables and so reports two unused-directive warnings: the option above makes both
-   * redundant, but deleting them is still an edit to a shipped migration. Warnings do not gate,
-   * and they mark the file as grandfathered.
+   * file-level disables even though the loop option above has made both redundant: deleting them
+   * would be an edit to a shipped migration. The `linterOptions` above is what stops `lint:fix`
+   * from deleting them for us.
    *
    * Do not add entries. A migration that has not shipped yet should be fixed instead.
    */
