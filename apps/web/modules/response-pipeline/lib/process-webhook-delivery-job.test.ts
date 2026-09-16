@@ -353,6 +353,23 @@ describe("processWebhookDeliveryJob", () => {
     );
   });
 
+  test("announces the loss when the last attempt fails to read the webhook", async () => {
+    // A load failure on attempt 5 drops the event exactly like an exhausted HTTP retry, so it has to
+    // emit the message the Job Runner troubleshooting table tells operators to grep for.
+    const poolError = new Error("Timed out fetching a new connection from the connection pool");
+    mockFindFirst.mockRejectedValue(poolError);
+
+    await expect(processWebhookDeliveryJob(data, createContext({ attempt: 5 }))).rejects.toBe(poolError);
+
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "load_failed", attempt: 5, maxAttempts: 5 }),
+      "Webhook delivery failed; retries exhausted"
+    );
+    // and must not still promise a retry it will not get
+    const logged = JSON.stringify([...mockLoggerWarn.mock.calls, ...mockLoggerError.mock.calls]);
+    expect(logged).not.toContain("will be retried");
+  });
+
   test("rethrows other database errors so BullMQ retries", async () => {
     const dbError = new Error("connection refused");
     mockFindFirst.mockRejectedValue(dbError);

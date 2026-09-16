@@ -93,6 +93,13 @@ export type TWorkflowRunReconcileJobData = TGlobalScopeJobData;
  * them from the database at delivery time, so the signing secret never sits in Redis and a webhook
  * deleted or re-scoped while retries are pending is skipped.
  *
+ * `response` deliberately goes the other way. Re-reading it would cost a query per attempt and, more
+ * importantly, would deliver whatever the response says *now* rather than what it said when the event
+ * fired — the point-in-time semantics the pre-fan-out body had. The price is one copy of the snapshot per
+ * matching webhook in Redis (plus the pipeline job's own), held for the queue's completed and failed
+ * retention, so a survey with many webhooks and long free-text answers multiplies its footprint by the
+ * webhook count. ENG-2318 tracks the payload size generally.
+ *
  * `webhookMessageId` is the Standard Webhooks `webhook-id`. The pipeline job derives it from its own job
  * id (the same derivation as before the fan-out), so receivers see identical ids and it stays constant
  * across every retry of this job.

@@ -75,6 +75,7 @@ type TDeliveryTarget = {
 
 const loadDeliveryTarget = async (
   data: TWebhookDeliveryJobData,
+  context: JobExecutionContext,
   logContext: TDeliveryLogContext
 ): Promise<TDeliveryTarget | null> => {
   try {
@@ -90,16 +91,23 @@ const loadDeliveryTarget = async (
     // dead receiver, and a failure-rate alert that ignores it would stay green through the outage.
     recordWebhookDeliveryOutcome({ outcome: "load_failed", event: data.event });
 
-    if (isDatabasePoolExhaustionError(error)) {
-      logger.warn(
-        { ...logContext, err: error, outcome: "load_failed" },
-        "Webhook delivery hit database pool exhaustion and will be retried"
-      );
+    // Same last-attempt split as the delivery path below. A load failure on the final attempt drops the
+    // event exactly like an exhausted HTTP retry does, so it has to emit the message the Job Runner
+    // troubleshooting table tells operators to grep for — otherwise the one loss caused by our own
+    // database is the only one that never announces itself.
+    const failureLogContext = {
+      ...logContext,
+      err: error,
+      outcome: "load_failed",
+      reason: "the webhook could not be read from the database",
+    };
+
+    if (context.attempt >= context.maxAttempts) {
+      logger.error(failureLogContext, "Webhook delivery failed; retries exhausted");
+    } else if (isDatabasePoolExhaustionError(error)) {
+      logger.warn(failureLogContext, "Webhook delivery hit database pool exhaustion and will be retried");
     } else {
-      logger.error(
-        { ...logContext, err: error, outcome: "load_failed" },
-        "Webhook delivery could not load the webhook and will be retried"
-      );
+      logger.error(failureLogContext, "Webhook delivery could not load the webhook and will be retried");
     }
     throw error;
   }
@@ -188,7 +196,7 @@ const classifyFailure = (attempt: TDeliveryAttempt): TClassifiedFailure => {
 export const processWebhookDeliveryJob: JobHandler<TWebhookDeliveryJobData> = async (data, context) => {
   const logContext = getDeliveryLogContext(data, context);
 
-  const target = await loadDeliveryTarget(data, logContext);
+  const target = await loadDeliveryTarget(data, context, logContext);
 
   if (!target) {
     logger.info({ ...logContext, outcome: "skipped_deleted" }, "Webhook delivery skipped: webhook deleted");

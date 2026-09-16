@@ -148,6 +148,14 @@ const createWebhookMessageId = ({
  * pipeline retry after a partial fan-out re-enqueues only the deliveries that never made it. Keyed on the
  * pipeline job id rather than the response, because `responseUpdated` legitimately fires once per update
  * and each must be delivered.
+ *
+ * That dedupe holds only while BullMQ still has the completed job: delivery jobs inherit the queue's
+ * `removeOnComplete` of 24 h **or 1000 jobs**, and at high throughput the count arm can trim a completed
+ * delivery inside the pipeline job's own ~15 s retry window, after which a retry re-adds the id and the
+ * receiver sees the event twice. The duplicate carries the same `webhook-id` (it is derived from the
+ * pipeline job id), so a receiver deduping as the docs describe is unaffected — delivery is at-least-once,
+ * not exactly-once. ENG-2829 tracks moving this onto BullMQ deduplication, which does not depend on
+ * retention.
  */
 const createWebhookDeliveryJobId = (jobId: string, webhookId: string): string => `whd-${jobId}-${webhookId}`;
 
