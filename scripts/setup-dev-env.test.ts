@@ -41,7 +41,7 @@ describe("scripts/setup-dev-env.sh AuthZed setup", () => {
       templatePath,
       [
         "ENCRYPTION_KEY=",
-        "NEXTAUTH_SECRET=",
+        "BETTER_AUTH_SECRET=",
         "CRON_SECRET=",
         "CUBEJS_API_SECRET=",
         "AUTHZED_TOKEN=",
@@ -111,5 +111,42 @@ describe("scripts/setup-dev-env.sh AuthZed setup", () => {
     expect(values.get("AUTHZED_SYSTEM_KEY")).toBe("custom_key");
     expect(values.get("AUTHZED_INSECURE")).toBe("false");
     expect(output).not.toContain("private-token");
+  });
+
+  test("generates exactly one auth secret on a fresh .env", () => {
+    // Generating both BETTER_AUTH_SECRET and the legacy NEXTAUTH_SECRET would give every clean
+    // checkout two disagreeing secrets, and the app warns about that shape at boot — a warning that
+    // fires on 100% of dev machines is a warning nobody reads.
+    const tempDir = createTempDir();
+    const templatePath = join(tempDir, ".env.example");
+    const envPath = join(tempDir, ".env");
+    writeFileSync(templatePath, ["ENCRYPTION_KEY=", "BETTER_AUTH_SECRET=", ""].join("\n"));
+
+    execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: templatePath },
+    });
+    const values = parseEnvFile(readFileSync(envPath, "utf8"));
+
+    expect(values.get("BETTER_AUTH_SECRET")).toMatch(/^[a-f0-9]{64}$/);
+    expect(values.has("NEXTAUTH_SECRET")).toBe(false);
+  });
+
+  test("carries an existing NEXTAUTH_SECRET across instead of minting a new one", () => {
+    // An .env from before the rename. BETTER_AUTH_SECRET wins at runtime, so generating a fresh value
+    // here would log the developer out and invalidate their outstanding verification links.
+    const tempDir = createTempDir();
+    const templatePath = join(tempDir, ".env.example");
+    const envPath = join(tempDir, ".env");
+    writeFileSync(templatePath, "");
+    writeFileSync(envPath, "NEXTAUTH_SECRET=legacy-secret-value\nAUTHZED_TOKEN=private-token\n");
+
+    execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: templatePath },
+    });
+    const values = parseEnvFile(readFileSync(envPath, "utf8"));
+
+    expect(values.get("BETTER_AUTH_SECRET")).toBe("legacy-secret-value");
+    // Left in place: nothing rewrites an existing install's env, and the app still accepts it.
+    expect(values.get("NEXTAUTH_SECRET")).toBe("legacy-secret-value");
   });
 });

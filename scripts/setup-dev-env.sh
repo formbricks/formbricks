@@ -9,7 +9,7 @@ readonly ENV_PATH="${FORMBRICKS_ENV_PATH:-${REPO_ROOT}/.env}"
 source "${SCRIPT_DIR}/dev-env.sh"
 readonly REQUIRED_GENERATED_KEYS=(
   "ENCRYPTION_KEY"
-  "NEXTAUTH_SECRET"
+  "BETTER_AUTH_SECRET"
   "CRON_SECRET"
   "CUBEJS_API_SECRET"
   "AUTHZED_TOKEN"
@@ -163,6 +163,15 @@ main() {
   fi
   if [[ "$(read_env_value AUTHZED_ENDPOINT)" != "${bundled_endpoint}" && -z "$(read_env_value AUTHZED_TOKEN)" ]]; then
     fail "Custom AUTHZED_ENDPOINT requires its existing AUTHZED_TOKEN; no replacement token was generated."
+  fi
+
+  # An .env that predates the BETTER_AUTH_* rename carries the secret under NEXTAUTH_SECRET. Copy that
+  # value across rather than letting the loop below mint a new one: BETTER_AUTH_SECRET wins at runtime,
+  # so generating a fresh one would log the developer out and invalidate their outstanding links, and
+  # leave the two keys disagreeing — which the app warns about at boot, on every machine.
+  if [[ -z "$(read_env_value BETTER_AUTH_SECRET)" && -n "$(read_env_value NEXTAUTH_SECRET)" ]]; then
+    upsert_env_value "BETTER_AUTH_SECRET" "$(read_env_value NEXTAUTH_SECRET)"
+    updated_keys+=("BETTER_AUTH_SECRET (from NEXTAUTH_SECRET)")
   fi
 
   for key in "${REQUIRED_GENERATED_KEYS[@]}"; do
