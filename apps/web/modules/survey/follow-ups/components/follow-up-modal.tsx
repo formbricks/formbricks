@@ -324,7 +324,13 @@ export const FollowUpModal = ({
       case "verifiedEmail":
         return { icon: <MailIcon className="size-4" /> };
       case "hiddenField":
-        return { icon: <FileType2Icon className="size-4" /> };
+        // Same truncation as the other user-named labels: the row is `w-full` and a flex item does
+        // not shrink below its content unless it clips, so a long field name would otherwise squeeze
+        // the library key beside it (`secondaryLabel`) down to nothing.
+        return {
+          icon: <FileType2Icon className="size-4" />,
+          textClass: "overflow-hidden text-ellipsis whitespace-nowrap",
+        };
       case "user":
         return {
           icon: <UserIcon className="size-4" />,
