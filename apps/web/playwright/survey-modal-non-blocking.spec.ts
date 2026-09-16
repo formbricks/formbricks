@@ -186,24 +186,29 @@ test.describe("App survey widget does not block the host page", () => {
     // that hit-tests its whole rectangle no matter what CSS says, so without this it cannot tell
     // which touches belong to the survey and which belong to the app underneath — and it has no way
     // to work the card's position out for itself.
+    // Both values are read in the same browser frame, inside the poll. The first report can land
+    // while the card is still settling, so reading the report and the DOM in separate round-trips
+    // compares two different animation states. Tolerance is 2px because the rect is deduped on
+    // whole pixels.
     await expect
-      .poll(() => page.evaluate(() => window.__cardRects.filter((r) => r !== null).length), {
-        timeout: 30000,
-      })
-      .toBeGreaterThan(0);
-
-    const reportedRect = await page.evaluate(() => {
-      const rects = window.__cardRects.filter((r) => r !== null);
-      return rects[rects.length - 1];
-    });
-
-    const actualBox = await dialog.boundingBox();
-    expect(actualBox).not.toBeNull();
-    // Reported in whole pixels, so allow a pixel of rounding either way rather than an exact match.
-    expect(Math.abs(reportedRect!.x - actualBox!.x)).toBeLessThanOrEqual(2);
-    expect(Math.abs(reportedRect!.y - actualBox!.y)).toBeLessThanOrEqual(2);
-    expect(Math.abs(reportedRect!.width - actualBox!.width)).toBeLessThanOrEqual(2);
-    expect(Math.abs(reportedRect!.height - actualBox!.height)).toBeLessThanOrEqual(2);
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const reported = window.__cardRects.filter((r) => r !== null);
+            const latest = reported[reported.length - 1];
+            const card = document.querySelector("#fbjs [role='dialog']");
+            if (!latest || !card) return Number.POSITIVE_INFINITY;
+            const box = card.getBoundingClientRect();
+            return Math.max(
+              Math.abs(latest.x - box.left),
+              Math.abs(latest.y - box.top),
+              Math.abs(latest.width - box.width),
+              Math.abs(latest.height - box.height)
+            );
+          }),
+        { timeout: 30000 }
+      )
+      .toBeLessThanOrEqual(2);
 
     // The survey must not have taken the caret.
     await expect(page.locator("#host-input")).toBeFocused();
@@ -275,11 +280,31 @@ test.describe("App survey widget does not block the host page", () => {
     // Reported again when the viewport changes. Every assertion above is satisfied by a single
     // report on open, so without this the resize listener could be deleted and nothing would go
     // red — leaving a host masking touches to where the card used to be after a rotation.
-    const reportsBeforeResize = await page.evaluate(() => window.__cardRects.length);
+    const xBeforeResize = await page.evaluate(() => {
+      const reported = window.__cardRects.filter((r) => r !== null);
+      return Math.round(reported[reported.length - 1]!.x);
+    });
+
     await page.setViewportSize({ width: 900, height: 700 });
+
+    // Assert the reported geometry moved with the viewport, not merely that another report
+    // arrived. A count alone would also be satisfied by a stray sample from the opening
+    // animation, so it would not pin the resize listener at all.
     await expect
-      .poll(() => page.evaluate(() => window.__cardRects.length), { timeout: 30000 })
-      .toBeGreaterThan(reportsBeforeResize);
+      .poll(
+        () =>
+          page.evaluate((previousX) => {
+            const reported = window.__cardRects.filter((r) => r !== null);
+            const latest = reported[reported.length - 1];
+            const card = document.querySelector("#fbjs [role='dialog']");
+            if (!latest || !card) return false;
+            const box = card.getBoundingClientRect();
+            const tracksCard = Math.abs(latest.x - box.left) <= 2 && Math.abs(latest.width - box.width) <= 2;
+            return tracksCard && Math.round(latest.x) !== previousX;
+          }, xBeforeResize),
+        { timeout: 30000 }
+      )
+      .toBe(true);
 
     // No two consecutive reports are identical. The card animates over 500ms and the rect is
     // sampled per frame, so without the whole-pixel dedupe a native host takes roughly thirty
