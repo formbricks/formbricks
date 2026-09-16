@@ -27,13 +27,6 @@ describe("getLogicRules", () => {
     expect(Array.isArray(logicRules["variable.number"].options)).toBe(true);
   });
 
-  test("should return correct structure for hiddenField rules", () => {
-    expect(logicRules).toHaveProperty("hiddenField");
-    expect(logicRules.hiddenField).toBeInstanceOf(Object);
-    expect(logicRules.hiddenField).toHaveProperty("options");
-    expect(Array.isArray(logicRules.hiddenField.options)).toBe(true);
-  });
-
   describe("Question Specific Rules", () => {
     test("OpenText.text", () => {
       const openTextTextRules = elementRules[TSurveyQuestionTypeEnum.OpenText + ".text"];
@@ -487,9 +480,12 @@ describe("getLogicRules", () => {
     });
   });
 
-  describe("HiddenField Rules", () => {
-    test("hiddenField", () => {
-      const rules = logicRules.hiddenField;
+  // The list an ingested Embedded Data field inherits when it declares no narrower dataType — which
+  // every field a legacy survey has does. Asserted in full because ENG-1853 retired the separate
+  // `hiddenField` family in favour of this one, and "the operators did not change" is the claim.
+  describe("Field Rules (string)", () => {
+    test("field.string", () => {
+      const rules = logicRules["field.string"];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -549,15 +545,16 @@ describe("TLogicRuleOption type", () => {
   });
 });
 
-describe("reserved field rules (ENG-1840)", () => {
+describe("dataType-keyed field rules (ENG-1840, ENG-1853)", () => {
   // Indexed explicitly rather than through a `Record<string, …>` cast: `getConditionOperatorOptions`
-  // reaches these keys as `reserved.${entry.dataType}`, and naming all four here means deleting one
-  // is a compile error in this test rather than a silently skipped loop iteration.
+  // reaches these keys as `field.${dataType}` — for a reserved catalog entry and, since ENG-1853, for
+  // an ingested Embedded Data field too — and naming all four here means deleting one is a compile
+  // error in this test rather than a silently skipped loop iteration.
   const reservedRules = {
-    string: logicRules["reserved.string"],
-    number: logicRules["reserved.number"],
-    boolean: logicRules["reserved.boolean"],
-    date: logicRules["reserved.date"],
+    string: logicRules["field.string"],
+    number: logicRules["field.number"],
+    boolean: logicRules["field.boolean"],
+    date: logicRules["field.date"],
   };
 
   const dataTypes = Object.keys(reservedRules) as (keyof typeof reservedRules)[];
@@ -575,8 +572,9 @@ describe("reserved field rules (ENG-1840)", () => {
   });
 
   test("every family can branch on absence", () => {
-    // A reserved value is legitimately absent (`source` on a link opened without one), and isSet /
-    // isNotSet are the only operators that let an author handle that.
+    // Such a value is legitimately absent (`source` on a link opened without one, an Embedded Data
+    // field nothing filled), and isSet / isNotSet are the only operators that let an author handle
+    // that.
     for (const dataType of dataTypes) {
       expect(opValues(dataType)).toEqual(
         expect.arrayContaining([

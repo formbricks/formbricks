@@ -1,6 +1,6 @@
 "use client";
 
-import { EyeOffIcon, MailIcon, TriangleAlertIcon, UserIcon } from "lucide-react";
+import { FileType2Icon, MailIcon, TriangleAlertIcon, UserIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -34,7 +34,7 @@ const getSelectItemIcon = (type: EmailSendToOption["type"], elementIconMap: TEle
     case "verifiedEmail":
       return <MailIcon className="size-4" />;
     case "hiddenField":
-      return <EyeOffIcon className="size-4" />;
+      return <FileType2Icon className="size-4" />;
     case "user":
       return <UserIcon className="size-4" />;
     case "openTextElement":
@@ -46,9 +46,14 @@ const getSelectItemIcon = (type: EmailSendToOption["type"], elementIconMap: TEle
 
 const renderSelectItem = (option: EmailSendToOption, elementIconMap: TElementIconMap) => (
   <SelectItem key={option.id} value={option.id}>
-    <div className="flex items-center gap-x-2">
+    <div className="flex w-full items-center gap-x-2">
       {getSelectItemIcon(option.type, elementIconMap)}
       <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
+      {option.secondaryLabel ? (
+        <span className="ml-auto truncate pl-2 font-mono text-xs text-slate-400">
+          {option.secondaryLabel}
+        </span>
+      ) : null}
     </div>
   </SelectItem>
 );
@@ -87,13 +92,15 @@ export const WorkflowEmailRecipientField = ({
     options.filter((option) => types.includes(option.type));
 
   // Declared as data so the three groups share one renderer. Verified email and question elements
-  // deliberately sit under the same "Questions" heading, as in the survey Follow-Ups picker.
+  // deliberately sit under the same "Questions" heading, as in the survey Follow-Ups picker — which
+  // is also where the "Embedded Data" heading comes from (ENG-1853): one group for what used to be
+  // split between variables and hidden fields, even though only ingested fields can hold an address.
   const groups = [
     {
       label: t("common.questions"),
       options: optionsOfType("verifiedEmail", "openTextElement", "contactInfoElement"),
     },
-    { label: t("common.hidden_fields"), options: optionsOfType("hiddenField") },
+    { label: t("common.embedded_data"), options: optionsOfType("hiddenField") },
     { label: t("common.members"), options: optionsOfType("user") },
   ].filter((group) => group.options.length > 0);
 
