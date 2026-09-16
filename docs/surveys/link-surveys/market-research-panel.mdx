@@ -23,13 +23,11 @@ External research panels are useful when:
 
 ## Steps to Follow
 
-### Step 1: Add hidden fields to the Formbricks survey
+### Step 1: Add passed-in fields to the Formbricks survey
 
-To be able to attribute a completed answer to a research participant, you need to add hidden fields to your Formbricks survey. To do so, edit your survey and scroll down to the Embedded Data card.
+To be able to attribute a completed answer to a research participant, you need to add passed-in fields to your Formbricks survey. To do so, edit your survey and scroll down to the Embedded Data card.
 
-Add three fields with the IDs `prolific_pid`, `study_id`, and `session_id`. Field IDs are lowercase, which is fine: Prolific sends its parameters in upper case and Formbricks matches them case-insensitively, so the values land in these fields either way.
-
-![Hidden fields added](/images/surveys/link-surveys/market-research-panel/hidden-fields.webp)
+Add three passed-in fields named `prolific_pid`, `study_id`, and `session_id`. Field names are lowercase, which is fine: Prolific sends its parameters in upper case and Formbricks matches them case-insensitively, so the values land in these fields either way.
 
 ### Step 2: Create an account on Prolific
 
