@@ -53,7 +53,8 @@ export const reportStaleServerActionError = (error: unknown): boolean => {
 
   hasSeenStaleAction = true;
   // Copied: a subscriber is free to unsubscribe while being notified.
-  for (const subscriber of [...subscribers]) {
+  const currentSubscribers = [...subscribers];
+  for (const subscriber of currentSubscribers) {
     subscriber();
   }
 
