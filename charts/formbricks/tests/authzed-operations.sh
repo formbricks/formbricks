@@ -13,15 +13,12 @@ trap 'rm -rf "${temp_dir}"' EXIT
 # install. Evaluate the real notes through `tpl` in a minimal ConfigMap chart so this contract remains
 # clusterless and release-accurate across supported Helm versions.
 notes_chart="${temp_dir}/notes-chart"
-mkdir -p "${notes_chart}/templates"
+mkdir -p "${notes_chart}/charts" "${notes_chart}/templates"
+cp "${CHART_DIR}/Chart.yaml" "${notes_chart}/Chart.yaml"
+cp "${CHART_DIR}"/charts/*.tgz "${notes_chart}/charts/"
 cp "${CHART_DIR}/values.yaml" "${notes_chart}/values.yaml"
 cp "${CHART_DIR}/templates/_helpers.tpl" "${notes_chart}/templates/_helpers.tpl"
 cp "${CHART_DIR}/templates/NOTES.txt" "${notes_chart}/notes.txt"
-printf '%s\n' \
-  'apiVersion: v2' \
-  'name: formbricks-notes-contract' \
-  'version: 0.0.0' \
-  'appVersion: 0.0.0' >"${notes_chart}/Chart.yaml"
 printf '%s\n' \
   'apiVersion: v1' \
   'kind: ConfigMap' \
