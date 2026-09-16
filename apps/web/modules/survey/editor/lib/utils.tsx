@@ -1254,6 +1254,22 @@ export const isUsedInRecall = (survey: TSurvey, id: string): number => {
   return -1; // Not found
 };
 
+/**
+ * The index of the first element whose block carries a logic rule the predicate matches, or -1.
+ *
+ * The "find the element, then look at its block's logic" walk was written out identically in every
+ * `find*UsedInLogic` below; only the predicate differs.
+ */
+const findElementIndexByBlockLogic = (
+  survey: TSurvey,
+  isUsedInLogicRule: (logicRule: TSurveyBlockLogic) => boolean
+): number =>
+  getElementsFromBlocks(survey.blocks).findIndex((element) => {
+    const { block } = findElementLocation(survey, element.id);
+    if (!block) return false;
+    return block.logic?.some(isUsedInLogicRule);
+  });
+
 export const findOptionUsedInLogic = (
   survey: TSurvey,
   elementId: string,
@@ -1295,17 +1311,7 @@ export const findOptionUsedInLogic = (
     return isUsedInCondition(logicRule.conditions);
   };
 
-  const elements = getElementsFromBlocks(survey.blocks);
-
-  return elements.findIndex((element) => {
-    const { block } = findElementLocation(survey, element.id);
-
-    if (!block) {
-      return false;
-    }
-
-    return block.logic?.some(isUsedInLogicRule);
-  });
+  return findElementIndexByBlockLogic(survey, isUsedInLogicRule);
 };
 
 export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number => {
@@ -1330,17 +1336,7 @@ export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): nu
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
-  const elements = survey.blocks.flatMap((b) => b.elements);
-
-  return elements.findIndex((element) => {
-    const { block } = findElementLocation(survey, element.id);
-
-    if (!block) {
-      return false;
-    }
-
-    return block.logic?.some(isUsedInLogicRule);
-  });
+  return findElementIndexByBlockLogic(survey, isUsedInLogicRule);
 };
 
 export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: string): number => {
@@ -1362,17 +1358,7 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
     return isUsedInCondition(logicRule.conditions);
   };
 
-  const elements = getElementsFromBlocks(survey.blocks);
-
-  return elements.findIndex((element) => {
-    const { block } = findElementLocation(survey, element.id);
-
-    if (!block) {
-      return false;
-    }
-
-    return block.logic?.some(isUsedInLogicRule);
-  });
+  return findElementIndexByBlockLogic(survey, isUsedInLogicRule);
 };
 
 export const getSurveyFollowUpActionDefaultBody = (t: TFunction): string => {
