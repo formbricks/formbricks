@@ -97,7 +97,10 @@ export const getLibraryColumns = ({
             {hasDefault ? (
               <code className="truncate font-mono text-xs text-slate-800">{String(field.defaultValue)}</code>
             ) : (
-              <span className="text-slate-500">–</span>
+              // The dash is what "no default" looks like in a column this narrow — copy all the
+              // same, so it comes from the catalog rather than sitting inline, and a locale that
+              // marks an absent value differently can say so.
+              <span className="text-slate-500">{t("workspace.embedded_data.no_default_placeholder")}</span>
             )}
             {field.locked && (
               <TooltipRenderer
