@@ -4,18 +4,12 @@ import {
   SURVEY_SCHEDULING_TIME_ZONE_LABEL,
 } from "@/modules/survey/scheduling/lib/constants";
 import { test } from "./lib/fixtures";
-import { createSurveyFromScratch } from "./utils/helper";
+import { createSurveyFromScratch, pickCalendarDay } from "./utils/helper";
 
 const formatSelectedDate = (date: Date): string =>
   new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "short",
-    year: "numeric",
-  }).format(date);
-
-const formatVisibleMonth = (date: Date): string =>
-  new Intl.DateTimeFormat("en-US", {
-    month: "long",
     year: "numeric",
   }).format(date);
 
@@ -67,27 +61,7 @@ const pickDateForToggle = async (page: Page, toggleTitle: string, dayOffset: num
   const datePickerTrigger = getDatePickerTrigger(page, toggleTitle);
   await expect(datePickerTrigger).toBeVisible();
   await datePickerTrigger.click();
-
-  const calendarPopover = page.locator("[data-radix-popper-content-wrapper]").last();
-  const calendar = calendarPopover.locator(".rdp-root");
-  const targetMonthLabel = formatVisibleMonth(targetDate);
-
-  for (let attempt = 0; attempt < 12; attempt++) {
-    const visibleMonthLabel = (await calendar.locator(".rdp-caption_label").textContent())?.trim();
-
-    if (visibleMonthLabel?.includes(targetMonthLabel)) {
-      break;
-    }
-
-    await calendar.locator(".rdp-button_next").click();
-  }
-
-  // `:not(.rdp-outside)` matters: the grid pads with the neighbouring months' days, so a bare day-number
-  // match can hit the same number in the wrong month.
-  await calendar
-    .locator(".rdp-day:not(.rdp-outside) .rdp-day_button:not([disabled])")
-    .filter({ hasText: new RegExp(`^${targetDate.getDate().toString()}$`) })
-    .click();
+  await pickCalendarDay(page, targetDate);
 
   return targetDate;
 };
