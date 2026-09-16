@@ -63,6 +63,21 @@ describe("labelEmbeddedFields", () => {
     expect(new Set(labels).size).toBe(3);
   });
 
+  test("stays collision-free when the literal name comes first, not second", () => {
+    // The mirror of the case above, and the one the name-only check missed: `Source (b)` is emitted
+    // bare because nothing claimed it yet, and the third field's *generated* label is then the same
+    // string. Checking `field.name` alone never sees that — the collision is between two labels, not
+    // between two names — so the export would ship two `Source (b)` headers and lose a value.
+    const labels = labelEmbeddedFields([
+      ingested("Source (b)", "c"),
+      ingested("Source", "a"),
+      ingested("Source", "b"),
+    ]).map(({ label }) => label);
+
+    expect(labels).toEqual(["Source (b)", "Source", "Source (b) (2)"]);
+    expect(new Set(labels).size).toBe(3);
+  });
+
   test("returns nothing for a survey with no fields", () => {
     expect(labelEmbeddedFields([])).toEqual([]);
   });

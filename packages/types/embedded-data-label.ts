@@ -23,10 +23,15 @@ export interface TLabelledEmbeddedField extends TLinkedEmbeddedField {
  * later one carries its key, which is what keeps a label stable when an unrelated second field is
  * added after it.
  *
- * The set holds the labels emitted so far rather than the names seen so far. The two differ only in
- * the pathological case — a field literally named `Source (utm_source)` sitting alongside two named
- * `Source` — and tracking emitted labels is what keeps the output collision-free there too, which is
- * the property the export's header-keyed rows depend on.
+ * The set holds the labels emitted so far rather than the names seen so far, and **the disambiguated
+ * label is checked against it too**. Both halves are needed: a field literally named `Source (b)`
+ * sitting ahead of two named `Source` collides on the *generated* label, not on any name, so
+ * checking only `field.name` would emit `Source (b)` twice. Duplicate labels are exactly what the
+ * export cannot survive — `getResponsesJson` keys its rows by label, so the later field would
+ * overwrite the earlier one's value and the file would carry two identical headers.
+ *
+ * The numeric tail that settles such a collision is deliberately never reached by a name alone: it
+ * needs a name *and* its key-qualified form both already taken.
  *
  * Order is the input's order: callers pass `getIngestedEmbeddedFields(survey)` (or the computed
  * counterpart), whose order is already the user-visible one.
@@ -35,7 +40,11 @@ export const labelEmbeddedFields = (fields: readonly TLinkedEmbeddedField[]): TL
   const taken = new Set<string>();
 
   return fields.map(({ field, link }) => {
-    const label = taken.has(field.name) ? `${field.name} (${link.storageKey})` : field.name;
+    const base = taken.has(field.name) ? `${field.name} (${link.storageKey})` : field.name;
+
+    let label = base;
+    for (let suffix = 2; taken.has(label); suffix++) label = `${base} (${suffix})`;
+
     taken.add(label);
     return { field, link, label };
   });
