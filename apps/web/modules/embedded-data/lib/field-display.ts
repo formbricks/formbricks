@@ -48,69 +48,48 @@ import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
  * trade the ticket's "adding a catalog entry surfaces it in both places with no further change"
  * criterion buys, and it is the reason this is not a lookup keyed off a required per-entry field.
  *
- * A switch of literal `t("…")` calls rather than a name → key lookup map on purpose: `pnpm i18n`
- * scans for literal `t()` arguments to find unused keys, and a map would make every
+ * A table of literal `t("…")` **calls** rather than of key strings: `pnpm i18n` scans for literal
+ * `t()` arguments to find unused keys, so a `{ action: "common.action" }` map would make every
  * `workspace.surveys.responses.*` key below read as dead and get deleted from thirty locale files.
+ * Keeping the call keeps the key alive, and one entry per line reads as the catalog it is — where
+ * the `case … return …` pairs this replaced were fifty lines whose shape SonarCloud matched against
+ * the equally long translation switch in `modules/ee/contacts/segments/lib/utils.ts`.
  */
-export const getReservedFieldLabel = (name: string, t: TFunction): string => {
-  switch (name) {
-    // The seven `primary` fields, all of which predate the catalog and keep their shipped copy.
-    case "action":
-      return t("common.action");
-    case "browser":
-      return t("workspace.surveys.responses.browser");
-    case "country":
-      return t("workspace.surveys.responses.country");
-    // The catalog spells this `deviceType`; both surfaces have always shown `Device`.
-    case "deviceType":
-      return t("workspace.surveys.responses.device");
-    case "os":
-      return t("workspace.surveys.responses.os");
-    case "source":
-      return t("workspace.surveys.responses.source");
-    case "url":
-      return t("common.url");
-    // The fourteen `secondary` fields. `ipAddress` is the only one with copy older than ENG-1841.
-    case "ipAddress":
-      return t("workspace.surveys.responses.ip_address");
-    case "locale":
-      return t("workspace.surveys.responses.locale");
-    case "pagePath":
-      return t("workspace.surveys.responses.page_path");
-    case "pageReferrer":
-      return t("workspace.surveys.responses.page_referrer");
-    case "screenHeight":
-      return t("workspace.surveys.responses.screen_height");
-    case "screenWidth":
-      return t("workspace.surveys.responses.screen_width");
-    case "timezone":
-      return t("workspace.surveys.responses.timezone");
-    case "utmCampaign":
-      return t("workspace.surveys.responses.utm_campaign");
-    case "utmContent":
-      return t("workspace.surveys.responses.utm_content");
-    case "utmMedium":
-      return t("workspace.surveys.responses.utm_medium");
-    case "utmSource":
-      return t("workspace.surveys.responses.utm_source");
-    case "utmTerm":
-      return t("workspace.surveys.responses.utm_term");
-    case "viewportHeight":
-      return t("workspace.surveys.responses.viewport_height");
-    case "viewportWidth":
-      return t("workspace.surveys.responses.viewport_width");
-    // The two `display: "none"` entries a picker offers but no column ever shows: `durationSeconds`
-    // to the response filter (ENG-1848/ENG-2894), and `language` — the only `availability: "both"`
-    // entry — to the mid-survey recall and logic pickers (ENG-1853). Both reuse a key that already
-    // exists rather than adding copy for a word already translated thirty times over.
-    case "durationSeconds":
-      return t("workspace.surveys.responses.duration_seconds");
-    case "language":
-      return t("common.language");
-    default:
-      return formatFieldNameToTitleCase(name);
-  }
+const RESERVED_FIELD_LABELS: Record<string, (t: TFunction) => string> = {
+  // The seven `primary` fields, all of which predate the catalog and keep their shipped copy.
+  action: (t) => t("common.action"),
+  browser: (t) => t("workspace.surveys.responses.browser"),
+  country: (t) => t("workspace.surveys.responses.country"),
+  // The catalog spells this `deviceType`; both surfaces have always shown `Device`.
+  deviceType: (t) => t("workspace.surveys.responses.device"),
+  os: (t) => t("workspace.surveys.responses.os"),
+  source: (t) => t("workspace.surveys.responses.source"),
+  url: (t) => t("common.url"),
+  // The fourteen `secondary` fields. `ipAddress` is the only one with copy older than ENG-1841.
+  ipAddress: (t) => t("workspace.surveys.responses.ip_address"),
+  locale: (t) => t("workspace.surveys.responses.locale"),
+  pagePath: (t) => t("workspace.surveys.responses.page_path"),
+  pageReferrer: (t) => t("workspace.surveys.responses.page_referrer"),
+  screenHeight: (t) => t("workspace.surveys.responses.screen_height"),
+  screenWidth: (t) => t("workspace.surveys.responses.screen_width"),
+  timezone: (t) => t("workspace.surveys.responses.timezone"),
+  utmCampaign: (t) => t("workspace.surveys.responses.utm_campaign"),
+  utmContent: (t) => t("workspace.surveys.responses.utm_content"),
+  utmMedium: (t) => t("workspace.surveys.responses.utm_medium"),
+  utmSource: (t) => t("workspace.surveys.responses.utm_source"),
+  utmTerm: (t) => t("workspace.surveys.responses.utm_term"),
+  viewportHeight: (t) => t("workspace.surveys.responses.viewport_height"),
+  viewportWidth: (t) => t("workspace.surveys.responses.viewport_width"),
+  // The two `display: "none"` entries a picker offers but no column ever shows: `durationSeconds`
+  // to the response filter (ENG-1848/ENG-2894), and `language` — the only `availability: "both"`
+  // entry — to the mid-survey recall and logic pickers (ENG-1853). Both reuse a key that already
+  // exists rather than adding copy for a word already translated thirty times over.
+  durationSeconds: (t) => t("workspace.surveys.responses.duration_seconds"),
+  language: (t) => t("common.language"),
 };
+
+export const getReservedFieldLabel = (name: string, t: TFunction): string =>
+  RESERVED_FIELD_LABELS[name]?.(t) ?? formatFieldNameToTitleCase(name);
 /**
  * Column and row icons, by catalog entry name. Sparse on purpose: an entry with no icon renders
  * without one rather than borrowing a misleading neighbour's, and the UTM family deliberately shares
