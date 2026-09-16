@@ -228,6 +228,26 @@ export const ZSurveyVariable = z
   });
 export const ZSurveyVariables = z.array(ZSurveyVariable);
 
+/**
+ * The variables array as a **stored** survey must satisfy it: ids unique, names unique.
+ *
+ * Separate from `ZSurveyVariables`, which is deliberately unrefined because partial payloads and
+ * derived fragments parse against it. Exported so the write path can check the same rule `ZSurvey`
+ * will apply on the next read — a guard that parsed the bare array would accept a survey it could
+ * never load again, which is the one failure it exists to prevent.
+ */
+export const ZStoredSurveyVariables = ZSurveyVariables.superRefine((variables, ctx) => {
+  const variableIds = variables.map((v) => v.id);
+  if (new Set(variableIds).size !== variableIds.length) {
+    ctx.addIssue({ code: "custom", message: "Variable IDs must be unique", path: ["variables"] });
+  }
+
+  const variableNames = variables.map((v) => v.name);
+  if (new Set(variableNames).size !== variableNames.length) {
+    ctx.addIssue({ code: "custom", message: "Variable names must be unique", path: ["variables"] });
+  }
+});
+
 export type TSurveyVariable = z.infer<typeof ZSurveyVariable>;
 export type TSurveyVariables = z.infer<typeof ZSurveyVariables>;
 
@@ -943,29 +963,7 @@ export const ZSurveyBase = z.object({
    * `reconcileEmbeddedData` do the writing.
    */
   embeddedFields: z.array(ZLinkedEmbeddedField).optional(),
-  variables: ZSurveyVariables.superRefine((variables, ctx) => {
-    // variable ids must be unique
-    const variableIds = variables.map((v) => v.id);
-    const uniqueVariableIds = new Set(variableIds);
-    if (uniqueVariableIds.size !== variableIds.length) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Variable IDs must be unique",
-        path: ["variables"],
-      });
-    }
-
-    // variable names must be unique
-    const variableNames = variables.map((v) => v.name);
-    const uniqueVariableNames = new Set(variableNames);
-    if (uniqueVariableNames.size !== variableNames.length) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Variable names must be unique",
-        path: ["variables"],
-      });
-    }
-  }),
+  variables: ZStoredSurveyVariables,
   followUps: z.array(
     ZSurveyFollowUp.extend({
       deleted: z.boolean().optional(),

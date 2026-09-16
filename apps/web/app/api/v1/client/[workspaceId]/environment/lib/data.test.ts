@@ -4,7 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
-import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
+import { selectPublicSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { getWorkspaceStateData } from "./data";
 
 vi.mock("server-only", () => ({}));
@@ -154,7 +154,9 @@ describe("getWorkspaceStateData", () => {
     const [{ select }] = vi.mocked(prisma.workspace.findUnique).mock.calls[0] as [
       { select: { surveys: { select: Record<string, unknown> } } },
     ];
-    expect(select.surveys.select.embeddedDataLinks).toEqual(selectSurveyEmbeddedDataLinks);
+    // The public selector, not the write-path one: this payload reaches anonymous SDK clients, and
+    // the workspace-library row id is of no use to a renderer.
+    expect(select.surveys.select.embeddedDataLinks).toEqual(selectPublicSurveyEmbeddedDataLinks);
   });
 
   test("should throw ResourceNotFoundError when workspace is not found", async () => {

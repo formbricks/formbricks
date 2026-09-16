@@ -30,12 +30,12 @@ import {
 import {
   TSurvey,
   TSurveyCreateInput,
+  ZStoredSurveyVariables,
   ZSurvey,
   ZSurveyCreateInput,
   ZSurveyHiddenFields,
-  ZSurveyVariables,
 } from "@formbricks/types/surveys/types";
-import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
+import { assertWritableEmbeddedFields, reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import {
@@ -98,7 +98,7 @@ const assertDerivedLegacyColumnsAreStorable = (columns: {
   variables: unknown;
   hiddenFields: unknown;
 }): void => {
-  const variables = ZSurveyVariables.safeParse(columns.variables);
+  const variables = ZStoredSurveyVariables.safeParse(columns.variables);
   if (!variables.success) {
     throw new InvalidInputError(
       `Embedded data fields cannot be stored as survey variables: ${variables.error.issues[0]?.message}`
@@ -414,6 +414,14 @@ export const updateSurveyInternal = async (
       embeddedFields,
       ...surveyData
     } = updatedSurvey;
+
+    // Before anything is written. The segment block below writes through `prisma`, not through the
+    // transaction further down, so a refusal raised inside `reconcileEmbeddedData` would roll the
+    // survey update back and leave that segment change committed. These refusals are pure, so
+    // spending them here costs nothing and makes the update all-or-nothing for the caller.
+    if (embeddedFields !== undefined) {
+      assertWritableEmbeddedFields(linkedToDesiredEmbeddedFields(embeddedFields));
+    }
 
     // ENG-1749 sibling: the segment block below updates/deletes by segment.id directly. Ensure the
     // segment belongs to this survey's workspace so a caller cannot mutate or delete another

@@ -901,6 +901,68 @@ describe("Tests for updateSurvey", () => {
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
+    test("refuses two derived variables that would share a name", async () => {
+      // `ZSurveyVariables` is only an array; the uniqueness rule lives on `ZSurveyBase.variables`,
+      // so a guard parsing the bare array would store a survey `ZSurvey` then refuses to load.
+      // A local field and a shared one can reach the same legacy name from different columns.
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+
+      await expect(
+        updateWith([
+          {
+            field: {
+              key: null,
+              name: "plan_tier",
+              source: "computed" as const,
+              dataType: "string" as const,
+              defaultValue: "",
+              locked: false,
+            },
+            link: { storageKey: "varlocal00000000000000001" },
+          },
+          {
+            field: {
+              key: null,
+              name: "plan_tier",
+              source: "computed" as const,
+              dataType: "string" as const,
+              defaultValue: "",
+              locked: false,
+            },
+            link: { storageKey: "varother00000000000000002" },
+          },
+        ])
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("refuses a shared field with no row id before it writes anything", async () => {
+      // `ZLinkedEmbeddedField` lets a shared entry omit `field.id`, and the reconcile refuses it —
+      // but inside its transaction, which does not cover the segment writes above. Spending the
+      // refusal first is what keeps a rejected update from half-applying.
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+
+      await expect(
+        updateWith([
+          {
+            field: {
+              key: "plan_tier",
+              name: "Plan tier",
+              source: "ingested" as const,
+              dataType: "string" as const,
+              defaultValue: null,
+              locked: false,
+            },
+            link: { storageKey: "plan_tier" },
+          },
+        ])
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(prisma.segment.update).not.toHaveBeenCalled();
+    });
+
     test("leaves the legacy path alone when the payload does not carry the key", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
       prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);

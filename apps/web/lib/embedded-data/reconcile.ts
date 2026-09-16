@@ -481,7 +481,14 @@ const assertNoDuplicateStorageKeys = (desired: TDesiredEmbeddedField[]): void =>
  * - A shared entry has to name the row it links. Without the id there is nothing to link, and
  *   treating it as local would silently fork a private copy of a library field.
  */
-const assertWritableEmbeddedFields = (desired: TDesiredEmbeddedField[]): void => {
+/**
+ * The shape refusals, exported so a caller can spend them before it writes anything else.
+ *
+ * `reconcileEmbeddedData` runs this inside its transaction, which is too late for a caller whose
+ * earlier writes are not in that transaction: the rollback would undo the survey update and leave
+ * theirs committed. Pure and idempotent, so running it twice costs nothing.
+ */
+export const assertWritableEmbeddedFields = (desired: TDesiredEmbeddedField[]): void => {
   for (const entry of desired) {
     if (entry.source === "reserved") {
       throw new InvalidInputError(

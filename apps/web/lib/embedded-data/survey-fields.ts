@@ -43,6 +43,33 @@ export const selectSurveyEmbeddedDataLinks = {
   orderBy: [{ order: "asc" }, { storageKey: "asc" }],
 } as const satisfies Prisma.SurveySelect["embeddedDataLinks"];
 
+/**
+ * The same relation without the workspace-library row id, for payloads an anonymous respondent
+ * receives.
+ *
+ * The renderer resolves recall and logic through `storageKey`, `key`, `dataType` and the default;
+ * `field.id` is read only by the write path (`linkedToDesiredEmbeddedFields` turns it into
+ * `embeddedDataId`) and by the reconcile, which reads the survey's own links inside its
+ * transaction. Nothing public needs it, so nothing public ships it — `TLinkedEmbeddedField.field`
+ * already declares `id` optional, so this is the same type with one field fewer.
+ */
+export const selectPublicSurveyEmbeddedDataLinks = {
+  ...selectSurveyEmbeddedDataLinks,
+  select: {
+    ...selectSurveyEmbeddedDataLinks.select,
+    embeddedData: {
+      select: {
+        key: true,
+        name: true,
+        source: true,
+        dataType: true,
+        defaultValue: true,
+        locked: true,
+      },
+    },
+  },
+} as const satisfies Prisma.SurveySelect["embeddedDataLinks"];
+
 /** The shape {@link selectSurveyEmbeddedDataLinks} produces, as much of it as the mapping needs. */
 interface TSurveyWithEmbeddedDataLinks {
   embeddedDataLinks?: {
