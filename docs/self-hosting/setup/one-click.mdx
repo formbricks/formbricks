@@ -334,8 +334,10 @@ chmod +x formbricks.sh
 ./formbricks.sh update
 ```
 
-The script pulls the latest images, runs database migrations, executes the AuthZed v6 preparation and read-only
-gate, and only then stops and restarts the running stack. A failed gate leaves the existing application running.
+The script pulls images and runs the read-only AuthZed upgrade check. A failed check leaves the existing
+application running. Otherwise it stops the stack, waits for PostgreSQL, completes application migrations,
+and only then starts the new stack. A failed migration leaves the stack stopped for recovery; preparation
+is never run against a live installation by the updater.
 
 Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
 Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
@@ -369,25 +371,27 @@ The update command does not regenerate or rotate them.
 The update command intentionally preserves your customized Compose file, so it cannot add SpiceDB by itself.
 Before upgrading to a release that uses AuthZed:
 
-1. Back up `formbricks/.env`, `formbricks/docker-compose.yml`, and the PostgreSQL volume.
+1. Follow the [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade): stop writers and
+   controllers, drain in-flight work, then back up configuration, secrets, and databases.
 2. Download the release-matched `authzed-postgres-bootstrap.sh` into the `formbricks` directory.
 3. Generate and add `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` to `.env` using `openssl rand -hex 32`.
 4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
    `authzed-ops` service from the released Compose file while preserving installer-added Traefik, storage, and
    mail configuration. Add the six application variables and use `AUTHZED_CONSISTENCY=fully_consistent`.
-5. Run `docker compose config`, `docker compose pull`, and `docker compose run --rm formbricks-migrate` from the
-   `formbricks` directory. The current application can remain running during these backward-compatible database
-   migrations.
-6. Start the datastore services, then prepare and verify the graph:
+5. Validate the target Compose file privately and pull the pinned images from the `formbricks` directory.
+   Keep maintenance active and writers stopped.
+6. Wait for the datastores, then run migrations, preparation, and verification using the target image:
 
    ```bash
-   docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+   docker compose up -d --wait postgres spicedb
+   docker compose --profile authzed-ops run --rm --no-deps \
+     --entrypoint formbricks-authzed-prepare authzed-ops \
+     --backup-confirmed --writers-stopped
    ```
 
-7. If `upgrade check` exits `0`, add `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` to `.env` and run
-   `./formbricks.sh update`. Do not set the acknowledgement to bypass a blocked check.
+   A mismatched non-empty schema requires the reviewed digest described in the maintenance guide.
+7. If preparation exits `0`, add `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` to `.env` and run
+   `./formbricks.sh update`. Do not bypass a blocked check. Keep maintenance active until access tests pass.
 8. Verify `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy.
 9. Back up the authorization database with
    `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` and add it to your

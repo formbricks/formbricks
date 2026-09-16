@@ -173,7 +173,6 @@
                 "icon": "mobile",
                 "pages": [
                   "surveys/website-app-surveys/quickstart",
-                  "surveys/website-app-surveys/workspace-id-migration",
                   "surveys/website-app-surveys/framework-guides",
                   "surveys/website-app-surveys/google-tag-manager",
                   "surveys/website-app-surveys/custom-css",
@@ -361,8 +360,10 @@
           {
             "group": "Advanced",
             "pages": [
+              "self-hosting/advanced/release-maintenance-policy",
               "self-hosting/advanced/migration",
               "self-hosting/advanced/authzed-operations",
+              "self-hosting/advanced/v6-maintenance-upgrade",
               "self-hosting/advanced/migrating-surveys",
               "self-hosting/advanced/license",
               "self-hosting/advanced/license-activation",

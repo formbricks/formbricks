@@ -21,22 +21,29 @@ cube(`FeedbackRecords`, {
       description: `Unique survey submissions, deduplicated by submission — one respondent submitting twice counts twice`,
     },
 
+    // The three NPS buckets must partition every non-null value_number, so that
+    // promoterCount + passiveCount + detractorCount always equals the number of answered NPS
+    // records. value_number is an unbounded numeric, so the buckets are half-open ranges rather
+    // than the BETWEEN ranges the 0-10 scale suggests: a 6.5 used to fall in no bucket at all
+    // while still counting in npsScore's denominator, silently dragging the score toward 0.
     promoterCount: {
       type: `count`,
       filters: [{ sql: `${CUBE}.field_type = 'nps' AND ${CUBE}.value_number >= 9` }],
-      description: `Number of NPS promoters (score 9-10)`,
+      description: `Number of NPS promoters (score >= 9; NPS scale is 0-10)`,
     },
 
     detractorCount: {
       type: `count`,
-      filters: [{ sql: `${CUBE}.field_type = 'nps' AND ${CUBE}.value_number BETWEEN 0 AND 6` }],
-      description: `Number of NPS detractors (score 0-6)`,
+      filters: [{ sql: `${CUBE}.field_type = 'nps' AND ${CUBE}.value_number < 7` }],
+      description: `Number of NPS detractors (score < 7; NPS scale is 0-10)`,
     },
 
     passiveCount: {
       type: `count`,
-      filters: [{ sql: `${CUBE}.field_type = 'nps' AND ${CUBE}.value_number BETWEEN 7 AND 8` }],
-      description: `Number of NPS passives (score 7-8)`,
+      filters: [
+        { sql: `${CUBE}.field_type = 'nps' AND ${CUBE}.value_number >= 7 AND ${CUBE}.value_number < 9` },
+      ],
+      description: `Number of NPS passives (score >= 7 and < 9; NPS scale is 0-10)`,
     },
 
     npsScore: {
@@ -47,7 +54,7 @@ cube(`FeedbackRecords`, {
           ELSE ROUND(
             (
               (COUNT(CASE WHEN ${CUBE}.field_type = 'nps' AND ${CUBE}.value_number >= 9 THEN 1 END)::numeric -
-               COUNT(CASE WHEN ${CUBE}.field_type = 'nps' AND ${CUBE}.value_number BETWEEN 0 AND 6 THEN 1 END)::numeric)
+               COUNT(CASE WHEN ${CUBE}.field_type = 'nps' AND ${CUBE}.value_number < 7 THEN 1 END)::numeric)
               / COUNT(CASE WHEN ${CUBE}.field_type = 'nps' AND ${CUBE}.value_number IS NOT NULL THEN 1 END)::numeric
             ) * 100,
             2
@@ -70,22 +77,26 @@ cube(`FeedbackRecords`, {
       description: `Number of answered CSAT responses (dismissed responses excluded).`,
     },
 
+    // Same partition rule as the NPS buckets above: satisfied + neutral + dissatisfied always
+    // equals the number of answered CSAT records, for any non-null value_number.
     csatSatisfiedCount: {
       type: `count`,
       filters: [{ sql: `${CUBE}.field_type = 'csat' AND ${CUBE}.value_number >= 4` }],
-      description: `Number of satisfied CSAT responses (top-2-box on the 1-5 scale)`,
+      description: `Number of satisfied CSAT responses (score >= 4; CSAT scale is 1-5)`,
     },
 
     csatDissatisfiedCount: {
       type: `count`,
-      filters: [{ sql: `${CUBE}.field_type = 'csat' AND ${CUBE}.value_number BETWEEN 1 AND 2` }],
-      description: `Number of dissatisfied CSAT responses (bottom-2-box on the 1-5 scale)`,
+      filters: [{ sql: `${CUBE}.field_type = 'csat' AND ${CUBE}.value_number < 3` }],
+      description: `Number of dissatisfied CSAT responses (score < 3; CSAT scale is 1-5)`,
     },
 
     csatNeutralCount: {
       type: `count`,
-      filters: [{ sql: `${CUBE}.field_type = 'csat' AND ${CUBE}.value_number = 3` }],
-      description: `Number of neutral CSAT responses (middle box on the 1-5 scale)`,
+      filters: [
+        { sql: `${CUBE}.field_type = 'csat' AND ${CUBE}.value_number >= 3 AND ${CUBE}.value_number < 4` },
+      ],
+      description: `Number of neutral CSAT responses (score >= 3 and < 4; CSAT scale is 1-5)`,
     },
 
     csatScore: {
@@ -102,7 +113,7 @@ cube(`FeedbackRecords`, {
           )
         END
       `,
-      description: `CSAT Score: % of answered CSAT responses rated 4 or 5 (top-2-box on the 1-5 scale). NULL when there are no answered CSAT responses.`,
+      description: `CSAT Score: % of answered CSAT responses scoring >= 4 (CSAT scale is 1-5). NULL when there are no answered CSAT responses.`,
     },
 
     csatAverage: {

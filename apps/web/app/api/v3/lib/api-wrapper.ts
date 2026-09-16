@@ -356,9 +356,18 @@ async function applyV3RateLimitOrRespond(params: {
  *
  * `apiVersion` is passed explicitly instead of being derived from the path: under a `basePath`
  * deployment the request URL is prefixed, and the reporter's own matcher would fall back to "unknown".
+ *
+ * 503 is excluded. In v3 it is a deployment state, not a fault: `problemServiceUnavailable` means "this
+ * capability is not enabled here", and a transient outage is a 502 (`response.ts`), which still reports.
+ * So every 503 is an operator configuration answer — a self-hoster with a Sentry DSN and no Hub or AI
+ * key would otherwise raise an `error`-level event on every such request, forever, for a deployment
+ * that is behaving exactly as configured. Downgrading instead of skipping is not an option worth taking:
+ * `buildSentryCaptureContext` hardcodes `level: "error"` for v1 and v2 as well, so a severity knob
+ * belongs to the shared reporter, not to this wrapper. Nothing is lost locally either — the Hub paths
+ * that produce most 503s already log at `warn` with a hint in `@/modules/hub/service`.
  */
 const reportServerError = (req: NextRequest, response: Response, error?: unknown): void => {
-  if (response.status < 500) {
+  if (response.status < 500 || response.status === 503) {
     return;
   }
 
@@ -367,7 +376,7 @@ const reportServerError = (req: NextRequest, response: Response, error?: unknown
   } catch {
     // `reportApiError` already swallows its own failures, so this should be unreachable — but it is
     // called on the success return path, where an escaping throw would be caught by the wrapper's own
-    // `catch` and rewrite the handler's status. A 503 becoming a 500 because Sentry hiccuped is the
+    // `catch` and rewrite the handler's status. A 502 becoming a 500 because Sentry hiccuped is the
     // exact class of thing observability must not do.
   }
 };

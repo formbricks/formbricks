@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 // Import pino after the mock is defined
 import Pino from "pino";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -419,5 +420,18 @@ describe("Logger", () => {
     expect(processSpy).not.toHaveBeenCalledWith("SIGINT", expect.any(Function));
 
     processSpy.mockRestore();
+  });
+
+  /**
+   * ENG-2602: `apps/web/proxy.ts` runs in the Edge Runtime and imports this module, and Next.js's
+   * Edge bundler scans statically — a literal `process.on(` in the source text warns regardless of
+   * the `NEXT_RUNTIME !== "nodejs"` guard it sits behind. Resolving the handle through
+   * `getNodeProcess()` is what keeps the reference invisible to that scan, so the source text is
+   * the thing under test here; the behavioural tests above cover that the calls still land.
+   */
+  test("no statically-analysable process.on/process.off reference survives in the module source", () => {
+    const source = readFileSync(new URL("./logger.ts", import.meta.url), "utf8");
+
+    expect(source).not.toMatch(/\bprocess\.(on|off)\(/);
   });
 });
