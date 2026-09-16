@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import type { z } from "zod";
 import {
+  V3_RESPONSE_BODY_FIELDS,
   V3_RESPONSE_DENIED_FIELDS,
   isIdShaped,
   looksLikeReferenceName,
@@ -54,6 +55,43 @@ describe.each(BODIES)("%s reference manifest", (_name, body) => {
   });
 
   /**
+   * Completeness, and the only assertion here that provides it.
+   *
+   * Set equality both ways: a field added to the body fails until someone classifies it, and a
+   * classification left behind after a field is removed fails too. The detectors below cannot do
+   * this — `data`, `embeddedData` and `language` match neither of them, which is exactly how an
+   * earlier version of this file passed while three of its nine declarations were unenforced.
+   */
+  test("every field on the body is classified, and every classification is on the body", () => {
+    const classified = Object.keys(V3_RESPONSE_BODY_FIELDS).filter((field) => fields.includes(field));
+    const unclassified = fields.filter((field) => !(field in V3_RESPONSE_BODY_FIELDS));
+
+    expect(unclassified).toEqual([]);
+    // Every field of this body is covered by the roster, and the roster's entries for it are real.
+    expect(classified.sort()).toEqual([...fields].sort());
+  });
+
+  /** A field the roster calls a reference must actually carry its declaration. */
+  test("every field classified as a reference has a declaration", () => {
+    const missing = fields.filter(
+      (field) => V3_RESPONSE_BODY_FIELDS[field] !== "none" && !referenceFor(shape[field])
+    );
+
+    expect(missing).toEqual([]);
+  });
+
+  /** And a field the roster calls `none` must not be visibly an id — that would be a misclassification. */
+  test("nothing classified as not-a-reference is visibly an id", () => {
+    const suspicious = fields.filter(
+      (field) =>
+        V3_RESPONSE_BODY_FIELDS[field] === "none" &&
+        (isIdShaped(shape[field]) || looksLikeReferenceName(field))
+    );
+
+    expect(suspicious).toEqual([]);
+  });
+
+  /**
    * The structural half. `z.cuid2()` carries `format: "cuid2"`, and an array exposes its element, so
    * this catches a new id-shaped field whatever it is named — including one named nothing like a
    * reference, which is the case a naming rule cannot see.
@@ -74,16 +112,6 @@ describe.each(BODIES)("%s reference manifest", (_name, body) => {
     expect(undeclared).toEqual([]);
   });
 
-  /** Keeps the manifest from rotting: a declaration for a field that no longer exists is a lie. */
-  test("every declaration names a field the body still has", () => {
-    const declared = fields.filter((field) => referenceFor(shape[field]));
-
-    expect(declared.length).toBeGreaterThan(0);
-    for (const field of declared) {
-      expect(shape[field]).toBeDefined();
-    }
-  });
-
   /**
    * The second artifact. The manifest can assert *declared ⇒ resolved*; it cannot assert
    * *forbidden ⇒ absent*, because a field nobody added is a field nobody declared. Tenancy the caller
@@ -93,6 +121,26 @@ describe.each(BODIES)("%s reference manifest", (_name, body) => {
     const present = V3_RESPONSE_DENIED_FIELDS.filter((denied) => fields.includes(denied));
 
     expect(present).toEqual([]);
+  });
+});
+
+/**
+ * The other direction, which the per-body checks structurally cannot make: the roster spans both
+ * bodies, and the patch body carries only six of the create body's twelve fields, so neither describe
+ * block can tell a stale entry from one that simply belongs to the other body. Without this, a
+ * classification left behind after a field is deleted stays green forever — the same "cannot fail"
+ * shape as the tautological test this file used to carry.
+ */
+describe("the roster as a whole", () => {
+  const onEitherBody = new Set([
+    ...Object.keys(shapeOf(ZV3CreateResponseBody)),
+    ...Object.keys(shapeOf(ZV3PatchResponseBody)),
+  ]);
+
+  test("every classification names a field that still exists on one of the bodies", () => {
+    const stale = Object.keys(V3_RESPONSE_BODY_FIELDS).filter((field) => !onEitherBody.has(field));
+
+    expect(stale).toEqual([]);
   });
 });
 

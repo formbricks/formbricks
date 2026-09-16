@@ -319,11 +319,19 @@ function raceIssuesFromUniqueViolation(error: unknown): InvalidParam[] | null {
  * promise in the scoped-update comment is not kept and the caller gets a 500 instead.
  *
  * Since the reference `connect`s became scoped too, P2025 also covers a contact, display or tag that
- * stopped matching its scope between the pre-flight check and the write. That is a race, not a
- * routine rejection — the checks answer the routine case with a 422 naming the field — and 403 is
- * the right answer for it: it is the same body a foreign reference would get from the pre-flight, so
- * winning or losing the race tells the caller nothing extra. Which reference lost is recoverable
- * from the logged Prisma error, and deliberately not from the response.
+ * stopped matching its scope between the pre-flight check and the write.
+ *
+ * That answer is a 403, and it is **not** the body the routine case gets: a foreign reference caught
+ * by the pre-flight is a 422 naming the field, which is what the contract documents. An earlier
+ * version of this comment claimed the two matched — they do not, and the difference is worth being
+ * precise about, because it is a documented-status divergence rather than a cosmetic one.
+ *
+ * It is still the right answer. The divergence is reachable only by losing a race — the reference was
+ * in scope when checked and out of scope by the time the row was written — and in that state the
+ * server cannot honestly say which field is at fault without re-reading and guessing. 403 with the
+ * uniform body says the least, and says nothing a foreign-reference 403 elsewhere does not already
+ * say. Which reference lost is recoverable from the logged Prisma error, and deliberately not from
+ * the response.
  */
 function rethrowScopedNotFound(error: unknown): void {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
