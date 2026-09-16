@@ -44,18 +44,29 @@ const getPresenceOptions = (t: TFunction) => [
   { label: t("workspace.surveys.edit.is_not_set"), value: OP.isNotSet },
 ];
 
+/**
+ * Whether the respondent answered the element at all. Every element family offers this pair and
+ * spelled it out inline — eleven copies of the same four lines, which Sonar counts as duplicated
+ * code whether or not the copies agree.
+ */
+const getSubmissionOptions = (t: TFunction) => [
+  { label: t("workspace.surveys.edit.is_submitted"), value: OP.isSubmitted },
+  { label: t("workspace.surveys.edit.is_skipped"), value: OP.isSkipped },
+];
+
+/**
+ * The set-membership operators a multi-select offers. MultipleChoiceMulti and PictureSelection have
+ * always offered exactly this list, spelled out twice.
+ */
+const getMultiSelectOptions = (t: TFunction) => [
+  { label: t("workspace.surveys.edit.does_not_include_one_of"), value: OP.doesNotIncludeOneOf },
+  { label: t("workspace.surveys.edit.does_not_include_all_of"), value: OP.doesNotIncludeAllOf },
+  { label: t("workspace.surveys.edit.includes_all_of"), value: OP.includesAllOf },
+  { label: t("workspace.surveys.edit.includes_one_of"), value: OP.includesOneOf },
+];
+
 const getNumericScaleOptions = (t: TFunction) => ({
-  options: [
-    ...getNumberComparisonOptions(),
-    {
-      label: t("workspace.surveys.edit.is_submitted"),
-      value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-    },
-    {
-      label: t("workspace.surveys.edit.is_skipped"),
-      value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-    },
-  ],
+  options: [...getNumberComparisonOptions(), ...getSubmissionOptions(t)],
 });
 
 export const getLogicRules = (t: TFunction) => {
@@ -68,180 +79,26 @@ export const getLogicRules = (t: TFunction) => {
   return {
     element: {
       [`${TSurveyElementTypeEnum.OpenText}.text`]: {
-        options: [
-          {
-            label: t("workspace.surveys.edit.equals"),
-            value: ZSurveyLogicConditionsOperator.enum.equals,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_equal"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-          },
-          {
-            label: t("workspace.surveys.edit.contains"),
-            value: ZSurveyLogicConditionsOperator.enum.contains,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_contain"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotContain,
-          },
-          {
-            label: t("workspace.surveys.edit.starts_with"),
-            value: ZSurveyLogicConditionsOperator.enum.startsWith,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_start_with"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotStartWith,
-          },
-          {
-            label: t("workspace.surveys.edit.ends_with"),
-            value: ZSurveyLogicConditionsOperator.enum.endsWith,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_end_with"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotEndWith,
-          },
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
-        ],
+        options: [...getTextOperatorOptions(t), ...getSubmissionOptions(t)],
       },
       [`${TSurveyElementTypeEnum.OpenText}.number`]: {
-        options: [
-          {
-            label: "=",
-            value: ZSurveyLogicConditionsOperator.enum.equals,
-          },
-          {
-            label: "!=",
-            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-          },
-          {
-            label: ">",
-            value: ZSurveyLogicConditionsOperator.enum.isGreaterThan,
-          },
-          {
-            label: "<",
-            value: ZSurveyLogicConditionsOperator.enum.isLessThan,
-          },
-          {
-            label: ">=",
-            value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual,
-          },
-          {
-            label: "<=",
-            value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual,
-          },
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
-        ],
+        options: [...getNumberComparisonOptions(), ...getSubmissionOptions(t)],
       },
       [TSurveyElementTypeEnum.MultipleChoiceSingle]: {
         options: [
-          {
-            label: t("workspace.surveys.edit.equals"),
-            value: ZSurveyLogicConditionsOperator.enum.equals,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_equal"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-          },
+          ...getEqualityOptions(t),
           {
             label: t("workspace.surveys.edit.equals_one_of"),
             value: ZSurveyLogicConditionsOperator.enum.equalsOneOf,
           },
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
+          ...getSubmissionOptions(t),
         ],
       },
       [TSurveyElementTypeEnum.MultipleChoiceMulti]: {
-        options: [
-          {
-            label: t("workspace.surveys.edit.equals"),
-            value: ZSurveyLogicConditionsOperator.enum.equals,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_equal"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_include_one_of"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeOneOf,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_include_all_of"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeAllOf,
-          },
-          {
-            label: t("workspace.surveys.edit.includes_all_of"),
-            value: ZSurveyLogicConditionsOperator.enum.includesAllOf,
-          },
-          {
-            label: t("workspace.surveys.edit.includes_one_of"),
-            value: ZSurveyLogicConditionsOperator.enum.includesOneOf,
-          },
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
-        ],
+        options: [...getEqualityOptions(t), ...getMultiSelectOptions(t), ...getSubmissionOptions(t)],
       },
       [TSurveyElementTypeEnum.PictureSelection]: {
-        options: [
-          {
-            label: t("workspace.surveys.edit.equals"),
-            value: ZSurveyLogicConditionsOperator.enum.equals,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_equal"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_include_one_of"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeOneOf,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_include_all_of"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeAllOf,
-          },
-          {
-            label: t("workspace.surveys.edit.includes_all_of"),
-            value: ZSurveyLogicConditionsOperator.enum.includesAllOf,
-          },
-          {
-            label: t("workspace.surveys.edit.includes_one_of"),
-            value: ZSurveyLogicConditionsOperator.enum.includesOneOf,
-          },
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
-        ],
+        options: [...getEqualityOptions(t), ...getMultiSelectOptions(t), ...getSubmissionOptions(t)],
       },
       [TSurveyElementTypeEnum.Rating]: numericScaleOptions,
       [TSurveyElementTypeEnum.NPS]: numericScaleOptions,
@@ -273,14 +130,7 @@ export const getLogicRules = (t: TFunction) => {
       },
       [TSurveyElementTypeEnum.Date]: {
         options: [
-          {
-            label: t("workspace.surveys.edit.equals"),
-            value: ZSurveyLogicConditionsOperator.enum.equals,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_equal"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-          },
+          ...getEqualityOptions(t),
           {
             label: t("workspace.surveys.edit.is_before"),
             value: ZSurveyLogicConditionsOperator.enum.isBefore,
@@ -289,39 +139,14 @@ export const getLogicRules = (t: TFunction) => {
             label: t("workspace.surveys.edit.is_after"),
             value: ZSurveyLogicConditionsOperator.enum.isAfter,
           },
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
+          ...getSubmissionOptions(t),
         ],
       },
       [TSurveyElementTypeEnum.FileUpload]: {
-        options: [
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
-        ],
+        options: [...getSubmissionOptions(t)],
       },
       [TSurveyElementTypeEnum.Ranking]: {
-        options: [
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
-        ],
+        options: [...getSubmissionOptions(t)],
       },
       [TSurveyElementTypeEnum.Cal]: {
         options: [
@@ -353,14 +178,7 @@ export const getLogicRules = (t: TFunction) => {
       },
       [`${TSurveyElementTypeEnum.Matrix}.row`]: {
         options: [
-          {
-            label: t("workspace.surveys.edit.equals"),
-            value: ZSurveyLogicConditionsOperator.enum.equals,
-          },
-          {
-            label: t("workspace.surveys.edit.does_not_equal"),
-            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-          },
+          ...getEqualityOptions(t),
           {
             label: t("workspace.surveys.edit.is_empty"),
             value: ZSurveyLogicConditionsOperator.enum.isEmpty,
@@ -377,28 +195,10 @@ export const getLogicRules = (t: TFunction) => {
         ],
       },
       [TSurveyElementTypeEnum.Address]: {
-        options: [
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
-        ],
+        options: [...getSubmissionOptions(t)],
       },
       [TSurveyElementTypeEnum.ContactInfo]: {
-        options: [
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
-        ],
+        options: [...getSubmissionOptions(t)],
       },
     },
     ["variable.text"]: { options: textOperatorOptions },
