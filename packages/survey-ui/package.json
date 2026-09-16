@@ -93,6 +93,7 @@
   "devDependencies": {
     "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/vite-plugins": "workspace:*",
     "@storybook/react": "catalog:",
     "@storybook/react-vite": "catalog:",
     "@tailwindcss/postcss": "catalog:",

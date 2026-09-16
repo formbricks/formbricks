@@ -59,6 +59,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/i18n-utils": "workspace:*",
     "@formbricks/types": "workspace:*",
+    "@formbricks/vite-plugins": "workspace:*",
     "@preact/preset-vite": "2.10.5",
     "@tailwindcss/postcss": "catalog:",
     "@testing-library/preact": "3.2.4",

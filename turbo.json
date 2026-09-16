@@ -29,7 +29,7 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#build": {
-      "dependsOn": ["@formbricks/logger#build"],
+      "dependsOn": ["@formbricks/logger#build", "^build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/cache#go": {
@@ -97,7 +97,11 @@
     },
     "@formbricks/js-core#build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "$TURBO_ROOT$/apps/web/public/js/formbricks.*"]
+    },
+    "@formbricks/js-core#build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**", "$TURBO_ROOT$/apps/web/public/js/formbricks.*"]
     },
     "@formbricks/js-core#go": {
       "cache": false,
@@ -144,11 +148,19 @@
     },
     "@formbricks/surveys#build": {
       "dependsOn": ["^build", "@formbricks/survey-ui#build"],
-      "outputs": ["dist/**"]
+      "outputs": [
+        "dist/**",
+        "$TURBO_ROOT$/apps/web/public/js/surveys.*",
+        "$TURBO_ROOT$/apps/web/public/js/validation.*"
+      ]
     },
     "@formbricks/surveys#build:dev": {
       "dependsOn": ["^build:dev", "@formbricks/i18n-utils#build", "@formbricks/survey-ui#build:dev"],
-      "outputs": ["dist/**"]
+      "outputs": [
+        "dist/**",
+        "$TURBO_ROOT$/apps/web/public/js/surveys.*",
+        "$TURBO_ROOT$/apps/web/public/js/validation.*"
+      ]
     },
     "@formbricks/surveys#go": {
       "cache": false,
