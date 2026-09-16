@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}} még mindig használatban van",
       "type_boolean": "Igaz/hamis",
       "type_change_body": "A már összegyűjtött értékek pontosan olyanok maradnak, amilyenek; csak az új válaszok kerülnek beolvasásra {{to}} típusként. Azok a szűrők és logikai műveletek, amelyek {{to}} értékeket hasonlítanak össze, előfordulhat, hogy nem egyeznek a régebbi értékekkel.",
-      "type_change_subtitle": "{{count}} felmérés, amely ezt a mezőt használja, már rendelkezik válaszokkal.",
+      "type_change_subtitle": "{count, plural, one {# felmérés, amely ezt a mezőt használja, már rendelkezik válaszokkal.} other {# felmérés, amely ezt a mezőt használja, már rendelkezik válaszokkal.}}",
       "type_change_title": "Módosítja {{name}} típusát {{from}} típusról {{to}} típusra?",
       "used_in": "Használva itt:",
       "used_in_one_survey": "1 felmérés",
