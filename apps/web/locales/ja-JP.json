@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}}はまだ使用されています",
       "type_boolean": "真/偽",
       "type_change_body": "既に収集された値はそのまま保持されます。新しい回答のみが{{to}}として読み取られます。{{to}}の値を比較するフィルターやロジックは、古い値と一致しない場合があります。",
-      "type_change_subtitle": "このフィールドを使用している{{count}}件のアンケートには既に回答があります。",
+      "type_change_subtitle": "{count, plural, other {このフィールドを使用している #件のアンケートには既に回答があります。}}",
       "type_change_title": "{{name}}を{{from}}から{{to}}に変更しますか？",
       "used_in": "使用先",
       "used_in_one_survey": "1件のアンケート",

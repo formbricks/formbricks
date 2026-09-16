@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}} este încă folosit",
       "type_boolean": "Adevărat/fals",
       "type_change_body": "Valorile deja colectate rămân exact cum sunt; doar răspunsurile noi sunt citite ca {{to}}. Filtrele și logica care compară valori {{to}} ar putea să nu se potrivească cu cele mai vechi.",
-      "type_change_subtitle": "{{count}} sondaje care folosesc acest câmp au deja răspunsuri.",
+      "type_change_subtitle": "{count, plural, one {# sondaj care utilizează acest câmp are deja răspunsuri.} few {# sondaje care utilizează acest câmp au deja răspunsuri.} other {# de sondaje care utilizează acest câmp au deja răspunsuri.}}",
       "type_change_title": "Schimbi {{name}} din {{from}} în {{to}}?",
       "used_in": "Folosit în",
       "used_in_one_survey": "1 sondaj",

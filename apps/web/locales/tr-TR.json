@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}} hala kullanılıyor",
       "type_boolean": "Doğru/yanlış",
       "type_change_body": "Zaten toplanmış değerler aynen kalır; yalnızca yeni yanıtlar {{to}} olarak okunur. {{to}} değerlerini karşılaştıran filtreler ve mantık, eski değerlerle eşleşmeyebilir.",
-      "type_change_subtitle": "Bu alanı kullanan {{count}} anketin zaten yanıtları var.",
+      "type_change_subtitle": "{count, plural, one {Bu alanı kullanan # ankette zaten yanıtlar var.} other {Bu alanı kullanan # ankette zaten yanıtlar var.}}",
       "type_change_title": "{{name}} alanı {{from}} yerine {{to}} olarak değiştirilsin mi?",
       "used_in": "Kullanıldığı yer",
       "used_in_one_survey": "1 anket",

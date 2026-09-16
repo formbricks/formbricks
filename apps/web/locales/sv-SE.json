@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}} används fortfarande",
       "type_boolean": "Sant/falskt",
       "type_change_body": "Värden som redan samlats in förblir exakt som de är; endast nya svar läses som {{to}}. Filter och logik som jämför {{to}}-värden kanske inte matchar de äldre.",
-      "type_change_subtitle": "{{count}} undersökningar som använder det här fältet har redan svar.",
+      "type_change_subtitle": "{count, plural, one {# undersökning som använder detta fält har redan svar.} other {# undersökningar som använder detta fält har redan svar.}",
       "type_change_title": "Ändra {{name}} från {{from}} till {{to}}?",
       "used_in": "Används i",
       "used_in_one_survey": "1 undersökning",
