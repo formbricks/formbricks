@@ -145,7 +145,7 @@ test.describe("Reserved fields in recall and logic", () => {
       // them; the catalog marks them `server` and the picker filters on that.
       // These are the labels the picker would actually render for these entries — searching for a
       // spelling it never produces would pass no matter what the availability filter did.
-      for (const serverOnly of ["Country", "Duration Seconds", "IP Address", "Browser", "OS", "Finished"]) {
+      for (const serverOnly of ["Country", "Duration (seconds)", "IP Address", "Browser", "OS", "Finished"]) {
         await expect(dropdown.getByText(serverOnly, { exact: true })).toHaveCount(0);
       }
     });
