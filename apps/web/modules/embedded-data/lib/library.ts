@@ -185,18 +185,18 @@ export const getSharedEmbeddedDataById = async (
  *
  * The mirror of {@link getSharedEmbeddedDataById} — `surveyId` where that one reads `key` — and the
  * only way to see a field as it was before a promote, since promoting is what makes it shared.
+ *
+ * Returns the row unnarrowed, because a local one is the opposite of what `asSharedField` asserts:
+ * it has the `surveyId` and not the `key`.
  */
 export const getLocalEmbeddedDataById = async (
   id: string,
   workspaceId: string
-): Promise<TSharedEmbeddedData | null> => {
-  const row = await prisma.embeddedData.findFirst({
+): Promise<TEmbeddedData | null> =>
+  prisma.embeddedData.findFirst({
     where: { id, workspaceId, surveyId: { not: null } },
     select: SELECT_SHARED_FIELD,
   });
-
-  return row ? asSharedField(row) : null;
-};
 
 /** {@link getSharedEmbeddedDataById}, refusing rather than returning null. */
 const requireSharedField = async (id: string, workspaceId: string): Promise<TSharedEmbeddedData> => {
