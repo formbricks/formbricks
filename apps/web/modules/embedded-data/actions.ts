@@ -15,6 +15,7 @@ import {
   deleteSharedEmbeddedData,
   getEmbeddedDataUsage,
   getEmbeddedDataWorkspaceId,
+  getLocalEmbeddedDataById,
   getSharedEmbeddedData,
   getSharedEmbeddedDataById,
   promoteEmbeddedDataToShared,
@@ -168,14 +169,17 @@ export const updateSharedEmbeddedDataAction = authenticatedActionClient
       const workspaceId = await requireWorkspaceScope(id);
       const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
+      // Named before the permission check rather than after it: `withAuditLogging` records a
+      // refused `assertCan` too, and an event that cannot say which workspace and field a probe
+      // aimed at is most of an audit trail's value gone. Naming a target grants no access to it.
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.embeddedDataId = id;
+
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
         type: "workspace",
         id: workspaceId,
       });
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.embeddedDataId = id;
       ctx.auditLoggingCtx.oldObject = await getSharedEmbeddedDataById(id, workspaceId);
 
       const result = await runWrite(ctx.auditLoggingCtx, () =>
@@ -198,14 +202,14 @@ export const deleteSharedEmbeddedDataAction = authenticatedActionClient
       const workspaceId = await requireWorkspaceScope(id);
       const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.embeddedDataId = id;
+
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
         type: "workspace",
         id: workspaceId,
       });
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.embeddedDataId = id;
 
       const result = await runWrite(ctx.auditLoggingCtx, () => deleteSharedEmbeddedData(id, workspaceId));
 
@@ -230,14 +234,18 @@ export const promoteEmbeddedDataToSharedAction = authenticatedActionClient
       const workspaceId = await requireWorkspaceScope(id);
       const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.embeddedDataId = id;
+
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
         type: "workspace",
         id: workspaceId,
       });
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.embeddedDataId = id;
+      // Read before the write, and local-scoped: promote is audited as an update, and once it lands
+      // the row is shared, so this is the last moment the "before" side exists to be read at all.
+      ctx.auditLoggingCtx.oldObject = await getLocalEmbeddedDataById(id, workspaceId);
 
       const result = await runWrite(ctx.auditLoggingCtx, () =>
         promoteEmbeddedDataToShared(id, workspaceId, input)

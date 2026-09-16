@@ -42,6 +42,7 @@ const mocks = vi.hoisted(() => {
     deleteSharedEmbeddedData: vi.fn(),
     getEmbeddedDataUsage: vi.fn(),
     getEmbeddedDataWorkspaceId: vi.fn(),
+    getLocalEmbeddedDataById: vi.fn(),
     getSharedEmbeddedData: vi.fn(),
     getSharedEmbeddedDataById: vi.fn(),
     promoteEmbeddedDataToShared: vi.fn(),
@@ -66,6 +67,7 @@ vi.mock("@/modules/embedded-data/lib/library", () => ({
   deleteSharedEmbeddedData: mocks.deleteSharedEmbeddedData,
   getEmbeddedDataUsage: mocks.getEmbeddedDataUsage,
   getEmbeddedDataWorkspaceId: mocks.getEmbeddedDataWorkspaceId,
+  getLocalEmbeddedDataById: mocks.getLocalEmbeddedDataById,
   getSharedEmbeddedData: mocks.getSharedEmbeddedData,
   getSharedEmbeddedDataById: mocks.getSharedEmbeddedDataById,
   promoteEmbeddedDataToShared: mocks.promoteEmbeddedDataToShared,
@@ -209,6 +211,25 @@ describe("workspace scope", () => {
     ["delete", deleteSharedEmbeddedDataAction, { id: fieldId }],
     ["promote", promoteEmbeddedDataToSharedAction, { id: fieldId, key: "plan_tier" }],
   ])(
+    "%s names its target in the audit context before the check that can refuse it",
+    async (_name, action, parsedInput) => {
+      // A refused call is still an audit event, and one that cannot say which workspace and field a
+      // probe aimed at says almost nothing. Both have to be set before `assertCan`, not after it.
+      mocks.getEmbeddedDataWorkspaceId.mockResolvedValue(otherWorkspaceId);
+      vi.mocked(assertCan).mockRejectedValueOnce(new AuthorizationError("Not authorized"));
+
+      await expect(run(action, parsedInput, ctx)).rejects.toThrow("Not authorized");
+
+      expect(ctx.auditLoggingCtx.organizationId).toBe(organizationId);
+      expect(ctx.auditLoggingCtx.embeddedDataId).toBe(fieldId);
+    }
+  );
+
+  test.each([
+    ["update", updateSharedEmbeddedDataAction, { id: fieldId, name: "Renamed" }],
+    ["delete", deleteSharedEmbeddedDataAction, { id: fieldId }],
+    ["promote", promoteEmbeddedDataToSharedAction, { id: fieldId, key: "plan_tier" }],
+  ])(
     "%s authorizes and rate-limits against the workspace it read off the row",
     async (_name, action, parsedInput) => {
       mocks.getEmbeddedDataWorkspaceId.mockResolvedValue(otherWorkspaceId);
@@ -284,6 +305,20 @@ describe("writes", () => {
       description: "Billing plan",
     });
     expect(result).toEqual({ status: "ok", field });
+    expect(ctx.auditLoggingCtx.newObject).toEqual(field);
+  });
+
+  test("promote reads the local row while it still exists, so its event is a diff", async () => {
+    // Audited as an update, and the update is exactly the ownership columns — so without the row as
+    // it was, the event is a dump of the promoted row and nothing says what promoting it changed.
+    // Read before the write, because afterwards the local row is gone: it is the shared one.
+    const local = { ...field, key: null, description: null };
+    mocks.getLocalEmbeddedDataById.mockResolvedValue(local);
+
+    await run(promoteEmbeddedDataToSharedAction, { id: fieldId, key: "plan_tier" }, ctx);
+
+    expect(mocks.getLocalEmbeddedDataById).toHaveBeenCalledWith(fieldId, workspaceId);
+    expect(ctx.auditLoggingCtx.oldObject).toEqual(local);
     expect(ctx.auditLoggingCtx.newObject).toEqual(field);
   });
 });
