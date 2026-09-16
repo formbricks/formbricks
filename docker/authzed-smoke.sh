@@ -71,6 +71,8 @@ authzed_cli() {
   local script="$2"
   shift 2
 
+  # Use one Node import hook; tsx's CLI adds a CommonJS preflight as well, which
+  # can race with its ESM loader in workers when the backfill loads Prisma/Pino.
   env \
     AUTHZED_CONSISTENCY="${AUTHZED_SMOKE_CONSISTENCY:-minimize_latency}" \
     AUTHZED_ENABLED=true \
@@ -87,7 +89,7 @@ authzed_cli() {
     LOG_LEVEL=fatal \
     NODE_ENV="${AUTHZED_SMOKE_NODE_ENV:-test}" \
     NODE_OPTIONS=--conditions=react-server \
-    pnpm --dir "${REPO_ROOT}/apps/web" exec tsx "${script}" "$@"
+    pnpm --dir "${REPO_ROOT}/apps/web" exec node --import tsx "${script}" "$@"
 }
 
 assert_health_result() {

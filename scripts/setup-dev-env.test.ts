@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,6 +59,11 @@ describe("scripts/setup-dev-env.sh AuthZed setup", () => {
     execFileSync("bash", [setupDevEnvScriptPath], { env: commandEnv });
     const firstEnv = parseEnvFile(readFileSync(envPath, "utf8"));
 
+    expect(firstEnv.get("AUTHZED_ENABLED")).toBe("true");
+    expect(firstEnv.get("AUTHZED_ENDPOINT")).toBe("localhost:50051");
+    expect(firstEnv.get("AUTHZED_CONSISTENCY")).toBe("fully_consistent");
+    expect(statSync(envPath).mode & 0o777).toBe(0o600);
+
     expect(firstEnv.get("AUTHZED_TOKEN")).toMatch(/^[a-f0-9]{64}$/);
     expect(firstEnv.get("AUTHZED_DATABASE_PASSWORD")).toMatch(/^[a-f0-9]{64}$/);
 
@@ -67,5 +72,44 @@ describe("scripts/setup-dev-env.sh AuthZed setup", () => {
 
     expect(secondEnv.get("AUTHZED_TOKEN")).toBe(firstEnv.get("AUTHZED_TOKEN"));
     expect(secondEnv.get("AUTHZED_DATABASE_PASSWORD")).toBe(firstEnv.get("AUTHZED_DATABASE_PASSWORD"));
+  });
+
+  test.each(["AUTHZED_ENABLED=false", "AUTHZED_CONSISTENCY=minimize_latency"])(
+    "explains incompatible existing configuration without changing it: %s",
+    (configuration) => {
+      const directory = createTempDir();
+      const template = join(directory, "template");
+      const envPath = join(directory, ".env");
+      writeFileSync(template, "");
+      writeFileSync(envPath, `${configuration}\nAUTHZED_TOKEN=private-token\n`);
+      expect(() =>
+        execFileSync("bash", [setupDevEnvScriptPath], {
+          env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: template },
+          stdio: "pipe",
+        })
+      ).toThrow(/v6 requires AUTHZED_/);
+      expect(readFileSync(envPath, "utf8")).toContain(configuration);
+    }
+  );
+
+  test("preserves external credentials and defaults a custom endpoint to TLS", () => {
+    const directory = createTempDir();
+    const template = join(directory, "template");
+    const envPath = join(directory, ".env");
+    writeFileSync(template, "");
+    writeFileSync(
+      envPath,
+      "AUTHZED_ENDPOINT=grpc.example.com:443\nAUTHZED_TOKEN=private-token\nAUTHZED_SYSTEM_KEY=custom_key\n"
+    );
+    const output = execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: template },
+      encoding: "utf8",
+    });
+    const values = parseEnvFile(readFileSync(envPath, "utf8"));
+    expect(values.get("AUTHZED_ENDPOINT")).toBe("grpc.example.com:443");
+    expect(values.get("AUTHZED_TOKEN")).toBe("private-token");
+    expect(values.get("AUTHZED_SYSTEM_KEY")).toBe("custom_key");
+    expect(values.get("AUTHZED_INSECURE")).toBe("false");
+    expect(output).not.toContain("private-token");
   });
 });

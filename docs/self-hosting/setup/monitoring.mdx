@@ -202,9 +202,8 @@ Use these endpoints for monitoring system health in container orchestration and 
 
 ## AuthZed and SpiceDB
 
-Current v5 bridge releases expose bounded projection and authorization-comparison metrics when AuthZed is
-enabled. Monitor projection failures, disabled outcomes, migration mismatches, authorization operational errors,
-and authorization latency.
+Self-hosted v6 upgrades use a maintenance window and do not require a v5 bridge or shadow comparisons.
+Monitor projection failures, disabled outcomes, schema drift, authorization operational errors, and latency.
 
 The v6 direct-authority release exposes authoritative allow/deny/operational-error and latency metrics plus
 outbox backlog, revocation delivery latency, oldest pending item, dead-letter, reconciliation drift, and repair

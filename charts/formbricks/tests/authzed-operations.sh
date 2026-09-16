@@ -130,6 +130,16 @@ if ! grep --fixed-strings 'helm.sh/hook: pre-upgrade' <<<"${acknowledged_upgrade
   printf '%s\n' "An acknowledged Helm upgrade must run the release-matched AuthZed gate before rollout." >&2
   exit 1
 fi
+upgrade_gate="$(helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --is-upgrade --set authzed.migrationAcknowledged=true \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --show-only templates/authzed-initialize-job.yaml)"
+if grep --fixed-strings 'upgrade prepare' <<<"${upgrade_gate}" >/dev/null; then
+  printf '%s\n' "The upgrade gate must not apply schemas or repair relationships while old writers are running." >&2
+  exit 1
+fi
+grep --fixed-strings 'formbricks-authzed upgrade check' <<<"${upgrade_gate}" >/dev/null
 
 # Render each supported ownership and datastore shape. These are intentionally render-only checks: none
 # of the operational commands are Helm hooks or automatically created Jobs.
