@@ -45,6 +45,9 @@ The controller scheduling values also move from the ineffective `envoy.deploymen
 `envoy.deployment.pod`. Move any node selectors, tolerations, topology spread constraints, extra volumes, or
 pod annotations that you placed under the old path before upgrading.
 
+The parent chart no longer repeats the bundled controller's default port list. The
+`envoy.deployment.ports` override remains supported, so existing port overrides need no migration.
+
 ### Bundled Valkey 8.1.9 Upgrade (action required for some self-hosted deployments)
 
 The old bundled digest selects only `linux/amd64`. The new digest selects the matching native image on
