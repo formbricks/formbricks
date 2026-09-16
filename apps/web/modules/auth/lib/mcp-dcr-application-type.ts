@@ -31,6 +31,11 @@ import { findDisallowedRedirectUri, isLoopbackRedirectUri } from "./mcp-dcr-redi
  * redirect under `native` too (`native` + `http://evil.example.com` → `invalid_redirect_uri`), so the
  * only URIs this can green-light are loopback and https ones. It never turns a rejected URI into an
  * accepted one; it only stops a native client being misfiled as a web one.
+ *
+ * This module also owns the *rejection* side of dynamic registration — see `prepareDcrRequest` and
+ * mcp-dcr-redirect-policy.ts (ENG-3086). The two live together because a Request body can only be read
+ * once: the allowlist and this inference have to share that single read, and the same read is what
+ * forces both to happen in the route rather than in a Better Auth hook.
  */
 
 const DCR_PATH_SEGMENT = "/api/auth/oauth2/register";

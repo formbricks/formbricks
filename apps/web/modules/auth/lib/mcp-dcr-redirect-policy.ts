@@ -24,18 +24,14 @@ import "server-only";
  * allowlist is the safe default.
  */
 
-const LOOPBACK_REDIRECT_HOSTS: Record<string, true> = {
-  localhost: true,
-  "127.0.0.1": true,
-  "[::1]": true,
-};
+const LOOPBACK_REDIRECT_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 /** Whether a redirect URI is an http loopback address (RFC 8252 §7.3). */
 export const isLoopbackRedirectUri = (uri: unknown): boolean => {
   if (typeof uri !== "string") return false;
   try {
     const url = new URL(uri);
-    return url.protocol === "http:" && LOOPBACK_REDIRECT_HOSTS[url.hostname] === true;
+    return url.protocol === "http:" && LOOPBACK_REDIRECT_HOSTS.has(url.hostname);
   } catch {
     return false;
   }
