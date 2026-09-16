@@ -9,7 +9,7 @@ import { Badge } from "@/modules/ui/components/badge";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import type { TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { getDataTypeLabel, getSourceIcon, getSourceLabel } from "./field-display";
+import { getDataTypeLabel, getSourceIcon, getSourceLabel } from "./field-labels";
 import { FieldRowMenu } from "./field-row-menu";
 import { FieldUsageCell } from "./field-usage-cell";
 
