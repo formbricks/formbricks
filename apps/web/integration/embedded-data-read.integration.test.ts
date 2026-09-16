@@ -108,12 +108,26 @@ describe("Embedded Data read seam (real Postgres)", () => {
     ]);
   });
 
-  test("a survey with no rows falls back to its legacy columns", async () => {
-    // ENG-2412 removed the fallback and this asserted its absence: deleting the rows made the fields
-    // disappear. That held only while nothing wrote back what it read. Once `updateSurvey` accepts
-    // `embeddedFields`, a caller that loads a survey and hands it straight back — the single-use
-    // toggle spreads one — turns "no rows" into "no fields" and derives empty columns over the only
-    // copy a backfill-skipped survey has. Zero rows is "not reconciled yet"; the columns answer.
+  /**
+   * **This reverses ENG-2412, on purpose, and a reviewer should weigh that.**
+   *
+   * ENG-2412 removed the read seam's legacy fallback so that deleting a survey's rows made its
+   * fields disappear rather than reappear — the rows are the write source of truth, and a model
+   * where they can be overruled is hard to reason about. That was right in its context: nothing
+   * yet wrote back what this seam read.
+   *
+   * ENG-3228 makes `embeddedFields` accepted input, which changes that. A caller that loads a
+   * survey and hands it straight back — `updateSingleUseLinksAction` spreads one — turns "no rows"
+   * into "no fields" and derives empty legacy columns over the only copy a backfill-skipped survey
+   * has. ENG-2628 then removes the editor's own derive, so without this there is no fallback left
+   * anywhere and such a survey opens empty as well.
+   *
+   * So zero rows means "not reconciled yet", not "no fields". The narrowness is what keeps
+   * ENG-2412's point intact: **one** row and the rows are authoritative again (the test below pins
+   * that), and the first save through the fallback writes rows, so a given survey can only ever
+   * take this path once.
+   */
+  test("a survey with no rows falls back to its legacy columns, and reconciles itself", async () => {
     const { surveyId } = await seedSurvey();
     await prisma.surveyEmbeddedData.deleteMany({ where: { surveyId } });
 
@@ -129,7 +143,9 @@ describe("Embedded Data read seam (real Postgres)", () => {
 
   test("a partial row set wins outright — the rows are the source of truth once any exist", async () => {
     // Not reachable today: `reconcileEmbeddedData` writes the whole derived set in one plan. Asserted
-    // so the fallback's "empty list only" rule is a decision on record rather than an accident.
+    // so the fallback's "empty list only" rule is a decision on record rather than an accident —
+    // and it is what keeps ENG-2412's point: one row and the legacy columns stop being consulted,
+    // so the fallback cannot half-overrule a reconciled survey.
     const { surveyId } = await seedSurvey();
     await prisma.surveyEmbeddedData.deleteMany({ where: { surveyId, storageKey: { in: ["plan"] } } });
 
