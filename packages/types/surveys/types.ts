@@ -3,6 +3,7 @@ import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZStorageUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { ZLinkedEmbeddedField } from "../embedded-data";
+import { linkedToDesiredEmbeddedFields, toLegacyEmbeddedFields } from "../embedded-data-mapping";
 import { type TI18nString, ZI18nString } from "../i18n";
 import { isLegacyIdCharset, isLegacyVariableName } from "../safe-identifier";
 import { ZSegment } from "../segment";
@@ -1021,7 +1022,35 @@ export const ZSurveyBase = z.object({
   customHeadScriptsMode: z.enum(["add", "replace"]).nullish(),
 });
 
-export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.RefinementCtx): void => {
+/**
+ * The survey this refinement resolves logic operands and follow-up recipients against.
+ *
+ * Identical to the input except for `variables` / `hiddenFields`, which are re-derived when the
+ * payload declares its Embedded Data as rows — the same derivation `updateSurveyInternal` runs
+ * before it writes (`toLegacyEmbeddedFields`), so what this validates against is what the survey
+ * will hold once the write lands rather than what the columns happen to say on the way in.
+ *
+ * That distinction only exists because of the editor (ENG-2628): its working copy is rows-native,
+ * so the two legacy keys it forwards are whatever it was loaded with at mount, and a variable or
+ * hidden field added since then lives only in `embeddedFields`. Without this, using a freshly added
+ * field in logic — or as a follow-up recipient — would fail `ZSurvey` on publish, both in the
+ * editor's own pre-flight and again as the server action's input schema.
+ *
+ * A payload with no `embeddedFields` is untouched, so every legacy caller (the v1 management PUT,
+ * whose schema omits the key outright) validates exactly as before.
+ */
+const withDerivedLegacyColumns = <T extends z.infer<typeof ZSurveyBase>>(survey: T): T => {
+  if (survey.embeddedFields === undefined) return survey;
+
+  const derived = toLegacyEmbeddedFields(
+    linkedToDesiredEmbeddedFields(survey.embeddedFields),
+    survey.hiddenFields
+  );
+  return { ...survey, variables: derived.variables, hiddenFields: derived.hiddenFields };
+};
+
+export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.RefinementCtx): void => {
+  const survey = withDerivedLegacyColumns(rawSurvey);
   const { questions, blocks, languages, welcomeCard, endings, isBackButtonHidden } = survey;
 
   // Validate: must have questions OR blocks with elements, not both

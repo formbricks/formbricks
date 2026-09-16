@@ -20,12 +20,12 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   RESERVED_FIELD_CATALOG,
-  getDeclaredEmbeddedFields,
+  getSurveyEmbeddedFields,
   listMidSurveyReservedEntries,
   listReadableFields,
 } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElement, TSurveyElementId, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyHiddenFields, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -59,7 +59,6 @@ interface RecallItemSelectProps {
   setShowRecallItemSelect: (show: boolean) => void;
   recallItems: TSurveyRecallItem[];
   selectedLanguageCode: string;
-  hiddenFields: TSurveyHiddenFields;
 }
 
 export const RecallItemSelect = ({
@@ -89,19 +88,12 @@ export const RecallItemSelect = ({
     return recallItems.map((recallItem) => recallItem.id);
   }, [recallItems]);
 
-  // ENG-1837: both groups are enumerated from the survey's Embedded Data definitions, derived from
-  // the editor's cards (`getDeclaredEmbeddedFields`) so a rename shows here without a reload. Only the
-  // `embeddedData` group of `listReadableFields` is used — its keys and labels are exactly today's
-  // (storage key / field name); the element group keeps this file's own labelling, which stores the
-  // raw headline HTML and searches it through `getTextContent`.
-  const embeddedFields = useMemo(
-    () =>
-      getDeclaredEmbeddedFields({
-        variables: localSurvey.variables,
-        hiddenFields: localSurvey.hiddenFields,
-      }),
-    [localSurvey.variables, localSurvey.hiddenFields]
-  );
+  // ENG-1837: both groups are enumerated from the survey's Embedded Data definitions. ENG-2628: off
+  // the rows, which the editor's cards now edit directly, so a rename still shows here without a
+  // reload. Only the `embeddedData` group of `listReadableFields` is used — its keys and labels are
+  // exactly today's (storage key / field name); the element group keeps this file's own labelling,
+  // which stores the raw headline HTML and searches it through `getTextContent`.
+  const embeddedFields = useMemo(() => getSurveyEmbeddedFields(localSurvey), [localSurvey]);
 
   /**
    * The definitions joined to their picker labels, in the definitions' own order. Keyed on

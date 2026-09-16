@@ -81,8 +81,22 @@ describe("buildEmailSendToOptions", () => {
   });
 
   test("maps hidden fields to options labelled by id", () => {
+    // ENG-2628: the recipient list is enumerated from the survey's Embedded Data rows, which is what
+    // the editor's Hidden Fields card writes — the legacy column no longer decides this.
+    const ingested = (storageKey: string) => ({
+      field: {
+        name: storageKey,
+        source: "ingested" as const,
+        dataType: "string" as const,
+        defaultValue: null,
+        locked: false,
+        key: null,
+      },
+      link: { storageKey },
+    });
+
     const options = buildEmailSendToOptions({
-      survey: makeSurvey({ hiddenFields: { enabled: true, fieldIds: ["utm", "ref"] } }),
+      survey: makeSurvey({ embeddedFields: [ingested("utm"), ingested("ref")] }),
       teamMemberDetails: [],
       userEmail: "me@example.com",
       selectedLanguageCode: "default",

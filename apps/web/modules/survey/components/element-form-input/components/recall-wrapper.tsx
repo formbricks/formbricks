@@ -262,7 +262,6 @@ export const RecallWrapper = ({
                 setShowRecallItemSelect={setShowRecallItemSelect}
                 recallItems={recallItems}
                 selectedLanguageCode={usedLanguageCode}
-                hiddenFields={localSurvey.hiddenFields}
               />
             )}
 

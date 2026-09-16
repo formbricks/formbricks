@@ -5,11 +5,13 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { FileDigitIcon } from "lucide-react";
 import { type Dispatch, type SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
+import { getComputedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { OptionIds } from "@/modules/survey/editor/components/option-ids";
 import { SurveyVariablesCardItem } from "@/modules/survey/editor/components/survey-variables-card-item";
+import { toCardVariable } from "@/modules/survey/editor/lib/embedded-fields";
 
 interface SurveyVariablesCardProps {
   localSurvey: TSurvey;
@@ -31,6 +33,9 @@ export const SurveyVariablesCard = ({
   const open = activeElementId === variablesCardId;
   const { t } = useTranslation();
   const [parent] = useAutoAnimate();
+  // ENG-2628: the card reads and writes the survey's Embedded Data rows. The form each row is
+  // edited through still speaks `TSurveyVariable`, so the two are adapted at this boundary.
+  const computedFields = getComputedEmbeddedFields(localSurvey);
 
   const setOpenState = (state: boolean) => {
     if (state) {
@@ -70,17 +75,19 @@ export const SurveyVariablesCard = ({
         <Collapsible.CollapsibleContent
           className={`flex flex-col px-4 ${open && "pb-6"} overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down`}>
           <div className="flex flex-col gap-2" ref={parent}>
-            {localSurvey.variables.length > 0 ? (
-              localSurvey.variables.map((variable) => (
-                <SurveyVariablesCardItem
-                  key={variable.id}
-                  mode="edit"
-                  variable={variable}
-                  localSurvey={localSurvey}
-                  setLocalSurvey={setLocalSurvey}
-                  quotas={quotas}
-                />
-              ))
+            {computedFields.length > 0 ? (
+              computedFields
+                .map(toCardVariable)
+                .map((variable) => (
+                  <SurveyVariablesCardItem
+                    key={variable.id}
+                    mode="edit"
+                    variable={variable}
+                    localSurvey={localSurvey}
+                    setLocalSurvey={setLocalSurvey}
+                    quotas={quotas}
+                  />
+                ))
             ) : (
               <p className="mt-2 text-sm text-slate-500 italic">
                 {t("workspace.surveys.edit.no_variables_yet_add_first_one_below")}
@@ -95,9 +102,9 @@ export const SurveyVariablesCard = ({
             quotas={quotas}
           />
 
-          {localSurvey.variables.length > 0 && (
+          {computedFields.length > 0 && (
             <div className="mt-6">
-              <OptionIds type="variables" variables={localSurvey.variables} />
+              <OptionIds type="variables" fields={computedFields} />
             </div>
           )}
         </Collapsible.CollapsibleContent>
