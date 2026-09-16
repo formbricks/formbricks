@@ -27,7 +27,7 @@ External research panels are useful when:
 
 To be able to attribute a completed answer to a research participant, you need to add hidden fields to your Formbricks survey. To do so, edit your survey and scroll down to the Embedded Data card.
 
-Add three fields with the IDs `PROLIFIC_PID`, `STUDY_ID`, and `SESSION_ID`.
+Add three fields with the IDs `prolific_pid`, `study_id`, and `session_id`. Field IDs are lowercase, which is fine: Prolific sends its parameters in upper case and Formbricks matches them case-insensitively, so the values land in these fields either way.
 
 ![Hidden fields added](/images/surveys/link-surveys/market-research-panel/hidden-fields.webp)
 
@@ -50,7 +50,7 @@ We connect the Formbricks survey with the Prolific study by copying the survey l
 
 ### Step 5: Choose URL parameters for attribution
 
-To attribute responses to the correct participant, you need to add URL parameters to the Formbricks survey link. The parameters are `PROLIFIC_PID`, `STUDY_ID`, and `SESSION_ID`, exactly like the hidden fields you added.
+To attribute responses to the correct participant, you need to add URL parameters to the Formbricks survey link. The parameters are `PROLIFIC_PID`, `STUDY_ID`, and `SESSION_ID` — Prolific's own spelling, which is upper case. They do not have to match the case of the field IDs from Step 1; the values are stored under the lowercase IDs you declared.
 
 ![Adding URL parameters to the survey](/images/surveys/link-surveys/market-research-panel/url-parameters.webp)
 
