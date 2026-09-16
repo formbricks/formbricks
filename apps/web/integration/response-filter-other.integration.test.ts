@@ -82,6 +82,23 @@ const CASES: { name: string; data: Record<string, unknown> }[] = [
   { name: "single: predefined", data: { [SINGLE_ID]: "S0" } },
   { name: "single: write-in", data: { [SINGLE_ID]: "typed" } },
   { name: "single: empty string", data: { [SINGLE_ID]: "" } },
+  // Review finding (ENG-3161): nothing enforces uniqueness on the stored array —
+  // `ZResponseDataValue` is `z.array(z.string())` with no cap — so an answer can be longer than the
+  // choice list and push the write-in past the probed window. 14 entries against a 13-choice element:
+  // without OTHER_WRITE_IN_PROBE_SLACK the window is 0..12, every one of those is the predefined
+  // "A0", and the write-in at index 13 is never probed. The pre-ENG-3161 predicate matched it.
+  {
+    name: "duplicates past the choice count, then write-in",
+    data: { [MULTI_ID]: [...Array.from({ length: CHOICE_COUNT + 1 }, () => "A0"), "my own answer"] },
+  },
+  // The longest *well-formed* answer: one entry per choice plus the write-in. Inside the window even
+  // without slack — kept to show where the boundary actually is.
+  {
+    name: "every choice then write-in",
+    data: {
+      [MULTI_ID]: [...Array.from({ length: CHOICE_COUNT }, (_unused, i) => label("default", i)), "late"],
+    },
+  },
 ];
 
 let surveyId: string;
@@ -143,10 +160,56 @@ beforeEach(async () => {
 describe('multipleChoiceMulti filtered by "Other"', () => {
   test("selects exactly the responses carrying a value outside the predefined set", async () => {
     expect(await matchingNames(otherFilter(MULTI_ID, ["Other"]))).toEqual([
+      "duplicates past the choice count, then write-in",
+      "every choice then write-in",
       "german label + write-in",
       "predefined + write-in",
       "write-in only",
     ]);
+  });
+
+  test("a write-in past choices.length is still found", async () => {
+    // The case the probe slack exists for: 14 entries on a 13-choice element, the first 13 all the
+    // same predefined label, the write-in at index 13. Set OTHER_WRITE_IN_PROBE_SLACK to 0 and this
+    // is the only assertion in the suite that fails — verified, not assumed.
+    const matched = await matchingNames(otherFilter(MULTI_ID, ["Other"]));
+
+    expect(matched).toContain("duplicates past the choice count, then write-in");
+  });
+
+  test("deleting choices from a running survey widens the filter rather than narrowing it", async () => {
+    // Review raised this as a second way the write-in escapes the window. It is not: deleting a
+    // choice removes its label from the predefined set, so an already-collected answer holding that
+    // label now reads as "outside the predefined set" at an index that IS probed. The effect is a
+    // wider match, not a narrower one — worth pinning, since the intuition runs the other way.
+    const shrunk = {
+      id: "unused",
+      blocks: [
+        {
+          ...BLOCKS[0],
+          elements: [
+            {
+              ...BLOCKS[0].elements[0],
+              choices: [
+                ...BLOCKS[0].elements[0].choices.slice(0, CHOICE_COUNT - 3),
+                { id: "other", label: { default: "Other" } },
+              ],
+            },
+            BLOCKS[0].elements[1],
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+
+    const where = { surveyId, ...buildWhereClause(shrunk, otherFilter(MULTI_ID, ["Other"])) };
+    const rows = await prisma.response.findMany({ where, select: { id: true } });
+    const nameById = new Map([...idsByName].map(([name, id]) => [id, name]));
+    const matched = rows.map((row) => nameById.get(row.id) ?? row.id);
+
+    // "two predefined labels" is A0+A1, both still predefined — it must NOT match.
+    expect(matched).not.toContain("two predefined labels");
+    // "every choice then write-in" holds A9..A11, whose choices were just deleted, so it does.
+    expect(matched).toContain("every choice then write-in");
   });
 
   test("a different answer order or a duplicated label is still not an Other", async () => {
@@ -173,6 +236,8 @@ describe('multipleChoiceMulti filtered by "Other"', () => {
     // counts as "outside the predefined set".
     expect(await matchingNames(otherFilter(MULTI_ID, ["Other", "A0"]))).toEqual([
       "duplicated label",
+      "duplicates past the choice count, then write-in",
+      "every choice then write-in",
       "german label + write-in",
       "one predefined label",
       "predefined + write-in",
