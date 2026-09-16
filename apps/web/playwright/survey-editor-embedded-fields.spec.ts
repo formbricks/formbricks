@@ -4,19 +4,23 @@ import { test } from "./lib/fixtures";
 import { createSurveyFromScratch, fillRichTextEditor } from "./utils/helper";
 
 /**
- * Embedded Data definitions in the survey editor (ENG-1837).
+ * Embedded Data definitions in the survey editor (ENG-1837, ENG-2628).
  *
  * The `EmbeddedData` / `SurveyEmbeddedData` tables are the read source of truth for Embedded Data
  * definitions (variables + hidden fields): readers resolve through the `embeddedFields` list inlined
- * onto the survey at load instead of reading `survey.variables` / `survey.hiddenFields`. The editor
- * is the one surface where those rows must NOT win: `localSurvey` is cloned once at mount and never
- * re-fetched, while the rows are only rewritten on save — so a reader resolving through them would
- * show pre-edit definitions until a reload.
+ * onto the survey at load instead of reading `survey.variables` / `survey.hiddenFields`. ENG-1837
+ * made the editor the one exception — its cards owned the legacy columns, so every editor surface
+ * had to derive from them or show pre-edit definitions until the next save.
  *
- * That regression is invisible on a survey with no rows (an empty inlined list falls back to the
- * cards anyway), so this spec deliberately saves first and reloads: from there on, `localSurvey`
- * carries real rows and every assertion below can tell "derived from the cards" apart from
- * "resolved through the rows".
+ * ENG-2628 removed that exception by removing the second description: the cards now edit
+ * `embeddedFields` itself, and every editor surface reads it like every runtime reader does. So the
+ * rows win here too, and a card edit still reaches the pickers on the next render because the cards
+ * write the very list those pickers read.
+ *
+ * Neither half is observable on a survey with no rows (an empty inlined list falls back to the
+ * legacy columns anyway), so this spec deliberately saves first and reloads: from there on,
+ * `localSurvey` carries real rows and every assertion below can tell "reads the rows" apart from
+ * "derives from the legacy columns".
  */
 
 const QUESTION_HEADLINE = "Which plan are you on?";
@@ -192,7 +196,7 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
   }) => {
     const variableName = uniqueName("var_alpha");
     const renamedVariableName = uniqueName("var_beta");
-    const staleRowName = uniqueName("var_stale");
+    const rowEditedName = uniqueName("var_row");
     const firstHiddenField = uniqueName("hidden_one");
     const secondHiddenField = uniqueName("hidden_two");
 
@@ -215,58 +219,59 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await saveDraft(page);
     expect(await prisma.surveyEmbeddedData.count({ where: { surveyId } })).toBe(2);
 
-    // Force that disagreement rather than waiting for it: the saved row is edited behind the
-    // editor's back so it claims a different name and a different type than the card does. This is
-    // what an editor reader resolving through the rows would show, so every card-derived assertion
-    // below now has something to be wrong about.
-    const staleRowUpdate = await prisma.embeddedData.updateMany({
+    // Pull the two descriptions apart rather than waiting for them to drift: the saved row is edited
+    // behind the editor's back so it claims a different name and a different type than the legacy
+    // column derived from it does. Whichever one the editor reads, the other is now wrong about
+    // something — which is what every assertion below reads off.
+    const rowUpdate = await prisma.embeddedData.updateMany({
       where: { surveyId, source: "computed" },
-      data: { name: staleRowName, dataType: "number" },
+      data: { name: rowEditedName, dataType: "number" },
     });
-    expect(staleRowUpdate.count).toBe(1);
+    expect(rowUpdate.count).toBe(1);
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(editorPanel(page).getByRole("heading", { name: QUESTION_HEADLINE })).toBeVisible();
-    // The editor really was handed that row: the survey reaches this client component as a
-    // serialized prop, so the stale name is in the payload even though no picker may show it.
-    // Without this the assertions below could pass for the wrong reason (rows never inlined at all).
-    expect(
-      (await page.content()).includes(staleRowName),
-      "the editor page should carry the diverging row in its serialized survey prop"
-    ).toBe(true);
 
-    // Baseline: the cards' definitions are offered, not the rows'.
+    // Baseline: the rows' definitions are offered, and the legacy column's name is nowhere. Before
+    // ENG-2628 this pair was the other way round.
     const pickerBeforeEdit = await openRecallPicker(page, "at-key");
-    await expect(recallItem(pickerBeforeEdit, variableName)).toHaveAttribute("title", "variable");
+    await expect(recallItem(pickerBeforeEdit, rowEditedName)).toHaveAttribute("title", "variable");
     await expect(recallItem(pickerBeforeEdit, firstHiddenField)).toHaveAttribute("title", "hiddenField");
-    await expect(recallItem(pickerBeforeEdit, staleRowName)).toHaveCount(0);
+    await expect(recallItem(pickerBeforeEdit, variableName)).toHaveCount(0);
     await closeRecallPicker(page);
+
+    // The card edits the same list it reads, so it names the row too.
+    await openCard(page, "Variables");
+    await expect(variableForms(page).first().getByPlaceholder(VARIABLE_NAME_PLACEHOLDER)).toHaveValue(
+      rowEditedName
+    );
 
     await openBlockLogic(page);
     const operandsBeforeEdit = await openCombobox(page, "condition-0-0-conditionValue");
-    await expect(operandsBeforeEdit.getByRole("option", { name: variableName, exact: true })).toBeVisible();
-    await expect(operandsBeforeEdit.getByRole("option", { name: staleRowName, exact: true })).toHaveCount(0);
+    await expect(operandsBeforeEdit.getByRole("option", { name: rowEditedName, exact: true })).toBeVisible();
+    await expect(operandsBeforeEdit.getByRole("option", { name: variableName, exact: true })).toHaveCount(0);
     await operandsBeforeEdit.getByRole("option", { name: firstHiddenField, exact: true }).click();
 
     await openCombobox(page, "action-0-objective");
     await page.getByRole("option", { name: "Calculate", exact: true }).click();
     const variablesBeforeEdit = await openCombobox(page, "action-0-variableId");
-    await variablesBeforeEdit.getByRole("option", { name: variableName, exact: true }).click();
-    // The card says text while the row says number, so this is the card's answer.
-    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "text");
+    await variablesBeforeEdit.getByRole("option", { name: rowEditedName, exact: true }).click();
+    // The row says number while the legacy column still says text, so this is the row's answer.
+    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "number");
 
-    // Edit the definitions through the legacy cards: rename the variable, retype it to a number,
-    // and declare a second hidden field. None of this touches the saved rows.
+    // Now edit through the cards: rename the variable, retype it back to text, and declare a second
+    // hidden field. The cards write `embeddedFields`, which is what every reader below is reading —
+    // so this must land with no save and no reload.
     await openCard(page, "Variables");
-    await renameVariable(page, variableName, renamedVariableName);
-    await selectVariableType(page, variableForms(page).first(), "Number");
+    await renameVariable(page, rowEditedName, renamedVariableName);
+    await selectVariableType(page, variableForms(page).first(), "Text");
     await addHiddenField(page, secondHiddenField);
 
-    // Recall picker: the new name and the new hidden field, and no trace of the stale one.
+    // Recall picker: the new name and the new hidden field, and no trace of the name it replaced.
     const pickerAfterEdit = await openRecallPicker(page, "toolbar");
     await expect(recallItem(pickerAfterEdit, renamedVariableName)).toHaveAttribute("title", "variable");
     await expect(recallItem(pickerAfterEdit, secondHiddenField)).toHaveAttribute("title", "hiddenField");
-    await expect(recallItem(pickerAfterEdit, variableName)).toHaveCount(0);
+    await expect(recallItem(pickerAfterEdit, rowEditedName)).toHaveCount(0);
     await closeRecallPicker(page);
 
     // Logic operand picker: same, live.
@@ -278,21 +283,21 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await expect(
       operandsAfterEdit.getByRole("option", { name: secondHiddenField, exact: true })
     ).toBeVisible();
-    await expect(operandsAfterEdit.getByRole("option", { name: variableName, exact: true })).toHaveCount(0);
+    await expect(operandsAfterEdit.getByRole("option", { name: rowEditedName, exact: true })).toHaveCount(0);
     await closeCombobox(page);
 
     // Calculate action: still bound to the same field (renaming keeps its id), now labelled with the
     // new name, and its value widget follows the field's new type.
     await expect(page.locator("#action-0-variableId")).toContainText(renamedVariableName);
-    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "number");
+    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "text");
 
-    // The edits survive a save and a reload, and the save is also what makes the rows catch up:
-    // the deliberately stale row is rewritten from the card it belongs to.
+    // The edits survive a save and a reload, and the save is what writes the card's answer back onto
+    // the row — including over the type the behind-the-back edit put there.
     await saveDraft(page);
     expect(await prisma.surveyEmbeddedData.count({ where: { surveyId } })).toBe(3);
     expect(await prisma.embeddedData.findFirst({ where: { surveyId, source: "computed" } })).toMatchObject({
       name: renamedVariableName,
-      dataType: "number",
+      dataType: "string",
     });
     await page.reload({ waitUntil: "domcontentloaded" });
 
@@ -306,7 +311,7 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
 
     await openBlockLogic(page);
     await expect(page.locator("#action-0-variableId")).toContainText(renamedVariableName);
-    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "number");
+    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "text");
   });
 
   /**
