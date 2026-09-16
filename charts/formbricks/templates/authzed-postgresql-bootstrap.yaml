@@ -89,7 +89,9 @@ spec:
           env:
             {{- if $bundledBootstrap }}
             - name: PGHOST
-              value: formbricks-postgresql
+              value: {{ include "formbricks.postgresqlPrimaryHost" . | quote }}
+            - name: PGPORT
+              value: {{ include "formbricks.postgresqlServicePort" . | quote }}
             - name: PGUSER
               value: {{ $bundledAdminUsername | quote }}
             - name: PGPASSWORD

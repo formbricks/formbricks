@@ -743,6 +743,8 @@ authzed:
 # Values passed to the bundled spicedb-operator dependency when
 # authzed.operator.install=true.
 spicedbOperator:
+  # The camelCase dependency alias is a values key, not a valid Kubernetes name.
+  nameOverride: spicedb-operator
   watchNamespaces: []
   serviceMonitor:
     enabled: false

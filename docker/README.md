@@ -58,6 +58,9 @@ The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (
 
 ## AuthZed / SpiceDB
 
+For v5 to v6, use the [maintenance upgrade guide](../docs/self-hosting/advanced/v6-maintenance-upgrade.mdx).
+The update command verifies an already-prepared graph; it does not migrate a live v5 installation online.
+
 The production and development Compose stacks include one SpiceDB v1.52.0 service backed by a dedicated
 `spicedb` database and login in the bundled PostgreSQL server. `authzed-db-bootstrap` creates or updates the
 database credentials, `spicedb-migrate` applies datastore migrations, and only then does `spicedb` start. Both
