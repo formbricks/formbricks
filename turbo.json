@@ -99,10 +99,6 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "$TURBO_ROOT$/apps/web/public/js/formbricks.*"]
     },
-    "@formbricks/js-core#build:dev": {
-      "dependsOn": ["^build:dev"],
-      "outputs": ["dist/**", "$TURBO_ROOT$/apps/web/public/js/formbricks.*"]
-    },
     "@formbricks/js-core#go": {
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup"],
@@ -156,11 +152,7 @@
     },
     "@formbricks/surveys#build:dev": {
       "dependsOn": ["^build:dev", "@formbricks/i18n-utils#build", "@formbricks/survey-ui#build:dev"],
-      "outputs": [
-        "dist/**",
-        "$TURBO_ROOT$/apps/web/public/js/surveys.*",
-        "$TURBO_ROOT$/apps/web/public/js/validation.*"
-      ]
+      "outputs": ["dist/**"]
     },
     "@formbricks/surveys#go": {
       "cache": false,

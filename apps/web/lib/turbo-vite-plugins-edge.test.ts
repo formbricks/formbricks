@@ -20,9 +20,10 @@ import { describe, expect, test } from "vitest";
 // `@formbricks/cache#build`, whose hash stayed at `4ba016d7…` while `node-next-dts.ts` was edited, and
 // moved only once `^build` was added beside it.
 //
-// Scope: `build` and `build:dev`, the cached tasks that read the helpers. `lint` and `typecheck` have
-// the same shape of gap repo-wide (the shared `lint` task declares no `dependsOn` at all) and are not
-// covered here.
+// Scope: `build` and `build:dev`, the cached tasks that read the helpers. `lint` still has the same
+// shape of gap (the shared `lint` task declares no `dependsOn` at all) and is not covered here;
+// `typecheck` does not, because it inherits `dependsOn: ["@formbricks/database#generate", "^typecheck"]`
+// and @formbricks/vite-plugins defines a `typecheck` script, so the helper's contents already reach it.
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "..", "..", "..");
@@ -57,6 +58,7 @@ const consumers = fs
   .map((entry) => path.join(packagesRoot, entry.name))
   .filter((dir) => fs.existsSync(path.join(dir, "package.json")))
   .map((dir) => ({
+    dir,
     manifest: readJson<PackageManifest>(path.join(dir, "package.json")),
     references: fs
       .readdirSync(dir)
@@ -66,10 +68,22 @@ const consumers = fs
   }))
   .filter((consumer) => consumer.references.length > 0);
 
-// Resolve `dependsOn` the way Turbo does: the `pkg#task` block wins outright over the shared task
-// config, which is the override trap this test exists for.
-const resolvedDependsOn = (packageName: string, task: string): string[] =>
-  turboJson.tasks[`${packageName}#${task}`]?.dependsOn ?? turboJson.tasks[task]?.dependsOn ?? [];
+type Consumer = (typeof consumers)[number];
+
+// Resolve `dependsOn` the way Turbo does: a package's own `turbo.json` wins, then the root `pkg#task`
+// block, then the shared task config — each rung REPLACES rather than merges per key, which is the
+// override trap this test exists for. A package config that declares the task without `dependsOn`
+// still inherits the shared one through `extends: ["//"]`.
+const resolvedDependsOn = (consumer: Consumer, task: string): string[] => {
+  const packageTurboJsonPath = path.join(consumer.dir, "turbo.json");
+  if (fs.existsSync(packageTurboJsonPath)) {
+    const packageTask = readJson<TurboJson>(packageTurboJsonPath).tasks?.[task];
+    if (packageTask) return packageTask.dependsOn ?? turboJson.tasks[task]?.dependsOn ?? [];
+  }
+  return (
+    turboJson.tasks[`${consumer.manifest.name}#${task}`]?.dependsOn ?? turboJson.tasks[task]?.dependsOn ?? []
+  );
+};
 
 describe("packages that build with @formbricks/vite-plugins edge it into the task graph", () => {
   test("the scan finds the known consumers", () => {
@@ -107,7 +121,7 @@ describe("packages that build with @formbricks/vite-plugins edge it into the tas
       const packageName = consumer.manifest.name ?? "";
       for (const task of BUILD_TASKS) {
         if (!consumer.manifest.scripts?.[task]) continue;
-        const dependsOn = resolvedDependsOn(packageName, task);
+        const dependsOn = resolvedDependsOn(consumer, task);
         if (!dependsOn.includes(`^${task}`)) missingEdge.push(`${packageName}#${task}`);
       }
     }

@@ -61,17 +61,26 @@ describe("turbo.json web build excludes transient Next.js dirs", () => {
 // app requests a URL that is not there. Measured on a js-core cache entry: 178 files, all under
 // packages/js-core/**, zero under apps/web/public/js.
 //
-// The globs stay per-package (`formbricks.*`, `date-format.*`, `surveys.*`, `validation.*`) because
-// both packages write into the same directory: a directory-wide glob makes each task's cache entry
-// capture, and later restore, the other package's artifacts — a js-core cache hit was observed
-// restoring a deleted surveys.umd.cjs.
+// One writer per file. Turbo captures every file a task's globs match *after* the task runs, whoever
+// wrote it, so a second task declaring the same paths yields entries whose contents depend on what
+// happened to be on disk. Measured before this rule was pinned: with `surveys#build:dev` declaring the
+// same globs as `surveys#build`, a dev run over a warm `dist` captured the production
+// `surveys.umd.cjs` — a file that task never builds — into the very cache key a clean dev run fills
+// with two files, and a dev cache hit then installed that production bundle. Ownership therefore stays
+// with the shipping `build` tasks; a package's `build:dev` declares `dist/**` only, as it always did.
+//
+// Prefixes per package rather than one glob for the directory: both packages write into
+// apps/web/public/js, and a directory-wide glob additionally lets one package's entry capture, and
+// later restore, the other's files — a js-core cache hit was observed resurrecting a deleted
+// surveys.umd.cjs. (A package's `dist/**` is still shared between its `build` and `build:dev`; that
+// capture-side overlap predates this change and is not served to browsers.)
 const PUBLIC_JS_DIR = "$TURBO_ROOT$/apps/web/public/js";
 
+// The tasks that own files in apps/web/public/js. `build:dev` is deliberately absent: it copies
+// through the same plugin, so declaring its paths would make it a second writer of the same files.
 const BUNDLE_OUTPUTS: Record<string, string[]> = {
   "@formbricks/js-core#build": [`${PUBLIC_JS_DIR}/formbricks.*`],
-  "@formbricks/js-core#build:dev": [`${PUBLIC_JS_DIR}/formbricks.*`],
   "@formbricks/surveys#build": [`${PUBLIC_JS_DIR}/surveys.*`, `${PUBLIC_JS_DIR}/validation.*`],
-  "@formbricks/surveys#build:dev": [`${PUBLIC_JS_DIR}/surveys.*`, `${PUBLIC_JS_DIR}/validation.*`],
 };
 
 describe("turbo.json SDK bundle tasks declare the files they copy into apps/web/public/js", () => {
@@ -123,6 +132,30 @@ describe("turbo.json SDK bundle tasks declare the files they copy into apps/web/
       overlapping,
       `These outputs claim all of apps/web/public/js: ${overlapping.join(", ")}. ` +
         "Scope each task to the filenames it copies, or one package's cache hit restores the other's artifacts (ENG-2924)."
+    ).toEqual([]);
+  });
+
+  test("no two tasks own the same public/js path", () => {
+    // The failure this pins, measured: two tasks declaring identical public/js globs each capture
+    // whatever the other left behind, so the same cache key holds different bytes from one run to the
+    // next and a hit can install the other task's — here, a production bundle — output.
+    const ownersByGlob: Record<string, string[]> = {};
+    for (const [taskName, task] of Object.entries(rootTasks)) {
+      for (const glob of task.outputs ?? []) {
+        if (!glob.startsWith(PUBLIC_JS_DIR)) continue;
+        ownersByGlob[glob] = [...(ownersByGlob[glob] ?? []), taskName];
+      }
+    }
+
+    const shared = Object.entries(ownersByGlob)
+      .filter(([, owners]) => owners.length > 1)
+      .map(([glob, owners]) => `${glob} claimed by ${owners.join(" + ")}`);
+
+    expect(
+      shared,
+      `public/js paths declared by more than one task: ${shared.join("; ")}. ` +
+        "Turbo captures by glob after the task runs, so a second writer's files land in the first " +
+        "task's cache entry and a hit restores them. Keep one owning task per path (ENG-2924)."
     ).toEqual([]);
   });
 });
