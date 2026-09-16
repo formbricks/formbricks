@@ -12,6 +12,17 @@ import { z } from "zod";
  * It is a manifest rather than a guard for a reason: a guard runs where someone remembered to call
  * it, and the failures above were all places nobody remembered. A declaration cannot be forgotten
  * quietly, because the test reads the schema rather than the code that enforces it.
+ *
+ * **Completeness comes from the roster below, not from the detectors.** An earlier version of this
+ * file leaned on "id-shaped or named like an id ⇒ must be declared", and claimed that failed when the
+ * schema grew a reference it did not know about. That was false for a third of the set it already
+ * carried: `data`, `embeddedData` and `language` match neither rule, and deleting their declarations
+ * left every test green. A record's keys are not reachable by the id-shape walk, and a plain string
+ * is not reachable by the name rule — so the two detectors can only ever catch the references that
+ * were already easy to spot. `V3_RESPONSE_BODY_FIELDS` classifies **every** field instead, and the
+ * test holds it to the schema by set equality, so a new field fails until someone says what it is.
+ * The detectors stay as a second, narrower check: they catch a field classified `none` that is
+ * visibly an id.
  */
 
 /** The four ways a request body can name something that has to belong to the caller. */
@@ -23,7 +34,9 @@ export type TV3ReferenceKind =
   /** Set-membership against the already-scoped survey: an ending, a language, an element id. */
   | "document-local"
   /** An id *inside* a value, not a field of its own — the workspace id in a file-upload URL. */
-  | "embedded-id";
+  | "embedded-id"
+  /** Not a reference. Recorded rather than omitted, so the roster can be checked for completeness. */
+  | "none";
 
 export type TV3Reference = {
   kind: TV3ReferenceKind;
@@ -99,6 +112,36 @@ export const isIdShaped = (schema: unknown): boolean => {
   }
 
   return false;
+};
+
+/**
+ * Every field on the two response write bodies, and what each one is.
+ *
+ * Exhaustive on purpose: the test asserts this set equals the schema's, so adding a field to either
+ * body fails until it is classified here. That is the property the detectors cannot provide — they
+ * see `z.cuid2()` and `*Id` names, and a survey-local map keyed by element ids is neither.
+ */
+export const V3_RESPONSE_BODY_FIELDS: Record<string, TV3ReferenceKind> = {
+  // References.
+  surveyId: "fk",
+  contactId: "fk",
+  displayId: "fk",
+  tags: "fk",
+  endingId: "document-local",
+  language: "document-local",
+  data: "document-local",
+  embeddedData: "document-local",
+  singleUseId: "document-local",
+  // Not references, and why.
+  //
+  // `ttc` is the one worth arguing about: its keys *are* element ids, which is what makes `data` a
+  // reference. It is classified `none` because nothing resolves it — the values are client-reported
+  // telemetry, clamped and stored verbatim, and a key naming no element costs a bucket nobody reads.
+  // Element ids are survey-local and the survey is authorized before the write, so there is no tenant
+  // question here; if `ttc` ever gains meaning beyond telemetry this is the line that has to change.
+  finished: "none",
+  meta: "none",
+  ttc: "none",
 };
 
 /** Field names that read as a reference even when the value is a plain string. */
