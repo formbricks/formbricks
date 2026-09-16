@@ -2198,7 +2198,7 @@
       "still_used_title": "{{name}} is still used",
       "type_boolean": "True/false",
       "type_change_body": "Values already collected stay exactly as they are; only new responses are read as {{to}}. Filters and logic that compare {{to}} values may not match the older ones.",
-      "type_change_subtitle": "{{count}} surveys using this field already have responses.",
+      "type_change_subtitle": "{count, plural, one {# survey using this field already has responses.} other {# surveys using this field already have responses.}}",
       "type_change_title": "Change {{name}} from {{from}} to {{to}}?",
       "used_in": "Used in",
       "used_in_one_survey": "1 survey",
