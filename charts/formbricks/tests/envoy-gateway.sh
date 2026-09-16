@@ -29,6 +29,10 @@ helm template qa "${chart_dir}" --include-crds "${common_args[@]}" > "${render_d
 grep -q 'gateway.networking.k8s.io/bundle-version: v1.5.1' "${render_dir}/bundled.yaml"
 grep -q 'name: backendtlspolicies.gateway.networking.k8s.io' "${render_dir}/bundled.yaml"
 grep -q 'name: envoyproxies.gateway.envoyproxy.io' "${render_dir}/bundled.yaml"
+grep -B1 '^kind: ValidatingAdmissionPolicy$' "${render_dir}/bundled.yaml" \
+  | grep -q '^apiVersion: admissionregistration.k8s.io/v1$'
+grep -B1 '^kind: ValidatingAdmissionPolicyBinding$' "${render_dir}/bundled.yaml" \
+  | grep -q '^apiVersion: admissionregistration.k8s.io/v1$'
 grep -q 'image: docker.io/envoyproxy/gateway:v1.8.4' "${render_dir}/bundled.yaml"
 grep -q '^kind: EnvoyProxy$' "${render_dir}/bundled.yaml"
 grep -q '^kind: SecurityPolicy$' "${render_dir}/bundled.yaml"
@@ -37,9 +41,18 @@ grep -q 'statusOnError: 503' "${render_dir}/bundled.yaml"
 helm template qa "${chart_dir}" --include-crds "${common_args[@]}" \
   --set envoy.crds.enabled=false > "${render_dir}/platform-crds.yaml"
 
-! grep -q 'name: backendtlspolicies.gateway.networking.k8s.io' "${render_dir}/platform-crds.yaml"
-! grep -q 'name: envoyproxies.gateway.envoyproxy.io' "${render_dir}/platform-crds.yaml"
-! grep -q '^kind: ValidatingAdmissionPolicy' "${render_dir}/platform-crds.yaml"
+if grep -q 'name: backendtlspolicies.gateway.networking.k8s.io' "${render_dir}/platform-crds.yaml"; then
+  echo "Platform-managed Gateway API CRDs must not be rendered" >&2
+  exit 1
+fi
+if grep -q 'name: envoyproxies.gateway.envoyproxy.io' "${render_dir}/platform-crds.yaml"; then
+  echo "Platform-managed Envoy Gateway CRDs must not be rendered" >&2
+  exit 1
+fi
+if grep -q '^kind: ValidatingAdmissionPolicy' "${render_dir}/platform-crds.yaml"; then
+  echo "Platform-managed safe-upgrade policies must not be rendered" >&2
+  exit 1
+fi
 grep -q 'image: docker.io/envoyproxy/gateway:v1.8.4' "${render_dir}/platform-crds.yaml"
 grep -q '^kind: Gateway$' "${render_dir}/platform-crds.yaml"
 grep -q '^kind: SecurityPolicy$' "${render_dir}/platform-crds.yaml"
@@ -54,7 +67,10 @@ helm template qa "${chart_dir}" --include-crds \
   --set envoy.formbricks.gatewayClass.name=platform-envoy \
   --set envoy.formbricks.routes.feedbackRecords=true > "${render_dir}/external-controller.yaml"
 
-! grep -q 'image: docker.io/envoyproxy/gateway:v1.8.4' "${render_dir}/external-controller.yaml"
+if grep -q 'image: docker.io/envoyproxy/gateway:v1.8.4' "${render_dir}/external-controller.yaml"; then
+  echo "External-controller mode must not render the bundled controller" >&2
+  exit 1
+fi
 grep -q 'gatewayClassName: platform-envoy' "${render_dir}/external-controller.yaml"
 grep -q '^kind: EnvoyProxy$' "${render_dir}/external-controller.yaml"
 grep -q '^kind: SecurityPolicy$' "${render_dir}/external-controller.yaml"

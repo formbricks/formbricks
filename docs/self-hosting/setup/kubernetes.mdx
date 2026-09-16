@@ -122,7 +122,8 @@ The chart supports these edge patterns for the v5-covered routes:
   `envoy.crds.enabled=true`
 - **Bundled Envoy controller with platform-managed CRDs**: keep the controller enabled and set
   `envoy.crds.enabled=false`
-- **Existing cluster Envoy controller**: set `envoy.enabled=true` and `envoy.controller.enabled=false`
+- **Existing cluster Envoy controller**: set `envoy.enabled=true`, `envoy.controller.enabled=false`,
+  `envoy.formbricks.gatewayClass.create=false`, and `envoy.formbricks.gatewayClass.name` to the existing class
 - **Equivalent external edge protection**: keep using your platform's own ingress or gateway layer if it already
   provides equivalent rate-limiting coverage
 
@@ -176,8 +177,8 @@ spec:
 ```
 
 The example installs the bundled controller. If your cluster already provides a compatible Envoy Gateway
-controller, set `envoy.controller.enabled: false`, keep `envoy.crds.enabled: false`, disable GatewayClass creation,
-and provide the existing GatewayClass name. In either mode, configure
+controller, set `envoy.controller.enabled: false`, disable GatewayClass creation, and provide the existing
+GatewayClass name. The controller dependency, including its CRDs, is disabled in this mode. In either mode, configure
 `envoy.formbricks.ingress` or your platform ingress/load balancer so public traffic reaches the Envoy-managed
 routes. If you use an equivalent external edge solution instead, verify that it covers every route in the
 [rate-limiting guide](/self-hosting/advanced/rate-limiting) before exposing Formbricks.

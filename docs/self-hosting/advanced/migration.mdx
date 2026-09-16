@@ -18,7 +18,7 @@ The bundled Valkey image moves from an amd64-only 8.1.1 image to the native amd6
 image. Fresh Docker and Helm installations receive it automatically. Existing installations that retain an
 older Compose file or explicitly reuse the previous Helm digest need the one-time update below.
 
-### Envoy Gateway 1.8.4 CRDs (action required for bundled-controller upgrades)
+### Envoy Gateway 1.8.4 CRD Upgrade
 
 The updated Helm chart replaces Envoy Gateway 1.7.1 and Gateway API 1.4.1 with Envoy Gateway 1.8.4 and Gateway
 API 1.5.1. Fresh installations receive the new CRDs automatically. Helm does not update CRDs during an ordinary
@@ -40,6 +40,10 @@ If the platform already manages compatible Gateway API CRDs, do not install anot
 only the Envoy Gateway CRDs as described in the [Kubernetes guide](/self-hosting/setup/kubernetes), set
 `envoy.crds.enabled=false`, and configure Flux to skip CRD installation and upgrades. Upgrade the CRDs before the
 controller and never downgrade them during rollback.
+
+The controller scheduling values also move from the ineffective `envoy.deployment.envoyGateway.pod` path to
+`envoy.deployment.pod`. Move any node selectors, tolerations, topology spread constraints, extra volumes, or
+pod annotations that you placed under the old path before upgrading.
 
 ### Bundled Valkey 8.1.9 Upgrade (action required for some self-hosted deployments)
 
