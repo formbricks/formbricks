@@ -51,11 +51,10 @@ export const LibraryCard = ({ workspaceId, fields, isReadOnly, locale }: Readonl
         bodyVariant="flush"
         cta={isReadOnly ? undefined : newFieldButton}>
         {fields.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 p-4">
-            <div className="w-full">
-              <EmptyState text={t("workspace.embedded_data.empty_state")} />
-            </div>
-            {!isReadOnly && newFieldButton}
+          // No action of its own: the card's `cta` already renders the same button in the header,
+          // and repeating it here put two identical "New field" buttons on an empty library.
+          <div className="p-4">
+            <EmptyState text={t("workspace.embedded_data.empty_state")} />
           </div>
         ) : (
           <SettingsTable
