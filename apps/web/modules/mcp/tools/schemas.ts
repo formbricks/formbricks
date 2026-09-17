@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import {
   MAX_FEEDBACK_RECORDS_PER_BATCH,
@@ -128,6 +129,44 @@ const ZMcpSurveyLanguageInput = z.strictObject({
 
 const ZMcpObjectInput = z.record(z.string(), z.unknown());
 
+/**
+ * The block and element shape, spelled out on the tool surface (ENG-2180).
+ *
+ * `blocks` is the one field a survey cannot omit, and it was advertised as a free-form object pointing
+ * at a "v3 survey document contract" that no tool description defined. The only way to learn the
+ * element types was to probe the live validator — and probing undercounts silently: one agent doing
+ * exactly that reported 16 of the 17 types and had no way to know it had missed one.
+ *
+ * The list is derived from the enum the request is actually validated against, never restated, so the
+ * advertised vocabulary cannot drift from the accepted one. `SURVEY_BLOCK_EXAMPLE` is asserted against
+ * the real create schema in `schemas.test.ts` for the same reason — a worked example that stops
+ * validating is worse than none.
+ */
+const SURVEY_ELEMENT_TYPES = Object.values(TSurveyElementTypeEnum).join(", ");
+
+/** A complete, valid block. Kept minimal: every field here is one the schema requires. */
+export const SURVEY_BLOCK_EXAMPLE = {
+  name: "Feedback",
+  elements: [
+    {
+      id: "improve",
+      type: "openText",
+      headline: { "en-US": "What should we improve?" },
+      required: false,
+    },
+  ],
+};
+
+const SURVEY_BLOCKS_DESCRIPTION = [
+  "Survey blocks. A block is `{ name, elements[], id? }` and an element is `{ id, type, headline, ... }`,",
+  `where \`type\` is one of: ${SURVEY_ELEMENT_TYPES}.`,
+  "Element ids are caller-supplied and become immutable once the survey leaves draft; block ids are",
+  'generated when omitted. Translatable fields are keyed by locale code — `{ "en-US": "..." }` — and',
+  "must carry every configured language; the internal `default` key is rejected. Each element type adds",
+  "its own required fields (a `rating` needs `scale` and `range`, a `pictureSelection` needs two or more",
+  `choices); \`validate_survey\` reports what is missing. Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
+].join(" ");
+
 export const ZMcpCreateSurveyInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID where the survey should be created."),
@@ -146,7 +185,7 @@ export const ZMcpCreateSurveyInput = z
       .optional()
       .describe("Configured survey languages using the v3 survey document contract."),
     welcomeCard: ZMcpObjectInput.optional().describe("Welcome card using the v3 survey document contract."),
-    blocks: z.array(ZMcpObjectInput).min(1).describe("Survey blocks using the v3 survey document contract."),
+    blocks: z.array(ZMcpObjectInput).min(1).describe(SURVEY_BLOCKS_DESCRIPTION),
     endings: z
       .array(ZMcpObjectInput)
       .optional()
@@ -165,7 +204,7 @@ export const ZMcpPatchSurveyInput = z
     data: z
       .record(z.string(), z.unknown())
       .describe(
-        "Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree."
+        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. ${SURVEY_BLOCKS_DESCRIPTION}`
       ),
   })
   .strict();
@@ -174,9 +213,7 @@ export const ZMcpValidateSurveyInput = z
   .object({
     operation: z.enum(["create", "patch"]).describe("Validation operation to run."),
     surveyId: z.cuid2().optional().describe("Survey ID to validate against. Required for patch validation."),
-    data: ZMcpObjectInput.describe(
-      "Create or patch payload to validate using the v3 survey document contract."
-    ),
+    data: ZMcpObjectInput.describe(`Create or patch payload to validate. ${SURVEY_BLOCKS_DESCRIPTION}`),
   })
   .strict();
 

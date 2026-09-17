@@ -1,7 +1,10 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as workflowSchemas from "./workflow-schemas";
+
+vi.mock("server-only", () => ({}));
 
 /**
  * Guards the ENG-2256 policy at every depth, against the JSON Schema we actually advertise rather than
@@ -199,5 +202,37 @@ describe("MCP tool input schemas reject undeclared arguments (ENG-2256)", () => 
     const advertised = z.toJSONSchema(surveyAndFeedbackSchemas.ZMcpListSurveysInput, { io: "input" });
 
     expect(advertised).toMatchObject({ additionalProperties: false });
+  });
+});
+
+describe("survey block discoverability (ENG-2180)", () => {
+  // The whole defect was that the tool surface described `blocks` as a "v3 survey document contract"
+  // it never defined, leaving the element vocabulary discoverable only by probing the live validator.
+  // These two guard the cure rather than the symptom: the advertised vocabulary has to stay identical
+  // to the accepted one, and the worked example has to keep working.
+  test("advertises exactly the element types the schema accepts", () => {
+    const advertised = surveyAndFeedbackSchemas.ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    for (const type of Object.values(TSurveyElementTypeEnum)) {
+      expect(advertised).toContain(type);
+    }
+    // ...and nothing invented. An element type that is advertised but not accepted is the worse half.
+    const listed = /one of: ([^.]+)\./.exec(advertised)?.[1].split(", ") ?? [];
+    expect(listed.toSorted()).toEqual(Object.values(TSurveyElementTypeEnum).toSorted());
+  });
+
+  test("the example block in the description is accepted by the create schema", async () => {
+    const { ZV3CreateSurveyBody } = await import("@/app/api/v3/surveys/schemas");
+
+    const parsed = ZV3CreateSurveyBody.safeParse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Example",
+      blocks: [surveyAndFeedbackSchemas.SURVEY_BLOCK_EXAMPLE],
+    });
+
+    // A worked example that has silently stopped validating is worse than no example at all: it is a
+    // confident wrong answer, which is exactly what probing already gives an agent.
+    expect(parsed.error?.issues ?? []).toEqual([]);
+    expect(parsed.success).toBe(true);
   });
 });
