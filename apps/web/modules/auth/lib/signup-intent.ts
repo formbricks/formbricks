@@ -42,10 +42,9 @@ import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cooki
 
 const SIGNUP_INTENT_KIND = "signup_intent";
 
-// The same resolved secret auth.ts hands Better Auth (see lib/constants.ts). Read at call time, not
-// captured at module scope: reading the constant at import time makes every unrelated test that mocks
-// "@/lib/constants" and transitively imports this module fail Vitest's strict missing-export check —
-// the reasoning pin-token.ts already spells out.
+// The same resolved secret auth.ts hands Better Auth (see lib/constants.ts). Read at call time so a
+// test can vary it between cases; note this module reads `@/lib/constants` at import time anyway, via
+// USE_SECURE_COOKIES below, so the indirection is about testability rather than import safety.
 const resolveSigningSecret = (): string | undefined => AUTH_SECRET;
 
 /**

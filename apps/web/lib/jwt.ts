@@ -23,9 +23,10 @@ const decryptWithFallback = (encryptedText: string, key: string): string => {
 /**
  * Resolve the signing secret, or refuse to mint/verify.
  *
- * Deliberately resolved per call rather than captured at module scope: `AUTH_SECRET` is a live import
- * binding, and reading it at call time is what keeps this guard observable to callers that swap the
- * constant after import.
+ * Resolved per call rather than captured at module scope, for the reason `pin-token.ts` spells out:
+ * reading `@/lib/constants` at import time makes every unrelated test that mocks it — and transitively
+ * imports this module — fail Vitest's missing-export check. It also keeps the guard observable to
+ * `jwt.test.ts`, which drives it by swapping the constant.
  */
 const requireAuthSecret = (): string => {
   if (!AUTH_SECRET) {

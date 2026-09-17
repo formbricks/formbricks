@@ -803,7 +803,17 @@ EOT
   auth_secret=$(openssl rand -hex 32)
   sed -i "/BETTER_AUTH_SECRET:$/s/BETTER_AUTH_SECRET:.*/BETTER_AUTH_SECRET: $auth_secret/" docker-compose.yml
   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $auth_secret/" docker-compose.yml
-  echo "🚗 BETTER_AUTH_SECRET updated successfully!"
+  # Report what actually landed. This script patches a docker-compose.yml downloaded from `stable`, so an
+  # older one carries only the legacy key and the first sed matches nothing — claiming success either way
+  # would hide an install left with an empty secret.
+  if grep -q "BETTER_AUTH_SECRET: $auth_secret" docker-compose.yml; then
+    echo "🚗 BETTER_AUTH_SECRET updated successfully!"
+  elif grep -q "NEXTAUTH_SECRET: $auth_secret" docker-compose.yml; then
+    echo "🚗 NEXTAUTH_SECRET updated successfully!"
+  else
+    echo "❌ Could not set an auth secret in docker-compose.yml - no BETTER_AUTH_SECRET or NEXTAUTH_SECRET line to update."
+    exit 1
+  fi
 
   encryption_key=$(openssl rand -hex 32) && sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $encryption_key/" docker-compose.yml
   echo "🚗 ENCRYPTION_KEY updated successfully!"

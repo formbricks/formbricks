@@ -120,6 +120,8 @@ main() {
   local key=""
   local current_value=""
   local spicedb_port=""
+  local better_auth_secret=""
+  local legacy_auth_secret=""
   local bundled_endpoint=""
 
   ensure_prerequisites
@@ -169,9 +171,17 @@ main() {
   # value across rather than letting the loop below mint a new one: BETTER_AUTH_SECRET wins at runtime,
   # so generating a fresh one would log the developer out and invalidate their outstanding links, and
   # leave the two keys disagreeing — which the app warns about at boot, on every machine.
-  if [[ -z "$(read_env_value BETTER_AUTH_SECRET)" && -n "$(read_env_value NEXTAUTH_SECRET)" ]]; then
-    upsert_env_value "BETTER_AUTH_SECRET" "$(read_env_value NEXTAUTH_SECRET)"
+  better_auth_secret="$(read_env_value BETTER_AUTH_SECRET)"
+  legacy_auth_secret="$(read_env_value NEXTAUTH_SECRET)"
+  if [[ -z "${better_auth_secret}" && -n "${legacy_auth_secret}" ]]; then
+    upsert_env_value "BETTER_AUTH_SECRET" "${legacy_auth_secret}"
     updated_keys+=("BETTER_AUTH_SECRET (from NEXTAUTH_SECRET)")
+  elif [[ -n "${better_auth_secret}" && -n "${legacy_auth_secret}" \
+    && "${better_auth_secret}" != "${legacy_auth_secret}" ]]; then
+    # Never rewrite a secret the developer chose — just stop the boot warning being a mystery.
+    log "Note: BETTER_AUTH_SECRET and NEXTAUTH_SECRET hold different values in ${ENV_PATH}."
+    log "      BETTER_AUTH_SECRET wins; the app warns about this at startup. Remove NEXTAUTH_SECRET, or"
+    log "      set both to the same value, to silence it."
   fi
 
   for key in "${REQUIRED_GENERATED_KEYS[@]}"; do

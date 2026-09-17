@@ -126,5 +126,7 @@ describe("instrumentation register", () => {
 
     expect(mockAssertAuthRuntimeConfiguration).not.toHaveBeenCalled();
     expect(mockWarnOnAuthSecretRisks).not.toHaveBeenCalled();
+    // Same guard, so assert the whole block rather than the two calls this change happened to add.
+    expect(mockAssertAuthzedRuntimeConfiguration).not.toHaveBeenCalled();
   });
 });
