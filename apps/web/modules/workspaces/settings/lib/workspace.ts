@@ -111,6 +111,18 @@ const deleteOrphanedWorkspaceLogoFile = async (workspaceId: string, previousUrl:
       return;
     }
 
+    // Owning the prefix says the object is this workspace's, not that it is a logo — `logo.url` is
+    // caller-supplied, so it can name any object under that prefix. Logo uploads always go through
+    // the management storage route, which issues `public` keys, so refusing anything else keeps this
+    // path away from `private/` objects (response attachments) even when the url is chosen.
+    if (storageFile.accessType !== "public") {
+      logger.error(
+        { workspaceId, accessType: storageFile.accessType },
+        "Refusing to delete a non-public object through workspace logo cleanup"
+      );
+      return;
+    }
+
     // Upload percent-encodes the file name into the URL, but the object is stored under the decoded
     // name, so a logo called "my logo.png" misses its key entirely unless it is decoded here.
     const result = await deleteFile(

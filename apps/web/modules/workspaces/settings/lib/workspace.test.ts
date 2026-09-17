@@ -199,6 +199,18 @@ describe("workspace lib", () => {
       expect(logger.error).toHaveBeenCalled();
     });
 
+    // Owning the prefix does not make the object a logo. Response attachments live under `private/`,
+    // so the cleanup refuses anything that is not a public key.
+    test("refuses to delete a private object even inside the workspace", async () => {
+      withStoredLogo("/storage/p1/private/response-attachment--fid--888.pdf");
+      resolvesTo({ logo: null });
+
+      await updateWorkspace("p1", { logo: { url: undefined } });
+
+      expect(deleteFile).not.toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
+    });
+
     test("deletes an object under the workspace's legacy environment prefix", async () => {
       vi.mocked(getWorkspaceLegacyStoragePrefixes).mockResolvedValue(["p1", "env-legacy"]);
       withStoredLogo("/storage/env-legacy/public/legacy--fid--333.png");
