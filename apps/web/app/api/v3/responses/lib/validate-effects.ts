@@ -200,20 +200,24 @@ export async function createEffects({
     meta,
   });
 
+  // Two independent reads; awaiting them in sequence would put a round trip of latency on an
+  // endpoint whose whole point is being cheap enough to call before every write.
+  const [countsTowardMeteredResponses, quotas] = await Promise.all([
+    withoutFailing(() => wouldMeter(organizationId), false, { requestId, context: "metering" }),
+    withoutFailing(() => quotaEffects({ surveyId: survey.id, response }), [], {
+      requestId,
+      context: "quotas",
+    }),
+  ]);
+
   return {
     language,
     contactId: contactId ?? null,
     displayId: displayId ?? null,
     // A create always dispatches `responseCreated`.
     firesPipeline: true,
-    countsTowardMeteredResponses: await withoutFailing(() => wouldMeter(organizationId), false, {
-      requestId,
-      context: "metering",
-    }),
-    quotas: await withoutFailing(() => quotaEffects({ surveyId: survey.id, response }), [], {
-      requestId,
-      context: "quotas",
-    }),
+    countsTowardMeteredResponses,
+    quotas,
   };
 }
 
