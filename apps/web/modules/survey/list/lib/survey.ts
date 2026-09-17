@@ -9,7 +9,10 @@ import {
   linkedToDesiredEmbeddedFields,
   toLegacyEmbeddedFields,
 } from "@formbricks/types/embedded-data-mapping";
-import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
+import {
+  type TLinkedEmbeddedField,
+  deriveLegacyEmbeddedData,
+} from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
@@ -238,10 +241,22 @@ export const copySurveyToOtherWorkspace = async (
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
     const t = await getTranslate();
 
-    const copiedEmbeddedFields = await planCopiedEmbeddedFields(embeddedDataLinks, {
-      isSameWorkspace,
-      targetWorkspaceId: targetWorkspace.id,
-    });
+    // **Zero rows is "not reconciled yet", not "no fields."** The backfill skips a survey whose
+    // legacy columns it cannot map, and such a survey keeps resolving from them until its next save.
+    // Planning from its empty relation would hand the copy an empty plan, and the derived columns
+    // below would then write `variables: []` / `fieldIds: []` — copying the survey by dropping every
+    // field it declares. The columns answer for it instead, exactly as every reader still does.
+    //
+    // No library lookup is skipped by taking this branch: a survey the backfill skipped has no links
+    // to begin with, so `deriveLegacyEmbeddedData` producing only local fields (`key: null`) is what
+    // the planner would have concluded for each of them anyway.
+    const copiedEmbeddedFields =
+      embeddedDataLinks.length > 0
+        ? await planCopiedEmbeddedFields(embeddedDataLinks, {
+            isSameWorkspace,
+            targetWorkspaceId: targetWorkspace.id,
+          })
+        : deriveLegacyEmbeddedData(existingSurvey);
     // Derived from the plan rather than cloned from the source, so a localized shared field lands in
     // the columns under the same name the copy's row holds.
     const copiedLegacyColumns = toLegacyEmbeddedFields(

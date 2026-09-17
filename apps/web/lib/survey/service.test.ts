@@ -380,7 +380,13 @@ describe("Tests for updateSurvey", () => {
       // workspace/organization on update.
       expect(updateArg?.data).not.toHaveProperty("workspaceId");
       expect(updateArg?.data).not.toHaveProperty("id");
-      expect(updateArg?.where).toEqual({ id: updateSurveyInput.id });
+      // …and the `where` carries the tenant anchor rather than the id alone, so the write is scoped
+      // by workspace the way every other query in this file is. The value is the stored survey's,
+      // never the payload's — that is what the two assertions above keep true.
+      expect(updateArg?.where).toEqual({
+        id: updateSurveyInput.id,
+        workspaceId: mockSurveyOutput.workspaceId,
+      });
     });
 
     // Note: Language handling tests (for languages.length > 0 fix) are covered in

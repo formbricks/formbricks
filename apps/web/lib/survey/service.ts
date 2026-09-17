@@ -761,7 +761,15 @@ export const updateSurveyInternal = async (
       async (tx) => {
         // Narrow select: what this update returns would describe the survey before the reconcile
         // below, and the re-read at the end of the transaction is what the caller gets instead.
-        await tx.survey.update({ where: { id: surveyId }, data, select: { id: true } });
+        // Scoped by workspace as well as id, per the repo's data-access rule. `Survey.id` is globally
+        // unique and every caller authorizes the workspace before reaching here, so this is the rule
+        // rather than a bypass being closed — the predicate is what keeps that true if a future
+        // caller forgets.
+        await tx.survey.update({
+          where: { id: surveyId, workspaceId: currentSurvey.workspaceId },
+          data,
+          select: { id: true },
+        });
 
         // ENG-1978: write the saved fields into the EmbeddedData tables in the same transaction, so a
         // survey never commits without them. ENG-2412: from the PAYLOAD, which is what makes the rows
@@ -792,7 +800,10 @@ export const updateSurveyInternal = async (
         // same select rather than a patch of the object in hand: this value reaches
         // `survey-menu-bar.tsx`, whose change detection deep-compares it against the editor's working
         // copy and short-circuits on differing key counts, so the key shape must be identical.
-        return tx.survey.findUniqueOrThrow({ where: { id: surveyId }, select: selectSurvey });
+        return tx.survey.findUniqueOrThrow({
+          where: { id: surveyId, workspaceId: currentSurvey.workspaceId },
+          select: selectSurvey,
+        });
       },
       // Prisma's default interactive-transaction ceiling is 5s, which the write above can plausibly
       // approach on a large survey: it rewrites blocks, follow-ups, triggers and languages, then reads

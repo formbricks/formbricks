@@ -409,6 +409,26 @@ describe("copySurveyToOtherWorkspace", () => {
     ]);
   });
 
+  test("copies a backfill-skipped survey's fields from its legacy columns", async () => {
+    // The backfill skips a survey whose legacy columns it cannot map, and that survey keeps
+    // resolving from them until its next save. Planning the copy off its empty relation would give
+    // the duplicate no fields at all — the columns answer for it instead.
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({
+      ...mockExistingSurveyDetails,
+      variables: [{ id: "var1", name: "Var One", type: "text", value: "" }],
+      hiddenFields: { enabled: true, fieldIds: ["hf1"] },
+      embeddedDataLinks: [],
+    } as any);
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+    const links = vi
+      .mocked(prisma.surveyEmbeddedData.create)
+      .mock.calls.map(([args]) => (args as { data: { storageKey: string } }).data.storageKey);
+
+    expect(links).toEqual(["var1", "hf1"]);
+  });
+
   describe("a shared field, on copy (ENG-3228)", () => {
     // A shared field is a link to a workspace-owned definition, so what a copy does with it depends
     // on where the copy lands. Definitions never cross a workspace boundary.
