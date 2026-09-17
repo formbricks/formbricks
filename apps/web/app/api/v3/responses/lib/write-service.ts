@@ -2,8 +2,8 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type {
   TResponse,
   TResponseData,
