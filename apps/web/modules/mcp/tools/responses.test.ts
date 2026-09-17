@@ -19,10 +19,22 @@ import {
   ZMcpResponseValidationOutput,
 } from "./response-schemas";
 import {
+  batchResourceKey,
   buildCountResponsesSearchParams,
   buildListResponsesSearchParams,
   registerResponseTools,
 } from "./responses";
+
+/**
+ * Restore the real hashing.
+ *
+ * `vitestSetup.ts` stubs `createHash` globally to return the literal `"fake-hash"` — harmless for the
+ * license checks it was added for, and silently fatal here: the batch confirmation is bound to a
+ * digest of the id set, so under the stub every set hashes alike and the binding compares equal no
+ * matter which responses the retry names. The guard would be inert and this file would still be green.
+ */
+vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
+vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
 
 vi.mock("@/app/api/v3/responses/lib/operations", () => ({
   batchDeleteV3Responses: vi.fn(),
@@ -97,6 +109,9 @@ const call = async (name: string, input: unknown, ctx = callContext()) => {
 };
 
 beforeEach(() => {
+  // Call history, not just implementations: several tests assert an operation was NOT reached, and
+  // without this they would read a previous test's call as their own.
+  vi.clearAllMocks();
   vi.mocked(listV3Responses).mockResolvedValue(successResponse({ data: [] }, { requestId: "req" }));
   vi.mocked(countV3ResponsesOperation).mockResolvedValue(
     successResponse({ count: 0, relation: "eq" }, { requestId: "req" })
@@ -395,7 +410,44 @@ describe("delete confirmation", () => {
         inputResponses: { confirm: { action: "accept", content: { confirm: true } } },
         requestState: () => ({
           tool: "batch_delete_responses",
-          resourceId: `${WORKSPACE_ID}:${ids.join(",")}`,
+          resourceId: batchResourceKey(WORKSPACE_ID, ids),
+        }),
+      })
+    );
+
+    expect(batchDeleteV3Responses).not.toHaveBeenCalled();
+  });
+
+  test("the batch confirmation is accepted for the exact set it was minted for", async () => {
+    const ids = ["clrs000000000000000000001", "clrs000000000000000000002"];
+
+    await call(
+      "batch_delete_responses",
+      { workspaceId: WORKSPACE_ID, ids },
+      callContext({
+        inputResponses: { confirm: { action: "accept", content: { confirm: true } } },
+        requestState: () => ({
+          tool: "batch_delete_responses",
+          resourceId: batchResourceKey(WORKSPACE_ID, ids),
+        }),
+      })
+    );
+
+    expect(batchDeleteV3Responses).toHaveBeenCalledWith(expect.objectContaining({ ids }));
+  });
+
+  /** Order is part of the binding, so an edited list is asked about again rather than assumed. */
+  test("a reordered set is not the set that was confirmed", async () => {
+    const ids = ["clrs000000000000000000001", "clrs000000000000000000002"];
+
+    await call(
+      "batch_delete_responses",
+      { workspaceId: WORKSPACE_ID, ids: [...ids].reverse() },
+      callContext({
+        inputResponses: { confirm: { action: "accept", content: { confirm: true } } },
+        requestState: () => ({
+          tool: "batch_delete_responses",
+          resourceId: batchResourceKey(WORKSPACE_ID, ids),
         }),
       })
     );
