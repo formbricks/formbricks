@@ -8,7 +8,6 @@ import {
   createFeedbackRecordsGatewayToken,
   createGatewayServiceToken,
   createInviteToken,
-  createSsoRelinkIntent,
   createToken,
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
@@ -16,7 +15,6 @@ import {
   verifyFeedbackRecordsGatewayToken,
   verifyGatewayServiceToken,
   verifyInviteToken,
-  verifySsoRelinkIntent,
   verifyToken,
   verifyTokenForLinkSurvey,
 } from "./jwt";
@@ -1238,53 +1236,6 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
             purpose: "email_verification",
           })
         );
-      });
-
-      test("round-trips SSO relink intents without losing callback state", () => {
-        const intent = createSsoRelinkIntent({
-          userId: mockUser.id,
-          email: mockUser.email,
-          provider: "google",
-          providerAccountId: "provider-123",
-          callbackUrl: "http://localhost:3000/invite?token=invite-token",
-        });
-
-        expect(verifySsoRelinkIntent(intent)).toEqual({
-          userId: mockUser.id,
-          email: mockUser.email,
-          provider: "google",
-          providerAccountId: "provider-123",
-          callbackUrl: "http://localhost:3000/invite?token=invite-token",
-        });
-      });
-
-      test("rejects expired SSO relink intents", () => {
-        const expiredIntent = jwt.sign(
-          {
-            userId: crypto.symmetricEncrypt(mockUser.id, TEST_ENCRYPTION_KEY),
-            email: crypto.symmetricEncrypt(mockUser.email, TEST_ENCRYPTION_KEY),
-            provider: "google",
-            providerAccountId: crypto.symmetricEncrypt("provider-123", TEST_ENCRYPTION_KEY),
-            callbackUrl: crypto.symmetricEncrypt("http://localhost:3000", TEST_ENCRYPTION_KEY),
-            exp: Math.floor(Date.now() / 1000) - 3600,
-          },
-          TEST_NEXTAUTH_SECRET
-        );
-
-        expect(() => verifySsoRelinkIntent(expiredIntent)).toThrow();
-      });
-
-      test("rejects tampered SSO relink intents", () => {
-        const intent = createSsoRelinkIntent({
-          userId: mockUser.id,
-          email: mockUser.email,
-          provider: "google",
-          providerAccountId: "provider-123",
-          callbackUrl: "http://localhost:3000",
-        });
-
-        const tamperedIntent = `${intent.slice(0, -1)}x`;
-        expect(() => verifySsoRelinkIntent(tamperedIntent)).toThrow();
       });
     });
   });

@@ -3,7 +3,8 @@ import * as Sentry from "@sentry/nextjs";
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { APIError } from "better-auth/api";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { genericOAuth } from "better-auth/plugins/generic-oauth";
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
@@ -21,6 +22,7 @@ import {
 } from "./better-auth-observability";
 import { runWithBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
+import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -831,6 +833,26 @@ describe("recordSsoCallbackOutcome (ENG-2551)", () => {
     expect(contextOf()).toMatchObject({ ssoCallbackReason: "other" });
   });
 
+  /**
+   * ENG-2882. The provisioning gate's reject reasons reach this field as the `?error=` code Better
+   * Auth redirects with, and before this they were absent from the allow-list, so the entire class —
+   * ~36 rejected SSO sign-ups a day — logged as `other`. That is indistinguishable from an outsider
+   * probing the callback with a junk `error`, and it is what made "are these rejections correct?"
+   * unanswerable: a personal-email block working exactly as designed and a misconfigured instance
+   * refusing every new user produced the same log line.
+   *
+   * Driven off the exported list rather than a copy, so a reason added to the gate without being
+   * classified fails here instead of silently rejoining the `other` bucket.
+   */
+  test.each(SSO_PROVISIONING_REJECT_REASONS)("records the provisioning reject reason %s", (reason) => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/google",
+      redirect(`https://app.test/auth/login?error=${reason}`)
+    );
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "failure", ssoCallbackReason: reason });
+  });
+
   test.each([
     ["Better Auth's own callback code", "unable_to_get_user_info"],
     ["a StateError code", "state_mismatch"],
@@ -999,4 +1021,149 @@ describe("recordSsoCallbackOutcome (ENG-2551)", () => {
     expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "failure", ssoCallbackReason: reason });
     expect(contextLoggerMock.warn).toHaveBeenCalledWith("SSO callback failed");
   });
+});
+
+/**
+ * ENG-2882 contract: a provisioning rejection, end to end through the real library.
+ *
+ * The allow-list test above proves the recorder labels a reason once it arrives in the URL. What it
+ * cannot prove is that the reason arrives at all, and that link is the one this whole defect is made
+ * of: on 5.4.x the gate rejected by returning `false`, Better Auth's `createUser` resolved to `null`,
+ * and `link-account.mjs` dereferenced it — so the browser landed on a generic `unable_to_create_user`
+ * and the reason never left the server. The throw that replaced it only works because
+ * `link-account.mjs` rethrows an `APIError` and `callback.mjs` turns one carrying a `code` into
+ * `?error=<code>`. Both are Better Auth internals with no test of ours behind them.
+ *
+ * So this drives the real thing: a real `betterAuth` callback, a hook that throws exactly what the
+ * gate throws, and the real recorder on the real `Response`. A Better Auth upgrade that stops
+ * propagating the code — or starts swallowing it again — fails here rather than in production.
+ * Endpoints are configured explicitly rather than by discovery: with no `jwks_uri` the userinfo
+ * branch runs, so the stub needs no key material.
+ *
+ * The IdP is a `fetch` stub rather than a listening socket. `betterFetch` falls back to
+ * `globalThis.fetch`, so stubbing it intercepts the token and userinfo calls while leaving every
+ * Better Auth code path real — which is the part under test. Nothing here binds a port, and an
+ * unexpected outbound URL throws rather than escaping to the network.
+ */
+describe("recordSsoCallbackOutcome — a real gate rejection through Better Auth (ENG-2882 contract)", () => {
+  const BASE_URL = "http://localhost:3000";
+  const IDP_ORIGIN = "https://stub-idp.test";
+  let subjectCounter = 0;
+
+  beforeAll(() => {
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL): Promise<Response> => {
+      const url = new URL(typeof input === "string" ? input : input.toString());
+      const json = (body: unknown): Response =>
+        new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } });
+
+      if (url.origin === IDP_ORIGIN && url.pathname === "/token") {
+        return json({ access_token: "stub-access-token", token_type: "bearer" });
+      }
+      if (url.origin === IDP_ORIGIN && url.pathname === "/userinfo") {
+        subjectCounter += 1;
+        // `id` as well as `sub`: on the userinfo branch genericOAuth maps email/name but not sub->id,
+        // and `accountSubject` then resolves the string "undefined" and fails the callback before it
+        // ever reaches the hook. Fresh per call — reusing a subject signs into the first account.
+        return json({
+          sub: `stub-subject-${subjectCounter}`,
+          id: `stub-subject-${subjectCounter}`,
+          email: `rejected-${subjectCounter}@example.com`,
+          email_verified: true,
+          name: "Rejected User",
+        });
+      }
+      // Loud rather than silent: a Better Auth upgrade that starts calling something else here would
+      // otherwise reach the real network, or fail in a way that reads like a broken assertion.
+      throw new Error(`Unexpected outbound request in the ENG-2882 contract test: ${url.href}`);
+    });
+  });
+
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /** The context the recorder logged with. Local: the helper of the same name is scoped elsewhere. */
+  const loggedContext = () => vi.mocked(logger.withContext).mock.calls[0]?.[0];
+
+  const buildAuth = (reason: string) =>
+    betterAuth({
+      baseURL: BASE_URL,
+      secret: "eng2882-contract-secret-eng2882-contract",
+      database: memoryAdapter({ user: [], session: [], account: [], verification: [] }),
+      databaseHooks: {
+        user: {
+          create: {
+            // Byte-for-byte what the gate's reject branch throws (better-auth-hooks.ts).
+            before: async () => {
+              throw new APIError("FORBIDDEN", {
+                message: "SSO sign-up was rejected by the instance's provisioning policy.",
+                code: reason,
+              });
+            },
+          },
+        },
+      },
+      plugins: [
+        genericOAuth({
+          config: [
+            {
+              providerId: "openid",
+              clientId: "contract-test",
+              clientSecret: "contract-test",
+              authorizationUrl: `${IDP_ORIGIN}/authorize`,
+              tokenUrl: `${IDP_ORIGIN}/token`,
+              userInfoUrl: `${IDP_ORIGIN}/userinfo`,
+              accountIssuer: IDP_ORIGIN,
+              scopes: ["openid", "email", "profile"],
+            },
+          ],
+        }),
+      ],
+    });
+
+  /** Runs a full sign-in → callback, carrying the state cookie the callback validates against. */
+  const rejectedCallback = async (reason: string): Promise<Response> => {
+    const auth = buildAuth(reason);
+    const signIn = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/sign-in/social`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ provider: "openid", callbackURL: "/", errorCallbackURL: "/auth/login" }),
+      })
+    );
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((entry) => entry.split(";")[0])
+      .join("; ");
+    const { url } = (await signIn.json()) as { url: string };
+    const state = new URL(url).searchParams.get("state");
+
+    return auth.handler(
+      new Request(`${BASE_URL}/api/auth/callback/openid?code=stub-code&state=${state}`, {
+        headers: { cookie },
+      })
+    );
+  };
+
+  test.each(SSO_PROVISIONING_REJECT_REASONS)(
+    "carries %s out of the callback and records it",
+    async (reason) => {
+      const response = await rejectedCallback(reason);
+
+      // The reason reached the browser rather than being flattened to `unable_to_create_user`.
+      expect(response.headers.get("location")).toContain(`error=${reason}`);
+
+      recordSsoCallbackOutcome(`${BASE_URL}/api/auth/callback/openid?code=stub-code`, response);
+
+      expect(loggedContext()).toMatchObject({
+        ssoCallbackOutcome: "failure",
+        ssoProvider: "openid",
+        ssoCallbackReason: reason,
+      });
+    }
+  );
 });

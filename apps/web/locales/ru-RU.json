@@ -107,6 +107,8 @@
         "offline_access": "Keep access with refresh tokens",
         "openid": "Identify you with OpenID Connect",
         "profile": "View your profile",
+        "responses_read": "Читать ответы на опросы",
+        "responses_write": "Создавать, обновлять и удалять ответы на опросы",
         "surveys_read": "Read surveys",
         "surveys_write": "Create, update, and delete surveys",
         "workflows_read": "Read workflows",
