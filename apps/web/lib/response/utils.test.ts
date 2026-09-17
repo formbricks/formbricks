@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import * as xlsx from "xlsx";
 import { Prisma } from "@formbricks/database/prisma";
 import {
   type TEmbeddedValueResponse,
@@ -8,6 +9,7 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { convertToCsv, convertToXlsxBuffer } from "@/lib/utils/file-conversion";
 import {
   calculateTtcTotal,
   extractChoiceIdsFromResponse,
@@ -1406,6 +1408,40 @@ describe("Response Utils", () => {
       expect(result[0]["Browser"]).toBe("Chrome");
       expect(result[0]["1. Question 1"]).toBe("answer1");
       expect(result[0]["person.email"]).toBe("test@example.com");
+    });
+
+    test("a computed field named `__proto__` keeps its value, and reaches both writers", async () => {
+      // `ZEmbeddedDataName` is a non-blank string, so `__proto__` is a legal variable name. On an
+      // ordinary row object, assigning that key runs Object.prototype's inherited setter instead of
+      // creating an own property, and the cell is silently lost. Asserted through the writers too,
+      // because that is where the loss shows: `{}` in CSV, no cell in XLSX.
+      //
+      // Question headlines cannot reach this — they are exported as "1. <headline>" — and neither can
+      // `person.<attribute>` or the reserved catalog. A display name used verbatim as a key is the
+      // whole exposure.
+      const protoSurvey = asRead({
+        ...mockSurvey,
+        blocks: [],
+        variables: [{ id: "v1", name: "__proto__", type: "text", value: "" }],
+      }) as TSurvey;
+      const protoResponse = { ...mockResponses[0], variables: { v1: "kept" } } as TResponse;
+
+      const result = getResponsesJson(protoSurvey, [protoResponse], [], [], [], false);
+
+      expect(Object.keys(result[0])).toContain("__proto__");
+      expect(result[0]["__proto__"]).toBe("kept");
+
+      const headers = ["Response ID", "__proto__"];
+      const csv = await convertToCsv(headers, result);
+      expect(csv).toContain("kept");
+      expect(csv).not.toContain("{}");
+
+      // Read the cell rather than `sheet_to_json`, whose rows are ordinary objects and so cannot hold
+      // a `__proto__` key either — that would test the assertion helper, not the writer.
+      const sheet = xlsx.read(convertToXlsxBuffer(headers, result), { type: "buffer" });
+      const cells = sheet.Sheets[sheet.SheetNames[0]];
+      expect(cells.B1.v).toBe("__proto__");
+      expect(cells.B2.v).toBe("kept");
     });
 
     test("reserved values are typed and projected: duration numeric, finishedAt ISO, url query redacted, absent empty", () => {
