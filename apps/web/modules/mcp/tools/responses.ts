@@ -363,16 +363,23 @@ const ZConfirmationAnswer = z.object({ confirm: z.boolean() });
 type TDeleteDecision = { kind: "confirmed" } | { kind: "ask" } | { kind: "refused"; reason: string };
 
 /**
- * A refusal shaped like the error half of the output schema, so a client that reads
+ * A refusal shaped like the error half of the output schema, so a client reading
  * `structuredContent` against the advertised schema sees the same shape it sees for a 403.
  *
- * `isError` is deliberately NOT set: nothing failed. The user was asked and said no, which is the
- * tool working correctly, and flagging it as an error invites a model to retry.
+ * **`isError` is set, although nothing malfunctioned.** The first version left it off, reasoning that
+ * a declined confirmation is the tool working correctly. That is true and beside the point: a model
+ * that reads only `isError` would take the absence as success and tell the user their response was
+ * deleted when it was not. Of the two ways to be wrong — a model that retries, or a model that
+ * reports a deletion that never happened — only one of them misleads a person about their data.
  */
 const refusal = (reason: string, requestId: string): CallToolResult => {
   const payload = { error: { status: 428, title: "Confirmation required", detail: reason, requestId } };
 
-  return { structuredContent: payload, content: [{ type: "text", text: JSON.stringify(payload) }] };
+  return {
+    isError: true,
+    structuredContent: payload,
+    content: [{ type: "text", text: JSON.stringify(payload) }],
+  };
 };
 
 /**

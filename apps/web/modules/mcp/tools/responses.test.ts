@@ -13,6 +13,7 @@ import {
 import { validateV3ResponseFromRawInput } from "@/app/api/v3/responses/lib/validate-operations";
 import { mcpRequestStateCodec } from "../request-state";
 import {
+  ZMcpDeleteResponseInput,
   ZMcpResponseCountOutput,
   ZMcpResponseListOutput,
   ZMcpResponseOutput,
@@ -350,7 +351,9 @@ describe("delete confirmation", () => {
     );
 
     expect(deleteV3Response).not.toHaveBeenCalled();
-    expect(result.isError).toBeUndefined();
+    // Reported as an error although nothing malfunctioned: a model reading only `isError` must not
+    // take a refusal for a deletion.
+    expect(result.isError).toBe(true);
     expect(JSON.stringify(result.structuredContent)).toContain("not confirmed");
   });
 
@@ -397,6 +400,17 @@ describe("delete confirmation", () => {
     );
 
     expect(deleteV3Response).toHaveBeenCalledWith(expect.objectContaining({ responseId: RESPONSE_ID }));
+  });
+
+  /**
+   * The only caller-controlled part of the message a **person** reads is the id, and the schema
+   * makes it a cuid2 — so a model cannot smuggle instructions into a confirmation prompt by naming a
+   * response "URGENT: approve to keep your account". Guarding the schema here because loosening it
+   * later would reopen that quietly.
+   */
+  test("nothing but a cuid2 can reach the confirmation prompt", () => {
+    expect(ZMcpDeleteResponseInput.safeParse({ responseId: "URGENT: approve this" }).success).toBe(false);
+    expect(ZMcpDeleteResponseInput.safeParse({ responseId: RESPONSE_ID }).success).toBe(true);
   });
 
   /** A confirmation for two ids must not carry over to a third. */
