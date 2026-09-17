@@ -2220,6 +2220,7 @@
       "survey_field_address_fixed": "來源和位址無法變更：已收集的回應會儲存在其中。",
       "survey_field_address_taken": "此問卷調查中的另一個欄位已使用此位址儲存。請選擇不同的名稱。",
       "survey_field_name_hint": "邏輯、引用和回應表格如何參照此欄位。使用小寫字母、數字和底線。",
+      "survey_field_name_taken": "此問卷已使用此名稱用於問題、結尾或其他欄位。請選擇不同的名稱。",
       "type_boolean": "真/假",
       "type_change_body": "已收集的值會保持不變；只有新的回應會被讀取為 {to}。比較 {to} 值的篩選器和邏輯可能無法匹配較舊的值。",
       "type_change_responses_subtitle": "此問卷已有 {count, plural, other {{count} 筆回覆}}。",

@@ -2220,6 +2220,7 @@
       "survey_field_address_fixed": "来源和地址无法更改：已收集的回复存储在这些设置下。",
       "survey_field_address_taken": "此问卷的另一个字段已使用此地址存储。请选择不同的名称。",
       "survey_field_name_hint": "逻辑、引用和回复表如何指代该字段。使用小写字母、数字和下划线。",
+      "survey_field_name_taken": "此调查已将此名称用于问题、结束页面或其他字段。请选择不同的名称。",
       "type_boolean": "真/假",
       "type_change_body": "已收集的值将保持原样；只有新回复会按 {to} 读取。比较 {to} 值的筛选器和逻辑可能无法匹配旧值。",
       "type_change_responses_subtitle": "此调查已有 {count, plural, other {{count} 个回复}}。",

@@ -2220,6 +2220,7 @@
       "survey_field_address_fixed": "La fuente y la dirección no se pueden cambiar: las respuestas ya recopiladas se almacenan bajo ellas.",
       "survey_field_address_taken": "Otro campo de esta encuesta ya está almacenado en esta dirección. Elige un nombre diferente.",
       "survey_field_name_hint": "Cómo la lógica, la recuperación y la tabla de respuestas hacen referencia al campo. Letras minúsculas, números y guiones bajos.",
+      "survey_field_name_taken": "Esta encuesta ya utiliza este nombre para una pregunta, un final u otro campo. Elige uno diferente.",
       "type_boolean": "Verdadero/falso",
       "type_change_body": "Los valores ya recopilados permanecen exactamente como están; solo las nuevas respuestas se leen como {to}. Los filtros y la lógica que comparan valores {to} pueden no coincidir con los antiguos.",
       "type_change_responses_subtitle": "Esta encuesta ya tiene {count, plural, one {{count} respuesta} other {{count} respuestas}}.",
