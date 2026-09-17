@@ -55,8 +55,10 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
     warning recommending a longer one, which you can act on whenever a forced sign-out is acceptable.
   </Warning>
 
-  Formbricks now refuses to start when neither variable has a value, rather than starting and then
-  failing on the first invite or verification link it tries to send.
+  Formbricks now refuses to start when neither variable has a value. If your instance set neither — it
+  could still start before this release, and only invites and verification links failed — generate a
+  secret before upgrading. Note that doing so **signs every current user out**: their cookies were
+  signed with a fallback value, not with a secret of yours.
 
 ## v5.4
 

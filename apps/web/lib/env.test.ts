@@ -729,13 +729,54 @@ describe("env", () => {
       expect(env.BETTER_AUTH_SECRET).toBe(secret);
     });
 
-    test("accepts a secret shorter than 32 characters", async () => {
-      // Deliberately no floor: an operator renaming a shorter legacy secret must not be forced to
-      // change its value, which would invalidate every session and outstanding token. Warned instead.
+    test("parses a short secret — the floor is a runtime gate, not a schema rule", async () => {
+      // Kept out of the schema so `next build` and CLI imports still work with no secrets in scope.
       setTestEnv({ BETTER_AUTH_SECRET: "short-secret" });
       const { env } = await import("./env");
 
       expect(env.BETTER_AUTH_SECRET).toBe("short-secret");
+    });
+
+    describe("length floor", () => {
+      const SHORT = "short-secret";
+
+      test("refuses a short secret on a fresh install (BETTER_AUTH_SECRET alone)", async () => {
+        // No migration constraint to protect here, and Better Auth's own sub-32 check is only a warning,
+        // so this is the last hard guard before those characters become the HMAC key for everything.
+        setTestEnv({ BETTER_AUTH_SECRET: SHORT });
+        const { assertAuthRuntimeConfiguration } = await import("./env");
+        const log = vi.spyOn(console, "error").mockImplementation(() => {});
+        try {
+          expect(assertAuthRuntimeConfiguration).toThrow("must be at least 32 characters");
+          // Points at the escape hatch rather than just refusing.
+          expect(log.mock.calls[0][0]).toContain("NEXTAUTH_SECRET");
+        } finally {
+          log.mockRestore();
+        }
+      });
+
+      test("accepts a short secret mid-rename (NEXTAUTH_SECRET also set)", async () => {
+        // The shape this ticket exists to support: the legacy value copied onto the new name. Forcing a
+        // change here would sign everyone out and void outstanding invite and verification links.
+        setTestEnv({ BETTER_AUTH_SECRET: SHORT, NEXTAUTH_SECRET: SHORT });
+        const { assertAuthRuntimeConfiguration } = await import("./env");
+
+        expect(assertAuthRuntimeConfiguration).not.toThrow();
+      });
+
+      test("accepts a short legacy-only secret, which boots today with no floor", async () => {
+        setTestEnv({ NEXTAUTH_SECRET: SHORT });
+        const { assertAuthRuntimeConfiguration } = await import("./env");
+
+        expect(assertAuthRuntimeConfiguration).not.toThrow();
+      });
+
+      test("accepts a 32-character secret on a fresh install", async () => {
+        setTestEnv({ BETTER_AUTH_SECRET: "a".repeat(32) });
+        const { assertAuthRuntimeConfiguration } = await import("./env");
+
+        expect(assertAuthRuntimeConfiguration).not.toThrow();
+      });
     });
 
     describe("warnOnAuthSecretRisks", () => {

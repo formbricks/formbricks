@@ -323,18 +323,48 @@ type TAuthConfigurationEnv = z.infer<typeof ZAuthConfigurationEnv>;
 /** Truthiness, not `!== undefined`: a blank secret must count as missing here too. */
 const hasValue = (value: string | undefined): value is string => Boolean(value?.trim());
 
+/** The floor Better Auth itself only warns about, and the one this file used to enforce via `.min(32)`. */
+const MIN_AUTH_SECRET_LENGTH = 32;
+
 const validateAuthConfiguration = (values: TAuthConfigurationEnv, ctx: z.RefinementCtx): void => {
-  if (hasValue(values.BETTER_AUTH_SECRET) || hasValue(values.NEXTAUTH_SECRET)) {
+  const betterAuthSecret = values.BETTER_AUTH_SECRET;
+  const legacySecret = values.NEXTAUTH_SECRET;
+
+  if (!hasValue(betterAuthSecret) && !hasValue(legacySecret)) {
+    addEnvIssue(
+      ctx,
+      "BETTER_AUTH_SECRET",
+      "BETTER_AUTH_SECRET is required. Generate one with `openssl rand -hex 32`. " +
+        "(An instance that predates the rename may set NEXTAUTH_SECRET instead; either is accepted. " +
+        "AUTH_SECRET is not: Better Auth reads it, but Formbricks signs its own tokens and does not.)"
+    );
     return;
   }
 
-  addEnvIssue(
-    ctx,
-    "BETTER_AUTH_SECRET",
-    "BETTER_AUTH_SECRET is required. Generate one with `openssl rand -hex 32`. " +
-      "(An instance that predates the rename may set NEXTAUTH_SECRET instead; either is accepted. " +
-      "AUTH_SECRET is not: Better Auth reads it, but Formbricks signs its own tokens and does not.)"
-  );
+  // The length floor, kept where it still buys something and dropped only where it would trap someone.
+  //
+  // It applies when BETTER_AUTH_SECRET is the ONLY secret set — a fresh install, which has no migration
+  // constraint and would otherwise lose a guard it used to have: Better Auth's own sub-32 check is a
+  // `logger.warn` that scrolls past, and those characters become the HMAC key for session cookies and
+  // for every invite, verification, email-change and survey-PIN token.
+  //
+  // It does NOT apply when NEXTAUTH_SECRET is also set. That is the rename-in-progress shape this
+  // ticket exists to support: an operator copying a shorter legacy secret onto the new name must not be
+  // forced to change its value, because changing it signs everyone out and voids outstanding links.
+  // A legacy-only instance is likewise left alone — it boots today with no floor at all.
+  if (
+    hasValue(betterAuthSecret) &&
+    !hasValue(legacySecret) &&
+    betterAuthSecret.length < MIN_AUTH_SECRET_LENGTH
+  ) {
+    addEnvIssue(
+      ctx,
+      "BETTER_AUTH_SECRET",
+      `BETTER_AUTH_SECRET must be at least ${MIN_AUTH_SECRET_LENGTH} characters. ` +
+        "Generate one with `openssl rand -hex 32`. (Renaming a shorter secret from an older instance? " +
+        "Keep NEXTAUTH_SECRET set alongside it and the existing value is accepted as-is.)"
+    );
+  }
 };
 
 const parsedEnv = createEnv({
