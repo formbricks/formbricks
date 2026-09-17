@@ -994,14 +994,23 @@ export const createSurvey = async (
     assertValidNewDeclaredFields({ existing: {}, incoming: parsedSurveyBody });
 
     // ENG-3228: same derivation as the update path — a payload that declares its fields as rows owns
-    // both columns, which are written from the rows rather than from whatever arrived beside them.
-    // Nothing to carry `enabled` over from on a create, so it turns on exactly when the survey has an
-    // ingested field.
-    const derivedColumns =
-      embeddedFields !== undefined
-        ? toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(embeddedFields))
-        : undefined;
-    if (derivedColumns) assertDerivedLegacyColumnsAreStorable(derivedColumns);
+    // both columns, which are written from the rows rather than from whatever arrived beside them,
+    // and a shared entry is canonicalized from its library row first so the columns cannot describe
+    // it differently from the row they are derived beside. Nothing to carry `enabled` over from on a
+    // create, so it turns on exactly when the survey has an ingested field.
+    //
+    // `reconcileEmbeddedData` re-runs the link refusals inside the transaction below, but by then
+    // these columns are already built, so the resolve has to happen out here too — and doing it
+    // before the transaction turns a bad link into a 400 rather than a rolled-back create.
+    let derivedColumns: ReturnType<typeof toLegacyEmbeddedFields> | undefined;
+    if (embeddedFields !== undefined) {
+      const desired = await assertLinkableEmbeddedFields(prisma, {
+        workspaceId: parsedWorkspaceId,
+        desired: linkedToDesiredEmbeddedFields(embeddedFields),
+      });
+      derivedColumns = toLegacyEmbeddedFields(desired);
+      assertDerivedLegacyColumnsAreStorable(derivedColumns);
+    }
 
     // An app survey can never be shown without a trigger, so block creating one directly in a
     // non-draft status with zero triggers (mirrors the editor's publish guard).

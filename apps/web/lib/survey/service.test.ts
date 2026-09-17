@@ -1495,6 +1495,56 @@ describe("Tests for createSurvey", () => {
       expect(createArg.data).not.toHaveProperty("embeddedFields");
     });
 
+    test("a shared field's columns come from the library row on create, not from the payload", async () => {
+      // The create path derives the legacy columns before the transaction, so it has to resolve the
+      // link itself — `reconcileEmbeddedData` re-checks it inside, but the columns are built by then.
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      // Answers both calls: this path resolves the link before the transaction, and `reconcileEmbeddedData`
+      // re-checks it inside.
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([
+        {
+          id: "clx000000000000000000009",
+          key: "plan_tier",
+          source: "computed",
+          name: "Plan tier",
+          dataType: "number",
+          defaultValue: 7,
+          locked: true,
+        },
+      ] as never);
+      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput, embeddedDataLinks: [] } as never);
+      prisma.survey.findUniqueOrThrow.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        embeddedDataLinks: [],
+      } as never);
+
+      await createSurvey(mockWorkspaceId, {
+        ...mockCreateSurveyInput,
+        embeddedFields: [
+          {
+            field: {
+              id: "clx000000000000000000009",
+              // Every one of these disagrees with the row above, and none of it survives.
+              key: "not_the_rows_key",
+              name: "Not the row's name",
+              source: "computed",
+              dataType: "string",
+              defaultValue: "made up",
+              locked: false,
+            },
+            link: { storageKey: "clx000000000000000000001" },
+          },
+        ],
+      } as never);
+
+      const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
+
+      // `legacyComputedName` takes the library key, `toLegacyVariable` the library type and default.
+      expect(createArg.data.variables).toEqual([
+        { id: "clx000000000000000000001", name: "plan_tier", type: "number", value: 7 },
+      ]);
+    });
+
     test("strips archivedAt from a create payload so a caller can't create a pre-archived survey", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.create.mockResolvedValueOnce({
