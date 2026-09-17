@@ -70,6 +70,11 @@ const asQuotaScreeningResponse = ({
  * decides. `wouldFill` compares the *stored* screened-in count against the limit, so it answers
  * about the quota as it stands now — a concurrent write can change it before the real create runs,
  * and no dry run can promise otherwise.
+ *
+ * One case the contract has no field for: a matched quota that is **already** at its limit screens
+ * the response *out* rather than counting it, and may end the survey. It is reported here as
+ * `wouldCount: true, wouldFill: true`, which is what those two fields mean as defined — but it is
+ * not the same situation as a quota this response fills for the first time.
  */
 const quotaEffects = async ({
   surveyId,
@@ -207,6 +212,7 @@ export async function patchEffects({
   language,
   data,
   variables,
+  ttc,
   tagsToApply,
 }: {
   survey: TV3WriteSurveyRow;
@@ -215,6 +221,7 @@ export async function patchEffects({
   language: string | null;
   data: TResponseData;
   variables: Record<string, TResponseDataValue>;
+  ttc: TResponseTtc;
   tagsToApply: string[];
 }): Promise<TV3ResponseValidationEffects> {
   const response = asQuotaScreeningResponse({
@@ -226,7 +233,7 @@ export async function patchEffects({
     language,
     data,
     variables,
-    ttc: (stored.ttc ?? {}) as TResponseTtc,
+    ttc,
     meta: (stored.meta ?? {}) as TResponseMeta,
   });
 

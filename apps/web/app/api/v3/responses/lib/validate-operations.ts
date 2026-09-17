@@ -2,7 +2,12 @@ import "server-only";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import type { TResponseData, TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
+import type {
+  TResponseData,
+  TResponseDataValue,
+  TResponseMeta,
+  TResponseTtc,
+} from "@formbricks/types/responses";
 import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
@@ -22,7 +27,7 @@ import {
 } from "./schemas";
 import { getResponseWorkspaceId, getScopedV3Response } from "./service";
 import { type TV3ResponseValidationEffects, createEffects, patchEffects } from "./validate-effects";
-import { normalizeV3Ttc } from "./write-plan";
+import { normalizeV3Ttc, totalStoredV3Ttc } from "./write-plan";
 import { collectReferenceIssues, getSurveyForV3Write } from "./write-service";
 
 type TValidateParams = {
@@ -262,10 +267,19 @@ async function validatePatch({
     return invalid("patch", references.issues, requestId);
   }
 
+  const finished = parsed.data.finished ?? stored.finished;
+
   const effects = await patchEffects({
     survey,
     stored,
-    finished: parsed.data.finished ?? stored.finished,
+    finished,
+    // `_total` is derived by the write on any patch that finishes a response, and a `reserved` quota
+    // operand on `durationSeconds` reads it. Screening the stored `ttc` instead would answer about
+    // the response as it is rather than as the patch would leave it.
+    ttc:
+      parsed.data.finished === true && !stored.finished
+        ? totalStoredV3Ttc(stored.ttc as Record<string, unknown> | undefined)
+        : ((stored.ttc ?? {}) as TResponseTtc),
     language: planned.effectiveLanguage,
     data: planned.composed.data ?? (stored.data as TResponseData) ?? {},
     variables: (planned.composed.variables ??
