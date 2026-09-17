@@ -20,9 +20,8 @@ import {
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { isDeepEqual } from "@/lib/utils/object";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { hasUnsavedSurveyChanges } from "@/modules/survey/editor/lib/unsaved-changes";
+import { hasUnsavedSurveyChanges, serverOwnedChanges } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -392,11 +391,14 @@ export const SurveyMenuBar = ({
         if (updatedSurveyResponse?.data) {
           const savedData = updatedSurveyResponse.data;
 
-          // If the segment changed on the server (e.g., private segment was deleted when
-          // switching from app to link type), update localSurvey to prevent stale segment
-          // references when publishing
-          if (!isDeepEqual(localSurveyRef.current.segment, savedData.segment)) {
-            setLocalSurvey({ ...localSurveyRef.current, segment: savedData.segment });
+          // Adopt the keys the server rewrote (ENG-3266). Without this the working copy can never
+          // match the return, so the dirty check below reports dirty on every tick and the editor
+          // saves every ten seconds with no user edit behind it. Guarded on the working copy still
+          // being the object that was sent: an edit made while the request was in flight is the
+          // author's, and the server's answer describes the payload from before it.
+          if (localSurveyRef.current === currentSurvey) {
+            const adopted = serverOwnedChanges(currentSurvey, savedData);
+            if (adopted) setLocalSurvey({ ...currentSurvey, ...adopted });
           }
 
           // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.

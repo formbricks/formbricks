@@ -59,3 +59,37 @@ export const hasUnsavedSurveyChanges = (
     (persisted) => persisted && isDeepEqual(local, ignoringServerOwned(persisted))
   );
 };
+
+/**
+ * The keys a save rewrites server-side, so the working copy has to adopt them back.
+ *
+ * A draft auto-save deliberately does not replace `localSurvey` with the server's return — that
+ * would re-render the editor under the author's cursor every ten seconds. It stores the return in
+ * `lastSavedSurveyRef` instead and compares against it. That works only while the return is
+ * key-for-key what was sent: any key the server rewrites is a difference the working copy can never
+ * reach on its own, so {@link hasUnsavedSurveyChanges} reports dirty on every tick and the editor
+ * saves forever, with no user edit behind it.
+ *
+ * `segment` was the first such key (a private segment the server deletes when a survey switches
+ * from app to link) and was patched in place. The Embedded Data rows added three more, and they are
+ * the reason this is a list rather than a special case: `embeddedFields` comes back from a re-read
+ * taken *after* the reconcile, carrying the row `id`, library `key`, `locked` and minted storage
+ * keys the payload could not know (ENG-3228), while `variables` and `hiddenFields` are no longer
+ * sent at all — the server derives both from those rows (`toLegacyEmbeddedFields`, ENG-2628) and
+ * the editor forwards whatever it was mounted with.
+ */
+const SERVER_OWNED_KEYS = ["segment", "embeddedFields", "variables", "hiddenFields"] as const;
+
+/**
+ * The server-owned keys whose saved value differs from the working copy, or `null` when none does.
+ *
+ * Returned as a patch rather than applied here so the caller decides when it is safe to take it —
+ * adopting a value into a working copy the author has edited since the request went out would drop
+ * that edit.
+ */
+export const serverOwnedChanges = (localSurvey: TSurvey, savedSurvey: TSurvey): Partial<TSurvey> | null => {
+  const changed = SERVER_OWNED_KEYS.filter((key) => !isDeepEqual(localSurvey[key], savedSurvey[key]));
+  if (changed.length === 0) return null;
+
+  return Object.fromEntries(changed.map((key) => [key, savedSurvey[key]]));
+};
