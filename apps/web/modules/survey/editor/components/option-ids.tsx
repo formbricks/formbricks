@@ -1,30 +1,24 @@
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
-import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isExternalImageSrc } from "@/lib/image-hosts";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
 
-interface OptionIdsElementProps {
+interface OptionIdsProps {
   type: "element";
   element: TSurveyElement;
 }
 
-interface OptionIdsVariablesProps {
-  type: "variables";
-  /**
-   * The survey's computed Embedded Data fields (ENG-2628). A field is addressed everywhere — recall
-   * tokens, logic operands, stored responses — by its link's `storageKey`, which is the id this
-   * badge exists to let an author copy.
-   */
-  fields: TLinkedEmbeddedField[];
-}
-
-type OptionIdsProps = OptionIdsElementProps | OptionIdsVariablesProps;
-
-export const OptionIds = (props: OptionIdsProps) => {
+/**
+ * The ids of an element's choices, for an author who needs to address one from outside the editor.
+ *
+ * The `variables` variant went with the Variables card (ENG-1851): the Embedded Data card shows each
+ * field's storage key on the row itself, so a second list of the same ids under the card had nothing
+ * left to add.
+ */
+export const OptionIds = (props: Readonly<OptionIdsProps>) => {
   const { t } = useTranslation();
   const selectedLanguageCode = "default";
 
@@ -74,27 +68,6 @@ export const OptionIds = (props: OptionIdsProps) => {
         return <></>;
     }
   };
-
-  const renderVariableIds = (fields: TLinkedEmbeddedField[]) => {
-    return (
-      <div className="flex flex-col gap-2">
-        {fields.map(({ field, link }) => (
-          <div key={link.storageKey}>
-            <IdBadge id={link.storageKey} label={field.name} />
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  if (props.type === "variables") {
-    return (
-      <div className="space-y-3">
-        <Label className="text-sm font-medium text-gray-700">{t("common.variable_ids")}</Label>
-        <div className="w-full">{renderVariableIds(props.fields)}</div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-3">

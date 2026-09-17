@@ -26,7 +26,7 @@ import {
  * with a `key`.
  *
  * Until this existed nothing wrote such a row: `reconcileEmbeddedData` only ever creates local ones
- * (`key: null`), because the legacy Variables and Hidden Fields cards it serves know nothing about a
+ * (`key: null`), because the legacy Variables and Hidden Fields cards it served knew nothing about a
  * workspace library. Every invariant that separates a library field from a local one therefore lives
  * here rather than being re-derived by the manager page, the editor's library picker and promote.
  *

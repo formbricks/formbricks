@@ -1,16 +1,22 @@
 import { describe, expect, test } from "vitest";
 import {
   linkedToDesiredEmbeddedFields,
-  toDesiredEmbeddedFields,
   toLegacyEmbeddedFields,
 } from "@formbricks/types/embedded-data-mapping";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
+import { TValidateIdErrorCode } from "@formbricks/types/surveys/validation";
 import {
-  appendIngestedField,
+  type TLinkableSharedField,
+  cloneSharedFieldToLocal,
+  declaredEmbeddedFieldName,
+  isPromotableEmbeddedField,
+  listLinkableSharedFields,
+  mintFreeStorageKey,
+  mintStorageKey,
   removeEmbeddedField,
-  toCardVariable,
-  toCardVariables,
-  upsertCardVariable,
+  toSharedEntry,
+  upsertEmbeddedField,
+  validateEmbeddedFieldName,
 } from "./embedded-fields";
 
 const computed = (
@@ -29,7 +35,10 @@ const computed = (
   link: { storageKey },
 });
 
-const ingested = (storageKey: string): TLinkedEmbeddedField => ({
+const ingested = (
+  storageKey: string,
+  overrides: Partial<TLinkedEmbeddedField["field"]> = {}
+): TLinkedEmbeddedField => ({
   field: {
     name: storageKey,
     source: "ingested",
@@ -37,128 +46,152 @@ const ingested = (storageKey: string): TLinkedEmbeddedField => ({
     defaultValue: null,
     locked: false,
     key: null,
+    ...overrides,
   },
   link: { storageKey },
 });
 
-describe("toCardVariable", () => {
-  test("addresses the variable by its storage key and labels it with the field name", () => {
-    expect(
-      toCardVariable(computed("var_id", { name: "Score", dataType: "number", defaultValue: 7 }))
-    ).toEqual({ id: "var_id", name: "Score", type: "number", value: 7 });
+const sharedRow = (overrides: Partial<TLinkableSharedField> = {}): TLinkableSharedField => ({
+  id: "ed_shared",
+  key: "plan_tier",
+  name: "Plan tier",
+  description: null,
+  source: "ingested",
+  dataType: "string",
+  defaultValue: null,
+  locked: false,
+  ...overrides,
+});
+
+const storageKeys = (fields: readonly TLinkedEmbeddedField[]): string[] =>
+  fields.map(({ link }) => link.storageKey);
+
+describe("mintStorageKey", () => {
+  // An ingested field is filled from `?name=`, so its address has to BE the name; a computed field is
+  // addressed by the id its recall tokens carry, so its name stays free to be renamed.
+  test("addresses an ingested field by its name", () => {
+    expect(mintStorageKey("ingested", "plan")).toBe("plan");
   });
 
-  test("labels a shared field with its name, not the library key the legacy column uses", () => {
-    const shared = computed("var_id", { name: "Plan tier", key: "plan_tier", id: "ed_1" });
+  test("mints a fresh id for a computed field", () => {
+    const first = mintStorageKey("computed", "score");
 
-    expect(toCardVariable(shared).name).toBe("Plan tier");
-  });
-
-  // Same fallbacks as `toLegacyVariable`: a value that cannot be the variable's declared type has to
-  // land on what the schema's prefault would have supplied, or the card and the derived column
-  // disagree about what the author typed.
-  test("falls back to 0 / empty string when the default cannot be the declared type", () => {
-    expect(toCardVariable(computed("a", { dataType: "number", defaultValue: "nope" })).value).toBe(0);
-    expect(toCardVariable(computed("b", { dataType: "string", defaultValue: 12 })).value).toBe("");
-  });
-
-  test("reads any non-number data type as the card's text variable", () => {
-    expect(toCardVariable(computed("c", { dataType: "date", defaultValue: "2026-01-01" })).type).toBe("text");
+    expect(first).not.toBe("score");
+    expect(mintStorageKey("computed", "score")).not.toBe(first);
   });
 });
 
-describe("toCardVariables", () => {
-  test("keeps list order and drops ingested fields", () => {
-    const fields = [computed("one"), ingested("hidden"), computed("two")];
+describe("mintFreeStorageKey", () => {
+  test("refuses an address another field already holds", () => {
+    // The reachable case: a computed field's address is a cuid, which the card displays and offers to
+    // copy, and a cuid is a legal ingested field name. Nothing upstream catches it — the two declare
+    // different names, and `upsertEmbeddedField` keeps both because their sources differ — so without
+    // this the survey only fails at the save, on `@@unique([surveyId, storageKey])`.
+    expect(mintFreeStorageKey("ingested", "cm4abc123", ["cm4abc123"])).toBeNull();
+    expect(mintFreeStorageKey("ingested", "utm_source", ["utm_source"])).toBeNull();
+  });
 
-    expect(toCardVariables(fields).map((variable) => variable.id)).toEqual(["one", "two"]);
+  test("mints when the address is free", () => {
+    expect(mintFreeStorageKey("ingested", "plan", ["utm_source"])).toBe("plan");
+    expect(mintFreeStorageKey("ingested", "plan", [])).toBe("plan");
+  });
+
+  test("a computed field's fresh id is free by construction", () => {
+    const key = mintFreeStorageKey("computed", "score", ["score"]);
+
+    expect(key).not.toBeNull();
+    expect(key).not.toBe("score");
   });
 });
 
-describe("upsertCardVariable", () => {
-  test("appends a new field as local and unlocked", () => {
-    const result = upsertCardVariable([ingested("hidden")], {
-      id: "var_new",
-      name: "score",
-      type: "number",
-      value: 3,
-    });
+describe("upsertEmbeddedField", () => {
+  test("appends a field the survey does not have", () => {
+    const result = upsertEmbeddedField([ingested("hidden")], computed("var_new", { name: "score" }));
 
-    expect(result).toHaveLength(2);
-    expect(result[1]).toEqual({
-      field: {
-        name: "score",
-        source: "computed",
-        dataType: "number",
-        defaultValue: 3,
-        locked: false,
-        key: null,
-      },
-      link: { storageKey: "var_new" },
-    });
+    expect(storageKeys(result)).toEqual(["hidden", "var_new"]);
   });
 
-  // The reason this is a merge and not a replace: the card's form has no word for a shared link, a
-  // row id or a lock, so writing a whole new entry would unlink or unlock the field on the next save.
-  test("preserves id, key and locked when editing an existing field", () => {
-    const shared = computed("var_id", { name: "Plan tier", key: "plan_tier", id: "ed_1", locked: true });
-
-    const [edited] = upsertCardVariable([shared], {
-      id: "var_id",
-      name: "Plan",
-      type: "text",
-      value: "pro",
-    });
-
-    expect(edited.field).toEqual({
-      name: "Plan",
-      source: "computed",
-      dataType: "string",
-      defaultValue: "pro",
-      locked: true,
-      key: "plan_tier",
-      id: "ed_1",
-    });
-  });
-
-  test("edits in place rather than reordering", () => {
+  test("replaces in place rather than reordering", () => {
     const fields = [computed("one"), ingested("hidden"), computed("two")];
 
-    const result = upsertCardVariable(fields, { id: "one", name: "renamed", type: "text", value: "" });
+    const result = upsertEmbeddedField(fields, computed("one", { name: "renamed", dataType: "number" }));
 
-    expect(result.map(({ link }) => link.storageKey)).toEqual(["one", "hidden", "two"]);
-    expect(result[0].field.name).toBe("renamed");
+    expect(storageKeys(result)).toEqual(["one", "hidden", "two"]);
+    expect(result[0].field).toMatchObject({ name: "renamed", dataType: "number" });
   });
 
-  test("never matches an ingested field that shares the storage key", () => {
-    const result = upsertCardVariable([ingested("shadow")], {
-      id: "shadow",
-      name: "shadow",
-      type: "text",
-      value: "",
-    });
+  // The address is unique per survey, but a malformed survey must not have a computed lookup answered
+  // by an ingested field — the same pairing the reconcile identifies a field by.
+  test("never matches a field of the other source at the same address", () => {
+    const result = upsertEmbeddedField([ingested("shadow")], computed("shadow"));
 
     expect(result).toHaveLength(2);
     expect(result[0].field.source).toBe("ingested");
   });
+
+  // Promote is expressed as an upsert of a differently-owned entry at the same address, so it has to
+  // land as an edit in place rather than as a second row.
+  test("carries an ownership change at the same address", () => {
+    const result = upsertEmbeddedField(
+      [ingested("plan", { id: "ed_1" })],
+      toSharedEntry(sharedRow({ id: "ed_1" }), "plan")
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].field).toMatchObject({ key: "plan_tier", id: "ed_1", name: "Plan tier" });
+  });
 });
 
-describe("appendIngestedField", () => {
-  // Byte-for-byte the entry `toDesiredEmbeddedFields` derives from the legacy column, so the
-  // `hiddenFields.fieldIds` the server derives back is exactly what the card used to write itself.
-  test("matches what the legacy hidden-field column derives into", () => {
-    const [added] = appendIngestedField([], "source_page");
-    const [desired] = toDesiredEmbeddedFields({
-      hiddenFields: { enabled: true, fieldIds: ["source_page"] },
-    });
+describe("cloneSharedFieldToLocal", () => {
+  const linked = [computed("var_id", { key: "plan_tier", id: "ed_1", name: "Plan tier" })];
 
-    expect(linkedToDesiredEmbeddedFields([added])).toEqual([desired]);
+  test("drops the library key and the row it named, keeping the definition and the address", () => {
+    const [cloned] = cloneSharedFieldToLocal(linked, "computed", "var_id");
+
+    expect(cloned.field).toEqual({
+      key: null,
+      name: "plan_tier",
+      source: "computed",
+      dataType: "string",
+      defaultValue: "",
+      locked: false,
+    });
+    expect(cloned.link.storageKey).toBe("var_id");
   });
 
-  test("appends after the fields already declared", () => {
-    const result = appendIngestedField([computed("one")], "utm_source");
+  // The column a computed field is declared under moves with the ownership — the key while shared,
+  // the name once local — so keeping the label would declare `Plan tier` as a variable name and the
+  // survey could never be saved again.
+  test("renames a cloned computed field to the key it drops", () => {
+    const [cloned] = cloneSharedFieldToLocal(linked, "computed", "var_id");
+    const declaredName = declaredEmbeddedFieldName(cloned);
 
-    expect(result.map(({ link }) => link.storageKey)).toEqual(["one", "utm_source"]);
+    expect(
+      validateEmbeddedFieldName({
+        name: declaredName,
+        takenIds: [],
+        otherFieldNames: [],
+        previousName: null,
+      })
+    ).toBeNull();
+    expect(declaredName).toBe("plan_tier");
+  });
+
+  // An ingested field is declared by its storage key under either ownership, so nothing rides on its
+  // label and the author keeps the one the library showed them.
+  test("keeps a cloned ingested field's display name", () => {
+    const linkedIngested = [ingested("plan_tier", { key: "plan_tier", id: "ed_1", name: "Plan tier" })];
+
+    const [cloned] = cloneSharedFieldToLocal(linkedIngested, "ingested", "plan_tier");
+
+    expect(cloned.field).toMatchObject({ key: null, name: "Plan tier" });
+    expect(declaredEmbeddedFieldName(cloned)).toBe("plan_tier");
+  });
+
+  test("leaves a field the survey already owns alone", () => {
+    const local = [computed("var_id", { id: "ed_1" })];
+
+    expect(cloneSharedFieldToLocal(local, "computed", "var_id")).toEqual(local);
   });
 });
 
@@ -166,10 +199,7 @@ describe("removeEmbeddedField", () => {
   test("drops only the addressed field", () => {
     const fields = [computed("one"), ingested("hidden"), computed("two")];
 
-    expect(removeEmbeddedField(fields, "computed", "one").map(({ link }) => link.storageKey)).toEqual([
-      "hidden",
-      "two",
-    ]);
+    expect(storageKeys(removeEmbeddedField(fields, "computed", "one"))).toEqual(["hidden", "two"]);
   });
 
   test("ignores a matching storage key of the other source", () => {
@@ -183,20 +213,130 @@ describe("removeEmbeddedField", () => {
   });
 });
 
+describe("declaredEmbeddedFieldName", () => {
+  test("names a computed field by its name, and a shared one by its library key", () => {
+    expect(declaredEmbeddedFieldName(computed("var_id", { name: "score" }))).toBe("score");
+    expect(declaredEmbeddedFieldName(computed("var_id", { name: "Plan tier", key: "plan_tier" }))).toBe(
+      "plan_tier"
+    );
+  });
+
+  // An ingested field's value arrives under its storage key, which is what recall and logic address —
+  // renaming the label does not move it.
+  test("names an ingested field by its address", () => {
+    expect(declaredEmbeddedFieldName(ingested("utm_source", { name: "Campaign source" }))).toBe("utm_source");
+  });
+});
+
+describe("validateEmbeddedFieldName", () => {
+  const check = (name: string, overrides: Partial<Parameters<typeof validateEmbeddedFieldName>[0]> = {}) =>
+    validateEmbeddedFieldName({ name, takenIds: [], otherFieldNames: [], previousName: null, ...overrides });
+
+  test("accepts a safe identifier nothing else has taken", () => {
+    expect(check("plan_tier")).toBeNull();
+  });
+
+  // The whole point of delegating to `validateId`'s strict branch: `country` is lowercase with no
+  // separators, so only the reserved list refuses it — and the server refuses it for the same reason.
+  test("refuses an auto-captured field's name, in any casing", () => {
+    expect(check("country")).toEqual({ code: TValidateIdErrorCode.Reserved, field: "country" });
+    expect(check("Country")).toEqual({ code: TValidateIdErrorCode.Reserved, field: "Country" });
+  });
+
+  test("refuses a name that is not a safe identifier", () => {
+    expect(check("Plan Tier")?.code).toBe(TValidateIdErrorCode.HasSpaces);
+    expect(check("PlanTier")?.code).toBe(TValidateIdErrorCode.NotSafeIdentifier);
+    expect(check("")?.code).toBe(TValidateIdErrorCode.Empty);
+  });
+
+  test("refuses a name another field or an element already answers to", () => {
+    expect(check("score", { otherFieldNames: ["score"] })?.code).toBe(TValidateIdErrorCode.Duplicate);
+    expect(check("q1", { takenIds: ["q1"] })?.code).toBe(TValidateIdErrorCode.Duplicate);
+  });
+
+  // The editor's half of the server's grandfather rule: a survey that already declares `country` has
+  // to stay editable, or its author could never change the field's type or default.
+  test("leaves an unchanged name alone, whatever it is", () => {
+    expect(check("country", { previousName: "country" })).toBeNull();
+    expect(check("Country", { previousName: "country" })).toBeNull();
+  });
+});
+
+describe("listLinkableSharedFields", () => {
+  const library = [
+    sharedRow({ id: "ed_plan", key: "plan" }),
+    sharedRow({ id: "ed_score", key: "score", source: "computed", name: "Score" }),
+  ];
+  const linkable = (embeddedFields: TLinkedEmbeddedField[], persistedFields = embeddedFields) =>
+    listLinkableSharedFields({ library, embeddedFields, persistedFields }).map((row) => row.key);
+
+  test("offers every row a survey with no fields can take", () => {
+    expect(linkable([])).toEqual(["plan", "score"]);
+  });
+
+  test("leaves out a row the survey already links", () => {
+    expect(linkable([toSharedEntry(library[0], "plan")])).toEqual(["score"]);
+  });
+
+  // `@@unique([surveyId, storageKey])` would refuse the link: an ingested field's address IS its key.
+  test("leaves out a row whose address a local field already holds", () => {
+    expect(linkable([ingested("plan")])).toEqual(["score"]);
+  });
+
+  // Recall and logic address fields by name across both namespaces, so a survey with a local
+  // computed `plan` cannot also take the library's ingested `plan`.
+  test("leaves out a row that would put one name in both namespaces", () => {
+    expect(linkable([computed("var_id", { name: "plan" })])).toEqual(["score"]);
+  });
+
+  // Grandfathering is per-save and reads the stored survey, exactly as the server's guard does: a
+  // survey that already holds the clash keeps saving, so the row stays on offer.
+  test("still offers a row whose clash the stored survey already holds", () => {
+    const clash = [computed("var_id", { name: "plan" }), ingested("plan")];
+
+    expect(linkable(clash, clash)).toEqual(["score"]);
+  });
+});
+
+describe("isPromotableEmbeddedField", () => {
+  const stored = ingested("plan", { id: "ed_1", name: "Plan", dataType: "number", defaultValue: 7 });
+
+  test("promotes a local field whose stored row still says what the card shows", () => {
+    expect(isPromotableEmbeddedField(stored, [stored])).toBe(true);
+  });
+
+  // Promote acts on the stored row, so a field edited since the last save would be filed under the
+  // library key with its old definition.
+  test("refuses a field the editor has changed since the save", () => {
+    const renamed = { ...stored, field: { ...stored.field, name: "Plan tier" } };
+    const relocked = { ...stored, field: { ...stored.field, locked: true } };
+
+    expect(isPromotableEmbeddedField(renamed, [stored])).toBe(false);
+    expect(isPromotableEmbeddedField(relocked, [stored])).toBe(false);
+  });
+
+  test("refuses a field the survey has never saved", () => {
+    expect(isPromotableEmbeddedField(ingested("plan"), [])).toBe(false);
+  });
+
+  test("refuses a field that is already in the library", () => {
+    const shared = toSharedEntry(sharedRow({ id: "ed_1" }), "plan");
+
+    expect(isPromotableEmbeddedField(shared, [shared])).toBe(false);
+  });
+});
+
 /**
- * The property the whole refactor rests on: what the cards build derives back into the legacy
- * columns the editor used to write by hand. `enabled` is the server's, taken from the stored survey
- * and only ever turned on, so it is passed in here the way `updateSurveyInternal` passes it.
+ * The property the whole refactor rests on: what the card builds derives back into the legacy columns
+ * the editor used to write by hand. `enabled` is the server's, taken from the stored survey and only
+ * ever turned on, so it is passed in here the way `updateSurveyInternal` passes it.
  */
 describe("the columns the server derives back from a card-built list", () => {
-  test("round-trips a variable and a hidden field", () => {
-    const withVariable = upsertCardVariable([], {
-      id: "cuid_var",
-      name: "score",
-      type: "number",
-      value: 5,
-    });
-    const fields = appendIngestedField(withVariable, "source_page");
+  test("round-trips a calculated and a passed-in field", () => {
+    const fields = upsertEmbeddedField(
+      [computed("cuid_var", { name: "score", dataType: "number", defaultValue: 5 })],
+      ingested("source_page")
+    );
 
     expect(toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(fields), { enabled: false })).toEqual({
       variables: [{ id: "cuid_var", name: "score", type: "number", value: 5 }],
@@ -204,7 +344,18 @@ describe("the columns the server derives back from a card-built list", () => {
     });
   });
 
-  test("leaves `enabled` on when the last ingested field is deleted", () => {
+  // A shared computed field answers to its library key in the derived column, because a display label
+  // like `Plan tier` is not a legal variable name.
+  test("derives a linked library field under its key", () => {
+    const fields = [toSharedEntry(sharedRow({ source: "computed" }), "cuid_var")];
+
+    expect(toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(fields), { enabled: false })).toEqual({
+      variables: [{ id: "cuid_var", name: "plan_tier", type: "text", value: "" }],
+      hiddenFields: { enabled: false, fieldIds: [] },
+    });
+  });
+
+  test("leaves `enabled` on when the last ingested field is removed", () => {
     const fields = removeEmbeddedField([ingested("source_page")], "ingested", "source_page");
 
     expect(
