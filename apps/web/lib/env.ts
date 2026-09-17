@@ -673,7 +673,7 @@ export const assertAuthzedRuntimeConfiguration = (): void => {
       addEnvIssue(
         ctx,
         "AUTHZED_ENABLED",
-        "Formbricks v6 requires AUTHZED_ENABLED=true; configure SpiceDB before starting the server. See https://formbricks.com/docs/self-hosting/advanced/authzed-operations"
+        "Formbricks v6 requires AUTHZED_ENABLED=true; configure SpiceDB before starting the server. See https://formbricks.com/docs/self-hosting/configuration/authzed-operations"
       );
     }
     // Report missing credentials even when enablement was omitted.
