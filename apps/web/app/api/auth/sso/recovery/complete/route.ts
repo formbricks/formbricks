@@ -67,13 +67,17 @@ export const GET = async (request: Request) => {
   } catch (error) {
     const recoveryError = error instanceof SsoRecoveryError ? error : null;
 
-    // An intent that simply is not there is the ordinary case — this recovery already completed, or it
-    // expired — and it is not evidence of a session that should not exist. Tearing one down here would
-    // punish a second open of a link that is replayable for its whole window by design: the sign-in
-    // endpoint establishes the session, then this route would revoke it and report that the linking
-    // failed, after it had already succeeded on the first open. So leave the session alone and
-    // just redirect.
-    if (recoveryError?.failure === "intent_missing") {
+    // No usable intent came back, and that is not evidence of a session that should not exist. Five
+    // situations land here and the store cannot tell them apart (see `SsoRecoveryError.failure`):
+    // expired, already consumed, never issued, Redis unreadable, or a record that failed validation.
+    //
+    // Tearing the session down would punish the ordinary ones. A link replayable for its whole window
+    // by design gets opened twice; the sign-in endpoint establishes the session, and this route would
+    // then revoke it and report that the linking failed, after it had already succeeded on the first
+    // open. Skipping the teardown is safe for the rest too, because it only revokes the token off this
+    // caller's own cookie — the account link has already failed closed inside `completeSsoRecovery`,
+    // which threw before writing anything. So leave the session alone and just redirect.
+    if (recoveryError?.failure === "intent_unusable") {
       return NextResponse.redirect(getSsoRecoveryFailureRedirectUrl());
     }
 

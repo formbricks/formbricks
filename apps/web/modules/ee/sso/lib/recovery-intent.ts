@@ -162,7 +162,8 @@ export const readSsoRecoveryIntent = async (
   }
 
   if (result.data === null) {
-    // Logged, though a miss is an ordinary outcome (expired, or already consumed): `completeSsoRecovery`
+    // Logged, though a miss is an ordinary outcome (expired, already consumed, or never issued):
+    // `completeSsoRecovery`
     // reports the failure without a correlation id of its own, and the hash is the only handle an
     // operator can join the two lines on. Recoveries are rare, so this does not add meaningful volume.
     logger.warn({ stateIdHash }, "No SSO recovery intent stored for this state");

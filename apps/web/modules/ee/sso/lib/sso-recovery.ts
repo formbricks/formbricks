@@ -318,18 +318,33 @@ const createSsoRecoveryCompletionUrl = (stateId: string): string => {
  */
 export class SsoRecoveryError extends Error {
   /**
-   * `intent_missing` means there was nothing to act on — already completed, or expired. `rejected`
-   * means an intent WAS read and a guard turned it down.
+   * `intent_unusable` means no intent came back to act on. `rejected` means one WAS read and a guard
+   * turned it down.
    *
-   * The route needs the difference because its failure response tears the caller's session down, and
-   * only one of the two is evidence that it should. The emailed link is replayable for its window by design
-   * (`better-auth-recovery-signin.ts`), so without this a second open would sign the user in and then
-   * immediately sign them out claiming the link had failed — after it had in fact succeeded.
+   * Named for the absence rather than for a cause, because `readSsoRecoveryIntent` cannot report a
+   * cause: it answers `null` for **five** situations and its own doc says so — the record expired, a
+   * completion already consumed it, the state id never named one, Redis could not be read (an outage,
+   * or the cache facade's timeout), or the stored value failed validation. An earlier version of this
+   * comment claimed two, which is the sort of drift the next reader inherits as fact.
+   *
+   * All five skip the teardown, deliberately. The route's failure response revokes the session token
+   * off the CALLER'S OWN cookie (`route.ts` → `buildFailedRecoveryResponse`), so skipping it can never
+   * preserve anything the caller did not already hold — there is no fail-open to be had here. What
+   * fails closed is the account link itself: `completeSsoRecovery` throws before any write, on every
+   * one of the five. So the teardown is session hygiene for a recovery that was *refused*, not a
+   * safety net for one that could not be read.
+   *
+   * And the two ordinary members of the five decide it. The emailed link is replayable for its window
+   * by design (`better-auth-recovery-signin.ts`), so a second open — already consumed — must not sign
+   * the user in and then immediately sign them out claiming the link failed, after it had in fact
+   * succeeded. A transient Redis blip behaves the same way on purpose: the user keeps the session the
+   * link legitimately minted and re-opening the still-valid link just works, where a teardown would
+   * log them out mid-flow to protect nothing.
    */
-  readonly failure: "intent_missing" | "rejected";
+  readonly failure: "intent_unusable" | "rejected";
   readonly callbackUrl?: string;
 
-  constructor(failure: "intent_missing" | "rejected", callbackUrl?: string) {
+  constructor(failure: "intent_unusable" | "rejected", callbackUrl?: string) {
     super(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
     this.name = "SsoRecoveryError";
     this.failure = failure;
@@ -472,7 +487,7 @@ export const completeSsoRecovery = async ({
       provider: "unknown",
       failureReason: "invalid_or_expired_intent",
     });
-    throw new SsoRecoveryError("intent_missing");
+    throw new SsoRecoveryError("intent_unusable");
   }
 
   const provider = normalizeSsoProvider(intent.provider);

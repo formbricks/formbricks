@@ -101,7 +101,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   });
 
   test("omits the callback when the intent could not be read at all", async () => {
-    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("intent_missing"));
+    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("intent_unusable"));
 
     const response = await GET(request(`${WEBAPP_URL}/api/auth/sso/recovery/complete?state=unknown`));
 
@@ -117,7 +117,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
    * reporting that the linking had failed after it had already succeeded.
    */
   test("leaves the session alone when the intent is simply gone", async () => {
-    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("intent_missing"));
+    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("intent_unusable"));
 
     const response = await GET(
       request(
