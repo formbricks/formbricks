@@ -12,7 +12,7 @@ import type { AuthorizationEvaluator } from "./evaluator";
  * `can` returns a boolean decision; `assertCan` throws an `AuthorizationError`
  * on denial. Both evaluate today's authorization rules and change nothing about
  * who can access what — they only funnel scattered checks through one boundary.
- * SpiceDB is the sole evaluator. Product call sites stay independent of its SDK
+ * This temporary Cloud bridge uses PostgreSQL; normal v6 uses SpiceDB. Product call sites stay independent of the engine
  * and receive only Formbricks-owned decisions and typed operational failures.
  */
 

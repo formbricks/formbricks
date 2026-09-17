@@ -38,7 +38,7 @@ describe("authoritative authorization metrics", () => {
       surface: "server_action",
     });
 
-    expect(counters.get("formbricks_authzed_authorization_decisions_total")?.add).toHaveBeenCalledWith(1, {
+    expect(counters.get("formbricks_bridge_authorization_decisions_total")?.add).toHaveBeenCalledWith(1, {
       action: "survey.read",
       actor_type: "user",
       error_code: "none",
@@ -47,7 +47,7 @@ describe("authoritative authorization metrics", () => {
       surface: "server_action",
     });
     expect(
-      histograms.get("formbricks_authzed_authorization_decision_duration_seconds")?.record
+      histograms.get("formbricks_bridge_authorization_decision_duration_seconds")?.record
     ).toHaveBeenCalledWith(0.125, {
       action: "survey.read",
       actor_type: "user",
@@ -68,7 +68,7 @@ describe("authoritative authorization metrics", () => {
       surface: "unscoped",
     });
 
-    expect(counters.get("formbricks_authzed_authorization_decisions_total")?.add).toHaveBeenCalledWith(1, {
+    expect(counters.get("formbricks_bridge_authorization_decisions_total")?.add).toHaveBeenCalledWith(1, {
       action: "workspace.read",
       actor_type: "apiKey",
       error_code: "authzed_unavailable",
@@ -79,7 +79,7 @@ describe("authoritative authorization metrics", () => {
   });
 
   test("never lets a meter failure alter authorization flow", () => {
-    counters.get("formbricks_authzed_authorization_decisions_total")?.add.mockImplementationOnce(() => {
+    counters.get("formbricks_bridge_authorization_decisions_total")?.add.mockImplementationOnce(() => {
       throw new Error("exporter unavailable");
     });
 

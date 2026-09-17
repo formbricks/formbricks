@@ -27,7 +27,7 @@ import { recordAuthorizationChecksPerRequest } from "./metrics";
  * the N+1 signal that histogram exists for.
  *
  * `getAuthorizationSurface()` reports `page` for the whole render instead of `unscoped` after the first
- * helper returns, so `formbricks_authzed_authorization_decisions_total` attributes page traffic
+ * helper returns, so the authorization decision counter attributes page traffic
  * correctly.
  *
  * Outside a React request scope — scripts, unit tests, any non-RSC caller — `cache()` does not

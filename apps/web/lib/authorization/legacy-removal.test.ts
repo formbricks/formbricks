@@ -24,8 +24,34 @@ const walkRuntimeSources = (directory: string): ReadonlyArray<string> =>
     return [absolutePath];
   });
 
-describe("direct-authority architecture", () => {
-  test("does not retain a legacy evaluator or rollout selector module", () => {
+describe("temporary bridge architecture", () => {
+  test("statically uses PostgreSQL for scalar and list decisions without a runtime engine switch", () => {
+    const coordinator = readFileSync(join(WEB_ROOT, "lib/authorization/coordinator.ts"), "utf8");
+    const list = readFileSync(join(WEB_ROOT, "lib/authorization/resource-list.ts"), "utf8");
+    expect(coordinator).toContain("await bridgeEvaluator.can(");
+    expect(list).toContain("await lookupBridgeResourceIds(");
+    for (const file of ["coordinator.ts", "resource-list.ts", "bridge-evaluator.ts", "bridge-access.ts"]) {
+      const source = readFileSync(join(WEB_ROOT, "lib/authorization", file), "utf8");
+      expect(source).toContain('import "server-only"');
+      for (const forbidden of [
+        "spicedb-evaluator",
+        "getAuthzedClient",
+        "assertAuthzedProjectionFreshness",
+        "process.env",
+      ]) {
+        expect(source, file).not.toContain(forbidden);
+      }
+    }
+  });
+
+  test("leaves the SpiceDB evaluator unreachable from runtime callers", () => {
+    const callers = walkRuntimeSources(WEB_ROOT).filter((path) =>
+      /from\s+["'][^"']*spicedb-evaluator["']/.test(readFileSync(path, "utf8"))
+    );
+    expect(callers).toEqual([]);
+  });
+
+  test("does not restore the historical compatibility helpers or rollout selector", () => {
     for (const relativePath of [
       "lib/authorization/legacy-evaluator.ts",
       "lib/authorization/legacy-api-key-access.ts",

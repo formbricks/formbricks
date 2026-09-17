@@ -6,7 +6,8 @@ Approved on 2026-09-17: create the bridge from **rc.5 product code**, not by bac
 into v5. Keep legacy authorization confined to this disposable Cloud release branch. Normal v6 remains
 SpiceDB-authoritative with no fallback or engine switch.
 
-**Status: strategy recorded, branch created; runtime implementation, image build, and rehearsal pending.**
+**Status: temporary PostgreSQL decision paths implemented and locally validated; image build and
+release-compatibility rehearsal pending.**
 This document is not deployment approval or evidence that the bridge is ready.
 
 | Artifact                      | Pin / disposition                                                                             |
@@ -46,6 +47,71 @@ change bridge authorization decisions, while failed projection remains durable a
 Use separate bridge deployment/metric identity so its legacy decisions are not counted as evidence of
 SpiceDB-authoritative success. Never merge bridge runtime commits into `main`, `release/6.0`, or another
 normal product release branch. Review them as a release-artifact diff against the pinned rc.5 base.
+
+## Temporary implementation and local evidence
+
+`apps/web/lib/authorization/coordinator.ts` statically calls `bridge-evaluator.ts`; the unchanged resource-list
+interface statically calls `bridge-access.ts`. There is no environment-controlled engine selection. The
+SpiceDB evaluator remains in the pinned source for its existing tests but has no runtime caller on this branch.
+
+The private bridge rules retain the 35-action contract and rc.5 source-scope guards. Organization membership,
+team administration, API-key scopes and feedback assignments are read from PostgreSQL. Scalar user workspace
+checks and workspace discovery share one parameterized, set-based query. Its organization correlation rejects
+malformed cross-tenant team grants; billing and inactive users cannot inherit team workspace access. Dataset
+union checks use a bounded number of queries, not one query per assigned workspace. API-key lookup uses the
+existing same-organization grant resolver. Resolver failures propagate through the existing sanitized error
+contract; they do not become an empty list or an ordinary denial.
+
+Decision telemetry uses the separate meter `formbricks.bridge.authorization` and these temporary names:
+
+- `formbricks_bridge_authorization_decisions_total`
+- `formbricks_bridge_authorization_decision_duration_seconds`
+- `formbricks_bridge_authorization_checks_per_request`
+
+Projection, outbox, SDK, schema and their operational metrics are unchanged. The deployment still needs valid
+AuthZed configuration for projection, with `fully_consistent`; the decision path does not depend on SpiceDB
+availability or projection freshness. Keep `DEBUG` unset: the shared Prisma debug option logs query parameters.
+
+Local validation on 2026-09-17:
+
+| Check                                          | Evidence                                                                                                          |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Focused unit suites                            | 1,043 tests passed across authorization, AuthZed, organization/workspace services, V3 workspace discovery and MCP |
+| Real PostgreSQL checks                         | 14 passed against a disposable local PostgreSQL 17 container with the real generated Prisma client                |
+| Web typecheck and changed-file lint            | Passed with synthetic configuration; no customer credentials used                                                 |
+| Canonical schema                               | 36 relationships, 157 assertions and 6 expected relations validated; schema unchanged                             |
+| Production application and operator CLI builds | Passed with synthetic configuration and unreachable SpiceDB endpoint; existing Node/Edge warnings remain          |
+| Client bundle boundary                         | Temporary Client Component import failed with the expected `server-only` error; fixture removed                   |
+| Isolated Docker SDK/projection smoke           | Rerun passed, including restart, recovery, backfill and pruning checks; see caveat below                          |
+
+An earlier Docker smoke run failed after recovery while a production build was running concurrently. The
+subsequent isolated-project run completed successfully, but the original failure has not been root-caused.
+Do not treat this as production resilience proof: repeat under measured rehearsal load and investigate any
+recurrence before promotion. The first local build also required supplying a synthetic Better Auth secret;
+the final build used complete synthetic configuration and completed without that authentication error.
+
+The database fixture tests only the authorization tables/columns. It proves role/grant ladders, multi-team
+unions, downgrade/removal, cross-tenant rejection, actor validity and exact/aggregate dataset rules; **it is not
+proof that the full v5-to-rc.5 migration or product deployment is compatible**. Tests make the SDK and freshness
+guard unavailable and require that bridge decisions never invoke either.
+
+Rerun after building workspace dependencies, using Node 24.14.0 and repository-pinned pnpm:
+
+```bash
+pnpm --filter @formbricks/web exec vitest run \
+  lib/authorization lib/authzed lib/organization/service.test.ts lib/workspace/service.test.ts \
+  app/api/v3/workspaces app/api/v2/me modules/mcp modules/survey/list/lib/workspace.test.ts
+pnpm --filter @formbricks/web exec vitest run --config vitest.bridge.config.mts
+pnpm --filter @formbricks/web typecheck
+pnpm authzed:validate
+pnpm authzed:smoke
+pnpm --filter @formbricks/web build
+```
+
+The standalone database test creates a unique container and random localhost port with disposable credentials,
+then removes its container and volumes. It never uses the developer's database or `.env`. Unit/typecheck/build
+commands require the normal non-production environment configuration. These checks do not replace the full
+image, migration, performance, response-delivery, rollback or soak gates below.
 
 ## Migration order remains a blocking gate
 

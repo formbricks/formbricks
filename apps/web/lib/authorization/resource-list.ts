@@ -1,12 +1,10 @@
 import "server-only";
 import { performance } from "node:perf_hooks";
 import { cache as reactCache } from "react";
-import { getAuthzedClient } from "@/lib/authzed/client";
-import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
+import { lookupBridgeResourceIds } from "./bridge-access";
 import { getAuthorizationSurface, recordAuthorizationCheckIssued } from "./context";
 import type { TAuthorizationAction, TAuthorizationActor } from "./contract";
 import { recordAuthorizationDecision } from "./metrics";
-import { getSpicedbObjectType } from "./object-type";
 import { normalizeAuthorizationOperationalError } from "./operational-error";
 
 type TCurrentListResource = "organization" | "workspace";
@@ -30,24 +28,19 @@ const lookupAuthorizationResourceIds = reactCache(
     } as const;
 
     try {
-      await assertAuthzedProjectionFreshness();
-
-      const result = await getAuthzedClient().lookupResources({
-        permission,
-        resourceType: getSpicedbObjectType(resourceType),
-        subject: {
-          objectId: actorId,
-          objectType: getSpicedbObjectType(actorType),
-        },
-      });
+      const resourceIds = await lookupBridgeResourceIds(
+        { type: actorType, id: actorId },
+        resourceType,
+        permission
+      );
 
       recordAuthorizationDecision({
         ...metric,
         durationMs: performance.now() - startedAt,
         // For a list operation, an empty authorized set is the aggregate equivalent of a deny.
-        outcome: result.resourceIds.length > 0 ? "allow" : "deny",
+        outcome: resourceIds.length > 0 ? "allow" : "deny",
       });
-      return result.resourceIds;
+      return resourceIds;
     } catch (error) {
       const normalized = normalizeAuthorizationOperationalError(error, "authorization_list");
       recordAuthorizationDecision({

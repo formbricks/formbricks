@@ -30,7 +30,7 @@ vi.mock("next/server", () => ({
   after: vi.fn((callback: () => Promise<void> | void) => afterCallbacks.push(callback)),
 }));
 
-const HISTOGRAM_NAME = "formbricks_authzed_authorization_checks_per_request";
+const HISTOGRAM_NAME = "formbricks_bridge_authorization_checks_per_request";
 
 type TBuckets = Readonly<{ boundaries: number[]; counts: number[] }>;
 type THistogramValue = Readonly<{ buckets: TBuckets; count: number; sum: number }>;

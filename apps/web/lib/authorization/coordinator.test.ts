@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
+import { bridgeEvaluator } from "./bridge-evaluator";
 import { getAuthorizationSurface } from "./context";
 import { authorizationCoordinator } from "./coordinator";
 import { recordAuthorizationDecision } from "./metrics";
-import { spicedbEvaluator } from "./spicedb-evaluator";
 
 vi.mock("./context", () => ({ getAuthorizationSurface: vi.fn(() => "unscoped") }));
 vi.mock("./metrics", () => ({ recordAuthorizationDecision: vi.fn() }));
-vi.mock("./spicedb-evaluator", () => ({ spicedbEvaluator: { can: vi.fn() } }));
+vi.mock("./bridge-evaluator", () => ({ bridgeEvaluator: { can: vi.fn() } }));
 
 const actor = { type: "user", id: "user-1" } as const;
 const resource = { type: "survey", id: "survey-1" } as const;
@@ -17,12 +17,12 @@ beforeEach(() => {
 });
 
 describe("authorizationCoordinator", () => {
-  test("uses SpiceDB for an unscoped central authorization call", async () => {
-    vi.mocked(spicedbEvaluator.can).mockResolvedValue(true);
+  test("uses PostgreSQL for an unscoped central authorization call", async () => {
+    vi.mocked(bridgeEvaluator.can).mockResolvedValue(true);
 
     await expect(authorizationCoordinator.can(actor, "survey.read", resource)).resolves.toBe(true);
 
-    expect(spicedbEvaluator.can).toHaveBeenCalledExactlyOnceWith(actor, "survey.read", resource);
+    expect(bridgeEvaluator.can).toHaveBeenCalledExactlyOnceWith(actor, "survey.read", resource);
     expect(recordAuthorizationDecision).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "survey.read",
@@ -34,8 +34,8 @@ describe("authorizationCoordinator", () => {
     );
   });
 
-  test("returns a genuine SpiceDB denial", async () => {
-    vi.mocked(spicedbEvaluator.can).mockResolvedValue(false);
+  test("returns a genuine PostgreSQL denial", async () => {
+    vi.mocked(bridgeEvaluator.can).mockResolvedValue(false);
 
     await expect(authorizationCoordinator.can(actor, "survey.read", resource)).resolves.toBe(false);
     expect(recordAuthorizationDecision).toHaveBeenCalledWith(expect.objectContaining({ outcome: "deny" }));
@@ -49,7 +49,7 @@ describe("authorizationCoordinator", () => {
       operation: "check_permission",
       retryable: true,
     });
-    vi.mocked(spicedbEvaluator.can).mockRejectedValue(outage);
+    vi.mocked(bridgeEvaluator.can).mockRejectedValue(outage);
 
     const thrown = await authorizationCoordinator
       .can(actor, "survey.read", resource)
@@ -72,7 +72,7 @@ describe("authorizationCoordinator", () => {
   });
 
   test("normalizes resolver failures into a fail-closed operational error", async () => {
-    vi.mocked(spicedbEvaluator.can).mockRejectedValue(new Error("database unavailable"));
+    vi.mocked(bridgeEvaluator.can).mockRejectedValue(new Error("database unavailable"));
 
     await expect(authorizationCoordinator.can(actor, "survey.read", resource)).rejects.toMatchObject({
       attempts: 1,
@@ -84,7 +84,7 @@ describe("authorizationCoordinator", () => {
 
   test("records the active bounded request surface", async () => {
     vi.mocked(getAuthorizationSurface).mockReturnValueOnce("api_v3");
-    vi.mocked(spicedbEvaluator.can).mockResolvedValue(true);
+    vi.mocked(bridgeEvaluator.can).mockResolvedValue(true);
 
     await authorizationCoordinator.can(actor, "survey.read", resource);
 
