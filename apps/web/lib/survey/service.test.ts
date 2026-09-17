@@ -1444,6 +1444,57 @@ describe("Tests for createSurvey", () => {
       ]);
     });
 
+    test("derives the legacy columns from an embeddedFields create payload", async () => {
+      // Both create schemas dropped their `embeddedFields` omission, so `POST /api/v1/management/surveys`
+      // reaches this branch. Nothing else passed `embeddedFields` to `createSurvey`, so deleting the
+      // derive — or reverting the parsed body to the unvalidated one — used to keep the suite green.
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput, embeddedDataLinks: [] } as never);
+      prisma.survey.findUniqueOrThrow.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        embeddedDataLinks: [],
+      } as never);
+
+      await createSurvey(mockWorkspaceId, {
+        ...mockCreateSurveyInput,
+        embeddedFields: [
+          {
+            field: {
+              key: null,
+              name: "plan",
+              source: "ingested",
+              dataType: "string",
+              defaultValue: null,
+              locked: false,
+            },
+            link: { storageKey: "plan" },
+          },
+          {
+            field: {
+              key: null,
+              name: "score",
+              source: "computed",
+              dataType: "number",
+              defaultValue: "0",
+              locked: false,
+            },
+            link: { storageKey: "clx000000000000000000001" },
+          },
+        ],
+      } as never);
+
+      const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
+
+      // The rows are the whole answer; the columns are derived back off them (the dual write).
+      expect(createArg.data.hiddenFields).toMatchObject({ fieldIds: ["plan"] });
+      expect(createArg.data.variables).toEqual([
+        { id: "clx000000000000000000001", name: "score", type: "number", value: 0 },
+      ]);
+      // And never as a nested relation write: `Survey` owns `embeddedDataLinks`, so leaving the key
+      // on the payload would turn it into one.
+      expect(createArg.data).not.toHaveProperty("embeddedFields");
+    });
+
     test("strips archivedAt from a create payload so a caller can't create a pre-archived survey", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.create.mockResolvedValueOnce({

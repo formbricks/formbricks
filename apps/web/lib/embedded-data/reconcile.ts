@@ -378,9 +378,9 @@ export const reconcileEmbeddedData = async (
           surveyId,
           // This survey's links are already gone, so any link still standing belongs to another
           // survey — and deleting the row would cascade that link away, silently costing that survey
-          // a field. Nothing creates such a link today (the reconcile only ever links to rows it just
-          // created), so this guards an invariant rather than a live path; leaving an orphaned row
-          // behind is the better failure of the two.
+          // a field. Since ENG-3228 this guards a live path rather than an invariant: a shared entry
+          // links a row this survey did not create, so a second survey's link can genuinely still
+          // stand here. Leaving an orphaned row behind is the better failure of the two.
           surveyLinks: { none: {} },
         },
       });
@@ -515,7 +515,7 @@ export const assertWritableEmbeddedFields = (desired: TDesiredEmbeddedField[]): 
  * composite foreign key on `SurveyEmbeddedData` makes such a pair unrepresentable anyway, so the
  * only question is whether the caller gets a 400 naming the field or a foreign-key violation.
  */
-const assertLinkableEmbeddedFields = async (
+export const assertLinkableEmbeddedFields = async (
   tx: Prisma.TransactionClient,
   { workspaceId, desired }: { workspaceId: string; desired: TDesiredEmbeddedField[] }
 ): Promise<void> => {

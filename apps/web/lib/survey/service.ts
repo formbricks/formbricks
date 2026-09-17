@@ -35,7 +35,11 @@ import {
   ZSurveyCreateInput,
   ZSurveyHiddenFields,
 } from "@formbricks/types/surveys/types";
-import { assertWritableEmbeddedFields, reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
+import {
+  assertLinkableEmbeddedFields,
+  assertWritableEmbeddedFields,
+  reconcileEmbeddedData,
+} from "@/lib/embedded-data/reconcile";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import {
@@ -415,12 +419,30 @@ export const updateSurveyInternal = async (
       ...surveyData
     } = updatedSurvey;
 
-    // Before anything is written. The segment block below writes through `prisma`, not through the
-    // transaction further down, so a refusal raised inside `reconcileEmbeddedData` would roll the
-    // survey update back and leave that segment change committed. These refusals are pure, so
-    // spending them here costs nothing and makes the update all-or-nothing for the caller.
+    // **Every Embedded Data refusal, before anything is written.** The segment block below writes
+    // through `prisma`, not through the transaction further down, so a refusal raised later would
+    // roll the survey update back and leave that segment change committed — a save carrying a
+    // segment edit beside an unstorable field would half-apply.
+    //
+    // All four refusals are therefore spent here: the two pure ones, the workspace lookup behind the
+    // shared links, and the derived columns. The reconcile re-runs the first two inside the
+    // transaction, which is what protects its other callers; re-running them is cheap and keeps that
+    // function safe on its own.
+    let derivedLegacyColumns: ReturnType<typeof toLegacyEmbeddedFields> | undefined;
     if (embeddedFields !== undefined) {
-      assertWritableEmbeddedFields(linkedToDesiredEmbeddedFields(embeddedFields));
+      const desired = linkedToDesiredEmbeddedFields(embeddedFields);
+      assertWritableEmbeddedFields(desired);
+      await assertLinkableEmbeddedFields(prisma, { workspaceId: currentSurvey.workspaceId, desired });
+
+      // ENG-3228: when the payload declares its Embedded Data as rows, those rows are the whole
+      // answer and the legacy columns are derived back off them rather than taken from whatever
+      // `variables` / `hiddenFields` came along in the same request. The dual write continues — the
+      // columns are the rollback net until ENG-2404, and deployed SDK bundles read them off the
+      // workspace-state payload — so deriving is what keeps the two descriptions of one survey from
+      // drifting apart. `enabled` comes from the stored survey because it is a survey-level toggle
+      // with no per-field carrier. Applied to `surveyData` further down, where the write is assembled.
+      derivedLegacyColumns = toLegacyEmbeddedFields(desired, currentSurvey.hiddenFields);
+      assertDerivedLegacyColumnsAreStorable(derivedLegacyColumns);
     }
 
     // ENG-1749 sibling: the segment block below updates/deletes by segment.id directly. Ensure the
@@ -733,21 +755,10 @@ export const updateSurveyInternal = async (
     surveyData.publishOn = normalizedScheduling.publishOn;
     surveyData.closeOn = normalizedScheduling.closeOn;
 
-    // ENG-3228: when the payload declares its Embedded Data as rows, those rows are the whole
-    // answer and the legacy columns are derived back off them rather than taken from whatever
-    // `variables` / `hiddenFields` came along in the same request. The dual write continues — the
-    // columns are the rollback net until ENG-2404, and deployed SDK bundles read them off the
-    // workspace-state payload — so deriving is what keeps the two descriptions of one survey from
-    // drifting apart. `enabled` comes from the stored survey because it is a survey-level toggle
-    // with no per-field carrier.
-    if (embeddedFields !== undefined) {
-      const derivedColumns = toLegacyEmbeddedFields(
-        linkedToDesiredEmbeddedFields(embeddedFields),
-        currentSurvey.hiddenFields
-      );
-      assertDerivedLegacyColumnsAreStorable(derivedColumns);
-      surveyData.variables = derivedColumns.variables;
-      surveyData.hiddenFields = derivedColumns.hiddenFields;
+    // Derived and refused above, before the segment writes; only applied here.
+    if (derivedLegacyColumns !== undefined) {
+      surveyData.variables = derivedLegacyColumns.variables;
+      surveyData.hiddenFields = derivedLegacyColumns.hiddenFields;
     }
 
     data = {
