@@ -92,6 +92,8 @@ checksums:
     auth/oauth/scopes/offline_access: 5086c8bd3685a21f691d81d50dc0a4e0
     auth/oauth/scopes/openid: 557e91a8b41497cf95b1434aefcb72ea
     auth/oauth/scopes/profile: ea073dc28851ee1a00365047be103d50
+    auth/oauth/scopes/responses_read: 94066eaf7b1e21520764958d43f833ef
+    auth/oauth/scopes/responses_write: a331bf6eba152ba441d07fffc76db3a2
     auth/oauth/scopes/surveys_read: 8280264457fe7c3b759c82422052aed2
     auth/oauth/scopes/surveys_write: fb128cebe62dfd5685d086d706c432c2
     auth/oauth/scopes/workflows_read: b3b216cd6e77b26500068bdf7afad004

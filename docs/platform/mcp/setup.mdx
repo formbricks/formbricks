@@ -125,7 +125,8 @@ to connect again.
 Tokens are short-lived by design: an access token lasts **15 minutes** and the client refreshes it
 silently in the background for up to **30 days** (the refresh window). After that — or after you
 revoke — the client re-runs the sign-in and consent flow. Approving the write scopes
-(`surveys:write`, `workflows:write`, `feedbackRecords:write`) is re-confirmed periodically for safety.
+(`surveys:write`, `workflows:write`, `feedbackRecords:write`, `responses:write`) is re-confirmed
+periodically for safety.
 
 ## Troubleshooting
 
@@ -145,6 +146,10 @@ revoke — the client re-runs the sign-in and consent flow. Approving the write 
     The client requested a scope it isn't registered for. Reconnect from scratch so it re-registers
     with the scopes the server advertises (`surveys:read`, `surveys:write`, `workflows:read`,
     `workflows:write`, `feedbackRecords:read`, `feedbackRecords:write`, `offline_access`).
+
+    `responses:read` and `responses:write` are deliberately **not** in that list yet. They can be
+    granted, but the server does not advertise them, so a client that asks for them by name is the
+    one case where this error is expected rather than a misconfiguration.
   </Accordion>
   <Accordion title="Stuck in a consent loop / keeps asking you to sign in">
     Usually a cookie or stale-session issue. Make sure you're signed in to Formbricks in the same

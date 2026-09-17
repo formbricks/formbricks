@@ -172,7 +172,7 @@ docker compose --profile authzed-ops run --rm authzed-ops backfill
 docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
-See [AuthZed Operations](/self-hosting/advanced/authzed-operations) before applying a schema, repairing
+See [AuthZed Operations](/self-hosting/configuration/authzed-operations) before applying a schema, repairing
 relationships, upgrading SpiceDB, or restoring a backup.
 
 The bundled PostgreSQL service leaves `track_commit_timestamp` at its default `off` value, so SpiceDB reports
@@ -379,7 +379,7 @@ first release that requires the AuthZed runtime:
    ```
 
    A non-empty mismatched schema requires the reviewed `remoteDigest` as described in
-   [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6).
+   [AuthZed Operations](/self-hosting/configuration/authzed-operations#upgrade-an-existing-installation-to-v6).
 7. Only after preparation and verification exit `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
    run `docker compose up -d`. The one-click updater only checks the already-prepared graph; it does not perform
    online preparation. Keep maintenance active until authorization checks pass.
@@ -391,7 +391,7 @@ first release that requires the AuthZed runtime:
 
 After database changes, restoring the old image alone may not be safe. Remain in maintenance and either fix
 forward or restore coordinated backups with the matching v5 configuration. Never delete volumes. See the
-rollback procedure in [AuthZed Operations](/self-hosting/advanced/authzed-operations#roll-back-a-v6-upgrade).
+rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-operations#roll-back-a-v6-upgrade).
 
 <Info>
   For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.
