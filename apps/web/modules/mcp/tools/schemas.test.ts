@@ -107,9 +107,24 @@ function classifyObjectNodes(name: string, schema: z.ZodType): Walked {
   return walked;
 }
 
-const allSchemas = Object.entries({ ...surveyAndFeedbackSchemas, ...workflowSchemas }).filter(
-  (entry) => entry[1] instanceof z.ZodType
-);
+/**
+ * Every schema either module exports, as `[name, schema]`.
+ *
+ * Both imports are namespace imports, so a module is free to export something that is not a schema —
+ * `SURVEY_BLOCK_EXAMPLE` is the first to do so. The `instanceof` filter has always removed those at
+ * runtime; the predicate is what tells the compiler so. Without it the element type stays a union of
+ * every export's concrete type, and Zod 4's `ZodType` is invariant enough that such a union will not
+ * assign to the `z.ZodType` parameter below.
+ *
+ * Deliberately a predicate rather than a cast: a cast would also silence the day a genuine schema
+ * stops being a `ZodType`, which is exactly what this suite exists to notice.
+ */
+const allExports: [string, unknown][] = Object.entries({
+  ...surveyAndFeedbackSchemas,
+  ...workflowSchemas,
+});
+
+const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);
 
 /**
  * The two tools whose input embeds the shared workflow `definition`, which is still open at every level
