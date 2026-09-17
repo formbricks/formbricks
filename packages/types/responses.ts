@@ -116,16 +116,20 @@ const ZResponseFilterCriteriaDataIncludesAll = z.object({
   value: z.array(z.string()),
 });
 
-// Booleans belong to boolean-typed Embedded Data fields, whose stored values are real jsonb
-// booleans — a string "true" would never match them (ENG-1848).
+// An equality value is compared against the value as it is *stored*, so there is no boolean member:
+// a boolean-typed Embedded Data field stores the strings "true" / "false", never a jsonb boolean.
+// ZResponseDataValue has no boolean member, so `normalizeBoolean` canonicalizes onto those two
+// spellings at ingest and `coerceToEmbeddedDataType` reads them back — and neither `variables`
+// (string | number) nor `meta` can hold one either. A jsonb boolean here could therefore only ever
+// describe a condition that matches no row, which is exactly what it did (ENG-3231).
 const ZResponseFilterCriteriaDataEquals = z.object({
   op: z.literal(ZResponseFilterCondition.enum.equals),
-  value: z.union([z.string(), z.number(), z.boolean()]),
+  value: z.union([z.string(), z.number()]),
 });
 
 const ZResponseFilterCriteriaDataNotEquals = z.object({
   op: z.literal(ZResponseFilterCondition.enum.notEquals),
-  value: z.union([z.string(), z.number(), z.boolean()]),
+  value: z.union([z.string(), z.number()]),
 });
 
 const ZResponseFilterCriteriaDataAccepted = z.object({
