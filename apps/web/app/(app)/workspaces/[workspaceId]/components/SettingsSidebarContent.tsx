@@ -8,6 +8,7 @@ import {
   ChevronDownIcon,
   CodeXmlIcon,
   CreditCardIcon,
+  DatabaseIcon,
   FoldersIcon,
   GlobeIcon,
   KeyIcon,
@@ -350,6 +351,14 @@ export const SettingsSidebarContent = ({
       label: t("common.tags"),
       href: workspaceSettingsPath(workspaceId, "tags"),
       icon: <TagIcon className={iconClassName} />,
+      disabled: isBilling,
+    },
+    // Last in the section, next to the other two lists a survey reuses: User Actions and Tags.
+    {
+      id: "embedded-data",
+      label: t("common.embedded_data"),
+      href: workspaceSettingsPath(workspaceId, "embedded-data"),
+      icon: <DatabaseIcon className={iconClassName} />,
       disabled: isBilling,
     },
   ];
