@@ -7,7 +7,12 @@ import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
 import { syncSsoIdentityForUser } from "./account-linking";
-import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl, startSsoRecovery } from "./sso-recovery";
+import {
+  SsoRecoveryError,
+  completeSsoRecovery,
+  getSsoRecoveryFailureRedirectUrl,
+  startSsoRecovery,
+} from "./sso-recovery";
 
 const mocks = vi.hoisted(() => ({
   createEmailToken: vi.fn(),
@@ -841,6 +846,38 @@ describe("sso-recovery", () => {
         }),
       })
     );
+  });
+
+  /**
+   * The failure KIND, not the message.
+   *
+   * Both kinds carry `OAUTH_ACCOUNT_NOT_LINKED_ERROR`, so every `rejects.toThrow("OAuthAccountNotLinked")`
+   * in this file passes for either one — which left the discriminant itself untested. It is what the
+   * completion route branches on to decide whether to revoke the caller's session, so reporting an
+   * absent intent as a rejection silently undoes the fix for a second open of a link that is replayable
+   * by design: the user gets signed in by the link and then signed straight back out, told the linking
+   * failed, after it had already succeeded. Caught by mutation, not by reading.
+   */
+  const failureKindOf = async (completion: Promise<unknown>): Promise<unknown> => {
+    const error = await completion.then(() => null).catch((thrown: unknown) => thrown);
+
+    expect(error).toBeInstanceOf(SsoRecoveryError);
+
+    return (error as SsoRecoveryError).failure;
+  };
+
+  test("reports an intent that did not come back as unusable, never as a rejection", async () => {
+    // Null covers all five: expired, already consumed, never issued, Redis unreadable, malformed.
+    mocks.readSsoRecoveryIntent.mockResolvedValue(null);
+
+    await expect(
+      failureKindOf(completeSsoRecovery({ stateId: "expired-state", sessionUserId: "user_1" }))
+    ).resolves.toBe("intent_unusable");
+  });
+
+  test("reports a guard turning a live intent down as a rejection", async () => {
+    // No session, so completion stops at `missing_session` with the record still readable.
+    await expect(failureKindOf(completeSsoRecovery({ stateId: "test-state" }))).resolves.toBe("rejected");
   });
 
   test("rejects recovery when the verified user no longer matches the intended email", async () => {
