@@ -117,10 +117,11 @@ export const MAIL_FROM_NAME = env.MAIL_FROM_NAME;
  * between any two of those is an outage, and it surfaces only as an opaque `state_security_mismatch`
  * (better-auth-observability.ts).
  *
- * `firstConfigured` treats an empty string as unset, which `??` does not. `createEnv` is deliberately
- * not configured with `emptyStringAsUndefined` (PRIVACY_URL depends on `""` surviving), so a
- * `BETTER_AUTH_SECRET=` line with no value parses as `""` — and `"" ?? env.NEXTAUTH_SECRET` is `""`.
- * That shape is what a stale `.env` or a missed installer sed anchor produces.
+ * `firstConfigured` treats a blank value as unset, which `??` does not: `"" ?? env.NEXTAUTH_SECRET` is
+ * `""`, which is falsy and would fail every guard below while shadowing a perfectly good legacy secret.
+ * `env.ts` already normalizes blank to undefined for both names, so this is the second line of defence
+ * rather than the first — kept because the invariant belongs next to the resolution, not in a distant
+ * schema. It selects a value, never rewrites one: trimming a secret would re-key the instance.
  *
  * Note these constant names collide with env vars Better Auth reads on its own
  * (`options.secret || env.BETTER_AUTH_SECRET || env.AUTH_SECRET`). There is no live conflict because

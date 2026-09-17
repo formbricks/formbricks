@@ -211,6 +211,14 @@ const ZSurveySchedulingLocalMinute = z.coerce.number().int().min(0).max(59);
 const emptyStringToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 const ZOptionalNonEmptyString = z.preprocess(emptyStringToUndefined, z.string().trim().min(1).optional());
+/**
+ * Blank normalizes to unset, but a non-blank value is kept VERBATIM — no `.trim()`, which in zod is a
+ * transform and would rewrite the parsed value. For a secret that is fatal: an instance whose value
+ * carries a trailing newline (what `kubectl create secret --from-file` stores, and what the chart
+ * faithfully round-trips through `b64dec`) has been signing with the untrimmed string, so trimming it
+ * here would invalidate every session and every outstanding invite and verification link.
+ */
+const ZOptionalVerbatimSecret = z.preprocess(emptyStringToUndefined, z.string().min(1).optional());
 const ZAuthzedBoolean = z.enum(["true", "false", "1", "0"]);
 const ZAuthzedConsistency = z.enum(["minimize_latency", "fully_consistent"]).optional();
 const ZAuthzedToken = z
@@ -324,7 +332,8 @@ const validateAuthConfiguration = (values: TAuthConfigurationEnv, ctx: z.Refinem
     ctx,
     "BETTER_AUTH_SECRET",
     "BETTER_AUTH_SECRET is required. Generate one with `openssl rand -hex 32`. " +
-      "(An instance that predates the rename may set NEXTAUTH_SECRET instead; either is accepted.)"
+      "(An instance that predates the rename may set NEXTAUTH_SECRET instead; either is accepted. " +
+      "AUTH_SECRET is not: Better Auth reads it, but Formbricks signs its own tokens and does not.)"
   );
 };
 
@@ -437,12 +446,12 @@ const parsedEnv = createEnv({
     // its own hardcoded default. `assertAuthRuntimeConfiguration` then refuses to start if neither is
     // actually set, so blank fails loudly at boot instead of quietly at the first invite.
     NEXTAUTH_URL: z.url().optional(),
-    NEXTAUTH_SECRET: ZOptionalNonEmptyString,
+    NEXTAUTH_SECRET: ZOptionalVerbatimSecret,
     // No length floor: Better Auth itself only warns below 32 characters, and a hard failure here
     // would trap an operator renaming a shorter legacy secret — the one fix available to them would be
     // changing its value, which invalidates every session and outstanding token. Warned about at boot
     // instead (`warnOnAuthSecretRisks`).
-    BETTER_AUTH_SECRET: ZOptionalNonEmptyString,
+    BETTER_AUTH_SECRET: ZOptionalVerbatimSecret,
     BETTER_AUTH_URL: z.url().optional(),
     MCP_OAUTH_JWKS_URL: ZMcpOauthJwksUrl.optional(),
     MAIL_FROM_NAME: z.string().optional(),
@@ -754,8 +763,10 @@ export const assertAuthRuntimeConfiguration = (): void => {
  * the domain and never the address, the token, or the URL.
  */
 export const warnOnAuthSecretRisks = (): void => {
-  const betterAuthSecret = env.BETTER_AUTH_SECRET?.trim();
-  const nextAuthSecret = env.NEXTAUTH_SECRET?.trim();
+  // Compared verbatim: two secrets differing only in trailing whitespace ARE different secrets, and
+  // that is exactly the pair an operator most needs told about.
+  const betterAuthSecret = env.BETTER_AUTH_SECRET;
+  const nextAuthSecret = env.NEXTAUTH_SECRET;
 
   // The add-instead-of-rename footgun: BETTER_AUTH_SECRET wins, so adding it with a NEW value rather
   // than moving the existing one across silently invalidates every session and every outstanding

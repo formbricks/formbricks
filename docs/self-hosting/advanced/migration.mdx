@@ -55,10 +55,8 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
     warning recommending a longer one, which you can act on whenever a forced sign-out is acceptable.
   </Warning>
 
-  One edge case worth checking before you upgrade: if your configuration defines `BETTER_AUTH_SECRET`
-  with an **empty** value, remove the line (or give it a real value). An empty value now counts as unset
-  and falls through to `NEXTAUTH_SECRET`, which signs users out once and requires any registered MCP
-  OAuth clients to be re-registered. Formbricks refuses to start if neither variable has a value.
+  Formbricks now refuses to start when neither variable has a value, rather than starting and then
+  failing on the first invite or verification link it tries to send.
 
 ## v5.4
 
@@ -543,9 +541,10 @@ with your instance URL:
 Better Auth introduces two optional variables. **Neither is required** for a standard upgrade — both fall
 back to your existing NextAuth configuration:
 
-- `BETTER_AUTH_SECRET` — cookie/session signing secret. Falls back to `NEXTAUTH_SECRET` when unset. If you
-  set it explicitly, use the value `NEXTAUTH_SECRET` already holds: setting a *different* one invalidates
-  every session and every outstanding invite and verification link. At least 32 characters is recommended.
+- `BETTER_AUTH_SECRET` — cookie/session signing secret. Falls back to `NEXTAUTH_SECRET` when unset. On
+  these releases it must be at least 32 characters when set explicitly. Use the value `NEXTAUTH_SECRET`
+  already holds: a *different* one invalidates every session and every outstanding invite and
+  verification link.
 - `BETTER_AUTH_URL` — the auth base URL. Falls back to `NEXTAUTH_URL` (and then `WEBAPP_URL`) when unset.
 
 <Info>

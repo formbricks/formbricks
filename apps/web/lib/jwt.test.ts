@@ -72,14 +72,6 @@ const testMissingSecretsError = async (
   }
 };
 
-// Mock environment variables
-vi.mock("@/lib/env", () => ({
-  env: {
-    ENCRYPTION_KEY: "0".repeat(32),
-    BETTER_AUTH_SECRET: "test-auth-secret",
-  },
-}));
-
 // Mock constants. `AUTH_SECRET` is the resolved BETTER_AUTH_SECRET/NEXTAUTH_SECRET value
 // (lib/constants.ts) — jwt.ts reads it at call time, which is what lets the helper below drop it.
 vi.mock("@/lib/constants", () => ({

@@ -74,10 +74,11 @@ export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  */
 export const auth = betterAuth({
   appName: "Formbricks",
-  // Resolved in lib/constants.ts, which documents the BETTER_AUTH_* / NEXTAUTH_* alias. Passing the
-  // resolved value explicitly matters twice over: BA's cookie signing has to use the same secret the
-  // forward-auth proxy verifies with (session-cookie.ts) and lib/jwt.ts signs app JWTs with, and an
-  // empty BETTER_AUTH_SECRET would otherwise let BA fall through to its own hardcoded default secret.
+  // Resolved in lib/constants.ts, which documents the BETTER_AUTH_* / NEXTAUTH_* alias. Passing it
+  // explicitly is what keeps BA's cookie signing on the same secret the forward-auth proxy verifies with
+  // (session-cookie.ts) and lib/jwt.ts signs app JWTs with; a divergence between any two of them is an
+  // outage. Note a falsy value here does NOT stop BA falling through to its own hardcoded default
+  // secret — `assertAuthRuntimeConfiguration` in lib/env.ts is what prevents that, by refusing to boot.
   secret: AUTH_SECRET,
   baseURL: AUTH_URL,
   disabledPaths: ["/token"],

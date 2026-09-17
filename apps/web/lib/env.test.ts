@@ -714,6 +714,21 @@ describe("env", () => {
       }
     });
 
+    test.each([
+      ["a trailing newline", "legacy-secret-value\n"],
+      ["a trailing space", "legacy-secret-value "],
+      ["a leading space", " legacy-secret-value"],
+    ])("keeps a secret carrying %s byte-for-byte", async (_label, secret) => {
+      // `.trim()` is a zod TRANSFORM, so trimming here would silently re-key the instance: a value
+      // stored by `kubectl create secret --from-file` carries a trailing newline, the chart round-trips
+      // it through b64dec, and the instance has been signing with it. Rewriting it on upgrade
+      // invalidates every session and every outstanding invite and verification link.
+      setTestEnv({ BETTER_AUTH_SECRET: secret });
+      const { env } = await import("./env");
+
+      expect(env.BETTER_AUTH_SECRET).toBe(secret);
+    });
+
     test("accepts a secret shorter than 32 characters", async () => {
       // Deliberately no floor: an operator renaming a shorter legacy secret must not be forced to
       // change its value, which would invalidate every session and outstanding token. Warned instead.
@@ -735,6 +750,16 @@ describe("env", () => {
           warn.mockRestore();
         }
       };
+
+      test("warns when the two secrets differ only in trailing whitespace", async () => {
+        // They are different secrets, and this is the pair most likely to have been created by accident.
+        setTestEnv({ BETTER_AUTH_SECRET: `${NEXTAUTH_SECRET}\n`, NEXTAUTH_SECRET });
+
+        const warnings = await loadAndWarn();
+
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0]).toContain("both set to different values");
+      });
 
       test("warns when both secrets are set to different values", async () => {
         setTestEnv({ BETTER_AUTH_SECRET, NEXTAUTH_SECRET });
