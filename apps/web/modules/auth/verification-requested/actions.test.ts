@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError, SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE } from "@formbricks/types/errors";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
@@ -346,7 +346,15 @@ describe("resendVerificationEmailAction", () => {
       expect(recoveryIntentMocks.refreshSsoRecoveryIntent).toHaveBeenCalled();
     });
 
-    test("should not treat a client-supplied recovery callback as recovery without a valid intent", async () => {
+    /**
+     * The state id is recovery-shaped but nothing is stored under it. The server cannot tell an expired
+     * intent from a consumed one or an invented one — `readSsoRecoveryIntent` returns `null` for all
+     * three — so they get one answer, and it is the honest one for the case that actually happens.
+     *
+     * This test previously asserted `{ success: true }` here, which is what stranded a user whose link
+     * had aged out: no mail was sent, and the page toasted that one had been.
+     */
+    test("reports an expired recovery link rather than a success with no mail sent", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       const verifiedUserWithLocale: NonNullable<Awaited<ReturnType<typeof getUserByEmail>>> = {
         ...mockVerifiedUser,
@@ -357,16 +365,21 @@ describe("resendVerificationEmailAction", () => {
       };
       vi.mocked(getUserByEmail).mockResolvedValue(verifiedUserWithLocale);
 
-      const result = await resendVerificationEmailAction({
-        ctx: mockCtx,
-        parsedInput: {
-          ...validInput,
-          callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=forged-state",
-        },
-      } as any);
+      // Thrown rather than returned: these tests drive the wrapped handler directly, so
+      // `handleServerError` — which turns an expected error into the action's `serverError`, and is
+      // what the form reads — is not in the path here. `InvalidInputError` is on the expected list, so
+      // the code reaches the client rather than being masked as a generic server error.
+      await expect(
+        resendVerificationEmailAction({
+          ctx: mockCtx,
+          parsedInput: {
+            ...validInput,
+            callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=forged-state",
+          },
+        } as any)
+      ).rejects.toThrow(SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE);
 
       expect(sendVerificationEmail).not.toHaveBeenCalled();
-      expect(result).toEqual({ success: true });
     });
 
     test("should fall back to a normal verification email when the recovery intent belongs to a different email", async () => {
