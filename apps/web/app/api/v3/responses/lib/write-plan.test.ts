@@ -68,6 +68,30 @@ describe("planAnswerDataWrite — the write predicate is the read projection", (
    * a caller sending back what it read carries no key for it — and a literal wholesale replace would
    * delete a value the caller never saw and could not have preserved.
    */
+  /**
+   * The reachable `__proto__` case, and the only one the API can produce.
+   *
+   * A caller cannot send the key — `z.record()` discards it before the body arrives — and a *publishable*
+   * stored key is deliberately not carried, because the round trip expects the caller to resend it. What
+   * is carried is a stored key the caller never sees: an ingested storage key, whose charset
+   * (`isLegacyIdCharset`) admits `__proto__`, exactly as the note on `ingestedBag` says. Merging that onto
+   * a plain `{}` runs `Object.prototype`'s setter instead of creating an own property, so a patch deletes
+   * a stored value silently.
+   *
+   * Asserted through `Object.keys` and a JSON round trip rather than `toEqual`: an expected literal
+   * written `{ __proto__: … }` swallows the key too, and the assertion would hold either way.
+   */
+  test("a stored ingested key named `__proto__` survives a patch rather than being dropped", () => {
+    const { data } = planAnswerDataWrite(
+      planFor(["q1"], ["__proto__"]),
+      { q1: "new" },
+      JSON.parse(String.raw`{"q1":"old","__proto__":"ingested"}`)
+    );
+
+    expect(Object.keys(data)).toContain("__proto__");
+    expect(JSON.parse(JSON.stringify(data))["__proto__"]).toBe("ingested");
+  });
+
   test("a stored hidden-field value survives a wholesale data replace", () => {
     const plan = planFor(["q1"], ["plan"]);
 
@@ -411,6 +435,18 @@ describe("normalizeV3Ttc", () => {
 });
 
 describe("totalStoredV3Ttc", () => {
+  /**
+   * Stored buckets reach `clampTtcBuckets` without passing through Zod, so unlike a caller-supplied
+   * `ttc` they can genuinely carry `__proto__` — and losing one silently changes a response's timing
+   * total on the next write.
+   */
+  test("a stored `__proto__` bucket survives the read-back", () => {
+    const total = totalStoredV3Ttc(JSON.parse(String.raw`{"q1":500,"__proto__":1200}`));
+
+    expect(Object.keys(total)).toContain("__proto__");
+    expect(JSON.parse(JSON.stringify(total))["__proto__"]).toBe(1200);
+  });
+
   /**
    * The gap a patch leaves otherwise: `ttc` is create-only for a caller, but `_total` is derived, and
    * the shared update service computes it on any write that finishes a response. Without this a

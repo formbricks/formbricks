@@ -17,7 +17,10 @@ const TTC_MAX_MS = 86_400_000;
 const TTC_TOTAL_KEY = "_total";
 
 const clampTtcBuckets = (ttc: Readonly<Record<string, number>>): TResponseTtc => {
-  const clamped: TResponseTtc = {};
+  // Null-prototype, like `ingestedBag` below: the keys are element ids, which the caller chooses at
+  // survey creation, so `__proto__` is a legal one. On a plain `{}` it hits `Object.prototype`'s
+  // setter and the bucket vanishes with no error.
+  const clamped = Object.create(null) as TResponseTtc;
 
   for (const [key, value] of Object.entries(ttc)) {
     if (key === TTC_TOTAL_KEY) continue;
@@ -60,7 +63,8 @@ export const normalizeV3Ttc = (
 export const totalStoredV3Ttc = (stored: Readonly<Record<string, unknown>> | undefined): TResponseTtc => {
   if (!stored) return {};
 
-  const buckets: Record<string, number> = {};
+  // Null-prototype: these keys come back from storage, where a `__proto__` bucket could already sit.
+  const buckets = Object.create(null) as Record<string, number>;
   for (const [key, value] of Object.entries(stored)) {
     if (key === TTC_TOTAL_KEY) continue;
     if (typeof value === "number" && Number.isFinite(value)) buckets[key] = value;
@@ -111,7 +115,10 @@ export const planAnswerDataWrite = (
   stored: TResponseData | undefined
 ): TV3AnswerDataPlan => {
   const issues: InvalidParam[] = [];
-  const data: TResponseData = {};
+  // Null-prototype, for the reason spelled out on `ingestedBag`: `data` is keyed by element id, the
+  // caller picks those ids, and `__proto__` would otherwise be dropped on assignment rather than
+  // stored or refused.
+  const data = Object.create(null) as TResponseData;
 
   for (const [key, value] of Object.entries(stored ?? {})) {
     if (!isPublishableDataKey(plan, key)) {
@@ -341,7 +348,9 @@ export const planEmbeddedDataWrite = ({
 }): TV3EmbeddedDataPlan => {
   const issues: InvalidParam[] = [];
   const dataClears: string[] = [];
-  const variableWrites: Record<string, TResponseDataValue> = {};
+  // Null-prototype: keyed by the variable's own name, and `ZEmbeddedDataName` is any non-blank
+  // string — so `__proto__` is a legal variable name and would otherwise write nowhere.
+  const variableWrites = Object.create(null) as Record<string, TResponseDataValue>;
   const variableClears: string[] = [];
   // Null-prototype, for the same reason `applyIngestContract` uses one: a storage key only has to
   // satisfy `isLegacyIdCharset`, which admits `__proto__`. On a plain `{}` that key hits
