@@ -39,6 +39,7 @@ export type AuditLoggingCtx = {
   feedbackDirectoryId?: string;
   feedbackRecordId?: string;
   feedbackSourceId?: string;
+  embeddedDataId?: string;
 };
 
 export type ActionClientCtx = {
