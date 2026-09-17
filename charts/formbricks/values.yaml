@@ -608,6 +608,16 @@ envoy:
   controller:
     enabled: false
 
+  # Install the Gateway API and Envoy Gateway CRDs bundled with the controller.
+  # Set this to false when the platform manages both CRD sets separately.
+  crds:
+    enabled: true
+    gatewayAPI:
+      # Cluster-wide policy that denies Gateway API CRD versions older than v1.5.0.
+      # Enable only after confirming that no other release reconciles an older bundle.
+      safeUpgradePolicy:
+        enabled: false
+
   createNamespace: false
 
   deployment:
@@ -619,23 +629,10 @@ envoy:
         requests:
           cpu: 100m
           memory: 256Mi
-      pod:
-        topologySpreadConstraints: []
-        tolerations: []
-        nodeSelector: {}
-    ports:
-      - name: grpc
-        port: 18000
-        targetPort: 18000
-      - name: ratelimit
-        port: 18001
-        targetPort: 18001
-      - name: wasm
-        port: 18002
-        targetPort: 18002
-      - name: metrics
-        port: 19001
-        targetPort: 19001
+    pod:
+      topologySpreadConstraints: []
+      tolerations: []
+      nodeSelector: {}
 
   service:
     type: ClusterIP

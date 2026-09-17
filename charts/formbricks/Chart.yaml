@@ -22,7 +22,7 @@ dependencies:
     condition: postgresql.enabled
   - name: gateway-helm
     alias: envoy
-    version: "v1.7.1"
+    version: "v1.8.4"
     repository: "oci://docker.io/envoyproxy"
     condition: envoy.controller.enabled
   - name: redis
