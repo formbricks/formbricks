@@ -114,33 +114,41 @@ describe("inlineSurveyEmbeddedFields", () => {
     });
   });
 
-  test("a survey with no rows and no legacy declarations inlines an empty list", () => {
+  test("a survey with no rows and no legacy columns inlines an empty list", () => {
     expect(inlineSurveyEmbeddedFields({ embeddedDataLinks: [] })).toStrictEqual([]);
   });
 
-  test("a backfill-skipped survey falls back to its legacy columns rather than reporting no fields", () => {
-    // Zero rows is "not reconciled yet", not "no fields". Reporting `[]` here is what let
-    // `updateSingleUseLinksAction` — which spreads a loaded survey straight back into `updateSurvey` —
-    // derive empty legacy columns over the only copy of this survey's declarations.
-    const inlined = inlineSurveyEmbeddedFields({
+  /**
+   * The backfill skips a survey whose legacy columns it cannot map and records that it "migrates
+   * itself the next time someone saves it". Zero rows therefore means "not reconciled yet", not
+   * "no fields".
+   *
+   * Reporting `[]` here is what let any caller that loads a survey and hands it straight back to
+   * `updateSurvey` — `updateSingleUseLinksAction` spreads one — derive empty legacy columns over the
+   * only copy of that survey's declarations.
+   */
+  test("a survey the backfill skipped is read from its legacy columns, not as empty", () => {
+    const fields = inlineSurveyEmbeddedFields({
       embeddedDataLinks: [],
-      variables: [{ id: "var1", name: "Var One", type: "text", value: "" }],
-      hiddenFields: { enabled: true, fieldIds: ["hf1"] },
-    } as never);
+      variables: [{ id: "v1", name: "score", type: "number", value: 0 }],
+      hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
+    });
 
-    expect(inlined?.map((entry) => entry.link.storageKey)).toEqual(["var1", "hf1"]);
+    expect(fields?.map(({ field, link }) => [field.source, field.name, link.storageKey])).toStrictEqual([
+      ["computed", "score", "v1"],
+      ["ingested", "utm_source", "utm_source"],
+    ]);
   });
 
   test("one row is enough to make the rows authoritative again", () => {
-    // The fallback heals itself: the first save through it writes rows, and from then on the columns
-    // are never consulted for this survey.
-    const inlined = inlineSurveyEmbeddedFields({
-      embeddedDataLinks: [link("plan", "plan", "ingested")],
-      variables: [{ id: "var1", name: "Var One", type: "text", value: "" }],
-      hiddenFields: { enabled: true, fieldIds: ["hf1"] },
-    } as never);
+    // The self-heal's other half: the first save through the fallback writes rows, and from then on
+    // the columns are derived output rather than input. A survey mid-migration must not read as both.
+    const fields = inlineSurveyEmbeddedFields({
+      embeddedDataLinks: JOINED_LINKS,
+      hiddenFields: { enabled: true, fieldIds: ["never_read"] },
+    });
 
-    expect(inlined?.map((entry) => entry.link.storageKey)).toEqual(["plan"]);
+    expect(fields?.map(({ link }) => link.storageKey)).not.toContain("never_read");
   });
 });
 
@@ -173,8 +181,9 @@ describe("withInlinedEmbeddedFields", () => {
  * The survey editor clones the server survey into its working copy and the menu bar compares the two
  * with {@link isDeepEqual} to gate the draft auto-save, the discard-changes dialog and the
  * beforeunload prompt. That comparison short-circuits on differing key counts, so the working copy
- * must stay structurally identical to what the server sent — which is why ENG-1837 does NOT strip the
- * inlined `embeddedFields` there and gives editor surfaces `getDeclaredEmbeddedFields` instead.
+ * must stay structurally identical to what the server sent — which is why the inlined
+ * `embeddedFields` is neither stripped nor reshaped there. Since ENG-2628 it is also the editor's
+ * Embedded Data state: the cards edit that list in place and send it straight back.
  *
  * These cases fail if anyone reintroduces a key-shape mutation on the editor's clone: an untouched
  * editor would then report unsaved changes forever and re-save an open draft every 10 seconds.

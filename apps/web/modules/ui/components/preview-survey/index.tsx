@@ -57,17 +57,25 @@ export const PreviewSurvey = ({
   isSpamProtectionAllowed,
   publicDomain,
 }: PreviewSurveyProps) => {
-  // ENG-1837: the preview is an authoring surface — the Variables and Hidden Fields cards are the
-  // live source of truth, and the saved EmbeddedData rows only catch up on save. Overriding the
-  // inlined definitions with the card-derived ones is what makes a rename or a new field show up in
-  // the preview's recall and logic on the next render, without a reload.
+  /**
+   * ENG-2628: the editor's working copy is rows-native, so a survey that comes from the editor
+   * already carries the definitions its cards declare and this passes them straight through.
+   *
+   * The derive stays as the fallback for the callers that are NOT the editor and have no rows at
+   * all: the templates gallery renders `getMinimalSurvey()` merged with a preset, and the workspace
+   * look settings and the email template preview build their own literals. Those surveys exist only
+   * in memory and have never been through a write path, so nothing has ever reconciled rows for
+   * them — without this they would preview with no recall and no logic operands.
+   */
   const previewSurvey = useMemo(
     () => ({
       ...survey,
-      embeddedFields: getDeclaredEmbeddedFields({
-        variables: survey.variables,
-        hiddenFields: survey.hiddenFields,
-      }),
+      embeddedFields:
+        survey.embeddedFields ??
+        getDeclaredEmbeddedFields({
+          variables: survey.variables,
+          hiddenFields: survey.hiddenFields,
+        }),
     }),
     [survey]
   );
