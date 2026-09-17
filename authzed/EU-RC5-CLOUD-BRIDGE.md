@@ -6,8 +6,9 @@ Approved on 2026-09-17: create the bridge from **rc.5 product code**, not by bac
 into v5. Keep legacy authorization confined to this disposable Cloud release branch. Normal v6 remains
 SpiceDB-authoritative with no fallback or engine switch.
 
-**Status: temporary PostgreSQL decision paths and pre-contraction chart compatibility implemented;
-local migration-order rehearsal passed. Image and end-to-end release rehearsal remain pending.**
+**Status: immutable bridge built; the first isolated Kubernetes v5 → bridge → rc.5 → bridge → rc.5
+rehearsal passed for the focused API/session/response cases. Production promotion remains blocked by
+the remaining browser, writer-pause, capacity, recovery and soak gates.**
 This document is not deployment approval or evidence that the bridge is ready.
 
 | Artifact                      | Pin / disposition                                                                             |
@@ -18,7 +19,7 @@ This document is not deployment approval or evidence that the bridge is ready.
 | Temporary bridge branch       | `bhagya/eu-rc5-product-bridge`                                                                |
 | Earlier v5 branch             | `bhagya/eu-rc5-cloud-bridge`; retained as an unmodified reference, not a deployment candidate |
 | Final rc.5 image              | `sha256:216b7d5c4e7f2554dd27b216e81150e146774aa8e107a13e26c229bf0659ae8b`                     |
-| Bridge image                  | Not built; record its unique immutable digest only after validation                           |
+| Bridge image                  | `sha256:40afe2054a0c6cc3c1fbb24bd5a6d7b7c9dac2dfba92b61b3acc7052993de15b`                     |
 
 ## What the bridge is
 
@@ -49,6 +50,9 @@ SpiceDB-authoritative success. Never merge bridge runtime commits into `main`, `
 normal product release branch. Review them as a release-artifact diff against the pinned rc.5 base.
 
 ## Temporary implementation and local evidence
+
+See [the isolated image rehearsal](./EU-RC5-REHEARSAL.md) for the exact source and image pins,
+migration artifact checks, focused Kubernetes results and explicit evidence limitations.
 
 `apps/web/lib/authorization/coordinator.ts` statically calls `bridge-evaluator.ts`; the unchanged resource-list
 interface statically calls `bridge-access.ts`. There is no environment-controlled engine selection. The
