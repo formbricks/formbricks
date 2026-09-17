@@ -24,6 +24,9 @@ describe("findInformalAddress", () => {
     expect(findInformalAddress({ common: { select_option: "Выбери вариант" } }, ruRU)).toEqual([
       { key: "common.select_option", value: "Выбери вариант", match: "Выбери" },
     ]);
+    expect(findInformalAddress({ answer: "Введите твою фамилию" }, ruRU)).toEqual([
+      { key: "answer", value: "Введите твою фамилию", match: "твою" },
+    ]);
   });
 
   test("passes formal and register-neutral phrasing", () => {

@@ -22,7 +22,7 @@ export const INFORMAL_ADDRESS_PATTERNS: Partial<Record<TSurveyRuntimeLanguageCod
   "ru-RU": informalForms(
     [
       // pronouns
-      "ты|тебя|тебе|тобой|твой|твоя|твоё|твое|твои|твоего|твоему|твоих",
+      "ты|тебя|тебе|тобой|твой|твою|твоя|твоё|твое|твоей|твоём|твоем|твоему|твоего|твои|твоим|твоими|твоих",
       // imperatives used in survey UI copy
       "выбери|попробуй|нажми|введи|перетащи|переименуй|свяжись|заполни|ответь",
       // second-person singular verb forms
