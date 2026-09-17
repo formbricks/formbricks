@@ -6,6 +6,7 @@ import {
   inputResponse,
 } from "@modelcontextprotocol/server";
 import type { CallToolResult } from "@modelcontextprotocol/server";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
   batchDeleteV3Responses,
@@ -340,6 +341,20 @@ export function registerResponseTools(server: McpServer): void {
   registerDeleteTools(server);
 }
 
+/**
+ * What a batch confirmation is about, as a fixed-width digest.
+ *
+ * The ids themselves would work and would be more legible, but a hundred cuid2s is ~2.5 KB of sealed
+ * state that then rides through the client on every retry. A digest binds the same thing — this
+ * workspace, these ids, in this order — at 64 characters. Order is deliberately significant: it costs
+ * nothing, and a caller that reorders its list gets asked again rather than silently reusing an
+ * answer about a set it has since edited.
+ */
+export const batchResourceKey = (workspaceId: string, ids: readonly string[]): string =>
+  createHash("sha256")
+    .update(`${workspaceId}\u0000${ids.join("\u0000")}`)
+    .digest("hex");
+
 /** The key the confirmation elicitation is filed under, on both the request and the retry. */
 const CONFIRM_KEY = "confirm";
 
@@ -516,9 +531,7 @@ function registerDeleteTools(server: McpServer): void {
     },
     ["responses:write"],
     async (input: TMcpBatchDeleteResponsesInput, ctx) => {
-      // The ids in the order they were sent, joined — so a confirmation for one set cannot be
-      // replayed against another, even one that shares most of its members.
-      const resourceKey = `${input.workspaceId}:${input.ids.join(",")}`;
+      const resourceKey = batchResourceKey(input.workspaceId, input.ids);
       const decision = decideDelete("batch_delete_responses", resourceKey, input.confirm, ctx);
 
       if (decision.kind === "ask") {

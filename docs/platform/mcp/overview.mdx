@@ -36,8 +36,8 @@ The whole flow uses Authorization Code + PKCE, the standard the [MCP authorizati
 
 ## What the agent can do
 
-The MCP server exposes survey, workflow and feedback-record tools, grouped into scopes you approve on
-the consent screen. Read tools require the matching `:read` scope; tools that create, update, or delete
+The MCP server exposes survey, workflow, response and feedback-record tools, grouped into scopes you
+approve on the consent screen. Read tools require the matching `:read` scope; tools that create, update, or delete
 require the `:write` scope:
 
 | Scope | Tools | What it allows |
@@ -48,10 +48,18 @@ require the `:write` scope:
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow` | Create, update, and delete workflows |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` | Read, count and search feedback records in a workspace's feedback dataset |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`², `delete_feedback_record`² | Create, correct and delete feedback records |
+| `responses:read`³ | `list_responses`, `count_responses`, `get_response` | Read and count survey responses |
+| `responses:write`³ | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` | Record, correct and delete survey responses |
 
 ¹ `test_workflow` is a dry-run (no changes are saved), so it only needs the `workflows:read` scope — but because it evaluates the live workflow definition, it requires **write or manage** permission on the workspace. A read-only member will get a 403 even though the scope matches.
 
 ² Changing a record that already exists is held to a higher bar than creating one, because a feedback dataset shared across workspaces has no way to tell whose records are whose. Connected over **OAuth** (the flow on this page), both tools require you to be an **organization owner or manager**. Authenticated with an **API key** instead, they require the dataset to be assigned to a **single workspace** — a workspace-scoped key cannot be shown to own a record in a shared one — and `delete_feedback_record` additionally requires **manage** permission, matching `DELETE` elsewhere in the API. Creating, reading and searching are unaffected either way.
+
+³ The response scopes are **rolling out**. The tools exist and the scopes can be granted, but they are
+not yet offered on the consent screen: adding a scope to the published list makes clients that
+registered before it existed fail their next consent with `invalid_scope`, so connected integrations
+are notified first. Until then a client is not shown them. A response is someone's submitted answers,
+so grant `responses:read` deliberately — it is respondent data, which `surveys:read` never exposes.
 
 Scope groups are independent — a client can be granted feedback-record access without survey access, or
 the other way around. `list_workspaces` is available to any read scope, since every other tool needs a
