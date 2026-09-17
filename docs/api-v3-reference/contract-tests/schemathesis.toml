@@ -40,17 +40,8 @@ enabled = false
 #
 # One block per operation, keyed by `operationId`, so each endpoint's PR deletes exactly its own and
 # the gate opens as the route lands rather than all at once at the end (ENG-2959). Keyed by operation
-# id rather than path because two of the three remaining paths carry a routed method beside the
-# unrouted one — `POST /responses` sits under the routed `GET`, and `PATCH /responses/{responseId}`
-# under the routed `GET` and `DELETE` — which a path filter cannot separate.
-[[operations]]
-include-operation-id = "createResponseV3"     # ENG-2866
-enabled = false
-
-[[operations]]
-include-operation-id = "updateResponseV3"     # ENG-2866
-enabled = false
-
+# id rather than path because the remaining path carries routed methods beside the unrouted one,
+# which a path filter cannot separate.
 [[operations]]
 include-operation-id = "validateResponseV3"   # ENG-2954
 enabled = false
