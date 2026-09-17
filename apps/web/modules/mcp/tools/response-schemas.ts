@@ -175,7 +175,20 @@ export type TMcpValidateResponseInput = z.infer<typeof ZMcpValidateResponseInput
 export const ZMcpResponseOutput = mcpToolOutput(ZV3ResponseResource);
 export const ZMcpResponseListOutput = mcpToolOutput(z.array(ZV3ResponseListItem));
 export const ZMcpResponseCountOutput = mcpToolOutput(
-  z.object({ count: z.number().int(), precision: z.enum(["capped", "exact"]) }).loose()
+  z
+    .object({
+      count: z.number().int(),
+      /**
+       * `eq` when the count is exact, `gte` when the cap was reached and `count` is a lower bound.
+       *
+       * Named for what the endpoint returns, not for the `precision` that was asked for — the two are
+       * different things, and the first version of this schema conflated them. The SDK validates a
+       * structured result against the advertised schema, so every `count_responses` call answered an
+       * output-validation error instead of a count until this matched.
+       */
+      relation: z.enum(["eq", "gte"]),
+    })
+    .loose()
 );
 export const ZMcpResponseDeleteOutput = mcpToolOutput(z.unknown());
 export const ZMcpResponseBatchDeleteOutput = mcpToolOutput(z.object({ deleted: z.number().int() }).loose());
