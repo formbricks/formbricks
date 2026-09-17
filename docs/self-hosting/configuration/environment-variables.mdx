@@ -13,7 +13,7 @@ These variables are present inside your machine's docker-compose file. Restart t
   Formbricks v5 makes Hub part of the standard self-hosted runtime and changes how rate limiting is enforced.
 </Note>
 
-For the `AI_*` variables, see [AI Features](/self-hosting/advanced/enterprise-features/ai-features) — it walks through each provider and the credentials it needs. Set only the variables for the provider you use; unused provider variables can be omitted.
+For the `AI_*` variables, see [AI Features](/self-hosting/configuration/ai-features) — it walks through each provider and the credentials it needs. Set only the variables for the provider you use; unused provider variables can be omitted.
 
 {/* prettier-ignore-start */}
 
@@ -196,7 +196,7 @@ docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
 For Helm, run `formbricks-authzed health` inside a Formbricks application pod. Repository development can keep
-using `pnpm authzed:health`. See [AuthZed Operations](/self-hosting/advanced/authzed-operations) for the complete
+using `pnpm authzed:health`. See [AuthZed Operations](/self-hosting/configuration/authzed-operations) for the complete
 Docker and Kubernetes command set, schema lifecycle, backups, and relationship repair.
 
 Only the repository-development `pnpm authzed:health` command reads the repository `.env`. Docker Compose
