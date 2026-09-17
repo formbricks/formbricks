@@ -58,6 +58,9 @@ The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (
 
 ## AuthZed / SpiceDB
 
+For v5 to v6, use the [maintenance upgrade guide](../docs/self-hosting/advanced/v6-maintenance-upgrade.mdx).
+The update command verifies an already-prepared graph; it does not migrate a live v5 installation online.
+
 The production and development Compose stacks include one SpiceDB v1.52.0 service backed by a dedicated
 `spicedb` database and login in the bundled PostgreSQL server. `authzed-db-bootstrap` creates or updates the
 database credentials, `spicedb-migrate` applies datastore migrations, and only then does `spicedb` start. Both
@@ -113,7 +116,7 @@ The first apply to an empty SpiceDB needs no additional argument. Replacing a no
 `--expected-current-digest sha256:<digest-from-check>`. The command verifies the write by reading and comparing
 the schema again. Fresh installs run the idempotent `authzed-initialize` service independently; Formbricks
 startup and `/health` do not depend on it. Existing upgrades require the explicit preparation and read-only gate. See
-the [public operations guide](../docs/self-hosting/advanced/authzed-operations.mdx) for the JSON contract, exit
+the [public operations guide](../docs/self-hosting/configuration/authzed-operations.mdx) for the JSON contract, exit
 codes, backup requirements, repair, and rollback rules. Repository development retains the equivalent
 `pnpm authzed:*` commands.
 

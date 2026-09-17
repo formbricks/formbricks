@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { getOAuthErrorVariant } from "./oauth-error";
+import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
 
 describe("getOAuthErrorVariant", () => {
   test("returns null when the callback carried no error", () => {
@@ -52,4 +53,17 @@ describe("getOAuthErrorVariant", () => {
   ])("falls back to the generic alert for %s", (code) => {
     expect(getOAuthErrorVariant(code)).toBe("generic");
   });
+
+  /**
+   * ENG-2882. `generic` tells the user to try again, which is actively wrong advice for a reject:
+   * the gate's decision is deterministic, so a retry reproduces it exactly. The Record in oauth-error
+   * makes an unclassified reason a build error; this asserts the runtime consequence of that, and
+   * catches a reason classified by a key that no longer matches the gate's spelling.
+   */
+  test.each(SSO_PROVISIONING_REJECT_REASONS)(
+    "never falls back to a retry prompt for the reject reason %s",
+    (reason) => {
+      expect(getOAuthErrorVariant(reason)).not.toBe("generic");
+    }
+  );
 });

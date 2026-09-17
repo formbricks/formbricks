@@ -2,7 +2,7 @@ get:
   operationId: getSurveysV3
   summary: List surveys
   description: |
-    Returns surveys for the workspace. Session cookie or x-api-key.
+    Returns surveys for the workspace. Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Surveys
   parameters:
@@ -168,6 +168,7 @@ get:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 post:
   operationId: createSurveyV3
   summary: Create a survey
@@ -476,3 +477,4 @@ post:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
