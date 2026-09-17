@@ -94,6 +94,34 @@ validation, application build and isolated SDK/projection smoke. Those counts ov
 claimed unique-test total. Pre-contraction chart service compatibility was tested locally with real PostgreSQL;
 the image-level service test before contraction was not completed and remains a focused gap.
 
+## Follow-up preflight on 2026-09-17
+
+The approved observation strategy now reuses applicable staging QA/soak evidence for the unchanged rc.5
+digest. A new blanket observation window is not required solely because the bridge is new. The focused
+bridge/EU deployment checks remain required; this decision does not establish that every earlier staging
+result applies to the EU data distribution, traffic or deployment mechanism.
+
+Read-only production checks and requests against the isolated fixture found:
+
+| Check                           | Result                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Existing respondent tab action  | rc.5's own PIN action returned HTTP 200 with the expected survey result; the exact live v5 PIN action ID returned HTTP 404 with `x-nextjs-action-not-found: 1` against the same fixture. Both artifacts lack a configured deployment ID. This is a failed HTTP compatibility check, not a completed browser reload test. |
+| Gateway coverage                | Normal application pages bypass Envoy, and the existing `test.formbricks.com` ingress also points directly to the application service. An Envoy-only pause cannot establish the product-write boundary.                                                                                                                  |
+| In-pod background jobs          | The shared `background-jobs` BullMQ queue was not paused. Zero active jobs at inspection time is not a freeze; recurring and newly enqueued work can still start.                                                                                                                                                        |
+| Request draining                | The live application deployment had a 30-second termination grace period and no pre-stop hook. The jobs runtime exits after closing workers; this does not independently establish HTTP/Server Action drain completion.                                                                                                  |
+| Artifact vulnerability coverage | Inspector reported successful active coverage for the exact bridge and rc.5 amd64 child manifests; the active High/Critical findings query returned no findings for those images. This is scan evidence, not a complete security sign-off.                                                                               |
+
+The reproducible local `check-existing-tab-actions.mjs` probe reads only action metadata from production
+and sends requests only to the synthetic rehearsal survey. It requires a successful target-version positive
+control, emits no survey/actor/token values, and exits 2 for incompatible previous-version actions. Initial
+manual requests used inconsistent Origin/Host headers and were rejected by the CSRF guard; the corrected
+same-origin requests produced the results above. Do not count those initial harness errors as an app defect.
+
+Before rollout, provide a tested compatibility/reload strategy for existing respondent tabs and verify it in
+a real browser. A required customer reload or interruption of PIN/email respondents is a change to the
+uninterrupted-respondent promise, not something to accept silently. Do not leave original v5 pods running
+after incompatible migrations to work around old actions.
+
 ## Still blocking production promotion
 
 1. Complete and test the production writer inventory and selective pause: gateway paths, workers, jobs,
@@ -102,12 +130,13 @@ the image-level service test before contraction was not completed and remains a 
 2. Verify real old/new browser tabs, Server Actions, static assets and graceful draining; remaining respondent
    paths; chart/dashboard image compatibility; anonymization and typed/locked embedded-data behavior across
    rollback; the broader API/MCP/current permission matrix.
-3. Test EU-shaped authorization/response load with 2× headroom, Aurora lock/pool behavior, durable delivery
-   during source commits/outages, full retained-log safety, backup restoration and fresh artifact security review.
-4. Complete the approved 24-hour compatibility rehearsal and seven-day authoritative soak. This first focused
-   run does not satisfy either gate, nor establish that all prerequisites for starting them are complete.
+3. Map existing staging evidence to EU-shaped authorization/response load with 2× headroom, Aurora lock/pool
+   behavior, durable delivery, retained-log safety and backup restoration. Run the missing checks rather than
+   repeating unchanged functionality. Keep the artifact scan results above separate from runtime proof.
+4. Link applicable existing staging observation evidence to the pinned rc.5 artifact and configuration. Do not
+   restart the full soak by default; preserve the approved post-cutover production monitoring requirements.
 
-EU production was last verified healthy on v5.4.2, with its three private SpiceDB replicas healthy. No EU
-application rollout, production migration, schema application or backfill was performed in this rehearsal.
-Finishing production deployment today is incompatible with the currently approved, still-unmet observation
-windows; urgency is not an approval to omit them.
+EU production was last verified healthy on v5.4.2 (4/4 application replicas at the follow-up check), with
+three private SpiceDB replicas healthy. No EU application rollout, production migration, schema application,
+backfill, queue pause or ingress mutation was performed in this rehearsal or follow-up preflight. The blocker
+is the concrete compatibility/pause work above, not a newly imposed week-long wait.

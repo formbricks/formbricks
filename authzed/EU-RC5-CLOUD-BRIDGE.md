@@ -8,8 +8,15 @@ SpiceDB-authoritative with no fallback or engine switch.
 
 **Status: immutable bridge built; the first isolated Kubernetes v5 → bridge → rc.5 → bridge → rc.5
 rehearsal passed for the focused API/session/response cases. Production promotion remains blocked by
-the remaining browser, writer-pause, capacity, recovery and soak gates.**
+the focused browser-compatibility and complete writer-pause checks, plus unproven EU-specific gates.**
 This document is not deployment approval or evidence that the bridge is ready.
+
+The subsequent decision on 2026-09-17 is to reuse applicable staging QA and observation evidence for
+the unchanged rc.5 digest. Do not automatically restart a 24-hour or seven-day observation window just
+because this temporary bridge is new. Record which evidence applies to the exact artifact/configuration;
+test the new bridge, EU migration/pause/rollback mechanism, and any uncovered production differences.
+Reuse does not turn an untested path or failed compatibility check into a pass. The remaining post-cutover
+production monitoring and EU-before-KSA gates are unchanged.
 
 | Artifact                      | Pin / disposition                                                                             |
 | ----------------------------- | --------------------------------------------------------------------------------------------- |
@@ -115,13 +122,13 @@ pnpm --filter @formbricks/web build
 The standalone database test creates a unique container and random localhost port with disposable credentials,
 then removes its container and volumes. It never uses the developer's database or `.env`. Unit/typecheck/build
 commands require the normal non-production environment configuration. These checks do not replace the full
-image, migration, performance, response-delivery, rollback or soak gates below.
+image, migration, performance, response-delivery and rollback gates below, or applicable staging evidence.
 
 ## Migration order remains a blocking gate
 
 See [the pinned migration manifest](./EU-RC5-MIGRATIONS.md) for live SQL-checksum verification,
 restricted artifact packaging, chart compatibility and local database evidence. This does not replace
-the image, production-scale, mixed-version or soak gates.
+the image, production-scale and mixed-version gates.
 
 Changing the source branch does **not** make rc.5 safe to run against the unprepared v5 database or permit
 unrestricted rc.5 migrations beside original v5 pods. Keep the original source commit in the reviewed
@@ -166,8 +173,8 @@ it. Verified read/respondent traffic may continue only where its compatibility a
    Leave Apollo, Artemis, KSA, and EU unchanged. Exercise original v5 → bridge → exact rc.5 → bridge → rc.5,
    including data written after each switch and accepted-response reconciliation.
 5. Prove selective writer pause, controller suspension, migration timing, outbox recovery, clean audits,
-   Next.js sessions/Server Actions/assets, and graceful draining. Complete the approved 24-hour compatibility
-   rehearsal and seven-day authoritative soak; previous artifacts do not supply this bridge's rollback proof.
+   Next.js sessions/Server Actions/assets, and graceful draining. Reuse applicable existing staging observation
+   evidence for unchanged rc.5; previous artifacts do not supply this bridge's rollback or writer-pause proof.
 6. Prepare separate reviewed production preparation, bridge, and cutover changes. Production promotion is
    gated by the measured rehearsal, not by this branch existing or tests passing locally.
 
