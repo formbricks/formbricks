@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
-import { FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL } from "@/modules/account/constants";
+import {
+  ACCOUNT_DELETED_PATH,
+  FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
+} from "@/modules/account/constants";
 import { auth } from "@/modules/auth/lib/auth";
 import { sendDeleteAccountConfirmationEmail } from "@/modules/email";
 import { requestSsoAccountDeletionEmail } from "./better-auth-account-deletion-request";
@@ -81,8 +84,9 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
     const mailArgs = sendDeleteAccountConfirmationEmailMock.mock.calls[0][0];
     expect(mailArgs.email).toBe(email);
     expect(mailArgs.deleteLink).toContain("/api/auth/delete-user/callback?token=");
-    // Self-hosted (IS_FORMBRICKS_CLOUD is false under test): the callback returns to the login page.
-    expect(mailArgs.deleteLink).toContain(`callbackURL=${encodeURIComponent("/auth/login")}`);
+    // The callback returns to the post-deletion page, which is where the deployment-specific hop
+    // happens (ENG-3260).
+    expect(mailArgs.deleteLink).toContain(`callbackURL=${encodeURIComponent(ACCOUNT_DELETED_PATH)}`);
     const token = new URL(mailArgs.deleteLink).searchParams.get("token");
     expect(token).toBeTruthy();
 
@@ -104,7 +108,7 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
     expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
   });
 
-  test("on Formbricks Cloud, the emailed link returns to the account-deletion survey (ENG-1780)", async () => {
+  test("on Formbricks Cloud, the emailed link still carries a relative callbackURL (ENG-3260)", async () => {
     constantsOverrides.isFormbricksCloud = true;
     const email = "ssocloud@example.com";
     const userId = await createVerifiedUser(email, "Passw0rd!");
@@ -115,10 +119,86 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
 
     expect(sendDeleteAccountConfirmationEmailMock).toHaveBeenCalledTimes(1);
     const mailArgs = sendDeleteAccountConfirmationEmailMock.mock.calls[0][0];
-    // Cloud: the callback redirects to the offboarding survey instead of the login page.
-    expect(mailArgs.deleteLink).toContain(
+    // The Cloud flag must not change the callbackURL: the offboarding survey is reached from the
+    // /auth/account-deleted page in the browser, never through Better Auth's origin-checked redirect.
+    expect(mailArgs.deleteLink).toContain(`callbackURL=${encodeURIComponent(ACCOUNT_DELETED_PATH)}`);
+    expect(mailArgs.deleteLink).not.toContain(
+      encodeURIComponent(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL)
+    );
+  });
+
+  /**
+   * The bug lived in Better Auth's HTTP middleware, not in the string this module returns, so these two
+   * drive the REAL handler over a REAL Request. Two things make that work, and neither is optional:
+   *
+   *  1. `auth.handler(new Request(...))`, never `auth.api.deleteUserCallback({ query, headers })`.
+   *     `originCheck` opens with `if (!ctx.request) return`
+   *     (better-auth/dist/api/middlewares/origin-check.mjs), and the direct `auth.api.*` call carries
+   *     headers but no Request — so the gate never runs and the call succeeds with the bug fully present.
+   *  2. `withOriginCheck`. Better Auth disables the gate outright under NODE_ENV=test
+   *     (`skipOriginCheck: … isTest() ? true : false`, context/create-context.mjs), which is every
+   *     vitest run, so even a real Request sails through. Re-arming it restores the production
+   *     behaviour on the real `auth` instance and its real `trustedOrigins`.
+   *
+   * Between them, a test written the obvious way is green before and after the fix. The negative
+   * control is what keeps this honest: it proves the gate really is armed here, so the positive test's
+   * 302 means something.
+   */
+  const withOriginCheck = async <T>(run: () => Promise<T>): Promise<T> => {
+    const ctx = await auth.$context;
+    const previous = ctx.skipOriginCheck;
+    ctx.skipOriginCheck = false;
+    try {
+      return await run();
+    } finally {
+      ctx.skipOriginCheck = previous;
+    }
+  };
+
+  const requestDeleteLinkFor = async (email: string): Promise<{ deleteLink: string; userId: string }> => {
+    const userId = await createVerifiedUser(email, "Passw0rd!");
+    await prisma.user.update({ where: { id: userId }, data: { identityProvider: "google" } });
+    getSessionMock.mockResolvedValue({ user: { id: userId, email } });
+
+    await requestSsoAccountDeletionEmail();
+
+    return { deleteLink: sendDeleteAccountConfirmationEmailMock.mock.calls[0][0].deleteLink, userId };
+  };
+
+  test("the emailed link survives originCheck end to end on a Cloud deployment and deletes the user", async () => {
+    constantsOverrides.isFormbricksCloud = true;
+    const email = "ssocloudhttp@example.com";
+    const { deleteLink, userId } = await requestDeleteLinkFor(email);
+    const cookie = await signInCookie(email, "Passw0rd!");
+
+    // Exactly what clicking the link in the inbox does.
+    const response = await withOriginCheck(() =>
+      auth.handler(new Request(deleteLink, { headers: { cookie } }))
+    );
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(ACCOUNT_DELETED_PATH);
+    expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
+  });
+
+  test("negative control: an absolute, cross-origin callbackURL is rejected before the token is read", async () => {
+    const email = "ssocrossorigin@example.com";
+    const { deleteLink, userId } = await requestDeleteLinkFor(email);
+    const cookie = await signInCookie(email, "Passw0rd!");
+
+    // Swap in the hardcoded Cloud survey URL the old code sent — the staging failure, byte for byte.
+    const crossOriginLink = deleteLink.replace(
+      `callbackURL=${encodeURIComponent(ACCOUNT_DELETED_PATH)}`,
       `callbackURL=${encodeURIComponent(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL)}`
     );
+    const response = await withOriginCheck(() =>
+      auth.handler(new Request(crossOriginLink, { headers: { cookie } }))
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ code: "INVALID_CALLBACK_URL" });
+    // And the account survives — which is what made account deletion untestable on staging.
+    expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull();
   });
 
   test("rejects a credential (email-identity) user — they must confirm with their password", async () => {
