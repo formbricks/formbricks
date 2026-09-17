@@ -524,6 +524,25 @@ describe("createScopedResponse — what actually reaches Prisma", () => {
       expect.objectContaining({ responseFinished: true, responseId: "clrs1" })
     );
   });
+
+  /**
+   * The columns are the behaviour here, not an implementation detail: `reserved` operands resolve
+   * through accessors that read `meta.*`, `ttc` and the timestamps off this row, and each one is
+   * wrapped in a `try`/`catch` answering `undefined`. Selected down to four columns the write does
+   * not fail — every reserved operand just reads as unset, so a quota on `country` or `browser`
+   * silently counts nothing on the v3 path while it still counts on v1 and v2.
+   */
+  test("the written row is selected with the columns reserved quota operands read", async () => {
+    const tx = txStub();
+    runTx(tx);
+
+    await createScopedResponse(createInput({}));
+
+    const select = tx.response.create.mock.calls[0][0].select;
+    for (const column of ["meta", "ttc", "createdAt", "updatedAt", "language", "surveyId"]) {
+      expect(select).toHaveProperty(column, true);
+    }
+  });
 });
 
 describe("updateScopedResponse — what actually reaches Prisma", () => {
