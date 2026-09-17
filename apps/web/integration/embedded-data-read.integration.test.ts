@@ -108,18 +108,23 @@ describe("Embedded Data read seam (real Postgres)", () => {
     ]);
   });
 
-  test("a survey with no rows has no fields, whatever its legacy columns still say", async () => {
-    // ENG-2412 removed the fallback. The rows are the write source of truth now, so deleting them
-    // makes the fields disappear rather than reappear — the behaviour that made the previous model
-    // hard to reason about. `deriveLegacyEmbeddedData` still has the columns; nothing consults it.
+  test("a survey with no rows falls back to its legacy columns", async () => {
+    // ENG-2412 removed the fallback and this asserted its absence: deleting the rows made the fields
+    // disappear. That held only while nothing wrote back what it read. Once `updateSurvey` accepts
+    // `embeddedFields`, a caller that loads a survey and hands it straight back — the single-use
+    // toggle spreads one — turns "no rows" into "no fields" and derives empty columns over the only
+    // copy a backfill-skipped survey has. Zero rows is "not reconciled yet"; the columns answer.
     const { surveyId } = await seedSurvey();
     await prisma.surveyEmbeddedData.deleteMany({ where: { surveyId } });
 
     const survey = await loadSurvey(surveyId);
 
-    expect(survey.embeddedFields).toEqual([]);
-    expect(getSurveyEmbeddedFields(survey)).toEqual([]);
-    expect(deriveLegacyEmbeddedData(LEGACY)).not.toEqual([]);
+    expect(getSurveyEmbeddedFields(survey).map(({ link }) => link.storageKey)).toEqual(
+      deriveLegacyEmbeddedData(LEGACY).map(({ link }) => link.storageKey)
+    );
+    // Not a copy of the legacy shape by accident — it is the same derive the write bridge and the
+    // backfill run, so what a reader sees is what a save would reconcile into rows.
+    expect(getSurveyEmbeddedFields(survey)).toEqual(deriveLegacyEmbeddedData(LEGACY));
   });
 
   test("a partial row set wins outright — the rows are the source of truth once any exist", async () => {
