@@ -117,6 +117,7 @@ export const AttributeFieldRow = ({
                     locale={locale}
                     triggerClassName="h-10 w-full"
                     onChange={(date) => valueField.onChange(toUTCDateString(formatLocalDay(date)))}
+                    onClear={() => valueField.onChange("")}
                   />
                 </div>
               );
