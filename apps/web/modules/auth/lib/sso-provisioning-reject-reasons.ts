@@ -16,6 +16,13 @@ import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors
  * Deliberately dependency-free (one string constant aside): the login form is a client component, and
  * `sso-provisioning.ts` is `server-only` and pulls in Prisma, licence checks and the invite service.
  *
+ * It lives in OSS `modules/auth`, not beside the gate in `modules/ee`, although the gate is the only
+ * thing that produces these codes. `modules/ee` is under a separate licence, and the consumers here
+ * are OSS — the login form most of all — so an OSS file importing the set from there would put
+ * EE-licensed source on the path of every sign-in page render. The direction that holds is the one
+ * `better-auth-hooks.ts` already uses for `credential-signup-backstop`: EE reaches into OSS, never
+ * the reverse. What travels is a wire contract — the `?error=` codes — not an enterprise feature.
+ *
  * Keep this list and `TSsoProvisioningRejectReason` in step by adding reasons HERE first — both
  * consumers key a `Record` on the union, so a new reason fails the build until it is classified.
  */

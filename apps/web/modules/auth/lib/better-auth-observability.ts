@@ -9,9 +9,9 @@ import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
-import { SSO_PROVISIONING_REJECT_REASONS } from "@/modules/ee/sso/lib/provisioning-reject-reasons";
 import { getBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
+import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 /**

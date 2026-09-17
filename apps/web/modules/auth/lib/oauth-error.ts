@@ -1,5 +1,5 @@
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
-import type { TSsoProvisioningRejectReason } from "@/modules/ee/sso/lib/provisioning-reject-reasons";
+import type { TSsoProvisioningRejectReason } from "./sso-provisioning-reject-reasons";
 
 /**
  * Classifies the `?error=<code>` an SSO callback lands on `/auth/login` with (ENG-2089).

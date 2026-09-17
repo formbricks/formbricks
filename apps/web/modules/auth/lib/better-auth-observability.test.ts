@@ -12,7 +12,6 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
-import { SSO_PROVISIONING_REJECT_REASONS } from "@/modules/ee/sso/lib/provisioning-reject-reasons";
 import {
   auditFailedAuthAfter,
   auditPasswordReset,
@@ -26,6 +25,7 @@ import {
 } from "./better-auth-observability";
 import { runWithBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
+import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({

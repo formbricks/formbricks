@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { SSO_PROVISIONING_REJECT_REASONS } from "@/modules/ee/sso/lib/provisioning-reject-reasons";
 import { getOAuthErrorVariant } from "./oauth-error";
+import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
 
 describe("getOAuthErrorVariant", () => {
   test("returns null when the callback carried no error", () => {

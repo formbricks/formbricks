@@ -14,6 +14,7 @@ import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import type { TSsoProvisioningRejectReason } from "@/modules/auth/lib/sso-provisioning-reject-reasons";
 import { updateUser } from "@/modules/auth/lib/user";
 import { resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -22,7 +23,6 @@ import {
   ensureDefaultOrganization,
 } from "@/modules/ee/sso/lib/default-organization";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
-import type { TSsoProvisioningRejectReason } from "@/modules/ee/sso/lib/provisioning-reject-reasons";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 
 export type TSsoProvisioningDecision =
