@@ -104,6 +104,44 @@ The bundled Valkey image moves from an amd64-only 8.1.1 image to the native amd6
 image. Fresh Docker and Helm installations receive it automatically. Existing installations that retain an
 older Compose file or explicitly reuse the previous Helm digest need the one-time update below.
 
+### Envoy Gateway 1.8.4 CRD Upgrade
+
+The updated Helm chart replaces Envoy Gateway 1.7.1 and Gateway API 1.4.1 with Envoy Gateway 1.8.4 and Gateway
+API 1.5.1. Fresh installations receive the new CRDs automatically. Helm does not update CRDs during an ordinary
+upgrade, so existing installations using the bundled controller must apply the matching CRDs before upgrading:
+
+```bash
+crd_dir="$(mktemp -d)"
+helm pull oci://docker.io/envoyproxy/gateway-crds-helm \
+  --version v1.8.4 --untar --untardir "${crd_dir}"
+helm template envoy-gateway-crds "${crd_dir}/gateway-crds-helm" \
+  --set crds.gatewayAPI.enabled=true \
+  --set crds.gatewayAPI.channel=experimental \
+  --set crds.envoyGateway.enabled=true \
+  | kubectl apply --server-side --force-conflicts -f -
+```
+
+`--force-conflicts` transfers the existing CRD fields from Helm's field manager to this explicit CRD upgrade.
+Pulling the OCI chart first keeps Helm 4's pull messages out of the manifest pipe. Remove the temporary directory
+after the apply succeeds.
+
+The chart does not install Envoy Gateway's cluster-wide safe-upgrade admission policy by default. Enabling
+`envoy.crds.gatewayAPI.safeUpgradePolicy.enabled` denies Gateway API CRD versions older than v1.5.0 across the
+whole cluster, including CRDs reconciled by unrelated releases. Enable it only after platform review; a chart
+rollback does not remove that policy automatically.
+
+If the platform already manages compatible Gateway API CRDs, do not install another Gateway API bundle. Install
+only the Envoy Gateway CRDs as described in the [Kubernetes guide](/self-hosting/setup/kubernetes), set
+`envoy.crds.enabled=false`, and configure Flux to skip CRD installation and upgrades. Upgrade the CRDs before the
+controller and never downgrade them during rollback.
+
+The controller scheduling values also move from the ineffective `envoy.deployment.envoyGateway.pod` path to
+`envoy.deployment.pod`. Move any node selectors, tolerations, topology spread constraints, extra volumes, or
+pod annotations that you placed under the old path before upgrading.
+
+The parent chart no longer repeats the bundled controller's default port list. The
+`envoy.deployment.ports` override remains supported, so existing port overrides need no migration.
+
 ### Database migrations
 
 All seven migrations apply automatically during the upgrade. Two want something from you first: one needs
@@ -665,7 +703,7 @@ Formbricks v5 splits rate limiting across two layers:
 - the application server for the remaining session-authenticated routes, server actions, and uncovered APIs
 
 Keep Redis/Valkey enabled for the remaining application-enforced limits. For the covered route groups and exact
-thresholds, use the [rate-limiting guide](/self-hosting/advanced/rate-limiting) as the source of truth.
+thresholds, use the [rate-limiting guide](/self-hosting/configuration/rate-limiting) as the source of truth.
 
 #### AI Features
 

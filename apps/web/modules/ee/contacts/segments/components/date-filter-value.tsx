@@ -87,6 +87,10 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
           onChange={(date) => {
             onChange([toUTCDateString(formatLocalDay(date)), betweenValue[1]]);
           }}
+          // Clears only this bound; the other one stays as picked.
+          onClear={() => {
+            onChange(["", betweenValue[1]]);
+          }}
         />
         <span className="text-sm text-slate-600">{t("common.and")}</span>
         <DatePicker
@@ -96,6 +100,9 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
           triggerClassName="h-9 w-[180px]"
           onChange={(date) => {
             onChange([betweenValue[0], toUTCDateString(formatLocalDay(date))]);
+          }}
+          onClear={() => {
+            onChange([betweenValue[0], ""]);
           }}
         />
       </div>
@@ -114,6 +121,9 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
       triggerClassName="h-9 w-[180px]"
       onChange={(date) => {
         onChange(toUTCDateString(formatLocalDay(date)));
+      }}
+      onClear={() => {
+        onChange("");
       }}
     />
   );

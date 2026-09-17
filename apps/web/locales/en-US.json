@@ -107,6 +107,8 @@
         "offline_access": "Keep access with refresh tokens",
         "openid": "Identify you with OpenID Connect",
         "profile": "View your profile",
+        "responses_read": "Read survey responses",
+        "responses_write": "Create, update, and delete survey responses",
         "surveys_read": "Read surveys",
         "surveys_write": "Create, update, and delete surveys",
         "workflows_read": "Read workflows",
@@ -4414,7 +4416,8 @@
       "value_date": "Value (Date)",
       "value_id": "Value ID",
       "value_number": "Value (Number)",
-      "value_text": "Value (Text)"
+      "value_text": "Value (Text)",
+      "view_survey": "View survey"
     },
     "workflows": {
       "add_action": "Add action",

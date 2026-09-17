@@ -107,6 +107,8 @@
         "offline_access": "Hozzáférés megtartása frissítési tokenekkel",
         "openid": "Azonosítsa magát OpenID Connect használatával",
         "profile": "A profilja megtekintése",
+        "responses_read": "Felmérési válaszok olvasása",
+        "responses_write": "Felmérési válaszok létrehozása, frissítése és törlése",
         "surveys_read": "Kérdőívek olvasása",
         "surveys_write": "Kérdőívek létrehozása, frissítése és törlése",
         "workflows_read": "Munkafolyamatok olvasása",
@@ -4414,7 +4416,8 @@
       "value_date": "Érték (dátum)",
       "value_id": "Értékazonosító",
       "value_number": "Érték (szám)",
-      "value_text": "Érték (szöveg)"
+      "value_text": "Érték (szöveg)",
+      "view_survey": "Felmérés megtekintése"
     },
     "workflows": {
       "add_action": "Művelet hozzáadása",
