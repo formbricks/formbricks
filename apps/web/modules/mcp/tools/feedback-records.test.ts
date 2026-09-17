@@ -913,6 +913,19 @@ describe("every feedback-record tool is gated on its own scope", () => {
     ["delete_feedback_record", "write"],
   ] as const;
 
+  /**
+   * The roster has to be exhaustive or the check above is only as good as someone remembering to extend
+   * it: an eleventh tool registered with a raw `server.registerTool` would be both ungated and absent
+   * from `TOOL_SCOPES`, so every case below would still pass. Comparing against what the module actually
+   * registers is what makes "every tool" true rather than "every tool we listed". A removed tool left
+   * behind here fails the same assertion, from the other side.
+   */
+  test("the roster covers exactly the tools the module registers", () => {
+    const { tools } = createToolServer();
+
+    expect([...tools.keys()].sort()).toEqual(TOOL_SCOPES.map(([tool]) => tool).sort());
+  });
+
   test.each(TOOL_SCOPES)("%s refuses a token holding only the other scope", async (tool, kind) => {
     const { tools } = createToolServer();
     const other = kind === "read" ? "feedbackRecords:write" : "feedbackRecords:read";
