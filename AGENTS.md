@@ -19,10 +19,14 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
 Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
 `test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
-`config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
-to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
-`apps/storybook` has no unit tests by policy (its components are exercised by the feature journeys in
-`apps/web/playwright`). Keep new packages on this matrix or document the exception here.
+`config-*` packages hold only config files (no scripts beyond `clean`); `email`, `types`, and
+`vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no unit tests
+by policy (its components are exercised by the feature journeys in `apps/web/playwright`). Keep new
+packages on this matrix or document the exception here.
+
+`types` is mostly declarations, but `validation.ts` is runtime logic and is tested like any other
+package — it is in Sonar's scope (ENG-2432), so treat it as covered code, not as a types-only
+workspace.
 
 ### Shared dependency versions (pnpm catalog)
 
