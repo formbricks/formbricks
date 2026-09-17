@@ -203,11 +203,11 @@ export const SurveyVariablesCardItem = ({
                     }
                   }
                   const declaredVariables = toCardVariables(getSurveyEmbeddedFields(localSurvey));
-                  if (mode === "create" && declaredVariables.find((v) => v.name === value)) {
+                  if (mode === "create" && declaredVariables.some((v) => v.name === value)) {
                     return t("workspace.surveys.edit.variable_name_is_already_taken_please_choose_another");
                   }
                   if (mode === "edit" && variable && variable.name !== value) {
-                    if (declaredVariables.find((v) => v.name === value)) {
+                    if (declaredVariables.some((v) => v.name === value)) {
                       return t("workspace.surveys.edit.variable_name_is_already_taken_please_choose_another");
                     }
                   }
