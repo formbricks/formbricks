@@ -4333,7 +4333,10 @@ export type TSurveyElementSummaryMatrix = z.infer<typeof ZSurveyElementSummaryMa
 
 export const ZSurveyElementSummaryHiddenFields = z.object({
   type: z.literal("hiddenField"),
+  /** The storage key the samples were read from. Unique per survey; not shown. */
   id: z.string(),
+  /** What the card is titled: the field's name, disambiguated on collision (ENG-3233). */
+  label: z.string(),
   responseCount: z.number(),
   samples: z.array(
     z.object({

@@ -7,7 +7,11 @@ import {
   ProcessedVariable,
   renderFollowUpEmail,
 } from "@formbricks/email";
-import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
+import {
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+} from "@formbricks/types/embedded-data-resolver";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -128,14 +132,17 @@ const buildHiddenFields = (
 ): ProcessedHiddenField[] => {
   if (!attachResponseData || !includeHiddenFields) return [];
 
-  return getIngestedStorageKeys(survey)
-    .filter((hiddenFieldId) => {
-      const hiddenFieldResponse = response.data[hiddenFieldId];
+  // ENG-3233: shown by name, read by storage key. `id` stays the storage key — it is the React key
+  // in the template, and only the key is unique per survey.
+  return labelEmbeddedFields(getIngestedEmbeddedFields(survey))
+    .filter(({ link }) => {
+      const hiddenFieldResponse = response.data[link.storageKey];
       return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
     })
-    .map((hiddenFieldId) => ({
-      id: hiddenFieldId,
-      value: response.data[hiddenFieldId] as string,
+    .map(({ link, label }) => ({
+      id: link.storageKey,
+      name: label,
+      value: response.data[link.storageKey] as string,
     }));
 };
 

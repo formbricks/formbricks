@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TFunction } from "i18next";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
 import {
   getComputedEmbeddedFields,
   getIngestedEmbeddedFields,
@@ -404,27 +405,29 @@ export const generateResponseTableColumns = (
     }
   );
 
-  const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = getIngestedEmbeddedFields(survey).map(
-    ({ field, link }) => {
-      return {
-        accessorKey: "HIDDEN_FIELD_" + link.storageKey,
-        header: () => (
-          <div className="flex items-center gap-x-2 overflow-hidden">
-            <span className="size-4">
-              <EyeOffIcon className="size-4" />
-            </span>
-            <span className="truncate">{field.name}</span>
-          </div>
-        ),
-        cell: ({ row }) => {
-          const hiddenFieldResponse = row.original.responseData[link.storageKey];
-          if (typeof hiddenFieldResponse === "string") {
-            return <div className="text-slate-900">{hiddenFieldResponse}</div>;
-          }
-        },
-      };
-    }
-  );
+  // ENG-3233: two ingested fields may share a name, and a truncated header makes that worse — the
+  // later one carries its storage key so the columns stay tellable apart.
+  const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = labelEmbeddedFields(
+    getIngestedEmbeddedFields(survey)
+  ).map(({ link, label }) => {
+    return {
+      accessorKey: "HIDDEN_FIELD_" + link.storageKey,
+      header: () => (
+        <div className="flex items-center gap-x-2 overflow-hidden">
+          <span className="size-4">
+            <EyeOffIcon className="size-4" />
+          </span>
+          <span className="truncate">{label}</span>
+        </div>
+      ),
+      cell: ({ row }) => {
+        const hiddenFieldResponse = row.original.responseData[link.storageKey];
+        if (typeof hiddenFieldResponse === "string") {
+          return <div className="text-slate-900">{hiddenFieldResponse}</div>;
+        }
+      },
+    };
+  });
 
   const metadataColumns = getMetadataColumnsData(t);
 

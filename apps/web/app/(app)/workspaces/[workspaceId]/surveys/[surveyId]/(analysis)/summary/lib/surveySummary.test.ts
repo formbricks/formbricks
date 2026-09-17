@@ -639,6 +639,50 @@ describe("getQuestionSummary", () => {
     expect(hiddenFieldSummary?.samples[0].value).toBe("Hidden val");
   });
 
+  /**
+   * ENG-3233. The card is titled by `label`; `id` stays the storage key the samples were read from,
+   * because that is what addresses `response.data`. Red on main, where there was no `label` and the
+   * card showed `utm_campaign`.
+   */
+  test("titles a hidden-field summary by the field's name, keeping the storage key on id", async () => {
+    const renamedSurvey = {
+      ...survey,
+      embeddedFields: [
+        {
+          field: {
+            name: "Campaign",
+            key: null,
+            source: "ingested",
+            dataType: "string",
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "utm_campaign" },
+        },
+      ],
+    };
+    const renamedResponses = [
+      { ...responses[0], data: { utm_campaign: "spring_sale" } },
+    ] as unknown as typeof responses;
+
+    const summary = await getElementSummary(
+      renamedSurvey as unknown as TSurvey,
+      getElementsFromBlocks((renamedSurvey as unknown as TSurvey).blocks),
+      renamedResponses,
+      mockDropOff
+    );
+
+    const hiddenFieldSummary = summary.find((s) => s.type === "hiddenField");
+    // `samples` as well as the metadata: the point of the rename is that the *label* changed while
+    // the key the value is read by did not, so an implementation that looked values up by label
+    // would still produce this id and label — with an empty sample list.
+    expect(hiddenFieldSummary).toMatchObject({
+      id: "utm_campaign",
+      label: "Campaign",
+      samples: [expect.objectContaining({ value: "spring_sale" })],
+    });
+  });
+
   describe("Ranking question type tests", () => {
     test("getQuestionSummary correctly processes ranking question with default language responses", async () => {
       const question = {
