@@ -6,6 +6,7 @@ import {
   FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
 } from "@/modules/account/constants";
 import { auth } from "@/modules/auth/lib/auth";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendDeleteAccountConfirmationEmail } from "@/modules/email";
 import { requestSsoAccountDeletionEmail } from "./better-auth-account-deletion-request";
 
@@ -18,7 +19,9 @@ vi.mock("@/modules/auth/lib/session", () => ({ getSession: getSessionMock }));
 // Toggle IS_FORMBRICKS_CLOUD per test to cover both post-deletion redirect targets; every other
 // constant (WEBAPP_URL, etc.) stays real so the Better Auth harness is untouched (auth.ts does not
 // read IS_FORMBRICKS_CLOUD).
-const { constantsOverrides } = vi.hoisted(() => ({ constantsOverrides: { isFormbricksCloud: false } }));
+const { constantsOverrides } = vi.hoisted(() => ({
+  constantsOverrides: { isFormbricksCloud: false, signupEnabled: false },
+}));
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
   return {
@@ -26,7 +29,22 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     get IS_FORMBRICKS_CLOUD() {
       return constantsOverrides.isFormbricksCloud;
     },
+    // Derived from IS_FORMBRICKS_CLOUD / IS_DEVELOPMENT / E2E_TESTING, all false under vitest, so the
+    // closed-signup policy (ENG-2293) otherwise admits only the first user on a fresh instance. The one
+    // test that needs two accounts raises this together with the multi-org license above.
+    get SIGNUP_ENABLED() {
+      return constantsOverrides.signupEnabled;
+    },
   };
+});
+
+// The closed-signup policy (ENG-2293) only lets an uninvited sign-up through on a fresh instance, or
+// when the license permits multiple organizations — so a test that needs a SECOND user has to say which.
+// Mirrors the mock in better-auth-account-deletion.integration.test.ts; defaults to false (single-org,
+// the real local shape) and is raised only by the test that needs two accounts.
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return { ...actual, getIsMultiOrgEnabled: vi.fn() };
 });
 
 // @/modules/email is mocked in integration/setup.ts (captures mail instead of hitting SMTP); grab the
@@ -58,6 +76,8 @@ beforeEach(async () => {
   await resetDb();
   vi.clearAllMocks();
   constantsOverrides.isFormbricksCloud = false;
+  constantsOverrides.signupEnabled = false;
+  vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
 });
 
 describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
@@ -199,6 +219,54 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
     expect(await response.json()).toMatchObject({ code: "INVALID_CALLBACK_URL" });
     // And the account survives — which is what made account deletion untestable on staging.
     expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull();
+  });
+
+  /**
+   * Who the emailed link works for. Better Auth binds the token to its requester
+   * (`token.value !== session.user.id` → INVALID_TOKEN) and needs a session at all, so the link is
+   * useless to anyone but the person who asked for it, in their own browser. Asserted here because this
+   * PR reshapes that link, and a reviewer should not have to take the binding on trust.
+   */
+  test("another signed-in user cannot spend someone else's deletion token", async () => {
+    // Two accounts on one instance: the closed-signup policy admits the second only when public
+    // sign-up is open AND the license allows multiple organizations.
+    constantsOverrides.signupEnabled = true;
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    const victimEmail = "tokenvictim@example.com";
+    const { deleteLink, userId: victimId } = await requestDeleteLinkFor(victimEmail);
+
+    const attackerEmail = "tokenattacker@example.com";
+    const attackerId = await createVerifiedUser(attackerEmail, "Passw0rd!");
+    const attackerCookie = await signInCookie(attackerEmail, "Passw0rd!");
+
+    const response = await withOriginCheck(() =>
+      auth.handler(new Request(deleteLink, { headers: { cookie: attackerCookie } }))
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ code: "INVALID_TOKEN" });
+    // Neither account is touched: not the victim the token names, nor the attacker who presented it.
+    expect(await prisma.user.findUnique({ where: { id: victimId } })).not.toBeNull();
+    expect(await prisma.user.findUnique({ where: { id: attackerId } })).not.toBeNull();
+  });
+
+  test("the emailed link does nothing without a session, and stays usable afterwards", async () => {
+    const email = "tokennosession@example.com";
+    const { deleteLink, userId } = await requestDeleteLinkFor(email);
+
+    const anonymous = await withOriginCheck(() => auth.handler(new Request(deleteLink)));
+
+    expect(anonymous.status).toBe(404);
+    expect(await anonymous.json()).toMatchObject({ code: "FAILED_TO_GET_USER_INFO" });
+    expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull();
+
+    // The rejected attempt must not have burned the token — the real user still has to be able to
+    // finish from their own browser after a mail scanner or a logged-out click hits the link first.
+    const cookie = await signInCookie(email, "Passw0rd!");
+    const owner = await withOriginCheck(() => auth.handler(new Request(deleteLink, { headers: { cookie } })));
+
+    expect(owner.status).toBe(302);
+    expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
   });
 
   test("rejects a credential (email-identity) user — they must confirm with their password", async () => {
