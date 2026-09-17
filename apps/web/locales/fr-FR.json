@@ -2222,6 +2222,7 @@
       "survey_field_address_fixed": "La source et l'adresse ne peuvent pas être modifiées : les réponses déjà collectées y sont stockées.",
       "survey_field_address_taken": "Un autre champ de cette enquête est déjà enregistré sous cette adresse. Choisis un nom différent.",
       "survey_field_name_hint": "Comment la logique, le rappel et le tableau de réponses font référence au champ. Lettres minuscules, chiffres et traits de soulignement.",
+      "survey_field_name_taken": "Ce sondage utilise déjà ce nom pour une question, une fin ou un autre champ. Choisis-en un autre.",
       "type_boolean": "Vrai/faux",
       "type_change_body": "Les valeurs déjà collectées restent exactement telles quelles ; seules les nouvelles réponses sont lues comme {to}. Les filtres et la logique qui comparent les valeurs {to} peuvent ne pas correspondre aux anciennes.",
       "type_change_responses_subtitle": "Cette enquête a déjà {count, plural, one {# réponse} other {# réponses}}.",

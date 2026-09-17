@@ -2222,6 +2222,7 @@
       "survey_field_address_fixed": "A origem e o endereço não podem ser alterados: as respostas já recolhidas estão armazenadas sob eles.",
       "survey_field_address_taken": "Outro campo neste inquérito já está armazenado sob este endereço. Escolhe um nome diferente.",
       "survey_field_name_hint": "Como a lógica, a recuperação e a tabela de respostas se referem ao campo. Letras minúsculas, números e sublinhados.",
+      "survey_field_name_taken": "Este inquérito já utiliza este nome para uma pergunta, um final ou outro campo. Escolhe um diferente.",
       "type_boolean": "Verdadeiro/falso",
       "type_change_body": "Os valores já recolhidos permanecem exatamente como estão; apenas as novas respostas são lidas como {to}. Filtros e lógica que comparam valores {to} podem não corresponder aos mais antigos.",
       "type_change_responses_subtitle": "Este inquérito já tem {count, plural, one {# resposta} other {# respostas}}.",

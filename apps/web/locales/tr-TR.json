@@ -2222,6 +2222,7 @@
       "survey_field_address_fixed": "Kaynak ve adres değiştirilemez: önceden toplanan yanıtlar bunların altında saklanır.",
       "survey_field_address_taken": "Bu anketteki başka bir alan zaten bu adres altında saklanıyor. Farklı bir isim seç.",
       "survey_field_name_hint": "Mantık, geri çağırma ve yanıt tablosunun alanı nasıl adlandıracağı. Sadece küçük harfler, sayılar ve alt çizgi kullanın.",
+      "survey_field_name_taken": "Bu anket bu ismi zaten bir soru, bir sonuç veya başka bir alan için kullanıyor. Farklı bir isim seç.",
       "type_boolean": "Doğru/yanlış",
       "type_change_body": "Daha önce toplanan değerler aynen kalır; sadece yeni yanıtlar {to} olarak okunur. {to} değerlerini karşılaştıran filtreler ve mantık, eskileriyle eşleşmeyebilir.",
       "type_change_responses_subtitle": "Bu ankette zaten {count, plural, one {# yanıt} other {# yanıt}} var.",

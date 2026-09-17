@@ -2222,6 +2222,7 @@
       "survey_field_address_fixed": "Sursa și adresa nu pot fi modificate: răspunsurile deja colectate sunt stocate sub ele.",
       "survey_field_address_taken": "Un alt câmp din acest sondaj este deja stocat la această adresă. Alege un alt nume.",
       "survey_field_name_hint": "Cum logica, rechemarea și tabelul de răspunsuri se referă la câmp. Litere mici, cifre și liniuțe de subliniere.",
+      "survey_field_name_taken": "Acest sondaj folosește deja acest nume pentru o întrebare, o finalizare sau un alt câmp. Alege unul diferit.",
       "type_boolean": "Adevărat/fals",
       "type_change_body": "Valorile deja colectate rămân exact așa cum sunt; doar răspunsurile noi sunt citite ca {to}. Filtrele și logica care compară valori {to} s-ar putea să nu corespundă cu cele mai vechi.",
       "type_change_responses_subtitle": "Acest sondaj are deja {count, plural, one {# răspuns} other {# răspunsuri}}.",

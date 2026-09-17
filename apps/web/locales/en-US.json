@@ -2222,6 +2222,7 @@
       "survey_field_address_fixed": "The source and the address cannot be changed: responses already collected are stored under them.",
       "survey_field_address_taken": "Another field on this survey is already stored under this address. Pick a different name.",
       "survey_field_name_hint": "How logic, recall and the response table refer to the field. Lowercase letters, numbers and underscores.",
+      "survey_field_name_taken": "This survey already uses this name for a question, an ending or another field. Pick a different one.",
       "type_boolean": "True/false",
       "type_change_body": "Values already collected stay exactly as they are; only new responses are read as {to}. Filters and logic that compare {to} values may not match the older ones.",
       "type_change_responses_subtitle": "This survey already has {count, plural, one {# response} other {# responses}}.",
