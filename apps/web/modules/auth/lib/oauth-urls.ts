@@ -106,8 +106,16 @@ export const MCP_OAUTH_SCOPES = [
   "feedbackRecords:write",
   // ENG-2862. Responses get their own pair rather than riding on `surveys:*`, which would silently
   // widen every token an integrator already holds to include respondent PII — the survey document is
-  // configuration, a response is someone's answers. Appended rather than inserted: the seed migration
-  // keeps a literal copy of this list and its test compares the two in order.
+  // configuration, a response is someone's answers.
+  //
+  // Adding a scope here is half the work. Instances that have already upgraded keep whatever
+  // `oauthResource.allowedScopes` they were seeded with, `resolveResourcePolicy` intersects the new
+  // scope away, and `resourceSeedMode: "insertOnly"` never repairs the row — so `/authorize` answers
+  // `invalid_scope` with nothing logged. The second half is a **data migration that grants it to
+  // existing rows**, listed in `REPAIR_MIGRATIONS` in `mcp-oauth-resource-seed.test.ts`.
+  //
+  // Not by editing the 20260812110001 seed migration. That one has already run everywhere, so widening
+  // its literal repairs nothing and only makes it claim something it never did.
   "responses:read",
   "responses:write",
 ] as const;

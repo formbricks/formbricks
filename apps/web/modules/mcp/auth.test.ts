@@ -263,16 +263,21 @@ describe("authenticateMcpRequest", () => {
       // rather than with `arrayContaining`, which is a subset matcher: it passed whether or not
       // `getMcpScopes` granted `responses:write`, so deleting that line left the whole suite green.
       // The read-only case below has always been exact; this one now matches it.
-      expect(result.authInfo.scopes).toEqual([
-        "surveys:read",
-        "workflows:read",
-        "feedbackRecords:read",
-        "responses:read",
-        "surveys:write",
-        "workflows:write",
-        "feedbackRecords:write",
-        "responses:write",
-      ]);
+      // Sorted on both sides: the set is the contract, the order is an artefact of the `Set` insertion
+      // in `getMcpScopes`. Consumers read these through `hasMcpScopes`, so reordering the adds would
+      // break this test without breaking anything real.
+      expect([...result.authInfo.scopes].sort()).toEqual(
+        [
+          "surveys:read",
+          "workflows:read",
+          "feedbackRecords:read",
+          "responses:read",
+          "surveys:write",
+          "workflows:write",
+          "feedbackRecords:write",
+          "responses:write",
+        ].sort()
+      );
     }
     expect(applyRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:v3" }), "key_1");
   });
@@ -293,12 +298,9 @@ describe("authenticateMcpRequest", () => {
     if (result.ok) {
       // `responses:read` rides along (ENG-2862): the same key can already read responses through v1/v2
       // management, so withholding it would make MCP narrower than the REST surface this credential has.
-      expect(result.authInfo.scopes).toEqual([
-        "surveys:read",
-        "workflows:read",
-        "feedbackRecords:read",
-        "responses:read",
-      ]);
+      expect([...result.authInfo.scopes].sort()).toEqual(
+        ["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read"].sort()
+      );
     }
   });
 

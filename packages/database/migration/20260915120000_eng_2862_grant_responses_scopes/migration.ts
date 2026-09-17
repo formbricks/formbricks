@@ -27,6 +27,15 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
  * No-op on a fresh database, as the harness requires: with no `oauthResource` rows the plugin seeds the
  * full current list at first boot.
  *
+ * **Deliberately one statement rather than batched.** The convention for data migrations is that a
+ * long-running `UPDATE` over a whole table is chunked and resumable, and this is neither: `oauthResource`
+ * holds one row per deployment — `resolveMcpResourceIdentifier` yields exactly one identifier, and the
+ * plugin seeds exactly that — so the `WHERE` matches one row on a real instance and a handful on a dev
+ * database that has changed `WEBAPP_URL`. Batching machinery would add a resumable cursor over a table
+ * that does not need one. The properties the convention is actually protecting are met directly: the
+ * append is idempotent (`NOT (allowedScopes @> …)` makes a re-run a no-op), convergent, and atomic, so
+ * a partial failure leaves nothing to resume.
+ *
  * **A NULL `allowedScopes` is left alone, but not because NULL is permissive.** An earlier version of
  * this comment claimed it was — that `resolveResourcePolicy` skips NULL/undefined, so NULL means "allow
  * everything". That is wrong at this layer, and the mistake is worth recording. The column is nullable
