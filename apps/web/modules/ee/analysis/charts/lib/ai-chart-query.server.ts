@@ -3,20 +3,33 @@ import { z } from "zod";
 import { type TChartQuery } from "@formbricks/types/analysis";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
+import { formatDataProfile } from "@/modules/ee/analysis/lib/ai-data-profile";
+import { getAIDataProfile } from "@/modules/ee/analysis/lib/ai-data-profile.server";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import {
+  DATE_PRESETS,
   FEEDBACK_DIMENSION_IDS,
   FEEDBACK_MEASURE_IDS,
   FEEDBACK_TIME_DIMENSION_IDS,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { type TChartType, ZChartType } from "@/modules/ee/analysis/types/analysis";
+import { resolveAIDateRange } from "./ai-chart-date-range";
 import { getAIChartPromptError } from "./ai-chart-errors.server";
 import { prepareQueryForChartType } from "./big-number";
 
 const CUBE_NAME = "FeedbackRecords";
 const DEFAULT_MEASURE = `${CUBE_NAME}.count`;
 const AI_CHART_GENERATION_TIMEOUT_MS = 30_000;
-const AI_CHART_GENERATION_MAX_OUTPUT_TOKENS = 1024;
+/**
+ * Output budget for one generation.
+ *
+ * This counts reasoning tokens, not just the JSON — and the answer is a query object that fits in a
+ * few hundred. At 1024 a thinking model (the default `gemini-2.5-flash` deployment spent 982 of them
+ * on a two-clause prompt) exhausted the budget mid-thought and threw `AIOutputTokenLimitError`
+ * before writing a single field. Sized for a model that thinks, since the provider and model are
+ * deployment configuration and a non-reasoning one simply never approaches the cap.
+ */
+const AI_CHART_GENERATION_MAX_OUTPUT_TOKENS = 8192;
 // Matches the maxLength of the chart-name input and the persisted chart name.
 const MAX_CHART_NAME_LENGTH = 255;
 
@@ -30,6 +43,7 @@ const toEnumTuple = (values: readonly string[]): [string, ...string[]] => {
 const ZMeasureId = z.enum(toEnumTuple(FEEDBACK_MEASURE_IDS));
 const ZDimensionId = z.enum(toEnumTuple(FEEDBACK_DIMENSION_IDS));
 const ZTimeDimensionId = z.enum(toEnumTuple(FEEDBACK_TIME_DIMENSION_IDS));
+const ZDatePreset = z.enum(toEnumTuple(DATE_PRESETS.map((preset) => preset.value)));
 const ZFilterMemberId = z.enum(toEnumTuple([...FEEDBACK_MEASURE_IDS, ...FEEDBACK_DIMENSION_IDS]));
 const ZFilterOperator = z.enum([
   "equals",
@@ -85,7 +99,30 @@ export const ZAIQueryResponse = z.object({
       z.object({
         dimension: ZTimeDimensionId,
         granularity: z.enum(["hour", "day", "week", "month", "quarter", "year"]).nullable(),
-        dateRange: z.string().nullable(),
+        // Three flat fields rather than one union: the preset is an enum the model cannot spell
+        // wrong, the explicit pair is the escape hatch for a window no preset covers, and both
+        // encode in every provider's structured-output dialect. A single `dateRange: string` is what
+        // let the model answer with an ISO 8601 interval nothing downstream could read.
+        // The descriptions carry the exclusivity rule because they are the only part of this that
+        // reaches the model: `Output.object` sends the schema to the provider as JSON Schema, which
+        // cannot express "one of these, never both". A cross-field refinement would therefore
+        // constrain nothing at generation time and only turn a model that answered with both into a
+        // failed request — so the rule is stated here, and `resolveAIDateRange` breaks the tie.
+        dateRangePreset: ZDatePreset.nullable().describe(
+          "Named range covering the request. Use this OR the explicit start/end pair, never both; prefer a preset whenever one fits. Null when giving explicit dates."
+        ),
+        dateRangeStart: z
+          .string()
+          .nullable()
+          .describe(
+            "Inclusive start as YYYY-MM-DD. Only when no preset covers the request, and only with dateRangePreset null and dateRangeEnd also given."
+          ),
+        dateRangeEnd: z
+          .string()
+          .nullable()
+          .describe(
+            "Inclusive end as YYYY-MM-DD. Only when no preset covers the request, and only with dateRangePreset null and dateRangeStart also given."
+          ),
       })
     )
     .nullable(),
@@ -105,6 +142,7 @@ export type AIChartQueryResult = {
 type GenerateAIChartQueryInput = {
   organizationId: string;
   workspaceId: string;
+  feedbackDirectoryId: string;
   userId: string;
   prompt: string;
 };
@@ -118,10 +156,22 @@ type GenerateAIChartQueryInput = {
 export const generateAIChartQuery = async ({
   organizationId,
   workspaceId,
+  feedbackDirectoryId,
   userId,
   prompt,
 }: GenerateAIChartQueryInput): Promise<AIChartQueryResult> => {
-  const schemaContext = generateSchemaContext();
+  // What the cube *could* hold, then what this directory actually does. The second half is what
+  // stops the model filtering on a source name it invented; it is best-effort, and an empty string
+  // leaves the schema-only prompt this feature shipped with.
+  const dataProfile = await getAIDataProfile({
+    feedbackDirectoryId,
+    workspaceId,
+    organizationId,
+    userId,
+  });
+  const schemaContext = [generateSchemaContext(), formatDataProfile(dataProfile)]
+    .filter((section) => section.length > 0)
+    .join("\n\n");
 
   let output: AIQueryResponse;
   try {
@@ -167,11 +217,21 @@ const normalizeChartQuery = (output: AIQueryResponse): AIChartQueryResult => {
   }
 
   if (output.timeDimensions?.length) {
-    query.timeDimensions = output.timeDimensions.map(({ dimension, granularity, dateRange }) => ({
-      dimension,
-      ...(granularity == null ? {} : { granularity }),
-      ...(dateRange == null ? {} : { dateRange }),
-    }));
+    query.timeDimensions = output.timeDimensions.map(
+      ({ dimension, granularity, dateRangePreset, dateRangeStart, dateRangeEnd }) => {
+        const dateRange = resolveAIDateRange({
+          preset: dateRangePreset,
+          start: dateRangeStart,
+          end: dateRangeEnd,
+        });
+
+        return {
+          dimension,
+          ...(granularity == null ? {} : { granularity }),
+          ...(dateRange === undefined ? {} : { dateRange }),
+        };
+      }
+    );
   }
 
   // A big number has no axis for a grouping, so the model asking for one (a granularity, a

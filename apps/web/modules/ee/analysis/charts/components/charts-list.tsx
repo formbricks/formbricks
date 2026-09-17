@@ -1,7 +1,7 @@
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { ChartRow } from "@/modules/ee/analysis/charts/components/chart-row";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
-import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 interface ChartsListProps {

@@ -24,6 +24,12 @@ interface WelcomeCardProps {
   responseCount?: number;
   autoFocusEnabled: boolean;
   isCurrent: boolean;
+  /**
+   * The recall lookup map, not the raw response: `survey.tsx` merges reserved-field values UNDER the
+   * response data (`mergeReservedValues`) before passing it, so `#recall:url#` resolves here while a
+   * declared field of the same name still wins. Read only by `replaceRecallInfo` — anything that
+   * needs the respondent's actual answers must take its own prop rather than reusing this one.
+   */
   responseData: TResponseData;
   variablesData: TResponseVariables;
   fullSizeCards: boolean;

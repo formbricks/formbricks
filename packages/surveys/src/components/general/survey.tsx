@@ -1,6 +1,18 @@
 import { type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { applyIngestContract } from "@formbricks/types/embedded-data-ingest";
+import {
+  RESERVED_FIELD_CATALOG,
+  coerceToEmbeddedDataType,
+  dropShadowedReservedEntries,
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+  getSurveyEmbeddedFields,
+  listShadowingNames,
+  mergeReservedValues,
+  projectClientReservedValues,
+} from "@formbricks/types/embedded-data-resolver";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { TJsFileUploadParams, type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import type {
@@ -28,7 +40,9 @@ import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
+import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
 import { getLocalizedValue } from "@/lib/i18n";
+import { INGEST_DROP_MESSAGES, logIngestResult } from "@/lib/ingest-logging";
 import { evaluateLogic, performActions } from "@/lib/logic";
 import {
   type SerializedSurveyState,
@@ -175,6 +189,24 @@ export function Survey({
     [offlinePersistEnabled, survey.id]
   );
 
+  // `onResponseCreateOrUpdate` runs on every question submit, but a response is only *created* on the
+  // first submit — later submits update it. `onResponseCreated` must therefore fire once, not per
+  // question, otherwise a 5-question survey triggers 5 downstream `/user` refreshes in js-core.
+  //
+  // Fired from the queue's server-ack seam below (not at enqueue time) so it can carry the persisted
+  // `responseId` — the id is minted by the server, so an event that carries it can only fire after
+  // the ack (ENG-1846). Same post-ack semantics as `onDisplayCreated`, which fires after
+  // createDisplay. Preview mode never reaches the queue and fires this without an id at submit time.
+  const responseCreatedRef = useRef(false);
+  const triggerResponseCreatedOnce = useCallback(
+    (responseId?: string) => {
+      if (responseCreatedRef.current) return;
+      responseCreatedRef.current = true;
+      void onResponseCreated?.(responseId);
+    },
+    [onResponseCreated]
+  );
+
   const responseQueue = useMemo(() => {
     if (appUrl && workspaceId && surveyState) {
       return new ResponseQueue(
@@ -210,6 +242,15 @@ export function Survey({
           },
           onResponseCreated: (responseId) => {
             void persistSurveyStateSnapshot({ responseId });
+            try {
+              triggerResponseCreatedOnce(responseId);
+            } catch (error) {
+              // This runs inside ResponseQueue.sendResponse's try block, and the callback reaches
+              // host-supplied code (js-core's event bus → the host page). A throw here would be
+              // caught as a SEND failure — the respondent shown an error and a retry for a response
+              // the server already created. Never let a host page do that.
+              console.error("Formbricks: onResponseCreated handler threw", error);
+            }
           },
         },
         surveyState
@@ -225,6 +266,7 @@ export function Survey({
     surveyState,
     offlinePersistEnabled,
     persistSurveyStateSnapshot,
+    triggerResponseCreatedOnce,
     survey.id,
   ]);
 
@@ -246,14 +288,26 @@ export function Survey({
     setlocalSurvey(survey);
   }, [survey]);
 
+  // ENG-1837: computed fields are seeded from their definitions in the EmbeddedData tables, falling
+  // back to the legacy `variables` column for surveys whose rows are not joined in. Only `variables`
+  // and `embeddedFields` are passed (and depended on): a computed field can never be derived from
+  // `hiddenFields`, so nothing else can change this map.
   useEffect(() => {
     setCurrentVariables(
-      survey.variables.reduce<TResponseVariables>((acc, variable) => {
-        acc[variable.id] = variable.value;
+      getComputedEmbeddedFields({
+        variables: survey.variables,
+        embeddedFields: survey.embeddedFields,
+      }).reduce<TResponseVariables>((acc, { field, link }) => {
+        // Provably the variable's declared value for every field derived from the legacy shape:
+        // ZSurveyVariable pins a number variable to a number and a text one to a string, and both
+        // are pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). Booleans
+        // and dates have no slot in TResponseVariables and no computed field can carry one.
+        const seed = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
+        if (typeof seed === "string" || typeof seed === "number") acc[link.storageKey] = seed;
         return acc;
       }, {})
     );
-  }, [survey.variables]);
+  }, [survey.variables, survey.embeddedFields]);
 
   const autoFocusEnabled = autoFocus ?? window.self === window.top;
 
@@ -286,7 +340,50 @@ export function Survey({
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const isNavigatingBackRef = useRef(false);
-  const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
+  /**
+   * The Embedded Data ingest contract (ENG-1845) applied to whatever the host handed us — URL params
+   * for a link survey, `track({ hiddenFields })` or `setEmbeddedData` for an app one. Every caller
+   * passes a raw bag and this is the one place it is filtered and coerced, so the SDKs stay dumb
+   * pipes and the four mobile ones inherit the rules without shipping a copy (ENG-2472).
+   *
+   * In a lazy initialiser because it belongs to the display-time snapshot: the bag is read once, at
+   * mount, like the browser-runtime context beside it. The values it produces are the ones the
+   * respondent's logic and recall see, so they must not change under them mid-survey.
+   *
+   * Client-side enforcement is for immediate correctness and developer feedback only — the server
+   * re-runs the same contract on ingest and recomputes the flags, because it cannot trust this.
+   */
+  const [ingestedFieldsRecord] = useState<TResponseData>(() => {
+    const elementIds = getElementsFromSurveyBlocks(survey.blocks).map((element) => element.id);
+    const result = applyIngestContract({
+      incoming: hiddenFieldsRecord ?? {},
+      ingestedFields: getIngestedEmbeddedFields(survey),
+      elementIds,
+      // This record is what the queue sends, so cutting here would hand the server a value that
+      // already fits — and the server's re-run is what produces the persisted flags, so the
+      // `truncated` verdict would be lost on the only path the feature actually ships on. The flag is
+      // still raised below for the console; the server does the cutting.
+      enforceSizeLimit: false,
+    });
+    logIngestResult(result);
+
+    // The contract passes question answers through because at a server boundary `incoming` IS
+    // `response.data`. Here it is only the host's bag, so a key naming a question is not an answer —
+    // and keeping it would be worse than useless: `ResponseQueue` merges this record OVER `data` on
+    // every submit, so a hidden field named after a question id would re-apply its display-time
+    // value on top of whatever the respondent actually answered. Prefilling has its own prop.
+    const elementIdSet = new Set(elementIds);
+    return Object.fromEntries(
+      Object.entries(result.data).filter(([key]) => {
+        if (!elementIdSet.has(key)) return true;
+        console.warn(
+          `Formbricks: "${key}" ${INGEST_DROP_MESSAGES.element_id_collision}, so the value was ignored.`
+        );
+        return false;
+      })
+    );
+  });
+  const [responseData, setResponseData] = useState<TResponseData>(ingestedFieldsRecord);
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
@@ -406,11 +503,6 @@ export function Survey({
   // restoration so we can skip creating a new display if a session was restored.
   const displayCreatedRef = useRef(false);
 
-  // `onResponseCreateOrUpdate` runs on every question submit, but a response is only *created* on the
-  // first submit — later submits update it. `onResponseCreated` must therefore fire once, not per
-  // question, otherwise a 5-question survey triggers 5 downstream `/user` refreshes in js-core.
-  const responseCreatedRef = useRef(false);
-
   useEffect(() => {
     if (offlinePersistEnabled && !progressRestored) return;
 
@@ -528,6 +620,22 @@ export function Survey({
 
       if (pendingCount > 0) {
         setPendingSyncCount(pendingCount);
+      }
+
+      /*
+       * Reinstate the browser context this response was first displayed with. Past this point the
+       * entry is being resumed, so the writes that follow go to the response `surveyStateSnapshot`
+       * already identifies — and the meta they carry has to keep describing the original display.
+       * Lazy `useRef` init has already measured the *current* page by now (a reload can land on a
+       * different URL, referrer or viewport), so the persisted snapshot replaces it rather than
+       * merging with it: a partial merge would report a context that never existed.
+       *
+       * Entries written before this field existed carry no meta and keep the freshly measured
+       * snapshot, which is exactly the behaviour they had.
+       */
+      if (progress.webSurveyMeta) {
+        const restoredMeta = progress.webSurveyMeta;
+        webSurveyMetaRef.current = () => restoredMeta;
       }
 
       // Validate that the saved blockId still exists in the current survey
@@ -754,7 +862,13 @@ export function Survey({
   };
 
   const evaluateLogicAndGetNextBlockId = (
-    data: TResponseData
+    data: TResponseData,
+    /**
+     * Reserved-field values, passed in rather than closed over: this is declared above the memo that
+     * produces them, and taking them as a parameter keeps the sole call site explicit about the fact
+     * that logic reads the same map recall does.
+     */
+    reservedFieldValues: Record<string, string | number>
   ): { nextBlockId: string | undefined; calculatedVariables: TResponseVariables } => {
     const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
 
@@ -788,7 +902,10 @@ export function Survey({
         localResponseData,
         calculationResults,
         logic.conditions,
-        selectedLanguage
+        selectedLanguage,
+        // Merged against the in-flight response data (answers from this block included), so a
+        // declared field shadows a same-named reserved entry here exactly as it does in recall.
+        mergeReservedValues(reservedFieldValues, localResponseData)
       );
 
       if (!isLogicMet) {
@@ -863,25 +980,21 @@ export function Survey({
     };
   };
 
-  const getWebSurveyMeta = useCallback(() => {
-    if (!isWebEnvironment) return {};
+  /**
+   * The browser-runtime context, snapshotted **once on this survey's first render** and frozen for
+   * the rest of its life. `onResponseCreateOrUpdate` runs on every submit, so reading the runtime
+   * there — as this did before — meant a respondent who rotated their phone or resized the window
+   * mid-survey silently rewrote the viewport the finished response reports.
+   *
+   * Lazy `useRef` initialisation is what makes "first render" the capture point. A survey with a
+   * `delay` is not mounted until the widget actually renders it, so render time is the only moment
+   * this component can reach — and it is the right one anyway: it is when the respondent first sees
+   * the survey, not when some earlier action queued it.
+   */
+  const webSurveyMetaRef = useRef<(() => TWebSurveyMeta) | null>(null);
+  webSurveyMetaRef.current ??= createWebSurveyMetaSnapshot(isWebEnvironment);
 
-    const url = new URL(window.location.href);
-    const source = url.searchParams.get("source");
-
-    return {
-      url: url.href,
-      ...(source ? { source } : {}),
-    };
-  }, [isWebEnvironment]);
-
-  // Fire onResponseCreated exactly once per survey lifecycle. The queue creates the response on the
-  // first add and updates it on later submits, so a multi-question survey must not re-trigger it.
-  const triggerResponseCreatedOnce = useCallback(() => {
-    if (responseCreatedRef.current) return;
-    responseCreatedRef.current = true;
-    onResponseCreated?.();
-  }, [onResponseCreated]);
+  const getWebSurveyMeta = useCallback((): TWebSurveyMeta => webSurveyMetaRef.current?.() ?? {}, []);
 
   const onResponseCreateOrUpdate = useCallback(
     async (responseUpdate: TResponseUpdate) => {
@@ -932,10 +1045,12 @@ export function Survey({
           variables: responseUpdate.variables,
           displayId: surveyState.displayId,
           endingId: responseUpdate.endingId,
-          hiddenFields: hiddenFieldsRecord,
+          // The filtered record, not the raw prop: `ResponseQueue` merges `hiddenFields` over `data`
+          // on every submit, so sending the raw bag here would put the dropped and uncoerced values
+          // straight back.
+          hiddenFields: ingestedFieldsRecord,
         });
-
-        triggerResponseCreatedOnce();
+        // No trigger here: the queue's onResponseCreated ack fires it with the persisted responseId.
       }
     },
     [
@@ -950,9 +1065,82 @@ export function Survey({
       userId,
       survey,
       action,
-      hiddenFieldsRecord,
+      ingestedFieldsRecord,
       getWebSurveyMeta,
     ]
+  );
+
+  /**
+   * The catalog entries this survey may resolve at all — everything the survey does not declare
+   * itself (ENG-2538).
+   *
+   * Without this filter the projection below carried a reserved value for every name in the catalog,
+   * and {@link mergeReservedValues}'s spread was the only thing keeping a declared field ahead of
+   * it. A spread only wins for keys that exist, so a survey declaring an optional `url` rendered the
+   * page's own address — an internal `/edit` URL in the editor's preview, the respondent's own link
+   * in production — wherever the respondent had not supplied the field. That is the normal case for
+   * a hidden field, and it reached respondent-facing copy.
+   *
+   * Element ids count as declarations here, which is why `questions` is in the list: a question with
+   * id `url` is absent from `responseData` until it is answered, so the reserved read would win for
+   * exactly as long as the respondent had not reached it.
+   */
+  const readableReservedEntries = useMemo(
+    () =>
+      dropShadowedReservedEntries(
+        RESERVED_FIELD_CATALOG,
+        listShadowingNames(
+          getSurveyEmbeddedFields(localSurvey),
+          questions.map((question) => question.id)
+        )
+      ),
+    [localSurvey, questions]
+  );
+
+  /**
+   * Reserved-field values this renderer can resolve *right now* (ENG-1840).
+   *
+   * `projectClientReservedValues` drops every `server` catalog entry, so the map holds only what a
+   * browser mid-survey actually knows (url, source, action, language today; the SDK-captured entries
+   * light up automatically once they land in the catalog). A recall token or logic operand naming a
+   * server-derived field — country, durationSeconds, browser — finds no key and reads as unset,
+   * which is the correct answer rather than a fabricated empty string.
+   *
+   * The meta slice is the same expression the response queue persists, so what recall shows and what
+   * ingest stores cannot drift apart. `language` is resolved the same way too: `"default"` is a
+   * renderer-internal sentinel, and `#recall:language#` must render the real language code.
+   */
+  const reservedValues = useMemo(
+    () =>
+      projectClientReservedValues(readableReservedEntries, {
+        surveyId: localSurvey.id,
+        language:
+          selectedLanguage === "default" ? (getDefaultLanguageCode(survey) ?? null) : selectedLanguage,
+        data: responseData,
+        variables: currentVariables,
+        ttc,
+        meta: { ...getWebSurveyMeta(), action },
+      }),
+    [
+      readableReservedEntries,
+      localSurvey.id,
+      selectedLanguage,
+      survey,
+      responseData,
+      currentVariables,
+      ttc,
+      getWebSurveyMeta,
+      action,
+    ]
+  );
+
+  /**
+   * Recall's lookup map. The reserved side is already shadow-filtered, so a declared field owns its
+   * name whether or not it has a value; the merge order is what still protects a stored `""` or `0`.
+   */
+  const recallValues = useMemo(
+    () => mergeReservedValues(reservedValues, responseData),
+    [reservedValues, responseData]
   );
 
   useEffect(() => {
@@ -978,7 +1166,9 @@ export function Survey({
     if (isResponseSendingFinished && isSurveyFinished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
-      onFinished?.();
+      // Gated on isResponseSendingFinished, so outside preview/offline the ack has landed and the
+      // queue has stamped the persisted responseId onto surveyState (ENG-1846).
+      onFinished?.(surveyState?.responseId ?? undefined);
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
@@ -1016,8 +1206,10 @@ export function Survey({
 
     pushVariableState(firstRespondedElementId);
 
-    const { nextBlockId: rawNextBlockId, calculatedVariables } =
-      evaluateLogicAndGetNextBlockId(surveyResponseData);
+    const { nextBlockId: rawNextBlockId, calculatedVariables } = evaluateLogicAndGetNextBlockId(
+      surveyResponseData,
+      reservedValues
+    );
     // A jump target may reference a deleted block or ending; treat such stale ids as "no target"
     // so the shown ending and the persisted endingId stay in sync
     const targetIsBlock = localSurvey.blocks.some((block) => block.id === rawNextBlockId);
@@ -1075,6 +1267,7 @@ export function Survey({
         currentVariables: calculatedVariables,
         history: newHistory,
         selectedLanguage,
+        webSurveyMeta: getWebSurveyMeta(),
         surveyStateSnapshot: {
           responseId: surveyState?.responseId ?? null,
           displayId: surveyState?.displayId ?? null,
@@ -1197,7 +1390,7 @@ export function Survey({
             responseCount={responseCount}
             autoFocusEnabled={autoFocusEnabled || hasUserNavigatedRef.current}
             isCurrent={offset === 0}
-            responseData={responseData}
+            responseData={recallValues}
             variablesData={currentVariables}
             isPreviewMode={isPreviewMode}
             fullSizeCards={fullSizeCards}
@@ -1218,7 +1411,7 @@ export function Survey({
               isCurrent={offset === 0}
               languageCode={selectedLanguage}
               isResponseSendingFinished={isResponseSendingFinished}
-              responseData={responseData}
+              responseData={recallValues}
               variablesData={currentVariables}
               onOpenExternalURL={onOpenExternalURL}
               isPreviewMode={isPreviewMode}
@@ -1239,7 +1432,7 @@ export function Survey({
               block={{
                 ...block,
                 elements: block.elements.map((element) =>
-                  parseRecallInformation(element, selectedLanguage, responseData, currentVariables)
+                  parseRecallInformation(element, selectedLanguage, recallValues, currentVariables)
                 ),
               }}
               value={responseData}

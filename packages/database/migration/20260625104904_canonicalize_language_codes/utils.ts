@@ -1,4 +1,4 @@
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import type { LanguageMergePlan, LanguageRow, SurveyLanguageMoves, SurveyLanguageRow } from "./types";
 
 /**

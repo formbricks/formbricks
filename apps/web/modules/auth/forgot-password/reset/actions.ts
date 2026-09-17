@@ -15,6 +15,8 @@ import { PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { actionClient } from "@/lib/utils/action-client";
 import { auth } from "@/modules/auth/lib/auth";
 import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp";
+import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
 const ZResetPasswordAction = z.object({
   token: z.string().min(1),
@@ -27,6 +29,8 @@ export const resetPasswordAction = actionClient
     if (PASSWORD_RESET_DISABLED) {
       throw new OperationNotAllowedError("Password reset is disabled");
     }
+
+    await applyIPRateLimit(rateLimitConfigs.auth.resetPassword);
 
     try {
       await auth.api.resetPassword({

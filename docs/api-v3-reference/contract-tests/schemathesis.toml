@@ -22,3 +22,13 @@ request-timeout = 30
 # absent parts so every documented operation gets a case, which is also what makes newly documented
 # endpoints covered with no per-endpoint registration.
 fill-missing = true
+
+# The eight `V3 Feedback Records` operations are served by the API gateway (Envoy in Cloud, Traefik
+# in the one-click Docker install → the Hub), not by this app: the Next.js route under
+# /api/v3/feedbackRecords is a local-dev proxy that needs a running Hub and answers 404 in production
+# builds. CI has no Hub, so exercising the proxy would only prove that a proxy without an upstream
+# answers 502 — nothing about the documented contract. Excluded rather than shallow-tested; the
+# contract is checked by the Hub's own suite and by the live smoke recorded in ENG-1259.
+[[operations]]
+include-tag = "V3 Feedback Records"
+enabled = false

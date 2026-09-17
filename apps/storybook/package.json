@@ -6,14 +6,13 @@
   "scripts": {
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "clean": "rimraf .turbo node_modules dist storybook-static"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "5.0.2",
-    "@eslint/js": "catalog:",
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@storybook/addon-a11y": "10.3.6",
     "@storybook/addon-docs": "10.3.6",
@@ -22,13 +21,10 @@
     "@storybook/react-vite": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@vitejs/plugin-react": "catalog:",
-    "eslint-plugin-react-hooks": "catalog:",
     "eslint-plugin-react-refresh": "0.4.26",
     "eslint-plugin-storybook": "10.3.6",
-    "globals": "catalog:",
     "storybook": "catalog:",
     "typescript": "catalog:",
-    "typescript-eslint": "catalog:",
     "vite": "catalog:"
   }
 }

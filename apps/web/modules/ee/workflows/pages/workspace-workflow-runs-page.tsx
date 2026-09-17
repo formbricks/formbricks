@@ -1,6 +1,7 @@
 "use client";
 
 import { WorkflowRunsTable } from "@/modules/ee/workflows/components/runs/workflow-runs-table";
+import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
 import { useWorkflowRuns } from "../hooks/use-workflow-runs";
 
 const RUNS_PER_PAGE = 20;
@@ -21,6 +22,7 @@ export const WorkspaceWorkflowRunsPage = ({ workspaceId }: Readonly<WorkspaceWor
     isFetchNextPageError,
     fetchNextPage,
   } = useWorkflowRuns({ workspaceId, limit: RUNS_PER_PAGE });
+  useTrackWorkflowSurface("workspace_runs");
 
   return (
     <WorkflowRunsTable

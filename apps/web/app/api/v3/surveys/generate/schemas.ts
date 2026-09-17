@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import { ZUserLocale } from "@formbricks/types/user";
 import {
   GENERATED_SURVEY_ELEMENT_TYPES,

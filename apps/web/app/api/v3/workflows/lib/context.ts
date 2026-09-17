@@ -15,6 +15,7 @@ import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { buildRecordAnalytics } from "./analytics";
 
 /**
  * Adapter glue between the Next.js v3 routes and the framework-agnostic `@formbricks/workflows`
@@ -147,4 +148,7 @@ export const buildWorkflowApiContext = (
   verifyTriggerSurvey,
   verifyRecipientsAllowed,
   ...(auditLog ? { recordAudit: buildRecordAudit(auditLog, authentication, requestId) } : {}),
+  // Product analytics (ENG-2851): always bound, unlike the audit sink, because it no-ops on its own
+  // when POSTHOG_KEY is unset and there is no per-request switch to respect.
+  recordAnalytics: buildRecordAnalytics(authentication, instance),
 });

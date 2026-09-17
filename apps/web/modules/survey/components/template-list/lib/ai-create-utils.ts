@@ -6,22 +6,9 @@ import {
   TrendingDownIcon,
   UsersIcon,
 } from "lucide-react";
-import type { TAIUnavailableReason } from "@/lib/ai/service";
 
 export const AI_SURVEY_PROMPT_MIN_LENGTH = 4;
 export const AI_SURVEY_PROMPT_MAX_LENGTH = 1200;
-
-export const getUnavailableMessageKey = (reason?: TAIUnavailableReason) => {
-  if (reason === "read_only") {
-    return "workspace.surveys.read_only_user_not_allowed_to_create_survey_warning";
-  }
-  if (reason === "not_in_plan") return "workspace.surveys.ai_create.ai_not_in_plan";
-  if (reason === "not_enabled") return "workspace.surveys.ai_create.ai_not_enabled";
-  if (reason === "instance_not_configured") {
-    return "workspace.surveys.ai_create.ai_instance_not_configured";
-  }
-  return "workspace.surveys.ai_create.ai_not_available";
-};
 
 export const getHelperPrompts = (
   t: TFunction

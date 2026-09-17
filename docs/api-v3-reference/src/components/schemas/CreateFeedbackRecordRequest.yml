@@ -1,0 +1,107 @@
+type: object
+description: >-
+  A new feedback record. Exactly one `value_*` member should carry the answer, matching
+  `field_type`. Strings must be valid UTF-8 without NULL bytes; violations answer **400**.
+additionalProperties: false
+required:
+  - tenant_id
+  - source_type
+  - field_id
+  - field_type
+  - submission_id
+properties:
+  tenant_id:
+    type: string
+    format: cuid2
+    description: >-
+      The feedback dataset to write into (the dataset id). The gateway authorizes the request
+      against this dataset, so it must be one the API key's workspace is assigned to.
+  source_type:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: Type of feedback source, e.g. `survey`, `review`, `feedback_form`.
+  source_id:
+    type: [string, "null"]
+    maxLength: 255
+    description: Reference to the survey / form / ticket the record came from.
+  source_name:
+    type: [string, "null"]
+    maxLength: 255
+    description: Human-readable name of the source.
+  submission_id:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: >-
+      Identifier of the logical submission this record belongs to. Groups multi-field submissions
+      and makes ingestion idempotent: records are unique per (`tenant_id`, `submission_id`,
+      `field_id`) and a duplicate answers **409**. If a record has no logical submission, reuse
+      `field_id`.
+  field_id:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: Identifier of the question / field.
+  field_label:
+    type: [string, "null"]
+    maxLength: 2048
+    description: The question text.
+  field_group_id:
+    type: string
+    maxLength: 255
+    description: Stable identifier grouping related fields (ranking, matrix and grid questions).
+  field_group_label:
+    type: [string, "null"]
+    maxLength: 2048
+    description: Human-readable question text for the group.
+  field_type:
+    $ref: ./FeedbackRecordFieldType.yml
+  language:
+    type: string
+    maxLength: 10
+    description: ISO language code the feedback was given in.
+  user_id:
+    type: string
+    maxLength: 255
+    description: >-
+      End-user identifier (e.g. an anonymous id or an email hash). Set it on anything you may later
+      have to erase: `DELETE /api/v3/feedbackRecords` matches on `user_id`.
+  collected_at:
+    type: string
+    format: date-time
+    description: When the feedback was given. Defaults to now. Must be between 1970-01-01 and 2080-12-31.
+  value_text:
+    type: [string, "null"]
+    maxLength: 30000
+    description: Text answer. The only member that feeds sentiment, emotion, translation and embedding enrichment.
+  value_id:
+    type: [string, "null"]
+    maxLength: 255
+    description: >-
+      Stable id of the selected option in the source system (e.g. a survey choice id or matrix
+      column id), stored alongside `value_text`. Opaque, not validated. Omit for free-text,
+      "other" and non-choice answers.
+  value_number:
+    type: number
+    format: double
+    minimum: -1000000000000000
+    maximum: 1000000000000000
+    description: Numeric answer (ratings, NPS scores, numbers). Must be between -1e15 and +1e15.
+  value_boolean:
+    type: boolean
+    description: Yes / no answer.
+  value_date:
+    type: string
+    format: date-time
+    description: Date answer. Must be between 1970-01-01 and 2080-12-31.
+  metadata:
+    type: [object, "null"]
+    additionalProperties: {}
+    description: >-
+      Arbitrary context for this record, stored as JSON: the dimensions you want to slice a
+      dashboard by, such as channel, device, country, campaign, plan or tags. Values may be strings,
+      numbers, booleans, `null`, or nested objects and arrays. Use stable `snake_case` keys — a key
+      is what a dashboard groups by. Numbers keep full precision in storage. Metadata is **not**
+      sent to the enrichment providers, but it **is** included in the `feedback_record.created` /
+      `feedback_record.updated` webhook payloads.

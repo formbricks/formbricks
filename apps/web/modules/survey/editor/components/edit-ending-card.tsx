@@ -13,10 +13,12 @@ import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbric
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
+import { extractLanguageCodes } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
 import { EndScreenForm } from "@/modules/survey/editor/components/end-screen-form";
 import { RedirectUrlForm } from "@/modules/survey/editor/components/redirect-url-form";
+import { getEndingCardTypeChangePatch } from "@/modules/survey/editor/lib/ending-card";
 import {
   findEndingCardUsedInLogic,
   formatTextWithSlashes,
@@ -282,11 +284,13 @@ export const EditEndingCard = ({
               handleOptionChange={(newType) => {
                 const selectedOption = endingCardTypes.find((option) => option.value === newType);
                 if (!selectedOption?.disabled) {
-                  if (newType === "redirectToUrl") {
-                    updateSurvey({ type: "redirectToUrl" });
-                  } else {
-                    updateSurvey({ type: "endScreen" });
-                  }
+                  updateSurvey(
+                    getEndingCardTypeChangePatch(
+                      endingCard,
+                      newType === "redirectToUrl" ? "redirectToUrl" : "endScreen",
+                      extractLanguageCodes(localSurvey.languages)
+                    )
+                  );
                 }
               }}
             />

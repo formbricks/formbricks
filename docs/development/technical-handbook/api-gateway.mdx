@@ -25,3 +25,9 @@ still runs through gateway authorization. `/api/v3/feedbackRecords/token` remain
 Envoy and Traefik do not send auth subrequests in the same format, so they stay as thin adapters. Envoy derives the
 original path from the auth request path. Traefik derives it from `X-Forwarded-Method` and `X-Forwarded-Uri`.
 Both adapters reuse the same gateway-auth core and FeedbackRecords authorizer.
+
+### Reference
+
+The public contract of the FeedbackRecords service — the eight operations the authorizer allows, and the
+two error shapes a caller sees — is documented in the
+[API v3 reference](/api-v3-reference/introduction), which is unlisted and in private beta.

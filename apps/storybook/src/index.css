@@ -1,9 +1,8 @@
 /* =============================================================================
    Storybook — Tailwind entry point
 
-   The single place Tailwind is configured for this app. Both `.storybook/preview.ts`
-   and `src/main.tsx` load this file; nothing else should reach into another
-   package's stylesheet directly.
+   The single place Tailwind is configured for this app. `.storybook/preview.ts` loads this file;
+   nothing else should reach into another package's stylesheet directly.
 
    Tailwind v4 is CSS-first, so there is no `tailwind.config.js` here. The theme,
    the `#fbjs` scoping and survey-ui's own source globs all arrive through the

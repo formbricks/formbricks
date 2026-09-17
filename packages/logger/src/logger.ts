@@ -193,8 +193,11 @@ const handleShutdown = (event: string, err?: Error): void => {
 const attachNodeProcessHandlers = (): void => {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
 
+  // Resolved through `getNodeProcess()` so the Edge bundler cannot statically see the
+  // `process.on` / `process.off` calls below and warn about unsupported Node.js APIs.
+  const nodeProcess = getNodeProcess() as typeof process & { [key: symbol]: boolean | undefined };
+
   // Next.js can evaluate bundled copies of this module in one process.
-  const nodeProcess = process as typeof process & { [key: symbol]: boolean | undefined };
   if (nodeProcess[PROCESS_HANDLERS_ATTACHED_KEY]) return;
 
   nodeProcess[PROCESS_HANDLERS_ATTACHED_KEY] = true;
@@ -205,14 +208,14 @@ const attachNodeProcessHandlers = (): void => {
   const handleSigint = (): void => handleShutdown("SIGINT");
 
   try {
-    process.on("uncaughtException", handleUncaughtException);
-    removeAttachedHandlers.push(() => process.off("uncaughtException", handleUncaughtException));
-    process.on("unhandledRejection", handleUnhandledRejection);
-    removeAttachedHandlers.push(() => process.off("unhandledRejection", handleUnhandledRejection));
-    process.on("SIGTERM", handleSigterm);
-    removeAttachedHandlers.push(() => process.off("SIGTERM", handleSigterm));
-    process.on("SIGINT", handleSigint);
-    removeAttachedHandlers.push(() => process.off("SIGINT", handleSigint));
+    nodeProcess.on("uncaughtException", handleUncaughtException);
+    removeAttachedHandlers.push(() => nodeProcess.off("uncaughtException", handleUncaughtException));
+    nodeProcess.on("unhandledRejection", handleUnhandledRejection);
+    removeAttachedHandlers.push(() => nodeProcess.off("unhandledRejection", handleUnhandledRejection));
+    nodeProcess.on("SIGTERM", handleSigterm);
+    removeAttachedHandlers.push(() => nodeProcess.off("SIGTERM", handleSigterm));
+    nodeProcess.on("SIGINT", handleSigint);
+    removeAttachedHandlers.push(() => nodeProcess.off("SIGINT", handleSigint));
   } catch (error) {
     removeAttachedHandlers.reverse().forEach((removeHandler) => removeHandler());
     Reflect.deleteProperty(nodeProcess, PROCESS_HANDLERS_ATTACHED_KEY);

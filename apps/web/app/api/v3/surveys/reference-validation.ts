@@ -219,6 +219,14 @@ function validateDynamicOperand(
       missingId: operand.value,
     });
   }
+
+  // `reserved` has no arm on purpose, and it is checked by a test rather than left to be inferred
+  // from the absence of code (ENG-2538). A reserved operand names a `RESERVED_FIELD_CATALOG` entry,
+  // which is a static list in code rather than anything declared on the survey — so there are no
+  // references to dangle against. Validating it against the catalog would also be actively wrong:
+  // `ZDynamicReservedField` deliberately checks the name as non-empty only, so that a survey
+  // authored against a newer catalog still round-trips through an older self-hosted deployment.
+  // An operand naming an entry that does not exist resolves as unset, exactly like a stale variable.
 }
 
 function validateConditionGroup(

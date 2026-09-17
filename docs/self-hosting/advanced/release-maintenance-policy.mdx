@@ -1,0 +1,87 @@
+---
+title: "Release and Maintenance Policy"
+description: "Which Formbricks releases receive security updates and bug fixes, and for how long"
+icon: "calendar-check"
+---
+
+This policy defines which Formbricks releases receive security updates and bug fixes. It applies to every
+self-hosted installation, Community and Enterprise alike.
+
+<Note>
+  This page covers which releases get fixes. Response times, recovery targets and other support commitments
+  for Enterprise customers are defined in your contract, not here.
+</Note>
+
+## Versioning
+
+Formbricks follows [Semantic Versioning](https://semver.org/): `Major.Minor.Patch`, for example `6.2.1`.
+
+| Release | Contains                                      | Example           |
+| ------- | --------------------------------------------- | ----------------- |
+| Major   | Breaking changes that need migration steps    | `5.x` → `6.0.0`   |
+| Minor   | New features and improvements                 | `6.1.0` → `6.2.0` |
+| Patch   | Bug fixes and security fixes, no new features | `6.2.0` → `6.2.1` |
+
+Every release is published on [GitHub Releases](https://github.com/formbricks/formbricks/releases) with its
+release notes.
+
+## Maintained Versions
+
+Each minor release is maintained for **three calendar months**, starting on the day its first stable version
+is published. Release candidates and the date you installed it do not count. If the ending month has no
+matching day, support ends on the last day of that month: a minor published on November 30 is maintained
+through the last day of February.
+
+- Patch releases do not restart the clock. `6.2.3` ends support on the same day as `6.2.0`.
+- A newer minor does not shorten the window of an older one. This is a time window, not a cap on the number
+  of maintained versions.
+- The support-end date of each minor is published in its release notes. Support runs through the end of that
+  day.
+
+What a release receives depends on where it sits in its window:
+
+| Release                                  | Bug fixes | Security fixes |
+| ---------------------------------------- | --------- | -------------- |
+| Latest minor                             | ✅        | ✅             |
+| Older minor, still within its window     | ❌        | ✅             |
+| Older minor, past its support-end date   | ❌        | ❌             |
+
+A maintained minor is not a frozen version. To stay covered, install its patch releases as they are
+published.
+
+## Security Fixes
+
+- **High and Critical vulnerabilities** (validated CVSS v4.0 base score of 7.0 or higher) are fixed on every
+  maintained minor. A public CVE is not required.
+- **Lower-severity vulnerabilities** are fixed in the latest minor only. Active exploitation, or a credible
+  attack chain with serious impact on customers, gets an expedited review regardless of score.
+- **Dependency vulnerabilities** follow the same rules. A scanner match alone does not mean a release is
+  affected; we verify whether the vulnerable code path is reachable in Formbricks.
+- If a fix cannot be safely backported to an older minor, we publish a mitigation or upgrade guidance for it
+  instead.
+
+These rules define which releases are covered. They are not a promise about how fast a fix ships.
+
+## Bug Fixes
+
+Non-security bug fixes ship in the **latest minor only**. Older minors receive security fixes only, even
+when a bug is blocking for you. To receive a bug fix, upgrade to the latest minor.
+
+## End of Support
+
+After its support-end date, no new fixes are accepted for a minor. Upgrade to a maintained minor to
+stay covered. A security fix accepted for backport before the end date is still completed and published,
+even if the work finishes after it.
+
+## Upgrade Recommendations
+
+- Run the latest stable release. It is the only version that receives every fix.
+- Pin a release tag in production instead of a moving tag such as `latest`.
+- Read the [migration guide](/self-hosting/advanced/migration) before a major upgrade. Major versions can
+  carry breaking changes that need steps before you switch images.
+- Plan to move to a newer minor before your current one reaches its support-end date.
+
+## Exceptions
+
+Backports beyond this policy are rare. They require a documented risk assessment and approval from Formbricks
+security leadership. Enterprise customers can raise a request through their support channel.

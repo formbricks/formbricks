@@ -27,6 +27,7 @@ export const IMPRINT_URL = env.IMPRINT_URL;
 export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 
 export const DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS = env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS === "1";
+export const WEBHOOK_DELIVERY_TIMEOUT_MS = env.WEBHOOK_DELIVERY_TIMEOUT_MS ?? 5_000;
 export const DEBUG_SHOW_RESET_LINK = !IS_PRODUCTION && env.DEBUG_SHOW_RESET_LINK === "1";
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const PASSWORD_RESET_TOKEN_LIFETIME_MINUTES = env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES;
@@ -66,6 +67,7 @@ export const SAML_PATH = "/api/auth/saml/callback";
 export const SIGNUP_ENABLED = IS_FORMBRICKS_CLOUD || IS_DEVELOPMENT || E2E_TESTING;
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
+export const INVITE_RATE_LIMIT_PER_24_HOURS = env.INVITE_RATE_LIMIT_PER_24_HOURS;
 
 export const SLACK_CLIENT_SECRET = env.SLACK_CLIENT_SECRET;
 export const SLACK_CLIENT_ID = env.SLACK_CLIENT_ID;
@@ -126,6 +128,11 @@ export const CLOUD_HOBBY_WORKSPACE_LIMIT = 1;
 
 export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO === "1";
 export const DEFAULT_TEAM_ID = env.AUTH_DEFAULT_TEAM_ID;
+// Self-hosted SSO auto-provisioning (`AUTH_SSO_DEFAULT_ORGANIZATION_ID`): when set, every new SSO user
+// joins this organization without needing an invite, created on first sign-up if it does not exist
+// yet. ENG-2089.
+export const DEFAULT_ORGANIZATION_ID = env.AUTH_DEFAULT_ORGANIZATION_ID;
+export const DEFAULT_ORGANIZATION_ROLE = env.AUTH_DEFAULT_ORGANIZATION_ROLE;
 
 // Cloud-only kill-switch: when enabled, the personal-email sign-up block also applies to invited
 // users (default exempts invites). See @/modules/auth/lib/signup-email-domain.

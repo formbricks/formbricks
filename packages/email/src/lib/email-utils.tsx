@@ -76,6 +76,10 @@ export const renderEmailResponseValue = (
       );
 
     default:
-      return <Text className="mt-0 text-sm break-words whitespace-pre-wrap">{response as string}</Text>;
+      return (
+        <Text className="mt-0 text-sm break-words whitespace-pre-wrap" dir="auto">
+          {response as string}
+        </Text>
+      );
   }
 };

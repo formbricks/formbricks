@@ -57,7 +57,15 @@ ${dimensionsText}
 
 ### Time dimension
 The time field is \`${CUBE_NAME}.collectedAt\`. Supported granularities: hour, day, week, month, quarter, year.
-Date range presets: ${datePresetsText}
+
+A time dimension's date range is given as **either** \`dateRangePreset\` **or** the pair
+\`dateRangeStart\` / \`dateRangeEnd\` — never both, and never as a range written into one field.
+Presets: ${datePresetsText}. Use a preset whenever one covers the request: it still means the same
+window when the chart is opened next month, where explicit dates freeze to the period you generated
+them in. When no preset covers it ("August and September", "Q2 last year"), give
+\`dateRangeStart\` and \`dateRangeEnd\` as plain calendar dates in \`YYYY-MM-DD\` form, both
+inclusive, and leave \`dateRangePreset\` null. Do not put timestamps, time zones, or an interval
+like \`start/end\` in any of these fields.
 
 ### Metric aliases
 - "responses", "response count", or "feedback records" means \`${CUBE_NAME}.count\` — not \`${CUBE_NAME}.uniqueResponses\`, which counts distinct submissions rather than every record.
@@ -74,8 +82,9 @@ ${operatorsText}
 ## Guidelines
 - Always include at least one measure. If unspecified, default to \`${CUBE_NAME}.count\`.
 - Use dimension IDs exactly as shown (e.g. \`FeedbackRecords.sourceType\`, \`FeedbackRecords.collectedAt\`).
-- For time-based filtering (date range only, no time grouping): add a timeDimension with dimension \`${CUBE_NAME}.collectedAt\` and dateRange. Do NOT include granularity (default is None / filter only).
-- For time-series or trend questions (e.g. "over time", "by day", "weekly", "monthly"): add a timeDimension with dimension, granularity (hour/day/week/month/quarter/year), and dateRange.
+- Only add a timeDimension when the request actually concerns time: it names a period ("last quarter", "since June"), or it asks for a trend ("over time", "by week"). A request that does neither — "responses by source", "average rating per question" — must omit timeDimensions entirely, so the chart covers all the data. Do not add a default window: a chart is saved and reopened, and a range nobody asked for becomes a silent filter on every later viewing.
+- For time-based filtering (date range only, no time grouping): add a timeDimension with dimension \`${CUBE_NAME}.collectedAt\` and a date range in the form described above. Do NOT include granularity (default is None / filter only).
+- For time-series or trend questions (e.g. "over time", "by day", "weekly", "monthly"): add a timeDimension with dimension, granularity (hour/day/week/month/quarter/year), and a date range.
 - Choose the most appropriate chart type from ${chartTypesText}; use \`big_number\` for single-number queries. There is no separate line type — \`area\` renders as a line through a display setting, so answer requests for a line chart with \`area\`.
 - Filters must use the exact operator strings from the schema.
 - For human-readable text dimensions (\`${CUBE_NAME}.sourceName\`, \`${CUBE_NAME}.sourceType\`, \`${CUBE_NAME}.fieldLabel\`, \`${CUBE_NAME}.fieldGroupLabel\`, \`${CUBE_NAME}.valueText\`), prefer the \`contains\` operator over \`equals\` unless the user clearly wants an exact full-string match — \`equals\` is an exact match and the stored value may differ in casing or spacing from the user's phrasing.

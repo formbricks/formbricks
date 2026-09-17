@@ -3,6 +3,33 @@
 This directory contains the canonical SpiceDB schema for Formbricks and its
 assertion-based validation suite.
 
+## Local development
+
+Use the repository-pinned Node and pnpm versions, install dependencies, and run `pnpm go`. It fills missing
+local environment defaults, starts Docker, migrates PostgreSQL, and prepares/verifies the bundled SpiceDB
+graph before starting the app. `pnpm db:up` alone starts dependencies; `pnpm dev:authzed` performs preparation.
+
+For an older `.env`, set `AUTHZED_ENABLED=true` and `AUTHZED_CONSISTENCY=fully_consistent`, then rerun
+`pnpm dev:setup`. Existing credentials and custom endpoints are preserved. Restart the development server
+after environment changes. `authzed_disabled` after login means the server is still running without the
+required authorization configuration; it is not a bad password or an enterprise-license requirement.
+
+Automatic graph preparation targets only the bundled localhost endpoint. For an external development
+datastore, use the existing commands explicitly after reviewing the endpoint and its source database:
+
+```bash
+pnpm db:migrate:dev
+pnpm authzed:upgrade prepare
+pnpm authzed:upgrade check
+pnpm dev
+```
+
+Never point these development commands at production. Non-empty schema drift requires an explicitly reviewed
+digest; initialization does not overwrite it silently. See [self-hosted maintenance upgrades](../docs/self-hosting/advanced/v6-maintenance-upgrade.mdx)
+and the separate [Cloud bridge procedure](./CLOUD-CUTOVER.md).
+
+## Schema files
+
 - `schema.zed` — the canonical, non-composable authorization schema
   (`use typechecking`).
 - `schema-validation.yaml` — relationships, assertions, and expected-relations

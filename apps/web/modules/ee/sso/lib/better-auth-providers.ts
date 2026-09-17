@@ -40,6 +40,27 @@ type GithubProfile = Parameters<NonNullable<SocialConfig<"github">["mapProfileTo
 type GoogleProfile = Parameters<NonNullable<SocialConfig<"google">["mapProfileToUser"]>>[0];
 
 /**
+ * Re-read the IdP profile on every sign-in, not just the first one.
+ *
+ * Without it Better Auth writes the profile once, at account creation, and never looks again
+ * (`handleOAuthUserInfo` only calls `updateUser` under this flag) — so a directory rename never
+ * reaches Formbricks. Named per-provider rather than set once because the two plugin families spell
+ * it differently: `overrideUserInfo` on a `GenericOAuthConfig`, `overrideUserInfoOnSignIn` on a
+ * built-in social provider's options. Both land on the same `opts.overrideUserInfo` branch.
+ *
+ * The IdP is therefore authoritative for `User.name`, which is why `EditProfileDetailsForm` disables
+ * the name input for a user whose `identityProvider` is not `email` — the same treatment that field's
+ * email sibling has always had. Editing it there would only survive until the next sign-in.
+ *
+ * ⚠ This flag alone is NOT safe, and the unsafe half is invisible here. Better Auth writes
+ * `{ name, image, email, emailVerified }` in one `updateUser` call, which for Formbricks means a
+ * write to a column that does not exist (`User` has no `image`) and an unverified rewrite of the
+ * account's email. `ssoProfileSyncUpdateBefore` in ./better-auth-hooks.ts narrows that write back
+ * down to the display name; the two are a pair, and neither works alone.
+ */
+const ssoSyncProfileOnSignIn = true;
+
+/**
  * Better Auth SSO providers (ENG-1054), mirroring the NextAuth set in `./providers.ts`. Gated behind
  * `ENTERPRISE_LICENSE_KEY` (parity with the `getSSOProviders()` gate) and each provider's configured
  * credentials. Google/GitHub use Better Auth's built-in social providers; Azure/OIDC/SAML register
@@ -64,6 +85,7 @@ export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
             github: {
               clientId: GITHUB_ID ?? "",
               clientSecret: GITHUB_SECRET ?? "",
+              overrideUserInfoOnSignIn: ssoSyncProfileOnSignIn,
               // Capture the resolved identity for verify-before-link recovery (design doc §13).
               // ⚠ providerAccountId must equal Better Auth's account.accountId — validate at cutover.
               mapProfileToUser: (profile: GithubProfile) => {
@@ -78,6 +100,7 @@ export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
             google: {
               clientId: GOOGLE_CLIENT_ID ?? "",
               clientSecret: GOOGLE_CLIENT_SECRET ?? "",
+              overrideUserInfoOnSignIn: ssoSyncProfileOnSignIn,
               mapProfileToUser: (profile: GoogleProfile) => {
                 captureSsoIdentity({ email: profile.email, providerAccountId: profile.sub });
                 return { email: profile.email };
@@ -406,6 +429,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               accountIssuer: ssoAccountIssuer("azuread"),
               accountSubject: ssoAccountSubject("sub"),
               redirectURI: ssoLegacyRedirectUri("azuread"),
+              overrideUserInfo: ssoSyncProfileOnSignIn,
               mapProfileToUser: (profile) => {
                 // Capture for verify-before-link recovery; name parity with the OIDC mapping.
                 captureSsoIdentity({
@@ -446,6 +470,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               accountIssuer: ssoAccountIssuer("openid"),
               accountSubject: ssoAccountSubject("sub"),
               redirectURI: ssoLegacyRedirectUri("openid"),
+              overrideUserInfo: ssoSyncProfileOnSignIn,
               mapProfileToUser: (profile) => {
                 captureSsoIdentity({
                   email: profile.email,
@@ -480,6 +505,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               accountIssuer: ssoAccountIssuer("saml"),
               accountSubject: ssoAccountSubject("id"),
               redirectURI: ssoLegacyRedirectUri("saml"),
+              overrideUserInfo: ssoSyncProfileOnSignIn,
               mapProfileToUser: (profile) => {
                 // ⚠ BoxyHQ's userinfo id — validate it matches Better Auth's account.accountId at cutover.
                 captureSsoIdentity({ email: profile.email, providerAccountId: toAccountSubject(profile.id) });

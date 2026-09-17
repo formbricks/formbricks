@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
@@ -168,32 +170,69 @@ export const POST = async (request: Request) =>
         );
       }
 
-      const createResponseResult = await createResponseWithQuotaEvaluation(workspaceId, body);
+      // "Anonymize responses" is a property of the SURVEY, not of the door a response arrived
+      // through: `ZResponseInput` picks `meta`, so without this a caller could write ipAddress,
+      // country, userAgent and an unredacted url onto a survey that has the toggle on. The realistic
+      // case is a customer proxying submissions from their own backend, which uses this route rather
+      // than the client one. Applied at the route, matching the client routes, because the survey read
+      // already happened here and `createResponse` does not load it.
+      const createResponseResult = await createResponseWithQuotaEvaluation(workspaceId, {
+        ...body,
+        meta: applyAnonymizePolicy(body.meta, surveyQuestions.data.isAnonymizeResponsesEnabled),
+      });
       if (!createResponseResult.ok) {
         return handleApiError(request, createResponseResult.error, auditLog);
       }
 
+      // Fire-and-forget by design (the other response endpoints await the enqueue), but a failure here
+      // loses every webhook, integration and email for the response — it must at least be visible.
+      const pipelineLogContext = {
+        responseId: createResponseResult.data.id,
+        surveyId: body.surveyId,
+        workspaceId,
+      };
       getResponseForPipeline(createResponseResult.data.id)
         .then((createdResponseForPipeline) => {
-          if (createdResponseForPipeline.ok) {
+          if (!createdResponseForPipeline.ok) {
+            logger.error(
+              { ...pipelineLogContext, error: createdResponseForPipeline.error },
+              "Response pipeline skipped: could not load the created response"
+            );
+            return;
+          }
+
+          sendToPipeline({
+            event: "responseCreated",
+            workspaceId,
+            surveyId: body.surveyId,
+            response: createdResponseForPipeline.data,
+          }).catch((error: unknown) => {
+            logger.error(
+              { ...pipelineLogContext, err: error, event: "responseCreated" },
+              "Response pipeline enqueue failed"
+            );
+          });
+
+          if (createResponseResult.data.finished) {
             sendToPipeline({
-              event: "responseCreated",
+              event: "responseFinished",
               workspaceId,
               surveyId: body.surveyId,
               response: createdResponseForPipeline.data,
-            }).catch(() => {});
-
-            if (createResponseResult.data.finished) {
-              sendToPipeline({
-                event: "responseFinished",
-                workspaceId,
-                surveyId: body.surveyId,
-                response: createdResponseForPipeline.data,
-              }).catch(() => {});
-            }
+            }).catch((error: unknown) => {
+              logger.error(
+                { ...pipelineLogContext, err: error, event: "responseFinished" },
+                "Response pipeline enqueue failed"
+              );
+            });
           }
         })
-        .catch(() => {});
+        .catch((error: unknown) => {
+          logger.error(
+            { ...pipelineLogContext, err: error },
+            "Response pipeline skipped: could not load the created response"
+          );
+        });
 
       if (auditLog) {
         auditLog.targetId = createResponseResult.data.id;

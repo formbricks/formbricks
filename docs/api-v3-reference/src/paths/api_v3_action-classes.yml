@@ -9,8 +9,7 @@ get:
 
     An empty `data` array means the workspace has no action classes yet. Triggers are optional, so
     you can still create an app survey with `distribution.triggers: []` (or omit `distribution`
-    entirely) and attach triggers later via `PATCH` once an action class exists. Session cookie or
-    x-api-key.
+    entirely) and attach triggers later via `PATCH` once an action class exists. Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Action Classes
   parameters:
@@ -27,9 +26,9 @@ get:
       schema:
         type: integer
         minimum: 1
-        maximum: 100
+        maximum: 250
         default: 50
-      description: Page size (max 100).
+      description: Page size (max 250).
     - in: query
       name: cursor
       schema:
@@ -88,3 +87,4 @@ get:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

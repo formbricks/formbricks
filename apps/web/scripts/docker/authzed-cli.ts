@@ -1,6 +1,11 @@
 import "server-only";
 import { configureCanonicalAuthzedSchemaUrl } from "../../lib/authzed/schema-source";
+import { exitAfterStdoutFlush } from "../authzed-health-process";
 import { INVALID_CONFIGURATION_RESULT, INVALID_REQUEST_RESULT } from "../authzed-schema-results";
+
+// Operator commands have a single-JSON output contract. Suppress application logging before loading
+// runtime modules so retries cannot add diagnostic lines to stdout.
+process.env.LOG_LEVEL = "fatal";
 
 configureCanonicalAuthzedSchemaUrl(import.meta.url, "./schema.zed");
 
@@ -141,4 +146,8 @@ const run = async (): Promise<void> => {
   }
 };
 
-void run();
+void run().then(() => {
+  if (process.argv[2] === "health") {
+    exitAfterStdoutFlush(process.exitCode ?? 1);
+  }
+});

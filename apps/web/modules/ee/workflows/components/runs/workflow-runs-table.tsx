@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { timeSince } from "@/lib/time";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
+import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "@/modules/ee/workflows/lib/display";
 import { type TWorkflowRunListItem } from "@/modules/ee/workflows/types";
 import { Badge } from "@/modules/ui/components/badge";
@@ -41,6 +43,16 @@ export const WorkflowRunsTable = ({
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const selectedRun = runs.find((run) => run.id === selectedRunId) ?? null;
+
+  const openRun = (run: TWorkflowRunListItem) => {
+    trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.runDetailOpened, {
+      run_id: run.id,
+      workflow_id: run.workflowId,
+      run_status: run.status,
+      scope: showWorkflowColumn ? "workspace" : "workflow",
+    });
+    setSelectedRunId(run.id);
+  };
 
   // Initial fetch with nothing yet to show: render the skeleton instead of an empty table.
   if (isLoading && runs.length === 0) {
@@ -85,11 +97,11 @@ export const WorkflowRunsTable = ({
                   key={run.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => setSelectedRunId(run.id)}
+                  onClick={() => openRun(run)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      setSelectedRunId(run.id);
+                      openRun(run);
                     }
                   }}
                   className="cursor-pointer hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden">

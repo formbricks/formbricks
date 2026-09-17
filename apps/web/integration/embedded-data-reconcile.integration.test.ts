@@ -1,0 +1,358 @@
+import { beforeEach, describe, expect, test } from "vitest";
+import { prisma } from "@formbricks/database";
+import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
+import { resetDb } from "@/integration/reset-db";
+import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
+
+/**
+ * The Embedded Data write bridge against real Postgres (ENG-1978).
+ *
+ * The reconcile is the only thing keeping the tables in step with what the editor saved, and every
+ * rule it enforces is about database state: the unique constraint on `(surveyId, storageKey)`, the
+ * cascade when a survey goes, and the ordering needed for a replaced field. The unit suite mocks
+ * `@formbricks/database`, so none of that is visible there.
+ */
+
+const seedSurvey = async (): Promise<{ surveyId: string; workspaceId: string }> => {
+  const organization = await prisma.organization.create({ data: { name: "Reconcile Org" } });
+  const workspace = await prisma.workspace.create({
+    data: { name: "Reconcile Workspace", organizationId: organization.id },
+  });
+  const survey = await prisma.survey.create({ data: { name: "Survey", workspaceId: workspace.id } });
+  return { surveyId: survey.id, workspaceId: workspace.id };
+};
+
+/** What the survey actually has, in the shape the assertions care about. */
+const readFields = async (surveyId: string) =>
+  prisma.surveyEmbeddedData
+    .findMany({
+      where: { surveyId },
+      orderBy: { storageKey: "asc" },
+      select: {
+        storageKey: true,
+        embeddedData: {
+          select: { name: true, source: true, dataType: true, defaultValue: true, key: true, surveyId: true },
+        },
+      },
+    })
+    .then((links) =>
+      links.map((link) => ({
+        storageKey: link.storageKey,
+        ...link.embeddedData,
+      }))
+    );
+
+/** Stored positions, read back the way `selectSurveyEmbeddedDataLinks` reads them. */
+const readOrder = async (surveyId: string) =>
+  prisma.surveyEmbeddedData
+    .findMany({
+      where: { surveyId },
+      orderBy: [{ order: "asc" }, { storageKey: "asc" }],
+      select: { storageKey: true, order: true },
+    })
+    .then((links) => links.map((link) => [link.storageKey, link.order]));
+
+const reconcile = (
+  surveyId: string,
+  workspaceId: string,
+  legacy: Parameters<typeof toDesiredEmbeddedFields>[0]
+) => prisma.$transaction((tx) => reconcileEmbeddedData(tx, { surveyId, workspaceId, patch: legacy }));
+
+beforeEach(async () => {
+  await resetDb();
+});
+
+describe("reconcileEmbeddedData (real Postgres)", () => {
+  test("creates a row and a link for each variable and hidden field", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+
+    await reconcile(surveyId, workspaceId, {
+      variables: [{ id: "clx000000000000000000001", name: "score", type: "number", value: 7 }],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    expect(await readFields(surveyId)).toEqual([
+      {
+        storageKey: "clx000000000000000000001",
+        name: "score",
+        source: "computed",
+        dataType: "number",
+        defaultValue: 7,
+        // Local: owned by this survey and absent from the shared library.
+        key: null,
+        surveyId,
+      },
+      {
+        storageKey: "plan",
+        name: "plan",
+        source: "ingested",
+        dataType: "string",
+        defaultValue: null,
+        key: null,
+        surveyId,
+      },
+    ]);
+  });
+
+  test("numbers fields by declaration — every variable, then every hidden field", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+
+    // Added in the editor as h1, h2, then the variable, then h3 — but the cards write to two
+    // separate arrays, so what survives is "variables first", not the order they were typed in.
+    await reconcile(surveyId, workspaceId, {
+      variables: [{ id: "clx000000000000000000001", name: "score", type: "number", value: 7 }],
+      hiddenFields: { enabled: true, fieldIds: ["h1", "h2", "h3"] },
+    });
+
+    expect(await readOrder(surveyId)).toEqual([
+      ["clx000000000000000000001", 0],
+      ["h1", 1],
+      ["h2", 2],
+      ["h3", 3],
+    ]);
+  });
+
+  test("re-numbers the tail when a field is removed from the middle", async () => {
+    // The only thing that moves a position in v1 — the cards can append and delete, not reorder.
+    // Without this the tail keeps its stale numbers and the next inserted field collides with one.
+    const { surveyId, workspaceId } = await seedSurvey();
+    await reconcile(surveyId, workspaceId, {
+      hiddenFields: { enabled: true, fieldIds: ["h1", "h2", "h3"] },
+    });
+
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["h1", "h3"] } });
+
+    expect(await readOrder(surveyId)).toEqual([
+      ["h1", 0],
+      ["h3", 1],
+    ]);
+  });
+
+  test("repairs positions left behind by something that did not set them", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+    const legacy = { hiddenFields: { enabled: true, fieldIds: ["h1", "h2", "h3"] } };
+    await reconcile(surveyId, workspaceId, legacy);
+    await prisma.surveyEmbeddedData.updateMany({ where: { surveyId }, data: { order: 0 } });
+
+    await reconcile(surveyId, workspaceId, legacy);
+
+    expect(await readOrder(surveyId)).toEqual([
+      ["h1", 0],
+      ["h2", 1],
+      ["h3", 2],
+    ]);
+  });
+
+  test("is idempotent — running it again changes nothing", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+    const legacy = { hiddenFields: { enabled: true, fieldIds: ["plan", "campaign"] } };
+
+    await reconcile(surveyId, workspaceId, legacy);
+    const first = await readFields(surveyId);
+    await reconcile(surveyId, workspaceId, legacy);
+
+    expect(await readFields(surveyId)).toEqual(first);
+    expect(await prisma.embeddedData.count({ where: { surveyId } })).toBe(2);
+  });
+
+  test("removes the row and the link for a deleted field", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+    await reconcile(surveyId, workspaceId, {
+      hiddenFields: { enabled: true, fieldIds: ["plan", "campaign"] },
+    });
+
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+
+    expect((await readFields(surveyId)).map((field) => field.storageKey)).toEqual(["plan"]);
+    expect(await prisma.embeddedData.count({ where: { surveyId } })).toBe(1);
+  });
+
+  test("updates a field whose default value changed, keeping the same row", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+    const variable = { id: "clx000000000000000000001", name: "score", type: "number" as const };
+    await reconcile(surveyId, workspaceId, { variables: [{ ...variable, value: 0 }] });
+    const before = await prisma.embeddedData.findFirstOrThrow({ where: { surveyId } });
+
+    await reconcile(surveyId, workspaceId, { variables: [{ ...variable, value: 99 }] });
+
+    const after = await prisma.embeddedData.findFirstOrThrow({ where: { surveyId } });
+    expect(after.id).toBe(before.id);
+    expect(after.defaultValue).toBe(99);
+  });
+
+  test("replaces a field whose source changed, which reuses the same storage key", async () => {
+    // Unlink has to happen before create or `@@unique([surveyId, storageKey])` rejects the new row.
+    const { surveyId, workspaceId } = await seedSurvey();
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+
+    // Both groups, because that is what a save sends — every caller merges over the loaded survey
+    // before calling in. Passing `variables` alone is a test-only shape now that an omitted group
+    // means "leave it alone": it would carry the ingested `plan` over and collide with the computed
+    // one, which `assertNoDuplicateStorageKeys` has always rejected.
+    await reconcile(surveyId, workspaceId, {
+      variables: [{ id: "plan", name: "plan", type: "text", value: "pro" }],
+      hiddenFields: { enabled: true, fieldIds: [] },
+    });
+
+    expect(await readFields(surveyId)).toMatchObject([{ storageKey: "plan", source: "computed" }]);
+    expect(await prisma.embeddedData.count({ where: { surveyId } })).toBe(1);
+  });
+
+  test("keeps a legacy hidden field name exactly as stored", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["Brand-Name"] } });
+
+    expect((await readFields(surveyId)).map((field) => field.storageKey)).toEqual(["Brand-Name"]);
+  });
+
+  test("rejects a duplicate field name within one survey", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+
+    await expect(
+      reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["plan", "plan"] } })
+    ).rejects.toThrow(/plan/);
+
+    expect(await prisma.embeddedData.count({ where: { surveyId } })).toBe(0);
+  });
+
+  test("lets two surveys in one workspace both hold a field named plan", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+    const other = await prisma.survey.create({ data: { name: "Other", workspaceId } });
+    const legacy = { hiddenFields: { enabled: true, fieldIds: ["plan"] } };
+
+    await reconcile(surveyId, workspaceId, legacy);
+    await reconcile(other.id, workspaceId, legacy);
+
+    // Both rows carry `key: null`, and Postgres treats NULLs as distinct, so the workspace-level
+    // unique on `key` does not fire.
+    expect(await prisma.embeddedData.count({ where: { workspaceId } })).toBe(2);
+  });
+
+  test("unlinks a shared library field without deleting or editing it", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+    const shared = await prisma.embeddedData.create({
+      data: { workspaceId, key: "plan_tier", name: "Plan tier", source: "ingested" },
+    });
+    await prisma.surveyEmbeddedData.create({
+      data: { workspaceId, surveyId, embeddedDataId: shared.id, storageKey: "plan_tier", order: 0 },
+    });
+
+    // The legacy cards know nothing about the shared library, so a save that omits the field must
+    // drop this survey's use of it and leave the workspace-owned definition alone.
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: [] } });
+
+    expect(await prisma.surveyEmbeddedData.count({ where: { surveyId } })).toBe(0);
+    expect(await prisma.embeddedData.findUnique({ where: { id: shared.id } })).toMatchObject({
+      name: "Plan tier",
+      key: "plan_tier",
+    });
+  });
+
+  test("keeps a definition another survey still links to, rather than cascading that link away", async () => {
+    // Unreachable today — the reconcile only ever links to rows it just created — but the schema
+    // permits the link, and deleting the row would take the other survey's link with it. Leaving an
+    // orphaned row behind is the better of the two failures.
+    const { surveyId, workspaceId } = await seedSurvey();
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+    const field = await prisma.embeddedData.findFirstOrThrow({ where: { surveyId } });
+
+    const borrower = await prisma.survey.create({ data: { name: "Borrower", workspaceId } });
+    await prisma.surveyEmbeddedData.create({
+      data: { workspaceId, surveyId: borrower.id, embeddedDataId: field.id, storageKey: "plan", order: 0 },
+    });
+
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: [] } });
+
+    expect(await prisma.embeddedData.findUnique({ where: { id: field.id } })).not.toBeNull();
+    expect(await prisma.surveyEmbeddedData.count({ where: { surveyId: borrower.id } })).toBe(1);
+    expect(await prisma.surveyEmbeddedData.count({ where: { surveyId } })).toBe(0);
+  });
+
+  test("cascades a survey's fields away when the survey is deleted", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+
+    await prisma.survey.delete({ where: { id: surveyId } });
+
+    expect(await prisma.embeddedData.count({ where: { workspaceId } })).toBe(0);
+    expect(await prisma.surveyEmbeddedData.count()).toBe(0);
+  });
+
+  test("never touches Response", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+    await prisma.response.create({
+      data: { surveyId, finished: true, data: { plan: "pro" }, variables: {}, meta: {}, ttc: {} },
+    });
+
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: [] } });
+
+    const response = await prisma.response.findFirstOrThrow({ where: { surveyId } });
+    // Removing the definition leaves the stored value alone: the response is keyed by the same
+    // storage key, which is exactly why no response migration is needed.
+    expect(response.data).toEqual({ plan: "pro" });
+  });
+
+  /**
+   * ENG-1839. The reserved-name guard is deliberately NOT in this file's production counterpart:
+   * `reconcileEmbeddedData` must keep accepting a reserved name, because a survey COPY feeds the
+   * whole source survey's fields in as "new" against zero existing rows. A guard here would make
+   * duplicating a grandfathered survey fail — which is why these live at the three input boundaries
+   * (`updateSurveyInternal`, `createSurvey`, the v3 patch) instead.
+   */
+  describe("grandfathered reserved names (ENG-1839)", () => {
+    test("reconciles a survey that declares `country`, creating the row and the link", async () => {
+      const { surveyId, workspaceId } = await seedSurvey();
+
+      await reconcile(surveyId, workspaceId, {
+        hiddenFields: { enabled: true, fieldIds: ["country", "url"] },
+      });
+
+      expect(await readFields(surveyId)).toEqual([
+        expect.objectContaining({ storageKey: "country", name: "country", source: "ingested" }),
+        expect.objectContaining({ storageKey: "url", name: "url", source: "ingested" }),
+      ]);
+    });
+
+    test("DUPLICATING a survey that declares `country` still succeeds", async () => {
+      // The shape of `copySurveyToOtherWorkspace`: the copy is its own `survey.create`, and the
+      // source survey's declared fields are then reconciled onto it with no rows of its own — every
+      // name arrives as "new", reserved ones included.
+      const { surveyId, workspaceId } = await seedSurvey();
+      const declared = { enabled: true, fieldIds: ["country", "team_size"] };
+      await reconcile(surveyId, workspaceId, { hiddenFields: declared });
+
+      const copy = await prisma.survey.create({
+        data: { name: "Survey (copy)", workspaceId, hiddenFields: declared },
+      });
+
+      await expect(reconcile(copy.id, workspaceId, { hiddenFields: declared })).resolves.not.toThrow();
+
+      // The duplicate has its own rows, and the original is untouched.
+      expect(await readFields(copy.id)).toEqual([
+        expect.objectContaining({ storageKey: "country", name: "country" }),
+        expect.objectContaining({ storageKey: "team_size", name: "team_size" }),
+      ]);
+      expect(await readFields(surveyId)).toHaveLength(2);
+    });
+
+    test("a copy into ANOTHER workspace defines `country` there too", async () => {
+      const { surveyId, workspaceId } = await seedSurvey();
+      const declared = { enabled: true, fieldIds: ["country"] };
+      await reconcile(surveyId, workspaceId, { hiddenFields: declared });
+
+      const { workspaceId: otherWorkspaceId } = await seedSurvey();
+      const copy = await prisma.survey.create({
+        data: { name: "Survey (copy)", workspaceId: otherWorkspaceId, hiddenFields: declared },
+      });
+
+      await reconcile(copy.id, otherWorkspaceId, { hiddenFields: declared });
+
+      expect(await readFields(copy.id)).toEqual([
+        expect.objectContaining({ storageKey: "country", name: "country" }),
+      ]);
+      expect(await prisma.embeddedData.count({ where: { workspaceId: otherWorkspaceId } })).toBe(1);
+    });
+  });
+});
