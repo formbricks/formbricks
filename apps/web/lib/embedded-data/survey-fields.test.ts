@@ -1,10 +1,51 @@
 import { describe, expect, test } from "vitest";
 import { isDeepEqual } from "@/lib/utils/object";
-import { inlineSurveyEmbeddedFields, withInlinedEmbeddedFields } from "./survey-fields";
+import {
+  inlineSurveyEmbeddedFields,
+  selectPublicSurveyEmbeddedDataLinks,
+  selectSurveyEmbeddedDataLinks,
+  withInlinedEmbeddedFields,
+} from "./survey-fields";
 
-const link = (storageKey: string, name: string, source: "computed" | "ingested") => ({
+/**
+ * The property the respondent-facing callers rest on.
+ *
+ * Their own tests assert that each loader selects `selectPublicSurveyEmbeddedDataLinks` — necessary,
+ * but both sides of that comparison are this module's constant, so adding `id` to it would leave
+ * every one of them green. This is the half that cannot be satisfied by the constant agreeing with
+ * itself, and it is why the pair is worth having: caller → public constant, public constant → no id.
+ */
+describe("selectPublicSurveyEmbeddedDataLinks", () => {
+  test("omits the workspace-library row id", () => {
+    expect(selectPublicSurveyEmbeddedDataLinks.select.embeddedData.select).not.toHaveProperty("id");
+  });
+
+  test("still carries what a renderer resolves recall and logic through", () => {
+    expect(selectPublicSurveyEmbeddedDataLinks.select.embeddedData.select).toMatchObject({
+      key: true,
+      name: true,
+      source: true,
+      dataType: true,
+      defaultValue: true,
+      locked: true,
+    });
+  });
+
+  test("the authenticated selector keeps the id, which is what the editor sends a link back by", () => {
+    expect(selectSurveyEmbeddedDataLinks.select.embeddedData.select).toHaveProperty("id", true);
+  });
+});
+
+const link = (
+  storageKey: string,
+  name: string,
+  source: "computed" | "ingested",
+  shared?: { id: string; key: string }
+) => ({
   storageKey,
   embeddedData: {
+    id: shared?.id ?? `ed_${storageKey}`,
+    key: shared?.key ?? null,
     name,
     source,
     dataType: "string" as const,
@@ -39,7 +80,15 @@ describe("inlineSurveyEmbeddedFields", () => {
     const fields = inlineSurveyEmbeddedFields({ embeddedDataLinks: JOINED_LINKS });
 
     expect(fields?.[0]).toStrictEqual({
-      field: { name: "tier", source: "computed", dataType: "string", defaultValue: null, locked: false },
+      field: {
+        id: "ed_clx000000000000000000002",
+        key: null,
+        name: "tier",
+        source: "computed",
+        dataType: "string",
+        defaultValue: null,
+        locked: false,
+      },
       link: { storageKey: "clx000000000000000000002" },
     });
   });
@@ -54,8 +103,44 @@ describe("inlineSurveyEmbeddedFields", () => {
     ).toStrictEqual(["clx000000000000000000002", "clx000000000000000000001", "utm_source", "plan"]);
   });
 
-  test("a survey with no rows inlines an empty list", () => {
+  test("carries a shared row's id and key, which is what lets the editor send the link back", () => {
+    // ENG-3228: the pairs are a write shape too. Drop either of these on the read and a survey can
+    // load a library link but never save one — the write path would read it as a local field.
+    const links = [link("plan_tier", "Plan tier", "ingested", { id: "ed_shared", key: "plan_tier" })];
+
+    expect(inlineSurveyEmbeddedFields({ embeddedDataLinks: links })?.[0].field).toMatchObject({
+      id: "ed_shared",
+      key: "plan_tier",
+    });
+  });
+
+  test("a survey with no rows and no legacy declarations inlines an empty list", () => {
     expect(inlineSurveyEmbeddedFields({ embeddedDataLinks: [] })).toStrictEqual([]);
+  });
+
+  test("a backfill-skipped survey falls back to its legacy columns rather than reporting no fields", () => {
+    // Zero rows is "not reconciled yet", not "no fields". Reporting `[]` here is what let
+    // `updateSingleUseLinksAction` — which spreads a loaded survey straight back into `updateSurvey` —
+    // derive empty legacy columns over the only copy of this survey's declarations.
+    const inlined = inlineSurveyEmbeddedFields({
+      embeddedDataLinks: [],
+      variables: [{ id: "var1", name: "Var One", type: "text", value: "" }],
+      hiddenFields: { enabled: true, fieldIds: ["hf1"] },
+    } as never);
+
+    expect(inlined?.map((entry) => entry.link.storageKey)).toEqual(["var1", "hf1"]);
+  });
+
+  test("one row is enough to make the rows authoritative again", () => {
+    // The fallback heals itself: the first save through it writes rows, and from then on the columns
+    // are never consulted for this survey.
+    const inlined = inlineSurveyEmbeddedFields({
+      embeddedDataLinks: [link("plan", "plan", "ingested")],
+      variables: [{ id: "var1", name: "Var One", type: "text", value: "" }],
+      hiddenFields: { enabled: true, fieldIds: ["hf1"] },
+    } as never);
+
+    expect(inlined?.map((entry) => entry.link.storageKey)).toEqual(["plan"]);
   });
 });
 

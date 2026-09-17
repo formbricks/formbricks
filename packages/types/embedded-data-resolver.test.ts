@@ -91,6 +91,7 @@ const sparseResponse: TEmbeddedValueResponse = {
 const makeField = (
   overrides: Partial<TLinkedEmbeddedField["field"]> = {}
 ): TLinkedEmbeddedField["field"] => ({
+  key: null,
   name: "Field",
   source: "ingested",
   dataType: "string",
@@ -1333,7 +1334,14 @@ describe("deriveLegacyEmbeddedData", () => {
   test("maps a variable to a computed field addressed by its existing cuid", () => {
     const [scorePair] = deriveLegacyEmbeddedData(legacySurvey);
     expect(scorePair).toStrictEqual({
-      field: { name: "score", source: "computed", dataType: "number", defaultValue: 10, locked: false },
+      field: {
+        key: null,
+        name: "score",
+        source: "computed",
+        dataType: "number",
+        defaultValue: 10,
+        locked: false,
+      },
       link: { storageKey: "clx0000000000000000000v1" },
     });
   });
@@ -1342,6 +1350,7 @@ describe("deriveLegacyEmbeddedData", () => {
     const pairs = deriveLegacyEmbeddedData(legacySurvey);
     expect(pairs[1]).toStrictEqual({
       field: {
+        key: null,
         name: "plan_name",
         source: "computed",
         dataType: "string",
@@ -1357,6 +1366,7 @@ describe("deriveLegacyEmbeddedData", () => {
     expect(pairs.slice(2)).toStrictEqual([
       {
         field: {
+          key: null,
           name: "source_page",
           source: "ingested",
           dataType: "string",
@@ -1367,6 +1377,7 @@ describe("deriveLegacyEmbeddedData", () => {
       },
       {
         field: {
+          key: null,
           name: "Coupon-Code",
           source: "ingested",
           dataType: "string",
@@ -1433,6 +1444,7 @@ describe("getSurveyEmbeddedFields", () => {
   const rows: TLinkedEmbeddedField[] = [
     {
       field: {
+        key: null,
         name: "renamed_score",
         source: "computed",
         dataType: "number",
@@ -1475,6 +1487,7 @@ describe("getSurveyEmbeddedFields", () => {
         ...rows,
         {
           field: {
+            key: null,
             name: "utm_source",
             source: "ingested" as const,
             dataType: "string" as const,
@@ -1485,6 +1498,7 @@ describe("getSurveyEmbeddedFields", () => {
         },
         {
           field: {
+            key: null,
             name: "plan",
             source: "ingested" as const,
             dataType: "string" as const,
@@ -1512,7 +1526,14 @@ describe("getSurveyEmbeddedFields", () => {
 
 describe("ZLinkedEmbeddedField mirrors TLinkedEmbeddedField", () => {
   const pair: TLinkedEmbeddedField = {
-    field: { name: "score", source: "computed", dataType: "number", defaultValue: 10, locked: false },
+    field: {
+      key: null,
+      name: "score",
+      source: "computed",
+      dataType: "number",
+      defaultValue: 10,
+      locked: false,
+    },
     link: { storageKey: "clx0000000000000000000v1" },
   };
 
@@ -1562,7 +1583,14 @@ describe("getDeclaredEmbeddedFields", () => {
 
   const staleRows: TLinkedEmbeddedField[] = [
     {
-      field: { name: "old_name", source: "computed", dataType: "string", defaultValue: "", locked: false },
+      field: {
+        key: null,
+        name: "old_name",
+        source: "computed",
+        dataType: "string",
+        defaultValue: "",
+        locked: false,
+      },
       link: { storageKey: "clx0000000000000000000v1" },
     },
   ];
@@ -1591,6 +1619,7 @@ describe("getDeclaredEmbeddedFields", () => {
         ...deriveLegacyEmbeddedData(legacySurvey),
         {
           field: {
+            key: null,
             name: "removed",
             source: "ingested" as const,
             dataType: "string" as const,
@@ -1615,7 +1644,14 @@ describe("getDeclaredEmbeddedFields", () => {
 describe("getLogicVariableValue", () => {
   const computedField = (storageKey: string, dataType: "number" | "string", defaultValue: number | string) =>
     ({
-      field: { name: storageKey, source: "computed" as const, dataType, defaultValue, locked: false },
+      field: {
+        key: null,
+        name: storageKey,
+        source: "computed" as const,
+        dataType,
+        defaultValue,
+        locked: false,
+      },
       link: { storageKey },
     }) satisfies TLinkedEmbeddedField;
 
@@ -1659,7 +1695,14 @@ describe("getLogicVariableValue", () => {
 describe("getComputedFieldDataType", () => {
   const fields: TLinkedEmbeddedField[] = [
     {
-      field: { name: "score", source: "computed", dataType: "number", defaultValue: 5, locked: false },
+      field: {
+        key: null,
+        name: "score",
+        source: "computed",
+        dataType: "number",
+        defaultValue: 5,
+        locked: false,
+      },
       link: { storageKey: "score" },
     },
   ];

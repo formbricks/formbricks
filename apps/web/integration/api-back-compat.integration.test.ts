@@ -7,7 +7,7 @@ import { patchV3Survey } from "@/app/api/v3/surveys/patch";
 import { V3SurveyReferenceValidationError } from "@/app/api/v3/surveys/reference-validation";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
-import { selectSurvey, updateSurvey } from "@/lib/survey/service";
+import { createSurvey, selectSurvey, updateSurvey } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 
 /**
@@ -75,7 +75,11 @@ const seedSurvey = async (legacy?: {
     reconcileEmbeddedData(tx, { surveyId: survey.id, workspaceId: workspace.id, patch: survey })
   );
 
-  return transformPrismaSurvey<TSurvey>(survey);
+  // Read back AFTER the reconcile, because `survey` above predates the rows. Both write boundaries
+  // take a loaded survey as `existing`, and since ENG-3228 the naming guard reads its `embeddedFields`
+  // rather than its columns — so a fixture holding the pre-reconcile object would grandfather nothing
+  // and refuse names every real caller may send.
+  return readAsLegacyApi(survey.id);
 };
 
 /**
@@ -97,7 +101,18 @@ const readRows = async (surveyId: string) =>
       orderBy: [{ order: "asc" }, { storageKey: "asc" }],
       select: {
         storageKey: true,
-        embeddedData: { select: { name: true, source: true, dataType: true, defaultValue: true } },
+        embeddedData: {
+          select: {
+            name: true,
+            source: true,
+            dataType: true,
+            defaultValue: true,
+            // Part of what `toDesiredEmbeddedFields` describes since ENG-3228, and part of what a
+            // legacy write must not change: every column-derived field is local and unlocked.
+            locked: true,
+            key: true,
+          },
+        },
       },
     })
     .then((links) => links.map(({ storageKey, embeddedData }) => ({ storageKey, ...embeddedData })));
@@ -403,8 +418,12 @@ const putOutcome = async (
   survey: TSurvey,
   patch: Partial<TSurvey>
 ): Promise<"accepted" | { refused: string }> => {
+  // `embeddedFields` is dropped for the same reason the route drops it: `ZSurveyUpdateInput` omits
+  // the key, so what a v1 PUT hands `updateSurvey` is the legacy columns and nothing else. Leaving
+  // it on would put every test below on the V2 carrier and stop testing this boundary at all.
+  const { embeddedFields: _embeddedFields, ...legacyPut } = { ...survey, ...patch };
   try {
-    await updateSurvey({ ...survey, ...patch });
+    await updateSurvey(legacyPut);
     return "accepted";
   } catch (error) {
     // The guard throws InvalidInputError, which `handleApiError` maps to a 400 for both APIs.
@@ -535,5 +554,57 @@ describe("grandfathering at the v1 / v2 write boundary (updateSurvey)", () => {
         ],
       })
     ).toEqual({ refused: "InvalidInputError" });
+  });
+});
+
+/**
+ * ENG-3228 made `embeddedFields` accepted input on the survey write path. One row per legacy write
+ * route, proving that a payload which does not carry it writes exactly what it always wrote — the
+ * columns decide, and the rows follow them.
+ *
+ * The fourth route, the duplicate, needs two workspaces and two libraries to say anything
+ * interesting, so its rows live in embedded-data-reconcile.integration.test.ts beside the shared-link
+ * cases they exist to contrast with.
+ */
+describe("no embeddedFields, no change — one row per legacy write route", () => {
+  const LEGACY_PAYLOAD = {
+    variables: [{ id: VARIABLE_ID, name: "score", type: "number" as const, value: 7 }],
+    hiddenFields: { enabled: true, fieldIds: ["plan"] },
+  };
+
+  test("POST /api/v1/management/surveys — createSurvey", async () => {
+    const organization = await prisma.organization.create({ data: { name: "Create Org" } });
+    const workspace = await prisma.workspace.create({
+      data: { name: "Create Workspace", organizationId: organization.id },
+    });
+
+    const created = await createSurvey(workspace.id, {
+      name: "Created Survey",
+      blocks: BLOCKS as never,
+      ...LEGACY_PAYLOAD,
+    });
+
+    expect(await readAsLegacyApi(created.id)).toMatchObject(LEGACY_PAYLOAD);
+    await expectNoDrift(created.id);
+  });
+
+  test("PUT /api/v1/management/surveys/{id} — updateSurvey", async () => {
+    const survey = await seedSurvey();
+
+    expect(await putOutcome(survey, LEGACY_PAYLOAD)).toBe("accepted");
+
+    expect(await readAsLegacyApi(survey.id)).toMatchObject(LEGACY_PAYLOAD);
+    await expectNoDrift(survey.id);
+  });
+
+  test("PATCH /api/v3/.../surveys/{id} — patchV3Survey, the route MCP comes through", async () => {
+    const survey = await seedSurvey();
+
+    expect(await patchOutcome(survey, LEGACY_PAYLOAD, "req_backcompat_v3_no_embedded_fields")).toBe(
+      "accepted"
+    );
+
+    expect(await readAsLegacyApi(survey.id)).toMatchObject(LEGACY_PAYLOAD);
+    await expectNoDrift(survey.id);
   });
 });

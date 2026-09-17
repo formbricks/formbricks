@@ -235,13 +235,31 @@ export type TSurveyEmbeddedData = z.infer<typeof ZSurveyEmbeddedData>;
  * first time a survey passed through `ZSurvey.parse` — including on the SDK and link-survey payload
  * paths, which are exactly the ones that need it.
  *
- * Only the columns the read seam consumes are mirrored (the resolver's `TResolvableEmbeddedField`
- * plus `name`), never the row's ids, ownership or timestamps: this shape ships to public survey
- * payloads, so anything extra would be a leak rather than an unused field. A type-level
- * assignability test in embedded-data-resolver.test.ts keeps the two definitions in step.
+ * Only the columns a reader or a writer actually needs are mirrored — the resolver's
+ * `TResolvableEmbeddedField`, plus `name`, plus the two addresses below — never the row's owning
+ * survey, workspace or timestamps: this shape ships to public survey payloads, so anything extra
+ * would be a leak rather than an unused field. A type-level assignability test in
+ * embedded-data-resolver.test.ts keeps the two definitions in step.
+ *
+ * **One shape for read and write** (ENG-3228). The survey write path accepts these same pairs, so
+ * `id` and `key` have to survive the read or the editor could never hand a shared link back: a
+ * shared entry says which library row it links by carrying that row's `id`, and `key !== null` is
+ * what marks it shared in the first place. Both are the same exposure class as the survey and
+ * segment ids that already ship in these payloads.
+ *
+ * `id` is optional because the pairs {@link deriveLegacyEmbeddedData} synthesizes from a survey's
+ * legacy columns describe no stored row and have no id to give. `key` is not: a row always knows
+ * whether it is in the library, and a local one is `null`.
+ *
+ * Deliberately a plain string rather than {@link ZEmbeddedData}'s `key`, which refuses reserved and
+ * non-identifier spellings. That rule belongs where a library key is *authored*; here the key only
+ * names a row that already passed it, and re-running it would refuse to read back a row the library
+ * accepted under an earlier version of the list.
  */
 export const ZLinkedEmbeddedField = z.object({
   field: z.object({
+    id: z.cuid2().optional(),
+    key: z.string().nullable(),
     name: ZEmbeddedDataName,
     source: ZEmbeddedDataSource,
     dataType: ZEmbeddedDataType,

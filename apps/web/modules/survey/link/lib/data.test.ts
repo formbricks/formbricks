@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
+import { selectPublicSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import {
@@ -130,6 +130,10 @@ describe("data", () => {
      * ENG-1845: this payload is the renderer's allow-list for link surveys. `getSurveyEmbeddedFields`
      * fails closed, so a select that loses the join is indistinguishable from a survey with no fields
      * — and every value in the URL would be silently dropped instead of ingested.
+     *
+     * Pinned to the *public* selector on purpose: an anonymous respondent has no use for the
+     * workspace-library row id, so swapping this for the write-path selector is a regression even
+     * though every field the renderer reads would still be there.
      */
     test("carries the Embedded Data join, which is the renderer's ingest allow-list", async () => {
       const surveyId = "survey-1";
@@ -139,7 +143,7 @@ describe("data", () => {
       await getSurveyWithMetadata(surveyId);
 
       expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).toEqual(
-        expect.objectContaining({ embeddedDataLinks: selectSurveyEmbeddedDataLinks })
+        expect.objectContaining({ embeddedDataLinks: selectPublicSurveyEmbeddedDataLinks })
       );
     });
 

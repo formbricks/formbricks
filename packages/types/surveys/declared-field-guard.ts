@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import type { TLinkedEmbeddedField } from "../embedded-data-resolver";
 import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
 import { type TSurveyHiddenFields, ZSurveyVariables } from "./types";
 import {
@@ -9,10 +10,18 @@ import {
 } from "./validation";
 
 /**
- * The legacy declared-field carriers of a survey write payload, as every write seam spells them:
- * one object literal with both keys present, each either populated or `undefined`.
+ * The declared-field carriers of a survey write payload, as every write seam spells them: one
+ * object literal with every key present, each either populated or `undefined`.
  */
 export interface TDeclaredFieldSource {
+  /**
+   * The V2 carrier (ENG-3228). When a payload declares its fields as rows it declares **all** of
+   * them, both sources, so this takes precedence over the two legacy keys below and they are not
+   * read at all — the same precedence `resolveDesiredEmbeddedFields` applies in the reconcile. A
+   * survey loaded through a select that carries the join always has it, which is what makes the
+   * grandfathering set the rows rather than the columns.
+   */
+  embeddedFields?: TLinkedEmbeddedField[] | null;
   hiddenFields?: Pick<TSurveyHiddenFields, "fieldIds"> | null;
   /**
    * Only `name` is required, deliberately: this reads nothing else, and the write seams hand it both
@@ -24,6 +33,22 @@ export interface TDeclaredFieldSource {
    */
   variables?: z.input<typeof ZSurveyVariables> | null;
 }
+
+const isDeclared = <T>(carrier: T | null | undefined): carrier is T =>
+  carrier !== undefined && carrier !== null;
+
+/**
+ * The name one Embedded Data entry occupies in the survey's recall and logic namespace.
+ *
+ * Not the same column for both sources, because the legacy columns are not: a computed field is
+ * addressed by its variable *name*, an ingested one by the *storage key* its value arrives under.
+ * A shared computed field answers to its library key rather than its display label, for the reason
+ * `toLegacyEmbeddedFields` (embedded-data-mapping.ts) writes the key into the derived column — a
+ * label like `Plan tier` is not a legal variable name, and checking it here would refuse every
+ * link to a library field that has one.
+ */
+const declaredEntryName = ({ field, link }: TLinkedEmbeddedField): string =>
+  field.source === "computed" ? (field.key ?? field.name) : link.storageKey;
 
 /**
  * The declared field names a payload actually *declares*.
@@ -37,14 +62,13 @@ export interface TDeclaredFieldSource {
  *
  * A `null` carrier is treated as absent for the same reason: it declares nothing to validate.
  */
-export const collectDeclaredFieldNames = (source: TDeclaredFieldSource): string[] => [
-  ...(source.variables !== undefined && source.variables !== null
-    ? source.variables.map((variable) => variable.name)
-    : []),
-  ...(source.hiddenFields !== undefined && source.hiddenFields !== null
-    ? (source.hiddenFields.fieldIds ?? [])
-    : []),
-];
+export const collectDeclaredFieldNames = (source: TDeclaredFieldSource): string[] =>
+  isDeclared(source.embeddedFields)
+    ? source.embeddedFields.map(declaredEntryName)
+    : [
+        ...(isDeclared(source.variables) ? source.variables.map((variable) => variable.name) : []),
+        ...(isDeclared(source.hiddenFields) ? (source.hiddenFields.fieldIds ?? []) : []),
+      ];
 
 /**
  * Refuses reserved names for **newly declared** field names, and only for those.
@@ -121,24 +145,32 @@ export const validateNewDeclaredFieldNames = ({
   return errors;
 };
 
-const isDeclared = <T>(carrier: T | null | undefined): carrier is T =>
-  carrier !== undefined && carrier !== null;
+/** Lower-cased name → the spelling the payload used. */
+type TNamespaceNames = Map<string, string>;
 
-/** Lower-cased name → the spelling the payload used, per namespace, for what a source declares. */
+const toNamespace = (names: string[]): TNamespaceNames =>
+  new Map(names.map((name) => [name.toLowerCase(), name]));
+
+const entryNames = (embeddedFields: TLinkedEmbeddedField[], source: "computed" | "ingested"): string[] =>
+  embeddedFields.filter((entry) => entry.field.source === source).map(declaredEntryName);
+
+/** What a source declares, split into the two namespaces recall and logic address fields through. */
 const namesByNamespace = (
   source: TDeclaredFieldSource
-): { variables: Map<string, string>; hiddenFields: Map<string, string> } => ({
-  variables: new Map(
-    isDeclared(source.variables)
-      ? source.variables.map((variable) => [variable.name.toLowerCase(), variable.name])
-      : []
-  ),
-  hiddenFields: new Map(
-    isDeclared(source.hiddenFields)
-      ? (source.hiddenFields.fieldIds ?? []).map((id) => [id.toLowerCase(), id])
-      : []
-  ),
-});
+): { variables: TNamespaceNames; hiddenFields: TNamespaceNames } =>
+  isDeclared(source.embeddedFields)
+    ? {
+        variables: toNamespace(entryNames(source.embeddedFields, "computed")),
+        hiddenFields: toNamespace(entryNames(source.embeddedFields, "ingested")),
+      }
+    : {
+        variables: toNamespace(
+          isDeclared(source.variables) ? source.variables.map((variable) => variable.name) : []
+        ),
+        hiddenFields: toNamespace(
+          isDeclared(source.hiddenFields) ? (source.hiddenFields.fieldIds ?? []) : []
+        ),
+      };
 
 /**
  * Refuses a name that a variable and a hidden field would share after the write — unless the survey
@@ -159,7 +191,9 @@ const namesByNamespace = (
  *
  * A carrier the payload never mentions (`undefined`/`null`) is the survey's current one, exactly as
  * the reconcile carries those rows over — so a payload that sends only `variables` is still checked
- * against the hidden fields it leaves in place.
+ * against the hidden fields it leaves in place. An `embeddedFields` payload mentions both, so there
+ * is nothing to carry over and a newly linked shared field is checked against every local name the
+ * survey keeps.
  *
  * The error names the side the write introduces (the hidden field, when the variable already
  * existed; the variable otherwise), with the code the editor's hidden-fields card reports for the
@@ -173,10 +207,18 @@ export const validateNewDeclaredFieldClashes = ({
   incoming: TDeclaredFieldSource;
 }): TValidateIdError[] => {
   const current = namesByNamespace(existing);
-  const next = namesByNamespace({
-    variables: isDeclared(incoming.variables) ? incoming.variables : existing.variables,
-    hiddenFields: isDeclared(incoming.hiddenFields) ? incoming.hiddenFields : existing.hiddenFields,
-  });
+  // An `embeddedFields` payload is the complete set for both namespaces, so there is nothing to
+  // carry over; the per-carrier merge below is for the legacy keys, which arrive independently.
+  const next = isDeclared(incoming.embeddedFields)
+    ? namesByNamespace(incoming)
+    : {
+        variables: isDeclared(incoming.variables)
+          ? namesByNamespace({ variables: incoming.variables }).variables
+          : current.variables,
+        hiddenFields: isDeclared(incoming.hiddenFields)
+          ? namesByNamespace({ hiddenFields: incoming.hiddenFields }).hiddenFields
+          : current.hiddenFields,
+      };
 
   const errors: TValidateIdError[] = [];
   for (const [lowered, variableName] of next.variables) {

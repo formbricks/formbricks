@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
-import { deriveLegacyEmbeddedData, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
+import {
+  type TLinkedEmbeddedField,
+  deriveLegacyEmbeddedData,
+  getSurveyEmbeddedFields,
+} from "@formbricks/types/embedded-data-resolver";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
@@ -62,14 +66,24 @@ beforeEach(async () => {
   await resetDb();
 });
 
+/**
+ * The pairs without the stored row id. ENG-3228 added it to the read so the editor can hand a shared
+ * link back on the next save, and the legacy derivation has nothing to put there — so a comparison
+ * against derived pairs has to drop it, and assert it separately.
+ */
+const withoutRowIds = (fields: TLinkedEmbeddedField[] | undefined) =>
+  fields?.map(({ field: { id: _id, ...field }, link }) => ({ field, link }));
+
 describe("Embedded Data read seam (real Postgres)", () => {
   test("a loaded survey carries the rows the write bridge wrote", async () => {
     const { surveyId } = await seedSurvey();
 
     const survey = await loadSurvey(surveyId);
 
-    expect(survey.embeddedFields).toEqual(deriveLegacyEmbeddedData(LEGACY));
-    expect(getSurveyEmbeddedFields(survey)).toEqual(deriveLegacyEmbeddedData(LEGACY));
+    expect(withoutRowIds(survey.embeddedFields)).toEqual(deriveLegacyEmbeddedData(LEGACY));
+    expect(withoutRowIds(getSurveyEmbeddedFields(survey))).toEqual(deriveLegacyEmbeddedData(LEGACY));
+    // Every pair names the row it came from, which is what a save needs to address a shared link.
+    expect(survey.embeddedFields?.every(({ field }) => typeof field.id === "string")).toBe(true);
   });
 
   test("the raw relation never leaks onto the survey object", async () => {
@@ -94,18 +108,23 @@ describe("Embedded Data read seam (real Postgres)", () => {
     ]);
   });
 
-  test("a survey with no rows has no fields, whatever its legacy columns still say", async () => {
-    // ENG-2412 removed the fallback. The rows are the write source of truth now, so deleting them
-    // makes the fields disappear rather than reappear — the behaviour that made the previous model
-    // hard to reason about. `deriveLegacyEmbeddedData` still has the columns; nothing consults it.
+  test("a survey with no rows falls back to its legacy columns", async () => {
+    // ENG-2412 removed the fallback and this asserted its absence: deleting the rows made the fields
+    // disappear. That held only while nothing wrote back what it read. Once `updateSurvey` accepts
+    // `embeddedFields`, a caller that loads a survey and hands it straight back — the single-use
+    // toggle spreads one — turns "no rows" into "no fields" and derives empty columns over the only
+    // copy a backfill-skipped survey has. Zero rows is "not reconciled yet"; the columns answer.
     const { surveyId } = await seedSurvey();
     await prisma.surveyEmbeddedData.deleteMany({ where: { surveyId } });
 
     const survey = await loadSurvey(surveyId);
 
-    expect(survey.embeddedFields).toEqual([]);
-    expect(getSurveyEmbeddedFields(survey)).toEqual([]);
-    expect(deriveLegacyEmbeddedData(LEGACY)).not.toEqual([]);
+    expect(getSurveyEmbeddedFields(survey).map(({ link }) => link.storageKey)).toEqual(
+      deriveLegacyEmbeddedData(LEGACY).map(({ link }) => link.storageKey)
+    );
+    // Not a copy of the legacy shape by accident — it is the same derive the write bridge and the
+    // backfill run, so what a reader sees is what a save would reconcile into rows.
+    expect(getSurveyEmbeddedFields(survey)).toEqual(deriveLegacyEmbeddedData(LEGACY));
   });
 
   test("a partial row set wins outright — the rows are the source of truth once any exist", async () => {

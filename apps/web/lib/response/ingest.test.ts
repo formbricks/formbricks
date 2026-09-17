@@ -20,7 +20,7 @@ const ingestedField = ({
   dataType?: TEmbeddedDataType;
   locked?: boolean;
 }): TLinkedEmbeddedField => ({
-  field: { name: storageKey, source: "ingested", dataType, defaultValue: null, locked },
+  field: { key: null, name: storageKey, source: "ingested", dataType, defaultValue: null, locked },
   link: { storageKey },
 });
 

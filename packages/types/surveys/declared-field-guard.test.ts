@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import type { TLinkedEmbeddedField } from "../embedded-data-resolver";
 import {
   type TDeclaredFieldSource,
   collectDeclaredFieldNames,
@@ -471,5 +472,116 @@ describe("validateNewDeclaredFields", () => {
     expect(describeDeclaredFieldNameError(error)).toBe(
       'Field name "plan" cannot be used: a second field in this survey would carry that name, and recall and logic address fields by name.'
     );
+  });
+});
+
+/**
+ * ENG-3228: the V2 carrier. A payload that declares its fields as rows says everything the two
+ * legacy keys said and more, so the guard has to read it instead of them — otherwise a panel edit
+ * would pass the reserved-name and clash checks by declaring nothing the guard can see.
+ */
+describe("the embeddedFields carrier", () => {
+  const entry = (
+    name: string,
+    source: "computed" | "ingested",
+    overrides: { key?: string; storageKey?: string } = {}
+  ): TLinkedEmbeddedField => ({
+    field: {
+      key: overrides.key ?? null,
+      name,
+      source,
+      dataType: "string",
+      defaultValue: null,
+      locked: false,
+    },
+    link: { storageKey: overrides.storageKey ?? name },
+  });
+
+  test("names a computed field by its name and an ingested one by its storage key", () => {
+    // Not the same column for both: recall addresses a variable by name and a hidden field by the
+    // key its value arrives under, which is exactly what the legacy columns carried.
+    expect(
+      collectDeclaredFieldNames({
+        embeddedFields: [entry("score", "computed"), entry("Plan tier", "ingested", { storageKey: "plan" })],
+      })
+    ).toEqual(["score", "plan"]);
+  });
+
+  test("takes precedence over the legacy keys in the same payload", () => {
+    expect(
+      collectDeclaredFieldNames({
+        embeddedFields: [entry("score", "computed")],
+        ...declared({ variables: ["ignored_variable"], hiddenFields: ["ignored_hidden_field"] }),
+      })
+    ).toEqual(["score"]);
+  });
+
+  test("refuses a newly declared reserved name, like any other carrier", () => {
+    expect(
+      validateNewDeclaredFields({
+        existing: {},
+        incoming: { embeddedFields: [entry("country", "ingested")] },
+      })
+    ).toEqual([{ code: TValidateIdErrorCode.Reserved, field: "country" }]);
+  });
+
+  test("grandfathers a reserved name the survey's rows already hold", () => {
+    const survey = { embeddedFields: [entry("country", "ingested")] };
+
+    expect(validateNewDeclaredFields({ existing: survey, incoming: survey })).toEqual([]);
+  });
+
+  test("refuses a computed and an ingested field that would share a name", () => {
+    expect(
+      validateNewDeclaredFields({
+        existing: {},
+        incoming: { embeddedFields: [entry("plan", "computed"), entry("plan", "ingested")] },
+      })
+    ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
+  });
+
+  describe("a newly linked shared field", () => {
+    test("is checked by its library key against the survey's local names", () => {
+      // The link is authored here even though the definition is not, so its key enters this survey's
+      // recall namespace for the first time and has to be checked like any other new name.
+      expect(
+        validateNewDeclaredFields({
+          existing: { embeddedFields: [entry("plan", "computed")] },
+          incoming: {
+            embeddedFields: [
+              entry("plan", "computed"),
+              entry("Plan tier", "ingested", { key: "plan", storageKey: "plan" }),
+            ],
+          },
+        })
+      ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
+    });
+
+    test("is named by its key rather than its label, which is never an identifier", () => {
+      // A library field displayed as `Plan tier` is perfectly legal; checking the label would refuse
+      // every link to one, because `validateId` demands a safe identifier from a new name.
+      expect(
+        validateNewDeclaredFields({
+          existing: {},
+          incoming: {
+            embeddedFields: [entry("Plan tier", "computed", { key: "plan_tier", storageKey: "cuid_1" })],
+          },
+        })
+      ).toEqual([]);
+    });
+
+    test("clashes case-insensitively, like every other name here", () => {
+      expect(
+        validateNewDeclaredFields({
+          existing: { embeddedFields: [entry("Plan", "computed")] },
+          incoming: {
+            embeddedFields: [
+              entry("Plan", "computed"),
+              entry("Plan tier", "ingested", { key: "plan", storageKey: "plan" }),
+            ],
+          },
+        })
+      ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
+    });
   });
 });

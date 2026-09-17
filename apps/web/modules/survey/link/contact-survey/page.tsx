@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { logger } from "@formbricks/logger";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
-import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
+import { getExistingContactResponse, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
 import {
   getBasicSurveyMetadata,
@@ -99,9 +100,28 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
 
   const { surveyId, contactId } = result.data;
 
+  // ENG-3228: the link-survey loader, not the authenticated one. This page renders the survey into a
+  // client component for whoever opens the contact link, so it is a respondent-facing reader and must
+  // take the selector that omits the workspace-library row id — the same one `/s/<surveyId>` and the
+  // v1 client environment use. It also blanks follow-ups and segment filters, which do not belong in
+  // a respondent's page payload either. It throws where the authenticated loader returned null, so
+  // both call sites below catch, mirroring `link/page.tsx`.
+  const loadSurvey = async (): Promise<TSurvey | null> => {
+    try {
+      return await getSurveyWithMetadata(surveyId);
+    } catch (error) {
+      // Logged rather than rethrown, and logged rather than swallowed silently: this loader turns a
+      // Prisma failure into `DatabaseError`, which is indistinguishable here from the survey simply
+      // being gone, and a respondent gets the same 404 either way. `link/page.tsx` treats its own
+      // load the same way, so the two pages fail alike; the log is what tells an outage apart.
+      logger.error(error, "Error fetching survey for contact link");
+      return null;
+    }
+  };
+
   const existingResponse = await getExistingContactResponse(surveyId, contactId)();
   if (existingResponse) {
-    const survey = await getSurvey(surveyId);
+    const survey = await loadSurvey();
     if (survey) {
       const workspace = await getWorkspaceById(survey.workspaceId);
       return <SurveyInactive status="response submitted" workspace={workspace || undefined} />;
@@ -110,7 +130,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   }
 
   const isPreview = preview === "true";
-  const survey = await getSurvey(surveyId);
+  const survey = await loadSurvey();
 
   if (!survey) {
     notFound();

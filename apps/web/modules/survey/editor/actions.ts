@@ -189,10 +189,33 @@ const checkSurveyFollowUpsPermission = async (
   }
 };
 
+/**
+ * The editor's payload with its stale Embedded Data projection removed (ENG-3228).
+ *
+ * `embeddedFields` became accepted input on the survey write path, where it is the COMPLETE desired
+ * set and the legacy columns are re-derived from it. The editor's working copy is not a valid
+ * sender yet: it is cloned from the server survey at mount and never updates that key — the
+ * Variables and Hidden Fields cards edit `variables` / `hiddenFields`, and every editor surface
+ * reads through `getDeclaredEmbeddedFields`, which derives from those columns for exactly this
+ * reason. Passing the mount-time list on would therefore be read as "these are the survey's fields"
+ * and discard the card edit that triggered the save.
+ *
+ * Dropped here rather than in the service, because this is the one caller whose copy is stale by
+ * design: every other caller that hands `updateSurvey` a whole survey just loaded it. Delete this
+ * when the V2 panel owns the key and sends what the author actually declared. The save already
+ * returns the freshly written list, so the working copy stops being stale after each save.
+ */
+const withoutStaleEmbeddedFields = <T extends { embeddedFields?: unknown }>(
+  survey: T
+): Omit<T, "embeddedFields"> => {
+  const { embeddedFields: _embeddedFields, ...rest } = survey;
+  return rest;
+};
+
 export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSurveyDraft).action(
   withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     // Cast to TSurvey - ZSurveyDraft validates structure, full validation happens on publish
-    const survey = parsedInput as TSurvey;
+    const survey = withoutStaleEmbeddedFields(parsedInput as TSurvey);
 
     const organizationId = await getOrganizationIdFromSurveyId(survey.id);
     const workspaceId = await getWorkspaceIdFromSurveyId(survey.id);
@@ -269,7 +292,7 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
 
     // Check external URLs permission (with grandfathering)
     await checkExternalUrlsPermission(organizationId, parsedInput, oldObject);
-    const result = await updateSurvey(parsedInput);
+    const result = await updateSurvey(withoutStaleEmbeddedFields(parsedInput));
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 

@@ -5,6 +5,7 @@ import { testInputValidation } from "vitestSetup";
 import { ActionClass, Prisma, Survey } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass } from "@formbricks/types/action-classes";
+import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import {
   DatabaseError,
   InvalidInputError,
@@ -83,6 +84,16 @@ beforeEach(() => {
   vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
   vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
   vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
+  // `updateSurveyInternal` re-reads the survey after its Embedded Data reconcile (ENG-3228), so that
+  // read has to be answered too. Echo the last thing `survey.update` actually resolved to, which is
+  // each test's own fixture for what got persisted.
+  vi.mocked(prisma.survey.findUniqueOrThrow).mockImplementation((async () => {
+    for (const result of [...vi.mocked(prisma.survey.update).mock.results].reverse()) {
+      const value = result.value instanceof Promise ? await result.value : result.value;
+      if (value) return value;
+    }
+    return undefined;
+  }) as never);
 });
 
 describe("evaluateLogic with mockSurveyWithLogic", () => {
@@ -369,7 +380,13 @@ describe("Tests for updateSurvey", () => {
       // workspace/organization on update.
       expect(updateArg?.data).not.toHaveProperty("workspaceId");
       expect(updateArg?.data).not.toHaveProperty("id");
-      expect(updateArg?.where).toEqual({ id: updateSurveyInput.id });
+      // …and the `where` carries the tenant anchor rather than the id alone, so the write is scoped
+      // by workspace the way every other query in this file is. The value is the stored survey's,
+      // never the payload's — that is what the two assertions above keep true.
+      expect(updateArg?.where).toEqual({
+        id: updateSurveyInput.id,
+        workspaceId: mockSurveyOutput.workspaceId,
+      });
     });
 
     // Note: Language handling tests (for languages.length > 0 fix) are covered in
@@ -818,6 +835,155 @@ describe("Tests for updateSurvey", () => {
    * The grandfather cases are the load-bearing ones: surveys in production already declare
    * `country`, `url`, `source`, `browser`, and this ticket must not rename or break any of them.
    */
+  describe("the embeddedFields carrier (ENG-3228)", () => {
+    /** One typed, defaulted, locked ingested field — none of which the legacy columns can carry. */
+    const typedPlan = {
+      field: {
+        key: null,
+        name: "plan",
+        source: "ingested" as const,
+        dataType: "number" as const,
+        defaultValue: 7,
+        locked: true,
+      },
+      link: { storageKey: "plan" },
+    };
+
+    const updateWith = (embeddedFields: unknown[]) =>
+      updateSurvey({ ...updateSurveyInput, embeddedFields } as never);
+
+    test("derives both legacy columns from the payload, ignoring the ones sent beside it", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateWith([
+        typedPlan,
+        {
+          field: {
+            key: null,
+            name: "score",
+            source: "computed" as const,
+            dataType: "number" as const,
+            defaultValue: 3,
+            locked: false,
+          },
+          link: { storageKey: "varscore0000000000000001" },
+        },
+      ]);
+
+      // The dual write continues, but the rows are what it is derived from: deployed SDK bundles
+      // still read these columns off the workspace-state payload.
+      const data = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data as {
+        variables: unknown;
+        hiddenFields: unknown;
+      };
+      expect(data.variables).toEqual([
+        { id: "varscore0000000000000001", name: "score", type: "number", value: 3 },
+      ]);
+      expect(data.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
+    });
+
+    test("refuses a payload whose derived columns would not load again", async () => {
+      // The columns are re-parsed by `ZSurvey` on every read, so a derived variable name the legacy
+      // schema refuses would store a survey that cannot be loaded. Caught before the transaction.
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+
+      await expect(
+        updateWith([
+          {
+            field: {
+              key: null,
+              name: "Not A Legal Variable Name",
+              source: "computed" as const,
+              dataType: "string" as const,
+              defaultValue: "",
+              locked: false,
+            },
+            link: { storageKey: "varbad000000000000000001" },
+          },
+        ])
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("refuses two derived variables that would share a name", async () => {
+      // `ZSurveyVariables` is only an array; the uniqueness rule lives on `ZSurveyBase.variables`,
+      // so a guard parsing the bare array would store a survey `ZSurvey` then refuses to load.
+      // A local field and a shared one can reach the same legacy name from different columns.
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+
+      await expect(
+        updateWith([
+          {
+            field: {
+              key: null,
+              name: "plan_tier",
+              source: "computed" as const,
+              dataType: "string" as const,
+              defaultValue: "",
+              locked: false,
+            },
+            link: { storageKey: "varlocal00000000000000001" },
+          },
+          {
+            field: {
+              key: null,
+              name: "plan_tier",
+              source: "computed" as const,
+              dataType: "string" as const,
+              defaultValue: "",
+              locked: false,
+            },
+            link: { storageKey: "varother00000000000000002" },
+          },
+        ])
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("refuses a shared field with no row id before it writes anything", async () => {
+      // `ZLinkedEmbeddedField` lets a shared entry omit `field.id`, and the reconcile refuses it —
+      // but inside its transaction, which does not cover the segment writes above. Spending the
+      // refusal first is what keeps a rejected update from half-applying.
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+
+      await expect(
+        updateWith([
+          {
+            field: {
+              key: "plan_tier",
+              name: "Plan tier",
+              source: "ingested" as const,
+              dataType: "string" as const,
+              defaultValue: null,
+              locked: false,
+            },
+            link: { storageKey: "plan_tier" },
+          },
+        ])
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(prisma.segment.update).not.toHaveBeenCalled();
+    });
+
+    test("leaves the legacy path alone when the payload does not carry the key", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateSurvey(updateSurveyInput);
+
+      const data = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data as {
+        variables: unknown;
+        hiddenFields: unknown;
+      };
+      expect(data.variables).toEqual(updateSurveyInput.variables);
+      expect(data.hiddenFields).toEqual(updateSurveyInput.hiddenFields);
+    });
+  });
+
   describe("reserved names for newly declared fields", () => {
     test("rejects a save that ADDS a hidden field named after a reserved field, and does not write", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({
@@ -835,6 +1001,19 @@ describe("Tests for updateSurvey", () => {
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
+    /**
+     * A stored survey's rows, as they would exist beside its columns. ENG-3228 made the naming guard
+     * read `existing.embeddedFields`, so a fixture whose rows and columns disagree grandfathers
+     * nothing — and every stored survey's rows are reconciled from its columns on every write.
+     */
+    const withRowsForColumns = <T extends { variables?: unknown; hiddenFields?: unknown }>(survey: T) => ({
+      ...survey,
+      embeddedDataLinks: toDesiredEmbeddedFields({
+        variables: survey.variables as never,
+        hiddenFields: survey.hiddenFields as never,
+      }).map(({ storageKey, ...field }) => ({ storageKey, embeddedData: field })),
+    });
+
     test("GRANDFATHER: a save on a survey that ALREADY has `country` succeeds and keeps the field", async () => {
       // Draft on both sides: `skipValidation` is restricted to draft-to-draft writes by the
       // ENG-1939/ENG-2115 gate, which runs after this guard. The grandfathering under test is
@@ -844,7 +1023,7 @@ describe("Tests for updateSurvey", () => {
         status: "draft",
         hiddenFields: { enabled: true, fieldIds: ["country"] },
       };
-      prisma.survey.findUnique.mockResolvedValueOnce(grandfathered as any);
+      prisma.survey.findUnique.mockResolvedValueOnce(withRowsForColumns(grandfathered) as any);
       prisma.survey.update.mockResolvedValueOnce(grandfathered as any);
 
       await expect(
@@ -878,7 +1057,7 @@ describe("Tests for updateSurvey", () => {
     test("GRANDFATHER: a survey that already declares `country` as a VARIABLE keeps it", async () => {
       const variable = { id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "country", type: "text" as const, value: "" };
       const grandfathered = { ...mockSurveyOutput, status: "draft", variables: [variable] };
-      prisma.survey.findUnique.mockResolvedValueOnce(grandfathered as any);
+      prisma.survey.findUnique.mockResolvedValueOnce(withRowsForColumns(grandfathered) as any);
       prisma.survey.update.mockResolvedValueOnce(grandfathered as any);
 
       await expect(
@@ -1262,6 +1441,107 @@ describe("Tests for createSurvey", () => {
           },
           link: { storageKey: "utm_source" },
         },
+      ]);
+    });
+
+    test("derives the legacy columns from an embeddedFields create payload", async () => {
+      // Both create schemas dropped their `embeddedFields` omission, so `POST /api/v1/management/surveys`
+      // reaches this branch. Nothing else passed `embeddedFields` to `createSurvey`, so deleting the
+      // derive — or reverting the parsed body to the unvalidated one — used to keep the suite green.
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput, embeddedDataLinks: [] } as never);
+      prisma.survey.findUniqueOrThrow.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        embeddedDataLinks: [],
+      } as never);
+
+      await createSurvey(mockWorkspaceId, {
+        ...mockCreateSurveyInput,
+        embeddedFields: [
+          {
+            field: {
+              key: null,
+              name: "plan",
+              source: "ingested",
+              dataType: "string",
+              defaultValue: null,
+              locked: false,
+            },
+            link: { storageKey: "plan" },
+          },
+          {
+            field: {
+              key: null,
+              name: "score",
+              source: "computed",
+              dataType: "number",
+              defaultValue: "0",
+              locked: false,
+            },
+            link: { storageKey: "clx000000000000000000001" },
+          },
+        ],
+      } as never);
+
+      const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
+
+      // The rows are the whole answer; the columns are derived back off them (the dual write).
+      expect(createArg.data.hiddenFields).toMatchObject({ fieldIds: ["plan"] });
+      expect(createArg.data.variables).toEqual([
+        { id: "clx000000000000000000001", name: "score", type: "number", value: 0 },
+      ]);
+      // And never as a nested relation write: `Survey` owns `embeddedDataLinks`, so leaving the key
+      // on the payload would turn it into one.
+      expect(createArg.data).not.toHaveProperty("embeddedFields");
+    });
+
+    test("a shared field's columns come from the library row on create, not from the payload", async () => {
+      // The create path derives the legacy columns before the transaction, so it has to resolve the
+      // link itself — `reconcileEmbeddedData` re-checks it inside, but the columns are built by then.
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      // Answers both calls: this path resolves the link before the transaction, and `reconcileEmbeddedData`
+      // re-checks it inside.
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([
+        {
+          id: "clx000000000000000000009",
+          key: "plan_tier",
+          source: "computed",
+          name: "Plan tier",
+          dataType: "number",
+          defaultValue: 7,
+          locked: true,
+        },
+      ] as never);
+      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput, embeddedDataLinks: [] } as never);
+      prisma.survey.findUniqueOrThrow.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        embeddedDataLinks: [],
+      } as never);
+
+      await createSurvey(mockWorkspaceId, {
+        ...mockCreateSurveyInput,
+        embeddedFields: [
+          {
+            field: {
+              id: "clx000000000000000000009",
+              // Every one of these disagrees with the row above, and none of it survives.
+              key: "not_the_rows_key",
+              name: "Not the row's name",
+              source: "computed",
+              dataType: "string",
+              defaultValue: "made up",
+              locked: false,
+            },
+            link: { storageKey: "clx000000000000000000001" },
+          },
+        ],
+      } as never);
+
+      const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
+
+      // `legacyComputedName` takes the library key, `toLegacyVariable` the library type and default.
+      expect(createArg.data.variables).toEqual([
+        { id: "clx000000000000000000001", name: "plan_tier", type: "number", value: 7 },
       ]);
     });
 

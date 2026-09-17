@@ -228,6 +228,26 @@ export const ZSurveyVariable = z
   });
 export const ZSurveyVariables = z.array(ZSurveyVariable);
 
+/**
+ * The variables array as a **stored** survey must satisfy it: ids unique, names unique.
+ *
+ * Separate from `ZSurveyVariables`, which is deliberately unrefined because partial payloads and
+ * derived fragments parse against it. Exported so the write path can check the same rule `ZSurvey`
+ * will apply on the next read — a guard that parsed the bare array would accept a survey it could
+ * never load again, which is the one failure it exists to prevent.
+ */
+export const ZStoredSurveyVariables = ZSurveyVariables.superRefine((variables, ctx) => {
+  const variableIds = variables.map((v) => v.id);
+  if (new Set(variableIds).size !== variableIds.length) {
+    ctx.addIssue({ code: "custom", message: "Variable IDs must be unique", path: ["variables"] });
+  }
+
+  const variableNames = variables.map((v) => v.name);
+  if (new Set(variableNames).size !== variableNames.length) {
+    ctx.addIssue({ code: "custom", message: "Variable names must be unique", path: ["variables"] });
+  }
+});
+
 export type TSurveyVariable = z.infer<typeof ZSurveyVariable>;
 export type TSurveyVariables = z.infer<typeof ZSurveyVariables>;
 
@@ -931,35 +951,19 @@ export const ZSurveyBase = z.object({
    * reader — reach it through `getSurveyEmbeddedFields`, never directly, so surveys read through a
    * select that omits the join still fall back to the legacy columns below.
    *
-   * Read-only and optional. Optional because every survey literal, fixture and create payload in the
-   * codebase predates it; read-only because `variables` / `hiddenFields` remain the written columns
-   * until the legacy JSON is dropped — the write paths that spread a survey object into Prisma strip
-   * this key explicitly, and both create-input schemas omit it.
+   * Since ENG-3228 it is also **accepted input** on `updateSurvey` and `createSurvey`: one shape for
+   * read and write, so the editor sends back the pairs it was loaded with, carrying the `dataType`,
+   * `defaultValue`, `locked` and shared-library link the legacy columns have no word for. Present in
+   * a payload, it is the complete desired set for both sources and `variables` / `hiddenFields` are
+   * re-derived from it server-side; absent, the legacy columns run the write exactly as before.
+   *
+   * Still optional — every survey literal, fixture and create payload in the codebase predates it —
+   * and still never spread into Prisma: `Survey` owns relations named `embeddedData` /
+   * `embeddedDataLinks`, so each write seam destructures this key out and lets
+   * `reconcileEmbeddedData` do the writing.
    */
   embeddedFields: z.array(ZLinkedEmbeddedField).optional(),
-  variables: ZSurveyVariables.superRefine((variables, ctx) => {
-    // variable ids must be unique
-    const variableIds = variables.map((v) => v.id);
-    const uniqueVariableIds = new Set(variableIds);
-    if (uniqueVariableIds.size !== variableIds.length) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Variable IDs must be unique",
-        path: ["variables"],
-      });
-    }
-
-    // variable names must be unique
-    const variableNames = variables.map((v) => v.name);
-    const uniqueVariableNames = new Set(variableNames);
-    if (uniqueVariableNames.size !== variableNames.length) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Variable names must be unique",
-        path: ["variables"],
-      });
-    }
-  }),
+  variables: ZStoredSurveyVariables,
   followUps: z.array(
     ZSurveyFollowUp.extend({
       deleted: z.boolean().optional(),
@@ -3901,12 +3905,13 @@ export const ZSurveyUpdateInput = ZSurveyBase.omit({
   createdAt: true,
   updatedAt: true,
   followUps: true,
-  // Read-only projection of the EmbeddedData tables (ENG-1837), omitted for the same reason as on
-  // both create inputs: nothing may reach a Prisma write through this schema. Omitting STRIPS rather
-  // than rejects, so the v1 PUT round-trip — which re-parses the loaded survey merged with the patch
-  // — is unaffected; `updateSurveyInternal` still destructures the key out, because callers that hand
-  // it a raw `TSurvey` (the editor's save actions, the summary's single-use toggle) never go through
-  // this schema at all.
+  // Omitted deliberately, and it stays omitted after ENG-3228 made `embeddedFields` accepted input
+  // elsewhere: this schema is the v1 `PUT /api/v1/management/surveys/{id}` boundary, which re-parses
+  // the loaded survey merged with the caller's patch. Admitting the key would hand `updateSurvey` the
+  // survey's OWN inlined rows as a desired set on every legacy PUT, turning what the columns say into
+  // a no-op. Omitting STRIPS rather than rejects, so a caller that sends it simply takes the legacy
+  // path. Callers that hand `updateSurvey` a raw `TSurvey` (the editor's save actions) never go
+  // through this schema and keep the V2 carrier.
   embeddedFields: true,
 })
   .extend({
@@ -3949,11 +3954,6 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     // archivedAt is owned exclusively by the archive/restore flows; a create must never set it,
     // otherwise a caller could POST an already-archived, purge-eligible survey.
     archivedAt: true,
-    // Read-only projection of the EmbeddedData tables (ENG-1837). `createSurvey` spreads the parsed
-    // body straight into `Prisma.SurveyCreateInput`, and `Survey` owns relations named
-    // `embeddedData` / `embeddedDataLinks`, so admitting this key would turn a read projection into
-    // a nested relation write. The rows are written by `reconcileEmbeddedData` instead.
-    embeddedFields: true,
   })
   .extend({
     name: z.string(), // Keep name required
@@ -4005,11 +4005,6 @@ export const ZSurveyCreateInputWithWorkspaceId = makeSchemaOptional(ZSurveyBase)
     // archivedAt is owned exclusively by the archive/restore flows; a create must never set it,
     // otherwise a caller could POST an already-archived, purge-eligible survey.
     archivedAt: true,
-    // Read-only projection of the EmbeddedData tables (ENG-1837). `createSurvey` spreads the parsed
-    // body straight into `Prisma.SurveyCreateInput`, and `Survey` owns relations named
-    // `embeddedData` / `embeddedDataLinks`, so admitting this key would turn a read projection into
-    // a nested relation write. The rows are written by `reconcileEmbeddedData` instead.
-    embeddedFields: true,
   })
   .extend({
     name: z.string(), // Keep name required
