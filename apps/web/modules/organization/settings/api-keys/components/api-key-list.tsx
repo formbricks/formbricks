@@ -17,7 +17,7 @@ export const ApiKeyList = async ({
   workspaces,
   isFormbricksCloud,
   canGrantOrganizationWriteAccess,
-}: ApiKeyListProps) => {
+}: Readonly<ApiKeyListProps>) => {
   const apiKeys = await getApiKeysWithEnvironmentPermissions(organizationId);
 
   return (

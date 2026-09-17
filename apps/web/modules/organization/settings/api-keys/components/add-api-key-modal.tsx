@@ -72,7 +72,7 @@ export const AddApiKeyModal = ({
   isCreatingAPIKey,
   isFormbricksCloud,
   canGrantOrganizationWriteAccess,
-}: AddApiKeyModalProps) => {
+}: Readonly<AddApiKeyModalProps>) => {
   const { t } = useTranslation();
   const { register, getValues, handleSubmit, reset, watch } = useForm<{ label: string }>();
   const apiKeyLabel = watch("label");
