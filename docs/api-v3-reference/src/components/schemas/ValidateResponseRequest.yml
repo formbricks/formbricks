@@ -1,0 +1,8 @@
+oneOf:
+  - $ref: ./ValidateResponseCreateRequest.yml
+  - $ref: ./ValidateResponsePatchRequest.yml
+discriminator:
+  propertyName: operation
+  mapping:
+    create: ./ValidateResponseCreateRequest.yml
+    patch: ./ValidateResponsePatchRequest.yml

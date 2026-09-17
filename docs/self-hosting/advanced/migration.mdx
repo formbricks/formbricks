@@ -8,27 +8,24 @@ icon: "arrow-right"
 
 Formbricks v6 replaces the legacy authorization evaluator with AuthZed SpiceDB. PostgreSQL remains the source
 of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback, so an existing
-installation must migrate through the bridge-compatible v5 release identified in the v6 release notes.
+installation must prepare its complete authorization graph before serving v6 traffic.
 
-Before selecting a v6 image:
+Use the supported source/target pair in the release notes and the
+[maintenance upgrade procedure](/self-hosting/advanced/v6-maintenance-upgrade). A self-hosted v5 bridge is not required:
 
-1. Back up the Formbricks and SpiceDB PostgreSQL databases, secrets, deployment configuration, image versions,
-   and canonical schema digest.
+1. Enter maintenance, stop all writers, suspend their controllers, and drain in-flight work. Take recoverable
+   backups of the databases, secrets, configuration, and source image versions.
 2. Merge the release-matched AuthZed deployment services or Helm values without overwriting proxy, storage,
    SMTP, or external-datastore customization.
-3. Run the v6 database migrations while the bridge application remains available.
+3. Run the target-image database migrations while writers remain stopped, never against the still-running v5 app.
 4. Run `formbricks-authzed upgrade prepare`, then require `formbricks-authzed upgrade check` to exit `0`.
 5. For one-click or Compose, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. For Helm, set
    `authzed.migrationAcknowledged=true` in the v6 upgrade values.
 6. Deploy v6 and verify critical allow, deny, revocation, and cross-tenant cases.
 
-The update scripts and chart fail before replacing the running release when the deployment contract,
-acknowledgement, schema, outbox, or relationship graph is not ready. Do not bypass the acknowledgement to silence
-a failed gate. See [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6)
-for Docker and Kubernetes commands, guarded schema replacement, backups, repair, and rollback.
-
-The moving `latest` image tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable
-publication. Existing installations opt into v6 explicitly during that migration window.
+The update script and Helm upgrade hook verify the prepared graph without repairing it. Do not bypass a failed
+gate. Keep maintenance active on failure: after database changes, recovery may require restoring coordinated
+backups rather than running `helm rollback`. Pin explicit releases and digests, not floating tags.
 
 ### Changes in Environment Variables
 
@@ -65,6 +62,44 @@ sessions has to fetch a fresh token — see
 The bundled Valkey image moves from an amd64-only 8.1.1 image to the native amd64/arm64 Valkey 8.1.9 Alpine
 image. Fresh Docker and Helm installations receive it automatically. Existing installations that retain an
 older Compose file or explicitly reuse the previous Helm digest need the one-time update below.
+
+### Envoy Gateway 1.8.4 CRD Upgrade
+
+The updated Helm chart replaces Envoy Gateway 1.7.1 and Gateway API 1.4.1 with Envoy Gateway 1.8.4 and Gateway
+API 1.5.1. Fresh installations receive the new CRDs automatically. Helm does not update CRDs during an ordinary
+upgrade, so existing installations using the bundled controller must apply the matching CRDs before upgrading:
+
+```bash
+crd_dir="$(mktemp -d)"
+helm pull oci://docker.io/envoyproxy/gateway-crds-helm \
+  --version v1.8.4 --untar --untardir "${crd_dir}"
+helm template envoy-gateway-crds "${crd_dir}/gateway-crds-helm" \
+  --set crds.gatewayAPI.enabled=true \
+  --set crds.gatewayAPI.channel=experimental \
+  --set crds.envoyGateway.enabled=true \
+  | kubectl apply --server-side --force-conflicts -f -
+```
+
+`--force-conflicts` transfers the existing CRD fields from Helm's field manager to this explicit CRD upgrade.
+Pulling the OCI chart first keeps Helm 4's pull messages out of the manifest pipe. Remove the temporary directory
+after the apply succeeds.
+
+The chart does not install Envoy Gateway's cluster-wide safe-upgrade admission policy by default. Enabling
+`envoy.crds.gatewayAPI.safeUpgradePolicy.enabled` denies Gateway API CRD versions older than v1.5.0 across the
+whole cluster, including CRDs reconciled by unrelated releases. Enable it only after platform review; a chart
+rollback does not remove that policy automatically.
+
+If the platform already manages compatible Gateway API CRDs, do not install another Gateway API bundle. Install
+only the Envoy Gateway CRDs as described in the [Kubernetes guide](/self-hosting/setup/kubernetes), set
+`envoy.crds.enabled=false`, and configure Flux to skip CRD installation and upgrades. Upgrade the CRDs before the
+controller and never downgrade them during rollback.
+
+The controller scheduling values also move from the ineffective `envoy.deployment.envoyGateway.pod` path to
+`envoy.deployment.pod`. Move any node selectors, tolerations, topology spread constraints, extra volumes, or
+pod annotations that you placed under the old path before upgrading.
+
+The parent chart no longer repeats the bundled controller's default port list. The
+`envoy.deployment.ports` override remains supported, so existing port overrides need no migration.
 
 ### Database migrations
 
@@ -627,7 +662,7 @@ Formbricks v5 splits rate limiting across two layers:
 - the application server for the remaining session-authenticated routes, server actions, and uncovered APIs
 
 Keep Redis/Valkey enabled for the remaining application-enforced limits. For the covered route groups and exact
-thresholds, use the [rate-limiting guide](/self-hosting/advanced/rate-limiting) as the source of truth.
+thresholds, use the [rate-limiting guide](/self-hosting/configuration/rate-limiting) as the source of truth.
 
 #### AI Features
 

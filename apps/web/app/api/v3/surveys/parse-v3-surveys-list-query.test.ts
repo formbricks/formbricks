@@ -74,6 +74,19 @@ describe("parseV3SurveysListQuery", () => {
     }
   });
 
+  /**
+   * The surveys list has its own `V3_SURVEYS_MAX_LIMIT`, raised alongside the shared v3 cap. Nothing
+   * else in this file exercises the limit beyond its default of 20, so without these two the raise
+   * is unpinned and reverting it keeps the suite green.
+   */
+  test("accepts the maximum limit and rejects one above it", () => {
+    const ok = parseV3SurveysListQuery(params(`workspaceId=${wid}&limit=250`));
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.limit).toBe(250);
+
+    expect(parseV3SurveysListQuery(params(`workspaceId=${wid}&limit=251`)).ok).toBe(false);
+  });
+
   test("parses includeTotalCount=false", () => {
     const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&includeTotalCount=false`));
     expect(r.ok).toBe(true);

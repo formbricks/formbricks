@@ -149,6 +149,11 @@ describe("authenticateMcpRequest", () => {
       // refresh token (ENG-2175). Asserted against the real constant, not a literal.
       expect(result.response.headers.get("WWW-Authenticate")).toContain(`scope="${MCP_CHALLENGE_SCOPE}"`);
       expect(MCP_CHALLENGE_SCOPE).toContain("offline_access");
+      // Exactly one challenge, this one. `problemUnauthorized` contributes none of its own — the plain
+      // bearer challenge is attached by the v3 wrapper only for auth modes that accept a bearer API key
+      // — so this pins that MCP's richer challenge stands alone. Were a second ever to join it, a client
+      // reading two comma-joined challenges would discover no `resource_metadata`.
+      expect(result.response.headers.get("WWW-Authenticate")).not.toContain('realm="formbricks"');
       expect(await result.response.json()).toMatchObject({
         code: "not_authenticated",
         detail: "API key or OAuth access token required",
@@ -254,14 +259,24 @@ describe("authenticateMcpRequest", () => {
       expect(result.authInfo.token).toBe("key_1");
       expect(getMcpAuthentication(result.authInfo)).toEqual(apiKeyAuth);
       expect(getMcpRequestId(result.authInfo)).toBe("req_1");
-      // A write-capable key must reach both tool groups' read AND write tools.
-      expect(result.authInfo.scopes).toEqual(
-        expect.arrayContaining([
+      // A write-capable key must reach every tool group's read AND write tools. Asserted exactly
+      // rather than with `arrayContaining`, which is a subset matcher: it passed whether or not
+      // `getMcpScopes` granted `responses:write`, so deleting that line left the whole suite green.
+      // The read-only case below has always been exact; this one now matches it.
+      // Sorted on both sides: the set is the contract, the order is an artefact of the `Set` insertion
+      // in `getMcpScopes`. Consumers read these through `hasMcpScopes`, so reordering the adds would
+      // break this test without breaking anything real.
+      expect([...result.authInfo.scopes].sort()).toEqual(
+        [
           "surveys:read",
-          "surveys:write",
+          "workflows:read",
           "feedbackRecords:read",
+          "responses:read",
+          "surveys:write",
+          "workflows:write",
           "feedbackRecords:write",
-        ])
+          "responses:write",
+        ].sort()
       );
     }
     expect(applyRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:v3" }), "key_1");
@@ -281,7 +296,11 @@ describe("authenticateMcpRequest", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.authInfo.scopes).toEqual(["surveys:read", "workflows:read", "feedbackRecords:read"]);
+      // `responses:read` rides along (ENG-2862): the same key can already read responses through v1/v2
+      // management, so withholding it would make MCP narrower than the REST surface this credential has.
+      expect([...result.authInfo.scopes].sort()).toEqual(
+        ["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read"].sort()
+      );
     }
   });
 

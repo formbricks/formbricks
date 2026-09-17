@@ -5,11 +5,15 @@ import { INVALID_CONFIGURATION_RESULT, INVALID_REQUEST_RESULT } from "./authzed-
 
 const webRoot = fileURLToPath(new URL("../", import.meta.url));
 const tsxExecutable = fileURLToPath(new URL("../../../node_modules/.bin/tsx", import.meta.url));
+const keepProcessAliveModule = `data:text/javascript,${encodeURIComponent(
+  "setInterval(() => process.uptime(), 60_000);"
+)}`;
 
 const runEntrypoint = (
   script: string,
   args: ReadonlyArray<string>,
-  environment: Readonly<Record<string, string>> = {}
+  environment: Readonly<Record<string, string>> = {},
+  timeout = 10_000
 ) =>
   spawnSync(tsxExecutable, ["--tsconfig", "tsconfig.json", script, ...args], {
     cwd: webRoot,
@@ -24,6 +28,7 @@ const runEntrypoint = (
       NODE_OPTIONS: "--conditions=react-server",
       ...environment,
     },
+    timeout,
   });
 
 const expectSingleJsonFailure = (
@@ -69,6 +74,12 @@ describe("AuthZed script entrypoints", () => {
       name: "packaged upgrade",
       script: "scripts/docker/authzed-cli.ts",
     },
+    {
+      args: ["--unknown"],
+      expected: INVALID_REQUEST_RESULT,
+      name: "development upgrade",
+      script: "scripts/authzed-upgrade.ts",
+    },
   ])("$name rejects invalid arguments with one sanitized JSON result", ({ args, expected, script }) => {
     expectSingleJsonFailure(runEntrypoint(script, args), expected);
   });
@@ -103,7 +114,35 @@ describe("AuthZed script entrypoints", () => {
       name: "packaged upgrade",
       script: "scripts/docker/authzed-cli.ts",
     },
+    {
+      args: ["check"],
+      expected: INVALID_CONFIGURATION_RESULT,
+      name: "development upgrade",
+      script: "scripts/authzed-upgrade.ts",
+    },
   ])("$name sanitizes runtime-loading failures", ({ args, expected, script }) => {
     expectSingleJsonFailure(runEntrypoint(script, args), expected);
+  });
+
+  test.each([
+    { args: [], name: "development health", script: "scripts/authzed-health.ts" },
+    { args: ["health"], name: "packaged health", script: "scripts/docker/authzed-cli.ts" },
+  ])("$name exits after a sanitized failure while another handle remains active", ({ args, script }) => {
+    const result = runEntrypoint(
+      script,
+      args,
+      {
+        NODE_OPTIONS: `--conditions=react-server --import=${keepProcessAliveModule}`,
+      },
+      2_000
+    );
+
+    expect(result.error).toBeUndefined();
+    expectSingleJsonFailure(result, {
+      code: "authzed_internal",
+      latencyMs: 0,
+      retryable: false,
+      status: "unhealthy",
+    });
   });
 });

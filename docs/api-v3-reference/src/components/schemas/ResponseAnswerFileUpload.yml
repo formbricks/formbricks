@@ -1,0 +1,35 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - fileUrls
+    properties:
+      elementType:
+        type: string
+        enum:
+          - fileUpload
+      fileUrls:
+        type: array
+        description: >
+          The uploaded files, **as stored** — workspace-relative paths, not absolute URLs, and
+          neither resolved nor signed.
+
+
+          A deliberate choice between two things this field could be. Storage writes a relative path
+          and the app's own read paths rewrite it to an absolute URL for display; v3 returns the
+          stored bytes instead, because `answers[]` promises verbatim values a client can write
+          straight back, and an absolute URL is neither what is stored nor what a write accepts.
+          Fetching a file is a separate concern with its own ticket (ENG-513, signed short-lived URLs
+          behind a dedicated endpoint); this field identifies the file, it does not serve it.
+
+
+          Not publicly fetchable in any case: access follows the same authorization as the response,
+          and deleting the response deletes the underlying files.
+        items:
+          type: string
+      fileCount:
+        type: integer
+        minimum: 0
+        description: Convenience count of `fileUrls`, so a list consumer need not materialize the array.
+unevaluatedProperties: false
+description: File-upload answer.

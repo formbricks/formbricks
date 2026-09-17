@@ -16,8 +16,8 @@
   "scripts": {
     "dev": "email dev --port 3456",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "clean": "rimraf .turbo node_modules coverage dist"
