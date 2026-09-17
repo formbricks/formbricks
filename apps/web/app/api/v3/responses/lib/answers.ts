@@ -397,7 +397,7 @@ const serializeOne = (
               (
                 element as unknown as Record<
                   string,
-                  { placeholder?: Parameters<typeof localizeSurveyString>[0] }
+                  { placeholder?: NonNullable<Parameters<typeof localizeSurveyString>[0]> }
                 >
               )[fieldId]?.placeholder,
               lookupKey

@@ -347,7 +347,7 @@ describe("v3 response contract", () => {
     const mapped = Object.values(answer.discriminator?.mapping ?? {});
 
     expect(sorted(new Set(oneOf))).toEqual(sorted(new Set(mapped)));
-    expect(oneOf.length).toBe(ZV3ResponseAnswer.options.length);
+    expect(oneOf).toHaveLength(ZV3ResponseAnswer.options.length);
   });
 
   test.each([

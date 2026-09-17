@@ -35,15 +35,12 @@ import type { TV3ResponseRow, TV3ResponseSurveyRow } from "./service";
  * serve a stale survey definition to a later request.
  */
 
-/** The survey-scoped inputs a response is serialized against. */
-type TPlanKey = string;
-
 /**
  * Cache key for the per-(survey, language) answer plan. A space separates them unambiguously:
  * a survey id is a cuid and a lookup key is a BCP-47 code or the literal `default`, so neither
  * side can contain one and no pair of inputs can collide on the joined string.
  */
-const planKey = (surveyId: string, lookupKey: string): TPlanKey => `${surveyId} ${lookupKey}`;
+const planKey = (surveyId: string, lookupKey: string): string => `${surveyId} ${lookupKey}`;
 
 /**
  * The stored fields the Embedded Data resolver reads.
@@ -83,7 +80,7 @@ export interface TV3ResponseSerializer {
 }
 
 export const createV3ResponseSerializer = (): TV3ResponseSerializer => {
-  const answerPlans = new Map<TPlanKey, ReturnType<typeof buildAnswerPlan>>();
+  const answerPlans = new Map<string, ReturnType<typeof buildAnswerPlan>>();
   const embeddedPlans = new Map<string, ReturnType<typeof buildEmbeddedDataPlan>>();
 
   const answerPlanFor = (survey: TV3ResponseSurveyRow, lookupKey: string) => {

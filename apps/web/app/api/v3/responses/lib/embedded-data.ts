@@ -109,13 +109,16 @@ const declaredType = (dataType: TEmbeddedDataType): TV3ResponseEmbeddedDatum["ty
  * falls back to a field's `defaultValue` before giving up, so a declared field with a default is
  * never absent.
  */
-export const serializeEmbeddedData = (
+/**
+ * The survey's own declared fields: one entry each, or an `unresolved[]` row when the stored bytes
+ * are a shape the resolver cannot read.
+ */
+const collectDeclared = (
   plan: TV3EmbeddedDataPlan,
-  response: TEmbeddedValueResponse
-): { embeddedData: TV3ResponseEmbeddedDatum[]; unresolved: TV3ResponseUnresolvedEntry[] } => {
-  const entries: TV3ResponseEmbeddedDatum[] = [];
-  const unresolved: TV3ResponseUnresolvedEntry[] = [];
-
+  response: TEmbeddedValueResponse,
+  entries: TV3ResponseEmbeddedDatum[],
+  unresolved: TV3ResponseUnresolvedEntry[]
+): void => {
   for (const { field, link } of plan.declared) {
     // `reserved` cannot appear among a survey's own declarations, and the resolver returns
     // `undefined` for it. Narrowing here rather than after the call keeps the `kind` lookup total.
@@ -149,7 +152,14 @@ export const serializeEmbeddedData = (
       value,
     });
   }
+};
 
+/** The reserved half of the catalog — submission metadata the response carries rather than declares. */
+const collectReserved = (
+  plan: TV3EmbeddedDataPlan,
+  response: TEmbeddedValueResponse,
+  entries: TV3ResponseEmbeddedDatum[]
+): void => {
   for (const entry of plan.reserved) {
     const value = resolveEmbeddedValue({ entry }, response);
     if (value === undefined) continue;
@@ -165,13 +175,23 @@ export const serializeEmbeddedData = (
       value: entry.privacy === "redactQuery" && typeof value === "string" ? redactUrlQuery(value) : value,
     });
   }
+};
 
-  // A variable deleted from the survey takes its declaration with it — `reconcile` hard-deletes the
-  // link row — but nothing prunes `response.variables`, so the value stays. Nothing above visits it:
-  // the loops walk the survey's *current* declarations. And unlike an orphaned `data` key, which
-  // `serializeAnswers` reports and the detail view's map still carries, a variable map is published
-  // nowhere in this contract — so without this the bytes would appear in no view at all, while v2
-  // still returns them. `variableNotInSurvey` is the reason the contract publishes for exactly this.
+/**
+ * Variables whose declaration is gone.
+ *
+ * A variable deleted from the survey takes its declaration with it — `reconcile` hard-deletes the
+ * link row — but nothing prunes `response.variables`, so the value stays. Neither collector above
+ * visits it: both walk the survey's *current* declarations. And unlike an orphaned `data` key, which
+ * `serializeAnswers` reports and the detail view's map still carries, a variable map is published
+ * nowhere in this contract — so without this the bytes would appear in no view at all, while v2
+ * still returns them. `variableNotInSurvey` is the reason the contract publishes for exactly this.
+ */
+const collectOrphanedVariables = (
+  plan: TV3EmbeddedDataPlan,
+  response: TEmbeddedValueResponse,
+  unresolved: TV3ResponseUnresolvedEntry[]
+): void => {
   for (const [storageKey, rawValue] of Object.entries(response.variables ?? {})) {
     if (plan.claimedVariableKeys.has(storageKey)) continue;
 
@@ -181,6 +201,25 @@ export const serializeEmbeddedData = (
       reason: "variableNotInSurvey",
     });
   }
+};
+
+/**
+ * Both published collections, in one walk of the plan.
+ *
+ * Order is part of the contract's shape: declared entries precede reserved ones, and a declared
+ * field's shape mismatch precedes an orphaned variable. The three collectors append to the same two
+ * accumulators in that order rather than returning their own, so the sequence is visible here.
+ */
+export const serializeEmbeddedData = (
+  plan: TV3EmbeddedDataPlan,
+  response: TEmbeddedValueResponse
+): { embeddedData: TV3ResponseEmbeddedDatum[]; unresolved: TV3ResponseUnresolvedEntry[] } => {
+  const entries: TV3ResponseEmbeddedDatum[] = [];
+  const unresolved: TV3ResponseUnresolvedEntry[] = [];
+
+  collectDeclared(plan, response, entries, unresolved);
+  collectReserved(plan, response, entries);
+  collectOrphanedVariables(plan, response, unresolved);
 
   return { embeddedData: entries, unresolved };
 };
