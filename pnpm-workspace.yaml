@@ -404,8 +404,10 @@ sharedWorkspaceLockfile: true
 access: public
 enablePrePostScripts: true
 # Flat, npm-style node_modules. Deliberate for now: several packages still rely on hoisted
-# (undeclared) dependencies — e.g. @formbricks/js-core reaches into sibling packages (ENG-1681)
-# and react/react-dom are hoisted from the workspace root (ENG-1693). Moving to the strict
+# (undeclared) dependencies — react/react-dom are hoisted from the workspace root (ENG-1693), and
+# apps/storybook aliases @formbricks/survey-ui's source without declaring it. The build-helper
+# imports that used to be undeclared (ENG-1681, ENG-2925) are declared now, and
+# apps/web/lib/turbo-vite-plugins-edge.test.ts guards that edge. Moving to the strict
 # `isolated` linker is the long-term goal (ENG-1674); fix the undeclared deps first.
 # `shamefullyHoist` above is left untouched here — it becomes meaningful only under the isolated
 # linker, so it is handled together with that migration rather than in this cleanup.

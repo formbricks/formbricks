@@ -116,7 +116,7 @@ The first apply to an empty SpiceDB needs no additional argument. Replacing a no
 `--expected-current-digest sha256:<digest-from-check>`. The command verifies the write by reading and comparing
 the schema again. Fresh installs run the idempotent `authzed-initialize` service independently; Formbricks
 startup and `/health` do not depend on it. Existing upgrades require the explicit preparation and read-only gate. See
-the [public operations guide](../docs/self-hosting/advanced/authzed-operations.mdx) for the JSON contract, exit
+the [public operations guide](../docs/self-hosting/configuration/authzed-operations.mdx) for the JSON contract, exit
 codes, backup requirements, repair, and rollback rules. Repository development retains the equivalent
 `pnpm authzed:*` commands.
 
