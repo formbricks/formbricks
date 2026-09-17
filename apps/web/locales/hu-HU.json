@@ -1,5 +1,9 @@
 {
   "auth": {
+    "account_deleted": {
+      "description": "Az Ön fiókja és annak valamennyi adata véglegesen eltávolításra került. Hamarosan továbbítjuk Önt.",
+      "heading": "Az Ön fiókja törlésre került"
+    },
     "continue_with_azure": "Folytatás Microsoft használatával",
     "continue_with_email": "Folytatás e-mail-címmel",
     "continue_with_github": "Folytatás GitHub használatával",

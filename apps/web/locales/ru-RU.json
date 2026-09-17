@@ -1,5 +1,9 @@
 {
   "auth": {
+    "account_deleted": {
+      "description": "Ваш аккаунт и все его данные были безвозвратно удалены. Сейчас вы будете перенаправлены.",
+      "heading": "Ваш аккаунт удалён"
+    },
     "continue_with_azure": "Продолжить с Microsoft",
     "continue_with_email": "Продолжить с помощью электронной почты",
     "continue_with_github": "Продолжить с GitHub",

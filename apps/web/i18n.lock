@@ -1,6 +1,8 @@
 version: 1
 checksums:
   55dc377b5e931bfc64e4add83e35d9ea:
+    auth/account_deleted/description: b4c8e487e2878695280861bccf9c880e
+    auth/account_deleted/heading: 804400728b6c442c746b32ee02d1795a
     auth/continue_with_azure: cbe83e6a317329bc7df5cf461ce63e47
     auth/continue_with_email: ffa84b192fae5cd6611815ba61582f24
     auth/continue_with_github: 38afe2cfdd9c3d85474eb9a4319313f5
