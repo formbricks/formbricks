@@ -4,9 +4,6 @@ import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { APIError } from "better-auth/api";
 import { genericOAuth } from "better-auth/plugins/generic-oauth";
-import { createServer } from "node:http";
-import type { Server } from "node:http";
-import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -1037,27 +1034,32 @@ describe("recordSsoCallbackOutcome (ENG-2551)", () => {
  * `link-account.mjs` rethrows an `APIError` and `callback.mjs` turns one carrying a `code` into
  * `?error=<code>`. Both are Better Auth internals with no test of ours behind them.
  *
- * So this drives the real thing: a stub IdP over real HTTP, a real `betterAuth` callback, a hook that
- * throws exactly what the gate throws, and the real recorder on the real `Response`. A Better Auth
- * upgrade that stops propagating the code — or starts swallowing it again — fails here rather than in
- * production. Endpoints are configured explicitly rather than by discovery: with no `jwks_uri` the
- * userinfo branch runs, so the stub needs no key material.
+ * So this drives the real thing: a real `betterAuth` callback, a hook that throws exactly what the
+ * gate throws, and the real recorder on the real `Response`. A Better Auth upgrade that stops
+ * propagating the code — or starts swallowing it again — fails here rather than in production.
+ * Endpoints are configured explicitly rather than by discovery: with no `jwks_uri` the userinfo
+ * branch runs, so the stub needs no key material.
+ *
+ * The IdP is a `fetch` stub rather than a listening socket. `betterFetch` falls back to
+ * `globalThis.fetch`, so stubbing it intercepts the token and userinfo calls while leaving every
+ * Better Auth code path real — which is the part under test. Nothing here binds a port, and an
+ * unexpected outbound URL throws rather than escaping to the network.
  */
 describe("recordSsoCallbackOutcome — a real gate rejection through Better Auth (ENG-2882 contract)", () => {
   const BASE_URL = "http://localhost:3000";
-  let idp: Server;
-  let idpUrl = "";
+  const IDP_ORIGIN = "https://stub-idp.test";
   let subjectCounter = 0;
 
-  beforeAll(async () => {
-    idp = createServer((req, res) => {
-      const path = new URL(req.url ?? "/", idpUrl || "http://127.0.0.1").pathname;
-      const json = (body: unknown): void => {
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify(body));
-      };
-      if (path === "/token") return json({ access_token: "stub-access-token", token_type: "bearer" });
-      if (path === "/userinfo") {
+  beforeAll(() => {
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL): Promise<Response> => {
+      const url = new URL(typeof input === "string" ? input : input.toString());
+      const json = (body: unknown): Response =>
+        new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } });
+
+      if (url.origin === IDP_ORIGIN && url.pathname === "/token") {
+        return json({ access_token: "stub-access-token", token_type: "bearer" });
+      }
+      if (url.origin === IDP_ORIGIN && url.pathname === "/userinfo") {
         subjectCounter += 1;
         // `id` as well as `sub`: on the userinfo branch genericOAuth maps email/name but not sub->id,
         // and `accountSubject` then resolves the string "undefined" and fails the callback before it
@@ -1070,14 +1072,14 @@ describe("recordSsoCallbackOutcome — a real gate rejection through Better Auth
           name: "Rejected User",
         });
       }
-      res.writeHead(404).end();
+      // Loud rather than silent: a Better Auth upgrade that starts calling something else here would
+      // otherwise reach the real network, or fail in a way that reads like a broken assertion.
+      throw new Error(`Unexpected outbound request in the ENG-2882 contract test: ${url.href}`);
     });
-    await new Promise<void>((resolve) => idp.listen(0, "127.0.0.1", resolve));
-    idpUrl = `http://127.0.0.1:${(idp.address() as AddressInfo).port}`;
   });
 
-  afterAll(async () => {
-    await new Promise<void>((resolve) => idp.close(() => resolve()));
+  afterAll(() => {
+    vi.unstubAllGlobals();
   });
 
   beforeEach(() => {
@@ -1112,10 +1114,10 @@ describe("recordSsoCallbackOutcome — a real gate rejection through Better Auth
               providerId: "openid",
               clientId: "contract-test",
               clientSecret: "contract-test",
-              authorizationUrl: `${idpUrl}/authorize`,
-              tokenUrl: `${idpUrl}/token`,
-              userInfoUrl: `${idpUrl}/userinfo`,
-              accountIssuer: idpUrl,
+              authorizationUrl: `${IDP_ORIGIN}/authorize`,
+              tokenUrl: `${IDP_ORIGIN}/token`,
+              userInfoUrl: `${IDP_ORIGIN}/userinfo`,
+              accountIssuer: IDP_ORIGIN,
               scopes: ["openid", "email", "profile"],
             },
           ],
