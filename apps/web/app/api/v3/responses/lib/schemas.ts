@@ -253,3 +253,36 @@ export const ZV3PatchResponseBody = z
   .strict()
   .refine((body) => Object.keys(body).length > 0, { message: "At least one field must be provided" });
 export type TV3PatchResponseBody = z.infer<typeof ZV3PatchResponseBody>;
+
+/**
+ * `POST /api/v3/responses/validate`.
+ *
+ * Deliberately the same shape as `ZV3SurveyValidationRequestBody`: a union discriminated on
+ * `operation`, each arm carrying the body the real call would take. The envelope is `.strict()` and
+ * its failures are the endpoint's only 400 — `data` is `unknown` here precisely because problems
+ * inside it are the point of the endpoint and come back as a `200` with `valid: false`.
+ *
+ * `data` is required rather than merely typed `unknown`: Zod treats an `unknown` field as
+ * satisfiable by an absent key, so without the check `{ "operation": "create" }` would validate an
+ * empty document and report it as a caller error rather than as the malformed envelope it is.
+ */
+const ZV3ValidationDocument = z.unknown().refine((value) => value !== undefined, {
+  message: "Required",
+});
+
+export const ZV3ResponseValidationRequestBody = z.discriminatedUnion("operation", [
+  z
+    .object({
+      operation: z.literal("create"),
+      data: ZV3ValidationDocument,
+    })
+    .strict(),
+  z
+    .object({
+      operation: z.literal("patch"),
+      responseId: z.cuid2(),
+      data: ZV3ValidationDocument,
+    })
+    .strict(),
+]);
+export type TV3ResponseValidationRequestBody = z.infer<typeof ZV3ResponseValidationRequestBody>;
