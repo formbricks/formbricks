@@ -654,8 +654,11 @@ leaves draft; block ids are generated when omitted. Translatable fields are keye
 must carry every configured language — the internal `default` key is rejected.
 
 The same list is carried on the tool's own `blocks` description, generated from
-`TSurveyElementTypeEnum` so the two cannot drift. Per-type required fields are not restated here;
-`validate_survey` reports what a given element is missing.
+`TSurveyElementTypeEnum` so the two cannot drift. Per-type required fields are not restated here.
+`validate_survey` will reject an element that is missing them, but it reports the element **by its
+position** rather than naming the field: the element schema is an undiscriminated union, so a wrong
+or absent `type` makes every branch fail and the message is a generic `Invalid input`. Send the
+type's own fields with the element rather than expecting the validator to name them.
 
 Input:
 
