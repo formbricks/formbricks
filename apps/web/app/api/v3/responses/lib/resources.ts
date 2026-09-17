@@ -252,12 +252,14 @@ export const ZV3ResponseUnresolvedEntry = z
      * it, and it would express none of the four.
      */
     rawValue: z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string(), z.string())]),
-    reason: z.enum([
-      "elementNotInSurvey",
-      "hiddenFieldNotInSurvey",
-      "variableNotInSurvey",
-      "valueShapeMismatch",
-    ]),
+    /**
+     * No `hiddenFieldNotInSurvey`: it had no producer and could not have one (ENG-3172). A key in
+     * `response.data` matching nothing in the current definition may be a deleted element or a deleted
+     * hidden field, and storage keeps no record of which — the two share one map. `elementNotInSurvey`
+     * is the honest single answer. `variableNotInSurvey` stays because variables live in their own map
+     * keyed by cuid, so an orphan there really is distinguishable.
+     */
+    reason: z.enum(["elementNotInSurvey", "variableNotInSurvey", "valueShapeMismatch"]),
   })
   .strict();
 export type TV3ResponseUnresolvedEntry = z.infer<typeof ZV3ResponseUnresolvedEntry>;
