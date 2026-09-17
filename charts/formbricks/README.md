@@ -240,7 +240,7 @@ from the target image, then prepared with `--expected-current-digest sha256:<dig
 relationships before replacement; see the repository `authzed/README.md` for exit codes and rollback rules.
 Later v6 releases with an unchanged canonical schema retain the read-only gate. A schema-changing release needs
 explicit preparation during maintenance; see [later v6 upgrades](../../docs/self-hosting/advanced/v6-maintenance-upgrade.mdx#later-v6-upgrades).
-The public [AuthZed operations guide](../../docs/self-hosting/advanced/authzed-operations.mdx) covers backups,
+The public [AuthZed operations guide](../../docs/self-hosting/configuration/authzed-operations.mdx) covers backups,
 restoration, schema lifecycle, relationship repair, and monitoring.
 
 Cloud operators that run the same guarded schema, outbox drain, reconciliation, and audit sequence outside Helm
