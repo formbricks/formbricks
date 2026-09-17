@@ -7,6 +7,11 @@ Self-hosters use the [maintenance-window upgrade](../docs/self-hosting/advanced/
 Cloud may keep ordinary traffic available during preparation using a temporary bridge artifact. These are
 required gates, not evidence that an existing artifact or environment has passed them.
 
+For EU's v5.4.2 → 6.0.0-rc.5 transition, use the approved
+[rc.5-product-based bridge strategy](./EU-RC5-CLOUD-BRIDGE.md). It supersedes the source-based branch recipe
+below for that release pair only. The branch strategy is approved; the artifact and deployment are not yet
+validated.
+
 ## Availability contract
 
 Online backfill plus a rolling deployment is not sufficient to promise zero downtime. A fully consistent
@@ -26,10 +31,14 @@ silently fall back to legacy authorization to meet an availability claim.
 1. Select exact Cloud source and target commits. Review **all** intervening database migrations; online
    preparation permits only changes compatible with the running source application. Incompatible changes
    require expansion/contraction work or maintenance first.
-2. Create a separate temporary Cloud release branch from the source application. Add the tested transactional
-   outbox and projection/repair compatibility needed by the final graph, retaining its legacy evaluator.
-   Verify every source writer is captured, including cascades and direct SQL. No legacy evaluator or
-   build-time engine selector is merged back into normal v6 source.
+2. Record the release-specific bridge base before implementation. The source-based recipe is a separate
+   temporary branch from the source application with the tested transactional outbox and projection/repair
+   compatibility needed by the final graph, retaining legacy authorization. A target-product-based bridge
+   instead preserves the target's product/data code and restores legacy decisions only in the temporary
+   branch. That alternative also requires explicit approval of the earlier product-code rollout, database
+   compatibility before contraction, and scalar/list permission parity. For either recipe, verify every
+   source writer is captured, including cascades and direct SQL. No legacy evaluator or build-time engine
+   selector is merged back into normal v6 source.
 3. Build a single-purpose bridge image. Record its immutable digest, source commit, outbox migration head,
    schema digest, configuration, and dependencies. Verify compatibility with the **final** application
    database/schema, including data created by v6 after cutover.
