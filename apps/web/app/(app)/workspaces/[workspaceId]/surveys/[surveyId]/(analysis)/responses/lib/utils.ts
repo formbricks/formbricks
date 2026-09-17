@@ -6,7 +6,7 @@ import {
   listDisplayableReservedFields,
 } from "@formbricks/types/embedded-data-resolver";
 import { TResponse } from "@formbricks/types/responses";
-import { RESERVED_FIELD_ICONS, getReservedFieldLabel } from "@/modules/analysis/lib/reserved-field-display";
+import { RESERVED_FIELD_ICONS, getReservedFieldLabel } from "@/modules/embedded-data/lib/field-display";
 
 export const getAddressFieldLabel = (field: string, t: TFunction) => {
   switch (field) {

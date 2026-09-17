@@ -30,7 +30,7 @@ import { ElementFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surve
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getReservedFilterEntries } from "@/lib/response/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getReservedFieldLabel } from "@/modules/analysis/lib/reserved-field-display";
+import { getReservedFieldLabel } from "@/modules/embedded-data/lib/field-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 const conditionOptions: Record<string, string[]> = {

@@ -181,6 +181,7 @@ checksums:
     common/attempt: fbe2d20432424e164245e13ff9195310
     common/attributes: 86d0ae6fea0fbb119722ed3841f8385a
     common/authorized_apps: 62c2c8e6703c9e5224e98294a53e1884
+    common/auto_captured: 4ce295153cc31205bb61909d54a8fa36
     common/back: f541015a827e37cb3b1234e56bc2aa3c
     common/billing: b01dbdd049ebbd4a349fa64d6ce65a3b
     common/booked: 77603a7aca80b8b333023c5cf39fec4d
@@ -262,6 +263,7 @@ checksums:
     common/editor: 15d1c1521efc08cd482f7ac9e1df0acf
     common/elements: 8cb054d952b341e5965284860d532bc7
     common/email: e7f34943a0c2fb849db1839ff6ef5cb5
+    common/embedded_data: 14a61ee4103a7b2fcc020f6ff8bed9ca
     common/enable: 463972a7a95f50f3105d09b92508f2cd
     common/enabled: 20236664b7e62df0e767921b4450205f
     common/ending_card: 16d30d3a36472159da8c2dbd374dfe22
@@ -279,6 +281,7 @@ checksums:
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
     common/failed_to_load_workspaces: 6ee3448097394517dc605074cd4e6ea4
     common/failed_to_parse_csv: 7a3d675ecbb3d15884faf1006a5752d6
+    common/false: 41f6cab1a102e400d519b0b18736aa6e
     common/field_placeholder: 1fedb1aab1a4d42ad49ddece6d8df372
     common/file_size_must_be_less_than_5_mb: a7d8ef9f888bfb3de2b589947fa2a63f
     common/file_storage_not_set_up: ed82fc9c54da2f16245eaea9f8aa08f3
@@ -495,7 +498,6 @@ checksums:
     common/summary: 13eb7b8a239fb4702dfdaee69100a220
     common/survey: b659d270a53dada994d926e0cc6e9a54
     common/survey_completed: 5d1974ef76d4436daee96b2b76eddd20
-    common/survey_data: f4a5130a1b0a188de060764e894b75b5
     common/survey_id: 08303e98b3d4134947256e494b0c829e
     common/survey_languages: 93e4a10ab190e6b1e1f7fe5f702df249
     common/survey_live: d1f370505c67509e7b2759952daba20d
@@ -527,6 +529,7 @@ checksums:
     common/trial_plan_badge: b7928bd1938c56199e7d8aada43e587e
     common/trigger: 25f7594d1ac2f32a3d2774dcd11dddfe
     common/trigger_payload: 50e9c46ecee798b95d23abf3896b86e7
+    common/true: 59278a86fd5e3f593dadbf04d95ea08f
     common/try_again: 33dd8820e743e35a66e6977f69e9d3b5
     common/type: f04471a7ddac844b9ad145eb9911ef75
     common/unarchive: 671fc7e9d7c8cb4d182a25a46551c168
@@ -543,6 +546,7 @@ checksums:
     common/user: 61073457a5c3901084b557d065f876be
     common/user_actions: 568ddeca3c5969341af83ff43f162233
     common/user_id: 37f5ba37f71cb50607af32a6a203b1d4
+    common/users: fe42f97809c24d700d3912c8d02ed452
     common/variable: c13db5775ba9791b1522cc55c9c7acce
     common/variable_ids: 44bf93b70703b7699fa9f21bc6c8eed4
     common/variables: ffd3eec5497af36d7b4e4185bad1313a

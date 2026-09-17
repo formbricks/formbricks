@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
 import {
   ArrowDownIcon,
-  EyeOffIcon,
+  FileType2Icon,
   HandshakeIcon,
   MailIcon,
   TriangleAlertIcon,
@@ -324,7 +324,13 @@ export const FollowUpModal = ({
       case "verifiedEmail":
         return { icon: <MailIcon className="size-4" /> };
       case "hiddenField":
-        return { icon: <EyeOffIcon className="size-4" /> };
+        // Same truncation as the other user-named labels: the row is `w-full` and a flex item does
+        // not shrink below its content unless it clips, so a long field name would otherwise squeeze
+        // the library key beside it (`secondaryLabel`) down to nothing.
+        return {
+          icon: <FileType2Icon className="size-4" />,
+          textClass: "overflow-hidden text-ellipsis whitespace-nowrap",
+        };
       case "user":
         return {
           icon: <UserIcon className="size-4" />,
@@ -348,9 +354,15 @@ export const FollowUpModal = ({
 
     return (
       <SelectItem key={option.id} value={option.id}>
-        <div className="flex items-center gap-x-2">
+        <div className="flex w-full items-center gap-x-2">
           {icon}
           <span className={textClass}>{option.label}</span>
+          {/* A shared Embedded Data field's library key — see `EmailSendToOption.secondaryLabel`. */}
+          {option.secondaryLabel ? (
+            <span className="ml-auto truncate pl-2 font-mono text-xs text-slate-400">
+              {option.secondaryLabel}
+            </span>
+          ) : null}
         </div>
       </SelectItem>
     );
@@ -623,7 +635,9 @@ export const FollowUpModal = ({
                                         {emailSendToHiddenFieldOptions.length > 0 ? (
                                           <div className="flex flex-col">
                                             <div className="flex gap-x-2 p-2">
-                                              <p className="text-sm text-slate-500">Hidden Fields</p>
+                                              <p className="text-sm text-slate-500">
+                                                {t("common.embedded_data")}
+                                              </p>
                                             </div>
 
                                             {emailSendToHiddenFieldOptions.map((option) =>
@@ -635,7 +649,7 @@ export const FollowUpModal = ({
                                         {userSendToEmailOptions.length > 0 ? (
                                           <div className="flex flex-col">
                                             <div className="flex gap-x-2 p-2">
-                                              <p className="text-sm text-slate-500">Users</p>
+                                              <p className="text-sm text-slate-500">{t("common.users")}</p>
                                             </div>
 
                                             {userSendToEmailOptions.map((option) => renderSelectItem(option))}
