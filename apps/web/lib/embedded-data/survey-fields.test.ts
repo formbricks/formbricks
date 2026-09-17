@@ -150,7 +150,6 @@ describe("inlineSurveyEmbeddedFields", () => {
 
     expect(fields?.map(({ link }) => link.storageKey)).not.toContain("never_read");
   });
-  });
 });
 
 describe("withInlinedEmbeddedFields", () => {

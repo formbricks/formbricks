@@ -98,7 +98,7 @@ export const FollowUpItem = ({
     // on the whole survey object.
     const matchedHiddenField = getIngestedStorageKeys({
       embeddedFields: localSurvey.embeddedFields,
-    }).some((storageKey) => storageKey === to);
+    }).includes(to);
 
     const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
       if (teamMemberDetail.email === userEmail) {
