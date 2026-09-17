@@ -88,10 +88,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
  * the keys, so left as-is a caller is told it sent something unsupported without being told what.
  * Bounded, because the key list is caller-controlled and both the response and the log line carry it.
  */
-function expandUnrecognizedKeys(
-  issue: z.core.$ZodIssue,
-  fallbackName: "body" | "query" | "params"
-): InvalidParam[] {
+function expandUnrecognizedKeys(issue: z.core.$ZodIssue, fallbackName: string): InvalidParam[] {
   const prefix = issue.path.length > 0 ? `${issue.path.join(".")}.` : "";
   // Read defensively rather than through the `code` narrowing: `error.issues` is typed as the base
   // `$ZodIssue`, which does not discriminate on `code`, so `issue.keys` is not reachable through it
@@ -122,7 +119,14 @@ function expandUnrecognizedKeys(
   return params;
 }
 
-function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "params"): InvalidParam[] {
+/**
+ * Zod issues as `invalid_params`, with the unknown-key expansion the v3 400 contract needs.
+ *
+ * Exported because `POST /api/v3/responses/validate` reports problems *inside* its payload as a 200
+ * body rather than a 400, and those params have to be the ones the real write would have produced —
+ * a second formatter would let the dry run describe the same rejection differently.
+ */
+export function formatZodIssues(error: z.ZodError, fallbackName: string): InvalidParam[] {
   return error.issues.flatMap((issue) => {
     if (issue.code === "unrecognized_keys") {
       return expandUnrecognizedKeys(issue, fallbackName);

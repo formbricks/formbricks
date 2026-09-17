@@ -552,6 +552,56 @@ type TWriteParams = {
   auditLog?: TV3AuditLog;
 };
 
+export type TV3CreatePlan =
+  | { ok: true; composed: ReturnType<typeof composeV3ResponseWrite>; storedLanguage: string | null }
+  | { ok: false; issues: InvalidParam[] };
+
+/**
+ * Everything a create decides before the transaction opens: the language the response will carry,
+ * the two stored maps it will write, and every reason it cannot proceed.
+ *
+ * Separated from the operation so `POST` and `POST /validate` cannot drift — a dry run that ran its
+ * own copy of this would be worth less than nothing, since a caller would be told a payload is
+ * acceptable by code that is not the code accepting it. It reads the database (file ownership) but
+ * writes nothing, which is what lets the validate path stop here.
+ *
+ * The language is resolved first because it decides which labels the answers are validated against,
+ * and it is the survey's own code rather than the caller's.
+ */
+export async function planV3ResponseCreate({
+  survey,
+  body,
+}: {
+  survey: TV3WriteSurveyRow;
+  body: TV3CreateResponseBody;
+}): Promise<TV3CreatePlan> {
+  const language = resolveV3WriteLanguage(survey.languages, body.language);
+  const storedLanguage = language.ok ? language.code : null;
+  const { lookupKey } = resolveV3LabelContext(survey.languages, storedLanguage);
+  const plan = buildAnswerPlan(
+    survey.blocks as never,
+    lookupKey,
+    (survey.embeddedFields ?? [])
+      .filter(({ field }) => field.source === "ingested")
+      .map(({ link }) => link.storageKey)
+  );
+
+  const composed = composeV3ResponseWrite({ plan, survey, body, stored: undefined });
+  const issues: InvalidParam[] = [
+    ...composed.issues,
+    ...(language.ok ? [] : [language.issue]),
+    ...[validateV3EndingId(survey.endings, body.endingId)].filter(
+      (issue): issue is InvalidParam => issue !== null
+    ),
+    ...answerValidationIssues(survey, composed.data, storedLanguage),
+    ...(await fileUploadIssues(survey, composed.data)),
+  ];
+
+  if (issues.length > 0) return { ok: false, issues };
+
+  return { ok: true, composed, storedLanguage };
+}
+
 /**
  * `POST /api/v3/responses` → 201 `{ data }` with a `Location` header.
  *
@@ -591,36 +641,16 @@ export async function createV3Response({
       return access;
     }
 
-    // Resolved before the plan is built: the language the response will carry decides which labels
-    // the answers are validated against, and it is the survey's own code rather than the caller's.
-    const language = resolveV3WriteLanguage(survey.languages, body.language);
-    const storedLanguage = language.ok ? language.code : null;
-    const { lookupKey } = resolveV3LabelContext(survey.languages, storedLanguage);
-    const plan = buildAnswerPlan(
-      survey.blocks as never,
-      lookupKey,
-      (survey.embeddedFields ?? [])
-        .filter(({ field }) => field.source === "ingested")
-        .map(({ link }) => link.storageKey)
-    );
+    const plan = await planV3ResponseCreate({ survey, body });
 
-    const composed = composeV3ResponseWrite({ plan, survey, body, stored: undefined });
-    const issues: InvalidParam[] = [
-      ...composed.issues,
-      ...(language.ok ? [] : [language.issue]),
-      ...[validateV3EndingId(survey.endings, body.endingId)].filter(
-        (issue): issue is InvalidParam => issue !== null
-      ),
-      ...answerValidationIssues(survey, composed.data, storedLanguage),
-      ...(await fileUploadIssues(survey, composed.data)),
-    ];
-
-    if (issues.length > 0) {
+    if (!plan.ok) {
       return problemUnprocessableContent(requestId, "The response conflicts with the survey definition", {
-        invalid_params: issues,
+        invalid_params: plan.issues,
         instance,
       });
     }
+
+    const { composed, storedLanguage } = plan;
 
     const outcome = await createScopedResponse({
       workspaceId: survey.workspaceId,
@@ -691,7 +721,7 @@ export async function createV3Response({
   }
 }
 
-type TV3PatchPlan =
+export type TV3PatchPlan =
   | { ok: true; composed: ReturnType<typeof composeV3ResponseWrite>; effectiveLanguage: string | null }
   | { ok: false; issues: InvalidParam[] };
 
@@ -703,7 +733,7 @@ type TV3PatchPlan =
  * a payload that changes language and answers in one call must be checked against the labels it is
  * about to have, not the ones it is leaving behind.
  */
-async function planV3ResponsePatch({
+export async function planV3ResponsePatch({
   survey,
   body,
   stored,
