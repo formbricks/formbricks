@@ -67,8 +67,12 @@ issuer under `/api/auth`.
 
 ### OAuth 2.1
 
-OAuth clients use Authorization Code + PKCE with Dynamic Client Registration. The MCP protected
-resource is:
+OAuth clients use Authorization Code + PKCE with Dynamic Client Registration. Registration is open
+(no initial access token — MCP clients self-register), so it accepts only `http` loopback redirect
+URIs: `localhost`, `127.0.0.1` or `[::1]` on any port, which is what every MCP client uses. A
+registration claiming any other redirect URI — including an `https` one — is refused with
+`400 invalid_redirect_uri`, because a remote address is one an attacker could receive an
+authorization code at. The MCP protected resource is:
 
 ```text
 https://app.formbricks.com/api/mcp
