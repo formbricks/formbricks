@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
@@ -108,7 +109,12 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   const loadSurvey = async (): Promise<TSurvey | null> => {
     try {
       return await getSurveyWithMetadata(surveyId);
-    } catch {
+    } catch (error) {
+      // Logged rather than rethrown, and logged rather than swallowed silently: this loader turns a
+      // Prisma failure into `DatabaseError`, which is indistinguishable here from the survey simply
+      // being gone, and a respondent gets the same 404 either way. `link/page.tsx` treats its own
+      // load the same way, so the two pages fail alike; the log is what tells an outage apart.
+      logger.error(error, "Error fetching survey for contact link");
       return null;
     }
   };

@@ -430,9 +430,14 @@ export const updateSurveyInternal = async (
     // function safe on its own.
     let derivedLegacyColumns: ReturnType<typeof toLegacyEmbeddedFields> | undefined;
     if (embeddedFields !== undefined) {
-      const desired = linkedToDesiredEmbeddedFields(embeddedFields);
-      assertWritableEmbeddedFields(desired);
-      await assertLinkableEmbeddedFields(prisma, { workspaceId: currentSurvey.workspaceId, desired });
+      const declared = linkedToDesiredEmbeddedFields(embeddedFields);
+      assertWritableEmbeddedFields(declared);
+      // Shared entries come back carrying the library's own definition rather than the payload's
+      // claim about it, so the columns derived below describe the same field the rows do.
+      const desired = await assertLinkableEmbeddedFields(prisma, {
+        workspaceId: currentSurvey.workspaceId,
+        desired: declared,
+      });
 
       // ENG-3228: when the payload declares its Embedded Data as rows, those rows are the whole
       // answer and the legacy columns are derived back off them rather than taken from whatever

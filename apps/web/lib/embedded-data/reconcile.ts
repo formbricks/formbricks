@@ -503,7 +503,8 @@ export const assertWritableEmbeddedFields = (desired: TDesiredEmbeddedField[]): 
 };
 
 /**
- * Refuses a shared link the workspace cannot honour, before anything is written.
+ * Refuses a shared link the workspace cannot honour, and answers with the library's own definition
+ * of every shared entry — before anything is written.
  *
  * Three ways a link the editor holds can be stale or wrong by the time it is saved: the library row
  * was deleted, it was never shared in the first place (`key IS NULL` means a local row, which
@@ -514,17 +515,37 @@ export const assertWritableEmbeddedFields = (desired: TDesiredEmbeddedField[]): 
  * Cross-workspace is covered by the `workspaceId` filter rather than by a separate check: the
  * composite foreign key on `SurveyEmbeddedData` makes such a pair unrepresentable anyway, so the
  * only question is whether the caller gets a 400 naming the field or a foreign-key violation.
+ *
+ * ## Why it canonicalizes rather than only refusing
+ *
+ * A shared entry's `key`, `name`, `dataType`, `defaultValue` and `locked` arrive from the client and
+ * are never written back: {@link buildReconcilePlan} skips a row this survey does not own, so the
+ * library row keeps whatever it already said. But `toLegacyEmbeddedFields` derives `variables` and
+ * `hiddenFields` from these same entries, and those columns *are* written — so a payload naming a
+ * real library row with a made-up `dataType` or `key` would store legacy columns describing the
+ * field differently from the row they were derived beside. Deriving them exists precisely to stop
+ * the two descriptions of one survey drifting apart, so for a shared entry the derivation has to
+ * read the library, not the payload. The rows are loaded here anyway; taking their columns costs
+ * one wider select.
  */
 export const assertLinkableEmbeddedFields = async (
   tx: Prisma.TransactionClient,
   { workspaceId, desired }: { workspaceId: string; desired: TDesiredEmbeddedField[] }
-): Promise<void> => {
+): Promise<TDesiredEmbeddedField[]> => {
   const shared = desired.filter(isSharedDesiredField);
-  if (shared.length === 0) return;
+  if (shared.length === 0) return desired;
 
   const rows = await tx.embeddedData.findMany({
     where: { id: { in: [...new Set(shared.map((entry) => entry.embeddedDataId))] }, workspaceId },
-    select: { id: true, key: true, source: true },
+    select: {
+      id: true,
+      key: true,
+      source: true,
+      name: true,
+      dataType: true,
+      defaultValue: true,
+      locked: true,
+    },
   });
   const rowById = new Map(rows.map((row) => [row.id, row]));
 
@@ -539,4 +560,20 @@ export const assertLinkableEmbeddedFields = async (
       );
     }
   }
+
+  // Address and source stay the survey's: the storage key is where *this* survey reads the value,
+  // and the source was just checked to agree. Everything describing the definition comes from the row.
+  return desired.map((entry) => {
+    if (!isSharedDesiredField(entry)) return entry;
+    const row = rowById.get(entry.embeddedDataId);
+    if (row?.key == null) return entry; // Unreachable: refused above.
+    return {
+      ...entry,
+      key: row.key,
+      name: row.name,
+      dataType: row.dataType,
+      defaultValue: row.defaultValue as TEmbeddedDataDefaultValue,
+      locked: row.locked,
+    };
+  });
 };

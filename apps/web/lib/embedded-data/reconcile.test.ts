@@ -3,6 +3,7 @@ import { type TDesiredEmbeddedField } from "@formbricks/types/embedded-data-mapp
 import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import {
   type TCurrentEmbeddedField,
+  assertLinkableEmbeddedFields,
   planEmbeddedDataReconcile,
   reconcileEmbeddedData,
   resolveDesiredEmbeddedFields,
@@ -579,5 +580,72 @@ describe("reconcileEmbeddedData refusals", () => {
       "Duplicate embedded data field: plan"
     );
     expect(tx.embeddedData.create).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The library's definition wins over the payload's claim about it.
+ *
+ * `buildReconcilePlan` never writes a row this survey does not own, so a wrong `dataType` on a
+ * shared entry cannot reach the library. It can reach the **legacy columns**, which
+ * `toLegacyEmbeddedFields` derives from these same entries and `updateSurveyInternal` does write —
+ * so without this a survey could store `variables` describing a shared field differently from the
+ * row beside it, which is the drift the derivation exists to prevent.
+ */
+describe("assertLinkableEmbeddedFields canonicalizes shared entries", () => {
+  const WORKSPACE_ID = "ws_1";
+  const row = {
+    id: "ed_shared",
+    key: "plan_tier",
+    source: "ingested" as const,
+    name: "Plan tier",
+    dataType: "number" as const,
+    defaultValue: 7,
+    locked: true,
+  };
+
+  const stubTx = (rows: (typeof row)[]) =>
+    ({ embeddedData: { findMany: vi.fn().mockResolvedValue(rows) } }) as unknown as Parameters<
+      typeof assertLinkableEmbeddedFields
+    >[0];
+
+  test("replaces the payload's definition with the row's", async () => {
+    // Every field of the claim is wrong on purpose, and none of it survives.
+    const lying: TDesiredEmbeddedField = {
+      ...desiredPlan,
+      storageKey: "plan",
+      key: "not_the_rows_key",
+      name: "Not the row's name",
+      dataType: "string",
+      defaultValue: "made up",
+      locked: false,
+      embeddedDataId: "ed_shared",
+    };
+
+    const [canonical] = await assertLinkableEmbeddedFields(stubTx([row]), {
+      workspaceId: WORKSPACE_ID,
+      desired: [lying],
+    });
+
+    expect(canonical).toStrictEqual({
+      // The address stays the survey's: it is where THIS survey reads the value.
+      storageKey: "plan",
+      source: "ingested",
+      embeddedDataId: "ed_shared",
+      key: "plan_tier",
+      name: "Plan tier",
+      dataType: "number",
+      defaultValue: 7,
+      locked: true,
+    });
+  });
+
+  test("leaves a local entry exactly as declared", async () => {
+    // A local field has no library row to be canonical; its definition is the payload's to set.
+    const local: TDesiredEmbeddedField = { ...desiredPlan, name: "My own field" };
+
+    expect(
+      await assertLinkableEmbeddedFields(stubTx([]), { workspaceId: WORKSPACE_ID, desired: [local] })
+    ).toStrictEqual([local]);
   });
 });
