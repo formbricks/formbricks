@@ -8,7 +8,7 @@ SpiceDB-authoritative with no fallback or engine switch.
 
 **Status: immutable bridge built; the first isolated Kubernetes v5 → bridge → rc.5 → bridge → rc.5
 rehearsal passed for the focused API/session/response cases. Production promotion remains blocked by
-the focused browser-compatibility and complete writer-pause checks, plus unproven EU-specific gates.**
+the complete writer-pause/drain checks and unproven EU-specific deployment gates.**
 This document is not deployment approval or evidence that the bridge is ready.
 
 The subsequent decision on 2026-09-17 is to reuse applicable staging QA and observation evidence for
@@ -17,6 +17,11 @@ because this temporary bridge is new. Record which evidence applies to the exact
 test the new bridge, EU migration/pause/rollback mechanism, and any uncovered production differences.
 Reuse does not turn an untested path or failed compatibility check into a pass. The remaining post-cutover
 production monitoring and EU-before-KSA gates are unchanged.
+
+The release owner subsequently classified the old-tab PIN action mismatch as a separate application
+compatibility limitation, not an AuthZed cutover blocker. Do not add a bridge workaround or restart a
+soak for it. Automatic browser recovery remains unverified; this decision does not waive writer/drain,
+migration, data-preservation or rollback gates.
 
 | Artifact                      | Pin / disposition                                                                             |
 | ----------------------------- | --------------------------------------------------------------------------------------------- |

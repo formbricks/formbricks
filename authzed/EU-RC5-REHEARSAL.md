@@ -117,19 +117,25 @@ control, emits no survey/actor/token values, and exits 2 for incompatible previo
 manual requests used inconsistent Origin/Host headers and were rejected by the CSRF guard; the corrected
 same-origin requests produced the results above. Do not count those initial harness errors as an app defect.
 
-Before rollout, provide a tested compatibility/reload strategy for existing respondent tabs and verify it in
-a real browser. A required customer reload or interruption of PIN/email respondents is a change to the
-uninterrupted-respondent promise, not something to accept silently. Do not leave original v5 pods running
-after incompatible migrations to work around old actions.
+The release owner subsequently accepted the old-tab PIN action mismatch as a separate application
+limitation, not an AuthZed cutover blocker. No bridge workaround or additional soak is required for it.
+The HTTP failure remains recorded above; automatic browser recovery is not claimed. Do not leave
+original v5 pods running after incompatible migrations to work around old actions.
+
+Further isolated pause testing passed 19 expected outcomes, including blocked management/signup/MCP/
+unknown routes, rc.5 PIN success, and public response creation/update. An actual Service-selector
+handoff and global BullMQ pause/drain completed in 9.25 seconds and restored the original selector and
+queue state. All 609 accepted fixture responses were reconciled to PostgreSQL with zero dead letters.
+This proves the tested in-cluster switch, not production ALB convergence or every external writer.
 
 ## Still blocking production promotion
 
 1. Complete and test the production writer inventory and selective pause: gateway paths, workers, jobs,
    imports, integrations, autoscalers and GitOps restart prevention. Measure both pause windows and recovery
    inside the approved time budget. No method-only allowlist or unrestricted migration hook is acceptable.
-2. Verify real old/new browser tabs, Server Actions, static assets and graceful draining; remaining respondent
-   paths; chart/dashboard image compatibility; anonymization and typed/locked embedded-data behavior across
-   rollback; the broader API/MCP/current permission matrix.
+2. Verify original-pod graceful draining and uncovered deployment-specific respondent/data paths. Reuse
+   applicable staging product/API/MCP evidence; keep the accepted old-tab PIN issue separate. The full
+   production controller/worker inventory and exact chart handoff still require review.
 3. Map existing staging evidence to EU-shaped authorization/response load with 2× headroom, Aurora lock/pool
    behavior, durable delivery, retained-log safety and backup restoration. Run the missing checks rather than
    repeating unchanged functionality. Keep the artifact scan results above separate from runtime proof.
