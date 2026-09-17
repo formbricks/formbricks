@@ -188,6 +188,7 @@ async function validateCreate({
   const effects = await createEffects({
     survey,
     organizationId: access.organizationId,
+    requestId,
     finished: parsed.data.finished,
     language: plan.storedLanguage,
     data: plan.composed.data ?? {},
@@ -272,6 +273,7 @@ async function validatePatch({
   const effects = await patchEffects({
     survey,
     stored,
+    requestId,
     finished,
     // `_total` is derived by the write on any patch that finishes a response, and a `reserved` quota
     // operand on `durationSeconds` reads it. Screening the stored `ttc` instead would answer about

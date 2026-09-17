@@ -148,11 +148,15 @@ const wouldMeter = async (organizationId: string): Promise<boolean> => {
  * quota screening behind `effects.quotas` could be read. Failing the whole request because a
  * secondary read failed would turn a working validation into a 500.
  */
-const withoutFailing = async <T>(work: () => Promise<T>, fallback: T, context: string): Promise<T> => {
+const withoutFailing = async <T>(
+  work: () => Promise<T>,
+  fallback: T,
+  { requestId, context }: { requestId: string; context: string }
+): Promise<T> => {
   try {
     return await work();
   } catch (error) {
-    logger.warn({ err: error }, `Response validation could not compute ${context}`);
+    logger.warn({ err: error, requestId }, `Response validation could not compute ${context}`);
     return fallback;
   }
 };
@@ -160,6 +164,7 @@ const withoutFailing = async <T>(work: () => Promise<T>, fallback: T, context: s
 export async function createEffects({
   survey,
   organizationId,
+  requestId,
   finished,
   language,
   data,
@@ -171,6 +176,7 @@ export async function createEffects({
 }: {
   survey: TV3WriteSurveyRow;
   organizationId: string;
+  requestId: string;
   finished: boolean;
   language: string | null;
   data: TResponseData;
@@ -200,14 +206,21 @@ export async function createEffects({
     displayId: displayId ?? null,
     // A create always dispatches `responseCreated`.
     firesPipeline: true,
-    countsTowardMeteredResponses: await withoutFailing(() => wouldMeter(organizationId), false, "metering"),
-    quotas: await withoutFailing(() => quotaEffects({ surveyId: survey.id, response }), [], "quotas"),
+    countsTowardMeteredResponses: await withoutFailing(() => wouldMeter(organizationId), false, {
+      requestId,
+      context: "metering",
+    }),
+    quotas: await withoutFailing(() => quotaEffects({ surveyId: survey.id, response }), [], {
+      requestId,
+      context: "quotas",
+    }),
   };
 }
 
 export async function patchEffects({
   survey,
   stored,
+  requestId,
   finished,
   language,
   data,
@@ -217,6 +230,7 @@ export async function patchEffects({
 }: {
   survey: TV3WriteSurveyRow;
   stored: TV3ResponseRow;
+  requestId: string;
   finished: boolean;
   language: string | null;
   data: TResponseData;
@@ -251,7 +265,10 @@ export async function patchEffects({
     firesPipeline: finished && !stored.finished,
     // Metering is a `responseCreated` side effect; a patch never meters.
     countsTowardMeteredResponses: false,
-    quotas: await withoutFailing(() => quotaEffects({ surveyId: survey.id, response }), [], "quotas"),
+    quotas: await withoutFailing(() => quotaEffects({ surveyId: survey.id, response }), [], {
+      requestId,
+      context: "quotas",
+    }),
     tagsToApply,
   };
 }
