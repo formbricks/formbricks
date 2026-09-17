@@ -3,10 +3,9 @@
 import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
-import { Badge } from "@/modules/ui/components/badge";
-import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
-import { type TAutoCapturedField, getAutoCapturedFields } from "../lib/auto-captured-fields";
-import { getAvailabilityLabel, getDataTypeLabel, getPrivacyLabel } from "./field-labels";
+import { SettingsTable } from "@/modules/ui/components/settings-table";
+import { getAutoCapturedFields } from "../lib/auto-captured-fields";
+import { getAutoCapturedColumns } from "./auto-captured-columns";
 
 /**
  * The second card: what every response already carries.
@@ -18,37 +17,7 @@ import { getAvailabilityLabel, getDataTypeLabel, getPrivacyLabel } from "./field
 export const AutoCapturedCard = () => {
   const { t } = useTranslation();
 
-  const columns: TSettingsTableColumn<TAutoCapturedField>[] = [
-    {
-      id: "name",
-      header: t("common.name"),
-      headerClassName: "w-[30%]",
-      cellClassName: "font-medium text-slate-800",
-      cell: (field) => field.label,
-    },
-    {
-      id: "dataType",
-      header: t("common.type"),
-      headerClassName: "w-[16%]",
-      hideBelow: "sm",
-      cell: (field) => <Badge text={getDataTypeLabel(field.dataType, t)} type="gray" size="tiny" />,
-    },
-    {
-      id: "availability",
-      header: t("workspace.embedded_data.in_logic_and_recall"),
-      headerClassName: "w-[27%]",
-      cellClassName: "text-slate-500",
-      cell: (field) => getAvailabilityLabel(field.availability, t),
-    },
-    {
-      id: "privacy",
-      header: t("workspace.embedded_data.when_anonymized"),
-      headerClassName: "w-[27%]",
-      cellClassName: "text-slate-500",
-      hideBelow: "sm",
-      cell: (field) => getPrivacyLabel(field.privacy, t),
-    },
-  ];
+  const columns = getAutoCapturedColumns(t);
 
   return (
     <SettingsCard
