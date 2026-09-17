@@ -142,6 +142,16 @@ export const generateSurveySingleUseLinkParamsList = (
  * boolean rather than surfacing a third rejection reason nobody could act on.
  */
 const decryptsToACuid = (value: string, decrypt: (encryptedSingleUseId: string) => string): boolean => {
+  // Shape first, and not as an optimization. `symmetricEncrypt` joins its parts with ":" in both the
+  // GCM and the legacy CBC layout, and a cuid2 is `[a-z0-9]{24}` — so a value with no colon cannot be
+  // a ciphertext this deployment produced, whatever a decrypt implementation does when handed one.
+  // Without this the probe's answer depends on `symmetricDecrypt` throwing, which is a weaker thing to
+  // rest a refusal on than a fact about the format: a permissive decrypt would turn every ordinary
+  // plaintext link into a refusal, which is an outage rather than a bug.
+  if (!value.includes(":")) {
+    return false;
+  }
+
   try {
     return isCuid(decrypt(value));
   } catch {

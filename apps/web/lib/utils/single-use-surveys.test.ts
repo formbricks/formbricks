@@ -206,9 +206,13 @@ describe("Single Use Surveys", () => {
     // injected here, so the cheapest level that can fail on this bug needs no cipher at all. The
     // round trip against real AES-256-GCM and a real deployment key is proven separately in
     // modules/survey/link/lib/single-use-link.test.ts.
-    const fakeEncrypt = (plaintext: string) => `enc(${plaintext})`;
+    // Colon-joined, like the real `symmetricEncrypt` (`iv:ciphertext:tag`, and `iv:ciphertext` on the
+    // legacy CBC layout). The separator is not decoration: a cuid2 cannot contain one, which is how
+    // plaintext mode tells an ordinary single-use id from a ciphertext without trusting a decrypt
+    // implementation to throw. A fake without it would exercise a shape production never produces.
+    const fakeEncrypt = (plaintext: string) => `iv:enc(${plaintext}):tag`;
     const fakeDecrypt = (ciphertext: string) => {
-      const match = /^enc\((.*)\)$/.exec(ciphertext);
+      const match = /^iv:enc\((.*)\):tag$/.exec(ciphertext);
       if (!match) throw new Error("Invalid encrypted payload");
       return match[1];
     };
@@ -325,6 +329,35 @@ describe("Single Use Surveys", () => {
           ok: true,
           singleUseId: PLAIN_CUID,
         });
+      });
+
+      test("and the mirror case — a plaintext link after encryption is turned on — is refused too", () => {
+        // The other half of the same toggle, and the half that was already safe: a bare cuid has no
+        // colons, so `symmetricDecrypt` refuses it outright rather than yielding a second identity.
+        // Asserted so the asymmetry between the two directions is a decision on the record, not an
+        // accident of the cipher's input format.
+        const plaintext = generateSurveySingleUseLinkParams(SURVEY_A, false);
+
+        expect(presentTo(SURVEY_A, plaintext)).toEqual({ ok: false, reason: "decryption_failed" });
+      });
+
+      test("a plaintext id is never handed to the cipher at all", () => {
+        // The refusal must rest on the value's shape, not on the decrypt throwing. A caller-supplied
+        // stub that returns a cuid for anything — which is exactly what the v1 gate's suite mocks —
+        // would otherwise turn every ordinary plaintext link into a refusal.
+        const plaintext = generateSurveySingleUseLinkParams(SURVEY_A, false);
+        const permissiveDecrypt = vi.fn(() => PLAIN_CUID);
+
+        expect(
+          validateSurveySingleUseLinkParams({
+            surveyId: SURVEY_A,
+            suId: plaintext.suId,
+            suToken: plaintext.suToken,
+            isEncrypted: false,
+            decrypt: permissiveDecrypt,
+          })
+        ).toEqual({ ok: true, singleUseId: PLAIN_CUID });
+        expect(permissiveDecrypt).not.toHaveBeenCalled();
       });
 
       test("an operator's custom id that is not a ciphertext still opens", () => {
