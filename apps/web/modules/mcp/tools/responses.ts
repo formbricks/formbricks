@@ -1,11 +1,11 @@
 import {
+  type CallToolResult,
   type InputRequiredResult,
   type McpServer,
   acceptedContent,
   inputRequired,
   inputResponse,
 } from "@modelcontextprotocol/server";
-import type { CallToolResult } from "@modelcontextprotocol/server";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
