@@ -77,8 +77,13 @@ const COMPARISON_OP_TO_PRISMA: Record<string, string> = {
  * column that stores days and instants alike (ENG-3232). `notInRange` treats an absent value as a
  * match, like `notEquals`.
  *
- * Gated on the same dataTypes as the comparisons it is assembled from — a range over a string or
- * boolean field could only have been crafted by hand, so it fails closed.
+ * Date fields only. The bounds are strings — `ZResponseFilterCriteria` types them that way so an
+ * ISO day and an ISO instant compare lexicographically the way they do in time — and only
+ * `buildDateFieldCondition` ever produces this op, from a `date` field. A number stored in JSON
+ * would be compared against those strings across JSON types rather than by value, so a numeric
+ * range would quietly select the wrong rows; numbers filter through `gt`/`gte`/`lt`/`lte` instead,
+ * which `buildTypedFieldCondition` gives them with a real numeric operand. Anything else could only
+ * have been crafted by hand, so it fails closed.
  */
 const buildJsonPathRangeCondition = (
   column: "meta" | "variables",
@@ -86,7 +91,7 @@ const buildJsonPathRangeCondition = (
   val: Extract<TTypedFieldFilterCondition, { op: "inRange" | "notInRange" }>,
   dataType: TEmbeddedDataType
 ): Prisma.ResponseWhereInput | null => {
-  if (dataType !== "number" && dataType !== "date") return null;
+  if (dataType !== "date") return null;
 
   if (val.op === "inRange") {
     return {
@@ -247,7 +252,8 @@ const buildVariableConditions = (
 };
 
 /**
- * The `data` keys a range may name: ingested fields whose dataType is ordered.
+ * The `data` keys a range may name: ingested **date** fields, for the reason
+ * {@link buildJsonPathRangeCondition} gives — string bounds cannot range a stored number.
  *
  * The group is shared. `processIngestedFilters` writes ingested storageKeys into it beside the
  * element ids that have always lived there, so unlike `variables` it cannot simply drop keys it
@@ -256,7 +262,7 @@ const buildVariableConditions = (
 const rangeableIngestedDataKeys = (survey: TSurvey): ReadonlySet<string> =>
   new Set(
     getIngestedEmbeddedFields(survey)
-      .filter(({ field }) => field.dataType === "number" || field.dataType === "date")
+      .filter(({ field }) => field.dataType === "date")
       .map(({ link }) => link.storageKey)
   );
 

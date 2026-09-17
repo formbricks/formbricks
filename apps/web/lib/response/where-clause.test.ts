@@ -26,6 +26,8 @@ const survey = {
     embeddedField("coupon", "ingested", "string"),
     embeddedField("renewal_date", "computed", "date"),
     embeddedField("plan", "computed", "string"),
+    embeddedField("visits", "ingested", "number"),
+    embeddedField("score", "computed", "number"),
   ],
 } as unknown as TSurvey;
 
@@ -79,6 +81,16 @@ describe("buildWhereClause: date windows", () => {
     expect(clausesFor({ variables: { plan: { op: "notInRange", ...window } } })).toEqual([]);
     expect(clausesFor({ data: { coupon: { op: "inRange", ...window } } })).toEqual([]);
     expect(clausesFor({ data: { coupon: { op: "notInRange", ...window } } })).toEqual([]);
+  });
+
+  test("fails closed: a window on a number-typed field emits nothing, in either column", () => {
+    // The bounds are strings, so `gte`/`lt` against a stored number would compare across JSON types
+    // rather than by value — "10" sorts before "9". Numbers filter through the numeric comparison
+    // operators instead, which is all `buildTypedFieldCondition` ever gives a `number` field.
+    expect(clausesFor({ data: { visits: { op: "inRange", ...window } } })).toEqual([]);
+    expect(clausesFor({ data: { visits: { op: "notInRange", ...window } } })).toEqual([]);
+    expect(clausesFor({ variables: { score: { op: "inRange", ...window } } })).toEqual([]);
+    expect(clausesFor({ variables: { score: { op: "notInRange", ...window } } })).toEqual([]);
   });
 
   test("fails closed: a window on a key no ingested field answers for emits nothing", () => {
