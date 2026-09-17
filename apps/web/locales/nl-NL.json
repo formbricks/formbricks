@@ -2220,6 +2220,7 @@
       "survey_field_address_fixed": "De bron en het adres kunnen niet worden gewijzigd: reeds verzamelde antwoorden zijn hieronder opgeslagen.",
       "survey_field_address_taken": "Een ander veld in deze enquête wordt al opgeslagen onder dit adres. Kies een andere naam.",
       "survey_field_name_hint": "Hoe logica, terugroepen en de antwoordtabel naar het veld verwijzen. Kleine letters, cijfers en underscores.",
+      "survey_field_name_taken": "Deze enquête gebruikt deze naam al voor een vraag, een afsluiting of een ander veld. Kies een andere naam.",
       "type_boolean": "Waar/onwaar",
       "type_change_body": "Reeds verzamelde waarden blijven precies zoals ze zijn; alleen nieuwe antwoorden worden gelezen als {to}. Filters en logica die {to}-waarden vergelijken, komen mogelijk niet overeen met de oudere.",
       "type_change_responses_subtitle": "Deze enquête heeft al {count, plural, one {{count} reactie} other {{count} reacties}}.",

@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
@@ -20,9 +20,8 @@ import {
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { isDeepEqual } from "@/lib/utils/object";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { hasUnsavedSurveyChanges } from "@/modules/survey/editor/lib/unsaved-changes";
+import { hasUnsavedSurveyChanges, serverOwnedChanges } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -36,7 +35,8 @@ import { AutoSaveIndicator } from "./auto-save-indicator";
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
   survey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  /** React's own setter: the auto-save adopts through the updater form, so a value alone is not enough. */
+  setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
@@ -387,12 +387,21 @@ export const SurveyMenuBar = ({
         if (updatedSurveyResponse?.data) {
           const savedData = updatedSurveyResponse.data;
 
-          // If the segment changed on the server (e.g., private segment was deleted when
-          // switching from app to link type), update localSurvey to prevent stale segment
-          // references when publishing
-          if (!isDeepEqual(localSurveyRef.current.segment, savedData.segment)) {
-            setLocalSurvey({ ...localSurveyRef.current, segment: savedData.segment });
-          }
+          // Adopt the keys the server rewrote (ENG-3266). Without this the working copy can never
+          // match the return, so the dirty check below reports dirty on every tick and the editor
+          // saves every ten seconds with no user edit behind it.
+          //
+          // Through the updater rather than against `localSurveyRef`, because the answer describes
+          // the payload from before an edit the author may have made while it was in flight, and
+          // dropping that edit would be worse than the loop. The ref cannot decide it: it is written
+          // in a passive effect, so it still names the sent object for as long as it takes React to
+          // flush one — a window the response can land in. `current` is the state itself, so the
+          // identity test is exact.
+          setLocalSurvey((current) => {
+            if (current !== currentSurvey) return current;
+            const adopted = serverOwnedChanges(current, savedData);
+            return adopted ? { ...current, ...adopted } : current;
+          });
 
           // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
           // This keeps the UI stable while still tracking that changes have been saved.
