@@ -17,7 +17,9 @@ import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspac
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
-import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
+import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
+import { deleteFile, deleteFilesByWorkspaceId } from "@/modules/storage/service";
+import { parseStorageFileUrl } from "@/modules/storage/utils";
 
 // Keep v5 defaults aligned with current production camelCase keys.
 // Safe-identifier migration (with backwards compatibility) is intentionally deferred to v5.1.
@@ -81,6 +83,50 @@ const selectWorkspace = {
   customHeadScripts: true,
 };
 
+/**
+ * Deletes the storage object a removed or replaced workspace logo used to point at.
+ *
+ * `logo.url` arrives through the update input and `parseStorageFileUrl` derives the storage id from
+ * the URL itself without checking its origin, so that id alone decides whose object gets deleted.
+ * Acting on it unguarded would be a cross-tenant delete primitive: point the logo at another
+ * workspace's storage URL, clear it, and the app removes their file. So the parsed id is checked
+ * against the prefixes this workspace actually owns first — the same guard ENG-1981 and ENG-2258
+ * put on response files.
+ *
+ * Best-effort: the user asked to change the logo, and the database already says so. A storage
+ * failure is logged and never thrown, or a dead bucket would fail an update that did happen.
+ */
+const deleteOrphanedWorkspaceLogoFile = async (workspaceId: string, previousUrl: string) => {
+  try {
+    const storageFile = parseStorageFileUrl(previousUrl);
+    // An external logo URL (a CDN link, which the UI supports) is not ours to delete.
+    if (!storageFile) return;
+
+    const ownedPrefixes = await getWorkspaceLegacyStoragePrefixes(workspaceId);
+    if (!ownedPrefixes.includes(storageFile.storageId)) {
+      logger.error(
+        { workspaceId, storageId: storageFile.storageId },
+        "Refusing to delete a workspace logo stored outside the workspace"
+      );
+      return;
+    }
+
+    // Upload percent-encodes the file name into the URL, but the object is stored under the decoded
+    // name, so a logo called "my logo.png" misses its key entirely unless it is decoded here.
+    const result = await deleteFile(
+      storageFile.storageId,
+      storageFile.accessType,
+      decodeURIComponent(storageFile.fileName)
+    );
+
+    if (!result.ok) {
+      logger.error({ workspaceId, error: result.error }, "Failed to delete the previous workspace logo");
+    }
+  } catch (error) {
+    logger.error({ error, workspaceId }, "Failed to delete the previous workspace logo");
+  }
+};
+
 export const updateWorkspace = async (
   workspaceId: string,
   inputWorkspace: TWorkspaceUpdateInput
@@ -91,7 +137,17 @@ export const updateWorkspace = async (
   // owner move their workspace (and all its data) into another organization, so it is stripped.
   const { organizationId: _organizationId, ...data } = inputWorkspace;
   let updatedWorkspace;
+  let previousLogoUrl: string | undefined;
   try {
+    // Only an update carrying a logo can orphan one, so a rename or a styling change costs no read.
+    if ("logo" in inputWorkspace) {
+      const current = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { logo: true },
+      });
+      previousLogoUrl = current?.logo?.url;
+    }
+
     updatedWorkspace = await prisma.workspace.update({
       where: {
         id: workspaceId,
@@ -109,6 +165,14 @@ export const updateWorkspace = async (
   await runPostCommitProjection("workspace_update", () =>
     reconcileTeamWorkspaceRelationships({ workspaceIds: [workspaceId] })
   );
+
+  // Compared against what was actually persisted, not against the input: Prisma treats
+  // `logo: undefined` as "leave this field alone", so trusting the input would delete the object
+  // while the row still points at it. Every upload gets a unique `--fid--{uuid}` key, so the old
+  // object has exactly one referrer and losing it orphans the file.
+  if (previousLogoUrl && previousLogoUrl !== updatedWorkspace.logo?.url) {
+    await deleteOrphanedWorkspaceLogoFile(workspaceId, previousLogoUrl);
+  }
 
   return updatedWorkspace as TWorkspace;
 };
