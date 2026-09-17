@@ -1,5 +1,5 @@
-import { Column, Container, Img, Link, Row, Text } from "@react-email/components";
 import { FileIcon } from "lucide-react";
+import { Column, Container, Img, Link, Row, Text } from "react-email";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TFunction } from "../types/translations";
 
