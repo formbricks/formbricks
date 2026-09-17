@@ -3,7 +3,7 @@ import { cleanup } from "@testing-library/react";
 import { TFunction } from "i18next";
 import { afterEach, describe, expect, test } from "vitest";
 import { normalizeIngestedValue } from "@formbricks/types/embedded-data-ingest";
-import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import { coerceToEmbeddedDataType, deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -13,7 +13,12 @@ import {
   SelectedFilterValue,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
-import { generateElementAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
+import {
+  buildDateFieldCondition,
+  generateElementAndFilterOptions,
+  getFormattedFilters,
+  getTodayDate,
+} from "./surveys";
 
 const t = ((key: string) => key) as TFunction;
 
@@ -1157,6 +1162,40 @@ describe("surveys", () => {
       }
     });
 
+    test("a date row reaches the data group as the window its value names", () => {
+      // The bug this pins (ENG-3232): the row's value is day-granular — the picker is an
+      // `<input type="date">` — while the column stores whatever arrived, so `equals` compared a day
+      // against an instant and missed it, and `Is after` matched instants on the day it excluded.
+      const dateFilter = (filterValue: string, filterComboBoxValue: string) =>
+        getFormattedFilters(
+          typedSurvey,
+          {
+            responseStatus: "all",
+            filter: [
+              {
+                elementType: {
+                  type: OptionsType.HIDDEN_FIELDS,
+                  label: "signup_date",
+                  id: "signup_date",
+                },
+                filterType: { filterValue, filterComboBoxValue },
+              },
+            ],
+          },
+          { from: undefined }
+        ).data?.signup_date;
+
+      const min = "2026-09-01";
+      const max = "2026-09-02";
+
+      expect(dateFilter("Equals", min)).toEqual({ op: "inRange", min, max });
+      expect(dateFilter("Not equals", min)).toEqual({ op: "notInRange", min, max });
+      expect(dateFilter("Is after", min)).toEqual({ op: "greaterEqual", value: max });
+      expect(dateFilter("Is before", min)).toEqual({ op: "lessThan", value: min });
+      // Presence still answers on the data group's own vocabulary, window or not.
+      expect(dateFilter("Is set", "")).toEqual({ op: "submitted" });
+    });
+
     test("ingested presence maps onto the data group's submitted/skipped vocabulary", () => {
       const selectedFilter: SelectedFilterValue = {
         responseStatus: "all",
@@ -1382,6 +1421,112 @@ describe("surveys", () => {
 
       expect(result.quotas?.quota1).toEqual({ op: "screenedIn" });
       expect(result.quotas?.quota2).toEqual({ op: "screenedOutNotInQuota" });
+    });
+  });
+
+  describe("buildDateFieldCondition", () => {
+    test("a day-granular value becomes the day-wide window it means", () => {
+      const min = "2026-09-01";
+      const max = "2026-09-02";
+
+      expect(buildDateFieldCondition("equals", min)).toEqual({ op: "inRange", min, max });
+      expect(buildDateFieldCondition("notEquals", min)).toEqual({ op: "notInRange", min, max });
+      // "after 1 Sep" starts at the next day, so an instant *on* 1 Sep is not after it (ENG-3232).
+      expect(buildDateFieldCondition("greaterThan", min)).toEqual({ op: "greaterEqual", value: max });
+      // "before 1 Sep" already ends at the bare date: every stored value on that day sorts at or
+      // after it, so this one arm needs no rewriting.
+      expect(buildDateFieldCondition("lessThan", min)).toEqual({ op: "lessThan", value: min });
+    });
+
+    test("the last representable day is still a day, not a point", () => {
+      // `new Date("9999-12-31Z")` plus a day is year 10000, which `toISOString` writes in ISO 8601's
+      // expanded form (`+010000-01-01T…`). Sliced to ten characters that is `+010000-01`, and `+`
+      // sorts below every digit — so as a `max` it would empty the window. Comparing against the
+      // bare date instead is the other failure: `9999-12-31T10:30:00Z` is an instant *on* that day,
+      // and it would miss "on" and match "after". The bound only has to sort above every value the
+      // day can hold, and it is never a stored value itself, so it does not have to be a real date.
+      const lastDay = "9999-12-31";
+      const bound = "9999-12-32";
+      const instantOnLastDay = "9999-12-31T10:30:00.000Z";
+
+      expect(buildDateFieldCondition("equals", lastDay)).toEqual({
+        op: "inRange",
+        min: lastDay,
+        max: bound,
+      });
+      expect(buildDateFieldCondition("notEquals", lastDay)).toEqual({
+        op: "notInRange",
+        min: lastDay,
+        max: bound,
+      });
+      expect(buildDateFieldCondition("greaterThan", lastDay)).toEqual({
+        op: "greaterEqual",
+        value: bound,
+      });
+      expect(buildDateFieldCondition("lessThan", lastDay)).toEqual({ op: "lessThan", value: lastDay });
+
+      // The property the bound exists for, read the way Postgres compares the strings.
+      expect(instantOnLastDay >= lastDay && instantOnLastDay < bound).toBe(true);
+      expect(instantOnLastDay >= bound).toBe(false);
+      // And nothing can be stored on the bound itself.
+      expect(coerceToEmbeddedDataType(bound, "date")).toBeUndefined();
+    });
+
+    test("the window covers both spellings a date field stores", () => {
+      const condition = buildDateFieldCondition("equals", "2026-09-01");
+      if (condition?.op !== "inRange") throw new Error("expected a range condition");
+
+      // Asserted against the ingest contract rather than hand-written strings: these are the exact
+      // values the column holds for `?signup_date=…`, and `>=`/`<` on them is the lexicographic
+      // comparison Postgres runs. A datetime upper bound would fail the last row — "2026-09-02"
+      // sorts before "2026-09-02T00:00:00.000Z", so a stored date-only 2 Sep would land in 1 Sep's
+      // window.
+      const stored = (raw: string) => normalizeIngestedValue(raw, "date")?.value as string;
+      const isInWindow = (raw: string) => stored(raw) >= condition.min && stored(raw) < condition.max;
+
+      expect(isInWindow("2026-09-01")).toBe(true);
+      expect(isInWindow("2026-09-01T10:30:00Z")).toBe(true);
+      expect(isInWindow("2026-09-01T00:00:00.000Z")).toBe(true);
+      expect(isInWindow("2026-09-01T23:59:59.999Z")).toBe(true);
+      expect(isInWindow("2026-08-31T23:59:59Z")).toBe(false);
+      expect(isInWindow("2026-09-02")).toBe(false);
+    });
+
+    test("the day after rolls over months, years and a leap day", () => {
+      const maxOf = (value: string) => {
+        const condition = buildDateFieldCondition("equals", value);
+        return condition?.op === "inRange" ? condition.max : null;
+      };
+
+      expect(maxOf("2026-09-30")).toBe("2026-10-01");
+      expect(maxOf("2026-12-31")).toBe("2027-01-01");
+      expect(maxOf("2024-02-28")).toBe("2024-02-29");
+      expect(maxOf("2024-02-29")).toBe("2024-03-01");
+    });
+
+    test("a full datetime names its own instant, so it is compared as-is", () => {
+      const value = "2026-09-01T10:30:00Z";
+
+      expect(buildDateFieldCondition("equals", value)).toEqual({ op: "equals", value });
+      expect(buildDateFieldCondition("notEquals", value)).toEqual({ op: "notEquals", value });
+      expect(buildDateFieldCondition("lessThan", value)).toEqual({ op: "lessThan", value });
+      expect(buildDateFieldCondition("greaterThan", value)).toEqual({ op: "greaterThan", value });
+    });
+
+    test("a value outside the stored subset, or an operator the menu never offers, drops the row", () => {
+      // Each of these would otherwise cut the ISO ordering at a point no stored value sits on.
+      for (const value of [
+        "2026-02-30", // a day that does not exist
+        "01/09/2026",
+        "2026-9-1",
+        "2026-09-01T10:30:00+02:00", // an offset datetime: the read seam takes UTC only
+        "2026-09-01T10:30:00", // and no zone-less one either
+        "tomorrow",
+      ]) {
+        expect(buildDateFieldCondition("equals", value)).toBeNull();
+      }
+
+      expect(buildDateFieldCondition("contains", "2026-09-01")).toBeNull();
     });
   });
 
