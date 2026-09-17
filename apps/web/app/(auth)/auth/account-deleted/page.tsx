@@ -1,3 +1,1 @@
-import { AccountDeletedPage } from "@/modules/auth/account-deleted/page";
-
-export default AccountDeletedPage;
+export { AccountDeletedPage as default } from "@/modules/auth/account-deleted/page";
