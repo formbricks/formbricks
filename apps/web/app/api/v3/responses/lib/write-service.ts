@@ -268,8 +268,12 @@ async function checkTags(
  * Every one of these is a 422 rather than a 404: the body is well-formed and the conflict is with
  * stored state. They are also all scoped to the workspace the caller is already authorized for, so
  * none of them can report on a resource outside it.
+ *
+ * Exported for `POST /api/v3/responses/validate`, which runs them against `prisma` rather than a
+ * transaction. That is the honest dry run: outside a transaction these answer about the state now
+ * rather than the state a write would see, which is exactly the guarantee a validate can offer.
  */
-async function collectReferenceIssues(
+export async function collectReferenceIssues(
   tx: Prisma.TransactionClient,
   {
     workspaceId,
