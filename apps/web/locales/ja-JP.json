@@ -107,6 +107,8 @@
         "offline_access": "リフレッシュトークンによるアクセスの維持",
         "openid": "OpenID Connectによる本人確認",
         "profile": "プロフィールの参照",
+        "responses_read": "アンケート回答を閲覧",
+        "responses_write": "アンケート回答を作成、更新、削除",
         "surveys_read": "アンケートの参照",
         "surveys_write": "アンケートの作成・更新・削除",
         "workflows_read": "ワークフローの参照",

@@ -104,8 +104,37 @@ export const MCP_OAUTH_SCOPES = [
   "workflows:write",
   "feedbackRecords:read",
   "feedbackRecords:write",
+  // ENG-2862. Responses get their own pair rather than riding on `surveys:*`, which would silently
+  // widen every token an integrator already holds to include respondent PII — the survey document is
+  // configuration, a response is someone's answers.
+  //
+  // Adding a scope here is half the work. Instances that have already upgraded keep whatever
+  // `oauthResource.allowedScopes` they were seeded with, `resolveResourcePolicy` intersects the new
+  // scope away, and `resourceSeedMode: "insertOnly"` never repairs the row — so `/authorize` answers
+  // `invalid_scope` with nothing logged. The second half is a **data migration that grants it to
+  // existing rows**, listed in `REPAIR_MIGRATIONS` in `mcp-oauth-resource-seed.test.ts`.
+  //
+  // Not by editing the 20260812110001 seed migration. That one has already run everywhere, so widening
+  // its literal repairs nothing and only makes it claim something it never did.
+  "responses:read",
+  "responses:write",
 ] as const;
 
+/**
+ * The resource scopes MCP clients are told about.
+ *
+ * Deliberately a subset of `MCP_OAUTH_SCOPES`, not a copy of it. A scope must exist here before a
+ * client will ever ask for it, and asking is what breaks: the oauth-provider validates `/authorize`
+ * as a subset of the scopes a client REGISTERED with, so advertising a new scope to clients that
+ * registered before it existed earns them `invalid_scope` on their next consent — not on deploy day,
+ * but trickling in across the 30-day refresh window as connections re-authorize.
+ *
+ * So `responses:read` / `responses:write` are grantable (they are in `MCP_OAUTH_SCOPES`, in the
+ * resource's `allowedScopes`, and in the ENG-2862 migration) but **not advertised yet**: there are no
+ * response tools behind them until ENG-2852, so there is nothing to gain by asking and a re-
+ * registration to cost. Adding them here is the last step of shipping those tools, and it is what the
+ * integrator notice announces — see ENG-2852.
+ */
 export const MCP_RESOURCE_SCOPES = [
   "surveys:read",
   "surveys:write",
