@@ -1,6 +1,5 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import deDETranslations from "../../locales/de-DE.json";
-import ruRUTranslations from "../../locales/ru-RU.json";
 import { INFORMAL_ADDRESS_PATTERNS, findInformalAddress } from "./locale-register";
 
 const deDE = INFORMAL_ADDRESS_PATTERNS["de-DE"]!;
@@ -29,31 +28,31 @@ describe("findInformalAddress", () => {
     ]);
   });
 
-  test("passes formal and register-neutral phrasing", () => {
+  // JS `\b` only knows ASCII word characters, so "варианты" would end in a false "ты" without the
+  // Unicode-aware boundary; "Individuell" is the Latin counterpart.
+  test("passes formal and register-neutral phrasing, and words that merely contain an informal form", () => {
     const bundle = {
       select_option: "Option wählen",
       is_between: "Bitte wählen Sie ein Datum zwischen {startDate} und {endDate}",
       redirected: "Sie werden sofort weitergeleitet",
       plural: "{count, plural, one {Dauert 1 Minute} other {Dauert {count} Minuten}}",
+      lookalikes: "Individuell für Kundinnen",
     };
 
     expect(findInformalAddress(bundle, deDE)).toEqual([]);
-    expect(findInformalAddress({ select_option: "Выберите вариант" }, ruRU)).toEqual([]);
-  });
-
-  test("matches whole words only, in Latin and Cyrillic script", () => {
-    expect(findInformalAddress({ a: "Individuell", b: "Kundin", c: "Ihre Antwort" }, deDE)).toEqual([]);
     expect(findInformalAddress({ a: "Выберите варианты", b: "Пожалуйста, введите" }, ruRU)).toEqual([]);
   });
 });
 
 // The bundles are regenerated from English by Lingo.dev, which has no register to preserve; this is what
-// keeps a regenerated string from re-introducing "du" (ENG-2790).
+// keeps a regenerated string from re-introducing "du" (ENG-2790). Every language with a pattern is
+// checked, so adding a language means adding its pattern and nothing here.
 describe("shipped bundles address the respondent formally", () => {
-  test.each([
-    ["de-DE", deDETranslations, deDE],
-    ["ru-RU", ruRUTranslations, ruRU],
-  ] as const)("%s", (_code, bundle, pattern) => {
+  test.each(Object.entries(INFORMAL_ADDRESS_PATTERNS))("%s", (code, pattern) => {
+    const bundle: unknown = JSON.parse(
+      readFileSync(new URL(`../../locales/${code}.json`, import.meta.url), "utf8")
+    );
+
     expect(findInformalAddress(bundle, pattern)).toEqual([]);
   });
 });
