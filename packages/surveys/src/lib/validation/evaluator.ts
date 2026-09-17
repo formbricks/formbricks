@@ -94,8 +94,11 @@ const getDefaultErrorMessage = (
   // For field-specific validation, prepend the field name
   if (rule.field) {
     const fieldLabel = getFieldLabel(element, rule.field, languageCode);
-    if (fieldLabel) {
-      return `${fieldLabel}: ${baseMessage}`;
+    // The label comes from the author's placeholder, which often already ends with a
+    // colon ("Nombre:"), so strip it to avoid rendering a double colon
+    const normalizedLabel = fieldLabel?.replace(/[\s:：]+$/u, "");
+    if (normalizedLabel) {
+      return `${normalizedLabel}: ${baseMessage}`;
     }
   }
 
