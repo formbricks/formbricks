@@ -236,6 +236,19 @@ describe("survey block discoverability (ENG-2180)", () => {
     expect(listed.toSorted()).toEqual(Object.values(TSurveyElementTypeEnum).toSorted());
   });
 
+  /**
+   * The rating values are read off `ZSurveyRatingElement` through a cast, so a change in Zod's internals
+   * would not throw — it would yield an empty list and quietly ship `scale ()` to every agent. Pinning
+   * the real values here means the description degrades loudly instead.
+   */
+  test("the description carries the rating values the schema actually accepts", async () => {
+    const { ZMcpCreateSurveyInput } = surveyAndFeedbackSchemas;
+    const description = ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    expect(description).toContain("`scale` (number|smiley|star)");
+    expect(description).toContain("`range` (5|3|4|6|7|10)");
+  });
+
   test("the example block in the description is accepted by the create schema", async () => {
     const { ZV3CreateSurveyBody } = await import("@/app/api/v3/surveys/schemas");
 

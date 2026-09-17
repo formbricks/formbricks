@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import { ZSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import {
   MAX_FEEDBACK_RECORDS_PER_BATCH,
@@ -157,14 +158,29 @@ export const SURVEY_BLOCK_EXAMPLE = {
   ],
 };
 
+/**
+ * A `rating`'s two extra fields, read off the element schema rather than restated.
+ *
+ * Restating them would reintroduce the drift this whole description exists to avoid, and would already
+ * be wrong: `ZSurveyRatingElement.range` admits `6`, which the base element's optional `range` and
+ * every prose description of it omit. Deriving keeps the advertised values equal to the accepted ones
+ * by construction, the same rule `SURVEY_ELEMENT_TYPES` follows.
+ */
+const RATING_SCALES = (ZSurveyRatingElement.shape.scale as unknown as { options: string[] }).options;
+const RATING_RANGES = (
+  ZSurveyRatingElement.shape.range as unknown as { options: { value: number }[] }
+).options.map((option) => option.value);
+
 const SURVEY_BLOCKS_DESCRIPTION = [
   "Survey blocks. A block is `{ name, elements[], id? }` and an element is `{ id, type, headline, ... }`,",
   `where \`type\` is one of: ${SURVEY_ELEMENT_TYPES}.`,
   "Element ids are caller-supplied and become immutable once the survey leaves draft; block ids are",
   'generated when omitted. Translatable fields are keyed by locale code — `{ "en-US": "..." }` — and',
   "must carry every configured language; the internal `default` key is rejected. Each element type adds",
-  "its own required fields (a `rating` needs `scale` and `range`, a `pictureSelection` needs two or more",
-  `choices); \`validate_survey\` reports what is missing. Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
+  `its own required fields — a \`rating\` needs \`scale\` (${RATING_SCALES.join("|")}) and \`range\``,
+  `(${RATING_RANGES.join("|")}), a \`pictureSelection\` needs two or more choices. An element that is`,
+  "missing one is reported by its position, not by the field name, so add the type's own fields before",
+  `retrying. Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
 ].join(" ");
 
 export const ZMcpCreateSurveyInput = z
