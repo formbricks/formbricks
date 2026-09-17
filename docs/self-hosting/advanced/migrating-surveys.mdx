@@ -93,7 +93,7 @@ is enough to keep every answer readable and correctly dated, but it is not a byt
     Management API requests are limited to **100 per minute per API key**. Every survey and every
     single response is one request, so 5,000 responses take at least 50 minutes. The scripts pace
     themselves with a `THROTTLE` sleep and retry on `429`. If you own the target instance and want it
-    to go faster, set [`RATE_LIMITING_DISABLED=1`](/self-hosting/advanced/rate-limiting#disabling-rate-limiting)
+    to go faster, set [`RATE_LIMITING_DISABLED=1`](/self-hosting/configuration/rate-limiting#disabling-rate-limiting)
     there for the duration of the import and restart it, then turn it back on.
   </Step>
 </Steps>

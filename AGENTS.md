@@ -24,6 +24,17 @@ to test; `email`, `types`, and `vite-plugins` are consumed from source, so they 
 `apps/storybook` has no unit tests by policy (its components are exercised by the feature journeys in
 `apps/web/playwright`). Keep new packages on this matrix or document the exception here.
 
+Consuming one of those source-only packages from another package's build config
+(`../vite-plugins/node-next-dts`, `.../postcss-scope-fbjs.cjs`, `.../copy-compiled-assets`) takes two
+things: declare it in `devDependencies`, and give every build task that reads it a `^build` /
+`^build:dev` edge. The declaration alone invalidates nothing — a task's hash folds in the tasks named
+in `dependsOn`, so the `^` edge is what carries the helper's contents. A root `pkg#task` block
+overwrites the shared task config outright — nothing is inherited — so the `^` entry has to be
+repeated in every block that declares the task, or a helper edit silently replays an older build
+(ENG-1681, ENG-2925). A package's own `turbo.json` behaves differently: it inherits the shared config
+per field, so it only needs `dependsOn` when it is changing it. Guarded by
+`apps/web/lib/turbo-vite-plugins-edge.test.ts`.
+
 ### Shared dependency versions (pnpm catalog)
 
 Every dependency used by **two or more** workspaces is pinned once in the `catalog:` block of
@@ -50,9 +61,13 @@ workspace globs from `pnpm-workspace.yaml` itself.
 The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the built bundle is copied to `apps/web/public/js/`. The Next.js app imports from `dist/`, **not** the source files. This means:
 
 - After any change to `packages/surveys` or its dependencies (`packages/survey-ui`, `packages/types`, etc.), you **must rebuild** for changes to take effect in the running app.
-- Turborepo caches build outputs aggressively. Always use `--force` to bypass the cache when iterating on survey packages:
+- Turborepo caches build outputs aggressively. The copied bundles are declared outputs of the two
+  packages' `build` tasks (`$TURBO_ROOT$/apps/web/public/js/…`), so a `pnpm build` cache hit restores
+  them together with `dist/**` instead of leaving the app without `/js/formbricks.umd.cjs`
+  (ENG-2924). Only `build` declares them: `build:dev` copies through the same plugin, and a second task
+  declaring the same paths makes each cache entry capture whatever the other left on disk. If a build
+  still looks stale, bypass the cache explicitly:
   ```
-  rm -rf packages/surveys/dist apps/web/public/js/surveys.* node_modules/.cache/turbo
   pnpm build --filter=@formbricks/surveys... --force
   ```
 - The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.

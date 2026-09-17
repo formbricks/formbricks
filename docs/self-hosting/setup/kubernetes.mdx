@@ -153,7 +153,7 @@ A fresh install runs an idempotent initialization Job, but application startup a
 from it. Upgrades never run relationship preparation automatically. For an existing v5 installation, follow
 [the v6 upgrade procedure below](#upgrading-from-v5-to-v6) before running `helm upgrade` or resuming GitOps.
 The chart refuses an unacknowledged upgrade, disabled AuthZed, or weaker consistency. Follow
-[AuthZed Operations](/self-hosting/advanced/authzed-operations) for ongoing operations and do not expose SpiceDB
+[AuthZed Operations](/self-hosting/configuration/authzed-operations) for ongoing operations and do not expose SpiceDB
 through an Ingress.
 
 ## 3. v5-Specific Deployment Notes
@@ -236,7 +236,7 @@ controller, set `envoy.controller.enabled: false`, disable GatewayClass creation
 GatewayClass name. The controller dependency, including its CRDs, is disabled in this mode. In either mode, configure
 `envoy.formbricks.ingress` or your platform ingress/load balancer so public traffic reaches the Envoy-managed
 routes. If you use an equivalent external edge solution instead, verify that it covers every route in the
-[rate-limiting guide](/self-hosting/advanced/rate-limiting) before exposing Formbricks.
+[rate-limiting guide](/self-hosting/configuration/rate-limiting) before exposing Formbricks.
 
 <Warning>
   Istio and other Gateway API implementations can remain in front of Formbricks, but they do not reconcile
