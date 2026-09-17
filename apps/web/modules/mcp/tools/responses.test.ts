@@ -13,6 +13,12 @@ import {
 import { validateV3ResponseFromRawInput } from "@/app/api/v3/responses/lib/validate-operations";
 import { mcpRequestStateCodec } from "../request-state";
 import {
+  ZMcpResponseCountOutput,
+  ZMcpResponseListOutput,
+  ZMcpResponseOutput,
+  ZMcpResponseValidationOutput,
+} from "./response-schemas";
+import {
   buildCountResponsesSearchParams,
   buildListResponsesSearchParams,
   registerResponseTools,
@@ -92,7 +98,9 @@ const call = async (name: string, input: unknown, ctx = callContext()) => {
 
 beforeEach(() => {
   vi.mocked(listV3Responses).mockResolvedValue(successResponse({ data: [] }, { requestId: "req" }));
-  vi.mocked(countV3ResponsesOperation).mockResolvedValue(successResponse({ count: 0 }, { requestId: "req" }));
+  vi.mocked(countV3ResponsesOperation).mockResolvedValue(
+    successResponse({ count: 0, relation: "eq" }, { requestId: "req" })
+  );
   vi.mocked(getV3Response).mockResolvedValue(successResponse({ data: {} }, { requestId: "req" }));
   vi.mocked(createV3ResponseFromRawInput).mockResolvedValue(
     successResponse({ data: {} }, { requestId: "req" })
@@ -201,6 +209,41 @@ describe("the scope gate", () => {
     expect(validateV3ResponseFromRawInput).not.toHaveBeenCalled();
     expect(deleteV3Response).not.toHaveBeenCalled();
     expect(batchDeleteV3Responses).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The advertised schema is checked by the SDK against every structured result, so a schema that
+ * describes a shape the operation does not return makes the tool answer an output-validation error
+ * instead of its payload. The first version of the count schema named the `precision` that was asked
+ * for rather than the `relation` that comes back, and every call failed against a live server.
+ */
+describe("the output schemas describe what the operations return", () => {
+  test("the count schema accepts the count endpoint's body", () => {
+    expect(
+      ZMcpResponseCountOutput.safeParse({ data: { count: 11, relation: "eq" }, requestId: "req" }).success
+    ).toBe(true);
+    expect(
+      ZMcpResponseCountOutput.safeParse({
+        data: { count: 11, precision: "capped" },
+        requestId: "req",
+      }).success
+    ).toBe(false);
+  });
+
+  test("every schema accepts the error envelope a failed operation produces", () => {
+    const failure = {
+      error: { status: 403, title: "Forbidden", detail: "Not authorized", requestId: "req" },
+    };
+
+    for (const [name, schema] of Object.entries({
+      list: ZMcpResponseListOutput,
+      count: ZMcpResponseCountOutput,
+      resource: ZMcpResponseOutput,
+      validation: ZMcpResponseValidationOutput,
+    })) {
+      expect(schema.safeParse(failure).success, `${name} rejects an error result`).toBe(true);
+    }
   });
 });
 
