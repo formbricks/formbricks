@@ -2,6 +2,7 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import type { TResponseData, TResponseDataValue } from "@formbricks/types/responses";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { buildKeysetPage } from "@/app/api/v3/lib/keyset-cursor";
 import {
@@ -26,7 +27,12 @@ import {
   parseV3ResponsesCountQuery,
   parseV3ResponsesListQuery,
 } from "./parse-v3-responses-list-query";
-import type { TV3CreateResponseBody, TV3PatchResponseBody } from "./schemas";
+import {
+  type TV3CreateResponseBody,
+  type TV3PatchResponseBody,
+  ZV3CreateResponseBody,
+  ZV3PatchResponseBody,
+} from "./schemas";
 import { createV3ResponseSerializer } from "./serializers";
 import {
   countV3Responses,
@@ -910,4 +916,46 @@ export async function updateV3Response({
       operation: "responses.update",
     });
   }
+}
+
+/**
+ * `createV3Response` and `updateV3Response` for a caller that holds an unparsed body.
+ *
+ * The route never needs these — `withV3ApiWrapper` parses the body against the same schemas before
+ * the handler runs, and answers the 400 itself. The MCP tools do: they receive whatever the model
+ * produced, and the schema failure has to become a tool result rather than a thrown error. Without
+ * them each tool would parse for itself, which is how two callers of one operation end up disagreeing
+ * about what a malformed body earns.
+ */
+export async function createV3ResponseFromRawInput({
+  body,
+  ...params
+}: TWriteParams & { body: unknown }): Promise<Response> {
+  const parsed = ZV3CreateResponseBody.safeParse(body);
+
+  if (!parsed.success) {
+    return problemBadRequest(params.requestId, "Invalid request body", {
+      invalid_params: formatZodIssues(parsed.error, "body"),
+      instance: params.instance,
+    });
+  }
+
+  return await createV3Response({ body: parsed.data, ...params });
+}
+
+export async function updateV3ResponseFromRawInput({
+  responseId,
+  body,
+  ...params
+}: TWriteParams & { responseId: string; body: unknown }): Promise<Response> {
+  const parsed = ZV3PatchResponseBody.safeParse(body);
+
+  if (!parsed.success) {
+    return problemBadRequest(params.requestId, "Invalid request body", {
+      invalid_params: formatZodIssues(parsed.error, "body"),
+      instance: params.instance,
+    });
+  }
+
+  return await updateV3Response({ responseId, body: parsed.data, ...params });
 }

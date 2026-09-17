@@ -60,10 +60,22 @@ export async function guardMcpAnyScope(
   );
 }
 
-type ScopedToolConfig<InputSchema extends StandardSchemaWithJSON> = {
+type ScopedToolConfig<
+  InputSchema extends StandardSchemaWithJSON,
+  OutputSchema extends StandardSchemaWithJSON,
+> = {
   title?: string;
   description?: string;
   inputSchema?: InputSchema;
+  /**
+   * The shape of `structuredContent`, advertised on `tools/list`.
+   *
+   * Optional only because the tools that predate it have none. New tools declare one: without it a
+   * client has to infer the result shape from an example, and the SDK cannot tell a tool that
+   * answered the wrong shape from one that answered correctly. Build it with `mcpToolOutput` so the
+   * error branch every tool can return is described too.
+   */
+  outputSchema?: OutputSchema;
   annotations?: ToolAnnotations;
 };
 
@@ -81,10 +93,13 @@ type ScopedToolConfig<InputSchema extends StandardSchemaWithJSON> = {
  * legitimately reaches (workspace discovery). That keeps such tools on this registration path rather
  * than dropping them to a raw `server.registerTool` with a hand-rolled gate.
  */
-export function registerScopedTool<InputSchema extends StandardSchemaWithJSON>(
+export function registerScopedTool<
+  InputSchema extends StandardSchemaWithJSON,
+  OutputSchema extends StandardSchemaWithJSON,
+>(
   server: McpServer,
   name: string,
-  config: ScopedToolConfig<InputSchema>,
+  config: ScopedToolConfig<InputSchema, OutputSchema>,
   // Non-empty tuple: a tool cannot be registered with `[]`, which would gate on nothing.
   requiredScopes: [string, ...string[]] | { anyOf: [string, ...string[]] },
   handler: ToolCallback<InputSchema>
