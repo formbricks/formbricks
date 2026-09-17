@@ -9,6 +9,7 @@ import {
   retryOnTransactionConflict,
 } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
+import { normalizeBridgeChart } from "@/modules/ee/analysis/charts/lib/bridge-chart";
 import { selectChart } from "@/modules/ee/analysis/charts/lib/charts";
 import {
   TAddWidgetInput,
@@ -184,7 +185,10 @@ export const getDashboard = async (dashboardId: string, workspaceId: string) => 
       throw new ResourceNotFoundError("Dashboard", dashboardId);
     }
 
-    return dashboard;
+    return {
+      ...dashboard,
+      widgets: dashboard.widgets.map((widget) => ({ ...widget, chart: normalizeBridgeChart(widget.chart) })),
+    };
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       throw error;

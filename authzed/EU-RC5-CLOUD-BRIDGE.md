@@ -6,8 +6,8 @@ Approved on 2026-09-17: create the bridge from **rc.5 product code**, not by bac
 into v5. Keep legacy authorization confined to this disposable Cloud release branch. Normal v6 remains
 SpiceDB-authoritative with no fallback or engine switch.
 
-**Status: temporary PostgreSQL decision paths implemented and locally validated; image build and
-release-compatibility rehearsal pending.**
+**Status: temporary PostgreSQL decision paths and pre-contraction chart compatibility implemented;
+local migration-order rehearsal passed. Image and end-to-end release rehearsal remain pending.**
 This document is not deployment approval or evidence that the bridge is ready.
 
 | Artifact                      | Pin / disposition                                                                             |
@@ -114,6 +114,10 @@ commands require the normal non-production environment configuration. These chec
 image, migration, performance, response-delivery, rollback or soak gates below.
 
 ## Migration order remains a blocking gate
+
+See [the pinned migration manifest](./EU-RC5-MIGRATIONS.md) for live SQL-checksum verification,
+restricted artifact packaging, chart compatibility and local database evidence. This does not replace
+the image, production-scale, mixed-version or soak gates.
 
 Changing the source branch does **not** make rc.5 safe to run against the unprepared v5 database or permit
 unrestricted rc.5 migrations beside original v5 pods. Keep the original source commit in the reviewed

@@ -6,7 +6,10 @@ export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
     environment: "node",
-    include: ["lib/authorization/bridge-postgres.integration.test.ts"],
+    include: [
+      "lib/authorization/bridge-postgres.integration.test.ts",
+      "modules/ee/analysis/charts/lib/bridge-chart.integration.test.ts",
+    ],
     fileParallelism: false,
     hookTimeout: 60_000,
   },

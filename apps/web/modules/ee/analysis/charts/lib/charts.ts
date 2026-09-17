@@ -12,9 +12,9 @@ import {
   TChartUpdateInput,
   TChartWithCreator,
   ZChartCreateInput,
-  ZChartType,
   ZChartUpdateInput,
 } from "@/modules/ee/analysis/types/analysis";
+import { normalizeBridgeChart } from "./bridge-chart";
 
 export const selectChart = {
   id: true,
@@ -32,7 +32,7 @@ export const createChart = async (data: TChartCreateInput): Promise<TChart> => {
   validateCubeQueryMembers(data.query);
 
   try {
-    return await prisma.chart.create({
+    const chart = await prisma.chart.create({
       data: {
         name: data.name,
         type: data.type,
@@ -44,6 +44,7 @@ export const createChart = async (data: TChartCreateInput): Promise<TChart> => {
       },
       select: selectChart,
     });
+    return normalizeBridgeChart(chart);
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       throw new InvalidInputError("A chart with this name already exists");
@@ -76,18 +77,20 @@ export const updateChart = async (
         throw new ResourceNotFoundError("Chart", chartId);
       }
 
+      const normalizedChart = normalizeBridgeChart(chart);
+
       const updatedChart = await tx.chart.update({
         where: { id: chartId },
         data: {
           name: data.name,
-          type: data.type,
+          type: data.type ?? (chart.type === "line" ? normalizedChart.type : undefined),
           query: data.query,
-          config: data.config,
+          config: data.config ?? (chart.type === "line" ? normalizedChart.config : undefined),
         },
         select: selectChart,
       });
 
-      return { chart, updatedChart };
+      return { chart: normalizedChart, updatedChart: normalizeBridgeChart(updatedChart) };
     });
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
@@ -153,13 +156,14 @@ export const duplicateChart = async (
     }
 
     const uniqueName = await getUniqueCopyName(sourceChart.name, workspaceId);
+    const normalizedChart = normalizeBridgeChart(sourceChart);
 
     return await createChart({
       workspaceId,
       name: uniqueName,
-      type: ZChartType.parse(sourceChart.type),
+      type: normalizedChart.type,
       query: ZChartQuery.parse(sourceChart.query),
-      config: ZChartConfig.parse(sourceChart.config ?? {}),
+      config: ZChartConfig.parse(normalizedChart.config ?? {}),
       feedbackDirectoryId: sourceChart.feedbackDirectoryId,
       createdBy,
     });
@@ -192,7 +196,7 @@ export const deleteChart = async (chartId: string, workspaceId: string): Promise
         where: { id: chartId },
       });
 
-      return chart;
+      return normalizeBridgeChart(chart);
     });
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
@@ -218,7 +222,7 @@ export const getChart = async (chartId: string, workspaceId: string): Promise<TC
       throw new ResourceNotFoundError("Chart", chartId);
     }
 
-    return chart;
+    return normalizeBridgeChart(chart);
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       throw error;
@@ -242,7 +246,7 @@ export const getCharts = async (workspaceId: string): Promise<TChartWithCreator[
         creator: { select: { name: true } },
       },
     });
-    return charts;
+    return charts.map(normalizeBridgeChart);
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       throw error;
@@ -258,7 +262,7 @@ export const getChartsWithCreator = async (workspaceId: string): Promise<TChartW
   validateInputs([workspaceId, ZId]);
 
   try {
-    return await prisma.chart.findMany({
+    const charts = await prisma.chart.findMany({
       where: { workspaceId },
       orderBy: { createdAt: "desc" },
       select: {
@@ -268,6 +272,7 @@ export const getChartsWithCreator = async (workspaceId: string): Promise<TChartW
         },
       },
     });
+    return charts.map(normalizeBridgeChart);
   } catch (error) {
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);

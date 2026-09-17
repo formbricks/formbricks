@@ -1,0 +1,11 @@
+# Disposable release artifact only. BRIDGE_IMAGE must be an approved immutable digest.
+ARG BRIDGE_IMAGE
+FROM ${BRIDGE_IMAGE}
+USER root
+# COPY alone merges directories: remove the full set first so excluded contractions cannot survive.
+RUN rm -rf /home/nextjs/packages/database/dist/migration
+COPY --chown=nextjs:nextjs artifact/packages/database/dist/migration /home/nextjs/packages/database/dist/migration
+COPY --chown=nextjs:nextjs artifact/migration-manifest.json /home/nextjs/migration-manifest.json
+USER nextjs
+ENTRYPOINT ["node", "packages/database/dist/scripts/apply-migrations.js"]
+CMD []
