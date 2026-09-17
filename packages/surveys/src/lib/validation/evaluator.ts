@@ -76,6 +76,23 @@ const getFieldLabel = (
 };
 
 /**
+ * Strip trailing whitespace and colons from a field label.
+ *
+ * The label comes from the author's placeholder, which often already ends with a colon
+ * ("Nombre:"), so the separator we append would otherwise render a double colon. Scanning
+ * backwards keeps this linear in the label's length.
+ */
+const stripTrailingColon = (label: string): string => {
+  let end = label.length;
+  while (end > 0) {
+    const char = label[end - 1];
+    if (char !== ":" && char !== "：" && char.trim() !== "") break;
+    end--;
+  }
+  return label.slice(0, end);
+};
+
+/**
  * Get default error message from rule or validator
  */
 const getDefaultErrorMessage = (
@@ -94,9 +111,7 @@ const getDefaultErrorMessage = (
   // For field-specific validation, prepend the field name
   if (rule.field) {
     const fieldLabel = getFieldLabel(element, rule.field, languageCode);
-    // The label comes from the author's placeholder, which often already ends with a
-    // colon ("Nombre:"), so strip it to avoid rendering a double colon
-    const normalizedLabel = fieldLabel?.replace(/[\s:：]+$/u, "");
+    const normalizedLabel = fieldLabel ? stripTrailingColon(fieldLabel) : undefined;
     if (normalizedLabel) {
       return `${normalizedLabel}: ${baseMessage}`;
     }
