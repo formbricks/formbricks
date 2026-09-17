@@ -9,6 +9,7 @@ import {
   generateSurveySingleUseSignature,
 } from "@/lib/utils/single-use-surveys";
 import { resolveSingleUseIdForSurvey } from "./single-use-link";
+import { recordSingleUseLinkValidation } from "./single-use-link-metrics";
 
 // 64 hex characters -> exactly 32 bytes once decoded.
 const { KEY } = vi.hoisted(() => ({ KEY: "0123456789abcdef".repeat(4) }));
@@ -41,6 +42,14 @@ vi.mock("@/lib/constants", async (importOriginal: () => Promise<typeof import("@
 
 vi.mock("@formbricks/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn() },
+}));
+
+// Spied rather than left real: `missing_su_id` is deliberately counted without being logged, and
+// "not logged" is only half the contract — without this the other half is unobservable and a change
+// that dropped the rejection entirely would look identical.
+vi.mock("./single-use-link-metrics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./single-use-link-metrics")>()),
+  recordSingleUseLinkValidation: vi.fn(),
 }));
 
 const SURVEY_A = "cm0aaaaaaaaaaaaaaaaaaaaa1"; // the attacker's own survey
@@ -120,9 +129,16 @@ describe("resolveSingleUseIdForSurvey (ENG-2758)", () => {
     });
   });
 
-  test("rejects a missing suId", () => {
+  test("rejects a missing suId, counting it without a log line", () => {
+    // A single-use survey's public URL with no `suId` at all is a crawler or a bare link pasted
+    // somewhere, not a signal — and logging it hands any anonymous caller the same flooding lever
+    // the `warn`-not-`error` rule exists to close, one level down. On `main` this case was silent.
+    // The counter still carries it, so the volume stays visible (raised in review on #9131).
     expect(openOn(SURVEY_A, null)).toBeNull();
-    expect(vi.mocked(logger.warn).mock.calls.at(-1)?.[0]).toMatchObject({ reason: "missing_su_id" });
+    expect(logger.warn).not.toHaveBeenCalled();
+    expect(recordSingleUseLinkValidation).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "rejected", reason: "missing_su_id" })
+    );
   });
 
   describe("repeated query parameters", () => {
@@ -145,9 +161,12 @@ describe("resolveSingleUseIdForSurvey (ENG-2758)", () => {
     test("treats a repeated suId as absent rather than an internal error", () => {
       expect(() => openOn(SURVEY_A, ["a", "b"])).not.toThrow();
       expect(openOn(SURVEY_A, ["a", "b"])).toBeNull();
-      expect(vi.mocked(logger.warn).mock.calls.at(-1)?.[0]).toMatchObject({
-        reason: "missing_su_id",
-      });
+      // Counted, not logged — same reason as a missing `suId`, which this collapses to. The
+      // assertion that matters here is that it is NOT `internal_error`, the signal reserved for a
+      // missing ENCRYPTION_KEY.
+      expect(recordSingleUseLinkValidation).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: "missing_su_id" })
+      );
       expect(logger.error).not.toHaveBeenCalled();
     });
   });

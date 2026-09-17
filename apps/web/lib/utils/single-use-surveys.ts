@@ -26,7 +26,17 @@ export type TSurveySingleUseLinkRejectionReason =
   | "missing_signature"
   | "signature_mismatch"
   | "decryption_failed"
-  | "not_a_cuid";
+  | "not_a_cuid"
+  /**
+   * A link minted while encryption was ON, presented while the survey is in plaintext mode.
+   *
+   * Its signature is genuine — the MAC covers `(surveyId, suId)` and says nothing about the mode —
+   * so without this it would be accepted, and the ciphertext itself would become the canonical
+   * `singleUseId`. The same link in encrypted mode canonicalizes the *decrypted* cuid instead, so
+   * one physical link would occupy two distinct single-use identities: a response stored under one
+   * is invisible to the lookup for the other, and the survey reopens for a second submission.
+   */
+  | "encrypted_id_in_plaintext_mode";
 
 /**
  * A discriminated union rather than `string | null` because the reason is what makes a rejection
@@ -123,6 +133,22 @@ export const generateSurveySingleUseLinkParamsList = (
   return singleUseLinkParams;
 };
 
+/**
+ * Whether a signature-verified `suId` is really an encrypted-mode id.
+ *
+ * Both failure shapes mean "not an encrypted-mode id" and are equally ordinary: a plaintext cuid has
+ * no colons, so `symmetricDecrypt` rejects it outright, while an operator's custom id may decrypt to
+ * bytes that are not a cuid. Neither is worth distinguishing at the call site, so this answers a
+ * boolean rather than surfacing a third rejection reason nobody could act on.
+ */
+const decryptsToACuid = (value: string, decrypt: (encryptedSingleUseId: string) => string): boolean => {
+  try {
+    return isCuid(decrypt(value));
+  } catch {
+    return false;
+  }
+};
+
 export const validateSurveySingleUseLinkParams = ({
   surveyId,
   suId,
@@ -159,6 +185,19 @@ export const validateSurveySingleUseLinkParams = ({
   }
 
   if (!isEncrypted) {
+    // The signature has already passed, so this value was minted by us for this survey — but it does
+    // not say *which mode* it was minted in, and an operator can toggle encryption at any time from
+    // the share modal. Accepting an encrypted-mode id here would canonicalize the ciphertext while
+    // encrypted mode canonicalizes the cuid inside it, splitting one link across two single-use
+    // identities and letting it be answered twice.
+    //
+    // Decrypting here is safe precisely because it is downstream of the MAC: no attacker-chosen bytes
+    // reach the cipher, which is the invariant the check above exists to hold. The cost is one AES
+    // operation on an already-authenticated value, and only for single-use surveys in plaintext mode.
+    if (decryptsToACuid(trimmedSuId, decrypt)) {
+      return { ok: false, reason: "encrypted_id_in_plaintext_mode" };
+    }
+
     return { ok: true, singleUseId: trimmedSuId };
   }
 

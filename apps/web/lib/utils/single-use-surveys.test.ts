@@ -280,6 +280,64 @@ describe("Single Use Surveys", () => {
       ).toEqual({ ok: false, reason: "signature_mismatch" });
     });
 
+    /**
+     * Toggling encryption is a supported share-modal action, and the signature does not record which
+     * mode a link was minted in. Without the plaintext-mode refusal the same physical link resolves to
+     * the ciphertext in one mode and to the cuid inside it in the other — two single-use identities for
+     * one link, so a response stored under the first is invisible to the lookup for the second and the
+     * survey reopens. Raised in review on #9131.
+     */
+    describe("a link minted in encrypted mode, presented after encryption is turned off", () => {
+      const openInPlaintextMode = (suId: string, suToken: string) =>
+        validateSurveySingleUseLinkParams({
+          surveyId: SURVEY_A,
+          suId,
+          suToken,
+          isEncrypted: false,
+          decrypt: fakeDecrypt,
+        });
+
+      test("is refused, rather than canonicalized to its own ciphertext", () => {
+        const minted = mintForA();
+
+        expect(openInPlaintextMode(minted.suId, minted.suToken)).toEqual({
+          ok: false,
+          reason: "encrypted_id_in_plaintext_mode",
+        });
+      });
+
+      test("and the two modes can no longer disagree about its identity", () => {
+        const minted = mintForA();
+
+        const inEncryptedMode = presentTo(SURVEY_A, minted);
+        expect(inEncryptedMode).toEqual({ ok: true, singleUseId: PLAIN_CUID });
+        // The only other outcome the resolver can now reach for this link is a refusal, so there is no
+        // second identity for a response to be stored under.
+        expect(openInPlaintextMode(minted.suId, minted.suToken).ok).toBe(false);
+      });
+
+      test("a genuine plaintext link still opens in plaintext mode", () => {
+        // The control. A refusal that also rejected ordinary plaintext links would be an outage, and
+        // every assertion above would still pass.
+        const plaintext = generateSurveySingleUseLinkParams(SURVEY_A, false);
+
+        expect(openInPlaintextMode(plaintext.suId, plaintext.suToken)).toEqual({
+          ok: true,
+          singleUseId: PLAIN_CUID,
+        });
+      });
+
+      test("an operator's custom id that is not a ciphertext still opens", () => {
+        // Custom ids are plaintext-only and operator-chosen, so they must survive the decrypt probe.
+        const custom = generateSurveySingleUseLinkParams(SURVEY_A, false, "ORDER-12345");
+
+        expect(openInPlaintextMode(custom.suId, custom.suToken)).toEqual({
+          ok: true,
+          singleUseId: "ORDER-12345",
+        });
+      });
+    });
+
     test("never decrypts a suId whose token it has not accepted", () => {
       // The ordering is the behaviour, not an implementation detail. `symmetricDecrypt` routes a
       // two-part payload to unauthenticated AES-256-CBC, and running any cipher over attacker-chosen

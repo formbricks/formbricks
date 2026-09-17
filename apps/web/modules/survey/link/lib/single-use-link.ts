@@ -101,16 +101,27 @@ export const resolveSingleUseIdForSurvey = ({
     // actually presented. Its absence is itself the signal that separates a link minted before this
     // release from a forgery; when present, it separates one broken email template retried 10,000
     // times from 10,000 distinct forgeries.
-    logger.warn(
-      {
-        surveyId,
-        surface,
-        mode,
-        reason: result.reason,
-        ...(rawSuToken ? { suTokenFingerprint: fingerprintSuToken(rawSuToken) } : {}),
-      },
-      "Rejected single-use survey link"
-    );
+    //
+    // `missing_su_id` is counted but not logged. It fires on any request to a single-use survey's
+    // public URL that carries no `suId` at all — a crawler on `/s/{surveyId}`, the bare link pasted
+    // into a chat — which is the same anonymous-caller flooding lever, one level down, and on `main`
+    // this case returned null silently. It is also the least actionable of the reasons: the
+    // post-upgrade diagnostic an operator needs is `missing_signature`, whose volume is bounded by
+    // how many pre-release links were mailed. The counter still carries it, so the volume remains
+    // visible without a log line per crawl.
+    if (result.reason !== "missing_su_id") {
+      logger.warn(
+        {
+          surveyId,
+          surface,
+          mode,
+          reason: result.reason,
+          ...(rawSuToken ? { suTokenFingerprint: fingerprintSuToken(rawSuToken) } : {}),
+        },
+        "Rejected single-use survey link"
+      );
+    }
+
     recordSingleUseLinkValidation({ mode, outcome: "rejected", reason: result.reason, surface });
     return null;
   }
