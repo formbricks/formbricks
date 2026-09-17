@@ -3,12 +3,14 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import type { TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import type {
   TResponse,
   TResponseData,
   TResponseDataValue,
   TResponseMeta,
   TResponseTtc,
+  TResponseVariables,
 } from "@formbricks/types/responses";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
@@ -89,6 +91,58 @@ export const v3WriteReadbackSelect = {
 } satisfies Prisma.ResponseSelect;
 
 export type TV3WriteReadbackRow = Prisma.ResponseGetPayload<{ select: typeof v3WriteReadbackSelect }>;
+
+/**
+ * The columns quota evaluation needs off the row it just wrote.
+ *
+ * Not a convenience: `evaluateResponseQuotas` builds the `reserved` operand map with
+ * `buildServerEmbeddedValues`, whose catalog accessors read `meta.country`, `meta.url`,
+ * `meta.userAgent.browser`, `createdAt`/`updatedAt` and `ttc` off this row. Every accessor is
+ * wrapped in a `try`/`catch` that answers `undefined`, so a row missing those columns does not
+ * fail — it silently resolves every reserved operand as unset, and a quota conditioned on one of
+ * them counts nothing. v1 and v2 hand over the full row, so a narrower select here would make v3
+ * the one write path where such a quota stops counting, with nothing logged.
+ *
+ * Shaped so `toQuotaEvaluationRow` can build a `TEmbeddedValueResponse` out of it without an escape
+ * hatch — which is what makes a future narrowing of this select a build failure rather than a quota
+ * that quietly stops matching.
+ */
+const v3QuotaEvaluationSelect = {
+  id: true,
+  surveyId: true,
+  createdAt: true,
+  updatedAt: true,
+  finished: true,
+  language: true,
+  data: true,
+  variables: true,
+  ttc: true,
+  meta: true,
+} satisfies Prisma.ResponseSelect;
+
+/**
+ * Narrow the written row to the slice quota evaluation reads, field by field.
+ *
+ * Written out rather than cast wholesale so the compiler is the guard: every field
+ * `TEmbeddedValueResponse` declares has to come from a column `v3QuotaEvaluationSelect` asks for, and
+ * narrowing that select stops being a silent behaviour change and becomes a build failure. The casts
+ * are confined here because Prisma types the four JSON columns as `JsonValue`; they are the shapes
+ * the write itself persisted a few lines earlier.
+ */
+const toQuotaEvaluationRow = (
+  row: Prisma.ResponseGetPayload<{ select: typeof v3QuotaEvaluationSelect }>
+): TEmbeddedValueResponse => ({
+  id: row.id,
+  surveyId: row.surveyId,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+  finished: row.finished,
+  language: row.language,
+  data: row.data as TResponseData,
+  variables: row.variables as TResponseVariables,
+  ttc: row.ttc as TResponseTtc,
+  meta: row.meta as TResponseMeta,
+});
 
 /** Read back a written response, scoped. `null` means it was removed between the write and the read. */
 export async function readbackV3Response(
@@ -434,7 +488,7 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
               }
             : {}),
         },
-        select: { id: true, finished: true, data: true, variables: true },
+        select: v3QuotaEvaluationSelect,
       });
 
       await evaluateResponseQuotas({
@@ -445,7 +499,7 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
         language: language ?? "default",
         responseFinished: created.finished,
         // The row as persisted, so `reserved` quota operands resolve (ENG-1840).
-        response: created as never,
+        response: toQuotaEvaluationRow(created),
         tx,
       });
 
@@ -532,7 +586,7 @@ export async function updateScopedResponse({
                 },
               }),
         },
-        select: { id: true, finished: true, data: true, variables: true, language: true },
+        select: v3QuotaEvaluationSelect,
       });
 
       // Evaluated on every patch, not only on one that finishes the response. For a quota with
@@ -545,7 +599,7 @@ export async function updateScopedResponse({
         variables: updated.variables as Record<string, TResponseDataValue>,
         language: updated.language ?? "default",
         responseFinished: updated.finished,
-        response: updated as never,
+        response: toQuotaEvaluationRow(updated),
         tx,
       });
 
