@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
@@ -8,11 +9,19 @@ import type { TUserNotificationSettings } from "@formbricks/types/user";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
-import { DEFAULT_ORGANIZATION_ID, DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
+import {
+  AUDIT_LOG_ENABLED,
+  DEFAULT_ORGANIZATION_ID,
+  DEFAULT_TEAM_ID,
+  SKIP_INVITE_FOR_SSO,
+  WEBAPP_URL,
+} from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
+import { nativeAuthAuditContext } from "@/modules/auth/lib/native-auth-audit-context";
+import { emitSecurityAudit } from "@/modules/auth/lib/security-audit";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import type { TSsoProvisioningRejectReason } from "@/modules/auth/lib/sso-provisioning-reject-reasons";
 import { updateUser } from "@/modules/auth/lib/user";
@@ -200,19 +209,40 @@ const assignSsoUserToOrganization = async ({
   role: TOrganizationRole;
   assignToDefaultTeam: boolean;
 }): Promise<void> => {
+  const requestId = nativeAuthAuditContext.getStore()?.requestId ?? randomUUID();
+  // Audit-only reads stay outside the transaction and fail open.
+  let previousRole: string | null | undefined;
+  let previousAccepted: boolean | null | undefined;
+  let previousTeams: { teamId: string; role: string }[] | undefined;
+  if (AUDIT_LOG_ENABLED) {
+    try {
+      const previous = await prisma.membership.findUnique({
+        where: { userId_organizationId: { userId, organizationId } },
+      });
+      previousRole = previous?.role ?? null;
+      previousAccepted = previous?.accepted ?? null;
+      previousTeams = await prisma.teamUser.findMany({
+        where: { userId, teamId: DEFAULT_TEAM_ID ?? "" },
+        select: { teamId: true, role: true },
+      });
+    } catch {
+      /* Unknown snapshots must not abort provisioning. */
+    }
+  }
   const MAX_ATTEMPTS = 2;
+  let committed = false;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      await prisma.$transaction(async (tx) => {
-        await createMembership(
+      const { membership, assignedTeamIds, notificationChanged } = await prisma.$transaction(async (tx) => {
+        const membership = await createMembership(
           organizationId,
           userId,
           { role, accepted: true },
           { projection: "deferred", transaction: tx }
         );
-        if (assignToDefaultTeam) {
-          await createDefaultTeamMembership(userId, { projection: "deferred", transaction: tx });
-        }
+        const teamIds = assignToDefaultTeam
+          ? await createDefaultTeamMembership(userId, { projection: "deferred", transaction: tx })
+          : [];
         const dbUser = await tx.user.findUnique({
           where: { id: userId },
           select: { notificationSettings: true },
@@ -231,7 +261,57 @@ const assignSsoUserToOrganization = async ({
           },
           tx
         );
+        return {
+          membership,
+          assignedTeamIds: teamIds ?? [],
+          notificationChanged: !current.unsubscribedOrganizationIds?.includes(organizationId),
+        };
       });
+      if (!committed) {
+        committed = true;
+        const incomplete =
+          membership?.accepted !== true ||
+          previousRole === undefined ||
+          previousTeams === undefined ||
+          (assignToDefaultTeam && assignedTeamIds.length === 0);
+        await emitSecurityAudit({
+          operation: "sso_membership_assignment",
+          actor: { id: "sso", type: "system" },
+          target: { type: "membership", id: `${userId}:${organizationId}` },
+          organizationId,
+          status: incomplete
+            ? "partial"
+            : previousRole === membership?.role &&
+                previousAccepted === membership?.accepted &&
+                !notificationChanged &&
+                assignedTeamIds.every((id) =>
+                  previousTeams?.some(
+                    (team) =>
+                      team.teamId === id &&
+                      team.role === (role === "owner" || role === "manager" ? "admin" : "contributor")
+                  )
+                )
+              ? "noop"
+              : "success",
+          source: "sso-provisioning",
+          requestId,
+          changes: {
+            subjectId: userId,
+            beforeRole: previousRole,
+            afterRole: membership?.role,
+            beforeAccepted: previousAccepted,
+            accepted: membership?.accepted,
+            notificationSettingsUpdated: notificationChanged,
+            teamMemberships: assignedTeamIds.map((teamId) => ({
+              id: `${teamId}:${userId}`,
+              teamId,
+              beforeRole: previousTeams?.find((team) => team.teamId === teamId)?.role ?? null,
+              afterRole: role === "owner" || role === "manager" ? "admin" : "contributor",
+            })),
+            ...(incomplete ? { observationIncomplete: true } : {}),
+          },
+        });
+      }
       await reconcileOrganizationMembership(organizationId, userId);
       if (assignToDefaultTeam && DEFAULT_TEAM_ID) {
         const defaultTeamId = DEFAULT_TEAM_ID;
@@ -242,6 +322,16 @@ const assignSsoUserToOrganization = async ({
       return;
     } catch (error) {
       if (attempt === MAX_ATTEMPTS) {
+        if (!committed)
+          await emitSecurityAudit({
+            operation: "sso_membership_assignment",
+            actor: { id: "sso", type: "system" },
+            target: { type: "membership", id: `${userId}:${organizationId}` },
+            organizationId,
+            status: "failure",
+            source: "sso-provisioning",
+            requestId,
+          });
         logger.error(error, "SSO provisioning: failed to assign new SSO user to its organization");
       }
     }

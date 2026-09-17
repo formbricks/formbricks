@@ -97,7 +97,7 @@ export const createDefaultTeamMembership = async (userId: string, options?: TDef
 
     const membershipRole = organizationMembership.role;
 
-    await createTeamMembership(
+    return await createTeamMembership(
       {
         organizationId: defaultTeam.organizationId,
         role: membershipRole,

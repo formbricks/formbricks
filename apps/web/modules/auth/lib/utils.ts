@@ -1,10 +1,9 @@
 import { createHash, randomUUID } from "crypto";
-import { createCacheKey } from "@formbricks/cache";
-import { logger } from "@formbricks/logger";
-import { cache } from "@/lib/cache";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { sampleAuthFailure } from "./auth-failure-sampling";
+import { nativeAuthAuditContext } from "./native-auth-audit-context";
 
 export const hashPassword = async (password: string) => {
   return await hashSecret(password, 12);
@@ -38,7 +37,7 @@ export const logAuthEvent = (
   status: TAuditStatus,
   userId: string,
   email?: string,
-  additionalData: Record<string, any> = {}
+  additionalData: Record<string, unknown> = {}
 ) => {
   const auditActorId = userId === UNKNOWN_DATA && email ? createAuditIdentifier(email, "email") : userId;
 
@@ -46,18 +45,21 @@ export const logAuthEvent = (
   // capturing every attempt was noise, not signal. The security trail is the audit log below
   // (throttled by shouldLogAuthFailure + rate-limiting); genuine *internal* auth errors are still
   // captured via the Better Auth logger's error level (ENG-2037).
-  queueAuditEventBackground({
+  void queueAuditEventBackground({
     action,
     targetType: "user",
     userId: auditActorId,
     targetId: auditActorId,
-    organizationId: UNKNOWN_DATA,
+    organizationId: "global",
+    scope: "global",
+    source: "native-auth",
+    requestId: nativeAuthAuditContext.getStore()?.requestId ?? randomUUID(),
     status,
-    userType: "user",
+    userType: userId === UNKNOWN_DATA ? "anonymous" : "user",
     newObject: {
       ...additionalData,
     },
-  });
+  }).catch(() => {});
 };
 
 /**
@@ -76,7 +78,7 @@ export const logAuthAttempt = (
   authMethod: string,
   userId: string = UNKNOWN_DATA,
   email?: string,
-  additionalData: Record<string, any> = {}
+  additionalData: Record<string, unknown> = {}
 ) => {
   logAuthEvent("authenticationAttempted", "failure", userId, email, {
     failureReason,
@@ -102,7 +104,7 @@ export const logAuthSuccess = (
   authMethod: string,
   userId: string,
   email: string,
-  additionalData: Record<string, any> = {}
+  additionalData: Record<string, unknown> = {}
 ) => {
   logAuthEvent(action, "success", userId, email, {
     provider,
@@ -127,7 +129,7 @@ export const logTwoFactorAttempt = (
   userId: string,
   email: string,
   failureReason?: string,
-  additionalData: Record<string, any> = {}
+  additionalData: Record<string, unknown> = {}
 ) => {
   const action = isSuccess ? "twoFactorVerified" : "twoFactorAttempted";
   const status = isSuccess ? "success" : "failure";
@@ -154,7 +156,7 @@ export const logEmailVerificationAttempt = (
   failureReason?: string,
   userId: string = UNKNOWN_DATA,
   email?: string,
-  additionalData: Record<string, any> = {}
+  additionalData: Record<string, unknown> = {}
 ) => {
   const action = isSuccess ? "emailVerified" : "emailVerificationAttempted";
   const status = isSuccess ? "success" : "failure";
@@ -167,124 +169,6 @@ export const logEmailVerificationAttempt = (
   });
 };
 
-// Rate limiting constants
-const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 minutes
-const AGGREGATION_THRESHOLD = 3; // After 3 failures, start aggregating
-
-/**
- * Rate limiting decision function for authentication audit logs.
- * Uses Redis for distributed rate limiting across Kubernetes pods.
- *
- * **What this function does:**
- * - Returns true/false to indicate whether an auth attempt should be logged
- * - Always returns true for successful authentications (no rate limiting)
- * - For failures: allows first 3 attempts per identifier within 5-minute window
- * - After 3 failures: allows every 10th attempt OR after 1+ minute gap
- * - Uses hashed identifiers to protect PII while enabling tracking
- * - Returns false if Redis is unavailable (fail closed)
- *
- * **Use cases:**
- * - Gate authentication failure logging to prevent spam
- * - Provide consistent rate limiting decisions across Kubernetes pods
- * - Protect user PII through identifier hashing
- *
- * **Example usage:**
- * ```typescript
- * if (await shouldLogAuthFailure(user.email)) {
- *   logAuthAttempt("invalid_password", "credentials", "password", user.id, user.email);
- * }
- * ```
- *
- * @param identifier - Unique identifier for rate limiting (email, token, etc.) - will be hashed
- * @param isSuccess - Whether this is a successful authentication (defaults to false)
- * @returns Promise<boolean> - Whether this attempt should be logged to audit trail
- */
-export const shouldLogAuthFailure = async (
-  identifier: string,
-  isSuccess: boolean = false
-): Promise<boolean> => {
-  // Always log successful authentications
-  if (isSuccess) return true;
-
-  const now = Date.now();
-  const bucketStart = Math.floor(now / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
-  const rateLimitKey = createCacheKey.rateLimit.core(
-    "auth",
-    createAuditIdentifier(identifier, "ratelimit"),
-    bucketStart
-  );
-
-  try {
-    // Get Redis client
-    const redis = await cache.getRedisClient();
-    if (!redis) {
-      logger.warn("Redis not available for rate limiting, not logging due to Redis requirement");
-      return false;
-    }
-
-    // Use Redis for distributed rate limiting
-    const multi = redis.multi();
-
-    // Remove expired entries and count recent failures
-    multi.zRemRangeByScore(rateLimitKey, 0, bucketStart);
-    multi.zCard(rateLimitKey);
-    multi.zAdd(rateLimitKey, { score: now, value: `${now}:${randomUUID()}` });
-    multi.expire(rateLimitKey, Math.ceil(RATE_LIMIT_WINDOW / 1000));
-
-    const results = await multi.exec();
-    if (!results) {
-      throw new Error("Redis transaction failed");
-    }
-
-    const currentCount = results[1] as unknown as number;
-
-    // Apply throttling logic
-    if (currentCount <= AGGREGATION_THRESHOLD) {
-      return true;
-    }
-
-    // Check if we should log (every 10th or after 1 minute gap)
-    const recentEntries = await redis.zRange(rateLimitKey, -10, -1);
-    if (recentEntries.length === 0) return true;
-
-    const lastLogTime = Number.parseInt(recentEntries[recentEntries.length - 1].split(":")[0]);
-    const timeSinceLastLog = now - lastLogTime;
-
-    return currentCount % 10 === 0 || timeSinceLastLog > 60000;
-  } catch (error) {
-    logger.warn({ error }, "Redis rate limiting failed, not logging due to Redis requirement");
-    // If Redis fails, do not log as Redis is required for audit logs
-    return false;
-  }
-};
-
-/**
- * Logs a user sign out event for audit compliance.
- *
- * @param userId - The ID of the user signing out
- * @param userEmail - The email of the user signing out
- * @param context - Additional context about the sign out (reason, redirect URL, etc.)
- */
-export const logSignOut = (
-  userId: string,
-  userEmail: string,
-  context?: {
-    reason?:
-      | "user_initiated"
-      | "account_deletion"
-      | "email_change"
-      | "session_timeout"
-      | "forced_logout"
-      | "password_reset";
-    redirectUrl?: string;
-    organizationId?: string;
-  }
-) => {
-  logAuthEvent("userSignedOut", "success", userId, userEmail, {
-    provider: "session",
-    authMethod: "sign_out",
-    reason: context?.reason || "user_initiated", // NOSONAR // We want to check for empty strings
-    redirectUrl: context?.redirectUrl,
-    organizationId: context?.organizationId,
-  });
-};
+/** Compatibility helper for callers that only need the sampling decision. */
+export const shouldLogAuthFailure = async (identifier: string, isSuccess = false): Promise<boolean> =>
+  isSuccess || (await sampleAuthFailure(identifier)).emit;

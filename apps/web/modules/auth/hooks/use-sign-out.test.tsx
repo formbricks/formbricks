@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
-import { logSignOutAction } from "@/modules/auth/actions/sign-out";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 
 // vitestSetup.ts mocks this hook globally (so component tests don't hit Better Auth); unmock here so we
-// exercise the REAL implementation. logSignOutAction is globally mocked there too — reuse that spy.
+// exercise the real implementation.
 vi.unmock("@/modules/auth/hooks/use-sign-out");
 
 // Hoisted so the (hoisted) vi.mock factories below can reference them.
@@ -14,7 +13,6 @@ vi.mock("@/modules/auth/lib/auth-client", () => ({
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: loggerError } }));
 
-const mockedLogSignOut = vi.mocked(logSignOutAction);
 // The hook reads a bare `localStorage` global, which vitest's jsdom doesn't expose on globalThis.
 const localStorageMock = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
 
@@ -27,7 +25,6 @@ beforeEach(() => {
   vi.stubGlobal("localStorage", localStorageMock);
   vi.clearAllMocks();
   baSignOut.mockResolvedValue({ error: null });
-  mockedLogSignOut.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -41,30 +38,20 @@ afterEach(() => {
 });
 
 describe("useSignOut", () => {
-  test("audits the sign-out, calls Better Auth signOut, and redirects to /auth/login by default", async () => {
+  test("calls Better Auth signOut and redirects to /auth/login by default", async () => {
     const { signOut } = useSignOut({ id: "user-1", email: "ada@example.com" });
 
     await signOut({ reason: "user_initiated", organizationId: "org-1" });
 
-    expect(mockedLogSignOut).toHaveBeenCalledWith("user-1", "ada@example.com", {
-      reason: "user_initiated",
-      redirectUrl: undefined,
-      organizationId: "org-1",
-    });
     expect(baSignOut).toHaveBeenCalledTimes(1);
     expect(window.location.href).toBe("/auth/login");
   });
 
-  test("defaults the reason and uses callbackUrl as the audit redirectUrl + navigation target", async () => {
+  test("uses callbackUrl as the navigation target", async () => {
     const { signOut } = useSignOut({ id: "u", email: "e@x.com" });
 
     await signOut({ callbackUrl: "/dashboard" });
 
-    expect(mockedLogSignOut).toHaveBeenCalledWith("u", "e@x.com", {
-      reason: "user_initiated",
-      redirectUrl: "/dashboard",
-      organizationId: undefined,
-    });
     expect(window.location.href).toBe("/dashboard");
   });
 
@@ -86,23 +73,11 @@ describe("useSignOut", () => {
     expect(localStorageMock.removeItem).toHaveBeenCalledWith(FORMBRICKS_ENVIRONMENT_ID_LS);
   });
 
-  test("skips the audit log when there is no session user", async () => {
+  test("calls native sign-out even without client session data", async () => {
     const { signOut } = useSignOut(null);
 
     await signOut();
 
-    expect(mockedLogSignOut).not.toHaveBeenCalled();
-    expect(baSignOut).toHaveBeenCalledTimes(1);
-    expect(window.location.href).toBe("/auth/login");
-  });
-
-  test("still signs out and redirects when audit logging throws", async () => {
-    mockedLogSignOut.mockRejectedValueOnce(new Error("audit down"));
-    const { signOut } = useSignOut({ id: "u", email: "e@x.com" });
-
-    await signOut();
-
-    expect(loggerError).toHaveBeenCalled();
     expect(baSignOut).toHaveBeenCalledTimes(1);
     expect(window.location.href).toBe("/auth/login");
   });
