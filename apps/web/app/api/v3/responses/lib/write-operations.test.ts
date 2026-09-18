@@ -540,6 +540,32 @@ describe("what the operation hands to the write", () => {
 
 describe("file-upload answers", () => {
   /**
+   * The survey has to DECLARE the file-upload element, or these tests prove nothing.
+   *
+   * With the default fixture — one `openText` called `q1` — the key `upload` is not publishable, so
+   * `planAnswerDataWrite` raises `unsupported_field` and the 422 arrives before `fileUploadIssues`
+   * is ever consulted. Both refusal tests then pass with the storage check deleted, which is the one
+   * check here that carries a security property.
+   */
+  const withUploadElement = () =>
+    survey({
+      blocks: [
+        {
+          id: "blk",
+          name: "Block",
+          elements: [
+            { id: "q1", type: "openText", headline: { default: "Q1" } },
+            { id: "upload", type: "fileUpload", headline: { default: "Upload" } },
+          ],
+        },
+      ],
+    });
+
+  beforeEach(() => {
+    mockGetSurveyForWrite.mockResolvedValue(withUploadElement());
+  });
+
+  /**
    * A stored answer is a storage path that the dashboard, the export and the read endpoints later
    * resolve into a signed URL. Without this check a caller with write access to one workspace could
    * store another workspace's path under a file-upload element and have it resolved on their own

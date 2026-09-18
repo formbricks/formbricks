@@ -79,9 +79,12 @@ const asQuotaScreeningResponse = ({
 const quotaEffects = async ({
   surveyId,
   response,
+  excludeResponseId,
 }: {
   surveyId: string;
   response: TEmbeddedValueResponse;
+  /** The response a patch is about, so its own existing link is not counted against it. */
+  excludeResponseId?: string;
 }): Promise<TV3ResponseValidationEffects["quotas"]> => {
   const screening = await screenResponseQuotas({
     surveyId,
@@ -102,8 +105,12 @@ const quotaEffects = async ({
           where: {
             quotaId: { in: screening.passedQuotas.map((quota) => quota.id) },
             status: "screenedIn",
-            // The same predicate `handleQuotas` counts with, minus its exclusion of the response
-            // being written — there is no such response here.
+            // The same predicate `handleQuotas` counts with, exclusion included. A create has no
+            // response to exclude; a patch does, and without it a response that already holds a
+            // qualifying link is counted once by the query and again by the `+ 1` below. That
+            // reports `wouldFill: true` one response early, while the write it describes keeps the
+            // response screened in.
+            ...(excludeResponseId ? { response: { id: { not: excludeResponseId } } } : {}),
             OR: [{ quota: { countPartialSubmissions: true } }, { response: { finished: true } }],
           },
           _count: { responseId: true },
@@ -269,10 +276,11 @@ export async function patchEffects({
     firesPipeline: finished && !stored.finished,
     // Metering is a `responseCreated` side effect; a patch never meters.
     countsTowardMeteredResponses: false,
-    quotas: await withoutFailing(() => quotaEffects({ surveyId: survey.id, response }), [], {
-      requestId,
-      context: "quotas",
-    }),
+    quotas: await withoutFailing(
+      () => quotaEffects({ surveyId: survey.id, response, excludeResponseId: stored.id }),
+      [],
+      { requestId, context: "quotas" }
+    ),
     tagsToApply,
   };
 }

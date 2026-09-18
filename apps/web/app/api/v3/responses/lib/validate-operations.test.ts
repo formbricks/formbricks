@@ -17,6 +17,7 @@ const {
   mockScreenQuotas,
   mockGroupBy,
   mockGetOrganization,
+  mockIsCloud,
   mockValidateResponseData,
   mockValidateFileUploads,
 } = vi.hoisted(() => ({
@@ -31,6 +32,7 @@ const {
   mockScreenQuotas: vi.fn(),
   mockGroupBy: vi.fn(),
   mockGetOrganization: vi.fn(),
+  mockIsCloud: vi.fn(),
   mockValidateResponseData: vi.fn(),
   mockValidateFileUploads: vi.fn(),
 }));
@@ -40,6 +42,14 @@ vi.mock("@/modules/api/lib/validation", () => ({ validateResponseData: mockValid
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceLegacyStoragePrefixes: async () => [] }));
 vi.mock("@/modules/storage/utils", () => ({ validateClientFileUploads: mockValidateFileUploads }));
 vi.mock("@/lib/organization/service", () => ({ getOrganization: mockGetOrganization }));
+// Metering is Cloud-only, so the constant has to be controllable or only the false branch is ever
+// reachable — a regression that stopped metering a real Cloud organization would pass unnoticed.
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  get IS_FORMBRICKS_CLOUD() {
+    return mockIsCloud();
+  },
+}));
 vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({ screenResponseQuotas: mockScreenQuotas }));
 vi.mock("@formbricks/database", () => ({
   prisma: { responseQuotaLink: { groupBy: mockGroupBy } },
@@ -139,6 +149,7 @@ beforeEach(() => {
   mockScreenQuotas.mockResolvedValue(null);
   mockGroupBy.mockResolvedValue([]);
   mockGetOrganization.mockResolvedValue({ billing: { stripeCustomerId: null } });
+  mockIsCloud.mockReturnValue(false);
 });
 
 /**
@@ -317,6 +328,37 @@ describe("effects", () => {
     );
     expect(alreadyFinished.effects.firesPipeline).toBe(false);
     expect(alreadyFinished.effects.countsTowardMeteredResponses).toBe(false);
+  });
+
+  /**
+   * Both halves of the metering gate, because it is an AND and a one-sided test proves neither. The
+   * write is metered only on Cloud AND only for an organization that has a Stripe customer.
+   */
+  test.each([
+    ["cloud with a Stripe customer", true, "cus_123", true],
+    ["cloud without one", true, null, false],
+    ["self-hosted with a Stripe customer", false, "cus_123", false],
+  ])("metering on a create: %s", async (_label, isCloud, stripeCustomerId, expected) => {
+    mockIsCloud.mockReturnValue(isCloud);
+    mockGetOrganization.mockResolvedValue({ billing: { stripeCustomerId } });
+
+    const data = await bodyOf(
+      await validate({ operation: "create", data: { surveyId: SURVEY_ID, finished: true, data: {} } })
+    );
+
+    expect(data.effects.countsTowardMeteredResponses).toBe(expected);
+  });
+
+  /** A patch is never a `responseCreated`, so it is never metered whatever the plan says. */
+  test("a patch is never metered, even on cloud with a Stripe customer", async () => {
+    mockIsCloud.mockReturnValue(true);
+    mockGetOrganization.mockResolvedValue({ billing: { stripeCustomerId: "cus_123" } });
+
+    const data = await bodyOf(
+      await validate({ operation: "patch", responseId: RESPONSE_ID, data: { finished: true } })
+    );
+
+    expect(data.effects.countsTowardMeteredResponses).toBe(false);
   });
 
   /**

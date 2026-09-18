@@ -12,7 +12,9 @@ description: >
 
 
   The number of **entries** is capped at 500, matching `data`: a response holds one timing per
-  element, so anything beyond that is not telemetry the server can use, and it is stored verbatim.
+  element, so anything beyond that is not telemetry the server can use. A map with more entries is
+  **rejected** — `maxProperties` below is enforced during request validation, so the whole write
+  fails rather than the excess being trimmed or stored.
 
 
   **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and
