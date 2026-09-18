@@ -1,0 +1,22 @@
+type: object
+description: >-
+  Which feedback dataset answered, echoed by every feedback-record operation that resolves one.
+
+
+  Open and composed with `allOf`, like `ListPaginationMeta` — see the note there. Extracted because
+  three components, across four operations, carried these two fields with the same prose copied out.
+required:
+  - datasetId
+  - datasetName
+properties:
+  datasetId:
+    type: string
+    format: cuid2
+    description: >-
+      The dataset that was actually searched. Echoed because an empty `data` is otherwise
+      ambiguous — "this dataset holds no matching records" reads identically to "I don't know what
+      was searched" — and a caller that let `workspaceId` resolve the dataset would otherwise need
+      a second request to learn which one answered.
+  datasetName:
+    type: string
+    description: Human-readable name of that dataset.

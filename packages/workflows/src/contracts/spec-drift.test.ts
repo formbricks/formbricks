@@ -38,6 +38,35 @@ const schemaKeys = (schema: z.ZodObject): string[] => Object.keys(schema.shape).
 const yamlPropertyKeys = (yamlSchema: Record<string, unknown>): string[] =>
   Object.keys((yamlSchema.properties as Record<string, unknown> | undefined) ?? {}).sort();
 
+/**
+ * The property keys a schema really exposes, following `allOf` branches and the relative `$ref`s
+ * between sibling component files.
+ *
+ * `yamlPropertyKeys` reads `properties` directly, so a composed schema answers `[]` — which reads as
+ * "the spec declares nothing" rather than "the properties are one level down". The three assertions
+ * above resolve their composition by hand because each is checking something narrower: that a named
+ * base is composed with an extension of exactly these fields. Use this one when the question is only
+ * what the whole schema ends up carrying.
+ */
+const composedPropertyKeys = async (relativePath: string): Promise<string[]> => {
+  const schema = await loadYaml(relativePath);
+  const branches = (schema.allOf as Record<string, unknown>[] | undefined) ?? [schema];
+  const keys = new Set<string>();
+
+  for (const branch of branches) {
+    const ref = branch.$ref as string | undefined;
+    if (ref) {
+      for (const key of await composedPropertyKeys(`components/schemas/${ref.replace("./", "")}`)) {
+        keys.add(key);
+      }
+      continue;
+    }
+    for (const key of yamlPropertyKeys(branch)) keys.add(key);
+  }
+
+  return [...keys].sort();
+};
+
 describe("operation coverage", () => {
   test("the contracts map covers exactly the workflow operations in the spec", async () => {
     const pathFiles = await readdir(new URL("paths/", SPEC_SRC_URL));
@@ -111,8 +140,37 @@ describe("resource shapes", () => {
   });
 
   test("CursorPaginationMeta matches the contract shape", async () => {
+    // Composed rather than inline since ENG-3113: the fields live in `ListPaginationMeta`, shared
+    // with every other v3 list, and this schema exists to close it.
+    expect(await composedPropertyKeys("components/schemas/CursorPaginationMeta.yml")).toEqual(
+      schemaKeys(ZCursorPaginationMeta)
+    );
+  });
+
+  test("CursorPaginationMeta adds nothing of its own to the shared base", async () => {
     const yamlSchema = await loadYaml("components/schemas/CursorPaginationMeta.yml");
-    expect(yamlPropertyKeys(yamlSchema)).toEqual(schemaKeys(ZCursorPaginationMeta));
+    const branches = yamlSchema.allOf as Record<string, string>[];
+
+    expect(branches).toHaveLength(1);
+    expect(branches[0].$ref).toContain("ListPaginationMeta");
+    // The close has to be `unevaluatedProperties`, not `additionalProperties`: inside an `allOf` the
+    // latter sees the base's own properties as additional and rejects every valid response.
+    expect(yamlSchema.unevaluatedProperties).toBe(false);
+  });
+
+  /**
+   * The echo reports the page size the server applied; it does not bound what may be asked for. A
+   * `maximum` here is also the trap described on `ZCursorPaginationMeta`: `validateOutput` turns a
+   * failing echo into a logged 500, so a cap that disagrees with the input schema converts a caller's
+   * 400 into a server error.
+   */
+  test("the limit echo carries no upper bound, in either layer", async () => {
+    const base = await loadYaml("components/schemas/ListPaginationMeta.yml");
+    const limit = (base.properties as Record<string, Record<string, unknown>>).limit;
+
+    expect(limit.minimum).toBe(1);
+    expect(limit.maximum).toBeUndefined();
+    expect(ZCursorPaginationMeta.safeParse({ limit: 1000, nextCursor: null }).success).toBe(true);
   });
 
   test("WorkflowTestResult properties match the contract shape", async () => {
