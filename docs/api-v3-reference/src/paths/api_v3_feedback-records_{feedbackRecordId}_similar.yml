@@ -10,9 +10,8 @@ get:
     A record with no embedding yet answers **409**, not 404 — it exists, it simply has nothing to
     compare. Records without text are never embedded.
 
-    Answers **403** for an unknown or inaccessible id. Answers **404** when the record exists but has
-    no embedding — it has no text, or was created moments ago and is not embedded yet. Answers
-    **503** on instances without an embedding model configured.
+    Answers **403** for an unknown or inaccessible id, and **503** on instances with no embedding
+    model configured.
   tags:
     - V3 Feedback Records
   parameters:
@@ -52,6 +51,8 @@ get:
       $ref: ../components/responses/V3Forbidden.yml
     "409":
       $ref: ../components/responses/FeedbackRecordsEmbeddingPending.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
     "429":
       $ref: ../components/responses/V3TooManyRequests.yml
     "500":

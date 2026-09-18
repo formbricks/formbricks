@@ -62,21 +62,32 @@ nonexistent_dataset_id="clctnosuchdataset0000001"
 
 failures=0
 
-# Prints "<status> <code>" so two refusals can be compared as a single value, which is the point:
-# equal strings mean the surface said the same thing about both ids.
+# Prints "<status> <code>" for the human-readable assertions. The body is kept, because comparing two
+# refusals needs more than this pair — see `refusal_fingerprint`.
 probe() {
-  local url="$1" status code
-  status=$(curl -s -o /tmp/tenancy-body.json -w "%{http_code}" -H "x-api-key: fbk_${SEED_API_KEY}" "${url}")
-  code=$(node -p "(() => { try { return require('/tmp/tenancy-body.json').code ?? '-'; } catch { return '-'; } })()")
+  local url="$1" body="${2:-/tmp/tenancy-body.json}" status code
+  status=$(curl -s -o "${body}" -w "%{http_code}" -H "x-api-key: fbk_${SEED_API_KEY}" "${url}")
+  code=$(node -p "(() => { try { return require('${body}').code ?? '-'; } catch { return '-'; } })()")
   echo "${status} ${code}"
 }
 
+# Everything that must be identical between two refusals, and nothing that must not be.
+#
+# Comparing status and `code` alone let a regression change the refusal `detail` between these two
+# paths while the check stayed green — and `detail` is prose a caller can read, so a difference there
+# is exactly the existence oracle this file exists to prevent. `requestId` and `instance` are excluded
+# because they are request-specific by construction: the instance carries the id that was asked for.
+refusal_fingerprint() {
+  local body="$1"
+  node -p "(() => { try { const b = require('${body}'); return JSON.stringify({ type: b.type ?? null, title: b.title ?? null, status: b.status ?? null, detail: b.detail ?? null, code: b.code ?? null }); } catch { return '-'; } })()"
+}
+
 expect_refused() {
-  local description="$1" observed="$2"
+  local description="$1" observed="$2" body="${3:-/tmp/tenancy-body.json}"
   local status="${observed%% *}"
   if [ "${status}" != "403" ]; then
     echo "::error::${description} answered ${observed}, expected 403. A caller can reach a dataset it holds no permission on."
-    cat /tmp/tenancy-body.json
+    cat "${body}"
     failures=$((failures + 1))
   else
     echo "ok: ${description} → ${observed}"
@@ -84,8 +95,8 @@ expect_refused() {
 }
 
 echo "--- a dataset in another organization is refused"
-foreign=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${foreign_dataset_id}")
-expect_refused "listing a foreign dataset" "${foreign}"
+foreign=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${foreign_dataset_id}" /tmp/tenancy-foreign.json)
+expect_refused "listing a foreign dataset" "${foreign}" /tmp/tenancy-foreign.json
 
 echo "--- a workspace the key holds no permission on is refused"
 foreign_ws=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${foreign_workspace_id}")
@@ -96,14 +107,23 @@ foreign_count=$(probe "${BASE_URL}/api/v3/feedback-records/count?workspaceId=${w
 expect_refused "counting a foreign dataset" "${foreign_count}"
 
 echo "--- a foreign dataset and a nonexistent one are indistinguishable"
-missing=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${nonexistent_dataset_id}")
-expect_refused "listing a nonexistent dataset" "${missing}"
+missing=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${nonexistent_dataset_id}" /tmp/tenancy-missing.json)
+expect_refused "listing a nonexistent dataset" "${missing}" /tmp/tenancy-missing.json
 
-if [ "${foreign}" != "${missing}" ]; then
-  echo "::error::A foreign dataset answers '${foreign}' but a nonexistent one answers '${missing}'. The difference tells a caller which ids exist in other organizations."
+foreign_fingerprint=$(refusal_fingerprint /tmp/tenancy-foreign.json)
+missing_fingerprint=$(refusal_fingerprint /tmp/tenancy-missing.json)
+
+# An unparseable body fingerprints as "-", and two of those compare equal — which would report "no
+# existence oracle" having compared nothing at all. Refuse that rather than pass it.
+if [ "${foreign_fingerprint}" = "-" ] || [ "${missing_fingerprint}" = "-" ]; then
+  echo "::error::A refusal body could not be read as JSON, so the two refusals were never compared."
+  cat /tmp/tenancy-foreign.json /tmp/tenancy-missing.json
+  failures=$((failures + 1))
+elif [ "${foreign_fingerprint}" != "${missing_fingerprint}" ]; then
+  echo "::error::A foreign dataset answers ${foreign_fingerprint} but a nonexistent one answers ${missing_fingerprint}. The difference tells a caller which ids exist in other organizations."
   failures=$((failures + 1))
 else
-  echo "ok: both refusals are '${missing}' — no existence oracle"
+  echo "ok: both refusals are ${missing_fingerprint} — no existence oracle"
 fi
 
 echo "--- a real record id is refused when named through a workspace the key cannot use"

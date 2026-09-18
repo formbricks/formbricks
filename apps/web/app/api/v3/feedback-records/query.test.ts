@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  ZV3FeedbackRecordSimilarityQuery,
   ZV3FeedbackRecordsCountQuery,
   ZV3FeedbackRecordsListQuery,
   respellProblemParams,
@@ -447,5 +448,94 @@ describe("a validation problem names what the caller sent", () => {
       })
     );
     expect(await res.json()).toEqual({ title: "Unprocessable Content" });
+  });
+});
+
+describe("unknown body fields are bounded", () => {
+  /**
+   * The expected-field list used to be rebuilt and embedded in every single unknown-key error, so a
+   * body near the 2 MiB limit — which is mostly small keys — could be refused with an error array far
+   * larger than the request. The list is built once now, and the keys are capped.
+   */
+  test("names at most twenty unknown fields and counts the rest", () => {
+    const body: Record<string, unknown> = {};
+    for (let i = 0; i < 25; i += 1) body[`bogus${i}`] = i;
+
+    const result = translateCreateBody(body);
+    if (result.ok) throw new Error("expected the unknown fields to be refused");
+
+    // 20 named, plus one summary.
+    expect(result.invalidParams).toHaveLength(21);
+    expect(result.invalidParams.at(-1)).toEqual({
+      name: "body",
+      reason: "5 further unknown fields were not listed.",
+    });
+  });
+
+  test("the error body does not grow with the square of the key count", () => {
+    const sizeFor = (count: number): number => {
+      const body: Record<string, unknown> = {};
+      for (let i = 0; i < count; i += 1) body[`bogus${i}`] = i;
+      const result = translateCreateBody(body);
+      if (result.ok) throw new Error("expected a refusal");
+      return JSON.stringify(result.invalidParams).length;
+    };
+
+    // Twenty times the keys must not mean twenty times the error, or the cap is not doing its job.
+    expect(sizeFor(500)).toBeLessThan(sizeFor(25) * 2);
+  });
+
+  test("a body with only known fields is still translated", () => {
+    // The cap must not change the happy path.
+    const result = translateCreateBody({ sourceType: "review", submissionId: "s" });
+
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe("the similarity threshold", () => {
+  const parseSimilarity = (params: Record<string, string>) =>
+    ZV3FeedbackRecordSimilarityQuery.safeParse({ workspaceId: WORKSPACE_ID, ...params });
+
+  /**
+   * The parameter's whole job is to exclude weak matches, and `z.coerce.number()` read a present-but-
+   * empty `?minScore=` as `0` — inside the documented range, so it was accepted, and the operations
+   * layer then applied it in place of its own default. `?minScore=` silently meant "match anything".
+   */
+  test.each(["", "   "])("an empty minScore is rejected, not read as zero: %j", (raw) => {
+    expect(parseSimilarity({ minScore: raw }).success).toBe(false);
+  });
+
+  test("a real zero is still accepted", () => {
+    const parsed = parseSimilarity({ minScore: "0" });
+
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.minScore).toBe(0);
+  });
+
+  test.each(["0.42", "1"])("an in-range threshold parses to its number: %s", (raw) => {
+    const parsed = parseSimilarity({ minScore: raw });
+
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.minScore).toBe(Number(raw));
+  });
+
+  test.each(["-0.1", "1.1", "abc"])("an out-of-range or non-numeric threshold is refused: %s", (raw) => {
+    expect(parseSimilarity({ minScore: raw }).success).toBe(false);
+  });
+
+  test("an absent threshold stays absent, so the operations layer applies its own default", () => {
+    const parsed = parseSimilarity({});
+
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.minScore).toBeUndefined();
+  });
+
+  /** `limit` escapes the coercion trap only because `0` fails its own `min(1)`. Pinned, not assumed. */
+  test.each(["", "   ", "0"])("an empty or zero limit is refused: %j", (raw) => {
+    expect(parseSimilarity({ limit: raw }).success).toBe(false);
   });
 });

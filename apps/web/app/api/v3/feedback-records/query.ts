@@ -275,7 +275,12 @@ export const ZV3FeedbackRecordSimilarityQuery = z
     datasetId: ZId.optional(),
     limit: z.coerce.number().int().min(1).max(100).optional(),
     cursor: z.string().min(1).optional(),
-    minScore: z.coerce.number().min(0).max(1).optional(),
+    // `numberParam`, not `z.coerce.number()`, for the reason spelled out on that helper: coercion
+    // reads a present-but-empty `?minScore=` as `0`, which is inside the documented range and so was
+    // accepted — silently replacing the default threshold with "match anything" on the one parameter
+    // whose whole job is to exclude weak matches. `limit` above escapes it only by accident, because
+    // `0` fails its own `min(1)`.
+    minScore: numberParam(0, 1).optional(),
   })
   .strict();
 
@@ -306,6 +311,9 @@ export type TV3BodyTranslation =
   | { ok: true; body: Record<string, unknown> }
   | { ok: false; invalidParams: { name: string; reason: string }[] };
 
+/** How many unknown body fields a 400 names before it stops enumerating them. */
+const MAX_REPORTED_UNKNOWN_FIELDS = 20;
+
 /**
  * Translate a documented request body into the operations layer's spelling.
  *
@@ -322,19 +330,36 @@ const translateBody = (body: unknown, members: Map<string, string>): TV3BodyTran
     return { ok: false, invalidParams: [{ name: "body", reason: "Expected a JSON object." }] };
   }
 
+  let unknownBeyondCap = 0;
+
   const translated: Record<string, unknown> = {};
   const unknown: { name: string; reason: string }[] = [];
+
+  // Built once. It used to be rebuilt and embedded per offending key, which made the error body grow
+  // with the product of the caller's key count and the member list — a body near the 2 MiB limit is
+  // mostly small keys, so a request that is refused could answer with far more bytes than it sent.
+  const expected = [...members.keys()].sort((a, b) => a.localeCompare(b)).join(", ");
 
   for (const [key, value] of Object.entries(body)) {
     const operationParam = members.get(key);
     if (!operationParam) {
-      unknown.push({
-        name: key,
-        reason: `Unknown field. Expected one of: ${[...members.keys()].sort((a, b) => a.localeCompare(b)).join(", ")}.`,
-      });
+      // Bounded for the same reason: the list is caller-controlled and reaches both the response and
+      // the log line. Past the cap the keys are counted rather than named.
+      if (unknown.length < MAX_REPORTED_UNKNOWN_FIELDS) {
+        unknown.push({ name: key, reason: `Unknown field. Expected one of: ${expected}.` });
+      } else {
+        unknownBeyondCap += 1;
+      }
       continue;
     }
     translated[operationParam] = value;
+  }
+
+  if (unknownBeyondCap > 0) {
+    unknown.push({
+      name: "body",
+      reason: `${unknownBeyondCap} further unknown fields were not listed.`,
+    });
   }
 
   return unknown.length > 0 ? { ok: false, invalidParams: unknown } : { ok: true, body: translated };

@@ -1,18 +1,15 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TooManyRequestsError } from "@formbricks/types/errors";
 import { proxyFeedbackRecordsRequest } from "@/modules/hub/feedback-records-proxy";
 
-const { mockAuthorizeGatewayRequest, mockApplyRateLimit, mockLoggerError, mockLoggerWarn, runtime } =
-  vi.hoisted(() => ({
-    mockAuthorizeGatewayRequest: vi.fn(),
-    mockApplyRateLimit: vi.fn(),
-    mockLoggerError: vi.fn(),
-    mockLoggerWarn: vi.fn(),
-    runtime: {
-      isProduction: false,
-    },
-  }));
+const { mockAuthorizeGatewayRequest, mockLoggerError, mockLoggerWarn, runtime } = vi.hoisted(() => ({
+  mockAuthorizeGatewayRequest: vi.fn(),
+  mockLoggerError: vi.fn(),
+  mockLoggerWarn: vi.fn(),
+  runtime: {
+    isProduction: false,
+  },
+}));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -29,18 +26,10 @@ vi.mock("@/lib/constants", () => ({
   },
 }));
 
+// The proxy reaches this module for one thing now: the authorization outcome. The rate limit and the
+// refusal shape moved inside `authorizeGatewayRequest`, and are covered by its own tests.
 vi.mock("@/modules/gateway-auth/lib/request", () => ({
   authorizeGatewayRequest: mockAuthorizeGatewayRequest,
-  // Real implementations: the refusal shape and the choice of identifier are part of what these tests
-  // are checking, not incidental collaborators.
-  buildGatewayStatusResponse: (status: number, message: string) =>
-    new Response(message, { status, headers: { "content-type": "text/plain; charset=utf-8" } }),
-  getGatewayRateLimitIdentifier: (principal: { type: string; apiKeyId?: string; userId?: string }) =>
-    principal.type === "apiKey" ? "api-key-1" : (principal.userId ?? "user-1"),
-}));
-
-vi.mock("@/modules/core/rate-limit/helpers", () => ({
-  applyRateLimit: mockApplyRateLimit,
 }));
 
 vi.mock("@/modules/hub/feedback-records-gateway", () => ({
@@ -89,7 +78,6 @@ describe("proxyFeedbackRecordsRequest", () => {
       status: "allow",
       principal: { type: "apiKey", authentication: { apiKeyId: "api-key-1" } },
     });
-    mockApplyRateLimit.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -222,49 +210,10 @@ describe("proxyFeedbackRecordsRequest", () => {
    * This path cannot use the wrapper — it forwards a request rather than handling one — so what is
    * pinned here is that it borrows the shared config rather than inventing a limit of its own.
    */
-  test("applies the shared v3 rate limit, keyed on the authorized principal", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
-    );
-
-    expect(mockApplyRateLimit).toHaveBeenCalledWith(
-      expect.objectContaining({ namespace: "api:v3", allowedPerInterval: 100, interval: 60 }),
-      "api-key-1"
-    );
-  });
-
-  test("refuses with 429 and Retry-After when the limit is exceeded", async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    mockApplyRateLimit.mockRejectedValueOnce(new TooManyRequestsError("Rate limit exceeded", 30));
-
-    const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
-    );
-
-    expect(response.status).toBe(429);
-    expect(response.headers.get("Retry-After")).toBe("30");
-    // Same media type as the 401 and 403 on this path, not the v3 routes' problem+json.
-    expect(response.headers.get("content-type")).toContain("text/plain");
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  test("does not forward to the store when the limit is exceeded", async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    mockApplyRateLimit.mockRejectedValueOnce(new TooManyRequestsError("Rate limit exceeded"));
-
-    const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
-    );
-
-    expect(response.status).toBe(429);
-    // No retryAfter on the error, so no header rather than a header with "undefined" in it.
-    expect(response.headers.get("Retry-After")).toBeNull();
-  });
+  // The principal rate limit moved into `authorizeGatewayRequest` (between authentication and
+  // authorization) so every gateway caller gets it, including the two forward-auth services that had
+  // none. Its tests moved with it, to `modules/gateway-auth/lib/request.test.ts` — this file mocks
+  // that function, so asserting the limit here would only assert the mock.
 
   test("returns the authorizer response for an unsupported operation", async () => {
     mockAuthorizeGatewayRequest.mockResolvedValueOnce({

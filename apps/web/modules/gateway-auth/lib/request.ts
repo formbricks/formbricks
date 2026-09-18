@@ -3,8 +3,11 @@ import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateApiKeyFromHeaders, getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getProxySession } from "@/modules/auth/lib/proxy-session";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
 export type TGatewayOriginalRequest = {
   method: string;
@@ -152,6 +155,33 @@ export type TGatewayAuthorizationOutcome =
   | { status: "allow"; principal: TGatewayAuthenticatedPrincipal }
   | { status: "deny"; response: Response };
 
+/**
+ * The shared principal limit, rendered the way this surface renders every other refusal.
+ *
+ * `text/plain` rather than problem+json, matching the 401 and 403 beside it: a caller here is talking
+ * to the feedback store's contract, and one JSON refusal among plain-text ones is the surprise.
+ *
+ * Only the limiter's own rejection becomes a 429. Anything else thrown here is a real fault and is
+ * left to propagate, because reporting it as "too many requests" tells the caller something false and
+ * hides the bug.
+ */
+const limitAuthenticatedPrincipal = async (
+  principal: TGatewayAuthenticatedPrincipal,
+  requestId: string
+): Promise<Response | null> => {
+  try {
+    await applyRateLimit(rateLimitConfigs.api.v3, getGatewayRateLimitIdentifier(principal));
+    return null;
+  } catch (error) {
+    if (!(error instanceof TooManyRequestsError)) throw error;
+
+    const response = buildGatewayStatusResponse(429, "Too Many Requests");
+    if (error.retryAfter) response.headers.set("Retry-After", String(error.retryAfter));
+    logger.warn({ requestId, statusCode: 429 }, "Gateway request rate limit exceeded");
+    return response;
+  }
+};
+
 export const authorizeGatewayRequest = async ({
   request,
   originalRequest,
@@ -175,6 +205,18 @@ export const authorizeGatewayRequest = async ({
     return { status: "deny", response: buildGatewayStatusResponse(401, "Unauthorized") };
   }
 
+  // Counted here — after authentication, before authorization — which is the contract the v3 wrapper
+  // already follows, and it is here rather than in each caller so none of them can forget it.
+  //
+  // `authorize` below resolves the tenant, checks entitlements and checks permissions, each a query.
+  // Limiting only a request that passes all of them, as the proxy used to, means a caller holding any
+  // valid credential can spend those queries without bound by failing the last check every time — and
+  // the two forward-auth callers had no limit at all, so the gateway routes inherited none.
+  const rateLimited = await limitAuthenticatedPrincipal(authenticationResult.principal, requestId);
+  if (rateLimited) {
+    return { status: "deny", response: rateLimited };
+  }
+
   const authorizationDecision = await authorizer.authorize({
     request,
     originalRequest,
@@ -190,6 +232,8 @@ export const authorizeGatewayRequest = async ({
 /**
  * What the rate limit is counted against — the same choice the v3 wrapper makes: the API key, or the
  * user behind a session.
+ *
+ * Module-private: the limit is applied here, so no caller has to know what it is keyed on.
  */
-export const getGatewayRateLimitIdentifier = (principal: TGatewayAuthenticatedPrincipal): string =>
+const getGatewayRateLimitIdentifier = (principal: TGatewayAuthenticatedPrincipal): string =>
   principal.type === "apiKey" ? principal.authentication.apiKeyId : principal.userId;

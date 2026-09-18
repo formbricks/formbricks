@@ -342,6 +342,46 @@ async function seedFeedbackDatasets(): Promise<void> {
 }
 
 /**
+ * A whole-response deadline for each feedback-store call, which Node does not give us.
+ *
+ * Node's ~300s inactivity timeouts only fire between chunks, so a store that trickles a byte every
+ * few minutes keeps `json()` pending indefinitely; a silent connection still costs five minutes.
+ * Either way the seed step is sequential, so one hung request holds the rest of the job until its
+ * 25-minute timeout and the failure reads as "CI is slow" rather than "the store did not answer".
+ *
+ * Per request rather than one budget for the loop: each call should get a full deadline, and a shared
+ * signal would make a later record fail because an earlier one was slow.
+ */
+const FEEDBACK_STORE_TIMEOUT_MS = 15_000;
+
+/**
+ * One feedback-store call, with its deadline and a failure that names itself.
+ *
+ * A bare `AbortSignal.timeout` rejection is a `TimeoutError` with no clue which request died, which is
+ * the same diagnosis problem the deadline exists to fix — one step later.
+ *
+ * The signal stays attached to the returned response, so the deadline covers reading the body too. A
+ * timeout that lands there is raised by the caller's `json()`, outside this wrapper, and so arrives
+ * unnamed — still bounded, just less legible than one on the request leg.
+ */
+async function fetchFeedbackStore(
+  url: string,
+  init: RequestInit,
+  describeRequest: string
+): Promise<Response> {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(FEEDBACK_STORE_TIMEOUT_MS) });
+  } catch (error) {
+    if (error instanceof Error && error.name === "TimeoutError") {
+      throw new Error(
+        `${describeRequest} did not complete within ${FEEDBACK_STORE_TIMEOUT_MS}ms. The feedback store accepted the connection but did not finish the response.`
+      );
+    }
+    throw error;
+  }
+}
+
+/**
  * Feedback records live in the feedback store, not in this database, so they are seeded over its API
  * rather than with Prisma. Returns the record id per fixed `submission_id`.
  *
@@ -384,11 +424,11 @@ async function seedFeedbackRecords(): Promise<Record<string, string>> {
       language: "en",
     };
 
-    const created = await fetch(`${baseUrl}/v1/feedback-records`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
+    const created = await fetchFeedbackStore(
+      `${baseUrl}/v1/feedback-records`,
+      { method: "POST", headers, body: JSON.stringify(body) },
+      `Seeding feedback record ${submissionId}`
+    );
 
     if (created.ok) {
       const record = (await created.json()) as { id?: string };
@@ -419,7 +459,11 @@ async function seedFeedbackRecords(): Promise<Record<string, string>> {
       submission_id: submissionId,
       limit: "1",
     });
-    const existing = await fetch(`${baseUrl}/v1/feedback-records?${query.toString()}`, { headers });
+    const existing = await fetchFeedbackStore(
+      `${baseUrl}/v1/feedback-records?${query.toString()}`,
+      { headers },
+      `Looking up existing feedback record ${submissionId}`
+    );
     if (!existing.ok) {
       throw new Error(`Feedback record ${submissionId} exists but could not be read (${existing.status}).`);
     }

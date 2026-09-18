@@ -55,6 +55,8 @@ get:
       $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
     "429":
       $ref: ../components/responses/V3TooManyRequests.yml
     "500":
@@ -68,7 +70,7 @@ patch:
   summary: Update a feedback record
   description: |
     Changes the answer, `language`, `userId` or `metadata` of one record. Only the members sent
-    are changed; provenance (`datasetId`, `source_*`, `field_*`, `submissionId`, `collectedAt`)
+    are changed; provenance (`datasetId`, `source*`, `field*`, `submissionId`, `collectedAt`)
     is immutable. Requires an API key with **write** permission (or higher) on a workspace the
     record's dataset is assigned to, and the dataset must be assigned to **exactly one** workspace
     — see the delete operation for why.
@@ -174,6 +176,8 @@ delete:
       $ref: ../components/responses/V3Forbidden.yml
     "409":
       $ref: ../components/responses/V3Conflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
     "429":
       $ref: ../components/responses/V3TooManyRequests.yml
     "500":

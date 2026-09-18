@@ -31,6 +31,6 @@ properties:
     type: number
     format: double
     description: >-
-      The similarity threshold that was applied, including the server default when the caller sent
-      none. Echoed because this value is clamped rather than rejected, so what was applied is not
-      always what was asked for.
+      The similarity threshold that was applied. Out-of-range and non-numeric values are rejected
+      with a **400**, so this never disagrees with what a caller sent — it is echoed for the case
+      where nothing was sent, since the server default is otherwise invisible.

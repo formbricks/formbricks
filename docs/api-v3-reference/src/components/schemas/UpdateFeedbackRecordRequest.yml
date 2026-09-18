@@ -1,7 +1,7 @@
 type: object
 description: >-
   A partial update. Only the members sent are changed; an empty body is accepted and changes
-  nothing. Provenance (`datasetId`, `source_*`, `field_*`, `submissionId`, `collectedAt`) is
+  nothing. Provenance (`datasetId`, `source*`, `field*`, `submissionId`, `collectedAt`) is
   immutable.
 additionalProperties: false
 # At least one field: an empty patch is a caller mistake, not a no-op worth a round trip, and the

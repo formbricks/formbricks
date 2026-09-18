@@ -6,7 +6,7 @@ get:
     (or higher) on the workspace.
 
     This is how a caller discovers the `datasetId` the record operations filter and write by — it is
-    not shown anywhere else in the API. A workspace reaches at most one active dataset, so this
+    not shown anywhere else in the API. A workspace holds few enough datasets to return whole, so this
     normally returns a single entry.
   tags:
     - V3 Feedback Records

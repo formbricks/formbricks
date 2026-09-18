@@ -4,5 +4,7 @@ schema:
   type: string
   format: cuid2
 description: >-
-  Names one feedback dataset explicitly. Optional: a workspace reaches at most one active dataset,
-  so `workspaceId` alone normally resolves it. List the ids with `GET /api/v3/feedback-datasets`.
+  Names one feedback dataset explicitly. Optional, and what happens when it is omitted depends on how
+  many datasets the workspace has: with exactly one, `workspaceId` alone resolves it; with more than
+  one, the request is a **400** naming this parameter as required; with none, it is a **422**. List the
+  ids with `GET /api/v3/feedback-datasets?workspaceId=<workspaceId>`.

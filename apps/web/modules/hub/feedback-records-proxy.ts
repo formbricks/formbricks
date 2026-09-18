@@ -1,15 +1,8 @@
 import "server-only";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { TooManyRequestsError } from "@formbricks/types/errors";
 import { HUB_API_KEY, HUB_API_URL } from "@/lib/constants";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
-import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import {
-  authorizeGatewayRequest,
-  buildGatewayStatusResponse,
-  getGatewayRateLimitIdentifier,
-} from "@/modules/gateway-auth/lib/request";
+import { authorizeGatewayRequest } from "@/modules/gateway-auth/lib/request";
 import { feedbackRecordsGatewayAuthorizer } from "@/modules/hub/feedback-records-gateway";
 import { getFeedbackRecordsHubPathname } from "@/modules/hub/feedback-records-routing";
 import { getHubErrorHint } from "@/modules/hub/utils";
@@ -93,7 +86,9 @@ const buildHubRequest = (request: NextRequest, hubUrl: URL): Request => {
  *
  * Rate-limited on `rateLimitConfigs.api.v3` — the same config, namespace and identifier every v3
  * route gets from the shared wrapper. This path cannot use the wrapper itself (it forwards a request
- * rather than handling one), so it applies the shared config directly instead of defining its own.
+ * rather than handling one); the limit is applied by `authorizeGatewayRequest`, between
+ * authentication and authorization, so the two forward-auth callers are covered by the same counter
+ * rather than by nothing.
  */
 export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise<Response> => {
   const originalUrl = new URL(request.url);
@@ -124,24 +119,6 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
 
   if (authorization.status === "deny") {
     return authorization.response;
-  }
-
-  // Derived outside the try: only the limiter's own refusal should become a 429. Wrapping this too
-  // would report an unexpected failure here as "too many requests", which is the wrong thing to tell
-  // a caller and hides the bug.
-  const rateLimitIdentifier = getGatewayRateLimitIdentifier(authorization.principal);
-
-  try {
-    await applyRateLimit(rateLimitConfigs.api.v3, rateLimitIdentifier);
-  } catch (error) {
-    // `text/plain`, like the 401 and 403 on this path: a caller here is talking to the feedback
-    // store's contract, and a lone problem+json refusal among plain-text ones is the surprise.
-    const response = buildGatewayStatusResponse(429, "Too Many Requests");
-    if (error instanceof TooManyRequestsError && error.retryAfter) {
-      response.headers.set("Retry-After", String(error.retryAfter));
-    }
-    logger.warn({ requestId, statusCode: 429 }, "Feedback records proxy rate limit exceeded");
-    return response;
   }
 
   try {

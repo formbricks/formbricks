@@ -1,6 +1,6 @@
 type: object
 description: >-
-  A new feedback record. Exactly one `value_*` member should carry the answer, matching
+  A new feedback record. Exactly one `value*` member should carry the answer, matching
   `fieldType`. Strings must be valid UTF-8 without NULL bytes; violations answer **400**.
 additionalProperties: false
 required:

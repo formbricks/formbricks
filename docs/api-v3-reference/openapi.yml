@@ -3551,7 +3551,7 @@ paths:
         (or higher) on the workspace.
 
         This is how a caller discovers the `datasetId` the record operations filter and write by — it is
-        not shown anywhere else in the API. A workspace reaches at most one active dataset, so this
+        not shown anywhere else in the API. A workspace holds few enough datasets to return whole, so this
         normally returns a single entry.
       tags:
         - V3 Feedback Records
@@ -3691,7 +3691,7 @@ paths:
                         fieldType: nps
                         valueNumber: 9
                     meta:
-                      limit: 100
+                      limit: 50
                       nextCursor: eyJjb2xsZWN0ZWRBdCI6IjIwMjYtMDgtMTVUMTA6Mjk6MTFaIn0
                       datasetId: ph7zv3w2u1x5k9d8m4q6c0bn
                       datasetName: Customer feedback
@@ -3701,6 +3701,8 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -3869,6 +3871,8 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -3940,6 +3944,8 @@ paths:
           $ref: '#/components/responses/V3Forbidden'
         '413':
           $ref: '#/components/responses/V3PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4006,6 +4012,8 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4019,7 +4027,7 @@ paths:
       summary: Update a feedback record
       description: |
         Changes the answer, `language`, `userId` or `metadata` of one record. Only the members sent
-        are changed; provenance (`datasetId`, `source_*`, `field_*`, `submissionId`, `collectedAt`)
+        are changed; provenance (`datasetId`, `source*`, `field*`, `submissionId`, `collectedAt`)
         is immutable. Requires an API key with **write** permission (or higher) on a workspace the
         record's dataset is assigned to, and the dataset must be assigned to **exactly one** workspace
         — see the delete operation for why.
@@ -4125,6 +4133,8 @@ paths:
           $ref: '#/components/responses/V3Forbidden'
         '409':
           $ref: '#/components/responses/V3Conflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4146,9 +4156,8 @@ paths:
         A record with no embedding yet answers **409**, not 404 — it exists, it simply has nothing to
         compare. Records without text are never embedded.
 
-        Answers **403** for an unknown or inaccessible id. Answers **404** when the record exists but has
-        no embedding — it has no text, or was created moments ago and is not embedded yet. Answers
-        **503** on instances without an embedding model configured.
+        Answers **403** for an unknown or inaccessible id, and **503** on instances with no embedding
+        model configured.
       tags:
         - V3 Feedback Records
       parameters:
@@ -4188,6 +4197,8 @@ paths:
           $ref: '#/components/responses/V3Forbidden'
         '409':
           $ref: '#/components/responses/FeedbackRecordsEmbeddingPending'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -8417,7 +8428,7 @@ components:
           type:
             - string
             - 'null'
-          description: Always `null`. Datasets are not paginated — a workspace reaches at most one active dataset — but the member is present so the envelope matches every other v3 list.
+          description: Always `null`. Datasets are not paginated — a workspace holds few enough that the set is returned whole — but the member is present so the envelope matches every other v3 list.
         totalCount:
           type: integer
           minimum: 0
@@ -8623,7 +8634,7 @@ components:
           $ref: '#/components/schemas/FeedbackRecordListMeta'
     CreateFeedbackRecordRequest:
       type: object
-      description: A new feedback record. Exactly one `value_*` member should carry the answer, matching `fieldType`. Strings must be valid UTF-8 without NULL bytes; violations answer **400**.
+      description: A new feedback record. Exactly one `value*` member should carry the answer, matching `fieldType`. Strings must be valid UTF-8 without NULL bytes; violations answer **400**.
       additionalProperties: false
       required:
         - sourceType
@@ -8826,7 +8837,7 @@ components:
         minScore:
           type: number
           format: double
-          description: The similarity threshold that was applied, including the server default when the caller sent none. Echoed because this value is clamped rather than rejected, so what was applied is not always what was asked for.
+          description: The similarity threshold that was applied. Out-of-range and non-numeric values are rejected with a **400**, so this never disagrees with what a caller sent — it is echoed for the case where nothing was sent, since the server default is otherwise invisible.
     FeedbackRecordSimilarityResult:
       type: object
       additionalProperties: false
@@ -8844,7 +8855,7 @@ components:
           $ref: '#/components/schemas/FeedbackRecordSimilarityMeta'
     UpdateFeedbackRecordRequest:
       type: object
-      description: A partial update. Only the members sent are changed; an empty body is accepted and changes nothing. Provenance (`datasetId`, `source_*`, `field_*`, `submissionId`, `collectedAt`) is immutable.
+      description: A partial update. Only the members sent are changed; an empty body is accepted and changes nothing. Provenance (`datasetId`, `source*`, `field*`, `submissionId`, `collectedAt`) is immutable.
       additionalProperties: false
       minProperties: 1
       properties:
@@ -9152,7 +9163,7 @@ components:
       schema:
         type: string
         format: cuid2
-      description: 'Names one feedback dataset explicitly. Optional: a workspace reaches at most one active dataset, so `workspaceId` alone normally resolves it. List the ids with `GET /api/v3/feedback-datasets`.'
+      description: 'Names one feedback dataset explicitly. Optional, and what happens when it is omitted depends on how many datasets the workspace has: with exactly one, `workspaceId` alone resolves it; with more than one, the request is a **400** naming this parameter as required; with none, it is a **422**. List the ids with `GET /api/v3/feedback-datasets?workspaceId=<workspaceId>`.'
     FeedbackRecordFilterSubmissionIdIn:
       in: query
       name: filter[submissionId][in]
