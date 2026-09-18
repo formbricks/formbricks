@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+#
+# Asserts that the v3 feedback-record surface keeps datasets apart, which the contract tests cannot.
+#
+# Schemathesis checks a response against its documentation. It is told about exactly one workspace, so
+# it never attempts a cross-tenant read — a surface that happily served another organization's records
+# would pass every contract check, because the *shape* of the answer would be perfectly correct. That
+# is the whole gap this script covers (ENG-3117 S5).
+#
+# Two properties, both about a caller holding a valid key for workspace A:
+#
+#   1. A dataset in another organization is refused.
+#   2. That refusal is indistinguishable from the refusal for a dataset that does not exist. If the two
+#      differed — 403 against 404, say, or different `code`s — the surface would be an oracle for
+#      "does this id exist", which is how a cross-tenant enumeration starts (ENG-1980).
+#
+# Usage: tenancy-check.sh [base-url]
+# Needs SEED_API_KEY in the environment and the seeded fixtures.json next to this script.
+set -euo pipefail
+
+BASE_URL="${1:-http://localhost:3000}"
+# Response bodies go in a private directory rather than at predictable `/tmp` paths. A path another
+# local process can guess is one it can pre-create as a symlink, and `curl -o` would then truncate
+# whatever that symlink points at; it also let two runs of this script overwrite each other's bodies.
+BODIES="$(mktemp -d "${TMPDIR:-/tmp}/tenancy-check.XXXXXX")"
+trap 'rm -rf "${BODIES}"' EXIT
+# Absolute, because these ids are read with `node -p "require(...)"` and Node resolves a bare
+# relative path as a module specifier rather than a file.
+FIXTURES="$(cd "$(dirname "$0")" && pwd)/fixtures.json"
+
+if [ -z "${SEED_API_KEY:-}" ]; then
+  echo "::error::SEED_API_KEY is not set; the tenancy check cannot authenticate."
+  exit 1
+fi
+
+workspace_id=$(node -p "require('${FIXTURES}').workspaceId")
+foreign_dataset_id=$(node -p "require('${FIXTURES}').tenancy?.foreignDatasetId ?? ''")
+foreign_workspace_id=$(node -p "require('${FIXTURES}').tenancy?.foreignWorkspaceId ?? ''")
+
+if [ -z "${foreign_dataset_id}" ] || [ -z "${foreign_workspace_id}" ]; then
+  echo "::error::fixtures.json carries no tenancy fixtures. Re-run db:seed:contract — without them this check would pass by testing nothing."
+  exit 1
+fi
+
+# Positive control. Every assertion below expects a 403, so on an instance where the Unify Feedback
+# entitlement is ungranted the whole script passes while proving nothing -- every id is refused, for a
+# reason that has nothing to do with tenancy. Confirm the caller can read its OWN dataset first, and
+# skip rather than report a green that means nothing. (CI's licence is known to miss this feature --
+# ENG-2553.)
+owned_dataset_id=$(node -p "require('${FIXTURES}').read?.datasetId ?? ''")
+if [ -n "${owned_dataset_id}" ]; then
+  owned_status=$(curl -s -o /dev/null -w "%{http_code}" -H "x-api-key: fbk_${SEED_API_KEY}" \
+    "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${owned_dataset_id}&limit=1")
+  if [ "${owned_status}" = "403" ]; then
+    echo "::warning::Tenant-isolation check skipped: the caller cannot read its own dataset either (403), so every refusal below would be vacuous. See ENG-2553."
+    exit 0
+  fi
+  if [ "${owned_status}" != "200" ]; then
+    echo "::error::Positive control returned ${owned_status}, expected 200 or 403. The tenancy assertions cannot be trusted."
+    exit 1
+  fi
+fi
+
+# A syntactically valid id that was never created. Same shape as a real one (`z.cuid2()`: lowercase
+# alphanumeric), so it fails on existence rather than on validation.
+nonexistent_dataset_id="clctnosuchdataset0000001"
+
+failures=0
+
+# Prints "<status> <code>" for the human-readable assertions. The body is kept, because comparing two
+# refusals needs more than this pair — see `refusal_fingerprint`.
+probe() {
+  local url="$1" body="${2:-${BODIES}/body.json}" status code
+  status=$(curl -s -o "${body}" -w "%{http_code}" -H "x-api-key: fbk_${SEED_API_KEY}" "${url}")
+  code=$(node -p "(() => { try { return require('${body}').code ?? '-'; } catch { return '-'; } })()")
+  echo "${status} ${code}"
+}
+
+# Everything that must be identical between two refusals, and nothing that must not be.
+#
+# Comparing status and `code` alone let a regression change the refusal `detail` between these two
+# paths while the check stayed green — and `detail` is prose a caller can read, so a difference there
+# is exactly the existence oracle this file exists to prevent. `requestId` and `instance` are excluded
+# because they are request-specific by construction: the instance carries the id that was asked for.
+refusal_fingerprint() {
+  local body="$1"
+  node -p "(() => { try { const b = require('${body}'); return JSON.stringify({ type: b.type ?? null, title: b.title ?? null, status: b.status ?? null, detail: b.detail ?? null, code: b.code ?? null }); } catch { return '-'; } })()"
+}
+
+expect_refused() {
+  local description="$1" observed="$2" body="${3:-${BODIES}/body.json}"
+  local status="${observed%% *}"
+  if [ "${status}" != "403" ]; then
+    echo "::error::${description} answered ${observed}, expected 403. A caller can reach a dataset it holds no permission on."
+    cat "${body}"
+    failures=$((failures + 1))
+  else
+    echo "ok: ${description} → ${observed}"
+  fi
+}
+
+echo "--- a dataset in another organization is refused"
+foreign=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${foreign_dataset_id}" "${BODIES}/foreign.json")
+expect_refused "listing a foreign dataset" "${foreign}" "${BODIES}/foreign.json"
+
+echo "--- a workspace the key holds no permission on is refused"
+foreign_ws=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${foreign_workspace_id}")
+expect_refused "listing in a foreign workspace" "${foreign_ws}"
+
+echo "--- counting is gated the same way as listing"
+foreign_count=$(probe "${BASE_URL}/api/v3/feedback-records/count?workspaceId=${workspace_id}&datasetId=${foreign_dataset_id}")
+expect_refused "counting a foreign dataset" "${foreign_count}"
+
+echo "--- a foreign dataset and a nonexistent one are indistinguishable"
+missing=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${nonexistent_dataset_id}" "${BODIES}/missing.json")
+expect_refused "listing a nonexistent dataset" "${missing}" "${BODIES}/missing.json"
+
+foreign_fingerprint=$(refusal_fingerprint "${BODIES}/foreign.json")
+missing_fingerprint=$(refusal_fingerprint "${BODIES}/missing.json")
+
+# An unparseable body fingerprints as "-", and two of those compare equal — which would report "no
+# existence oracle" having compared nothing at all. Refuse that rather than pass it.
+if [ "${foreign_fingerprint}" = "-" ] || [ "${missing_fingerprint}" = "-" ]; then
+  echo "::error::A refusal body could not be read as JSON, so the two refusals were never compared."
+  cat "${BODIES}/foreign.json" "${BODIES}/missing.json"
+  failures=$((failures + 1))
+elif [ "${foreign_fingerprint}" != "${missing_fingerprint}" ]; then
+  echo "::error::A foreign dataset answers ${foreign_fingerprint} but a nonexistent one answers ${missing_fingerprint}. The difference tells a caller which ids exist in other organizations."
+  failures=$((failures + 1))
+else
+  echo "ok: both refusals are ${missing_fingerprint} — no existence oracle"
+fi
+
+echo "--- a real record id is refused when named through a workspace the key cannot use"
+# The strongest form of the check: the id is genuinely one of ours and the record genuinely exists, so
+# a 200 would be a straight object-level authorization failure (BOLA) and a 404 would still confirm to
+# the caller that the id is real. Only a 403 reveals nothing.
+record_id=$(node -p "require('${FIXTURES}').read.feedbackRecordId ?? ''")
+if [ -n "${record_id}" ]; then
+  foreign_record=$(probe "${BASE_URL}/api/v3/feedback-records/${record_id}?workspaceId=${foreign_workspace_id}")
+  expect_refused "reading a real record through a foreign workspace" "${foreign_record}"
+else
+  echo "::warning::No feedback record fixture; skipped the object-level authorization assertion."
+fi
+
+echo "--- a foreign record is refused when named through a workspace the key CAN use"
+# The assertion the one above cannot make. There, the workspace is foreign, so workspace authorization
+# may refuse before the record is ever looked up — the check passes whether or not the record query
+# carries a tenant scope. Here the workspace is the caller's own and passes that gate, so the only
+# thing left that can refuse is a correctly scoped record lookup. A 200 is a straight BOLA.
+foreign_record_id=$(node -p "require('${FIXTURES}').tenancy?.foreignRecordId ?? ''")
+if [ -n "${foreign_record_id}" ]; then
+  cross_tenant=$(probe "${BASE_URL}/api/v3/feedback-records/${foreign_record_id}?workspaceId=${workspace_id}")
+  expect_refused "reading a foreign record through an authorized workspace" "${cross_tenant}"
+else
+  echo "::warning::No foreign feedback record fixture; skipped the cross-tenant record assertion."
+fi
+
+if [ "${failures}" -gt 0 ]; then
+  echo "::error::${failures} tenancy assertion(s) failed."
+  exit 1
+fi
+
+echo "All tenancy assertions passed."

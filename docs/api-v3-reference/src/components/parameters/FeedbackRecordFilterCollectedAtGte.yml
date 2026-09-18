@@ -1,0 +1,6 @@
+in: query
+name: filter[collectedAt][gte]
+schema:
+  type: string
+  format: date-time
+description: Records collected at or after this instant. Bounded to 1970-2080.

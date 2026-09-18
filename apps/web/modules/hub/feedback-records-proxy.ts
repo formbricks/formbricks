@@ -1,7 +1,7 @@
 import "server-only";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { HUB_API_KEY, HUB_API_URL, IS_PRODUCTION } from "@/lib/constants";
+import { HUB_API_KEY, HUB_API_URL } from "@/lib/constants";
 import { authorizeGatewayRequest } from "@/modules/gateway-auth/lib/request";
 import { feedbackRecordsGatewayAuthorizer } from "@/modules/hub/feedback-records-gateway";
 import { getFeedbackRecordsHubPathname } from "@/modules/hub/feedback-records-routing";
@@ -36,6 +36,18 @@ const buildHubRequestUrl = (requestUrl: URL): URL | null => {
   return hubUrl;
 };
 
+/**
+ * A second readable view of the request, for the authorizer to consume the body from.
+ */
+const authorizationRequest = (request: NextRequest): NextRequest =>
+  new NextRequest(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: request.clone().body,
+    // Required by undici whenever a streaming body is supplied.
+    duplex: "half",
+  } as ConstructorParameters<typeof NextRequest>[1]);
+
 const buildHubRequest = (request: NextRequest, hubUrl: URL): Request => {
   const hubRequest = new Request(hubUrl, request);
   const connectionHeaders = (request.headers.get("connection") ?? "")
@@ -57,13 +69,28 @@ const buildHubRequest = (request: NextRequest, hubUrl: URL): Request => {
   return hubRequest;
 };
 
-const buildAllowResponse = (): Response => new Response(null, { status: 200 });
-
+/**
+ * Forwards a feedback-record request to the store, having authorized it against Formbricks first.
+ *
+ * This used to refuse in production (`IS_PRODUCTION` → 404) because the gateway served these paths
+ * there and a second data path would have been a liability. ENG-3117 retires those gateway routes, so
+ * this is now the only way `/v1/feedback-records` is served, in every environment. The route exists
+ * to keep the feedback store's own path shape working for callers pointing `hub-typescript` at a
+ * Formbricks origin; everything else moved to `/api/v3/feedback-records`, which the app serves
+ * natively and which is what new integrations should use.
+ *
+ * Deliberately still a passthrough. Translating between the two contracts here — the store's
+ * `tenant_id` and snake_case against v3's `workspaceId`/`datasetId` and camelCase — would mean
+ * writing the inverse of the v3 serializers plus a response direction that does not exist, to arrive
+ * at bytes the store already returns.
+ *
+ * Rate-limited on `rateLimitConfigs.api.v3` — the same config, namespace and identifier every v3
+ * route gets from the shared wrapper. This path cannot use the wrapper itself (it forwards a request
+ * rather than handling one); the limit is applied by `authorizeGatewayRequest`, between
+ * authentication and authorization, so the two forward-auth callers are covered by the same counter
+ * rather than by nothing.
+ */
 export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise<Response> => {
-  if (IS_PRODUCTION) {
-    return new Response(null, { status: 404 });
-  }
-
   const originalUrl = new URL(request.url);
   const requestId = request.headers.get("x-request-id") ?? "unknown";
   const hubUrl = buildHubRequestUrl(originalUrl);
@@ -71,20 +98,27 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
     return new Response("Unsupported FeedbackRecords proxy route", { status: 400 });
   }
 
-  const authorizationResponse = await authorizeGatewayRequest({
-    request: new NextRequest(request.clone()),
+  const authorization = await authorizeGatewayRequest({
+    // Built from the URL and an init rather than by wrapping `request.clone()`. Wrapping a cloned
+    // NextRequest throws `Cannot read private member #state from an object whose class did not declare
+    // it` on Node >24: the clone's class does not declare undici's private field that the constructor
+    // reaches for. It only reproduces through the running server, because the NextRequest the server
+    // runtime passes a route handler is not the one importable in a test.
+    //
+    // The clone itself is load-bearing and stays: the authorizer reads the body to find `tenant_id`,
+    // and the original has to survive unread so it can be forwarded to the store.
+    request: authorizationRequest(request),
     originalRequest: {
       method: request.method.toUpperCase(),
       url: originalUrl,
     },
     authorizers: [feedbackRecordsGatewayAuthorizer],
     requestId,
-    buildAllowResponse,
     unsupportedRouteMessage: "Unsupported FeedbackRecords proxy route",
   });
 
-  if (!authorizationResponse.ok) {
-    return authorizationResponse;
+  if (authorization.status === "deny") {
+    return authorization.response;
   }
 
   try {

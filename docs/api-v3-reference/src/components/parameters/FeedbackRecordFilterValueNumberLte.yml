@@ -1,0 +1,6 @@
+in: query
+name: filter[valueNumber][lte]
+schema:
+  type: number
+  format: double
+description: Records whose numeric answer is at most this value.

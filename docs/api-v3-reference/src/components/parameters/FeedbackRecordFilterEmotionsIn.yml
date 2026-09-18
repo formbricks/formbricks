@@ -1,0 +1,13 @@
+in: query
+name: filter[emotions][in]
+style: form
+explode: true
+schema:
+  type: array
+  maxItems: 6
+  items:
+    $ref: ../schemas/FeedbackRecordEmotion.yml
+description: >-
+  Records carrying any of these emotion labels. A record matches when it carries **any** of them;
+  there is no "carries all" form. Repeat the parameter for several values. An empty value is
+  rejected, as on every other filter.

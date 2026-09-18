@@ -48,7 +48,50 @@ const CONTRACT_IDS = {
   WORKFLOW_TEST: "clctworkflowtest00000001",
   ACTION_CLASS_READ: "clctactionclassread00001",
   RESPONSE_READ: "clctresponseread00000001",
+  // Feedback datasets are `FeedbackDirectory` rows; the id is what the API calls `datasetId` and what
+  // the feedback store calls its tenant. Two of them on purpose — see `seedFeedbackDatasets`.
+  FEEDBACK_DATASET: "clctfeedbackdataset00001",
+  FEEDBACK_DATASET_FOREIGN: "clctfeedbackforeign00001",
+  FOREIGN_ORGANIZATION: "clctfeedbackforeignorg01",
+  FOREIGN_WORKSPACE: "clctfeedbackforeignws001",
 } as const;
+
+/**
+ * The seeded records, by the `submission_id` they are stored under. Fixed so re-seeding finds the
+ * existing rows instead of duplicating them.
+ *
+ * `READ` carries text chosen to match the semantic-search example in the contract
+ * (`query: complaints about waiting times at the gates`). That is not decoration: the search
+ * operations only return a populated page when something actually scores above the threshold, and an
+ * empty page satisfies the response schema while validating none of the match shape. With the
+ * offline embedding stub this text scores ~0.76 against that query — above both the app's 0.5
+ * default and the store's own 0.7 — so the operation is exercised with a real match either way.
+ */
+const FEEDBACK_SUBMISSIONS = {
+  READ: "contract-feedback-read",
+  PATCH: "contract-feedback-patch",
+  DELETE: "contract-feedback-delete",
+} as const;
+
+/**
+ * A record in the FOREIGN dataset, for the one tenancy assertion the owned records cannot make.
+ *
+ * Asking for an owned record through a foreign workspace proves less than it looks: workspace
+ * authorization can refuse on the workspace before the record is ever looked up, so the assertion
+ * passes whether or not the record query carries a tenant scope. Asking for a FOREIGN record through
+ * an AUTHORIZED workspace is the shape that bites — the workspace check passes, and only a correctly
+ * scoped record lookup refuses.
+ */
+const FOREIGN_FEEDBACK_SUBMISSION = "contract-feedback-foreign";
+
+const FEEDBACK_RECORD_TEXT: Record<string, string> = {
+  [FEEDBACK_SUBMISSIONS.READ]:
+    "Complaints about waiting times at the gates - we queued 40 minutes to get in.",
+  [FEEDBACK_SUBMISSIONS.PATCH]: "Contract fixture for the update operation.",
+  [FEEDBACK_SUBMISSIONS.DELETE]: "Contract fixture for the delete operation.",
+  [FOREIGN_FEEDBACK_SUBMISSION]:
+    "A record owned by another organization, used only to prove a cross-tenant read is refused.",
+};
 
 /**
  * Where the id map goes. Defaults to the contract-tests directory that reads it, resolved from this
@@ -222,6 +265,220 @@ async function seedWorkflow(
   await prisma.workflow.upsert({ where: { id }, update: fields, create: { id, ...fields } });
 }
 
+/**
+ * Two feedback datasets, because one cannot detect a cross-tenant read.
+ *
+ * `FEEDBACK_DATASET` is assigned to the seeded workspace, so the seeded key reaches it. **Exactly
+ * one** assignment: a dataset shared by two workspaces has no workspace whose permission can say
+ * whose records they are, so the surface refuses update and delete on it (ENG-2189) — a second
+ * assignment would silently turn two documented 200s into 403s and the contract run would still be
+ * green.
+ *
+ * `FEEDBACK_DATASET_FOREIGN` belongs to a different organization and a workspace the key has no
+ * permission on. Nothing in the contract run touches it: Schemathesis checks the documented contract,
+ * not tenancy, and it only ever sends the one workspace it is told about. It exists for
+ * `tenancy-check.sh`, which asserts that a foreign dataset and a nonexistent one are indistinguishable
+ * from outside — the property a contract test cannot see.
+ */
+async function seedFeedbackDatasets(): Promise<void> {
+  await prisma.feedbackDirectory.upsert({
+    where: { id: CONTRACT_IDS.FEEDBACK_DATASET },
+    update: {},
+    create: {
+      id: CONTRACT_IDS.FEEDBACK_DATASET,
+      name: "Contract fixture — feedback dataset",
+      organizationId: SEED_IDS.ORGANIZATION,
+    },
+  });
+  await prisma.feedbackDirectoryWorkspace.upsert({
+    where: {
+      feedbackDirectoryId_workspaceId: {
+        feedbackDirectoryId: CONTRACT_IDS.FEEDBACK_DATASET,
+        workspaceId: SEED_IDS.WORKSPACE,
+      },
+    },
+    update: {},
+    create: { feedbackDirectoryId: CONTRACT_IDS.FEEDBACK_DATASET, workspaceId: SEED_IDS.WORKSPACE },
+  });
+
+  // A separate organization, so the refusal is exercised at both layers the policy checks: the key
+  // does not belong to this organization, and holds no permission on its workspace.
+  await prisma.organization.upsert({
+    where: { id: CONTRACT_IDS.FOREIGN_ORGANIZATION },
+    update: {},
+    create: { id: CONTRACT_IDS.FOREIGN_ORGANIZATION, name: "Contract fixture — foreign organization" },
+  });
+  await prisma.workspace.upsert({
+    where: { id: CONTRACT_IDS.FOREIGN_WORKSPACE },
+    update: {},
+    create: {
+      id: CONTRACT_IDS.FOREIGN_WORKSPACE,
+      name: "Contract fixture — foreign workspace",
+      organizationId: CONTRACT_IDS.FOREIGN_ORGANIZATION,
+    },
+  });
+  await prisma.feedbackDirectory.upsert({
+    where: { id: CONTRACT_IDS.FEEDBACK_DATASET_FOREIGN },
+    update: {},
+    create: {
+      id: CONTRACT_IDS.FEEDBACK_DATASET_FOREIGN,
+      name: "Contract fixture — foreign feedback dataset",
+      organizationId: CONTRACT_IDS.FOREIGN_ORGANIZATION,
+    },
+  });
+  await prisma.feedbackDirectoryWorkspace.upsert({
+    where: {
+      feedbackDirectoryId_workspaceId: {
+        feedbackDirectoryId: CONTRACT_IDS.FEEDBACK_DATASET_FOREIGN,
+        workspaceId: CONTRACT_IDS.FOREIGN_WORKSPACE,
+      },
+    },
+    update: {},
+    create: {
+      feedbackDirectoryId: CONTRACT_IDS.FEEDBACK_DATASET_FOREIGN,
+      workspaceId: CONTRACT_IDS.FOREIGN_WORKSPACE,
+    },
+  });
+}
+
+/**
+ * A whole-response deadline for each feedback-store call, which Node does not give us.
+ *
+ * Node's ~300s inactivity timeouts only fire between chunks, so a store that trickles a byte every
+ * few minutes keeps `json()` pending indefinitely; a silent connection still costs five minutes.
+ * Either way the seed step is sequential, so one hung request holds the rest of the job until its
+ * 25-minute timeout and the failure reads as "CI is slow" rather than "the store did not answer".
+ *
+ * Per request rather than one budget for the loop: each call should get a full deadline, and a shared
+ * signal would make a later record fail because an earlier one was slow.
+ */
+const FEEDBACK_STORE_TIMEOUT_MS = 15_000;
+
+/**
+ * One feedback-store call, with its deadline and a failure that names itself.
+ *
+ * A bare `AbortSignal.timeout` rejection is a `TimeoutError` with no clue which request died, which is
+ * the same diagnosis problem the deadline exists to fix — one step later.
+ *
+ * The signal stays attached to the returned response, so the deadline covers reading the body too. A
+ * timeout that lands there is raised by the caller's `json()`, outside this wrapper, and so arrives
+ * unnamed — still bounded, just less legible than one on the request leg.
+ */
+async function fetchFeedbackStore(
+  url: string,
+  init: RequestInit,
+  describeRequest: string
+): Promise<Response> {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(FEEDBACK_STORE_TIMEOUT_MS) });
+  } catch (error) {
+    if (error instanceof Error && error.name === "TimeoutError") {
+      throw new Error(
+        `${describeRequest} did not complete within ${FEEDBACK_STORE_TIMEOUT_MS}ms. The feedback store accepted the connection but did not finish the response.`
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * Feedback records live in the feedback store, not in this database, so they are seeded over its API
+ * rather than with Prisma. Returns the record id per fixed `submission_id`.
+ *
+ * Skipped, with a warning rather than a throw, when the store is not configured: `db:seed:contract`
+ * is also run by developers whose stack has no store, and the four feedback operations that need a
+ * record then answer their documented 403 — shallower, but honest, and the same degradation the
+ * entitlement-gated operations already have.
+ *
+ * Records are unique per (tenant, submission, field), so a re-seed answers 409. That is the expected
+ * path on a second run, not a failure: the existing record is looked up and reused, which is what
+ * keeps the id map stable across runs.
+ */
+async function seedFeedbackRecords(): Promise<Record<string, string>> {
+  const baseUrl = process.env.HUB_API_URL?.replace(/\/+$/, "");
+  const apiKey = process.env.HUB_API_KEY;
+  if (!baseUrl || !apiKey) {
+    logger.warn(
+      "HUB_API_URL/HUB_API_KEY unset — skipping feedback record fixtures. The four operations that need a record will answer their documented 403."
+    );
+    return {};
+  }
+
+  const headers = { authorization: `Bearer ${apiKey}`, "content-type": "application/json" };
+  const ids: Record<string, string> = {};
+
+  const submissions: [submissionId: string, tenantId: string][] = [
+    ...Object.values(FEEDBACK_SUBMISSIONS).map((id): [string, string] => [id, CONTRACT_IDS.FEEDBACK_DATASET]),
+    [FOREIGN_FEEDBACK_SUBMISSION, CONTRACT_IDS.FEEDBACK_DATASET_FOREIGN],
+  ];
+
+  for (const [submissionId, tenantId] of submissions) {
+    const body = {
+      tenant_id: tenantId,
+      source_type: "review",
+      source_name: "Contract fixtures",
+      submission_id: submissionId,
+      field_id: "review_body",
+      field_type: "text",
+      value_text: FEEDBACK_RECORD_TEXT[submissionId],
+      language: "en",
+    };
+
+    const created = await fetchFeedbackStore(
+      `${baseUrl}/v1/feedback-records`,
+      { method: "POST", headers, body: JSON.stringify(body) },
+      `Seeding feedback record ${submissionId}`
+    );
+
+    if (created.ok) {
+      const record = (await created.json()) as { id?: string };
+      if (!record.id) {
+        // A 2xx with no `id` used to fall through and leave this submission out of the map. The hooks
+        // then substitute a generated cuid2, so the PATCH and DELETE cases run against a record that
+        // does not exist and get the 403 the contract documents — green, while never touching the
+        // success path they exist to cover. The workflow's preflight only checks
+        // `read.feedbackRecordId`, so it would not catch it either.
+        throw new Error(
+          `Seeding feedback record ${submissionId} returned ${created.status} with no id. The contract operations would run against a generated id and pass without exercising anything.`
+        );
+      }
+      ids[submissionId] = record.id;
+      continue;
+    }
+
+    if (created.status !== 409) {
+      throw new Error(
+        `Seeding feedback record ${submissionId} failed with ${created.status}. The feedback contract operations would run against no data.`
+      );
+    }
+
+    // Already present from an earlier run — find it rather than inventing a new submission id, so the
+    // id map stays stable and the store does not accumulate a record per CI run.
+    const query = new URLSearchParams({
+      tenant_id: tenantId,
+      submission_id: submissionId,
+      limit: "1",
+    });
+    const existing = await fetchFeedbackStore(
+      `${baseUrl}/v1/feedback-records?${query.toString()}`,
+      { headers },
+      `Looking up existing feedback record ${submissionId}`
+    );
+    if (!existing.ok) {
+      throw new Error(`Feedback record ${submissionId} exists but could not be read (${existing.status}).`);
+    }
+    const page = (await existing.json()) as { data?: { id?: string }[] };
+    const found = page.data?.[0]?.id;
+    if (!found) {
+      throw new Error(`Feedback record ${submissionId} answered 409 but no matching record was found.`);
+    }
+    ids[submissionId] = found;
+  }
+
+  logger.info(`Seeded ${Object.keys(ids).length} feedback record fixtures.`);
+  return ids;
+}
+
 async function main(): Promise<void> {
   const outPath = getOutPath();
 
@@ -270,6 +527,9 @@ async function main(): Promise<void> {
   // with a documented 401 before a handler ever looks for a row. Seeding them would read as coverage
   // that does not exist. Add them here if tags ever accept an API key.
 
+  await seedFeedbackDatasets();
+  const feedbackRecordIds = await seedFeedbackRecords();
+
   const workflowRun = await prisma.workflowRun.findFirst({
     where: { workspaceId: SEED_IDS.WORKSPACE },
     select: { id: true },
@@ -287,6 +547,21 @@ async function main(): Promise<void> {
       surveyId: CONTRACT_IDS.SURVEY_READ,
       workflowId: SEED_IDS.WORKFLOW_RESPONSE_FOLLOW_UP,
       ...(workflowRun ? { runId: workflowRun.id } : {}),
+      // Every feedback operation takes `datasetId`; the ones that address a single record also take
+      // `feedbackRecordId`, defaulted here to the read fixture and overridden per operation below.
+      datasetId: CONTRACT_IDS.FEEDBACK_DATASET,
+      ...(feedbackRecordIds[FEEDBACK_SUBMISSIONS.READ]
+        ? { feedbackRecordId: feedbackRecordIds[FEEDBACK_SUBMISSIONS.READ] }
+        : {}),
+    },
+    // Not consumed by the Schemathesis hooks — a contract run must never send these, or it would be
+    // asserting a 403 against the documented 200. Written for `tenancy-check.sh`.
+    tenancy: {
+      foreignDatasetId: CONTRACT_IDS.FEEDBACK_DATASET_FOREIGN,
+      foreignWorkspaceId: CONTRACT_IDS.FOREIGN_WORKSPACE,
+      ...(feedbackRecordIds[FOREIGN_FEEDBACK_SUBMISSION]
+        ? { foreignRecordId: feedbackRecordIds[FOREIGN_FEEDBACK_SUBMISSION] }
+        : {}),
     },
     operations: {
       getResponseV3: { path: { responseId: CONTRACT_IDS.RESPONSE_READ } },
@@ -302,6 +577,21 @@ async function main(): Promise<void> {
       archiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_ARCHIVE } },
       unarchiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_UNARCHIVE } },
       testWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_TEST } },
+      // Their own victims, so a delete cannot decide what the read fixture sees.
+      ...(feedbackRecordIds[FEEDBACK_SUBMISSIONS.PATCH]
+        ? {
+            updateFeedbackRecordV3: {
+              path: { feedbackRecordId: feedbackRecordIds[FEEDBACK_SUBMISSIONS.PATCH] },
+            },
+          }
+        : {}),
+      ...(feedbackRecordIds[FEEDBACK_SUBMISSIONS.DELETE]
+        ? {
+            deleteFeedbackRecordV3: {
+              path: { feedbackRecordId: feedbackRecordIds[FEEDBACK_SUBMISSIONS.DELETE] },
+            },
+          }
+        : {}),
     },
   };
 

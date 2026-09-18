@@ -1,0 +1,18 @@
+type: object
+additionalProperties: false
+required:
+  - data
+  - meta
+properties:
+  meta:
+    $ref: ./FeedbackRecordCountMeta.yml
+  data:
+    type: object
+    additionalProperties: false
+    required:
+      - count
+    properties:
+      count:
+        type: integer
+        minimum: 0
+        description: Records matching the filters, across every page.

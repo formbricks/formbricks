@@ -2,9 +2,10 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { proxyFeedbackRecordsRequest } from "@/modules/hub/feedback-records-proxy";
 
-const { mockAuthorizeGatewayRequest, mockLoggerError, runtime } = vi.hoisted(() => ({
+const { mockAuthorizeGatewayRequest, mockLoggerError, mockLoggerWarn, runtime } = vi.hoisted(() => ({
   mockAuthorizeGatewayRequest: vi.fn(),
   mockLoggerError: vi.fn(),
+  mockLoggerWarn: vi.fn(),
   runtime: {
     isProduction: false,
   },
@@ -13,6 +14,7 @@ const { mockAuthorizeGatewayRequest, mockLoggerError, runtime } = vi.hoisted(() 
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: mockLoggerError,
+    warn: mockLoggerWarn,
   },
 }));
 
@@ -24,6 +26,8 @@ vi.mock("@/lib/constants", () => ({
   },
 }));
 
+// The proxy reaches this module for one thing now: the authorization outcome. The rate limit and the
+// refusal shape moved inside `authorizeGatewayRequest`, and are covered by its own tests.
 vi.mock("@/modules/gateway-auth/lib/request", () => ({
   authorizeGatewayRequest: mockAuthorizeGatewayRequest,
 }));
@@ -70,7 +74,10 @@ describe("proxyFeedbackRecordsRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     runtime.isProduction = false;
-    mockAuthorizeGatewayRequest.mockResolvedValue(new Response(null, { status: 200 }));
+    mockAuthorizeGatewayRequest.mockResolvedValue({
+      status: "allow",
+      principal: { type: "apiKey", authentication: { apiKeyId: "api-key-1" } },
+    });
   });
 
   afterEach(() => {
@@ -109,7 +116,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     const body = JSON.stringify({ tenant_id: "dir_1", text: "Feedback" });
     mockAuthorizeGatewayRequest.mockImplementationOnce(async ({ request }: { request: NextRequest }) => {
       expect(await request.text()).toBe(body);
-      return new Response(null, { status: 200 });
+      return { status: "allow", principal: { type: "apiKey", authentication: { apiKeyId: "api-key-1" } } };
     });
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }));
     vi.stubGlobal("fetch", fetchMock);
@@ -186,7 +193,7 @@ describe("proxyFeedbackRecordsRequest", () => {
 
   test("returns the authorization response without calling Hub", async () => {
     const authorizationResponse = new Response("Forbidden", { status: 403 });
-    mockAuthorizeGatewayRequest.mockResolvedValueOnce(authorizationResponse);
+    mockAuthorizeGatewayRequest.mockResolvedValueOnce({ status: "deny", response: authorizationResponse });
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
@@ -198,10 +205,21 @@ describe("proxyFeedbackRecordsRequest", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  /**
+   * The same config every v3 route gets from the shared wrapper, counted against the same identifier.
+   * This path cannot use the wrapper — it forwards a request rather than handling one — so what is
+   * pinned here is that it borrows the shared config rather than inventing a limit of its own.
+   */
+  // The principal rate limit moved into `authorizeGatewayRequest` (between authentication and
+  // authorization) so every gateway caller gets it, including the two forward-auth services that had
+  // none. Its tests moved with it, to `modules/gateway-auth/lib/request.test.ts` — this file mocks
+  // that function, so asserting the limit here would only assert the mock.
+
   test("returns the authorizer response for an unsupported operation", async () => {
-    mockAuthorizeGatewayRequest.mockResolvedValueOnce(
-      new Response("Unsupported FeedbackRecords route", { status: 400 })
-    );
+    mockAuthorizeGatewayRequest.mockResolvedValueOnce({
+      status: "deny",
+      response: new Response("Unsupported FeedbackRecords route", { status: 400 }),
+    });
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
@@ -271,17 +289,42 @@ describe("proxyFeedbackRecordsRequest", () => {
     expect(serializeIncludingErrors(mockLoggerError.mock.calls)).not.toContain("secret-url");
   });
 
-  test("is unavailable in production", async () => {
+  /**
+   * The inverse of what this asserted before ENG-3117. The guard existed because the gateway served
+   * these paths in production and a second data path would have been a liability. It is now the only
+   * thing serving `/v1/feedback-records` on a deployment that does not run the gateway -- a
+   * customer-managed ingress, or one-click -- so refusing would take the compatibility path down
+   * exactly where it has callers. Where the gateway *is* enabled it still matches first and the app's
+   * copy is simply never reached, which is why the two can overlap while the gateway is deprecated.
+   */
+  test("serves production, so deployments without the gateway still have the path", async () => {
     runtime.isProduction = true;
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1")
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
     );
 
-    expect(response.status).toBe(404);
-    expect(mockAuthorizeGatewayRequest).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(mockAuthorizeGatewayRequest).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  test("still authorizes before forwarding in production", async () => {
+    runtime.isProduction = true;
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    mockAuthorizeGatewayRequest.mockResolvedValueOnce({
+      status: "deny",
+      response: new Response("Forbidden", { status: 403 }),
+    });
+
+    const response = await proxyFeedbackRecordsRequest(
+      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
+    );
+
+    expect(response.status).toBe(403);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

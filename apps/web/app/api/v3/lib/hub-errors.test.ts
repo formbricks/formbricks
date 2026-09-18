@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { NO_CONFIG_ERROR } from "@/modules/hub/utils";
-import { EMBEDDINGS_UNAVAILABLE_DETAIL } from "../feedbackRecords/lib/errors";
+import { EMBEDDINGS_UNAVAILABLE_DETAIL } from "../feedback-records/lib/errors";
 import { hubErrorToProblemResponse } from "./hub-errors";
 
 vi.mock("server-only", () => ({}));

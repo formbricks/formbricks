@@ -366,7 +366,17 @@ export function successListResponse<T, TMeta extends Record<string, unknown>>(
 
 export function successResponse<T>(
   data: T,
-  options?: { requestId?: string; cache?: string; status?: number }
+  options?: {
+    requestId?: string;
+    cache?: string;
+    status?: number;
+    /**
+     * Present when something is true about the request that is not part of the resource itself — the
+     * dataset a feedback-record count was taken in, say. Omitted entirely when not given, so a
+     * response without it is byte-identical to before.
+     */
+    meta?: Record<string, unknown>;
+  }
 ): Response {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -380,6 +390,7 @@ export function successResponse<T>(
   return Response.json(
     {
       data,
+      ...(options?.meta ? { meta: options.meta } : {}),
     },
     {
       status: options?.status ?? 200,

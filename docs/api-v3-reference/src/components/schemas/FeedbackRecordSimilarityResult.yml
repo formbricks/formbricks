@@ -2,7 +2,7 @@ type: object
 additionalProperties: false
 required:
   - data
-  - limit
+  - meta
 properties:
   data:
     type: array
@@ -10,11 +10,5 @@ properties:
     items:
       $ref: ./FeedbackRecordSimilarityItem.yml
     description: Matches ordered by descending `score`.
-  limit:
-    type: integer
-    description: The page size that was applied.
-  next_cursor:
-    type: string
-    description: >-
-      Opaque keyset cursor for the next page. Present only when a full page was returned and there
-      may be more results. Pass it back unchanged as `cursor`.
+  meta:
+    $ref: ./FeedbackRecordSimilarityMeta.yml

@@ -9,7 +9,7 @@
     "prisma.config.mjs",
     "turbo.json"
   ],
-  "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
+  "globalEnv": ["HUB_API_KEY", "HUB_API_URL", "MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
   "globalPassThroughEnv": ["SEED_API_KEY"],
   "tasks": {
     "@formbricks/ai#build": {
