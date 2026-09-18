@@ -19,6 +19,11 @@
 set -euo pipefail
 
 BASE_URL="${1:-http://localhost:3000}"
+# Response bodies go in a private directory rather than at predictable `/tmp` paths. A path another
+# local process can guess is one it can pre-create as a symlink, and `curl -o` would then truncate
+# whatever that symlink points at; it also let two runs of this script overwrite each other's bodies.
+BODIES="$(mktemp -d "${TMPDIR:-/tmp}/tenancy-check.XXXXXX")"
+trap 'rm -rf "${BODIES}"' EXIT
 # Absolute, because these ids are read with `node -p "require(...)"` and Node resolves a bare
 # relative path as a module specifier rather than a file.
 FIXTURES="$(cd "$(dirname "$0")" && pwd)/fixtures.json"
@@ -65,7 +70,7 @@ failures=0
 # Prints "<status> <code>" for the human-readable assertions. The body is kept, because comparing two
 # refusals needs more than this pair — see `refusal_fingerprint`.
 probe() {
-  local url="$1" body="${2:-/tmp/tenancy-body.json}" status code
+  local url="$1" body="${2:-${BODIES}/body.json}" status code
   status=$(curl -s -o "${body}" -w "%{http_code}" -H "x-api-key: fbk_${SEED_API_KEY}" "${url}")
   code=$(node -p "(() => { try { return require('${body}').code ?? '-'; } catch { return '-'; } })()")
   echo "${status} ${code}"
@@ -83,7 +88,7 @@ refusal_fingerprint() {
 }
 
 expect_refused() {
-  local description="$1" observed="$2" body="${3:-/tmp/tenancy-body.json}"
+  local description="$1" observed="$2" body="${3:-${BODIES}/body.json}"
   local status="${observed%% *}"
   if [ "${status}" != "403" ]; then
     echo "::error::${description} answered ${observed}, expected 403. A caller can reach a dataset it holds no permission on."
@@ -95,8 +100,8 @@ expect_refused() {
 }
 
 echo "--- a dataset in another organization is refused"
-foreign=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${foreign_dataset_id}" /tmp/tenancy-foreign.json)
-expect_refused "listing a foreign dataset" "${foreign}" /tmp/tenancy-foreign.json
+foreign=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${foreign_dataset_id}" "${BODIES}/foreign.json")
+expect_refused "listing a foreign dataset" "${foreign}" "${BODIES}/foreign.json"
 
 echo "--- a workspace the key holds no permission on is refused"
 foreign_ws=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${foreign_workspace_id}")
@@ -107,17 +112,17 @@ foreign_count=$(probe "${BASE_URL}/api/v3/feedback-records/count?workspaceId=${w
 expect_refused "counting a foreign dataset" "${foreign_count}"
 
 echo "--- a foreign dataset and a nonexistent one are indistinguishable"
-missing=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${nonexistent_dataset_id}" /tmp/tenancy-missing.json)
-expect_refused "listing a nonexistent dataset" "${missing}" /tmp/tenancy-missing.json
+missing=$(probe "${BASE_URL}/api/v3/feedback-records?workspaceId=${workspace_id}&datasetId=${nonexistent_dataset_id}" "${BODIES}/missing.json")
+expect_refused "listing a nonexistent dataset" "${missing}" "${BODIES}/missing.json"
 
-foreign_fingerprint=$(refusal_fingerprint /tmp/tenancy-foreign.json)
-missing_fingerprint=$(refusal_fingerprint /tmp/tenancy-missing.json)
+foreign_fingerprint=$(refusal_fingerprint "${BODIES}/foreign.json")
+missing_fingerprint=$(refusal_fingerprint "${BODIES}/missing.json")
 
 # An unparseable body fingerprints as "-", and two of those compare equal — which would report "no
 # existence oracle" having compared nothing at all. Refuse that rather than pass it.
 if [ "${foreign_fingerprint}" = "-" ] || [ "${missing_fingerprint}" = "-" ]; then
   echo "::error::A refusal body could not be read as JSON, so the two refusals were never compared."
-  cat /tmp/tenancy-foreign.json /tmp/tenancy-missing.json
+  cat "${BODIES}/foreign.json" "${BODIES}/missing.json"
   failures=$((failures + 1))
 elif [ "${foreign_fingerprint}" != "${missing_fingerprint}" ]; then
   echo "::error::A foreign dataset answers ${foreign_fingerprint} but a nonexistent one answers ${missing_fingerprint}. The difference tells a caller which ids exist in other organizations."
