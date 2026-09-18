@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
+import { MAX_INGESTED_VALUE_BYTES } from "@formbricks/types/embedded-data-ingest";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -257,6 +258,40 @@ describe("planEmbeddedDataWrite — names in, storage keys out", () => {
   });
 
   /**
+   * The ingested path truncates at this cap; this branch stored whatever arrived, so a text variable
+   * could carry most of the 2 MB body limit into `Response.variables` — re-read into recall and quota
+   * evaluation on every later read of the response.
+   *
+   * Refused rather than truncated, matching what this branch already does with a value that will not
+   * coerce: a variable feeds calculations, so a silently cut value corrupts them.
+   */
+  test("a variable larger than the stored-value cap is refused, not stored", () => {
+    const fields = [declared("notes", "computed", { dataType: "string", storageKey: "clvr0002" })];
+
+    const plan = planEmbedded(fields, { notes: "a".repeat(MAX_INGESTED_VALUE_BYTES + 1) });
+
+    expect(plan.variableWrites).toEqual({});
+    expect(plan.issues).toEqual([
+      expect.objectContaining({ name: "notes", code: "unsupported_field", referenceType: "variable" }),
+    ]);
+  });
+
+  test("the cap is counted in UTF-8 bytes, not UTF-16 code units", () => {
+    const fields = [declared("notes", "computed", { dataType: "string", storageKey: "clvr0002" })];
+
+    // Each "あ" is 3 UTF-8 bytes, so this is under the cap by `length` and over it by bytes. Counting
+    // code units would let a non-Latin value through at ~3x the documented limit.
+    const overInBytes = "あ".repeat(Math.ceil(MAX_INGESTED_VALUE_BYTES / 3) + 1);
+    expect(overInBytes.length).toBeLessThan(MAX_INGESTED_VALUE_BYTES);
+
+    expect(planEmbedded(fields, { notes: overInBytes }).variableWrites).toEqual({});
+
+    // And a value that fits is still stored, so the cap is not simply rejecting everything.
+    const fits = "あ".repeat(10);
+    expect(planEmbedded(fields, { notes: fits }).variableWrites).toEqual({ clvr0002: fits });
+  });
+
+  /**
    * Two payload names can resolve to one field, because the match is case-insensitive. Then one
    * entry's write and another's clear target the same slot and whichever ran last silently wins —
    * the same ambiguity as one name matching two fields, and refused the same way.
@@ -460,9 +495,19 @@ describe("totalStoredV3Ttc", () => {
     });
   });
 
-  test("a response with no stored timings totals to zero rather than crashing", () => {
+  /**
+   * `{}` is the common case, not an edge one: `Response.ttc` is `Json @default("{}")`, so every
+   * response created without `ttc` stores a truthy empty object. This used to assert `{_total: 0}`,
+   * which pinned the bug — `POST {finished:false}` with no `ttc` then `PATCH {finished:true}` reported
+   * a `durationSeconds` of zero, i.e. "answered instantly" rather than "not measured".
+   */
+  test("a response with no stored timings stays unmeasured rather than totalling to zero", () => {
     expect(totalStoredV3Ttc(undefined)).toEqual({});
-    expect(totalStoredV3Ttc({})).toEqual({ _total: 0 });
+    expect(totalStoredV3Ttc({})).toEqual({});
+    // Only `_total` and nothing to total: still no measurement.
+    expect(totalStoredV3Ttc({ _total: 0 })).toEqual({});
+    // Non-numeric buckets are dropped, so this is the same "nothing was measured" case.
+    expect(totalStoredV3Ttc({ junk: "x" as never })).toEqual({});
   });
 
   test("non-numeric stored buckets are ignored rather than poisoning the sum", () => {

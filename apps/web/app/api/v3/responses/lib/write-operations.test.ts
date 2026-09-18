@@ -296,6 +296,24 @@ describe("updateV3Response", () => {
   });
 
   /**
+   * The mutation this closes: lowering the third argument to `"read"` left the whole suite green, so
+   * nothing stopped a read-only key rewriting `data`, `finished` and `tags` across the workspace.
+   * Create and validate both pinned their permission; patch — the one that mutates existing rows —
+   * did not.
+   */
+  test("patching requires readWrite, not read", async () => {
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } as never });
+
+    expect(mockRequireAccess).toHaveBeenCalledWith(
+      expect.anything(),
+      WORKSPACE_ID,
+      "readWrite",
+      "req-1",
+      undefined
+    );
+  });
+
+  /**
    * The deliberate divergence from v1 and v2, which both re-emit on every patch. Re-running every
    * webhook, integration and follow-up email because someone fixed a typo in a finished response is
    * not what "finished" means.
@@ -607,5 +625,29 @@ describe("file-upload answers", () => {
 
     expect(response.status).toBe(422);
     expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The check runs on the caller's `data`, never on the merged map — the same gate answer validation
+   * uses, and for the same reason. `composed.data` carries the stored answers too, so a patch that
+   * does not send `data` would re-run URLs collected months ago through today's
+   * `allowedFileExtensions`: narrow those afterwards and every later patch 422s naming `data`, a field
+   * the request never carried and the caller cannot fix.
+   */
+  test("a patch that does not send data leaves stored uploads unchecked", async () => {
+    mockGetScoped.mockResolvedValueOnce(
+      row({ data: { upload: ["http://x.test/storage/ws/private/surveys/s/elements/upload/old.pdf"] } })
+    );
+    // Would refuse if it ran at all — the point is that it does not.
+    mockValidateFileUploads.mockReturnValue(false);
+
+    const response = await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { finished: true } as never,
+    });
+
+    expect(mockValidateFileUploads).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
   });
 });

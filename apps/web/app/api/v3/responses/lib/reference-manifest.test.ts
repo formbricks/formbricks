@@ -7,7 +7,7 @@ import {
   looksLikeReferenceName,
   referenceFor,
 } from "./reference-manifest";
-import { ZV3CreateResponseBody, ZV3PatchResponseBody } from "./schemas";
+import { ZV3CreateResponseBody, ZV3PatchResponseBody, ZV3ResponseValidationRequestBody } from "./schemas";
 
 vi.mock("server-only", () => ({}));
 
@@ -40,18 +40,39 @@ const shapeOf = (schema: z.ZodType): Record<string, z.ZodType> => {
   throw new Error("could not reach the object shape — the schema's wrappers changed");
 };
 
-const BODIES: [string, z.ZodType][] = [
-  ["ZV3CreateResponseBody", ZV3CreateResponseBody],
-  ["ZV3PatchResponseBody", ZV3PatchResponseBody],
+/**
+ * The validate envelope is a discriminated union, so it has options rather than one shape. Both are
+ * covered: the `patch` variant is the one that carries `responseId`, and covering only it would leave
+ * a field added to the `create` variant unclassified.
+ */
+const validationVariants = (): [string, z.ZodType][] => {
+  const { options } = ZV3ResponseValidationRequestBody as unknown as { options: z.ZodType[] };
+  if (!Array.isArray(options) || options.length !== 2) {
+    throw new Error("could not reach the validation envelope's variants — the schema's shape changed");
+  }
+  return options.map((option, index) => [`ZV3ResponseValidationRequestBody[${index}]`, option]);
+};
+
+/**
+ * Every request body this module ships. The envelope used to be missing, which meant its
+ * `responseId` — a `z.cuid2()` both detectors would have flagged on a write body — was undeclared,
+ * and a `workspaceId` added to it would have kept the suite green.
+ */
+const BODIES: [string, z.ZodType, number][] = [
+  ["ZV3CreateResponseBody", ZV3CreateResponseBody, 4],
+  ["ZV3PatchResponseBody", ZV3PatchResponseBody, 4],
+  // The envelope carries two or three fields by design, so it gets its own floor — a shared one would
+  // either wave the write bodies through or fail here for no reason.
+  ...validationVariants().map(([name, schema]) => [name, schema, 2] as [string, z.ZodType, number]),
 ];
 
-describe.each(BODIES)("%s reference manifest", (_name, body) => {
+describe.each(BODIES)("%s reference manifest", (_name, body, minFields) => {
   const shape = shapeOf(body);
   const fields = Object.keys(shape);
 
   test("the shape is reachable and non-trivial, so the assertions below mean something", () => {
     // Without this, a change that made `shapeOf` return `{}` would turn every test here green.
-    expect(fields.length).toBeGreaterThan(3);
+    expect(fields.length).toBeGreaterThanOrEqual(minFields);
   });
 
   /**
@@ -132,13 +153,10 @@ describe.each(BODIES)("%s reference manifest", (_name, body) => {
  * shape as the tautological test this file used to carry.
  */
 describe("the roster as a whole", () => {
-  const onEitherBody = new Set([
-    ...Object.keys(shapeOf(ZV3CreateResponseBody)),
-    ...Object.keys(shapeOf(ZV3PatchResponseBody)),
-  ]);
+  const onAnyBody = new Set(BODIES.flatMap(([, schema]) => Object.keys(shapeOf(schema))));
 
   test("every classification names a field that still exists on one of the bodies", () => {
-    const stale = Object.keys(V3_RESPONSE_BODY_FIELDS).filter((field) => !onEitherBody.has(field));
+    const stale = Object.keys(V3_RESPONSE_BODY_FIELDS).filter((field) => !onAnyBody.has(field));
 
     expect(stale).toEqual([]);
   });

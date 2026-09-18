@@ -308,7 +308,13 @@ describe("effects", () => {
     expect(data.effects.language).toBe("de");
   });
 
-  test("a create fires the pipeline; a patch fires it only on the transition", async () => {
+  /**
+   * `firesPipeline` used to report the `responseFinished` transition, so a patch of an
+   * already-finished response answered `false`. Every patch dispatches `responseUpdated`, and the job
+   * fans any event to its webhooks — so a caller that dry-ran a correction, read `false`, and expected
+   * silence watched its webhooks fire.
+   */
+  test("every create and every patch fires the pipeline, transition or not", async () => {
     const created = await bodyOf(
       await validate({ operation: "create", data: { surveyId: SURVEY_ID, finished: false, data: {} } })
     );
@@ -324,7 +330,8 @@ describe("effects", () => {
     const alreadyFinished = await bodyOf(
       await validate({ operation: "patch", responseId: RESPONSE_ID, data: { finished: true } })
     );
-    expect(alreadyFinished.effects.firesPipeline).toBe(false);
+    // The patch that changes nothing about `finished` still emits `responseUpdated`.
+    expect(alreadyFinished.effects.firesPipeline).toBe(true);
     expect(alreadyFinished.effects.countsTowardMeteredResponses).toBe(false);
   });
 

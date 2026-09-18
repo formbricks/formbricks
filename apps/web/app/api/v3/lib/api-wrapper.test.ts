@@ -4,7 +4,7 @@ import { z } from "zod";
 import { ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
-import { withV3ApiWrapper } from "./api-wrapper";
+import { formatZodIssues, withV3ApiWrapper } from "./api-wrapper";
 
 const { mockAuthenticateRequest, mockGetSession } = vi.hoisted(() => ({
   mockAuthenticateRequest: vi.fn(),
@@ -824,5 +824,68 @@ describe("5xx reporting", () => {
 
     expect(response.status).toBe(502);
     await expect(response.json()).resolves.toEqual({ x: 1 });
+  });
+});
+
+/**
+ * `formatZodIssues` changed every v3 400 — an unsupported key is now named instead of the body — and
+ * nothing exercised it. The one "Unsupported field" case in this file builds a `custom` issue through
+ * `superRefine`, which never reaches the expansion, so reverting the function to Zod's base `map`
+ * kept the suite green.
+ *
+ * Driven through a real `.strict()` parse rather than a hand-built issue: the expansion reads
+ * `issue.keys`, which Zod populates and a fixture would only assert the shape of.
+ */
+describe("formatZodIssues — the unknown-key expansion", () => {
+  const strictBody = z.object({ kept: z.string() }).strict();
+
+  const issuesFor = (value: Record<string, unknown>) => {
+    const parsed = strictBody.safeParse(value);
+    if (parsed.success) throw new Error("expected the strict parse to reject");
+    return formatZodIssues(parsed.error, "body");
+  };
+
+  test("names each unknown key instead of the body", () => {
+    const params = issuesFor({ kept: "x", extra: 1, alsoExtra: 2 });
+
+    expect(params).toEqual([
+      { name: "extra", reason: "Unsupported field 'extra'", code: "unsupported_field" },
+      { name: "alsoExtra", reason: "Unsupported field 'alsoExtra'", code: "unsupported_field" },
+    ]);
+  });
+
+  test("stops at 20 keys and says how many it did not list", () => {
+    const value: Record<string, unknown> = { kept: "x" };
+    for (let i = 0; i < 25; i += 1) value[`extra${i}`] = i;
+
+    const params = issuesFor(value);
+
+    // 20 named, plus one summary — the list is caller-controlled and reaches both the body and the log.
+    expect(params).toHaveLength(21);
+    expect(params.at(-1)).toEqual({
+      name: "body",
+      reason: "5 further unsupported fields were not listed",
+      code: "unsupported_field",
+    });
+  });
+
+  test("a nested object's keys are reported under their path", () => {
+    const nested = z.object({ meta: z.object({ kept: z.string() }).strict() }).strict();
+    const parsed = nested.safeParse({ meta: { kept: "x", extra: 1 } });
+    if (parsed.success) throw new Error("expected the strict parse to reject");
+
+    expect(formatZodIssues(parsed.error, "body")).toEqual([
+      { name: "meta.extra", reason: "Unsupported field 'extra'", code: "unsupported_field" },
+    ]);
+  });
+
+  test("an issue carrying no key list still produces a param", () => {
+    // The fallback exists so an empty list cannot leave a 400 with no `invalid_params` at all.
+    const params = formatZodIssues(
+      { issues: [{ code: "unrecognized_keys", path: [], message: "Unrecognized key" }] } as never,
+      "body"
+    );
+
+    expect(params).toEqual([{ name: "body", reason: "Unrecognized key", code: "unsupported_field" }]);
   });
 });

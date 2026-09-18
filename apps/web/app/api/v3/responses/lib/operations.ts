@@ -775,7 +775,11 @@ export async function planV3ResponsePatch({
     ...(endingIssue ? [endingIssue] : []),
     // Only what the caller supplied — see `answerValidationIssues`.
     ...(body.data === undefined ? [] : answerValidationIssues(survey, composed.data, effectiveLanguage)),
-    ...(await fileUploadIssues(survey, composed.data)),
+    // Gated on `body.data` for the same reason as the line above. `composed.data` is the merged map,
+    // so an `embeddedData`-only patch would otherwise re-run stored upload URLs through today's
+    // `allowedFileExtensions`: narrow those after collection and every later patch 422s naming `data`,
+    // a field the request never carried.
+    ...(body.data === undefined ? [] : await fileUploadIssues(survey, composed.data)),
   ];
 
   if (issues.length > 0) return { ok: false, issues };

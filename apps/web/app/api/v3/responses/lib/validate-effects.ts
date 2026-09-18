@@ -267,13 +267,19 @@ export async function patchEffects({
     contactId: stored.contact?.id ?? null,
     displayId: stored.displayId,
     /*
-     * `responseFinished` fires on the transition, so a patch that leaves a finished response
-     * finished dispatches nothing. One case is not modelled: quota evaluation can itself flip
-     * `finished` to true inside the write's transaction when a matched quota's action is
-     * `endSurvey`, and a dry run cannot claim that will happen — the quota may be full by then, or
-     * not. This reports what the payload asks for.
+     * Always true for a patch. This used to report `finished && !stored.finished`, which modelled
+     * only `responseFinished` — but `updateV3Response` dispatches `responseUpdated` on *every* patch,
+     * and the pipeline job fans any event out to its webhooks. A caller that dry-ran a correction,
+     * read `false`, and concluded nothing would fire would then watch its `responseUpdated` webhooks
+     * run.
+     *
+     * The field answers "would a real write run the pipeline", so the transition only decides which
+     * events go out, not whether any do. `responseFinished` additionally fires on the transition; the
+     * one case not modelled is quota evaluation flipping `finished` to true inside the write's
+     * transaction when a matched quota ends the survey, which a dry run cannot promise — the quota may
+     * be full by then, or not.
      */
-    firesPipeline: finished && !stored.finished,
+    firesPipeline: true,
     // Metering is a `responseCreated` side effect; a patch never meters.
     countsTowardMeteredResponses: false,
     quotas: await withoutFailing(

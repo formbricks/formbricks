@@ -16,7 +16,7 @@ info:
     **Spec location:** source of truth is the multi-file tree at `docs/api-v3-reference/src/` (root `openapi.yml` plus one file per path and component); `docs/api-v3-reference/openapi.yml` is the generated single-file bundle (alongside v2 at `docs/api-v2-reference/openapi.yml`).
 
     **workspaceId**
-    `workspaceId` is the canonical container identifier for this API. It is a **required query parameter on collection read endpoints** (`GET /api/v3/surveys`, `GET /api/v3/action-classes`, `GET /api/v3/contact-attribute-keys`) because those operate within a workspace. **`POST /api/v3/surveys` instead requires `workspaceId` in the request body**, not as a query parameter. Single-resource endpoints (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by its globally-unique id and resolve the workspace from it, so they do **not** accept a `workspaceId` query parameter — sending one returns **400** (`Unrecognized key: "workspaceId"`).
+    `workspaceId` is the canonical container identifier for this API. It is a **required query parameter on collection read endpoints** (`GET /api/v3/surveys`, `GET /api/v3/action-classes`, `GET /api/v3/contact-attribute-keys`) because those operate within a workspace. **`POST /api/v3/surveys` instead requires `workspaceId` in the request body**, not as a query parameter. Single-resource endpoints (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by its globally-unique id and resolve the workspace from it, so they do **not** accept a `workspaceId` query parameter — sending one returns **400** with an `invalid_params` entry naming the key itself (`name: "workspaceId"`, `reason: "Unsupported field 'workspaceId'"`), rather than one naming the body.
 
     **Auth**
     Authenticate with either a session cookie or **`x-api-key`**. In dual-auth mode, V3 checks the API key first when the header is present, otherwise it uses the session path. Unauthenticated callers get **401** before query validation.
@@ -2259,7 +2259,7 @@ paths:
 
         `PATCH` is the only update verb — there is no `PUT`. Within it, `data` is replaced wholesale rather than deep-merged, so send the complete answer map; `embeddedData` merges by field name. Unknown top-level keys are rejected with **400** rather than ignored.
 
-        Setting `finished` to `true` fires the finish side of the response pipeline, including Hub ingestion. Updates otherwise emit `responseUpdated`.
+        Every patch emits `responseUpdated` and runs the response pipeline, including Hub ingestion. Transitioning `finished` to `true` additionally emits `responseFinished`; patching a response that is already finished does not re-emit it.
       tags:
         - V3 Responses
       parameters:
@@ -7574,7 +7574,9 @@ components:
 
         `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
 
-        **Note for the implementation, because the obvious shortcut is wrong.** The one shipped update service merges `data` (`apps/web/lib/response/service.ts`, `// merge data object`), and merges `ttc` with it. Reusing it would ship merge semantics under a replace contract, silently — an unimplemented route has no test to catch the difference. v3 replaces on purpose: a merge makes it impossible to delete an answer, which a correction flow needs. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
+        v3 replaces on purpose, where v1 and v2 merge: a merge makes it impossible to delete an answer, which a correction flow needs.
+
+        **Every patch runs the response pipeline**, emitting `responseUpdated` — so webhooks, integrations and follow-ups fire for a correction as much as for a substantive edit. A patch that *transitions* the response to finished additionally emits `responseFinished`; one that patches an already-finished response does not re-emit it.
 
         Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`, `displayId`, `singleUseId`, `contactAttributes`, and the create-only `ttc` and `meta` — timing and submission context describe the original submission event, so they are set once and not revised. `contactId` is create-only deliberately — re-attributing an existing response to a different person is a capability only v2 offers, and it is not carried forward.
       minProperties: 1
@@ -7659,7 +7661,7 @@ components:
           description: The display that would be linked, or `null` if none.
         firesPipeline:
           type: boolean
-          description: Whether a real write would run the response pipeline — webhooks, integrations, follow-ups, and Hub ingestion. True for a create, and for a patch that transitions the response to finished.
+          description: 'Whether a real write would run the response pipeline — webhooks, integrations, follow-ups, and Hub ingestion. Always `true`: a create emits `responseCreated` and every patch emits `responseUpdated`, so a write is never side-effect free. A patch that transitions the response to finished additionally emits `responseFinished`; the transition decides which events go out, not whether any do.'
         countsTowardMeteredResponses:
           type: boolean
           description: Whether a real write would consume one metered monthly response.

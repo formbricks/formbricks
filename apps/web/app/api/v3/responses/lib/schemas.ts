@@ -270,6 +270,23 @@ const ZV3ValidationDocument = z.unknown().refine((value) => value !== undefined,
   message: "Required",
 });
 
+/**
+ * The envelope's own `responseId`, declared like any other reference (ENG-2861).
+ *
+ * A dry run resolves it exactly as a real patch does — `getResponseWorkspaceId`, then the scoped
+ * read — so validate cannot be used to probe whether a response exists in someone else's workspace.
+ * Declared on its own const rather than inline because the registry keys on the schema instance.
+ */
+const ZV3ValidationResponseId = declareReference(z.cuid2(), {
+  kind: "fk",
+  resolvedAgainst: "Response, via getResponseWorkspaceId then the workspace-scoped read",
+});
+
+declareReference(ZV3ValidationDocument, {
+  kind: "document-local",
+  resolvedAgainst: "the nested create or patch body, whose own fields carry their declarations",
+});
+
 export const ZV3ResponseValidationRequestBody = z.discriminatedUnion("operation", [
   z
     .object({
@@ -280,7 +297,7 @@ export const ZV3ResponseValidationRequestBody = z.discriminatedUnion("operation"
   z
     .object({
       operation: z.literal("patch"),
-      responseId: z.cuid2(),
+      responseId: ZV3ValidationResponseId,
       data: ZV3ValidationDocument,
     })
     .strict(),

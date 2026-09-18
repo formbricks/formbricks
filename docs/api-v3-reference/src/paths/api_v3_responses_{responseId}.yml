@@ -246,8 +246,9 @@ patch:
     rejected with **400** rather than ignored.
 
 
-    Setting `finished` to `true` fires the finish side of the response pipeline, including Hub
-    ingestion. Updates otherwise emit `responseUpdated`.
+    Every patch emits `responseUpdated` and runs the response pipeline, including Hub ingestion.
+    Transitioning `finished` to `true` additionally emits `responseFinished`; patching a response that
+    is already finished does not re-emit it.
   tags:
     - V3 Responses
   parameters:

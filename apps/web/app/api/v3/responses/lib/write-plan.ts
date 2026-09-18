@@ -1,10 +1,22 @@
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
-import { applyIngestContract, normalizeIngestedValue } from "@formbricks/types/embedded-data-ingest";
+import {
+  MAX_INGESTED_VALUE_BYTES,
+  applyIngestContract,
+  normalizeIngestedValue,
+} from "@formbricks/types/embedded-data-ingest";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { type TV3AnswerPlan, isPublishableDataKey } from "./answers";
+
+/**
+ * UTF-8 byte length, matching how `applyIngestContract` measures a value. `String.length` counts
+ * UTF-16 code units, so it under-counts every non-Latin script by up to 3x — the cap has to be
+ * measured in the same units the storage contract states it in.
+ */
+const UTF8_ENCODER = new TextEncoder();
+const utf8ByteLength = (value: string): number => UTF8_ENCODER.encode(value).length;
 
 /** Milliseconds in a day: the contract's upper bound for one element's time-to-complete. */
 const TTC_MAX_MS = 86_400_000;
@@ -69,6 +81,13 @@ export const totalStoredV3Ttc = (stored: Readonly<Record<string, unknown>> | und
     if (key === TTC_TOTAL_KEY) continue;
     if (typeof value === "number" && Number.isFinite(value)) buckets[key] = value;
   }
+
+  // No timings were ever collected, so there is nothing to total. The `!stored` guard above does not
+  // cover this: `Response.ttc` is `Json @default("{}")`, so a response created without `ttc` stores a
+  // truthy `{}` and reaches here. Totalling it would publish `{_total: 0}` — a `durationSeconds` of
+  // zero that reads as "answered instantly" rather than "not measured", which is exactly what the
+  // invariant on `normalizeV3Ttc` above says must not happen.
+  if (Object.keys(buckets).length === 0) return {};
 
   return calculateTtcTotal(clampTtcBuckets(buckets));
 };
@@ -293,6 +312,27 @@ const planEmbeddedEntry = (
         issue: {
           name,
           reason: `'${name}' is a ${field.dataType} variable and cannot store this value.`,
+          code: "unsupported_field",
+          referenceType: "variable",
+        },
+      };
+    }
+
+    // Bound the value, as the ingested path does. `applyIngestContract` truncates a hidden field at
+    // MAX_INGESTED_VALUE_BYTES; this branch stored whatever arrived, so a text variable could carry
+    // most of the 2 MB body limit into `Response.variables` — and unlike an answer, a variable is
+    // re-read into recall and quota evaluation on every later read of the response.
+    //
+    // Refused rather than truncated, which is the same call this branch already makes for a value
+    // that will not coerce: a variable feeds calculations, so silently storing a cut value corrupts
+    // them where an error tells the caller. The ingested path truncates instead because a hidden
+    // field arrives from a URL with nobody to tell.
+    if (typeof normalized.value === "string" && utf8ByteLength(normalized.value) > MAX_INGESTED_VALUE_BYTES) {
+      return {
+        kind: "issue",
+        issue: {
+          name,
+          reason: `'${name}' exceeds the ${MAX_INGESTED_VALUE_BYTES} byte limit for a stored field value.`,
           code: "unsupported_field",
           referenceType: "variable",
         },

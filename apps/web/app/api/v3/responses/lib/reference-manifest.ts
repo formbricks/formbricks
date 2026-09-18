@@ -127,6 +127,10 @@ export const V3_RESPONSE_BODY_FIELDS: Record<string, TV3ReferenceKind> = {
   contactId: "fk",
   displayId: "fk",
   tags: "fk",
+  // The validate envelope's, naming the response a dry-run patch would target. Resolved exactly as a
+  // real patch resolves it — `getResponseWorkspaceId` then the scoped read — so a dry run cannot be
+  // used to probe whether a foreign response exists.
+  responseId: "fk",
   endingId: "document-local",
   language: "document-local",
   data: "document-local",
@@ -142,6 +146,8 @@ export const V3_RESPONSE_BODY_FIELDS: Record<string, TV3ReferenceKind> = {
   finished: "none",
   meta: "none",
   ttc: "none",
+  // The validate envelope's discriminator. Picks which planner runs, names nothing.
+  operation: "none",
 };
 
 /** Field names that read as a reference even when the value is a plain string. */

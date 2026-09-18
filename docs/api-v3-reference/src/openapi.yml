@@ -50,8 +50,9 @@ info:
     body**, not as a query parameter. Single-resource endpoints
     (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by
     its globally-unique id and resolve the workspace from it, so they do **not**
-    accept a `workspaceId` query parameter — sending one returns **400**
-    (`Unrecognized key: "workspaceId"`).
+    accept a `workspaceId` query parameter — sending one returns **400** with an
+    `invalid_params` entry naming the key itself (`name: "workspaceId"`,
+    `reason: "Unsupported field 'workspaceId'"`), rather than one naming the body.
 
 
     **Auth**

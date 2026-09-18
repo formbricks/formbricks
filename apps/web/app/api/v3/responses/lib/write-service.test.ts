@@ -526,6 +526,33 @@ describe("createScopedResponse — what actually reaches Prisma", () => {
   });
 
   /**
+   * The select's shape was guarded; passing it on was not. Dropping the `response:` argument from
+   * both call sites left the suite green, because `response` is optional on the evaluator — and with
+   * it absent every `reserved` operand resolves unset, which is the exact failure the wide select
+   * exists to prevent. Assert the row arrives, not just that it was selected.
+   */
+  test("the persisted row is handed to the evaluator, not just selected", async () => {
+    const tx = txStub();
+    tx.response.create.mockResolvedValueOnce({
+      id: "clrs1",
+      surveyId: "clsv1",
+      finished: true,
+      data: { q1: "x" },
+      variables: {},
+      meta: { country: "PT" },
+      ttc: { _total: 1200 },
+    });
+    runTx(tx);
+
+    await createScopedResponse(createInput({ finished: false }));
+
+    const [call] = mockEvaluateQuotas.mock.calls.at(-1) ?? [];
+    expect(call?.response).toEqual(
+      expect.objectContaining({ id: "clrs1", meta: { country: "PT" }, ttc: { _total: 1200 } })
+    );
+  });
+
+  /**
    * The columns are the behaviour here, not an implementation detail: `reserved` operands resolve
    * through accessors that read `meta.*`, `ttc` and the timestamps off this row, and each one is
    * wrapped in a `try`/`catch` answering `undefined`. Selected down to four columns the write does
