@@ -36,9 +36,10 @@ The whole flow uses Authorization Code + PKCE, the standard the [MCP authorizati
 
 ## What the agent can do
 
-The MCP server exposes survey, workflow, response and feedback-record tools, grouped into scopes you
-approve on the consent screen. Read tools require the matching `:read` scope; tools that create, update, or delete
-require the `:write` scope:
+The MCP server exposes survey, workflow, response and feedback-record tools, grouped into
+authorization scopes. Read tools require the matching `:read` scope; tools that create, update, or
+delete require the `:write` scope. Everything below is offered on the consent screen except where a
+footnote says otherwise:
 
 | Scope | Tools | What it allows |
 | --- | --- | --- |
