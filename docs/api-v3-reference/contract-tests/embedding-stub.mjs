@@ -123,6 +123,15 @@ const server = createServer((req, res) => {
       return;
     }
 
+    // `JSON.parse` succeeds on any JSON value, and a bare `null` is the one that bites: reading
+    // `.input` off it throws, and the throw is inside a `req.on("end")` callback with nothing above it
+    // to catch — so a single `-d null` takes the whole stub down mid-suite. A primitive is harmless
+    // by comparison (`(1).input` is just undefined), but nothing below wants one either.
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+      reply(400, { error: { message: "Body must be a JSON object", type: "invalid_request_error" } });
+      return;
+    }
+
     const inputs = Array.isArray(parsed.input) ? parsed.input : [parsed.input ?? ""];
     // Same reasoning as the `dimensions` cap below, on the other multiplier. The body limit allows an
     // array of several hundred thousand empty strings, and each one becomes a vector of `dimensions`
