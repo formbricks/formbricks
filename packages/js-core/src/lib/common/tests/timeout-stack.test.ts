@@ -63,6 +63,19 @@ describe("TimeoutStack", () => {
     ]);
   });
 
+  test("add retires an entry whose timeout id a new timer reuses", () => {
+    const instance = TimeoutStack.getInstance();
+    instance.add("firstAction", 5);
+    instance.markFired(5);
+
+    // A browser may hand id 5 to a later timer once the first one has run. Both lookups on this
+    // stack resolve by id, so the spent entry has to go or markFired below marks it instead.
+    instance.add("secondAction", 5);
+    instance.markFired(5);
+
+    expect(instance.getTimeouts()).toEqual([{ event: "secondAction", timeoutId: 5, fired: true }]);
+  });
+
   test("add keeps a still-pending entry for the same action", () => {
     const instance = TimeoutStack.getInstance();
     instance.add("pageView", 111);
