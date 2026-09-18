@@ -57,8 +57,8 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
 
   Formbricks now refuses to start when neither variable has a value, in every environment. Before this
   release that refusal applied only when `NODE_ENV=production`; a development or test instance with
-  neither variable set still started, falling back to the authentication library's built-in default
-  secret, and only invites and verification links failed. So a production instance is already required
+  neither variable set still started, using a fallback value for the signing secret, and only invites
+  and verification links failed. So a production instance is already required
   to have one of these set and is unaffected. If a non-production instance of yours set neither,
   generate a secret before upgrading — doing so **signs every current user out**, because their cookies
   were signed with that fallback value rather than with a secret of yours.
