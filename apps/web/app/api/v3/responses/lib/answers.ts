@@ -395,6 +395,61 @@ const serializeMatrix = (
 };
 
 /**
+ * The four element types whose answer is one or more choices.
+ *
+ * Grouped out of `serializeOne` because they differ only in arity and in whether position carries
+ * meaning — every one of them resolves the same way through `resolveSelection`, so the switch was
+ * spending three branches on one idea.
+ *
+ * `pictureSelection` stores choice **ids**, so it resolves `exact` and carries no label —
+ * `ZSurveyPictureChoice` has none. `multipleChoiceMulti` stores localized labels. `ranking` is stored
+ * in drag order, so the array index is the rank.
+ */
+const serializeChoices = (
+  element: Extract<
+    TSurveyElement,
+    { type: "multipleChoiceSingle" | "multipleChoiceMulti" | "pictureSelection" | "ranking" }
+  >,
+  raw: unknown,
+  base: TSerializeBase,
+  choiceIndex: TV3ChoiceIndex
+): Serialized => {
+  const mismatch = { reason: "valueShapeMismatch" as const };
+
+  if (element.type === "multipleChoiceSingle") {
+    if (typeof raw !== "string") return mismatch;
+
+    return {
+      answer: {
+        ...base,
+        elementType: "multipleChoiceSingle",
+        selections: [resolveSelection(raw, choiceIndex)],
+      },
+    };
+  }
+
+  if (!isStringArray(raw)) return mismatch;
+
+  if (element.type === "ranking") {
+    return {
+      answer: {
+        ...base,
+        elementType: "ranking",
+        selections: raw.map((entry, position) => resolveSelection(entry, choiceIndex, position + 1)),
+      },
+    };
+  }
+
+  return {
+    answer: {
+      ...base,
+      elementType: element.type,
+      selections: raw.map((entry) => resolveSelection(entry, choiceIndex)),
+    },
+  };
+};
+
+/**
  * One stored value to one answer, or a reason it could not be read.
  *
  * Every branch narrows before it reads. `valueShapeMismatch` is returned rather than thrown, and
@@ -481,42 +536,11 @@ const serializeOne = (
     case "matrix":
       return serializeMatrix(element, raw, base, lookupKey);
 
-    case "multipleChoiceSingle": {
-      if (typeof raw !== "string") return mismatch;
-      return {
-        answer: {
-          ...base,
-          elementType: "multipleChoiceSingle",
-          selections: [resolveSelection(raw, choiceIndex)],
-        },
-      };
-    }
-
+    case "multipleChoiceSingle":
     case "multipleChoiceMulti":
-    case "pictureSelection": {
-      // `pictureSelection` stores choice **ids**, so it resolves `exact` and carries no label —
-      // `ZSurveyPictureChoice` has none. `multipleChoiceMulti` stores localized labels.
-      if (!isStringArray(raw)) return mismatch;
-      return {
-        answer: {
-          ...base,
-          elementType: element.type,
-          selections: raw.map((entry) => resolveSelection(entry, choiceIndex)),
-        },
-      };
-    }
-
-    case "ranking": {
-      // Stored in drag order, so the array index is the rank.
-      if (!isStringArray(raw)) return mismatch;
-      return {
-        answer: {
-          ...base,
-          elementType: "ranking",
-          selections: raw.map((entry, position) => resolveSelection(entry, choiceIndex, position + 1)),
-        },
-      };
-    }
+    case "pictureSelection":
+    case "ranking":
+      return serializeChoices(element, raw, base, choiceIndex);
 
     default:
       return mismatch;

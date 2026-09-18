@@ -4,7 +4,6 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
-import type { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { type TKeysetCursor, keysetOrderBy, keysetPagePredicate } from "@/app/api/v3/lib/keyset-cursor";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { deleteDisplay } from "@/lib/display/service";
@@ -416,7 +415,13 @@ async function rescueLegacyBlocks<TSurvey extends { id: string; blocks: unknown[
     where: { id: { in: legacyIds } },
     select: { id: true, questions: true },
   });
-  const questionsById = new Map(legacy.map((row) => [row.id, (row.questions ?? []) as TSurveyQuestion[]]));
+  // Derived from the transform rather than naming `TSurveyQuestion`, which is deprecated in favour of
+  // `TSurveyElement`. The deprecation is right and irrelevant here: this reads the legacy `questions`
+  // blob and hands it to the legacy-shaped transform, so the old type IS the correct one at this
+  // boundary. Deriving it says that without importing a deprecated symbol, and follows the signature
+  // if it ever changes.
+  type TLegacyQuestions = Parameters<typeof transformQuestionsToBlocks>[0];
+  const questionsById = new Map(legacy.map((row) => [row.id, (row.questions ?? []) as TLegacyQuestions]));
 
   return surveys.map((survey) => {
     const questions = questionsById.get(survey.id);
