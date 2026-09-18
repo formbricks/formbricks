@@ -33,8 +33,6 @@ export {
   renderFollowUpEmail,
 } from "./lib/render";
 
-export { render } from "@react-email/render";
-
 export {
   Body,
   Button,
@@ -51,6 +49,7 @@ export {
   Section,
   Tailwind,
   Text,
-} from "@react-email/components";
+  render,
+} from "react-email";
 
 export type { ProcessedHiddenField, ProcessedResponseElement, ProcessedVariable } from "./types/follow-up";

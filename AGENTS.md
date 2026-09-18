@@ -130,8 +130,8 @@ ship their own CSS rather than relying on the app to scan them:
 
 - `@formbricks/surveys` — prebuilt bundle served from `apps/web/public/js/` (see the section above).
 - `@formbricks/survey-ui` — exports `./styles` (`dist/survey-ui.css`), scoped to `#fbjs`.
-- `@formbricks/email` — ships no stylesheet at all; `@react-email/tailwind` compiles and inlines the
-  classes into the email HTML at render time.
+- `@formbricks/email` — ships no stylesheet at all; `react-email`'s `Tailwind` component compiles and
+  inlines the classes into the email HTML at render time.
 
 If you ever consume a workspace package as raw source **for its styling**, the app has to be told
 about that package's files explicitly — detection stops at the app's own root, so nothing else will
