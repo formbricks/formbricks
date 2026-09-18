@@ -12,7 +12,8 @@ import {
 import { TWorkspace } from "@formbricks/types/workspace";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
-import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
+import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
+import { deleteFile, deleteFilesByWorkspaceId } from "@/modules/storage/service";
 import { createWorkspace, deleteWorkspace, deleteWorkspaceIfNotLast, updateWorkspace } from "./workspace";
 
 vi.mock("server-only", () => ({}));
@@ -48,6 +49,7 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
       create: vi.fn(),
       delete: vi.fn(),
+      findUnique: vi.fn(),
     },
     workspaceTeam: {
       createMany: vi.fn(),
@@ -100,6 +102,11 @@ vi.mock("@/lib/utils/validate", () => ({
 
 vi.mock("@/modules/storage/service", () => ({
   deleteFilesByWorkspaceId: vi.fn(),
+  deleteFile: vi.fn(),
+}));
+
+vi.mock("@/lib/workspace/service", () => ({
+  getWorkspaceLegacyStoragePrefixes: vi.fn(),
 }));
 
 describe("workspace lib", () => {
@@ -109,6 +116,141 @@ describe("workspace lib", () => {
     // the same prisma mock so assertions stay on `prisma.*` and a rollback surfaces as a throw.
     vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(prisma));
     vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValue([]);
+  });
+
+  // ENG-2418: removing or replacing a logo was a database-only write, so the old object stayed in the
+  // bucket forever. Every upload gets a unique `--fid--{uuid}` key, so exactly one row referenced it.
+  describe("updateWorkspace logo cleanup", () => {
+    const LOGO_PREFIX = "/storage/p1/public";
+    const oldUrl = `${LOGO_PREFIX}/old--fid--111.png`;
+    const newUrl = `${LOGO_PREFIX}/new--fid--222.png`;
+
+    const withStoredLogo = (url: string | null) => {
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(
+        (url ? { logo: { url } } : { logo: null }) as any
+      );
+    };
+    const resolvesTo = (workspace: Partial<TWorkspace> & { logo?: { url: string } | null }) => {
+      vi.mocked(prisma.workspace.update).mockResolvedValueOnce({ ...baseWorkspace, ...workspace } as any);
+    };
+
+    beforeEach(() => {
+      vi.mocked(getWorkspaceLegacyStoragePrefixes).mockResolvedValue(["p1"]);
+      vi.mocked(deleteFile).mockResolvedValue({ ok: true, data: undefined } as any);
+    });
+
+    test("deletes the old object when the logo is removed", async () => {
+      withStoredLogo(oldUrl);
+      resolvesTo({ logo: null });
+
+      await updateWorkspace("p1", { logo: { url: undefined } });
+
+      expect(deleteFile).toHaveBeenCalledWith("p1", "public", "old--fid--111.png");
+    });
+
+    test("deletes only the old object when the logo is replaced", async () => {
+      withStoredLogo(oldUrl);
+      resolvesTo({ logo: { url: newUrl } });
+
+      await updateWorkspace("p1", { logo: { url: newUrl } });
+
+      expect(deleteFile).toHaveBeenCalledTimes(1);
+      expect(deleteFile).toHaveBeenCalledWith("p1", "public", "old--fid--111.png");
+    });
+
+    test("deletes nothing when the logo url is unchanged", async () => {
+      withStoredLogo(oldUrl);
+      resolvesTo({ logo: { url: oldUrl } });
+
+      await updateWorkspace("p1", { logo: { url: oldUrl, bgColor: "#fff" } });
+
+      expect(deleteFile).not.toHaveBeenCalled();
+    });
+
+    test("does not read or delete anything when the update carries no logo", async () => {
+      resolvesTo({ name: "renamed" });
+
+      await updateWorkspace("p1", { name: "renamed" });
+
+      expect(prisma.workspace.findUnique).not.toHaveBeenCalled();
+      expect(deleteFile).not.toHaveBeenCalled();
+    });
+
+    // Prisma treats `logo: undefined` as "leave the field alone". Trusting the input instead of what
+    // was persisted would delete the object while the row still points at it.
+    test("deletes nothing when Prisma ignores an undefined logo", async () => {
+      withStoredLogo(oldUrl);
+      resolvesTo({ logo: { url: oldUrl } });
+
+      await updateWorkspace("p1", { logo: undefined });
+
+      expect(deleteFile).not.toHaveBeenCalled();
+    });
+
+    // ENG-2258 / ENG-1981: logo.url is caller-supplied and parseStorageFileUrl does not check the
+    // origin, so an unguarded delete is a cross-tenant delete primitive.
+    test("refuses to delete an object under a prefix the workspace does not own", async () => {
+      withStoredLogo("/storage/other-workspace/public/victim--fid--999.png");
+      resolvesTo({ logo: null });
+
+      await updateWorkspace("p1", { logo: { url: undefined } });
+
+      expect(deleteFile).not.toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    // Owning the prefix does not make the object a logo. Response attachments live under `private/`,
+    // so the cleanup refuses anything that is not a public key.
+    test("refuses to delete a private object even inside the workspace", async () => {
+      withStoredLogo("/storage/p1/private/response-attachment--fid--888.pdf");
+      resolvesTo({ logo: null });
+
+      await updateWorkspace("p1", { logo: { url: undefined } });
+
+      expect(deleteFile).not.toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    test("deletes an object under the workspace's legacy environment prefix", async () => {
+      vi.mocked(getWorkspaceLegacyStoragePrefixes).mockResolvedValue(["p1", "env-legacy"]);
+      withStoredLogo("/storage/env-legacy/public/legacy--fid--333.png");
+      resolvesTo({ logo: null });
+
+      await updateWorkspace("p1", { logo: { url: undefined } });
+
+      expect(deleteFile).toHaveBeenCalledWith("env-legacy", "public", "legacy--fid--333.png");
+    });
+
+    test("leaves an external logo url alone", async () => {
+      withStoredLogo("https://cdn.example.com/logo.png");
+      resolvesTo({ logo: null });
+
+      await updateWorkspace("p1", { logo: { url: undefined } });
+
+      expect(deleteFile).not.toHaveBeenCalled();
+    });
+
+    // The url carries the percent-encoded name; the object is stored under the decoded one.
+    test("decodes the file name before deleting", async () => {
+      withStoredLogo(`${LOGO_PREFIX}/my%20logo--fid--444.png`);
+      resolvesTo({ logo: null });
+
+      await updateWorkspace("p1", { logo: { url: undefined } });
+
+      expect(deleteFile).toHaveBeenCalledWith("p1", "public", "my logo--fid--444.png");
+    });
+
+    test.each([
+      ["returns an error", () => vi.mocked(deleteFile).mockResolvedValue({ ok: false, error: {} } as any)],
+      ["rejects", () => vi.mocked(deleteFile).mockRejectedValue(new Error("bucket down"))],
+    ])("still resolves the update when deleteFile %s", async (_label, arrange) => {
+      arrange();
+      withStoredLogo(oldUrl);
+      resolvesTo({ logo: null });
+
+      await expect(updateWorkspace("p1", { logo: { url: undefined } })).resolves.toBeDefined();
+      expect(logger.error).toHaveBeenCalled();
+    });
   });
 
   describe("updateWorkspace", () => {
