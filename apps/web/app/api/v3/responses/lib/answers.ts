@@ -11,6 +11,7 @@ import {
   type TV3ResponseUnresolvedEntry,
   V3_ADDRESS_FIELD_IDS,
   V3_CONTACT_INFO_FIELD_IDS,
+  narrowToPublishableValue,
 } from "./resources";
 
 /**
@@ -579,9 +580,16 @@ export const serializeAnswers = (
       // `start` or `source`, and suppressing a real answer would be the same loss in a new place.
       if (LINK_SURVEY_SYSTEM_PARAM_KEYS.has(key)) continue;
 
+      // Narrowed, not cast — the third place stored bytes reach the wire. The `raw === null` skip
+      // above catches the shape that is easiest to picture; `["a", 1]` and `{ a: 5 }` are just as far
+      // outside the four-shape union and were being published verbatim. A live smoke caught these
+      // after the two better-known boundaries were already fixed.
+      const publishable = narrowToPublishableValue(raw);
+      if (publishable === undefined) continue;
+
       unresolved.push({
         key,
-        rawValue: raw as TV3ResponseUnresolvedEntry["rawValue"],
+        rawValue: publishable,
         reason: "elementNotInSurvey",
       });
       continue;

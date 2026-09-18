@@ -638,3 +638,33 @@ describe("labels resolve in the response's language", () => {
     expect(withSelections(answers[0]).selections[0]).toMatchObject({ optionId: "c1", match: "label" });
   });
 });
+
+/**
+ * The third boundary where stored bytes reach the wire, and the one a live smoke found after the
+ * other two were fixed: an orphaned `data` key is reported with its value verbatim. The `null` skip
+ * nearby covers the shape that is easiest to picture; `["a", 1]` and `{ a: 5 }` are just as far
+ * outside `rawValue`'s four-shape union.
+ */
+describe("what an orphaned key may publish as rawValue", () => {
+  const orphan = (raw: unknown) =>
+    serializeAnswers(buildAnswerPlan([] as never, "default", []), { orphan: raw } as never, "default")
+      .unresolved;
+
+  test.each([
+    ["an array with a non-string item", ["a", 1]],
+    ["a record with a non-string value", { a: 5 }],
+    ["a boolean", true],
+    ["a nested array", [["a"]]],
+  ])("%s is reported nowhere rather than published", (_label, raw) => {
+    expect(orphan(raw)).toEqual([]);
+  });
+
+  test.each([
+    ["a string", "kept"],
+    ["a number", 7],
+    ["a string array", ["a", "b"]],
+    ["a string record", { row: "column" }],
+  ])("%s the union declares is still reported", (_label, raw) => {
+    expect(orphan(raw)).toEqual([{ key: "orphan", rawValue: raw, reason: "elementNotInSurvey" }]);
+  });
+});
