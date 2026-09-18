@@ -47,6 +47,7 @@ const CONTRACT_IDS = {
   WORKFLOW_UNARCHIVE: "clctworkflowunarchive001",
   WORKFLOW_TEST: "clctworkflowtest00000001",
   ACTION_CLASS_READ: "clctactionclassread00001",
+  RESPONSE_READ: "clctresponseread00000001",
 } as const;
 
 /**
@@ -96,6 +97,46 @@ async function seedSurveyLanguages(surveyId: string, codes: readonly string[]): 
       create: { languageId: language.id, surveyId, enabled: true, default: index === 0 },
     });
   }
+}
+
+/**
+ * One response on the read survey, so the three response reads have something to return.
+ *
+ * Without it `GET /api/v3/responses` and `/count` answer a valid but empty page, and
+ * `GET /{responseId}` has no id to fetch — all schema-conformant, and none of it exercising the
+ * payload the contract actually describes. The answer is keyed by the read survey's own element id
+ * so it resolves into `answers[]` rather than landing in `unresolved[]`, which is the difference
+ * between checking the envelope and checking the response body.
+ *
+ * `ttc` is present because `durationSeconds` is the one optional member of the payload, and absent
+ * timing is the case that omits it — seeding timing exercises the other branch.
+ *
+ * The destructive response operations are not seeded here: their gates open on their own tickets,
+ * and each will want its own victim for the reason this file's header gives.
+ */
+async function seedResponse(id: string, surveyId: string): Promise<void> {
+  const elementId = `${surveyId}element`;
+  const fields = {
+    surveyId,
+    finished: true,
+    // The survey's own default code, not `"default"`. `"default"` is a legitimate stored value — the
+    // contract says so (`ResponseBase.yml`) and three app surfaces guard on it — but it is the wrong
+    // fixture here: it matches none of the survey's declared languages, so `resolveV3LabelContext`
+    // took the unrecognised-language fallback and the one row the contract suite validates exercised
+    // the fallback branch in every body. `z.string().nullable()` accepts that, so nothing failed — the
+    // fixture was schema-valid and had quietly stopped describing the ordinary payload.
+    language: READ_SURVEY_LANGUAGES[0],
+    data: { [elementId]: "Contract fixture answer" },
+    ttc: { [elementId]: 1500, _total: 1500 },
+    meta: { source: "link" },
+    variables: {},
+  };
+
+  await prisma.response.upsert({
+    where: { id },
+    update: fields,
+    create: { id, ...fields },
+  });
 }
 
 async function seedSurvey(id: string, name: string, archived: boolean): Promise<void> {
@@ -191,6 +232,7 @@ async function main(): Promise<void> {
 
   await seedSurvey(CONTRACT_IDS.SURVEY_READ, "Contract fixture — read", false);
   await seedSurveyLanguages(CONTRACT_IDS.SURVEY_READ, READ_SURVEY_LANGUAGES);
+  await seedResponse(CONTRACT_IDS.RESPONSE_READ, CONTRACT_IDS.SURVEY_READ);
   await seedSurvey(CONTRACT_IDS.SURVEY_PATCH, "Contract fixture — patch", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_DELETE, "Contract fixture — delete", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_ARCHIVE, "Contract fixture — archive", false);
@@ -247,6 +289,7 @@ async function main(): Promise<void> {
       ...(workflowRun ? { runId: workflowRun.id } : {}),
     },
     operations: {
+      getResponseV3: { path: { responseId: CONTRACT_IDS.RESPONSE_READ } },
       patchSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_PATCH } },
       deleteSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_DELETE } },
       archiveSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_ARCHIVE } },

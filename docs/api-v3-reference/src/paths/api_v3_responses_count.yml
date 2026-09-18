@@ -84,6 +84,14 @@ get:
         when a person needs a precise figure, not on a dashboard poll. It exists so that the capped
         default is a sensible default rather than a limitation, and so the cap cannot be sidestepped
         by accident.
+
+
+        **`exact` requires `surveyId` or `contactId`**, and answers **400** naming `precision`
+        without one — the same anchor rule `filter[finished][eq]` and `filter[language][in]` carry.
+        `capped` stops at the cap whatever the scope, so its cost is flat; an unanchored `exact` is a
+        full scan of every response in the workspace, and the contract refuses a query it cannot bound
+        rather than serving it slowly. For a workspace-wide figure use the capped default, which
+        reports `relation: gte` once it reaches the cap.
   responses:
     "200":
       description: Count retrieved successfully

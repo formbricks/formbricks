@@ -14,6 +14,7 @@ import {
   cleanupStripeCustomer,
   ensureCloudStripeSetupForOrganization,
 } from "@/modules/ee/billing/lib/organization-billing";
+import { deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 import {
   createOrganization,
   deleteOrganization,
@@ -79,6 +80,10 @@ vi.mock("@/modules/hub/service", () => ({
     data: { deletedFeedbackRecords: 0, deletedEmbeddings: 0, deletedWebhooks: 0 },
     error: null,
   }),
+}));
+
+vi.mock("@/modules/storage/service", () => ({
+  deleteWorkspaceFilesBestEffort: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe("Organization Service", () => {
@@ -460,6 +465,77 @@ describe("Organization Service", () => {
         assignments: [{ feedbackDirectoryId: "frd_1", workspaceId: "workspace-1" }],
         feedbackDirectoryIds: ["frd_1", "frd_2"],
       });
+    });
+
+    // ENG-3197: the cascade wipes the workspace rows, so anything left in the bucket afterwards is
+    // unreferenced respondent data that nothing can enumerate. Both prefixes have to be captured
+    // off the deleted rows, which is why the delete selects legacyEnvironmentId.
+    test("should delete object storage files for every workspace it owned", async () => {
+      vi.mocked(prisma.organization.delete).mockResolvedValue({
+        id: "org1",
+        name: "Test Org",
+        billing: null,
+        memberships: [],
+        workspaces: [
+          { id: "workspace-1", legacyEnvironmentId: "env-1" },
+          { id: "workspace-2", legacyEnvironmentId: null },
+        ],
+        teams: [],
+        apiKeys: [],
+        feedbackDirectories: [],
+      } as any);
+
+      await deleteOrganization("org1");
+
+      expect(deleteWorkspaceFilesBestEffort).toHaveBeenCalledTimes(2);
+      expect(deleteWorkspaceFilesBestEffort).toHaveBeenCalledWith({
+        id: "workspace-1",
+        legacyEnvironmentId: "env-1",
+      });
+      expect(deleteWorkspaceFilesBestEffort).toHaveBeenCalledWith({
+        id: "workspace-2",
+        legacyEnvironmentId: null,
+      });
+    });
+
+    test("should select legacyEnvironmentId off the deleted workspace rows", async () => {
+      vi.mocked(prisma.organization.delete).mockResolvedValue({
+        id: "org1",
+        name: "Test Org",
+        billing: null,
+        memberships: [],
+        workspaces: [],
+        teams: [],
+        apiKeys: [],
+        feedbackDirectories: [],
+      } as any);
+
+      await deleteOrganization("org1");
+
+      expect(prisma.organization.delete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: expect.objectContaining({
+            workspaces: { select: { id: true, legacyEnvironmentId: true } },
+          }),
+        })
+      );
+    });
+
+    test("should complete without storage cleanup when the organization has no workspaces", async () => {
+      vi.mocked(prisma.organization.delete).mockResolvedValue({
+        id: "org1",
+        name: "Test Org",
+        billing: null,
+        memberships: [],
+        workspaces: [],
+        teams: [],
+        apiKeys: [],
+        feedbackDirectories: [],
+      } as any);
+
+      await expect(deleteOrganization("org1")).resolves.toBeUndefined();
+
+      expect(deleteWorkspaceFilesBestEffort).not.toHaveBeenCalled();
     });
   });
 
