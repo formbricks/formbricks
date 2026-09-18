@@ -7,8 +7,46 @@ const SINGLE_USE_SIGNATURE_PAYLOAD_PREFIX = "formbricks.single-use.v1";
 
 export type TSurveySingleUseLinkParams = {
   suId: string;
-  suToken?: string;
+  /**
+   * HMAC over the survey id and the `suId` **exactly as it appears in the URL** — a ciphertext in
+   * encrypted mode, a CUID in plaintext mode. Minted in both modes since ENG-2758, and required so
+   * that dropping the survey binding again is a compile error rather than a silent vulnerability.
+   *
+   * Consumers that build a link URL still guard with `if (suToken)`. That is not dead code: these
+   * params travel back from a server action, so during a rolling deploy a new client bundle can hit
+   * an old pod that returns `{ suId }` alone. Without the guard the URL would carry the literal
+   * string `suToken=undefined`, which validates as `signature_mismatch` and would send an operator
+   * hunting a key-rotation problem that does not exist.
+   */
+  suToken: string;
 };
+
+export type TSurveySingleUseLinkRejectionReason =
+  | "missing_su_id"
+  | "missing_signature"
+  | "signature_mismatch"
+  | "decryption_failed"
+  | "not_a_cuid"
+  /**
+   * A link minted while encryption was ON, presented while the survey is in plaintext mode.
+   *
+   * Its signature is genuine — the MAC covers `(surveyId, suId)` and says nothing about the mode —
+   * so without this it would be accepted, and the ciphertext itself would become the canonical
+   * `singleUseId`. The same link in encrypted mode canonicalizes the *decrypted* cuid instead, so
+   * one physical link would occupy two distinct single-use identities: a response stored under one
+   * is invisible to the lookup for the other, and the survey reopens for a second submission.
+   */
+  | "encrypted_id_in_plaintext_mode";
+
+/**
+ * A discriminated union rather than `string | null` because the reason is what makes a rejection
+ * diagnosable. "Rejected" tells an operator nothing; `signature_mismatch` 4,000 times with distinct
+ * token fingerprints says a survey is being enumerated, while `missing_signature` 200 times with no
+ * fingerprint says somebody mailed links minted before this release.
+ */
+export type TSurveySingleUseLinkValidation =
+  | { ok: true; singleUseId: string }
+  | { ok: false; reason: TSurveySingleUseLinkRejectionReason };
 
 const getSingleUseSigningKey = (): string => {
   if (!env.ENCRYPTION_KEY) {
@@ -18,8 +56,12 @@ const getSingleUseSigningKey = (): string => {
   return env.ENCRYPTION_KEY;
 };
 
-// generate encrypted single use id for the survey
-export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
+/**
+ * Module-private on purpose: this mints a bare id with no survey binding, which is the shape that
+ * ENG-2758 was. Everything outside this file goes through `generateSurveySingleUseLinkParams`,
+ * which always signs. Do not export it again.
+ */
+const generateSurveySingleUseId = (isEncrypted: boolean): string => {
   const cuid = createId();
   if (!isEncrypted) {
     return cuid;
@@ -33,17 +75,13 @@ export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
   return encryptedCuid;
 };
 
-export const generateSurveySingleUseIds = (count: number, isEncrypted: boolean): string[] => {
-  const singleUseIds: string[] = [];
-
-  for (let i = 0; i < count; i++) {
-    singleUseIds.push(generateSurveySingleUseId(isEncrypted));
-  }
-
-  return singleUseIds;
-};
-
 export const generateSurveySingleUseSignature = (surveyId: string, singleUseId: string): string => {
+  // The fields are joined, not length-prefixed, so this relies on `surveyId` never containing a
+  // colon: it is a cuid2 at the mint action (ZGenerateSingleUseIdAction) and a database id at every
+  // validation site. A *custom* `singleUseId` may contain one, so without that assumption
+  // ("survey-1", "b:CUSTOM") and ("survey-1:b", "CUSTOM") would sign identically. Fixing it means
+  // bumping the payload prefix, which would invalidate every plaintext suToken in the wild — see the
+  // payload-v2 follow-up rather than changing the format here.
   const payload = `${SINGLE_USE_SIGNATURE_PAYLOAD_PREFIX}:${surveyId}:${singleUseId}`;
 
   return createHmac("sha256", getSingleUseSigningKey()).update(payload).digest("hex");
@@ -66,12 +104,15 @@ export const generateSurveySingleUseLinkParams = (
   isEncrypted: boolean,
   singleUseId?: string
 ): TSurveySingleUseLinkParams => {
-  if (isEncrypted) {
-    return { suId: generateSurveySingleUseId(true) };
-  }
+  // A custom id stays plaintext-only — it is not recoverable from a ciphertext, and
+  // ZGenerateSingleUseIdAction already refuses the combination.
+  const suId = isEncrypted
+    ? generateSurveySingleUseId(true)
+    : singleUseId?.trim() || generateSurveySingleUseId(false);
 
-  const suId = singleUseId?.trim() || generateSurveySingleUseId(false);
-
+  // Signed in both modes since ENG-2758. Before that the encrypted branch returned the ciphertext
+  // alone and discarded `surveyId`, so an encrypted link was bound to nothing and any survey on the
+  // deployment accepted it.
   return {
     suId,
     suToken: generateSurveySingleUseSignature(surveyId, suId),
@@ -92,6 +133,32 @@ export const generateSurveySingleUseLinkParamsList = (
   return singleUseLinkParams;
 };
 
+/**
+ * Whether a signature-verified `suId` is really an encrypted-mode id.
+ *
+ * Both failure shapes mean "not an encrypted-mode id" and are equally ordinary: a plaintext cuid has
+ * no colons, so `symmetricDecrypt` rejects it outright, while an operator's custom id may decrypt to
+ * bytes that are not a cuid. Neither is worth distinguishing at the call site, so this answers a
+ * boolean rather than surfacing a third rejection reason nobody could act on.
+ */
+const decryptsToACuid = (value: string, decrypt: (encryptedSingleUseId: string) => string): boolean => {
+  // Shape first, and not as an optimization. `symmetricEncrypt` joins its parts with ":" in both the
+  // GCM and the legacy CBC layout, and a cuid2 is `[a-z0-9]{24}` — so a value with no colon cannot be
+  // a ciphertext this deployment produced, whatever a decrypt implementation does when handed one.
+  // Without this the probe's answer depends on `symmetricDecrypt` throwing, which is a weaker thing to
+  // rest a refusal on than a fact about the format: a permissive decrypt would turn every ordinary
+  // plaintext link into a refusal, which is an outage rather than a bug.
+  if (!value.includes(":")) {
+    return false;
+  }
+
+  try {
+    return isCuid(decrypt(value));
+  } catch {
+    return false;
+  }
+};
+
 export const validateSurveySingleUseLinkParams = ({
   surveyId,
   suId,
@@ -104,21 +171,56 @@ export const validateSurveySingleUseLinkParams = ({
   suToken?: string | null;
   isEncrypted: boolean;
   decrypt: (encryptedSingleUseId: string) => string;
-}): string | null => {
+}): TSurveySingleUseLinkValidation => {
   const trimmedSuId = suId?.trim();
 
   if (!trimmedSuId) {
-    return null;
+    return { ok: false, reason: "missing_su_id" };
   }
 
-  if (isEncrypted) {
-    try {
-      const decryptedSingleUseId = decrypt(trimmedSuId);
-      return isCuid(decryptedSingleUseId) ? decryptedSingleUseId : null;
-    } catch {
-      return null;
+  // Authenticate, then decrypt — in that order, and never the other way round. The signature covers
+  // the `suId` as it appears in the URL, so it can be verified without touching the cipher, and must
+  // be, for two reasons:
+  //
+  //  1. `symmetricDecrypt` picks its algorithm by counting colons, and routes a two-part payload to
+  //     its unauthenticated AES-256-CBC V1 branch, bypassing the GCM path's own refusal to fall
+  //     back. Verifying first means no attacker-chosen bytes ever reach that branch from a public
+  //     endpoint.
+  //  2. Decrypt-then-`isCuid` accepts *any* ciphertext under ENCRYPTION_KEY whose plaintext happens
+  //     to be a cuid2 — including the `contactId` that getContactSurveyLink encrypts into the
+  //     base64url (readable) payload of a /c/{jwt} personalized link. Only the MAC distinguishes
+  //     "a single-use id minted for THIS survey" from "a cuid this deployment once encrypted".
+  if (!validateSurveySingleUseSignature(surveyId, trimmedSuId, suToken)) {
+    return { ok: false, reason: suToken ? "signature_mismatch" : "missing_signature" };
+  }
+
+  if (!isEncrypted) {
+    // The signature has already passed, so this value was minted by us for this survey — but it does
+    // not say *which mode* it was minted in, and an operator can toggle encryption at any time from
+    // the share modal. Accepting an encrypted-mode id here would canonicalize the ciphertext while
+    // encrypted mode canonicalizes the cuid inside it, splitting one link across two single-use
+    // identities and letting it be answered twice.
+    //
+    // Decrypting here is safe precisely because it is downstream of the MAC: no attacker-chosen bytes
+    // reach the cipher, which is the invariant the check above exists to hold. The cost is one AES
+    // operation on an already-authenticated value, and only for single-use surveys in plaintext mode.
+    if (decryptsToACuid(trimmedSuId, decrypt)) {
+      return { ok: false, reason: "encrypted_id_in_plaintext_mode" };
     }
+
+    return { ok: true, singleUseId: trimmedSuId };
   }
 
-  return validateSurveySingleUseSignature(surveyId, trimmedSuId, suToken) ? trimmedSuId : null;
+  let decryptedSingleUseId: string;
+  try {
+    decryptedSingleUseId = decrypt(trimmedSuId);
+  } catch {
+    return { ok: false, reason: "decryption_failed" };
+  }
+
+  if (!isCuid(decryptedSingleUseId)) {
+    return { ok: false, reason: "not_a_cuid" };
+  }
+
+  return { ok: true, singleUseId: decryptedSingleUseId };
 };
