@@ -4,7 +4,7 @@ description: >-
 
 
   Open and composed with `allOf`, like `ListPaginationMeta` — see the note there. Extracted because
-  three operations carried these two fields with the same prose copied out.
+  three components, across four operations, carried these two fields with the same prose copied out.
 required:
   - datasetId
   - datasetName
