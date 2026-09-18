@@ -99,3 +99,23 @@ describe("registerScopedTool", () => {
     );
   });
 });
+
+/**
+ * The ENG-2119 invariant, as a test rather than a convention.
+ *
+ * `registerScopedTool` takes the scope as a required argument, so the compiler already stops a tool
+ * being registered without one — verified separately, and `tsc` reports `Expected 5 arguments, but
+ * got 4`. What the compiler cannot stop is someone re-exporting the raw guards and gating by hand
+ * inside a handler again, which is exactly how the guarantee was lost the first time: the
+ * feedback-record tools did that for ten tools, and nothing failed.
+ *
+ * So this pins the module's public surface. If a guard is exported again, this is the test that says
+ * the structural gate just became conventional.
+ */
+describe("the scope guards stay private (ENG-2119)", () => {
+  test("registerScopedTool is the only export", async () => {
+    const guardScopes = await import("./guard-scopes");
+
+    expect(Object.keys(guardScopes).sort()).toEqual(["registerScopedTool"]);
+  });
+});
