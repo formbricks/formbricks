@@ -3,7 +3,6 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { MainNavigation } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD, IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
-import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getTrialDaysRemaining } from "@/lib/trial-countdown";
@@ -57,7 +56,6 @@ const getTrialEndingDaysRemaining = (trialEnd: string | Date, cookieStore: TCook
 
 export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutProps) => {
   const t = await getTranslate();
-  const publicDomain = getPublicDomain();
 
   // Destructure all data from props (NO database queries)
   const {
@@ -154,7 +152,6 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           isDevelopment={IS_DEVELOPMENT}
           membershipRole={membership.role}
-          publicDomain={publicDomain}
           organizationWorkspacesLimit={organizationWorkspacesLimit}
           isLicenseActive={active}
           isAccessControlAllowed={isAccessControlAllowed}
