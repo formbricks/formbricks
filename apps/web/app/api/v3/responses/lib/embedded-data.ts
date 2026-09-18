@@ -202,9 +202,15 @@ const collectOrphanedVariables = (
   for (const [storageKey, rawValue] of Object.entries(response.variables ?? {})) {
     if (plan.claimedVariableKeys.has(storageKey)) continue;
 
+    // Narrowed like every other route into `rawValue`. `Response.variables` is a Json column, so an
+    // orphaned variable can hold anything a past write left there — including shapes outside the four
+    // the contract names, which a cast published verbatim.
+    const publishable = narrowToPublishableValue(rawValue);
+    if (publishable === undefined) continue;
+
     unresolved.push({
       key: storageKey,
-      rawValue: rawValue as TV3ResponseUnresolvedEntry["rawValue"],
+      rawValue: publishable,
       reason: "variableNotInSurvey",
     });
   }

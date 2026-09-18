@@ -390,6 +390,34 @@ describe("listV3Responses", () => {
     expect(mockCount).not.toHaveBeenCalled();
   });
 
+  /**
+   * The minted cursor has to be one this endpoint will accept back. Nothing asserted that: stamping a
+   * wrong `fp` into `buildKeysetPage` still produced a plausible token and still returned page one, so
+   * every test passed while page two answered 400. Round-tripped rather than decoded, because what
+   * matters is that the parser takes it, not what is inside it.
+   */
+  test("the nextCursor it mints is accepted back on the same query", async () => {
+    mockKeysetPage.mockResolvedValue([
+      { id: ROW.id, createdAt: ROW.createdAt, surveyId: ROW.surveyId },
+      { id: "clrsbbbbbbbbbbbbbbbbbbbb", createdAt: ROW.createdAt, surveyId: ROW.surveyId },
+    ]);
+
+    const firstPage = await (
+      await listV3Responses({ ...read, searchParams: query(`workspaceId=${WORKSPACE}&limit=1`) })
+    ).json();
+
+    expect(firstPage.meta.nextCursor).toBeTruthy();
+
+    const secondPage = await listV3Responses({
+      ...read,
+      searchParams: query(
+        `workspaceId=${WORKSPACE}&limit=1&cursor=${encodeURIComponent(firstPage.meta.nextCursor)}`
+      ),
+    });
+
+    expect(secondPage.status).toBe(200);
+  });
+
   test("the total is fetched only when asked for, and reported with its relation", async () => {
     mockCount.mockResolvedValue({ count: 10_000, relation: "gte" });
 
@@ -465,6 +493,40 @@ describe("getV3Response", () => {
     expect(Object.keys(body)).toEqual(["data"]);
     expect(body.data.id).toBe(ROW.id);
   });
+
+  /**
+   * `id` alone does not distinguish the two serializers — swapping `toResource` for `toListItem` here
+   * kept every assertion green while silently dropping the four fields that make this the detail view.
+   * Presence is the discriminator, so this asserts the keys rather than their values.
+   */
+  test("the detail view carries the four fields the list item omits", async () => {
+    mockGetWorkspaceId.mockResolvedValue(WORKSPACE);
+    mockRequireAccess.mockResolvedValue({ workspaceId: WORKSPACE, organizationId: "org_1" });
+    mockGetScoped.mockResolvedValue(ROW);
+
+    const body = await (await getV3Response(idParams)).json();
+
+    expect(Object.keys(body.data)).toEqual(
+      expect.arrayContaining(["contact", "data", "displayId", "singleUseId"])
+    );
+  });
+
+  /**
+   * The fourth 403 exit, and the one with no byte-identity partner above: the response resolved but
+   * its survey was deleted between the two queries. Deleting the guard answers 500 from the
+   * serializer instead, which both leaks the race and breaks the contract's single 403.
+   */
+  test("a survey deleted under an in-flight read is the same 403, not a 500", async () => {
+    mockGetWorkspaceId.mockResolvedValue(WORKSPACE);
+    mockRequireAccess.mockResolvedValue({ workspaceId: WORKSPACE, organizationId: "org_1" });
+    mockGetScoped.mockResolvedValue(ROW);
+    mockGetSurveys.mockResolvedValue(new Map());
+
+    const res = await getV3Response(idParams);
+
+    expect(res.status).toBe(403);
+    expect(await res.text()).toBe(await problemForbidden("req_1", undefined, idParams.instance).text());
+  });
 });
 
 describe("countV3ResponsesOperation", () => {
@@ -489,9 +551,20 @@ describe("countV3ResponsesOperation", () => {
 
     await countV3ResponsesOperation({
       ...read,
-      searchParams: query(`workspaceId=${WORKSPACE}&precision=exact`),
+      searchParams: query(`workspaceId=${WORKSPACE}&surveyId=${SURVEY.id}&precision=exact`),
     });
 
     expect(mockCount).toHaveBeenCalledWith(expect.objectContaining({ precision: "exact" }));
+  });
+
+  /** The unbounded `count(*)` never reaches the database: refused at the query boundary. */
+  test("an unanchored exact count is refused before the service is called", async () => {
+    const res = await countV3ResponsesOperation({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&precision=exact`),
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockCount).not.toHaveBeenCalled();
   });
 });

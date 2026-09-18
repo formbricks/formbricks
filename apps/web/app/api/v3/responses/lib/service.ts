@@ -605,11 +605,24 @@ export async function hydrateV3Responses(ids: readonly string[]): Promise<TV3Res
 export async function countV3Responses({
   filter,
   precision,
+  cap = V3_RESPONSE_COUNT_CAP,
 }: {
   filter: TV3ResponsesFilter;
   precision: "capped" | "exact";
+  /**
+   * The cap the capped path stops at. Defaults to {@link V3_RESPONSE_COUNT_CAP} and no caller passes
+   * anything else — it exists so the `gte` branch is reachable in a test. Pinning it otherwise needs a
+   * fixture of 10 000 responses, which is why `relation: "eq"` could be hardcoded here without a
+   * single test noticing.
+   *
+   * **Clamped to the default, so it can only ever narrow.** A test wants a smaller cap; nothing has any
+   * business asking for a larger one, and this is a LIMIT on the largest table in the schema. Should
+   * this ever be wired to a request, a hostile value buys nothing.
+   */
+  cap?: number;
 }): Promise<{ count: number; relation: "eq" | "gte" }> {
   const where = Prisma.join(scopeAndFilters(filter), " AND ");
+  const effectiveCap = Math.min(cap, V3_RESPONSE_COUNT_CAP);
 
   if (precision === "exact") {
     const [row] = await prisma.$queryRaw<{ count: bigint }[]>`
@@ -623,12 +636,12 @@ export async function countV3Responses({
   // stop walking the index once the cap is reached, which is the entire point of capping.
   const [row] = await prisma.$queryRaw<{ count: bigint }[]>`
     SELECT count(*)::bigint AS count
-    FROM (SELECT 1 FROM "Response" r WHERE ${where} LIMIT ${V3_RESPONSE_COUNT_CAP}) AS capped
+    FROM (SELECT 1 FROM "Response" r WHERE ${where} LIMIT ${effectiveCap}) AS capped
   `;
 
   const count = Number(row?.count ?? 0);
 
-  return { count, relation: count >= V3_RESPONSE_COUNT_CAP ? "gte" : "eq" };
+  return { count, relation: count >= effectiveCap ? "gte" : "eq" };
 }
 
 /** One response, scoped. Returns `null` for both "does not exist" and "not in this workspace". */

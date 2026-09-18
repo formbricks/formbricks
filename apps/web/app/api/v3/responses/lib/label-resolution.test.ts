@@ -54,9 +54,14 @@ describe("resolveV3LabelContext", () => {
     expect(resolveV3LabelContext([], "en")).toEqual({ lookupKey: "default", labelsLanguage: null });
   });
 
-  /** `"default"` is an internal key; emitting it as a language code would be meaningless to a client. */
+  /**
+   * `"default"` is an internal key; emitting it as a language code would be meaningless to a client.
+   *
+   * It is in the loop because it is a value `Response.language` really holds — the contract names it
+   * legitimate and three app surfaces guard on it — and it was the one stored spelling this never fed.
+   */
   test("never reports the literal `default` as the language", () => {
-    for (const responseLanguage of ["en", "de", "fr", null]) {
+    for (const responseLanguage of ["en", "de", "fr", "default", null]) {
       expect(resolveV3LabelContext(LANGUAGES, responseLanguage).labelsLanguage).not.toBe("default");
     }
   });

@@ -6,9 +6,13 @@ import type { TI18nString } from "@formbricks/types/i18n";
  * Two things make this its own module rather than a pair of inline calls.
  *
  * **The lookup key is not the language code.** A survey's default language is keyed under the literal
- * string `"default"` in every i18n map, while `Response.language` stores the real BCP-47 code. So a
- * response in the survey's default language must be looked up under `"default"`, and looking it up
- * under its own code finds nothing.
+ * string `"default"` in every i18n map, while `Response.language` usually stores the survey's own
+ * code. So a response in the survey's default language must be looked up under `"default"`, and
+ * looking it up under its own code finds nothing.
+ *
+ * `Response.language` can itself hold `"default"` — the contract names it a legitimate value and
+ * three app surfaces guard on it — so this resolves both spellings of the same language rather than
+ * assuming a row never carries the key.
  *
  * **The repo has two `getLocalizedValue`s and they disagree**, so which one is used is a correctness
  * question, not a style one:

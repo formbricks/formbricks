@@ -119,12 +119,12 @@ async function seedResponse(id: string, surveyId: string): Promise<void> {
   const fields = {
     surveyId,
     finished: true,
-    // The survey's own default code, not `"default"`. That string is the i18n map key and never a
-    // value `Response.language` holds — a real row carries a BCP-47 code or `null`. Seeding it made
-    // `resolveV3LabelContext` match none of the survey's languages and take the unrecognised-language
-    // fallback, so the one row the contract suite validates exercised the fallback branch and
-    // published `language: "default"` in every body. `z.string().nullable()` accepts that, so nothing
-    // failed — the fixture was schema-valid and had quietly stopped describing the payload.
+    // The survey's own default code, not `"default"`. `"default"` is a legitimate stored value — the
+    // contract says so (`ResponseBase.yml`) and three app surfaces guard on it — but it is the wrong
+    // fixture here: it matches none of the survey's declared languages, so `resolveV3LabelContext`
+    // took the unrecognised-language fallback and the one row the contract suite validates exercised
+    // the fallback branch in every body. `z.string().nullable()` accepts that, so nothing failed — the
+    // fixture was schema-valid and had quietly stopped describing the ordinary payload.
     language: READ_SURVEY_LANGUAGES[0],
     data: { [elementId]: "Contract fixture answer" },
     ttc: { [elementId]: 1500, _total: 1500 },

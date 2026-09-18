@@ -37,6 +37,7 @@ const CREATED_AT_LTE = "filter[createdAt][lte]" as const;
 const CREATED_AT_LT = "filter[createdAt][lt]" as const;
 const FINISHED_EQ = "filter[finished][eq]" as const;
 const LANGUAGE_IN = "filter[language][in]" as const;
+const PRECISION = "precision" as const;
 const ID_IN = "filter[id][in]" as const;
 
 /**
@@ -369,6 +370,26 @@ export const parseV3ResponsesCountQuery = (
   const crossField = crossFieldIssues(filter);
   if (crossField.length > 0) {
     return { ok: false, invalid_params: crossField };
+  }
+
+  // The same anchor rule as `finished` and `languages` above, for the same reason — and this is the
+  // case that needs it most. `capped` counts over a `LIMIT`ed subquery, so PostgreSQL stops walking
+  // once the cap is reached; `exact` is a plain `count(*)` with nothing bounding it, on the largest
+  // table in the schema. Unanchored it is a full scan of every response in the workspace, reachable on
+  // the shared 100/min bucket by any credential with read access.
+  //
+  // Refused rather than rate-limited: a narrower bucket makes the scan rarer, not bounded, and the
+  // contract already states that it would rather refuse than serve a query it cannot bound.
+  if (parsed.data.precision === "exact" && filter.surveyId === undefined && filter.contactId === undefined) {
+    return {
+      ok: false,
+      invalid_params: [
+        {
+          name: PRECISION,
+          reason: "Requires surveyId or contactId, because an exact count is not bounded without one.",
+        },
+      ],
+    };
   }
 
   return { ok: true, filter, precision: parsed.data.precision };

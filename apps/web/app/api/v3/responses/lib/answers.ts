@@ -633,9 +633,21 @@ export const serializeAnswers = (
     );
 
     if ("reason" in result) {
+      // Narrowed, not cast — the fourth boundary, and the one that is easiest to miss because the
+      // element exists here. `serializeOne` answering `valueShapeMismatch` says precisely that the
+      // stored bytes do not fit the element; a `matrix` holding `{"Row A": 5}`, a `ranking` holding
+      // `[1, 2]` or an `openText` holding `true` all land here, and casting shipped them verbatim
+      // into a field the committed schema types as one of four shapes.
+      //
+      // Dropped rather than reported without a value: `rawValue` is required on the entry, and
+      // deliberately so — see `ZV3ResponseUnresolvedEntry`. Publishing a body the schema rejects is
+      // the worse of the two, and this matches what the `elementNotInSurvey` path above does.
+      const publishable = narrowToPublishableValue(raw);
+      if (publishable === undefined) continue;
+
       unresolved.push({
         key,
-        rawValue: raw as TV3ResponseUnresolvedEntry["rawValue"],
+        rawValue: publishable,
         reason: result.reason,
       });
       continue;

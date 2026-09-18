@@ -342,7 +342,7 @@ export const ZV3ResponseListItem = z.object(responseBase).strict();
 export type TV3ResponseListItem = z.infer<typeof ZV3ResponseListItem>;
 
 /**
- * The detailed view: the list item plus the five fields a single-row read adds.
+ * The detailed view: the list item plus the four fields a single-row read adds.
  *
  * `data` is **not** `readOnly` — it is exactly what the write endpoints accept, so a client
  * round-tripping a response needs it writable. Embedded Data round-trips through `embeddedData[]`

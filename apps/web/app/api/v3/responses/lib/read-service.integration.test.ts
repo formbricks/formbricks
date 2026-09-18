@@ -304,6 +304,33 @@ describe("counting", () => {
     expect(result).toEqual({ count: TOTAL, relation: "eq" });
   });
 
+  /**
+   * The `gte` branch, which nothing reached: with the real 10 000 cap it needs a fixture of 10 000
+   * responses, so `relation` could be hardcoded to `eq` and stay green. `cap` is injectable for
+   * exactly this — the LIMIT and the comparison both read it, so a small cap exercises the same code
+   * the default does.
+   */
+  test("a capped count that reaches the cap reports gte, and stops at the cap", async () => {
+    const result = await countV3Responses({
+      filter: { workspaceId: scope.workspaceId },
+      precision: "capped",
+      cap: 2,
+    });
+
+    expect(result).toEqual({ count: 2, relation: "gte" });
+  });
+
+  /** One below the cap is still exact, so `gte` is not simply always reported. */
+  test("a capped count one short of the cap still reports eq", async () => {
+    const result = await countV3Responses({
+      filter: { workspaceId: scope.workspaceId },
+      precision: "capped",
+      cap: TOTAL + 1,
+    });
+
+    expect(result).toEqual({ count: TOTAL, relation: "eq" });
+  });
+
   /** Below the cap the capped path is exact too — `gte` is reserved for a count that hit the cap. */
   test("a capped count below the cap reports eq", async () => {
     const result = await countV3Responses({

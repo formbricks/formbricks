@@ -200,6 +200,22 @@ describe("a variable the survey no longer declares", () => {
    * variables map is published in this contract — so without a report the bytes appear in no view
    * at all, while v2 still returns them.
    */
+  /**
+   * `Response.variables` is a Json column, so an orphan can hold whatever a past write left there —
+   * including shapes outside the four `rawValue` publishes. This route used to cast, which put them
+   * on the wire verbatim.
+   */
+  test.each([
+    ["an array with a non-string item", ["a", 1]],
+    ["a record with a non-string value", { a: 5 }],
+    ["a boolean", true],
+  ])("an orphan holding %s is reported nowhere rather than published", (_label, raw) => {
+    const fields = [declared("score", "computed", "number")];
+    const res = response({ variables: { clvr000000000000000000009: raw } as never });
+
+    expect(unresolvedOf(fields, res)).toEqual([]);
+  });
+
   test("its stored value is reported rather than dropped", () => {
     const fields = [declared("score", "computed", "number")];
     const res = response({

@@ -53,6 +53,32 @@ describe("defaults the contract publishes", () => {
 
     expect(result.ok && result.precision).toBe("capped");
   });
+
+  /**
+   * The anchor rule extended to `precision`. `capped` counts over a `LIMIT`ed subquery so Postgres
+   * stops at the cap; `exact` is a plain `count(*)` with nothing bounding it, on the largest table in
+   * the schema — unanchored that is every response in the workspace, on the shared 100/min bucket.
+   */
+  test("an exact count needs the same anchor finished and language need", () => {
+    const unanchored = countQuery(`workspaceId=${WORKSPACE}&precision=exact`);
+
+    expect(unanchored.ok).toBe(false);
+    expect(namesOf(unanchored)).toEqual(["precision"]);
+  });
+
+  test.each([
+    ["surveyId", `surveyId=${SURVEY}`],
+    ["contactId", `contactId=${RESPONSE}`],
+  ])("an exact count anchored by %s is accepted", (_label, anchor) => {
+    const result = countQuery(`workspaceId=${WORKSPACE}&${anchor}&precision=exact`);
+
+    expect(result.ok && result.precision).toBe("exact");
+  });
+
+  test("the capped default stays usable without an anchor", () => {
+    // The refusal must not cost the unanchored workspace-wide count its `gte` answer.
+    expect(countQuery(`workspaceId=${WORKSPACE}&precision=capped`).ok).toBe(true);
+  });
 });
 
 describe("what is refused", () => {

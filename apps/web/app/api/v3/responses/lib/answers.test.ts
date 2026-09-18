@@ -552,6 +552,26 @@ describe("unreadable values become unresolved rather than throwing or guessing",
     expect(unresolved).toEqual([{ key: "q1", rawValue: raw, reason: "valueShapeMismatch" }]);
   });
 
+  /**
+   * The `valueShapeMismatch` twin of the orphan cases below. The element exists here, which is what
+   * made this one easy to miss: `serializeOne` answering `valueShapeMismatch` says exactly that the
+   * stored bytes do not fit it, so they are as likely to sit outside the four published shapes as an
+   * orphan's. Casting shipped them verbatim into a field the committed schema types as one of four.
+   */
+  test.each([
+    ["a matrix holding a number", "matrix", { "Row A": 5 }],
+    ["a ranking holding numbers", "ranking", [1, 2]],
+    ["an openText holding a boolean", "openText", true],
+    ["a nested array", "openText", [["a"]]],
+  ])("%s is reported nowhere rather than published", (_label, type, raw) => {
+    const { answers, unresolved } = only([element({ id: "q1", type: type as never })], {
+      q1: raw as never,
+    });
+
+    expect(answers).toEqual([]);
+    expect(unresolved).toEqual([]);
+  });
+
   test("a key with no element in the current definition is reported, not dropped", () => {
     const { answers, unresolved } = only([element({ id: "q1", type: "openText" })], {
       q1: "kept",
