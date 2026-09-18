@@ -1,3 +1,4 @@
+import { mockValidateFileUploads } from "./__mocks__/storage-utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { validateV3Response, validateV3ResponseFromRawInput } from "./validate-operations";
 
@@ -19,7 +20,6 @@ const {
   mockGetOrganization,
   mockIsCloud,
   mockValidateResponseData,
-  mockValidateFileUploads,
 } = vi.hoisted(() => ({
   mockRequireAccess: vi.fn(),
   mockGetSurveyForWrite: vi.fn(),
@@ -34,13 +34,11 @@ const {
   mockGetOrganization: vi.fn(),
   mockIsCloud: vi.fn(),
   mockValidateResponseData: vi.fn(),
-  mockValidateFileUploads: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mockRequireAccess }));
 vi.mock("@/modules/api/lib/validation", () => ({ validateResponseData: mockValidateResponseData }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceLegacyStoragePrefixes: async () => [] }));
-vi.mock("@/modules/storage/utils", () => ({ validateClientFileUploads: mockValidateFileUploads }));
 vi.mock("@/lib/organization/service", () => ({ getOrganization: mockGetOrganization }));
 // Metering is Cloud-only, so the constant has to be controllable or only the false branch is ever
 // reachable — a regression that stopped metering a real Cloud organization would pass unnoticed.

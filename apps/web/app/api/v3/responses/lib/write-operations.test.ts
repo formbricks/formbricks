@@ -1,3 +1,4 @@
+import { mockValidateFileUploads } from "./__mocks__/storage-utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { createV3Response, updateV3Response } from "./operations";
@@ -16,7 +17,6 @@ const {
   mockGetWorkspaceId,
   mockGetScoped,
   mockValidateResponseData,
-  mockValidateFileUploads,
   mockToResource,
 } = vi.hoisted(() => ({
   mockRequireAccess: vi.fn(),
@@ -28,14 +28,12 @@ const {
   mockGetWorkspaceId: vi.fn(),
   mockGetScoped: vi.fn(),
   mockValidateResponseData: vi.fn(),
-  mockValidateFileUploads: vi.fn(),
   mockToResource: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mockRequireAccess }));
 vi.mock("@/modules/api/lib/validation", () => ({ validateResponseData: mockValidateResponseData }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceLegacyStoragePrefixes: async () => [] }));
-vi.mock("@/modules/storage/utils", () => ({ validateClientFileUploads: mockValidateFileUploads }));
 vi.mock("./serializers", () => ({
   createV3ResponseSerializer: () => ({ toResource: mockToResource, toListItem: vi.fn() }),
 }));
