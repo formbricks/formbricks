@@ -3,7 +3,6 @@ import { CreateFirstWorkspaceButton } from "@/app/(app)/(onboarding)/organizatio
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
 import { WorkspaceAndOrgSwitch } from "@/app/(app)/workspaces/[workspaceId]/components/workspace-and-org-switch";
 import { IS_FORMBRICKS_CLOUD, IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
-import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getUser } from "@/lib/user/service";
@@ -26,7 +25,6 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
   if (!user) return notFound();
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const publicDomain = getPublicDomain();
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   const isMembershipPending = membership?.role === undefined;
@@ -39,7 +37,6 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
       <LandingSidebar
         user={user}
         organization={organization}
-        publicDomain={publicDomain}
         isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
       />
       <div className="flex-1">
