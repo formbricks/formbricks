@@ -100,8 +100,10 @@ upsert_env_value() {
       value = ENVIRON["FORMBRICKS_UPSERT_VALUE"]
     }
 
-    $0 ~ "^[[:space:]]*" key "[[:space:]]*=" {
-      print key "=" value
+    $0 ~ "^[[:space:]]*(export[[:space:]]+)?" key "[[:space:]]*=" {
+      # Keep an `export` prefix the line already had. Dropping it would be a silent behaviour change
+      # for anyone who `source`s their .env: without it the variable stops reaching child processes.
+      print ($0 ~ "^[[:space:]]*export[[:space:]]+" ? "export " : "") key "=" value
       replaced = 1
       next
     }

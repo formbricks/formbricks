@@ -150,6 +150,48 @@ describe("scripts/setup-dev-env.sh AuthZed setup", () => {
     expect(values.get("NEXTAUTH_SECRET")).toBe("legacy-secret-value");
   });
 
+  /**
+   * `export KEY=value` is a form both dotenv and @next/env accept, so a developer whose .env carries
+   * it has a secret the app reads. The matchers used to skip it, which meant the migration saw no
+   * legacy secret and the generation loop minted a fresh BETTER_AUTH_SECRET — logging them out and
+   * voiding their outstanding links, the exact failure this migration exists to prevent.
+   */
+  test("an export-prefixed legacy secret is migrated, not treated as absent", () => {
+    const tempDir = createTempDir();
+    const templatePath = join(tempDir, ".env.example");
+    const envPath = join(tempDir, ".env");
+    writeFileSync(templatePath, "");
+    writeFileSync(envPath, 'export NEXTAUTH_SECRET="exported-secret"\nAUTHZED_TOKEN=private-token\n');
+
+    execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: templatePath },
+    });
+
+    const contents = readFileSync(envPath, "utf8");
+    // Carried across verbatim, and NOT replaced by a freshly generated 64-char hex secret.
+    expect(contents).toContain('BETTER_AUTH_SECRET="exported-secret"');
+    expect(contents).not.toMatch(/BETTER_AUTH_SECRET=[a-f0-9]{64}/);
+  });
+
+  /**
+   * Rewriting `export KEY=` as a bare `KEY=` would be a silent behaviour change for anyone who
+   * `source`s their .env — the variable would stop reaching child processes.
+   */
+  test("an existing export prefix survives a regenerated value", () => {
+    const tempDir = createTempDir();
+    const templatePath = join(tempDir, ".env.example");
+    const envPath = join(tempDir, ".env");
+    writeFileSync(templatePath, "");
+    // Empty, so the generation loop rewrites this very line.
+    writeFileSync(envPath, "export CRON_SECRET=\nAUTHZED_TOKEN=private-token\n");
+
+    execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: templatePath },
+    });
+
+    expect(readFileSync(envPath, "utf8")).toMatch(/^export CRON_SECRET=[a-f0-9]{64}$/m);
+  });
+
   // Both of these assert the assignment is copied byte for byte. Anything that resolves the value and
   // writes the result back is a re-key: the developer keeps their .env but loses their session, and
   // the cause is invisible because both keys still "look" like the same secret.
