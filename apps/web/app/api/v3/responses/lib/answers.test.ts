@@ -647,8 +647,7 @@ describe("labels resolve in the response's language", () => {
  */
 describe("what an orphaned key may publish as rawValue", () => {
   const orphan = (raw: unknown) =>
-    serializeAnswers(buildAnswerPlan([] as never, "default", []), { orphan: raw } as never, "default")
-      .unresolved;
+    serializeAnswers(buildAnswerPlan([], "default", []), { orphan: raw } as never, undefined).unresolved;
 
   test.each([
     ["an array with a non-string item", ["a", 1]],
