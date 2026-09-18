@@ -55,10 +55,13 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
     warning recommending a longer one, which you can act on whenever a forced sign-out is acceptable.
   </Warning>
 
-  Formbricks now refuses to start when neither variable has a value. If your instance set neither — it
-  could still start before this release, and only invites and verification links failed — generate a
-  secret before upgrading. Note that doing so **signs every current user out**: their cookies were
-  signed with a fallback value, not with a secret of yours.
+  Formbricks now refuses to start when neither variable has a value, in every environment. Before this
+  release that refusal applied only when `NODE_ENV=production`; a development or test instance with
+  neither variable set still started, falling back to the authentication library's built-in default
+  secret, and only invites and verification links failed. So a production instance is already required
+  to have one of these set and is unaffected. If a non-production instance of yours set neither,
+  generate a secret before upgrading — doing so **signs every current user out**, because their cookies
+  were signed with that fallback value rather than with a secret of yours.
 
 ## v5.4
 
@@ -370,10 +373,11 @@ routing. The URLs above are the ones introduced in v5.2 and they are now a stabl
 API — a future authentication-core upgrade will not move them either.
 
 <Note>
-  The table writes `your-domain.com` as your `WEBAPP_URL`, which is correct for a default install. If you
-  set `BETTER_AUTH_URL` to a different origin, the callback lives on **that** origin instead — it is
-  derived from the same auth base URL Better Auth itself uses, not from `WEBAPP_URL`.
-  Either way it is unchanged by this upgrade.
+  The table writes `your-domain.com` as your `WEBAPP_URL`, which is correct for a default install. The
+  callback is derived from the same auth base URL Better Auth itself uses, not from `WEBAPP_URL`: that is
+  `BETTER_AUTH_URL`, or `NEXTAUTH_URL` when only the legacy name is set, falling back to `WEBAPP_URL` when
+  neither is. So if either auth URL names a different origin, the callback lives on **that** origin — register
+  that URI at your identity provider. Either way it is unchanged by this upgrade.
 </Note>
 
 <Note>

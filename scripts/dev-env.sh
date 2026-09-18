@@ -18,3 +18,19 @@ read_env_value() {
     }
   ' "${ENV_PATH}"
 }
+
+# Read the assignment exactly as written, with no trimming and no quote stripping. Copying a secret
+# between keys has to go through this rather than read_env_value: the trim/unquote above resolves a
+# value the way dotenv would, which is right for comparing but wrong for copying — writing the
+# resolved form back unquoted changes what dotenv then resolves, and a changed auth secret logs every
+# developer out.
+read_env_raw_value() {
+  local key="$1"
+
+  awk -v key="${key}" '
+    $0 ~ "^[[:space:]]*" key "[[:space:]]*=" {
+      print substr($0, index($0, "=") + 1)
+      exit
+    }
+  ' "${ENV_PATH}"
+}

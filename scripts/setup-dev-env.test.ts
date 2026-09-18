@@ -149,4 +149,29 @@ describe("scripts/setup-dev-env.sh AuthZed setup", () => {
     // Left in place: nothing rewrites an existing install's env, and the app still accepts it.
     expect(values.get("NEXTAUTH_SECRET")).toBe("legacy-secret-value");
   });
+
+  // Both of these assert the assignment is copied byte for byte. Anything that resolves the value and
+  // writes the result back is a re-key: the developer keeps their .env but loses their session, and
+  // the cause is invisible because both keys still "look" like the same secret.
+  test.each([
+    ['" legacy secret "', "quoted value whose whitespace is significant"],
+    ["'  padded  '", "single-quoted value"],
+    ["back\\nslash", "value containing a backslash escape"],
+    ["trailing-hash # not-a-comment", "value dotenv would keep whole"],
+  ])("copies NEXTAUTH_SECRET across verbatim: %s (%s)", (rawValue) => {
+    const tempDir = createTempDir();
+    const templatePath = join(tempDir, ".env.example");
+    const envPath = join(tempDir, ".env");
+    writeFileSync(templatePath, "");
+    writeFileSync(envPath, `NEXTAUTH_SECRET=${rawValue}\nAUTHZED_TOKEN=private-token\n`);
+
+    execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: templatePath },
+    });
+
+    const contents = readFileSync(envPath, "utf8");
+    expect(contents).toContain(`BETTER_AUTH_SECRET=${rawValue}\n`);
+    // The source assignment is untouched, so the two keys still resolve to one secret.
+    expect(contents).toContain(`NEXTAUTH_SECRET=${rawValue}\n`);
+  });
 });

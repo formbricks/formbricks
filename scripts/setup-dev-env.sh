@@ -88,9 +88,16 @@ upsert_env_value() {
 
   TEMP_FILE="$(mktemp "${ENV_PATH}.tmp.XXXXXX")"
 
-  awk -v key="${key}" -v value="${value}" '
+  # The value travels through the environment, not `awk -v`, for two reasons. An -v assignment expands
+  # backslash escapes, so `-v value='a\nb'` writes a real newline and silently corrupts any secret
+  # containing a backslash; ENVIRON is passed through verbatim. It also keeps every secret this script
+  # writes — the migrated one and the generated ones — out of awk's argv, which `ps` shows to other
+  # users on this machine. The key stays on -v: it is one of this script's own literals, and it is
+  # interpolated into the match regex rather than printed.
+  FORMBRICKS_UPSERT_VALUE="${value}" awk -v key="${key}" '
     BEGIN {
       replaced = 0
+      value = ENVIRON["FORMBRICKS_UPSERT_VALUE"]
     }
 
     $0 ~ "^[[:space:]]*" key "[[:space:]]*=" {
@@ -174,7 +181,11 @@ main() {
   better_auth_secret="$(read_env_value BETTER_AUTH_SECRET)"
   legacy_auth_secret="$(read_env_value NEXTAUTH_SECRET)"
   if [[ -z "${better_auth_secret}" && -n "${legacy_auth_secret}" ]]; then
-    upsert_env_value "BETTER_AUTH_SECRET" "${legacy_auth_secret}"
+    # Copy the assignment verbatim, not the resolved value: `NEXTAUTH_SECRET=" s "` resolves to ` s `,
+    # and writing that back unquoted would resolve to `s` — a different secret, so every session and
+    # outstanding link dies. The comparison below still uses the resolved values, which is what
+    # "do these two keys hold the same secret" means.
+    upsert_env_value "BETTER_AUTH_SECRET" "$(read_env_raw_value NEXTAUTH_SECRET)"
     updated_keys+=("BETTER_AUTH_SECRET (from NEXTAUTH_SECRET)")
   elif [[ -n "${better_auth_secret}" && -n "${legacy_auth_secret}" \
     && "${better_auth_secret}" != "${legacy_auth_secret}" ]]; then
