@@ -1,4 +1,8 @@
 type: object
+# Deliberately NOT composed from `ListPaginationMeta`, alone among the v3 list metas. That base
+# requires `limit`, and this operation takes no `limit` query parameter — there is nothing to echo.
+# Composing it would mean inventing a page size for a collection that is never paged, which is a
+# worse lie than the small duplication of one `nextCursor` block.
 additionalProperties: false
 required:
   - nextCursor
