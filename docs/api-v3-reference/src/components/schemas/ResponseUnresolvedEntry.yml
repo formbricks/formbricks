@@ -13,13 +13,16 @@ description: >
   always resolves — and the stored bytes, whatever their shape, are reported nowhere. Only a field
   with **no** `defaultValue` can reach `valueShapeMismatch`.
 
-  A `locked` field narrows that further: it ignores whatever a response supplies, so a *scalar* under
-  its key is not reported either — the shape is not the problem, the lock is — while a non-scalar
-  under a lockless, defaultless field is. Neither case is a silent drop by accident; both are
-  consequences of resolution order, and they are written down so a consumer does not read
-  `unresolved[]` as a guarantee that nothing was left behind. If either proves to matter in practice a
-  reason code can be added without breaking anyone, whereas removing one could not — which is why
-  this is documentation rather than a guess at a fifth enum member.
+  A **scalar** under a defaultless field is not reported either, and the cause is the reporting guard
+  rather than `locked`. Only `resolveEmbeddedValue` consults the lock; the guard that decides what
+  reaches this collection admits objects only. So an uncoercible scalar — `"yes"` under a boolean
+  field — resolves to nothing and is then excluded for being a scalar, lock or no lock. A non-scalar
+  under a lockless, defaultless field is what does reach `valueShapeMismatch`. Neither omission is a
+  silent drop by accident — one follows from resolution order, the other from the reporting guard —
+  and both are written down so a consumer does not read `unresolved[]` as a guarantee that nothing
+  was left behind. If either proves to matter in practice a reason code can be added without breaking
+  anyone, whereas removing one could not — which is why this is documentation rather than a guess at
+  a fifth enum member.
 required:
   - key
   - rawValue

@@ -9,6 +9,7 @@ import {
 } from "@formbricks/types/embedded-data-resolver";
 import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
 import type { TV3ResponseEmbeddedDatum, TV3ResponseUnresolvedEntry } from "./resources";
+import { narrowToPublishableValue } from "./resources";
 
 /**
  * The `embeddedData[]` projection: hidden fields, variables and auto-captured context as one
@@ -131,10 +132,16 @@ const collectDeclared = (
       // wire — so without this the bytes would be visible nowhere at all, which is silent loss on
       // exactly the old rows the name-keyed restructure was meant to protect.
       const stored = storedValueFor(field.source, link.storageKey, response);
-      if (stored !== undefined && stored !== null && typeof stored === "object") {
+      // Narrowed, not cast. `typeof stored === "object"` admits `[1, 2]` and `{ a: 5 }`, neither of
+      // which `rawValue` can carry — and nothing downstream parses this, so such a row reached the
+      // caller as a body the committed spec rejects. A value the union cannot express is reported
+      // nowhere rather than reported wrongly, which is the same answer the resolver gives when it
+      // cannot coerce.
+      const publishable = narrowToPublishableValue(stored);
+      if (publishable !== undefined && typeof publishable === "object") {
         unresolved.push({
           key: field.name,
-          rawValue: stored as TV3ResponseUnresolvedEntry["rawValue"],
+          rawValue: publishable,
           reason: "valueShapeMismatch",
         });
       }

@@ -197,6 +197,42 @@ const ZV3ResponseAnswerComposite = z
   .strict();
 
 /**
+ * The four shapes `data` and `unresolved[].rawValue` may carry, as a standalone schema.
+ *
+ * Extracted because two boundaries publish stored JSON and neither can trust it. `Response.data` is
+ * a `Json` column written by four APIs over several years: it holds JSON `null`s (`answers.ts` skips
+ * them for exactly this reason), arrays with non-string items, and records with non-string values.
+ * None of those are in this union, and `Response.json` does not validate — so a legacy row reaches a
+ * caller as a body the committed OpenAPI rejects.
+ *
+ * Declared once rather than inline at each site so the published union and the runtime guard cannot
+ * drift: `narrowToPublishableValue` is the only way a stored value should enter either field.
+ */
+export const ZV3ResponseRawValue = z.union([
+  z.string(),
+  z.number(),
+  z.array(z.string()),
+  z.record(z.string(), z.string()),
+]);
+export type TV3ResponseRawValue = z.infer<typeof ZV3ResponseRawValue>;
+
+/**
+ * A stored value if the contract can carry it, `undefined` if it cannot.
+ *
+ * `undefined` rather than a throw or a coerced stand-in: the caller decides what an unpublishable
+ * byte means in its position. `serializeAnswers` already treats it as "skip" and the `unresolved[]`
+ * collector as "do not report", which is the answer the resolver gives for a value it cannot coerce.
+ *
+ * Deliberately a parse rather than a `typeof` check. Two of the four members are element-wise —
+ * `string[]` and `Record<string, string>` — and `typeof raw === "object"` passes `[1, 2]` and
+ * `{ a: 5 }`, which is exactly the gap that let unvalidated legacy values onto the wire.
+ */
+export const narrowToPublishableValue = (raw: unknown): TV3ResponseRawValue | undefined => {
+  const parsed = ZV3ResponseRawValue.safeParse(raw);
+  return parsed.success ? parsed.data : undefined;
+};
+
+/**
  * Nine value shapes across seventeen element types, discriminated on `elementType`.
  *
  * Switch on `elementType` rather than probing for which value field is present: several types share
@@ -251,7 +287,7 @@ export const ZV3ResponseUnresolvedEntry = z
      * that accepts `undefined`, which would make the field optional here while the contract requires
      * it, and it would express none of the four.
      */
-    rawValue: z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string(), z.string())]),
+    rawValue: ZV3ResponseRawValue,
     /**
      * No `hiddenFieldNotInSurvey`: it had no producer and could not have one (ENG-3172). A key in
      * `response.data` matching nothing in the current definition may be a deleted element or a deleted
@@ -320,10 +356,7 @@ export const ZV3ResponseResource = z
     displayId: z.string().nullable(),
     singleUseId: z.string().nullable(),
     /** The same four shapes `unresolved[].rawValue` carries — this is the map it is drawn from. */
-    data: z.record(
-      z.string(),
-      z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string(), z.string())])
-    ),
+    data: z.record(z.string(), ZV3ResponseRawValue),
   })
   .strict();
 export type TV3ResponseResource = z.infer<typeof ZV3ResponseResource>;

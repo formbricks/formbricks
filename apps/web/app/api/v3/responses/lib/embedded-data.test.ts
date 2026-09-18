@@ -272,6 +272,22 @@ describe("a value the resolver cannot read is reported, not dropped", () => {
     ]);
   });
 
+  /**
+   * `rawValue` carries four shapes, and two of them are element-wise: `string[]` and
+   * `Record<string, string>`. A `typeof stored === "object"` guard passes `["a", 1]` and `{ a: 5 }`
+   * alike, and nothing downstream parses the result — so a legacy row of either shape reached the
+   * caller as a body the committed spec rejects. Reported nowhere beats reported wrongly.
+   */
+  test.each([
+    ["an array with a non-string item", ["a", 1]],
+    ["a record with a non-string value", { nested: 5 }],
+    ["a nested array", [["a"]]],
+  ])("%s is not published as a rawValue", (_label, stored) => {
+    const fields = [declared("plan", "ingested", "string")];
+
+    expect(unresolvedOf(fields, response({ data: { plan: stored } as never }))).toEqual([]);
+  });
+
   test("a field that is simply absent is not reported as a mismatch", () => {
     expect(unresolvedOf([declared("plan", "ingested", "string")], response())).toEqual([]);
   });

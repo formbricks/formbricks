@@ -293,6 +293,106 @@ const compositeFields = (element: TSurveyElement): readonly string[] =>
 
 type Serialized = { answer: TV3ResponseAnswer } | { reason: TV3ResponseUnresolvedEntry["reason"] };
 
+/** The positional and label fields every serialized answer carries, whatever its element type. */
+type TSerializeBase = {
+  position: number;
+  elementId: string;
+  elementLabel: string;
+  durationSeconds?: number;
+};
+
+/**
+ * `address` and `contactInfo`: a fixed-length positional array.
+ *
+ * Lifted out of `serializeOne` because the two heaviest branches carried most of that function's
+ * cognitive complexity, and neither shares anything with the rest of the switch beyond `base`.
+ */
+const serializeComposite = (
+  element: Extract<TSurveyElement, { type: "address" | "contactInfo" }>,
+  raw: unknown,
+  base: TSerializeBase,
+  lookupKey: string
+): Serialized => {
+  const mismatch = { reason: "valueShapeMismatch" as const };
+
+  // A fixed-length positional array, blanks included. Every slot is emitted, because dropping an
+  // empty one shifts every later value onto the wrong field and makes the stored array
+  // unreconstructable. Slots the author has switched off are stored as `""` too.
+  if (!isStringArray(raw)) return mismatch;
+  const ids = compositeFields(element);
+  // A longer array than the type has slots cannot be represented as `fields` without losing the
+  // overflow, and silently dropping part of a stored value is the one thing this module does not
+  // do. Reported as a shape mismatch instead, which carries the whole array through untouched.
+  if (raw.length > ids.length) return mismatch;
+  return {
+    answer: {
+      ...base,
+      elementType: element.type,
+      fields: ids.map((fieldId, slot) => ({
+        slot,
+        fieldId: fieldId as
+          | (typeof V3_ADDRESS_FIELD_IDS)[number]
+          | (typeof V3_CONTACT_INFO_FIELD_IDS)[number],
+        fieldLabel: localizeSurveyString(
+          (
+            element as unknown as Record<
+              string,
+              { placeholder?: NonNullable<Parameters<typeof localizeSurveyString>[0]> }
+            >
+          )[fieldId]?.placeholder,
+          lookupKey
+        ),
+        valueText: raw[slot] ?? "",
+      })),
+    },
+  };
+};
+
+/**
+ * `matrix`: keyed by the localized row label in the respondent's language, valued by the localized
+ * column label — never ids. Lifted out for the same reason as the composite branch above.
+ */
+const serializeMatrix = (
+  element: Extract<TSurveyElement, { type: "matrix" }>,
+  raw: unknown,
+  base: TSerializeBase,
+  lookupKey: string
+): Serialized => {
+  const mismatch = { reason: "valueShapeMismatch" as const };
+
+  // Keyed by the **localized row label** in the respondent's language, valued by the localized
+  // column label — never ids. So `rawKey` is what rebuilds the stored object, and `rowLabel` is
+  // that row resolved in the *current* language, which can differ.
+  if (!isStringRecord(raw)) return mismatch;
+  return {
+    answer: {
+      ...base,
+      elementType: "matrix",
+      // A blank value is a row the respondent left alone. The contract says so directly —
+      // "One entry per row the respondent answered. Rows left blank are omitted rather than
+      // returned" — and both display readers already skip them, so publishing them as
+      // `unmatched` invented rows that were never answered and mislabelled the reason.
+      rows: Object.entries(raw)
+        .filter(([, rawValue]) => rawValue !== "")
+        .map(([rawKey, rawValue]) => {
+          const row = element.rows.find((entry) => localizeSurveyString(entry.label, lookupKey) === rawKey);
+          const column = element.columns.find(
+            (entry) => localizeSurveyString(entry.label, lookupKey) === rawValue
+          );
+          return {
+            rawKey,
+            rowId: row?.id ?? null,
+            rowLabel: row ? localizeSurveyString(row.label, lookupKey) : rawKey,
+            columnId: column?.id ?? null,
+            columnLabel: column ? localizeSurveyString(column.label, lookupKey) : null,
+            rawValue,
+            match: column ? ("label" as const) : ("unmatched" as const),
+          };
+        }),
+    },
+  };
+};
+
 /**
  * One stored value to one answer, or a reason it could not be read.
  *
@@ -303,7 +403,7 @@ type Serialized = { answer: TV3ResponseAnswer } | { reason: TV3ResponseUnresolve
 const serializeOne = (
   element: TSurveyElement,
   raw: unknown,
-  base: { position: number; elementId: string; elementLabel: string; durationSeconds?: number },
+  base: TSerializeBase,
   lookupKey: string,
   choiceIndex: TV3ChoiceIndex
 ): Serialized => {
@@ -374,75 +474,11 @@ const serializeOne = (
     }
 
     case "address":
-    case "contactInfo": {
-      // A fixed-length positional array, blanks included. Every slot is emitted, because dropping an
-      // empty one shifts every later value onto the wrong field and makes the stored array
-      // unreconstructable. Slots the author has switched off are stored as `""` too.
-      if (!isStringArray(raw)) return mismatch;
-      const ids = compositeFields(element);
-      // A longer array than the type has slots cannot be represented as `fields` without losing the
-      // overflow, and silently dropping part of a stored value is the one thing this module does not
-      // do. Reported as a shape mismatch instead, which carries the whole array through untouched.
-      if (raw.length > ids.length) return mismatch;
-      return {
-        answer: {
-          ...base,
-          elementType: element.type,
-          fields: ids.map((fieldId, slot) => ({
-            slot,
-            fieldId: fieldId as
-              | (typeof V3_ADDRESS_FIELD_IDS)[number]
-              | (typeof V3_CONTACT_INFO_FIELD_IDS)[number],
-            fieldLabel: localizeSurveyString(
-              (
-                element as unknown as Record<
-                  string,
-                  { placeholder?: NonNullable<Parameters<typeof localizeSurveyString>[0]> }
-                >
-              )[fieldId]?.placeholder,
-              lookupKey
-            ),
-            valueText: raw[slot] ?? "",
-          })),
-        },
-      };
-    }
+    case "contactInfo":
+      return serializeComposite(element, raw, base, lookupKey);
 
-    case "matrix": {
-      // Keyed by the **localized row label** in the respondent's language, valued by the localized
-      // column label — never ids. So `rawKey` is what rebuilds the stored object, and `rowLabel` is
-      // that row resolved in the *current* language, which can differ.
-      if (!isStringRecord(raw)) return mismatch;
-      return {
-        answer: {
-          ...base,
-          elementType: "matrix",
-          // A blank value is a row the respondent left alone. The contract says so directly —
-          // "One entry per row the respondent answered. Rows left blank are omitted rather than
-          // returned" — and both display readers already skip them, so publishing them as
-          // `unmatched` invented rows that were never answered and mislabelled the reason.
-          rows: Object.entries(raw)
-            .filter(([, rawValue]) => rawValue !== "")
-            .map(([rawKey, rawValue]) => {
-              const row = element.rows.find(
-                (entry) => localizeSurveyString(entry.label, lookupKey) === rawKey
-              );
-              const column = element.columns.find(
-                (entry) => localizeSurveyString(entry.label, lookupKey) === rawValue
-              );
-              return {
-                rawKey,
-                rowId: row?.id ?? null,
-                rowLabel: row ? localizeSurveyString(row.label, lookupKey) : rawKey,
-                columnId: column?.id ?? null,
-                columnLabel: column ? localizeSurveyString(column.label, lookupKey) : null,
-                rawValue,
-                match: column ? ("label" as const) : ("unmatched" as const),
-              };
-            }),
-        },
-      };
-    }
+    case "matrix":
+      return serializeMatrix(element, raw, base, lookupKey);
 
     case "multipleChoiceSingle": {
       if (typeof raw !== "string") return mismatch;

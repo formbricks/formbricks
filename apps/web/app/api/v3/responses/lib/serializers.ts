@@ -11,6 +11,7 @@ import type {
   TV3ResponseTag,
   TV3ResponseUnresolvedEntry,
 } from "./resources";
+import { narrowToPublishableValue } from "./resources";
 import type { TV3ResponseRow, TV3ResponseSurveyRow } from "./service";
 
 /**
@@ -182,7 +183,18 @@ export const createV3ResponseSerializer = (): TV3ResponseSerializer => {
       contact: toContact(row.contact),
       displayId: row.displayId,
       singleUseId: row.singleUseId,
-      data: Object.fromEntries(Object.entries(stored).filter(([key]) => isPublishableDataKey(plan, key))),
+      // Filtered by key AND narrowed by value. `isPublishableDataKey` answers "is this key the
+      // caller's to see"; it says nothing about the byte under it, and `Response.data` holds JSON
+      // `null`s and other shapes outside the published union. `serializeAnswers` already skips those
+      // — this is the one view that echoed them verbatim, producing a body the committed spec
+      // rejects.
+      data: Object.fromEntries(
+        Object.entries(stored).flatMap(([key, rawValue]) => {
+          if (!isPublishableDataKey(plan, key)) return [];
+          const publishable = narrowToPublishableValue(rawValue);
+          return publishable === undefined ? [] : [[key, publishable] as const];
+        })
+      ),
     };
   };
 

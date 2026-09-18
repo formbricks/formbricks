@@ -131,9 +131,16 @@ describe("the keyset walk, against real Postgres", () => {
     expect(new Set(seen).size).toBe(TOTAL);
   });
 
+  /**
+   * Both assertions, at every page size. The set alone cannot see a repeat — duplicates collapse
+   * into it — and repeating rows is the failure mode this file's own doc names. The page sizes
+   * matter because each one puts the boundary somewhere different inside the tie groups, which is
+   * where a missing tiebreaker shows up.
+   */
   test.each([1, 2, 3, 7, 20])("the walk is complete at page size %i", async (limit) => {
     const { seen } = await walk(filter, limit, "-createdAt");
 
+    expect(seen).toHaveLength(TOTAL);
     expect(new Set(seen).size).toBe(TOTAL);
   });
 

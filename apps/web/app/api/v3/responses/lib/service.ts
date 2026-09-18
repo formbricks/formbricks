@@ -4,7 +4,9 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
+import type { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { type TKeysetCursor, keysetOrderBy, keysetPagePredicate } from "@/app/api/v3/lib/keyset-cursor";
+import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { deleteDisplay } from "@/lib/display/service";
 import { inlineSurveyEmbeddedFields, selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
@@ -364,8 +366,9 @@ export type TV3ResponseRow = Prisma.ResponseGetPayload<{ select: typeof v3Respon
  * What a v3 read needs off the `Survey` the response belongs to.
  *
  * `blocks` carries the file-upload and element lookups. The legacy `questions` blob is deliberately
- * not selected: nothing on this path reads it, and hauling it across the wire for every survey on a
- * 250-row page costs real bytes. `languages`
+ * not selected: nothing on the common path reads it, and hauling it across the wire for every survey
+ * on a 250-row page costs real bytes — `rescueLegacyBlocks` fetches it only for the surveys that
+ * turn out to need it. `languages`
  * carries what resolves the response's label language. `embeddedDataLinks` uses the shared constant
  * so the ordering rule stays decided in one place — see its own comment.
  */
@@ -384,6 +387,44 @@ export const v3ResponseSurveySelect = {
 export type TV3ResponseSurveyRow = Prisma.SurveyGetPayload<{ select: typeof v3ResponseSurveySelect }> & {
   embeddedFields: TLinkedEmbeddedField[] | undefined;
 };
+
+/**
+ * Fill in `blocks` for any survey whose column is empty but whose legacy `questions` is not.
+ *
+ * `Survey.blocks` is `Json[] @default([])` and `ZSurvey.blocks` uses `.prefault([])`, so a row with
+ * empty `blocks` and populated `questions` is representable and schema-valid — the blocks migration
+ * having run is not a guarantee one cannot be met. The answer plan is built from `blocks` alone, so
+ * without this every stored answer on such a survey comes back as `unresolved[]` with
+ * `elementNotInSurvey`: a live survey's answers reported as orphans.
+ *
+ * A second query rather than a wider select, because the first one runs for every page and this one
+ * runs for almost none. `questions` is the largest column on the table and the hot path has no use
+ * for it; paying for it on all 250 surveys of a page to rescue the rare legacy row would be the wrong
+ * trade. Surveys with empty blocks are the only ids sent, so the common case issues no query at all.
+ *
+ * Reading, never writing: nothing here backfills the row. `transformQuestionsToBlocks` is the same
+ * transform the rest of the app derives the modern shape with, so a rescued survey serializes exactly
+ * as a migrated one does rather than through a second interpretation of the legacy blob.
+ */
+async function rescueLegacyBlocks<TSurvey extends { id: string; blocks: unknown[] }>(
+  surveys: TSurvey[]
+): Promise<TSurvey[]> {
+  const legacyIds = surveys.filter((survey) => survey.blocks.length === 0).map((survey) => survey.id);
+  if (legacyIds.length === 0) return surveys;
+
+  const legacy = await prisma.survey.findMany({
+    where: { id: { in: legacyIds } },
+    select: { id: true, questions: true },
+  });
+  const questionsById = new Map(legacy.map((row) => [row.id, (row.questions ?? []) as TSurveyQuestion[]]));
+
+  return surveys.map((survey) => {
+    const questions = questionsById.get(survey.id);
+    if (!questions || questions.length === 0) return survey;
+
+    return { ...survey, blocks: transformQuestionsToBlocks(questions) };
+  });
+}
 
 /**
  * Load every survey a page of responses refers to, in one query.
@@ -405,10 +446,12 @@ export async function getV3ResponseSurveys(
     return new Map();
   }
 
-  const surveys = await prisma.survey.findMany({
-    where: { id: { in: unique } },
-    select: v3ResponseSurveySelect,
-  });
+  const surveys = await rescueLegacyBlocks(
+    await prisma.survey.findMany({
+      where: { id: { in: unique } },
+      select: v3ResponseSurveySelect,
+    })
+  );
 
   return new Map(
     surveys.map((survey) => [survey.id, { ...survey, embeddedFields: inlineSurveyEmbeddedFields(survey) }])

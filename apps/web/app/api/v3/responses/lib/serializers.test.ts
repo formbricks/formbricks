@@ -233,6 +233,64 @@ describe("what the detail view's data map may carry", () => {
     expect(resource.data).toEqual({ q1: "good", deleted_element: "still mine" });
   });
 
+  /**
+   * `ZV3ResponseResource.data` is a four-shape union with no `null` member, and `Response.data` is a
+   * `Json` column four APIs have written to for years. `serializeAnswers` skips stored nulls for
+   * exactly this reason; the detail view was the one place the same byte was echoed verbatim, so the
+   * endpoint answered a body the committed spec rejects.
+   */
+  test("a stored JSON null is dropped rather than published", () => {
+    const resource = createV3ResponseSerializer().toResource(
+      row({ data: { q1: "good", legacy_null: null } as never }),
+      survey()
+    );
+
+    expect(resource.data).toEqual({ q1: "good" });
+    expect(Object.keys(resource.data)).not.toContain("legacy_null");
+  });
+
+  /**
+   * The union's array and record members are element-wise, so a `typeof value === "object"` guard
+   * would pass both of these. Only a parse rejects them.
+   */
+  test("a value outside the published union is dropped, whatever its container type", () => {
+    const resource = createV3ResponseSerializer().toResource(
+      row({
+        data: {
+          q1: "good",
+          legacy_mixed_array: ["a", 1],
+          legacy_number_record: { a: 5 },
+          legacy_bool: true,
+        } as never,
+      }),
+      survey()
+    );
+
+    expect(resource.data).toEqual({ q1: "good" });
+  });
+
+  /** The four shapes the contract does carry still come through untouched. */
+  test("every shape the union declares is kept", () => {
+    const resource = createV3ResponseSerializer().toResource(
+      row({
+        data: {
+          text: "a",
+          score: 7,
+          choices: ["x", "y"],
+          matrix: { row: "column" },
+        } as never,
+      }),
+      survey()
+    );
+
+    expect(resource.data).toEqual({
+      text: "a",
+      score: 7,
+      choices: ["x", "y"],
+      matrix: { row: "column" },
+    });
+  });
+
   /** On a collision the answer owns the key, so it is an answer and belongs in the map. */
   test("a key an element claims is kept even when a field declares the same name", () => {
     const s = survey({ embeddedFields: [declaredField("q1", "ingested")] });
