@@ -76,11 +76,6 @@ vi.mock("server-only", () => {
   return {};
 });
 
-// mock server actions that might be called in tests
-vi.mock("@/modules/auth/actions/sign-out", () => ({
-  logSignOutAction: vi.fn().mockResolvedValue(undefined),
-}));
-
 // mock prisma client
 
 vi.mock("@formbricks/database/prisma", async () => {

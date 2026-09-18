@@ -84,6 +84,7 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
 
 /** Audit-only targets use a separate namespace so each target and each Prisma model is classified once. */
 export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
+  account: "authentication_or_application",
   actionClass: "workspace_inherited_resource",
   apiKey: "relationship_or_grant_source",
   chart: "workspace_inherited_resource",
@@ -100,10 +101,14 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   invite: "authentication_or_application",
   language: "parent_derived_or_data_integrity",
   membership: "relationship_or_grant_source",
+  oauthClient: "authentication_or_application",
+  oauthConsent: "authentication_or_application",
+  oauthToken: "authentication_or_application",
   organization: "direct_authorization_resource",
   quota: "parent_derived_or_data_integrity",
   response: "direct_authorization_resource",
   segment: "workspace_inherited_resource",
+  session: "authentication_or_application",
   survey: "direct_authorization_resource",
   tag: "workspace_inherited_resource",
   team: "direct_authorization_resource",

@@ -12,9 +12,6 @@ const mocks = vi.hoisted(() => ({
   // Held in a box and exposed through a getter below so a single test can flip it: `EMAIL_AUTH_ENABLED` is
   // a const import in the action, and the getter keeps the live binding readable per call.
   emailAuthEnabled: { value: true },
-  // The wrapper is applied once at module import, so `vi.resetAllMocks()` in beforeEach would wipe the
-  // call history before any test could read it. A plain array on the hoisted object survives the reset.
-  auditWrapperArgs: [] as [string, string][],
 }));
 
 const allowedRateLimitResponse = { allowed: true };
@@ -32,6 +29,7 @@ vi.mock("@/lib/constants", () => ({
     return mocks.emailAuthEnabled.value;
   },
   PASSWORD_RESET_DISABLED: false,
+  AUDIT_LOG_ENABLED: true,
   WEBAPP_URL: "http://localhost:3000",
 }));
 
@@ -39,15 +37,6 @@ vi.mock("@/lib/constants", () => ({
 // `lib/crypto`, which reads ENCRYPTION_KEY from the (fully replaced) constants mock at import time.
 vi.mock("@/lib/user/password", () => ({
   hasCredentialAccount: mocks.hasCredentialAccount,
-}));
-
-// Passthrough so the handler runs directly, matching modules/ee/billing/actions.test.ts. Importing the
-// real handler would drag the audit-log graph (and its POSTHOG_KEY constant read) into this suite.
-vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
-  withAuditLogging: vi.fn((action: string, target: string, fn: unknown) => {
-    mocks.auditWrapperArgs.push([action, target]);
-    return fn;
-  }),
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -76,11 +65,12 @@ vi.mock("next/headers", () => ({
 }));
 
 vi.mock("@formbricks/logger", () => ({
-  logger: { error: vi.fn() },
+  logger: { error: vi.fn(), audit: vi.fn() },
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({
   actionClient: {
+    use: vi.fn().mockReturnThis(),
     inputSchema: vi.fn().mockReturnThis(),
     action: vi.fn((fn) => fn),
   },
@@ -211,12 +201,6 @@ describe("forgotPasswordAction", () => {
     });
   });
 
-  /**
-   * The action answers `{ success: true }` whether or not a reset was actually requested, so the audit
-   * wrapper cannot tell the two apart on its own — without `suppressEvent` it would record a
-   * `passwordReset` for an address that never got one. Same false-record problem as duplicate sign-up
-   * (ENG-2091), and these pin both directions.
-   */
   describe("Audit record", () => {
     beforeEach(() => {
       vi.mocked(applyIPRateLimit).mockResolvedValue(allowedRateLimitResponse);
@@ -227,30 +211,25 @@ describe("forgotPasswordAction", () => {
 
       await callAction(validInput);
 
-      expect(auditLoggingCtx.userId).toBe(mockUser.id);
-      expect(auditLoggingCtx.suppressEvent).toBeUndefined();
+      expect(logger.audit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          target: { type: "user", id: mockUser.id },
+          status: "success",
+          scope: "global",
+          actor: { id: "unknown", type: "anonymous" },
+        })
+      );
     });
 
-    test("suppresses the event for an address with no account", async () => {
+    test("records a no-op for an address with no account", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
       await callAction(validInput);
 
-      expect(auditLoggingCtx.suppressEvent).toBe(true);
-      expect(auditLoggingCtx.userId).toBeUndefined();
+      expect(logger.audit).toHaveBeenCalledWith(expect.objectContaining({ status: "noop" }));
     });
 
-    /**
-     * Without this the whole audit story is unobserved: `withAuditLogging` is mocked as a passthrough and
-     * `actionClient.action` returns the handler, so deleting the wrapper from the action entirely would
-     * leave every other test in this file green — including the ones below. This is the only assertion
-     * that the event is emitted under the right action and target at all.
-     */
-    test("wires the wrapper with the right audit action and target", () => {
-      expect(mocks.auditWrapperArgs).toContainEqual(["passwordReset", "user"]);
-    });
-
-    test("suppresses the event when the reset email fails to send", async () => {
+    test("records failure when the reset request fails", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
       vi.mocked(auth.api.requestPasswordReset).mockRejectedValue(new Error("smtp down"));
 
@@ -258,16 +237,16 @@ describe("forgotPasswordAction", () => {
 
       // The action still reports success, so an unsuppressed event would claim a link was mailed.
       expect(result).toEqual({ success: true });
-      expect(auditLoggingCtx.suppressEvent).toBe(true);
+      expect(logger.audit).toHaveBeenCalledWith(expect.objectContaining({ status: "failure" }));
     });
 
-    test("suppresses the event for a user with no password to reset", async () => {
+    test("records no-op for a user with no password to reset", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue({ ...mockUser, identityProvider: "google" } as any);
       mocks.hasCredentialAccount.mockResolvedValue(false);
 
       await callAction(validInput);
 
-      expect(auditLoggingCtx.suppressEvent).toBe(true);
+      expect(logger.audit).toHaveBeenCalledWith(expect.objectContaining({ status: "noop" }));
     });
   });
 
