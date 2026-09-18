@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
@@ -247,6 +250,27 @@ describe("survey block discoverability (ENG-2180)", () => {
 
     expect(description).toContain("`scale` (number|smiley|star)");
     expect(description).toContain("`range` (5|3|4|6|7|10)");
+  });
+
+  /**
+   * The handbook restates the element list in prose, and says of it that the two "cannot drift". That is
+   * only true of the tool description, which is generated; the `.mdx` copy is hand-written and would go
+   * stale the day an element type is added. This makes the claim true rather than softening it.
+   */
+  test("the handbook's element list matches the enum", () => {
+    const handbook = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "../../../../../docs/development/technical-handbook/mcp-server.mdx"
+    );
+    const prose = fs.readFileSync(handbook, "utf-8").replace(/\n/g, " ");
+    const listed = /The element\s+`type` is one of ([^.]+)\./.exec(prose)?.[1] ?? "";
+
+    expect(
+      listed
+        .split(",")
+        .map((entry) => entry.trim().replaceAll("`", ""))
+        .toSorted()
+    ).toEqual(Object.values(TSurveyElementTypeEnum).toSorted());
   });
 
   test("the example block in the description is accepted by the create schema", async () => {
