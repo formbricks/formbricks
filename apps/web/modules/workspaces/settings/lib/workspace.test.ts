@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { StorageErrorCode } from "@formbricks/storage";
 import {
   DatabaseError,
   InvalidInputError,
@@ -12,7 +11,7 @@ import {
 import { TWorkspace } from "@formbricks/types/workspace";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
-import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
+import { deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 import { createWorkspace, deleteWorkspace, deleteWorkspaceIfNotLast, updateWorkspace } from "./workspace";
 
 vi.mock("server-only", () => ({}));
@@ -99,7 +98,7 @@ vi.mock("@/lib/utils/validate", () => ({
 }));
 
 vi.mock("@/modules/storage/service", () => ({
-  deleteFilesByWorkspaceId: vi.fn(),
+  deleteWorkspaceFilesBestEffort: vi.fn(),
 }));
 
 describe("workspace lib", () => {
@@ -338,25 +337,36 @@ describe("workspace lib", () => {
       ] as any);
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
 
-      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
       const result = await deleteWorkspace("p1");
       expect(result).toEqual(baseWorkspace);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ workspaceIds: ["p1"] });
       expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
         assignments: [feedbackDirectoryAssignment],
       });
-      expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", []);
+      expect(deleteWorkspaceFilesBestEffort).toHaveBeenCalledWith(baseWorkspace);
     });
 
-    test("logs error if file deletion fails", async () => {
-      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
-      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({
-        ok: false,
-        error: { code: StorageErrorCode.Unknown },
-      } as any);
-      vi.mocked(logger.error).mockImplementation(() => {});
+    // ENG-3197: this used to pass a hardcoded [] for the legacy prefixes, so files uploaded before
+    // the workspace was migrated off its environment id survived the delete.
+    test("passes the workspace's legacy environment prefix to storage cleanup", async () => {
+      const migratedWorkspace = { ...baseWorkspace, legacyEnvironmentId: "env-1" };
+      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(migratedWorkspace as any);
+
       await deleteWorkspace("p1");
-      expect(logger.error).toHaveBeenCalled();
+
+      expect(deleteWorkspaceFilesBestEffort).toHaveBeenCalledWith(migratedWorkspace);
+    });
+
+    test("selects legacyEnvironmentId off the deleted row", async () => {
+      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
+
+      await deleteWorkspace("p1");
+
+      expect(prisma.workspace.delete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: expect.objectContaining({ legacyEnvironmentId: true }),
+        })
+      );
     });
 
     test("throws DatabaseError on Prisma error", async () => {
@@ -376,7 +386,6 @@ describe("workspace lib", () => {
     test("deletes a workspace while another workspace remains", async () => {
       vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ id: "p1" }, { id: "p2" }]);
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
-      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
 
       await expect(deleteWorkspaceIfNotLast("p1", "org1")).resolves.toEqual(baseWorkspace);
     });
