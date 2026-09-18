@@ -10,6 +10,9 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
+  AUTH_SECRET,
+  AUTH_TRUSTED_ORIGINS,
+  AUTH_URL,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   PASSWORD_RESET_DISABLED,
@@ -18,7 +21,6 @@ import {
   SESSION_MAX_AGE,
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
-import { env } from "@/lib/env";
 import { BETTER_AUTH_IP_ADDRESS_CONFIG } from "@/lib/utils/client-ip";
 import {
   accountDeletionConfig,
@@ -72,15 +74,15 @@ export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  */
 export const auth = betterAuth({
   appName: "Formbricks",
-  // ENG-1054: fall back to NEXTAUTH_SECRET (which already signed NextAuth's session cookies) when
-  // BETTER_AUTH_SECRET is unset. This keeps existing envs working AND guarantees BA's cookie signing
-  // uses the same secret the forward-auth proxy verifies with (session-cookie.ts) — a mismatch makes
-  // the proxy reject every session and bounce users between / and /auth/login. NEXTAUTH_SECRET also
-  // still signs app JWTs (lib/jwt.ts).
-  secret: env.BETTER_AUTH_SECRET ?? env.NEXTAUTH_SECRET,
-  baseURL: env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL,
+  // Resolved in lib/constants.ts, which documents the BETTER_AUTH_* / NEXTAUTH_* alias. Passing it
+  // explicitly is what keeps BA's cookie signing on the same secret the forward-auth proxy verifies with
+  // (session-cookie.ts) and lib/jwt.ts signs app JWTs with; a divergence between any two of them is an
+  // outage. Note a falsy value here does NOT stop BA falling through to its own hardcoded default
+  // secret — `assertAuthRuntimeConfiguration` in lib/env.ts is what prevents that, by refusing to boot.
+  secret: AUTH_SECRET,
+  baseURL: AUTH_URL,
   disabledPaths: ["/token"],
-  trustedOrigins: [env.BETTER_AUTH_URL, env.NEXTAUTH_URL].filter((url): url is string => Boolean(url)),
+  trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
   database: prismaAdapter(prisma, { provider: "postgresql" }),
