@@ -13,7 +13,7 @@ These variables are present inside your machine's docker-compose file. Restart t
   Formbricks v5 makes Hub part of the standard self-hosted runtime and changes how rate limiting is enforced.
 </Note>
 
-For the `AI_*` variables, see [AI Features](/self-hosting/advanced/enterprise-features/ai-features) — it walks through each provider and the credentials it needs. Set only the variables for the provider you use; unused provider variables can be omitted.
+For the `AI_*` variables, see [AI Features](/self-hosting/configuration/ai-features) — it walks through each provider and the credentials it needs. Set only the variables for the provider you use; unused provider variables can be omitted.
 
 {/* prettier-ignore-start */}
 
@@ -51,6 +51,7 @@ For the `AI_*` variables, see [AI Features](/self-hosting/advanced/enterprise-fe
 | ENTERPRISE_LICENSE_KEY                  | License key for the Formbricks Enterprise Edition. Unlocks Enterprise-only features; the instance validates it against the Formbricks license server, so it needs outbound network access (or `HTTP_PROXY`/`HTTPS_PROXY`). See [License Activation](/self-hosting/advanced/license-activation). | optional (required for Enterprise Edition features)                                      |                                                                           |
 | TELEMETRY_DISABLED                      | Disables telemetry reporting if set to 1. Ignored when an Enterprise License is active.                                                                                                         | optional                                                                                 |                                                                           |
 | DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS | Allows webhook URLs to point to internal/private network addresses (e.g. localhost, 192.168.x.x) if set to 1. Useful for self-hosted instances that need to send webhooks to internal services. | optional                                                                                 |                                                                           |
+| WEBHOOK_DELIVERY_TIMEOUT_MS             | Milliseconds a webhook delivery (and the "test endpoint" button) waits for the receiver to respond before failing the attempt. Between 1000 and 30000. A longer timeout holds a Job Runner slot longer. | optional                                                                                 | 5000                                                                      |
 | INVITE_DISABLED                         | Disables the ability for invited users to create an account if set to 1.                                                                                                                        | optional                                                                                 |                                                                           |
 | MAIL_FROM                               | Email address to send emails from.                                                                                                                                                              | optional (required if email services are to be enabled)                                  |                                                                           |
 | MAIL_FROM_NAME                          | Email name/title to send emails from.                                                                                                                                                           | optional (required if email services are to be enabled)                                  |                                                                           |
@@ -196,7 +197,7 @@ docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
 For Helm, run `formbricks-authzed health` inside a Formbricks application pod. Repository development can keep
-using `pnpm authzed:health`. See [AuthZed Operations](/self-hosting/advanced/authzed-operations) for the complete
+using `pnpm authzed:health`. See [AuthZed Operations](/self-hosting/configuration/authzed-operations) for the complete
 Docker and Kubernetes command set, schema lifecycle, backups, and relationship repair.
 
 Only the repository-development `pnpm authzed:health` command reads the repository `.env`. Docker Compose

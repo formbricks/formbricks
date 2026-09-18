@@ -189,7 +189,12 @@ overrides:
   # GHSA-55q2-fjhq-7xh7: DOMPurify <=3.4.12 can be bypassed with crafted HTML; patched in 3.4.13.
   # load-bearing: isomorphic-dompurify, posthog-js and redoc resolve vulnerable 3.x versions.
   dompurify: 3.4.13
-  fast-xml-parser: 5.7.0 # load-bearing: @aws-sdk/xml-builder pins 5.4.1 / 5.5.8, both <5.7.0 and vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
+  # GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g are patched in 5.7.0, but 5.7.0 and 5.7.1 reject
+  # entity names starting with "#", and @aws-sdk/xml-builder registers "#xD"/"#10" on its parser —
+  # which threw on every XML-parsed S3 response and silently disabled storage prefix cleanup
+  # (ENG-3263). 5.7.2 is the lowest version that carries both fixes, so the floor is 5.7.2, not 5.7.0.
+  # load-bearing: @aws-sdk/xml-builder pins 5.4.1 / 5.5.8, both <5.7.0 and vulnerable.
+  fast-xml-parser: 5.7.2
   # GHSA-22jq-vg5j-6vgg, GHSA-4xrf-jv44-h6hh and GHSA-mwp4-54f8-5fhr: ip-address parsing
   # vulnerabilities are all patched in 10.3.1.
   # load-bearing: socks and express-rate-limit resolve vulnerable 10.x versions.
@@ -404,8 +409,10 @@ sharedWorkspaceLockfile: true
 access: public
 enablePrePostScripts: true
 # Flat, npm-style node_modules. Deliberate for now: several packages still rely on hoisted
-# (undeclared) dependencies — e.g. @formbricks/js-core reaches into sibling packages (ENG-1681)
-# and react/react-dom are hoisted from the workspace root (ENG-1693). Moving to the strict
+# (undeclared) dependencies — react/react-dom are hoisted from the workspace root (ENG-1693), and
+# apps/storybook aliases @formbricks/survey-ui's source without declaring it. The build-helper
+# imports that used to be undeclared (ENG-1681, ENG-2925) are declared now, and
+# apps/web/lib/turbo-vite-plugins-edge.test.ts guards that edge. Moving to the strict
 # `isolated` linker is the long-term goal (ENG-1674); fix the undeclared deps first.
 # `shamefullyHoist` above is left untouched here — it becomes meaningful only under the isolated
 # linker, so it is handled together with that migration rather than in this cleanup.

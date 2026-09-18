@@ -170,3 +170,34 @@ export const deleteFilesByWorkspaceId = async (workspaceId: string, environmentI
 
   return results[0];
 };
+
+/**
+ * Best-effort storage cleanup for a workspace that has just been deleted.
+ *
+ * Both callers (workspace deletion and organization deletion) run this *after* the database cascade
+ * has committed, so there is nothing left to roll back and no row left pointing at these objects.
+ * A storage failure — S3 unconfigured, bucket unreachable, objects already gone — is therefore
+ * logged and swallowed: reporting the deletion as failed would be a lie, since the records really
+ * are gone. The cost of that choice is orphaned objects when storage is down, which is the same
+ * trade-off `deleteWorkspace` has always made.
+ */
+export const deleteWorkspaceFilesBestEffort = async (workspace: {
+  id: string;
+  legacyEnvironmentId?: string | null;
+}): Promise<void> => {
+  // Pre-#8044 uploads are keyed by the environment id the workspace was migrated from, so both
+  // prefixes have to go. A null id is dropped here and never reaches deleteFilesByPrefix.
+  const legacyPrefixes = [workspace.legacyEnvironmentId].filter((prefix): prefix is string =>
+    Boolean(prefix)
+  );
+
+  try {
+    const result = await deleteFilesByWorkspaceId(workspace.id, legacyPrefixes);
+
+    if (!result.ok) {
+      logger.error({ error: result.error, workspaceId: workspace.id }, "Error deleting S3 files");
+    }
+  } catch (error) {
+    logger.error({ error, workspaceId: workspace.id }, "Error deleting S3 files");
+  }
+};

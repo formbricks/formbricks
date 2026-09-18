@@ -17,7 +17,7 @@ import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspac
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
-import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
+import { deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 
 // Keep v5 defaults aligned with current production camelCase keys.
 // Safe-identifier migration (with backwards compatibility) is intentionally deferred to v5.1.
@@ -227,7 +227,9 @@ const deleteWorkspaceRecord = async (db: TWorkspaceDeletionDbClient, workspaceId
     where: {
       id: workspaceId,
     },
-    select: selectWorkspace,
+    // legacyEnvironmentId rides along on the deleted row so storage cleanup has the legacy prefix
+    // after the row is gone. It is not part of selectWorkspace because no other caller needs it.
+    select: { ...selectWorkspace, legacyEnvironmentId: true },
   });
 
   return { feedbackDirectoryAssignments, workspace };
@@ -244,12 +246,7 @@ const completeWorkspaceDeletion = async (
     reconcileFeedbackDirectoryRelationships({ assignments: feedbackDirectoryAssignments })
   );
 
-  const s3Result = await deleteFilesByWorkspaceId(workspaceId, []);
-
-  if (!s3Result.ok && "error" in s3Result) {
-    // fail silently because we don't want to throw an error if the files are not deleted
-    logger.error(s3Result.error, "Error deleting S3 files");
-  }
+  await deleteWorkspaceFilesBestEffort(workspace);
 
   return workspace;
 };
