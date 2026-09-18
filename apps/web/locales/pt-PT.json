@@ -1,5 +1,9 @@
 {
   "auth": {
+    "account_deleted": {
+      "description": "A tua conta e todos os seus dados foram permanentemente removidos. Vamos encaminhá-lo agora.",
+      "heading": "A tua conta foi eliminada"
+    },
     "continue_with_azure": "Continuar com Microsoft",
     "continue_with_email": "Continuar com Email",
     "continue_with_github": "Continuar com GitHub",

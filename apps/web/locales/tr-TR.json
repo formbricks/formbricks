@@ -1,5 +1,9 @@
 {
   "auth": {
+    "account_deleted": {
+      "description": "Hesabın ve tüm verilerin kalıcı olarak silindi. Şimdi seni yönlendiriyoruz.",
+      "heading": "Hesabın silindi"
+    },
     "continue_with_azure": "Microsoft ile devam et",
     "continue_with_email": "Email ile devam et",
     "continue_with_github": "GitHub ile devam et",

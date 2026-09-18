@@ -7,10 +7,8 @@ import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import {
-  ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE,
-  FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
-} from "@/modules/account/constants";
+import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/constants";
+import { getPostAccountDeletionRedirectUrl } from "@/modules/account/lib/post-account-deletion-redirect";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -91,11 +89,9 @@ export const DeleteAccountModal = ({
       logger.error({ error: signOutError }, "Failed to sign out after account deletion");
     }
 
-    if (isFormbricksCloud) {
-      globalThis.location.replace(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL);
-    } else {
-      globalThis.location.replace("/auth/login");
-    }
+    // Same destination, and the same client-side hop, as the SSO email-link path's /auth/account-deleted
+    // page — one helper so the two cannot drift apart again (ENG-3260).
+    globalThis.location.replace(getPostAccountDeletionRedirectUrl(isFormbricksCloud));
   };
 
   // SSO users have no password, so deletion is confirmed via an email link. The account is removed only

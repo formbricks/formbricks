@@ -1,5 +1,9 @@
 {
   "auth": {
+    "account_deleted": {
+      "description": "Ditt konto och all dess data har tagits bort permanent. Tar dig vidare nu.",
+      "heading": "Ditt konto har raderats"
+    },
     "continue_with_azure": "Fortsätt med Microsoft",
     "continue_with_email": "Fortsätt med e-post",
     "continue_with_github": "Fortsätt med GitHub",

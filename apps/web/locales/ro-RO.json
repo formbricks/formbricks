@@ -1,5 +1,9 @@
 {
   "auth": {
+    "account_deleted": {
+      "description": "Contul tău și toate datele asociate au fost eliminate definitiv. Te redirecționăm acum.",
+      "heading": "Contul tău a fost șters"
+    },
     "continue_with_azure": "Continuă cu Microsoft",
     "continue_with_email": "Continuă cu email",
     "continue_with_github": "Continuă cu GitHub",
