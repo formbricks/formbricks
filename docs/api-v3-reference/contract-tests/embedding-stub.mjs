@@ -35,6 +35,7 @@ import { createServer } from "node:http";
 const DIMENSIONS = 768;
 // Generous next to any real embedding model, and the ceiling on what a request may make this process
 // allocate. See the clamp in the /v1/embeddings handler.
+const MAX_INPUTS = 2048;
 const MAX_DIMENSIONS = 4096;
 const MAX_BODY_BYTES = 1 << 20;
 
@@ -123,6 +124,19 @@ const server = createServer((req, res) => {
     }
 
     const inputs = Array.isArray(parsed.input) ? parsed.input : [parsed.input ?? ""];
+    // Same reasoning as the `dimensions` cap below, on the other multiplier. The body limit allows an
+    // array of several hundred thousand empty strings, and each one becomes a vector of `dimensions`
+    // floats — hundreds of megabytes from one sub-megabyte request. This is a CI helper rather than
+    // an internet-facing service, but it listens on a port and costs nothing to bound.
+    if (inputs.length > MAX_INPUTS) {
+      reply(400, {
+        error: {
+          message: `At most ${MAX_INPUTS} inputs per request`,
+          type: "invalid_request_error",
+        },
+      });
+      return;
+    }
     // Bounded on purpose. `dimensions` is request-supplied and reaches two allocations below, so an
     // unbounded value is an allocation the caller chooses the size of. The store only accepts vectors
     // of `EmbeddingVectorDimensions`, so anything past this cap is useless as well as hostile —

@@ -60,9 +60,10 @@ be worth explaining here no longer is. What is left is the part that is specific
 
 ### Finding a dataset id
 
-Every operation is scoped by `workspaceId`. `datasetId` is optional: a workspace reaches at most one active
-dataset, so `workspaceId` alone normally resolves it, and you only need to name a dataset when a workspace
-reaches more than one.
+Every operation is scoped by `workspaceId`. `datasetId` is optional, and which of three things happens
+depends on how many datasets the workspace has: with exactly one, `workspaceId` alone resolves it; with
+more than one, omitting `datasetId` is a `400` naming it as required; with none, the request is a `422`.
+`GET /api/v3/feedback-datasets` lists the ids.
 
 `GET /api/v3/feedback-datasets?workspaceId=<workspaceId>` lists the ids. The dataset id is not shown anywhere
 in the app, so this is the way to find it.

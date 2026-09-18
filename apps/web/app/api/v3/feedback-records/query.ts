@@ -45,19 +45,56 @@ const booleanParam = z
   .optional()
   .transform((value) => (value === undefined ? undefined : value === "true"));
 
-/** A numeric bound. Non-numeric text becomes NaN and is rejected rather than silently dropped. */
-const numberParam = (min?: number, max?: number) => {
-  let schema = z.coerce.number();
-  if (min !== undefined) schema = schema.min(min);
-  if (max !== undefined) schema = schema.max(max);
-  return schema.optional();
-};
+/**
+ * A numeric bound. Non-numeric text becomes NaN and is rejected rather than silently dropped.
+ *
+ * The emptiness check is not decoration. The wrapper hands a present-but-empty query value through as
+ * `""`, and `z.coerce.number()` reads both `""` and `"   "` as `0` — so `?filter[sentimentScore][gte]=`
+ * would filter at zero, and `?filter[valueNumber][lte]=` at zero, each silently and each inside the
+ * documented range. Rejecting the empty string first turns those into the 400 the contract promises.
+ */
+const numberParam = (min?: number, max?: number) =>
+  z
+    .string()
+    .trim()
+    .min(1, "Must not be empty")
+    .transform((value, ctx) => {
+      const parsed = Number(value);
+
+      if (!Number.isFinite(parsed)) {
+        ctx.addIssue({ code: "custom", message: "Expected a number" });
+        return z.NEVER;
+      }
+
+      if (min !== undefined && parsed < min) {
+        ctx.addIssue({ code: "custom", message: `Must be greater than or equal to ${min}` });
+        return z.NEVER;
+      }
+
+      if (max !== undefined && parsed > max) {
+        ctx.addIssue({ code: "custom", message: `Must be less than or equal to ${max}` });
+        return z.NEVER;
+      }
+
+      return parsed;
+    })
+    .optional();
 
 /** A timestamp bound, left opaque here: only the Hub can compare two offsets correctly. */
 const timestampParam = z.string().trim().min(1).optional();
 
 /** An identifier-shaped filter value, matching the operations' own bounds. */
 const idParam = z.string().trim().min(1).max(255);
+
+/**
+ * A caller-owned *name*, preserved exactly as sent.
+ *
+ * Deliberately not `idParam`: that trims, and the Hub compares filters by equality against a value
+ * the create path stores verbatim. A source named `" Acme "` would therefore be stored with its
+ * spaces and be unreachable through a trimming filter — the record exists and no query can name it.
+ * An id has no such problem, so it keeps the trim, which absorbs copy-paste whitespace.
+ */
+const nameParam = z.string().min(1).max(255);
 
 /**
  * Documented filter name → the operations' parameter name.
@@ -134,7 +171,7 @@ const filterShape = {
   datasetId: ZId.optional(),
   "filter[sourceType][in]": repeatable(idParam),
   "filter[sourceId][in]": repeatable(idParam),
-  "filter[sourceName][in]": repeatable(idParam),
+  "filter[sourceName][in]": repeatable(nameParam),
   "filter[fieldType][in]": repeatable(ZHubFieldType, ZHubFieldType.options.length),
   "filter[fieldId][in]": repeatable(idParam),
   "filter[fieldGroupId][in]": repeatable(idParam),

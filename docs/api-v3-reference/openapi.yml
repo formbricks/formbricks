@@ -48,7 +48,7 @@ info:
     `POST /api/v3/surveys/generate` returns a draft `POST /api/v3/surveys` payload plus validation metadata. It does not create a survey. It generates survey content for both `link` and `app` surveys; for `app` it seeds a default `distribution` (display once, no triggers, no targeting) that you finish configuring before publishing.
     Prompt text is sent to the configured AI provider for generation, but it is not stored by this endpoint, not logged by default, and not included in audit data.
 
-    **Feedback Records** `/api/v3/feedback-records` reads and writes the normalized feedback store behind Unify Feedback. It follows the same conventions as the rest of v3 — camelCase members, `{ data, meta }` list envelopes with `meta.nextCursor`, `filter[field][op]` query filters, `sortBy`, and RFC 9457 problem responses — and is scoped by `workspaceId` like every other v3 list. A workspace reaches at most one active dataset; `GET /api/v3/feedback-datasets` lists the ids, and `datasetId` names one explicitly where a workspace has more than one.
+    **Feedback Records** `/api/v3/feedback-records` reads and writes the normalized feedback store behind Unify Feedback. It follows the same conventions as the rest of v3 — camelCase members, `{ data, meta }` list envelopes with `meta.nextCursor`, `filter[field][op]` query filters, `sortBy`, and RFC 9457 problem responses — and is scoped by `workspaceId` like every other v3 list. `datasetId` is optional and resolves in three ways: a workspace with exactly one assigned dataset needs only `workspaceId`; one with several answers `400` naming `datasetId` as required; one with none answers `422`. `GET /api/v3/feedback-datasets` lists the ids.
     Authenticate with **`x-api-key`**: the key needs a permission on a workspace the dataset is assigned to — `read` to list, count, get and search, `write` to create and update, `manage` to delete — and may update or delete only in a dataset assigned to exactly one workspace, because in a shared dataset no workspace permission can say whose records they are.
     **OpenAPI**
     This spec is **not** produced by `pnpm generate-api-specs` (that script only builds v2 → `docs/api-v2-reference/openapi.yml`). When the route contract changes, edit the files under `docs/api-v3-reference/src/`, then run `pnpm api:v3:bundle` to regenerate the committed single-file bundle. `pnpm api:v3:lint` lints the source tree; `pnpm api:v3:check` (CI) fails when the bundle is stale.
@@ -3951,9 +3951,11 @@ paths:
       operationId: getFeedbackRecordV3
       summary: Get a feedback record
       description: |
-        Returns one feedback record by id. The dataset is read from the record itself, so no
-        `datasetId` is sent. Requires an API key with **read** permission (or higher) on a workspace the
-        record's dataset is assigned to.
+        Returns one feedback record by id. `datasetId` is optional: omit it and the workspace's sole
+        assigned dataset is used, or supply it to name one — the record is then rejected if its dataset
+        is not the one named. A workspace with several assigned datasets and no `datasetId` answers
+        **400**; one with none answers **422**. Requires an API key with **read** permission (or higher)
+        on a workspace the record's dataset is assigned to.
 
         An id that does not exist, and one in a dataset you cannot read, both answer **403** — the same
         body either way, so a record's existence cannot be probed.
@@ -9175,6 +9177,7 @@ components:
         maxItems: 100
         items:
           type: string
+          minLength: 1
           maxLength: 255
       description: Records from any of these specific sources.
     FeedbackRecordFilterSourceNameIn:
@@ -9187,6 +9190,7 @@ components:
         maxItems: 100
         items:
           type: string
+          minLength: 1
           maxLength: 255
       description: Records from any of these source names.
     FeedbackRecordFilterFieldIdIn:

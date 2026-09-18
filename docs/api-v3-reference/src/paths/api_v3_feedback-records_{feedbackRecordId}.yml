@@ -2,9 +2,11 @@ get:
   operationId: getFeedbackRecordV3
   summary: Get a feedback record
   description: |
-    Returns one feedback record by id. The dataset is read from the record itself, so no
-    `datasetId` is sent. Requires an API key with **read** permission (or higher) on a workspace the
-    record's dataset is assigned to.
+    Returns one feedback record by id. `datasetId` is optional: omit it and the workspace's sole
+    assigned dataset is used, or supply it to name one — the record is then rejected if its dataset
+    is not the one named. A workspace with several assigned datasets and no `datasetId` answers
+    **400**; one with none answers **422**. Requires an API key with **read** permission (or higher)
+    on a workspace the record's dataset is assigned to.
 
     An id that does not exist, and one in a dataset you cannot read, both answer **403** — the same
     body either way, so a record's existence cannot be probed.

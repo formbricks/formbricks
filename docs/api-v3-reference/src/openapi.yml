@@ -208,9 +208,10 @@ info:
     `/api/v3/feedback-records` reads and writes the normalized feedback store behind Unify Feedback.
     It follows the same conventions as the rest of v3 — camelCase members, `{ data, meta }` list
     envelopes with `meta.nextCursor`, `filter[field][op]` query filters, `sortBy`, and RFC 9457
-    problem responses — and is scoped by `workspaceId` like every other v3 list. A workspace reaches
-    at most one active dataset; `GET /api/v3/feedback-datasets` lists the ids, and `datasetId` names
-    one explicitly where a workspace has more than one.
+    problem responses — and is scoped by `workspaceId` like every other v3 list. `datasetId` is
+    optional and resolves in three ways: a workspace with exactly one assigned dataset needs only
+    `workspaceId`; one with several answers `400` naming `datasetId` as required; one with none
+    answers `422`. `GET /api/v3/feedback-datasets` lists the ids.
 
     Authenticate with **`x-api-key`**: the key needs a permission on a workspace the dataset is
     assigned to — `read` to list, count, get and search, `write` to create and update, `manage` to

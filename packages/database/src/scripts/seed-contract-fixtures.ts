@@ -72,11 +72,24 @@ const FEEDBACK_SUBMISSIONS = {
   DELETE: "contract-feedback-delete",
 } as const;
 
+/**
+ * A record in the FOREIGN dataset, for the one tenancy assertion the owned records cannot make.
+ *
+ * Asking for an owned record through a foreign workspace proves less than it looks: workspace
+ * authorization can refuse on the workspace before the record is ever looked up, so the assertion
+ * passes whether or not the record query carries a tenant scope. Asking for a FOREIGN record through
+ * an AUTHORIZED workspace is the shape that bites — the workspace check passes, and only a correctly
+ * scoped record lookup refuses.
+ */
+const FOREIGN_FEEDBACK_SUBMISSION = "contract-feedback-foreign";
+
 const FEEDBACK_RECORD_TEXT: Record<string, string> = {
   [FEEDBACK_SUBMISSIONS.READ]:
     "Complaints about waiting times at the gates - we queued 40 minutes to get in.",
   [FEEDBACK_SUBMISSIONS.PATCH]: "Contract fixture for the update operation.",
   [FEEDBACK_SUBMISSIONS.DELETE]: "Contract fixture for the delete operation.",
+  [FOREIGN_FEEDBACK_SUBMISSION]:
+    "A record owned by another organization, used only to prove a cross-tenant read is refused.",
 };
 
 /**
@@ -313,9 +326,14 @@ async function seedFeedbackRecords(): Promise<Record<string, string>> {
   const headers = { authorization: `Bearer ${apiKey}`, "content-type": "application/json" };
   const ids: Record<string, string> = {};
 
-  for (const submissionId of Object.values(FEEDBACK_SUBMISSIONS)) {
+  const submissions: [submissionId: string, tenantId: string][] = [
+    ...Object.values(FEEDBACK_SUBMISSIONS).map((id): [string, string] => [id, CONTRACT_IDS.FEEDBACK_DATASET]),
+    [FOREIGN_FEEDBACK_SUBMISSION, CONTRACT_IDS.FEEDBACK_DATASET_FOREIGN],
+  ];
+
+  for (const [submissionId, tenantId] of submissions) {
     const body = {
-      tenant_id: CONTRACT_IDS.FEEDBACK_DATASET,
+      tenant_id: tenantId,
       source_type: "review",
       source_name: "Contract fixtures",
       submission_id: submissionId,
@@ -333,7 +351,17 @@ async function seedFeedbackRecords(): Promise<Record<string, string>> {
 
     if (created.ok) {
       const record = (await created.json()) as { id?: string };
-      if (record.id) ids[submissionId] = record.id;
+      if (!record.id) {
+        // A 2xx with no `id` used to fall through and leave this submission out of the map. The hooks
+        // then substitute a generated cuid2, so the PATCH and DELETE cases run against a record that
+        // does not exist and get the 403 the contract documents — green, while never touching the
+        // success path they exist to cover. The workflow's preflight only checks
+        // `read.feedbackRecordId`, so it would not catch it either.
+        throw new Error(
+          `Seeding feedback record ${submissionId} returned ${created.status} with no id. The contract operations would run against a generated id and pass without exercising anything.`
+        );
+      }
+      ids[submissionId] = record.id;
       continue;
     }
 
@@ -346,7 +374,7 @@ async function seedFeedbackRecords(): Promise<Record<string, string>> {
     // Already present from an earlier run — find it rather than inventing a new submission id, so the
     // id map stays stable and the store does not accumulate a record per CI run.
     const query = new URLSearchParams({
-      tenant_id: CONTRACT_IDS.FEEDBACK_DATASET,
+      tenant_id: tenantId,
       submission_id: submissionId,
       limit: "1",
     });
@@ -445,6 +473,9 @@ async function main(): Promise<void> {
     tenancy: {
       foreignDatasetId: CONTRACT_IDS.FEEDBACK_DATASET_FOREIGN,
       foreignWorkspaceId: CONTRACT_IDS.FOREIGN_WORKSPACE,
+      ...(feedbackRecordIds[FOREIGN_FEEDBACK_SUBMISSION]
+        ? { foreignRecordId: feedbackRecordIds[FOREIGN_FEEDBACK_SUBMISSION] }
+        : {}),
     },
     operations: {
       patchSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_PATCH } },

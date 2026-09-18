@@ -27,7 +27,7 @@ The update script and Helm upgrade hook verify the prepared graph without repair
 gate. Keep maintenance active on failure: after database changes, recovery may require restoring coordinated
 backups rather than running `helm rollback`. Pin explicit releases and digests, not floating tags.
 
-### Feedback Records Are Served by the Application
+### Feedback Records are served by the application
 
 The Feedback Records API used to be served by the API gateway — Envoy on Kubernetes, Traefik on the
 one-click install — which authenticated the call and forwarded it to Hub. It is now served by the Formbricks

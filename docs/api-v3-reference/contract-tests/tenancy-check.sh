@@ -118,6 +118,19 @@ else
   echo "::warning::No feedback record fixture; skipped the object-level authorization assertion."
 fi
 
+echo "--- a foreign record is refused when named through a workspace the key CAN use"
+# The assertion the one above cannot make. There, the workspace is foreign, so workspace authorization
+# may refuse before the record is ever looked up — the check passes whether or not the record query
+# carries a tenant scope. Here the workspace is the caller's own and passes that gate, so the only
+# thing left that can refuse is a correctly scoped record lookup. A 200 is a straight BOLA.
+foreign_record_id=$(node -p "require('${FIXTURES}').tenancy?.foreignRecordId ?? ''")
+if [ -n "${foreign_record_id}" ]; then
+  cross_tenant=$(probe "${BASE_URL}/api/v3/feedback-records/${foreign_record_id}?workspaceId=${workspace_id}")
+  expect_refused "reading a foreign record through an authorized workspace" "${cross_tenant}"
+else
+  echo "::warning::No foreign feedback record fixture; skipped the cross-tenant record assertion."
+fi
+
 if [ "${failures}" -gt 0 ]; then
   echo "::error::${failures} tenancy assertion(s) failed."
   exit 1

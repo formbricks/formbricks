@@ -159,6 +159,44 @@ describe("scalars are coerced, not guessed", () => {
   test("an empty filter value is rejected rather than ignored", () => {
     expect(parseList({ "filter[userId][in]": "" }).success).toBe(false);
   });
+
+  /**
+   * `z.coerce.number()` reads both of these as `0`, and zero sits inside every documented range — so
+   * an empty bound filtered at zero and reported success. The emptiness has to be rejected before
+   * coercion sees it.
+   */
+  test.each([
+    ["filter[sentimentScore][gte]", ""],
+    ["filter[sentimentScore][lte]", "   "],
+    ["filter[valueNumber][gte]", ""],
+    ["filter[valueNumber][lte]", "   "],
+  ])("an empty numeric bound on %s is rejected, not read as zero", (key, raw) => {
+    expect(parseList({ [key]: raw }).success).toBe(false);
+  });
+
+  test("a real zero bound is still accepted", () => {
+    const parsed = parseList({ "filter[valueNumber][gte]": "0" });
+    expect(parsed.success).toBe(true);
+  });
+
+  /**
+   * The Hub compares filters by equality against a name the create path stores verbatim, so trimming
+   * here would make a source named with surrounding spaces unreachable — the record exists and no
+   * query can name it. Ids keep their trim; names do not.
+   */
+  test("a source name keeps the whitespace the caller sent", () => {
+    const parsed = parseList({ "filter[sourceName][in]": " Acme " });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(toOperationFilters(parsed.data).source_name).toEqual(" Acme ");
+  });
+
+  test("a source id still has its whitespace trimmed", () => {
+    const parsed = parseList({ "filter[sourceId][in]": "  src_1  " });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(toOperationFilters(parsed.data).source_id).toEqual("src_1");
+  });
 });
 
 describe("pagination and ordering", () => {
