@@ -47,51 +47,65 @@ summarising them away, because a procurement team or an individual respondent ne
 before they rely on it, not after.
 
 <Note>
-  Some gaps recorded in the 9 August 2026 report have since been fixed in the codebase and will ship in the
-  next release. Those entries are marked **Fixed, not yet released** below and still read as *Does Not Support*
-  in the report, which predates the fix. If you are assessing a released version, treat the report as
-  authoritative for that version.
+  The 9 August 2026 report and the current codebase have since diverged, in both directions. Some gaps the
+  report records have been fixed and will ship in the next release; those entries are marked **Fixed, not yet
+  released** below and still read as *Does Not Support* in the report, which predates the fix. Two areas run
+  the other way: the report records them as supported, but a later review of the code found limitations we now
+  publish below, marked **Not in the 9 August 2026 report**. If you are assessing a released version, the
+  report remains authoritative for the entries marked as fixed here; for the two areas it records as
+  supported, this page is the more accurate description.
 </Note>
 
 ---
 
 ## Accessibility Features
 
-Everything in this table was assessed as supported in the most recent report.
+Everything in this table was assessed as supported in the most recent report. Where a row carries an
+exception, it names it and links to the entry describing it.
 
 | Area | What the survey UI does | WCAG 2.0 criterion |
 | --- | --- | --- |
 | Keyboard operation | Every question type, navigation button, and control can be operated with a keyboard alone. Keyboard focus is never trapped in a component — it can always be moved away using standard keys. | 2.1.1, 2.1.2 |
 | Visible focus | The element that currently has keyboard focus is shown with a visible focus indicator. | 2.4.7 |
 | Focus order | Focus moves through the survey in an order that preserves meaning and operability. | 2.4.3 |
-| Text alternatives | Non-text content is given a text alternative. | 1.1.1 |
 | Contrast | Text and images of text in the default survey theme meet the minimum contrast ratio. A survey creator can override every colour, and Formbricks does not check the contrast of a custom theme. | 1.4.3 |
 | Resizing text | Text can be resized up to 200% without assistive technology, and without loss of content or functionality. | 1.4.4 |
-| No time limits | There is no time limit on completing a survey. | 2.2.1 |
-| No auto-playing media | No audio or video ever plays on its own. Nothing in a survey starts playing that the respondent did not start. | 2.2.2 |
+| No time limits | There is no time limit on completing a survey, except when a creator enables [Auto close](#auto-close-countdown), which is off by default. | 2.2.1 |
+| No auto-playing media | No audio or video ever plays on its own. The [Auto close](#auto-close-countdown) countdown is the only thing that animates by itself. | 2.2.2 |
 | Error identification | When an answer is rejected, the error is identified and described to the respondent in text. | 3.3.1 |
 | Error suggestion | Where we know how an input should be corrected, the survey suggests the correction. | 3.3.3 |
 | Labels and instructions | Every input field has a descriptive label. | 3.3.2 |
 | Review and correction | A **Back** button is shown by default, so respondents can return to an earlier question, review their answer, and change it before submitting. | 3.3.4 |
 | Not relying on colour alone | Instructions are written in plain language, and error messages carry both a visual cue and a text cue. | 1.4.1 |
 
-<Note>
-  Website and in-app surveys have an optional **auto-close** setting that dismisses an unanswered survey
-  prompt after a set number of seconds. It applies only to the first screen, and the countdown is cancelled as
-  soon as the respondent interacts with the survey in any way — including with the keyboard. It does not
-  impose a time limit on answering, and it does not apply to link surveys. While the countdown runs it is
-  shown as a shrinking progress bar, which animates for as long as the creator configured — so a survey with
-  auto-close enabled does carry one automatic animation, and it can last longer than five seconds.
-</Note>
-
 ---
 
 ## Known Limitations
 
-The following were assessed as not conforming. Each entry states what a respondent experiences and what a
-survey creator can do about it. Entries marked **Fixed, not yet released** have been addressed in the codebase
-since the report was written and will ship in the next release; their workarounds still apply to released
-versions.
+The following do not fully conform. Each entry states what a respondent experiences and what a survey creator
+can do about it.
+
+Two markers say where an entry differs from the 9 August 2026 report. **Fixed, not yet released** means the
+gap has been addressed in the codebase since the report was written and will ship in the next release; the
+workaround still applies to released versions. **Not in the 9 August 2026 report** means the report records
+that criterion as supported, and a later review of the code found otherwise.
+
+### Image Text Alternatives
+
+**Affected criterion:** 1.1.1 — **Not in the 9 August 2026 report**
+
+Formbricks lets a survey creator add an image to a question or to an ending card, and lets them build a
+Picture Selection question out of images. It offers no field for a text alternative for any of them. A
+respondent using a screen reader is told that an image is present and nothing about what it shows, and the
+options in a Picture Selection question cannot be told apart at all — they are identified by an internal id
+rather than by what they depict.
+
+The welcome card is the exception: its logo and its video both carry a real text alternative.
+
+**Workaround:** Treat images as illustration. Put anything a respondent needs in order to answer into the
+question headline or the description, both of which are always read out. For a Picture Selection question,
+make sure the choice is also expressed in text — a respondent who cannot see the images has no other way to
+distinguish the options, so a picture-only question is unanswerable for them.
 
 ### Embedded Third-Party Video
 
@@ -121,6 +135,32 @@ part that always works. Do not put information in a video that a respondent need
 question, unless that information also appears as text. Add captions and a transcript on the hosting platform as
 well: for YouTube and Vimeo they will not be reachable from the embedded player, but they will be there for a
 respondent who opens the video in its own tab.
+
+### Auto-Close Countdown
+
+**Affected criteria:** 2.2.1, 2.2.2 — **Not in the 9 August 2026 report.** Applies only when a survey creator
+enables **Auto close**.
+
+Website and in-app surveys have an optional **Auto close** setting that dismisses an unanswered survey prompt
+after a set number of seconds. It is off by default, it is not available on link surveys, and it applies only
+to the survey's first screen. With it off, nothing described here happens: there is no countdown, no automatic
+animation, and no time limit anywhere in the survey.
+
+With it on, the first screen carries a time limit — a respondent who needs longer to read the prompt than the
+configured number of seconds loses the survey. While the countdown runs it is shown as a shrinking progress
+bar, which animates for as long as the creator configured, and there is no control to pause, stop, or hide it.
+Formbricks does not cap the configured value, so that animation can run well beyond the five seconds after
+which an automatic animation needs a pause control.
+
+The countdown is cancelled by the respondent's first interaction of any kind — moving the pointer over the
+survey, clicking, tapping, or pressing a key — and once cancelled it does not restart. A respondent who does
+anything at all keeps the survey. The respondent most likely to lose it is one who is reading or listening
+before touching anything, which includes screen reader users.
+
+Once past the first screen there is no time limit on answering.
+
+**Workaround:** Leave **Auto close** off, which is the default. If you need it, set it generously — long enough
+that a respondent reading at their own pace is not cut off.
 
 ### Page Titles and Survey Instructions
 
@@ -157,17 +197,26 @@ the correct language, so they do not need to use the switcher. See
 
 ### Semantic Headings
 
-**Affected criterion:** 2.4.6 — **Fixed, not yet released**
+**Affected criterion:** 2.4.6 — **Fixed for link surveys, not yet released. Still open for website and in-app
+surveys.**
 
 As assessed, the survey UI used no semantic heading elements, so a respondent using a screen reader could not
 navigate the survey by heading and question headlines were not exposed as headings.
 
-The survey now has a heading structure: the survey name is its single top-level heading, and card headlines —
-the welcome card, each question prompt, and the ending — are second-level headings beneath it. A respondent can
-navigate the survey by heading and knows what they are answering.
+Card headlines — the welcome card, each question prompt, and the ending — are now second-level headings on
+every survey, so a respondent can navigate between them by heading.
 
-**Workaround for released versions:** Keeping surveys short and putting one question on each screen reduces the
-amount of navigation a respondent has to do.
+The survey name sits above them as the survey's single top-level heading, but **only on a link survey**. A
+website or in-app survey is delivered by the JavaScript widget, which loads the survey from an endpoint that
+deliberately withholds survey names, so that a survey's name is not readable by anyone who can reach that
+endpoint. The widget has no name to use, so those surveys carry the second-level card headings with no
+top-level heading above them. A respondent can still move between prompts by heading; what they do not get is
+a heading naming the survey they are answering.
+
+**Workaround for released versions, and for website and in-app surveys:** Keeping surveys short and putting one
+question on each screen reduces the amount of navigation a respondent has to do. Repeating the survey's purpose
+in the first question's headline gives a respondent the context that the missing top-level heading would
+otherwise carry.
 
 ### Language of Parts
 
@@ -256,7 +305,8 @@ not.
 
 **Do not put information only in an image.** Formbricks does not currently offer a field for image alt text, so
 an image cannot carry information on its own. Treat images as illustration and put anything a respondent needs
-in order to answer into the headline or the description.
+in order to answer into the headline or the description. See
+[Image Text Alternatives](#image-text-alternatives) above.
 
 **Do not convey meaning with colour alone.** If a rating scale, an option, or an instruction depends on a
 respondent seeing red versus green, add a label, a number, or a word that carries the same meaning.
