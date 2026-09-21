@@ -24,8 +24,13 @@ name: Linear Release Cut
 #
 # RUNBOOK.
 #   - The "Code Freeze" stage must exist on the pipeline with lifecycle type "started" AND the
-#     freeze toggle on. A started type keeps `complete --version` able to find the release; the
-#     toggle is what makes the unversioned main sync skip it. Neither can be set from CI.
+#     freeze toggle on. Linear offers the freeze toggle only on started stages, so the type is
+#     what makes freezing possible at all; the toggle is what makes the unversioned main sync
+#     skip the release. Neither can be set from CI.
+#
+#     Both matter because a cut leaves two started releases - x.y.0 in Code Freeze and
+#     x.(y+1).0 in Progress. The toggle is the only thing that tells an unversioned sync which
+#     of the two to land on.
 #   - Major bump: the next train is derived as x.(y+1).0, so cutting release/5.5 before 6.0
 #     creates 5.6.0. Edit that release's version to 6.0.0 in Linear, or dispatch `sync` then
 #     `update --stage "In Progress"` with the right version and cancel the derived one.
