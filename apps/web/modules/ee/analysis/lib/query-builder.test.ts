@@ -3,14 +3,16 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 import {
   type ChartBuilderState,
   type FilterNode,
-  addFilterNode,
   buildCubeQuery,
+  duplicateFilterNode,
   hasIncompleteFilterRow,
+  insertFilterNodeAfter,
   isFilterGroup,
   parseQueryToState,
   removeFilterNode,
-  updateFilterGroupLogic,
+  toggleFilterGroupLogic,
   updateFilterRow,
+  wrapFilterNodeInGroup,
 } from "./query-builder";
 
 const baseState: ChartBuilderState = {
@@ -534,12 +536,13 @@ describe("query-builder", () => {
       children: [{ id: "b", field: "FeedbackRecords.sourceName", operator: "equals", values: ["PAF_Pre"] }],
     };
 
-    test("adds a condition inside the addressed group", () => {
-      const next = addFilterNode(
-        [conditionA, group],
-        { id: "c", field: "FeedbackRecords.sourceName", operator: "equals", values: ["PAF_After"] },
-        "g1"
-      );
+    test("inserts a condition right below the addressed one, inside its group", () => {
+      const next = insertFilterNodeAfter([conditionA, group], "b", {
+        id: "c",
+        field: "FeedbackRecords.sourceName",
+        operator: "equals",
+        values: ["PAF_After"],
+      });
 
       const target = next[1];
       if (!isFilterGroup(target)) throw new Error("expected a group node");
@@ -547,9 +550,41 @@ describe("query-builder", () => {
       expect(next).toHaveLength(2);
     });
 
-    test("adds to the top level when no group is addressed", () => {
-      const next = addFilterNode([conditionA], { id: "z", field: "x", operator: "set", values: null });
-      expect(next.map((node) => node.id)).toEqual(["a", "z"]);
+    test("inserts below a top-level condition, before the group that follows it", () => {
+      const next = insertFilterNodeAfter([conditionA, group], "a", {
+        id: "z",
+        field: "x",
+        operator: "set",
+        values: null,
+      });
+      expect(next.map((node) => node.id)).toEqual(["a", "z", "g1"]);
+    });
+
+    test("duplicates a nested condition below itself with a fresh id", () => {
+      const next = duplicateFilterNode([conditionA, group], "b");
+      const target = next[1];
+      if (!isFilterGroup(target)) throw new Error("expected a group node");
+      expect(target.children).toHaveLength(2);
+      expect(target.children[1]).toMatchObject({ field: "FeedbackRecords.sourceName", values: ["PAF_Pre"] });
+      expect(target.children[1].id).not.toBe("b");
+    });
+
+    test("wraps a condition in a group that flips the surrounding logic", () => {
+      const next = wrapFilterNodeInGroup([conditionA, group], "a", "and");
+      const wrapped = next[0];
+      if (!isFilterGroup(wrapped)) throw new Error("expected a group node");
+      expect(wrapped.logic).toBe("or");
+      expect(wrapped.children).toEqual([conditionA]);
+      expect(next[1]).toEqual(group);
+    });
+
+    test("wraps a nested condition against its own group's logic, not the top level's", () => {
+      const next = wrapFilterNodeInGroup([conditionA, group], "b", "and");
+      const outer = next[1];
+      if (!isFilterGroup(outer)) throw new Error("expected a group node");
+      const inner = outer.children[0];
+      if (!isFilterGroup(inner)) throw new Error("expected a nested group node");
+      expect(inner.logic).toBe("and");
     });
 
     test("updates a condition nested in a group and clears values for valueless operators", () => {
@@ -559,11 +594,12 @@ describe("query-builder", () => {
       expect(target.children[0]).toMatchObject({ operator: "notSet", values: null });
     });
 
-    test("changes the logic of a group without touching the top-level logic", () => {
-      const next = updateFilterGroupLogic([conditionA, group], "g1", "and");
+    test("flips the logic of a group without touching its siblings", () => {
+      const next = toggleFilterGroupLogic([conditionA, group], "g1");
       const target = next[1];
       if (!isFilterGroup(target)) throw new Error("expected a group node");
       expect(target.logic).toBe("and");
+      expect(next[0]).toBe(conditionA);
     });
 
     test("drops a group left empty by removing its last condition", () => {

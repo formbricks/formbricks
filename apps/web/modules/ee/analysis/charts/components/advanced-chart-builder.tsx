@@ -10,6 +10,7 @@ import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time
 import { useChartQuery } from "@/modules/ee/analysis/charts/hooks/use-chart-query";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { supportsTimeGrouping } from "@/modules/ee/analysis/charts/lib/chart-display";
+import { createDefaultFilterRow } from "@/modules/ee/analysis/charts/lib/filter-conditions";
 import {
   type ChartBuilderState,
   type FilterNode,
@@ -18,7 +19,6 @@ import {
   hasIncompleteFilterRow,
   parseQueryToState,
 } from "@/modules/ee/analysis/lib/query-builder";
-import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
 import type { AnalyticsResponse, TChartType } from "@/modules/ee/analysis/types/analysis";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 
@@ -216,18 +216,7 @@ export function AdvancedChartBuilder({
           if (filtersOpen) {
             dispatch({ type: ACTION.SET_FILTERS, payload: [] });
           } else if (state.filters.length === 0) {
-            const firstField = FEEDBACK_FIELDS.dimensions[0] ?? FEEDBACK_FIELDS.measures[0];
-            dispatch({
-              type: ACTION.SET_FILTERS,
-              payload: [
-                {
-                  id: crypto.randomUUID(),
-                  field: firstField?.id ?? "",
-                  operator: "equals" as const,
-                  values: null,
-                },
-              ],
-            });
+            dispatch({ type: ACTION.SET_FILTERS, payload: [createDefaultFilterRow()] });
           }
         }}
         htmlId="chart-filters-toggle"
@@ -237,7 +226,6 @@ export function AdvancedChartBuilder({
         childrenContainerClass="flex-col gap-3 p-4"
         childBorder>
         <FiltersPanel
-          hideTitle
           workspaceId={workspaceId}
           feedbackDirectoryId={feedbackDirectoryId}
           filters={state.filters}

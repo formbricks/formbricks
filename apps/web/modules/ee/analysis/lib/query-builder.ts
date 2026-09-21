@@ -227,18 +227,62 @@ function parseFilters(filters: TCubeFilter[]): {
   };
 }
 
-/** Appends `node` to the top level, or inside the group with `parentId` when one is given. */
-export function addFilterNode(nodes: FilterNode[], node: FilterNode, parentId?: string | null): FilterNode[] {
-  if (!parentId) {
-    return [...nodes, node];
+/** Inserts `node` right after the node with `afterId`, at whatever depth that node sits. */
+export function insertFilterNodeAfter(nodes: FilterNode[], afterId: string, node: FilterNode): FilterNode[] {
+  const next: FilterNode[] = [];
+
+  for (const current of nodes) {
+    next.push(
+      isFilterGroup(current)
+        ? { ...current, children: insertFilterNodeAfter(current.children, afterId, node) }
+        : current
+    );
+    if (current.id === afterId) next.push(node);
   }
 
-  return nodes.map((current) => {
-    if (!isFilterGroup(current)) return current;
-    if (current.id === parentId) {
-      return { ...current, children: [...current.children, node] };
+  return next;
+}
+
+const cloneWithNewIds = (node: FilterNode): FilterNode =>
+  isFilterGroup(node)
+    ? { ...node, id: crypto.randomUUID(), children: node.children.map(cloneWithNewIds) }
+    : { ...node, id: crypto.randomUUID() };
+
+/** Inserts a copy of the node with `id` right after it, with fresh ids throughout the copy. */
+export function duplicateFilterNode(nodes: FilterNode[], id: string): FilterNode[] {
+  const next: FilterNode[] = [];
+
+  for (const node of nodes) {
+    next.push(isFilterGroup(node) ? { ...node, children: duplicateFilterNode(node.children, id) } : node);
+    if (node.id === id) next.push(cloneWithNewIds(node));
+  }
+
+  return next;
+}
+
+/**
+ * Wraps the node with `id` in a new group, in place. The group opens with the opposite of its
+ * parent's logic: a group that repeats the surrounding AND/OR changes nothing, and the one thing a
+ * group is for is `A AND (B OR C)`.
+ */
+export function wrapFilterNodeInGroup(
+  nodes: FilterNode[],
+  id: string,
+  parentLogic: "and" | "or"
+): FilterNode[] {
+  return nodes.map((node) => {
+    if (node.id === id) {
+      const group: FilterGroup = {
+        id: crypto.randomUUID(),
+        logic: parentLogic === "and" ? "or" : "and",
+        children: [node],
+      };
+      return group;
     }
-    return { ...current, children: addFilterNode(current.children, node, parentId) };
+    if (isFilterGroup(node)) {
+      return { ...node, children: wrapFilterNodeInGroup(node.children, id, node.logic) };
+    }
+    return node;
   });
 }
 
@@ -277,11 +321,12 @@ export function updateFilterRow(nodes: FilterNode[], id: string, updates: Partia
   });
 }
 
-export function updateFilterGroupLogic(nodes: FilterNode[], id: string, logic: "and" | "or"): FilterNode[] {
+/** Flips the AND/OR of the group with `id`. */
+export function toggleFilterGroupLogic(nodes: FilterNode[], id: string): FilterNode[] {
   return nodes.map((node) => {
     if (!isFilterGroup(node)) return node;
-    if (node.id === id) return { ...node, logic };
-    return { ...node, children: updateFilterGroupLogic(node.children, id, logic) };
+    if (node.id === id) return { ...node, logic: node.logic === "and" ? "or" : "and" };
+    return { ...node, children: toggleFilterGroupLogic(node.children, id) };
   });
 }
 
