@@ -119,11 +119,12 @@ describe("shipped bundles", () => {
 });
 
 describe("loadLanguage", () => {
-  const baseUrl = "https://app.formbricks.com/js/locales";
+  const appUrl = "https://app.formbricks.com";
+  const baseUrl = `${appUrl}/js/locales`;
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    setLocaleBaseUrl(baseUrl);
+    setLocaleBaseUrl(appUrl);
     fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ common: { next: "x" } }) });
     vi.stubGlobal("fetch", fetchMock);
   });
@@ -178,11 +179,19 @@ describe("loadLanguage", () => {
     expect(i18n.getFixedT("pl-PL")("common.required")).toBe(i18n.getFixedT("en-US")("common.required"));
   });
 
-  test("nothing is requested before the host app has said where the bundles live", async () => {
-    setLocaleBaseUrl("");
+  // The SDK and the link survey pass an absolute appUrl, which is what lets a mobile WebView — whose
+  // null base URL cannot resolve a root-relative path — reach the bundles at all.
+  test("the bundles are addressed under the deployment's own appUrl", async () => {
     await loadLanguage("pl-PL");
-    expect(fetchMock).not.toHaveBeenCalled();
-    setLocaleBaseUrl(baseUrl);
+    expect(requestedUrls()[0].startsWith(`${appUrl}/js/locales/`)).toBe(true);
+  });
+
+  // The preview and editor render on the app's own origin and pass no appUrl, so a relative path is
+  // both correct and all they can use.
+  test("without an appUrl the path stays relative to the app's own origin", async () => {
+    setLocaleBaseUrl(undefined);
+    await loadLanguage("pl-PL");
+    expect(requestedUrls()[0].startsWith("/js/locales/pl-PL.json?v=")).toBe(true);
   });
 });
 

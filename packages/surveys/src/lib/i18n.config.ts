@@ -54,8 +54,13 @@ i18n
  */
 let localeBaseUrl = "";
 
-export const setLocaleBaseUrl = (url: string): void => {
-  localeBaseUrl = url;
+/**
+ * Point the loader at a deployment, from the `appUrl` the host app renders with. Both production
+ * callers pass one (the SDK from its config, the link survey from the public domain); the preview and
+ * editor do not, and fall back to a path relative to the app's own origin, which is where they render.
+ */
+export const setLocaleBaseUrl = (appUrl: string | undefined): void => {
+  localeBaseUrl = `${appUrl ?? ""}/js/locales`;
 };
 
 /**

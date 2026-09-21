@@ -48,9 +48,11 @@ const localesDir = resolve(__dirname, "locales");
  */
 const computeLocalesHash = (): string => {
   const hash = createHash("sha256");
-  for (const file of readdirSync(localesDir)
-    .filter((name) => name.endsWith(".json"))
-    .sort()) {
+  const files = readdirSync(localesDir).filter((name) => name.endsWith(".json"));
+  // Code-unit order rather than `localeCompare`: this feeds a content hash, and a locale-sensitive
+  // collation would let identical locale files hash differently on another machine's ICU data.
+  files.sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
+  for (const file of files) {
     hash.update(file);
     hash.update(readFileSync(resolve(localesDir, file)));
   }

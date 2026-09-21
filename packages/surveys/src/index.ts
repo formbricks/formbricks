@@ -22,11 +22,8 @@ export const renderSurvey = (props: SurveyContainerProps) => {
 
   const { mode, containerId, languageCode, appUrl } = props;
 
-  // Where the on-demand locale bundles live, beside the renderer itself. Both production callers pass
-  // `appUrl` (the SDK from its config, the link survey from the public domain), which is what makes the
-  // URL absolute for mobile WebViews, whose null base URL cannot resolve a root-relative path. The
-  // preview and editor render on the app's own origin, where the relative path is correct.
-  setLocaleBaseUrl(`${appUrl ?? ""}/js/locales`);
+  // Where the on-demand locale bundles live, beside the renderer itself.
+  setLocaleBaseUrl(appUrl);
 
   addStylesToDom();
   addCustomThemeToDom({ styling: props.styling });
