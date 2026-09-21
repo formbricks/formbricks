@@ -41,6 +41,19 @@ const __dirname = dirname(__filename);
 const localesDir = resolve(__dirname, "locales");
 
 /**
+ * Code-unit order, deliberately not `localeCompare`.
+ *
+ * This orders the input to a content hash, and `localeCompare` resolves its collation from the host's
+ * locale and ICU data — so the same locale files could hash differently on another machine and bust the
+ * CDN cache for no reason. Mirrors the helpers of the same name under `apps/web`, which a build config
+ * in another workspace cannot import.
+ */
+const byCodeUnit = (left: string, right: string): number => {
+  if (left === right) return 0;
+  return left < right ? -1 : 1;
+};
+
+/**
  * Content hash of every shipped locale, injected as `__FB_LOCALES_HASH__` and appended to each
  * on-demand locale fetch as `?v=`. `/js/*` is served with a 30-day `s-maxage`, so without a token that
  * moves with the strings a fresh bundle could be handed a month-old bundle of them; with one, the URL
@@ -49,9 +62,7 @@ const localesDir = resolve(__dirname, "locales");
 const computeLocalesHash = (): string => {
   const hash = createHash("sha256");
   const files = readdirSync(localesDir).filter((name) => name.endsWith(".json"));
-  // Code-unit order rather than `localeCompare`: this feeds a content hash, and a locale-sensitive
-  // collation would let identical locale files hash differently on another machine's ICU data.
-  files.sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
+  files.sort(byCodeUnit);
   for (const file of files) {
     hash.update(file);
     hash.update(readFileSync(resolve(localesDir, file)));
