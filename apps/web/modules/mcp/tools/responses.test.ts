@@ -333,6 +333,22 @@ describe("delete confirmation", () => {
     expect(result.requestState).toEqual(expect.any(String));
   });
 
+  /**
+   * The mint side and the verify side, connected — the one thing the rest of this block cannot do,
+   * because every other confirmation test hand-supplies `requestState()` and so never runs
+   * `askToConfirm`. Without this, minting the wrong payload passes every test here while refusing
+   * every real confirmation forever: the retry compares the sealed `resourceId` against the
+   * arguments, so a state minted for anything else can never match.
+   */
+  test("the state a first call mints is the state a retry will accept", async () => {
+    const result = await call("delete_response", { responseId: RESPONSE_ID });
+
+    await expect(mcpRequestStateCodec.verify(result.requestState as string, callContext())).resolves.toEqual({
+      tool: "delete_response",
+      resourceId: RESPONSE_ID,
+    });
+  });
+
   test("an in-band confirmation deletes without asking", async () => {
     const result = await call("delete_response", { responseId: RESPONSE_ID, confirm: true });
 

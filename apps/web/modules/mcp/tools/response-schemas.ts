@@ -116,7 +116,15 @@ export const ZMcpBatchDeleteResponsesInput = z
       .array(ZId)
       .min(1)
       .max(100)
-      .describe("Responses to delete, at most 100. Deleted in one transaction: all or none."),
+      // The uniqueness rule is `ZV3BatchDeleteResponsesBody`'s, and it has to be restated here
+      // because this tool calls `batchDeleteV3Responses` directly rather than through the route that
+      // parses that body. Without it a repeated id answers `deleted: 2` for a three-id request — the
+      // unreconcilable count that schema's own comment says the rule exists to prevent — and the
+      // confirmation prompt names the array length rather than the number of rows.
+      .refine((ids) => new Set(ids).size === ids.length, { message: "Response ids must be unique" })
+      .describe(
+        "Responses to delete, at most 100 and each id at most once. Deleted in one transaction: all or none."
+      ),
     confirm: confirmArgument,
   })
   .strict();
