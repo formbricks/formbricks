@@ -4030,7 +4030,7 @@ checksums:
     workspace/unify/default_source_name_formbricks: 9088b01e1085b1cf42412597ebeea051
     workspace/unify/delete_feedback_record: 86d7262c000cfb1f91ea373036cd3616
     workspace/unify/delete_feedback_record_confirmation: 389f5a27a76d825d8751cc8fa20589ea
-    workspace/unify/delete_feedback_records_confirmation: 9867caf985bfd77e4df9be2164298dd5
+    workspace/unify/delete_feedback_records_confirmation: 9fad14c0047470bd5db8bc7717c54aa6
     workspace/unify/delete_source_confirmation: 43b048de6338be1757ade6bf5029b010
     workspace/unify/dismiss: c2f298165cbfc17041b795065bfeb57c
     workspace/unify/download_sample_csv: 76975598e61d4eaeb04fc14da8b0a837
@@ -4060,7 +4060,8 @@ checksums:
     workspace/unify/feedback_record_details_description: 0b6f908154161241ce6bdeb4a2acaecd
     workspace/unify/feedback_record_mcp: 8d9aeea97bbb0ad4c4adbf508057f284
     workspace/unify/feedback_records: e24cf48bb6985910f4ffe5e00512d388
-    workspace/unify/feedback_records_deleted_successfully: 176c27a362d593a62355904c50bb0e9e
+    workspace/unify/feedback_records_count_selected: cfa91b58600f61b7fa822aa526dbf91d
+    workspace/unify/feedback_records_deleted_successfully: ee4adb6e4f6239fe3358ee917ed08898
     workspace/unify/feedback_records_partially_deleted: dff8cd8482e8053ce4186e6b42d0aee8
     workspace/unify/feedback_records_refreshed: 4b27a8e2a8dbe8afa945d9f874aa7ef1
     workspace/unify/feedback_sources: e58ec9be19db8789e7096a756d24f2b2
@@ -4136,7 +4137,7 @@ checksums:
     workspace/unify/sentiment: 9ba5719c80c0136c2d0644217619aff6
     workspace/unify/set_value: b8a86f8da957ebd599ece4b1b1936a78
     workspace/unify/setup_connection: 2b15b163e60a2112904d8fa505206a22
-    workspace/unify/showing_count_loaded: f443aae08223b65fbd5521d6e69534a4
+    workspace/unify/showing_count_loaded: efb18bdf77b3fbfa824c734dfcbd8695
     workspace/unify/showing_rows: e851514ed6c4d2e453d0098af2d773bd
     workspace/unify/source: 45309626f464f4bda161ee783a4c8c80
     workspace/unify/source_connect_csv_description: 8db7e23acbfa89920694d61ac9585b44
