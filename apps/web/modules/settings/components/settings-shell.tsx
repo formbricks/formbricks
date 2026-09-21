@@ -69,6 +69,7 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
               organizationWorkspacesLimit={data.organizationWorkspacesLimit}
               isFormbricksCloud={data.isFormbricksCloud}
               isLicenseActive={active}
+              isNoLicense={status === "no-license"}
               isOwnerOrManager={data.isOwnerOrManager}
               isAccessControlAllowed={data.isAccessControlAllowed}
               membershipRole={data.membershipRole}

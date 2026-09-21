@@ -29,6 +29,7 @@ interface WorkspaceBreadcrumbProps {
   organizationWorkspacesLimit: number;
   isFormbricksCloud: boolean;
   isLicenseActive: boolean;
+  isNoLicense: boolean;
   currentOrganizationId: string;
   isAccessControlAllowed: boolean;
   isEnvironmentBreadcrumbVisible: boolean;
@@ -42,6 +43,7 @@ export const WorkspaceBreadcrumb = ({
   organizationWorkspacesLimit,
   isFormbricksCloud,
   isLicenseActive,
+  isNoLicense,
   currentOrganizationId,
   isAccessControlAllowed,
   isEnvironmentBreadcrumbVisible,
@@ -193,7 +195,7 @@ export const WorkspaceBreadcrumb = ({
           setOpen={setOpenLimitModal}
           buttons={getLimitModalButtons()}
           workspaceLimit={organizationWorkspacesLimit}
-          showLiteLicenseTip={!isFormbricksCloud && !isLicenseActive}
+          showLiteLicenseTip={!isFormbricksCloud && isNoLicense}
         />
       )}
       {openCreateWorkspaceModal && (
