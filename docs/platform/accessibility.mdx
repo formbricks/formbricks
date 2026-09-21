@@ -94,18 +94,18 @@ that criterion as supported, and a later review of the code found otherwise.
 
 **Affected criterion:** 1.1.1 — **Not in the 9 August 2026 report**
 
-Formbricks lets a survey creator add an image to a question or to an ending card, and lets them build a
-Picture Selection question out of images. It offers no field for a text alternative for any of them. A
-respondent using a screen reader is told that an image is present and nothing about what it shows, and the
-options in a Picture Selection question cannot be told apart at all — they are identified by an internal id
-rather than by what they depict.
+Formbricks lets a survey creator add an image to a question or to an ending card, and offers no field for a
+text alternative for it. Those images are announced only as an image, with nothing about what they show, and a
+survey creator has no way to change that.
 
-The welcome card is the exception: its logo and its video both carry a real text alternative.
+Two places do better. The welcome card's logo and video both carry a real text alternative. And the image
+options in a Picture Selection question derive theirs from the uploaded file's name — `team-photo-2026.png` is
+announced as "team photo 2026" — falling back to a numbered label where the file name leaves nothing readable.
 
-**Workaround:** Treat images as illustration. Put anything a respondent needs in order to answer into the
-question headline or the description, both of which are always read out. For a Picture Selection question,
-make sure the choice is also expressed in text — a respondent who cannot see the images has no other way to
-distinguish the options, so a picture-only question is unanswerable for them.
+**Workaround:** Treat question and ending images as illustration. Put anything a respondent needs in order to
+answer into the headline or the description, both of which are always read out. For a Picture Selection
+question, name the files the way you would write alt text before you upload them, and make sure the choice is
+also expressed in text wherever the image carries the meaning.
 
 ### Embedded Third-Party Video
 
@@ -305,7 +305,8 @@ not.
 
 **Do not put information only in an image.** Formbricks does not currently offer a field for image alt text, so
 an image cannot carry information on its own. Treat images as illustration and put anything a respondent needs
-in order to answer into the headline or the description. See
+in order to answer into the headline or the description. In a Picture Selection question the file name becomes
+the text alternative, so name the files descriptively before uploading them. See
 [Image Text Alternatives](#image-text-alternatives) above.
 
 **Do not convey meaning with colour alone.** If a rating scale, an option, or an instruction depends on a
