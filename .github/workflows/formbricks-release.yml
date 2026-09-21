@@ -116,6 +116,7 @@ jobs:
     needs:
       - docker-build-community
     with:
+      APP_VERSION: ${{ needs.docker-build-community.outputs.VERSION }}
       VERSION: ${{ needs.docker-build-community.outputs.VERSION }}
 
   verify-cloud-build:

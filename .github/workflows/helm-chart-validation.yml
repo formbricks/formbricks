@@ -69,6 +69,7 @@ jobs:
           bash charts/formbricks/tests/postgresql-overrides.sh
           bash charts/formbricks/tests/authzed-operations.sh
           bash charts/formbricks/tests/envoy-gateway.sh
+          bash charts/formbricks/tests/pdb-selectors.sh
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

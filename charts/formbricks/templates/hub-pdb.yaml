@@ -40,6 +40,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "formbricks.hubname" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: hub
 {{- end }}
 {{- if and .Values.hub.enabled .Values.hub.worker.enabled .Values.hub.worker.pdb.enabled }}
 {{- $hasMinAvailable := not (kindIs "invalid" .Values.hub.worker.pdb.minAvailable) -}}
@@ -83,6 +84,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "formbricks.hubWorkerName" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: hub-worker
 {{- end }}
 {{- if and .Values.hub.enabled .Values.hub.embeddings.enabled .Values.hub.embeddings.pdb.enabled }}
 {{- $hasMinAvailable := not (kindIs "invalid" .Values.hub.embeddings.pdb.minAvailable) -}}
@@ -126,6 +128,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: hub-embeddings
 {{- end }}
 {{- if and .Values.taxonomy.enabled .Values.taxonomy.pdb.enabled }}
 {{- $hasMinAvailable := not (kindIs "invalid" .Values.taxonomy.pdb.minAvailable) -}}
@@ -169,4 +172,5 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "formbricks.taxonomyName" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: taxonomy
 {{- end }}
