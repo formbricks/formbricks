@@ -96,6 +96,19 @@ vi.mock("@formbricks/database", () => ({
     organization: {
       findFirst: vi.fn(),
     },
+    // Added for the Embedded Data reconcile the copy runs (ENG-1978)
+    embeddedData: {
+      create: vi.fn(),
+      update: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    surveyEmbeddedData: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -126,6 +139,21 @@ const resetMocks = () => {
   vi.mocked(prisma.actionClass.findMany).mockReset();
   vi.mocked(getQuotas).mockReset();
   vi.mocked(logger.error).mockClear();
+
+  // copySurveyToOtherWorkspace wraps its writes in a transaction (ENG-1978) so the survey and its
+  // Embedded Data rows land together. Reset first like every mock above — otherwise the call history
+  // these tests assert on accumulates across tests — then run the callback against the same mocked
+  // client, and start the copy with no existing links so the reconcile is a no-op unless a test says
+  // otherwise.
+  vi.mocked(prisma.$transaction).mockReset();
+  vi.mocked(prisma.surveyEmbeddedData.findMany).mockReset();
+  vi.mocked(prisma.surveyEmbeddedData.create).mockReset();
+  vi.mocked(prisma.embeddedData.create).mockReset();
+
+  vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
+  vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
+  vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
+  vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
 };
 
 const makePrismaKnownError = () =>
@@ -236,6 +264,10 @@ describe("copySurveyToOtherWorkspace", () => {
   const mockNewSurveyResult = {
     id: "new_cuid2_id",
     workspaceId: targetWorkspaceId,
+    // The copy carries the source survey's Embedded Data, which the reconcile re-creates for the new
+    // survey (ENG-1978).
+    variables: [{ id: "var_cuid", name: "score", type: "number", value: 0 }],
+    hiddenFields: { enabled: true, fieldIds: ["plan"] },
     segment: null,
     triggers: [
       { actionClass: { id: "new_ac1", name: "Code Action", workspaceId: targetWorkspaceId } },
@@ -312,6 +344,36 @@ describe("copySurveyToOtherWorkspace", () => {
       })
     );
     expect(checkForInvalidMediaInBlocks).toHaveBeenCalledWith(mockExistingSurveyDetails.blocks);
+  });
+
+  test("defines the copied survey's embedded data in the TARGET workspace, not the source", async () => {
+    // The function's `workspaceId` argument is the source. Reading it instead of the created
+    // survey's own workspace would define the fields in the wrong tenant — which the composite
+    // foreign keys then reject, leaving the copy with no fields at all.
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+    const workspaces = vi
+      .mocked(prisma.embeddedData.create)
+      .mock.calls.map(([args]) => (args as { data: { workspaceId: string } }).data.workspaceId);
+
+    expect(workspaces).toHaveLength(2);
+    expect(new Set(workspaces)).toEqual(new Set([targetWorkspaceId]));
+  });
+
+  test("re-creates the copied survey's variables and hidden fields under their original keys", async () => {
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+    const links = vi
+      .mocked(prisma.surveyEmbeddedData.create)
+      .mock.calls.map(([args]) => (args as { data: { storageKey: string; order: number } }).data);
+
+    // A variable keeps its cuid and a hidden field its name, so the copy's recall tokens — cloned
+    // verbatim from the source — still resolve. The positions come across too, so the copy exports
+    // its columns in the same order as the survey it was made from.
+    expect(links.map(({ storageKey, order }) => [storageKey, order])).toEqual([
+      ["var_cuid", 0],
+      ["plan", 1],
+    ]);
   });
 
   test("should copy survey to the same workspace successfully", async () => {

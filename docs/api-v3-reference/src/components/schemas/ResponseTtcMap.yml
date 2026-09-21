@@ -1,0 +1,31 @@
+type: object
+description: >
+  Per-element time-to-complete, keyed by element id, in **milliseconds**. Accepted on create so that
+  a caller replaying a real submission can carry its timing; reads report the same information as
+  `durationSeconds` in seconds, on each answer and summed at the top level.
+
+
+  This is client-reported telemetry, not a measurement the server can vouch for, so each value is
+  clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value
+  should never cost you the response. Any finite *value* is therefore accepted, and none is declared
+  out of range.
+
+
+  The number of **entries** is capped at 500, matching `data`: a response holds one timing per
+  element, so anything beyond that is not telemetry the server can use. A map with more entries is
+  **rejected** — `maxProperties` below is enforced during request validation, so the whole write
+  fails rather than the excess being trimmed or stored.
+
+
+  **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and
+  writes its own when the response is finished, by summing the element entries. Sending one therefore
+  changes nothing rather than skewing the stored total, and `durationSeconds` on the read is computed
+  from the element entries regardless.
+
+
+  **An omitted map is not the same as an empty one.** Omitting `ttc` stores no timings at all and the
+  response reports no `durationSeconds`; sending `{}` on a finished response stores a `_total` of
+  zero, which reads as "completed instantly".
+maxProperties: 500
+additionalProperties:
+  type: number

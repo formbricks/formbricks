@@ -30,6 +30,7 @@ export const getClientIdentifier = async (): Promise<string> => {
  *
  * @param config - Rate limit configuration
  * @param identifier - Unique identifier for rate limiting (IP hash, user ID, API key, etc.)
+ * @param requested - Number of units to consume atomically; defaults to one
  * @throws {Error} When rate limit is exceeded or rate limiting system fails
  */
 const throwIfRateLimitExceeded = (result: Awaited<ReturnType<typeof checkRateLimit>>): TRateLimitResponse => {
@@ -57,9 +58,13 @@ export const assertRateLimitAvailable = async (
 
 export const applyRateLimit = async (
   config: TRateLimitConfig,
-  identifier: string
+  identifier: string,
+  requested?: number
 ): Promise<TRateLimitResponse> => {
-  const result = await checkRateLimit(config, identifier);
+  const result =
+    requested === undefined
+      ? await checkRateLimit(config, identifier)
+      : await checkRateLimit(config, identifier, requested);
   return throwIfRateLimitExceeded(result);
 };
 

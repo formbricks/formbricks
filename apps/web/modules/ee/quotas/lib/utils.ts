@@ -16,6 +16,10 @@ import { validateInputs } from "@/lib/utils/validate";
  * @param variablesData - Variables data for evaluation
  * @param quotas - Active quota definitions for the survey
  * @param selectedLanguage - Language for evaluation context
+ * @param embeddedValues - Reserved-field values (ENG-1840), built by `buildServerEmbeddedValues` from
+ *   the persisted response so a quota condition on `country` or `finished` resolves. Defaults to `{}`,
+ *   under which every `reserved` operand reads as unset — the same as an absent hidden field, so a
+ *   caller that cannot supply a response degrades rather than throwing.
  * @returns Object with passed and failed quotas
  */
 export const evaluateQuotas = (
@@ -23,7 +27,8 @@ export const evaluateQuotas = (
   responseData: TResponseData,
   variablesData: TResponseVariables,
   quotas: TSurveyQuota[],
-  selectedLanguage: string = "default"
+  selectedLanguage: string = "default",
+  embeddedValues: TResponseData = {}
 ): { passedQuotas: TSurveyQuota[]; failedQuotas: TSurveyQuota[] } => {
   const passedQuotas: TSurveyQuota[] = [];
   const failedQuotas: TSurveyQuota[] = [];
@@ -34,7 +39,14 @@ export const evaluateQuotas = (
       ...quota.logic,
     };
 
-    const conditionsMatch = evaluateLogic(survey, responseData, variablesData, conditions, selectedLanguage);
+    const conditionsMatch = evaluateLogic(
+      survey,
+      responseData,
+      variablesData,
+      conditions,
+      selectedLanguage,
+      embeddedValues
+    );
 
     if (conditionsMatch) {
       passedQuotas.push(quota);

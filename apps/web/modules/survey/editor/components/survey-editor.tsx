@@ -97,9 +97,17 @@ export const SurveyEditor = ({
 
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
+  // `localSurvey` must stay a structural clone of `survey`: the menu bar compares the two with
+  // `isDeepEqual` to gate the draft auto-save, the back-navigation dialog and the beforeunload
+  // prompt, and that comparison short-circuits on differing key counts. ENG-1837 therefore does NOT
+  // strip the inlined `embeddedFields` here — editor surfaces read their definitions through
+  // `getDeclaredEmbeddedFields` instead, which ignores the rows and derives from the cards.
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
+  // Set when a save or publish is blocked by a missing trigger, so the Survey Trigger card can say
+  // so (ENG-2581). The card itself stops showing the error once the survey has a trigger.
+  const [hasTriggerError, setHasTriggerError] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
 
@@ -146,6 +154,8 @@ export const SurveyEditor = ({
   // `[localSurvey?.type]` effect below already picks the first element whenever `localSurvey`
   // appears.
   useEffect(() => {
+    // Must stay identical to the `useState` initializer above: the working copy is compared
+    // against `survey` key-for-key by the menu bar, so any reshaping has to apply to both or neither.
     setLocalSurvey((current) => current ?? structuredClone(survey));
   }, [survey]);
 
@@ -200,6 +210,7 @@ export const SurveyEditor = ({
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidElements={setInvalidElements}
+        setHasTriggerError={setHasTriggerError}
         workspace={localWorkspace}
         responseCount={responseCount}
         finishedResponseCount={finishedResponseCount}
@@ -290,6 +301,7 @@ export const SurveyEditor = ({
               locale={locale}
               appSetupCompleted={localWorkspace.appSetupCompleted}
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
+              hasTriggerError={hasTriggerError}
             />
           )}
 

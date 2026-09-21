@@ -20,6 +20,11 @@
       "import": "./dist/canonical.js",
       "require": "./dist/canonical.cjs"
     },
+    "./survey-runtime-languages": {
+      "types": "./dist/survey-runtime-languages.d.ts",
+      "import": "./dist/survey-runtime-languages.js",
+      "require": "./dist/survey-runtime-languages.cjs"
+    },
     "./utils": {
       "types": "./dist/utils.d.ts",
       "import": "./dist/utils.js",

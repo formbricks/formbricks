@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 import { SENTIMENT_VALUE_ORDER } from "@/modules/ee/analysis/lib/schema-definition";
 import {
+  AXIS_LABEL_GAP,
+  AXIS_LABEL_LINE_HEIGHT,
+  CATEGORY_AXIS_LABEL_LINES,
   CATEGORY_AXIS_MAX_WIDTH,
   CATEGORY_AXIS_MIN_WIDTH,
   CHART_BRAND_DARK,
@@ -18,6 +21,8 @@ import {
   formatPercentShare,
   formatXAxisTick,
   getCategoryAxisWidth,
+  getCategoryLabelBoxHeight,
+  getCategoryLabelLineClamp,
   getSemanticDimensionColor,
   getSentimentMeasureColor,
   getValueLabelPadding,
@@ -25,6 +30,7 @@ import {
   prepareMeasureSliceData,
   preparePieData,
   resolveChartType,
+  truncateLabelToBox,
 } from "./chart-utils";
 
 describe("chart-utils", () => {
@@ -441,6 +447,82 @@ describe("flipped bar axis sizing", () => {
 
   test("caps the value gutter so a huge number cannot eat the plot", () => {
     expect(getValueLabelPadding(["123,456,789,012,345"])).toBe(VALUE_LABEL_MAX_PADDING);
+  });
+});
+
+describe("category label truncation", () => {
+  // The gutter caps at CATEGORY_AXIS_MAX_WIDTH and the tick hands the helper `axisWidth - gap`.
+  const BOX_WIDTH = 152;
+  // Two real questions from the KAS pre-match survey, which share nineteen leading characters.
+  const CLARITY_SCREENING = "CSAT With clarity of screening procedures";
+  const CLARITY_INFO = "CSAT with clarity of information";
+
+  test("leaves a label that already fits alone", () => {
+    expect(truncateLabelToBox("Gender", BOX_WIDTH, 1)).toBe("Gender");
+  });
+
+  // ENG-3148: tail truncation printed the shared opening words against every bar, so a dense axis
+  // read "CSAT with clarity of…" all the way down and the rows could not be told apart.
+  test("keeps the distinguishing tail when labels share an opening", () => {
+    const screening = truncateLabelToBox(CLARITY_SCREENING, BOX_WIDTH, 1);
+    const info = truncateLabelToBox(CLARITY_INFO, BOX_WIDTH, 1);
+
+    expect(screening).not.toBe(info);
+    expect(screening.endsWith("procedures")).toBe(true);
+    expect(screening).toContain("…");
+  });
+
+  test("spends the whole box: more lines cut less", () => {
+    const oneLine = truncateLabelToBox(CLARITY_SCREENING, BOX_WIDTH, 1);
+    const threeLines = truncateLabelToBox(CLARITY_SCREENING, BOX_WIDTH, 3);
+
+    expect(threeLines.length).toBeGreaterThan(oneLine.length);
+    expect(threeLines).toBe(CLARITY_SCREENING);
+  });
+
+  test("cuts to what the box can show, so the CSS clamp is not what the reader meets", () => {
+    const capacity = Math.floor(BOX_WIDTH / 6.5);
+
+    expect(truncateLabelToBox(CLARITY_SCREENING, BOX_WIDTH, 1).length).toBeLessThanOrEqual(capacity);
+  });
+
+  test("says something rather than nothing in a box with no room", () => {
+    expect(truncateLabelToBox("Nationality", 10, 1)).toBe("…");
+    expect(truncateLabelToBox("Nationality", 20, 1)).toContain("…");
+  });
+
+  // recharts has not measured the axis on the first render, and a guessed cut there would stick.
+  test("returns the label untouched when the box is not measured yet", () => {
+    expect(truncateLabelToBox(CLARITY_SCREENING, Number.NaN, 1)).toBe(CLARITY_SCREENING);
+    expect(truncateLabelToBox(CLARITY_SCREENING, 0, 1)).toBe(CLARITY_SCREENING);
+    expect(truncateLabelToBox(CLARITY_SCREENING, BOX_WIDTH, 0)).toBe(CLARITY_SCREENING);
+  });
+});
+
+describe("wrapped category label box", () => {
+  // ENG-3148: the budget used to come from the band (plotHeight / rowCount), so the same question
+  // wrapped over three lines on a sparse CES chart and clamped to one on a dense CSAT chart of the
+  // same questions at the same width. Row count is out of the treatment now.
+  test("gives every chart one line, whatever its row count leaves per band", () => {
+    for (const band of [12, 24, 40, 56, 200, 1000]) {
+      expect(getCategoryLabelLineClamp()).toBe(CATEGORY_AXIS_LABEL_LINES);
+      expect(getCategoryLabelBoxHeight(band)).toBeLessThanOrEqual(AXIS_LABEL_LINE_HEIGHT);
+    }
+  });
+
+  test("never overlaps the neighbouring label, however tight the band", () => {
+    for (const band of [12, 24, 40, 56, 200]) {
+      expect(getCategoryLabelBoxHeight(band)).toBeLessThanOrEqual(band - AXIS_LABEL_GAP);
+    }
+  });
+
+  test("keeps a box worth showing when the band cannot hold a line at all", () => {
+    expect(getCategoryLabelBoxHeight(4)).toBeGreaterThan(0);
+  });
+
+  test("assumes the full line before recharts has measured the axis", () => {
+    expect(getCategoryLabelBoxHeight(undefined)).toBe(AXIS_LABEL_LINE_HEIGHT);
+    expect(getCategoryLabelBoxHeight(Number.NaN)).toBe(AXIS_LABEL_LINE_HEIGHT);
   });
 });
 

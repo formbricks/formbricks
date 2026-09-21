@@ -12,6 +12,7 @@ export default defineConfig({
       entry: {
         index: resolve(__dirname, "src/index.ts"),
         canonical: resolve(__dirname, "src/canonical.ts"),
+        "survey-runtime-languages": resolve(__dirname, "src/survey-runtime-languages.ts"),
         utils: resolve(__dirname, "src/utils.ts"),
       },
       formats: ["es", "cjs"],

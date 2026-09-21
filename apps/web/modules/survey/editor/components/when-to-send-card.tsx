@@ -7,6 +7,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { ActionClass, OrganizationRole } from "@formbricks/database/prisma-browser";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
@@ -26,6 +27,8 @@ interface WhenToSendCardProps {
   propActionClasses: ActionClass[];
   membershipRole?: OrganizationRole;
   workspacePermission: TTeamPermission | null;
+  /** A save or publish was just blocked because this card has no trigger (ENG-2581). */
+  hasError?: boolean;
 }
 
 export const WhenToSendCard = ({
@@ -35,7 +38,8 @@ export const WhenToSendCard = ({
   propActionClasses,
   membershipRole,
   workspacePermission,
-}: WhenToSendCardProps) => {
+  hasError = false,
+}: Readonly<WhenToSendCardProps>) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
@@ -159,6 +163,17 @@ export const WhenToSendCard = ({
     return !localSurvey.triggers || !localSurvey.triggers.length || !localSurvey.triggers[0];
   }, [localSurvey]);
 
+  // Read at render time rather than mirrored into state, so adding a trigger clears the error the
+  // moment the survey has one — nothing has to remember to reset a flag.
+  const showError = hasError && containsEmptyTriggers;
+
+  // A collapsed card cannot show the user what to fix.
+  useEffect(() => {
+    if (showError) {
+      setOpen(true);
+    }
+  }, [showError]);
+
   if (localSurvey.type === "link") {
     return null; // Hide card completely
   }
@@ -172,15 +187,24 @@ export const WhenToSendCard = ({
             setOpen(openState);
           }
         }}
-        className="w-full rounded-lg border border-slate-300 bg-white">
+        className={cn(
+          "w-full rounded-lg border bg-white",
+          showError ? "border-red-400" : "border-slate-300"
+        )}>
         <Collapsible.CollapsibleTrigger
           asChild
           className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
-          id="whenToSendCardTrigger">
+          id="whenToSendCardTrigger"
+          aria-invalid={showError}>
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pr-5 pl-2">
               {containsEmptyTriggers ? (
-                <div className="size-7 rounded-full border border-amber-500 bg-amber-50" />
+                <div
+                  className={cn(
+                    "size-7 rounded-full border",
+                    showError ? "border-red-400 bg-red-100" : "border-amber-500 bg-amber-50"
+                  )}
+                />
               ) : (
                 <CheckIcon
                   strokeWidth={3}
@@ -191,8 +215,10 @@ export const WhenToSendCard = ({
 
             <div>
               <p className="font-semibold text-slate-800">{t("workspace.surveys.edit.survey_trigger")}</p>
-              <p className="mt-1 text-sm text-slate-500">
-                {t("workspace.surveys.edit.choose_the_actions_which_trigger_the_survey")}
+              <p className={cn("mt-1 text-sm", showError ? "text-red-600" : "text-slate-500")}>
+                {showError
+                  ? t("workspace.surveys.edit.please_set_a_survey_trigger")
+                  : t("workspace.surveys.edit.choose_the_actions_which_trigger_the_survey")}
               </p>
             </div>
           </div>

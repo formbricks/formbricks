@@ -1,0 +1,10 @@
+in: query
+name: filter[createdAt][lt]
+schema:
+  type: string
+  format: date-time
+description: >-
+  Only records created strictly before this instant (**exclusive**). The upper bound of a half-open
+  `[start, end)` window, which is what makes consecutive windows tile without overlapping or
+  dropping a record on the boundary. Mutually exclusive with `filter[createdAt][lte]` — sending both
+  is a **400**.

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TaxonomyNode, TaxonomyRun } from "@/modules/hub/types";
+import { AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -179,9 +180,12 @@ export const TopicsSubtopicsContainer = ({
               ? t("workspace.unify.taxonomy_run_in_progress")
               : t("workspace.unify.taxonomy_run_started")
           ),
-        // A trigger failure comes back as a raw upstream detail (502 / bad_gateway with the Hub's JSON
-        // blob), so show a clean localized message instead of dumping it. The specific failed-run alert
-        // (with the exact reason) still renders once /state refetches; raw detail stays in server logs.
+        // No longer a raw upstream blob: the server now answers a bounded, relayed 400 whose `detail`
+        // and `invalid_params` carry the actionable reason ("at least 20 embedded text feedback records
+        // are required; found 3"), rather than the 502 with the Hub's JSON that this used to discard.
+        // Still shows the localized string, so that reason reaches nobody — surfacing it is a UX call
+        // this error-mapping change deliberately does not make. The specific failed-run alert still
+        // renders once /state refetches.
         onError: () => toast.error(t("workspace.unify.taxonomy_start_failed")),
       }
     );
@@ -272,6 +276,24 @@ export const TopicsSubtopicsContainer = ({
           isGenerating={isRunning}
           onGenerate={handleGenerate}
           canWrite={canWrite}
+        />
+
+        {/*
+          A run is server-side and polled, so it has no progress to report and the phases cycle on
+          the kit's own cadence. No `useBeforeUnloadPrompt` to go with it, unlike the survey and
+          chart generators: the run outlives the tab, and the page picks it back up from /state on
+          the next load, so a "you will lose this" prompt would warn about a loss that cannot happen.
+
+          The timer is left on. It restarts at zero on a reload rather than tracking the run's true
+          age, which is honest about what this page knows — it is timing its own wait, not the run.
+        */}
+        <AiStatusLine
+          isActive={isRunning}
+          messages={[
+            t("workspace.unify.taxonomy_ai_status_reading"),
+            t("workspace.unify.taxonomy_ai_status_grouping"),
+            t("workspace.unify.taxonomy_ai_status_naming"),
+          ]}
         />
 
         {gate.showInlineProgress && (

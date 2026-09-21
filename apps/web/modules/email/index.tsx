@@ -51,7 +51,11 @@ import {
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { TElementResponseMappingSurvey, getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
-import { TVerificationRequestPurpose, buildVerificationLinks } from "@/modules/auth/lib/verification-links";
+import {
+  TVerificationRequestPurpose,
+  VERIFICATION_LINK_TTL_SECONDS,
+  buildVerificationLinks,
+} from "@/modules/auth/lib/verification-links";
 import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
@@ -76,7 +80,9 @@ interface SendEmailDataProps {
 }
 
 export type TResponseFinishedEmailSurvey = TElementResponseMappingSurvey &
-  Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields">;
+  // `variables` / `hiddenFields` are the resolver's fallback; `embeddedFields` carries the joined
+  // EmbeddedData rows the template resolves definitions through (ENG-1837).
+  Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields" | "embeddedFields">;
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
   if (!IS_SMTP_CONFIGURED) {
@@ -149,17 +155,23 @@ export const sendVerificationEmail = async ({
   locale,
   callbackUrl,
   purpose = "email_verification",
+  linkTtlSeconds = VERIFICATION_LINK_TTL_SECONDS,
 }: {
   id: string;
   email: TUserEmail;
   locale: TUserLocale;
   callbackUrl?: string;
   purpose?: TVerificationRequestPurpose;
+  /**
+   * Overridden only by an SSO-recovery resend, which has to mint a link no longer-lived than the intent
+   * it points at — see `getSsoRecoveryPairedTtlSeconds`. Everything else gets the full window.
+   */
+  linkTtlSeconds?: number;
 }): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
     const token = createToken(id, {
-      expiresIn: "1d",
+      expiresIn: linkTtlSeconds,
       purpose,
     });
     const { verifyLink, verificationRequestLink } = buildVerificationLinks({

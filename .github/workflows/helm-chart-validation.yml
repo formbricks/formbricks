@@ -10,6 +10,7 @@ jobs:
   validate:
     name: Validate Helm Chart
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -27,6 +28,9 @@ jobs:
         uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
         with:
           version: v3.15.4
+
+      - name: Validate default operator against Kubernetes API
+        run: bash charts/formbricks/tests/authzed-api-server.sh
 
       - name: Validate chart renders
         shell: bash
@@ -62,7 +66,10 @@ jobs:
           }
 
           helm lint "$chart" --set formbricks.webappUrl=https://qa.example.com
+          bash charts/formbricks/tests/postgresql-overrides.sh
           bash charts/formbricks/tests/authzed-operations.sh
+          bash charts/formbricks/tests/envoy-gateway.sh
+          bash charts/formbricks/tests/pdb-selectors.sh
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -531,6 +538,24 @@ jobs:
             test "$(grep -c 'mountPath: /var/run/qa-credentials' "$manifest")" -eq 1
             test "$(grep -c 'readOnly: true' "$manifest")" -eq 1
           done
+
+          # ENG-2599: the app Secret carries the documented BETTER_AUTH_* keys and the legacy NEXTAUTH_*
+          # alias, and the secret MUST be the same value under both. formbricks.authSecret ends in
+          # `randAlphaNum`, so including it twice instead of resolving it once would emit two different
+          # secrets here and the legacy key would sign nothing the app ever verifies.
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/secrets.yaml > "$render_dir/app-secrets.yaml"
+
+          for key in BETTER_AUTH_SECRET NEXTAUTH_SECRET BETTER_AUTH_URL NEXTAUTH_URL; do
+            test "$(grep -c "^  ${key}: " "$render_dir/app-secrets.yaml")" -eq 1
+          done
+          auth_secret="$(grep '^  BETTER_AUTH_SECRET: ' "$render_dir/app-secrets.yaml")"
+          legacy_secret="$(grep '^  NEXTAUTH_SECRET: ' "$render_dir/app-secrets.yaml")"
+          test "${auth_secret#*: }" = "${legacy_secret#*: }"
+          auth_url="$(grep '^  BETTER_AUTH_URL: ' "$render_dir/app-secrets.yaml")"
+          legacy_url="$(grep '^  NEXTAUTH_URL: ' "$render_dir/app-secrets.yaml")"
+          test "${auth_url#*: }" = "${legacy_url#*: }"
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

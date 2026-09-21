@@ -132,6 +132,17 @@
                 ]
               },
               {
+                "group": "Embedded Data",
+                "icon": "database",
+                "pages": [
+                  "surveys/embedded-data/overview",
+                  "surveys/embedded-data/reserved-fields",
+                  "surveys/embedded-data/set-embedded-data",
+                  "surveys/embedded-data/mobile-sdks",
+                  "surveys/embedded-data/migration"
+                ]
+              },
+              {
                 "group": "Link Surveys",
                 "icon": "link",
                 "pages": [
@@ -162,7 +173,6 @@
                 "icon": "mobile",
                 "pages": [
                   "surveys/website-app-surveys/quickstart",
-                  "surveys/website-app-surveys/workspace-id-migration",
                   "surveys/website-app-surveys/framework-guides",
                   "surveys/website-app-surveys/google-tag-manager",
                   "surveys/website-app-surveys/custom-css",
@@ -176,7 +186,8 @@
                       "surveys/website-app-surveys/recontact",
                       "surveys/website-app-surveys/cooldown-period",
                       "surveys/website-app-surveys/survey-display-logic",
-                      "surveys/website-app-surveys/show-survey-to-percent-of-users"
+                      "surveys/website-app-surveys/show-survey-to-percent-of-users",
+                      "surveys/website-app-surveys/lifecycle-events"
                     ]
                   }
                 ]
@@ -317,6 +328,9 @@
               "self-hosting/configuration/domain-configuration",
               "self-hosting/configuration/cdn",
               "self-hosting/configuration/custom-subpath",
+              "self-hosting/configuration/ai-features",
+              "self-hosting/configuration/authzed-operations",
+              "self-hosting/configuration/rate-limiting",
               {
                 "group": "Auth & SSO",
                 "icon": "lock",
@@ -349,8 +363,9 @@
           {
             "group": "Advanced",
             "pages": [
+              "self-hosting/advanced/release-maintenance-policy",
               "self-hosting/advanced/migration",
-              "self-hosting/advanced/authzed-operations",
+              "self-hosting/advanced/v6-maintenance-upgrade",
               "self-hosting/advanced/migrating-surveys",
               "self-hosting/advanced/license",
               "self-hosting/advanced/license-activation",
@@ -370,8 +385,7 @@
                   "self-hosting/advanced/enterprise-features/ai-features",
                   "self-hosting/advanced/enterprise-features/workflows"
                 ]
-              },
-              "self-hosting/advanced/rate-limiting"
+              }
             ]
           }
         ],
@@ -471,6 +485,20 @@
           "source": "/api-v2-reference/openapi.yml"
         },
         "tab": "API v2 Reference (Beta)"
+      },
+      {
+        "groups": [
+          {
+            "group": "API v3 Documentation (Private Beta)",
+            "pages": ["api-v3-reference/introduction"]
+          }
+        ],
+        "hidden": true,
+        "openapi": {
+          "directory": "api-v3-reference",
+          "source": "/api-v3-reference/openapi.yml"
+        },
+        "tab": "API v3 Reference (Private Beta)"
       }
     ]
   },
@@ -1260,8 +1288,16 @@
       "source": "/docs/self-hosting/license"
     },
     {
-      "destination": "/docs/self-hosting/advanced/rate-limiting",
+      "destination": "/docs/self-hosting/configuration/rate-limiting",
       "source": "/docs/self-hosting/rate-limiting"
+    },
+    {
+      "destination": "/docs/self-hosting/configuration/rate-limiting",
+      "source": "/docs/self-hosting/advanced/rate-limiting"
+    },
+    {
+      "destination": "/docs/self-hosting/configuration/authzed-operations",
+      "source": "/docs/self-hosting/advanced/authzed-operations"
     },
     {
       "destination": "/docs/self-hosting/setup/cluster-setup",

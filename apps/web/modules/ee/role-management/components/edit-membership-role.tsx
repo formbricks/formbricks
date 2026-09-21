@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { isRoleEditDisabled } from "@/modules/ee/role-management/lib/role-edit-rules";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -51,11 +52,15 @@ export function EditMembershipRole({
   const { isOwner, isManager } = getAccessFlags(currentUserRole);
   const isOwnerOrManager = isOwner || isManager;
 
-  const disableRole =
-    isUserManagementDisabledFromUi ||
-    memberId === userId ||
-    (memberRole === "owner" && !doesOrgHaveMoreThanOneOwner) ||
-    (currentUserRole === "manager" && memberRole === "owner");
+  const disableRole = isRoleEditDisabled({
+    isUserManagementDisabledFromUi,
+    currentUserRole,
+    memberRole,
+    memberId,
+    userId,
+    memberAccepted,
+    doesOrgHaveMoreThanOneOwner,
+  });
 
   const handleMemberRoleUpdate = async (role: TOrganizationRole) => {
     setLoading(true);

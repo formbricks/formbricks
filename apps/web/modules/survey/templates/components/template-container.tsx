@@ -18,8 +18,10 @@ type TemplateContainerWithPreviewProps = {
   workspace: Workspace;
   isTemplatePage?: boolean;
   publicDomain: string;
-  defaultLanguage: TUserLocale;
-  language?: TUserLocale;
+  /** The language surveys created here are authored in — see `resolveDefaultSurveyLanguage`. */
+  defaultLanguage: string;
+  /** The creator's dashboard locale, for the AI create card. */
+  language: TUserLocale;
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 };
@@ -29,7 +31,7 @@ export const TemplateContainerWithPreview = ({
   isTemplatePage = true,
   publicDomain,
   defaultLanguage,
-  language = defaultLanguage,
+  language,
   isAIAvailable = false,
   aiUnavailableReason,
 }: Readonly<TemplateContainerWithPreviewProps>) => {

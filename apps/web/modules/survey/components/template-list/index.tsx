@@ -22,13 +22,15 @@ import { useCreateSurveyFromTemplate } from "./hooks/use-create-survey-from-temp
 interface TemplateListProps {
   workspaceId: string;
   workspace: Workspace;
-  defaultLanguage: TUserLocale;
+  /** The language the created survey is authored in — see `resolveDefaultSurveyLanguage`. */
+  defaultLanguage: string;
   templateSearch?: string;
   showFilters?: boolean;
   onTemplateClick?: (template: TTemplate) => void;
   noPreview?: boolean; // single click to create survey
   showAICreateCard?: boolean;
-  language?: TUserLocale;
+  /** The creator's dashboard locale. AI generation is capped to the languages the dashboard has. */
+  language: TUserLocale;
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 }
@@ -42,7 +44,7 @@ export const TemplateList = ({
   onTemplateClick = () => {},
   noPreview,
   showAICreateCard = false,
-  language = defaultLanguage,
+  language,
   isAIAvailable = false,
   aiUnavailableReason,
 }: Readonly<TemplateListProps>) => {

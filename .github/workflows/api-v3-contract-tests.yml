@@ -257,6 +257,12 @@ jobs:
         run: python -m pip install schemathesis==4.25.0
         shell: bash
 
+      # Which operations are skipped, and why, lives in schemathesis.toml next to the operations it
+      # names — not here. An endpoint's own PR deletes its block there as the route lands, so each
+      # one is contract-checked when it ships rather than all of them at the end (ENG-2959).
+      #
+      # The selected-operation count is the check: it is printed on every run, and it must rise by
+      # exactly the number of operations a PR claims to have implemented.
       - name: Run v3 contract tests
         if: steps.harness.outputs.present == 'true'
         shell: bash

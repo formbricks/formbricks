@@ -18,7 +18,10 @@ import { WorkflowSortDropdown } from "../components/workflow-sort-dropdown";
 import { WorkflowStatusPill } from "../components/workflow-status-pill";
 import { WorkflowsEmptyState } from "../components/workflows-empty-state";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
+import { useTrackWorkflowListFilters } from "../hooks/use-track-workflow-list-filters";
+import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
 import { useWorkflows } from "../hooks/use-workflows";
+import { resolveWorkflowListSurface } from "../lib/analytics";
 import { computeStatusIn, parseStoredWorkflowFilters } from "../lib/list-filters";
 import { WorkflowsListBodyLoading } from "../loading";
 
@@ -81,6 +84,14 @@ export const WorkflowsListPage = ({
     );
   }, [searchValue, selectedStatuses, sortBy, isFilterInitialized]);
 
+  useTrackWorkflowListFilters({
+    isFilterInitialized,
+    searchValue,
+    debouncedSearchValue,
+    selectedStatuses,
+    sortBy,
+  });
+
   const toggleStatus = (value: TWorkflowStatus) => {
     setSelectedStatuses((prev) =>
       prev.includes(value) ? prev.filter((status) => status !== value) : [...prev, value]
@@ -112,6 +123,17 @@ export const WorkflowsListPage = ({
 
   const showInitialLoading = isLoading && workflows.length === 0;
   const hasActiveFilters = selectedStatuses.length > 0 || searchValue.length > 0;
+
+  // Reported once per screen the user lands on; `null` while loading or erroring, neither of which
+  // is a visit. `hasActiveFilters` is what separates an empty workspace from an emptied filter.
+  useTrackWorkflowSurface(
+    resolveWorkflowListSurface({
+      showInitialLoading,
+      isError,
+      hasActiveFilters,
+      workflowCount: workflows.length,
+    })
+  );
 
   let listContent: React.ReactNode;
 

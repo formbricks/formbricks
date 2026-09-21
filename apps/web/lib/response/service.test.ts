@@ -5,7 +5,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseUpdateInput } from "@formbricks/types/responses";
 import { getOrganization } from "../organization/service";
-import { getResponseDownloadFile, updateResponse } from "./service";
+import { getResponseDownloadFile, responseSelection, updateResponse } from "./service";
 import { calculateTtcTotal, getResponsesJson } from "./utils";
 
 vi.mock("@formbricks/database", () => ({
@@ -75,7 +75,26 @@ vi.mock("../utils/file-conversion", () => ({
 
 const mockResponseId = "response-123";
 
-const createMockCurrentResponse = (overrides: Record<string, unknown> = {}) => ({
+/**
+ * What the Prisma mocks below actually demand.
+ *
+ * `vi.mocked(prisma.response.findUnique)` types `mockResolvedValue` against the method's default
+ * instantiation, so the `select` at the call site is invisible to it and it asks for the **whole**
+ * `Response` model — every scalar, not just the fourteen `responseSelection` names. That is what the
+ * `as any` casts here were hiding, and it is why this is spelled as the selection plus the two
+ * scalars it deliberately leaves out: `contactId`, and `ingestFlags`, which only `updateResponse`'s
+ * pre-read selects (keeping it off every response the module returns). Together those are all
+ * sixteen columns, and `responseSelection` carries the `contact` and `tags` relations the code under
+ * test reads.
+ *
+ * Worth the indirection because it makes the fixture track the schema: add a column to the model and
+ * these tests stop compiling, instead of a cast quietly supplying `undefined` for it.
+ */
+type MockCurrentResponse = Prisma.ResponseGetPayload<{
+  select: typeof responseSelection & { contactId: true; ingestFlags: true };
+}>;
+
+const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {}): MockCurrentResponse => ({
   id: mockResponseId,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -92,6 +111,8 @@ const createMockCurrentResponse = (overrides: Record<string, unknown> = {}) => (
   displayId: "display-123",
   contact: null,
   tags: [],
+  contactId: null,
+  ingestFlags: null,
   ...overrides,
 });
 
@@ -109,8 +130,8 @@ describe("updateResponse", () => {
   describe("language canonicalization (ENG-1067)", () => {
     test("canonicalizes a legacy language code on update", async () => {
       const currentResponse = createMockCurrentResponse();
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
-      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
 
       await updateResponse(mockResponseId, createMockResponseInput({ language: "hi" }));
 
@@ -121,8 +142,8 @@ describe("updateResponse", () => {
 
     test("preserves the 'default' sentinel and unresolvable codes", async () => {
       const currentResponse = createMockCurrentResponse();
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
-      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
 
       await updateResponse(mockResponseId, createMockResponseInput({ language: "default" }));
       expect(prisma.response.update).toHaveBeenLastCalledWith(
@@ -133,6 +154,76 @@ describe("updateResponse", () => {
       expect(prisma.response.update).toHaveBeenLastCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ language: "123" }) })
       );
+    });
+  });
+
+  /**
+   * ENG-1845. The flags are the server's verdict on the incoming data, so they are a separate
+   * parameter rather than a key on the client-supplied input — a client could otherwise claim there
+   * was nothing to report. On a partial write they union by key: this payload's keys take their new
+   * verdict, everything else keeps what it had.
+   */
+  describe("Embedded Data ingest flags", () => {
+    const updateArgs = () => vi.mocked(prisma.response.update).mock.calls[0][0] as { data: unknown };
+
+    test("leaves the stored flags untouched when the caller did not run the contract", async () => {
+      const currentResponse = createMockCurrentResponse({
+        ingestFlags: [{ key: "seats", reason: "coercion_failed" }],
+      });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+
+      await updateResponse(mockResponseId, createMockResponseInput({ data: { seats: 12 } }));
+
+      // The authenticated management routes update a response without running the contract, and must
+      // not wipe what a client ingest recorded.
+      expect(updateArgs().data).not.toHaveProperty("ingestFlags");
+    });
+
+    test("persists the flags the contract computed", async () => {
+      const currentResponse = createMockCurrentResponse();
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+
+      await updateResponse(mockResponseId, createMockResponseInput({ data: { seats: "many" } }), undefined, [
+        { key: "seats", reason: "coercion_failed" },
+      ]);
+
+      expect(updateArgs().data).toMatchObject({
+        ingestFlags: [{ key: "seats", reason: "coercion_failed" }],
+      });
+    });
+
+    test("clears a stored flag once the same key arrives with a value that coerces", async () => {
+      const currentResponse = createMockCurrentResponse({
+        ingestFlags: [{ key: "seats", reason: "coercion_failed" }],
+      });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+
+      await updateResponse(mockResponseId, createMockResponseInput({ data: { seats: 12 } }), undefined, []);
+
+      // `[]`, not `null`: null stays reserved for "no ingest boundary has written this".
+      expect(updateArgs().data).toMatchObject({ ingestFlags: [] });
+    });
+
+    test("keeps a stored flag for a key this payload did not write", async () => {
+      const currentResponse = createMockCurrentResponse({
+        ingestFlags: [{ key: "seats", reason: "coercion_failed" }],
+      });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+
+      await updateResponse(
+        mockResponseId,
+        createMockResponseInput({ data: { plan: "gold" } }),
+        undefined,
+        []
+      );
+
+      expect(updateArgs().data).toMatchObject({
+        ingestFlags: [{ key: "seats", reason: "coercion_failed" }],
+      });
     });
   });
 
@@ -147,11 +238,11 @@ describe("updateResponse", () => {
         finished: false,
       });
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockResolvedValue({
         ...currentResponse,
         ttc: { element1: 1000, element2: 2000, element3: 3000 },
-      } as any);
+      });
 
       await updateResponse(mockResponseId, responseInput);
 
@@ -173,8 +264,8 @@ describe("updateResponse", () => {
         finished: false,
       });
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
-      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
 
       await updateResponse(mockResponseId, responseInput);
 
@@ -197,12 +288,12 @@ describe("updateResponse", () => {
         finished: true,
       });
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockResolvedValue({
         ...currentResponse,
         finished: true,
         ttc: { element1: 1000, element2: 2000, element3: 3000, _total: 6000 },
-      } as any);
+      });
 
       await updateResponse(mockResponseId, responseInput);
 
@@ -223,11 +314,11 @@ describe("updateResponse", () => {
         finished: false,
       });
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockResolvedValue({
         ...currentResponse,
         ttc: { element1: 1000, element2: 2000 },
-      } as any);
+      });
 
       await updateResponse(mockResponseId, responseInput);
 
@@ -244,11 +335,11 @@ describe("updateResponse", () => {
         finished: false,
       });
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockResolvedValue({
         ...currentResponse,
         ttc: { element1: 1000 },
-      } as any);
+      });
 
       await updateResponse(mockResponseId, responseInput);
 
@@ -271,11 +362,11 @@ describe("updateResponse", () => {
         finished: false,
       });
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockResolvedValue({
         ...currentResponse,
         ttc: { element1: 1000 },
-      } as any);
+      });
 
       await updateResponse(mockResponseId, responseInput);
 
@@ -298,11 +389,11 @@ describe("updateResponse", () => {
         finished: false,
       });
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockResolvedValue({
         ...currentResponse,
         ttc: { element1: 1500 },
-      } as any);
+      });
 
       await updateResponse(mockResponseId, responseInput);
 
@@ -327,11 +418,11 @@ describe("updateResponse", () => {
         finished: false,
       });
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockResolvedValue({
         ...currentResponse,
         data: { question1: "answer1", question2: "answer2" },
-      } as any);
+      });
 
       await updateResponse(mockResponseId, responseInput);
 
@@ -382,11 +473,11 @@ describe("updateResponse", () => {
         finished: false,
       });
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockResolvedValue({
         ...currentResponse,
         variables: { var1: "value1", var2: "value2" },
-      } as any);
+      });
 
       await updateResponse(mockResponseId, responseInput);
 
@@ -411,7 +502,7 @@ describe("updateResponse", () => {
 
     test("should throw DatabaseError on Prisma errors", async () => {
       const currentResponse = createMockCurrentResponse();
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Database error", {
           code: "P2002",
@@ -426,7 +517,7 @@ describe("updateResponse", () => {
 
     test("should throw ResourceNotFoundError when response is deleted during update", async () => {
       const currentResponse = createMockCurrentResponse();
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Record to update not found", {
           code: PrismaErrorType.RecordNotFound,
@@ -441,7 +532,7 @@ describe("updateResponse", () => {
 
     test("should throw ResourceNotFoundError when Prisma reports a missing response record", async () => {
       const currentResponse = createMockCurrentResponse();
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
       vi.mocked(prisma.response.update).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Record does not exist", {
           code: PrismaErrorType.RecordNotFound,
