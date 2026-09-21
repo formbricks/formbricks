@@ -1,4 +1,4 @@
-import { render } from "@react-email/render";
+import { render } from "react-email";
 import { DeleteAccountEmail } from "../../emails/auth/delete-account-email";
 import { ForgotPasswordEmail } from "../../emails/auth/forgot-password-email";
 import { NewEmailVerification } from "../../emails/auth/new-email-verification";
