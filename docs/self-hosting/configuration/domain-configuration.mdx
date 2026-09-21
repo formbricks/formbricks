@@ -11,13 +11,13 @@ Formbricks supports both single domain and dual domain configurations with Publi
 For a single domain setup, you need to configure two essential environment variables:
 
 1. `WEBAPP_URL`: The base URL of your Formbricks instance (serves both admin and public content)
-2. `NEXTAUTH_URL`: The authentication URL (should be the same as WEBAPP_URL)
+2. `BETTER_AUTH_URL`: The authentication URL (should be the same as WEBAPP_URL)
 
 ### Example Configuration
 
 ```bash
 WEBAPP_URL=https://formbricks.example.com
-NEXTAUTH_URL=https://formbricks.example.com
+BETTER_AUTH_URL=https://formbricks.example.com
 ```
 
 ### Important Notes
@@ -61,7 +61,7 @@ security must be configured by you. Formbricks does not manage your infrastructu
 ```bash
 # Private admin domain
 WEBAPP_URL=https://admin.formbricks.example.com
-NEXTAUTH_URL=https://admin.formbricks.example.com
+BETTER_AUTH_URL=https://admin.formbricks.example.com
 
 # Public domain for surveys
 PUBLIC_URL=https://surveys.example.com

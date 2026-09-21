@@ -39,6 +39,14 @@ description: >
 
   The value shapes are the stored ones, and they differ by element type. `ResponseAnswer` documents
   each; `answers[]` on the read is the resolved view of this same map.
+
+
+  **Bounds are a write-side concern and live on `ResponseDataMapInput`, not here.** This schema is
+  the stored shape, and a read must describe what the API can actually return: the v1 and v2 write
+  paths store this same map with no cardinality limit, so a response written through them can carry
+  more keys — or a longer multi-select — than a v3 write would accept. Declaring the write bounds on
+  this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for
+  those rows.
 additionalProperties:
   oneOf:
     - type: string
