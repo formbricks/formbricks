@@ -1,6 +1,9 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { SURVEY_RUNTIME_LANGUAGE_CODES } from "@formbricks/i18n-utils/survey-runtime-languages";
+import {
+  DEFAULT_SURVEY_LANGUAGE_CODE,
+  SURVEY_RUNTIME_LANGUAGE_CODES,
+} from "@formbricks/i18n-utils/survey-runtime-languages";
 import i18n, {
   hasLanguageLoaded,
   loadLanguage,
@@ -131,7 +134,11 @@ describe("loadLanguage", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    for (const code of SURVEY_RUNTIME_LANGUAGE_CODES) i18n.removeResourceBundle(code, "translation");
+    // English is compiled in, not fetched, and every fallback assertion here rests on it resolving to a
+    // real string. Stripping it too would let a test compare two unresolved key echoes and pass.
+    for (const code of SURVEY_RUNTIME_LANGUAGE_CODES) {
+      if (code !== DEFAULT_SURVEY_LANGUAGE_CODE) i18n.removeResourceBundle(code, "translation");
+    }
   });
 
   const requestedUrls = (): string[] => fetchMock.mock.calls.map((call) => String(call[0]));
@@ -176,7 +183,12 @@ describe("loadLanguage", () => {
     fetchMock.mockResolvedValue({ ok: false, status: 404 });
     await expect(loadLanguage("pl-PL")).resolves.toBeUndefined();
     expect(i18n.hasResourceBundle("pl-PL", "translation")).toBe(false);
-    expect(i18n.getFixedT("pl-PL")("common.required")).toBe(i18n.getFixedT("en-US")("common.required"));
+
+    // Pinned to the string, not just to "matches English": both sides echo the key back when no bundle
+    // is loaded at all, so comparing them alone would pass on two failures as readily as on a fallback.
+    const english = i18n.getFixedT(DEFAULT_SURVEY_LANGUAGE_CODE)("common.required");
+    expect(english).toBe("Required");
+    expect(i18n.getFixedT("pl-PL")("common.required")).toBe(english);
   });
 
   // The SDK and the link survey pass an absolute appUrl, which is what lets a mobile WebView — whose
