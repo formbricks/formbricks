@@ -1389,6 +1389,26 @@ describe("Response Utils", () => {
       expect(result[0]).not.toHaveProperty("utm_campaign");
     });
 
+    test("an ingested field named like a fixed column does not take that column's cell", () => {
+      // The `extractSurveyDetails` counterpart of this pins the header row; this pins the cells.
+      // Both call sites need the same seed and neither guards the other: a row is one flat object
+      // keyed by label, so an unseeded `Response ID` here would write the field's value over the
+      // response's own id — under a header the sheet still has, holding the wrong value.
+      const shadowing = {
+        ...(mockSurvey as TSurvey),
+        embeddedFields: [ingestedRow("Response ID", "resp_id")],
+      } as TSurvey;
+      const response = {
+        ...mockResponses[0],
+        data: { ...mockResponses[0].data, resp_id: "spring_sale" },
+      } as unknown as TResponse;
+
+      const result = getResponsesJson(shadowing, [response], [], [], false);
+
+      expect(result[0]["Response ID"]).toBe("response1");
+      expect(result[0]["Response ID (resp_id)"]).toBe("spring_sale");
+    });
+
     test("a computed field the response never captured leaves an empty cell", () => {
       // resolveEmbeddedValue would substitute the declared default here — i.e. display a value the
       // respondent's run never produced. The export deliberately reads the raw slot instead.

@@ -78,6 +78,18 @@ describe("labelEmbeddedFields", () => {
     expect(new Set(labels).size).toBe(3);
   });
 
+  test("treats a seeded string as already claimed, so only the field that shadows one carries its key", () => {
+    // The `reserved` seed is what lets a caller whose surface has other columns in the same
+    // namespace — the response export, whose rows are flat objects keyed by header — keep this
+    // rule covering the whole row rather than only this group.
+    const labels = labelEmbeddedFields(
+      [ingested("Response ID", "resp_id"), ingested("Campaign", "utm_campaign")],
+      new Set(["Response ID", "Timestamp"])
+    ).map(({ label }) => label);
+
+    expect(labels).toEqual(["Response ID (resp_id)", "Campaign"]);
+  });
+
   test("returns nothing for a survey with no fields", () => {
     expect(labelEmbeddedFields([])).toEqual([]);
   });

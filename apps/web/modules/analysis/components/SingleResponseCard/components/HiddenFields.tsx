@@ -2,6 +2,7 @@
 
 import { EyeOffIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData } from "@formbricks/types/responses";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
@@ -15,16 +16,19 @@ interface HiddenFieldsProps {
 export const HiddenFields = ({ hiddenFields, responseData }: Readonly<HiddenFieldsProps>) => {
   const { t } = useTranslation();
 
-  // `storageKey` is the React key: it is unique per survey by `@@unique([surveyId, storageKey])`,
-  // whereas a field's display name carries no uniqueness constraint.
-  let hiddenFieldsData: { storageKey: string; label: string; value: string }[] = [];
+  // ENG-3233: labelled over the survey's whole field list, *before* the empty-value filter below.
+  // Allocating over the filtered list instead would make a label depend on which fields this one
+  // response happened to capture, so the card would name a field differently from the table header
+  // above it. `storageKey` stays the React key: it is unique per survey by `@@unique([surveyId,
+  // storageKey])`, whereas a display name carries no uniqueness constraint.
+  const hiddenFieldsData: { storageKey: string; label: string; value: string }[] = [];
 
-  hiddenFields.forEach(({ field, link }) => {
+  labelEmbeddedFields(hiddenFields).forEach(({ link, label }) => {
     const value = responseData[link.storageKey];
     if (value) {
       hiddenFieldsData.push({
         storageKey: link.storageKey,
-        label: field.name,
+        label,
         value: typeof value === "string" ? value : "",
       });
     }
