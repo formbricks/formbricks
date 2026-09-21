@@ -167,9 +167,17 @@ const TYPED_FIELD_OP_MAP: Record<string, string> = {
 type TTypedFieldFilterCondition = NonNullable<TResponseFilterCriteria["reserved"]>[string];
 
 /**
- * One filter row → one typed condition, coerced to the field's dataType (a number field must send a
- * real number — a string-typed `equals` never matches a jsonb number). Returns null when the row
- * cannot form a valid condition, so half-filled rows drop instead of matching wrongly.
+ * One filter row → one typed condition, coerced to the field's **stored** form — which is not always
+ * the obvious reading of its dataType. A number field must send a real number, because a
+ * string-typed `equals` never matches a jsonb number. A boolean field must send the *string*
+ * `"true"` / `"false"`, because that is what the ingest contract writes: `ZResponseDataValue` has no
+ * boolean member, so nothing under `data`, `variables` or `meta` is ever a jsonb boolean and a real
+ * boolean here matched no row at all (ENG-3231). The picker below already offers a boolean field
+ * exactly those two spellings as its options, so the value reaches this function in its stored form
+ * and all this has to do is stop converting it.
+ *
+ * Returns null when the row cannot form a valid condition, so half-filled rows drop instead of
+ * matching wrongly.
  */
 const buildTypedFieldCondition = (
   filterType: FilterValue["filterType"],
@@ -193,7 +201,7 @@ const buildTypedFieldCondition = (
   if (dataType === "boolean") {
     if (op !== "equals" && op !== "notEquals") return null;
     if (value !== "true" && value !== "false") return null;
-    return { op, value: value === "true" } as TTypedFieldFilterCondition;
+    return { op, value };
   }
   return { op, value } as TTypedFieldFilterCondition;
 };

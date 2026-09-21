@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { TFunction } from "i18next";
 import { afterEach, describe, expect, test } from "vitest";
+import { normalizeIngestedValue } from "@formbricks/types/embedded-data-ingest";
 import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
@@ -1055,35 +1056,49 @@ describe("surveys", () => {
       expect(result.variables?.var_score).toEqual({ op: "lessThan", value: 5 });
     });
 
-    test("boolean and date ingested fields coerce per dataType; invalid numbers drop the row", () => {
-      // Legacy-derived fields are all string-typed, so craft the typed rows directly.
-      const typedSurvey = {
-        ...survey,
-        embeddedFields: [
-          ...(survey.embeddedFields ?? []),
-          {
-            field: {
-              name: "is_pro",
-              source: "ingested",
-              dataType: "boolean",
-              defaultValue: null,
-              locked: false,
-            },
-            link: { storageKey: "is_pro" },
+    // Legacy-derived fields are all string-typed, so craft the typed rows directly.
+    const typedSurvey = {
+      ...survey,
+      embeddedFields: [
+        ...(survey.embeddedFields ?? []),
+        {
+          field: {
+            name: "is_pro",
+            source: "ingested",
+            dataType: "boolean",
+            defaultValue: null,
+            locked: false,
           },
+          link: { storageKey: "is_pro" },
+        },
+        {
+          field: {
+            name: "signup_date",
+            source: "ingested",
+            dataType: "date",
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "signup_date" },
+        },
+      ],
+    } as TSurvey;
+
+    const boolFilter = (filterValue: string, filterComboBoxValue: string) => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
           {
-            field: {
-              name: "signup_date",
-              source: "ingested",
-              dataType: "date",
-              defaultValue: null,
-              locked: false,
-            },
-            link: { storageKey: "signup_date" },
+            elementType: { type: OptionsType.HIDDEN_FIELDS, label: "is_pro", id: "is_pro" },
+            filterType: { filterValue, filterComboBoxValue },
           },
         ],
-      } as TSurvey;
+      };
 
+      return getFormattedFilters(typedSurvey, selectedFilter, { from: undefined });
+    };
+
+    test("boolean and date ingested fields coerce per dataType; invalid numbers drop the row", () => {
       const result = getFormattedFilters(
         typedSurvey,
         {
@@ -1106,44 +1121,66 @@ describe("surveys", () => {
         {} as any
       );
 
-      // Booleans are stored as real jsonb booleans, so the filter value must be one too.
-      expect(result.data?.is_pro).toEqual({ op: "equals", value: true });
+      // Booleans are stored as the strings the ingest contract writes, so the filter value is one
+      // too — a jsonb boolean here matched no row (ENG-3231).
+      expect(result.data?.is_pro).toEqual({ op: "equals", value: "true" });
       // Dates ride the comparison ops with the ISO string.
       expect(result.data?.signup_date).toEqual({ op: "lessThan", value: "2026-01-01" });
       // A non-numeric value for a number field cannot form a condition — the row drops.
       expect(result.variables).toBeUndefined();
 
       // A text op makes no sense on a boolean — dropped rather than matching wrongly.
-      const boolContains = getFormattedFilters(
-        typedSurvey,
-        {
-          responseStatus: "all",
-          filter: [
-            {
-              elementType: { type: "Hidden Fields", label: "is_pro", id: "is_pro" },
-              filterType: { filterValue: "Contains", filterComboBoxValue: "tru" },
-            },
-          ],
-        } as any,
-        {} as any
-      );
-      expect(boolContains.data?.is_pro).toBeUndefined();
+      expect(boolFilter("Contains", "tru").data?.is_pro).toBeUndefined();
 
       // Only the exact literals are booleans — "yes" must drop, not coerce to false.
-      const boolGarbage = getFormattedFilters(
-        typedSurvey,
-        {
-          responseStatus: "all",
-          filter: [
-            {
-              elementType: { type: "Hidden Fields", label: "is_pro", id: "is_pro" },
-              filterType: { filterValue: "Equals", filterComboBoxValue: "yes" },
-            },
-          ],
-        } as any,
-        {} as any
-      );
-      expect(boolGarbage.data?.is_pro).toBeUndefined();
+      expect(boolFilter("Equals", "yes").data?.is_pro).toBeUndefined();
+    });
+
+    test("a boolean condition carries the same spelling the ingest contract stores", () => {
+      // The bug this pins (ENG-3231): the filter sent a real jsonb boolean while every write path
+      // stores the string, so `is_pro equals true` matched nothing the moment a boolean field held a
+      // value. Asserting against `normalizeIngestedValue` rather than a hand-written "true" is what
+      // keeps the two seams from drifting apart again — whatever the ingest contract decides the
+      // canonical spelling is, this is the value the filter has to compare against.
+      for (const [label, incoming] of [
+        ["true", "1"],
+        ["false", "off"],
+      ] as const) {
+        const stored = normalizeIngestedValue(incoming, "boolean");
+        expect(stored).toEqual({ value: label });
+
+        expect(boolFilter("Equals", label).data?.is_pro).toEqual({ op: "equals", value: stored?.value });
+        expect(boolFilter("Not equals", label).data?.is_pro).toEqual({
+          op: "notEquals",
+          value: stored?.value,
+        });
+      }
+    });
+
+    test("the picker offers a boolean field exactly the spellings the condition builder accepts", () => {
+      // The other half of the contract above. `buildTypedFieldCondition` takes only these two
+      // literals and drops the row for anything else, so the picker is what guarantees the value
+      // arrives in its stored form. Change this list — to `Yes`/`No`, or back to real booleans —
+      // and every boolean filter row silently stops reaching the query instead of failing loudly.
+      //
+      // Called directly rather than through `genOptions`, whose `asRead` replaces `embeddedFields`
+      // with the legacy-derived rows — and those are all string-typed, so the boolean branch under
+      // test would never run.
+      const { elementFilterOptions } = generateElementAndFilterOptions({
+        survey: typedSurvey as TSurvey,
+        environmentTags: undefined,
+        attributes: {},
+        reservedValues: {},
+        hiddenFields: {},
+        variableValues: {},
+        quotas: [],
+        t,
+      });
+
+      expect(elementFilterOptions.find((option) => option.id === "is_pro")?.filterComboBoxOptions).toEqual([
+        "true",
+        "false",
+      ]);
     });
 
     test("ingested presence maps onto the data group's submitted/skipped vocabulary", () => {
