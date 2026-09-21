@@ -29,6 +29,7 @@ on:
       - main
     paths:
       - .github/workflows/linear-release.yml
+      - .github/workflows/linear-release-cut.yml
       - .github/workflows/formbricks-release.yml
       - .github/workflows/linear-release-smoke.yml
 
@@ -68,5 +69,29 @@ jobs:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
           command: complete
           version: ${{ inputs.version }}
+          dry_run: "true"
+          log_level: verbose
+
+      # The two steps linear-release-cut.yml runs at a branch cut. Read the verbose log rather
+      # than the green tick: the stage step should name the resolved "Code Freeze" stage, and
+      # the empty-range sync should say whether it would create the release - if it reports
+      # nothing to do instead, the cut's "Start the next train" step will fail on a release
+      # that does not exist.
+      - name: Dry-run the code-freeze stage move
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: update
+          stage: Code Freeze
+          version: ${{ inputs.version }}
+          dry_run: "true"
+          log_level: verbose
+
+      - name: Dry-run the empty-range next-train sync
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          version: ${{ inputs.version }}
+          base_ref: ${{ github.sha }}
           dry_run: "true"
           log_level: verbose
