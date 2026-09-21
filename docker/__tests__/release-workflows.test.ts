@@ -230,7 +230,8 @@ describe("release workflows", () => {
 
     expect(concurrency?.group).toBe("linear-release-cut");
     expect(concurrency?.queue).toBe("max");
-    expect(concurrency?.["cancel-in-progress"]).toBeUndefined();
+    // Omitted and explicit false are the same behaviour; only true is disallowed with queue: max.
+    expect(concurrency?.["cancel-in-progress"] ?? false).toBe(false);
   });
 
   // The dispatch form cannot express "stage is required only for update"; the action fails on
