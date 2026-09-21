@@ -4237,7 +4237,7 @@ components:
         limit:
           type: integer
           minimum: 1
-          description: 'The page size actually applied. Carries no `maximum`: it echoes what the server used, it does not bound what may be asked for. The request-side bound belongs to the `limit` query parameter, which differs per collection — 250 on most, 1000 on feedback records, 100 on workflows.'
+          description: 'The page size actually applied. Carries no `maximum`: it echoes what the server used, it does not bound what may be asked for. The request-side bound is the `limit` query parameter on the operation itself and differs per collection — read it there. A shared description cannot state it without being wrong for some of the operations that compose this base.'
         nextCursor:
           type:
             - string
@@ -7750,7 +7750,7 @@ components:
       description: |-
         A list `meta` carrying pagination and nothing else — the shape for collections that do not report a total and have no domain context to echo.
 
-        Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. It previously capped the `limit` echo at 100, alone among the v3 list metas, which said an out-of-range *echo* was a contract violation rather than an out-of-range *request*. The bound moved to where requests are bounded: the `limit` query parameter.
+        Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. Each composing operation bounds its own requests through its `limit` query parameter, which is why this shape states no cap of its own.
     WorkflowNodeUi:
       type: object
       description: Builder-only UI metadata that does not affect workflow execution. Additional keys are preserved.
@@ -8579,7 +8579,7 @@ components:
     FeedbackDatasetContext:
       type: object
       description: |-
-        Which feedback dataset answered, echoed by every feedback-record operation that resolves one.
+        Which feedback dataset answered, echoed by the feedback-record operations that return a `meta`. The single-record read and the three record writes resolve a dataset too, but answer without one.
 
         Open and composed with `allOf`, like `ListPaginationMeta` — see the note there. Extracted because three components, across four operations, carried these two fields with the same prose copied out.
       required:
@@ -8589,7 +8589,7 @@ components:
         datasetId:
           type: string
           format: cuid2
-          description: The dataset that was actually searched. Echoed because an empty `data` is otherwise ambiguous — "this dataset holds no matching records" reads identically to "I don't know what was searched" — and a caller that let `workspaceId` resolve the dataset would otherwise need a second request to learn which one answered.
+          description: The dataset that actually answered. Echoed because the result alone is ambiguous — "this dataset holds nothing matching" reads identically to "I don't know which dataset was consulted" — and a caller that let `workspaceId` resolve the dataset would otherwise need a second request to learn which one answered.
         datasetName:
           type: string
           description: Human-readable name of that dataset.
@@ -8723,7 +8723,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/FeedbackDatasetContext'
       unevaluatedProperties: false
-      description: 'The `meta` for the feedback-record count. Carries no pagination: a count is one number, not a page, so it composes the dataset context alone.'
+      description: 'The `meta` for the feedback-record count. Carries no pagination: a count is one number, not a page, so it composes the dataset context alone. The echo earns its place here for the counting form of the same ambiguity: `count: 0` reads identically as "nothing here matches" and as "I don''t know what was counted".'
     FeedbackRecordCountEnvelope:
       type: object
       additionalProperties: false

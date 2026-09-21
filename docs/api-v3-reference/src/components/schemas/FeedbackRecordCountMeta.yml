@@ -3,4 +3,6 @@ allOf:
 unevaluatedProperties: false
 description: >-
   The `meta` for the feedback-record count. Carries no pagination: a count is one number, not a page,
-  so it composes the dataset context alone.
+  so it composes the dataset context alone. The echo earns its place here for the counting form of
+  the same ambiguity: `count: 0` reads identically as "nothing here matches" and as "I don't know
+  what was counted".

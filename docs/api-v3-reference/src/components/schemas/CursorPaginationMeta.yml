@@ -6,7 +6,6 @@ description: >-
   total and have no domain context to echo.
 
 
-  Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. It previously capped
-  the `limit` echo at 100, alone among the v3 list metas, which said an out-of-range *echo* was a
-  contract violation rather than an out-of-range *request*. The bound moved to where requests are
-  bounded: the `limit` query parameter.
+  Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. Each composing
+  operation bounds its own requests through its `limit` query parameter, which is why this shape
+  states no cap of its own.

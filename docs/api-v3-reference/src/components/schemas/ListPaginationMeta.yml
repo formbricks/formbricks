@@ -23,8 +23,9 @@ properties:
     minimum: 1
     description: >-
       The page size actually applied. Carries no `maximum`: it echoes what the server used, it does
-      not bound what may be asked for. The request-side bound belongs to the `limit` query parameter,
-      which differs per collection — 250 on most, 1000 on feedback records, 100 on workflows.
+      not bound what may be asked for. The request-side bound is the `limit` query parameter on the
+      operation itself and differs per collection — read it there. A shared description cannot state
+      it without being wrong for some of the operations that compose this base.
   nextCursor:
     type:
       - string

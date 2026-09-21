@@ -1,6 +1,7 @@
 type: object
 description: >-
-  Which feedback dataset answered, echoed by every feedback-record operation that resolves one.
+  Which feedback dataset answered, echoed by the feedback-record operations that return a `meta`.
+  The single-record read and the three record writes resolve a dataset too, but answer without one.
 
 
   Open and composed with `allOf`, like `ListPaginationMeta` — see the note there. Extracted because
@@ -13,10 +14,10 @@ properties:
     type: string
     format: cuid2
     description: >-
-      The dataset that was actually searched. Echoed because an empty `data` is otherwise
-      ambiguous — "this dataset holds no matching records" reads identically to "I don't know what
-      was searched" — and a caller that let `workspaceId` resolve the dataset would otherwise need
-      a second request to learn which one answered.
+      The dataset that actually answered. Echoed because the result alone is ambiguous — "this
+      dataset holds nothing matching" reads identically to "I don't know which dataset was
+      consulted" — and a caller that let `workspaceId` resolve the dataset would otherwise need a
+      second request to learn which one answered.
   datasetName:
     type: string
     description: Human-readable name of that dataset.

@@ -171,6 +171,30 @@ describe("resource shapes", () => {
     expect(limit.minimum).toBe(1);
     expect(limit.maximum).toBeUndefined();
     expect(ZCursorPaginationMeta.safeParse({ limit: 1000, nextCursor: null }).success).toBe(true);
+    // The lower bound is the half the assertions above do not reach: the spec says `minimum: 1`, so
+    // the zod echo has to refuse 0 rather than merely not cap the top end.
+    expect(ZCursorPaginationMeta.safeParse({ limit: 0, nextCursor: null }).success).toBe(false);
+  });
+
+  /**
+   * The base's own stated guarantee, and the one with a named precedent: a shared envelope whose
+   * fields drift to optional is how v3's predecessor stopped honouring its pagination contract with
+   * nothing going red (ENG-2622). Deleting the `required` block left every other test here green.
+   */
+  test("the shared base requires both of its fields", async () => {
+    const base = await loadYaml("components/schemas/ListPaginationMeta.yml");
+
+    expect([...((base.required as string[] | undefined) ?? [])].sort()).toEqual(["limit", "nextCursor"]);
+  });
+
+  /**
+   * The zod half of "closed". The YAML half is asserted above via `unevaluatedProperties`; without
+   * this, `strictObject` could become `object` and the two layers would disagree silently.
+   */
+  test("the zod echo refuses a key the spec does not declare", () => {
+    expect(ZCursorPaginationMeta.safeParse({ limit: 20, nextCursor: null, hasMore: true }).success).toBe(
+      false
+    );
   });
 
   test("WorkflowTestResult properties match the contract shape", async () => {
