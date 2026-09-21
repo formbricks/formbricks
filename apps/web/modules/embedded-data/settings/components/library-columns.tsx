@@ -5,12 +5,12 @@ import { LockIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import type { TSharedEmbeddedDataListItem } from "@/modules/embedded-data/types";
-import { Badge } from "@/modules/ui/components/badge";
+import { DataTypeBadge } from "@/modules/ui/components/data-type-badge";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import type { TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { getDataTypeLabel, getSourceIcon, getSourceLabel } from "./field-labels";
 import { FieldRowMenu } from "./field-row-menu";
+import { FieldSourceIndicator } from "./field-status";
 import { FieldUsageCell } from "./field-usage-cell";
 
 /**
@@ -66,14 +66,7 @@ export const getLibraryColumns = ({
       headerClassName: "w-[14%]",
       hideBelow: "md",
       skeletonWidth: "w-20",
-      cell: (field) => (
-        // `whitespace-nowrap`: "Passed in" is two words, and a Badge is a pill — wrapping breaks the
-        // pill across two lines rather than eliding it.
-        <div className="flex items-center gap-2 whitespace-nowrap text-slate-500">
-          {getSourceIcon(field.source, "size-4")}
-          <Badge text={getSourceLabel(field.source, t)} type="gray" size="tiny" />
-        </div>
-      ),
+      cell: (field) => <FieldSourceIndicator source={field.source} />,
     },
     {
       id: "dataType",
@@ -81,7 +74,7 @@ export const getLibraryColumns = ({
       headerClassName: "w-[10%]",
       hideBelow: "md",
       skeletonWidth: "w-16",
-      cell: (field) => <Badge text={getDataTypeLabel(field.dataType, t)} type="gray" size="tiny" />,
+      cell: (field) => <DataTypeBadge dataType={field.dataType} />,
     },
     {
       id: "defaultValue",
@@ -128,8 +121,10 @@ export const getLibraryColumns = ({
       header: t("workspace.embedded_data.used_in"),
       headerClassName: "w-[12%] whitespace-nowrap",
       skeletonWidth: "w-20",
-      // The cell's trigger opens a popover; a row click behind it would edit the field instead.
-      stopRowClick: true,
+      // Deliberately **not** `stopRowClick`. That stopped every click in the cell, including the ones
+      // on a row with nothing to open, so "Not used" was the one patch of a row that did nothing.
+      // The popover trigger stops its own click instead, which leaves the rest of the cell — and the
+      // whole of an unused one — behaving like the row around it.
       cell: (field) => (
         <FieldUsageCell fieldId={field.id} workspaceId={workspaceId} surveyCount={field.surveyCount} />
       ),

@@ -10,6 +10,7 @@ import {
   embeddedFieldRow,
   fillEmbeddedFieldDialog,
   fillRichTextEditor,
+  openCreateEmbeddedFieldTab,
   openEmbeddedDataCard,
 } from "./utils/helper";
 
@@ -45,13 +46,9 @@ const uniqueName = (prefix: string): string => `${prefix}_${Math.random().toStri
 const headlineEditor = (page: Page): Locator =>
   editorPanel(page).locator('label:has-text("Question*")').locator("..").locator("..");
 
-/** Opens the new-field dialog with its source already picked. */
+/** Opens the Add field dialog's create tab with the source already picked. */
 const openNewFieldDialog = async (page: Page, source: EmbeddedFieldSource): Promise<Locator> => {
-  await openEmbeddedDataCard(page);
-  await editorPanel(page).getByRole("button", { name: "New field", exact: true }).click();
-
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
+  const dialog = await openCreateEmbeddedFieldTab(page);
   await fillEmbeddedFieldDialog(page, { source });
   return dialog;
 };

@@ -982,8 +982,25 @@ export const openEmbeddedDataCard = async (page: Page): Promise<void> => {
 export const embeddedFieldRow = (page: Page, name: string): Locator =>
   editorPanel(page).getByTestId("embedded-field-row").filter({ hasText: name });
 
-/** The open new-field / edit-field dialog. */
+/** The open Add field / edit-field dialog. */
 const embeddedFieldDialog = (page: Page): Locator => page.getByRole("dialog");
+
+/**
+ * Opens the card's one "Add field" control and switches to the create tab.
+ *
+ * Two steps because the card follows the Actions flow: one control opens a dialog whose first tab is
+ * the workspace library, and declaring a field the survey owns is the second tab.
+ */
+export const openCreateEmbeddedFieldTab = async (page: Page): Promise<Locator> => {
+  await openEmbeddedDataCard(page);
+  await editorPanel(page).getByRole("button", { name: "Add field", exact: true }).click();
+
+  const dialog = embeddedFieldDialog(page);
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Create new field", exact: true }).click();
+  await expect(dialog.locator("#embedded-field-name")).toBeVisible();
+  return dialog;
+};
 
 /** Fills the dialog that is already open, without submitting it. */
 export const fillEmbeddedFieldDialog = async (
@@ -1011,8 +1028,7 @@ export const addEmbeddedField = async (
   page: Page,
   field: { name: string; source: EmbeddedFieldSource; type?: EmbeddedFieldType; defaultValue?: string }
 ): Promise<void> => {
-  await openEmbeddedDataCard(page);
-  await editorPanel(page).getByRole("button", { name: "New field", exact: true }).click();
+  await openCreateEmbeddedFieldTab(page);
   await fillEmbeddedFieldDialog(page, field);
   await embeddedFieldDialog(page).getByRole("button", { name: "Add", exact: true }).click();
   await expect(embeddedFieldRow(page, field.name)).toBeVisible();

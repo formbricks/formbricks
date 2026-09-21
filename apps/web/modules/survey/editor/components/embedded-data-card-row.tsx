@@ -12,11 +12,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { EMBEDDED_FIELD_ICON_BY_DATA_TYPE } from "@/modules/embedded-data/lib/field-display";
-import {
-  getDataTypeLabel,
-  getSourceIcon,
-  getSourceLabel,
-} from "@/modules/embedded-data/settings/components/field-labels";
+import { getDataTypeLabel } from "@/modules/embedded-data/settings/components/field-labels";
+import { FieldSourceIndicator } from "@/modules/embedded-data/settings/components/field-status";
 import { type TEmbeddedFieldWarning } from "@/modules/survey/editor/lib/embedded-field-guards";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
@@ -71,6 +68,7 @@ export const EmbeddedDataCardRow = ({
   const { field, link } = entry;
   const isShared = field.key !== null;
   const TypeIcon = EMBEDDED_FIELD_ICON_BY_DATA_TYPE[field.dataType];
+  const typeLabel = getDataTypeLabel(field.dataType, t);
 
   /**
    * What a warning means, as a sentence. The branch is decided in `.ts`; the copy lives here because
@@ -96,7 +94,11 @@ export const EmbeddedDataCardRow = ({
       data-storage-key={link.storageKey}>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <TypeIcon className="size-4 shrink-0 text-slate-500" aria-hidden="true" />
+          {/* The row's only statement of what kind of value this is — the meta line below used to
+              repeat it in words, which said the same thing twice in a row two lines tall. */}
+          <TooltipRenderer tooltipContent={typeLabel}>
+            <TypeIcon className="size-4 shrink-0 text-slate-500" aria-label={typeLabel} />
+          </TooltipRenderer>
           <span className="truncate text-sm font-medium text-slate-800">{field.name}</span>
           <Badge
             text={
@@ -118,12 +120,7 @@ export const EmbeddedDataCardRow = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-          <span className="flex items-center gap-1.5 whitespace-nowrap">
-            {getSourceIcon(field.source, "size-3.5")}
-            {getSourceLabel(field.source, t)}
-          </span>
-          <span aria-hidden="true">·</span>
-          <span className="whitespace-nowrap">{getDataTypeLabel(field.dataType, t)}</span>
+          <FieldSourceIndicator source={field.source} iconClassName="size-3.5" />
           <span aria-hidden="true">·</span>
           <span className="truncate">
             {`${t("common.default")}: `}

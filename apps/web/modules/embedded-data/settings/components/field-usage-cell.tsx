@@ -24,6 +24,11 @@ interface FieldUsageCellProps {
  * for a panel most rows never open. Once loaded they are kept — the same row reopened is the common
  * case, and a library field's usage does not change while the page is open unless this user changes
  * it, which reloads the route anyway.
+ *
+ * **The whole cell is the control, whichever answer it gives.** The trigger fills its cell rather
+ * than hugging its text, so the gap beside "2 surveys" opens the popover like the words do; and an
+ * unused row renders no trigger at all and stops nothing, so clicking "Not used" opens the field for
+ * editing exactly as clicking anywhere else on that row does.
  */
 export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<FieldUsageCellProps>) => {
   const { t } = useTranslation();
@@ -32,7 +37,9 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
   const label = getUsageLabel(surveyCount);
 
   if (label.kind === "unused") {
-    return <span className="text-slate-500">{t("workspace.embedded_data.not_used")}</span>;
+    // `block`, so the span covers the cell it is given: the row's own click handler is what a click
+    // anywhere in here reaches, and a dead patch in the middle of a clickable row is the bug.
+    return <span className="block text-slate-500">{t("workspace.embedded_data.not_used")}</span>;
   }
 
   const text =
@@ -75,7 +82,12 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
       onOpenChange={(open) => {
         if (open && !usage) void loadUsage();
       }}>
-      <PopoverTrigger className="rounded-sm text-sm text-slate-800 underline underline-offset-2 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden">
+      <PopoverTrigger
+        // The row behind this one opens the edit dialog. Stopping the click here rather than on the
+        // column keeps that suppression to the trigger, which is the only part of the cell that has
+        // something else to do with it.
+        onClick={(event) => event.stopPropagation()}
+        className="-m-1 flex w-full cursor-pointer items-center rounded-sm p-1 text-left text-sm text-slate-800 underline underline-offset-2 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden">
         {text}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 shadow-lg">

@@ -2,11 +2,8 @@ import type { TFunction } from "i18next";
 import {
   AirplayIcon,
   ArrowUpFromDotIcon,
-  CalendarDaysIcon,
   ClockIcon,
-  FileDigitIcon,
   FileTextIcon,
-  FileType2Icon,
   FlagIcon,
   GlobeIcon,
   LanguagesIcon,
@@ -17,10 +14,10 @@ import {
   ShieldIcon,
   SmartphoneIcon,
   TimerIcon,
-  ToggleLeftIcon,
 } from "lucide-react";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
+import { DATA_TYPE_ICONS } from "@/modules/ui/components/data-type-badge/lib/data-types";
 
 /**
  * The human-readable label for a reserved field (ENG-2540).
@@ -130,17 +127,13 @@ export const RESERVED_FIELD_ICONS: Record<string, LucideIcon> = {
  * what decides the operators the next dropdown will offer, and whether the recall token will render
  * a date or a word.
  *
- * A map rather than a chain of ternaries so it stays exhaustive: adding a dataType is a compile
- * error here instead of a row that quietly renders with no icon. Auto-captured fields have their own
- * map ({@link RESERVED_FIELD_ICONS}), keyed by name, because there a `string` is sometimes a country
- * and sometimes a browser and the icon is worth more than the type would be.
+ * **The glyphs are the contact-attributes set**, re-exported from the shared data-type module rather
+ * than chosen again here: the two surfaces drew a different icon for the same four kinds, so a
+ * `number` read as one thing in Attributes and another in Embedded Data (ENG-1860). Auto-captured
+ * fields keep their own map ({@link RESERVED_FIELD_ICONS}), keyed by name, because there a `string`
+ * is sometimes a country and sometimes a browser and the icon is worth more than the type would be.
  */
-export const EMBEDDED_FIELD_ICON_BY_DATA_TYPE: Record<TEmbeddedDataType, LucideIcon> = {
-  string: FileType2Icon,
-  number: FileDigitIcon,
-  boolean: ToggleLeftIcon,
-  date: CalendarDaysIcon,
-};
+export const EMBEDDED_FIELD_ICON_BY_DATA_TYPE: Record<TEmbeddedDataType, LucideIcon> = DATA_TYPE_ICONS;
 
 /** The icon an auto-captured field gets, falling back to the generic one for an entry with none. */
 export const getReservedFieldIcon = (name: string): LucideIcon => RESERVED_FIELD_ICONS[name] ?? GlobeIcon;

@@ -318,6 +318,15 @@ export const SettingsSidebarContent = ({
       icon: <LanguagesIcon className={iconClassName} />,
       disabled: isBilling,
     },
+    // Directly below Survey Languages: both are things a survey is composed from rather than things
+    // the workspace is connected to, and an author reaches for them at the same point.
+    {
+      id: "embedded-data",
+      label: t("common.embedded_data"),
+      href: workspaceSettingsPath(workspaceId, "embedded-data"),
+      icon: <DatabaseIcon className={iconClassName} />,
+      disabled: isBilling,
+    },
     {
       id: "app-connection",
       label: t("common.web_and_mobile_sdk"),
@@ -351,14 +360,6 @@ export const SettingsSidebarContent = ({
       label: t("common.tags"),
       href: workspaceSettingsPath(workspaceId, "tags"),
       icon: <TagIcon className={iconClassName} />,
-      disabled: isBilling,
-    },
-    // Last in the section, next to the other two lists a survey reuses: User Actions and Tags.
-    {
-      id: "embedded-data",
-      label: t("common.embedded_data"),
-      href: workspaceSettingsPath(workspaceId, "embedded-data"),
-      icon: <DatabaseIcon className={iconClassName} />,
       disabled: isBilling,
     },
   ];

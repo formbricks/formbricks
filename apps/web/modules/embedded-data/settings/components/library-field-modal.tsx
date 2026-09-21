@@ -22,7 +22,6 @@ import {
 import { DefaultValueInput } from "@/modules/embedded-data/components/default-value-input";
 import type { TSharedEmbeddedData, TSharedEmbeddedDataWriteResult } from "@/modules/embedded-data/types";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
-import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -63,6 +62,7 @@ import {
   parseDefaultValueDraft,
 } from "../lib/library-field";
 import { getDataTypeLabel, getSourceIcon, getSourceLabel } from "./field-labels";
+import { FieldSourceIndicator } from "./field-status";
 
 /**
  * Create and edit in one component, because the two dialogs differ only in what is fixed.
@@ -386,10 +386,7 @@ export const LibraryFieldModal = ({
                   {isEdit ? (
                     <div className="flex flex-col gap-2">
                       <Label>{t("workspace.embedded_data.value_source")}</Label>
-                      <div className="flex items-center gap-2 text-slate-500">
-                        {getSourceIcon(field.source, "size-4")}
-                        <Badge text={getSourceLabel(field.source, t)} type="gray" size="tiny" />
-                      </div>
+                      <FieldSourceIndicator source={field.source} />
                       <p className="text-xs text-slate-500">
                         {t("workspace.embedded_data.source_cannot_be_changed")}
                       </p>
