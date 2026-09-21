@@ -102,8 +102,54 @@ export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !==
 export const MAIL_FROM = env.MAIL_FROM;
 export const MAIL_FROM_NAME = env.MAIL_FROM_NAME;
 
-export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
-export const BETTER_AUTH_SECRET = env.BETTER_AUTH_SECRET;
+/**
+ * Auth secret and base URL, resolved once for the whole app.
+ *
+ * `BETTER_AUTH_*` are the documented names. `NEXTAUTH_*` are a deliberately UNDOCUMENTED
+ * backward-compatible alias: ENG-1054 shipped them as the canonical names, and ENG-2599 flipped the docs
+ * without dropping them. The alias is permanent, not a deprecation window — nothing ever rewrites an
+ * existing install's env. A Compose install keeps a literal `NEXTAUTH_SECRET:` in its customized
+ * `docker-compose.yml` and `update_formbricks()` never touches it, so removing the fallback would break
+ * every instance that upgraded from v5.1 or earlier.
+ *
+ * Resolve here, never at the call site. The secret signs Better Auth's session cookies (auth.ts), the
+ * forward-auth proxy's verification of them (session-cookie.ts), and every app JWT — invites, email
+ * verification, email change, survey PIN tokens, gateway service tokens (lib/jwt.ts). A divergence
+ * between any two of those is an outage, and it surfaces only as an opaque `state_security_mismatch`
+ * (better-auth-observability.ts).
+ *
+ * `firstConfigured` treats a blank value as unset, which `??` does not: `"" ?? env.NEXTAUTH_SECRET` is
+ * `""`, which is falsy and would fail every guard below while shadowing a perfectly good legacy secret.
+ * `env.ts` already normalizes blank to undefined for both names, so this is the second line of defence
+ * rather than the first — kept because the invariant belongs next to the resolution, not in a distant
+ * schema. It selects a value, never rewrites one: trimming a secret would re-key the instance.
+ *
+ * Note these constant names collide with env vars Better Auth reads on its own
+ * (`options.secret || env.BETTER_AUTH_SECRET || env.AUTH_SECRET`). There is no live conflict because
+ * auth.ts passes `secret` and `baseURL` explicitly; `assertAuthRuntimeConfiguration` in lib/env.ts
+ * refuses to boot on the one configuration where it would matter.
+ */
+const firstConfigured = (...values: (string | undefined)[]): string | undefined =>
+  values.find((value) => value !== undefined && value.trim().length > 0);
+
+export const AUTH_SECRET = firstConfigured(env.BETTER_AUTH_SECRET, env.NEXTAUTH_SECRET);
+export const AUTH_URL = firstConfigured(env.BETTER_AUTH_URL, env.NEXTAUTH_URL);
+
+/**
+ * Every configured auth origin, not just the winning one: an instance mid-rename has both set, and both
+ * have to stay trusted or Better Auth's CSRF/origin check rejects requests arriving on the other.
+ *
+ * De-duplicated because the managed paths set both names to the same value — the chart writes both keys
+ * from one `$webappUrl`, and the one-click installer seds both to the same domain — so the common case is
+ * one origin listed twice.
+ *
+ * The explicit type predicate is load-bearing — `.filter(Boolean)` does not narrow
+ * `(string | undefined)[]` to the `string[]` that `trustedOrigins` requires.
+ */
+export const AUTH_TRUSTED_ORIGINS = [
+  ...new Set([env.BETTER_AUTH_URL, env.NEXTAUTH_URL].filter((url): url is string => Boolean(url?.trim()))),
+];
+
 export const ITEMS_PER_PAGE = 30;
 export const SURVEYS_PER_PAGE = 12;
 export const RESPONSES_PER_PAGE = 25;

@@ -47,7 +47,7 @@ and the separate [Cloud bridge procedure](./CLOUD-CUTOVER.md).
   decision (legacy vs SpiceDB), the proof that the workspace-scoped list paths issue
   a row-count-independent number of checks, and how to reproduce both with
   `pnpm authzed:perf`.
-- [`AuthZed Operations`](../docs/self-hosting/advanced/authzed-operations.mdx) —
+- [`AuthZed Operations`](../docs/self-hosting/configuration/authzed-operations.mdx) —
   the public self-hosting contract for Docker and Kubernetes operators.
 
 ## Running the validation

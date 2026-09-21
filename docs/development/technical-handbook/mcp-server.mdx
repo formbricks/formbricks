@@ -118,10 +118,19 @@ without declaring a scope, so a new tool inherits enforcement by construction �
 group legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, which keeps them on the
 same registration path rather than a hand-rolled gate.
 
-The one current exception is the feedback-record tools, which centralise the gate in their own shared
-read/write handler factories and register through `server.registerTool` directly. Every one of their
-handlers is still gated, but the guarantee is by convention there rather than by construction —
-converging them onto `registerScopedTool` is a known follow-up.
+**There are no exceptions, and tests are what keep it that way.** The feedback-record tools were one
+for a while — they gated inside their own handler factories and registered through
+`server.registerTool` directly, which meant every handler was checked but a *new* tool added outside
+those factories would have registered unguarded. ENG-2119 moved all ten onto `registerScopedTool` and
+made `guardMcpScopes` / `guardMcpAnyScope` private again, so the guards are no longer reachable from a
+tool module.
+
+Be precise about what that guarantees. Privacy removes the hand-rolled gate, and the compiler stops you
+forgetting `registerScopedTool`'s scope argument — but it cannot stop a module calling
+`server.registerTool(...)` directly, because `server` is an argument to every tool module. No type
+system reaches that. The checks that do: a test pins `registerScopedTool` as the only export of
+`guard-scopes.ts`, and `feedback-records.test.ts` drives all ten tools with the opposite scope, which
+goes red if a tool is registered unguarded *or* wired to the wrong scope.
 
 **There is no single mandatory baseline scope.** Authentication requires *at least one* resource scope
 (`MCP_RESOURCE_SCOPES`), so a workflows-only or `feedbackRecords:read`-only grant is a legitimate MCP
