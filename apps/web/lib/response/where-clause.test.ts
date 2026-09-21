@@ -74,6 +74,21 @@ describe("buildWhereClause: date windows", () => {
     ]);
   });
 
+  test("the complement on the variables column matches either side, and an absent value", () => {
+    // The data column's complement is pinned above; this is the other translator, and it is a
+    // separate code path rather than the same one parameterised — so an inverted bound or a dropped
+    // absent-value arm here would not show up there.
+    expect(clausesFor({ variables: { renewal_date: { op: "notInRange", ...window } } })).toEqual([
+      {
+        OR: [
+          { variables: { path: ["renewal_date"], lt: window.min } },
+          { variables: { path: ["renewal_date"], gte: window.max } },
+          { variables: { path: ["renewal_date"], equals: Prisma.DbNull } },
+        ],
+      },
+    ]);
+  });
+
   test("fails closed: a window on a string-typed field emits nothing, in either column", () => {
     // Nothing offers a range for a string field, so one could only have been crafted — and `lt` on
     // a string column would silently answer with a lexicographic slice of it.

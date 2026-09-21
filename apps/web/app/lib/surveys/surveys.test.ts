@@ -1504,6 +1504,30 @@ describe("surveys", () => {
       expect(maxOf("2024-02-29")).toBe("2024-03-01");
     });
 
+    test("the window is UTC wherever the machine running it happens to be", () => {
+      // The boundary is read off the UTC clock on purpose: `new Date(2026, 8, 1)` is midnight
+      // wherever the process sits, so in a positive-offset zone it lands on the previous day and
+      // the same saved filter would answer differently per viewer.
+      //
+      // Pinned under a zone that is not UTC, deliberately. Under UTC the local-zone and UTC
+      // constructors agree to the day, so the mistake is invisible there — and UTC is what CI runs,
+      // which would leave this the one guarantee nothing could catch.
+      /* eslint-disable turbo/no-undeclared-env-vars -- the zone under test, not app config */
+      const original = process.env.TZ;
+      process.env.TZ = "Australia/Sydney";
+
+      try {
+        expect(buildDateFieldCondition("equals", "2026-09-01")).toEqual({
+          op: "inRange",
+          min: "2026-09-01",
+          max: "2026-09-02",
+        });
+      } finally {
+        process.env.TZ = original;
+      }
+      /* eslint-enable turbo/no-undeclared-env-vars */
+    });
+
     test("a full datetime names its own instant, so it is compared as-is", () => {
       const value = "2026-09-01T10:30:00Z";
 
