@@ -85,7 +85,7 @@ export const SurveyEditor = ({
   isExternalUrlsAllowed,
   publicDomain,
   enterpriseLicenseRequestFormUrl,
-}: SurveyEditorProps) => {
+}: Readonly<SurveyEditorProps>) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));

@@ -56,7 +56,7 @@ export const SettingsView = ({
   locale,
   appSetupCompleted,
   enterpriseLicenseRequestFormUrl,
-}: SettingsViewProps) => {
+}: Readonly<SettingsViewProps>) => {
   const isAppSurvey = localSurvey.type === "app";
 
   return (

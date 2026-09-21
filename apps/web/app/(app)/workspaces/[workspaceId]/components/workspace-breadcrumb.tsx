@@ -193,6 +193,7 @@ export const WorkspaceBreadcrumb = ({
           setOpen={setOpenLimitModal}
           buttons={getLimitModalButtons()}
           workspaceLimit={organizationWorkspacesLimit}
+          showLiteLicenseTip={!isFormbricksCloud && !isLicenseActive}
         />
       )}
       {openCreateWorkspaceModal && (

@@ -663,6 +663,7 @@ export const MainNavigation = ({
           setOpen={setOpenWorkspaceLimitModal}
           buttons={workspaceLimitModalButtons()}
           workspaceLimit={organizationWorkspacesLimit}
+          showLiteLicenseTip={!isFormbricksCloud && !isLicenseActive}
         />
       )}
       {openCreateWorkspaceModal && (
