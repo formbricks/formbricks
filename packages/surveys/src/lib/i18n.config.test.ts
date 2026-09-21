@@ -1,7 +1,12 @@
-import { readdirSync } from "node:fs";
-import { describe, expect, test } from "vitest";
+import { readFileSync, readdirSync } from "node:fs";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SURVEY_RUNTIME_LANGUAGE_CODES } from "@formbricks/i18n-utils/survey-runtime-languages";
-import i18n, { resolveFallbackBundles } from "./i18n.config";
+import i18n, {
+  hasLanguageLoaded,
+  loadLanguage,
+  resolveFallbackBundles,
+  setLocaleBaseUrl,
+} from "./i18n.config";
 
 // Locks down the locale-to-bundle fallback contract (ENG-1067). Bundles are keyed by each language's
 // canonical CLDR-default tag (`de-DE`, `pt-BR`, `zh-Hans-CN`); resolveFallbackBundles maps any requested
@@ -72,30 +77,128 @@ describe("resolveFallbackBundles", () => {
 });
 
 describe("shipped bundles", () => {
-  // supportedLngs, the static imports and the resources map are three hand-maintained lists that must
-  // agree — a language registered as supported without a bundle silently renders English (ENG-2068).
-  test("every supported language has a translation bundle registered", () => {
-    const supportedLngs = i18n.options.supportedLngs || [];
-    const supported = supportedLngs.filter((code: string) => code !== "cimode");
-    expect([...supported].sort()).toEqual(Object.keys(i18n.options.resources ?? {}).sort());
+  const localeFiles = readdirSync(new URL("../../locales/", import.meta.url))
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => file.replace(/\.json$/, ""));
+
+  // Every language the runtime advertises must have a bundle that can actually be served — inlined for
+  // English, fetchable from /js/locales for the rest. Advertising one with no bundle behind it is the
+  // bug this guards (ENG-2068): the survey renders English chrome around translated questions.
+  test("every supported language has a bundle on disk to serve", () => {
+    const supported = (i18n.options.supportedLngs || []).filter((code: string) => code !== "cimode");
+    expect([...supported].sort()).toEqual([...localeFiles].sort());
+  });
+
+  // The whole point of loading on demand: shipping a second bundle inside the widget puts that language
+  // back on every respondent's download, whether they speak it or not.
+  test("English is the only bundle compiled into the widget", () => {
+    expect(Object.keys(i18n.options.resources ?? {})).toEqual(["en-US"]);
   });
 
   // SURVEY_RUNTIME_LANGUAGE_CODES is what the workspace default-survey-language picker offers
   // (ENG-2816). Offering a language whose bundle we do not ship is the bug that setting exists to
   // avoid, so the list has to be provably the shipped set — not a copy of it that can rot.
   test("the runtime language list matches the bundles on disk", () => {
-    const shippedBundleCodes = readdirSync(new URL("../../locales/", import.meta.url))
-      .filter((file) => file.endsWith(".json"))
-      .map((file) => file.replace(/\.json$/, ""));
-
-    expect([...SURVEY_RUNTIME_LANGUAGE_CODES].sort()).toEqual(shippedBundleCodes.sort());
+    expect([...SURVEY_RUNTIME_LANGUAGE_CODES].sort()).toEqual([...localeFiles].sort());
   });
 
-  test("survey strings resolve for the shipped languages", () => {
+  test("survey strings resolve once a shipped bundle is loaded", () => {
     for (const code of ["id-ID", "km-KH", "ne-NP", "ur-PK", "vi-VN", "zh-Hant-TW"]) {
+      const bundle = JSON.parse(
+        readFileSync(new URL(`../../locales/${code}.json`, import.meta.url), "utf-8")
+      ) as Record<string, unknown>;
+      i18n.addResourceBundle(code, "translation", bundle);
+
       const required = i18n.getFixedT(code)("common.required");
       expect(required).not.toBe("common.required");
       expect(required).not.toBe(i18n.getFixedT("en-US")("common.required"));
+
+      i18n.removeResourceBundle(code, "translation");
     }
+  });
+});
+
+describe("loadLanguage", () => {
+  const baseUrl = "https://app.formbricks.com/js/locales";
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    setLocaleBaseUrl(baseUrl);
+    fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ common: { next: "x" } }) });
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    for (const code of SURVEY_RUNTIME_LANGUAGE_CODES) i18n.removeResourceBundle(code, "translation");
+  });
+
+  const requestedUrls = (): string[] => fetchMock.mock.calls.map((call) => String(call[0]));
+
+  // A survey language is stored un-canonicalized and most region variants ship no file of their own —
+  // `de-AT` is served by `de-DE.json`, `en-GB` by the bundled English. Fetching the requested tag would
+  // 404 on every one of them and silently fall back to English.
+  test.each([
+    ["de-AT", "de-DE"],
+    ["de-LU", "de-DE"],
+    ["fr-BE", "fr-FR"],
+    ["it-CH", "it-IT"],
+    ["nl-BE", "nl-NL"],
+    ["pt-PT", "pt-BR"],
+    ["zh-TW", "zh-Hant-TW"],
+    ["de", "de-DE"],
+  ])("%s is fetched from its language's bundle, %s", async (requested, bundle) => {
+    await loadLanguage(requested);
+    expect(requestedUrls()).toHaveLength(1);
+    expect(requestedUrls()[0]).toContain(`${baseUrl}/${bundle}.json?v=`);
+  });
+
+  test("English and its variants never cost a request", async () => {
+    await loadLanguage("en-US");
+    await loadLanguage("en-GB");
+    await loadLanguage("en-AU");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test("a language with no bundle at all never costs a request", async () => {
+    await loadLanguage("fa-IR");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test("concurrent and repeat asks for one bundle share a single request", async () => {
+    await Promise.all([loadLanguage("de-DE"), loadLanguage("de-AT"), loadLanguage("de")]);
+    await loadLanguage("de-DE");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("a failed fetch leaves the survey renderable in English", async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 404 });
+    await expect(loadLanguage("pl-PL")).resolves.toBeUndefined();
+    expect(i18n.hasResourceBundle("pl-PL", "translation")).toBe(false);
+    expect(i18n.getFixedT("pl-PL")("common.required")).toBe(i18n.getFixedT("en-US")("common.required"));
+  });
+
+  test("nothing is requested before the host app has said where the bundles live", async () => {
+    setLocaleBaseUrl("");
+    await loadLanguage("pl-PL");
+    expect(fetchMock).not.toHaveBeenCalled();
+    setLocaleBaseUrl(baseUrl);
+  });
+});
+
+describe("hasLanguageLoaded", () => {
+  test("is true for English without a fetch, false for an unfetched language", () => {
+    expect(hasLanguageLoaded("en-US")).toBe(true);
+    expect(hasLanguageLoaded("en-GB")).toBe(true);
+    expect(hasLanguageLoaded("pl-PL")).toBe(false);
+  });
+
+  // The provider asks about the requested tag; the answer has to be about the bundle that serves it, or
+  // a loaded `de-DE` would read as missing for `de-AT` and refetch on every render.
+  test("answers for the bundle that serves the tag, not the tag", () => {
+    i18n.addResourceBundle("de-DE", "translation", { common: { next: "Weiter" } });
+    expect(hasLanguageLoaded("de-AT")).toBe(true);
+    i18n.removeResourceBundle("de-DE", "translation");
+    expect(hasLanguageLoaded("de-AT")).toBe(false);
   });
 });

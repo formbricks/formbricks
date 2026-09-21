@@ -5,7 +5,7 @@ import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
 import { getI18nLanguage } from "@/lib/i18n-utils";
-import i18n from "@/lib/i18n.config";
+import i18n, { loadLanguage } from "@/lib/i18n.config";
 import { getLanguageDisplayName, getShortLanguageDisplayName } from "@/lib/language-display-name";
 import { getVisibleSurveyLanguages, isSameLanguageCode } from "@/lib/language-options";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
@@ -75,9 +75,13 @@ export function LanguageSwitch({
 
   const handleI18nLanguage = (languageCode: string) => {
     const calculatedLanguage = getI18nLanguage(languageCode, surveyLanguages);
-    if (i18n.language !== calculatedLanguage) {
-      i18n.changeLanguage(calculatedLanguage);
-    }
+    // Fetch first, switch second, so the chrome flips straight from one language to the next instead of
+    // blinking through English while the new strings are in flight. Resolves immediately once loaded.
+    void loadLanguage(calculatedLanguage).then(() => {
+      if (i18n.language !== calculatedLanguage) {
+        i18n.changeLanguage(calculatedLanguage);
+      }
+    });
   };
 
   const changeLanguage = (languageCode: string) => {

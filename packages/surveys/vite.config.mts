@@ -1,4 +1,6 @@
 import preact from "@preact/preset-vite";
+import { createHash } from "node:crypto";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { visualizer } from "rollup-plugin-visualizer";
@@ -36,6 +38,25 @@ const stubSurveyUiStylesForVitest = (): Plugin => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const localesDir = resolve(__dirname, "locales");
+
+/**
+ * Content hash of every shipped locale, injected as `__FB_LOCALES_HASH__` and appended to each
+ * on-demand locale fetch as `?v=`. `/js/*` is served with a 30-day `s-maxage`, so without a token that
+ * moves with the strings a fresh bundle could be handed a month-old bundle of them; with one, the URL
+ * changes only when a translation actually does.
+ */
+const computeLocalesHash = (): string => {
+  const hash = createHash("sha256");
+  for (const file of readdirSync(localesDir)
+    .filter((name) => name.endsWith(".json"))
+    .sort()) {
+    hash.update(file);
+    hash.update(readFileSync(resolve(localesDir, file)));
+  }
+  return hash.digest("hex").slice(0, 12);
+};
+
 const config = ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
@@ -51,6 +72,7 @@ const config = ({ mode }) => {
     },
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),
+      __FB_LOCALES_HASH__: JSON.stringify(computeLocalesHash()),
     },
     plugins: [preact(), tsconfigPaths()],
   };
@@ -77,7 +99,7 @@ const config = ({ mode }) => {
       },
       plugins: [
         ...sharedConfig.plugins,
-        copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),
+        copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist"), localesDir }),
       ],
     });
   }
@@ -144,7 +166,7 @@ const config = ({ mode }) => {
     plugins: [
       ...sharedConfig.plugins,
       stubSurveyUiStylesForVitest(),
-      copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),
+      copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist"), localesDir }),
       process.env.ANALYZE === "true" &&
         visualizer({
           filename: resolve(__dirname, "stats.html"),
