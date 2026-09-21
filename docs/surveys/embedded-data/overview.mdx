@@ -95,7 +95,8 @@ The same contract runs in the browser when the survey is displayed, and again on
 
   <Step title="Coercion to the declared type">
     Values are coerced rather than rejected. `"42"` into a `number` field becomes `42`; `true`, `1`, `yes`
-    and `on` (and their negatives) become booleans; a `date` field accepts `2026-08-06` and full ISO 8601
+    and `on` (and their negatives) become the strings `"true"` and `"false"` — that canonical pair is what a
+    response stores, what an export column shows, and what a filter compares against; a `date` field accepts `2026-08-06` and full ISO 8601
     datetimes, stores ISO 8601, and reads a datetime with no zone as UTC rather than as the respondent's
     local time. A value that cannot be coerced is stored verbatim and flagged, so a bad parameter never
     blocks a response. Today every hidden field is a `string`, and every scalar has a lossless text form, so
