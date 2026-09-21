@@ -6,9 +6,9 @@ icon: "arrow-right"
 
 ## v6
 
-Formbricks v6 replaces the legacy authorization evaluator with AuthZed SpiceDB. PostgreSQL remains the source
-of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback, so an existing
-installation must prepare its complete authorization graph before serving v6 traffic.
+Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL
+remains the source of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback,
+so an existing installation must prepare its complete authorization graph before serving v6 traffic.
 
 Use the supported source/target pair in the release notes and the
 [maintenance upgrade procedure](/self-hosting/advanced/v6-maintenance-upgrade). A self-hosted v5 bridge is not required:
@@ -18,7 +18,8 @@ Use the supported source/target pair in the release notes and the
 2. Merge the release-matched AuthZed deployment services or Helm values without overwriting proxy, storage,
    SMTP, or external-datastore customization.
 3. Run the target-image database migrations while writers remain stopped, never against the still-running v5 app.
-4. Run `formbricks-authzed upgrade prepare`, then require `formbricks-authzed upgrade check` to exit `0`.
+4. Run `formbricks-authzed-prepare --backup-confirmed --writers-stopped`; it runs migrations, reconciliation,
+   one clean full audit, and a second independent `upgrade check` audit.
 5. For one-click or Compose, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. For Helm, set
    `authzed.migrationAcknowledged=true` in the v6 upgrade values.
 6. Deploy v6 and verify critical allow, deny, revocation, and cross-tenant cases.
@@ -26,6 +27,9 @@ Use the supported source/target pair in the release notes and the
 The update script and Helm upgrade hook verify the prepared graph without repairing it. Do not bypass a failed
 gate. Keep maintenance active on failure: after database changes, recovery may require restoring coordinated
 backups rather than running `helm rollback`. Pin explicit releases and digests, not floating tags.
+
+The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
+`appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
 
 ### Changes in Environment Variables
 
