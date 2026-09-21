@@ -14,6 +14,7 @@ import {
   ZEmbeddedDataType,
 } from "@formbricks/types/embedded-data";
 import { toSafeIdentifier } from "@formbricks/types/safe-identifier";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createSharedEmbeddedDataAction,
@@ -428,6 +429,35 @@ export const LibraryFieldModal = ({
                     />
                   )}
 
+                  {/* Why the Type list below is shorter. Which types it holds is `ZEmbeddedData`'s
+                      answer, read through `getDataTypesForSource` — this only names the source the
+                      sentence is about. */}
+                  {source === "computed" && (
+                    <p className="text-xs text-slate-500">
+                      {t("workspace.embedded_data.calculated_type_hint")}
+                    </p>
+                  )}
+
+                  {isLockableSource(source) && (
+                    <FormField
+                      control={form.control}
+                      name="locked"
+                      render={({ field: lockedField }) => (
+                        <FormItem>
+                          <AdvancedOptionToggle
+                            htmlId="embedded-data-locked"
+                            isChecked={lockedField.value}
+                            onToggle={lockedField.onChange}
+                            title={t("workspace.embedded_data.locked")}
+                            description={t("workspace.embedded_data.locked_description")}
+                            customContainerClass="px-0 py-0"
+                          />
+                          <FormError />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -439,7 +469,7 @@ export const LibraryFieldModal = ({
                             <Select
                               value={dataTypeField.value}
                               onValueChange={(next) => handleDataTypeChange(ZEmbeddedDataType.parse(next))}>
-                              <SelectTrigger className="w-full">
+                              <SelectTrigger className="h-10 w-full">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -475,34 +505,12 @@ export const LibraryFieldModal = ({
                       )}
                     />
                   </div>
-
-                  {/* Why the Type list just got shorter. Which types it holds is `ZEmbeddedData`'s
-                      answer, read through `getDataTypesForSource` — this only names the source the
-                      sentence is about. */}
-                  {source === "computed" && (
+                  {/* Moved off the table (ENG-1860): a date every row repeats is worth one line on
+                      the field it belongs to, not a column competing with the values. */}
+                  {isEdit && (
                     <p className="text-xs text-slate-500">
-                      {t("workspace.embedded_data.calculated_type_hint")}
+                      {`${t("common.created_at")}: ${formatDateForDisplay(field.createdAt, locale)}`}
                     </p>
-                  )}
-
-                  {isLockableSource(source) && (
-                    <FormField
-                      control={form.control}
-                      name="locked"
-                      render={({ field: lockedField }) => (
-                        <FormItem>
-                          <AdvancedOptionToggle
-                            htmlId="embedded-data-locked"
-                            isChecked={lockedField.value}
-                            onToggle={lockedField.onChange}
-                            title={t("workspace.embedded_data.locked")}
-                            description={t("workspace.embedded_data.locked_description")}
-                            customContainerClass="px-0 py-0"
-                          />
-                          <FormError />
-                        </FormItem>
-                      )}
-                    />
                   )}
                 </div>
               </DialogBody>

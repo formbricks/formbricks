@@ -230,7 +230,7 @@ export const EmbeddedFieldForm = ({
                 <Label>{t("workspace.embedded_data.value_source")}</Label>
                 <div className="flex items-center gap-2">
                   <FieldSourceIndicator source={entry.field.source} />
-                  <IdBadge id={entry.link.storageKey} showCopyIconOnHover={true} />
+                  <IdBadge id={entry.link.storageKey} />
                 </div>
                 <p className="text-xs text-slate-500">
                   {t("workspace.embedded_data.survey_field_address_fixed")}
@@ -273,6 +273,33 @@ export const EmbeddedFieldForm = ({
               />
             )}
 
+            {/* Why the Type list below is shorter for a calculated field. Which types it holds is
+              `ZEmbeddedData`'s answer, read through `getDataTypesForSource` — this only names
+              the source the sentence is about. */}
+            {source === "computed" && (
+              <p className="text-xs text-slate-500">{t("workspace.embedded_data.calculated_type_hint")}</p>
+            )}
+
+            {isLockableSource(source) && (
+              <FormField
+                control={form.control}
+                name="locked"
+                render={({ field: lockedField }) => (
+                  <FormItem>
+                    <AdvancedOptionToggle
+                      htmlId="embedded-field-locked"
+                      isChecked={lockedField.value}
+                      onToggle={lockedField.onChange}
+                      title={t("workspace.embedded_data.locked")}
+                      description={t("workspace.embedded_data.locked_description")}
+                      customContainerClass="px-0 py-0"
+                    />
+                    <FormError />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -284,7 +311,7 @@ export const EmbeddedFieldForm = ({
                       <Select
                         value={dataTypeField.value}
                         onValueChange={(next) => handleDataTypeChange(ZEmbeddedDataType.parse(next))}>
-                        <SelectTrigger id="embedded-field-type" className="w-full">
+                        <SelectTrigger id="embedded-field-type" className="h-10 w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -321,33 +348,6 @@ export const EmbeddedFieldForm = ({
                 )}
               />
             </div>
-
-            {/* Why the Type list is shorter for a calculated field. Which types it holds is
-              `ZEmbeddedData`'s answer, read through `getDataTypesForSource` — this only names
-              the source the sentence is about. */}
-            {source === "computed" && (
-              <p className="text-xs text-slate-500">{t("workspace.embedded_data.calculated_type_hint")}</p>
-            )}
-
-            {isLockableSource(source) && (
-              <FormField
-                control={form.control}
-                name="locked"
-                render={({ field: lockedField }) => (
-                  <FormItem>
-                    <AdvancedOptionToggle
-                      htmlId="embedded-field-locked"
-                      isChecked={lockedField.value}
-                      onToggle={lockedField.onChange}
-                      title={t("workspace.embedded_data.locked")}
-                      description={t("workspace.embedded_data.locked_description")}
-                      customContainerClass="px-0 py-0"
-                    />
-                    <FormError />
-                  </FormItem>
-                )}
-              />
-            )}
           </div>
 
           {/* Sticky rather than a `DialogFooter`, because this form is rendered inside a tab as well

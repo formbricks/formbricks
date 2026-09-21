@@ -2160,7 +2160,6 @@
       "add_to_library": "Kütüphaneye ekle",
       "add_to_library_description": "\"{name}\" alanına bir kütüphane anahtarı ver. Bu çalışma alanındaki herhangi bir anket aynı alanı ekleyebilir.",
       "after_response_submitted": "Yanıt gönderildikten sonra",
-      "anonymize_note": "Anket bağlantısına sahip olan herkes, bağlantı üzerinden iletilen değerleri okuyabilir ve değiştirebilir. Değiştiremeyecekleri bir değer ayarlamak için alanı kilitle ve varsayılan bir değer ver. Anonimleştirilmiş sütun, bir anketin ayarlarında Yanıtları anonimleştir açık olduğunda geçerlidir.",
       "auto_captured": "Otomatik yakalanan alanlar",
       "auto_captured_description": "Her anket bunları her yanıtta kaydeder, mantık, geri çağırma, filtreler ve dışa aktarımlar için hazır hale getirir.",
       "calculated_type_hint": "Hesaplanan alanlar metin veya sayıdır — anket mantığının hesaplayabildiği şeyler.",
@@ -2202,7 +2201,7 @@
       "no_default": "Varsayılan yok",
       "no_default_placeholder": "–",
       "not_used": "Kullanılmıyor",
-      "open_in_library": "Kütüphanede aç",
+      "open_library": "Kütüphaneyi aç",
       "owner_library": "Kütüphane",
       "owner_local": "Bu anket",
       "privacy_kept": "Saklandı",
@@ -2240,7 +2239,7 @@
       "warning_clashing_address": "Bu anketteki başka bir alan da bu isme yanıt veriyor. Hatırlama ve mantık bunlardan birini çözümler.",
       "warning_reserved_address": "Bu ad artık ayrılmış bir otomatik yakalama alanı. Bu anket kendi değerini tutar ve burada kazanan o olur, bu nedenle otomatik yakalanan değer bu ad altında kullanılamaz.",
       "warning_unsafe_address": "Bu adres mevcut adlandırma kuralından önce oluşturulmuş. Çalışmaya devam eder; yeni bir alan bu şekilde adlandırılamaz.",
-      "when_anonymized": "Yanıtlar anonimleştirildiğinde"
+      "when_anonymized": "Anonimleştirildiğinde"
     },
     "formbricks_logo": "Formbricks Logosu",
     "general": {

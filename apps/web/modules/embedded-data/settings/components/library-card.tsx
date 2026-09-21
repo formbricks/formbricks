@@ -17,7 +17,7 @@ interface LibraryCardProps {
   workspaceId: string;
   fields: TSharedEmbeddedDataListItem[];
   isReadOnly: boolean;
-  /** App locale — the Created column and the date default's picker format against it. */
+  /** App locale — the edit dialog's created-on line and date default picker format against it. */
   locale: string;
 }
 
@@ -60,7 +60,6 @@ export const LibraryCard = ({ workspaceId, fields, isReadOnly, locale }: Readonl
           <SettingsTable
             columns={getLibraryColumns({
               t,
-              locale,
               workspaceId,
               isReadOnly,
               onEdit: setEditingField,

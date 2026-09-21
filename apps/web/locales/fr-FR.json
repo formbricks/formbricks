@@ -2160,7 +2160,6 @@
       "add_to_library": "Ajouter à la bibliothèque",
       "add_to_library_description": "Donne à \"{name}\" une clé de bibliothèque. N'importe quelle enquête de cet espace de travail pourra alors ajouter ce même champ.",
       "after_response_submitted": "Après l'envoi de la réponse",
-      "anonymize_note": "Toute personne disposant d'un lien d'enquête peut lire et modifier les valeurs transmises via ce lien. Pour définir une valeur qu'ils ne peuvent pas modifier, verrouille le champ et attribue-lui une valeur par défaut. La colonne anonymisée s'applique lorsque l'option Anonymiser les réponses est activée dans les paramètres d'une enquête.",
       "auto_captured": "Champs capturés automatiquement",
       "auto_captured_description": "Chaque enquête enregistre ces données à chaque réponse, prêtes pour la logique, le rappel, les filtres et les exports.",
       "calculated_type_hint": "Les champs calculés sont du texte ou des nombres — ce que la logique d'enquête peut calculer.",
@@ -2202,7 +2201,7 @@
       "no_default": "Pas de valeur par défaut",
       "no_default_placeholder": "–",
       "not_used": "Non utilisé",
-      "open_in_library": "Ouvrir dans la bibliothèque",
+      "open_library": "Ouvrir la bibliothèque",
       "owner_library": "Bibliothèque",
       "owner_local": "Cette enquête",
       "privacy_kept": "Conservé",
@@ -2240,7 +2239,7 @@
       "warning_clashing_address": "Un autre champ de cette enquête répond à ce nom. Le rappel et la logique en résolvent un.",
       "warning_reserved_address": "Ce nom est désormais un champ auto-capturé réservé. Cette enquête conserve le sien, qui l'emporte ici, donc la valeur auto-capturée n'est pas disponible sous ce nom.",
       "warning_unsafe_address": "Cette adresse précède la règle de nommage actuelle. Elle continue de fonctionner ; un nouveau champ ne pourrait pas être nommé ainsi.",
-      "when_anonymized": "Lorsque les réponses sont anonymisées"
+      "when_anonymized": "Lors de l'anonymisation"
     },
     "formbricks_logo": "Logo Formbricks",
     "general": {

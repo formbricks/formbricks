@@ -2160,7 +2160,6 @@
       "add_to_library": "新增至資料庫",
       "add_to_library_description": "為「{name}」設定資料庫索引鍵。此工作區中的任何問卷都可以新增相同的欄位。",
       "after_response_submitted": "回應提交後",
-      "anonymize_note": "任何持有問卷連結的人都可以讀取及變更透過連結傳入的值。若要設定他們無法變更的值，請鎖定欄位並給予預設值。當問卷設定中的「匿名回覆」開啟時，匿名欄將會套用。",
       "auto_captured": "自動擷取欄位",
       "auto_captured_description": "每個問卷都會在每次回覆時記錄這些資料，供邏輯、引用、篩選及匯出使用。",
       "calculated_type_hint": "計算欄位為文字或數字——問卷邏輯可以計算的內容。",
@@ -2202,7 +2201,7 @@
       "no_default": "無預設值",
       "no_default_placeholder": "–",
       "not_used": "未使用",
-      "open_in_library": "在資料庫中開啟",
+      "open_library": "開啟資料庫",
       "owner_library": "資料庫",
       "owner_local": "此問卷",
       "privacy_kept": "保留",
@@ -2240,7 +2239,7 @@
       "warning_clashing_address": "此問卷中有另一個欄位使用了這個名稱。召回和邏輯將解析其中一個。",
       "warning_reserved_address": "此名稱現在是保留的自動擷取欄位。此問卷保留自己的欄位且優先使用，因此自動擷取的值無法以此名稱取得。",
       "warning_unsafe_address": "此位址早於目前的命名規則。它仍可正常運作；但新欄位無法使用此名稱。",
-      "when_anonymized": "當回應被匿名化時"
+      "when_anonymized": "匿名化時"
     },
     "formbricks_logo": "Formbricks 標誌",
     "general": {

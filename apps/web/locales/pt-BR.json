@@ -2160,7 +2160,6 @@
       "add_to_library": "Adicionar à biblioteca",
       "add_to_library_description": "Dê uma chave de biblioteca para \"{name}\". Qualquer pesquisa neste workspace pode então adicionar o mesmo campo.",
       "after_response_submitted": "Depois que a resposta for enviada",
-      "anonymize_note": "Qualquer pessoa com um link da pesquisa pode ler e alterar os valores passados por ele. Para definir um valor que não possa ser alterado, bloqueie o campo e forneça um valor padrão. A coluna anonimizada se aplica quando a opção Anonimizar respostas está ativada nas configurações de uma pesquisa.",
       "auto_captured": "Campos capturados automaticamente",
       "auto_captured_description": "Cada pesquisa registra essas informações em todas as respostas, prontas para lógica, recuperação, filtros e exportações.",
       "calculated_type_hint": "Campos calculados são texto ou números — o que a lógica da pesquisa pode calcular.",
@@ -2202,7 +2201,7 @@
       "no_default": "Sem padrão",
       "no_default_placeholder": "–",
       "not_used": "Não usado",
-      "open_in_library": "Abrir na biblioteca",
+      "open_library": "Abrir biblioteca",
       "owner_library": "Biblioteca",
       "owner_local": "Esta pesquisa",
       "privacy_kept": "Mantido",
@@ -2240,7 +2239,7 @@
       "warning_clashing_address": "Outro campo nesta pesquisa responde a este nome. Recall e lógica resolvem um deles.",
       "warning_reserved_address": "Este nome agora é um campo reservado capturado automaticamente. Esta pesquisa mantém o seu próprio, que tem prioridade aqui, então o valor capturado automaticamente não está disponível sob este nome.",
       "warning_unsafe_address": "Este endereço é anterior à regra de nomenclatura atual. Ele continua funcionando; um novo campo não poderia ser nomeado assim.",
-      "when_anonymized": "Quando as respostas forem anonimizadas"
+      "when_anonymized": "Quando anonimizado"
     },
     "formbricks_logo": "Logo da Formbricks",
     "general": {

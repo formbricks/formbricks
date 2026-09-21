@@ -96,16 +96,14 @@ export const LibraryEmbeddedFieldsTab = ({
 
   const renderRows = () => {
     if (matches.length === 0) {
-      return (
-        <EmptyState
-          variant="simple"
-          text={
-            library.length === 0
-              ? t("workspace.embedded_data.empty_state")
-              : t("workspace.embedded_data.library_all_added")
-          }
-        />
-      );
+      const emptyText = () => {
+        if (term) return t("common.no_results");
+        return library.length === 0
+          ? t("workspace.embedded_data.empty_state")
+          : t("workspace.embedded_data.library_all_added");
+      };
+
+      return <EmptyState variant="simple" text={emptyText()} />;
     }
 
     return (
@@ -118,7 +116,7 @@ export const LibraryEmbeddedFieldsTab = ({
             <div className="flex min-w-0 flex-col gap-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="truncate text-sm font-medium text-slate-800">{field.name}</span>
-                <IdBadge id={field.key} showCopyIconOnHover={true} />
+                <IdBadge id={field.key} copyDisabled={true} />
               </div>
               {field.description && <p className="text-xs text-slate-500">{field.description}</p>}
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -126,7 +124,7 @@ export const LibraryEmbeddedFieldsTab = ({
                 <DataTypeBadge dataType={field.dataType} showIcon={false} />
               </div>
             </div>
-            <Button size="sm" type="button" onClick={() => onLink(field)}>
+            <Button size="sm" type="button" variant="secondary" onClick={() => onLink(field)}>
               {t("common.add")}
             </Button>
           </div>
@@ -137,17 +135,16 @@ export const LibraryEmbeddedFieldsTab = ({
 
   return (
     <div>
-      {/* Only once there is a list long enough to search: a search box over two rows is furniture. */}
-      {linkable.length > 5 && (
-        <Input
-          type="text"
-          id="search-embedded-data-library"
-          className="mb-2 bg-white"
-          placeholder={t("workspace.embedded_data.search_library")}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      )}
+      {/* Always, like the saved-actions tab: a workspace can define hundreds of fields, and a box
+          that appears only past some threshold is one an author cannot learn to reach for. */}
+      <Input
+        type="text"
+        id="search-embedded-data-library"
+        className="mb-2 bg-white"
+        placeholder={t("workspace.embedded_data.search_library")}
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+      />
       <div className="max-h-96 overflow-y-auto">{renderRows()}</div>
     </div>
   );

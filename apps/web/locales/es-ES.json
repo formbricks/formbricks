@@ -2160,7 +2160,6 @@
       "add_to_library": "Añadir a la biblioteca",
       "add_to_library_description": "Dale a \"{name}\" una clave de biblioteca. Cualquier encuesta de este espacio de trabajo podrá entonces añadir el mismo campo.",
       "after_response_submitted": "Después de enviar la respuesta",
-      "anonymize_note": "Cualquiera con un enlace de encuesta puede leer y cambiar los valores que se pasan a través de él. Para establecer uno que no puedan cambiar, bloquea el campo y dale un valor predeterminado. La columna anonimizada se aplica cuando Anonimizar respuestas está activado en la configuración de una encuesta.",
       "auto_captured": "Campos capturados automáticamente",
       "auto_captured_description": "Cada encuesta registra estos datos en cada respuesta, listos para lógica, recuperación, filtros y exportaciones.",
       "calculated_type_hint": "Los campos calculados son texto o números — lo que la lógica de la encuesta puede calcular.",
@@ -2202,7 +2201,7 @@
       "no_default": "Sin predeterminado",
       "no_default_placeholder": "–",
       "not_used": "Sin usar",
-      "open_in_library": "Abrir en la biblioteca",
+      "open_library": "Abrir biblioteca",
       "owner_library": "Biblioteca",
       "owner_local": "Esta encuesta",
       "privacy_kept": "Conservado",
@@ -2240,7 +2239,7 @@
       "warning_clashing_address": "Otro campo de esta encuesta responde a este nombre. El recuerdo y la lógica resuelven uno de ellos.",
       "warning_reserved_address": "Este nombre ahora es un campo reservado capturado automáticamente. Esta encuesta mantiene el suyo propio, que tiene prioridad aquí, por lo que el valor capturado automáticamente no está disponible bajo este nombre.",
       "warning_unsafe_address": "Esta dirección es anterior a la regla de nomenclatura actual. Sigue funcionando; un nuevo campo no podría nombrarse así.",
-      "when_anonymized": "Cuando las respuestas sean anonimizadas"
+      "when_anonymized": "Cuando esté anonimizado"
     },
     "formbricks_logo": "Logo de Formbricks",
     "general": {

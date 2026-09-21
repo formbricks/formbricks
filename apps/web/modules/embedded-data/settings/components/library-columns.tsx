@@ -3,14 +3,12 @@
 import type { TFunction } from "i18next";
 import { LockIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { formatDateForDisplay } from "@/lib/utils/datetime";
 import type { TSharedEmbeddedDataListItem } from "@/modules/embedded-data/types";
 import { DataTypeBadge } from "@/modules/ui/components/data-type-badge";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import type { TSettingsTableColumn } from "@/modules/ui/components/settings-table";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { FieldRowMenu } from "./field-row-menu";
-import { FieldSourceIndicator } from "./field-status";
+import { FieldSourceIcon, StatusIcon } from "./field-status";
 import { FieldUsageCell } from "./field-usage-cell";
 
 /**
@@ -25,14 +23,12 @@ import { FieldUsageCell } from "./field-usage-cell";
  */
 export const getLibraryColumns = ({
   t,
-  locale,
   workspaceId,
   isReadOnly,
   onEdit,
   onDelete,
 }: Readonly<{
   t: TFunction;
-  locale: string;
   workspaceId: string;
   isReadOnly: boolean;
   onEdit: (field: TSharedEmbeddedDataListItem) => void;
@@ -42,7 +38,7 @@ export const getLibraryColumns = ({
     {
       id: "name",
       header: t("common.name"),
-      headerClassName: "w-[22%]",
+      headerClassName: "w-[26%]",
       skeletonWidth: "w-32",
       cell: (field) => (
         <div className="flex flex-col gap-0.5">
@@ -54,24 +50,29 @@ export const getLibraryColumns = ({
     {
       id: "key",
       header: t("common.key"),
-      headerClassName: "w-[16%]",
+      headerClassName: "w-[20%]",
       skeletonWidth: "w-24",
       // The chip copies the key, which is a button inside the row's activator.
       stopRowClick: true,
-      cell: (field) => <IdBadge id={field.key} showCopyIconOnHover={true} />,
+      // The copy affordance is always drawn rather than revealed on hover: a control that appears
+      // under the pointer and takes the chip's width with it makes the column twitch as the cursor
+      // crosses the table.
+      cell: (field) => <IdBadge id={field.key} />,
     },
     {
       id: "source",
       header: t("workspace.embedded_data.value_source_column"),
-      headerClassName: "w-[14%]",
+      headerClassName: "w-[8%]",
       hideBelow: "md",
-      skeletonWidth: "w-20",
-      cell: (field) => <FieldSourceIndicator source={field.source} />,
+      skeletonWidth: "w-8",
+      // Icon alone, like the auto-captured table's status columns: the heading says what the column
+      // answers, and arrow-in against calculator is a difference you read without a word.
+      cell: (field) => <FieldSourceIcon source={field.source} />,
     },
     {
       id: "dataType",
       header: t("common.type"),
-      headerClassName: "w-[10%]",
+      headerClassName: "w-[14%]",
       hideBelow: "md",
       skeletonWidth: "w-16",
       cell: (field) => <DataTypeBadge dataType={field.dataType} />,
@@ -79,7 +80,7 @@ export const getLibraryColumns = ({
     {
       id: "defaultValue",
       header: t("common.default"),
-      headerClassName: "w-[14%]",
+      headerClassName: "w-[16%]",
       hideBelow: "lg",
       skeletonWidth: "w-16",
       cell: (field) => {
@@ -96,21 +97,15 @@ export const getLibraryColumns = ({
               <span className="text-slate-500">{t("workspace.embedded_data.no_default_placeholder")}</span>
             )}
             {field.locked && (
-              <TooltipRenderer
-                tooltipContent={
+              <StatusIcon
+                icon={LockIcon}
+                iconClassName={cn("size-3.5", !hasDefault && "text-warning")}
+                label={
                   hasDefault
                     ? t("workspace.embedded_data.locked_description")
                     : t("workspace.embedded_data.locked_without_default")
-                }>
-                <LockIcon
-                  className={cn("size-3.5 shrink-0", hasDefault ? "text-slate-500" : "text-warning")}
-                  aria-label={
-                    hasDefault
-                      ? t("workspace.embedded_data.locked")
-                      : t("workspace.embedded_data.locked_without_default")
-                  }
-                />
-              </TooltipRenderer>
+                }
+              />
             )}
           </div>
         );
@@ -128,15 +123,6 @@ export const getLibraryColumns = ({
       cell: (field) => (
         <FieldUsageCell fieldId={field.id} workspaceId={workspaceId} surveyCount={field.surveyCount} />
       ),
-    },
-    {
-      id: "createdAt",
-      header: t("common.created_at"),
-      headerClassName: "w-[12%] whitespace-nowrap",
-      hideBelow: "lg",
-      cellClassName: "text-slate-500",
-      skeletonWidth: "w-20",
-      cell: (field) => formatDateForDisplay(field.createdAt, locale),
     },
   ];
 

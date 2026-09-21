@@ -2160,7 +2160,6 @@
       "add_to_library": "Adaugă în bibliotecă",
       "add_to_library_description": "Dă lui \"{name}\" o cheie de bibliotecă. Orice sondaj din acest spațiu de lucru va putea apoi adăuga același câmp.",
       "after_response_submitted": "După ce răspunsul este trimis",
-      "anonymize_note": "Oricine are un link de sondaj poate citi și modifica valorile transmise prin acesta. Pentru a stabili una pe care nu o pot schimba, blochează câmpul și oferă-i o valoare implicită. Coloana anonimizată se aplică atunci când opțiunea Anonimizează răspunsurile este activată în setările unui sondaj.",
       "auto_captured": "Câmpuri capturate automat",
       "auto_captured_description": "Fiecare sondaj înregistrează acestea la fiecare răspuns, gata pentru logică, rechemare, filtre și exporturi.",
       "calculated_type_hint": "Câmpurile calculate sunt text sau numere — ceea ce logica sondajului poate calcula.",
@@ -2202,7 +2201,7 @@
       "no_default": "Fără valoare implicită",
       "no_default_placeholder": "–",
       "not_used": "Nefolosit",
-      "open_in_library": "Deschide în bibliotecă",
+      "open_library": "Deschide biblioteca",
       "owner_library": "Bibliotecă",
       "owner_local": "Acest sondaj",
       "privacy_kept": "Păstrat",
@@ -2240,7 +2239,7 @@
       "warning_clashing_address": "Un alt câmp din acest sondaj răspunde la acest nume. Rechemarea și logica rezolvă unul dintre ele.",
       "warning_reserved_address": "Acest nume este acum un câmp auto-capturat rezervat. Acest sondaj își păstrează propriul câmp, care are prioritate aici, astfel încât valoarea auto-capturată nu este disponibilă sub acest nume.",
       "warning_unsafe_address": "Această adresă este anterioară regulii actuale de denumire. Continuă să funcționeze; un câmp nou nu ar putea fi denumit astfel.",
-      "when_anonymized": "Când răspunsurile sunt anonimizate"
+      "when_anonymized": "Când este anonimizat"
     },
     "formbricks_logo": "Logo Formbricks",
     "general": {

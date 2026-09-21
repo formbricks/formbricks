@@ -2160,7 +2160,6 @@
       "add_to_library": "Zur Bibliothek hinzufügen",
       "add_to_library_description": "Gib „{name}“ einen Bibliotheksschlüssel. Jede Umfrage in diesem Workspace kann dann dasselbe Feld hinzufügen.",
       "after_response_submitted": "Nachdem die Antwort gesendet wurde",
-      "anonymize_note": "Jeder mit einem Umfragelink kann die darüber übergebenen Werte lesen und ändern. Um einen Wert festzulegen, den sie nicht ändern können, sperre das Feld und gib ihm einen Standardwert. Die Spalte \"Anonymisiert\" gilt, wenn in den Einstellungen einer Umfrage \"Antworten anonymisieren\" aktiviert ist.",
       "auto_captured": "Automatisch erfasste Felder",
       "auto_captured_description": "Jede Umfrage erfasst diese automatisch bei jeder Antwort – bereit für Logik, Rückruf, Filter und Exporte.",
       "calculated_type_hint": "Berechnete Felder sind Text oder Zahlen – was die Umfragelogik berechnen kann.",
@@ -2202,7 +2201,7 @@
       "no_default": "Kein Standard",
       "no_default_placeholder": "–",
       "not_used": "Nicht verwendet",
-      "open_in_library": "In Bibliothek öffnen",
+      "open_library": "Bibliothek öffnen",
       "owner_library": "Bibliothek",
       "owner_local": "Diese Umfrage",
       "privacy_kept": "Gespeichert",
@@ -2240,7 +2239,7 @@
       "warning_clashing_address": "Ein anderes Feld in dieser Umfrage verwendet diesen Namen. Recall und Logik lösen eines davon auf.",
       "warning_reserved_address": "Dieser Name ist jetzt ein reserviertes automatisch erfasstes Feld. Diese Umfrage behält ihr eigenes, das hier gewinnt, sodass der automatisch erfasste Wert unter diesem Namen nicht verfügbar ist.",
       "warning_unsafe_address": "Diese Adresse stammt aus der Zeit vor der aktuellen Namensregel. Sie funktioniert weiterhin; ein neues Feld könnte nicht so benannt werden.",
-      "when_anonymized": "Wenn Antworten anonymisiert werden"
+      "when_anonymized": "Bei Anonymisierung"
     },
     "formbricks_logo": "Formbricks-Logo",
     "general": {

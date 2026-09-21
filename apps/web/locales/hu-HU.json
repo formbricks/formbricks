@@ -2160,7 +2160,6 @@
       "add_to_library": "Hozzáadás a könyvtárhoz",
       "add_to_library_description": "Adjon könyvtári kulcsot a(z) „{name}“ mezőnek. Ezt követően a munkaterület bármely felmérése hozzáadhatja ugyanazt a mezőt.",
       "after_response_submitted": "A válasz beküldése után",
-      "anonymize_note": "Bárki, aki rendelkezik felmérési hivatkozással, elolvashatja és módosíthatja a rajta keresztül átadott értékeket. Ha olyan értéket szeretne beállítani, amelyet nem tudnak módosítani, zárolja le a mezőt, és adjon meg egy alapértelmezett értéket. Az anonimizált oszlop akkor érvényes, ha a Válaszok anonimizálása be van kapcsolva a felmérés beállításaiban.",
       "auto_captured": "Automatikusan rögzített mezők",
       "auto_captured_description": "Minden felmérés rögzíti ezeket minden válasznál, felkészülve a logikára, felidézésre, szűrőkre és exportálásokra.",
       "calculated_type_hint": "A számított mezők szöveg vagy számok formájában jelennek meg — amit a felmérési logika kiszámíthat.",
@@ -2202,7 +2201,7 @@
       "no_default": "Nincs alapértelmezett",
       "no_default_placeholder": "–",
       "not_used": "Nem használt",
-      "open_in_library": "Megnyitás a könyvtárban",
+      "open_library": "Könyvtár megnyitása",
       "owner_library": "Könyvtár",
       "owner_local": "Ez a felmérés",
       "privacy_kept": "Megtartva",
@@ -2240,7 +2239,7 @@
       "warning_clashing_address": "Egy másik mező ezen a felmérésben ugyanerre a névre válaszol. Az emlékeztetés és a logika az egyiket fogja feloldani.",
       "warning_reserved_address": "Ez a név most már egy fenntartott, automatikusan rögzített mező. Ez a felmérés megtartja a sajátját, amely itt elsőbbséget élvez, így az automatikusan rögzített érték nem érhető el ezen a néven.",
       "warning_unsafe_address": "Ez a cím megelőzi a jelenlegi elnevezési szabályt. Továbbra is működik; egy új mező nem kaphatná meg ezt a nevet.",
-      "when_anonymized": "Amikor a válaszok anonimizálva vannak"
+      "when_anonymized": "Anonimizáláskor"
     },
     "formbricks_logo": "Formbricks logó",
     "general": {

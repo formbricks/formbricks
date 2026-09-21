@@ -2160,7 +2160,6 @@
       "add_to_library": "添加到库",
       "add_to_library_description": "为\"{name}\"设置库键。此工作区中的任何调查问卷都可以添加相同的字段。",
       "after_response_submitted": "提交回复后",
-      "anonymize_note": "任何拥有调查问卷链接的人都可以读取和更改通过链接传递的值。若要设置他们无法更改的值，请锁定该字段并为其设置默认值。当调查问卷设置中启用\"匿名化回复\"时，匿名化列将生效。",
       "auto_captured": "自动捕获字段",
       "auto_captured_description": "每份调查问卷都会在每次回复时记录这些内容，可用于逻辑、调用、筛选和导出。",
       "calculated_type_hint": "计算字段可以是文本或数字 — 即调查逻辑能够计算的内容。",
@@ -2202,7 +2201,7 @@
       "no_default": "无默认值",
       "no_default_placeholder": "–",
       "not_used": "未使用",
-      "open_in_library": "在库中打开",
+      "open_library": "打开库",
       "owner_library": "库",
       "owner_local": "此调查问卷",
       "privacy_kept": "保留",
@@ -2240,7 +2239,7 @@
       "warning_clashing_address": "此调查中的另一个字段使用相同的名称。召回和逻辑将解析其中一个。",
       "warning_reserved_address": "此名称现在是一个保留的自动捕获字段。此调查保留了自己的字段，该字段在此处优先，因此自动捕获的值在此名称下不可用。",
       "warning_unsafe_address": "此地址早于当前的命名规则。它仍可正常使用；但新字段无法使用此名称。",
-      "when_anonymized": "当回复被匿名化时"
+      "when_anonymized": "匿名化后"
     },
     "formbricks_logo": "Formbricks Logo",
     "general": {

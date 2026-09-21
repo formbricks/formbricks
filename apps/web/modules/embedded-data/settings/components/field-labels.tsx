@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { ArrowDownToLineIcon, CalculatorIcon } from "lucide-react";
+import { ArrowDownToLineIcon, CalculatorIcon, type LucideIcon } from "lucide-react";
 import type { TEmbeddedDataSource } from "@formbricks/types/embedded-data";
 import type { TReservedFieldPrivacy } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
@@ -29,12 +29,21 @@ export const getSourceLabel = (source: TEmbeddedDataSource, t: TFunction): strin
   }
 };
 
-export const getSourceIcon = (source: TEmbeddedDataSource, className: string) =>
-  source === "computed" ? (
-    <CalculatorIcon className={className} aria-hidden="true" />
-  ) : (
-    <ArrowDownToLineIcon className={className} aria-hidden="true" />
-  );
+/**
+ * A map rather than a ternary, so a cell can hand the component itself to `StatusIcon` instead of a
+ * rendered element. `reserved` has no source cell of its own — the auto-captured table is the
+ * answer — but the branch exists because `TEmbeddedDataSource` includes the value.
+ */
+export const SOURCE_ICONS: Record<TEmbeddedDataSource, LucideIcon> = {
+  ingested: ArrowDownToLineIcon,
+  computed: CalculatorIcon,
+  reserved: ArrowDownToLineIcon,
+};
+
+export const getSourceIcon = (source: TEmbeddedDataSource, className: string) => {
+  const Icon = SOURCE_ICONS[source];
+  return <Icon className={className} aria-hidden="true" />;
+};
 
 /**
  * What kind of value a field holds, in the words Attributes already uses for the same four kinds.

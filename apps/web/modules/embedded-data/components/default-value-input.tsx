@@ -37,6 +37,10 @@ interface DefaultValueInputProps {
  * A blank draft means "no default" — never `""`, which is a value an ingested field would then be
  * filled with. `parseDefaultValueDraft` is the other half of that, and the two are the only places
  * that know it.
+ *
+ * All three controls are forced to `h-10`. Left alone they are three different heights — `Input` is
+ * `h-10`, `SelectTrigger` is `h-9` and the date picker's trigger is a default `Button` at `h-9` — so
+ * the Type/Default pair beside each other stepped by a few pixels depending on the type chosen.
  */
 export const DefaultValueInput = ({
   dataType,
@@ -52,7 +56,7 @@ export const DefaultValueInput = ({
       <Select
         value={value === "" ? NO_DEFAULT_VALUE : value}
         onValueChange={(next) => onChange(next === NO_DEFAULT_VALUE ? "" : next)}>
-        <SelectTrigger id={id} className="w-full">
+        <SelectTrigger id={id} className="h-10 w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -69,7 +73,7 @@ export const DefaultValueInput = ({
       <DatePicker
         value={parseStoredDay(value)}
         locale={locale}
-        triggerClassName="w-full"
+        triggerClassName="h-10 w-full"
         onChange={(date) => onChange(formatLocalDay(date))}
         onClear={() => onChange("")}
       />

@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { EMBEDDED_FIELD_ICON_BY_DATA_TYPE } from "@/modules/embedded-data/lib/field-display";
 import { getDataTypeLabel } from "@/modules/embedded-data/settings/components/field-labels";
-import { FieldSourceIndicator } from "@/modules/embedded-data/settings/components/field-status";
+import { FieldSourceIndicator, StatusIcon } from "@/modules/embedded-data/settings/components/field-status";
 import { type TEmbeddedFieldWarning } from "@/modules/survey/editor/lib/embedded-field-guards";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
@@ -25,7 +25,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { IdBadge } from "@/modules/ui/components/id-badge";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface EmbeddedDataCardRowProps {
   entry: TLinkedEmbeddedField;
@@ -96,26 +95,28 @@ export const EmbeddedDataCardRow = ({
         <div className="flex flex-wrap items-center gap-2">
           {/* The row's only statement of what kind of value this is — the meta line below used to
               repeat it in words, which said the same thing twice in a row two lines tall. */}
-          <TooltipRenderer tooltipContent={typeLabel}>
-            <TypeIcon className="size-4 shrink-0 text-slate-500" aria-label={typeLabel} />
-          </TooltipRenderer>
+          <StatusIcon icon={TypeIcon} label={typeLabel} />
           <span className="truncate text-sm font-medium text-slate-800">{field.name}</span>
-          <Badge
-            text={
-              isShared ? t("workspace.embedded_data.owner_library") : t("workspace.embedded_data.owner_local")
-            }
-            type={isShared ? "info" : "gray"}
-            size="tiny"
-          />
+          {/* The two owners used to be a `Badge` apiece, `info` against `gray` — which the Badge
+              component renders with the identical slate palette, so the one difference an author
+              needs to see was the wording. The library one carries the glyph its row menu and the
+              settings page already use; the survey-owned one stays a plain pill. */}
+          {isShared ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
+              <LibraryBigIcon className="size-3" aria-hidden="true" />
+              {t("workspace.embedded_data.owner_library")}
+            </span>
+          ) : (
+            <Badge text={t("workspace.embedded_data.owner_local")} type="gray" size="tiny" />
+          )}
           {/* Only what locking does. That it has no default to fall back on is a warning below,
               where it is visible without hovering. */}
           {field.locked && (
-            <TooltipRenderer tooltipContent={t("workspace.embedded_data.locked_description")}>
-              <LockIcon
-                className="size-3.5 shrink-0 text-slate-500"
-                aria-label={t("workspace.embedded_data.locked")}
-              />
-            </TooltipRenderer>
+            <StatusIcon
+              icon={LockIcon}
+              iconClassName="size-3.5"
+              label={t("workspace.embedded_data.locked_description")}
+            />
           )}
         </div>
 
@@ -128,7 +129,7 @@ export const EmbeddedDataCardRow = ({
               ? t("workspace.embedded_data.no_default")
               : String(field.defaultValue)}
           </span>
-          <IdBadge id={link.storageKey} showCopyIconOnHover={true} />
+          <IdBadge id={link.storageKey} />
         </div>
 
         {/* Already on screen when the card opens, so `status` rather than the assertive default. */}
@@ -159,7 +160,7 @@ export const EmbeddedDataCardRow = ({
                 <DropdownMenuItem
                   icon={<ExternalLinkIcon className="size-4" />}
                   onSelect={() => window.open(libraryHref, "_blank", "noopener,noreferrer")}>
-                  {t("workspace.embedded_data.open_in_library")}
+                  {t("workspace.embedded_data.open_library")}
                 </DropdownMenuItem>
               </>
             ) : (

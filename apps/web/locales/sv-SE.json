@@ -2160,7 +2160,6 @@
       "add_to_library": "Lägg till i bibliotek",
       "add_to_library_description": "Ge \"{name}\" en biblioteksnyckel. Alla undersökningar i den här arbetsytan kan då lägga till samma fält.",
       "after_response_submitted": "Efter att svaret skickats in",
-      "anonymize_note": "Alla med en enkätlänk kan läsa och ändra värdena som skickas genom den. För att ställa in ett värde de inte kan ändra, lås fältet och ge det ett standardvärde. Kolumnen anonymiserad gäller när Anonymisera svar är aktiverat i en enkäts inställningar.",
       "auto_captured": "Automatiskt infångade fält",
       "auto_captured_description": "Varje enkät registrerar dessa för varje svar, redo för logik, återkallning, filter och export.",
       "calculated_type_hint": "Beräknade fält är text eller siffror — det som enkätlogiken kan beräkna.",
@@ -2202,7 +2201,7 @@
       "no_default": "Inget standardvärde",
       "no_default_placeholder": "–",
       "not_used": "Används inte",
-      "open_in_library": "Öppna i bibliotek",
+      "open_library": "Öppna bibliotek",
       "owner_library": "Bibliotek",
       "owner_local": "Den här undersökningen",
       "privacy_kept": "Bevarad",
@@ -2240,7 +2239,7 @@
       "warning_clashing_address": "Ett annat fält i den här undersökningen svarar mot det här namnet. Återkallning och logik löser ett av dem.",
       "warning_reserved_address": "Det här namnet är nu ett reserverat auto-infångat fält. Den här undersökningen behåller sitt eget, som vinner här, så det auto-infångade värdet är inte tillgängligt under det här namnet.",
       "warning_unsafe_address": "Den här adressen är äldre än den nuvarande namnregeln. Den fortsätter att fungera; ett nytt fält skulle inte kunna namnges så här.",
-      "when_anonymized": "När svar anonymiseras"
+      "when_anonymized": "När anonymiserad"
     },
     "formbricks_logo": "Formbricks-logotyp",
     "general": {
