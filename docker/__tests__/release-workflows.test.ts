@@ -8,6 +8,7 @@ const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const workflowsDirectory = ".github/workflows";
 const linearSyncWorkflow = `${workflowsDirectory}/linear-release.yml`;
 const formbricksReleaseWorkflow = `${workflowsDirectory}/formbricks-release.yml`;
+const helmReleaseWorkflow = `${workflowsDirectory}/release-helm-chart.yml`;
 const linearSmokeWorkflow = `${workflowsDirectory}/linear-release-smoke.yml`;
 const linearCutWorkflow = `${workflowsDirectory}/linear-release-cut.yml`;
 const releaseWorkflows = [
@@ -23,8 +24,10 @@ const linearActionVersion = "v0.15.1";
 const releasedVersion = "${{ needs.docker-build-community.outputs.VERSION }}";
 
 type WorkflowStep = {
+  env?: Record<string, string>;
   id?: string;
   if?: string;
+  name?: string;
   run?: string;
   uses?: string;
   with?: {
@@ -38,15 +41,30 @@ type WorkflowStep = {
   };
 };
 
+type WorkflowInput = {
+  description?: string;
+  required?: boolean;
+  type?: string;
+};
+
 type WorkflowTriggers = {
   push?: { branches?: string[]; paths?: string[] };
-  workflow_dispatch?: unknown;
+  workflow_call?: { inputs?: Record<string, WorkflowInput> };
+  workflow_dispatch?: { inputs?: Record<string, WorkflowInput> };
   pull_request?: unknown;
   pull_request_target?: unknown;
 };
 
+type WorkflowJob = {
+  if?: string;
+  needs?: string[];
+  steps?: WorkflowStep[];
+  uses?: string;
+  with?: Record<string, string>;
+};
+
 type Workflow = {
-  jobs?: Record<string, { if?: string; needs?: string[]; steps?: WorkflowStep[] } | undefined>;
+  jobs?: Record<string, WorkflowJob | undefined>;
   on?: WorkflowTriggers;
   // js-yaml 3 resolved the YAML 1.1 truthy key `on:` to boolean `true`; 4.x keeps it a string.
   true?: WorkflowTriggers;
@@ -141,6 +159,32 @@ describe("release workflows", () => {
 
     expect(steps.map((step) => step.with?.version)).toEqual([releasedVersion, releasedVersion]);
     expect(steps.map((step) => step.with?.command)).toEqual([undefined, "complete"]);
+  });
+
+  test("can publish a chart patch without inventing a new application image", () => {
+    const workflow = readWorkflow(helmReleaseWorkflow);
+    const triggers = workflow.on ?? workflow.true;
+    const reusableInputs = triggers?.workflow_call?.inputs;
+    const manualInputs = triggers?.workflow_dispatch?.inputs;
+    const updateStep = workflow.jobs?.publish?.steps?.find(
+      (step) => step.name === "Update Chart.yaml with new version"
+    );
+    const imageStep = workflow.jobs?.publish?.steps?.find(
+      (step) => step.name === "Validate default Formbricks image tag"
+    );
+
+    expect(reusableInputs?.VERSION?.required).toBe(true);
+    expect(reusableInputs?.APP_VERSION?.required).toBe(true);
+    expect(manualInputs?.VERSION?.required).toBe(true);
+    expect(manualInputs?.APP_VERSION?.required).toBe(true);
+    expect(updateStep?.run).toContain('yq -i ".version = \\"${VERSION}\\""');
+    expect(updateStep?.run).toContain('yq -i ".appVersion = \\"${APP_VERSION}\\""');
+    expect(imageStep?.run).toContain("formbricks/formbricks:${APP_VERSION}");
+
+    expect(readWorkflow(formbricksReleaseWorkflow).jobs?.["helm-chart-release"]?.with).toMatchObject({
+      APP_VERSION: releasedVersion,
+      VERSION: releasedVersion,
+    });
   });
 
   test("skips the Linear completion for prereleases", () => {
